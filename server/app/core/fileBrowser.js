@@ -127,7 +127,7 @@ async function ls(targetDir, options = {}) {
       if (dirFilter && !dirFilter.test(name)) {
         return;
       }
-      dirList.push({ path: request, name, type: "dir", islink: false, isComponentDir: await isComponentDir(request) });
+      dirList.push({ path: request, name, type: "dir", islink: false, isComponentDir: await isComponentDir(path.resolve(request, name)) });
     } else if (stats.isFile() && sendFilename) {
       if (fileFilter && !fileFilter.test(name)) {
         return;
@@ -143,7 +143,7 @@ async function ls(targetDir, options = {}) {
           if (dirFilter && !dirFilter.test(name)) {
             return;
           }
-          dirList.push({ path: request, name, type: "dir", islink: true, isComponentDir: await isComponentDir(request) });
+          dirList.push({ path: request, name, type: "dir", islink: true, isComponentDir: await isComponentDir(path.resolve(request, name)) });
         }
 
         if (stats2.isFile() && sendFilename) {

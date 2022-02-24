@@ -223,7 +223,7 @@ function registerListeners(socket, projectRootDir) {
     if (event.file.pathName !== absFilename) {
       await fs.move(event.file.pathName, absFilename);
     }
-    const fileSizeMB = parseInt(event.file.size / 1024 / 1024);
+    const fileSizeMB = parseInt(event.file.size / 1024 / 1024, 10);
     getLogger(projectRootDir).info(`upload completed ${absFilename} [${fileSizeMB > 1 ? `${fileSizeMB} MB` : `${event.file.size} Byte`}]`);
 
     if (fileSizeMB > gitLFSSize) {

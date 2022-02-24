@@ -17,7 +17,6 @@ const { getDateString } = require("../lib/utility");
 const { componentJsonReplacer } = require("./componentFilesOperator");
 const Dispatcher = require("./dispatcher");
 const { removeSsh } = require("./sshManager");
-const { emitProjectEvent } = require("./projectEventManager");
 
 
 class Project extends EventEmitter {
@@ -43,12 +42,14 @@ class Project extends EventEmitter {
   }
 
   async updateProjectState(state, projectJson) {
+    console.log("DEBUG: updateProjectState", state);
+
     if (!projectJson) {
       projectJson = await readJsonGreedy(this.projectJsonFilename);
     }
     projectJson.state = state;
     projectJson.mtime = getDateString(true);
-    emitProjectEvent(this.projectRootDir, "projectStateChanged", projectJson);
+    //emitProjectEvent(this.projectRootDir, "projectStateChanged", projectJson);
     return fs.writeJson(this.projectJsonFilename, projectJson, { spaces: 4 });
   }
 
@@ -103,7 +104,7 @@ class Project extends EventEmitter {
     await gitResetHEAD(this.projectRootDir);
     await gitClean(this.projectRootDir);
     const projectJson = await readJsonGreedy(this.projectJsonFilename);
-    emitProjectEvent(this.projectRootDir, "projectStateChanged", projectJson);
+    //emitProjectEvent(this.projectRootDir, "projectStateChanged", projectJson);
   }
 }
 

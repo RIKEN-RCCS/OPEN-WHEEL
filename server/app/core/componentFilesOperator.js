@@ -565,11 +565,29 @@ async function validateInputFiles(component) {
   return true;
 }
 
+/**
+ * validate outputFiles
+ * @param {Object} component - any component object which has putFiles prop
+ * @returns {true|Error} - outputFile is valid or not
+ */
+async function validateOutputFiles(component) {
+  for (const outputFile of component.outputFiles) {
+    const filename = outputFile.name;
+    if (!isValidOutputFilename(filename)) {
+      return Promise.reject(new Error(`${component.name} '${outputFile.name}' is not allowed.`));
+    }
+  }
+  return true;
+}
+
 async function recursiveGetHosts(projectRootDir, parentID, hosts) {
   const promises = [];
   const children = await getChildren(projectRootDir, parentID);
 
   for (const component of children) {
+    if (component.disable) {
+      continue;
+    }
     if (component.type === "task" && component.host !== "localhost" || component.type === "stepjob") {
       hosts.push(component.host);
     }
@@ -624,6 +642,9 @@ async function validateComponents(projectRootDir, parentID) {
     }
     if (Object.prototype.hasOwnProperty.call(component, "inputFiles")) {
       promises.push(validateInputFiles(component));
+    }
+    if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
+      promises.push(validateOutputFiles(component));
     }
     if (hasChild(component)) {
       promises.push(validateComponents(projectRootDir, component.ID));
@@ -765,6 +786,7 @@ async function arrangeComponent(stepjobGroupArray) {
       }
 
       let nextComponent = [];
+      /*eslint-disable-next-line no-loop-func*/
       nextComponent = stepjobTaskComponents.filter((stepjobTask)=>{
         return stepjobTask.ID === arrangeArraytemp[i - 1].next[0];
       });
@@ -1046,7 +1068,7 @@ async function getSourceComponents(projectRootDir) {
     }));
 
   return components.filter((componentJson)=>{
-    return componentJson.type === "source" && !componentJson.subComponent;
+    return componentJson.type === "source" && !componentJson.subComponent && !componentJson.disable;
   });
 }
 
@@ -1132,5 +1154,6 @@ module.exports = {
   cleanComponent,
   removeComponent,
   isComponentDir,
-  getComponentTree
+  getComponentTree,
+  readComponentJson
 };

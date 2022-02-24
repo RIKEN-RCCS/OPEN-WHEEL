@@ -81,10 +81,10 @@
       };
     },
     mounted () {
-      SIO.emitGlobal("getFileList", { mode: this.mode, path: this.requestRoot}, (fileList)=>{
-        this.items = fileList.map(fileListModifier.bind(null, this.pathSep));
+      SIO.emitGlobal("getFileList", null, { mode: this.mode, path: this.requestRoot}, (fileList)=>{
         this.root=this.requestRoot || fileList[0].path || "/";
         this.pathSep=this.root[0] === "/" ? "/" : "\\";
+        this.items = fileList.map(fileListModifier.bind(null, this.pathSep));
       });
     },
     methods: {
@@ -96,7 +96,7 @@
           const path = [this.root];
           getActiveItem(this.items, item.id, path);
           const currentDir = path.join(this.pathSep);
-          SIO.emitGlobal("getFileList", { mode: this.mode, path: currentDir }, (fileList)=>{
+          SIO.emitGlobal("getFileList", null, { mode: this.mode, path: currentDir }, (fileList)=>{
             if (!Array.isArray(fileList)) {
               reject(fileList);
             }

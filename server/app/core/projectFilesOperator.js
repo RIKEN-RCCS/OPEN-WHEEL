@@ -16,11 +16,31 @@ const { getDateString, isValidName } = require("../lib/utility");
 const { replacePathsep, convertPathSep } = require("./pathUtils");
 const { readJsonGreedy } = require("./fileUtils");
 const { gitInit, gitAdd, gitCommit, gitResetHEAD, gitClean, gitRm } = require("./gitOperator2");
-const { emitProjectEvent } = require("./projectEventManager");
 const { hasChild } = require("../core/workflowComponent");
 
 const { getLogger } = require("../logSettings");
 const logger = getLogger();
+
+/**
+ * remove trailing path sep from string
+ * @param {string} filename - string possibly with trailing path sep
+ * @returns {string} - string without trailing path sep
+ */
+function removeTrailingPathSep(filename) {
+  if (filename.endsWith(path.sep)) {
+    return removeTrailingPathSep(filename.slice(0, -1));
+  }
+  return filename;
+}
+
+/**
+ * get project JSON
+ * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @returns {Object} - project JSON data
+ */
+async function getProjectJson(projectRootDir) {
+  return readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+}
 
 /**
  * read component JSON file and return children's ID
@@ -117,6 +137,10 @@ async function removeComponentPath(projectRootDir, IDs, force = false) {
   return gitAdd(projectRootDir, filename);
 }
 
+/**
+ *
+ * @returns {Object} - component path map
+ */
 async function updateComponentPath(projectRootDir, ID, absPath) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
   const projectJson = await readJsonGreedy(filename);
@@ -143,7 +167,7 @@ async function updateComponentPath(projectRootDir, ID, absPath) {
   //write project Json file
   await fs.writeJson(filename, projectJson, { spaces: 4 });
   await gitAdd(projectRootDir, filename);
-  emitProjectEvent(projectRootDir, "componentPathChanged", projectJson.componentPath);
+  return projectJson.componentPath;
 }
 
 async function setProjectState(projectRootDir, state, force) {
@@ -155,8 +179,9 @@ async function setProjectState(projectRootDir, state, force) {
     projectJson.mtime = timestamp;
     await fs.writeJson(filename, projectJson, { spaces: 4 });
     await gitAdd(projectRootDir, filename);
-    emitProjectEvent(projectRootDir, "projectStateChanged", projectJson);
+    return projectJson;
   }
+  return false;
 }
 
 async function getComponentDir(projectRootDir, ID, isAbsolute) {
@@ -425,6 +450,64 @@ async function updateProjectDescription(projectRootDir, description) {
   await fs.writeJson(filename, projectJson);
 }
 
+async function addProject(projectDir, description) {
+  let projectRootDir = path.normalize(removeTrailingPathSep(convertPathSep(projectDir)));
+
+  if (!projectRootDir.endsWith(suffix)) {
+    projectRootDir += suffix;
+  }
+  projectRootDir = path.resolve(projectRootDir);
+
+  const projectName = path.basename(projectRootDir.slice(0, -suffix.length));
+
+  if (!isValidName(projectName)) {
+    logger.error(projectName, "is not allowed for project name");
+    throw (new Error("illegal project name"));
+  }
+  if (isDuplicateProjectName(projectName)) {
+    logger.error(projectName, "is already used");
+    throw (new Error("already exists"));
+  }
+
+  await createNewProject(projectRootDir, projectName, description, "wheel", "wheel@example.com", logger);
+  projectList.unshift({ path: projectRootDir });
+}
+
+async function renameProject(id, newName, oldDir) {
+  if (!isValidName(newName)) {
+    logger.error(newName, "is not allowed for project name");
+    throw (new Error("illegal project name"));
+  }
+  if (isDuplicateProjectName(newName)) {
+    logger.error(newName, "is already exists");
+    throw (new Error("already exists"));
+  }
+
+  const newDir = path.resolve(path.dirname(oldDir), newName + suffix);
+
+  await fs.move(oldDir, newDir);
+  const projectJson = await readJsonGreedy(path.resolve(newDir, projectJsonFilename));
+  projectJson.name = newName;
+  projectJson.root = newDir;
+  projectJson.mtime = getDateString(true);
+  await fs.writeJson(path.resolve(newDir, projectJsonFilename), projectJson);
+  const rootWorkflow = await readJsonGreedy(path.resolve(newDir, componentJsonFilename));
+  rootWorkflow.name = newName;
+  await fs.writeJson(path.resolve(newDir, componentJsonFilename), rootWorkflow);
+  await gitAdd(newDir, projectJsonFilename);
+  await gitAdd(newDir, componentJsonFilename);
+
+  //TODO get from user db
+  const name = "wheel";
+  const mail = "wheel.example.com";
+  await gitCommit(newDir, name, mail);
+
+  //rewrite path in project List entry
+  const target = projectList.get(id);
+  target.path = newDir;
+  await projectList.update(target);
+}
+
 module.exports = {
   createNewProject,
   updateComponentPath,
@@ -436,5 +519,8 @@ module.exports = {
   getProjectState,
   checkRunningJobs,
   importProject,
-  updateProjectDescription
+  updateProjectDescription,
+  getProjectJson,
+  addProject,
+  renameProject
 };

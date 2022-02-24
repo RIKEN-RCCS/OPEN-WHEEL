@@ -321,6 +321,7 @@
     },
     mounted: function () {
       const projectRootDir = readCookie("rootDir");
+      SIO.initGlobal({projectRootDir});
       const ID = readCookie("root");
       this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);
@@ -361,13 +362,28 @@
       SIO.emit("getComponentTree", projectRootDir, (componentTree)=>{
         this.commitComponentTree(componentTree);
       });
+
       this.commitWaitingProjectJson(true);
-      SIO.emit("getProjectJson", (rt)=>{
+      SIO.emitGlobal("getProjectJson", projectRootDir, (rt)=>{
         debug("getProjectJson done", rt);
       });
+      SIO.onGlobal("projectJson", (projectJson)=>{
+        this.projectJson = projectJson;
+        this.commitProjectState(projectJson.state.toLowerCase());
+        this.commitComponentPath(projectJson.componentPath);
+        this.commitWaitingProjectJson(false);
+      });
+
       this.commitWaitingWorkflow(true);
-      SIO.emit("getWorkflow", ID, (rt)=>{
+      SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
         debug("getWorkflow done", rt);
+      });
+      SIO.onGlobal("workflow", (wf)=>{
+        if(this.currentComponent!==null && wf.ID !== this.currentComponent.ID){
+          this.commitSelectedComponent(null);
+        }
+        this.commitCurrentComponent(wf);
+        this.commitWaitingWorkflow(false);
       });
       this.$router.replace({ name: "graph" })
         .catch((err)=>{
@@ -411,8 +427,15 @@
         debug("upsupported operation", operation);
       },
       emitProjectOperation (operation) {
-        SIO.emit(operation, (rt)=>{
+        if(operation === "stopProject" || operation === "cleanProject"){
+          this.commitWaitingWorkflow(true);
+        }
+        SIO.emitGlobal(operation, projectRootDir, (rt)=>{
           debug(operation, "done", rt);
+
+          if(operation === "stopProject" || operation === "cleanProject"){
+            this.commitWaitingWorkflow(false);
+          }
         });
       },
       updateDescription(){

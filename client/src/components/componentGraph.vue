@@ -31,6 +31,7 @@
         drawComponents(this.currentComponent,
                        this.svg,
                        this.projectState,
+                       this.projectRootDir,
                        this.$store.commit.bind(this),
                        this.$store.dispatch.bind(this),
         );
@@ -81,7 +82,7 @@
         SIO.emit("createNode", payload, (rt)=>{
           if (rt !== true) return;
           // update component Map
-          SIO.emit("getProjectJson");
+          SIO.emitGlobal("getProjectJson", this.projectRootDir);
           // update componant Tree
           SIO.emit("getComponentTree", this.projectRootDir, (componentTree)=>{
             this.commitComponentTree(componentTree);

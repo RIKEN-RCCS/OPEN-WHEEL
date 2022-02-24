@@ -15,18 +15,20 @@ if (process.env.WHEEL_DEBUG_VERBOSE) {
 }
 
 const path = require("path");
+const os = require("os");
 const fs = require("fs-extra");
 const cors = require("cors");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-const cookie = require("cookie");
-const siofu = require("socketio-file-upload");
+const Siofu = require("socketio-file-upload");
 const { port, keyFilename, certFilename, projectList, remoteHost, jobScheduler } = require("./db/db");
 const { setProjectState, checkRunningJobs, updateProjectDescription } = require("./core/projectFilesOperator");
-const { onCreateNewFile, onCreateNewDir, onGetFileList } = require("./handlers/fileManager.js");
+const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onRemoveFile, onUploadFileSaved } = require("./handlers/fileManager.js");
 const tryToConnect = require("./handlers/tryToConnect.js");
-const { onRemoveProjectsFromList, onRemoveProjects } = require("./handlers/projectListHandlers.js");
+const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./handlers/projectList.js");
+const { onGetProjectJson, onGetWorkflow, onRunProject, onPauseProject, onStopProject, onCleanProject, onSaveProject, onRevertProject } = require("./handlers/projectController.js");
+const { onSaveFile, onOpenFile } = require("./handlers/rapid.js");
 const { getLogger } = require("./logSettings");
 
 /*
@@ -57,52 +59,93 @@ app.use(cookieParser());
 app.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
 app.use(express.static(path.resolve(__dirname, "public"), { index: false }));
 
-app.use(siofu.router);
+app.use(Siofu.router);
 
 //global socket IO handler
 sio.on("connection", (socket)=>{
-  logger.debug("global prependAny cookie =", cookie.parse(socket.handshake.headers.cookie));
+  //TODO このタイミングでworkflowを開こうとしている時はroomに入れる
+  //client側でprojectRootDirはこの値に入れている
+  //socket.handshake.auth.projectRootDir
   socket.prependAny((eventName, ...args)=>{
+    if (eventName.startsWith("siofu")) {
+      return;
+    }
     //remove callback function
-    args.pop();
+    const cb = args.pop();
+    if (typeof cb !== "function") {
+      throw new Error("socketIO API must be called with call back function");
+    }
 
     //cut sensitive values
     if (eventName === "tryToConnect") {
       args.pop();
     }
-
     //this must go to trace level(file only, never go to console)
     logger.debug(`[socketIO API] ${eventName} recieved.`, args);
   });
 
   //
-  //filemanager
+  //projectController
   //
+  socket.on("runProject", onRunProject.bind(null, socket));
+  socket.on("pauseProject", onPauseProject.bind(null, socket));
+  socket.on("stopProject", onStopProject.bind(null, socket));
+  socket.on("cleanProject", onCleanProject.bind(null, socket));
+  socket.on("saveProject", onSaveProject.bind(null, socket));
+  socket.on("revertProject", onRevertProject.bind(null, socket));
+
+  //
+  //filemanager
+  ///
+  const uploader = new Siofu();
+  uploader.listen(socket);
+  uploader.dir = os.homedir();
+  uploader.on("start", (event)=>{
+    logger.debug("upload request recieved", event.file.name);
+  });
+  uploader.on("saved", onUploadFileSaved.bind(null, socket));
+  uploader.on("error", (event)=>{
+    logger.error("file upload failed", event.file, event.error);
+  });
   //create
   socket.on("createNewFile", onCreateNewFile);
   socket.on("createNewDir", onCreateNewDir);
   //read
   socket.on("getFileList", onGetFileList);
+  socket.on("getSNDContents", onGetSNDContents);
   //update
-  //not yet implemented!!
+  socket.on("renameFile", onRenameFile);
   //delete
-  //not yet implemented!!
+  socket.on("removeFile", onRemoveFile);
+  //
+  //rapid to be merged with filemanager handlers
+  //
+  //update
+  socket.on("saveFile", onSaveFile);
+  socket.on("openFile", onOpenFile.bind(null, socket));
+
 
   //
   //projectList
   //
   //create
-  //not yet implemented!!
+  socket.on("addProject", onAddProject.bind(null, socket));
   //read
-  //not yet implemented!!
+  socket.on("getProjectList", onGetProjectList.bind(null, socket));
+  socket.on("renameProject", onRenameProject.bind(null, socket));
+
   //update
-  //not yet implemented!!
+  socket.on("reorderProjectList", onReorderProjectList.bind(null, socket));
+
   //delete
-  socket.on("removeProjectsFromList", onRemoveProjectsFromList);
-  socket.on("removeProjects", onRemoveProjects);
+  socket.on("removeProjectsFromList", onRemoveProjectsFromList.bind(null, socket));
+  socket.on("removeProjects", onRemoveProjects.bind(null, socket));
 
   //
-  //projectJson
+  //projectFiles
+  //read
+  socket.on("getProjectJson", onGetProjectJson.bind(null, socket));
+  socket.on("getWorkflow", onGetWorkflow.bind(null, socket));
   //update
   socket.on("updateProjectDescription", async(projectRootDir, description, cb)=>{
     await updateProjectDescription(projectRootDir, description);
@@ -128,10 +171,6 @@ sio.on("connection", (socket)=>{
   socket.on("getHostList", (cb)=>{
     cb(remoteHost.getAll());
   });
-  socket.on("getJobSchedulerLabelList", (cb)=>{
-    const JSNames = Object.keys(jobScheduler);
-    cb(JSNames);
-  });
 
   //update
   socket.on("updateHost", async(updatedHost, cb)=>{
@@ -147,34 +186,40 @@ sio.on("connection", (socket)=>{
     cb(true);
   });
 
+
+  //
+  //JobScheduler
+  //
+  //read
+  socket.on("getJobSchedulerList", (cb)=>{
+    cb(jobScheduler);
+  });
+  socket.on("getJobSchedulerLabelList", (cb)=>{
+    cb(Object.keys(jobScheduler));
+  });
+
   //auxiliary
   socket.on("tryToConnect", tryToConnect);
   socket.on("tryToConnectById", async(id, password, cb)=>{
     const hostInfo = remoteHost.get(id);
     await tryToConnect(hostInfo, password, cb);
   });
-
-
-  //JobScheduler
-  //read
-  socket.on("getJobSchedulerList", (cb)=>{
-    cb(jobScheduler);
-  });
 });
+
 //routing
 const routes = {
-  home: require(path.resolve(__dirname, "routes/home"))(sio),
+  home: require(path.resolve(__dirname, "routes/home")),
   workflow: require(path.resolve(__dirname, "routes/workflow"))(sio),
-  remotehost: require(path.resolve(__dirname, "routes/remotehost"))(sio),
+  remotehost: require(path.resolve(__dirname, "routes/remotehost")),
   jobScript: require(path.resolve(__dirname, "routes/jobScript"))(sio)
 };
-app.use("/", routes.home);
-app.use("/home", routes.home);
+app.get("/", routes.home);
+app.get("/home", routes.home);
+app.get("/remotehost", routes.remotehost);
 app.use("/workflow", routes.workflow);
 app.use("/graph", routes.workflow);
 app.use("/list", routes.workflow);
 app.use("/editor", routes.workflow);
-app.use("/remotehost", routes.remotehost);
 app.use("/jobScript", routes.jobScript);
 
 

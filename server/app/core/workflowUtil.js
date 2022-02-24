@@ -12,6 +12,7 @@ const { readJsonGreedy } = require("./fileUtils");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { gitAdd } = require("./gitOperator2");
 const { componentJsonReplacer } = require("./componentFilesOperator");
+const { hasChild } = require("./workflowComponent");
 
 async function getComponentDir(projectRootDir, targetID) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
@@ -89,10 +90,52 @@ async function updateComponentJson(projectRootDir, component, modifier) {
   return gitAdd(projectRootDir, filename);
 }
 
+/**
+ * return component,  its children, and grandsons
+ * @param {string} projectRootDir - project's root path
+ * @param {strint} rootComponentDir - path of component to be obrained
+ * @returns {Object} - nested component JSON object
+ */
+async function getThreeGenerationFamily(projectRootDir, rootComponentDir) {
+  const wf = await getComponent(projectRootDir, path.resolve(rootComponentDir, componentJsonFilename));
+  const rt = Object.assign({}, wf);
+  rt.descendants = await getChildren(projectRootDir, wf.ID);
+
+  for (const child of rt.descendants) {
+    if (child.handler) {
+      delete child.handler;
+    }
+
+    if (hasChild(child)) {
+      const grandson = await getChildren(projectRootDir, child.ID);
+      child.descendants = grandson.map((e)=>{
+        if (e.type === "task") {
+          return { type: e.type, pos: e.pos, host: e.host, useJobScheduler: e.useJobScheduler };
+        }
+        return { type: e.type, pos: e.pos };
+      });
+    }
+  }
+  return rt;
+}
+
+/**
+ * call getThreeGenerationFamily with ID
+ * @param {string} projectRootDir - project's root path
+ * @param {strint} rootComponentID - ID of component to be obrained
+ * @returns {Object} - nested component JSON object
+ */
+async function getThreeGenerationFamilyByID(projectRootDir, rootComponentID) {
+  const rootComponentDir = await getComponentDir(projectRootDir, rootComponentID);
+  return getThreeGenerationFamily(projectRootDir, rootComponentDir);
+}
+
 module.exports = {
   getComponentDir,
   getComponent,
   getChildren,
   updateComponentJson,
-  getComponentRelativePath
+  getComponentRelativePath,
+  getThreeGenerationFamily,
+  getThreeGenerationFamilyByID
 };

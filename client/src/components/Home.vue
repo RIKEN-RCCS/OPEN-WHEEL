@@ -187,12 +187,10 @@
     },
     computed: {
       selected () {
-        let rt = this.selectedInTable.length > 0 ? this.selectedInTable[0].path : this.home;
-
         if (this.selectedInTree) {
-          rt = this.selectedInTree.replace(reProjectJsonFilename, "");
+          return this.selectedInTree.replace(reProjectJsonFilename, "");
         }
-        return rt;
+        return this.selectedInTable.length > 0 ? this.selectedInTable[0].path : this.home;
       },
       buttons () {
         const open = { icon: "mdi-check", label: "open" };
@@ -216,13 +214,23 @@
     mounted: function () {
       this.pathSep = readCookie("pathSep");
       this.home = readCookie("home");
-      SIO.emitHome("getProjectList", true);
-      SIO.onHome("projectList", (data)=>{
+      SIO.initGlobal();
+      SIO.onGlobal("projectList", (data)=>{
         this.projectList.splice(0, this.projectList.length, ...data);
       });
+      this.forceUpdateProjectList();
     },
     methods: {
       required,
+      forceUpdateProjectList(){
+        SIO.emitGlobal("getProjectList", (data)=>{
+           if (!Array.isArray(data)) {
+             console.log("unexpected projectlist recieved", data);
+             return;
+           }
+           this.projectList.splice(0, this.projectList.length, ...data);
+        });
+      },
       closeDialog () {
         this.dialog = false;
         this.dialogMode = "default";
@@ -232,11 +240,13 @@
         this.dialogTitle = "";
       },
       createProject () {
-        if (!this.newProjectName) {
-
-        }
-        const path = `${this.selected}/${this.newProjectName}`;
-        SIO.emitHome("addProject", path, this.newProjectDescription);
+        const path = `${this.selected || "."}/${this.newProjectName}`;
+        SIO.emitGlobal("addProject", path, this.newProjectDescription, (rt)=>{
+          if(!rt){
+            console.log("create project failed", this.selected, this.newProjectName, this.newProjectDescription, path);
+            this.forceUpdateProjectList();
+          }
+        });
         this.closeDialog();
       },
       openProject () {
@@ -255,11 +265,18 @@
         input.setAttribute("type", "hidden");
         input.setAttribute("name", "project");
         input.setAttribute("value", this.selected);
+        console.log("selected=",this.selected);
+        console.log("selectedInTree=", this.selectedInTree);
         form.appendChild(input);
         form.submit();
       },
       renameProject (item) {
-        SIO.emitHome("renameProject", { id: item.id, newName: item.name, path: item.path });
+        SIO.emitGlobal("renameProject", item.id, item.name, item.path, (rt)=>{
+          if(!rt){
+            console.log("rename failed", item.id, item.name, item.path);
+            this.forceUpdateProjectList();
+          }
+        });
       },
       openDeleteProjectDialog (fromListOnly) {
         this.removeFromList = fromListOnly;
@@ -273,21 +290,10 @@
           });
         const eventName = this.removeFromList ? "removeProjectsFromList" : "removeProjects";
         SIO.emitGlobal(eventName, removeIDs, (rt)=>{
-          if (!rt) {
-            console.log("remove failed", rt);
-            SIO.emitGlobal("getProjectList", (data)=>{
-              if (!Array.isArray(data)) {
-                console.log("illegal projectlist recieved", data);
-                return;
-              }
-              this.projectList.splice(0, this.projectList.length, ...data);
-            });
-            return;
+          if(!rt){
+            console.log("remove failed", eventName, removeIDs);
+            this.forceUpdateProjectList();
           }
-          const newProjectList = this.projectList.filter((e)=>{
-            return !removeIDs.includes(e.id);
-          });
-          this.projectList.splice(0, this.projectList.length, ...newProjectList);
           this.selectedInTable = [];
         });
       },

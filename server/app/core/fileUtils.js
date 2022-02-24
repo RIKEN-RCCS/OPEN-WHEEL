@@ -215,11 +215,30 @@ async function saveFile(argFilename, content) {
   await gitAdd(repoDir, absFilename);
 }
 
+/**
+ * get unused path string
+ * @param {string} parent - parent directory
+ * @param {string} name - desired name
+ * @returns {string} - file or directory name with suffix
+ */
+async function getUnusedPath(parent, name) {
+  const desiredPath = path.resolve(parent, name);
+  if (!await fs.pathExists(desiredPath)) {
+    return desiredPath;
+  }
+  let suffix = 1;
+  while (await fs.pathExists(path.resolve(parent, `${name}.${suffix}`))) {
+    ++suffix;
+  }
+  return path.resolve(parent, `${name}.${suffix}`);
+}
+
 
 module.exports = {
   readJsonGreedy,
   addX,
   deliverFile,
   openFile,
-  saveFile
+  saveFile,
+  getUnusedPath
 };

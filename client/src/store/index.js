@@ -91,7 +91,7 @@ export default new Vuex.Store({
       context.commit("selectedComponent", payload);
       const dup = Object.assign({}, payload);
       context.commit("copySelectedComponent", dup);
-      SIO.emit("getFileList", context.getters.selectedComponentAbsPath, (fileList)=>{
+      SIO.emitGlobal("getFileList", context.state.projectRootDir, {path: context.getters.selectedComponentAbsPath, mode:"SND"}, (fileList)=>{
         const scriptCandidates = fileList
           .filter((e)=>{
             return e.type.startsWith("file");

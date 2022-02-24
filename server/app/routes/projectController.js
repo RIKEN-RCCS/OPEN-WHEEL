@@ -13,29 +13,20 @@ const glob = require("glob");
 const { create } = require("abc4");
 const { emitLongArray } = require("./utility");
 const { convertPathSep } = require("../core/pathUtils");
-const { readJsonGreedy, deliverFile } = require("../core/fileUtils");
-const { getDateString, isValidOutputFilename } = require("../lib/utility");
-const { interval, remoteHost, projectJsonFilename, componentJsonFilename } = require("../db/db");
+const { readJsonGreedy } = require("../core/fileUtils");
+const { getDateString } = require("../lib/utility");
+const { interval, projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { getChildren, getComponentDir, getComponent } = require("../core/workflowUtil");
 const { hasChild } = require("../core/workflowComponent");
-const { on, once, off } = require("../core/projectEventManager");
 const {
   setCwd,
   getCwd,
   addCluster,
-  removeCluster,
-  runProject,
-  pauseProject,
-  getUpdatedTaskStateList,
-  cleanProject,
-  getLogger,
-  updateProjectState
+  getLogger
 } = require("../core/projectResource");
-const { gitAdd, gitCommit, gitResetHEAD, gitStatus } = require("../core/gitOperator2");
-const { addSsh, removeSsh, createSsh, askPassword } = require("../core/sshManager");
+const { gitAdd } = require("../core/gitOperator2");
+const { addSsh, askPassword } = require("../core/sshManager");
 const {
-  getHosts,
-  getSourceComponents,
   addInputFile,
   addOutputFile,
   removeInputFile,
@@ -48,26 +39,15 @@ const {
   removeFileLink,
   cleanComponent,
   removeComponent,
-  validateComponents,
   createNewComponent,
   updateComponent,
   updateStepNumber,
   getComponentTree
 } = require("../core/componentFilesOperator");
-const { getProjectState, setProjectState } = require("../core/projectFilesOperator");
+const { getProjectState } = require("../core/projectFilesOperator");
 const { taskStateFilter } = require("../core/taskUtil");
 const blockSize = 100; //max number of elements which will be sent via taskStateList at one time
 
-/**
- * promised version of socketIO.emit()
- * @param {Function} emit - socketIO's emit()
- * this function is resolved when ack is called on opposite side
- */
-async function emitWithPromise(emit, ...args) {
-  return new Promise((resolve)=>{
-    emit(...args, resolve);
-  });
-}
 
 //read and send current workflow and its child and grandson
 async function sendWorkflow(emit, projectRootDir, cwd) {
@@ -110,6 +90,7 @@ async function sendProjectJson(emit, projectRootDir) {
 }
 
 async function sendTaskStateList(emit, projectRootDir) {
+  console.log("======= DEBUG ======== sendTaskStateList in route/projectController.js is called ");
   const p = [];
   klaw(projectRootDir)
     .on("data", (item)=>{
@@ -823,6 +804,7 @@ async function onGetComponentTree(projectRootDir, rootDir, cb) {
 function registerListeners(socket, projectRootDir) {
   const emit = socket.emit.bind(socket);
 
+  /*
   async function onProjectStateChange(projectJson) {
     getLogger(projectRootDir).trace("projectState: onProjectStateChanged", projectJson.state);
     emit("projectJson", projectJson);
@@ -851,7 +833,9 @@ function registerListeners(socket, projectRootDir) {
   function onResultFilesReady(results) {
     emitLongArray(emit, "results", results);
   }
+  */
 
+  /*
   on(projectRootDir, "projectStateChanged", onProjectStateChange);
   once(projectRootDir, "taskStateChanged", onTaskStateChanged);
   once(projectRootDir, "componentStateChanged", onComponentStateChanged);
@@ -863,13 +847,8 @@ function registerListeners(socket, projectRootDir) {
     off(projectRootDir, "componentStateChanged", onComponentStateChanged);
     off(projectRootDir, "resultFilesReady", onResultFilesReady);
   });
+  */
 
-  socket.on("runProject", onRunProject.bind(null, socket, projectRootDir));
-  socket.on("pauseProject", onPauseProject.bind(null, emit, projectRootDir));
-  socket.on("cleanProject", onCleanProject.bind(null, emit, projectRootDir, false));
-  socket.on("saveProject", onSaveProject.bind(null, emit, projectRootDir));
-  socket.on("revertProject", onRevertProject.bind(null, emit, projectRootDir));
-  socket.on("stopProject", onCleanProject.bind(null, emit, projectRootDir, true));
   socket.on("updateProjectJson", onUpdateProjectJson.bind(null, emit, projectRootDir));
   socket.on("getProjectState", onGetProjectState.bind(null, emit, projectRootDir));
   socket.on("getProjectJson", onGetProjectJson.bind(null, emit, projectRootDir));

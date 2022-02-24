@@ -217,6 +217,35 @@ async function gitLFSUntrack(rootDir, filename) {
   }
 }
 
+/**
+ * @typedef {Object} unsavedFile
+ * @property {string} status - unsaved file's status which is one of ["new", "modified", "deleted',"renamed"]
+ * @property {string} name - unsaved file's name
+ */
+/**
+ * get unsavedFiles
+ * @param {string} rootDir - repo's root dir
+ * @returns {unsavedFile[]} - unsaved files
+ *
+ */
+async function getUnsavedFiles(rootDir) {
+  const { added, modified, deleted, renamed } = await gitStatus(rootDir);
+  const unsavedFiles = [];
+  for (const e of added) {
+    unsavedFiles.push({ status: "new", name: e });
+  }
+  for (const e of modified) {
+    unsavedFiles.push({ status: "modified", name: e });
+  }
+  for (const e of deleted) {
+    unsavedFiles.push({ status: "deleted", name: e });
+  }
+  for (const e of renamed) {
+    unsavedFiles.push({ status: "renamed", name: e });
+  }
+  return unsavedFiles;
+}
+
 
 module.exports = {
   gitInit,
@@ -228,5 +257,6 @@ module.exports = {
   gitClean,
   gitLFSTrack,
   gitLFSUntrack,
-  isLFS
+  isLFS,
+  getUnsavedFiles
 };

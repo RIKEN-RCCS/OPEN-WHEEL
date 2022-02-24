@@ -11,16 +11,18 @@ let nodes = []
 let parentnode = []
 let svg = null
 let presentState = null
+let projectRootDir = null
 let commit = null
 let dispatch = null
 
 /**
    * draw components
    */
-function drawComponents (currentWf, argSvg, argPresentState, argCommit, argDispatch) {
+function drawComponents (currentWf, argSvg, argPresentState, argProjectRootDir, argCommit, argDispatch) {
   if (!currentWf) return
   svg = argSvg
   presentState = argPresentState
+  projectRootDir = argProjectRootDir
   commit = argCommit
   dispatch = argDispatch
 
@@ -87,8 +89,8 @@ function drawNodes (nodesInWF) {
       .onDblclick(function (e) {
         const nodeType = e.target.instance.parent(".node").data("type")
         if (nodeType === "workflow" || nodeType === "parameterStudy" || nodeType === "for" || nodeType === "while" || nodeType === "foreach" || nodeType === "stepjob") {
-          const currentWorkFlow = e.target.instance.parent(".node").data("ID")
-          SIO.emit("getWorkflow", currentWorkFlow)
+          const currentWorkFlowID = e.target.instance.parent(".node").data("ID")
+          SIO.emitGlobal("getWorkflow", projectRootDir, currentWorkFlowID)
         }
       })
     nodes.push(node)

@@ -103,7 +103,7 @@ See License.txt in the project root for the license information.
       ...mapState(["selectedFile"]),
     },
     mounted () {
-      SIO.on("parameterSettingFile", (file)=>{
+      SIO.onGlobal("parameterSettingFile", (file)=>{
         this.openParamEditor = file.isParameterSettingFile;
       });
     },

@@ -2,109 +2,92 @@
 import { io } from "socket.io-client";
 const SocketIOFileUpload = require("socketio-file-upload");
 
+let initialized=false;
 let socket = null;
-// following 2 socket will be removed after room integration
+
+let initializedGlobal=false;
 let socketGlobal = null;
-let socketHome = null;
-let socketRemoteHost = null;
 let uploader = null;
 function init () {
-  socketGlobal = io("/", { transposrts: ["websocket"] });
   socket = io("/workflow", { transposrts: ["websocket"] });
-  socketHome = io("/home", { transposrts: ["websocket"] });
-  socketRemoteHost = io("/remotehost", { transposrts: ["websocket"] });
-  uploader = new SocketIOFileUpload(socket);
-  uploader.chunkSize = 1024 * 100;
+  initialized=true;
 }
 
 export default {
-  onHome: (event, callback)=>{
-    if (socket === null) {
-      init();
-    }
-    socketHome.on(event, callback);
+  initGlobal(auth){
+    socketGlobal = auth ? io("/", { transposrts: ["websocket"], auth }) : io("/", { transposrts: ["websocket"] });
+    uploader = new SocketIOFileUpload(socketGlobal);
+    uploader.chunkSize = 1024 * 100;
+    initializedGlobal=true;
   },
-  onRemotehost: (event, callback)=>{
-    if (socket === null) {
-      init();
+  generalCallback: (rt)=>{
+    if(rt instanceof Error){
+      console.log(rt);
     }
-    socketRemoteHost.on(event, callback);
   },
   onGlobal: (event, callback)=>{
-    if (socket === null) {
+    if (! initializedGlobal) {
       init();
     }
     socketGlobal.on(event, callback);
   },
   emitGlobal: (event, ...args)=>{
-    if (socket === null) {
+    if (! initializedGlobal) {
       init();
     }
     socketGlobal.emit(event, ...args);
   },
-  emitHome: (event, ...args)=>{
-    if (socket === null) {
-      init();
-    }
-    socketHome.emit(event, ...args);
-  },
-  emitRemotehost: (event, ...args)=>{
-    if (socket === null) {
-      init();
-    }
-    socketRemoteHost.emit(event, ...args);
-  },
   close: ()=>{
-    if (socket === null) {
+    if (! initialized) {
       return;
     }
     socket.close();
     socket = null;
   },
   on: (event, callback)=>{
-    if (socket === null) {
+    if (! initialized) {
       init();
     }
     socket.on(event, callback);
   },
   once: (event, callback)=>{
-    if (socket === null) {
+    if (! initialized) {
       init();
     }
     socket.once(event, callback);
   },
   off: (event, callback)=>{
-    if (socket === null) {
+    if (! initialized) {
       init();
     }
     socket.off(event, callback);
   },
   emit: (event, ...args)=>{
-    if (socket === null) {
+    if (! initialized) {
       init();
     }
     socket.emit(event, ...args);
   },
   listenOnDrop: (...args)=>{
-    if (socket === null) {
+    if (! initialized) {
       init();
     }
     uploader.listenOnDrop(...args);
   },
   prompt: ()=>{
-    if (socket === null) {
+    if (! initialized) {
       init();
     }
     uploader.prompt();
   },
   onUploaderEvent: (event, callback)=>{
-    if (socket === null) {
+    if (! initialized) {
       init();
     }
     uploader.addEventListener(event, callback);
   },
   removeUploaderEvent: (event, callback)=>{
-    if (socket === null) {
+    if (! initialized) {
       return;
     }
     uploader.removeEventListener(event, callback);
