@@ -16,7 +16,7 @@ const { deliverFile } = require("../core/fileUtils");
 const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getThreeGenerationFamily, getThreeGenerationFamilyByID } = require("../core/workflowUtil.js");
 const { getHosts, validateComponents, readComponentJson, getSourceComponents } = require("../core/componentFilesOperator");
-const { getComponentDir, getProjectJson, getProjectState, setProjectState } = require("../core/projectFilesOperator");
+const { getComponentDir, getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
 const { cleanProject } = require("../core/projectController.js");
 
@@ -358,6 +358,12 @@ async function onGetWorkflow(socket, projectRootDir, componentID, cb) {
   return cb(true);
 }
 
+async function onUpdateProjectDescription(projectRootDir, description, cb) {
+  await updateProjectDescription(projectRootDir, description);
+  cb(true);
+}
+
+
 module.exports = {
   onRunProject,
   onPauseProject,
@@ -366,5 +372,6 @@ module.exports = {
   onSaveProject,
   onRevertProject,
   onGetWorkflow,
-  onGetProjectJson
+  onGetProjectJson,
+  onUpdateProjectDescription
 };

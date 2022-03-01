@@ -174,6 +174,9 @@ async function setup(filename, size, num, compress) {
   }
 }
 
+//TODO 引数は無しor projectRootDir に変更
+//projectRootDirが渡されたらaddcontextしてからloggerを返す
+//なかったらremoveContextしておくこと
 function getLogger(cat) {
   if (firstCall) {
     if (process.env.WHEEL_DISABLE_CONSOLE_LOG) {

@@ -686,10 +686,10 @@
         const ID = this.selectedComponent.ID;
         // event がrenameInputFile, renameOutputFileの時だけindex引数をもってくれば良い
         if (event === "renameInputFile" || event === "renameOutputFile") {
-          SIO.emit(event, ID, index, v.name);
+          SIO.emitGlobal(event, this.projectRootDir, ID, index, v.name, SIO.generalCallback);
           return;
         }
-        SIO.emit(event, ID, v.name);
+        SIO.emitGlobal(event, this.projectRootDir, ID, v.name, SIO.generalCallback);
       },
       updateIndexList (op, e, index) {
         if (op === "add") {

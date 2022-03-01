@@ -593,107 +593,6 @@ async function onRemoveNode(emit, projectRootDir, targetID, cb) {
   cb(true);
 }
 
-async function onAddInputFile(emit, projectRootDir, ID, name, cb) {
-  if (typeof cb !== "function") {
-    cb = ()=>{};
-  }
-  getLogger(projectRootDir).debug("addInputFile event recieved:", projectRootDir, ID, name);
-
-  try {
-    await addInputFile(projectRootDir, ID, name);
-    await sendWorkflow(emit, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).error("addInputFile failed", e);
-    cb(false);
-    return;
-  }
-  cb(true);
-}
-
-async function onAddOutputFile(emit, projectRootDir, ID, name, cb) {
-  if (typeof cb !== "function") {
-    cb = ()=>{};
-  }
-  getLogger(projectRootDir).debug("addOutputFile event recieved:", projectRootDir, ID, name);
-
-  try {
-    await addOutputFile(projectRootDir, ID, name);
-    await sendWorkflow(emit, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).error("addOutputFile failed", e);
-    cb(false);
-    return;
-  }
-  cb(true);
-}
-
-async function onRemoveInputFile(emit, projectRootDir, ID, name, cb) {
-  if (typeof cb !== "function") {
-    cb = ()=>{};
-  }
-  getLogger(projectRootDir).debug("removeInputFile event recieved:", projectRootDir, ID, name);
-
-  try {
-    await removeInputFile(projectRootDir, ID, name);
-    await sendWorkflow(emit, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).error("removeInputFile failed", e);
-    cb(false);
-    return;
-  }
-  cb(true);
-}
-
-async function onRemoveOutputFile(emit, projectRootDir, ID, name, cb) {
-  if (typeof cb !== "function") {
-    cb = ()=>{};
-  }
-  getLogger(projectRootDir).debug("removeOutputFile event recieved:", projectRootDir, ID, name);
-
-  try {
-    await removeOutputFile(projectRootDir, ID, name);
-    await sendWorkflow(emit, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).error("removeOutputFile failed", e);
-    cb(false);
-    return;
-  }
-  cb(true);
-}
-
-async function onRenameInputFile(emit, projectRootDir, ID, index, newName, cb) {
-  if (typeof cb !== "function") {
-    cb = ()=>{};
-  }
-  getLogger(projectRootDir).debug("renameIntputFile event recieved:", projectRootDir, ID, index, newName);
-
-  try {
-    await renameInputFile(projectRootDir, ID, index, newName);
-    await sendWorkflow(emit, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).error("renameInputFile failed", e);
-    cb(false);
-    return;
-  }
-  cb(true);
-}
-
-async function onRenameOutputFile(emit, projectRootDir, ID, index, newName, cb) {
-  if (typeof cb !== "function") {
-    cb = ()=>{};
-  }
-  getLogger(projectRootDir).debug("renameOuttputFile event recieved:", projectRootDir, ID, index, newName);
-
-  try {
-    await renameOutputFile(projectRootDir, ID, index, newName);
-    await sendWorkflow(emit, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).error("renameOutputFile failed", e);
-    cb(false);
-    return;
-  }
-  cb(true);
-}
 
 /**
  * @param {Object}  msg
@@ -861,12 +760,12 @@ function registerListeners(socket, projectRootDir) {
   socket.on("createNode", onCreateNode.bind(null, emit, projectRootDir));
   socket.on("updateNode", onUpdateNode.bind(null, emit, projectRootDir));
   socket.on("removeNode", onRemoveNode.bind(null, emit, projectRootDir));
-  socket.on("addInputFile", onAddInputFile.bind(null, emit, projectRootDir));
-  socket.on("addOutputFile", onAddOutputFile.bind(null, emit, projectRootDir));
-  socket.on("removeInputFile", onRemoveInputFile.bind(null, emit, projectRootDir));
-  socket.on("removeOutputFile", onRemoveOutputFile.bind(null, emit, projectRootDir));
-  socket.on("renameInputFile", onRenameInputFile.bind(null, emit, projectRootDir));
-  socket.on("renameOutputFile", onRenameOutputFile.bind(null, emit, projectRootDir));
+  //socket.on("addInputFile", onAddInputFile.bind(null, emit, projectRootDir));
+  //socket.on("addOutputFile", onAddOutputFile.bind(null, emit, projectRootDir));
+  //socket.on("removeInputFile", onRemoveInputFile.bind(null, emit, projectRootDir));
+  //socket.on("removeOutputFile", onRemoveOutputFile.bind(null, emit, projectRootDir));
+  //socket.on("renameInputFile", onRenameInputFile.bind(null, emit, projectRootDir));
+  //socket.on("renameOutputFile", onRenameOutputFile.bind(null, emit, projectRootDir));
   socket.on("addLink", onAddLink.bind(null, emit, projectRootDir));
   socket.on("removeLink", onRemoveLink.bind(null, emit, projectRootDir));
   socket.on("addFileLink", onAddFileLink.bind(null, emit, projectRootDir));
