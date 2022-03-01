@@ -21,18 +21,11 @@
   },
   "scripts": {
     "start": "node app/index",
-    "buildImage": "cross-env DOCKER_BUILDKIT=1 docker build --target=exec -t wheel .",
     "mocha": "mocha",
     "lint": "eslint --fix app/**/*.js test/UT/**/*.js",
-    "UT:server": "cross-env WHEEL_DISABLE_LOG=1  WHEEL_DISABLE_CONSOLE_LOG=1 mocha --recursive test/UT/server/ --unhandled-rejections=strict",
-    "UT:client": "opener test/UT/client/index.html",
-    "coverage:server": "nyc --reporter=html --reporter=text npm run UT:server",
-    "coverage:client": "nyc --reporter=html --reporter=text npm run UT:client",
-    "E2E": "wdio run test/E2E/wdio.conf.js",
-    "prepare": "webpack",
-    "watch": "webpack -w",
-    "node-dev": "node-dev --inspect app/index",
-    "dev": "run-p watch node-dev"
+    "test": "cross-env WHEEL_DISABLE_LOG=1  WHEEL_DISABLE_CONSOLE_LOG=1 mocha --recursive test --unhandled-rejections=strict",
+    "coverage": "nyc --reporter=html --reporter=text npm run test",
+    "prepare": "webpack"
   },
   "husky": {
     "hooks": {

@@ -9,6 +9,7 @@ const asyncExecFile = promisify(execFile);
 const chai = require("chai");
 const expect = chai.expect;
 chai.use(require("chai-fs"));
+chai.use(require("chai-as-promised"));
 
 //helper function
 async function checkLFSenabled(repoDir) {
@@ -38,7 +39,7 @@ const {
   gitLFSTrack,
   gitLFSUntrack,
   isLFS
-} = require("../../../app/core/gitOperator2.js");
+} = require("../app/core/gitOperator2.js");
 
 //test data
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");

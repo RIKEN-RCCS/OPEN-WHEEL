@@ -8,9 +8,9 @@ RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
 # copy necessary files
 COPY client client
 COPY server server
-COPY build.sh build.sh
+COPY package.json package.json
 
-RUN ./build.sh
+RUN npm run build
 
 #build base image to run WHEEL
 FROM --platform=linux/amd64 node:fermium-slim as runner

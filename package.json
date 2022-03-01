@@ -16,7 +16,8 @@
     "node": ">=12"
   },
   "scripts": {
-    "build": "cd server; npm install; npm prepare; cd ../client npm install; npm run build -- --no-clean --mode development",
+    "start": "cd server; npm start",
+    "build": "cd server; npm install; npm prepare; cd ../client; npm install; npm run build -- --no-clean --mode development",
     "buildDoc": "run-s convertDoc removeDoc replaceDoc renameHtml",
     "licenseReport": "run-s licenseReport-doc licenseReport-server licenseReport-client",
     "convertDoc": "markdown-folder-to-html documentMD/user_guide",
