@@ -419,7 +419,7 @@
             return
           }
           const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir"
-          SIO.emit(this.dialog.submitEvent, fullPath, (rt)=>{
+          SIO.emitGlobal(this.dialog.submitEvent, this.projectRootDir, fullPath, (rt)=>{
             if (!rt) {
               return
             }
