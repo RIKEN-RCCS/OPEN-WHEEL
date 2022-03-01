@@ -175,19 +175,7 @@ const onUploadFileSaved = async(socket, event)=>{
     logger.error("file upload failed", event.file.meta.name);
   }
   const projectRootDir = event.file.meta.projectRootDir;
-  let uploadDir = event.file.meta.componentDir;
-  console.log("DEBUG 1:", uploadDir, event.file.meta.absPath); //TODO ディレクトリを選択していてもnullで来る <- client側を確認
-
-  if (event.file.meta.absPath !== null) {
-    const stat = await fs.stat(event.file.meta.absPath);
-    if (stat.isDir()) {
-      uploadDir = event.file.meta.absPath;
-      console.log("DEBUG 2:", uploadDir);
-    } else if (stat.isFile()) {
-      uploadDir = path.dirname(event.file.meta.absPath);
-      console.log("DEBUG 3:", uploadDir);
-    }
-  }
+  const uploadDir = event.file.meta.currentDir;
   const absFilename = await getUnusedPath(uploadDir, event.file.meta.orgName);
   await fs.move(event.file.pathName, absFilename);
   const fileSizeMB = parseInt(event.file.size / 1024 / 1024, 10);

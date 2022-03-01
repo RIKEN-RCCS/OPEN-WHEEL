@@ -330,6 +330,10 @@
         // 実際にwebhookを呼び出す処理
       },
       updateSelected(activeItems){
+        if(!activeItems[0]){
+          this.activeItem=null
+          return
+        }
         const [activeItem, activeItemPath] = this.getActiveItem(activeItems[0])
         this.activeItem=activeItem;
         this.currentDir=activeItemPath
@@ -337,7 +341,7 @@
           this.commitSelectedFile(activeItem.id)
         }
         if (activeItem.type.startsWith("dir")) {
-          const lastPathSep = path.lastIndexOf(this.pathSep)
+          const lastPathSep = activeItemPath.lastIndexOf(this.pathSep)
           this.currentDir = activeItemPath.slice(0, lastPathSep)
         }
       },

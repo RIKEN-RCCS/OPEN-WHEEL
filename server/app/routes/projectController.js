@@ -529,7 +529,11 @@ async function onUpdateNode(emit, projectRootDir, ID, prop, value, cb) {
 
   try {
     await updateComponent(projectRootDir, ID, prop, value);
-    await sendWorkflow(emit, projectRootDir);
+    const filename = path.resolve(projectRootDir, projectJsonFilename);
+    const projectJson = await readJsonGreedy(filename);
+    const cwd = projectJson.componentPath[ID];
+    console.log(cwd);
+    await sendWorkflow(emit, projectRootDir, cwd);
 
     if (prop === "name") {
       await sendProjectJson(emit, projectRootDir); //to update componentPath
