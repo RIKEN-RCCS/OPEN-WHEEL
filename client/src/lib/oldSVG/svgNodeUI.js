@@ -20,10 +20,11 @@ export class SvgNodeUI {
    * @param svg  svg.js's instance
    * @param node any node instance to draw
    */
-  constructor (svg, node) {
+  constructor (svg, node, projectRootDir) {
     /** svg.js's instance*/
     this.svg = svg
     this.editDisable = false
+    this.projectRootDir = projectRootDir
 
     /** cable instance container */
     this.nextLinks = []
@@ -146,7 +147,7 @@ export class SvgNodeUI {
           const x = e.detail.p.x
           const y = e.detail.p.y
           if (x !== startX || y !== startY) {
-            SIO.emit("updateNode", node.ID, "pos", { x: x - diffX, y: y - diffY })
+            SIO.emitGlobal("updateNode", projectRootDir, node.ID, "pos", { x: x - diffX, y: y - diffY }, SIO.generalCallback)
           }
         } else {
           e.preventDefault()

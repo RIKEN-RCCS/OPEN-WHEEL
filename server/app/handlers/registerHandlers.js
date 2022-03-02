@@ -18,7 +18,8 @@ const {
   onRenameInputFile,
   onRenameOutputFile,
   onRemoveInputFile,
-  onRemoveOutputFile
+  onRemoveOutputFile,
+  onUpdateNode
 } = require("./workflowEditor.js");
 const { getLogger } = require("../logSettings");
 const logger = getLogger();
@@ -43,6 +44,7 @@ const registerHandlers = (socket, Siofu)=>{
   //update
   socket.on("renameInputFile", onRenameInputFile.bind(null, socket));
   socket.on("renameOutputFile", onRenameOutputFile.bind(null, socket));
+  socket.on("updateNode", onUpdateNode.bind(null, socket));
   //delete
   socket.on("removeInputFile", onRemoveInputFile.bind(null, socket));
   socket.on("removeOutputFile", onRemoveOutputFile.bind(null, socket));

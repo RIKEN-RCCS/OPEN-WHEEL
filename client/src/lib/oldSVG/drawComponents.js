@@ -79,7 +79,7 @@ function drawParentLinks (parentnode, nodes) {
    */
 function drawNodes (nodesInWF) {
   nodesInWF.forEach(function (v) {
-    const node = new svgNode.SvgNodeUI(svg, v)
+    const node = new svgNode.SvgNodeUI(svg, v, projectRootDir)
     node.ID = v.ID
     node
       .onClick(function (e) {

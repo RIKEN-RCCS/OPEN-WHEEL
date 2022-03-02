@@ -354,9 +354,14 @@ function isInitialComponent(component) {
   return true;
 }
 
+function isComponent(componentJson) {
+  return componentJson instanceof BaseWorkflowComponent;
+}
+
 
 module.exports = {
   componentFactory,
   hasChild,
-  isInitialComponent
+  isInitialComponent,
+  isComponent
 };

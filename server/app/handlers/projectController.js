@@ -14,11 +14,11 @@ const logger = getLogger();
 const { remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
-const { getThreeGenerationFamily, getThreeGenerationFamilyByID } = require("../core/workflowUtil.js");
 const { getHosts, validateComponents, readComponentJson, getSourceComponents } = require("../core/componentFilesOperator");
 const { getComponentDir, getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
 const { cleanProject } = require("../core/projectController.js");
+const { sendWorkflow } = require("./senders.js");
 
 /*
  * openedProjects={projectRootDir: {
@@ -90,24 +90,6 @@ async function updateProjectState(socket, projectRootDir, state) {
   if (projectJson) {
     socket.emit("projectState", projectJson.state);
   }
-}
-
-//read and send current workflow and its child and grandson
-async function sendWorkflow(socket, cb, projectRootDir, parentComponentDir) {
-  if (typeof projectRootDir !== "string") {
-    logger.error("sendWorkflow called without parentComponentDir !!");
-  }
-
-  try {
-    const wf = await getThreeGenerationFamily(projectRootDir, parentComponentDir);
-    if (wf) {
-      socket.emit("workflow", wf);
-    }
-  } catch (e) {
-    cb(e);
-    return;
-  }
-  cb(true);
 }
 
 /**
@@ -263,11 +245,12 @@ async function onRunProject(socket, projectRootDir, cb) {
     cb(err);
   } finally {
     socket.emit("projectJson", await getProjectJson(projectRootDir));
-    await sendWorkflow(socket, projectRootDir);
+    await sendWorkflow(socket, cb, projectRootDir);
     //試しに素のsocket.emitを使って送る
     //大量のデータで問題が発生するようであれば、emitLongArrayを復活させて
     //ブロッキングしながら送る
     //await emitLongArray(socket.emit, "taskStateList", getUpdatedTaskStateList(projectRootDir), blockSize);
+    //TODO sendersに移動
     socket.emit("taskStateList", getUpdatedTaskStateList(projectRootDir));
     removeSsh(projectRootDir);
     removeCluster(projectRootDir);
@@ -280,7 +263,7 @@ async function onPauseProject(socket, projectRootDir, cb) {
     await pauseProject(projectRootDir);
     await updateProjectState(socket, projectRootDir, "paused");
     socket.emit("projectJson", await getProjectJson(projectRootDir));
-    await sendWorkflow(socket, projectRootDir);
+    await sendWorkflow(socket, cb, projectRootDir);
     //試しに素のsocket.emitを使って送る
     //大量のデータで問題が発生するようであれば、emitLongArrayを復活させて
     //ブロッキングしながら送る
@@ -304,11 +287,11 @@ async function onCleanProject(socket, projectRootDir, cb) {
 
   try {
     await cleanProject(projectRootDir);
-    await sendWorkflow(socket, projectRootDir, projectRootDir);
+    await sendWorkflow(socket, cb, projectRootDir, projectRootDir);
   } catch (e) {
     cb(e);
   } finally {
-    await sendWorkflow(socket, projectRootDir);
+    await sendWorkflow(socket, cb, projectRootDir);
     socket.emit("taskStateList", []);
     socket.emit("projectJson", await getProjectJson(projectRootDir));
     removeSsh(projectRootDir);
@@ -333,7 +316,7 @@ async function onSaveProject(socket, projectRootDir, cb) {
 async function onRevertProject(socket, projectRootDir, cb) {
   await askUnsavedFiles(socket.emit, projectRootDir);
   await gitResetHEAD(projectRootDir);
-  await sendWorkflow(socket, projectRootDir);
+  await sendWorkflow(socket, cb, projectRootDir);
   logger.debug("revert project done");
   const projectJson = await getProjectJson(projectRootDir);
   cb(projectJson);
@@ -349,13 +332,8 @@ async function onGetProjectJson(socket, projectRootDir, cb) {
   return cb(true);
 }
 async function onGetWorkflow(socket, projectRootDir, componentID, cb) {
-  try {
-    const wf = await getThreeGenerationFamilyByID(projectRootDir, componentID);
-    socket.emit("workflow", wf);
-  } catch (e) {
-    return cb(false);
-  }
-  return cb(true);
+  const requestedComponentDir = await getComponentDir(projectRootDir, componentID);
+  return sendWorkflow(socket, cb, projectRootDir, requestedComponentDir);
 }
 
 async function onUpdateProjectDescription(projectRootDir, description, cb) {

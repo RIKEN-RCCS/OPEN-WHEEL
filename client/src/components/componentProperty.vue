@@ -703,7 +703,7 @@
         }
         const ID = this.selectedComponent.ID;
         const newValue = this.copySelectedComponent.indexList;
-        SIO.emit("updateNode", ID, "indexList", newValue);
+        SIO.emitGlobal("updateNode", this.projectRootDir, ID, "indexList", newValue, SIO.generalCallback);
       },
       updateComponentProperty (prop) {
         if (prop === "name" && !this.validName) return;
@@ -718,11 +718,7 @@
         // 仕様を検討のうえ、ガードするなら何か方法を考える必要がある
         if (this.selectedComponent === null) return;
 
-        SIO.emit("updateNode", ID, prop, newValue, (rt)=>{
-          if(rt === false){
-            return;
-          }
-        });
+        SIO.emit("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
       },
       addToIncludeList (v) {
         this.copySelectedComponent.include = addGlobPattern(this.copySelectedComponent.include, v.name);

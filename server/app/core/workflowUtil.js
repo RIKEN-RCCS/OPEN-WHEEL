@@ -12,7 +12,7 @@ const { readJsonGreedy } = require("./fileUtils");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { gitAdd } = require("./gitOperator2");
 const { componentJsonReplacer } = require("./componentFilesOperator");
-const { hasChild } = require("./workflowComponent");
+const { hasChild, isComponent } = require("./workflowComponent");
 
 async function getComponentDir(projectRootDir, targetID) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
@@ -37,22 +37,23 @@ async function getComponentRelativePath(projectRootDir, targetID, srcID) {
 }
 
 async function getComponent(projectRootDir, component) {
+  if (typeof component !== "string") {
+    return isComponent(component) ? component : null;
+  }
   let componentJson = component; //component is treated as component Json object by default
-  if (typeof component === "string") {
-    const isFilePath = await fs.pathExists(component);
+  const isFilePath = await fs.pathExists(component);
 
-    if (isFilePath) {
-      //component is path of component Json file
-      componentJson = await readJsonGreedy(component);
+  if (isFilePath) {
+    //component is path of component Json file
+    componentJson = await readJsonGreedy(component);
+  } else {
+    //component should be ID string
+    const componentDir = await getComponentDir(projectRootDir, component);
+
+    if (await fs.pathExists(componentDir)) {
+      componentJson = await readJsonGreedy(path.resolve(componentDir, componentJsonFilename));
     } else {
-      //component should be ID string
-      const componentDir = await getComponentDir(projectRootDir, component);
-
-      if (await fs.pathExists(componentDir)) {
-        componentJson = await readJsonGreedy(path.resolve(componentDir, componentJsonFilename));
-      } else {
-        componentJson = null;
-      }
+      componentJson = null;
     }
   }
 
@@ -124,17 +125,6 @@ async function getThreeGenerationFamily(projectRootDir, rootComponentDir) {
   return rt;
 }
 
-/**
- * call getThreeGenerationFamily with ID
- * @param {string} projectRootDir - project's root path
- * @param {strint} rootComponentID - ID of component to be obrained
- * @returns {Object} - nested component JSON object
- */
-async function getThreeGenerationFamilyByID(projectRootDir, rootComponentID) {
-  const rootComponentDir = await getComponentDir(projectRootDir, rootComponentID);
-  return getThreeGenerationFamily(projectRootDir, rootComponentDir);
-}
-
 module.exports = {
   getComponentDir,
   getParentDir,
@@ -142,6 +132,5 @@ module.exports = {
   getChildren,
   updateComponentJson,
   getComponentRelativePath,
-  getThreeGenerationFamily,
-  getThreeGenerationFamilyByID
+  getThreeGenerationFamily
 };
