@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      /*! ADAPTED
+    Typeplate : Starter Kit
+    URL ........... http://typeplate.com
+    Version ....... 3.0.2
+    Github ........ https://github.com/typeplate/starter-kit
+    Authors ....... Dennis Gaebel (@gryghostvisuals) & Zachary Kain (@zakkain)
+    License ....... Creative Commmons Attribution 3.0
+    License URL ... https://github.com/typeplate/starter-kit/blob/master/license.txt
+    */
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        text-rendering: optimizeLegibility;
+        line-height: 1;
+        margin-top: 0;
+        color: #222;
+      }
+
+      blockquote + figcaption cite {
+        display: block;
+        font-size: inherit;
+        text-align: right;
+      }
+
+      body {
+        word-wrap: break-word;
+      }
+
+      pre code {
+        word-wrap: normal;
+      }
+
+      body {
+        -webkit-hyphens: auto;
+        -ms-hyphens: auto;
+        hyphens: auto;
+        color: #444;
+      }
+
+      h1 {
+        font-size: 2em;
+        /* 2*16 = 32 */
+      }
+
+      h2 {
+        font-size: 1.5em;
+        /* 1.5*16 = 24 */
+      }
+
+      h3 {
+        font-size: 1.17em;
+        /* 1.17*16 = 18.72 */
+      }
+
+      h4 {
+        font-size: 1em;
+        /* 1*16 = 16 */
+      }
+
+      h5 {
+        font-size: 0.83em;
+        /* 0.83*16 = 13.28 */
+      }
+
+      h6 {
+        font-size: 0.75em;
+        /* 0.75*16 = 12 */
+      }
+
+      h1 {
+        margin: 2.42424rem 0 1.454544rem;
+      }
+
+      h2 {
+        margin: 2.0202rem 0 1.21212rem;
+      }
+
+      h3 {
+        margin: 1.61616rem 0 1rem;
+      }
+
+      h4 {
+        margin: 1.21212rem 0 1;
+      }
+
+      h5 {
+        margin: 0.80808rem 0;
+      }
+
+      h6 {
+        margin: 0.70707rem 0;
+      }
+
+      p {
+        margin: auto auto 1.5rem;
+      }
+
+      small {
+        font-size: 65%;
+      }
+
+      input,
+      abbr,
+      acronym,
+      blockquote,
+      code,
+      kbd,
+      q,
+      samp,
+      var {
+        -webkit-hyphens: none;
+        -ms-hyphens: none;
+        hyphens: none;
+      }
+
+      pre {
+        white-space: pre;
+      }
+
+      pre code {
+        white-space: -moz-pre-wrap;
+        white-space: pre-wrap;
+      }
+
+      code {
+        white-space: pre;
+        font-family: SF Mono, Consolas, Dejavu Sans Mono, Menlo, monospace;
+      }
+
+      abbr {
+        -webkit-font-variant: small-caps;
+        -moz-font-variant: small-caps;
+        -ms-font-variant: small-caps;
+        font-variant: small-caps;
+        font-weight: 600;
+        text-transform: lowercase;
+        color: gray;
+      }
+
+      abbr[title]:hover {
+        cursor: help;
+      }
+
+      /* FROM http://purecss.io/layouts/side-menu/  adapted to remove pure classes*/
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+          "Segoe UI Symbol";
+        color: #444;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: auto;
+      }
+
+      code,
+      pre {
+        background-color: #f5f5f5;
+        color: #444;
+        border-radius: 2px;
+        text-shadow: 0px 1px 0px white;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+      }
+
+      pre code {
+        border: none;
+        box-shadow: none;
+      }
+
+      pre {
+        padding: 0.5em;
+      }
+
+      code {
+        display: inline-block;
+        padding: 0 0.5em;
+        line-height: 1.4;
+        font-size: 0.9em;
+      }
+
+      table {
+        border-spacing: 0;
+        margin-bottom: 1.5rem;
+      }
+
+      table th,
+      table td {
+        padding: 0.3em 0.7em;
+      }
+
+      table th {
+        background-color: #f4f4f4;
+        border-bottom: 2px solid #444;
+      }
+
+      table td {
+        border: 1px solid #f5f5f5;
+      }
+
+      /* Add transition to containers so they can push in and out. */
+
+      #layout,
+      #menu,
+      .menu-link {
+        -webkit-transition: all 0.2s ease-out;
+        -moz-transition: all 0.2s ease-out;
+        -ms-transition: all 0.2s ease-out;
+        -o-transition: all 0.2s ease-out;
+        transition: all 0.2s ease-out;
+      }
+
+      /* This is the parent `<div>` that contains the menu and the content area. */
+
+      #layout {
+        position: relative;
+        padding-left: 0;
+      }
+
+      #layout.active #menu {
+        left: 250px;
+        width: 250px;
+      }
+
+      #layout.active .menu-link {
+        left: 250px;
+      }
+
+      /* The content `<div>` is where all your content goes. */
+
+      .content {
+        margin: 50px auto;
+        padding: 0 2em;
+        max-width: 80ex;
+        line-height: 1.6em;
+      }
+
+      /*
+      The `#menu` `<div>` is the parent `<div>` that contains the menu that
+      appears on the left side of the page.
+      */
+
+      #menu {
+        margin-left: -250px;
+        /* "#menu" width */
+        width: 250px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1000;
+        /* so the menu or its navicon stays above all content */
+        background: #f4f4f4;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        font-size: 0.9em;
+      }
+
+      @media print {
+        #menu,
+        .menu-link {
+          display: none !important;
+        }
+      }
+
+      a,
+      a * {
+        text-decoration: none;
+        color: #2483cc;
+      }
+
+      a:visited {
+        text-decoration: none;
+        color: #2483cc;
+      }
+
+      /* All anchors inside the menu should be styled like this. */
+
+      #menu a {
+        display: block;
+        padding: 0.5em 0.5em;
+      }
+
+      #menu a:first-letter {
+        text-transform: capitalize;
+      }
+
+      #menu ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 1em 0.5em;
+      }
+
+      #menu ul ul {
+        margin-top: 0.5em;
+        margin-left: 0.5em;
+        border-left: 4px solid rgba(255, 255, 255, 0.5);
+      }
+
+      /* Change color of the anchor links on hover/focus. */
+
+      #menu li a:hover,
+      #menu li a:focus {
+        background: rgba(255, 255, 255, 0.4);
+      }
+
+      /* This styles the selected menu item `<li>`. */
+
+      #menu li a.active {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      /* This styles a link within a selected menu item `<li>`. */
+
+      #menu li a.active {
+        color: #222;
+      }
+
+      /* This styles the menu heading. */
+
+      #menu li.heading {
+        font-size: 0.9em;
+        text-transform: uppercase;
+        color: #000;
+      }
+
+      #menu li.heading > * {
+        padding: 0.5em;
+        display: block;
+      }
+
+      #menu li.heading a {
+        color: #0c68af;
+      }
+
+      /* -- Dynamic Button For Responsive Menu -------------------------------------*/
+
+      /*
+      `.menu-link` represents the responsive menu toggle that shows/hides on
+      small screens.
+      */
+
+      .menu-link {
+        position: fixed;
+        display: block;
+        /* show this only on small screens */
+        top: 0;
+        left: 0;
+        /* "#menu width" */
+        font-size: 10px;
+        /* change this value to increase/decrease button size */
+        z-index: 10;
+        width: 2em;
+        height: auto;
+        padding: 1.6em 1.2em;
+        border-radius: 0 2px 2px 0;
+      }
+
+      .menu-link:hover {
+        background: #f4f4f4;
+      }
+
+      .menu-link span {
+        position: relative;
+        display: block;
+      }
+
+      .menu-link span,
+      .menu-link span:before,
+      .menu-link span:after {
+        background-color: #555;
+        width: 100%;
+        height: 0.2em;
+        border-radius: 1em;
+      }
+
+      .menu-link span:before,
+      .menu-link span:after {
+        position: absolute;
+        margin-top: -0.6em;
+        content: " ";
+      }
+
+      .menu-link span:after {
+        margin-top: 0.6em;
+      }
+
+      /* Hides the menu at `48em`, but modify this based on your app's needs. */
+
+      @media (min-width: 48em) {
+        .header,
+        .content {
+          padding-left: 2em;
+          padding-right: 2em;
+        }
+
+        #layout {
+          padding-left: 250px;
+          /* left col width "#menu" */
+          left: 0;
+        }
+        #menu {
+          left: 250px;
+        }
+
+        .menu-link {
+          position: fixed;
+          left: 250px;
+          display: none;
+        }
+
+        #layout.active .menu-link {
+          left: 250px;
+        }
+      }
+
+      @media (max-width: 48em) {
+        /* Only apply this when the window is small. Otherwise, the following case results in extra padding on the left:
+         * Make the window small.
+         * Tap the menu to trigger the active state.
+         * Make the window large again.
+         */
+        #layout.active {
+          position: relative;
+          left: 250px;
+        }
+      }
+
+      /* Heading anchors and permalinks */
+      h1[id],
+      h2[id],
+      h3[id],
+      h4[id],
+      h5[id],
+      h6[id] {
+        position: relative;
+      }
+      .heading-anchor-permalink {
+        /* Position the permalink to the left of the title */
+        position: absolute;
+        right: 100%;
+        /* Add some spacing as padding to not lose the hover */
+        padding-right: 0.6rem;
+        /* Make it only visible on heading hover, see below */
+        opacity: 0;
+      }
+      h1[id]:hover .heading-anchor-permalink,
+      h2[id]:hover .heading-anchor-permalink,
+      h3[id]:hover .heading-anchor-permalink,
+      h4[id]:hover .heading-anchor-permalink,
+      h5[id]:hover .heading-anchor-permalink,
+      h6[id]:hover .heading-anchor-permalink {
+        opacity: 0.5;
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+  </head>
+
+  <body>
+    <div id="layout">
+      <!-- Menu toggle -->
+      <a href="#menu" id="menuLink" class="menu-link">
+        <!-- Hamburger icon -->
+        <span></span>
+      </a>
+      <nav id="menu">
+        <ul>
+<li class="heading"><span>1 WHEEL introduction</span></li>
+<ul>
+<li class="heading"><span>how to boot</span></li>
+<ul>
+<li><a class="" href="../../1_WHEEL_introduction/how_to_boot/boot.html">boot</a></li>
+</ul>
+</ul>
+<li class="heading"><span>2 WHEEL manual</span></li>
+<ul>
+<li class="heading"><span>1 home screen</span></li>
+<ul>
+<li><a class="" href="../1_home_screen/create_project.html">create project</a></li>
+<li><a class="" href="../1_home_screen/edit_project.html">edit project</a></li>
+</ul>
+<li class="heading"><span>2 remotehost screen</span></li>
+<ul>
+<li><a class="active" href="remotehost.html">remotehost</a></li>
+</ul>
+<li class="heading"><span>3 workflow screen</span></li>
+<ul>
+<li><a class="" href="../3_workflow_screen/1_graphview.html">1 graphview</a></li>
+<li><a class="" href="../3_workflow_screen/2_listview.html">2 listview</a></li>
+<li><a class="" href="../3_workflow_screen/3_editor.html">3 editor</a></li>
+<li><a class="" href="../3_workflow_screen/3_rapid.html">3 rapid</a></li>
+<li><a class="" href="../3_workflow_screen/4_PS_editor.html">4 PS editor</a></li>
+</ul>
+<li class="heading"><span>4 component</span></li>
+<ul>
+<li><a class="" href="../4_component/10_Stepjob.html">10 Stepjob</a></li>
+<li><a class="" href="../4_component/11_BulkjobTask.html">11 BulkjobTask</a></li>
+<li><a class="" href="../4_component/1_Task.html">1 Task</a></li>
+<li><a class="" href="../4_component/2_If.html">2 If</a></li>
+<li><a class="" href="../4_component/3_For.html">3 For</a></li>
+<li><a class="" href="../4_component/4_Foreach.html">4 Foreach</a></li>
+<li><a class="" href="../4_component/5_While.html">5 While</a></li>
+<li><a class="" href="../4_component/6_Source.html">6 Source</a></li>
+<li><a class="" href="../4_component/7_Viewer.html">7 Viewer</a></li>
+<li><a class="" href="../4_component/8_ParameterStudy.html">8 ParameterStudy</a></li>
+<li><a class="" href="../4_component/99_component_design.html">99 component design</a></li>
+<li><a class="" href="../4_component/9_Workflow.html">9 Workflow</a></li>
+</ul>
+<li class="heading"><span>5 execute workflow</span></li>
+<ul>
+<li><a class="" href="../5_execute_workflow/execute_workflow.html">execute workflow</a></li>
+</ul>
+<li class="heading"><span>6 jobScript screen</span></li>
+<ul>
+<li><a class="" href="../6_jobScript_screen/jobScript.html">jobScript</a></li>
+</ul>
+</ul>
+<li class="heading"><span>3 WHEEL tutorial</span></li>
+<ul>
+<li class="heading"><span>1 OpenFOAM PS sample</span></li>
+<ul>
+<li><a class="" href="../../3_WHEEL_tutorial/1_OpenFOAM_PS_sample/OpenFOAM_PS_sample.html">OpenFOAM PS sample</a></li>
+</ul>
+<li class="heading"><span>2 OpenFOAM KPrepostCloud sample</span></li>
+<ul>
+<li><a class="" href="../../3_WHEEL_tutorial/2_OpenFOAM_KPrepostCloud_sample/OpenFOAM_KPrepostCloud_sample.html">OpenFOAM KPrepostCloud sample</a></li>
+</ul>
+<li class="heading"><span>3 OpenFOAM TCS sample</span></li>
+<ul>
+<li><a class="" href="../../3_WHEEL_tutorial/3_OpenFOAM_TCS_sample/OpenFOAM_TCS_sample.html">OpenFOAM TCS sample</a></li>
+</ul>
+<li class="heading"><span>4 TensorFlow UGE sample</span></li>
+<ul>
+<li><a class="" href="../../3_WHEEL_tutorial/4_TensorFlow_UGE_sample/TensorFlow_UGE_sample.html">TensorFlow UGE sample</a></li>
+</ul>
+</ul>
+<li class="heading"><span>4 ATTENTION</span></li>
+<ul>
+<li><a class="" href="../../4_ATTENTION/ATTENTION.html">ATTENTION</a></li>
+</ul>
+<li><a class="" href="../../readme.html">readme</a></li>
+</ul>
+      </nav>
+      <article id="main" class="content">
+        <h1 id="%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E7%99%BB%E9%8C%B2">リモートホストの登録 <a class="heading-anchor-permalink" href="#%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E7%99%BB%E9%8C%B2">#</a></h1>
+<p>ワークフロー内でWHEELサーバ外の計算環境（以下、リモートホスト）を用いる場合、対象とするリモートホストにSSH接続し処理を実行します。<br>
+WHEELでは、ワークフロー画面（Taskコンポーネント）にて使用するリモートホストの情報及びリモートホストに登録されているユーザ情報をリモートホスト登録画面にて設定します。</p>
+<h2 id="%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2%E3%81%B8%E3%81%AE%E7%A7%BB%E5%8B%95">リモートホスト登録画面への移動 <a class="heading-anchor-permalink" href="#%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2%E3%81%B8%E3%81%AE%E7%A7%BB%E5%8B%95">#</a></h2>
+<p>リモートホスト登録画面には、下記の2パターンの方法によって遷移します。</p>
+<ul>
+<li>ホーム画面右上ドロワー内の[ Remotehost Editor ]</li>
+<li>ワークフロー画面右上ドロワー内の[ Remotehost Editor ]</li>
+</ul>
+<ol>
+<li>
+<p>ホーム画面右上ドロワー<br>
+<img src="./img/home_remotehost.png" alt="img" title="home_remotehost"></p>
+</li>
+<li>
+<p>ワークフロー画面右上ドロワー<br>
+<img src="./img/workflow_remotehost.png" alt="img" title="workflow_remotehost"></p>
+</li>
+</ol>
+<h2 id="%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2">リモートホスト登録画面 <a class="heading-anchor-permalink" href="#%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2">#</a></h2>
+<p>リモートホスト登録画面の構成は以下のようになっています。<br>
+<img src="./img/remotehost.png" alt="img" title="remotehost"></p>
+<ol>
+<li>タイトル　：ホーム画面遷移ボタン</li>
+<li>リモートホスト種別選択ボタン：入力画面の切替（HPC or Cloud）</li>
+<li>Host List エリア：登録済みリモートホストリスト
+<ol>
+<li>リモートホストリスト：登録済みリモートホスト情報</li>
+<li>New ボタン：新規リモートホスト登録</li>
+<li>Copyボタン：登録済みリモートホストの複製（登録済みリモートホスト情報の引用用）</li>
+<li>Deleteボタン：登録済みリモートホストの削除</li>
+</ol>
+</li>
+<li>Host Registration エリア：リモートホスト登録用情報入力エリア
+<ol>
+<li>リモートホスト情報入力エリア：新規リモートホスト情報、登録済みリモートホスト情報の編集エリア</li>
+<li>Cancel ボタン：入力情報のリフレッシュ</li>
+<li>Confirm ボタン：入力情報の登録</li>
+</ol>
+</li>
+</ol>
+<p>また、Host Registrationエリアの各プロパティは以下です。</p>
+<h3 id="hpc">HPC <a class="heading-anchor-permalink" href="#hpc">#</a></h3>
+<p><img src="./img/hpc_remotehost.png" alt="img" title="hpc_remotehost"></p>
+<table>
+<thead>
+<tr>
+<th>プロパティ名</th>
+<th>プロパティ</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Label</td>
+<td>リモートホスト識別ラベル</td>
+<td>重複不可 *</td>
+</tr>
+<tr>
+<td>Connection Check</td>
+<td>リモートホスト接続確認ボタン</td>
+<td>ー</td>
+</tr>
+<tr>
+<td>Host Name</td>
+<td>リモートホストIPアドレス、または、リモートホスト名</td>
+<td>* ex .京プリポストクラウド:134.160.188.185/ds1.r-ccs.riken.jp</td>
+</tr>
+<tr>
+<td>Port</td>
+<td>リモートホストポート番号</td>
+<td>SSH接続用（デフォルト値 22）</td>
+</tr>
+<tr>
+<td>User ID</td>
+<td>リモートホスト登録済みユーザ名</td>
+<td>*</td>
+</tr>
+<tr>
+<td>Host Work Dir</td>
+<td>リモートホストマシンでの作業ディレクトリ</td>
+<td>*</td>
+</tr>
+<tr>
+<td>Auth Type</td>
+<td>リモートホストマシンの認証手段</td>
+<td>ラジオボタンより選択</td>
+</tr>
+<tr>
+<td>Auth Path</td>
+<td>Auth Type -&gt; Private Key 選択時のKeyFile保存先パス</td>
+<td>ー</td>
+</tr>
+<tr>
+<td>JobScheduler</td>
+<td>ジョブスケジューラ名</td>
+<td>app/config/jobSceduler.jsonに定義されているジョブスケジューラ名を設定する</td>
+</tr>
+<tr>
+<td>Max Job</td>
+<td>ジョブ投入制限数</td>
+<td>接続先リモートホストから同時に投入できる最大ジョブ数（デフォルト値 5）</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>キュー名</td>
+<td>接続先ホストからジョブを投入する時に使えるキュー、カンマ区切りで複数入力可（ex. A, B, C）</td>
+</tr>
+<tr>
+<td>connection renewal interval(min.)</td>
+<td>ssh接続を再接続する間隔[分]</td>
+<td>最初にSSH接続した時間から設定時間以上経過後にSSH接続を行う場合、一度切断し再接続する <br> （デフォルト値 0、再接続しない）</td>
+</tr>
+<tr>
+<td>connection renewal delay(sec.)</td>
+<td>切断後、再接続時までの待ち時間[秒]</td>
+<td>（デフォルト値 0）</td>
+</tr>
+<tr>
+<td>status check interval(sec.)</td>
+<td>ジョブ投入後のステータス確認を行う間隔[秒]</td>
+<td>（デフォルト値 10）</td>
+</tr>
+<tr>
+<td>max status check error</td>
+<td>ステータス確認に失敗した時に、ジョブ自体をfailedとするしきい値</td>
+<td>（デフォルト値 10）</td>
+</tr>
+</tbody>
+</table>
+<p>*必須パラメータ</p>
+<h3 id="cloud-%E8%A9%B3%E7%B4%B0%E3%81%AFcloud(aws)%E3%82%A4%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%B3%E3%82%B9%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95%E3%82%92%E5%8F%82%E8%80%83%E3%81%8F%E3%81%A0%E3%81%95%E3%81%84">Cloud　　詳細は<a href="../../../doc/Cloud.html">Cloud(AWS)インスタンス利用方法</a>を参考ください <a class="heading-anchor-permalink" href="#cloud-%E8%A9%B3%E7%B4%B0%E3%81%AFcloud(aws)%E3%82%A4%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%B3%E3%82%B9%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95%E3%82%92%E5%8F%82%E8%80%83%E3%81%8F%E3%81%A0%E3%81%95%E3%81%84">#</a></h3>
+<p><img src="./img/cloud_remotehost.png" alt="img" title="hpc_remotehost"></p>
+<table>
+<thead>
+<tr>
+<th>プロパティ名</th>
+<th>プロパティ</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Label</td>
+<td>リモートホスト識別ラベル</td>
+<td>重複不可 *</td>
+</tr>
+<tr>
+<td>Cloud service provider</td>
+<td>クラウドサービスプロバイダー名</td>
+<td>現バージョン(ver1.2.3)では、「aws」のみ対応 *</td>
+</tr>
+<tr>
+<td>OS</td>
+<td>OS名</td>
+<td>現バージョン(ver1.2.3)では、「ubuntu16」のみ対応 *</td>
+</tr>
+<tr>
+<td>region</td>
+<td>インスタンスを起動するリージョン</td>
+<td>*  ex. ap-northeast-1</td>
+</tr>
+<tr>
+<td>numNodes</td>
+<td>起動するノード数</td>
+<td>*</td>
+</tr>
+<tr>
+<td>InstanceType</td>
+<td>起動するインスタンスタイプ</td>
+<td>* ex. t2.micro</td>
+</tr>
+<tr>
+<td>rootVolume</td>
+<td>rootのEBSボリューム</td>
+<td>起動するインスタンスにアタッチされるrootのEBSボリュームのサイズ（デフォルト値 8 [GB]）</td>
+</tr>
+<tr>
+<td>shareStorage</td>
+<td>共有ストレージの利用設定</td>
+<td>（デフォルト値 利用する）</td>
+</tr>
+<tr>
+<td>mpi</td>
+<td>MPI</td>
+<td>ー</td>
+</tr>
+<tr>
+<td>compiler</td>
+<td>コンパイラ</td>
+<td>ー</td>
+</tr>
+<tr>
+<td>playbook</td>
+<td>起動時に実行されるplaybook</td>
+<td>ー</td>
+</tr>
+<tr>
+<td>additionalParams</td>
+<td>aws-sdkのEC2.runInstancesに渡すことのできる設定値</td>
+<td>access keyおよび secret access key等を設定可能</td>
+</tr>
+<tr>
+<td>additionalParamsForHead</td>
+<td>additionalParamsのうちヘッドノードのみに適用する値</td>
+<td>ー</td>
+</tr>
+<tr>
+<td>JobScheduler</td>
+<td>WHEELに登録されているジョブスケジューラ名</td>
+<td>app/config/jobSceduler.jsonに定義されているジョブスケジューラ名を設定する <br> ただし、インスタンスにジョブスケジューラがインストールされている必要がある。<br> ジョブスケジューラ「PBSPro」を設定した場合、WHEELが起動するクラスタにPBSProをインストールする</td>
+</tr>
+<tr>
+<td>Max Job</td>
+<td>ジョブ投入制限数</td>
+<td>接続先リモートホストから同時に投入できる最大ジョブ数（デフォルト値 5）</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>Queue名</td>
+<td>接続先ホストからジョブを投入する時に使えるキュー、カンマ区切りで複数入力可（ex. A, B, C）</td>
+</tr>
+<tr>
+<td>connection renewal interval(min.)</td>
+<td>ssh接続を再接続する間隔[分]</td>
+<td>最初にSSH接続した時間から設定時間以上経過後にSSH接続を行う場合、一度切断し再接続する（デフォルト値 0、再接続しない）</td>
+</tr>
+<tr>
+<td>connection renewal delay(sec.)</td>
+<td>切断後、再接続時までの待ち時間[秒]</td>
+<td>（デフォルト値 0）</td>
+</tr>
+<tr>
+<td>status check interval(sec.)</td>
+<td>ジョブ投入後のステータス確認を行う間隔[秒]</td>
+<td>（デフォルト値 10）</td>
+</tr>
+<tr>
+<td>max status check error</td>
+<td>ステータス確認に失敗した時に、ジョブ自体をfailedとするしきい値</td>
+<td>（デフォルト値 10）</td>
+</tr>
+</tbody>
+</table>
+<p>*必須パラメータ</p>
+<h3 id="jobscheduler%E3%81%B8%E3%81%AE%E8%A8%AD%E5%AE%9A%E6%96%B9%E6%B3%95">JobSchedulerへの設定方法 <a class="heading-anchor-permalink" href="#jobscheduler%E3%81%B8%E3%81%AE%E8%A8%AD%E5%AE%9A%E6%96%B9%E6%B3%95">#</a></h3>
+<p>ワークフローをリモートホスト上で処理する場合、Taskコンポーネントにリモートホストの設定を行います。（Taskコンポーネントに関する詳細は後述）<br>
+Taskコンポーネントは、child_process又はsshを用いて指定されたスクリプトを直接実行する以外に、ジョブスケジューラにジョブとして投入することが可能です。<br>
+本機能に関する設定は次の5つがあります。</p>
+<ol>
+<li>Taskコンポーネントの[ useJobScheduler ]プロパティを有効にしている場合、Taskはジョブスケジューラ経由で実行されます。</li>
+<li>Taskコンポーネントの[ queue ]プロパティには、投入先のキュー名を指定することができます。<br>
+null(デフォルト値)が指定されていた場合は、ジョブスケジューラ側で指定されているデフォルトキューに対してジョブが投入されます。</li>
+<li>ホスト登録画面[ JobScheduler ]には、当該ホストから投入可能なジョブスケジューラの名称を設定します。</li>
+<li>ホスト登録画面[ Max Job ]には、本プロパティに設定された値以下の投入本数を上限として、WHEELからのジョブ投入を抑制します。</li>
+<li>ホスト登録画面[ Queue ]で登録したQueue情報は、Taskコンポーネントの[ queue ]プロパティでセレクトボックスとして表示されます。</li>
+</ol>
+<p>ジョブスケジューラの定義は&quot;app/config/jobSceduler.json&quot;にて行います。 スケジューラの名称をkeyとし、以下の各keyを持つテーブルを値として各ジョブスケジューラを設定します。</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>submit</td>
+<td>ジョブ投入に用いるコマンド名</td>
+</tr>
+<tr>
+<td>queueOpt</td>
+<td>投入先キューを指定するためのsubmitコマンドのオプション</td>
+</tr>
+<tr>
+<td>stat</td>
+<td>ジョブの状態表示に用いるコマンド名</td>
+</tr>
+<tr>
+<td>del</td>
+<td>ジョブの削除に用いるコマンド名</td>
+</tr>
+<tr>
+<td>reJobID</td>
+<td>submitコマンドの出力からジョブIDを抽出するための正規表現</td>
+</tr>
+<tr>
+<td>reFinishdState</td>
+<td>statコマンドの出力を正常終了と判定するための正規表現</td>
+</tr>
+<tr>
+<td>reFailedState</td>
+<td>statコマンドの出力を異常終了と判定するための正規表現</td>
+</tr>
+</tbody>
+</table>
+<p>reJobIDは1つ以上のキャプチャを含む正規表現でなければなりません。また、1つ目のキャプチャ文字列がjobIDを示す文字列として扱われます。<br>
+reFinishedStateとreFailedStateは、前者が先に評価され前者がマッチした場合は後者の判定は行なわずに正常終了と判定します。また、両者にマッチしない場合はジョブは実行待ちもしくは実行中と判定します。<br>
+※いずれの正規表現もプログラム内でコンパイルして利用するため、正規表現リテラル(//)は使うことができません。</p>
+<blockquote>
+<p>富士通 ParallelNaviでの設定は次のようになります。</p>
+</blockquote>
+<pre><code>{  
+　&quot;ParallelNavi&quot;: {  
+    &quot;submit&quot;: &quot;pjsub -X&quot;,
+    &quot;queueOpt&quot;: &quot;-L rscgrp=&quot;,
+    &quot;stat&quot;: &quot;pjstat -v -H day=3 --choose st,ec&quot;,
+    &quot;del&quot;: &quot;pjdel&quot;,
+    &quot;reJobID&quot;: &quot;pjsub Job (\\d+) submitted.&quot;,
+    &quot;reFinishedState&quot;: &quot;^ST *EC *\\ nEXT *0&quot;,
+    &quot;reReturnCode&quot;: &quot;^ST *EC *\\nEXT *(\\d+)&quot;,
+    &quot;reFailedState&quot;: &quot;^ST *EC *\\n(CCL|ERR|EXT|RJT)&quot;,
+    &quot;reJobStatus&quot;: &quot;^ST *EC *\\n(\\S+)&quot;
+　}  
+}  
+</code></pre>
+<h2 id="%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E7%99%BB%E9%8C%B2">ホストの登録 <a class="heading-anchor-permalink" href="#%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E7%99%BB%E9%8C%B2">#</a></h2>
+<p>ホストの登録方法は、2パターンあります。</p>
+<ol>
+<li>新規に登録する</li>
+<li>既存のホスト情報を引用し、登録する</li>
+</ol>
+<p>まずは、「1. 新規に登録する」方法を説明します。</p>
+<h3 id="1.-%E6%96%B0%E8%A6%8F%E3%81%AB%E7%99%BB%E9%8C%B2%E3%81%99%E3%82%8B">1. 新規に登録する <a class="heading-anchor-permalink" href="#1.-%E6%96%B0%E8%A6%8F%E3%81%AB%E7%99%BB%E9%8C%B2%E3%81%99%E3%82%8B">#</a></h3>
+<p>手順は以下になります。</p>
+<ol>
+<li>Host List エリア「New」ボタンをクリックする</li>
+<li>Host Registration エリアの必要項目を入力する</li>
+<li>Host Registration エリア「Confirm」ボタンをクリックする</li>
+</ol>
+<h4 id="1.-host-list-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Cnew%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">1. Host List エリア「New」ボタンをクリックする <a class="heading-anchor-permalink" href="#1.-host-list-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Cnew%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">#</a></h4>
+<p>Host Registrationがクリアされます。ただし、Port, Max Job, connection renewal interval(min.), connection renewal delay(sec.), status check interval(sec.), max status check errorにはデフォルト値が入ります。</p>
+<p><img src="./img/remotehost_new.png" alt="img" title="remotehost_new"></p>
+<h4 id="2.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AE%E5%BF%85%E8%A6%81%E9%A0%85%E7%9B%AE%E3%82%92%E5%85%A5%E5%8A%9B%E3%81%99%E3%82%8B">2. Host Registration エリアの必要項目を入力する <a class="heading-anchor-permalink" href="#2.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AE%E5%BF%85%E8%A6%81%E9%A0%85%E7%9B%AE%E3%82%92%E5%85%A5%E5%8A%9B%E3%81%99%E3%82%8B">#</a></h4>
+<p>必要項目を入力します。Label（重複不可）, Host Name, User Name, User ID, Host Work Dirは、入力必須項目です。</p>
+<p><img src="./img/remotehost_info.png" alt="img" title="remotehost_info"></p>
+<h4 id="3.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Cconfirm%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">3. Host Registration エリア「Confirm」ボタンをクリックする <a class="heading-anchor-permalink" href="#3.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Cconfirm%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">#</a></h4>
+<p>入力内容をホスト情報として登録します。Host List エリアにホスト情報が追加されます。</p>
+<p><img src="./img/remotehost_confirm.png" alt="img" title="remotehost_confirm"></p>
+<h3 id="2.-%E6%97%A2%E5%AD%98%E3%81%AE%E3%83%9B%E3%82%B9%E3%83%88%E6%83%85%E5%A0%B1%E3%82%92%E5%BC%95%E7%94%A8%E3%81%97%E3%80%81%E7%99%BB%E9%8C%B2%E3%81%99%E3%82%8B">2. 既存のホスト情報を引用し、登録する <a class="heading-anchor-permalink" href="#2.-%E6%97%A2%E5%AD%98%E3%81%AE%E3%83%9B%E3%82%B9%E3%83%88%E6%83%85%E5%A0%B1%E3%82%92%E5%BC%95%E7%94%A8%E3%81%97%E3%80%81%E7%99%BB%E9%8C%B2%E3%81%99%E3%82%8B">#</a></h3>
+<p>続いて、「2. 既存のホスト情報を引用し、登録する」方法を説明します。</p>
+<p>手順は以下になります。</p>
+<ol>
+<li>Host List エリアに表示されている登録済みホストをクリックする</li>
+<li>Host List エリア「Copy」ボタンをクリックする</li>
+<li>複製したホストを選択し、Host Registration エリアのLabel（必須）及びその他項目を編集する</li>
+<li>Host Registration エリア「Confirm」ボタンをクリックする</li>
+</ol>
+<h4 id="1.-host-list-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AB%E8%A1%A8%E7%A4%BA%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%82%8B%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%83%9B%E3%82%B9%E3%83%88%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">1. Host List エリアに表示されている登録済みホストをクリックする <a class="heading-anchor-permalink" href="#1.-host-list-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AB%E8%A1%A8%E7%A4%BA%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%82%8B%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%83%9B%E3%82%B9%E3%83%88%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">#</a></h4>
+<p>登録済みホストを選択します。選択したホスト情報は、Host Registration エリアに反映されます。</p>
+<p><img src="./img/remotehost_select.png" alt="img" title="remotehost_select"></p>
+<h4 id="2.-host-list-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Ccopy%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">2. Host List エリア「Copy」ボタンをクリックする <a class="heading-anchor-permalink" href="#2.-host-list-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Ccopy%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">#</a></h4>
+<p>Copyボタンをクリックします。Host Listに選択したホスト情報が複製されます。<br>
+Labelも複製されるため、Label重複の警告メッセージが表示されます。</p>
+<p><img src="./img/remotehost_copy.png" alt="img" title="remotehost_copy"></p>
+<h4 id="3.-%E8%A4%87%E8%A3%BD%E3%81%97%E3%81%9F%E3%83%9B%E3%82%B9%E3%83%88%E3%82%92%E9%81%B8%E6%8A%9E%E3%81%97%E3%80%81host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AElabel%EF%BC%88%E5%BF%85%E9%A0%88%EF%BC%89%E5%8F%8A%E3%81%B3%E3%81%9D%E3%81%AE%E4%BB%96%E9%A0%85%E7%9B%AE%E3%82%92%E7%B7%A8%E9%9B%86%E3%81%99%E3%82%8B">3. 複製したホストを選択し、Host Registration エリアのLabel（必須）及びその他項目を編集する <a class="heading-anchor-permalink" href="#3.-%E8%A4%87%E8%A3%BD%E3%81%97%E3%81%9F%E3%83%9B%E3%82%B9%E3%83%88%E3%82%92%E9%81%B8%E6%8A%9E%E3%81%97%E3%80%81host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AElabel%EF%BC%88%E5%BF%85%E9%A0%88%EF%BC%89%E5%8F%8A%E3%81%B3%E3%81%9D%E3%81%AE%E4%BB%96%E9%A0%85%E7%9B%AE%E3%82%92%E7%B7%A8%E9%9B%86%E3%81%99%E3%82%8B">#</a></h4>
+<p>Label及びその他項目を編集し、Label重複警告メッセージが解除されたことを確認します。</p>
+<p><img src="./img/remotehost_copy_edit.png" alt="img" title="remotehost_copy_edit"></p>
+<h4 id="4.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Cconfirm%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">4. Host Registration エリア「Confirm」ボタンをクリックする <a class="heading-anchor-permalink" href="#4.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Cconfirm%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">#</a></h4>
+<p>「Confirm」ボタンをクリックします。</p>
+<p><img src="./img/remotehost_copy_confirm.png" alt="img" title="remotehost_copy_confirm"></p>
+<h2 id="%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E7%B7%A8%E9%9B%86">ホストの編集 <a class="heading-anchor-permalink" href="#%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E7%B7%A8%E9%9B%86">#</a></h2>
+<p>ホストの編集の手順は以下になります。</p>
+<ol>
+<li>Host List エリアに表示されている編集したいホストをクリックする</li>
+<li>Host Registration エリアにてホスト情報を編集する</li>
+<li>Host Registration エリア「Confirm」ボタンをクリックする</li>
+</ol>
+<h4 id="1.-host-list-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AB%E8%A1%A8%E7%A4%BA%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%82%8B%E7%B7%A8%E9%9B%86%E3%81%97%E3%81%9F%E3%81%84%E3%83%9B%E3%82%B9%E3%83%88%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">1. Host List エリアに表示されている編集したいホストをクリックする <a class="heading-anchor-permalink" href="#1.-host-list-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AB%E8%A1%A8%E7%A4%BA%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%82%8B%E7%B7%A8%E9%9B%86%E3%81%97%E3%81%9F%E3%81%84%E3%83%9B%E3%82%B9%E3%83%88%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B">#</a></h4>
+<p>Host Registration エリアに選択したホストの登録情報が表示されます。</p>
+<p><img src="./img/remotehost_edit.png" alt="img" title="host_edit"></p>
+<h4 id="2.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AB%E3%81%A6%E3%83%9B%E3%82%B9%E3%83%88%E6%83%85%E5%A0%B1%E3%82%92%E7%B7%A8%E9%9B%86%E3%81%99%E3%82%8B">2. Host Registration エリアにてホスト情報を編集する <a class="heading-anchor-permalink" href="#2.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%81%AB%E3%81%A6%E3%83%9B%E3%82%B9%E3%83%88%E6%83%85%E5%A0%B1%E3%82%92%E7%B7%A8%E9%9B%86%E3%81%99%E3%82%8B">#</a></h4>
+<p>項目を編集します。</p>
+<p><img src="./img/remotehost_edit_info.png" alt="img" title="host_edit_info"></p>
+<h4 id="3.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Cconfirm%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B-2">3. Host Registration エリア「Confirm」ボタンをクリックする <a class="heading-anchor-permalink" href="#3.-host-registration-%E3%82%A8%E3%83%AA%E3%82%A2%E3%80%8Cconfirm%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E3%82%AF%E3%83%AA%E3%83%83%E3%82%AF%E3%81%99%E3%82%8B-2">#</a></h4>
+<p>ホスト情報を更新します。</p>
+<p><img src="./img/remotehost_edit_confirm.png" alt="img" title="host_edit_confirm"></p>
+<h2 id="%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E5%89%8A%E9%99%A4">ホストの削除 <a class="heading-anchor-permalink" href="#%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E5%89%8A%E9%99%A4">#</a></h2>
+<p>ホストの削除は、以下の手順で行います。</p>
+<ol>
+<li>Host List エリアに表示されている削除したいホストをクリックする</li>
+<li>Host List エリア「Delete」ボタンをクリックする</li>
+<li>表示される「削除確認メッセージダイアログボックス」の「OK」ボタンをクリックする。</li>
+</ol>
+<p><img src="./img/remotehost_delete.png" alt="img" title="remotehost_delete"></p>
+<p>削除されていることを確認します。</p>
+<p><img src="./img/remotehost_delete_result.png" alt="img" title="remotehost_delete_result"></p>
+<h2 id="%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E6%8E%A5%E7%B6%9A%E7%A2%BA%E8%AA%8D">ホストの接続確認 <a class="heading-anchor-permalink" href="#%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AE%E6%8E%A5%E7%B6%9A%E7%A2%BA%E8%AA%8D">#</a></h2>
+<p>登録したホストが有効であるが確認するためにホストの接続確認（Connection Check）を行います。<br>
+Connection Checkは、「Test」ボタンをクリックすることで行います。</p>
+<p>Connection Checkの手順は以下になります。</p>
+<ol>
+<li>Connection Checkしたいホストを選択する</li>
+<li>Connection Check「Test」ボタンをクリックする</li>
+<li>表示される「パスワード入力ダイアログボックス」にパスワードを入力し、「OK」を押下する</li>
+<li>「Test」ボタンの表示がOKまたはNGになることを確認する</li>
+</ol>
+<h4 id="1.-connection-check">1. Connection Check <a class="heading-anchor-permalink" href="#1.-connection-check">#</a></h4>
+<p><img src="./img/remotehost_connectioncheck.png" alt="img" title="remotehost_connectioncheck"></p>
+<h4 id="4.-%E3%80%8Ctest%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%81%AE%E8%A1%A8%E7%A4%BA%E3%81%8C-ok-%E3%81%BE%E3%81%9F%E3%81%AF-ng-%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%93%E3%81%A8%E3%82%92%E7%A2%BA%E8%AA%8D%E3%81%99%E3%82%8B">4. 「Test」ボタンの表示が OK または NG になることを確認する <a class="heading-anchor-permalink" href="#4.-%E3%80%8Ctest%E3%80%8D%E3%83%9C%E3%82%BF%E3%83%B3%E3%81%AE%E8%A1%A8%E7%A4%BA%E3%81%8C-ok-%E3%81%BE%E3%81%9F%E3%81%AF-ng-%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%93%E3%81%A8%E3%82%92%E7%A2%BA%E8%AA%8D%E3%81%99%E3%82%8B">#</a></h4>
+<p>Host Name, User ID, Port, AuthPath 及び入力したパスワードが適切な場合は「OK」、不適切な場合は「NG」となります。</p>
+<p>・適切な場合<br>
+「Test」ボタンがOKとなります。</p>
+<p><img src="./img/remotehost_connectioncheck_OK.png" alt="img" title="remotehost_connectioncheck_OK"></p>
+<p>・不適切な場合<br>
+「Test」ボタンがNGとなり、エラーメッセージが表示されます。</p>
+<p><img src="./img/remotehost_connectioncheck_NG.png" alt="img" title="remotehost_connectioncheck_NG"></p>
+
+      </article>
+    </div>
+    <script>
+      // Load contents.json if you need it
+    </script>
+    <script>
+      // FROM http://purecss.io/js/ui.js
+      (function(window, document) {
+        var layout = document.getElementById("layout"),
+          menu = document.getElementById("menu"),
+          menuLink = document.getElementById("menuLink");
+
+        function toggleClass(element, className) {
+          var classes = element.className.split(/\s+/),
+            length = classes.length,
+            i = 0;
+
+          for (; i < length; i++) {
+            if (classes[i] === className) {
+              classes.splice(i, 1);
+              break;
+            }
+          }
+          // The className is not found
+          if (length === classes.length) {
+            classes.push(className);
+          }
+
+          element.className = classes.join(" ");
+        }
+
+        menuLink.onclick = function(e) {
+          var active = "active";
+
+          e.preventDefault();
+          toggleClass(layout, active);
+          toggleClass(menu, active);
+          toggleClass(menuLink, active);
+        };
+      })(this, this.document);
+    </script>
+  </body>
+</html>

@@ -19,6 +19,7 @@
     "start": "cd server; npm start",
     "build": "cd server; npm install; npm prepare; cd ../client; npm install; npm run build -- --no-clean --mode development",
     "buildDoc": "run-s convertDoc removeDoc replaceDoc renameHtml",
+    "buildPDFDoc": "run-s removeTmp copyUserGuide md2pdf concatPDF removeTmp",
     "licenseReport": "run-s licenseReport-doc licenseReport-server licenseReport-client",
     "convertDoc": "markdown-folder-to-html documentMD/user_guide",
     "removeDoc": "shx rm -fr docs",
@@ -26,12 +27,19 @@
     "renameHtml": "shx mv docs/readme.html docs/index.html",
     "licenseReport-doc": "license-report --output=csv --csvHeaders --config license-report-config.json",
     "licenseReport-server": "license-report --package=server/package.json --output=csv --csvHeaders --config license-report-config.json",
-    "licenseReport-client": "license-report --package=client/package.json --output=csv --csvHeaders --config license-report-config.json"
+    "licenseReport-client": "license-report --package=client/package.json --output=csv --csvHeaders --config license-report-config.json",
+    "copyUserGuide": "shx cp -r documentMD/user_guide/ tmp",
+    "md2pdf": "md-to-pdf --stylesheet=https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css --body-class=markdown-body tmp/*.md tmp/*/*.md tmp/*/*/*.md",
+    "concatPDF": "node bin/concatPDF.js tmp",
+    "removeTmp": "shx rm -fr tmp"
   },
   "devDependencies": {
+    "glob": "^7.2.0",
     "license-report": "^5.0.1",
     "markdown-folder-to-html": "^2.4.0",
+    "md-to-pdf": "^5.1.0",
     "npm-run-all": "^4.1.5",
+    "pdf-merger-js": "^3.4.0",
     "shx": "^0.3.4"
   }
 }

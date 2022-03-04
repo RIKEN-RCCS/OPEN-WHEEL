@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      /*! ADAPTED
+    Typeplate : Starter Kit
+    URL ........... http://typeplate.com
+    Version ....... 3.0.2
+    Github ........ https://github.com/typeplate/starter-kit
+    Authors ....... Dennis Gaebel (@gryghostvisuals) & Zachary Kain (@zakkain)
+    License ....... Creative Commmons Attribution 3.0
+    License URL ... https://github.com/typeplate/starter-kit/blob/master/license.txt
+    */
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        text-rendering: optimizeLegibility;
+        line-height: 1;
+        margin-top: 0;
+        color: #222;
+      }
+
+      blockquote + figcaption cite {
+        display: block;
+        font-size: inherit;
+        text-align: right;
+      }
+
+      body {
+        word-wrap: break-word;
+      }
+
+      pre code {
+        word-wrap: normal;
+      }
+
+      body {
+        -webkit-hyphens: auto;
+        -ms-hyphens: auto;
+        hyphens: auto;
+        color: #444;
+      }
+
+      h1 {
+        font-size: 2em;
+        /* 2*16 = 32 */
+      }
+
+      h2 {
+        font-size: 1.5em;
+        /* 1.5*16 = 24 */
+      }
+
+      h3 {
+        font-size: 1.17em;
+        /* 1.17*16 = 18.72 */
+      }
+
+      h4 {
+        font-size: 1em;
+        /* 1*16 = 16 */
+      }
+
+      h5 {
+        font-size: 0.83em;
+        /* 0.83*16 = 13.28 */
+      }
+
+      h6 {
+        font-size: 0.75em;
+        /* 0.75*16 = 12 */
+      }
+
+      h1 {
+        margin: 2.42424rem 0 1.454544rem;
+      }
+
+      h2 {
+        margin: 2.0202rem 0 1.21212rem;
+      }
+
+      h3 {
+        margin: 1.61616rem 0 1rem;
+      }
+
+      h4 {
+        margin: 1.21212rem 0 1;
+      }
+
+      h5 {
+        margin: 0.80808rem 0;
+      }
+
+      h6 {
+        margin: 0.70707rem 0;
+      }
+
+      p {
+        margin: auto auto 1.5rem;
+      }
+
+      small {
+        font-size: 65%;
+      }
+
+      input,
+      abbr,
+      acronym,
+      blockquote,
+      code,
+      kbd,
+      q,
+      samp,
+      var {
+        -webkit-hyphens: none;
+        -ms-hyphens: none;
+        hyphens: none;
+      }
+
+      pre {
+        white-space: pre;
+      }
+
+      pre code {
+        white-space: -moz-pre-wrap;
+        white-space: pre-wrap;
+      }
+
+      code {
+        white-space: pre;
+        font-family: SF Mono, Consolas, Dejavu Sans Mono, Menlo, monospace;
+      }
+
+      abbr {
+        -webkit-font-variant: small-caps;
+        -moz-font-variant: small-caps;
+        -ms-font-variant: small-caps;
+        font-variant: small-caps;
+        font-weight: 600;
+        text-transform: lowercase;
+        color: gray;
+      }
+
+      abbr[title]:hover {
+        cursor: help;
+      }
+
+      /* FROM http://purecss.io/layouts/side-menu/  adapted to remove pure classes*/
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+          "Segoe UI Symbol";
+        color: #444;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: auto;
+      }
+
+      code,
+      pre {
+        background-color: #f5f5f5;
+        color: #444;
+        border-radius: 2px;
+        text-shadow: 0px 1px 0px white;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+      }
+
+      pre code {
+        border: none;
+        box-shadow: none;
+      }
+
+      pre {
+        padding: 0.5em;
+      }
+
+      code {
+        display: inline-block;
+        padding: 0 0.5em;
+        line-height: 1.4;
+        font-size: 0.9em;
+      }
+
+      table {
+        border-spacing: 0;
+        margin-bottom: 1.5rem;
+      }
+
+      table th,
+      table td {
+        padding: 0.3em 0.7em;
+      }
+
+      table th {
+        background-color: #f4f4f4;
+        border-bottom: 2px solid #444;
+      }
+
+      table td {
+        border: 1px solid #f5f5f5;
+      }
+
+      /* Add transition to containers so they can push in and out. */
+
+      #layout,
+      #menu,
+      .menu-link {
+        -webkit-transition: all 0.2s ease-out;
+        -moz-transition: all 0.2s ease-out;
+        -ms-transition: all 0.2s ease-out;
+        -o-transition: all 0.2s ease-out;
+        transition: all 0.2s ease-out;
+      }
+
+      /* This is the parent `<div>` that contains the menu and the content area. */
+
+      #layout {
+        position: relative;
+        padding-left: 0;
+      }
+
+      #layout.active #menu {
+        left: 250px;
+        width: 250px;
+      }
+
+      #layout.active .menu-link {
+        left: 250px;
+      }
+
+      /* The content `<div>` is where all your content goes. */
+
+      .content {
+        margin: 50px auto;
+        padding: 0 2em;
+        max-width: 80ex;
+        line-height: 1.6em;
+      }
+
+      /*
+      The `#menu` `<div>` is the parent `<div>` that contains the menu that
+      appears on the left side of the page.
+      */
+
+      #menu {
+        margin-left: -250px;
+        /* "#menu" width */
+        width: 250px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1000;
+        /* so the menu or its navicon stays above all content */
+        background: #f4f4f4;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        font-size: 0.9em;
+      }
+
+      @media print {
+        #menu,
+        .menu-link {
+          display: none !important;
+        }
+      }
+
+      a,
+      a * {
+        text-decoration: none;
+        color: #2483cc;
+      }
+
+      a:visited {
+        text-decoration: none;
+        color: #2483cc;
+      }
+
+      /* All anchors inside the menu should be styled like this. */
+
+      #menu a {
+        display: block;
+        padding: 0.5em 0.5em;
+      }
+
+      #menu a:first-letter {
+        text-transform: capitalize;
+      }
+
+      #menu ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 1em 0.5em;
+      }
+
+      #menu ul ul {
+        margin-top: 0.5em;
+        margin-left: 0.5em;
+        border-left: 4px solid rgba(255, 255, 255, 0.5);
+      }
+
+      /* Change color of the anchor links on hover/focus. */
+
+      #menu li a:hover,
+      #menu li a:focus {
+        background: rgba(255, 255, 255, 0.4);
+      }
+
+      /* This styles the selected menu item `<li>`. */
+
+      #menu li a.active {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      /* This styles a link within a selected menu item `<li>`. */
+
+      #menu li a.active {
+        color: #222;
+      }
+
+      /* This styles the menu heading. */
+
+      #menu li.heading {
+        font-size: 0.9em;
+        text-transform: uppercase;
+        color: #000;
+      }
+
+      #menu li.heading > * {
+        padding: 0.5em;
+        display: block;
+      }
+
+      #menu li.heading a {
+        color: #0c68af;
+      }
+
+      /* -- Dynamic Button For Responsive Menu -------------------------------------*/
+
+      /*
+      `.menu-link` represents the responsive menu toggle that shows/hides on
+      small screens.
+      */
+
+      .menu-link {
+        position: fixed;
+        display: block;
+        /* show this only on small screens */
+        top: 0;
+        left: 0;
+        /* "#menu width" */
+        font-size: 10px;
+        /* change this value to increase/decrease button size */
+        z-index: 10;
+        width: 2em;
+        height: auto;
+        padding: 1.6em 1.2em;
+        border-radius: 0 2px 2px 0;
+      }
+
+      .menu-link:hover {
+        background: #f4f4f4;
+      }
+
+      .menu-link span {
+        position: relative;
+        display: block;
+      }
+
+      .menu-link span,
+      .menu-link span:before,
+      .menu-link span:after {
+        background-color: #555;
+        width: 100%;
+        height: 0.2em;
+        border-radius: 1em;
+      }
+
+      .menu-link span:before,
+      .menu-link span:after {
+        position: absolute;
+        margin-top: -0.6em;
+        content: " ";
+      }
+
+      .menu-link span:after {
+        margin-top: 0.6em;
+      }
+
+      /* Hides the menu at `48em`, but modify this based on your app's needs. */
+
+      @media (min-width: 48em) {
+        .header,
+        .content {
+          padding-left: 2em;
+          padding-right: 2em;
+        }
+
+        #layout {
+          padding-left: 250px;
+          /* left col width "#menu" */
+          left: 0;
+        }
+        #menu {
+          left: 250px;
+        }
+
+        .menu-link {
+          position: fixed;
+          left: 250px;
+          display: none;
+        }
+
+        #layout.active .menu-link {
+          left: 250px;
+        }
+      }
+
+      @media (max-width: 48em) {
+        /* Only apply this when the window is small. Otherwise, the following case results in extra padding on the left:
+         * Make the window small.
+         * Tap the menu to trigger the active state.
+         * Make the window large again.
+         */
+        #layout.active {
+          position: relative;
+          left: 250px;
+        }
+      }
+
+      /* Heading anchors and permalinks */
+      h1[id],
+      h2[id],
+      h3[id],
+      h4[id],
+      h5[id],
+      h6[id] {
+        position: relative;
+      }
+      .heading-anchor-permalink {
+        /* Position the permalink to the left of the title */
+        position: absolute;
+        right: 100%;
+        /* Add some spacing as padding to not lose the hover */
+        padding-right: 0.6rem;
+        /* Make it only visible on heading hover, see below */
+        opacity: 0;
+      }
+      h1[id]:hover .heading-anchor-permalink,
+      h2[id]:hover .heading-anchor-permalink,
+      h3[id]:hover .heading-anchor-permalink,
+      h4[id]:hover .heading-anchor-permalink,
+      h5[id]:hover .heading-anchor-permalink,
+      h6[id]:hover .heading-anchor-permalink {
+        opacity: 0.5;
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+  </head>
+
+  <body>
+    <div id="layout">
+      <!-- Menu toggle -->
+      <a href="#menu" id="menuLink" class="menu-link">
+        <!-- Hamburger icon -->
+        <span></span>
+      </a>
+      <nav id="menu">
+        <ul>
+<li class="heading"><span>1 WHEEL introduction</span></li>
+<ul>
+<li class="heading"><span>how to boot</span></li>
+<ul>
+<li><a class="" href="../../1_WHEEL_introduction/how_to_boot/boot.html">boot</a></li>
+</ul>
+</ul>
+<li class="heading"><span>2 WHEEL manual</span></li>
+<ul>
+<li class="heading"><span>1 home screen</span></li>
+<ul>
+<li><a class="" href="../1_home_screen/create_project.html">create project</a></li>
+<li><a class="" href="../1_home_screen/edit_project.html">edit project</a></li>
+</ul>
+<li class="heading"><span>2 remotehost screen</span></li>
+<ul>
+<li><a class="" href="../2_remotehost_screen/remotehost.html">remotehost</a></li>
+</ul>
+<li class="heading"><span>3 workflow screen</span></li>
+<ul>
+<li><a class="" href="../3_workflow_screen/1_graphview.html">1 graphview</a></li>
+<li><a class="" href="../3_workflow_screen/2_listview.html">2 listview</a></li>
+<li><a class="" href="../3_workflow_screen/3_editor.html">3 editor</a></li>
+<li><a class="" href="../3_workflow_screen/3_rapid.html">3 rapid</a></li>
+<li><a class="" href="../3_workflow_screen/4_PS_editor.html">4 PS editor</a></li>
+</ul>
+<li class="heading"><span>4 component</span></li>
+<ul>
+<li><a class="" href="10_Stepjob.html">10 Stepjob</a></li>
+<li><a class="" href="11_BulkjobTask.html">11 BulkjobTask</a></li>
+<li><a class="" href="1_Task.html">1 Task</a></li>
+<li><a class="" href="2_If.html">2 If</a></li>
+<li><a class="" href="3_For.html">3 For</a></li>
+<li><a class="" href="4_Foreach.html">4 Foreach</a></li>
+<li><a class="" href="5_While.html">5 While</a></li>
+<li><a class="" href="6_Source.html">6 Source</a></li>
+<li><a class="" href="7_Viewer.html">7 Viewer</a></li>
+<li><a class="" href="8_ParameterStudy.html">8 ParameterStudy</a></li>
+<li><a class="active" href="99_component_design.html">99 component design</a></li>
+<li><a class="" href="9_Workflow.html">9 Workflow</a></li>
+</ul>
+<li class="heading"><span>5 execute workflow</span></li>
+<ul>
+<li><a class="" href="../5_execute_workflow/execute_workflow.html">execute workflow</a></li>
+</ul>
+<li class="heading"><span>6 jobScript screen</span></li>
+<ul>
+<li><a class="" href="../6_jobScript_screen/jobScript.html">jobScript</a></li>
+</ul>
+</ul>
+<li class="heading"><span>3 WHEEL tutorial</span></li>
+<ul>
+<li class="heading"><span>1 OpenFOAM PS sample</span></li>
+<ul>
+<li><a class="" href="../../3_WHEEL_tutorial/1_OpenFOAM_PS_sample/OpenFOAM_PS_sample.html">OpenFOAM PS sample</a></li>
+</ul>
+<li class="heading"><span>2 OpenFOAM KPrepostCloud sample</span></li>
+<ul>
+<li><a class="" href="../../3_WHEEL_tutorial/2_OpenFOAM_KPrepostCloud_sample/OpenFOAM_KPrepostCloud_sample.html">OpenFOAM KPrepostCloud sample</a></li>
+</ul>
+<li class="heading"><span>3 OpenFOAM TCS sample</span></li>
+<ul>
+<li><a class="" href="../../3_WHEEL_tutorial/3_OpenFOAM_TCS_sample/OpenFOAM_TCS_sample.html">OpenFOAM TCS sample</a></li>
+</ul>
+<li class="heading"><span>4 TensorFlow UGE sample</span></li>
+<ul>
+<li><a class="" href="../../3_WHEEL_tutorial/4_TensorFlow_UGE_sample/TensorFlow_UGE_sample.html">TensorFlow UGE sample</a></li>
+</ul>
+</ul>
+<li class="heading"><span>4 ATTENTION</span></li>
+<ul>
+<li><a class="" href="../../4_ATTENTION/ATTENTION.html">ATTENTION</a></li>
+</ul>
+<li><a class="" href="../../readme.html">readme</a></li>
+</ul>
+      </nav>
+      <article id="main" class="content">
+        <h1 id="%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%97%E3%83%AD%E3%83%91%E3%83%86%E3%82%A3%E3%81%AE%E4%BB%95%E6%A7%98%E8%A9%B3%E7%B4%B0">コンポーネントプロパティの仕様詳細 <a class="heading-anchor-permalink" href="#%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%97%E3%83%AD%E3%83%91%E3%83%86%E3%82%A3%E3%81%AE%E4%BB%95%E6%A7%98%E8%A9%B3%E7%B4%B0">#</a></h1>
+<h2 id="%E2%96%A0inputfile%E3%81%8A%E3%82%88%E3%81%B3outputfile">■inputFileおよびoutputFile <a class="heading-anchor-permalink" href="#%E2%96%A0inputfile%E3%81%8A%E3%82%88%E3%81%B3outputfile">#</a></h2>
+<p>コンポーネントのinputFiles, outputFilesに設定可能な入力値について説明します。</p>
+<p>inputFiles, outputFilesには以下の4種類の文字列を指定することができます。<br>
+・空文字列(inputのみ)<br>
+・path.sep(’\‘でも’/‘でも良い)を含む文字列<br>
+・path.sep(’\‘でも’/'でも良い)を含まない文字列<br>
+・globパターン(outputのみ)</p>
+<h3 id="%E2%97%AFinput%E3%81%8C%E7%A9%BA%E6%96%87%E5%AD%97%E5%88%97%E3%81%AE%E5%A0%B4%E5%90%88"><u>◯inputが空文字列の場合</u> <a class="heading-anchor-permalink" href="#%E2%97%AFinput%E3%81%8C%E7%A9%BA%E6%96%87%E5%AD%97%E5%88%97%E3%81%AE%E5%A0%B4%E5%90%88">#</a></h3>
+<p>inputは後続ノードのrootディレクトリ(そのノードのpathプロパティが指定されたディレクトリ)が指定されてものとして扱われます。</p>
+<h3 id="%E2%97%AFinput%E3%81%8Cpath.sep%E3%82%92%E5%90%AB%E3%81%BE%E3%81%AA%E3%81%84%E6%96%87%E5%AD%97%E5%88%97%E3%81%AE%E5%A0%B4%E5%90%88"><u>◯inputがpath.sepを含まない文字列の場合</u> <a class="heading-anchor-permalink" href="#%E2%97%AFinput%E3%81%8Cpath.sep%E3%82%92%E5%90%AB%E3%81%BE%E3%81%AA%E3%81%84%E6%96%87%E5%AD%97%E5%88%97%E3%81%AE%E5%A0%B4%E5%90%88">#</a></h3>
+<p>outputが単一のファイルの場合、inputはファイル名として扱われ、別名でのシンボリックリンクが作成されます。<br>
+outputがディレクトリの場合、inputはディレクトリ名として扱われ、その名前でディレクトリへのシンボリックリンクが作成されます。<br>
+outputがglobパターンの場合、inputはディレクトリ名として扱われ、そのディレクトリの下にglobパターンで指定されたファイルへのシンボリックリンクが作成されます。<br>
+いずれの場合でも、outputの指定文字列にpath.sepが含まれた場合は後続ノード側でも同じディレクトリが作成された上でシンボリックリンクが作成されます。</p>
+<h3 id="%E2%97%AFinput%E3%81%8Cpath.sep%E3%82%92%E5%90%AB%E3%82%80%E6%96%87%E5%AD%97%E5%88%97%E3%81%AE%E5%A0%B4%E5%90%88"><u>◯inputがpath.sepを含む文字列の場合</u> <a class="heading-anchor-permalink" href="#%E2%97%AFinput%E3%81%8Cpath.sep%E3%82%92%E5%90%AB%E3%82%80%E6%96%87%E5%AD%97%E5%88%97%E3%81%AE%E5%A0%B4%E5%90%88">#</a></h3>
+<p>最後のpath.sepまでを後続ノードのrootディレクトリからの相対ディレクトリ名として扱います。<br>
+先頭と末尾のpath.sepは無視され、それぞれ取り除いた値が指定されたものとして扱います。<br>
+例えば’/foo/bar/'という指定がされた場合は、'foo/bar’が指定されたものとして扱います。<br>
+(もしあれば)末尾のものを除いて最後のpath.sep以降に続く文字列は&quot;inputがpath.sepを含まない文字列の場合&quot;に準じてoutputの指定に応じた取り扱いを行います。</p>
+<h2 id="%E2%96%A0%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%B8%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E6%93%8D%E4%BD%9C">■コンポーネントディレクトリへのファイル操作 <a class="heading-anchor-permalink" href="#%E2%96%A0%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%B8%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E6%93%8D%E4%BD%9C">#</a></h2>
+<p>コンポーネントで使用するファイルは、コンポーネント選択時に表示されるプロパティ画面の[ Files ]領域より設定します。</p>
+<p>例：Workflowコンポーネントのプロパティ画面</p>
+<p><img src="./img/component_design/property_Files.png" alt="img" title="property_Files"></p>
+<p>Files領域の構成は、以下です。</p>
+<p><img src="./img/component_design/Files.png" alt="img" title="Files"></p>
+<ol>
+<li>rootワークフローからの相対パス表示領域</li>
+<li>JupyterNotebookの起動ボタン</li>
+<li>コンポーネントディレクトリへの新規ディレクトリの作成ボタン</li>
+<li>コンポーネントディレクトリへの新規ファイルの作成ボタン</li>
+<li>コンポーネントディレクトリへのファイルのアップロードボタン（ファイルブラウザの起動）</li>
+<li>ファイル編集ボタン</li>
+<li>PS用ファイル編集ボタン</li>
+</ol>
+<p>以下で各ボタンの機能について説明します。</p>
+<h3 id="%E2%97%AF%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%B8%E3%81%AE%E6%96%B0%E8%A6%8F%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%AE%E4%BD%9C%E6%88%90"><u>◯コンポーネントディレクトリへの新規ディレクトリの作成</U> <a class="heading-anchor-permalink" href="#%E2%97%AF%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%B8%E3%81%AE%E6%96%B0%E8%A6%8F%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%AE%E4%BD%9C%E6%88%90">#</a></h3>
+<p>コンポーネントディレクトリへの新規ディレクトリの作成手順は以下になります。</p>
+<ol>
+<li>新規ディレクトリを作成したいコンポーネントをクリックする。</li>
+<li>[ Files ]領域内の上記Files領域図ボタン「3」をクリックする。</li>
+<li>表示されるダイアログより、作成するディレクトリ名を入力し、[ OK ]ボタンをクリックする。</li>
+</ol>
+<h5 id="%E6%96%B0%E8%A6%8F%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%AE%E4%BD%9C%E6%88%90">新規ディレクトリの作成 <a class="heading-anchor-permalink" href="#%E6%96%B0%E8%A6%8F%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%AE%E4%BD%9C%E6%88%90">#</a></h5>
+<p><img src="./img/component_design/create_directory.png" alt="img" title="create_directory"></p>
+<h5 id="%E4%BD%9C%E6%88%90%E7%B5%90%E6%9E%9C">作成結果 <a class="heading-anchor-permalink" href="#%E4%BD%9C%E6%88%90%E7%B5%90%E6%9E%9C">#</a></h5>
+<p><img src="./img/component_design/create_directory_result.png" alt="img" title="create_directory_result"></p>
+<h3 id="%E2%97%AF%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%B8%E3%81%AE%E6%96%B0%E8%A6%8F%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E4%BD%9C%E6%88%90"><u>◯コンポーネントディレクトリへの新規ファイルの作成</u> <a class="heading-anchor-permalink" href="#%E2%97%AF%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%B8%E3%81%AE%E6%96%B0%E8%A6%8F%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E4%BD%9C%E6%88%90">#</a></h3>
+<p>新規ファイルの作成もディレクトリの作成と同様に以下の手順になります。</p>
+<ol>
+<li>新規ファイルを作成したいコンポーネントをクリックする。</li>
+<li>[ Files ]領域内の上記Files領域図ボタン「4」をクリックする。</li>
+<li>表示されるダイアログより、作成するファイル名を入力し、[ OK ]ボタンをクリックする。</li>
+</ol>
+<h3 id="%E2%97%AF%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%B8%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89"><u>◯コンポーネントディレクトリへのファイルのアップロード</u> <a class="heading-anchor-permalink" href="#%E2%97%AF%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E3%81%B8%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89">#</a></h3>
+<p>コンポーネントディレクトリへのファイルのアップロード手順は以下になります。</p>
+<ol>
+<li>新規ディレクトリを作成したいコンポーネントをクリックする。</li>
+<li>[ Files ]領域内の上記Files領域図ボタン「5」をクリックする。</li>
+<li>表示されるファイルブラウザ画面、アップロードしたいファイルを選択し、[ 開く ]ボタンをクリックする。</li>
+</ol>
+<h5 id="%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89">ファイルのアップロード <a class="heading-anchor-permalink" href="#%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89">#</a></h5>
+<p><img src="./img/component_design/file_upload.png" alt="img" title="file_upload"></p>
+<h5 id="%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89%E7%B5%90%E6%9E%9C">アップロード結果 <a class="heading-anchor-permalink" href="#%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89%E7%B5%90%E6%9E%9C">#</a></h5>
+<p><img src="./img/component_design/file_upload_result.png" alt="img" title="file_upload_result"></p>
+<h2 id="%E2%96%A0%E9%9A%8E%E5%B1%A4%E9%96%93%EF%BC%88%E8%A6%AA%E5%AD%90%E9%96%93%EF%BC%89%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E7%A7%BB%E5%8B%95">■階層間（親子間）のファイル移動 <a class="heading-anchor-permalink" href="#%E2%96%A0%E9%9A%8E%E5%B1%A4%E9%96%93%EF%BC%88%E8%A6%AA%E5%AD%90%E9%96%93%EF%BC%89%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E7%A7%BB%E5%8B%95">#</a></h2>
+<p>Workflow, ParameterStudy, 及びループ系（For, While, Foreach）のコンポーネントは、<br>
+コンポーネント内にコンポーネント（子コンポーネント）を持つことができます。<br>
+親コンポーネントから子コンポーネントへのファイル移動は、親子間ファイル移動機能を使用することで行うことができます。<br>
+使用方法は以下です。</p>
+<h3 id="%E2%97%AF%E8%A6%AA%E9%9A%8E%E5%B1%A4%E3%81%8B%E3%82%89%E5%AD%90%E9%9A%8E%E5%B1%A4%E3%81%B8"><u>◯親階層から子階層へ</u> <a class="heading-anchor-permalink" href="#%E2%97%AF%E8%A6%AA%E9%9A%8E%E5%B1%A4%E3%81%8B%E3%82%89%E5%AD%90%E9%9A%8E%E5%B1%A4%E3%81%B8">#</a></h3>
+<ol>
+<li>渡し元コンポーネント（task0）の出力ファイルを設定する（図1参照）</li>
+<li>渡し先コンポーネント（workflow0）の入力ファイル名を設定する</li>
+<li>渡し元コンポーネント（task0）の出力ファイルを渡し元コンポーネント（workflow0）の入力ファイルへ接続する</li>
+<li>コンポーネントの子階層へ遷移する（図2参照）</li>
+<li>子階層にてコンポーネントを作成する（childTask）</li>
+<li>子コンポーネント（childTask）の入力ファイルを設定する</li>
+<li>親コンポーネントからの入力ファイルを子コンポーネント（childTask）の入力ファイルへ接続する</li>
+</ol>
+<h5 id="%E5%9B%B31-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E5%87%BA%E5%8A%9B%E3%83%BB%E5%85%A5%E5%8A%9B%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%A8%AD%E5%AE%9A%EF%BC%88%E8%A6%AA%E9%9A%8E%E5%B1%A4%E3%81%8B%E3%82%89%E5%AD%90%E9%9A%8E%E5%B1%A4%E3%81%B8%EF%BC%89">図1 コンポーネントの出力・入力ファイル設定（親階層から子階層へ） <a class="heading-anchor-permalink" href="#%E5%9B%B31-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E5%87%BA%E5%8A%9B%E3%83%BB%E5%85%A5%E5%8A%9B%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%A8%AD%E5%AE%9A%EF%BC%88%E8%A6%AA%E9%9A%8E%E5%B1%A4%E3%81%8B%E3%82%89%E5%AD%90%E9%9A%8E%E5%B1%A4%E3%81%B8%EF%BC%89">#</a></h5>
+<p><img src="./img/component_design/move_file_PtoC.png" alt="img" title="入出力ファイルの設定"></p>
+<h5 id="%E5%9B%B32-%E8%A6%AA%E3%81%8B%E3%82%89%E5%AD%90%E3%81%B8%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%BB%A2%E9%80%81">図2 親から子へのファイル転送 <a class="heading-anchor-permalink" href="#%E5%9B%B32-%E8%A6%AA%E3%81%8B%E3%82%89%E5%AD%90%E3%81%B8%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%BB%A2%E9%80%81">#</a></h5>
+<p><img src="./img/component_design/PtoC_file_connection.png" alt="img" title="親子間ファイルの接続"></p>
+<h3 id="%E2%97%AF%E5%AD%90%E9%9A%8E%E5%B1%A4%E3%81%8B%E3%82%89%E8%A6%AA%E9%9A%8E%E5%B1%A4%E3%81%B8"><u>◯子階層から親階層へ</u> <a class="heading-anchor-permalink" href="#%E2%97%AF%E5%AD%90%E9%9A%8E%E5%B1%A4%E3%81%8B%E3%82%89%E8%A6%AA%E9%9A%8E%E5%B1%A4%E3%81%B8">#</a></h3>
+<ol>
+<li>渡し元コンポーネント（workflow0）の出力ファイルを設定する（図3参照）</li>
+<li>渡し先コンポーネント（task1）の入力ファイル名を設定する</li>
+<li>渡し元コンポーネント（workflow0）の出力ファイルを渡し先コンポーネント（task1）の入力ファイルへ接続する</li>
+<li>コンポーネントの子階層へ遷移する（図4参照）</li>
+<li>子コンポーネント（childTask）の出力ファイルを設定する</li>
+<li>子コンポーネント（childTask）の出力ファイルを親コンポーネントの出力ファイルへ接続する</li>
+</ol>
+<h5 id="%E5%9B%B33-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E5%87%BA%E5%8A%9B%E3%83%BB%E5%85%A5%E5%8A%9B%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%A8%AD%E5%AE%9A%EF%BC%88%E5%AD%90%E9%9A%8E%E5%B1%A4%E3%81%8B%E3%82%89%E8%A6%AA%E9%9A%8E%E5%B1%A4%E3%81%B8%EF%BC%89">図3 コンポーネントの出力・入力ファイル設定（子階層から親階層へ） <a class="heading-anchor-permalink" href="#%E5%9B%B33-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E5%87%BA%E5%8A%9B%E3%83%BB%E5%85%A5%E5%8A%9B%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%A8%AD%E5%AE%9A%EF%BC%88%E5%AD%90%E9%9A%8E%E5%B1%A4%E3%81%8B%E3%82%89%E8%A6%AA%E9%9A%8E%E5%B1%A4%E3%81%B8%EF%BC%89">#</a></h5>
+<p><img src="./img/component_design/move_file_CtoP.png" alt="img" title="入出力ファイルの設定"></p>
+<h5 id="%E5%9B%B34-%E5%AD%90%E3%81%8B%E3%82%89%E8%A6%AA%E3%81%B8%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%BB%A2%E9%80%81">図4 子から親へのファイル転送 <a class="heading-anchor-permalink" href="#%E5%9B%B34-%E5%AD%90%E3%81%8B%E3%82%89%E8%A6%AA%E3%81%B8%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%BB%A2%E9%80%81">#</a></h5>
+<p><img src="./img/component_design/CtoP_file_connection.png" alt="img" title="親子間ファイルの接続"></p>
+<p>ただし、子階層において親の入力ファイルを直接出力ファイルへ渡すこと（input1.txtをoutput2.txtへ接続する　図4参照）はできません。</p>
+
+      </article>
+    </div>
+    <script>
+      // Load contents.json if you need it
+    </script>
+    <script>
+      // FROM http://purecss.io/js/ui.js
+      (function(window, document) {
+        var layout = document.getElementById("layout"),
+          menu = document.getElementById("menu"),
+          menuLink = document.getElementById("menuLink");
+
+        function toggleClass(element, className) {
+          var classes = element.className.split(/\s+/),
+            length = classes.length,
+            i = 0;
+
+          for (; i < length; i++) {
+            if (classes[i] === className) {
+              classes.splice(i, 1);
+              break;
+            }
+          }
+          // The className is not found
+          if (length === classes.length) {
+            classes.push(className);
+          }
+
+          element.className = classes.join(" ");
+        }
+
+        menuLink.onclick = function(e) {
+          var active = "active";
+
+          e.preventDefault();
+          toggleClass(layout, active);
+          toggleClass(menu, active);
+          toggleClass(menuLink, active);
+        };
+      })(this, this.document);
+    </script>
+  </body>
+</html>
