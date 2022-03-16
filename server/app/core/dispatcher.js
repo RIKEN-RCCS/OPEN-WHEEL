@@ -12,7 +12,7 @@ const glob = require("glob");
 const FileType = require("file-type");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { interval, componentJsonFilename } = require("../db/db");
+const { componentJsonFilename } = require("../db/db");
 const { exec } = require("./executer");
 const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
@@ -423,6 +423,11 @@ class Dispatcher extends EventEmitter {
             this.hasFailedComponent = true;
             return Promise.reject(err);
           })
+          .finally(()=>{
+            setImmediate(()=>{
+              this.emit("dispatch");
+            });
+          })
       );
     }//end of while loop
 
@@ -453,10 +458,7 @@ class Dispatcher extends EventEmitter {
       }
       this.emit("done", state);
     } else {
-      //call next dispatcher
-      setTimeout(()=>{
-        this.emit("dispatch");
-      }, interval);
+      this.once("dispatch", this._dispatch);
     }
   }
 
@@ -475,7 +477,7 @@ class Dispatcher extends EventEmitter {
 
   async start() {
     if (this.listenerCount("dispatch") === 0) {
-      this.on("dispatch", this._dispatch);
+      this.once("dispatch", this._dispatch);
     }
 
     for (const child of this.children) {
@@ -790,7 +792,6 @@ class Dispatcher extends EventEmitter {
 
     const [getParamSpace, getScatterFiles, scatterFiles, gatherFiles, rewriteTargetFile] = makeCmd(paramSettings);
     const paramSpace = await getParamSpace(templateRoot);
-    //TODO check paramSpace
 
     //ignore all filenames in file type parameter space and parameter study setting file
     const ignoreFiles = [componentJsonFilename, paramSettingsFilename]
@@ -834,7 +835,6 @@ class Dispatcher extends EventEmitter {
         return e.value;
       })
         .map((e)=>{
-          //TODO files should be deliverd under specific component
           const src = path.resolve(templateRoot, e);
           const dst = path.resolve(instanceRoot, e);
           this.logger.debug("parameter: copy from", src, "to ", dst);
