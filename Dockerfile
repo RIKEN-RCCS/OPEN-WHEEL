@@ -24,7 +24,7 @@ RUN apt-get update && apt -y install curl git &&\
 FROM runner as test
 WORKDIR /usr/src/
 COPY --from=builder /usr/src/server/ .
-CMD ["npm", "run", "coverage:server"]
+CMD ["npm", "run", "test"]
 
 # run WHEEL
 FROM runner as exec
