@@ -90,7 +90,7 @@ function drawNodes (nodesInWF) {
         const nodeType = e.target.instance.parent(".node").data("type")
         if (nodeType === "workflow" || nodeType === "parameterStudy" || nodeType === "for" || nodeType === "while" || nodeType === "foreach" || nodeType === "stepjob") {
           const currentWorkFlowID = e.target.instance.parent(".node").data("ID")
-          SIO.emitGlobal("getWorkflow", projectRootDir, currentWorkFlowID)
+          SIO.emitGlobal("getWorkflow", projectRootDir, currentWorkFlowID, SIO.generalCallback)
         }
       })
     nodes.push(node)

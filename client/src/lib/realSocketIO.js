@@ -4,21 +4,14 @@ const SocketIOFileUpload = require("socketio-file-upload");
 
 let initialized=false;
 let socket = null;
-
-let initializedGlobal=false;
-let socketGlobal = null;
 let uploader = null;
-function init () {
-  socket = io("/workflow", { transposrts: ["websocket"] });
-  initialized=true;
-}
 
 export default {
-  initGlobal(auth){
-    socketGlobal = auth ? io("/", { transposrts: ["websocket"], auth }) : io("/", { transposrts: ["websocket"] });
-    uploader = new SocketIOFileUpload(socketGlobal);
+  init(auth){
+    socket = auth ? io("/", { transposrts: ["websocket"], auth }) : io("/", { transposrts: ["websocket"] });
+    uploader = new SocketIOFileUpload(socket);
     uploader.chunkSize = 1024 * 100;
-    initializedGlobal=true;
+    initialized=true;
   },
   generalCallback: (rt)=>{
     if(rt instanceof Error){
@@ -26,16 +19,16 @@ export default {
     }
   },
   onGlobal: (event, callback)=>{
-    if (! initializedGlobal) {
+    if (! initialized) {
       init();
     }
-    socketGlobal.on(event, callback);
+    socket.on(event, callback);
   },
   emitGlobal: (event, ...args)=>{
-    if (! initializedGlobal) {
+    if (! initialized) {
       init();
     }
-    socketGlobal.emit(event, ...args);
+    socket.emit(event, ...args);
   },
   close: ()=>{
     if (! initialized) {
@@ -43,30 +36,6 @@ export default {
     }
     socket.close();
     socket = null;
-  },
-  on: (event, callback)=>{
-    if (! initialized) {
-      init();
-    }
-    socket.on(event, callback);
-  },
-  once: (event, callback)=>{
-    if (! initialized) {
-      init();
-    }
-    socket.once(event, callback);
-  },
-  off: (event, callback)=>{
-    if (! initialized) {
-      init();
-    }
-    socket.off(event, callback);
-  },
-  emit: (event, ...args)=>{
-    if (! initialized) {
-      init();
-    }
-    socket.emit(event, ...args);
   },
   listenOnDrop: (...args)=>{
     if (! initialized) {

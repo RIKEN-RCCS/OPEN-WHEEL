@@ -27,8 +27,6 @@ const projectJsonFileOnly = new RegExp(`^.*(?:${escapeRegExp(projectJsonFilename
  * @param {Function} cb - call back function
  */
 const onGetFileList = async(projectRootDir, msg, cb)=>{
-  logger.debug(projectRootDir, "getFileList");
-
   const target = msg.path ? path.normalize(convertPathSep(msg.path)) : rootDir;
   const request = target;
 

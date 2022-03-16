@@ -13,18 +13,32 @@ const { onSaveFile, onOpenFile } = require("./rapid.js");
 const { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } = require("./remoteHost.js");
 const { onGetJobSchedulerList, onGetJobSchedulerLabelList } = require("./jobScheduler.js");
 const {
+  onCreateNode,
+  onUpdateNode,
+  onRemoveNode,
   onAddInputFile,
   onAddOutputFile,
   onRenameInputFile,
   onRenameOutputFile,
+  onAddLink,
+  onAddFileLink,
   onRemoveInputFile,
   onRemoveOutputFile,
-  onUpdateNode
+  onRemoveLink,
+  onRemoveFileLink
 } = require("./workflowEditor.js");
+const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
 const logger = getLogger();
 
 const registerHandlers = (socket, Siofu)=>{
+  //
+  //read information
+  //
+  socket.on("getComponentTree", sendComponentTree.bind(null, socket));
+  socket.on("getTaskStateList", sendTaskStateList.bind(null, socket));
+
+
   //
   //projectController
   //
@@ -39,15 +53,21 @@ const registerHandlers = (socket, Siofu)=>{
   //workflow editor
   //
   //create
+  socket.on("createNode", onCreateNode.bind(null, socket));
   socket.on("addInputFile", onAddInputFile.bind(null, socket));
   socket.on("addOutputFile", onAddOutputFile.bind(null, socket));
+  socket.on("addLink", onAddLink.bind(null, socket));
+  socket.on("addFileLink", onAddFileLink.bind(null, socket));
   //update
   socket.on("renameInputFile", onRenameInputFile.bind(null, socket));
   socket.on("renameOutputFile", onRenameOutputFile.bind(null, socket));
   socket.on("updateNode", onUpdateNode.bind(null, socket));
   //delete
+  socket.on("removeNode", onRemoveNode.bind(null, socket));
   socket.on("removeInputFile", onRemoveInputFile.bind(null, socket));
   socket.on("removeOutputFile", onRemoveOutputFile.bind(null, socket));
+  socket.on("removeLink", onRemoveLink.bind(null, socket));
+  socket.on("removeFileLink", onRemoveFileLink.bind(null, socket));
 
   //
   //filemanager

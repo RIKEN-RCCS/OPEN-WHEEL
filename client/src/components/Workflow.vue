@@ -321,29 +321,16 @@
     },
     mounted: function () {
       const projectRootDir = readCookie("rootDir");
-      SIO.initGlobal({projectRootDir});
+      SIO.init({projectRootDir});
       const ID = readCookie("root");
       this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);
 
-      SIO.on("projectJson", (projectJson)=>{
-        this.projectJson = projectJson;
-        this.commitProjectState(projectJson.state.toLowerCase());
-        this.commitComponentPath(projectJson.componentPath);
-        this.commitWaitingProjectJson(false);
-      });
-      SIO.on("workflow", (wf)=>{
-        if(this.currentComponent!==null && wf.ID !== this.currentComponent.ID){
-          this.commitSelectedComponent(null);
-        }
-        this.commitCurrentComponent(wf);
-        this.commitWaitingWorkflow(false);
-      });
-      SIO.on("componentTree", (componentTree)=>{
+      SIO.onGlobal("componentTree", (componentTree)=>{
         this.commitComponentTree(componentTree);
       });
-      SIO.on("showMessage", this.showSnackbar);
-      SIO.on("askPassword", (hostname, cb)=>{
+      SIO.onGlobal("showMessage", this.showSnackbar);
+      SIO.onGlobal("askPassword", (hostname, cb)=>{
         this.pwCallback = (pw)=>{
           cb(pw);
         };
@@ -353,30 +340,11 @@
       SIO.onGlobal("hostList", (hostList)=>{
         this.commitRemoteHost(hostList);
       });
-      SIO.emitGlobal("getHostList", (hostList)=>{
-        this.commitRemoteHost(hostList);
-      });
-      SIO.emitGlobal("getJobSchedulerList", (JSList)=>{
-        this.commitJobScheduler(JSList);
-      });
-      SIO.emit("getComponentTree", projectRootDir, (componentTree)=>{
-        this.commitComponentTree(componentTree);
-      });
-
-      this.commitWaitingProjectJson(true);
-      SIO.emitGlobal("getProjectJson", projectRootDir, (rt)=>{
-        debug("getProjectJson done", rt);
-      });
       SIO.onGlobal("projectJson", (projectJson)=>{
         this.projectJson = projectJson;
         this.commitProjectState(projectJson.state.toLowerCase());
         this.commitComponentPath(projectJson.componentPath);
         this.commitWaitingProjectJson(false);
-      });
-
-      this.commitWaitingWorkflow(true);
-      SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
-        debug("getWorkflow done", rt);
       });
       SIO.onGlobal("workflow", (wf)=>{
         if(this.currentComponent!==null && wf.ID !== this.currentComponent.ID){
@@ -384,6 +352,23 @@
         }
         this.commitCurrentComponent(wf);
         this.commitWaitingWorkflow(false);
+      });
+
+      SIO.emitGlobal("getHostList", (hostList)=>{
+        this.commitRemoteHost(hostList);
+      });
+      SIO.emitGlobal("getJobSchedulerList", (JSList)=>{
+        this.commitJobScheduler(JSList);
+      });
+      SIO.emitGlobal("getComponentTree", projectRootDir, projectRootDir, SIO.generalCallback);
+
+      this.commitWaitingProjectJson(true);
+      SIO.emitGlobal("getProjectJson", projectRootDir, (rt)=>{
+        debug("getProjectJson done", rt);
+      });
+      this.commitWaitingWorkflow(true);
+      SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
+        debug("getWorkflow done", rt);
       });
       this.$router.replace({ name: "graph" })
         .catch((err)=>{

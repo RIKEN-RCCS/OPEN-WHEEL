@@ -40,7 +40,7 @@
       window.addEventListener("resize", this.fit2);
 
       for (const event of this.eventNames) {
-        SIO.on(event, (data)=>{
+        SIO.onGlobal(event, (data)=>{
           this.term.writeln(data);
           this.$emit("newlog");
         });

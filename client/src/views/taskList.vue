@@ -37,6 +37,7 @@
   </v-treeview>
 </template>
 <script>
+  import { mapState } from "vuex";
   import SIO from "@/lib/socketIOWrapper.js";
   import { taskStateList2Tree } from "@/lib/taskStateList2Tree.js";
   import componentButton from "@/components/common/componentButton.vue";
@@ -59,9 +60,12 @@
       list: function () {
         return [this.taskStateTree];
       },
+      ...mapState([
+        "projectRootDir"
+      ]),
     },
     mounted: function () {
-      SIO.on("taskStateList", async (taskStateList)=>{
+      SIO.onGlobal("taskStateList", async (taskStateList)=>{
         let isChanged=false;
         if(taskStateList.length===0){
           this.taskStateTree = { children: [], root: true, ...headers };
@@ -78,7 +82,7 @@
           this.$refs.tree.updateAll(true);
         }
       });
-      SIO.emit("getTaskStateList", (rt)=>{
+      SIO.emitGlobal("getTaskStateList", this.projectRootDir, (rt)=>{
         console.log("getTaskStateList done", rt);
       });
     },

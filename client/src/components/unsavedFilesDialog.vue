@@ -53,7 +53,7 @@
       };
     },
     mounted () {
-      SIO.on("unsavedFiles", (unsavedFiles, cb)=>{
+      SIO.onGlobal("unsavedFiles", (unsavedFiles, cb)=>{
         if (unsavedFiles.length === 0) {
           return;
         }

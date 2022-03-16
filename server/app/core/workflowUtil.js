@@ -22,7 +22,10 @@ async function getComponentDir(projectRootDir, targetID) {
 async function getParentDir(projectRootDir, targetID) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   const componentPath = projectJson.componentPath[targetID];
-  return componentPath ? path.resolve(projectRootDir, path.dirname(componentPath)) : null;
+  if (typeof componentPath !== "string" || componentPath === "./") {
+    return projectRootDir;
+  }
+  return path.resolve(projectRootDir, path.dirname(componentPath));
 }
 
 async function getComponentRelativePath(projectRootDir, targetID, srcID) {

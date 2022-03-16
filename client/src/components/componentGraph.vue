@@ -79,15 +79,7 @@
         //   console.log("DEUBG: out of range drop!", payload.pos);
         // }
 
-        SIO.emit("createNode", payload, (rt)=>{
-          if (rt !== true) return;
-          // update component Map
-          SIO.emitGlobal("getProjectJson", this.projectRootDir);
-          // update componant Tree
-          SIO.emit("getComponentTree", this.projectRootDir, (componentTree)=>{
-            this.commitComponentTree(componentTree);
-          });
-        });
+        SIO.emitGlobal("createNode", this.projectRootDir, payload, SIO.generalCallback);
       },
       fit: function () {
         const magicNumber = 17;

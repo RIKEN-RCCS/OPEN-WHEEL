@@ -69,9 +69,9 @@ export class SvgNodeUI {
       numLower = node.type === "if" ? 3 : 2
 
       if (numLower === 2) {
-        [this.lowerPlug, tmp] = parts.createLower(svg, boxX, boxY, boxBbox.width / numLower, boxBbox.height, config.plug_color.flow, SIO, node.type)
+        [this.lowerPlug, tmp] = parts.createLower(svg, boxX, boxY, boxBbox.width / numLower, boxBbox.height, config.plug_color.flow, SIO, node.type, projectRootDir)
       } else {
-        [this.lowerPlug, tmp] = parts.createLower(svg, boxX, boxY, boxBbox.width / numLower * 2, boxBbox.height, config.plug_color.flow, SIO, node.type)
+        [this.lowerPlug, tmp] = parts.createLower(svg, boxX, boxY, boxBbox.width / numLower * 2, boxBbox.height, config.plug_color.flow, SIO, node.type,projectRootDir)
       }
       this.lowerPlug.addClass("lowerPlug").data({ next: node.next })
         .attr("id", `${node.name}_lower`)
@@ -83,7 +83,7 @@ export class SvgNodeUI {
     if (node.type !== "viewer") {
       this.group.data({ outputFiles: node.outputFiles })
       node.outputFiles.forEach((output, fileIndex)=>{
-        const [plug, cable] = parts.createConnector(svg, boxX, boxY, boxBbox.width, textHeight * fileIndex, SIO, node.type)
+        const [plug, cable] = parts.createConnector(svg, boxX, boxY, boxBbox.width, textHeight * fileIndex, SIO, node.type,projectRootDir)
         const outputName = output.name.replace(/([*+?^=!:$@%&#,"'~;<>{}()|[\]\/\\])/g, "")
         plug.data({ name: output.name, dst: output.dst }).attr("id", `${node.name}_${outputName}_connector`)
         this.group.add(plug)
@@ -103,7 +103,7 @@ export class SvgNodeUI {
     }
 
     if (numLower === 3) {
-      [this.lower2Plug, tmp] = parts.createLower(svg, boxX, boxY, boxBbox.width / numLower, boxBbox.height, config.plug_color.elseFlow, SIO)
+      [this.lower2Plug, tmp] = parts.createLower(svg, boxX, boxY, boxBbox.width / numLower, boxBbox.height, config.plug_color.elseFlow, SIO, node.type, projectRootDir)
       this.lower2Plug.addClass("elsePlug").data({ else: node.else })
         .attr("id", `${node.name}_else`)
       this.group.add(this.lower2Plug).add(tmp)
@@ -177,7 +177,7 @@ export class SvgNodeUI {
         this.nextLinks.push(cable)
         dstPlug.on("click", (e)=>{
           if (!this.editDisable) {
-            SIO.emit("removeLink", { src: this.group.data("ID"), dst: dstIndex, isElse: false })
+            SIO.emitGlobal("removeLink",this.projectRootDir,  { src: this.group.data("ID"), dst: dstIndex, isElse: false }, SIO.generalCallback)
           } else {
             e.preventDefault()
           }
@@ -196,7 +196,7 @@ export class SvgNodeUI {
         this.elseLinks.push(cable)
         dstPlug.on("click", (e)=>{
           if (!this.editDisable) {
-            SIO.emit("removeLink", { src: this.group.data("ID"), dst: dstIndex, isElse: true })
+            SIO.emitGlobal("removeLink",this.projectRootDir, { src: this.group.data("ID"), dst: dstIndex, isElse: true }, SIO.generalCallback)
           } else {
             e.preventDefault()
           }
@@ -218,7 +218,7 @@ export class SvgNodeUI {
 
         dstPlug.on("click", (e)=>{
           if (!this.editDisable) {
-            SIO.emit("removeFileLink", this.group.data("ID"), srcPlug.data("name"), dst.dstNode, dst.dstName)
+            SIO.emitGlobal("removeFileLink",this.projectRootDir, this.group.data("ID"), srcPlug.data("name"), dst.dstNode, dst.dstName, SIO.generalCallback)
           } else {
             e.preventDefault()
           }
@@ -355,7 +355,7 @@ export class SvgParentNodeUI {
       const connectorYpos = 32
       const connectorHeight = 32
       const connectorInterval = connectorHeight * 1.5
-      const [plug, cable] = parts.createParentConnector(svg, connectorXpos, connectorYpos, 0, connectorInterval * fileIndex, SIO, parentnode.type)
+      const [plug, cable] = parts.createParentConnector(svg, connectorXpos, connectorYpos, 0, connectorInterval * fileIndex, SIO, parentnode.type, projectRootDir)
       const inputName = input.name.replace(/([*+?^=!:$@%&#,"'~;<>{}()|[\]\/\\])/g, "")
       plug.data({ name: input.name, forwardTo: input.forwardTo }).attr("id", `${parentnode.name}_${inputName}_connector`)
       this.group.add(plug)
@@ -398,7 +398,7 @@ export class SvgParentNodeUI {
           this.inputFileLinks.push(cable)
 
           dstPlug.on("click", (e)=>{
-            SIO.emit("removeFileLink", this.group.data("ID"), srcPlug.data("name"), dst.dstNode, dst.dstName)
+            SIO.emitGlobal("removeFileLink",this.projectRootDir, this.group.data("ID"), srcPlug.data("name"), dst.dstNode, dst.dstName, SIO.generalCallback)
           })
         })
       }

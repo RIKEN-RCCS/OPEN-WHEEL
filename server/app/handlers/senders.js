@@ -5,11 +5,14 @@
  */
 "use strict";
 const path = require("path");
+const klaw = require("klaw");
+
 const { getThreeGenerationFamily } = require("../core/workflowUtil.js");
 const { getLogger } = require("../logSettings");
 const { getComponentTree } = require("../core/componentFilesOperator");
-const { projectJsonFilename } = require("../db/db");
+const { projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { readJsonGreedy } = require("../core/fileUtils");
+const { taskStateFilter } = require("../core/taskUtil");
 
 //read and send current workflow and its child and grandson
 async function sendWorkflow(socket, cb, projectRootDir, parentComponentDir = "") {
@@ -19,8 +22,7 @@ async function sendWorkflow(socket, cb, projectRootDir, parentComponentDir = "")
   if (typeof projectRootDir !== "string") {
     logger.error("sendWorkflow called without projectRootDir!!");
   }
-  const target = !path.isAbsolute(parentComponentDir) ? path.resolve(projectRootDir, parentComponentDir) : parentComponentDir;
-
+  const target = path.isAbsolute(parentComponentDir) ? parentComponentDir : path.resolve(projectRootDir, parentComponentDir);
 
   try {
     const wf = await getThreeGenerationFamily(projectRootDir, target);
@@ -50,8 +52,30 @@ async function sendProjectJson(socket, projectRootDir) {
   socket.emit("projectJson", projectJson);
 }
 
+//recursive read component meta data and send task state tree data as list
+async function sendTaskStateList(socket, projectRootDir) {
+  const p = [];
+  klaw(projectRootDir)
+    .on("data", (item)=>{
+      if (!item.path.endsWith(componentJsonFilename)) {
+        return;
+      }
+      p.push(readJsonGreedy(item.path));
+    })
+    .on("end", async()=>{
+      const jsonFiles = await Promise.all(p);
+      const data = jsonFiles
+        .filter((e)=>{
+          return e.type === "task" && Object.prototype.hasOwnProperty.call(e, "ancestorsName");
+        })
+        .map(taskStateFilter);
+      await socket.emit("taskStatelist", data);
+    });
+}
+
 module.exports = {
   sendWorkflow,
   sendComponentTree,
-  sendProjectJson
+  sendProjectJson,
+  sendTaskStateList
 };

@@ -61,22 +61,27 @@ sio.on("connection", (socket)=>{
   //TODO このタイミングでworkflowを開こうとしている時はroomに入れる
   //client側でprojectRootDirはこの値に入れている
   //socket.handshake.auth.projectRootDir
+  const projectRootDir = socket.handshake.auth.projectRootDir;
+  if (typeof projectRootDir === "string") {
+    socket.join(projectRootDir);
+  }
   socket.prependAny((eventName, ...args)=>{
     if (eventName.startsWith("siofu")) {
       return;
     }
-    //remove callback function
+    //get callback argument
     const cb = args.pop();
-    if (typeof cb !== "function") {
-      throw new Error("socketIO API must be called with call back function");
-    }
-
-    //cut sensitive values
+    //remove sensitive values
     if (eventName === "tryToConnect") {
       args.pop();
     }
     //this must go to trace level(file only, never go to console)
     logger.debug(`[socketIO API] ${eventName} recieved.`, args);
+
+    //sanity check for ack
+    if (typeof cb !== "function") {
+      throw new Error("socketIO API must be called with call back function");
+    }
   });
   registerHandlers(socket, Siofu);
 });
@@ -84,7 +89,7 @@ sio.on("connection", (socket)=>{
 //routing
 const routes = {
   home: require(path.resolve(__dirname, "routes/home")),
-  workflow: require(path.resolve(__dirname, "routes/workflow"))(sio),
+  workflow: require(path.resolve(__dirname, "routes/workflow")),
   remotehost: require(path.resolve(__dirname, "routes/remotehost")),
   jobScript: require(path.resolve(__dirname, "routes/jobScript"))(sio)
 };

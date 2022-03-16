@@ -85,7 +85,7 @@
     methods: {
       goto: function (item) {
         const requestID = isContainer(item) ? item.ID : item.parent;
-        SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID);
+        SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);
         this.showComponentTree = false;
       },
     },

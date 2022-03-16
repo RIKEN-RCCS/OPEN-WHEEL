@@ -17,27 +17,26 @@ const {
   addFileLink,
   removeLink,
   removeFileLink,
-  cleanComponent,
   removeComponent,
   createNewComponent,
-  updateComponent,
-  updateStepNumber,
-  getComponentTree
+  updateComponent
 } = require("../core/componentFilesOperator.js");
 const { getParentDir } = require("../core/workflowUtil.js");
 const { sendWorkflow, sendProjectJson, sendComponentTree } = require("./senders.js");
 const { projectJsonFilename } = require("../db/db");
 const { readJsonGreedy } = require("../core/fileUtils");
+const { convertPathSep } = require("../core/pathUtils");
 
 async function generalHandler(socket, func, funcname, projectRootDir, cb, ID) {
   try {
     await func();
   } catch (e) {
-    getLogger(projectRootDir).error(`${funcname} failed`, e);
+    //getLogger(projectRootDir).error(`${funcname} failed`, e);
+    getLogger().error(`${funcname} failed`, e);
     cb(e);
     return;
   }
-  const parentDir = ID ? getParentDir(ID) : projectRootDir;
+  const parentDir = ID ? await getParentDir(ID) : projectRootDir;
   await sendWorkflow(socket, cb, projectRootDir, parentDir);
 }
 
@@ -67,8 +66,6 @@ async function onRenameOutputFile(socket, projectRootDir, ID, index, newName, cb
 }
 
 async function onUpdateNode(socket, projectRootDir, ID, prop, value, cb) {
-  getLogger(projectRootDir).debug("updateNode event recieved:", projectRootDir, ID, prop, value);
-
   try {
     await updateComponent(projectRootDir, ID, prop, value);
     const filename = path.resolve(projectRootDir, projectJsonFilename);
@@ -92,6 +89,33 @@ async function onUpdateNode(socket, projectRootDir, ID, prop, value, cb) {
   cb(true);
 }
 
+async function onCreateNode(socket, projectRootDir, request, cb) {
+  await generalHandler(socket, createNewComponent.bind(null, projectRootDir, convertPathSep(request.path), request.type, request.pos), "createNewComponent", projectRootDir, cb);
+  await sendProjectJson(socket, projectRootDir);
+  return sendComponentTree(socket, projectRootDir, projectRootDir);
+}
+
+async function onRemoveNode(socket, projectRootDir, targetID, cb) {
+  await generalHandler(socket, removeComponent.bind(null, projectRootDir, targetID), "removeComponent", projectRootDir, cb);
+  await sendProjectJson(socket, projectRootDir);
+  return sendComponentTree(socket, projectRootDir, projectRootDir);
+}
+
+
+async function onAddLink(socket, projectRootDir, msg, cb) {
+  return generalHandler(socket, addLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "addLink", projectRootDir, cb);
+}
+
+async function onRemoveLink(socket, projectRootDir, msg, cb) {
+  return generalHandler(socket, removeLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "removeLink", projectRootDir, cb);
+}
+
+async function onAddFileLink(socket, projectRootDir, srcNode, srcName, dstNode, dstName, cb) {
+  return generalHandler(socket, addFileLink.bind(null, projectRootDir, srcNode, srcName, dstNode, dstName), "addFileLink", projectRootDir, cb);
+}
+async function onRemoveFileLink(socket, projectRootDir, srcNode, srcName, dstNode, dstName, cb) {
+  return generalHandler(socket, removeFileLink.bind(null, projectRootDir, srcNode, srcName, dstNode, dstName), "removeFileLink", projectRootDir, cb);
+}
 
 module.exports = {
   onAddInputFile,
@@ -100,5 +124,11 @@ module.exports = {
   onRenameOutputFile,
   onRemoveInputFile,
   onRemoveOutputFile,
-  onUpdateNode
+  onUpdateNode,
+  onCreateNode,
+  onRemoveNode,
+  onAddLink,
+  onAddFileLink,
+  onRemoveLink,
+  onRemoveFileLink
 };

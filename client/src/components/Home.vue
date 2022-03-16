@@ -214,7 +214,7 @@
     mounted: function () {
       this.pathSep = readCookie("pathSep");
       this.home = readCookie("home");
-      SIO.initGlobal();
+      SIO.init();
       SIO.onGlobal("projectList", (data)=>{
         this.projectList.splice(0, this.projectList.length, ...data);
       });

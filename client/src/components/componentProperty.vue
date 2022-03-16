@@ -654,15 +654,13 @@
         commitSelectedComponent: "selectedComponent",
       }),
       deleteComponent () {
-        SIO.emit("removeNode", this.selectedComponent.ID, (rt)=>{
+        SIO.emitGlobal("removeNode", this.selectedComponent.ID, (rt)=>{
           if (!rt) {
             return;
           }
           this.commitSelectedComponent(null);
           // update componentTree
-          SIO.emit("getComponentTree", this.projectRootDir, (componentTree)=>{
-            this.commitComponentTree(componentTree);
-          });
+          SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
         });
       },
       deleteSourceOutputFile(){
@@ -718,7 +716,7 @@
         // 仕様を検討のうえ、ガードするなら何か方法を考える必要がある
         if (this.selectedComponent === null) return;
 
-        SIO.emit("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
+        SIO.emitGlobal("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
       },
       addToIncludeList (v) {
         this.copySelectedComponent.include = addGlobPattern(this.copySelectedComponent.include, v.name);

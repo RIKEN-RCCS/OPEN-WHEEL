@@ -1168,7 +1168,7 @@ function initializeCableInfo (cable, plug, clone, originX, originY) {
 }
 
 // plug
-function createLCPlugAndCable (svg, originX, originY, moveY, color, plugShape, cableDirection, counterpart, type, parent, SIO, callback) {
+function createLCPlugAndCable (svg, originX, originY, moveY, color, plugShape, cableDirection, counterpart, type, parent, SIO, projectRootDir, callback) {
   const plug = svg.polygon(plugShape).fill(color)
     .addClass("connectorPlug")
   const bbox = plug.bbox()
@@ -1235,7 +1235,7 @@ function createLCPlugAndCable (svg, originX, originY, moveY, color, plugShape, c
               }
               // 同名ファイルが存在しないため、recepterを作成する
               if (hitPlug === null) {
-                SIO.emit("addInputFile", taskNodeID, filename, (result)=>{
+                SIO.emitGlobal("addInputFile",projectRootDir,  taskNodeID, filename, (result)=>{
                   if (result) {
                     let addInputPlug = null
                     addInputPlug = createReceptor(svg, box.x(), box.y(), 0, 10)
@@ -1316,18 +1316,18 @@ function createLCPlugAndCable (svg, originX, originY, moveY, color, plugShape, c
   return [plug, cable.cable]
 }
 
-export function createLower (svg, originX, originY, offsetX, offsetY, color, SIO, type) {
-  return createLCPlugAndCable(svg, originX + offsetX, originY + offsetY, true, color, DPlug, "DU", ".upperPlug", type, false, SIO, function (myIndex, hitIndex, plug) {
-    SIO.emit("addLink", { src: myIndex, dst: hitIndex, isElse: plug.hasClass("elsePlug") })
+export function createLower (svg, originX, originY, offsetX, offsetY, color, SIO, type, projectRootDir) {
+  return createLCPlugAndCable(svg, originX + offsetX, originY + offsetY, true, color, DPlug, "DU", ".upperPlug", type, false, SIO, projectRootDir, function (myIndex, hitIndex, plug) {
+    SIO.emitGlobal("addLink", projectRootDir, { src: myIndex, dst: hitIndex, isElse: plug.hasClass("elsePlug") }, SIO.generalCallback)
   })
 }
 
-export function createConnector (svg, originX, originY, offsetX, offsetY, SIO, type) {
+export function createConnector (svg, originX, originY, offsetX, offsetY, SIO, type, projectRootDir) {
   offsetY += calcFileBasePosY()
-  return createLCPlugAndCable(svg, originX + offsetX, originY + offsetY, false, config.plug_color.file, RPlug, "RL", ".receptorPlug", type, false, SIO, function (myIndex, hitIndex, plug, hitPlug) {
+  return createLCPlugAndCable(svg, originX + offsetX, originY + offsetY, false, config.plug_color.file, RPlug, "RL", ".receptorPlug", type, false, SIO, projectRootDir, function (myIndex, hitIndex, plug, hitPlug) {
     const srcName = plug.data("name")
     const dstName = hitPlug.data("name")
-    SIO.emit("addFileLink", myIndex, srcName, hitIndex, dstName)
+    SIO.emitGlobal("addFileLink",projectRootDir,  myIndex, srcName, hitIndex, dstName, SIO.generalCallback)
   })
 }
 
@@ -1360,11 +1360,11 @@ export function createFilesNameBox (svg, x, y, type, name, inputFiles, outputFil
 }
 
 // parent -> children connector
-export function createParentConnector (svg, originX, originY, offsetX, offsetY, SIO, type) {
-  return createLCPlugAndCable(svg, originX + offsetX, originY + offsetY, false, config.plug_color.file, parentLPlug, "RL", ".receptorPlug", type, true, SIO, function (myIndex, hitIndex, plug, hitPlug) {
+export function createParentConnector (svg, originX, originY, offsetX, offsetY, SIO, type, projectRootDir) {
+  return createLCPlugAndCable(svg, originX + offsetX, originY + offsetY, false, config.plug_color.file, parentLPlug, "RL", ".receptorPlug", type, true, SIO, projectRootDir, function (myIndex, hitIndex, plug, hitPlug) {
     const srcName = plug.data("name")
     const dstName = hitPlug.data("name")
-    SIO.emit("addFileLink", myIndex, srcName, hitIndex, dstName)
+    SIO.emitGlobal("addFileLink",projectRootDir,  myIndex, srcName, hitIndex, dstName, SIO.generalCallback)
   })
 }
 
