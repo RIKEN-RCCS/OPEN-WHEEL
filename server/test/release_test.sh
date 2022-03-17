@@ -17,7 +17,8 @@ function cleanup()
     return
 }
 
-pushd $(dirname $0)
+TEST_DIR=$(dirname $0)
+pushd ${TEST_DIR}
 
 # stop container
 docker stop ${TAG} >& /dev/null
@@ -76,7 +77,7 @@ echo '  "name": "testServer",'
 echo '  "host": "'${IPAddress}'",'
 echo '  "path": "/home/pbsuser",'
 echo '  "keyFile": null,'
-echo '  "username": "pbsuser",'
+echo '  "username": "testuser",'
 echo '  "numJob": 5,'
 echo '  "port": 22,'
 echo '  "id": "dummy-id",'
@@ -91,7 +92,7 @@ echo '}]'
 
 #run UT in container
 docker run --env "WHEEL_TEST_REMOTEHOST=testServer" \
-           --env "WHEEL_TEST_REMOTE_PASSWORD=hoge"  \
+           --env "WHEEL_TEST_REMOTE_PASSWORD=passw0rd"  \
            -v ${PWD}/${CONFIG_DIR}:/usr/src/app/config  \
            -p 8089:8089  \
            -p 8090:8090  \
@@ -99,7 +100,7 @@ docker run --env "WHEEL_TEST_REMOTEHOST=testServer" \
 rt=$?
 
 #get log files from container
-LOG_DIR=$(date "+%Y%m%d-%H%M")
+LOG_DIR=$(dirname ${TEST_DIR})/$(date "+%Y%m%d-%H%M")
 mkdir $LOG_DIR
 docker cp ${TAG}:/usr/src/coverage/ $LOG_DIR
 
