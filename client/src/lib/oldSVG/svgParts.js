@@ -1302,7 +1302,7 @@ function createLCPlugAndCable (svg, originX, originY, moveY, color, plugShape, c
           const myIndex = plug.parent().node.instance.data("ID")
           if (hitIndex !== myIndex) {
             if (type === "stepjobTask") {
-              SIO.emit("updateStepNumber")
+              SIO.emitGlobal("updateStepNumber")
             }
             callback(myIndex, hitIndex, plug, hitPlug)
           }
