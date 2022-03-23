@@ -8,17 +8,16 @@ const { getSsh, getSshHostinfo } = require("./sshManager");
 const { cancel } = require("./executer");
 const { jobScheduler } = require("../db/db");
 const { getLogger } = require("../logSettings.js");
-const logger = getLogger();
 
-async function cancelRemoteJob(projectRootDir, task) {
+async function cancelRemoteJob(task) {
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
   const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
   const JS = jobScheduler[hostinfo.jobScheduler];
   const cancelCmd = `${JS.del} ${task.jobID}`;
-  logger.debug(`cancel job: ${cancelCmd}`);
+  getLogger(task.projectRootDir).debug(`cancel job: ${cancelCmd}`);
   const output = [];
   await ssh.exec(cancelCmd, {}, output, output);
-  logger.debug("cacnel done", output.join());
+  getLogger(task.projectRootDir).debug("cacnel done", output.join());
 }
 
 async function cancelLocalJob() {
@@ -32,10 +31,10 @@ async function killLocalProcess(task) {
   }
 }
 
-async function killTask(projectRootDir, task) {
+async function killTask(task) {
   if (task.remotehostID !== "localhost") {
     if (task.useJobScheduler) {
-      await cancelRemoteJob(projectRootDir, task);
+      await cancelRemoteJob(task);
     } else {
 
       //do nothing for remoteExec at this time
@@ -49,7 +48,7 @@ async function killTask(projectRootDir, task) {
   }
 }
 
-function cancelDispatchedTasks(projectRootDir, tasks) {
+function cancelDispatchedTasks(tasks) {
   for (const task of tasks) {
     if (task.state === "finished" || task.state === "failed") {
       continue;
@@ -57,7 +56,7 @@ function cancelDispatchedTasks(projectRootDir, tasks) {
     const canceled = cancel(task);
 
     if (!canceled) {
-      killTask(projectRootDir, task);
+      killTask(task);
     }
     task.state = "not-started";
   }

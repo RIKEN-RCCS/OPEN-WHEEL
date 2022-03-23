@@ -5,16 +5,17 @@
  */
 "use strict";
 const path = require("path");
-const { readJsonGreedy } = require("../core/fileUtils");
-const { gitAdd, gitResetHEAD, gitClean } = require("../core/gitOperator2");
-const { removeSsh } = require("./sshManager");
-const { taskStateFilter, cancelDispatchedTasks } = require("./taskUtil");
-const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
-
-
+const fs = require("fs-extra");
 const EventEmitter = require("events");
+const { readJsonGreedy } = require("../core/fileUtils");
+const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
+const { removeSsh } = require("./sshManager");
+const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
+const { componentJsonReplacer } = require("./componentFilesOperator");
+const Dispatcher = require("./dispatcher");
+const { getDateString } = require("../lib/utility");
+
 const rootDispatchers = new Map();
-const tasks = new Map();
 const eventEmitters = new Map();
 
 /**
@@ -35,36 +36,89 @@ const eventEmitters = new Map();
  *
  */
 
+
+async function updateProjectState(projectRootDir, state, projectJson) {
+  projectJson.state = state;
+  projectJson.mtime = getDateString(true);
+  const ee = eventEmitters.get(projectRootDir);
+  ee.emit("projectStateChanged", projectJson);
+  return fs.writeJson(path.resolve(projectRootDir, projectJsonFilename), projectJson, { spaces: 4 });
+}
+
+
 const cleanProject = async(projectRootDir)=>{
   const rootDispatcher = rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
+    await rootDispatcher.remove();
     rootDispatchers.delete(projectRootDir);
   }
-  const dispatchedTasks = tasks.get(projectRootDir);
-  await cancelDispatchedTasks(projectRootDir, dispatchedTasks);
-  dispatchedTasks.clear();
   removeSsh(projectRootDir);
-
 
   await gitResetHEAD(projectRootDir);
   await gitClean(projectRootDir);
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-
-  const ee = eventEmitters.get(projectRootDir);
-  if (ee) {
-    ee.emit("projectStateChanged", projectJson);
-  }
+  await updateProjectState(projectRootDir, projectJson);
 };
 
-/*
- *
-  runProject,
-  stopProject,
-  pauseProject,
-  saveProject,
-  revertProject
-  */
+async function pauseProject(projectRootDir) {
+  const rootDispatcher = rootDispatchers.get(projectRootDir);
+  if (rootDispatcher) {
+    await rootDispatcher.pause();
+  }
+
+  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+  await updateProjectState("paused", projectJson);
+}
+
+async function stopProject(projectRootDir) {
+  const rootDispatcher = rootDispatchers.get(projectRootDir);
+  if (rootDispatcher) {
+    await rootDispatcher.stop();
+  }
+
+  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+  await updateProjectState("not-started", projectJson);
+}
+
+async function runProject(projectRootDir) {
+  if (rootDispatchers.has(projectRootDir)) {
+    return new Error(`project is already running ${projectRootDir}`);
+  }
+
+  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+  const rootWF = await readJsonGreedy(path.resolve(projectRootDir, componentJsonFilename));
+
+  const ee = new EventEmitter();
+  eventEmitters.set(projectRootDir, ee);
+
+  const rootDispatcher = new Dispatcher(projectRootDir,
+    rootWF.ID,
+    projectRootDir,
+    getDateString(),
+    projectJson.componentPath,
+    ee.emit.bind(ee));
+
+  if (rootWF.cleanupFlag === "2") {
+    rootDispatcher.doCleanup = defaultCleanupRemoteRoot;
+  }
+  rootDispatchers.set(projectRootDir, rootDispatcher);
+
+  await updateProjectState(projectRootDir, "running", projectJson);
+  rootWF.state = await rootDispatcher.start();
+  await updateProjectState(projectRootDir, rootWF.state, projectJson);
+
+  await fs.writeJson(path.resolve(projectRootDir, componentJsonFilename), rootWF, { spaces: 4, replacer: componentJsonReplacer });
+
+  eventEmitters.delete(projectRootDir);
+  rootDispatchers.delete(projectRootDir);
+  removeSsh(projectRootDir);
+  return rootWF.state;
+}
+
 
 module.exports = {
-  cleanProject
+  cleanProject,
+  runProject,
+  pauseProject,
+  stopProject
 };

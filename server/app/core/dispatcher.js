@@ -21,9 +21,13 @@ const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2, removeIn
 const { componentJsonReplacer, getComponent } = require("./componentFilesOperator");
 const { isInitialComponent } = require("./workflowComponent");
 const { evalCondition } = require("./dispatchUtils");
+const { getLogger } = require("../logSettings.js");
+const { cancelDispatchedTasks } = require("./taskUtil.js");
 
 
 const viewerSupportedTypes = ["png", "jpg", "gif", "bmp"];
+
+const taskDB = new Map();
 
 async function getFiletype(filename) {
   let rt;
@@ -41,17 +45,6 @@ async function getFiletype(filename) {
   return rt;
 }
 
-const silentLogger = {
-  error: ()=>{},
-  warn: ()=>{},
-  info: ()=>{},
-  debug: ()=>{},
-  trace: ()=>{},
-  stdout: ()=>{},
-  stderr: ()=>{},
-  sshout: ()=>{},
-  ssherr: ()=>{}
-};
 
 /**
  * check state is finished or not
@@ -319,27 +312,31 @@ async function replaceTargetFile(srcDir, dstDir, targetFiles, params) {
  * @param {string} cwfID -          current dispatching workflow ID
  * @param {string} cwfDir -         current dispatching workflow directory (absolute path);
  * @param {string} startTime -      project start time
- * @param {Object} logger -         logger instance from log4js
  * @param {Object} componentPath -  componentPath in project Json
  */
 class Dispatcher extends EventEmitter {
-  constructor(projectRootDir, cwfID, cwfDir, startTime, logger, componentPath, emit, ancestorsType) {
+  constructor(projectRootDir, cwfID, cwfDir, startTime, componentPath, emit, ancestorsType) {
     super();
     this.projectRootDir = projectRootDir;
     this.cwfID = cwfID;
     this.cwfDir = cwfDir;
     this.projectStartTime = startTime;
-    this.logger = logger ? logger : silentLogger;
     this.componentPath = componentPath;
     this.emitEvent = emit;
     this.ancestorsType = ancestorsType;
 
     this.nextSearchList = [];
     this.children = new Set(); //child dispatcher instance
-    this.runningTasks = [];
+    this.runningTasks = []; //store currently running tasks from this dispatcher object
+
+    if (!taskDB.has(this.projectRootDir)) {
+      taskDB.set(this.projectRootDir, new Set());
+    }
+    this.dispatchedTasks = taskDB.get(this.projectRootDir); //store all dipatched tasks in this project
     this.hasFailedComponent = false;
     this.hasUnknownComponent = false;
     this.isInitialized = this._asyncInit();
+    this.logger = getLogger(projectRootDir);
   }
 
   async _asyncInit() {
@@ -511,8 +508,11 @@ class Dispatcher extends EventEmitter {
   }
 
   pause() {
+    cancelDispatchedTasks(this.runningTasks);
     this.emit("stop");
     this.removeListener("dispatch", this._dispatch);
+    //to be discussed kill task or
+    this.cancelTasks();
 
     for (const child of this.children) {
       child.pause();
@@ -617,8 +617,8 @@ class Dispatcher extends EventEmitter {
 
     exec(task, this.logger); //exec is async function but dispatcher never wait end of task execution
 
-    //runningTasks in this class and dispatchedTask in Project class is for different purpose, please keep duplicate!
     this.runningTasks.push(task);
+    this.dispatchedTasks.add(task);
     this.emitEvent("taskDispatched", task);
     await fs.writeJson(path.resolve(task.workingDir, componentJsonFilename), task, { spaces: 4, replacer: componentJsonReplacer });
     await this._addNextComponent(task);
@@ -638,7 +638,7 @@ class Dispatcher extends EventEmitter {
     const childDir = path.resolve(this.cwfDir, component.name);
     const ancestorsType = typeof this.ancestorsType === "string" ? `${this.ancestorsType}/${component.type}` : component.type;
     const child = new Dispatcher(this.projectRootDir, component.ID, childDir, this.projectStartTime,
-      this.logger, this.componentPath, this.emitEvent, ancestorsType);
+      this.componentPath, this.emitEvent, ancestorsType);
     this.children.add(child);
 
     //exception should be catched in caller
@@ -768,12 +768,12 @@ class Dispatcher extends EventEmitter {
       return e;
     }) : [];
 
-    return [templateRoot, paramSettingsFilename, paramSettings, targetFiles];
+    return { templateRoot, paramSettingsFilename, paramSettings, targetFiles };
   }
 
   async _PSHandler(component) {
     this.logger.debug("_PSHandler called", component.name);
-    const [templateRoot, paramSettingsFilename, paramSettings, targetFiles] = await this._getTargetFile(component);
+    const { templateRoot, paramSettingsFilename, paramSettings, targetFiles } = await this._getTargetFile(component);
 
     const scatterRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "scatter") ? paramSettings.scatter.map((e)=>{
       return {
@@ -929,7 +929,7 @@ class Dispatcher extends EventEmitter {
 
   async _bulkjobHandler(component) {
     this.logger.debug("_bulkjobHandler called", component.name);
-    const [templateRoot, paramSettingsFilename, paramSettings, targetFiles] = await this._getTargetFile(component);
+    const { templateRoot, paramSettings, targetFiles } = await this._getTargetFile(component);
     const paramSpace = await getParamSpacev2(paramSettings.params, templateRoot);
 
     const bulkNumTotal = getParamSize(paramSpace);
@@ -950,7 +950,8 @@ class Dispatcher extends EventEmitter {
       }).map((e)=>{
         return e.value;
       })
-        .map((e)=>{
+        .map((e)=>{ //eslint-disable-line no-loop-func
+          //I dont know it's OK or harmful to disable no-loop-func here
           const src = path.resolve(templateRoot, e);
           const dst = path.resolve(templateRoot, `${countBulkNum}.${e}`);
           this.logger.debug("parameter: copy from", src, "to ", dst);

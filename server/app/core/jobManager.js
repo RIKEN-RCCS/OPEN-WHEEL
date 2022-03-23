@@ -265,8 +265,7 @@ class JobManager extends EventEmitter {
     this.addTaskList(task);
     const rt = await this.batch.qsubAndWait(task);
     this.dropFromTaskList(task);
-    //TODO なんとかする taskにevent emitterをつける?
-    //emitProjectEvent(task.projetRootDir, "taskStateChanged", task);
+    task.emitEvent(task.projetRootDir, "taskStateChanged", task);
     return rt;
   }
 }

@@ -30,8 +30,8 @@ class EmitArbitrator extends EventEmitter {
         const tmp = this.buffer.splice(0, this.chunkSize);
         await this.promisedEmit(tmp);
       }
-      for (const cb of this.callbacks) {
-        cb();
+      for (const func of this.callbacks) {
+        func();
       }
     } finally {
       setTimeout(()=>{

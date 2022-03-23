@@ -17,23 +17,11 @@ const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gi
 const { getHosts, validateComponents, readComponentJson, getSourceComponents } = require("../core/componentFilesOperator");
 const { getComponentDir, getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
-const { cleanProject } = require("../core/projectController.js");
+const { runProject, cleanProject, pauseProject, stopProject } = require("../core/projectController.js");
 const { sendWorkflow } = require("./senders.js");
+const { addCluster, removeCluster } = require("../core/clusterManager.js");
+const { addSsh } = require("../core/sshManager.js");
 
-/*
- * openedProjects={projectRootDir: {
- *         clients: [client id],    <-- not in use for now
- *         currentWF:{
- *           client id: current wf ID
- *         },
- *         clusters: [cluster],
- *         ssh: [{ssh,sshconfig}]
- * }}
- *
- *
- *
- */
-const openedProjects = new Map();
 
 async function createCloudInstance(projectRootDir, hostinfo, sio) {
   const order = hostinfo.additionalParams || {};
@@ -55,8 +43,7 @@ async function createCloudInstance(projectRootDir, hostinfo, sio) {
   order.debug = logger.trace.bind(logger);
 
   const cluster = await create(order);
-  const project = openedProjects.get(projectRootDir);
-  project.clusters.add(cluster);
+  addCluster(projectRootDir, hostinfo, cluster);
   const config = {
     host: cluster.headNodes[0].publicNetwork.hostname,
     port: hostinfo.port,
@@ -81,7 +68,7 @@ async function createCloudInstance(projectRootDir, hostinfo, sio) {
   }
 
   hostinfo.host = config.host;
-  project.ssh.set(hostinfo.id, { ssh: arssh, hostinfo });
+  addSsh(projectRootDir, hostinfo, arssh);
 }
 
 
@@ -122,7 +109,7 @@ async function askUnsavedFiles(emit, projectRootDir) {
 async function validationCheck(projectRootDir) {
   const rootWF = await readComponentJson(projectRootDir);
   await validateComponents(projectRootDir, rootWF.ID);
-  await gitCommit(projectRootDir, "wheel", "wheel@example.com");//TODO replace name and mail
+  await gitCommit(projectRootDir, "wheel", "wheel@example.com");
 }
 
 async function getSourceCandidates(projectRootDir, ID) {
@@ -159,54 +146,7 @@ async function getSourceFilename(projectRootDir, component, sio) {
   });
 }
 
-
-async function preRunProject(projectRootDir, socket) {
-  await updateProjectState(socket, projectRootDir, "prepareing");
-
-  //resolve source files
-  const sourceComponents = await getSourceComponents(projectRootDir);
-
-  for (const component of sourceComponents) {
-    if (component.disable) {
-      logger.debug(`disabled component: ${component.name}(${component.ID})`);
-      continue;
-    }
-    //ask to user if needed
-    const filename = await getSourceFilename(projectRootDir, component, socket);
-
-    const componentDir = await getComponentDir(projectRootDir, component.ID);
-    const outputFilenames = component.outputFiles.map((e)=>{
-      return e.name;
-    });
-    logger.trace("sourceFile:", filename, "will be used as", outputFilenames);
-
-    await Promise.all(
-      outputFilenames.map((outputFile)=>{
-        if (filename !== outputFile) {
-          return deliverFile(path.resolve(componentDir, filename), path.resolve(componentDir, outputFile));
-        }
-        return Promise.resolve(true);
-      })
-    );
-  }
-
-  //create remotehost connection
-  const hosts = await getHosts(projectRootDir, null);
-  for (const remoteHostName of hosts) {
-    const id = remoteHost.getID("name", remoteHostName);
-    const hostInfo = remoteHost.get(id);
-    if (!hostInfo) {
-      return Promise.reject(new Error(`illegal remote host specified ${remoteHostName}`));
-    }
-    if (hostInfo.type === "aws") {
-      await createCloudInstance(projectRootDir, hostInfo, socket);
-    } else {
-      await createSsh(projectRootDir, remoteHostName, hostInfo, socket);
-    }
-  }
-}
-
-async function onRunProject(socket, projectRootDir, cb) {
+async function onRunProject(socket, projectRootDir, ack) {
   const projectState = await getProjectState(projectRootDir);
   if (projectState !== "paused") {
   //validation check
@@ -214,13 +154,55 @@ async function onRunProject(socket, projectRootDir, cb) {
       validationCheck(projectRootDir);
     } catch (err) {
       logger.error("fatal error occurred while validation phase:", err);
-      cb(err);
+      ack(err);
       return false;
     }
 
     //interactive phase
     try {
-      preRunProject(projectRootDir, socket);
+      await updateProjectState(socket, projectRootDir, "prepareing");
+
+      //resolve source files
+      const sourceComponents = await getSourceComponents(projectRootDir);
+
+      for (const component of sourceComponents) {
+        if (component.disable) {
+          logger.debug(`disabled component: ${component.name}(${component.ID})`);
+          continue;
+        }
+        //ask to user if needed
+        const filename = await getSourceFilename(projectRootDir, component, socket);
+
+        const componentDir = await getComponentDir(projectRootDir, component.ID);
+        const outputFilenames = component.outputFiles.map((e)=>{
+          return e.name;
+        });
+        logger.trace("sourceFile:", filename, "will be used as", outputFilenames);
+
+        await Promise.all(
+          outputFilenames.map((outputFile)=>{
+            if (filename !== outputFile) {
+              return deliverFile(path.resolve(componentDir, filename), path.resolve(componentDir, outputFile));
+            }
+            return Promise.resolve(true);
+          })
+        );
+      }
+
+      //create remotehost connection
+      const hosts = await getHosts(projectRootDir, null);
+      for (const remoteHostName of hosts) {
+        const id = remoteHost.getID("name", remoteHostName);
+        const hostInfo = remoteHost.get(id);
+        if (!hostInfo) {
+          return Promise.reject(new Error(`illegal remote host specified ${remoteHostName}`));
+        }
+        if (hostInfo.type === "aws") {
+          await createCloudInstance(projectRootDir, hostInfo, socket);
+        } else {
+          await createSsh(projectRootDir, remoteHostName, hostInfo, socket);
+        }
+      }
     } catch (err) {
       if (err.reason === "CANCELED") {
         logger.debug(err.message);
@@ -231,7 +213,7 @@ async function onRunProject(socket, projectRootDir, cb) {
       removeCluster(projectRootDir);
       await updateProjectState(socket, projectRootDir, "not-started");
       socket.emit("projectJson", await getProjectJson(projectRootDir));
-      cb(err);
+      ack(err);
       return false;
     }
   }
@@ -242,69 +224,78 @@ async function onRunProject(socket, projectRootDir, cb) {
   } catch (err) {
     logger.error("fatal error occurred while parsing workflow:", err);
     await updateProjectState(socket, projectRootDir, "failed");
-    cb(err);
+    ack(err);
   } finally {
     socket.emit("projectJson", await getProjectJson(projectRootDir));
-    await sendWorkflow(socket, cb, projectRootDir);
-    //試しに素のsocket.emitを使って送る
-    //大量のデータで問題が発生するようであれば、emitLongArrayを復活させて
-    //ブロッキングしながら送る
-    //await emitLongArray(socket.emit, "taskStateList", getUpdatedTaskStateList(projectRootDir), blockSize);
-    //TODO sendersに移動
-    socket.emit("taskStateList", getUpdatedTaskStateList(projectRootDir));
+    await sendWorkflow(socket, ack, projectRootDir);
     removeSsh(projectRootDir);
     removeCluster(projectRootDir);
   }
-  return cb(true);
+  return ack(true);
 }
 
-async function onPauseProject(socket, projectRootDir, cb) {
+async function onPauseProject(socket, projectRootDir, ack) {
   try {
     await pauseProject(projectRootDir);
     await updateProjectState(socket, projectRootDir, "paused");
     socket.emit("projectJson", await getProjectJson(projectRootDir));
-    await sendWorkflow(socket, cb, projectRootDir);
-    //試しに素のsocket.emitを使って送る
-    //大量のデータで問題が発生するようであれば、emitLongArrayを復活させて
-    //ブロッキングしながら送る
-    //await emitLongArray(socket.emit, "taskStateList", getUpdatedTaskStateList(projectRootDir), blockSize);
-    socket.emit("taskStateList", getUpdatedTaskStateList(projectRootDir));
+    await sendWorkflow(socket, ack, projectRootDir);
   } catch (e) {
-    cb(e);
+    ack(e);
     return;
   }
   logger.debug("pause project done");
-  cb(true);
+  ack(true);
 }
-async function onStopProject(socket, projectRootDir, cb) {}
 
-async function onCleanProject(socket, projectRootDir, cb) {
+async function onStopProject(socket, projectRootDir, ack) {
   try {
     await askUnsavedFiles(socket.emit, projectRootDir);
   } catch (e) {
-    logger.warn("clean project canceled");
+    logger.info("stop project canceled");
+    return;
+  }
+  try {
+    await stopProject(projectRootDir);
+    await updateProjectState(socket, projectRootDir, "paused");
+    socket.emit("projectJson", await getProjectJson(projectRootDir));
+    await sendWorkflow(socket, ack, projectRootDir);
+  } catch (e) {
+    ack(e);
+    return;
+  }
+  logger.debug("stop project done");
+  ack(true);
+}
+
+async function onCleanProject(socket, projectRootDir, ack) {
+  try {
+    await askUnsavedFiles(socket.emit, projectRootDir);
+  } catch (e) {
+    logger.info("clean project canceled");
+    return;
   }
 
   try {
     await cleanProject(projectRootDir);
-    await sendWorkflow(socket, cb, projectRootDir, projectRootDir);
+    await sendWorkflow(socket, ack, projectRootDir, projectRootDir);
   } catch (e) {
-    cb(e);
+    ack(e);
   } finally {
-    await sendWorkflow(socket, cb, projectRootDir);
+    await sendWorkflow(socket, ack, projectRootDir);
     socket.emit("taskStateList", []);
     socket.emit("projectJson", await getProjectJson(projectRootDir));
     removeSsh(projectRootDir);
     removeCluster(projectRootDir);
   }
   logger.debug("clean project done");
-  cb(true);
+  ack(true);
 }
 async function onSaveProject(socket, projectRootDir, cb) {
   const projectState = await getProjectState(projectRootDir);
   if (projectState === "not-started") {
     await setProjectState(projectRootDir, "not-started", true);
-    await gitCommit(projectRootDir, "wheel", "wheel@example.com");//TODO replace name and mail
+    await gitCommit(projectRootDir, "wheel", "wheel@example.com");
   } else {
     logger.error(projectState, "project can not be saved");
     return cb(null);

@@ -22,7 +22,7 @@
   "scripts": {
     "start": "node app/index",
     "mocha": "mocha",
-    "lint": "eslint --fix app/**/*.js test/UT/**/*.js",
+    "lint": "eslint --fix app/**/*.js",
     "test": "cross-env WHEEL_DISABLE_LOG=1  WHEEL_DISABLE_CONSOLE_LOG=1 mocha --recursive test --unhandled-rejections=strict",
     "coverage": "nyc --reporter=html --reporter=text npm run test",
     "prepare": "webpack"

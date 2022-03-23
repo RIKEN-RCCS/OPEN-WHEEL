@@ -120,7 +120,7 @@ async function gitRm(rootDir, filename) {
 /**
  * performe git reset HEAD
  * @param {string} rootDir - repo's root dir
- * @param filePatterns - files to be reset
+ * @param {string} filePatterns - files to be reset
  */
 async function gitResetHEAD(rootDir, filePatterns = "") {
   if (filePatterns === "") {
@@ -171,7 +171,7 @@ async function gitStatus(rootDir) {
 /**
  * performe git clean -df
  * @param {string} rootDir - repo's root dir
- * @param filePatterns - files to be reset
+ * @param {string} filePatterns - files to be reset
  */
 async function gitClean(rootDir, filePatterns = "") {
   return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", filePatterns]);
@@ -195,7 +195,7 @@ async function isLFS(rootDir, filename) {
 /**
  * performe git lfs track
  * @param {string} rootDir - repo's root dir
- * @param filename - files to be track
+ * @param {string} filename - files to be track
  */
 async function gitLFSTrack(rootDir, filename) {
   await gitPromise(rootDir, ["lfs", "track", makeLFSPattern(rootDir, filename)]);
@@ -206,7 +206,7 @@ async function gitLFSTrack(rootDir, filename) {
 /**
  * performe git lfs untrack
  * @param {string} rootDir - repo's root dir
- * @param filename - files to be untracked
+ * @param {string} filename - files to be untracked
  */
 async function gitLFSUntrack(rootDir, filename) {
   await gitPromise(rootDir, ["lfs", "untrack", makeLFSPattern(rootDir, filename)]);

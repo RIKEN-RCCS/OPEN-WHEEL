@@ -144,7 +144,7 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
   } catch (err) {
     //just ignore if JSON.parse() failed
   }
-  if (!contentJson.hasOwnProperty("targetFiles") || !Array.isArray(contentJson.targetFiles) || forceNormal) {
+  if (!Object.prototype.hasOwnProperty.call(contentJson, "targetFiles") || !Array.isArray(contentJson.targetFiles) || forceNormal) {
     return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
   }
 
@@ -156,10 +156,10 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
       if (typeof targetFile === "string") {
         return path.resolve(dirname, targetFile);
       }
-      if (!targetFile.hasOwnProperty("targetName")) {
+      if (!Object.prototype.hasOwnProperty.call(targetFile, "targetName")) {
         return null;
       }
-      if (targetFile.hasOwnProperty("targetNode")) {
+      if (Object.prototype.hasOwnProperty.call(targetFile, "targetNode")) {
         //to avoid circurler dependency, do not use getComponentDir in projectFilesOperator.js
         const ID = targetFile.targetNode;
         const projectJson = JSON.parse(fs.readFileSync(path.resolve(projectRootDir, projectJsonFilename)).toString());
