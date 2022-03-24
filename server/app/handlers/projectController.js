@@ -14,13 +14,14 @@ const logger = getLogger();
 const { remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
-const { getHosts, validateComponents, readComponentJson, getSourceComponents } = require("../core/componentFilesOperator");
+const { getHosts, validateComponents, getSourceComponents } = require("../core/componentFilesOperator");
 const { getComponentDir, getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
 const { runProject, cleanProject, pauseProject, stopProject } = require("../core/projectController.js");
 const { sendWorkflow } = require("./senders.js");
 const { addCluster, removeCluster } = require("../core/clusterManager.js");
 const { addSsh } = require("../core/sshManager.js");
+const { isValidOutputFilename } = require("../lib/utility");
 
 
 async function createCloudInstance(projectRootDir, hostinfo, sio) {
@@ -106,44 +107,37 @@ async function askUnsavedFiles(emit, projectRootDir) {
   }
 }
 
-async function validationCheck(projectRootDir) {
-  const rootWF = await readComponentJson(projectRootDir);
-  await validateComponents(projectRootDir, rootWF.ID);
-  await gitCommit(projectRootDir, "wheel", "wheel@example.com");
-}
-
 async function getSourceCandidates(projectRootDir, ID) {
   const componentDir = await getComponentDir(projectRootDir, ID);
   return promisify(glob)("*", { cwd: componentDir, ignore: componentJsonFilename });
+}
+
+//memo askSourceFilename eventのクライアント側ハンドラが無いかもしれない
+async function askSourceFilename(socket, ID, name, description, candidates) {
+  return new Promise((resolve, reject)=>{
+    socket.emit("askSourceFilename", ID, name, description, candidates, (filename)=>{
+      if (isValidOutputFilename(filename)) {
+        //ここでファイルが存在するか確認する。ファイルがアップロードされるパターンでは
+        //アップロード完了を待ちたいがそんなイベントは無い気がする・・・
+        resolve(filename);
+      } else {
+        reject(new Error(`invalid filename: ${filename}`));
+      }
+    });
+  });
 }
 
 /**
  * ask user what file to be used
  */
 async function getSourceFilename(projectRootDir, component, sio) {
-  return new Promise((resolve)=>{
-    sio.on("sourceFile", (id, filename)=>{
-      resolve(filename);
-    });
+  const filelist = await getSourceCandidates(projectRootDir, component.ID);
+  getLogger(projectRootDir).trace("sourceFile: candidates=", filelist);
 
-    if (component.uploadOnDemand) {
-      sio.emit("requestSourceFile", component.ID, component.name, component.description);
-    } else {
-      getSourceCandidates(projectRootDir, component.ID)
-        .then((filelist)=>{
-          getLogger(projectRootDir).trace("sourceFile: candidates=", filelist);
-
-          if (filelist.length === 1) {
-            resolve(filelist[0]);
-          } else if (filelist.length === 0) {
-            getLogger(projectRootDir).warn("no files found in source component");
-            sio.emit("requestSourceFile", component.ID, component.name, component.description);
-          } else {
-            sio.emit("askSourceFilename", component.ID, component.name, component.description, filelist);
-          }
-        });
-    }
-  });
+  if (filelist.length === 1) {
+    return (filelist[0]);
+  }
+  return askSourceFilename(sio, component.ID, component.name, component.description, filelist);
 }
 
 async function onRunProject(socket, projectRootDir, ack) {
@@ -151,7 +145,8 @@ async function onRunProject(socket, projectRootDir, ack) {
   if (projectState !== "paused") {
   //validation check
     try {
-      validationCheck(projectRootDir);
+      await validateComponents(projectRootDir);
+      await gitCommit(projectRootDir, "wheel", "wheel@example.com");
     } catch (err) {
       logger.error("fatal error occurred while validation phase:", err);
       ack(err);

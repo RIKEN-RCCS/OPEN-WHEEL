@@ -13,24 +13,24 @@ chai.use(require("chai-json-schema"));
 const rewire = require("rewire");
 
 //testee
-const { exec, cancel } = require("../app/core/executer");
+const { exec } = require("../app/core/executer");
 const executer = rewire("../app/core/executer");
 const gatherFiles = executer.__get__("gatherFiles");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
+const remoteHome = "/home/testuser";
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename, statusFilename, jobManagerJsonFilename } = require("../app/db/db");
+const { componentJsonFilename, statusFilename, jobManagerJsonFilename } = require("../app/db/db");
 const { createNewProject } = require("../app/core/projectFilesOperator");
-const { updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink } = require("../app/core/componentFilesOperator");
-const { sanitizePath, convertPathSep, replacePathsep } = require("../app/core/pathUtils");
+const { updateComponent, createNewComponent } = require("../app/core/componentFilesOperator");
+const { replacePathsep } = require("../app/core/pathUtils");
 
-const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("./testScript");
+const { scriptName, pwdCmd, scriptHeader, exit } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
-const { escapeRegExp } = require("../app/lib/utility");
 const { remoteHost } = require("../app/db/db");
 const { addSsh, createSshConfig } = require("../app/core/sshManager");
 
@@ -46,11 +46,11 @@ const dummyLogger = {
   sshout: sinon.stub(),
   ssherr: sinon.stub()
 };
-//dummyLogger.error = sinon.spy(console.log);
-//dummyLogger.warn = sinon.spy(console.log);
-//dummyLogger.info = sinon.spy(console.log);
-//dummyLogger.debug = sinon.spy(console.log);
-//dummyLogger.trace = sinon.spy(console.log);
+dummyLogger.error = sinon.spy(console.log);
+dummyLogger.warn = sinon.spy(console.log);
+dummyLogger.info = sinon.spy(console.log);
+dummyLogger.debug = sinon.spy(console.log);
+dummyLogger.trace = sinon.spy(console.log);
 executer.__set__("logger", dummyLogger);
 
 describe("UT for executer class", function() {
@@ -145,10 +145,10 @@ describe("UT for executer class", function() {
       task0.host = "testServer";
       //following lines are from Executer.exec but planning to move to Dispatcher._dispatchTask()
       task0.remotehostID = remoteHost.getID("name", task0.host) || "localhost";
-      task0.remoteWorkingDir = path.posix.join("/home/pbsuser", task0.projectStartTime);
+      task0.remoteWorkingDir = path.posix.join(remoteHome, task0.projectStartTime);
     });
     afterEach(async()=>{
-      await arssh.exec(`rm -fr ${path.posix.join("/home/pbsuser", task0.projectStartTime)}`);
+      await arssh.exec(`rm -fr ${path.posix.join(remoteHome, task0.projectStartTime)}`);
     });
     after(async()=>{
       if (arssh) {
@@ -174,12 +174,13 @@ describe("UT for executer class", function() {
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
         expect(dummyLogger.stdout).not.to.be.called;
         expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name));
+        expect(dummyLogger.sshout).to.be.calledOnceWith(path.posix.join(remoteHome, task0.projectStartTime, task0.name));
         expect(dummyLogger.ssherr).not.to.be.called;
-        expect(await arssh.ls(path.posix.join("/home/pbsuser", task0.projectStartTime))).to.have.members([path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name)]);
-        expect(await arssh.ls(path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name))).to.have.members([
-          path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name, "run.sh"),
-          path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name, componentJsonFilename)
+        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
+          .to.have.members([path.posix.join(remoteHome, task0.projectStartTime, task0.name)]);
+        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime, task0.name))).to.have.members([
+          path.posix.join(remoteHome, task0.projectStartTime, task0.name, "run.sh"),
+          path.posix.join(remoteHome, task0.projectStartTime, task0.name, componentJsonFilename)
         ]);
       });
       it("cleanup remote directory after successfully run", async()=>{
@@ -188,9 +189,9 @@ describe("UT for executer class", function() {
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
         expect(dummyLogger.stdout).not.to.be.called;
         expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name));
+        expect(dummyLogger.sshout).to.be.calledOnceWith(path.posix.join(remoteHome, task0.projectStartTime, task0.name));
         expect(dummyLogger.ssherr).not.to.be.called;
-        expect(await arssh.ls(path.posix.join("/home/pbsuser", task0.projectStartTime))).to.be.an("array").that.is.empty;
+        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime))).to.be.an("array").that.is.empty;
       });
       it("get outputFiles after successfully run", async()=>{
         task0.outputFiles = [{ name: "hoge" }];
@@ -230,12 +231,13 @@ describe("UT for executer class", function() {
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
         expect(dummyLogger.stdout).not.to.be.called;
         expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name));
+        expect(dummyLogger.sshout).to.be.calledOnceWith(path.posix.join(remoteHome, task0.projectStartTime, task0.name));
         expect(dummyLogger.ssherr).not.to.be.called;
-        expect(await arssh.ls(path.posix.join("/home/pbsuser", task0.projectStartTime))).to.have.members([path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name)]);
-        expect(await arssh.ls(path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name))).to.have.members([
-          path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name, "run.sh"),
-          path.posix.join("/home/pbsuser", task0.projectStartTime, task0.name, componentJsonFilename)
+        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
+          .to.have.members([path.posix.join(remoteHome, task0.projectStartTime, task0.name)]);
+        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime, task0.name))).to.have.members([
+          path.posix.join(remoteHome, task0.projectStartTime, task0.name, "run.sh"),
+          path.posix.join(remoteHome, task0.projectStartTime, task0.name, componentJsonFilename)
         ]);
       });
       it("do not get outputFiles after failed run", async()=>{

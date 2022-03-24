@@ -24,14 +24,6 @@ const { updateComponent, createNewComponent, addInputFile, addOutputFile, addFil
 
 
 const stub = sinon.stub();
-const debugLogger = {
-  error: sinon.stub(),
-  warn: sinon.stub(),
-  info: sinon.stub(),
-  debug: sinon.stub(),
-  trace: sinon.stub()
-};
-
 const wait = ()=>{
   return new Promise((resolve)=>{
     setTimeout(resolve, 10);
@@ -64,7 +56,7 @@ describe("UT for Dispatcher class", function() {
       await addInputFile(projectRootDir, next.ID, "b");
       await addFileLink(projectRootDir, previous.ID, "a", next.ID, "b");
       await fs.outputFile(path.resolve(projectRootDir, previous.name, "a"), "hoge");
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
       expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
@@ -73,7 +65,7 @@ describe("UT for Dispatcher class", function() {
       await addOutputFile(projectRootDir, previous.ID, "a*");
       await addInputFile(projectRootDir, next.ID, "b");
       await addFileLink(projectRootDir, previous.ID, "a*", next.ID, "b");
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, next.name, "b")).not.to.be.a.path();
       expect(path.resolve(projectRootDir, next.name, "a*")).not.to.be.a.path();
@@ -90,7 +82,7 @@ describe("UT for Dispatcher class", function() {
       await updateComponent(projectRootDir, for0.ID, "end", 2);
       await updateComponent(projectRootDir, for0.ID, "step", 1);
       await updateComponent(projectRootDir, for0.ID, "keep", 0);
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       await wait();
       expect(path.resolve(projectRootDir, `${for0.name}_0`)).not.to.be.a.path();
@@ -118,7 +110,7 @@ describe("UT for Dispatcher class", function() {
       await updateComponent(projectRootDir, for0.ID, "end", 0);
       await updateComponent(projectRootDir, for0.ID, "start", 2);
       await updateComponent(projectRootDir, for0.ID, "step", -1);
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, `${for0.name}_0`)).to.be.a.directory();
       expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
@@ -144,7 +136,7 @@ describe("UT for Dispatcher class", function() {
       await updateComponent(projectRootDir, for0.ID, "start", 1);
       await updateComponent(projectRootDir, for0.ID, "end", 3);
       await updateComponent(projectRootDir, for0.ID, "step", 2);
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
       expect(path.resolve(projectRootDir, `${for0.name}_2`)).not.to.be.a.path();
@@ -171,7 +163,7 @@ describe("UT for Dispatcher class", function() {
       await updateComponent(projectRootDir, for0.ID, "start", -1);
       await updateComponent(projectRootDir, for0.ID, "end", 1);
       await updateComponent(projectRootDir, for0.ID, "step", 1);
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, `${for0.name}_-1`)).to.be.a.directory();
       expect(path.resolve(projectRootDir, `${for0.name}_0`)).to.be.a.directory();
@@ -197,7 +189,7 @@ describe("UT for Dispatcher class", function() {
       await updateComponent(projectRootDir, for0.ID, "start", 0);
       await updateComponent(projectRootDir, for0.ID, "end", 2);
       await updateComponent(projectRootDir, for0.ID, "step", 1);
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, `${for0.name}_0`)).to.be.a.directory();
       expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
@@ -246,7 +238,7 @@ describe("UT for Dispatcher class", function() {
       await updateComponent(projectRootDir, PS0.ID, "deleteLoopInstance", true);
     });
     it("should delete all loop instance", async()=>{
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_1`)).not.to.be.a.path();
       expect(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_2`)).not.to.be.a.path();
@@ -278,7 +270,7 @@ describe("UT for Dispatcher class", function() {
       await updateComponent(projectRootDir, foreach0.ID, "keep", 0);
     });
     it("should copy 3 times and delete all component", async()=>{
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       await wait();
       expect(path.resolve(projectRootDir, `${foreach0.name}_foo`)).not.to.be.a.path();
@@ -297,7 +289,7 @@ describe("UT for Dispatcher class", function() {
       await updateComponent(projectRootDir, while0.ID, "keep", 0);
     });
     it("should copy 3 times and delete all component", async()=>{
-      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", debugLogger, projectJson.componentPath, stub);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, stub);
       expect(await DP.start()).to.be.equal("finished");
       await wait();
       expect(path.resolve(projectRootDir, `${while0.name}_0`)).not.to.be.a.path();

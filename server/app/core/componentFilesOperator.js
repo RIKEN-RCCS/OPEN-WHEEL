@@ -615,9 +615,17 @@ async function getHosts(projectRootDir, rootID) {
 /**
  * validate all components in workflow
  */
-async function validateComponents(projectRootDir, parentID) {
-  const promises = [];
+async function validateComponents(projectRootDir, argParentID) {
+  let parentID;
+  if (typeof argParentID !== "string") {
+    const rootWF = await readComponentJson(projectRootDir);
+    parentID = rootWF.ID;
+  } else {
+    parentID = argParentID;
+  }
+
   const children = await getChildren(projectRootDir, parentID);
+  const promises = [];
 
   for (const component of children) {
     if (component.disable) {

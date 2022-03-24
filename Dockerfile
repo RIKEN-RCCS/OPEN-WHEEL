@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 #build WHEEL client code
 FROM --platform=linux/amd64 node:fermium-slim as builder
 WORKDIR /usr/src/
@@ -10,7 +11,8 @@ COPY client client
 COPY server server
 COPY package.json package.json
 
-RUN npm run build
+RUN --mount=type=cache,target=/root/.npm cd server; npm install
+RUN --mount=type=cache,target=/root/.npm cd client; npm install; npm run build -- --no-clean --mode development
 
 #build base image to run WHEEL
 FROM --platform=linux/amd64 node:fermium-slim as runner

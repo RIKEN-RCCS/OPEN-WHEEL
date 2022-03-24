@@ -17,15 +17,13 @@ function cleanup()
     return
 }
 
-TEST_DIR=$(dirname $0)
+TEST_DIR=$(cd $(dirname $0);pwd)
 pushd ${TEST_DIR}
 
 # stop container
 docker stop ${TAG} >& /dev/null
 # remove container
 docker rm ${TAG} >& /dev/null
-# remove image
-docker rmi ${TAG} >& /dev/null
 
 set -e -o pipefail
 trap cleanup EXIT
@@ -75,7 +73,7 @@ cp ../app/config/{server,jobScheduler}.json ${CONFIG_DIR}
 echo '[{'
 echo '  "name": "testServer",'
 echo '  "host": "'${IPAddress}'",'
-echo '  "path": "/home/pbsuser",'
+echo '  "path": "/home/testuser",'
 echo '  "keyFile": null,'
 echo '  "username": "testuser",'
 echo '  "numJob": 5,'
@@ -95,7 +93,6 @@ docker run --env "WHEEL_TEST_REMOTEHOST=testServer" \
            --env "WHEEL_TEST_REMOTE_PASSWORD=passw0rd"  \
            -v ${PWD}/${CONFIG_DIR}:/usr/src/app/config  \
            -p 8089:8089  \
-           -p 8090:8090  \
            --name ${TAG} ${TAG}
 rt=$?
 
