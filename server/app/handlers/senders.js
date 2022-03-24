@@ -16,11 +16,8 @@ const { taskStateFilter } = require("../core/taskUtil");
 
 //read and send current workflow and its child and grandson
 async function sendWorkflow(socket, cb, projectRootDir, parentComponentDir = "") {
-//const logger = getLogger(projectRootDir);
-  const logger = getLogger();
-
   if (typeof projectRootDir !== "string") {
-    logger.error("sendWorkflow called without projectRootDir!!");
+    getLogger(projectRootDir).error("sendWorkflow called without projectRootDir!!");
   }
   const target = path.isAbsolute(parentComponentDir) ? parentComponentDir : path.resolve(projectRootDir, parentComponentDir);
 

@@ -9,7 +9,6 @@ const { getUnusedPath } = require("../core/fileUtils.js");
 const { escapeRegExp } = require("../lib/utility");
 const fileBrowser = require("../core/fileBrowser");
 const { getLogger } = require("../logSettings");
-const logger = getLogger();
 const { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir } = require("../db/db");
 
 const oldProjectJsonFilename = "swf.prj.json";
@@ -53,14 +52,14 @@ const onGetFileList = async(projectRootDir, msg, cb)=>{
     });
     return cb(result);
   } catch (e) {
-    logger.error(projectRootDir, "error occurred during reading directory", e);
+    getLogger(projectRootDir).error(projectRootDir, "error occurred during reading directory", e);
     return cb(null);
   }
 };
 
 const onGetSNDContents = async(projectRootDir, requestDir, glob, isDir, cb)=>{
   const modifiedRequestDir = path.normalize(convertPathSep(requestDir));
-  logger.debug(projectRootDir, "getSNDContents in", modifiedRequestDir);
+  getLogger(projectRootDir).debug(projectRootDir, "getSNDContents in", modifiedRequestDir);
 
   try {
     const result = await fileBrowser(modifiedRequestDir, {
@@ -88,7 +87,7 @@ async function onCreateNewFile(projectRootDir, argFilename, cb) {
     await fs.writeFile(filename, "");
     await gitAdd(projectRootDir, filename);
   } catch (e) {
-    logger.error(projectRootDir, "create new file failed", e);
+    getLogger(projectRootDir).error(projectRootDir, "create new file failed", e);
     cb(null);
     return;
   }
@@ -103,7 +102,7 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
     await fs.writeFile(path.resolve(dirname, ".gitkeep"), "");
     await gitAdd(projectRootDir, path.resolve(dirname, ".gitkeep"));
   } catch (e) {
-    logger.error(projectRootDir, "create new directory failed", e);
+    getLogger(projectRootDir).error(projectRootDir, "create new directory failed", e);
     cb(null);
     return;
   }
@@ -169,15 +168,15 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
 }
 
 const onUploadFileSaved = async(socket, event)=>{
-  if (!event.file.success) {
-    logger.error("file upload failed", event.file.meta.name);
-  }
   const projectRootDir = event.file.meta.projectRootDir;
+  if (!event.file.success) {
+    getLogger(projectRootDir).error("file upload failed", event.file.meta.name);
+  }
   const uploadDir = event.file.meta.currentDir;
   const absFilename = await getUnusedPath(uploadDir, event.file.meta.orgName);
   await fs.move(event.file.pathName, absFilename);
   const fileSizeMB = parseInt(event.file.size / 1024 / 1024, 10);
-  logger.info(`upload completed ${absFilename} [${fileSizeMB > 1 ? `${fileSizeMB} MB` : `${event.file.size} Byte`}]`);
+  getLogger(projectRootDir).info(`upload completed ${absFilename} [${fileSizeMB > 1 ? `${fileSizeMB} MB` : `${event.file.size} Byte`}]`);
 
   if (fileSizeMB > gitLFSSize) {
     await gitLFSTrack(projectRootDir, absFilename);

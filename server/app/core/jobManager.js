@@ -10,7 +10,6 @@ const fs = require("fs-extra");
 const SBS = require("simple-batch-system");
 const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
-const logger = getLogger();
 const { getDateString } = require("../lib/utility");
 const { gatherFiles } = require("./execUtils");
 const { jobScheduler, jobManagerJsonFilename } = require("../db/db");
@@ -38,12 +37,12 @@ function getStatCommand(JS, jobID, type) {
     }, "");
     rt = rt.replace(/^ +; +/, "");
   }
-  return rt;
+  return `. /etc/profile;${rt}`;
 }
 
 async function issueStatCmd(statCmd, task, output) {
   if (task.remotehostID === "localhost") {
-    logger.error("local submit is not supported yet!!");
+    getLogger(task.projectRootDir).error("local submit is not supported yet!!");
     return Promise.reject(new Error("local submit is not supported"));
   }
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
@@ -95,11 +94,11 @@ async function isFinished(JS, task) {
 
   const finished = reFinishedState.test(outputText);
   if (!finished) {
-    logger.debug(`JobStatusCheck: ${task.jobID} is not yet completed\n${outputText}`);
+    getLogger(task.projectRootDir).debug(`JobStatusCheck: ${task.jobID} is not yet completed\n${outputText}`);
     return null;
   }
 
-  logger.debug(`JobStatusCheck: ${task.jobID} is finished\n${outputText}`);
+  getLogger(task.projectRootDir).debug(`JobStatusCheck: ${task.jobID} is finished\n${outputText}`);
 
   //for backward compatibility use reJobStatus if JS does not have reJobStatusCode
   const reJobStatusCode = JS.reJobStatusCode || JS.reJobStatus;
@@ -109,18 +108,18 @@ async function isFinished(JS, task) {
     task.jobStatus = getFirstCapture(outputText, reJobStatusCode);
   } else {
     [jobStatus, jobStatusList] = getBulkFirstCapture(outputText, JS.reSubJobStatusCode);
-    logger.debug(`JobStatus: ${jobStatus} ,jobStatusList: ${jobStatusList}`);
+    getLogger(task.projectRootDir).debug(`JobStatus: ${jobStatus} ,jobStatusList: ${jobStatusList}`);
     task.jobStatus = jobStatus;
   }
 
   //status.wheel.txtの出力方法を検討する
   if (task.jobStatus === null) {
-    logger.warn("get job status code failed, code is overwrited by -2");
+    getLogger(task.projectRootDir).warn("get job status code failed, code is overwrited by -2");
     task.jobStatus = -2;
   }
   if (statCmdRt !== 0) {
-    logger.warn(`status check command returns ${statCmdRt} and it is in acceptableRt: ${JS.acceptableRt}`);
-    logger.warn("it may fail to get job script's return code. so it is overwirted by 0");
+    getLogger(task.projectRootDir).warn(`status check command returns ${statCmdRt} and it is in acceptableRt: ${JS.acceptableRt}`);
+    getLogger(task.projectRootDir).warn("it may fail to get job script's return code. so it is overwirted by 0");
     return 0;
   }
   let strRt = 0;
@@ -130,16 +129,16 @@ async function isFinished(JS, task) {
     strRt = getFirstCapture(outputText, JS.reReturnCode);
   } else {
     [rt, rtCodeList] = getBulkFirstCapture(outputText, JS.reSubReturnCode);
-    logger.debug(`rt: ${rt} ,rtCodeList: ${rtCodeList}`);
+    getLogger(task.projectRootDir).debug(`rt: ${rt} ,rtCodeList: ${rtCodeList}`);
     strRt = rt;
   }
 
   if (strRt === null) {
-    logger.warn("get return code failed, code is overwrited by -2");
+    getLogger(task.projectRootDir).warn("get return code failed, code is overwrited by -2");
     return -2;
   }
   if (strRt === "6") {
-    logger.warn("get return code 6, this job was canceled by stepjob dependency");
+    getLogger(task.projectRootDir).warn("get return code 6, this job was canceled by stepjob dependency");
     return 0;
   }
 
@@ -152,6 +151,7 @@ async function isFinished(JS, task) {
 class JobManager extends EventEmitter {
   constructor(projectRootDir, hostinfo) {
     super();
+
     this.taskListFilename = path.resolve(projectRootDir, `${hostinfo.id}.${jobManagerJsonFilename}`);
 
     try {
@@ -178,13 +178,13 @@ class JobManager extends EventEmitter {
     }
     this.batch = new SBS({
       exec: async(task)=>{
-        logger.trace(task.jobID, "status check start");
+        getLogger(task.projectRootDir).trace(task.jobID, "status check start");
 
         if (task.state !== "running") {
           return false;
         }
         task.jobStartTime = task.jobStartTime || getDateString(true, true);
-        logger.trace(task.jobID, "status checked", statusCheckCount);
+        getLogger(task.projectRootDir).trace(task.jobID, "status checked", statusCheckCount);
         ++statusCheckCount;
 
         try {
@@ -193,7 +193,7 @@ class JobManager extends EventEmitter {
           if (task.rt === null) {
             return Promise.reject(new Error("not finished"));
           }
-          logger.info(task.jobID, "is finished (remote). rt =", task.rt);
+          getLogger(task.projectRootDir).info(task.jobID, "is finished (remote). rt =", task.rt);
           task.jobEndTime = task.jobEndTime || getDateString(true, true);
 
           if (task.rt === 0) {
@@ -205,10 +205,10 @@ class JobManager extends EventEmitter {
           ++statusCheckFailedCount;
           err.jobID = task.jobID;
           err.JS = JS;
-          logger.warn("status check failed", err);
+          getLogger(task.projectRootDir).warn("status check failed", err);
 
           if (statusCheckFailedCount > maxStatusCheckError) {
-            logger.warn("max status check error count exceeded");
+            getLogger(task.projectRootDir).warn("max status check error count exceeded");
             err.jobStatusCheckFaild = true;
             err.statusCheckFailedCount = statusCheckFailedCount;
             err.statusCheckCount = statusCheckCount;
@@ -230,7 +230,7 @@ class JobManager extends EventEmitter {
   }
 
   async onTaskListUpdated() {
-    logger.trace("taskListUpdated");
+    getLogger(this.projectRootDir).trace("taskListUpdated");
 
     if (this.tasks.length > 0) {
       await fs.writeJson(this.taskListFilename, this.tasks);
@@ -253,13 +253,13 @@ class JobManager extends EventEmitter {
   }
 
   async register(task) {
-    logger.trace("register task", task);
+    getLogger(task.projectRootDir).trace("register task", task);
 
     if (this.tasks.some((e)=>{
       //task.sbsID is set by executer class
       return e.sbsID === task.sbsID;
     })) {
-      logger.debug("this task is already registerd", task);
+      getLogger(task.projectRootDir).debug("this task is already registerd", task);
       return null;
     }
     this.addTaskList(task);

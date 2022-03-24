@@ -4,16 +4,6 @@
  * See License.txt in the project root for the license information.
  */
 "use strict";
-
-//this line must be placed before require express, socket.io and any other depending library
-if (process.env.WHEEL_DEBUG_VERBOSE) {
-  const debugLib = require("debug");
-  const orgNamespaces = debugLib.load();
-  const newNamespaces = "socket.io:*,express:*,abc4*,arssh2*,sbs*";
-  const namespaces = orgNamespaces ? `${orgNamespaces},${newNamespaces}` : newNamespaces;
-  debugLib.enable(namespaces);
-}
-
 const path = require("path");
 const fs = require("fs-extra");
 const cors = require("cors");
@@ -58,9 +48,7 @@ app.use(Siofu.router);
 
 //global socket IO handler
 sio.on("connection", (socket)=>{
-  //TODO このタイミングでworkflowを開こうとしている時はroomに入れる
-  //client側でprojectRootDirはこの値に入れている
-  //socket.handshake.auth.projectRootDir
+  logger.addContext("socket", socket);
   const projectRootDir = socket.handshake.auth.projectRootDir;
   if (typeof projectRootDir === "string") {
     socket.join(projectRootDir);

@@ -10,7 +10,6 @@ const glob = require("glob");
 const ARsshClient = require("arssh2-client");
 const { create } = require("abc4");
 const { getLogger } = require("../logSettings");
-const logger = getLogger();
 const { remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
@@ -40,6 +39,7 @@ async function createCloudInstance(projectRootDir, hostinfo, sio) {
   order.batch = hostinfo.jobScheduler;
   order.id = order.id || await askPassword(sio, "input access key for AWS");
   order.pw = order.pw || await askPassword(sio, "input secret access key for AWS");
+  const logger = getLogger(projectRootDir);
   order.info = logger.debug.bind(logger);
   order.debug = logger.trace.bind(logger);
 
@@ -148,7 +148,7 @@ async function onRunProject(socket, projectRootDir, ack) {
       await validateComponents(projectRootDir);
       await gitCommit(projectRootDir, "wheel", "wheel@example.com");
     } catch (err) {
-      logger.error("fatal error occurred while validation phase:", err);
+      getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
       ack(err);
       return false;
     }
@@ -162,7 +162,7 @@ async function onRunProject(socket, projectRootDir, ack) {
 
       for (const component of sourceComponents) {
         if (component.disable) {
-          logger.debug(`disabled component: ${component.name}(${component.ID})`);
+          getLogger(projectRootDir).debug(`disabled component: ${component.name}(${component.ID})`);
           continue;
         }
         //ask to user if needed
@@ -172,7 +172,7 @@ async function onRunProject(socket, projectRootDir, ack) {
         const outputFilenames = component.outputFiles.map((e)=>{
           return e.name;
         });
-        logger.trace("sourceFile:", filename, "will be used as", outputFilenames);
+        getLogger(projectRootDir).trace("sourceFile:", filename, "will be used as", outputFilenames);
 
         await Promise.all(
           outputFilenames.map((outputFile)=>{
@@ -200,9 +200,9 @@ async function onRunProject(socket, projectRootDir, ack) {
       }
     } catch (err) {
       if (err.reason === "CANCELED") {
-        logger.debug(err.message);
+        getLogger(projectRootDir).debug(err.message);
       } else {
-        logger.error("fatal error occurred while prepareing phase:", err);
+        getLogger(projectRootDir).error("fatal error occurred while prepareing phase:", err);
       }
       removeSsh(projectRootDir);
       removeCluster(projectRootDir);
@@ -217,7 +217,7 @@ async function onRunProject(socket, projectRootDir, ack) {
   try {
     await runProject(projectRootDir);
   } catch (err) {
-    logger.error("fatal error occurred while parsing workflow:", err);
+    getLogger(projectRootDir).error("fatal error occurred while parsing workflow:", err);
     await updateProjectState(socket, projectRootDir, "failed");
     ack(err);
   } finally {
@@ -239,7 +239,7 @@ async function onPauseProject(socket, projectRootDir, ack) {
     ack(e);
     return;
   }
-  logger.debug("pause project done");
+  getLogger(projectRootDir).debug("pause project done");
   ack(true);
 }
 
@@ -247,7 +247,7 @@ async function onStopProject(socket, projectRootDir, ack) {
   try {
     await askUnsavedFiles(socket.emit, projectRootDir);
   } catch (e) {
-    logger.info("stop project canceled");
+    getLogger(projectRootDir).info("stop project canceled");
     return;
   }
   try {
@@ -259,7 +259,7 @@ async function onStopProject(socket, projectRootDir, ack) {
     ack(e);
     return;
   }
-  logger.debug("stop project done");
+  getLogger(projectRootDir).debug("stop project done");
   ack(true);
 }
 
@@ -267,7 +267,7 @@ async function onCleanProject(socket, projectRootDir, ack) {
   try {
     await askUnsavedFiles(socket.emit, projectRootDir);
   } catch (e) {
-    logger.info("clean project canceled");
+    getLogger(projectRootDir).info("clean project canceled");
     return;
   }
 
@@ -283,7 +283,7 @@ async function onCleanProject(socket, projectRootDir, ack) {
     removeSsh(projectRootDir);
     removeCluster(projectRootDir);
   }
-  logger.debug("clean project done");
+  getLogger(projectRootDir).debug("clean project done");
   ack(true);
 }
 async function onSaveProject(socket, projectRootDir, cb) {
@@ -292,10 +292,10 @@ async function onSaveProject(socket, projectRootDir, cb) {
     await setProjectState(projectRootDir, "not-started", true);
     await gitCommit(projectRootDir, "wheel", "wheel@example.com");
   } else {
-    logger.error(projectState, "project can not be saved");
+    getLogger(projectRootDir).error(projectState, "project can not be saved");
     return cb(null);
   }
-  logger.debug("save project done");
+  getLogger(projectRootDir).debug("save project done");
   const projectJson = await getProjectJson(projectRootDir);
   return cb(projectJson);
 }
@@ -303,7 +303,7 @@ async function onRevertProject(socket, projectRootDir, cb) {
   await askUnsavedFiles(socket.emit, projectRootDir);
   await gitResetHEAD(projectRootDir);
   await sendWorkflow(socket, cb, projectRootDir);
-  logger.debug("revert project done");
+  getLogger(projectRootDir).debug("revert project done");
   const projectJson = await getProjectJson(projectRootDir);
   cb(projectJson);
 }

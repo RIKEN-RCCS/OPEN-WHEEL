@@ -18,8 +18,8 @@ const { getDateString } = require("../lib/utility");
 const { getSsh, getSshHostinfo } = require("./sshManager.js");
 const { gatherFiles, setTaskState, createStatusFile } = require("./execUtils");
 const { registerJob } = require("./jobManager");
+const { getLogger } = require("../logSettings.js");
 const executers = new Map();
-let logger; //logger is injected when exec() is called;
 
 function getMaxNumJob(hostinfo) {
   if (hostinfo === null) {
@@ -37,26 +37,19 @@ async function replaceCRLF(filename) {
   return fs.writeFile(filename, contents);
 }
 
-function passToSSHout(data) {
-  logger.sshout(data.toString().trim());
-}
-
-function passToSSHerr(data) {
-  logger.ssherr(data.toString().trim());
-}
 
 async function prepareRemoteExecDir(task) {
   await setTaskState(task, "stage-in");
-  logger.debug(task.remoteWorkingDir, task.script);
+  getLogger(task.projectRootDir).debug(task.remoteWorkingDir, task.script);
   const localScriptPath = path.resolve(task.workingDir, task.script);
   await replaceCRLF(localScriptPath);
   const remoteScriptPath = path.posix.join(task.remoteWorkingDir, task.script);
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
-  logger.debug(`send ${task.workingDir} to ${task.remoteWorkingDir} start`);
+  getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} start`);
   await ssh.send(task.workingDir, path.posix.dirname(task.remoteWorkingDir));
   await ssh.chmod(remoteScriptPath, "744");
   task.preparedTime = getDateString(true, true);
-  logger.debug(`send ${task.workingDir} to ${task.remoteWorkingDir} finished`);
+  getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} finished`);
 }
 
 function makeEnv(task) {
@@ -126,13 +119,13 @@ function makeBulkOpt(task) {
 async function needsRetry(task) {
   let rt = false;
   try {
-    rt = await evalCondition(task.retryCondition, task.workingDir, task.currentIndex, logger);
+    rt = await evalCondition(task.projectRootDir, task.retryCondition, task.workingDir, task.currentIndex);
   } catch (err) {
-    logger.info(`retryCondition of ${task.name}(${task.ID}) is set but exception occurred while evaluting it. so give up retring`);
+    getLogger(task.projectRootDir).info(`retryCondition of ${task.name}(${task.ID}) is set but exception occurred while evaluting it. so give up retring`);
     return false;
   }
   if (rt) {
-    logger.info(`${task.name}(${task.ID}) failed but retring`);
+    getLogger(task.projectRootDir).info(`${task.name}(${task.ID}) failed but retring`);
   }
   return rt;
 }
@@ -140,9 +133,9 @@ async function needsRetry(task) {
 async function decideFinishState(task) {
   let rt = false;
   try {
-    rt = await evalCondition(task.condition, task.workingDir, task.currentIndex, logger);
+    rt = await evalCondition(task.projectRootDir, task.condition, task.workingDir, task.currentIndex);
   } catch (err) {
-    logger.info(`manualFinishCondition of ${task.name}(${task.ID}) is set but exception occurred while evaluting it.`);
+    getLogger(task.projectRootDir).info(`manualFinishCondition of ${task.name}(${task.ID}) is set but exception occurred while evaluting it.`);
     return false;
   }
   return rt;
@@ -218,7 +211,7 @@ class Executer {
     try {
       await this.batch.qwait(task.sbsID);
     } catch (e) {
-      logger.warn(task.name, "failed due to", e);
+      getLogger(task.projectRootDir).warn(task.name, "failed due to", e);
     } finally {
       await createStatusFile(task);
     }
@@ -261,8 +254,8 @@ class RemoteJobExecuter extends Executer {
     await prepareRemoteExecDir(task);
     const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
     const submitOpt = task.submitOption ? task.submitOption : "";
-    const submitCmd = `cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${makeEnvForPath(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)}${makeBulkOpt(task)}${submitOpt} ./${task.script}`;
-    logger.debug("submitting job (remote):", submitCmd);
+    const submitCmd = `. /etc/profile; cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${makeEnvForPath(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)}${makeBulkOpt(task)}${submitOpt} ./${task.script}`;
+    getLogger(task.projectRootDir).debug("submitting job (remote):", submitCmd);
     await setTaskState(task, "running");
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
     const output = [];
@@ -287,7 +280,7 @@ class RemoteJobExecuter extends Executer {
     }
     const jobID = result[1];
     task.jobID = jobID;
-    logger.info("submit success:", submitCmd, jobID);
+    getLogger(task.projectRootDir).info("submit success:", submitCmd, jobID);
     task.jobSubmittedTime = getDateString(true, true);
     return registerJob(hostinfo, task);
   }
@@ -300,15 +293,22 @@ class RemoteTaskExecuter extends Executer {
 
   async exec(task) {
     await prepareRemoteExecDir(task);
-    logger.debug("prepare done");
+    getLogger(task.projectRootDir).debug("prepare done");
     await setTaskState(task, "running");
-    const cmd = `cd ${task.remoteWorkingDir} && ${makeEnv(task)} ./${task.script}`;
-    logger.debug("exec (remote)", cmd);
+    const cmd = `. /etc/profile; cd ${task.remoteWorkingDir} && ${makeEnv(task)} ./${task.script}`;
+    getLogger(task.projectRootDir).debug("exec (remote)", cmd);
 
     //if exception occurred in ssh.exec, it will be catched in caller
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
-    const rt = await ssh.exec(cmd, {}, passToSSHout, passToSSHerr);
-    logger.debug(task.name, "(remote) done. rt =", rt);
+    const rt = await ssh.exec(cmd, {}, (data)=>{
+      getLogger(task.projectRootDir).sshout(data.toString().trim());
+    },
+    (data)=>{
+      getLogger(task.projectRootDir).ssherr(data.toString().trim());
+    });
+
+
+    getLogger(task.projectRootDir).debug(task.name, "(remote) done. rt =", rt);
 
     if (rt === 0) {
       await gatherFiles(task);
@@ -325,17 +325,17 @@ function promisifiedSpawn(task, script, options) {
       }
     });
     cp.stdout.on("data", (data)=>{
-      logger.stdout(data.toString());
+      getLogger(task.projectRootDir).stdout(data.toString());
     });
     cp.stderr.on("data", (data)=>{
-      logger.stderr(data.toString());
+      getLogger(task.projectRootDir).stderr(data.toString());
     });
     cp.on("error", (err)=>{
       cp.removeAlllisteners("exit");
       reject(err);
     });
     cp.on("exit", (rt)=>{
-      logger.debug(task.name, "done. rt =", rt);
+      getLogger(task.projectRootDir).debug(task.name, "done. rt =", rt);
       resolve(rt);
     });
     task.handler = cp;
@@ -373,7 +373,7 @@ function getExecutersKey(task) {
 
 
 function createExecuter(task) {
-  logger.debug("createExecuter called");
+  getLogger(task.projectRootDir).debug("createExecuter called");
   const onRemote = task.remotehostID !== "localhost";
   const hostinfo = onRemote ? getSshHostinfo(task.projectRootDir, task.remotehostID) : null;
   if (task.useJobScheduler && typeof jobScheduler[hostinfo.jobScheduler] === "undefined") {
@@ -381,7 +381,7 @@ function createExecuter(task) {
     err.task = task.name;
     err.useJobScheduler = task.useJobScheduler;
     err.hostinfo = hostinfo;
-    logger.error(err);
+    getLogger(task.projectRootDir).error(err);
     throw err;
   }
   if (onRemote) {
@@ -397,12 +397,11 @@ function createExecuter(task) {
  * enqueue task
  * @param {Task} task - instance of Task class (dfined in workflowComponent.js)
  */
-async function exec(task, loggerInstance) {
-  logger = loggerInstance;
+async function exec(task) {
   task.remotehostID = remoteHost.getID("name", task.host) || "localhost";
   let executer;
   if (executers.has(getExecutersKey(task))) {
-    logger.debug(`reuse existing executer for ${task.host} ${task.useJobScheduler ? "with" : "without"} job scheduler`);
+    getLogger(task.projectRootDir).debug(`reuse existing executer for ${task.host} ${task.useJobScheduler ? "with" : "without"} job scheduler`);
     executer = executers.get(getExecutersKey(task));
     const onRemote = task.remotehostID !== "localhost";
     const hostinfo = onRemote ? getSshHostinfo(task.projectRootDir, task.remotehostID) : null;
@@ -420,7 +419,7 @@ async function exec(task, loggerInstance) {
       executer.setGrpName(grpName);
     }
   } else {
-    logger.debug("create new executer for", task.host, " with job scheduler", task.useJobScheduler);
+    getLogger(task.projectRootDir).debug("create new executer for", task.host, " with job scheduler", task.useJobScheduler);
     executer = createExecuter(task);
     executers.set(getExecutersKey(task), executer);
   }
@@ -445,7 +444,7 @@ function cancel(task) {
   task.remotehostID = remoteHost.getID("name", task.host) || "localhost";
   const executer = executers.get(getExecutersKey(task));
   if (typeof executer === "undefined") {
-    logger.warn("executer for", task.remotehostID, " with job scheduler", task.useJobScheduler, "is not found");
+    getLogger(task.projectRootDir).warn("executer for", task.remotehostID, " with job scheduler", task.useJobScheduler, "is not found");
     return false;
   }
   return executer.cancel(task);

@@ -23,7 +23,7 @@
     "start": "node app/index",
     "mocha": "mocha",
     "lint": "eslint --fix app/**/*.js",
-    "test": "cross-env WHEEL_DISABLE_LOG=1  WHEEL_DISABLE_CONSOLE_LOG=1 mocha --recursive --unhandled-rejections=strict",
+    "test": "cross-env WHEEL_LOGLEVEL=OFF mocha --recursive --unhandled-rejections=strict",
     "coverage": "nyc --reporter=html --reporter=text npm run test",
     "prepare": "webpack"
   },
@@ -55,7 +55,7 @@
     "glob": "^7.1.6",
     "is-path-inside": "^3.0.2",
     "klaw": "^3.0.0",
-    "log4js": "^6.1.0",
+    "log4js": "^6.4.4",
     "minimatch": "^3.0.4",
     "nunjucks": "^3.2.1",
     "promise-retry": "^1.1.1",

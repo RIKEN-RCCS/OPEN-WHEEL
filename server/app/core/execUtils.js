@@ -11,7 +11,6 @@ const { replacePathsep } = require("./pathUtils");
 const { componentJsonReplacer } = require("./componentFilesOperator");
 const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
-const logger = getLogger();
 
 /**
  * parse filter string from client and return validate glob pattern
@@ -29,7 +28,7 @@ function parseFilter(pattern) {
  */
 async function setTaskState(task, state) {
   task.state = state;
-  logger.trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
+  getLogger(task.proejctRootDir).trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
   //to avoid git add when task state is changed, we do NOT use updateComponentJson(in workflowUtil) here
   await fs.writeJson(path.resolve(task.workingDir, componentJsonFilename), task, { spaces: 4, replacer: componentJsonReplacer });
   //taskにevent emitterをつけてdispatcher側で読み取る
@@ -39,7 +38,7 @@ async function setTaskState(task, state) {
 
 async function gatherFiles(task) {
   await setTaskState(task, "stage-out");
-  logger.debug("start to get files from remote server if specified");
+  getLogger(task.proejctRootDir).debug("start to get files from remote server if specified");
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
 
   //get outputFiles from remote server
@@ -54,7 +53,7 @@ async function gatherFiles(task) {
 
   for (const outputFile of outputFiles) {
     const dst = `${path.join(task.workingDir, path.dirname(outputFile))}/`;
-    logger.debug("try to get outputFiles", outputFile, "\n  from:", task.remoteWorkingDir, "\n  to:", dst);
+    getLogger(task.proejctRootDir).debug("try to get outputFiles", outputFile, "\n  from:", task.remoteWorkingDir, "\n  to:", dst);
 
     try {
       await ssh.recv(path.posix.join(task.remoteWorkingDir, outputFile), dst, null, null);
@@ -63,7 +62,7 @@ async function gatherFiles(task) {
       if (e.message !== "src must be existing file or directory") {
         throw e;
       } else {
-        logger.debug("src file not found but ignored", outputFile);
+        getLogger(task.projectRootDir).debug("src file not found but ignored", outputFile);
       }
     }
   }
@@ -73,7 +72,7 @@ async function gatherFiles(task) {
   if (typeof task.include === "string") {
     const include = `${task.remoteWorkingDir}/${parseFilter(task.include)}`;
     const exclude = task.exclude ? `${task.remoteWorkingDir}/${parseFilter(task.exclude)}` : null;
-    logger.debug("try to get ", include, "\n  from:", task.remoteWorkingDir, "\n  to:", task.workingDir, "\n  exclude filter:", exclude);
+    getLogger(task.projectRootDir).debug("try to get ", include, "\n  from:", task.remoteWorkingDir, "\n  to:", task.workingDir, "\n  exclude filter:", exclude);
 
     try {
       await ssh.recv(include, task.workingDir, null, exclude);
@@ -82,20 +81,20 @@ async function gatherFiles(task) {
       if (e.message !== "src must be existing file or directory") {
         throw e;
       } else {
-        logger.debug("file not found but ignored", e);
+        getLogger(task.projectRootDir).debug("file not found but ignored", e);
       }
     }
   }
 
   //clean up remote working directory
   if (task.doCleanup) {
-    logger.debug("(remote) rm -fr", task.remoteWorkingDir);
+    getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
 
     try {
       await ssh.exec(`rm -fr ${task.remoteWorkingDir}`);
     } catch (e) {
       //just log and ignore error
-      logger.warn("remote cleanup failed but ignored", e);
+      getLogger(task.projectRootDir).warn("remote cleanup failed but ignored", e);
     }
   }
 }

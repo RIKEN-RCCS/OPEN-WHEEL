@@ -14,10 +14,10 @@ const getFirstCapture = jobManager.__get__("getFirstCapture");
 describe("UT for jobManager class", ()=>{
   describe("#getStatCommand", ()=>{
     it("should return single command for single jobID", ()=>{
-      expect(getStatCommand({ stat: "stat" }, "jobID")).to.equal("stat jobID");
+      expect(getStatCommand({ stat: "stat" }, "jobID")).to.equal(". /etc/profile;stat jobID");
     });
     it("should return multi commands are connected by OR pipe and has same jobID", ()=>{
-      expect(getStatCommand({ stat: ["stat", "stat -b", "stat -a -b -c"] }, "jobID")).to.equal("stat jobID ; stat -b jobID ; stat -a -b -c jobID");
+      expect(getStatCommand({ stat: ["stat", "stat -b", "stat -a -b -c"] }, "jobID")).to.equal(". /etc/profile;stat jobID ; stat -b jobID ; stat -a -b -c jobID");
     });
   });
   describe("#getFirstCapture", ()=>{

@@ -5,124 +5,98 @@
  */
 "use strict";
 const path = require("path");
-const debugLib = require("debug");
-const debug = debugLib("wheel:logger");
 const { promisify } = require("util");
 const log4js = require("log4js");
+const logger = log4js.getLogger();
 const { logFilename, numLogFiles, maxLogSize, compressLogFile } = require("./db/db");
-log4js.addLayout("errorlog", ()=>{
-  return function(logEvent) {
-    const tmp = logEvent.data.reduce((a, p)=>{
-      if (p instanceof Error) {
-        return `${a}<br>${p.message}`;
-      }
 
-      if (typeof p === "string") {
-        return `${a} ${p}`;
-      }
-      return a;
-    }, "");
-    return tmp;
-  };
-});
+function getLoglevel(ignoreEnv = false) {
+  const wheelLoglevel = process.env.WHEEL_LOGLEVEL;
+  const defaultLevel = "debug";
+  if (ignoreEnv || typeof wheelLoglevel !== "string") {
+    return defaultLevel;
+  }
+  return ["ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "MARK", "OFF"].includes(wheelLoglevel.toUpperCase()) ? wheelLoglevel.toUpperCase() : defaultLevel;
+}
 
 const eventNameTable = {
-  DEBUG: "logDBG",
+  DEBUG: null,
   INFO: "logINFO",
-  WARN: "logWARN",
+  WARN: null,
   ERROR: "logERR",
+  FATAL: "logERR",
   STDOUT: "logStdout",
   STDERR: "logStderr",
   SSHOUT: "logSSHout",
   SSHERR: "logSSHerr"
 };
 
-function socketIOAppender(layout, timezoneOffset, ignoreLevel, argEventName) {
+function socketIOAppender(layout, timezoneOffset, argEventName) {
   return (loggingEvent)=>{
-    if (loggingEvent.level.level < ignoreLevel) {
+    const eventName = argEventName || eventNameTable[loggingEvent.level.levelStr];
+    const socket = loggingEvent.context.socket;
+    if (!socket) {
+      console.log("context.socket is not set. something go wrong"); //eslint-disable-line no-console
       return;
     }
-    const eventName = argEventName || eventNameTable[loggingEvent.level.levelStr];
-    const socket = loggingEvent.context.sio;
+    const projectRootDir = loggingEvent.context.projectRootDir;
 
-    if (eventName) {
-      socket.emit(eventName, layout(loggingEvent, timezoneOffset));
+    if (eventName && projectRootDir) {
+      socket.to(projectRootDir).emit(eventName, layout(loggingEvent, timezoneOffset));
     }
   };
 }
 
-const log2client = {
+const socketIO = {
   configure: (config, layouts)=>{
     let layout = layouts.basicLayout;
 
     if (config.layout) {
       layout = layouts.layout(config.layout.type, config.layout);
     }
-    return socketIOAppender(layout, config.timezoneOffset, 20000);
+    return socketIOAppender(layout, config.timezoneOffset);
   }
 };
 
-const errorlog = {
-  configure: (config, layouts)=>{
-    let layout = layouts.messagePassThroughLayout;
-
-    if (config.layout) {
-      layout = layouts.layout(config.layout.type, config.layout);
-    }
-    const eventName = config.eventName || "showMessage";
-    return socketIOAppender(layout, config.timezoneOffset, 40000, eventName);
-  }
-};
-
-
-const defaultSettings = {
+const logSettings = {
   appenders: {
     console: {
       type: "console"
     },
-    filterdConsole: {
-      type: "logLevelFilter",
-      appender: "console",
-      level: "debug"
-    },
-    file: {
-      type: "file",
-      filename: path.resolve(logFilename),
-      maxLogSize,
-      backups: numLogFiles,
-      compress: compressLogFile
+    socketIO: {
+      type: socketIO
     },
     multi: {
       type: "multiFile",
-      property: "logFilename",
+      property: "projectRootDir",
       base: "",
-      extension: "",
+      extension: `/${path.basename(logFilename)}`,
       maxLogSize,
       backups: numLogFiles,
       compress: compressLogFile
     },
-    socketIO: {
-      type: log2client
+    filterdConsole: {
+      type: "logLevelFilter",
+      appender: "console",
+      level: getLoglevel()
     },
-    errorlog: {
-      type: errorlog,
-      layout: { type: "errorlog" }
+    filterdFile: {
+      type: "logLevelFilter",
+      appender: "multi",
+      level: getLoglevel()
+    },
+    log2client: {
+      type: "logLevelFilter",
+      appender: "socketIO",
+      level: getLoglevel()
     }
   },
   categories: {
     default: {
       appenders: [
         "filterdConsole",
-        "file"
-      ],
-      level: "trace"
-    },
-    workflow: {
-      appenders: [
-        "filterdConsole",
-        "multi",
-        "socketIO",
-        "errorlog"
+        "filterdFile",
+        "log2client"
       ],
       level: "trace"
     }
@@ -146,63 +120,28 @@ const defaultSettings = {
     }
   }
 };
+//configure with default setting
+log4js.configure(logSettings);
 
-let firstCall = true;
-const logSettings = Object.assign({}, defaultSettings);
-
-
-/**
- * setup log4js
- * @param {string} filename - general log file name
- * @param {number} size - max size of log file
- * @param {number} num - max back up files to keep
- * @param {boolean} compress - backup files to be compressed or not
- */
-async function setup(filename, size, num, compress) {
-  //this function will not affect project log filename to keep file
-  logSettings.appenders.file.filename = filename;
-  logSettings.appenders.file.maxLogSize = size;
-  logSettings.appenders.multi.maxLogSize = size;
-  logSettings.appenders.file.backups = num;
-  logSettings.appenders.multi.backups = num;
-  logSettings.appenders.file.compress = compress === true;
-  logSettings.appenders.multi.compress = compress === true;
-
-  if (!firstCall) {
-    await promisify(log4js.shutdown);
-    firstCall = true;
+async function setLoglevel(appender, loglevel) {
+  if (!["filterdConsole", "filterdFile", "log2client"].includes(appender)) {
+    return;
   }
+  logSettings.appenders[appender].level = loglevel || getLoglevel();
+  await promisify(log4js.shutdown)();
+  log4js.configure(logSettings);
 }
 
-//TODO 引数は無しor projectRootDir に変更
-//projectRootDirが渡されたらaddcontextしてからloggerを返す
-//なかったらremoveContextしておくこと
-function getLogger(cat) {
-  if (firstCall) {
-    if (process.env.WHEEL_DISABLE_CONSOLE_LOG) {
-      logSettings.categories.default.appenders = logSettings.categories.default.appenders.filter((e)=>{
-        return e !== "filterdConsole";
-      });
-      logSettings.categories.workflow.appenders = logSettings.categories.workflow.appenders.filter((e)=>{
-        return e !== "filterdConsole";
-      });
-    }
-    debug("getLogger called. current setting is as follows\n", logSettings);
-    log4js.configure(logSettings);
-    firstCall = false;
-  }
-  const logger = log4js.getLogger(cat);
-  if (process.env.WHEEL_DISABLE_LOG) {
-    debug("logging is disabled because WHEEL_DISABLE_LOG is set to ", process.env.WHEEL_DISABLE_LOG);
-    logger.level = "off";
-  } else {
-    debug("logging level is trace");
-    logger.level = "trace";
-  }
+
+function getLogger(projectRootDir) {
+  //please note projectRootDir context will remain after logging
+  logger.addContext("projectRootDir", projectRootDir || path.dirname(logFilename));
+  logger.shutdown = promisify(log4js.shutdown); //only use in test code
+  //logger.reset = log4js.configure.bind(log4js, logSettings);
   return logger;
 }
 
 module.exports = {
-  getLogger,
-  setup
+  setLoglevel,
+  getLogger
 };

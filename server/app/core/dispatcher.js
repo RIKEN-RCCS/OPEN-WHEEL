@@ -249,9 +249,9 @@ function whileGetNextIndex(component) {
   return component.currentIndex !== null ? ++(component.currentIndex) : 0;
 }
 
-async function whileIsFinished(cwfDir, logger, component) {
+async function whileIsFinished(cwfDir, projectRootDir, component) {
   const cwd = path.resolve(cwfDir, component.name);
-  const condition = await evalCondition(component.condition, cwd, component.currentIndex, logger);
+  const condition = await evalCondition(projectRootDir, component.condition, cwd, component.currentIndex);
   return !condition;
 }
 
@@ -615,7 +615,7 @@ class Dispatcher extends EventEmitter {
     }
     task.parentType = this.cwfJson.type;
 
-    exec(task, this.logger); //exec is async function but dispatcher never wait end of task execution
+    exec(task); //exec is async function but dispatcher never wait end of task execution
 
     this.runningTasks.push(task);
     this.dispatchedTasks.add(task);
@@ -628,7 +628,7 @@ class Dispatcher extends EventEmitter {
     this.logger.debug("_checkIf called", component.name);
     const childDir = path.resolve(this.cwfDir, component.name);
     const currentIndex = Object.prototype.hasOwnProperty.call(this.cwfJson, "currentIndex") ? this.cwfJson.currentIndex : null;
-    const condition = await evalCondition(component.condition, childDir, currentIndex, this.logger);
+    const condition = await evalCondition(this.projectRootDir, component.condition, childDir, currentIndex);
     await this._addNextComponent(component, !condition);
     await this._setComponentState(component, "finished");
   }
@@ -1130,7 +1130,7 @@ class Dispatcher extends EventEmitter {
         cmd = this._loopHandler.bind(this, forGetNextIndex, forIsFinished, forTripCount, forKeepLoopInstance);
         break;
       case "while":
-        cmd = this._loopHandler.bind(this, whileGetNextIndex, whileIsFinished.bind(null, this.cwfDir, this.logger), null, whileKeepLoopInstance);
+        cmd = this._loopHandler.bind(this, whileGetNextIndex, whileIsFinished.bind(null, this.cwfDir, this.projectRootDir), null, whileKeepLoopInstance);
         break;
       case "foreach":
         cmd = this._loopHandler.bind(this, foreachGetNextIndex, foreachIsFinished, foreachTripCount, foreachKeepLoopInstance);

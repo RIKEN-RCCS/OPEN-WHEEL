@@ -29,7 +29,6 @@ const {
 } = require("./workflowEditor.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
-const logger = getLogger();
 
 const registerHandlers = (socket, Siofu)=>{
   //
@@ -76,11 +75,13 @@ const registerHandlers = (socket, Siofu)=>{
   uploader.listen(socket);
   uploader.dir = os.homedir();
   uploader.on("start", (event)=>{
-    logger.debug("upload request recieved", event.file.name);
+    const projectRootDir = event.file.meta.projectRootDir;
+    getLogger(projectRootDir).debug("upload request recieved", event.file.name);
   });
   uploader.on("saved", onUploadFileSaved.bind(null, socket));
   uploader.on("error", (event)=>{
-    logger.error("file upload failed", event.file, event.error);
+    const projectRootDir = event.file.meta.projectRootDir;
+    getLogger(projectRootDir).error("file upload failed", event.file, event.error);
   });
   //create
   socket.on("createNewFile", onCreateNewFile);

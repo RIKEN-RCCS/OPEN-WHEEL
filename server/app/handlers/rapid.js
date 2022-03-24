@@ -6,7 +6,6 @@
 "use strict";
 const path = require("path");
 const { getLogger } = require("../logSettings");
-const logger = getLogger();
 const { openFile, saveFile } = require("../core/fileUtils.js");
 
 const onOpenFile = async(socket, projectRootDir, filename, forceNormal, cb)=>{
@@ -20,7 +19,7 @@ const onOpenFile = async(socket, projectRootDir, filename, forceNormal, cb)=>{
       }
     }
   } catch (err) {
-    logger.warn(projectRootDir, "openFile event failed", err);
+    getLogger(projectRootDir).warn(projectRootDir, "openFile event failed", err);
     return cb(err);
   }
   return cb(true);
@@ -30,7 +29,7 @@ const onSaveFile = async(projectRootDir, filename, dirname, content, cb)=>{
   try {
     await saveFile(path.resolve(dirname, filename), content);
   } catch (err) {
-    logger.warn(projectRootDir, "saveFile event failed", err);
+    getLogger(projectRootDir).warn(projectRootDir, "saveFile event failed", err);
     return cb(err);
   }
   return cb(true);

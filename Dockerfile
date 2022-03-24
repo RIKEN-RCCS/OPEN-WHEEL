@@ -7,9 +7,9 @@ WORKDIR /usr/src/
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
 
 # copy necessary files
+COPY package.json package.json
 COPY client client
 COPY server server
-COPY package.json package.json
 
 RUN --mount=type=cache,target=/root/.npm cd server; npm install
 RUN --mount=type=cache,target=/root/.npm cd client; npm install; npm run build -- --no-clean --mode development

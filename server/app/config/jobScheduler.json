@@ -16,7 +16,7 @@
     "stat": "qstat -xf",
     "del": "qdel",
     "reJobID": "^(\\d+).*",
-    "reFinishedState": "Unknown Job Id",
+    "reFinishedState": "(?:Unknown Job Id|PBS is not configured to maintain job history)",
     "reReturnCode": "",
     "reJobStatusCode": "",
     "acceptableRt": 153,
@@ -36,8 +36,14 @@
   "Fugaku": {
     "submit": "pjsub -X",
     "queueOpt": "-L rscgrp=",
-    "stat": ["pjstat -v --choose jid,st,ec,pc","pjstat -v -H day=3 --choose jid,st,ec,pc"],
-    "bulkstat": ["pjstat -E -v --choose jid,st,ec,pc","pjstat -E -v -H day=3 --choose jid,st,ec,pc"],
+    "stat": [
+      "pjstat -v --choose jid,st,ec,pc",
+      "pjstat -v -H day=3 --choose jid,st,ec,pc"
+    ],
+    "bulkstat": [
+      "pjstat -E -v --choose jid,st,ec,pc",
+      "pjstat -E -v -H day=3 --choose jid,st,ec,pc"
+    ],
     "del": "pjdel",
     "reJobID": "pjsub Job (\\d+_*\\d*) submitted.",
     "reFinishedState": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:CCL|ERR|EXT|RJT) *(?:\\d+|\\S+) *(?:\\d+|\\S+)",
@@ -64,7 +70,10 @@
   "UGE": {
     "submit": "qsub",
     "queueOpt": "-l ",
-    "stat": ["qstat -j","qacct -j"],
+    "stat": [
+      "qstat -j",
+      "qacct -j"
+    ],
     "del": "qdel",
     "reJobID": "(\\d+).*",
     "reFinishedState": "failed *0",

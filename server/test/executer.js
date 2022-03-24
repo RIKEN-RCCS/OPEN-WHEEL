@@ -35,38 +35,10 @@ const { remoteHost } = require("../app/db/db");
 const { addSsh, createSshConfig } = require("../app/core/sshManager");
 
 
-const dummyLogger = {
-  error: sinon.stub(),
-  warn: sinon.stub(),
-  info: sinon.stub(),
-  debug: sinon.stub(),
-  trace: sinon.stub(),
-  stdout: sinon.stub(),
-  stderr: sinon.stub(),
-  sshout: sinon.stub(),
-  ssherr: sinon.stub()
-};
-dummyLogger.error = sinon.spy(console.log);
-dummyLogger.warn = sinon.spy(console.log);
-dummyLogger.info = sinon.spy(console.log);
-dummyLogger.debug = sinon.spy(console.log);
-dummyLogger.trace = sinon.spy(console.log);
-executer.__set__("logger", dummyLogger);
-
 describe("UT for executer class", function() {
   this.timeout(0);
   let task0;
   beforeEach(async()=>{
-    dummyLogger.error.resetHistory();
-    dummyLogger.warn.resetHistory();
-    dummyLogger.info.resetHistory();
-    dummyLogger.debug.resetHistory();
-    dummyLogger.trace.resetHistory();
-    dummyLogger.stdout.resetHistory();
-    dummyLogger.stderr.resetHistory();
-    dummyLogger.sshout.resetHistory();
-    dummyLogger.ssherr.resetHistory();
-
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
     task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
@@ -97,21 +69,13 @@ describe("UT for executer class", function() {
   });
   describe("#local exec", ()=>{
     it("run shell script which returns 0 and status should be Finished", async()=>{
-      await exec(task0, dummyLogger);
+      await exec(task0);
       expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
-      expect(dummyLogger.stdout).to.be.calledOnceWith(`${path.resolve(task0.projectRootDir, task0.name)}\n`);
-      expect(dummyLogger.stderr).not.to.be.called;
-      expect(dummyLogger.sshout).not.to.be.called;
-      expect(dummyLogger.ssherr).not.to.be.called;
     });
     it("run shell script which returns 1 and status should be failed", async()=>{
       await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-      await exec(task0, dummyLogger);
+      await exec(task0);
       expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
-      expect(dummyLogger.stdout).to.be.calledOnceWith(`${path.resolve(task0.projectRootDir, task0.name)}\n`);
-      expect(dummyLogger.stderr).not.to.be.called;
-      expect(dummyLogger.sshout).not.to.be.called;
-      expect(dummyLogger.ssherr).not.to.be.called;
     });
   });
   describe("run on remote host", ()=>{
@@ -170,12 +134,8 @@ describe("UT for executer class", function() {
     });
     describe("#remote exec", ()=>{
       it("run shell script which returns 0 and status should be Finished", async()=>{
-        await exec(task0, dummyLogger);
+        await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(path.posix.join(remoteHome, task0.projectStartTime, task0.name));
-        expect(dummyLogger.ssherr).not.to.be.called;
         expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
           .to.have.members([path.posix.join(remoteHome, task0.projectStartTime, task0.name)]);
         expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime, task0.name))).to.have.members([
@@ -185,54 +145,34 @@ describe("UT for executer class", function() {
       });
       it("cleanup remote directory after successfully run", async()=>{
         task0.doCleanup = true;
-        await exec(task0, dummyLogger);
+        await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(path.posix.join(remoteHome, task0.projectStartTime, task0.name));
-        expect(dummyLogger.ssherr).not.to.be.called;
         expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime))).to.be.an("array").that.is.empty;
       });
       it("get outputFiles after successfully run", async()=>{
         task0.outputFiles = [{ name: "hoge" }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(0)}`);
-        await exec(task0, dummyLogger);
+        await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(`/home/pbsuser/${task0.projectStartTime}/${task0.name}`);
-        expect(dummyLogger.ssherr).not.to.be.called;
         expect(path.join(task0.workingDir, "hoge")).to.be.a.file().with.content("hoge");
       });
       it("do nothing if outputFile is not found", async()=>{
         task0.outputFiles = [{ name: "huga" }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(0)}`);
-        await exec(task0, dummyLogger);
+        await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(`/home/pbsuser/${task0.projectStartTime}/${task0.name}`);
-        expect(dummyLogger.ssherr).not.to.be.called;
         expect(path.join(task0.workingDir, "huga")).not.to.be.a.path();
       });
       it("run shell script which returns 1 and status should be failed", async()=>{
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-        await exec(task0, dummyLogger);
+        await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(`/home/pbsuser/${task0.projectStartTime}/${task0.name}`);
-        expect(dummyLogger.ssherr).not.to.be.called;
       });
       it("do not cleanup remote directory after failed run", async()=>{
         task0.doCleanup = true;
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-        await exec(task0, dummyLogger);
+        await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(path.posix.join(remoteHome, task0.projectStartTime, task0.name));
-        expect(dummyLogger.ssherr).not.to.be.called;
         expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
           .to.have.members([path.posix.join(remoteHome, task0.projectStartTime, task0.name)]);
         expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime, task0.name))).to.have.members([
@@ -243,12 +183,8 @@ describe("UT for executer class", function() {
       it("do not get outputFiles after failed run", async()=>{
         task0.outputFiles = [{ name: "hoge" }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(1)}`);
-        await exec(task0, dummyLogger);
+        await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).to.be.calledOnceWith(`/home/pbsuser/${task0.projectStartTime}/${task0.name}`);
-        expect(dummyLogger.ssherr).not.to.be.called;
         expect(path.join(task0.workingDir, "hoge")).not.to.be.a.path();
       });
     });
@@ -257,13 +193,9 @@ describe("UT for executer class", function() {
         task0.useJobScheduler = true;
       });
       it("run shell script which returns 0 and status should be Finished", async()=>{
-        await exec(task0, dummyLogger);
+        await exec(task0);
         //92 means job was successfully finished on PBS Pro
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\n92");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).not.to.be.called;
-        expect(dummyLogger.ssherr).not.to.be.called;
         const remotehostID = process.env.WHEEL_TEST_REMOTEHOST;
         const hostInfo = remoteHost.query("name", remotehostID);
         const hostname = hostInfo.host;
@@ -272,13 +204,9 @@ describe("UT for executer class", function() {
       });
       it("run shell script which returns 1 and status should be failed", async()=>{
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-        await exec(task0, dummyLogger);
+        await exec(task0);
         //93 means job was finished but failed on PBS Pro
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\n93");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).not.to.be.called;
-        expect(dummyLogger.ssherr).not.to.be.called;
         const remotehostID = process.env.WHEEL_TEST_REMOTEHOST;
         const hostInfo = remoteHost.query("name", remotehostID);
         const hostname = hostInfo.host;
@@ -287,13 +215,9 @@ describe("UT for executer class", function() {
       });
       it("add submit option", async()=>{
         task0.submitOption = "-N testjob";
-        await exec(task0, dummyLogger);
+        await exec(task0);
         //92 means job was successfully finished on PBS Pro
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\n92");
-        expect(dummyLogger.stdout).not.to.be.called;
-        expect(dummyLogger.stderr).not.to.be.called;
-        expect(dummyLogger.sshout).not.to.be.called;
-        expect(dummyLogger.ssherr).not.to.be.called;
         const remotehostID = process.env.WHEEL_TEST_REMOTEHOST;
         const hostInfo = remoteHost.query("name", remotehostID);
         const hostname = hostInfo.host;

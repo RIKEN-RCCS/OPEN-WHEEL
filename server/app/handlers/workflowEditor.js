@@ -31,8 +31,7 @@ async function generalHandler(socket, func, funcname, projectRootDir, cb, ID) {
   try {
     await func();
   } catch (e) {
-    //getLogger(projectRootDir).error(`${funcname} failed`, e);
-    getLogger().error(`${funcname} failed`, e);
+    getLogger(projectRootDir).error(`${funcname} failed`, e);
     cb(e);
     return;
   }

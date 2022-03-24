@@ -8,24 +8,24 @@ const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs-extra");
 const { getLogger } = require("../logSettings");
-const logger = getLogger();
 const { escapeRegExp } = require("../lib/utility");
 
 /**
  * asynchronous git call
  * @param {string} cwd - working directory
  * @param {string[]} args - argument list including git's sub command eg. add,commit,init... etc.
+ * @param {string} rootDir - repo's root dir
  */
-async function gitPromise(cwd, args) {
+async function gitPromise(cwd, args, rootDir) {
   return new Promise((resolve, reject)=>{
     const cp = spawn("git", args, { cwd: path.resolve(cwd), env: process.env, shell: true });
     let output = "";
     cp.stdout.on("data", (data)=>{
-      logger.trace(data.toString());
+      getLogger(rootDir).trace(data.toString());
       output += data.toString();
     });
     cp.stderr.on("data", (data)=>{
-      logger.trace(data.toString());
+      getLogger(rootDir).trace(data.toString());
       output += data.toString();
     });
     cp.on("error", (e)=>{
@@ -67,10 +67,10 @@ async function gitInit(rootDir, user, mail) {
   }
   const { dir, base } = path.parse(path.resolve(rootDir));
   await fs.ensureDir(dir);
-  await gitPromise(dir, ["init", base]);
-  await gitPromise(rootDir, ["config", "user.name", user]);
-  await gitPromise(rootDir, ["config", "user.email", mail]);
-  return gitPromise(rootDir, ["lfs", "install"]);
+  await gitPromise(dir, ["init", base], rootDir);
+  await gitPromise(rootDir, ["config", "user.name", user], rootDir);
+  await gitPromise(rootDir, ["config", "user.email", mail], rootDir);
+  return gitPromise(rootDir, ["lfs", "install"], rootDir);
 }
 
 /**
@@ -79,7 +79,7 @@ async function gitInit(rootDir, user, mail) {
  * @param {string} message - commmit message
  */
 async function gitCommit(rootDir, message = "save project") {
-  return gitPromise(rootDir, ["commit", "-m", `"${message}"`])
+  return gitPromise(rootDir, ["commit", "-m", `"${message}"`], rootDir)
     .catch((err)=>{
       if (!/(no changes|nothing)( added | )to commit/m.test(err)) {
         throw err;
@@ -94,7 +94,7 @@ async function gitCommit(rootDir, message = "save project") {
  * filename should be absolute path or relative path from rootDir.
  */
 async function gitAdd(rootDir, filename) {
-  return gitPromise(rootDir, ["add", filename])
+  return gitPromise(rootDir, ["add", filename], rootDir)
     .catch((err)=>{
       if (!/fatal: Unable to create '.*index.lock': File exists/.test(err)) {
         throw err;
@@ -109,7 +109,7 @@ async function gitAdd(rootDir, filename) {
  * filename should be absolute path or relative path from rootDir.
  */
 async function gitRm(rootDir, filename) {
-  return gitPromise(rootDir, ["rm", "-r", "--cached", filename])
+  return gitPromise(rootDir, ["rm", "-r", "--cached", filename], rootDir)
     .catch((err)=>{
       if (!/fatal: pathspec '.*' did not match any files/.test(err)) {
         throw err;
@@ -124,10 +124,10 @@ async function gitRm(rootDir, filename) {
  */
 async function gitResetHEAD(rootDir, filePatterns = "") {
   if (filePatterns === "") {
-    return gitPromise(rootDir, ["reset", "HEAD", "--hard"]);
+    return gitPromise(rootDir, ["reset", "HEAD", "--hard"], rootDir);
   }
-  await gitPromise(rootDir, ["reset", "HEAD", "--", filePatterns]);
-  return gitPromise(rootDir, ["checkout", "HEAD", "--", filePatterns]);
+  await gitPromise(rootDir, ["reset", "HEAD", "--", filePatterns], rootDir);
+  return gitPromise(rootDir, ["checkout", "HEAD", "--", filePatterns], rootDir);
 }
 
 /**
@@ -135,7 +135,7 @@ async function gitResetHEAD(rootDir, filePatterns = "") {
  * @param {string} rootDir - repo's root dir
  */
 async function gitStatus(rootDir) {
-  const output = await gitPromise(rootDir, ["status", "--short"]);
+  const output = await gitPromise(rootDir, ["status", "--short"], rootDir);
   const rt = { added: [], modified: [], deleted: [], renamed: [], untracked: [] };
 
   //parse output from git
@@ -174,7 +174,7 @@ async function gitStatus(rootDir) {
  * @param {string} filePatterns - files to be reset
  */
 async function gitClean(rootDir, filePatterns = "") {
-  return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", filePatterns]);
+  return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", filePatterns], rootDir);
 }
 
 function getRelativeFilename(rootDir, filename) {
@@ -187,7 +187,7 @@ function makeLFSPattern(rootDir, filename) {
 
 async function isLFS(rootDir, filename) {
   const lfsPattern = getRelativeFilename(rootDir, filename);
-  const lfsTrackResult = await gitPromise(rootDir, ["lfs", "track"]);
+  const lfsTrackResult = await gitPromise(rootDir, ["lfs", "track"], rootDir);
   const re = new RegExp(escapeRegExp(lfsPattern), "m");
   return re.test(lfsTrackResult);
 }
@@ -198,8 +198,8 @@ async function isLFS(rootDir, filename) {
  * @param {string} filename - files to be track
  */
 async function gitLFSTrack(rootDir, filename) {
-  await gitPromise(rootDir, ["lfs", "track", makeLFSPattern(rootDir, filename)]);
-  logger.trace(`${filename} is treated as large file`);
+  await gitPromise(rootDir, ["lfs", "track", makeLFSPattern(rootDir, filename)], rootDir);
+  getLogger(rootDir).trace(`${filename} is treated as large file`);
   return gitAdd(rootDir, ".gitattributes");
 }
 
@@ -209,8 +209,8 @@ async function gitLFSTrack(rootDir, filename) {
  * @param {string} filename - files to be untracked
  */
 async function gitLFSUntrack(rootDir, filename) {
-  await gitPromise(rootDir, ["lfs", "untrack", makeLFSPattern(rootDir, filename)]);
-  logger.trace(`${filename} never treated as large file`);
+  await gitPromise(rootDir, ["lfs", "untrack", makeLFSPattern(rootDir, filename)], rootDir);
+  getLogger(rootDir).trace(`${filename} never treated as large file`);
 
   if (await fs.pathExists(path.resolve(rootDir, ".gitattributes"))) {
     await gitAdd(rootDir, ".gitattributes");

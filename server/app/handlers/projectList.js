@@ -7,7 +7,6 @@
 const path = require("path");
 const fs = require("fs-extra");
 const { getLogger } = require("../logSettings");
-const logger = getLogger();
 const { projectList, projectJsonFilename } = require("../db/db.js");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { addProject, renameProject } = require("../core/projectFilesOperator.js");
@@ -21,7 +20,7 @@ const getAllProject = async()=>{
       const projectJson = await readJsonGreedy(path.join(v.path, projectJsonFilename));
       rt = Object.assign(projectJson, v);
     } catch (err) {
-      logger.warn(v, "read failed remove from the list");
+      getLogger().warn(v, "read failed remove from the list");
       projectList.remove(v.id);
       rt = null;
     }

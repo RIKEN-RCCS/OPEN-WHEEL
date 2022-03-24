@@ -2,11 +2,16 @@
 TAG=wheel_release_test
 TAG_TEST_SERVER=wheel_release_test_server
 
+# crate config files
+#
+CONFIG_DIR=$(mktemp -d tmp.XXXXXXXXXX)
+# self-signed-certification files
+SSL_CONFIG=$(mktemp tmp_config.XXXXXXXXXX)
 function cleanup()
 {
     echo "============================================="
     echo "start cleanup process"
-    docker stop ${TAG} ${TAG_TEST_SERVER}
+    docker stop ${TAG}
     rm -fr ${CONFIG_DIR}
     rm ${SSL_CONFIG}
     echo "remaining containers"
@@ -22,6 +27,7 @@ pushd ${TEST_DIR}
 
 # stop container
 docker stop ${TAG} >& /dev/null
+docker stop ${TAG_TEST_SERVER} >& /dev/null
 # remove container
 docker rm ${TAG} >& /dev/null
 
@@ -47,12 +53,6 @@ if [ ${rt} -ne 0 ];then
   exit 3
 fi
 
-#
-# crate config files
-#
-CONFIG_DIR=$(mktemp -d tmp.XXXXXXXXXX)
-# self-signed-certification files
-SSL_CONFIG=$(mktemp tmp_config.XXXXXXXXXX)
 echo '[dn]
 CN=localhost
 [req]
@@ -89,10 +89,11 @@ echo '}]'
 } > ${CONFIG_DIR}/remotehost.json
 
 #run UT in container
-docker run --env "WHEEL_TEST_REMOTEHOST=testServer" \
-           --env "WHEEL_TEST_REMOTE_PASSWORD=passw0rd"  \
-           -v ${PWD}/${CONFIG_DIR}:/usr/src/app/config  \
-           -p 8089:8089  \
+docker run --rm\
+           --env "WHEEL_TEST_REMOTEHOST=testServer"\
+           --env "WHEEL_TEST_REMOTE_PASSWORD=passw0rd"\
+           -v ${PWD}/${CONFIG_DIR}:/usr/src/app/config\
+           -p 8089:8089\
            --name ${TAG} ${TAG}
 rt=$?
 
