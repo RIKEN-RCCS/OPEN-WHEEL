@@ -14,6 +14,7 @@ const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } =
 const { componentJsonReplacer } = require("./componentFilesOperator");
 const Dispatcher = require("./dispatcher");
 const { getDateString } = require("../lib/utility");
+const { getLogger } = require("../logSettings.js");
 
 const rootDispatchers = new Map();
 const eventEmitters = new Map();
@@ -104,11 +105,11 @@ async function runProject(projectRootDir) {
   rootDispatchers.set(projectRootDir, rootDispatcher);
 
   await updateProjectState(projectRootDir, "running", projectJson);
+  getLogger(projectRootDir).info("project start");
   rootWF.state = await rootDispatcher.start();
+  getLogger(projectRootDir).info("project finished");
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
-
   await fs.writeJson(path.resolve(projectRootDir, componentJsonFilename), rootWF, { spaces: 4, replacer: componentJsonReplacer });
-
   eventEmitters.delete(projectRootDir);
   rootDispatchers.delete(projectRootDir);
   removeSsh(projectRootDir);

@@ -18,8 +18,8 @@ const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
-const { componentJsonReplacer, getComponent } = require("./componentFilesOperator");
-const { isInitialComponent } = require("./workflowComponent");
+const { componentJsonReplacer, getComponent, getChildren } = require("./componentFilesOperator");
+const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
 const { evalCondition } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
@@ -313,21 +313,25 @@ async function replaceTargetFile(srcDir, dstDir, targetFiles, params) {
  * @param {string} cwfDir -         current dispatching workflow directory (absolute path);
  * @param {string} startTime -      project start time
  * @param {Object} componentPath -  componentPath in project Json
+ * @param {Function} emitEvent - emit function for project
+ * @param {string } ancestorsType - comma separated ancestor components' type
  */
 class Dispatcher extends EventEmitter {
-  constructor(projectRootDir, cwfID, cwfDir, startTime, componentPath, emit, ancestorsType) {
+  constructor(projectRootDir, cwfID, cwfDir, startTime, componentPath, emitEvent, ancestorsType) {
     super();
     this.projectRootDir = projectRootDir;
     this.cwfID = cwfID;
     this.cwfDir = cwfDir;
     this.projectStartTime = startTime;
     this.componentPath = componentPath;
-    this.emitEvent = emit;
+    this.emitEvent = emitEvent;
     this.ancestorsType = ancestorsType;
 
-    this.nextSearchList = [];
+    this.currentSearchList = [];
+    this.pendingComponents = [];
     this.children = new Set(); //child dispatcher instance
     this.runningTasks = []; //store currently running tasks from this dispatcher object
+    this.needToRerun = false;
 
     if (!taskDB.has(this.projectRootDir)) {
       taskDB.set(this.projectRootDir, new Set());
@@ -335,8 +339,22 @@ class Dispatcher extends EventEmitter {
     this.dispatchedTasks = taskDB.get(this.projectRootDir); //store all dipatched tasks in this project
     this.hasFailedComponent = false;
     this.hasUnknownComponent = false;
-    this.isInitialized = this._asyncInit();
     this.logger = getLogger(projectRootDir);
+    this.firstCall = true;
+    this.on("taskCompleted", (state)=>{
+      this.setStateFlag(state);
+      this._reserveDispatch();
+    });
+  }
+
+  _reserveDispatch() {
+    if (this.listenerCount("dispatch") === 0) {
+      this.needToRerun = true;
+    } else {
+      setImmediate(()=>{
+        this.emit("dispatch");
+      });
+    }
   }
 
   async _asyncInit() {
@@ -346,58 +364,76 @@ class Dispatcher extends EventEmitter {
     if (this.cwfJson.cleanupFlag !== "2") {
       this.doCleanup = this.cwfJson.cleanupFlag === "0";
     }
+    //overwrite environment variables
+    return true;
+  }
 
-    const children = await promisify(glob)(path.join(this.cwfDir, "*", componentJsonFilename));
-    const childComponents = await Promise.all(children.map((e)=>{
-      return readJsonGreedy(e);
-    }));
+  setStateFlag(state) {
+    if (state === "unknown") {
+      this.hasUnknownComponent = true;
+    } else if (state === "failed") {
+      this.hasFailedComponent = true;
+    }
+  }
 
-    this.currentSearchList = childComponents
-      .filter((component)=>{
-        return !component.subComponent && isInitialComponent(component);
-      });
 
-    this.logger.debug("initial tasks : ", this.currentSearchList.map((e)=>{
-      return e.name;
-    }));
+  async _dispatchOneComponent(target) {
+    try {
+      await this._cmdFactory(target.type).call(this, target);
+    } catch (err) {
+      await this._setComponentState(target, "failed");
+      this.hasFailedComponent = true;
+      return Promise.reject(err);
+    } finally {
+      this.setStateFlag(target.state);
+      await this._addNextComponent(target);
 
+      if (isFinishedState(target.state)) {
+        this.logger.info(`finished component: ${target.name}(${target.ID})`);
+      }
+      this._reserveDispatch();
+    }
     return true;
   }
 
   async _dispatch() {
-    if (this.isInitialized !== true) {
-      await this.isInitialized;
-    }
-    const promises = [];
+    this.logger.trace("_dispatch called", this.cwfDir);
 
+    if (this.firstCall) {
+      await this._asyncInit();
+      const childComponents = await getChildren(this.projectRootDir, this.cwfID);
+      this.currentSearchList = childComponents.filter((component)=>{
+        return isInitialComponent(component);
+      });
+      this.logger.debug("initial tasks : ", this.currentSearchList.map((e)=>{
+        return e.name;
+      }));
+      this.firstCall = false;
+    }
+    this.logger.trace("currentList:", this.currentSearchList.map((e)=>{
+      return e.name;
+    }));
+
+    const promises = [];
     while (this.currentSearchList.length > 0) {
       const target = this.currentSearchList.shift();
+
+
       if (target.disable) {
         this.logger.info(`disabled component: ${target.name}(${target.ID})`);
         continue;
       }
       if (target.type === "source") {
         await this._setComponentState(target, "finished");
-      }
-      if (target.state === "finished") {
-        this.logger.info(`finished component: ${target.name}(${target.ID})`);
-        await this._addNextComponent(target);
+        this._addNextComponent(target);
         continue;
       }
       if (!await this._isReady(target)) {
-        this.nextSearchList.push(target);
+        this.pendingComponents.push(target);
         continue;
       }
 
-      this.logger.debug("currentList:", this.currentSearchList.map((e)=>{
-        return e.name;
-      }));
-      this.logger.debug("next waiting component", this.nextSearchList.map((e)=>{
-        return e.name;
-      }));
-
-
-      await this._setComponentState(target, "running");
+      await this._getInputFiles(target);
 
       if (target.type === "stepjobTask") {
         const parentComponent = await getComponent(this.projectRootDir, target.parent);
@@ -406,70 +442,106 @@ class Dispatcher extends EventEmitter {
         target.parentName = parentComponent.name;
       }
 
-      promises.push(
-        this._cmdFactory(target.type).call(this, target)
-          .then(()=>{
-            if (target.state === "unknown") {
-              this.hasUnknownComponent = true;
-            } else if (target.state === "failed") {
-              this.hasFailedComponent = true;
-            }
-          })
-          .catch(async(err)=>{
-            await this._setComponentState(target, "failed");
-            this.hasFailedComponent = true;
-            return Promise.reject(err);
-          })
-          .finally(()=>{
-            setImmediate(()=>{
-              this.emit("dispatch");
-            });
-          })
-      );
+      await this._setComponentState(target, "running");
+      promises.push(this._dispatchOneComponent(target));
     }//end of while loop
 
-    try {
-      await Promise.all(promises);
-    } catch (e) {
-      this.emit("error", e);
+    if (promises.length > 0) {
+      try {
+        await Promise.all(promises);
+      } catch (e) {
+        this.emit("error", e);
+      }
     }
 
     //remove duplicated entry
-    const nextIDs = Array.from(new Set(this.nextSearchList.map((e)=>{
-      return e.ID;
-    })));
-    this.currentSearchList = nextIDs.map((id)=>{
-      return this.nextSearchList.find((e)=>{
-        return e.ID === id;
-      });
+    this.currentSearchList = removeDuplicatedComponent(this.pendingComponents);
+    this.currentSearchList = await this._removeComponentsWhichHasDisabledDependency(this.currentSearchList);
+    this.pendingComponents = [];
+    this.runningTasks = this.runningTasks.filter((task)=>{
+      return !isFinishedState(task.state);
     });
-    this.nextSearchList = [];
 
+    if (this.needToRerun) {
+      this.needToRerun = false;
+      this.logger.debug("revoke _dispatch()");
+      return this._dispatch();
+    }
     if (this._isFinished()) {
-      this.removeListener("dispatch", this._dispatch);
-      let state = "finished";
-      if (this.hasUnknownComponent) {
-        state = "unknown";
-      } else if (this.hasFailedComponent) {
-        state = "failed";
-      }
+      const state = this._getState();
       this.emit("done", state);
     } else {
+      this.logger.trace("waiting component", this.currentSearchList.map((e)=>{
+        return e.name;
+      }));
+
       this.once("dispatch", this._dispatch);
     }
+    return true;
+  }
+
+  async _hasDisabledDependency(component) {
+    if (component.previous) {
+      for (const ID of component.previous) {
+        const previous = await this._getComponent(ID);
+        if (previous.disable) {
+          return true;
+        }
+        const rt = await this._hasDisabledDependency(previous);
+        if (rt) {
+          return true;
+        }
+      }
+    }
+    if (component.inputFiles) {
+      for (const inputFile of component.inputFiles) {
+        for (const src of inputFile.src) {
+          if (src.srcNode === component.parent) {
+            continue;
+          }
+          const previousF = await this._getComponent(src.srcNode);
+          if (previousF.disable) {
+            return true;
+          }
+          const rtF = await this._hasDisabledDependency(previousF);
+          if (rtF) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * search disabled component recursively in upward direction
+   * @param {Object[]} components - start point components for searching
+   * @returns {Object[]} - component list which do not have disabled dependency
+   */
+  async _removeComponentsWhichHasDisabledDependency(components) {
+    const shouldBeRemoved = await Promise.all(components.map((component)=>{
+      const rt = this._hasDisabledDependency(component);
+      return rt;
+    }));
+    return components.filter((v, index)=>{
+      return !shouldBeRemoved[index];
+    });
+  }
+
+
+  _getState() {
+    let state = "finished";
+    if (this.hasUnknownComponent) {
+      state = "unknown";
+    } else if (this.hasFailedComponent) {
+      state = "failed";
+    }
+    return state;
   }
 
   _isFinished() {
-    this.runningTasks = this.runningTasks.filter((task)=>{
-      if (task.state === "unknown") {
-        this.hasUnknownComponent = true;
-      }
-      if (task.state === "failed") {
-        this.hasFailedComponent = true;
-      }
-      return !isFinishedState(task.state);
-    });
-    return this.currentSearchList.length === 0 && this.nextSearchList.length === 0 && this.runningTasks.length === 0;
+    this.logger.trace(`${this.cwfDir} number of runningTask, waiting component = ${this.runningTasks.length}, ${this.currentSearchList.length}`);
+    return this.runningTasks.length === 0 && this.currentSearchList.length === 0;
   }
 
   async start() {
@@ -493,6 +565,7 @@ class Dispatcher extends EventEmitter {
       };
 
       const onDone = (state)=>{
+        this.logger.trace(`dispatcher finished ${this.cwfDir} with ${state}`);
         onStop();
         resolve(state);
       };
@@ -527,7 +600,7 @@ class Dispatcher extends EventEmitter {
     }
     this.children.clear();
     this.currentSearchList = [];
-    this.nextSearchList = [];
+    this.pendingComponents = [];
   }
 
   async _addNextComponent(component, useElse = false) {
@@ -559,7 +632,7 @@ class Dispatcher extends EventEmitter {
       return this._getComponent(id);
     }));
 
-    Array.prototype.push.apply(this.nextSearchList, nextComponents);
+    Array.prototype.push.apply(this.pendingComponents, nextComponents);
   }
 
   async _getBehindIfComponentList(component) {
@@ -584,7 +657,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _dispatchTask(task) {
-    this.logger.debug("_dispatchTask called", task.name);
+    //this.logger.debug("_dispatchTask called", task.name);
     task.dispatchedTime = getDateString(true, true);
     task.startTime = "not started"; //to be assigned in executer
     task.endTime = "not finished"; //to be assigned in executer
@@ -596,6 +669,7 @@ class Dispatcher extends EventEmitter {
     task.projectRootDir = this.projectRootDir;
     task.workingDir = path.resolve(this.cwfDir, task.name);
     task.emitEvent = this.emitEvent;
+    task.emitForDispatcher = this.emit.bind(this);
 
     task.ancestorsName = replacePathsep(path.relative(task.projectRootDir, path.dirname(task.workingDir)));
     task.ancestorsType = this.ancestorsType;
@@ -653,6 +727,9 @@ class Dispatcher extends EventEmitter {
       }
     } finally {
       await this._addNextComponent(component);
+      setImmediate(()=>{
+        this.emit("dispatch");
+      });
     }
   }
 
@@ -684,7 +761,7 @@ class Dispatcher extends EventEmitter {
   async _loopHandler(getNextIndex, isFinished, getTripCount, keepLoopInstance, component) {
     if (component.childLoopRunning) {
       //send back itself to searchList for next loop trip
-      this.nextSearchList.push(component);
+      this.pendingComponents.push(component);
       return Promise.resolve();
     }
     this.logger.debug("_loopHandler called", component.name);
@@ -708,7 +785,7 @@ class Dispatcher extends EventEmitter {
     }
 
     //send back itself to searchList for next loop trip
-    this.nextSearchList.push(component);
+    this.pendingComponents.push(component);
 
     const newComponent = Object.assign({}, component);
     newComponent.name = `${component.originalName}_${sanitizePath(component.currentIndex)}`;
@@ -981,26 +1058,21 @@ class Dispatcher extends EventEmitter {
         }
       }
     }
+    if (component.inputFiles) {
+      for (const inputFile of component.inputFiles) {
+        for (const src of inputFile.src) {
+          if (src.srcNode === component.parent) {
+            continue;
+          }
+          const previous = await this._getComponent(src.srcNode);
 
-    for (const inputFile of component.inputFiles) {
-      for (const src of inputFile.src) {
-        if (src.srcNode === component.parent) {
-          continue;
-        }
-        const previous = await this._getComponent(src.srcNode);
-
-        if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
-          this.logger.trace(`${component.name}(${component.ID}) is not ready because ${inputFile} from ${previous.name}(${previous.ID}) is not arrived`);
-          return false;
+          if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
+            this.logger.trace(`${component.name}(${component.ID}) is not ready because ${inputFile} from ${previous.name}(${previous.ID}) is not arrived`);
+            return false;
+          }
         }
       }
     }
-    const result = await this._getOutputFiles(component);
-    //store gatherd filenames. it will be used and removed in _ViewerHandler()
-    if (component.type === "viewer") {
-      component.files = result;
-    }
-
     return true;
   }
 
@@ -1027,10 +1099,11 @@ class Dispatcher extends EventEmitter {
     this.emitEvent("componentStateChanged");
   }
 
-  async _getOutputFiles(component) {
-    this.logger.debug(`getOutputFiles for ${component.name}`);
+  async _getInputFiles(component) {
+    this.logger.debug(`getInputFiles for ${component.name}`);
     const promises = [];
     const deliverRecipes = new Set();
+
     for (const inputFile of component.inputFiles) {
       const dstName = inputFile.name;
       //resolve real src
@@ -1106,6 +1179,9 @@ class Dispatcher extends EventEmitter {
     const results = await Promise.all(p2);
     for (const result of results) {
       this.logger.trace(`make ${result.type} from  ${result.src} to ${result.dst}`);
+    }
+    if (component.type === "viewer") {
+      component.files = results;
     }
     return results;
   }

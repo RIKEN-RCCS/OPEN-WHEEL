@@ -1142,6 +1142,7 @@ async function getComponentTree(projectRootDir, rootDir) {
 module.exports = {
   getHosts,
   getSourceComponents,
+  getChildren,
   getComponent,
   validateComponents,
   componentJsonReplacer,

@@ -40,7 +40,9 @@ describe("UT for Dispatcher class", function() {
     rootWF = await fs.readJson(path.resolve(projectRootDir, componentJsonFilename));
   });
   after(async()=>{
-    await fs.remove(testDirRoot);
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
   });
 
   describe("#outputFile delivery functionality", async()=>{

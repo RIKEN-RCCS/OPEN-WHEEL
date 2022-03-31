@@ -197,6 +197,11 @@ const onUploadFileSaved = async(socket, event)=>{
   socket.emit("fileList", result);
 };
 
+const onDownloadFile = async(socket, projectRootDir, target, cb)=>{
+  getLogger(projectRootDir).debug("Download API is not implemented for now", socket, target);
+  cb();
+};
+
 
 module.exports = {
   onGetFileList,
@@ -205,5 +210,6 @@ module.exports = {
   onCreateNewDir,
   onRemoveFile,
   onRenameFile,
-  onUploadFileSaved
+  onUploadFileSaved,
+  onDownloadFile
 };

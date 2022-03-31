@@ -73,6 +73,7 @@ async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
   return eval(conditionExpression);
 }
 
+
 module.exports = {
   evalCondition
 };

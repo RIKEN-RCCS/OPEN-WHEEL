@@ -214,6 +214,8 @@ class Executer {
       getLogger(task.projectRootDir).warn(task.name, "failed due to", e);
     } finally {
       await createStatusFile(task);
+      getLogger(task.projectRootDir).debug(task.name, "completed");
+      task.emitForDispatcher("taskCompleted", task.state);
     }
   }
 
@@ -432,7 +434,7 @@ async function exec(task) {
     task.remoteRootWorkingDir = replacePathsep(path.posix.join(remoteRoot, task.projectStartTime));
   }
 
-  //executer.submit is async function but we does NOT wait it at dispatcher._dispatchTask()
+  //executer.submit is async function but we do NOT wait it at dispatcher._dispatchTask()
   //task state will be written to component json file and read it from each functions which need task status
   return executer.submit(task);
 }

@@ -31,9 +31,8 @@ async function setTaskState(task, state) {
   getLogger(task.proejctRootDir).trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
   //to avoid git add when task state is changed, we do NOT use updateComponentJson(in workflowUtil) here
   await fs.writeJson(path.resolve(task.workingDir, componentJsonFilename), task, { spaces: 4, replacer: componentJsonReplacer });
-  //taskにevent emitterをつけてdispatcher側で読み取る
-//emitProjectEvent(task.projectRootDir, "taskStateChanged", task);
-//emitProjectEvent(task.projectRootDir, "componentStateChanged", task);
+  task.emitEvent("taskStateChanged", task);
+  task.emitEvent("componentStateChanged", task);
 }
 
 async function gatherFiles(task) {

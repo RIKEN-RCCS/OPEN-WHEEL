@@ -60,9 +60,7 @@ describe("UT for executer class", function() {
 
     task0.ancestorsName = replacePathsep(path.relative(task0.projectRootDir, path.dirname(task0.workingDir)));
     task0.doCleanup = false;
-    //task0.doCleanup = task0.cleanupFlag === "0";
-    //task0.ancestorsType = this.ancestorsType;
-    //task.parentType = this.cwfJson.type;
+    task0.emitForDispatcher = sinon.stub();
   });
   after(async()=>{
     await fs.remove(testDirRoot);
@@ -71,11 +69,13 @@ describe("UT for executer class", function() {
     it("run shell script which returns 0 and status should be Finished", async()=>{
       await exec(task0);
       expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
+      expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "finished");
     });
     it("run shell script which returns 1 and status should be failed", async()=>{
       await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
       await exec(task0);
       expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
+      expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "failed");
     });
   });
   describe("run on remote host", ()=>{
@@ -84,11 +84,11 @@ describe("UT for executer class", function() {
       const remotehostID = process.env.WHEEL_TEST_REMOTEHOST;
       const password = process.env.WHEEL_TEST_REMOTE_PASSWORD;
       if (!remotehostID) {
-        console.log("WHEEL_TEST_REMOTEHOST is not set so remote exec test is skipped");
+        console.log("remote exec test will be skipped because WHEEL_TEST_REMOTEHOST is not set");
         this.skip();
       }
       if (!password) {
-        console.log("WHEEL_TEST_REMOTE_PASSWORD is not set so remote exec test is skipped");
+        console.log("remote exec test will be skipped because WHEEL_TEST_REMOTE_PASSWORD is not set");
         this.skip();
       }
       const hostInfo = remoteHost.query("name", remotehostID);
@@ -188,7 +188,7 @@ describe("UT for executer class", function() {
         expect(path.join(task0.workingDir, "hoge")).not.to.be.a.path();
       });
     });
-    describe("#remote job", ()=>{
+    describe.skip("#remote job", ()=>{
       beforeEach(()=>{
         task0.useJobScheduler = true;
       });

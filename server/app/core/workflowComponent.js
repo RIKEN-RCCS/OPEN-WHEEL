@@ -337,20 +337,9 @@ function isInitialComponent(component) {
   if (component.previous.length > 0) {
     return false;
   }
+  //components which have file-based dependency is initial component
+  //it will be suspended in dispatcher._dispatch()
 
-  if (component.inputFiles.length > 0) {
-    for (const inputFile of component.inputFiles) {
-      const isConnected = inputFile.src.some((e)=>{
-        if (e.srcNode === component.parent) {
-          return false;
-        }
-        return e.srcNode !== null;
-      });
-      if (isConnected) {
-        return false;
-      }
-    }
-  }
   return true;
 }
 
@@ -358,10 +347,28 @@ function isComponent(componentJson) {
   return componentJson instanceof BaseWorkflowComponent;
 }
 
+/**
+ * remove duplicated component from array
+ * @param {Object[]} components - array of component
+ * @returns {Object[]} - unique components
+ */
+function removeDuplicatedComponent(components) {
+  const IDs = components.map((component)=>{
+    return component.ID;
+  });
+  const uniqueIDs = Array.from(new Set(IDs));
+  return uniqueIDs.map((id)=>{
+    return components.find((e)=>{
+      return e.ID === id;
+    });
+  });
+}
+
 
 module.exports = {
   componentFactory,
   hasChild,
   isInitialComponent,
-  isComponent
+  isComponent,
+  removeDuplicatedComponent
 };
