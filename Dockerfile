@@ -11,8 +11,8 @@ COPY package.json package.json
 COPY client client
 COPY server server
 
-RUN --mount=type=cache,target=/root/.npm cd server; npm install
-RUN --mount=type=cache,target=/root/.npm cd client; npm install; npm run build -- --no-clean --mode development
+RUN cd server; npm install
+RUN cd client; npm install; npm run build -- --no-clean --mode development
 
 #build base image to run WHEEL
 FROM --platform=linux/amd64 node:fermium-slim as runner

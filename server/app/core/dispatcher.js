@@ -432,9 +432,6 @@ class Dispatcher extends EventEmitter {
         this.pendingComponents.push(target);
         continue;
       }
-
-      await this._getInputFiles(target);
-
       if (target.type === "stepjobTask") {
         const parentComponent = await getComponent(this.projectRootDir, target.parent);
         target.host = parentComponent.host;
@@ -442,6 +439,7 @@ class Dispatcher extends EventEmitter {
         target.parentName = parentComponent.name;
       }
 
+      await this._getInputFiles(target);
       await this._setComponentState(target, "running");
       promises.push(this._dispatchOneComponent(target));
     }//end of while loop
