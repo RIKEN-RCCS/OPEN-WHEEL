@@ -1,0 +1,195 @@
+{
+  "KYUSHU UNIVERSITY ITO-A": [
+    {
+      "label": "JobScheduler",
+      "type": "JobScheduler",
+      "value": "TCS"
+    },
+    {
+      "label": "Resource Group",
+      "type": "select",
+      "prop": "rscgrp",
+      "items": [
+        "ito-q-dbg",
+        "ito-ss-dbg",
+        "ito-s-dbg",
+        "ito-m-dbg",
+        "ito-l-dbg",
+        "ito-xl-dbg",
+        "ito-xxl-dbg",
+        "ito-single",
+        "ito-qq",
+        "ito-q",
+        "ito-ss",
+        "ito-s",
+        "ito-m",
+        "ito-l",
+        "ito-xl",
+        "ito-xxl"
+      ]
+    },
+    {
+      "label": "Node",
+      "type": "number",
+      "prop": "nodeNum"
+    },
+    {
+      "label": "Core per node",
+      "type": "number",
+      "prop": "coreNum"
+    },
+    {
+      "label": "Elapsed Time (hh:mm:ss)",
+      "type": "text",
+      "prop": "elapsedTime",
+      "value": "00:00:00"
+    },
+    {
+      "label": "Stdout Name",
+      "type": "text",
+      "prop": "stdoutName"
+    },
+    {
+      "label": "Stderr Name",
+      "type": "text",
+      "prop": "stderrName"
+    },
+    {
+      "label": "Job Name",
+      "type": "text",
+      "prop": "jobName"
+    },
+    {
+      "label": "other command (ex. module load...)",
+      "type": "text",
+      "prop": "other"
+    }
+  ],
+  "KYUSHU UNIVERSITY ITO-B": [
+    {
+      "label": "JobScheduler",
+      "type": "JobScheduler",
+      "value": "TCS"
+    },
+    {
+      "label": "Resource Group",
+      "type": "select",
+      "prop": "rscgrp",
+      "items": [
+        "ito-g-1-dbg",
+        "ito-g-4-dbg",
+        "ito-g-16-dbg",
+        "ito-g-1",
+        "ito-g-4",
+        "ito-g-16",
+        "ito-g-64"
+      ]
+    },
+    {
+      "label": "Node",
+      "type": "number",
+      "prop": "nodeNum"
+    },
+    {
+      "label": "Core per node",
+      "type": "number",
+      "prop": "coreNum"
+    },
+    {
+      "label": "Elapsed Time (hh:mm:ss)",
+      "type": "text",
+      "prop": "elapsedTime",
+      "value": "00:00:00"
+    },
+    {
+      "label": "Stdout Name",
+      "type": "text",
+      "prop": "stdoutName"
+    },
+    {
+      "label": "Stderr Name",
+      "type": "text",
+      "prop": "stderrName"
+    },
+    {
+      "label": "Job Name",
+      "type": "text",
+      "prop": "jobName"
+    },
+    {
+      "label": "other command (ex. module load...)",
+      "type": "text",
+      "prop": "other"
+    }
+  ],
+  "other": [
+    {
+      "label": "Resource Type",
+      "type": "select",
+      "items": [
+        "rt_f",
+        "rt_G.large",
+        "rt_G.small",
+        "rt_C.large",
+        "rt_C.small"
+      ],
+      "prop": "rsctype"
+    },
+    {
+      "label": "Resource Number",
+      "type": "number",
+      "prop": "rscnum"
+    },
+    {
+      "label": "JobScheduler",
+      "type": "JobScheduler",
+      "value": "UGE"
+    },
+    {
+      "label": "Elapsed Time (hh:mm:ss)",
+      "type": "text",
+      "value": "00:00:00",
+      "prop": "elapseTime"
+    },
+    {
+      "label": "Priority",
+      "type": "text",
+      "prop": "Priority"
+    },
+    {
+      "label": "Task Id (n[-m[x]])",
+      "type": "text",
+      "prop": "taskId"
+    },
+    {
+      "label": "Hold Id",
+      "type": "number",
+      "prop": "holdId"
+    },
+    {
+      "label": "Ar Id",
+      "type": "number",
+      "prop": "arId"
+    },
+    {
+      "label": "Stdout Name",
+      "type": "text",
+      "prop": "stdoutName"
+    },
+    {
+      "label": "Stderr Name",
+      "type": "text",
+      "prop": "stderrName"
+    },
+    {
+      "label": "Job Name",
+      "type": "text",
+      "prop": "jobName"
+    },
+    {
+      "label": "other command (ex. module load...)",
+      "type": "text",
+      "prop": "other"
+    }
+  ]
+}

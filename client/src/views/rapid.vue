@@ -11,14 +11,14 @@ See License.txt in the project root for the license information.
     <v-toolbar dense>
       <v-spacer />
       <v-toolbar-items>
-        <v-switch
-          v-model="readOnly"
-          label="read only"
+        <v-select
+          v-model="mode"
+          :items="modes"
           class="pt-3"
         />
         <v-switch
-          v-model="openParamEditor"
-          label="parameter study setting"
+          v-model="readOnly"
+          label="read only"
           class="pt-3"
         />
         <v-btn @click="saveAllFiles">
@@ -34,12 +34,19 @@ See License.txt in the project root for the license information.
           :read-only="readOnly"
         />
       </v-col>
-      <v-col v-show="openParamEditor">
+      <v-col v-show="mode === 'paramEditor'">
         <parameter-editor
           ref="param"
           :read-only="readOnly"
           @openNewTab="openNewTab"
           @insertBraces="insertBraces"
+        />
+      </v-col>
+      <v-col v-show="mode === 'jobScriptEditor'">
+        <job-script-editor
+          ref="jse"
+          :read-only="readOnly"
+          @insert="insertSnipet"
         />
       </v-col>
     </v-row>
@@ -55,6 +62,7 @@ See License.txt in the project root for the license information.
   import filterEditor from "@/components/rapid/filterEditor.vue";
   import tabEditor from "@/components/rapid/tabEditor.vue";
   import parameterEditor from "@/components/rapid/parameterEditor.vue";
+  import jobScriptEditor  from "@/components/rapid/jobScriptEditor.vue";
   import SIO from "@/lib/socketIOWrapper.js";
 
   export default {
@@ -64,6 +72,7 @@ See License.txt in the project root for the license information.
       filterEditor,
       tabEditor,
       parameterEditor,
+      jobScriptEditor,
     },
     beforeRouteLeave (to, from, next) {
       if (!this.hasChange()) {
@@ -95,7 +104,8 @@ See License.txt in the project root for the license information.
     },
     data: ()=>{
       return {
-        openParamEditor: false,
+        mode: "normal",
+        modes: ["normal", "paramEditor", "jobScriptEditor"],
         readOnly: false,
       };
     },
@@ -104,7 +114,9 @@ See License.txt in the project root for the license information.
     },
     mounted () {
       SIO.onGlobal("parameterSettingFile", (file)=>{
-        this.openParamEditor = file.isParameterSettingFile;
+        if(file.isParameterSettingFile){
+            this.mode="paramEditor";
+        }
       });
     },
     methods: {
@@ -115,16 +127,24 @@ See License.txt in the project root for the license information.
       insertBraces () {
         this.$refs.text.insertBraces();
       },
+      insertSnipet(snipet){
+        this.$refs.text.insertSnipet(snipet);
+      },
       hasChange () {
-        const fileChanged = this.$refs.text.hasChange();
-        const paramChanged = this.$refs.param.hasChange();
-        return fileChanged || paramChanged;
+        return this.$refs.text.hasChange() || this.$refs.param.hasChange(); // ||this.$refs.jse.hasChange();
       },
       saveAllFiles () {
-        const fileChanged = this.$refs.text.saveAll();
-        const paramChanged = this.$refs.param.save();
-        return fileChanged || paramChanged;
+        this.$refs.text.saveAll();
+        this.$refs.param.save();
       },
     },
   };
 </script>
+<style>
+.v-select__selections {
+  width: 140px;
+}
+.v-select__selections input {
+  width: 0;
+}
+</style>

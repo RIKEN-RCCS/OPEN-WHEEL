@@ -78,8 +78,7 @@ sio.on("connection", (socket)=>{
 const routes = {
   home: require(path.resolve(__dirname, "routes/home")),
   workflow: require(path.resolve(__dirname, "routes/workflow")),
-  remotehost: require(path.resolve(__dirname, "routes/remotehost")),
-  jobScript: require(path.resolve(__dirname, "routes/jobScript"))(sio)
+  remotehost: require(path.resolve(__dirname, "routes/remotehost"))
 };
 app.get("/", routes.home);
 app.get("/home", routes.home);
@@ -88,7 +87,6 @@ app.use("/workflow", routes.workflow);
 app.use("/graph", routes.workflow);
 app.use("/list", routes.workflow);
 app.use("/editor", routes.workflow);
-app.use("/jobScript", routes.jobScript);
 
 
 //port number

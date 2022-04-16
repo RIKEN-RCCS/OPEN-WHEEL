@@ -27,6 +27,7 @@ const {
   onRemoveLink,
   onRemoveFileLink
 } = require("./workflowEditor.js");
+const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } = require("./jobScript.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
 
@@ -141,6 +142,18 @@ const registerHandlers = (socket, Siofu)=>{
   //read
   socket.on("getJobSchedulerList", onGetJobSchedulerList);
   socket.on("getJobSchedulerLabelList", onGetJobSchedulerLabelList);
+
+  //
+  //JobScriptTemplate
+  //
+  //create
+  socket.on("addJobScriptTemplate", onAddJobScriptTemplate.bind(null, socket));
+  //read
+  socket.on("getJobscriptTemplates", onGetJobScriptTemplates.bind(null, socket));
+  //update
+  socket.on("updateJobScriptTemplate", onUpdateJobScriptTemplate.bind(null, socket));
+  //delete
+  socket.on("removeJobScriptTemplate", onRemoveJobScriptTemplate.bind(null, socket));
 
   //auxiliary
   socket.on("tryToConnect", onTryToConnect);

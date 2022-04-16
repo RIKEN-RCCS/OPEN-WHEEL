@@ -1,15 +1,15 @@
 <template>
   <v-dialog
-    v-model="value"
+    v-model="dialog"
+    :max-width="maxWidth"
     persistent
-    width="auto"
   >
     <v-card>
       <v-card-title>
         {{ title }}
       </v-card-title>
       <v-card-text>
-        <slot>
+        <slot name="message">
           {{ message }}
         </slot>
       </v-card-text>
@@ -36,7 +36,10 @@
   export default {
     name: "VersatileDialog",
     props:{
-      value: Boolean,
+      value: {
+        type: Boolean,
+        required: true
+      },
       persistent: {
         type: Boolean,
         default: true
@@ -51,11 +54,28 @@
         }
       },
       title:{
-        type: String
+        type: String,
+        default: ""
       },
       message:{
-        type: String
+        type: String,
+        default: ""
+      },
+      maxWidth:{
+        type: [String, Number],
+        default: undefined
       }
     },
+    computed:{
+      dialog:{
+        get(){
+          return this.value;
+        },
+        set(v){
+          this.$emit("input", v);
+        }
+      }
+    },
+
   };
 </script>

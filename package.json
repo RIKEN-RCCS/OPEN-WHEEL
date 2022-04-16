@@ -17,7 +17,7 @@
   },
   "scripts": {
     "start": "cd server; npm start",
-    "build": "cd server; npm install; npm prepare; cd ../client; npm install; npm run build -- --no-clean --mode development",
+    "build": "cd server; npm install; cd ../client; npm install; npm run build -- --no-clean --mode development",
     "buildDoc": "run-s convertDoc removeDoc replaceDoc renameHtml",
     "buildPDFDoc": "run-s removeTmp copyUserGuide md2pdf concatPDF removeTmp",
     "licenseReport": "run-s licenseReport-doc licenseReport-server licenseReport-client",

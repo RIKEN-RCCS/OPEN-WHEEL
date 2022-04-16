@@ -209,6 +209,14 @@
         this.newFilename = null;
         this.newFilePrompt = false;
       },
+      insertSnipet(snipet){
+        // this function will be called from parent component
+        const session = this.editor.getSession();
+        const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}}) || new ace.Range(0,0,0,0);
+        range.start.row=0;
+        range.start.column=0;
+        session.replace(range, snipet);
+      },
       insertBraces () {
         // this function will be called from parent component
         const selectedRange = this.editor.getSelection().getRange();
