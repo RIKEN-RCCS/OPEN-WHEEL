@@ -58,8 +58,7 @@
           return;
         }
         this.cb = cb;
-        this.unsavedFiles = unsavedFiles;
-        // this.unsavedFiles.splice();//force update DOM //現状では要らないっぽい?
+        this.unsavedFiles.splice(0, this.unsavedFiles.length, ...unsavedFiles);
         this.dialog = true;
       });
     },
