@@ -12,11 +12,6 @@ See License.txt in the project root for the license information.
         load
       </v-btn>
       <v-btn
-        @click="saveDialog=true"
-      >
-        register
-      </v-btn>
-      <v-btn
         @click="insertJobScript"
       >
         insert
@@ -25,6 +20,12 @@ See License.txt in the project root for the license information.
         @click="clear"
       >
         clear
+      </v-btn>
+      <v-btn
+        class="ml-8"
+        @click="saveDialog=true"
+      >
+        register
       </v-btn>
     </v-card-actions>
     <v-card-text>
