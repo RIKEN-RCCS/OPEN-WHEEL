@@ -399,7 +399,7 @@
         if(operation === "stopProject" || operation === "cleanProject"){
           this.commitWaitingWorkflow(true);
         }
-        SIO.emitGlobal(operation, projectRootDir, (rt)=>{
+        SIO.emitGlobal(operation, this.projectRootDir, (rt)=>{
           debug(operation, "done", rt);
 
           if(operation === "stopProject" || operation === "cleanProject"){
