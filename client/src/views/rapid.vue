@@ -34,7 +34,7 @@ See License.txt in the project root for the license information.
           :read-only="readOnly"
         />
       </v-col>
-      <v-col v-show="mode === 'paramEditor'">
+      <v-col v-show="mode === 'PS-config'">
         <parameter-editor
           ref="param"
           :read-only="readOnly"
@@ -105,7 +105,7 @@ See License.txt in the project root for the license information.
     data: ()=>{
       return {
         mode: "normal",
-        modes: ["normal", "paramEditor", "jobScriptEditor"],
+        modes: ["normal", "PS-config", "jobScriptEditor"],
         readOnly: false,
       };
     },
@@ -115,7 +115,7 @@ See License.txt in the project root for the license information.
     mounted () {
       SIO.onGlobal("parameterSettingFile", (file)=>{
         if(file.isParameterSettingFile){
-            this.mode="paramEditor";
+            this.mode="PS-config";
         }
       });
     },
