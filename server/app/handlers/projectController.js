@@ -92,14 +92,14 @@ async function emitWithPromise(emit, ...args) {
 }
 
 async function askUnsavedFiles(emit, projectRootDir) {
-  const unsavedFiles = await getUnsavedFiles(projectRootDir)
-    .filter((e)=>{
-      return !(e.name === componentJsonFilename || e.name === projectJsonFilename);
-    });
-  if (unsavedFiles.length > 0) {
-    const toBeSaved = await emitWithPromise(emit, "unsavedFiles", unsavedFiles);
+  const unsavedFiles = await getUnsavedFiles(projectRootDir);
+  const filterdUnsavedFiles = unsavedFiles.filter((e)=>{
+    return !(e.name === componentJsonFilename || e.name === projectJsonFilename);
+  });
+  if (filterdUnsavedFiles.length > 0) {
+    const toBeSaved = await emitWithPromise(emit, "unsavedFiles", filterdUnsavedFiles);
     if (toBeSaved) {
-      await Promise.all(unsavedFiles.map((unsaved)=>{
+      await Promise.all(filterdUnsavedFiles.map((unsaved)=>{
         return gitAdd(projectRootDir, unsaved.name);
       }));
       await gitCommit(projectRootDir);
