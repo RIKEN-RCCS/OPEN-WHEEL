@@ -67,7 +67,7 @@
           });
         }
         return this.componentDefinitions.filter((e)=>{
-          return ["task", "if", "for", "while", "foreach", "source", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"].includes(e.type);
+          return ["task", "if", "for", "while", "foreach", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"].includes(e.type);
         });
       },
     },
