@@ -53,10 +53,10 @@ async function prepareRemoteExecDir(task) {
 }
 
 function makeEnv(task) {
-  return Object.prototype.hasOwnProperty.call(task, "currentIndex") ? `env WHEEL_CURRENT_INDEX=${task.currentIndex.toString()} ` : "";
-}
-function makeEnvForPath(task) {
-  return `env WHEEL_REMOTE_PRJDIR=${task.remoteRootWorkingDir} `;
+  return Object.entries(task.env)
+    .reduce((a, [k, v])=>{
+      return `${a} ${k}=${v}`;
+    }, "env");
 }
 
 /**
@@ -256,7 +256,7 @@ class RemoteJobExecuter extends Executer {
     await prepareRemoteExecDir(task);
     const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
     const submitOpt = task.submitOption ? task.submitOption : "";
-    const submitCmd = `. /etc/profile; cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${makeEnvForPath(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)}${makeBulkOpt(task)}${submitOpt} ./${task.script}`;
+    const submitCmd = `. /etc/profile; cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
     getLogger(task.projectRootDir).debug("submitting job (remote):", submitCmd);
     await setTaskState(task, "running");
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
@@ -356,15 +356,9 @@ class LocalTaskExecuter extends Executer {
 
     const options = {
       cwd: task.workingDir,
-      env: process.env,
+      env: Object.assign({}, process.env, task.env),
       shell: true
     };
-    //add Environment variable
-    options.env.WHEEL_LOCAL_PRJDIR = task.projectRootDir.toString();
-
-    if (Object.prototype.hasOwnProperty.call(task, "currentIndex")) {
-      options.env.WHEEL_CURRENT_INDEX = task.currentIndex.toString();
-    }
     return promisifiedSpawn(task, script, options);
   }
 }

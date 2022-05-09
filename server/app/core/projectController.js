@@ -97,7 +97,8 @@ async function runProject(projectRootDir) {
     projectRootDir,
     getDateString(),
     projectJson.componentPath,
-    ee.emit.bind(ee));
+    ee.emit.bind(ee),
+    rootWF.env);
 
   if (rootWF.cleanupFlag === "2") {
     rootDispatcher.doCleanup = defaultCleanupRemoteRoot;

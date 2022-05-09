@@ -7,6 +7,8 @@
 const path = require("path");
 const fs = require("fs-extra");
 const isPathInside = require("is-path-inside");
+const { diff } = require("just-diff");
+const { diffApply } = require("just-diff-apply");
 const { promisify } = require("util");
 const glob = require("glob");
 const { componentFactory } = require("./workflowComponent");
@@ -41,11 +43,30 @@ async function readComponentJson(componentDir) {
 }
 
 /**
+ * write componentJson by ID
+ */
+async function writeComponentJsonByID(projectRootDir, ID, component) {
+  const componentDir = await getComponentDir(projectRootDir, ID, true);
+  return writeComponentJson(projectRootDir, componentDir, component);
+}
+
+/**
  * read componentJson by ID
  */
-async function getComponent(projectRootDir, ID) {
+async function readComponentJsonByID(projectRootDir, ID) {
   const componentDir = await getComponentDir(projectRootDir, ID, true);
   return readComponentJson(componentDir);
+}
+
+/**
+ * modify component json
+ */
+async function modifyComponentJson(projectRootDir, ID, modifier) {
+  const componentDir = await getComponentDir(projectRootDir, ID, true);
+  const componentJson = await readComponentJson(componentDir);
+  await modifier(componentJson);
+  await writeComponentJson(projectRootDir, componentDir, componentJson);
+  return componentJson;
 }
 
 
@@ -59,7 +80,7 @@ async function isParent(projectRootDir, parentID, childID) {
   if (childID === "parent") {
     return false;
   }
-  const childJson = await getComponent(projectRootDir, childID);
+  const childJson = await readComponentJsonByID(projectRootDir, childID);
   if (childJson === null || typeof childID !== "string") {
     return false;
   }
@@ -69,11 +90,11 @@ async function isParent(projectRootDir, parentID, childID) {
 
 async function removeAllLink(projectRootDir, ID) {
   const counterparts = new Map();
-  const component = await getComponent(projectRootDir, ID);
+  const component = await readComponentJsonByID(projectRootDir, ID);
 
   if (Object.prototype.hasOwnProperty.call(component, "previous")) {
     for (const previousComponent of component.previous) {
-      const counterpart = counterparts.get(previousComponent) || await getComponent(projectRootDir, previousComponent);
+      const counterpart = counterparts.get(previousComponent) || await readComponentJsonByID(projectRootDir, previousComponent);
       counterpart.next = counterpart.next.filter((e)=>{
         return e !== component.ID;
       });
@@ -89,7 +110,7 @@ async function removeAllLink(projectRootDir, ID) {
 
   if (Object.prototype.hasOwnProperty.call(component, "next")) {
     for (const nextComponent of component.next) {
-      const counterpart = counterparts.get(nextComponent) || await getComponent(projectRootDir, nextComponent);
+      const counterpart = counterparts.get(nextComponent) || await readComponentJsonByID(projectRootDir, nextComponent);
       counterpart.previous = counterpart.previous.filter((e)=>{
         return e !== component.ID;
       });
@@ -99,7 +120,7 @@ async function removeAllLink(projectRootDir, ID) {
 
   if (Object.prototype.hasOwnProperty.call(component, "else")) {
     for (const elseComponent of component.else) {
-      const counterpart = counterparts.get(elseComponent) || await getComponent(projectRootDir, elseComponent);
+      const counterpart = counterparts.get(elseComponent) || await readComponentJsonByID(projectRootDir, elseComponent);
       counterpart.previous = counterpart.previous.filter((e)=>{
         return e !== component.ID;
       });
@@ -111,7 +132,7 @@ async function removeAllLink(projectRootDir, ID) {
     for (const inputFile of component.inputFiles) {
       for (const src of inputFile.src) {
         const srcComponent = src.srcNode;
-        const counterpart = counterparts.get(srcComponent) || await getComponent(projectRootDir, srcComponent);
+        const counterpart = counterparts.get(srcComponent) || await readComponentJsonByID(projectRootDir, srcComponent);
 
         for (const outputFile of counterpart.outputFiles) {
           outputFile.dst = outputFile.dst.filter((e)=>{
@@ -127,7 +148,7 @@ async function removeAllLink(projectRootDir, ID) {
     for (const outputFile of component.outputFiles) {
       for (const dst of outputFile.dst) {
         const dstComponent = dst.dstNode;
-        const counterpart = counterparts.get(dstComponent) || await getComponent(projectRootDir, dstComponent);
+        const counterpart = counterparts.get(dstComponent) || await readComponentJsonByID(projectRootDir, dstComponent);
 
         for (const inputFile of counterpart.inputFiles) {
           inputFile.src = inputFile.src.filter((e)=>{
@@ -718,6 +739,22 @@ async function renameComponentDir(projectRootDir, ID, newName) {
   return updateComponentPath(projectRootDir, ID, newDir);
 }
 
+async function replaceEnv(projectRootDir, ID, newEnv) {
+  const componentJson = await readComponentJsonByID(projectRootDir, ID);
+  const env = componentJson.env || {};
+  const patch = diff(env, newEnv);
+  diffApply(env, patch);
+  componentJson.env = env;
+  await writeComponentJsonByID(projectRootDir, ID, componentJson);
+  return componentJson;
+}
+
+async function getEnv(projectRootDir, ID) {
+  const componentJson = await readComponentJsonByID(projectRootDir, ID);
+  const env = componentJson.env;
+  return env;
+}
+
 async function updateComponent(projectRootDir, ID, prop, value) {
   if (prop === "path") {
     return Promise.reject(new Error("path property is deprecated. please use 'name' instead."));
@@ -725,15 +762,15 @@ async function updateComponent(projectRootDir, ID, prop, value) {
   if (prop === "inputFiles" || prop === "outputFiles") {
     return Promise.reject(new Error(`updateNode does not support ${prop}. please use renameInputFile or renameOutputFile`));
   }
+  if (prop === "env") {
+    return Promise.reject(new Error("updateNode does not support env. please use updateEnv"));
+  }
   if (prop === "name") {
     await renameComponentDir(projectRootDir, ID, value);
   }
-
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  const componentJson = await readComponentJson(componentDir);
-  componentJson[prop] = value;
-  await writeComponentJson(projectRootDir, componentDir, componentJson);
-  return componentJson;
+  return modifyComponentJson(projectRootDir, ID, (componentJson)=>{
+    componentJson[prop] = value;
+  });
 }
 
 async function updateStepNumber(projectRootDir) {
@@ -1143,7 +1180,7 @@ module.exports = {
   getHosts,
   getSourceComponents,
   getChildren,
-  getComponent,
+  readComponentJsonByID,
   validateComponents,
   componentJsonReplacer,
   createNewComponent,
@@ -1160,6 +1197,8 @@ module.exports = {
   addFileLink,
   removeLink,
   removeFileLink,
+  getEnv,
+  replaceEnv,
   cleanComponent,
   removeComponent,
   isComponentDir,

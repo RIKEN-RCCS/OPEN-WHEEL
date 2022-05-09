@@ -35,6 +35,8 @@ class BaseWorkflowComponent {
      *  - 'unknown'    failed to check status (e.g. qstat command failed)
      */
     this.state = "not-started";
+
+    this.env = {};
   }
 }
 

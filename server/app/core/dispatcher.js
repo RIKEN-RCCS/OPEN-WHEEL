@@ -203,7 +203,6 @@ function makeCmd(paramSettings) {
 }
 
 function forGetNextIndex(component) {
-  ++component.numFinished;
   return component.currentIndex !== null ? component.currentIndex + component.step : component.start;
 }
 
@@ -245,8 +244,7 @@ function foreachKeepLoopInstance(component, cwfDir) {
 }
 
 function whileGetNextIndex(component) {
-  ++component.numFinished;
-  return component.currentIndex !== null ? ++(component.currentIndex) : 0;
+  return component.currentIndex !== null ? component.currentIndex + 1 : 0;
 }
 
 async function whileIsFinished(cwfDir, projectRootDir, component) {
@@ -256,8 +254,6 @@ async function whileIsFinished(cwfDir, projectRootDir, component) {
 }
 
 function foreachGetNextIndex(component) {
-  ++component.numFinished;
-
   if (component.currentIndex !== null) {
     const i = component.indexList.findIndex((e)=>{
       return e === component.currentIndex;
@@ -287,6 +283,16 @@ function loopInitialize(component, getTripCount) {
   if (typeof getTripCount === "function") {
     component.numTotal = getTripCount(component);
   }
+  if (!component.env) {
+    component.env = {};
+  }
+  if (component.type.toLowerCase() === "for") {
+    component.env.WHEEL_FOR_START = component.start;
+    component.env.WHEEL_FOR_END = component.end;
+    component.env.WHEEL_FOR_STEP = component.step;
+  } else if (component.type.toLowerCase() === "while") {
+    component.env.WHEEL_FOREACH_LEN = component.numTotal;
+  }
 }
 
 async function replaceTargetFile(srcDir, dstDir, targetFiles, params) {
@@ -313,11 +319,12 @@ async function replaceTargetFile(srcDir, dstDir, targetFiles, params) {
  * @param {string} cwfDir -         current dispatching workflow directory (absolute path);
  * @param {string} startTime -      project start time
  * @param {Object} componentPath -  componentPath in project Json
- * @param {Function} emitEvent - emit function for project
+ * @param {Function} emitEvent -    emit function for project
+ * @param {Object} env -             environment variables
  * @param {string } ancestorsType - comma separated ancestor components' type
  */
 class Dispatcher extends EventEmitter {
-  constructor(projectRootDir, cwfID, cwfDir, startTime, componentPath, emitEvent, ancestorsType) {
+  constructor(projectRootDir, cwfID, cwfDir, startTime, componentPath, emitEvent, env, ancestorsType) {
     super();
     this.projectRootDir = projectRootDir;
     this.cwfID = cwfID;
@@ -326,6 +333,7 @@ class Dispatcher extends EventEmitter {
     this.componentPath = componentPath;
     this.emitEvent = emitEvent;
     this.ancestorsType = ancestorsType;
+    this.env = Object.assign({}, env);
 
     this.currentSearchList = [];
     this.pendingComponents = [];
@@ -681,10 +689,7 @@ class Dispatcher extends EventEmitter {
     if (task.usePSSettingFile === true) {
       await this._bulkjobHandler(task);
     }
-
-    if (Object.prototype.hasOwnProperty.call(this.cwfJson, "currentIndex")) {
-      task.currentIndex = this.cwfJson.currentIndex;
-    }
+    task.env = Object.assign(this.env, task.env);
     task.parentType = this.cwfJson.type;
 
     exec(task); //exec is async function but dispatcher never wait end of task execution
@@ -710,7 +715,7 @@ class Dispatcher extends EventEmitter {
     const childDir = path.resolve(this.cwfDir, component.name);
     const ancestorsType = typeof this.ancestorsType === "string" ? `${this.ancestorsType}/${component.type}` : component.type;
     const child = new Dispatcher(this.projectRootDir, component.ID, childDir, this.projectStartTime,
-      this.componentPath, this.emitEvent, ancestorsType);
+      this.componentPath, this.emitEvent, Object.assign({}, this.env, component.env), ancestorsType);
     this.children.add(child);
 
     //exception should be catched in caller
@@ -765,16 +770,16 @@ class Dispatcher extends EventEmitter {
     this.logger.debug("_loopHandler called", component.name);
     component.childLoopRunning = true;
 
-    //determine old loop block directory
-    let srcDir = component.initialized ? `${component.originalName}_${sanitizePath(component.currentIndex)}` : component.name;
-    srcDir = path.resolve(this.cwfDir, srcDir);
-
+    let prevIndex;
+    let srcDir;
     if (!component.initialized) {
       loopInitialize(component, getTripCount);
+      srcDir = path.resolve(this.cwfDir, component.name);
+    } else {
+      prevIndex = component.currentIndex;
+      srcDir = path.resolve(this.cwfDir, `${component.originalName}_${sanitizePath(prevIndex)}`);
     }
-
-    //update index variable(component.currentIndex)
-    component.currentIndex = await getNextIndex(component);
+    component.currentIndex = getNextIndex(component);
 
     //end determination
     if (await isFinished(component)) {
@@ -788,6 +793,15 @@ class Dispatcher extends EventEmitter {
     const newComponent = Object.assign({}, component);
     newComponent.name = `${component.originalName}_${sanitizePath(component.currentIndex)}`;
     newComponent.subComponent = true;
+
+    if (!newComponent.env) {
+      newComponent.env = {};
+    }
+    if (typeof prevIndex !== "undefined") {
+      newComponent.env.WHEEL_PREV_INDEX = prevIndex;
+    }
+    newComponent.env.WHEEL_CURRENT_INDEX = component.currentIndex;
+    newComponent.env.WHEEL_NEXT_INDEX = getNextIndex(component);
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
     try {
@@ -796,6 +810,7 @@ class Dispatcher extends EventEmitter {
       await setStateR(dstDir, "not-started");
       await fs.writeJson(path.resolve(dstDir, componentJsonFilename), newComponent, { spaces: 4, replacer: componentJsonReplacer });
       await this._delegate(newComponent);
+      ++component.numFinished;
 
       keepLoopInstance(component, this.cwfDir);
 

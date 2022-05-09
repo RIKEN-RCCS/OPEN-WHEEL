@@ -99,7 +99,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="isDisabled('runProject')"
+                :disabled="! canRun"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('runProject')"
@@ -118,7 +118,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="isDisabled('pauseProject')"
+                :disabled="! running"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('pauseProject')"
@@ -134,7 +134,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="isDisabled('stopProject')"
+                :disabled="canRun"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('stopProject')"
@@ -150,7 +150,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="isDisabled('cleanProject')"
+                :disabled="canRun"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('cleanProject')"
@@ -168,7 +168,7 @@
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
-                :disabled="isDisabled('saveProject')"
+                :disabled="! isEdittable"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('saveProject')"
@@ -182,7 +182,7 @@
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
-                :disabled="isDisabled('revertProject')"
+                :disabled="! isEdittable"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('revertProject')"
@@ -317,7 +317,7 @@
         "snackbarMessage",
         "projectRootDir"
       ]),
-      ...mapGetters(["waiting"]),
+      ...mapGetters(["waiting", "isEdittable", "canRun", "running"]),
     },
     mounted: function () {
       const projectRootDir = readCookie("rootDir");
@@ -395,22 +395,6 @@
           commitWaitingWorkflow: "waitingWorkflow",
         },
       ),
-      isDisabled (operation) {
-        if (operation === "runProject") {
-          return !["not-started", "paused"].includes(this.projectState);
-        } else if (operation === "pauseProject") {
-          return this.projectState !== "running";
-        } else if (operation === "stopProject") {
-          return ["not-started", "preparing"].includes(this.projectState);
-        } else if (operation === "cleanProject") {
-          return ["not-started", "preparing"].includes(this.projectState);
-        } else if (operation === "saveProject") {
-          return this.projectState !== "not-started";
-        } else if (operation === "revertProject") {
-          return this.projectState !== "not-started";
-        }
-        debug("upsupported operation", operation);
-      },
       emitProjectOperation (operation) {
         if(operation === "stopProject" || operation === "cleanProject"){
           this.commitWaitingWorkflow(true);

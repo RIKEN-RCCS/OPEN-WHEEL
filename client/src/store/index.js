@@ -41,6 +41,7 @@ const mutationFactory = (types)=>{
  * @property { Boolean } waitingWorkflow - flag for loading Worgflow data for graph component
  * @property { Boolean } waitingFile - flag for loading file data for rapid
  * @property { Boolean } waitingSave - flag for waiting save (=commit)
+ * @property { Boolean } waitingEnv  - flag for loading environment variable data
  * @property { number } canvasWidth - width of canvas in component graph
  * @property { number } canvasHeight - width of canvas in component graph
  * @property { string[] } scriptCandidates - filenames directly under selected component directory
@@ -67,6 +68,7 @@ const state = {
   waitingWorkflow: false,
   waitingFile: false,
   waitingSave: false,
+  waitingEnv: false,
   canvasWidth: null,
   canvasHeight: null,
   scriptCandidates: [],
@@ -154,10 +156,19 @@ export default new Vuex.Store({
     },
     // flag to show loading screen
     waiting: (state)=>{
-      return state.waitingProjectJson || state.waitingWorkflow || state.waitingFile || state.waitingSave;
+      return state.waitingProjectJson || state.waitingWorkflow || state.waitingFile || state.waitingSave || state.waitingEnv;
     },
     pathSep: (state)=>{
       return typeof state.projectRootDir === "string" && state.projectRootDir[0] !== "/" ? "\\" : "/";
+    },
+    isEdittable: (state)=>{
+      return state.projectState === "not-started";
+    },
+    canRun: (state)=>{
+      return ["not-started", "preparing"].includes(state.projectState);
+    },
+    running:(state)=>{
+      return state.projectState === "running";
     },
   },
   modules: {

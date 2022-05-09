@@ -19,7 +19,9 @@ const {
   removeFileLink,
   removeComponent,
   createNewComponent,
-  updateComponent
+  updateComponent,
+  getEnv,
+  replaceEnv
 } = require("../core/componentFilesOperator.js");
 const { getParentDir } = require("../core/workflowUtil.js");
 const { sendWorkflow, sendProjectJson, sendComponentTree } = require("./senders.js");
@@ -116,6 +118,20 @@ async function onRemoveFileLink(socket, projectRootDir, srcNode, srcName, dstNod
   return generalHandler(socket, removeFileLink.bind(null, projectRootDir, srcNode, srcName, dstNode, dstName), "removeFileLink", projectRootDir, cb);
 }
 
+async function onUpdateEnv(socket, projectRootDir, ID, newEnv, cb) {
+  return generalHandler(socket, replaceEnv.bind(null, projectRootDir, ID, newEnv), "updateEnv", projectRootDir, cb);
+}
+
+async function onGetEnv(socket, projectRootDir, ID, cb) {
+  try {
+    const env = await getEnv(projectRootDir, ID);
+    return cb(env);
+  } catch (e) {
+    getLogger(projectRootDir).error("getEnv failed", e);
+    return cb(e);
+  }
+}
+
 module.exports = {
   onAddInputFile,
   onAddOutputFile,
@@ -129,5 +145,7 @@ module.exports = {
   onAddLink,
   onAddFileLink,
   onRemoveLink,
-  onRemoveFileLink
+  onRemoveFileLink,
+  onUpdateEnv,
+  onGetEnv
 };

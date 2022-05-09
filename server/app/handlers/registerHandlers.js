@@ -25,7 +25,9 @@ const {
   onRemoveInputFile,
   onRemoveOutputFile,
   onRemoveLink,
-  onRemoveFileLink
+  onRemoveFileLink,
+  onGetEnv,
+  onUpdateEnv
 } = require("./workflowEditor.js");
 const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } = require("./jobScript.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
@@ -58,10 +60,13 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("addOutputFile", onAddOutputFile.bind(null, socket));
   socket.on("addLink", onAddLink.bind(null, socket));
   socket.on("addFileLink", onAddFileLink.bind(null, socket));
+  //read
+  socket.on("getEnv", onGetEnv.bind(null, socket));
   //update
   socket.on("renameInputFile", onRenameInputFile.bind(null, socket));
   socket.on("renameOutputFile", onRenameOutputFile.bind(null, socket));
   socket.on("updateNode", onUpdateNode.bind(null, socket));
+  socket.on("updateEnv", onUpdateEnv.bind(null, socket));
   //delete
   socket.on("removeNode", onRemoveNode.bind(null, socket));
   socket.on("removeInputFile", onRemoveInputFile.bind(null, socket));
