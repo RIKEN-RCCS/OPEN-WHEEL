@@ -9,7 +9,7 @@
       fab
       absolute
       class="mt-6 ml-2"
-      :disable="! isEdittable"
+      :disabled="! isEdittable"
       @click.stop="openEnvironmentVariableSetting"
     >
       <v-icon>
