@@ -9,6 +9,10 @@ See License.txt in the project root for the license information.
     fluid
   >
     <v-toolbar dense>
+      <v-text-field
+        v-model="selectedComponentRelativePath"
+        readonly
+      />
       <v-spacer />
       <v-toolbar-items>
         <v-select
@@ -110,7 +114,14 @@ See License.txt in the project root for the license information.
       };
     },
     computed: {
-      ...mapState(["selectedFile"]),
+      ...mapState(["selectedFile", "componentPath", "selectedComponent"]),
+      selectedComponentRelativePath(){
+        if(this.selectedComponent === null){
+          return null;
+        }
+        const relativePath=this.componentPath[this.selectedComponent.ID];
+        return relativePath.startsWith("./") ? relativePath.slice(2) : relativePath;
+      }
     },
     mounted () {
       SIO.onGlobal("parameterSettingFile", (file)=>{
