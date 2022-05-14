@@ -109,7 +109,6 @@ See License.txt in the project root for the license information.
     data: ()=>{
       return {
         mode: "normal",
-        modes: ["normal", "PS-config", "jobScriptEditor"],
         readOnly: false,
       };
     },
@@ -121,6 +120,13 @@ See License.txt in the project root for the license information.
         }
         const relativePath=this.componentPath[this.selectedComponent.ID];
         return relativePath.startsWith("./") ? relativePath.slice(2) : relativePath;
+      },
+      modes(){
+        const disablePS=this.selectedComponent !== null ? this.selectedComponent.type !== "parameterStudy" : false;
+        const disableJobScriptEditor=this.selectedComponent !== null ? this.selectedComponent.type !== "task" : false;
+        return [ {text: "normal", value:"normal"},
+          {text: "PS-config", value:"PS-config", disabled: disablePS},
+          {text: "jobScriptEditor", value: "jobScriptEditor", disabled: disableJobScriptEditor}];
       }
     },
     mounted () {
