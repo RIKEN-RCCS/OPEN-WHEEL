@@ -6,6 +6,7 @@
       dense
     >
       <v-btn
+        outlined
         @click="clearAllLog"
       >
         clear all log
@@ -55,9 +56,8 @@
     },
     data: ()=>{
       return {
-        currentTab: 1,
+        currentTab: 0,
         items: [
-          { label: "debug", id: "debug",        clear: 0, unread: false, eventNames: ["logDBG"] },
           { label: "info", id: "info",          clear: 0, unread: false, eventNames: ["logINFO", "logWARN", "logERR"] },
           { label: "stdout", id: "stdout",      clear: 0, unread: false, eventNames: ["logStdout"] },
           { label: "stderr", id: "stderr",      clear: 0, unread: false, eventNames: ["logStderr"] },
