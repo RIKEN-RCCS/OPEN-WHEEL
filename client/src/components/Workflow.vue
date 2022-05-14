@@ -81,6 +81,7 @@
               <v-btn
                 outlined
                 replace
+                :disabled="! (isEdittable && selectedComponent !== null)"
                 :to="{name: 'editor' }"
                 v-bind="attrs"
                 v-on="on"
@@ -315,7 +316,8 @@
         "openSnackbar",
         "currentComponent",
         "snackbarMessage",
-        "projectRootDir"
+        "projectRootDir",
+        "selectedComponent",
       ]),
       ...mapGetters(["waiting", "isEdittable", "canRun", "running"]),
     },
