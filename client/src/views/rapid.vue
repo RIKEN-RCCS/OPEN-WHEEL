@@ -36,6 +36,7 @@ See License.txt in the project root for the license information.
         <tab-editor
           ref="text"
           :read-only="readOnly"
+          @jobscript="setIsJobScript"
         />
       </v-col>
       <v-col v-show="mode === 'PS-config'">
@@ -50,6 +51,7 @@ See License.txt in the project root for the license information.
         <job-script-editor
           ref="jse"
           :read-only="readOnly"
+          :is-job-script="isJobScript"
           @insert="insertSnipet"
         />
       </v-col>
@@ -110,6 +112,7 @@ See License.txt in the project root for the license information.
       return {
         mode: "normal",
         readOnly: false,
+        isJobScript: false
       };
     },
     computed: {
@@ -127,7 +130,7 @@ See License.txt in the project root for the license information.
         return [ {text: "normal", value:"normal"},
           {text: "PS-config", value:"PS-config", disabled: disablePS},
           {text: "jobScriptEditor", value: "jobScriptEditor", disabled: disableJobScriptEditor}];
-      }
+      },
     },
     mounted () {
       SIO.onGlobal("parameterSettingFile", (file)=>{
@@ -138,6 +141,9 @@ See License.txt in the project root for the license information.
     },
     methods: {
       ...mapActions(["showDialog"]),
+      setIsJobScript(v){
+        this.isJobScript=v;
+      },
       openNewTab (...args) {
         this.$refs.text.openNewTab(...args);
       },

@@ -14,7 +14,7 @@ See License.txt in the project root for the license information.
       <v-btn
         @click="insertJobScript"
       >
-        insert
+        {{ isJobScript ? "update" : "insert" }}
       </v-btn>
       <v-btn
         @click="clear"
@@ -125,6 +125,10 @@ See License.txt in the project root for the license information.
         type: Boolean,
         required: true,
       },
+      isJobScript:{
+        type: Boolean,
+        required: true,
+      }
     },
     data: function () {
       return {

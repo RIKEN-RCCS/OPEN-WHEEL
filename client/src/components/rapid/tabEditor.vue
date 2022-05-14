@@ -116,6 +116,7 @@
         activeTab: 0,
         files: [],
         editor: null,
+        isJobScript: false
       };
     },
     computed: {
@@ -142,6 +143,10 @@
         readOnly: this.readOnly,
       });
       this.editor.on("changeSession", this.editor.resize.bind(this.editor));
+      this.editor.on("changeSession", ({session})=>{
+        const isJobScript = typeof this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}})!== "undefined";
+        this.$emit("jobscript", isJobScript);
+      });
 
       SIO.onGlobal("file", (file)=>{
         // check arraived file is already opened or not
@@ -209,13 +214,15 @@
         this.newFilename = null;
         this.newFilePrompt = false;
       },
-      insertSnipet(snipet){
+      insertSnipet(argSnipet){
         // this function will be called from parent component
         const session = this.editor.getSession();
         const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}}) || new ace.Range(0,0,0,0);
         range.start.row=0;
         range.start.column=0;
+        const snipet = range.end.row === 0 && range.end.column === 0 ? argSnipet : argSnipet.trimEnd();
         session.replace(range, snipet);
+        this.$emit("jobscript", true);
       },
       insertBraces () {
         // this function will be called from parent component

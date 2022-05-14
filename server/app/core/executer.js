@@ -53,6 +53,9 @@ async function prepareRemoteExecDir(task) {
 }
 
 function makeEnv(task) {
+  if (typeof task.env === "undefined" || Object.keys(task.env).length === 0) {
+    return "";
+  }
   return Object.entries(task.env)
     .reduce((a, [k, v])=>{
       return `${a} ${k}=${v}`;

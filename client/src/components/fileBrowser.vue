@@ -4,7 +4,7 @@
       <v-spacer />
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn>
+          <v-btn class="ml-4">
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -29,20 +29,6 @@
           </v-btn>
         </template>
         new file
-      </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn>
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="createNewJobScript('newJobscript')"
-            >
-              mdi-file-document-edit-outline
-            </v-icon>
-          </v-btn>
-        </template>
-        create job script file
       </v-tooltip>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
@@ -100,6 +86,7 @@
         </template>
         share file
       </v-tooltip>
+      <v-spacer />
       <v-progress-linear
         v-show="uploading"
         value="percentUploaded"

@@ -1,9 +1,7 @@
-function createITOAScript(v) {
+function createFugaku(v) {
   return `#!/bin/bash
-#PJM -L "rscunit=ito-a"
 ${v.rscgrp      ? `#PJM -L "rscgrp=${v.rscgrp}"`:""}
-${v.nodeNum     ? `#PJM -L "vnode=${v.nodeNum}"` : ""}
-${v.coreNum     ? `#PJM -L "vnode-core=${v.coreNum}"` : ""}
+${v.nodeNum     ? `#PJM -L "node=${v.nodeNum}"` : ""}
 ${v.elapsedTime ? `#PJM -L "elapse=${v.elapsedTime}"` : ""}
 ${v.stdoutName  ? `#PJM -o "${v.stdoutName}"` : ""}
 ${v.stderrName  ? `#PJM -e "${v.stderrName}"` : ""}
@@ -13,9 +11,9 @@ ${v.other ? `${v.other}` : ""}
 `.replaceAll(/^\n/mg,"");
 }
 
-function createITOBScript(v) {
+function createITOScript(unit,v) {
   return `#!/bin/bash
-#PJM -L "rscunit=ito-b"
+${unit          ? "#PJM -L \"rscunit=ito-a\"":""}
 ${v.rscgrp      ? `#PJM -L "rscgrp=${v.rscgrp}"`:""}
 ${v.nodeNum     ? `#PJM -L "vnode=${v.nodeNum}"` : ""}
 ${v.coreNum     ? `#PJM -L "vnode-core=${v.coreNum}"` : ""}
@@ -44,17 +42,20 @@ ${v.other ? `${buffer.other}` : ""}
 `.replaceAll(/^\n/mg,"");
 }
 
+const funcTable={
+  "Fugaku": createFugaku,
+  "KYUSHU UNIVERSITY ITO-A": createITOScript.bind(null, "ito-a"),
+  "KYUSHU UNIVERSITY ITO-B": createITOScript.bind(null, "ito-b"),
+  "other": createOtherScript
+};
+
 function createJobScript(center, v){
-  if(center === "KYUSHU UNIVERSITY ITO-A"){
-    return createITOAScript(v);
-  }else if(center === "KYUSHU UNIVERSITY ITO-B"){
-    return createITOBScript(v);
-  }else if(center === "other"){
-    createOtherScript;
-  }else{
+  const func=funcTable[center];
+  if(typeof func === "undefined"){
     console.log("unsupported center name", center);
+    return "";
   }
+  return func(v);
 }
 
 export default createJobScript;
-

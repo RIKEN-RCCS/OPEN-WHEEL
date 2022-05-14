@@ -1,4 +1,56 @@
 {
+  "Fugaku": [
+    {
+      "label": "JobScheduler",
+      "type": "JobScheduler",
+      "value": "TCS"
+    },
+    {
+      "label": "Resource Group",
+      "type": "select",
+      "prop": "rscgrp",
+      "items": [
+        "small",
+        "small-free",
+        "small-s1",
+        "small-torus",
+        "large",
+        "large-free",
+        "huge"
+      ]
+    },
+    {
+      "label": "Node",
+      "type": "number",
+      "prop": "nodeNum"
+    },
+    {
+      "label": "Elapsed Time (hh:mm:ss)",
+      "type": "text",
+      "prop": "elapsedTime",
+      "value": "00:00:00"
+    },
+    {
+      "label": "Stdout Name",
+      "type": "text",
+      "prop": "stdoutName"
+    },
+    {
+      "label": "Stderr Name",
+      "type": "text",
+      "prop": "stderrName"
+    },
+    {
+      "label": "Job Name",
+      "type": "text",
+      "prop": "jobName"
+    },
+    {
+      "label": "other command (ex. module load...)",
+      "type": "text",
+      "prop": "other"
+    }
+  ],
   "KYUSHU UNIVERSITY ITO-A": [
     {
       "label": "JobScheduler",
