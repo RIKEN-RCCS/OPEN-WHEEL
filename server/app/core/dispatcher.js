@@ -12,13 +12,14 @@ const glob = require("glob");
 const FileType = require("file-type");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { componentJsonFilename } = require("../db/db");
+const { remoteHost, componentJsonFilename } = require("../db/db");
+const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
-const { componentJsonReplacer, getComponent, getChildren } = require("./componentFilesOperator");
+const { componentJsonReplacer, getComponent, getChildren, isLocal } = require("./componentFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
 const { evalCondition } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
@@ -611,7 +612,7 @@ class Dispatcher extends EventEmitter {
 
   async _addNextComponent(component, useElse = false) {
     let nextComponentIDs = [];
-    if (component.type !== "source" && component.type !== "viewer") {
+    if (component.type !== "source" && component.type !== "viewer" && component.type !== "storage") {
       nextComponentIDs = useElse ? Array.from(component.else) : Array.from(component.next);
     }
     if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
@@ -645,11 +646,11 @@ class Dispatcher extends EventEmitter {
     const behindIfComponetList = [];
     for (const outputFile of component.outputFiles) {
       for (const e of outputFile.dst) {
-        const outputCmp = await this._getComponent(e.dstNode);
-        if (outputCmp.type === "viewer") {
+        const dstComponent = await this._getComponent(e.dstNode);
+        if (dstComponent.type === "viewer" || dstComponent.type === "storage") {
           continue;
         }
-        const prviousCmp = await Promise.all(outputCmp.previous.map((id)=>{
+        const prviousCmp = await Promise.all(dstComponent.previous.map((id)=>{
           return this._getComponent(id);
         }));
         prviousCmp.forEach((cmp)=>{
@@ -1056,6 +1057,22 @@ class Dispatcher extends EventEmitter {
     fs.writeJson(path.join(templateRoot, componentJsonFilename), component, { spaces: 4, replacer: componentJsonReplacer });
   }
 
+  async _storageHandler(component) {
+    const storagePath = component.storagePath;
+    const currentDir = this._getComponentDir(component.ID);
+
+    if (isLocal(component)) {
+      if (currentDir !== storagePath) {
+        await fs.copy(currentDir, storagePath);
+      }
+    } else {
+      const remotehostID = remoteHost.getID("name", component.host);
+      const ssh = getSsh(this.projectRootDir, remotehostID);
+      await ssh.send(storagePath, currentDir);
+    }
+    await this._setComponentState(component, "finished");
+  }
+
   async _isReady(component) {
     if (component.type === "source") {
       return true;
@@ -1177,6 +1194,7 @@ class Dispatcher extends EventEmitter {
     for (const recipe of deliverRecipes) {
       const srces = await promisify(glob)(recipe.srcName, { cwd: recipe.srcRoot });
       const hasGlob = glob.hasMagic(recipe.srcName);
+
       for (const srcFile of srces) {
         const oldPath = path.resolve(recipe.srcRoot, srcFile);
         let newPath = path.resolve(dstRoot, recipe.dstName);
@@ -1235,6 +1253,9 @@ class Dispatcher extends EventEmitter {
         break;
       case "viewer":
         cmd = this._viewerHandler;
+        break;
+      case "storage":
+        cmd = this._storageHandler;
         break;
       default:
         this.logger.error("illegal type specified", type);

@@ -20,9 +20,9 @@ const { isValidName, isValidInputFilename, isValidOutputFilename } = require("..
 const { hasChild, isInitialComponent } = require("./workflowComponent");
 const { replacePathsep } = require("../core/pathUtils");
 
-/*
- * private functions
- */
+function isLocal(component) {
+  return typeof component.host === "undefined" || component.host === "localhost";
+}
 
 /**
  * write component Json file and git add
@@ -571,6 +571,16 @@ async function validateForeach(component) {
   return Promise.resolve();
 }
 
+async function validateStorage(component) {
+  if (typeof component.storagePath !== "string") {
+    return Promise.reject(new Error("storagePath is not set"));
+  }
+  if (isLocal(component) && !fs.pathExists(component.storagePath)) {
+    return Promise.reject(new Error("specified path is not exist on localhost"));
+  }
+  return Promise.resolve();
+}
+
 /**
  * validate inputFiles
  * @param {Object} component - any component object which has inputFiles prop
@@ -668,6 +678,8 @@ async function validateComponents(projectRootDir, argParentID) {
       promises.push(validateParameterStudy(projectRootDir, component));
     } else if (component.type === "foreach") {
       promises.push(validateForeach(component));
+    } else if (component.type === "storage") {
+      promises.push(validateStorage(component));
     }
     if (Object.prototype.hasOwnProperty.call(component, "inputFiles")) {
       promises.push(validateInputFiles(component));
@@ -1101,7 +1113,6 @@ async function removeComponent(projectRootDir, ID) {
   //so, gitRm and fs.remove must be called in this order
   await gitRm(projectRootDir, targetDir);
   await fs.remove(targetDir);
-
   return removeComponentPath(projectRootDir, descendantsIDs);
 }
 
@@ -1203,5 +1214,6 @@ module.exports = {
   removeComponent,
   isComponentDir,
   getComponentTree,
-  readComponentJson
+  readComponentJson,
+  isLocal
 };

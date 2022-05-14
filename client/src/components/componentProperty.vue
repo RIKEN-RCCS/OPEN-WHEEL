@@ -141,6 +141,13 @@
               outlined
               @change="updateComponentProperty('submitOption')"
             />
+            <v-text-field
+              v-if="isStorage"
+              v-model.lazy="copySelectedComponent.storagePath"
+              label="directory path"
+              outlined
+              @change="updateComponentProperty('storagePath')"
+            />
           </v-expansion-panel-content>
         </v-expansion-panel>
         <v-expansion-panel v-if="isTask">
@@ -471,14 +478,17 @@
             </v-radio-group>
           </v-expansion-panel-content>
         </v-expansion-panel>
-        <v-expansion-panel>
+        <v-expansion-panel
+          v-if="! isStorage"
+        >
           <v-expansion-panel-header>Files</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expanion-panel-content>
             <file-browser
               :readonly="false"
               :project-root-dir="projectRootDir"
             />
-          </v-expansion-panel-content>
+            </v-expansion-panel-content>
+          </v-expanion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
     </v-form>
@@ -575,6 +585,9 @@
       isBulkjobTask(){
         return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "bulkjobTask";
       },
+      isStorage(){
+        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "storage";
+      },
       includeList: function () {
         if (typeof this.copySelectedComponent.include !== "string") {
           return [];
@@ -654,7 +667,7 @@
         commitSelectedComponent: "selectedComponent",
       }),
       deleteComponent () {
-        SIO.emitGlobal("removeNode", this.selectedComponent.ID, (rt)=>{
+        SIO.emitGlobal("removeNode", this.projectRootDir, this.selectedComponent.ID, this.currentComponent.ID, (rt)=>{
           if (!rt) {
             return;
           }
@@ -684,10 +697,10 @@
         const ID = this.selectedComponent.ID;
         // event がrenameInputFile, renameOutputFileの時だけindex引数をもってくれば良い
         if (event === "renameInputFile" || event === "renameOutputFile") {
-          SIO.emitGlobal(event, this.projectRootDir, ID, index, v.name, SIO.generalCallback);
+          SIO.emitGlobal(event, this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
           return;
         }
-        SIO.emitGlobal(event, this.projectRootDir, ID, v.name, SIO.generalCallback);
+        SIO.emitGlobal(event, this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
       },
       updateIndexList (op, e, index) {
         if (op === "add") {

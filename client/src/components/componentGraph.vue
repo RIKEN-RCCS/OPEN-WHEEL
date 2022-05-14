@@ -164,6 +164,7 @@
                        this.projectRootDir,
                        this.$store.commit.bind(this),
                        this.$store.dispatch.bind(this),
+                       this.currentComponent.ID
         );
       },
     },
@@ -171,12 +172,17 @@
       this.svg = SVG("node_svg");
       this.fit();
       window.addEventListener("resize", this.fit.bind(this));
-      drawComponents(this.currentComponent,
-                     this.svg,
-                     this.projectState,
-                     this.$store.commit.bind(this),
-                     this.$store.dispatch.bind(this),
-      );
+
+      if(this.currentComponent !== null){
+        drawComponents(this.currentComponent,
+                       this.svg,
+                       this.projectState,
+                       this.projectRootDir,
+                       this.$store.commit.bind(this),
+                       this.$store.dispatch.bind(this),
+                       this.currentComponent.ID 
+        );
+      }
     },
     beforeDestroy: function () {
       window.removeEventListener("resize", this.fit.bind(this));
@@ -224,7 +230,7 @@
           a[e.name]=e.value;
           return a;
         }, {});
-        SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, SIO.generalCallback);
+        SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID,  SIO.generalCallback);
       },
       onDrop (event) {
         const offsetX = event.dataTransfer.getData("offsetX");
@@ -247,7 +253,7 @@
         //   console.log("DEUBG: out of range drop!", payload.pos);
         // }
 
-        SIO.emitGlobal("createNode", this.projectRootDir, payload, SIO.generalCallback);
+        SIO.emitGlobal("createNode", this.projectRootDir, payload, this.currentComponent.ID, SIO.generalCallback);
       },
       fit: function () {
         const magicNumber = 17;

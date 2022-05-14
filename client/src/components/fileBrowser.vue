@@ -310,7 +310,6 @@
       getComponentDirRootFiles(){
         if (typeof this.selectedComponentAbsPath === "string") {
           SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponentAbsPath, mode: "underComponent"}, (fileList)=>{
-            console.log(fileList);
             this.items = fileList
               .filter((e)=>{return !e.isComponentDir})
               .map(fileListModifier.bind(null, this.pathSep))

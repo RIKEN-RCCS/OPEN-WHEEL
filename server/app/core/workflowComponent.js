@@ -40,6 +40,17 @@ class BaseWorkflowComponent {
   }
 }
 
+class Storage extends BaseWorkflowComponent {
+  constructor(pos, parent) {
+    super(pos, parent);
+    this.type = "storage";
+    this.inputFiles = [];
+    this.outputFiles = [];
+    this.host = "localhost";
+    this.storagePath = null;
+  }
+}
+
 class Source extends BaseWorkflowComponent {
   constructor(pos, parent) {
     super(pos, parent);
@@ -304,6 +315,9 @@ function componentFactory(type, ...args) {
     case "foreach":
       component = new Foreach(...args);
       break;
+    case "storage":
+      component = new Storage(...args);
+      break;
     case "source":
       component = new Source(...args);
       break;
@@ -330,6 +344,9 @@ function hasChild(component) {
 }
 
 function isInitialComponent(component) {
+  if (component.type === "storage") {
+    return false;
+  }
   if (component.type === "source" && component.outputFiles[0].dst.length > 0) {
     return true;
   }

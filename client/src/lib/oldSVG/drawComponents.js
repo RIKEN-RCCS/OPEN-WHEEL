@@ -18,7 +18,7 @@ let dispatch = null
 /**
    * draw components
    */
-function drawComponents (currentWf, argSvg, argPresentState, argProjectRootDir, argCommit, argDispatch) {
+function drawComponents (currentWf, argSvg, argPresentState, argProjectRootDir, argCommit, argDispatch, parentID) {
   if (!currentWf) return
   svg = argSvg
   presentState = argPresentState
@@ -38,7 +38,7 @@ function drawComponents (currentWf, argSvg, argPresentState, argProjectRootDir, 
   })
   parentnode = []
 
-  drawNodes(currentWf.descendants)
+  drawNodes(currentWf.descendants, parentID)
   drawParentFileRelation(currentWf)
   drawLinks(nodes)
   drawParentLinks(parentnode, nodes)
@@ -77,9 +77,9 @@ function drawParentLinks (parentnode, nodes) {
    * draw nodes
    * @param nodeInWF node list in workflow Json
    */
-function drawNodes (nodesInWF) {
+function drawNodes (nodesInWF, parentID) {
   nodesInWF.forEach(function (v) {
-    const node = new svgNode.SvgNodeUI(svg, v, projectRootDir)
+    const node = new svgNode.SvgNodeUI(svg, v, projectRootDir, parentID)
     node.ID = v.ID
     node
       .onClick(function (e) {

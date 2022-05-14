@@ -23,13 +23,14 @@ const {
   getEnv,
   replaceEnv
 } = require("../core/componentFilesOperator.js");
-const { getParentDir } = require("../core/workflowUtil.js");
+const { getComponentDir } = require("../core/projectFilesOperator.js");
 const { sendWorkflow, sendProjectJson, sendComponentTree } = require("./senders.js");
 const { projectJsonFilename } = require("../db/db");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { convertPathSep } = require("../core/pathUtils");
 
-async function generalHandler(socket, func, funcname, projectRootDir, cb, ID) {
+
+async function generalHandler(socket, func, funcname, projectRootDir, parentID, cb) {
   try {
     await func();
   } catch (e) {
@@ -37,33 +38,33 @@ async function generalHandler(socket, func, funcname, projectRootDir, cb, ID) {
     cb(e);
     return;
   }
-  const parentDir = ID ? await getParentDir(ID) : projectRootDir;
+  const parentDir = await getComponentDir(projectRootDir, parentID, true);
   await sendWorkflow(socket, cb, projectRootDir, parentDir);
 }
 
 
-async function onAddInputFile(socket, projectRootDir, ID, name, cb) {
-  return generalHandler(socket, addInputFile.bind(null, projectRootDir, ID, name), "addInputFile", projectRootDir, cb, ID);
+async function onAddInputFile(socket, projectRootDir, ID, name, parentID, cb) {
+  return generalHandler(socket, addInputFile.bind(null, projectRootDir, ID, name), "addInputFile", projectRootDir, parentID, cb);
 }
 
-async function onAddOutputFile(socket, projectRootDir, ID, name, cb) {
-  return generalHandler(socket, addOutputFile.bind(null, projectRootDir, ID, name), "addOutputFile", projectRootDir, cb, ID);
+async function onAddOutputFile(socket, projectRootDir, ID, name, parentID, cb) {
+  return generalHandler(socket, addOutputFile.bind(null, projectRootDir, ID, name), "addOutputFile", projectRootDir, parentID, cb);
 }
 
-async function onRemoveInputFile(socket, projectRootDir, ID, name, cb) {
-  return generalHandler(socket, removeInputFile.bind(null, projectRootDir, ID, name), "removeInputFile", projectRootDir, cb, ID);
+async function onRemoveInputFile(socket, projectRootDir, ID, name, parentID, cb) {
+  return generalHandler(socket, removeInputFile.bind(null, projectRootDir, ID, name), "removeInputFile", projectRootDir, parentID, cb);
 }
 
-async function onRemoveOutputFile(socket, projectRootDir, ID, name, cb) {
-  return generalHandler(socket, removeOutputFile.bind(null, projectRootDir, ID, name), "removeOutputFile", projectRootDir, cb, ID);
+async function onRemoveOutputFile(socket, projectRootDir, ID, name, parentID, cb) {
+  return generalHandler(socket, removeOutputFile.bind(null, projectRootDir, ID, name), "removeOutputFile", projectRootDir, parentID, cb);
 }
 
-async function onRenameInputFile(socket, projectRootDir, ID, index, newName, cb) {
-  return generalHandler(socket, renameInputFile.bind(null, projectRootDir, ID, index, newName), "renameInputFile", projectRootDir, cb);
+async function onRenameInputFile(socket, projectRootDir, ID, index, newName, parentID, cb) {
+  return generalHandler(socket, renameInputFile.bind(null, projectRootDir, ID, index, newName), "renameInputFile", projectRootDir, parentID, cb);
 }
 
-async function onRenameOutputFile(socket, projectRootDir, ID, index, newName, cb) {
-  return generalHandler(socket, renameOutputFile.bind(null, projectRootDir, ID, index, newName), "renameOutputFile", projectRootDir, cb);
+async function onRenameOutputFile(socket, projectRootDir, ID, index, newName, parentID, cb) {
+  return generalHandler(socket, renameOutputFile.bind(null, projectRootDir, ID, index, newName), "renameOutputFile", projectRootDir, parentID, cb);
 }
 
 async function onUpdateNode(socket, projectRootDir, ID, prop, value, cb) {
@@ -90,36 +91,36 @@ async function onUpdateNode(socket, projectRootDir, ID, prop, value, cb) {
   cb(true);
 }
 
-async function onCreateNode(socket, projectRootDir, request, cb) {
-  await generalHandler(socket, createNewComponent.bind(null, projectRootDir, convertPathSep(request.path), request.type, request.pos), "createNewComponent", projectRootDir, cb);
+async function onCreateNode(socket, projectRootDir, request, parentID, cb) {
+  await generalHandler(socket, createNewComponent.bind(null, projectRootDir, convertPathSep(request.path), request.type, request.pos), "createNewComponent", projectRootDir, parentID, cb);
   await sendProjectJson(socket, projectRootDir);
   return sendComponentTree(socket, projectRootDir, projectRootDir);
 }
 
-async function onRemoveNode(socket, projectRootDir, targetID, cb) {
-  await generalHandler(socket, removeComponent.bind(null, projectRootDir, targetID), "removeComponent", projectRootDir, cb);
+async function onRemoveNode(socket, projectRootDir, ID, parentID, cb) {
+  await generalHandler(socket, removeComponent.bind(null, projectRootDir, ID), "removeComponent", projectRootDir, parentID, cb);
   await sendProjectJson(socket, projectRootDir);
   return sendComponentTree(socket, projectRootDir, projectRootDir);
 }
 
 
-async function onAddLink(socket, projectRootDir, msg, cb) {
-  return generalHandler(socket, addLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "addLink", projectRootDir, cb);
+async function onAddLink(socket, projectRootDir, msg, parentID, cb) {
+  return generalHandler(socket, addLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "addLink", projectRootDir, parentID, cb);
 }
 
-async function onRemoveLink(socket, projectRootDir, msg, cb) {
-  return generalHandler(socket, removeLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "removeLink", projectRootDir, cb);
+async function onRemoveLink(socket, projectRootDir, msg, parentID, cb) {
+  return generalHandler(socket, removeLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "removeLink", projectRootDir, parentID, cb);
 }
 
-async function onAddFileLink(socket, projectRootDir, srcNode, srcName, dstNode, dstName, cb) {
-  return generalHandler(socket, addFileLink.bind(null, projectRootDir, srcNode, srcName, dstNode, dstName), "addFileLink", projectRootDir, cb);
+async function onAddFileLink(socket, projectRootDir, srcNode, srcName, dstNode, dstName, parentID, cb) {
+  return generalHandler(socket, addFileLink.bind(null, projectRootDir, srcNode, srcName, dstNode, dstName), "addFileLink", projectRootDir, parentID, cb);
 }
-async function onRemoveFileLink(socket, projectRootDir, srcNode, srcName, dstNode, dstName, cb) {
-  return generalHandler(socket, removeFileLink.bind(null, projectRootDir, srcNode, srcName, dstNode, dstName), "removeFileLink", projectRootDir, cb);
+async function onRemoveFileLink(socket, projectRootDir, srcNode, srcName, dstNode, dstName, parentID, cb) {
+  return generalHandler(socket, removeFileLink.bind(null, projectRootDir, srcNode, srcName, dstNode, dstName), "removeFileLink", projectRootDir, parentID, cb);
 }
 
-async function onUpdateEnv(socket, projectRootDir, ID, newEnv, cb) {
-  return generalHandler(socket, replaceEnv.bind(null, projectRootDir, ID, newEnv), "updateEnv", projectRootDir, cb);
+async function onUpdateEnv(socket, projectRootDir, ID, newEnv, parentID, cb) {
+  return generalHandler(socket, replaceEnv.bind(null, projectRootDir, ID, newEnv), "updateEnv", projectRootDir, parentID, cb);
 }
 
 async function onGetEnv(socket, projectRootDir, ID, cb) {
