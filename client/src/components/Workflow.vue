@@ -151,7 +151,6 @@
               <v-btn
                 outlined
                 icon
-                :disabled="canRun"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('cleanProject')"
@@ -232,7 +231,11 @@
         size="64"
       />
     </v-overlay>
-    <unsaved-files-dialog />
+    <unsaved-files-dialog
+      :unsaved-files="unsavedFiles"
+      :dialog="showUnsavedFilesDialog"
+      @closed="unsavedFilesDialogClosed"
+    />
     <password-dialog
       v-model="pwDialog"
       :title="pwDialogTitle"
@@ -306,7 +309,10 @@
         pwDialogTitle: "",
         pwCallback: ()=>{},
         descriptionDialog: false,
-        projectDescription: ""
+        projectDescription: "",
+        cb:null,
+        unsavedFiles:[],
+        showUnsavedFilesDialog:false
       };
     },
     computed: {
@@ -379,8 +385,23 @@
           }
           throw err;
         });
+      SIO.onGlobal("unsavedFiles", (unsavedFiles, cb)=>{
+        console.log("unsavedFiles event recieved", unsavedFiles);
+
+        if (unsavedFiles.length === 0) {
+          return;
+        }
+        this.cb = cb;
+        this.unsavedFiles.splice(0, this.unsavedFiles.length, ...unsavedFiles);
+        this.showUnsavedFilesDialog= true;
+      });
     },
     methods: {
+      unsavedFilesDialogClosed(...args){
+        this.unsavedFiles.splice(0);
+        this.cb(args);
+        this.showUnsavedFilesDialog=false;
+      },
       ...mapActions(["showSnackbar", "closeSnackbar"]),
       ...mapMutations(
         {

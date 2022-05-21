@@ -12,7 +12,7 @@ const { create } = require("abc4");
 const { getLogger } = require("../logSettings");
 const { remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
-const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
+const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getHosts, validateComponents, getSourceComponents } = require("../core/componentFilesOperator");
 const { getComponentDir, getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
@@ -91,16 +91,25 @@ async function emitWithPromise(emit, ...args) {
   });
 }
 
-async function askUnsavedFiles(emit, projectRootDir) {
+async function askUnsavedFiles(socket, projectRootDir) {
+  const logger = getLogger(projectRootDir);
   const unsavedFiles = await getUnsavedFiles(projectRootDir);
   const filterdUnsavedFiles = unsavedFiles.filter((e)=>{
     return !(e.name === componentJsonFilename || e.name === projectJsonFilename);
   });
   if (filterdUnsavedFiles.length > 0) {
-    const toBeSaved = await emitWithPromise(emit, "unsavedFiles", filterdUnsavedFiles);
-    if (toBeSaved) {
+    const [mode, toBeSaved] = await emitWithPromise(socket.emit.bind(socket), "unsavedFiles", filterdUnsavedFiles);
+    if (mode === "cancel") {
+      throw (new Error("canceled by user"));
+    } else if (mode === "discard") {
+      logger.info("discard unsaved files");
+      logger.debug("discard unsaved files", filterdUnsavedFiles.map((unsaved)=>{
+        return unsaved.name;
+      }));
+    } else if (mode === "save") {
+      logger.info("save files and clean project", toBeSaved);
       await Promise.all(filterdUnsavedFiles.map((unsaved)=>{
-        return gitAdd(projectRootDir, unsaved.name);
+        return unsaved.status === "deleted" ? gitRm(projectRootDir, unsaved.name) : gitAdd(projectRootDir, unsaved.name);
       }));
       await gitCommit(projectRootDir);
     }
@@ -245,12 +254,6 @@ async function onPauseProject(socket, projectRootDir, ack) {
 
 async function onStopProject(socket, projectRootDir, ack) {
   try {
-    await askUnsavedFiles(socket.emit, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).info("stop project canceled");
-    return;
-  }
-  try {
     await stopProject(projectRootDir);
     await updateProjectState(socket, projectRootDir, "paused");
     socket.emit("projectJson", await getProjectJson(projectRootDir));
@@ -265,9 +268,11 @@ async function onStopProject(socket, projectRootDir, ack) {
 
 async function onCleanProject(socket, projectRootDir, ack) {
   try {
-    await askUnsavedFiles(socket.emit, projectRootDir);
+    await askUnsavedFiles(socket, projectRootDir);
   } catch (e) {
-    getLogger(projectRootDir).info("clean project canceled");
+    getLogger(projectRootDir).info("clean project canceled due to", e.message);
+    getLogger(projectRootDir).debug(e);
+    ack(e);
     return;
   }
 
@@ -300,7 +305,7 @@ async function onSaveProject(socket, projectRootDir, cb) {
   return cb(projectJson);
 }
 async function onRevertProject(socket, projectRootDir, cb) {
-  await askUnsavedFiles(socket.emit, projectRootDir);
+  await askUnsavedFiles(socket, projectRootDir);
   await gitResetHEAD(projectRootDir);
   await sendWorkflow(socket, cb, projectRootDir);
   getLogger(projectRootDir).debug("revert project done");
