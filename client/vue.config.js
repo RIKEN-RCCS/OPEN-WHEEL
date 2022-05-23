@@ -11,6 +11,12 @@ module.exports = {
       title: "workflow",
       filename: "workflow.html",
     },
+    viewer: {
+      entry: "src/viewer.js",
+      template: "public/index.html",
+      title: "viewer",
+      filename: "viewer.html",
+    },
     home:{
       entry: "src/home.js",
       template: "public/index.html",
