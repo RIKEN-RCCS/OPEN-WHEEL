@@ -8,8 +8,10 @@ const promiseRetry = require("promise-retry");
 const fs = require("fs-extra");
 const path = require("path");
 const Mode = require("stat-mode");
+const { getLogger } = require("../logSettings.js");
 const { gitAdd } = require("./gitOperator2");
 const { projectJsonFilename } = require("../db/db");
+const { getSsh } = require("./sshManager.js");
 
 
 /**
@@ -107,6 +109,25 @@ async function deliverFile(src, dst) {
     }
     return Promise.reject(e);
   }
+}
+
+/**
+ * execut ln -s command on remotehost to make shallow symlink
+ */
+async function deliverFileOnRemote(recipe) {
+  const logger = getLogger(recipe.projectRootDir);
+  if (!recipe.onRemote) {
+    logger.warn("deliverFileOnremote must be called with onRemote flag");
+    return null;
+  }
+  const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
+  const sshCmd = `bash -O failglob -c 'mkdir ${recipe.dstRoot} 2>/dev/null; cd ${recipe.dstRoot} && for i in ${recipe.srcRoot}/${recipe.srcName}; do ln -sf \${i} ${recipe.dstName} ;done'`;
+  logger.debug("execute on remote", sshCmd);
+  const rt = await ssh.exec(sshCmd, {}, logger.debug.bind(logger), logger.debug.bind(logger));
+  if (rt !== 0) {
+    logger.warn("deliver file on remote failed", rt);
+  }
+  return rt;
 }
 
 /**
@@ -238,6 +259,7 @@ module.exports = {
   readJsonGreedy,
   addX,
   deliverFile,
+  deliverFileOnRemote,
   openFile,
   saveFile,
   getUnusedPath

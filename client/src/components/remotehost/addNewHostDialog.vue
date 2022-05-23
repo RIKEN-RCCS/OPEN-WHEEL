@@ -107,14 +107,30 @@
                           label="available queues"
                         />
                       </v-col>
-                      <v-col cols="6">
+                      <v-col cols="3">
                         <v-checkbox
                           v-model="host.useBulkjob"
                           label="use bulkjob"
                         />
+                      </v-col>
+                      <v-col cols="3">
                         <v-checkbox
                           v-model="host.useStepjob"
                           label="use stepjob"
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-select
+                          v-model="host.sharedHost"
+                          :items="hostNames"
+                          label="shared host"
+                          clearable
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.sharedPath"
+                          label="shared path on shared host"
                         />
                       </v-col>
                     </v-row>
@@ -297,7 +313,7 @@
     },
     watch:{
       openDialog(v){
-      this.host = Object.assign(this.host, this.initialValue);
+        this.host = Object.assign(this.host, this.initialValue);
       }
     },
     methods: {

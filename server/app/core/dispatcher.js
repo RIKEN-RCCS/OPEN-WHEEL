@@ -17,11 +17,11 @@ const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
-const { readJsonGreedy, deliverFile } = require("./fileUtils");
+const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
-const { componentJsonReplacer, getComponent, getChildren, isLocal } = require("./componentFilesOperator");
+const { componentJsonReplacer, getComponent, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
-const { evalCondition } = require("./dispatchUtils");
+const { evalCondition, getRemoteWorkingDir } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
 
@@ -408,6 +408,7 @@ class Dispatcher extends EventEmitter {
   async _dispatch() {
     this.logger.trace("_dispatch called", this.cwfDir);
 
+
     if (this.firstCall) {
       await this._asyncInit();
       const childComponents = await getChildren(this.projectRootDir, this.cwfID);
@@ -432,15 +433,18 @@ class Dispatcher extends EventEmitter {
         this.logger.info(`disabled component: ${target.name}(${target.ID})`);
         continue;
       }
+
       if (target.type === "source") {
         await this._setComponentState(target, "finished");
         this._addNextComponent(target);
         continue;
       }
+
       if (!await this._isReady(target)) {
         this.pendingComponents.push(target);
         continue;
       }
+
       if (target.type === "stepjobTask") {
         const parentComponent = await getComponent(this.projectRootDir, target.parent);
         target.host = parentComponent.host;
@@ -469,11 +473,13 @@ class Dispatcher extends EventEmitter {
       return !isFinishedState(task.state);
     });
 
+
     if (this.needToRerun) {
       this.needToRerun = false;
       this.logger.debug("revoke _dispatch()");
       return this._dispatch();
     }
+
     if (this._isFinished()) {
       const state = this._getState();
       this.emit("done", state);
@@ -1161,6 +1167,12 @@ class Dispatcher extends EventEmitter {
                 }
               })
           );
+        } else if (await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID)) {
+          const srcComponent = await this._getComponent(src.srcNode);
+          const srcRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent);
+          const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
+          const remotehostID = remoteHost.getID("name", component.host);
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName: src.srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID });
         } else {
           const srcRoot = this._getComponentDir(src.srcNode);
           promises.push(
@@ -1192,25 +1204,31 @@ class Dispatcher extends EventEmitter {
     const dstRoot = this._getComponentDir(component.ID);
     const p2 = [];
     for (const recipe of deliverRecipes) {
-      const srces = await promisify(glob)(recipe.srcName, { cwd: recipe.srcRoot });
-      const hasGlob = glob.hasMagic(recipe.srcName);
+      if (recipe.onRemote) {
+        p2.push(deliverFileOnRemote(recipe));
+      } else {
+        const srces = await promisify(glob)(recipe.srcName, { cwd: recipe.srcRoot });
+        const hasGlob = glob.hasMagic(recipe.srcName);
 
-      for (const srcFile of srces) {
-        const oldPath = path.resolve(recipe.srcRoot, srcFile);
-        let newPath = path.resolve(dstRoot, recipe.dstName);
+        for (const srcFile of srces) {
+          const oldPath = path.resolve(recipe.srcRoot, srcFile);
+          let newPath = path.resolve(dstRoot, recipe.dstName);
 
-        //dst is regard as directory if srcName has glob pattern or dstName ends with path separator
-        //if newPath is existing Directory, src will also be copied under newPath directory
-        if (hasGlob || recipe.dstName.endsWith(path.posix.sep) || recipe.dstName.endsWith(path.win32.sep)) {
-          newPath = path.resolve(newPath, srcFile);
+          //dst is regard as directory if srcName has glob pattern or dstName ends with path separator
+          //if newPath is existing Directory, src will also be copied under newPath directory
+          if (hasGlob || recipe.dstName.endsWith(path.posix.sep) || recipe.dstName.endsWith(path.win32.sep)) {
+            newPath = path.resolve(newPath, srcFile);
+          }
+          p2.push(deliverFile(oldPath, newPath));
         }
-        p2.push(deliverFile(oldPath, newPath));
       }
     }
     const results = await Promise.all(p2);
+
     for (const result of results) {
       this.logger.trace(`make ${result.type} from  ${result.src} to ${result.dst}`);
     }
+
     if (component.type === "viewer") {
       component.files = results;
     }

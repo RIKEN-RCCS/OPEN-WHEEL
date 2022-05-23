@@ -181,6 +181,20 @@ async function setProjectState(projectRootDir, state, force) {
   return false;
 }
 
+/**
+ * return relative path from one component to another
+ * @param {string} projectRootDir -
+ * @param {string} from - starting point component's ID
+ * @param {string} to - endpoint component's ID
+ * @returns {string} - relativepath from "from" to "to"
+ */
+async function getRelativeComponentPath(projectRootDir, from, to) {
+  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+  const fromPath = projectJson.componentPath[from];
+  const toPath = projectJson.componentPath[to];
+  return path.relative(fromPath, toPath);
+}
+
 async function getComponentDir(projectRootDir, ID, isAbsolute) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   const relativePath = projectJson.componentPath[ID];
@@ -508,6 +522,7 @@ module.exports = {
   createNewProject,
   updateComponentPath,
   removeComponentPath,
+  getRelativeComponentPath,
   getComponentDir,
   getDescendantsIDs,
   getAllComponentIDs,

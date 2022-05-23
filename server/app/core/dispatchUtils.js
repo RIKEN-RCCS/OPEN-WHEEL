@@ -9,6 +9,9 @@ const childProcess = require("child_process");
 const fs = require("fs-extra");
 const { addX } = require("./fileUtils");
 const { getLogger } = require("../logSettings.js");
+const { replacePathsep } = require("./pathUtils");
+const { remoteHost } = require("../db/db");
+const { getSshHostinfo } = require("./sshManager.js");
 
 async function pspawn(projectRootDir, script, options) {
   return new Promise((resolve, reject)=>{
@@ -72,8 +75,27 @@ async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
   //eslint-disable-next-line no-eval
   return eval(conditionExpression);
 }
+function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component) {
+  const remotehostID = remoteHost.getID("name", component.host);
+  if (typeof remotehostID === "undefined") {
+    return null;
+  }
+  const hostinfo = getSshHostinfo(projectRootDir, remotehostID);
+  const remoteRoot = typeof hostinfo.path === "string" ? hostinfo.path : "";
+  return replacePathsep(path.posix.join(remoteRoot, projectStartTime));
+}
+function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, component) {
+  const remoteRootWorkingDir = getRemoteRootWorkingDir(projectRootDir, projectStartTime, component);
+  if (remoteRootWorkingDir === null) {
+    return null;
+  }
+  const localWorkingDir = replacePathsep(path.relative(projectRootDir, workingDir));
+  return replacePathsep(path.posix.join(remoteRootWorkingDir, localWorkingDir));
+}
 
 
 module.exports = {
-  evalCondition
+  evalCondition,
+  getRemoteWorkingDir,
+  getRemoteRootWorkingDir
 };

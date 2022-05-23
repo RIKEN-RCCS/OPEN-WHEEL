@@ -8,7 +8,7 @@ const path = require("path");
 const fs = require("fs-extra");
 const { componentJsonFilename, statusFilename } = require("../db/db");
 const { replacePathsep } = require("./pathUtils");
-const { componentJsonReplacer } = require("./componentFilesOperator");
+const { componentJsonReplacer, isSameRemoteHost } = require("./componentFilesOperator");
 const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
 
@@ -39,9 +39,21 @@ async function gatherFiles(task) {
   await setTaskState(task, "stage-out");
   getLogger(task.proejctRootDir).debug("start to get files from remote server if specified");
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
+  const filter = task.outputFiles.map(async(outputFile)=>{
+    const rt = await Promise.all(outputFile.dst.map(({ dstNode })=>{
+      return isSameRemoteHost(task.projectRootDir, task.ID, dstNode);
+    }));
+    const needToDownload = rt.some((isSame)=>{
+      return !isSame;
+    });
+    getLogger(task.proejctRootDir).trace(`${outputFile.name} will ${needToDownload ? "" : "NOT"} be download`);
+    return needToDownload;
+  });
 
-  //get outputFiles from remote server
   const outputFiles = task.outputFiles
+    .filter((v, i)=>{
+      return filter[i];
+    })
     .map((e)=>{
       if (e.name.endsWith("/") || e.name.endsWith("\\")) {
         const dirname = replacePathsep(e.name);

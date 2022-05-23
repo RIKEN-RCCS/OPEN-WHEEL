@@ -25,6 +25,39 @@ function isLocal(component) {
 }
 
 /**
+ * check if specified components are executed on same remote host
+ * @param {string} projectRootDir - root directory path of project
+ * @param {string} left -  first componentID
+ * @param {string} right - second componentID
+ * @returns {boolean} - on same remote or not
+ */
+async function isSameRemoteHost(projectRootDir, left, right) {
+  if (left === right) {
+    return null;
+  }
+  const leftComponent = await readComponentJsonByID(projectRootDir, left);
+  const rightComponent = await readComponentJsonByID(projectRootDir, right);
+
+  if (isLocal(leftComponent) || isLocal(rightComponent)) {
+    return false;
+  }
+
+  if (leftComponent.host === rightComponent.host) {
+    return true;
+  }
+  const leftHost = remoteHost.query("name", leftComponent.host);
+  const rightHost = remoteHost.query("name", rightComponent.host);
+  const leftSharedHost = remoteHost.query("sharedHost", leftHost.sharedHost);
+  const rightSharedHost = remoteHost.query("sharedHost", rightHost.sharedHost);
+
+  if (leftHost === rightSharedHost || rightHost === leftSharedHost || leftSharedHost === rightSharedHost) {
+    return true;
+  }
+  return false;
+}
+
+
+/**
  * write component Json file and git add
  */
 async function writeComponentJson(projectRootDir, componentDir, component) {
@@ -1215,5 +1248,6 @@ module.exports = {
   isComponentDir,
   getComponentTree,
   readComponentJson,
-  isLocal
+  isLocal,
+  isSameRemoteHost
 };

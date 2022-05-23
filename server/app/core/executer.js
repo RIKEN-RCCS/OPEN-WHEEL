@@ -12,8 +12,7 @@ const fs = require("fs-extra");
 const SBS = require("simple-batch-system");
 const { remoteHost, jobScheduler, numJobOnLocal, defaultTaskRetryCount } = require("../db/db");
 const { addX } = require("./fileUtils");
-const { evalCondition } = require("./dispatchUtils");
-const { replacePathsep } = require("./pathUtils");
+const { evalCondition, getRemoteRootWorkingDir, getRemoteWorkingDir } = require("./dispatchUtils");
 const { getDateString } = require("../lib/utility");
 const { getSsh, getSshHostinfo } = require("./sshManager.js");
 const { gatherFiles, setTaskState, createStatusFile } = require("./execUtils");
@@ -424,12 +423,10 @@ async function exec(task) {
   }
 
   if (task.remotehostID !== "localhost") {
-    const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
-    const localWorkingDir = replacePathsep(path.relative(task.projectRootDir, task.workingDir));
-    const remoteRoot = typeof hostinfo.path === "string" ? hostinfo.path : "";
-    task.remoteWorkingDir = replacePathsep(path.posix.join(remoteRoot, task.projectStartTime, localWorkingDir));
-    task.remoteRootWorkingDir = replacePathsep(path.posix.join(remoteRoot, task.projectStartTime));
+    task.remoteWorkingDir = getRemoteWorkingDir(task.projectRootDir, task.projectStartTime, task.workingDir, task);
+    task.remoteRootWorkingDir = getRemoteRootWorkingDir(task.projectRootDir, task.projectStartTime, task);
   }
+
 
   //executer.submit is async function but we do NOT wait it at dispatcher._dispatchTask()
   //task state will be written to component json file and read it from each functions which need task status
