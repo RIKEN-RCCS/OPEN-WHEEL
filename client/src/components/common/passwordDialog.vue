@@ -9,6 +9,7 @@
       </v-card-title>
       <v-text-field
         v-model="password"
+        class="mx-6"
         autofocus
         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
         :type="showPassword ? 'text' : 'password'"
