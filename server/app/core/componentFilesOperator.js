@@ -13,7 +13,7 @@ const { promisify } = require("util");
 const glob = require("glob");
 const { componentFactory } = require("./workflowComponent");
 const { updateComponentPath, removeComponentPath, getComponentDir, getDescendantsIDs, getAllComponentIDs } = require("./projectFilesOperator");
-const { projectJsonFilename, componentJsonFilename, remoteHost, jobScheduler } = require("../db/db");
+const { projectJsonFilename, componentJsonFilename, remoteHost, jobScheduler, defaultPSconfigFilename } = require("../db/db");
 const { readJsonGreedy } = require("./fileUtils");
 const { gitAdd, gitRm, gitResetHEAD, gitClean } = require("./gitOperator2");
 const { isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
@@ -763,6 +763,10 @@ async function createNewComponent(projectRootDir, parentDir, type, pos) {
   newComponent.name = path.basename(absDirName);
   await writeComponentJson(projectRootDir, absDirName, newComponent);
   await updateComponentPath(projectRootDir, newComponent.ID, absDirName);
+
+  if (type === "PS") {
+    await fs.writeJson(path.resolve(absDirName, defaultPSconfigFilename), { version: 2, targetFiles: [], params: [], scatter: [], gather: [] }, { spaces: 4 });
+  }
   return newComponent;
 }
 

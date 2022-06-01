@@ -71,6 +71,7 @@ module.exports.componentJsonFilename = "cmp.wheel.json";
 module.exports.statusFilename = "status.wheel.txt";
 module.exports.jobManagerJsonFilename = "jm.wheel.json";
 module.exports.filesJsonFilename = "files.wheel.json";
+module.exports.defaultPSconfigFilename = "parameterSetting.json";
 module.exports.keyFilename = keyFilename;
 module.exports.certFilename = certFilename;
 module.exports.logFilename = logFilename;

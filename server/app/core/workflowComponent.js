@@ -5,6 +5,7 @@
  */
 "use strict";
 const uuidv1 = require("uuid/v1");
+const { defaultPSconfigFilename } = require("../db/db.js");
 
 class BaseWorkflowComponent {
   constructor(pos, parent) {
@@ -186,7 +187,7 @@ class ParameterStudy extends GeneralComponent {
   constructor(...args) {
     super(...args);
     this.type = "parameterStudy";
-    this.parameterFile = null;
+    this.parameterFile = defaultPSconfigFilename;
     this.numTotal = null;
     this.numFinished = null;
     this.numFailed = null;
