@@ -30,8 +30,10 @@ const {
   onUpdateEnv
 } = require("./workflowEditor.js");
 const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } = require("./jobScript.js");
+const { onGetResultFiles } = require("./resultFiles.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
+
 
 const registerHandlers = (socket, Siofu)=>{
   //
@@ -159,6 +161,11 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("updateJobScriptTemplate", onUpdateJobScriptTemplate.bind(null, socket));
   //delete
   socket.on("removeJobScriptTemplate", onRemoveJobScriptTemplate.bind(null, socket));
+
+  //
+  //result files (read only)
+  //
+  socket.on("getResultFiles", onGetResultFiles.bind(null, socket));
 
   //auxiliary
   socket.on("tryToConnect", onTryToConnect);

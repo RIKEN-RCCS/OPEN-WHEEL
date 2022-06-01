@@ -265,8 +265,6 @@
         input.setAttribute("type", "hidden");
         input.setAttribute("name", "project");
         input.setAttribute("value", this.selected);
-        console.log("selected=",this.selected);
-        console.log("selectedInTree=", this.selectedInTree);
         form.appendChild(input);
         form.submit();
       },

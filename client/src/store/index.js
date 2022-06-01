@@ -165,7 +165,7 @@ export default new Vuex.Store({
       return state.projectState === "not-started";
     },
     canRun: (state)=>{
-      return ["not-started", "preparing"].includes(state.projectState);
+      return ["not-started", "paused"].includes(state.projectState);
     },
     running:(state)=>{
       return state.projectState === "running";

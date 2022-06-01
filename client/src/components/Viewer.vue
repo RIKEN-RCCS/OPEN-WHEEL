@@ -10,17 +10,28 @@
       > WHEEL </a>
       <v-spacer />
       <p>
-        viwer
+        viewer
       </p>
       <v-spacer />
     </v-app-bar>
     <v-main>
-      <ul id="list">
-        <li
-          v-for="item in items"
-          :key="item.url"
-        />
-      </ul>
+      <v-viewer
+        ref="viewer"
+        :options="options"
+        :images="images"
+        class="viewer"
+        @inited="inited"
+      >
+        <template #default="scope">
+          <img
+            v-for="src in scope.images"
+            :key="src.url"
+            :src="src.url"
+            :data-src="src.url"
+            :alt="title"
+          >
+        </template>
+      </v-viewer>
     </v-main>
     <v-footer app />
   </v-app>
@@ -28,25 +39,50 @@
 
 <script>
   "use strict";
-  import Viewer from "viwerjs/dist/viewer.min.js ";
+  import "viewerjs/dist/viewer.css";
+  import { component as VViewer }  from "v-viewer";
+  import SIO from "@/lib/socketIOWrapper.js";
+  import { readCookie } from "@/lib/utility.js";
 
   export default{
     name: "Viewer",
+    components:{
+     VViewer
+    },
     data(){
       return {
-        items:[]
+        items:[],
+        options:
+          {
+          navbar: false,
+            "url":"data-src"
+          }
       };
     },
+    computed: {
+      images(){
+        return this.items;
+      }
+    },
     mounted(){
-      const viewer = new Viewer(document.getElementById("list"), {
-        inline: true,
-        viewed() {
-          viewer.zoomTo(1);
-        }
+      // dirをcookieから取得
+      const dir=readCookie("dir");
+      const projectRootDir=readCookie("rootDir");
+      if(typeof dir !== "string" || typeof projectRootDir !== "string"){
+        return;
+      }
+      SIO.onGlobal("resultFiles", (results)=>{
+        this.items=results;
       });
+      SIO.emitGlobal("getResultFiles", projectRootDir, dir, SIO.generalCallback);
+    },
+    methods:{
+      inited (viewer) {
+        this.$viewer = viewer;
+      },
+      show () {
+        this.$viewer.show();
+      }
     }
   };
 </script>
-<style>
-  @import "viewerjs/dist/viewer.min.css";
-</style>

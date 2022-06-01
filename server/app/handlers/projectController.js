@@ -6,6 +6,7 @@
 "use strict";
 const path = require("path");
 const { promisify } = require("util");
+const EventEmitter = require("events");
 const glob = require("glob");
 const ARsshClient = require("arssh2-client");
 const { create } = require("abc4");
@@ -17,10 +18,11 @@ const { getHosts, validateComponents, getSourceComponents } = require("../core/c
 const { getComponentDir, getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
 const { runProject, cleanProject, pauseProject, stopProject } = require("../core/projectController.js");
-const { sendWorkflow } = require("./senders.js");
 const { addCluster, removeCluster } = require("../core/clusterManager.js");
 const { addSsh } = require("../core/sshManager.js");
 const { isValidOutputFilename } = require("../lib/utility");
+const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir } = require("./senders.js");
+const { parentDirs, eventEmitters } = require("../core/global.js");
 
 
 async function createCloudInstance(projectRootDir, hostinfo, sio) {
@@ -224,6 +226,18 @@ async function onRunProject(socket, projectRootDir, ack) {
 
   //actual run
   try {
+    const ee = new EventEmitter();
+    eventEmitters.set(projectRootDir, ee);
+    ee.on("componentStateChanged", ()=>{
+      const parentDir = parentDirs.get(projectRootDir);
+      sendWorkflow(socket, ()=>{}, projectRootDir, parentDir);
+    });
+    ee.on("projectStateChanged", sendProjectJson.bind(null, socket, projectRootDir));
+    ee.on("taskDispatched", sendTaskStateList.bind(null, socket, projectRootDir));
+    ee.on("taskCompleted", sendTaskStateList.bind(null, socket, projectRootDir));
+    ee.on("taskStateChanged", sendTaskStateList.bind(null, socket, projectRootDir));
+    ee.on("resultFilesReady", sendResultsFileDir.bind(null, socket));
+
     await runProject(projectRootDir);
   } catch (err) {
     getLogger(projectRootDir).error("fatal error occurred while parsing workflow:", err);
@@ -232,6 +246,7 @@ async function onRunProject(socket, projectRootDir, ack) {
   } finally {
     socket.emit("projectJson", await getProjectJson(projectRootDir));
     await sendWorkflow(socket, ack, projectRootDir);
+    eventEmitters.delete(projectRootDir);
     removeSsh(projectRootDir);
     removeCluster(projectRootDir);
   }

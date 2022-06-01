@@ -11,6 +11,7 @@ const { replacePathsep } = require("./pathUtils");
 const { componentJsonReplacer, isSameRemoteHost } = require("./componentFilesOperator");
 const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
+const { eventEmitters } = require("./global.js");
 
 /**
  * parse filter string from client and return validate glob pattern
@@ -31,8 +32,9 @@ async function setTaskState(task, state) {
   getLogger(task.proejctRootDir).trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
   //to avoid git add when task state is changed, we do NOT use updateComponentJson(in workflowUtil) here
   await fs.writeJson(path.resolve(task.workingDir, componentJsonFilename), task, { spaces: 4, replacer: componentJsonReplacer });
-  task.emitEvent("taskStateChanged", task);
-  task.emitEvent("componentStateChanged", task);
+  const ee = eventEmitters.get(task.projectRootDir);
+  ee.emit("taskStateChanged", task);
+  ee.emit("componentStateChanged", task);
 }
 
 async function gatherFiles(task) {

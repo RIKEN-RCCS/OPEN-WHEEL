@@ -6,18 +6,16 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const EventEmitter = require("events");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
 const { removeSsh } = require("./sshManager");
 const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { componentJsonReplacer } = require("./componentFilesOperator");
+const { componentJsonReplacer, readComponentJson } = require("./componentFilesOperator");
 const Dispatcher = require("./dispatcher");
 const { getDateString } = require("../lib/utility");
 const { getLogger } = require("../logSettings.js");
-
+const { eventEmitters } = require("./global.js");
 const rootDispatchers = new Map();
-const eventEmitters = new Map();
 
 /**
  * @event projectStateChanged
@@ -55,6 +53,13 @@ const cleanProject = async(projectRootDir)=>{
   }
   removeSsh(projectRootDir);
 
+  const { ID } = await readComponentJson(projectRootDir);
+  const viewerURLRoot = path.resolve(path.dirname(__dirname), "viewer");
+  const viewerDir = path.join(viewerURLRoot, ID);
+  if (fs.pathExists(viewerDir)) {
+    fs.remove(viewerDir);
+  }
+
   await gitResetHEAD(projectRootDir);
   await gitClean(projectRootDir);
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
@@ -89,15 +94,11 @@ async function runProject(projectRootDir) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   const rootWF = await readJsonGreedy(path.resolve(projectRootDir, componentJsonFilename));
 
-  const ee = new EventEmitter();
-  eventEmitters.set(projectRootDir, ee);
-
   const rootDispatcher = new Dispatcher(projectRootDir,
     rootWF.ID,
     projectRootDir,
     getDateString(),
     projectJson.componentPath,
-    ee.emit.bind(ee),
     rootWF.env);
 
   if (rootWF.cleanupFlag === "2") {
@@ -111,9 +112,7 @@ async function runProject(projectRootDir) {
   getLogger(projectRootDir).info("project finished");
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
   await fs.writeJson(path.resolve(projectRootDir, componentJsonFilename), rootWF, { spaces: 4, replacer: componentJsonReplacer });
-  eventEmitters.delete(projectRootDir);
   rootDispatchers.delete(projectRootDir);
-  removeSsh(projectRootDir);
   return rootWF.state;
 }
 

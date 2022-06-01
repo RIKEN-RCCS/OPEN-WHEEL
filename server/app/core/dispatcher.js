@@ -12,18 +12,19 @@ const glob = require("glob");
 const FileType = require("file-type");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { remoteHost, componentJsonFilename } = require("../db/db");
+const { remoteHost, componentJsonFilename, filesJsonFilename } = require("../db/db");
 const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
-const { componentJsonReplacer, getComponent, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
+const { componentJsonReplacer, getComponent, getChildren, isLocal, isSameRemoteHost, readComponentJson } = require("./componentFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
 const { evalCondition, getRemoteWorkingDir } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
+const { eventEmitters } = require("./global.js");
 
 
 const viewerSupportedTypes = ["png", "jpg", "gif", "bmp"];
@@ -320,19 +321,17 @@ async function replaceTargetFile(srcDir, dstDir, targetFiles, params) {
  * @param {string} cwfDir -         current dispatching workflow directory (absolute path);
  * @param {string} startTime -      project start time
  * @param {Object} componentPath -  componentPath in project Json
- * @param {Function} emitEvent -    emit function for project
  * @param {Object} env -             environment variables
  * @param {string } ancestorsType - comma separated ancestor components' type
  */
 class Dispatcher extends EventEmitter {
-  constructor(projectRootDir, cwfID, cwfDir, startTime, componentPath, emitEvent, env, ancestorsType) {
+  constructor(projectRootDir, cwfID, cwfDir, startTime, componentPath, env, ancestorsType) {
     super();
     this.projectRootDir = projectRootDir;
     this.cwfID = cwfID;
     this.cwfDir = cwfDir;
     this.projectStartTime = startTime;
     this.componentPath = componentPath;
-    this.emitEvent = emitEvent;
     this.ancestorsType = ancestorsType;
     this.env = Object.assign({}, env);
 
@@ -681,7 +680,6 @@ class Dispatcher extends EventEmitter {
     task.projectStartTime = this.projectStartTime;
     task.projectRootDir = this.projectRootDir;
     task.workingDir = path.resolve(this.cwfDir, task.name);
-    task.emitEvent = this.emitEvent;
     task.emitForDispatcher = this.emit.bind(this);
 
     task.ancestorsName = replacePathsep(path.relative(task.projectRootDir, path.dirname(task.workingDir)));
@@ -703,7 +701,8 @@ class Dispatcher extends EventEmitter {
 
     this.runningTasks.push(task);
     this.dispatchedTasks.add(task);
-    this.emitEvent("taskDispatched", task);
+    const ee = eventEmitters.get(this.projectRootDir);
+    ee.emit("taskDispatched", task);
     await fs.writeJson(path.resolve(task.workingDir, componentJsonFilename), task, { spaces: 4, replacer: componentJsonReplacer });
     await this._addNextComponent(task);
   }
@@ -722,7 +721,7 @@ class Dispatcher extends EventEmitter {
     const childDir = path.resolve(this.cwfDir, component.name);
     const ancestorsType = typeof this.ancestorsType === "string" ? `${this.ancestorsType}/${component.type}` : component.type;
     const child = new Dispatcher(this.projectRootDir, component.ID, childDir, this.projectStartTime,
-      this.componentPath, this.emitEvent, Object.assign({}, this.env, component.env), ancestorsType);
+      this.componentPath, Object.assign({}, this.env, component.env), ancestorsType);
     this.children.add(child);
 
     //exception should be catched in caller
@@ -733,7 +732,8 @@ class Dispatcher extends EventEmitter {
       //if component type is not workflow, it must be copied component of PS, for, while or foreach
       //so, it is no need to emit "componentStateChanged" here.
       if (component.type === "workflow" || component.type === "stepjob") {
-        this.emitEvent("componentStateChanged");
+        const ee = eventEmitters.get(this.projectRootDir);
+        ee.emit("componentStateChanged");
       }
     } finally {
       await this._addNextComponent(component);
@@ -961,7 +961,8 @@ class Dispatcher extends EventEmitter {
           }
           fs.writeJson(path.join(templateRoot, componentJsonFilename), component, { spaces: 4, replacer: componentJsonReplacer })
             .then(()=>{
-              this.emitEvent("componentStateChanged");
+              const ee = eventEmitters.get(this.projectRootDir);
+              ee.emit("componentStateChanged");
             });
         })
         .then(()=>{
@@ -992,13 +993,12 @@ class Dispatcher extends EventEmitter {
     this.logger.debug("_viewerHandler called", component.name);
     const viewerURLRoot = path.resolve(path.dirname(__dirname), "viewer");
     await fs.ensureDir(viewerURLRoot);
-    const dir = await fs.mkdtemp(viewerURLRoot + path.sep);
-
-    const componentRoot = path.resolve(this.cwfDir, component.name);
+    const { ID } = await readComponentJson(this.projectRootDir);
+    const dir = path.join(viewerURLRoot, ID);
     const files = await Promise.all(component.files.map((e)=>{
       return getFiletype(e.dst);
     }));
-    delete component.files;
+    delete component.files; //component.files is stored in Dispatcher._getInputFiles()
     const rt = await Promise.all(
       files
         .filter((e)=>{
@@ -1012,15 +1012,34 @@ class Dispatcher extends EventEmitter {
           return false;
         })
         .map((e)=>{
-          return deliverFile(e.name, path.resolve(dir, path.relative(componentRoot, e.name)));
+          return deliverFile(e.name, path.resolve(dir, path.relative(this.projectRootDir, e.name).replace(path.sep, "_")));
         })
     );
-    this.logger.debug("send URLs", rt.map((e)=>{
-      return e.src;
-    }));
-    this.emitEvent("resultFilesReady", rt.map((e)=>{
-      return { componentID: component.ID, filename: path.relative(componentRoot, e.src), url: path.relative(viewerURLRoot, e.dst) };
-    }));
+
+    this.logger.info("result files are ready in", dir);
+    const filename = path.join(dir, filesJsonFilename);
+    let filesJson = [];
+    try {
+      filesJson = await readJsonGreedy(filename);
+    } catch (e) {
+      if (e.code !== "ENOENT") {
+        throw e;
+      }
+    }
+    rt.map((e)=>{
+      return {
+        componentID: component.ID,
+        filename: path.relative(this.projectRootDir, e.src),
+        url: path.relative(viewerURLRoot, e.dst)
+      };
+    }).forEach((e)=>{
+      if (!filesJson.includes(e)) {
+        filesJson.push(e);
+      }
+    });
+    await fs.writeJson(filename, filesJson);
+    const ee = eventEmitters.get(this.projectRootDir);
+    ee.emit("resultFilesReady", dir);
     await this._setComponentState(component, "finished");
   }
 
@@ -1132,7 +1151,8 @@ class Dispatcher extends EventEmitter {
     //write to file
     //to avoid git add when task state is changed, we do NOT use updateComponentJson(in workflowUtil) here
     await fs.writeJson(path.join(componentDir, componentJsonFilename), component, { spaces: 4, replacer: componentJsonReplacer });
-    this.emitEvent("componentStateChanged");
+    const ee = eventEmitters.get(this.projectRootDir);
+    ee.emit("componentStateChanged");
   }
 
   async _getInputFiles(component) {

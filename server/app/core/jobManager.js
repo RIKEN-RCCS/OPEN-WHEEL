@@ -14,6 +14,7 @@ const { getDateString } = require("../lib/utility");
 const { gatherFiles } = require("./execUtils");
 const { jobScheduler, jobManagerJsonFilename } = require("../db/db");
 const { createStatusFile, createBulkStatusFile } = require("./execUtils");
+const { eventEmitters } = require("./global.js");
 
 const jobManagers = new Map();
 
@@ -265,7 +266,8 @@ class JobManager extends EventEmitter {
     this.addTaskList(task);
     const rt = await this.batch.qsubAndWait(task);
     this.dropFromTaskList(task);
-    task.emitEvent(task.projetRootDir, "taskStateChanged", task);
+    const ee = eventEmitters.get(task.projectRootDir);
+    ee.emit(task.projetRootDir, "taskStateChanged", task);
     return rt;
   }
 }

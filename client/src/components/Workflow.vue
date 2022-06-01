@@ -151,6 +151,7 @@
               <v-btn
                 outlined
                 icon
+                :disabled="canRun"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('cleanProject')"
@@ -162,6 +163,20 @@
           </v-tooltip>
         </v-card>
 
+        <v-spacer />
+        <v-tooltip bottom>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              v-bind="attrs"
+              :disabled="viewerDataDir === null"
+              v-on="on"
+              @click="openViewerScreen"
+            >
+              <v-icon>mdi-image-multiple-outline</v-icon>
+            </v-btn>
+          </template>
+          <span>open viewer screen</span>
+        </v-tooltip>
         <v-spacer />
         <v-card>
           <v-tooltip bottom>
@@ -263,17 +278,25 @@
     </v-snackbar>
     <versatile-dialog
       v-model="descriptionDialog"
+      max-width="50vw"
       title="project description"
       @ok="updateDescription"
       @cancel="descriptionDialog=false"
     >
-      <template>
+      <template slot="message">
         <v-textarea
           v-model="projectDescription"
           outlined
         />
       </template>
     </versatile-dialog>
+    <versatile-dialog
+      v-model="viewerScreenDialog"
+      max-width="50vw"
+      title="open viewer screen"
+      @ok="openViewerScreen();viewerScreenDialog=false"
+      @cancel="viewerScreenDialog=false"
+    />
   </v-app>
 </template>
 
@@ -289,6 +312,7 @@
   import { readCookie } from "@/lib/utility.js";
   import Debug from "debug";
   const debug = Debug("wheel:workflow:main");
+  let viewerWindow = null;
 
   export default {
     name: "Workflow",
@@ -309,10 +333,13 @@
         pwDialogTitle: "",
         pwCallback: ()=>{},
         descriptionDialog: false,
+        viewerScreenDialog: false,
         projectDescription: "",
-        cb:null,
+        cb: null,
         unsavedFiles:[],
-        showUnsavedFilesDialog:false
+        showUnsavedFilesDialog:false,
+        viewerDataDir: null,
+        firstViewDataAlived: false,
       };
     },
     computed: {
@@ -386,8 +413,6 @@
           throw err;
         });
       SIO.onGlobal("unsavedFiles", (unsavedFiles, cb)=>{
-        console.log("unsavedFiles event recieved", unsavedFiles);
-
         if (unsavedFiles.length === 0) {
           return;
         }
@@ -395,8 +420,37 @@
         this.unsavedFiles.splice(0, this.unsavedFiles.length, ...unsavedFiles);
         this.showUnsavedFilesDialog= true;
       });
+      SIO.onGlobal("resultFilesReady", (dir)=>{
+        this.viewerDataDir=dir;
+
+        if(! this.firstViewDataAlived){
+          this.viewerScreenDialog=true;
+          this.firstViewDataAlived=true;
+        }
+        return;
+      });
     },
     methods: {
+      openViewerScreen(){
+        viewerWindow = window.open("/viewer", "viewer");
+        const form = document.createElement("form");
+        form.setAttribute("target", "viewer");
+        form.setAttribute("action", "/viewer");
+        form.setAttribute("method", "post");
+        form.style.display = "none";
+        document.body.appendChild(form);
+        const input = document.createElement("input");
+        input.setAttribute("type", "hidden");
+        input.setAttribute("name", "dir");
+        input.setAttribute("value", this.viewerDataDir);
+        form.appendChild(input);
+        const input2 = document.createElement("input");
+        input2.setAttribute("type", "hidden");
+        input2.setAttribute("name", "rootDir");
+        input2.setAttribute("value", this.projectRootDir);
+        form.appendChild(input2);
+        form.submit();
+      },
       unsavedFilesDialogClosed(...args){
         this.unsavedFiles.splice(0);
         this.cb(args);
@@ -419,6 +473,9 @@
         },
       ),
       emitProjectOperation (operation) {
+        if(operation === "cleanProject"){
+          this.firstViewDataAlived=false;
+        }
         if(operation === "stopProject" || operation === "cleanProject"){
           this.commitWaitingWorkflow(true);
         }
@@ -427,6 +484,9 @@
 
           if(operation === "stopProject" || operation === "cleanProject"){
             this.commitWaitingWorkflow(false);
+          }
+          if(operation === "cleanProject"){
+            this.viewerDataDir=null;
           }
         });
       },

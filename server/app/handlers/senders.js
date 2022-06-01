@@ -13,6 +13,7 @@ const { getComponentTree } = require("../core/componentFilesOperator");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { taskStateFilter } = require("../core/taskUtil");
+const { parentDirs } = require("../core/global.js");
 
 //read and send current workflow and its child and grandson
 async function sendWorkflow(socket, cb, projectRootDir, parentComponentDir = "") {
@@ -26,6 +27,7 @@ async function sendWorkflow(socket, cb, projectRootDir, parentComponentDir = "")
 
     if (wf) {
       socket.emit("workflow", wf);
+      parentDirs.set(projectRootDir, target);
     }
   } catch (e) {
     cb(e);
@@ -70,9 +72,14 @@ async function sendTaskStateList(socket, projectRootDir) {
     });
 }
 
+async function sendResultsFileDir(socket, dir) {
+  socket.emit("resultFilesReady", dir);
+}
+
 module.exports = {
   sendWorkflow,
   sendComponentTree,
   sendProjectJson,
-  sendTaskStateList
+  sendTaskStateList,
+  sendResultsFileDir
 };
