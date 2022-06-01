@@ -295,12 +295,15 @@
         return [activeItem, activeItemPath.join(this.pathSep)]
       },
       getComponentDirRootFiles(){
-        if (typeof this.selectedComponentAbsPath === "string") {
-          SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponentAbsPath, mode: "underComponent"}, (fileList)=>{
-            this.items = fileList
-              .filter((e)=>{return !e.isComponentDir})
-              .map(fileListModifier.bind(null, this.pathSep))
-          })
+        const cb= (fileList)=>{
+        this.items = fileList
+          .filter((e)=>{return !e.isComponentDir})
+          .map(fileListModifier.bind(null, this.pathSep))
+        }
+        if(this.selectedComponent.type === "storage"){
+          SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponent.path || "/", mode: "underComponent"}, cb)
+        } else if (typeof this.selectedComponentAbsPath === "string") {
+          SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponentAbsPath, mode: "underComponent"}, cb)
         }
       },
       noDuplicate(v){
@@ -363,8 +366,14 @@
             resolve()
           }
           const [activeItem, currentDir] = this.getActiveItem(item.id)
+
           if(item.type === "dir" || item.type === "dir-link"){
-            SIO.emitGlobal("getFileList", this.projectRootDir, {path: currentDir, mode: "underComponent"}, cb)
+            if(this.selectedComponent.type === "storage"){
+              const path = [this.selectedComponent.path || "/", currentDir.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
+              SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
+            }else{
+              SIO.emitGlobal("getFileList", this.projectRootDir, {path: currentDir, mode: "underComponent"}, cb)
+            }
           }else{
             SIO.emitGlobal("getSNDContents", this.projectRootDir, currentDir, item.name, item.type.startsWith("sndd"),cb)
           }

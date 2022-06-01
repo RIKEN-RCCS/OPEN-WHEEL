@@ -478,16 +478,13 @@
             </v-radio-group>
           </v-expansion-panel-content>
         </v-expansion-panel>
-        <v-expansion-panel
-          v-if="! isStorage"
-        >
+        <v-expansion-panel>
           <v-expansion-panel-header>Files</v-expansion-panel-header>
           <v-expanion-panel-content>
             <file-browser
               :readonly="false"
               :project-root-dir="projectRootDir"
             />
-            </v-expansion-panel-content>
           </v-expanion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
@@ -544,7 +541,7 @@
         return this.copySelectedComponent.host === "localhost";
       },
       hasHost(){
-        return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
+        return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask", "storage"].includes(this.selectedComponent.type);
       },
       hasJobScheduler(){
         return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
