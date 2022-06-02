@@ -287,6 +287,7 @@
       },
       selectedComponent(){
         this.getComponentDirRootFiles();
+        this.currentDir=this.selectedComponentAbsPath
       },
     },
     mounted () {
