@@ -5,6 +5,7 @@ const fs = require("fs-extra");
 //setup test framework
 const chai = require("chai");
 const expect = chai.expect;
+const sinon = require("sinon");
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
@@ -15,6 +16,8 @@ const { runProject } = require("../app/core/projectController");
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
+const { eventEmitters } = require("../app/core/global.js");
+eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 //helper functions
 const { createNewProject } = require("../app/core/projectFilesOperator");

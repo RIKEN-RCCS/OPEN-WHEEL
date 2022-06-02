@@ -9,16 +9,14 @@ const sinon = require("sinon");
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
-const rewire = require("rewire");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 //testee
-const Dispatcher = rewire("../app/core/dispatcher");
-const ee = new Map();
-ee.set(projectRootDir, { emit: sinon.stub() });
-Dispatcher.__set__("eventEmitters", ee);
+const Dispatcher = require("../app/core/dispatcher");
+const { eventEmitters } = require("../app/core/global.js");
+eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 
 //helper functions
