@@ -480,12 +480,12 @@
         </v-expansion-panel>
         <v-expansion-panel>
           <v-expansion-panel-header>Files</v-expansion-panel-header>
-          <v-expanion-panel-content>
+          <v-expansion-panel-content>
             <file-browser
               :readonly="false"
               :project-root-dir="projectRootDir"
             />
-          </v-expanion-panel-content>
+          </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
     </v-form>

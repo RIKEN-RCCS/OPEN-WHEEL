@@ -109,45 +109,32 @@
         </v-icon>
       </template>
     </v-treeview>
-    <v-dialog
+    <versatile-dialog
       v-model="dialog.open"
-      persistent
-      max-width="300"
+      max-width="40vw"
+      :title="dialog.title"
+      @ok="submitAndCloseDialog"
+      @cancel="clearAndCloseDialog"
     >
-      <v-card>
-        <v-card-title>
-          {{ dialog.title }}
-        </v-card-title>
-        <v-card-text>
-          <v-text-field
-            v-if="dialog.withInputField"
-            v-model="dialog.inputField"
-            autofocus
-            :label="dialog.inputFieldLabel"
-            :rules="[noDuplicate]"
-          />
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            @click="submitAndCloseDialog"
-          >
-            OK
-          </v-btn>
-          <v-btn
-            @click="clearAndCloseDialog"
-          >
-            cancel
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+      <template
+        v-if="dialog.withInputField"
+        slot="message"
+      >
+        <v-text-field
+          v-model="dialog.inputField"
+          autofocus
+          :label="dialog.inputFieldLabel"
+          :rules="[noDuplicate]"
+        />
+      </template>
+    </versatile-dialog>
   </div>
 </template>
 <script src="/siofu/client.js"></script>
 <script>
   import { mapState, mapGetters, mapMutations } from "vuex"
   import SIO from "@/lib/socketIOWrapper.js"
+  import versatileDialog from "@/components/versatileDialog.vue";
   import { removeFromArray } from "@/lib/clientUtility.js"
 
   function fileListModifier (pathsep, e) {
@@ -184,6 +171,9 @@
         const rt = _getActiveItem(item.children, key, path)
 
         if (rt) {
+          if(item.type === "snd" || item.type ==="sndd"){
+            path.pop()
+          }
           return rt
         }
         path.pop()
@@ -216,6 +206,9 @@
   }
   export default {
     name: "FileBrowser",
+    components: {
+      versatileDialog,
+    },
     props: {
       readonly: { type: Boolean, default: true },
       projectRootDir: { type: String, default: null }
@@ -309,8 +302,8 @@
       getActiveItem (key) {
         const pathArray = [this.selectedComponentAbsPath]
         const activeItem = _getActiveItem(this.items,key,pathArray);
-        const activeItemPath = pathArray[pathArray.length -1 ].includes('*') ? pathArray.slice(0,-1):pathArray
-        return [activeItem, activeItemPath.join(this.pathSep)]
+        const activeItemPath = pathArray.join(this.pathSep)
+        return [activeItem, activeItemPath]
       },
       getComponentDirRootFiles(){
         const cb= (fileList)=>{
@@ -338,11 +331,6 @@
         const [activeItem, activeItemPath] = this.getActiveItem(activeItems[0])
         this.activeItem=activeItem;
         this.currentDir=activeItemPath
-        if (activeItem.type.startsWith("file")) {
-          this.commitSelectedFile(activeItem.id)
-          const lastPathSep = activeItemPath.lastIndexOf(this.pathSep)
-          this.currentDir = activeItemPath.slice(0, lastPathSep)
-        }
       },
       onChoose(event){
         for (const file of event.files){
@@ -376,11 +364,10 @@
             resolve()
           }
           const [activeItem, currentDir] = this.getActiveItem(item.id)
-
+          const path = this.selectedComponent.type === "storage"
+            ?  [this.storagePath, currentDir.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
+            : currentDir
           if(item.type === "dir" || item.type === "dir-link"){
-            const path = this.selectedComponent.type === "storage"
-              ?  [this.storagePath, currentDir.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
-              : currentDir
               SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
           }else{
             SIO.emitGlobal("getSNDContents", this.projectRootDir, currentDir, item.name, item.type.startsWith("sndd"),cb)
