@@ -254,11 +254,17 @@
       }
     },
     computed: {
-      ...mapState(["selectedComponent", "selectedFile"]),
+      ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
       ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
+      storagePath(){
+        return this.copySelectedComponent.storagePath || "/"
+      }
     },
     watch: {
       items () {
+        if(["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
+          return;
+        }
         const scriptCandidates = this.items
           .filter((e)=>{
             return e.type.startsWith("file")
@@ -267,6 +273,17 @@
             return e.name
           })
         this.commitScriptCandidates(scriptCandidates)
+      },
+      currentComponent: {
+        // edit workflow -> server respond workflow data -> fire this event
+        handler(nv,ov){
+          if(nv.descendants.some((e)=> {
+            return e.ID === this.selectedComponent.ID
+          })){
+            this.getComponentDirRootFiles();
+          }
+        },
+        deep: true
       },
       selectedComponent(){
         this.getComponentDirRootFiles();
@@ -300,17 +317,11 @@
           .filter((e)=>{return !e.isComponentDir})
           .map(fileListModifier.bind(null, this.pathSep))
         }
-        if(this.selectedComponent.type === "storage"){
-          SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponent.path || "/", mode: "underComponent"}, cb)
-        } else if (typeof this.selectedComponentAbsPath === "string") {
-          SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponentAbsPath, mode: "underComponent"}, cb)
-        }
+        const path = this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
+        SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
       },
       noDuplicate(v){
        return ! this.items.map((e)=>{ return e.name }).includes(v)
-      },
-      createNewJobScript (event) {
-        console.log("not implemented!!")
       },
       shareFile() {
         if (!hasWebhook) {
@@ -328,8 +339,6 @@
         this.currentDir=activeItemPath
         if (activeItem.type.startsWith("file")) {
           this.commitSelectedFile(activeItem.id)
-        }
-        if (activeItem.type.startsWith("dir")) {
           const lastPathSep = activeItemPath.lastIndexOf(this.pathSep)
           this.currentDir = activeItemPath.slice(0, lastPathSep)
         }
@@ -368,12 +377,10 @@
           const [activeItem, currentDir] = this.getActiveItem(item.id)
 
           if(item.type === "dir" || item.type === "dir-link"){
-            if(this.selectedComponent.type === "storage"){
-              const path = [this.selectedComponent.path || "/", currentDir.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
+            const path = this.selectedComponent.type === "storage"
+              ?  [this.storagePath, currentDir.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
+              : currentDir
               SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
-            }else{
-              SIO.emitGlobal("getFileList", this.projectRootDir, {path: currentDir, mode: "underComponent"}, cb)
-            }
           }else{
             SIO.emitGlobal("getSNDContents", this.projectRootDir, currentDir, item.name, item.type.startsWith("sndd"),cb)
           }
