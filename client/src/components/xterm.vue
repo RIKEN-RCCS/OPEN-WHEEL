@@ -13,10 +13,10 @@
         type: Number,
         default: 0
       },
-      eventNames: {
-        type: Array,
-        default: ()=>{return [];}
-      },
+      log:{
+        type: String,
+        default: ""
+      }
     },
     data: ()=>{
       return {
@@ -33,18 +33,15 @@
       clear: function () {
         this.term.clear();
       },
+      log: function(log){
+        this.term.writeln(log);
+      }
     },
     mounted: function () {
       this.term.loadAddon(this.fitAddon);
       this.term.open(this.$el);
       window.addEventListener("resize", this.fit2);
 
-      for (const event of this.eventNames) {
-        SIO.onGlobal(event, (data)=>{
-          this.term.writeln(data);
-          this.$emit("newlog");
-        });
-      }
       const unwatch=this.$watch(()=>{
         return this.term._core._renderService.dimensions;
       },

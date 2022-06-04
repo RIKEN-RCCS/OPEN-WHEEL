@@ -10,6 +10,7 @@ const { escapeRegExp } = require("../lib/utility");
 const fileBrowser = require("../core/fileBrowser");
 const { getLogger } = require("../logSettings");
 const { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir } = require("../db/db");
+const { emitAll } = require("./commUtils.js");
 
 const oldProjectJsonFilename = "swf.prj.json";
 const noDotFiles = /^[^.].*$/;
@@ -167,12 +168,14 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
   cb(true);
 }
 
-const onUploadFileSaved = async(socket, event)=>{
+const onUploadFileSaved = async(event)=>{
   const projectRootDir = event.file.meta.projectRootDir;
   if (!event.file.success) {
     getLogger(projectRootDir).error("file upload failed", event.file.meta.name);
+    return;
   }
   const uploadDir = event.file.meta.currentDir;
+  const uploadClient = event.file.meta.clientID;
   const absFilename = await getUnusedPath(uploadDir, event.file.meta.orgName);
   await fs.move(event.file.pathName, absFilename);
   const fileSizeMB = parseInt(event.file.size / 1024 / 1024, 10);
@@ -193,8 +196,7 @@ const onUploadFileSaved = async(socket, event)=>{
     },
     withParentDir: false
   });
-
-  socket.emit("fileList", result);
+  emitAll(uploadClient, "fileList", result);
 };
 
 const onDownloadFile = async(socket, projectRootDir, target, cb)=>{

@@ -4,12 +4,27 @@
  * See License.txt in the project root for the license information.
  */
 "use strict";
+const debug = require("debug")("wheel");
 const parentDirs = new Map();
 const eventEmitters = new Map();
 const watchers = new Map();
+let sio = null;
+
+function setSio(io) {
+  if (sio !== null) {
+    debug("SocketIO instance duplicated!!");
+  }
+  sio = io;
+}
+function getSio() {
+  return sio;
+}
+
 
 module.exports = {
   parentDirs,
   eventEmitters,
-  watchers
+  watchers,
+  setSio,
+  getSio
 };

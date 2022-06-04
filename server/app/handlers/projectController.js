@@ -23,9 +23,10 @@ const { addSsh } = require("../core/sshManager.js");
 const { isValidOutputFilename } = require("../lib/utility");
 const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir } = require("./senders.js");
 const { parentDirs, eventEmitters } = require("../core/global.js");
+const { emitAll, emitWithPromise } = require("./commUtils.js");
 
 
-async function createCloudInstance(projectRootDir, hostinfo, sio) {
+async function createCloudInstance(projectRootDir, hostinfo, clientID) {
   const order = hostinfo.additionalParams || {};
   order.headOnlyParam = hostinfo.additionalParamsForHead || {};
   order.provider = hostinfo.type;
@@ -39,8 +40,8 @@ async function createCloudInstance(projectRootDir, hostinfo, sio) {
   //order.mpi = hostinfo.mpi;
   //order.compiler = hostinfo.compiler;
   order.batch = hostinfo.jobScheduler;
-  order.id = order.id || await askPassword(sio, "input access key for AWS");
-  order.pw = order.pw || await askPassword(sio, "input secret access key for AWS");
+  order.id = order.id || await askPassword(clientID, "input access key for AWS");
+  order.pw = order.pw || await askPassword(clientID, "input secret access key for AWS");
   const logger = getLogger(projectRootDir);
   order.info = logger.debug.bind(logger);
   order.debug = logger.trace.bind(logger);
@@ -75,32 +76,21 @@ async function createCloudInstance(projectRootDir, hostinfo, sio) {
 }
 
 
-async function updateProjectState(socket, projectRootDir, state) {
+async function updateProjectState(projectRootDir, state) {
   const projectJson = await setProjectState(projectRootDir, state);
   if (projectJson) {
-    socket.emit("projectState", projectJson.state);
+    await emitAll(projectRootDir, "projectState", projectJson.state);
   }
 }
 
-/**
- * promised version of socketIO.emit()
- * @param {Function} emit - socketIO's emit()
- * this function is resolved when ack is called on opposite side
- */
-async function emitWithPromise(emit, ...args) {
-  return new Promise((resolve)=>{
-    emit(...args, resolve);
-  });
-}
-
-async function askUnsavedFiles(socket, projectRootDir) {
+async function askUnsavedFiles(clientID, projectRootDir) {
   const logger = getLogger(projectRootDir);
   const unsavedFiles = await getUnsavedFiles(projectRootDir);
   const filterdUnsavedFiles = unsavedFiles.filter((e)=>{
     return !(e.name === componentJsonFilename || e.name === projectJsonFilename);
   });
   if (filterdUnsavedFiles.length > 0) {
-    const [mode, toBeSaved] = await emitWithPromise(socket.emit.bind(socket), "unsavedFiles", filterdUnsavedFiles);
+    const [mode, toBeSaved] = await emitWithPromise(emitAll.bind(null, clientID), "unsavedFiles", filterdUnsavedFiles);
     if (mode === "cancel") {
       throw (new Error("canceled by user"));
     } else if (mode === "discard") {
@@ -124,9 +114,9 @@ async function getSourceCandidates(projectRootDir, ID) {
 }
 
 //memo askSourceFilename eventのクライアント側ハンドラが無いかもしれない
-async function askSourceFilename(socket, ID, name, description, candidates) {
+async function askSourceFilename(clientID, ID, name, description, candidates) {
   return new Promise((resolve, reject)=>{
-    socket.emit("askSourceFilename", ID, name, description, candidates, (filename)=>{
+    emitAll(clientID, "askSourceFilename", ID, name, description, candidates, (filename)=>{
       if (isValidOutputFilename(filename)) {
         //ここでファイルが存在するか確認する。ファイルがアップロードされるパターンでは
         //アップロード完了を待ちたいがそんなイベントは無い気がする・・・
@@ -141,17 +131,17 @@ async function askSourceFilename(socket, ID, name, description, candidates) {
 /**
  * ask user what file to be used
  */
-async function getSourceFilename(projectRootDir, component, sio) {
+async function getSourceFilename(projectRootDir, component, clientID) {
   const filelist = await getSourceCandidates(projectRootDir, component.ID);
   getLogger(projectRootDir).trace("sourceFile: candidates=", filelist);
 
   if (filelist.length === 1) {
     return (filelist[0]);
   }
-  return askSourceFilename(sio, component.ID, component.name, component.description, filelist);
+  return askSourceFilename(clientID, component.ID, component.name, component.description, filelist);
 }
 
-async function onRunProject(socket, projectRootDir, ack) {
+async function onRunProject(clientID, projectRootDir, ack) {
   const projectState = await getProjectState(projectRootDir);
   if (projectState !== "paused") {
   //validation check
@@ -166,7 +156,7 @@ async function onRunProject(socket, projectRootDir, ack) {
 
     //interactive phase
     try {
-      await updateProjectState(socket, projectRootDir, "prepareing");
+      await updateProjectState(projectRootDir, "prepareing");
 
       //resolve source files
       const sourceComponents = await getSourceComponents(projectRootDir);
@@ -177,7 +167,7 @@ async function onRunProject(socket, projectRootDir, ack) {
           continue;
         }
         //ask to user if needed
-        const filename = await getSourceFilename(projectRootDir, component, socket);
+        const filename = await getSourceFilename(projectRootDir, component, clientID);
 
         const componentDir = await getComponentDir(projectRootDir, component.ID);
         const outputFilenames = component.outputFiles.map((e)=>{
@@ -204,9 +194,9 @@ async function onRunProject(socket, projectRootDir, ack) {
           return Promise.reject(new Error(`illegal remote host specified ${remoteHostName}`));
         }
         if (hostInfo.type === "aws") {
-          await createCloudInstance(projectRootDir, hostInfo, socket);
+          await createCloudInstance(projectRootDir, hostInfo, clientID);
         } else {
-          await createSsh(projectRootDir, remoteHostName, hostInfo, socket);
+          await createSsh(projectRootDir, remoteHostName, hostInfo, clientID);
         }
       }
     } catch (err) {
@@ -217,8 +207,7 @@ async function onRunProject(socket, projectRootDir, ack) {
       }
       removeSsh(projectRootDir);
       removeCluster(projectRootDir);
-      await updateProjectState(socket, projectRootDir, "not-started");
-      socket.emit("projectJson", await getProjectJson(projectRootDir));
+      await updateProjectState(projectRootDir, "not-started");
       ack(err);
       return false;
     }
@@ -230,22 +219,22 @@ async function onRunProject(socket, projectRootDir, ack) {
     eventEmitters.set(projectRootDir, ee);
     ee.on("componentStateChanged", ()=>{
       const parentDir = parentDirs.get(projectRootDir);
-      sendWorkflow(socket, ()=>{}, projectRootDir, parentDir);
+      sendWorkflow(()=>{}, projectRootDir, parentDir);
     });
-    ee.on("projectStateChanged", sendProjectJson.bind(null, socket, projectRootDir));
-    ee.on("taskDispatched", sendTaskStateList.bind(null, socket, projectRootDir));
-    ee.on("taskCompleted", sendTaskStateList.bind(null, socket, projectRootDir));
-    ee.on("taskStateChanged", sendTaskStateList.bind(null, socket, projectRootDir));
-    ee.on("resultFilesReady", sendResultsFileDir.bind(null, socket));
+    ee.on("projectStateChanged", sendProjectJson.bind(null, projectRootDir));
+    ee.on("taskDispatched", sendTaskStateList.bind(null, projectRootDir));
+    ee.on("taskCompleted", sendTaskStateList.bind(null, projectRootDir));
+    ee.on("taskStateChanged", sendTaskStateList.bind(null, projectRootDir));
+    ee.on("resultFilesReady", sendResultsFileDir.bind(null, projectRootDir));
 
     await runProject(projectRootDir);
   } catch (err) {
     getLogger(projectRootDir).error("fatal error occurred while parsing workflow:", err);
-    await updateProjectState(socket, projectRootDir, "failed");
+    await updateProjectState(projectRootDir, "failed");
     ack(err);
   } finally {
-    socket.emit("projectJson", await getProjectJson(projectRootDir));
-    await sendWorkflow(socket, ack, projectRootDir);
+    emitAll(projectRootDir, "projectJson", await getProjectJson(projectRootDir));
+    await sendWorkflow(ack, projectRootDir);
     eventEmitters.delete(projectRootDir);
     removeSsh(projectRootDir);
     removeCluster(projectRootDir);
@@ -253,12 +242,11 @@ async function onRunProject(socket, projectRootDir, ack) {
   return ack(true);
 }
 
-async function onPauseProject(socket, projectRootDir, ack) {
+async function onPauseProject(projectRootDir, ack) {
   try {
     await pauseProject(projectRootDir);
-    await updateProjectState(socket, projectRootDir, "paused");
-    socket.emit("projectJson", await getProjectJson(projectRootDir));
-    await sendWorkflow(socket, ack, projectRootDir);
+    await updateProjectState(projectRootDir, "paused");
+    await sendWorkflow(ack, projectRootDir);
   } catch (e) {
     ack(e);
     return;
@@ -267,12 +255,11 @@ async function onPauseProject(socket, projectRootDir, ack) {
   ack(true);
 }
 
-async function onStopProject(socket, projectRootDir, ack) {
+async function onStopProject(projectRootDir, ack) {
   try {
     await stopProject(projectRootDir);
-    await updateProjectState(socket, projectRootDir, "paused");
-    socket.emit("projectJson", await getProjectJson(projectRootDir));
-    await sendWorkflow(socket, ack, projectRootDir);
+    await updateProjectState(projectRootDir, "paused");
+    await sendWorkflow(ack, projectRootDir);
   } catch (e) {
     ack(e);
     return;
@@ -281,9 +268,9 @@ async function onStopProject(socket, projectRootDir, ack) {
   ack(true);
 }
 
-async function onCleanProject(socket, projectRootDir, ack) {
+async function onCleanProject(clientID, projectRootDir, ack) {
   try {
-    await askUnsavedFiles(socket, projectRootDir);
+    await askUnsavedFiles(clientID, projectRootDir);
   } catch (e) {
     getLogger(projectRootDir).info("clean project canceled due to", e.message);
     getLogger(projectRootDir).debug(e);
@@ -293,20 +280,22 @@ async function onCleanProject(socket, projectRootDir, ack) {
 
   try {
     await cleanProject(projectRootDir);
-    await sendWorkflow(socket, ack, projectRootDir, projectRootDir);
+    await sendWorkflow(ack, projectRootDir, projectRootDir);
   } catch (e) {
     ack(e);
   } finally {
-    await sendWorkflow(socket, ack, projectRootDir);
-    socket.emit("taskStateList", []);
-    socket.emit("projectJson", await getProjectJson(projectRootDir));
+    await Promise.all([
+      sendWorkflow(ack, projectRootDir),
+      emitAll(projectRootDir, "taskStateList", []),
+      emitAll(projectRootDir, "projectJson", await getProjectJson(projectRootDir))
+    ]);
     removeSsh(projectRootDir);
     removeCluster(projectRootDir);
   }
   getLogger(projectRootDir).debug("clean project done");
   ack(true);
 }
-async function onSaveProject(socket, projectRootDir, cb) {
+async function onSaveProject(projectRootDir, cb) {
   const projectState = await getProjectState(projectRootDir);
   if (projectState === "not-started") {
     await setProjectState(projectRootDir, "not-started", true);
@@ -319,27 +308,27 @@ async function onSaveProject(socket, projectRootDir, cb) {
   const projectJson = await getProjectJson(projectRootDir);
   return cb(projectJson);
 }
-async function onRevertProject(socket, projectRootDir, cb) {
-  await askUnsavedFiles(socket, projectRootDir);
+async function onRevertProject(clientID, projectRootDir, cb) {
+  await askUnsavedFiles(clientID, projectRootDir);
   await gitResetHEAD(projectRootDir);
-  await sendWorkflow(socket, cb, projectRootDir);
+  await sendWorkflow(cb, projectRootDir);
   getLogger(projectRootDir).debug("revert project done");
   const projectJson = await getProjectJson(projectRootDir);
   cb(projectJson);
 }
 
-async function onGetProjectJson(socket, projectRootDir, cb) {
+async function onGetProjectJson(projectRootDir, cb) {
   try {
     const projectJson = await getProjectJson(projectRootDir);
-    socket.emit("projectJson", projectJson);
+    emitAll(projectRootDir, "projectJson", projectJson);
   } catch (e) {
     return cb(false);
   }
   return cb(true);
 }
-async function onGetWorkflow(socket, projectRootDir, componentID, cb) {
+async function onGetWorkflow(clientID, projectRootDir, componentID, cb) {
   const requestedComponentDir = await getComponentDir(projectRootDir, componentID);
-  return sendWorkflow(socket, cb, projectRootDir, requestedComponentDir);
+  return sendWorkflow(cb, projectRootDir, requestedComponentDir, clientID);
 }
 
 async function onUpdateProjectDescription(projectRootDir, description, cb) {

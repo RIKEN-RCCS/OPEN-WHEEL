@@ -7,17 +7,20 @@
 const path = require("path");
 const { getLogger } = require("../logSettings");
 const { openFile, saveFile } = require("../core/fileUtils.js");
+const { emitAll } = require("./commUtils.js");
 
-const onOpenFile = async(socket, projectRootDir, filename, forceNormal, cb)=>{
+const onOpenFile = async(clientID, projectRootDir, filename, forceNormal, cb)=>{
   try {
     const files = await openFile(projectRootDir, filename, forceNormal);
+    const promise = [];
     for (const file of files) {
       if (file.isParameterSettingFile) {
-        socket.emit("parameterSettingFile", file);
+        promise.push(emitAll(clientID, "parameterSettingFile", file));
       } else {
-        socket.emit("file", file);
+        promise.push(emitAll(clientID, "file", file));
       }
     }
+    await Promise.all(promise);
   } catch (err) {
     getLogger(projectRootDir).warn(projectRootDir, "openFile event failed", err);
     return cb(err);

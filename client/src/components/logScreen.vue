@@ -36,8 +36,7 @@
       >
         <xterm
           :clear="item.clear"
-          :event-names="item.eventNames"
-          @newlog="newlog(item)"
+          :log="item.log"
         />
       </v-tab-item>
     </v-tabs-items>
@@ -58,11 +57,11 @@
       return {
         currentTab: 0,
         items: [
-          { label: "info", id: "info",          clear: 0, unread: false, eventNames: ["logINFO", "logWARN", "logERR"] },
-          { label: "stdout", id: "stdout",      clear: 0, unread: false, eventNames: ["logStdout"] },
-          { label: "stderr", id: "stderr",      clear: 0, unread: false, eventNames: ["logStderr"] },
-          { label: "stdout(SSH)", id: "sshout", clear: 0, unread: false, eventNames: ["logSSHout"] },
-          { label: "stderr(SSH)", id: "ssherr", clear: 0, unread: false, eventNames: ["logSSHerr"] },
+          { label: "info", id: "info",          clear: 0, log: "",unread: false, eventNames: ["logINFO", "logWARN", "logERR"] },
+          { label: "stdout", id: "stdout",      clear: 0, log: "", unread: false, eventNames: ["logStdout"] },
+          { label: "stderr", id: "stderr",      clear: 0, log: "", unread: false, eventNames: ["logStderr"] },
+          { label: "stdout(SSH)", id: "sshout", clear: 0, log: "", unread: false, eventNames: ["logSSHout"] },
+          { label: "stderr(SSH)", id: "ssherr", clear: 0, log: "", unread: false, eventNames: ["logSSHerr"] },
         ],
       };
     },
@@ -75,6 +74,16 @@
       }
     },
     methods: {
+      getItemByEventName(eventName){
+        return this.items.find((item)=>{
+          return item.eventNames.some((e)=>{return e=== eventName;});
+        });
+      },
+      logRecieved(eventName, data){
+        const item=this.getItemByEventName(eventName);
+        this.newlog(item);
+        item.log=data;
+      },
       newlog: function(item){
         item.unread = item.id !== this.items[this.currentTab].id;
       },
@@ -83,7 +92,7 @@
       },
       clearAllLog: function () {
         // $refsでxtermコンポーネントのclear()を呼び出す方法を使うと
-        // Vue2 -> Vue3の移行時に作業量が増えるため、workaroundとしてclear propに変更があったり
+        // Vue2 -> Vue3の移行時に作業量が増えるため、workaroundとしてclear propに変更があったら
         // xtermコンポーネントでclearを実行するようにしている。
         for (const item of this.items) {
           item.unread=false;

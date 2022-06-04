@@ -9,6 +9,7 @@ const { promisify } = require("util");
 const log4js = require("log4js");
 const logger = log4js.getLogger();
 const { logFilename, numLogFiles, maxLogSize, compressLogFile } = require("./db/db");
+const { emitAll } = require("./handlers/commUtils.js");
 
 function getLoglevel(ignoreEnv = false) {
   const wheelLoglevel = process.env.WHEEL_LOGLEVEL;
@@ -34,15 +35,11 @@ const eventNameTable = {
 function socketIOAppender(layout, timezoneOffset, argEventName) {
   return (loggingEvent)=>{
     const eventName = argEventName || eventNameTable[loggingEvent.level.levelStr];
-    const socket = loggingEvent.context.socket;
-    if (!socket) {
-      console.log("context.socket is not set. something go wrong"); //eslint-disable-line no-console
-      return;
-    }
     const projectRootDir = loggingEvent.context.projectRootDir;
 
-    if (eventName && projectRootDir) {
-      socket.to(projectRootDir).emit(eventName, layout(loggingEvent, timezoneOffset));
+    if (eventName) {
+      //emitAll is async function but we did not wait here
+      emitAll(projectRootDir, eventName, layout(loggingEvent, timezoneOffset));
     }
   };
 }

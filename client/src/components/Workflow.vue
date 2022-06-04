@@ -235,6 +235,7 @@
         >
           <log-screen 
             v-show="showLogScreen"
+            ref="logscreen"
             :show="showLogScreen"
           />
         </v-col>
@@ -429,6 +430,13 @@
         }
         return;
       });
+
+      // call back for log-screen
+      for (const event of ["logINFO", "logWARN", "logERR", "logStdout", "logStderr", "logSSHout", "logSSHerr"]) {
+        SIO.onGlobal(event, (data)=>{
+          this.$refs.logscreen.logRecieved(event, data);
+        });
+      }
     },
     methods: {
       openViewerScreen(){

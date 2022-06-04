@@ -9,18 +9,19 @@ const fs = require("fs");
 const { filesJsonFilename } = require("../db/db");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { watchers } = require("../core/global.js");
+const { emitAll } = require("./commUtils.js");
 
-const onGetResultFiles = async(socket, projectRootDir, dir, cb)=>{
+const onGetResultFiles = async(clientID, projectRootDir, dir, cb)=>{
   try {
     const filename = path.resolve(dir, filesJsonFilename);
     const fileJson = await readJsonGreedy(filename);
-    socket.emit("resultFiles", fileJson);
+    emitAll(clientID, "resultFiles", fileJson);
     const watcher = fs.watch(filename, { persistent: false, signal: "TERM" }, async(event)=>{
       if (event !== "change") {
         return;
       }
       const fileJson2 = await readJsonGreedy(filename);
-      socket.emit("resultFiles", fileJson2);
+      emitAll(clientID, "resultFiles", fileJson2);
     });
     watchers.set(projectRootDir, watcher);
   } catch (e) {

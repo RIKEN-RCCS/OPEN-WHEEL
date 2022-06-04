@@ -73,10 +73,6 @@
         }else{
           isChanged = await taskStateList2Tree(taskStateList, this.taskStateTree);
         }
-        console.log(isChanged);
-        console.log(this.firstTime);
-        console.log(this.taskStateTree);
-
         if(this.$refs.tree && (this.firstTime || isChanged)){
           this.firstTime=false;
           this.$refs.tree.updateAll(true);

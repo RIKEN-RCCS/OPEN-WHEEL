@@ -331,6 +331,8 @@
         const [activeItem, activeItemPath] = this.getActiveItem(activeItems[0])
         this.activeItem=activeItem;
         this.currentDir=activeItemPath
+        const fullPath = `${this.currentDir}${this.pathSep}${this.activeItem.name}`
+        this.commitSelectedFile(fullPath);
       },
       onChoose(event){
         for (const file of event.files){
@@ -338,6 +340,7 @@
           file.meta.orgName=file.name
           file.meta.projectRootDir=this.projectRootDir
           file.meta.componentDir=this.selectedComponentAbsPath
+          file.meta.clientID=SIO.getID()
         }
         this.uploading=true;
       },

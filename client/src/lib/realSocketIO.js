@@ -52,6 +52,9 @@ const removeUploaderEvent= (event, callback)=>{
   initIfNeeded();
   uploader.removeEventListener(event, callback);
 };
+const getID=()=>{
+  return socket !== null ? socket.id : null;
+};
 
 export default {
   init,
@@ -63,5 +66,6 @@ export default {
   listenOnDrop,
   prompt,
   onUploaderEvent,
-  removeUploaderEvent
+  removeUploaderEvent,
+  getID
 };

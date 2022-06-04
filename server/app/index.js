@@ -15,6 +15,7 @@ const { port, keyFilename, certFilename, projectList } = require("./db/db");
 const { setProjectState, checkRunningJobs } = require("./core/projectFilesOperator");
 const { getLogger } = require("./logSettings");
 const { registerHandlers } = require("./handlers/registerHandlers");
+const { setSio } = require("./core/global.js");
 
 /*
  * read SSL related files
@@ -29,6 +30,7 @@ const app = express();
 const opt = { key, cert };
 const server = require("https").createServer(opt, app);
 const sio = require("socket.io")(server);
+setSio(sio);
 
 //setup logger
 const logger = getLogger();
@@ -48,7 +50,6 @@ app.use(Siofu.router);
 
 //global socket IO handler
 sio.on("connection", (socket)=>{
-  logger.addContext("socket", socket);
   const projectRootDir = socket.handshake.auth.projectRootDir;
   if (typeof projectRootDir === "string") {
     socket.join(projectRootDir);

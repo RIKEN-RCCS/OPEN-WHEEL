@@ -40,43 +40,43 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //read information
   //
-  socket.on("getComponentTree", sendComponentTree.bind(null, socket));
-  socket.on("getTaskStateList", sendTaskStateList.bind(null, socket));
+  socket.on("getComponentTree", sendComponentTree);
+  socket.on("getTaskStateList", sendTaskStateList);
 
 
   //
   //projectController
   //
-  socket.on("runProject", onRunProject.bind(null, socket));
-  socket.on("pauseProject", onPauseProject.bind(null, socket));
-  socket.on("stopProject", onStopProject.bind(null, socket));
-  socket.on("cleanProject", onCleanProject.bind(null, socket));
-  socket.on("saveProject", onSaveProject.bind(null, socket));
-  socket.on("revertProject", onRevertProject.bind(null, socket));
+  socket.on("runProject", onRunProject.bind(null, socket.id));
+  socket.on("pauseProject", onPauseProject);
+  socket.on("stopProject", onStopProject);
+  socket.on("cleanProject", onCleanProject.bind(null, socket.id));
+  socket.on("saveProject", onSaveProject);
+  socket.on("revertProject", onRevertProject.bind(null, socket.id));
 
   //
   //workflow editor
   //
   //create
-  socket.on("createNode", onCreateNode.bind(null, socket));
-  socket.on("addInputFile", onAddInputFile.bind(null, socket));
-  socket.on("addOutputFile", onAddOutputFile.bind(null, socket));
-  socket.on("addLink", onAddLink.bind(null, socket));
-  socket.on("addFileLink", onAddFileLink.bind(null, socket));
+  socket.on("createNode", onCreateNode);
+  socket.on("addInputFile", onAddInputFile);
+  socket.on("addOutputFile", onAddOutputFile);
+  socket.on("addLink", onAddLink);
+  socket.on("addFileLink", onAddFileLink);
   //read
-  socket.on("getEnv", onGetEnv.bind(null, socket));
+  socket.on("getEnv", onGetEnv);
   //update
-  socket.on("renameInputFile", onRenameInputFile.bind(null, socket));
-  socket.on("renameOutputFile", onRenameOutputFile.bind(null, socket));
-  socket.on("updateNode", onUpdateNode.bind(null, socket));
-  socket.on("updateEnv", onUpdateEnv.bind(null, socket));
-  socket.on("updateStepNumber", onUpdateStepNumber.bind(null, socket));
+  socket.on("renameInputFile", onRenameInputFile);
+  socket.on("renameOutputFile", onRenameOutputFile);
+  socket.on("updateNode", onUpdateNode);
+  socket.on("updateEnv", onUpdateEnv);
+  socket.on("updateStepNumber", onUpdateStepNumber);
   //delete
-  socket.on("removeNode", onRemoveNode.bind(null, socket));
-  socket.on("removeInputFile", onRemoveInputFile.bind(null, socket));
-  socket.on("removeOutputFile", onRemoveOutputFile.bind(null, socket));
-  socket.on("removeLink", onRemoveLink.bind(null, socket));
-  socket.on("removeFileLink", onRemoveFileLink.bind(null, socket));
+  socket.on("removeNode", onRemoveNode);
+  socket.on("removeInputFile", onRemoveInputFile);
+  socket.on("removeOutputFile", onRemoveOutputFile);
+  socket.on("removeLink", onRemoveLink);
+  socket.on("removeFileLink", onRemoveFileLink);
 
   //
   //filemanager
@@ -88,7 +88,7 @@ const registerHandlers = (socket, Siofu)=>{
     const projectRootDir = event.file.meta.projectRootDir;
     getLogger(projectRootDir).debug("upload request recieved", event.file.name);
   });
-  uploader.on("saved", onUploadFileSaved.bind(null, socket));
+  uploader.on("saved", onUploadFileSaved);
   uploader.on("error", (event)=>{
     const projectRootDir = event.file.meta.projectRootDir;
     getLogger(projectRootDir).error("file upload failed", event.file, event.error);
@@ -108,7 +108,7 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //update
   socket.on("saveFile", onSaveFile);
-  socket.on("openFile", onOpenFile.bind(null, socket));
+  socket.on("openFile", onOpenFile.bind(null, socket.id));
 
   //
   //projectList
@@ -127,8 +127,8 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //projectFiles
   //read
-  socket.on("getProjectJson", onGetProjectJson.bind(null, socket));
-  socket.on("getWorkflow", onGetWorkflow.bind(null, socket));
+  socket.on("getProjectJson", onGetProjectJson);
+  socket.on("getWorkflow", onGetWorkflow.bind(null, socket.id));
   //update
   socket.on("updateProjectDescription", onUpdateProjectDescription);
 
@@ -167,7 +167,7 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //result files (read only)
   //
-  socket.on("getResultFiles", onGetResultFiles.bind(null, socket));
+  socket.on("getResultFiles", onGetResultFiles.bind(null, socket.id));
 
   //auxiliary
   socket.on("tryToConnect", onTryToConnect);
