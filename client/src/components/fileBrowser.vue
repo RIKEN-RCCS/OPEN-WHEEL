@@ -78,7 +78,7 @@
             <v-icon
               v-bind="attrs"
               v-on="on"
-              @click="shareFile"
+              @click="openDialog('shareFile')"
             >
               mdi-share-outline
             </v-icon>
@@ -117,15 +117,42 @@
       @cancel="clearAndCloseDialog"
     >
       <template
-        v-if="dialog.withInputField"
+        v-if="['createNewDir','createNewFile','renameFile'].includes(dialog.submitEvent)"
         slot="message"
       >
         <v-text-field
           v-model="dialog.inputField"
-          autofocus
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
         />
+      </template>
+      <template
+        v-if="dialog.submitEvent === 'shareFile'"
+        slot="message"
+      >
+        <v-text-field
+          v-model="dialog.inputField"
+          readonly
+          :label="dialog.inputFieldLabel"
+          :rules="[noDuplicate]"
+        >
+          <template #append-outer>
+            <v-tooltip
+              bottom
+            >
+              <template #activator="{ on }">
+                <v-icon
+                  ref="icon"
+                  @click="copyToClipboard"
+                  v-on="on"
+                >
+                  mdi-content-copy
+                </v-icon>
+              </template>
+              copy file path
+            </v-tooltip>
+          </template>
+        </v-text-field>
       </template>
     </versatile-dialog>
   </div>
@@ -193,6 +220,7 @@
       createNewFile: "create new File",
       removeFile: `are you sure you want to delete ${itemName} ?`,
       renameFile: `rename ${itemName}`,
+      shareFile:  `copy file path ${itemName}`,
     }
     return titles[event]
   }
@@ -201,6 +229,7 @@
       createNewDir: "new directory name",
       createNewFile: "new file name",
       renameFile: "new name",
+      shareFile: "share file",
     }
     return labels[event]
   }
@@ -299,6 +328,10 @@
       SIO.removeUploaderEvent("progress", this.updateProgressBar)
     },
     methods: {
+      copyToClipboard(){
+        console.log("DEBUG:",this.dialog.inputField);
+        this.$copyText(this.dialog.inputField, this.$refs.icon.$el)
+      },
       getActiveItem (key) {
         const pathArray = [this.selectedComponentAbsPath]
         const activeItem = _getActiveItem(this.items,key,pathArray);
@@ -316,12 +349,6 @@
       },
       noDuplicate(v){
        return ! this.items.map((e)=>{ return e.name }).includes(v)
-      },
-      shareFile() {
-        if (!hasWebhook) {
-          // store経由でwebhookのコンフィグダイアログを表示する
-        }
-        // 実際にwebhookを呼び出す処理
       },
       updateSelected(activeItems){
         if(!activeItems[0]){
@@ -379,7 +406,6 @@
       },
       clearAndCloseDialog () {
         this.dialog.title = ""
-        this.dialog.withInputField = true
         this.dialog.inputFieldLabel = ""
         this.dialog.inputField = ""
         this.dialog.open = false
@@ -433,7 +459,7 @@
         this.clearAndCloseDialog()
       },
       openDialog (event) {
-        if (event === "removeFile" || event === "renameFile") {
+        if (event === "removeFile" || event === "renameFile" || event === "shareFile") {
           if (!this.activeItem) {
             console.log("remove or rename without active item is not allowed")
             return
@@ -443,10 +469,10 @@
             return
           }
         }
-
-        if (event === "removeFile") {
-          this.dialog.withInputField = false
+        if(event === "shareFile"){
+          this.dialog.inputField=`${this.currentDir}${this.pathSep}${this.activeItem.name}`
         }
+
         this.dialog.title = getTitle(event, this.activeItem ? this.activeItem.name : null)
         this.dialog.inputFieldLabel = getLabel(event)
         this.dialog.submitEvent = event
