@@ -482,9 +482,15 @@
           <v-expansion-panel-header>Files</v-expansion-panel-header>
           <v-expansion-panel-content>
             <file-browser
+              v-if="! isRemoteComponent"
               :readonly="false"
               :project-root-dir="projectRootDir"
             />
+            <v-btn
+              v-if="isRemoteComponent"
+            >
+              browse files on remotehost
+            </v-btn>
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
@@ -533,7 +539,7 @@
     },
     computed: {
       ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler"]),
-      ...mapGetters(["selectedComponentAbsPath"]),
+      ...mapGetters(["selectedComponentAbsPath", "isRemoteComponent"]),
       disableRemoteSetting () {
         if(this.isStepjobTask){
           return false;
@@ -639,8 +645,8 @@
         }
         this.commitSelectedComponent(null);
       },
-      selectedComponent () {
-        if (this.selectedComponent === null) {
+      selectedComponent (nv, ov) {
+        if (this.selectedComponent === null || ( nv !== null && ov !== null && nv.ID === ov.ID)) {
           return;
         }
         this.reopening = true;

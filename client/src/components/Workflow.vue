@@ -387,6 +387,15 @@
           this.commitSelectedComponent(null);
         }
         this.commitCurrentComponent(wf);
+
+        if(this.selectedComponent){
+          const update = wf.descendants.find((e)=>{
+            return e.ID === this.selectedComponent.ID;
+          });
+          if(update){
+            this.commitSelectedComponent(update);
+          }
+        }
         this.commitWaitingWorkflow(false);
       });
 

@@ -128,6 +128,11 @@ export default new Vuex.Store({
     },
   },
   getters: {
+    isRemoteComponent:(state,getters)=>{
+      return state.selectedComponent.type === "storage"
+                           && typeof state.selectedComponent.host === "string"
+                           && state.selectedComponent.host !== "localhost";
+    },
     // get selected component's absolute path on server
     selectedComponentAbsPath: (state, getters)=>{
       if (state.selectedComponent === null || typeof state.selectedComponent.ID === "undefined") {

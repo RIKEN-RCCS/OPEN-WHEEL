@@ -78,6 +78,20 @@
             <v-icon
               v-bind="attrs"
               v-on="on"
+              @click="download"
+            >
+              mdi-download
+            </v-icon>
+          </v-btn>
+        </template>
+        download
+      </v-tooltip>
+      <v-tooltip top>
+        <template #activator="{ on, attrs }">
+          <v-btn>
+            <v-icon
+              v-bind="attrs"
+              v-on="on"
               @click="openDialog('shareFile')"
             >
               mdi-share-outline
@@ -113,6 +127,7 @@
       v-model="dialog.open"
       max-width="40vw"
       :title="dialog.title"
+      :message="dialog.message"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
     >
@@ -153,6 +168,23 @@
             </v-tooltip>
           </template>
         </v-text-field>
+      </template>
+    </versatile-dialog>
+    <versatile-dialog
+      v-model="downloadDialog"
+      title="download content ready"
+      max-width="30vw"
+      :buttons="downloadDialogButton"
+      @close="downloadDialog=false;downloadURL=null"
+    >
+      <template
+        slot="message"
+      >
+        <v-row>
+          <v-btn class="mx-auto mt-10 mb-6">
+            <a :href="downloadURL">download</a>
+          </v-btn>
+        </v-row>
       </template>
     </versatile-dialog>
   </div>
@@ -229,7 +261,7 @@
       createNewDir: "new directory name",
       createNewFile: "new file name",
       renameFile: "new name",
-      shareFile: "share file",
+      shareFile: "file path",
     }
     return labels[event]
   }
@@ -273,11 +305,16 @@
           inputField: "",
           submitArgs: [],
         },
+        downloadDialogButton:[
+          {icon: "mdi-close", label: "close"}
+        ],
+        downloadURL:null,
+        downloadDialog:false
       }
     },
     computed: {
       ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
-      ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
+      ...mapGetters(["selectedComponentAbsPath", "pathSep", "isRemoteComponent"]),
       storagePath(){
         return this.copySelectedComponent.storagePath || "/"
       }
@@ -329,7 +366,6 @@
     },
     methods: {
       copyToClipboard(){
-        console.log("DEBUG:",this.dialog.inputField);
         this.$copyText(this.dialog.inputField, this.$refs.icon.$el)
       },
       getActiveItem (key) {
@@ -458,8 +494,18 @@
         }
         this.clearAndCloseDialog()
       },
+      closeDownloadDialog(){
+        this.downloadURL=null
+        this.downloadDialog=false
+      },
+      download(){
+        SIO.emitGlobal('download', this.projectRootDir, this.activeItem.id, this.isRemoteComponent, (url)=>{
+          this.downloadURL=url
+          this.downloadDialog=true
+        });
+      },
       openDialog (event) {
-        if (event === "removeFile" || event === "renameFile" || event === "shareFile") {
+        if (["removeFile", "renameFile", "shareFile"].includes(event)) {
           if (!this.activeItem) {
             console.log("remove or rename without active item is not allowed")
             return
@@ -470,7 +516,7 @@
           }
         }
         if(event === "shareFile"){
-          this.dialog.inputField=`${this.currentDir}${this.pathSep}${this.activeItem.name}`
+          this.dialog.inputField=this.activeItem.id
         }
 
         this.dialog.title = getTitle(event, this.activeItem ? this.activeItem.name : null)

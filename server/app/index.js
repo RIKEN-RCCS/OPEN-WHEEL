@@ -43,8 +43,9 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
 app.use(express.static(path.resolve(__dirname, "public"), { index: false }));
+app.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
+app.use(express.static(path.resolve(__dirname, "download"), { index: false }));
 
 app.use(Siofu.router);
 

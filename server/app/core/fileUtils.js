@@ -13,7 +13,6 @@ const { gitAdd } = require("./gitOperator2");
 const { projectJsonFilename } = require("../db/db");
 const { getSsh } = require("./sshManager.js");
 
-
 /**
  * read Json file until get some valid JSON data
  * @param {string} filename - filename to be read
@@ -253,7 +252,6 @@ async function getUnusedPath(parent, name) {
   }
   return path.resolve(parent, `${name}.${suffix}`);
 }
-
 
 module.exports = {
   readJsonGreedy,

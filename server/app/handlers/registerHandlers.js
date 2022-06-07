@@ -5,7 +5,7 @@
  */
 "use strict";
 const os = require("os");
-const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onRemoveFile, onUploadFileSaved } = require("./fileManager.js");
+const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onRemoveFile, onUploadFileSaved, onDownload } = require("./fileManager.js");
 const { onTryToConnect, onTryToConnectById } = require("./tryToConnect.js");
 const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./projectList.js");
 const { onGetProjectJson, onGetWorkflow, onRunProject, onPauseProject, onStopProject, onCleanProject, onSaveProject, onRevertProject, onUpdateProjectDescription } = require("./projectController.js");
@@ -99,6 +99,7 @@ const registerHandlers = (socket, Siofu)=>{
   //read
   socket.on("getFileList", onGetFileList);
   socket.on("getSNDContents", onGetSNDContents);
+  socket.on("download", onDownload);
   //update
   socket.on("renameFile", onRenameFile);
   //delete

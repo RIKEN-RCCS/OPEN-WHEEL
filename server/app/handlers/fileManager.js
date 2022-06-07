@@ -3,14 +3,16 @@ const path = require("path");
 const fs = require("fs-extra");
 const minimatch = require("minimatch");
 const klaw = require("klaw");
+const { zip } = require("zip-a-folder");
 const { gitAdd, gitRm, gitLFSTrack, gitLFSUntrack, isLFS } = require("../core/gitOperator2");
 const { convertPathSep } = require("../core/pathUtils");
-const { getUnusedPath } = require("../core/fileUtils.js");
+const { getUnusedPath, deliverFile } = require("../core/fileUtils.js");
 const { escapeRegExp } = require("../lib/utility");
 const fileBrowser = require("../core/fileBrowser");
 const { getLogger } = require("../logSettings");
 const { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir } = require("../db/db");
 const { emitAll } = require("./commUtils.js");
+const { createTempd } = require("../core/createTempd.js");
 
 const oldProjectJsonFilename = "swf.prj.json";
 const noDotFiles = /^[^.].*$/;
@@ -199,9 +201,18 @@ const onUploadFileSaved = async(event)=>{
   emitAll(uploadClient, "fileList", result);
 };
 
-const onDownloadFile = async(socket, projectRootDir, target, cb)=>{
-  getLogger(projectRootDir).debug("Download API is not implemented for now", socket, target);
-  cb();
+const onDownload = async(projectRootDir, target, isRemote, cb)=>{
+  const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
+  const tmpDir = await fs.mkdtemp(`${dir}/`);
+  const stats = await fs.stat(target);
+  if (stats.isDirectory()) {
+    zip(target, `${path.join(tmpDir, path.basename(target))}.zip`);
+  } else {
+    await deliverFile(target, `${tmpDir}/${path.basename(target)}`);
+  }
+  const url = `/${path.join(path.relative(downloadRootDir, tmpDir), path.basename(target))}${stats.isDirectory() ? ".zip" : ""}`;
+  getLogger(projectRootDir).debug("Download url is ready", url);
+  cb(url);
 };
 
 
@@ -213,5 +224,5 @@ module.exports = {
   onRemoveFile,
   onRenameFile,
   onUploadFileSaved,
-  onDownloadFile
+  onDownload
 };

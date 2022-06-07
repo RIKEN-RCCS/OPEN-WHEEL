@@ -19,12 +19,13 @@ const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
-const { componentJsonReplacer, getComponent, getChildren, isLocal, isSameRemoteHost, readComponentJson } = require("./componentFilesOperator");
+const { componentJsonReplacer, getComponent, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
 const { evalCondition, getRemoteWorkingDir } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
 const { eventEmitters } = require("./global.js");
+const { createTempd } = require("../core/createTempd.js");
 
 
 const viewerSupportedTypes = ["png", "jpg", "gif", "bmp"];
@@ -991,10 +992,7 @@ class Dispatcher extends EventEmitter {
 
   async _viewerHandler(component) {
     this.logger.debug("_viewerHandler called", component.name);
-    const viewerURLRoot = path.resolve(path.dirname(__dirname), "viewer");
-    await fs.ensureDir(viewerURLRoot);
-    const { ID } = await readComponentJson(this.projectRootDir);
-    const dir = path.join(viewerURLRoot, ID);
+    const { dir, root: viewerURLRoot } = await createTempd(this.projectRootDir, "viewer");
     const files = await Promise.all(component.files.map((e)=>{
       return getFiletype(e.dst);
     }));
