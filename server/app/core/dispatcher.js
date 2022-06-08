@@ -10,6 +10,7 @@ const { promisify } = require("util");
 const { EventEmitter } = require("events");
 const glob = require("glob");
 const FileType = require("file-type");
+const isSvg = require("is-svg");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
 const { remoteHost, componentJsonFilename, filesJsonFilename } = require("../db/db");
@@ -28,18 +29,26 @@ const { eventEmitters } = require("./global.js");
 const { createTempd } = require("../core/tempd.js");
 
 
-const viewerSupportedTypes = ["png", "jpg", "gif", "bmp"];
+const viewerSupportedTypes = ["apng", "avif", "gif", "jpg", "png", "webp", "tif", "bmp", "svg"];
 
 const taskDB = new Map();
 
 async function getFiletype(filename) {
   let rt;
-  try {
-    rt = await FileType.fromFile(filename);
-  } catch (e) {
+  const buffer = await fs.readFile(filename);
+  if (isSvg(buffer.toString())) {
+    rt = {
+      ext: "svg",
+      mime: "image/svg+xml"
+    };
+  } else {
+    try {
+      rt = await FileType.fromBuffer(buffer);
+    } catch (e) {
     //eslint-disable-next-line valid-typeof
-    if (typeof (e) === "EndOfStreamError") {
-      return rt;
+      if (typeof (e) === "EndOfStreamError") {
+        return rt;
+      }
     }
   }
   if (rt) {
