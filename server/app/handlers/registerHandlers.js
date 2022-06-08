@@ -5,7 +5,7 @@
  */
 "use strict";
 const os = require("os");
-const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onRemoveFile, onUploadFileSaved, onDownload } = require("./fileManager.js");
+const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } = require("./fileManager.js");
 const { onTryToConnect, onTryToConnectById } = require("./tryToConnect.js");
 const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./projectList.js");
 const { onGetProjectJson, onGetWorkflow, onRunProject, onPauseProject, onStopProject, onCleanProject, onSaveProject, onRevertProject, onUpdateProjectDescription } = require("./projectController.js");
@@ -105,6 +105,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("renameFile", onRenameFile);
   //delete
   socket.on("removeFile", onRemoveFile);
+  socket.on("removeDownloadFile", onRemoveDownloadFile);
   //
   //rapid (to be merged with filemanager handlers)
   //

@@ -175,7 +175,7 @@
       title="download content ready"
       max-width="30vw"
       :buttons="downloadDialogButton"
-      @close="downloadDialog=false;downloadURL=null"
+      @close="closeDownloadDialog"
     >
       <template
         slot="message"
@@ -314,7 +314,7 @@
     },
     computed: {
       ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
-      ...mapGetters(["selectedComponentAbsPath", "pathSep", "isRemoteComponent"]),
+      ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
       storagePath(){
         return this.copySelectedComponent.storagePath || "/"
       }
@@ -417,6 +417,7 @@
       ...mapMutations({
         commitScriptCandidates: "scriptCandidates",
         commitSelectedFile: "selectedFile",
+        commitWaitingDownload: "waitingDownload"
       }),
       getChildren (item) {
         return new Promise((resolve, reject)=>{
@@ -495,13 +496,17 @@
         this.clearAndCloseDialog()
       },
       closeDownloadDialog(){
-        this.downloadURL=null
-        this.downloadDialog=false
+        SIO.emitGlobal("removeDownloadFile", this.projectRootDir, this.downloadURL, ()=>{
+          this.downloadURL=null
+          this.downloadDialog=false
+        });
       },
       download(){
-        SIO.emitGlobal('download', this.projectRootDir, this.activeItem.id, this.isRemoteComponent, (url)=>{
+        this.commitWaitingDownload(true);
+        SIO.emitGlobal('download', this.projectRootDir, this.activeItem.id, (url)=>{
           this.downloadURL=url
           this.downloadDialog=true
+          this.commitWaitingDownload(false);
         });
       },
       openDialog (event) {

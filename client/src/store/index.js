@@ -42,6 +42,7 @@ const mutationFactory = (types)=>{
  * @property { Boolean } waitingFile - flag for loading file data for rapid
  * @property { Boolean } waitingSave - flag for waiting save (=commit)
  * @property { Boolean } waitingEnv  - flag for loading environment variable data
+ * @property { Boolean } waitingDownload  - flag for prepareing download file
  * @property { number } canvasWidth - width of canvas in component graph
  * @property { number } canvasHeight - width of canvas in component graph
  * @property { string[] } scriptCandidates - filenames directly under selected component directory
@@ -69,6 +70,7 @@ const state = {
   waitingFile: false,
   waitingSave: false,
   waitingEnv: false,
+  waitingDownload: false,
   canvasWidth: null,
   canvasHeight: null,
   scriptCandidates: [],
@@ -128,11 +130,6 @@ export default new Vuex.Store({
     },
   },
   getters: {
-    isRemoteComponent:(state,getters)=>{
-      return state.selectedComponent.type === "storage"
-                           && typeof state.selectedComponent.host === "string"
-                           && state.selectedComponent.host !== "localhost";
-    },
     // get selected component's absolute path on server
     selectedComponentAbsPath: (state, getters)=>{
       if (state.selectedComponent === null || typeof state.selectedComponent.ID === "undefined") {
@@ -151,7 +148,7 @@ export default new Vuex.Store({
     },
     // flag to show loading screen
     waiting: (state)=>{
-      return state.waitingProjectJson || state.waitingWorkflow || state.waitingFile || state.waitingSave || state.waitingEnv;
+      return state.waitingProjectJson || state.waitingWorkflow || state.waitingFile || state.waitingSave || state.waitingEnv || state.waitingDownload;
     },
     pathSep: (state)=>{
       return typeof state.projectRootDir === "string" && state.projectRootDir[0] !== "/" ? "\\" : "/";

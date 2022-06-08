@@ -186,7 +186,7 @@
       title="download content ready"
       max-width="30vw"
       :buttons="downloadDialogButton"
-      @close="downloadDialog=false;downloadURL=null"
+      @close="closeDownloadDialog"
     >
       <template
         slot="message"
@@ -326,7 +326,7 @@
     },
     computed: {
       ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
-      ...mapGetters(["selectedComponentAbsPath", "pathSep", "isRemoteComponent"]),
+      ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
       storagePath(){
         return this.copySelectedComponent.storagePath || "/"
       }
@@ -381,6 +381,12 @@
       SIO.removeUploaderEvent("progress", this.updateProgressBar)
     },
     methods: {
+      closeDownloadDialog(){
+        SIO.emitGlobal("removeDownloadFile", this.projectRootDir, this.downloadURL, ()=>{
+          this.downloadURL=null
+          this.downloadDialog=false
+        });
+      },
       requestRemoteConnection(){
         SIO.emitGlobal("requestRemoteConnection", this.projectRootDir, this.selectedComponent.ID, (isReady)=>{
           this.connected=isReady
@@ -441,6 +447,7 @@
       ...mapMutations({
         commitScriptCandidates: "scriptCandidates",
         commitSelectedFile: "selectedFile",
+        commitWaitingDownload: "waitingDownload"
       }),
       getChildren (item) {
         return new Promise((resolve, reject)=>{
@@ -460,6 +467,7 @@
           if(item.type === "dir" || item.type === "dir-link"){
               SIO.emitGlobal("getRemoteFileList",this.projectRootDir, this.selectedComponent.host, {path, mode: "underComponent"}, cb)
           }else{
+            //memo SND content is not supported in remote file browser for now
             SIO.emitGlobal("getSNDContents", this.projectRootDir, currentDir, item.name, item.type.startsWith("sndd"),cb)
           }
         })
@@ -518,12 +526,14 @@
         }
         this.clearAndCloseDialog()
       },
-      closeDownloadDialog(){
-        this.downloadURL=null
-        this.downloadDialog=false
-      },
       download(){
-        SIO.emitGlobal('download', this.projectRootDir, this.activeItem.id, this.isRemoteComponent, (url)=>{
+        this.commitWaitingDownload(true);
+        SIO.emitGlobal('downloadRemote', this.projectRootDir, this.activeItem.id, this.selectedComponent.host, (url)=>{
+          this.commitWaitingDownload(false);
+          if(url === null){
+            console.log("download failed.");
+            return
+          }
           this.downloadURL=url
           this.downloadDialog=true
         });

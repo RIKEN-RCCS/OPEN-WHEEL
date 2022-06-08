@@ -24,6 +24,7 @@ const { isValidOutputFilename } = require("../lib/utility");
 const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir } = require("./senders.js");
 const { parentDirs, eventEmitters } = require("../core/global.js");
 const { emitAll, emitWithPromise } = require("./commUtils.js");
+const { removeTempd } = require("../core/tempd.js");
 
 
 async function createCloudInstance(projectRootDir, hostinfo, clientID) {
@@ -281,6 +282,7 @@ async function onCleanProject(clientID, projectRootDir, ack) {
   try {
     await cleanProject(projectRootDir);
     await sendWorkflow(ack, projectRootDir, projectRootDir);
+    await Promise.all([removeTempd(projectRootDir, "viewer"), removeTempd(projectRootDir, "download")]);
   } catch (e) {
     ack(e);
   } finally {
@@ -312,6 +314,7 @@ async function onRevertProject(clientID, projectRootDir, cb) {
   await askUnsavedFiles(clientID, projectRootDir);
   await gitResetHEAD(projectRootDir);
   await sendWorkflow(cb, projectRootDir);
+  await Promise.all([removeTempd(projectRootDir, "viewer"), removeTempd(projectRootDir, "download")]);
   getLogger(projectRootDir).debug("revert project done");
   const projectJson = await getProjectJson(projectRootDir);
   cb(projectJson);

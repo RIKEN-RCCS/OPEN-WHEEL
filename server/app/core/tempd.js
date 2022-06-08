@@ -16,7 +16,13 @@ async function createTempd(projectRootDir, prefix) {
   return { dir, root };
 }
 
+async function removeTempd(projectRootDir, prefix) {
+  const { ID } = await readComponentJson(projectRootDir);
+  return fs.remove(path.resolve(path.dirname(__dirname), prefix, ID));
+}
+
 
 module.exports = {
-  createTempd
+  createTempd,
+  removeTempd
 };

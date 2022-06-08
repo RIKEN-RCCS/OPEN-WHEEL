@@ -541,7 +541,12 @@
     },
     computed: {
       ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler"]),
-      ...mapGetters(["selectedComponentAbsPath", "isRemoteComponent"]),
+      ...mapGetters(["selectedComponentAbsPath"]),
+      isRemoteComponent(){
+      return this.selectedComponent.type === "storage"
+                           && typeof this.selectedComponent.host === "string"
+                           && this.selectedComponent.host !== "localhost";
+      },
       disableRemoteSetting () {
         if(this.isStepjobTask){
           return false;
