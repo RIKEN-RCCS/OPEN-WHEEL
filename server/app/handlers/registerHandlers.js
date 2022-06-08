@@ -34,6 +34,7 @@ const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemp
 const { onGetResultFiles } = require("./resultFiles.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
+const { onRequestRemoteConnection, onGetRemoteFileList, onGetRemoteSNDContents, onRemoteDownload } = require("./remoteFileBrowser.js");
 
 
 const registerHandlers = (socket, Siofu)=>{
@@ -111,6 +112,15 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("saveFile", onSaveFile);
   socket.on("openFile", onOpenFile.bind(null, socket.id));
 
+
+  //
+  //remote file browser
+  //
+  socket.on("getRemoteFileList", onGetRemoteFileList);
+  socket.on("getRemoteSNDContents", onGetRemoteSNDContents);
+  socket.on("downloadRemote", onRemoteDownload);
+
+
   //
   //projectList
   //
@@ -173,6 +183,7 @@ const registerHandlers = (socket, Siofu)=>{
   //auxiliary
   socket.on("tryToConnect", onTryToConnect);
   socket.on("tryToConnectById", onTryToConnectById);
+  socket.on("requestRemoteConnection", onRequestRemoteConnection.bind(null, socket));
 };
 module.exports = {
   registerHandlers

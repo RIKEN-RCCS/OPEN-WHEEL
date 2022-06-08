@@ -47,6 +47,7 @@ async function onTryToConnectById(id, password, cb) {
   const hostInfo = remoteHost.get(id);
   await tryToConnect(hostInfo, password, cb);
 }
+
 module.exports = {
   onTryToConnectById,
   onTryToConnect: tryToConnect

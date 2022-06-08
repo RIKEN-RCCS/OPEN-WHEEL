@@ -486,11 +486,11 @@
               :readonly="false"
               :project-root-dir="projectRootDir"
             />
-            <v-btn
+            <remote-file-browser
               v-if="isRemoteComponent"
-            >
-              browse files on remotehost
-            </v-btn>
+              :readonly="false"
+              :project-root-dir="projectRootDir"
+            />
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
@@ -501,6 +501,7 @@
 <script>
   import listForm from "@/components/common/listForm.vue";
   import fileBrowser from "@/components/fileBrowser.vue";
+  import remoteFileBrowser from "@/components/remoteFileBrowser.vue";
   import { isValidName } from "@/lib/utility.js";
   import { glob2Array, addGlobPattern, removeGlobPattern, updateGlobPattern } from "@/lib/clientUtility.js";
   import { mapState, mapGetters, mapMutations } from "vuex";
@@ -515,6 +516,7 @@
     components: {
       listForm,
       fileBrowser,
+      remoteFileBrowser
     },
     data: function () {
       return {
