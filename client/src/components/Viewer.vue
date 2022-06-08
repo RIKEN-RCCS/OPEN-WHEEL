@@ -26,6 +26,7 @@
           <img
             v-for="src in scope.images"
             :key="src.url"
+            class="borderd-img"
             :src="src.url"
             :data-src="src.url"
             :alt="title"
@@ -86,3 +87,12 @@
     }
   };
 </script>
+<style>
+  .viewer {
+    background-color: #1E1E1E;
+  }
+  .borderd-img{
+    border: 2px solid white;
+    box-sizing: border-box;
+  }
+</style>
