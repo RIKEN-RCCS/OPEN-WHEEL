@@ -69,7 +69,7 @@
       ...mapState({
         tree: "componentTree",
         currentComponent: "currentComponent",
-        projectRootDir:"projectRootDir"
+        projectRootDir: "projectRootDir"
       }),
       pathToCurrentComponent: function () {
         const rt = [];

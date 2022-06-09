@@ -9,10 +9,20 @@ See License.txt in the project root for the license information.
     fluid
   >
     <v-toolbar dense>
-      <v-text-field
-        v-model="selectedComponentRelativePath"
-        readonly
-      />
+      <v-breadcrumbs
+        :items="pathToCurrentComponent"
+      >
+        <template #divider>
+          <v-icon>mdi-forward</v-icon>
+        </template>
+        <template #item="{ item }">
+          <v-breadcrumbs-item>
+            <component-button
+              :item="item"
+            />
+          </v-breadcrumbs-item>
+        </template>
+      </v-breadcrumbs>
       <v-spacer />
       <v-toolbar-items>
         <v-select
@@ -64,7 +74,9 @@ See License.txt in the project root for the license information.
 
   "use strict";
   import { mapState, mapActions } from "vuex";
+  import getNodeAndPath from "@/lib/getNodeAndPath.js";
   import unsavedFileDialog from "@/components/rapid/unsavedFileDialog.vue";
+  import componentButton from "@/components/common/componentButton.vue";
   import filterEditor from "@/components/rapid/filterEditor.vue";
   import tabEditor from "@/components/rapid/tabEditor.vue";
   import parameterEditor from "@/components/rapid/parameterEditor.vue";
@@ -74,6 +86,7 @@ See License.txt in the project root for the license information.
   export default {
     name: "Editor",
     components: {
+      componentButton,
       unsavedFileDialog,
       filterEditor,
       tabEditor,
@@ -116,7 +129,20 @@ See License.txt in the project root for the license information.
       };
     },
     computed: {
-      ...mapState(["selectedFile", "componentPath", "selectedComponent"]),
+      ...mapState({
+        selectedFile: "selectedFile",
+        componentPath: "componentPath",
+        selectedComponent: "selectedComponent",
+        currentComponent: "currentComponent",
+        tree: "componentTree"
+      }),
+      pathToCurrentComponent: function () {
+        const rt = [];
+        if (this.currentComponent !== null) {
+          getNodeAndPath(this.currentComponent.ID, this.tree, rt);
+        }
+        return rt;
+      },
       selectedComponentRelativePath(){
         if(this.selectedComponent === null){
           return null;
