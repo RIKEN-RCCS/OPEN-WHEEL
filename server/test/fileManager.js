@@ -16,7 +16,7 @@ const onGetFileList = fileManager.__get__("onGetFileList");
 const onGetSNDContents = fileManager.__get__("onGetSNDContents");
 const onRemoveFile = fileManager.__get__("onRemoveFile");
 const onRenameFile = fileManager.__get__("onRenameFile");
-const onDownloadFile = fileManager.__get__("onDownloadFile");
+const onDownload = fileManager.__get__("onDownload");
 const onCreateNewFile = fileManager.__get__("onCreateNewFile");
 const onCreateNewDir = fileManager.__get__("onCreateNewDir");
 
@@ -201,7 +201,7 @@ describe("fileManager UT", ()=>{
   });
   describe.skip("#downloadFile (not implemented for now)", ()=>{
     it("should send file", async()=>{
-      await onDownloadFile(emit, "dummy", { path: testDirRoot, name: "foo_1" }, cb);
+      await onDownload(emit, "dummy", { path: testDirRoot, name: "foo_1" }, cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
       expect(emit).to.have.been.calledOnce;
@@ -210,7 +210,7 @@ describe("fileManager UT", ()=>{
       expect(sendData.toString()).to.equal("foo_1");
     });
     it("should not send directory", async()=>{
-      await onDownloadFile(emit, "dummy", { path: testDirRoot, name: "foo" }, cb);
+      await onDownload(emit, "dummy", { path: testDirRoot, name: "foo" }, cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(false);
       expect(emit).not.to.have.been.called;

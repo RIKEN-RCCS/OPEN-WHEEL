@@ -13,29 +13,27 @@ chai.use((_chai, _)=>{
     _.flag(this, "message", msg);
   });
 });
+const rewire = require("rewire");
 
 const { logFilename } = require("../app/db/db.js");
 const projectRootDir = path.resolve("hoge");
 
 //testee
-const { getLogger, setLoglevel } = require("../app/logSettings.js");
+const LOG = rewire("../app/logSettings.js");
+const getLogger = LOG.__get__("getLogger");
+const setLoglevel = LOG.__get__("setLoglevel");
+const reset = LOG.__get__("reset");
+
 //stubs
-const emitTo = sinon.stub();
-const sio = {
-  to() {
-    return {
-      emit: emitTo
-    };
-  },
-  emit: sinon.stub()
-};
+const emitAll = sinon.stub();
+LOG.__set__("emitAll", emitAll);
+
 
 describe("Unit test for log4js's helper functions", ()=>{
   let logger;
   before(async()=>{
     await setLoglevel("log2client", "debug");
     await setLoglevel("filterdFile", "trace");
-    getLogger().addContext("socket", sio);
   });
   after(async()=>{
     await setLoglevel("log2client", process.env.WHEEL_LOGLEVEL);
@@ -55,26 +53,29 @@ describe("Unit test for log4js's helper functions", ()=>{
     beforeEach(async()=>{
       await fs.remove(projectRootDir);
       await fs.mkdir(projectRootDir);
-      sio.emit.resetHistory();
-      emitTo.resetHistory();
+      emitAll.resetHistory();
     });
     afterEach(async()=>{
-      await fs.remove(path.resolve(__dirname, logFilename));
-      await fs.remove(projectRootDir);
+      if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+        await fs.remove(path.resolve(__dirname, logFilename));
+        await fs.remove(projectRootDir);
+      }
+      reset();
     });
     it("should send info, warn and error log to client", ()=>{
-      logger = getLogger();
+      logger = getLogger(projectRootDir);
       logger.debug("debug");
       logger.info("info");
       logger.warn("warn");
       logger.error("error");
-      expect(sio.emit).not.to.called;
-      expect(emitTo.callCount).to.eql(2);
-      const calls = emitTo.getCalls();
-      expect(calls[0].args[0]).to.eql("logINFO");
-      expect(calls[0].args[1]).to.match(/info$/);
-      expect(calls[1].args[0]).to.eql("logERR");
-      expect(calls[1].args[1]).to.match(/error$/);
+      expect(emitAll.callCount).to.eql(2);
+      const calls = emitAll.getCalls();
+      expect(calls[0].args[0]).to.eql(projectRootDir);
+      expect(calls[0].args[1]).to.eql("logINFO");
+      expect(calls[0].args[2]).to.match(/info$/);
+      expect(calls[1].args[0]).to.eql(projectRootDir);
+      expect(calls[1].args[1]).to.eql("logERR");
+      expect(calls[1].args[2]).to.match(/error$/);
     });
     it("should write all logs except trace to file", async()=>{
       logger = getLogger(projectRootDir);

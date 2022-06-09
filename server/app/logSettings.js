@@ -129,6 +129,10 @@ async function setLoglevel(appender, loglevel) {
   log4js.configure(logSettings);
 }
 
+function reset() {
+  log4js.configure(logSettings);
+}
+
 
 function getLogger(projectRootDir) {
   //please note projectRootDir context will remain after logging
@@ -140,5 +144,6 @@ function getLogger(projectRootDir) {
 
 module.exports = {
   setLoglevel,
-  getLogger
+  getLogger,
+  reset
 };

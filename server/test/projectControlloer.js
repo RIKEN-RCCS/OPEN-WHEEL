@@ -24,6 +24,11 @@ const { updateComponent, createNewComponent, addInputFile, addOutputFile, addLin
 
 const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
+async function sleep(time) {
+  return new Promise((resolve)=>{
+    setTimeout(resolve, time);
+  });
+}
 
 describe("project Controller UT", function() {
   this.timeout(0); //eslint-disable-line no-invalid-this
@@ -928,6 +933,7 @@ describe("project Controller UT", function() {
       });
       it("should run project and successfully finish", async()=>{
         await runProject(projectRootDir);
+        await sleep(1000);
         expect(path.resolve(projectRootDir, projectJsonFilename)).to.be.a.file().with.json.using.schema({
           required: ["state"],
           properties: {
