@@ -458,6 +458,7 @@
               @remove="removeFromExcludeList"
               @update="updateExcludeList"
             />
+            clean up flag
             <v-radio-group
               v-model="copySelectedComponent.cleanupFlag"
               :disabled="disableRemoteSetting"
