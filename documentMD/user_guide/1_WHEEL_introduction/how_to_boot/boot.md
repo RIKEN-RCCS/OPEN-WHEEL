@@ -1,7 +1,7 @@
-# WHEELの起動方法 
+# WHEELの起動方法
 
 ## 事前準備
-WHEELの起動にはdockerを使用します。  
+WHEELの起動にはdockerを使用します。
 最新の [docker](https://www.docker.com/) を取得してください。
 
 ## 起動方法
@@ -13,14 +13,19 @@ WHEELの起動にはdockerを使用します。
 4. ターミナルを起動し、以下のコマンドを入力します。
 
 ```
-> docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/app/config -p 8089:8089 -p 8090:8090 tmkawanabe/wheel:latest
+> docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/app/config -p 8089:8089 tmkawanabe/wheel:latest
 ```
 
-このとき、`CONFIG_DIR`は、ホストマシンからの絶対パスである必要があります。
+このとき、`CONFIG_DIR`は、ホストマシン上での絶対パスである必要があります。
 
 上記コマンドでは、
 
-- プロジェクトファイルの作成先を${HOME}で指定できます。
-- WHEEL、jupyter notebookのポート番号を指定できます。(デフォルトでは、WHEEL：8089、jupyter notebook：8090が指定されています。)
+- プロジェクトファイルの作成先を${HOME}に指定しています
+- WHHELのポート番号を8089に指定しています。
 
-詳細設定に関する情報は、 [administrator's guide](../../../AdminGuide.md) をご確認ください。
+WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、`https://localhost:8089`にアクセスしてください。
+
+
+
+--------
+[トップページに戻る](../../index.md)

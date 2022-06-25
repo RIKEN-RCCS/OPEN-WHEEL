@@ -22,8 +22,8 @@
       <v-btn
         rounded
         outlined
-        plain
         :ripple="false"
+        :style="{backgroundColor : stateColor}"
       >
         status: {{ projectState }}
       </v-btn>
@@ -310,7 +310,7 @@
   import unsavedFilesDialog from "@/components/unsavedFilesDialog.vue";
   import versatileDialog from "@/components/versatileDialog.vue";
   import SIO from "@/lib/socketIOWrapper.js";
-  import { readCookie } from "@/lib/utility.js";
+  import { readCookie, state2color } from "@/lib/utility.js";
   import Debug from "debug";
   const debug = Debug("wheel:workflow:main");
   let viewerWindow = null;
@@ -354,6 +354,9 @@
         "selectedComponent",
       ]),
       ...mapGetters(["waiting", "isEdittable", "canRun", "running"]),
+      stateColor(){
+        return state2color(this.projectState);
+      }
     },
     mounted: function () {
       const projectRootDir = readCookie("rootDir");

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      /*! ADAPTED
+    Typeplate : Starter Kit
+    URL ........... http://typeplate.com
+    Version ....... 3.0.2
+    Github ........ https://github.com/typeplate/starter-kit
+    Authors ....... Dennis Gaebel (@gryghostvisuals) & Zachary Kain (@zakkain)
+    License ....... Creative Commmons Attribution 3.0
+    License URL ... https://github.com/typeplate/starter-kit/blob/master/license.txt
+    */
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        text-rendering: optimizeLegibility;
+        line-height: 1;
+        margin-top: 0;
+        color: #222;
+      }
+
+      blockquote + figcaption cite {
+        display: block;
+        font-size: inherit;
+        text-align: right;
+      }
+
+      body {
+        word-wrap: break-word;
+      }
+
+      pre code {
+        word-wrap: normal;
+      }
+
+      body {
+        -webkit-hyphens: auto;
+        -ms-hyphens: auto;
+        hyphens: auto;
+        color: #444;
+      }
+
+      h1 {
+        font-size: 2em;
+        /* 2*16 = 32 */
+      }
+
+      h2 {
+        font-size: 1.5em;
+        /* 1.5*16 = 24 */
+      }
+
+      h3 {
+        font-size: 1.17em;
+        /* 1.17*16 = 18.72 */
+      }
+
+      h4 {
+        font-size: 1em;
+        /* 1*16 = 16 */
+      }
+
+      h5 {
+        font-size: 0.83em;
+        /* 0.83*16 = 13.28 */
+      }
+
+      h6 {
+        font-size: 0.75em;
+        /* 0.75*16 = 12 */
+      }
+
+      h1 {
+        margin: 2.42424rem 0 1.454544rem;
+      }
+
+      h2 {
+        margin: 2.0202rem 0 1.21212rem;
+      }
+
+      h3 {
+        margin: 1.61616rem 0 1rem;
+      }
+
+      h4 {
+        margin: 1.21212rem 0 1;
+      }
+
+      h5 {
+        margin: 0.80808rem 0;
+      }
+
+      h6 {
+        margin: 0.70707rem 0;
+      }
+
+      p {
+        margin: auto auto 1.5rem;
+      }
+
+      small {
+        font-size: 65%;
+      }
+
+      input,
+      abbr,
+      acronym,
+      blockquote,
+      code,
+      kbd,
+      q,
+      samp,
+      var {
+        -webkit-hyphens: none;
+        -ms-hyphens: none;
+        hyphens: none;
+      }
+
+      pre {
+        white-space: pre;
+      }
+
+      pre code {
+        white-space: -moz-pre-wrap;
+        white-space: pre-wrap;
+      }
+
+      code {
+        white-space: pre;
+        font-family: SF Mono, Consolas, Dejavu Sans Mono, Menlo, monospace;
+      }
+
+      abbr {
+        -webkit-font-variant: small-caps;
+        -moz-font-variant: small-caps;
+        -ms-font-variant: small-caps;
+        font-variant: small-caps;
+        font-weight: 600;
+        text-transform: lowercase;
+        color: gray;
+      }
+
+      abbr[title]:hover {
+        cursor: help;
+      }
+
+      /* FROM http://purecss.io/layouts/side-menu/  adapted to remove pure classes*/
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+          "Segoe UI Symbol";
+        color: #444;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: auto;
+      }
+
+      code,
+      pre {
+        background-color: #f5f5f5;
+        color: #444;
+        border-radius: 2px;
+        text-shadow: 0px 1px 0px white;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+      }
+
+      pre code {
+        border: none;
+        box-shadow: none;
+      }
+
+      pre {
+        padding: 0.5em;
+      }
+
+      code {
+        display: inline-block;
+        padding: 0 0.5em;
+        line-height: 1.4;
+        font-size: 0.9em;
+      }
+
+      table {
+        border-spacing: 0;
+        margin-bottom: 1.5rem;
+      }
+
+      table th,
+      table td {
+        padding: 0.3em 0.7em;
+      }
+
+      table th {
+        background-color: #f4f4f4;
+        border-bottom: 2px solid #444;
+      }
+
+      table td {
+        border: 1px solid #f5f5f5;
+      }
+
+      /* Add transition to containers so they can push in and out. */
+
+      #layout,
+      #menu,
+      .menu-link {
+        -webkit-transition: all 0.2s ease-out;
+        -moz-transition: all 0.2s ease-out;
+        -ms-transition: all 0.2s ease-out;
+        -o-transition: all 0.2s ease-out;
+        transition: all 0.2s ease-out;
+      }
+
+      /* This is the parent `<div>` that contains the menu and the content area. */
+
+      #layout {
+        position: relative;
+        padding-left: 0;
+      }
+
+      #layout.active #menu {
+        left: 250px;
+        width: 250px;
+      }
+
+      #layout.active .menu-link {
+        left: 250px;
+      }
+
+      /* The content `<div>` is where all your content goes. */
+
+      .content {
+        margin: 50px auto;
+        padding: 0 2em;
+        max-width: 80ex;
+        line-height: 1.6em;
+      }
+
+      /*
+      The `#menu` `<div>` is the parent `<div>` that contains the menu that
+      appears on the left side of the page.
+      */
+
+      #menu {
+        margin-left: -250px;
+        /* "#menu" width */
+        width: 250px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1000;
+        /* so the menu or its navicon stays above all content */
+        background: #f4f4f4;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        font-size: 0.9em;
+      }
+
+      @media print {
+        #menu,
+        .menu-link {
+          display: none !important;
+        }
+      }
+
+      a,
+      a * {
+        text-decoration: none;
+        color: #2483cc;
+      }
+
+      a:visited {
+        text-decoration: none;
+        color: #2483cc;
+      }
+
+      /* All anchors inside the menu should be styled like this. */
+
+      #menu a {
+        display: block;
+        padding: 0.5em 0.5em;
+      }
+
+      #menu a:first-letter {
+        text-transform: capitalize;
+      }
+
+      #menu ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 1em 0.5em;
+      }
+
+      #menu ul ul {
+        margin-top: 0.5em;
+        margin-left: 0.5em;
+        border-left: 4px solid rgba(255, 255, 255, 0.5);
+      }
+
+      /* Change color of the anchor links on hover/focus. */
+
+      #menu li a:hover,
+      #menu li a:focus {
+        background: rgba(255, 255, 255, 0.4);
+      }
+
+      /* This styles the selected menu item `<li>`. */
+
+      #menu li a.active {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      /* This styles a link within a selected menu item `<li>`. */
+
+      #menu li a.active {
+        color: #222;
+      }
+
+      /* This styles the menu heading. */
+
+      #menu li.heading {
+        font-size: 0.9em;
+        text-transform: uppercase;
+        color: #000;
+      }
+
+      #menu li.heading > * {
+        padding: 0.5em;
+        display: block;
+      }
+
+      #menu li.heading a {
+        color: #0c68af;
+      }
+
+      /* -- Dynamic Button For Responsive Menu -------------------------------------*/
+
+      /*
+      `.menu-link` represents the responsive menu toggle that shows/hides on
+      small screens.
+      */
+
+      .menu-link {
+        position: fixed;
+        display: block;
+        /* show this only on small screens */
+        top: 0;
+        left: 0;
+        /* "#menu width" */
+        font-size: 10px;
+        /* change this value to increase/decrease button size */
+        z-index: 10;
+        width: 2em;
+        height: auto;
+        padding: 1.6em 1.2em;
+        border-radius: 0 2px 2px 0;
+      }
+
+      .menu-link:hover {
+        background: #f4f4f4;
+      }
+
+      .menu-link span {
+        position: relative;
+        display: block;
+      }
+
+      .menu-link span,
+      .menu-link span:before,
+      .menu-link span:after {
+        background-color: #555;
+        width: 100%;
+        height: 0.2em;
+        border-radius: 1em;
+      }
+
+      .menu-link span:before,
+      .menu-link span:after {
+        position: absolute;
+        margin-top: -0.6em;
+        content: " ";
+      }
+
+      .menu-link span:after {
+        margin-top: 0.6em;
+      }
+
+      /* Hides the menu at `48em`, but modify this based on your app's needs. */
+
+      @media (min-width: 48em) {
+        .header,
+        .content {
+          padding-left: 2em;
+          padding-right: 2em;
+        }
+
+        #layout {
+          padding-left: 250px;
+          /* left col width "#menu" */
+          left: 0;
+        }
+        #menu {
+          left: 250px;
+        }
+
+        .menu-link {
+          position: fixed;
+          left: 250px;
+          display: none;
+        }
+
+        #layout.active .menu-link {
+          left: 250px;
+        }
+      }
+
+      @media (max-width: 48em) {
+        /* Only apply this when the window is small. Otherwise, the following case results in extra padding on the left:
+         * Make the window small.
+         * Tap the menu to trigger the active state.
+         * Make the window large again.
+         */
+        #layout.active {
+          position: relative;
+          left: 250px;
+        }
+      }
+
+      /* Heading anchors and permalinks */
+      h1[id],
+      h2[id],
+      h3[id],
+      h4[id],
+      h5[id],
+      h6[id] {
+        position: relative;
+      }
+      .heading-anchor-permalink {
+        /* Position the permalink to the left of the title */
+        position: absolute;
+        right: 100%;
+        /* Add some spacing as padding to not lose the hover */
+        padding-right: 0.6rem;
+        /* Make it only visible on heading hover, see below */
+        opacity: 0;
+      }
+      h1[id]:hover .heading-anchor-permalink,
+      h2[id]:hover .heading-anchor-permalink,
+      h3[id]:hover .heading-anchor-permalink,
+      h4[id]:hover .heading-anchor-permalink,
+      h5[id]:hover .heading-anchor-permalink,
+      h6[id]:hover .heading-anchor-permalink {
+        opacity: 0.5;
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+  </head>
+
+  <body>
+    <div id="layout">
+      <!-- Menu toggle -->
+      <a href="#menu" id="menuLink" class="menu-link">
+        <!-- Hamburger icon -->
+        <span></span>
+      </a>
+      <nav id="menu">
+        <ul>
+<li class="heading"><span>1 WHEEL introduction</span></li>
+<ul>
+<li class="heading"><span>how to boot</span></li>
+<ul>
+<li><a class="" href="../../1_WHEEL_introduction/how_to_boot/boot.html">boot</a></li>
+</ul>
+</ul>
+<li class="heading"><span>2 WHEEL manual</span></li>
+<ul>
+<li><a class="" href="../../2_WHEEL_manual/0_readme.html">0 readme</a></li>
+<li class="heading"><span>1 home screen</span></li>
+<ul>
+<li><a class="" href="../../2_WHEEL_manual/1_home_screen/home.html">home</a></li>
+</ul>
+<li class="heading"><span>2 remotehost screen</span></li>
+<ul>
+<li><a class="" href="../../2_WHEEL_manual/2_remotehost_screen/remotehost.html">remotehost</a></li>
+</ul>
+<li class="heading"><span>3 workflow screen</span></li>
+<ul>
+<li><a class="" href="../../2_WHEEL_manual/3_workflow_screen/1_graphview.html">1 graphview</a></li>
+<li><a class="" href="../../2_WHEEL_manual/3_workflow_screen/2_listview.html">2 listview</a></li>
+<li><a class="" href="../../2_WHEEL_manual/3_workflow_screen/3_editor.html">3 editor</a></li>
+</ul>
+<li class="heading"><span>4 component</span></li>
+<ul>
+<li><a class="" href="../../2_WHEEL_manual/4_component/00_common.html">00 common</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/01_Task.html">01 Task</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/02_If.html">02 If</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/03_For.html">03 For</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/04_while.html">04 while</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/05_Foreach.html">05 Foreach</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/06_PS.html">06 PS</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/07_Workflow.html">07 Workflow</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/08_Storage.html">08 Storage</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/09_Source.html">09 Source</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/10_Viewer.html">10 Viewer</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/11_Stepjob.html">11 Stepjob</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/12_BulkjobTask.html">12 BulkjobTask</a></li>
+</ul>
+</ul>
+<li class="heading"><span>3 WHEEL tutorial</span></li>
+<ul>
+<li><a class="" href="../0_readme.html">0 readme</a></li>
+<li><a class="" href="../1_hello_world.html">1 hello world</a></li>
+<li class="heading"><span>2 OpenFOAM PS sample</span></li>
+<ul>
+<li><a class="" href="../2_OpenFOAM_PS_sample/OpenFOAM_PS_sample.html">OpenFOAM PS sample</a></li>
+</ul>
+<li class="heading"><span>3 OpenFOAM KPrepostCloud sample</span></li>
+<ul>
+<li><a class="" href="../3_OpenFOAM_KPrepostCloud_sample/OpenFOAM_KPrepostCloud_sample.html">OpenFOAM KPrepostCloud sample</a></li>
+</ul>
+<li class="heading"><span>4 OpenFOAM TCS sample</span></li>
+<ul>
+<li><a class="" href="../4_OpenFOAM_TCS_sample/OpenFOAM_TCS_sample.html">OpenFOAM TCS sample</a></li>
+</ul>
+<li class="heading"><span>5 TensorFlow UGE sample</span></li>
+<ul>
+<li><a class="active" href="TensorFlow_UGE_sample.html">TensorFlow UGE sample</a></li>
+</ul>
+</ul>
+<li class="heading"><span>4 ATTENTION</span></li>
+<ul>
+<li><a class="" href="../../4_ATTENTION/ATTENTION.html">ATTENTION</a></li>
+</ul>
+<li><a class="" href="../../readme.html">readme</a></li>
+</ul>
+      </nav>
+      <article id="main" class="content">
+        <h1 id="tensorflow%E3%82%92%E5%88%A9%E7%94%A8%E3%81%97%E3%81%9Fmnist%E3%83%87%E3%83%BC%E3%82%BF%E8%A7%A3%E6%9E%90%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC">TensorFlowを利用したMNISTデータ解析ワークフロー <a class="heading-anchor-permalink" href="#tensorflow%E3%82%92%E5%88%A9%E7%94%A8%E3%81%97%E3%81%9Fmnist%E3%83%87%E3%83%BC%E3%82%BF%E8%A7%A3%E6%9E%90%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC">#</a></h1>
+<p>本章では、WHEELを用いた計算事例として「TensorFlowを利用したMNISTデータの解析ワークフロー」を紹介します。<br>
+本事例では、TensorFlowを利用するリモートタスクを用いて、MNISTデータを用いた手書き数字画像学習モデルを作成します。<br>
+以降、下記の順にて事例内容を紹介します。</p>
+<ol>
+<li>MNISTデータについて</li>
+<li>NN(Neural Network)について</li>
+<li>kerasについて</li>
+<li>ワークフローの作成</li>
+<li>ジョブの投入</li>
+<li>解析結果の確認</li>
+</ol>
+<p>また、Taskコンポーネントで使用するスクリプト例は、<br>
+下記よりダウンロード可能です。<br>
+<a href="./sample/runTensorFlow.zip">TensorFlowサンプルデータ</a></p>
+<h2 id="1.-mnist%E3%83%87%E3%83%BC%E3%82%BF%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">1. MNISTデータについて <a class="heading-anchor-permalink" href="#1.-mnist%E3%83%87%E3%83%BC%E3%82%BF%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">#</a></h2>
+<p>ここでは、本事例で使用するMNISTデータについて説明をします。<br>
+MNISTとは手書き数字画像60000枚とテスト画像10000枚を集めた画像データセットのことであり、<br>
+ニューラルネットワークを学習するうえで非常に便利な画像のデータセットとして著名です。<br>
+データセットの中身は以下のような構造になっています。</p>
+<pre><code>MNISTデータ
+　├ 学習用データ (60,000個)
+　│ 　├ 画像データ
+　│ 　└ ラベルデータ(正解データ)
+　│
+　└ 検証用データ (10,000個)
+　　 　├ 画像データ
+　　 　└ ラベルデータ（正解データ）
+</code></pre>
+<p>各画像データに対して正解データであるラベルデータが一つずつ与えられています。</p>
+<h2 id="2.-nn(neural-network)%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">2. NN(Neural Network)について <a class="heading-anchor-permalink" href="#2.-nn(neural-network)%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">#</a></h2>
+<p>ここでは、MNISTデータを解析する際に使用するNNという手法について説明します。<br>
+NNとは、ニューラルネットワークの略で、人間の脳内にある神経細胞（ニューロン）とそのつながり、つまり神経回路網を人工ニューロンという数式的なモデルで表現したものです。<br>
+入力層、出力層、隠れ層から構成されていて、層と層の間には、ニューロン同士のつながりの強さを示す「重み」があります。</p>
+<p><img src="./img/NN.PNG" alt="img" title="ニューラルネットワークについて"></p>
+<p>画像より特徴を抽出して、ノードの重みを更新していき学習させていきます。<br>
+本事例では、MNISTのデータセットを用いたので28*28ピクセルの入力から0~9の数字のどれかという出力を出すために入力層を784ノード、出力層を10ノードとしています。</p>
+<h2 id="3.-keras%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">3. kerasについて <a class="heading-anchor-permalink" href="#3.-keras%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">#</a></h2>
+<p>Kerasは、オープンソースのニューラルネットワークライブラリです。<br>
+ディープニューラルネットワークを用いた迅速な実験を行えるように設計されており、「シンプル」「モジュール式」「拡張性」などの特徴があります。<br>
+Kerasは以下のバックエンドをサポートしており、TensorFlowをデフォルトのテンソル計算ライブラリとしています。</p>
+<ul>
+<li>TensorFlow</li>
+<li>Microsoft Cognitive Toolkit</li>
+<li>Theano</li>
+</ul>
+<pre><code>model = Sequential()
+model.add(Dense(8, input_dim=4))
+model.add(Activation('relu'))
+model.add(Dense(3, input_dim=8))
+model.add(Activation('softmax'))
+model.compile(optimizer='SGD', loss='categorical_crossentropy', metrics=['accuracy'])
+</code></pre>
+<p>上記にkerasによるモデリング例を載せていますが、直感的にモデリングをすることが出来るのがkerasの特徴です。<br>
+これにより、ニューラルネットワークの設計を容易に行うことができます。本モデル例は以下の内容となります。</p>
+<ul>
+<li>入力層は四つのノードを持っています。</li>
+<li>隠れ層の数は一つで、ノード数は8です。</li>
+<li>隠れ層のそれぞれのノードは入力層のノードの重みとの線形結合された値を受け取り、活性化関数を適応させています。</li>
+<li>出力層は3つのノードを持っています。</li>
+<li>出力層のそれぞれのノードは入力層のノードの重みとの線形結合された値を受け取り、活性化関数を適応させています。</li>
+</ul>
+<h2 id="4.-wheel%E3%81%AB%E3%82%88%E3%82%8B%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">4. WHEELによるワークフローの作成 <a class="heading-anchor-permalink" href="#4.-wheel%E3%81%AB%E3%82%88%E3%82%8B%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">#</a></h2>
+<p>本節では、WHEELでのパラメトリックスタディ解析に必要なワークフローコンポーネントについて説明します。<br>
+本事例で必要なコンポーネントとその役割は以下です。</p>
+<ul>
+<li>Task コンポーネント - 1：ジョブ投入前の前処理</li>
+<li>Task コンポーネント - 2：MNISTデータを用いたnnモデルの学習</li>
+<li>Task コンポーネント - 3：nnモデルの評価</li>
+</ul>
+<p>以降で、各コンポーネントについて説明します。</p>
+<h3 id="task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---1">Task コンポーネント - 1 <a class="heading-anchor-permalink" href="#task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---1">#</a></h3>
+<p>続いて、ジョブ投入用及びTensorFlow解析実行用コンポーネント「PreRunTensorFlow_Task」について説明します。<br>
+本コンポーネントは、スーパーコンピュータのキューを用いてTensorFlowによるMNISTデータ学習の前処理を実行するためのコンポーネントです。</p>
+<p>runTensorFlow_Taskコンポーネントに設定するプロパティ、及びスクリプトの中身は以下です。</p>
+<h5 id="preruntensorflow_task">PreRunTensorFlow_Task <a class="heading-anchor-permalink" href="#preruntensorflow_task">#</a></h5>
+<table>
+<thead>
+<tr>
+<th>プロパティ名</th>
+<th>設定値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>PreRunTensorFlow_Task</td>
+</tr>
+<tr>
+<td>Script</td>
+<td><a href="http://PreRunTensorFlow.sh">PreRunTensorFlow.sh</a></td>
+</tr>
+<tr>
+<td>InputFiles</td>
+<td>-</td>
+</tr>
+<tr>
+<td>OutputFiles</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Remotehost</td>
+<td>UGEjobScheduler</td>
+</tr>
+<tr>
+<td>UseJobScheduler</td>
+<td>true</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Clean up flag</td>
+<td>keep files</td>
+</tr>
+<tr>
+<td>include</td>
+<td>-</td>
+</tr>
+<tr>
+<td>exclude</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Files</td>
+<td><a href="http://kerasMNIST.py">kerasMNIST.py</a> , <a href="http://kerasMNISTEval.py">kerasMNISTEval.py</a></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><a href="http://PreRunTensorFlow.sh">PreRunTensorFlow.sh</a></p>
+</blockquote>
+<pre><code>#!/bin/bash
+#$ -l rt_F=1
+#$ -j y
+#$ -cwd
+
+mv kerasMNIST.py kerasMNISTEval.py /${WORK}
+cd /${WORK}
+source /etc/profile.d/modules.sh
+module load singularity/2.6.1
+singularity pull docker://nvcr.io/nvidia/tensorflow:19.06-py2
+</code></pre>
+<p>設定は以下です。</p>
+<ol>
+<li>スーパーコンピュータでTensorFlowを実行するためのディレクトリに移動します</li>
+<li>プロパティ[ script ]にPreRunTensorFlow.shを設定します</li>
+<li>プロパティ[ remotehost ]に事前に登録しているリモートホスト情報「UGEjobScheduler」設定します *</li>
+</ol>
+<p>*　ジョブスケジューラーにUGEを使用して計算を行うため「UGEjobScheduler」としています。<br>
+　 ユーザの環境に合わせて名称の変更が必要です。</p>
+<p><img src="./img/PreRunTensorFlow_Task.PNG" alt="img" title="TensorFlow_Task"></p>
+<p>以上がTaskコンポーネント - 1 の設定になります。</p>
+<h3 id="task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---2">Task コンポーネント - 2 <a class="heading-anchor-permalink" href="#task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---2">#</a></h3>
+<p>続いて、ジョブ投入用及びTensorFlow解析実行用コンポーネント「TrainRunTensorFlow_Task」について説明します。<br>
+本コンポーネントは、スーパーコンピュータのキューを用いてTensorFlowによるMNISTデータ学習処理を実行するためのコンポーネントです。</p>
+<p>TrainRunTensorFlow_Taskコンポーネントに設定するプロパティ、及びスクリプトの中身は以下です。</p>
+<h5 id="trainruntensorflow_task">TrainRunTensorFlow_Task <a class="heading-anchor-permalink" href="#trainruntensorflow_task">#</a></h5>
+<table>
+<thead>
+<tr>
+<th>プロパティ名</th>
+<th>設定値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>TrainRunTensorFlow_Task</td>
+</tr>
+<tr>
+<td>Script</td>
+<td><a href="http://TrainRunTensorFlow.sh">TrainRunTensorFlow.sh</a></td>
+</tr>
+<tr>
+<td>InputFiles</td>
+<td>-</td>
+</tr>
+<tr>
+<td>OutputFiles</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Remotehost</td>
+<td>UGEjobScheduler</td>
+</tr>
+<tr>
+<td>UseJobScheduler</td>
+<td>true</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Clean up flag</td>
+<td>keep files</td>
+</tr>
+<tr>
+<td>include</td>
+<td>-</td>
+</tr>
+<tr>
+<td>exclude</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Files</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><a href="http://runTensorFlow.sh">runTensorFlow.sh</a></p>
+</blockquote>
+<pre><code>#!/bin/bash
+#$ -l rt_F=1
+#$ -j y
+#$ -cwd
+
+cd /${WORK}
+source /etc/profile.d/modules.sh
+module load singularity/2.6.1
+singularity run --nv tensorflow-19.06-py2.simg python kerasMNIST.py &gt; ./log.MNIST 2&gt;&amp;1
+</code></pre>
+<p>設定は以下です。</p>
+<ol>
+<li>スーパーコンピュータでTensorFlowを実行するためのジョブスクリプトTrainRunTensorFlow.shをインポートします</li>
+<li>プロパティ[ script ]にTrainRunTensorFlow.shを設定します</li>
+<li>プロパティ[ remotehost ]に事前に登録しているリモートホスト情報「UGEjobScheduler」設定します *</li>
+</ol>
+<p><img src="./img/TrainRunTensorFlow_Task.PNG" alt="img" title="TensorFlow_Task"></p>
+<p>以上がTaskコンポーネント - 2 の設定になります。</p>
+<h3 id="task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---3">Task コンポーネント - 3 <a class="heading-anchor-permalink" href="#task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---3">#</a></h3>
+<p>続いて、ジョブ投入用及びTensorFlow解析実行用コンポーネント「EvalRunTensorFlow_Task」について説明します。<br>
+本コンポーネントは、スーパーコンピュータのキューを用いてTensorFlowによるMNISTデータを学習したモデルを評価するためのコンポーネントです。</p>
+<p>EvalRunTensorFlow_Taskコンポーネントに設定するプロパティ、及びスクリプトの中身は以下です。</p>
+<h5 id="evalruntensorflow_task">EvalRunTensorFlow_Task <a class="heading-anchor-permalink" href="#evalruntensorflow_task">#</a></h5>
+<table>
+<thead>
+<tr>
+<th>プロパティ名</th>
+<th>設定値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>EvalRunTensorFlow_Task</td>
+</tr>
+<tr>
+<td>Script</td>
+<td><a href="http://EvalRunTensorFlow.sh">EvalRunTensorFlow.sh</a></td>
+</tr>
+<tr>
+<td>InputFiles</td>
+<td>-</td>
+</tr>
+<tr>
+<td>OutputFiles</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Remotehost</td>
+<td>UGEjobScheduler</td>
+</tr>
+<tr>
+<td>UseJobScheduler</td>
+<td>true</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Clean up flag</td>
+<td>keep files</td>
+</tr>
+<tr>
+<td>include</td>
+<td>-</td>
+</tr>
+<tr>
+<td>exclude</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Files</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><a href="http://EvalRunTensorFlow.sh">EvalRunTensorFlow.sh</a></p>
+</blockquote>
+<pre><code>#!/bin/bash
+#$ -l rt_F=1
+#$ -j y
+#$ -cwd
+
+cd /${WORK}
+source /etc/profile.d/modules.sh
+module load singularity/2.6.1
+singularity run --nv tensorflow-19.06-py2.simg python kerasMNISTEval.py &gt; ./log.MNISTEval 2&gt;&amp;1
+</code></pre>
+<p>設定は以下です。</p>
+<ol>
+<li>スーパーコンピュータでTensorFlowを実行するためのジョブスクリプトEvalRunTensorFlow.shをインポートします</li>
+<li>プロパティ[ script ]にEvalRunTensorFlow.shを設定します</li>
+<li>プロパティ[ remotehost ]に事前に登録しているリモートホスト情報「UGEjobScheduler」設定します *</li>
+</ol>
+<p><img src="./img/EvalRunTensorFlow_Task.PNG" alt="img" title="TensorFlow_Task"></p>
+<p>以上がTaskコンポーネント - 3 の設定になります。</p>
+<h3 id="%E3%82%B8%E3%83%A7%E3%83%96%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">ジョブスクリプトに関して <a class="heading-anchor-permalink" href="#%E3%82%B8%E3%83%A7%E3%83%96%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">#</a></h3>
+<p>WHEELは、効率的に計算資源を利用することを目的としています。</p>
+<p>スーパーコンピューターでTensorFlowを実行するためのコマンドを紹介します。</p>
+<p>本解析では、NVIDIA GPU Cloud(NGC)が提供するDockerイメージをsingularityを用いて実行しています。</p>
+<pre><code>singularity pull docker://nvcr.io/nvidia/tensorflow:19.06-py2
+</code></pre>
+<p>また、処理終了後、実行結果を確認するためにログを出力するようにしておくと各タスクの動作確認が容易に実施できます。</p>
+<pre><code>singularity run --nv tensorflow-19.06-py2.simg python kerasMNISTEval.py &gt; ./log.MNISTEval 2&gt;&amp;1
+</code></pre>
+<h3 id="%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E6%83%85%E5%A0%B1%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">リモートホスト登録情報に関して <a class="heading-anchor-permalink" href="#%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E6%83%85%E5%A0%B1%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">#</a></h3>
+<p>本事例は、jobSchedulerにUGE利用してジョブを投入することを前提としています。<br>
+そのため、前述のホスト情報登録方法に従い、ホスト情報を登録しておく必要があります。
+本サンプルでは、UGEjobSchedulerを使用するため「UGEjobScheduler」としています。</p>
+<h2 id="4.-%E3%82%B8%E3%83%A7%E3%83%96%E3%81%AE%E6%8A%95%E5%85%A5">4. ジョブの投入 <a class="heading-anchor-permalink" href="#4.-%E3%82%B8%E3%83%A7%E3%83%96%E3%81%AE%E6%8A%95%E5%85%A5">#</a></h2>
+<p>ジョブの投入を行います。前述の「9.ワークフローの作成」にありますように、ジョブの投入は、ワークフロー実行画面上部の実行ボタンより行います。<br>
+実行状況の確認は、ログエリアやコンポーネント右上の実行状況表示アイコン、及びリストビュー画面から行います。</p>
+<p><img src="./img/jobUGE.png" alt="img" title="ジョブの投入"></p>
+<h2 id="5.-%E8%A7%A3%E6%9E%90%E7%B5%90%E6%9E%9C%E3%81%AE%E7%A2%BA%E8%AA%8D">5. 解析結果の確認 <a class="heading-anchor-permalink" href="#5.-%E8%A7%A3%E6%9E%90%E7%B5%90%E6%9E%9C%E3%81%AE%E7%A2%BA%E8%AA%8D">#</a></h2>
+<p>解析結果の確認を行います。<br>
+実行完了後、リモートタスクに作成された「log.kerasMNIST」,「log.kerasMNISTEval」ファイルより以下の結果を確認することができます。</p>
+<pre><code>・
+・
+・
+('Test loss:', 0.27075190788507464)
+('Test accuracy:', 0.927)
+</code></pre>
+<p>用語の意味は以下の通りとなっています。</p>
+<table>
+<thead>
+<tr>
+<th>プロパティ名</th>
+<th>設定値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test loss</td>
+<td>学習用データを与えた時の損失値。小さくなればなるほど正しい結果を表せています</td>
+</tr>
+<tr>
+<td>Test accuracy</td>
+<td>検証用データの正答率。1に近いほど検証用データにおいて精度が高いことを表しています</td>
+</tr>
+</tbody>
+</table>
+<p>accuracyが「0.927」すなわち検証用データにおいて精度92.7%の学習モデルが作成されたことが確認できます。<br>
+TensorFlowを利用したMNISTデータ解析ワークフロー例は以上になります。</p>
+
+      </article>
+    </div>
+    <script>
+      // Load contents.json if you need it
+    </script>
+    <script>
+      // FROM http://purecss.io/js/ui.js
+      (function(window, document) {
+        var layout = document.getElementById("layout"),
+          menu = document.getElementById("menu"),
+          menuLink = document.getElementById("menuLink");
+
+        function toggleClass(element, className) {
+          var classes = element.className.split(/\s+/),
+            length = classes.length,
+            i = 0;
+
+          for (; i < length; i++) {
+            if (classes[i] === className) {
+              classes.splice(i, 1);
+              break;
+            }
+          }
+          // The className is not found
+          if (length === classes.length) {
+            classes.push(className);
+          }
+
+          element.className = classes.join(" ");
+        }
+
+        menuLink.onclick = function(e) {
+          var active = "active";
+
+          e.preventDefault();
+          toggleClass(layout, active);
+          toggleClass(menu, active);
+          toggleClass(menuLink, active);
+        };
+      })(this, this.document);
+    </script>
+  </body>
+</html>
