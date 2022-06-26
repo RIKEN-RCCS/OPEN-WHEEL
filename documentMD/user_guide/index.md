@@ -3,9 +3,9 @@
 
 [WHEEL起動手順書](1_WHEEL_introduction/how_to_boot/boot.md)
 
-[WHEELリファレンスマニュアル](2_WHEEL_manual/0_readme.md)
+[WHEELリファレンスマニュアル](2_WHEEL_manual/index.md)
 
-[WHEELチュートリアル](3_WHEEL_tutorial/0_readme.md)
+[WHEELチュートリアル](3_WHEEL_tutorial/index.md)
 
 ### 制約事項
 WHEELは開発中のソフトウェアであり、いくつかの制約事項が残っています。
