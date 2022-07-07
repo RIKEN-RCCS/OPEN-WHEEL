@@ -553,11 +553,10 @@ WHEELでは、ワークフロー画面（Taskコンポーネント）にて使�
 <h2 id="%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2%E3%81%B8%E3%81%AE%E7%A7%BB%E5%8B%95">リモートホスト登録画面への移動 <a class="heading-anchor-permalink" href="#%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2%E3%81%B8%E3%81%AE%E7%A7%BB%E5%8B%95">#</a></h2>
 <p>リモートホスト登録画面は、画面右上のハンバーガーメニューをクリックした時に表示されるリンクを
 クリックすると表示されます</p>
-<p><img src="./img/hunberger.png" alt="img" title="hunberger.png">
+<p><img src="./img/hanberger.png" alt="img" title="hanberger.png">
 <img src="./img/drawer.png" alt="img" title="drawer.png"></p>
 <h2 id="%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2">リモートホスト登録画面 <a class="heading-anchor-permalink" href="#%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2">#</a></h2>
 <p>リモートホスト登録画面の構成は以下のようになっています。
-TODO ダミーの設定情報を表示して撮影して差し替え
 <img src="./img/remotehost.png" alt="img" title="remotehost"></p>
 <ol>
 <li>タイトル　：ホーム画面遷移ボタン</li>
@@ -704,12 +703,12 @@ TODO ダミーの設定情報を表示して撮影して差し替え
 <tr>
 <td>Cloud service provider</td>
 <td>クラウドサービスプロバイダー名</td>
-<td>現バージョン(ver1.2.3)では、「aws」のみ対応 *</td>
+<td>現バージョン(ver2.1.0)では、「aws」のみ対応 *</td>
 </tr>
 <tr>
 <td>OS</td>
 <td>OS名</td>
-<td>現バージョン(ver1.2.3)では、「ubuntu16」のみ対応 *</td>
+<td>現バージョン(ver2.1.0)では、「ubuntu16」のみ対応 *</td>
 </tr>
 <tr>
 <td>region</td>
@@ -780,77 +779,6 @@ TODO ダミーの設定情報を表示して撮影して差し替え
 </table>
 <p><code>Advance settings</code> の項目はリモートホストと同じです。</p>
 <p>必要な情報を入力し、OKボタンをクリックするとクラウド設定が登録されます。</p>
-<h3 id="jobscheduler%E3%81%B8%E3%81%AE%E8%A8%AD%E5%AE%9A%E6%96%B9%E6%B3%95">JobSchedulerへの設定方法 <a class="heading-anchor-permalink" href="#jobscheduler%E3%81%B8%E3%81%AE%E8%A8%AD%E5%AE%9A%E6%96%B9%E6%B3%95">#</a></h3>
-<p>ワークフローをリモートホスト上で処理する場合、Taskコンポーネントにリモートホストの設定を行います。（Taskコンポーネントに関する詳細は後述）
-Taskコンポーネントは、child_process又はsshを用いて指定されたスクリプトを直接実行する以外に、ジョブスケジューラにジョブとして投入することが可能です。
-本機能に関する設定は次の5つがあります。</p>
-<ol>
-<li>Taskコンポーネントの[ useJobScheduler ]プロパティを有効にしている場合、Taskはジョブスケジューラ経由で実行されます。</li>
-<li>Taskコンポーネントの[ queue ]プロパティには、投入先のキュー名を指定することができます。
-null(デフォルト値)が指定されていた場合は、ジョブスケジューラ側で指定されているデフォルトキューに対してジョブが投入されます。</li>
-<li>ホスト登録画面[ JobScheduler ]には、当該ホストから投入可能なジョブスケジューラの名称を設定します。</li>
-<li>ホスト登録画面[ Max Job ]には、本プロパティに設定された値以下の投入本数を上限として、WHEELからのジョブ投入を抑制します。</li>
-<li>ホスト登録画面[ Queue ]で登録したQueue情報は、Taskコンポーネントの[ queue ]プロパティでセレクトボックスとして表示されます。</li>
-</ol>
-<p>ジョブスケジューラの定義は&quot;app/config/jobSceduler.json&quot;にて行います。 スケジューラの名称をkeyとし、以下の各keyを持つテーブルを値として各ジョブスケジューラを設定します。</p>
-<table>
-<thead>
-<tr>
-<th>key</th>
-<th>value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>submit</td>
-<td>ジョブ投入に用いるコマンド名</td>
-</tr>
-<tr>
-<td>queueOpt</td>
-<td>投入先キューを指定するためのsubmitコマンドのオプション</td>
-</tr>
-<tr>
-<td>stat</td>
-<td>ジョブの状態表示に用いるコマンド名</td>
-</tr>
-<tr>
-<td>del</td>
-<td>ジョブの削除に用いるコマンド名</td>
-</tr>
-<tr>
-<td>reJobID</td>
-<td>submitコマンドの出力からジョブIDを抽出するための正規表現</td>
-</tr>
-<tr>
-<td>reFinishdState</td>
-<td>statコマンドの出力を正常終了と判定するための正規表現</td>
-</tr>
-<tr>
-<td>reFailedState</td>
-<td>statコマンドの出力を異常終了と判定するための正規表現</td>
-</tr>
-</tbody>
-</table>
-<p>reJobIDは1つ以上のキャプチャを含む正規表現でなければなりません。また、1つ目のキャプチャ文字列がjobIDを示す文字列として扱われます。
-reFinishedStateとreFailedStateは、前者が先に評価され前者がマッチした場合は後者の判定は行なわずに正常終了と判定します。また、両者にマッチしない場合はジョブは実行待ちもしくは実行中と判定します。
-※いずれの正規表現もプログラム内でコンパイルして利用するため、正規表現リテラル(//)は使うことができません。</p>
-<blockquote>
-<p>富士通 ParallelNaviでの設定は次のようになります。</p>
-</blockquote>
-<pre><code>{
-　&quot;ParallelNavi&quot;: {
-    &quot;submit&quot;: &quot;pjsub -X&quot;,
-    &quot;queueOpt&quot;: &quot;-L rscgrp=&quot;,
-    &quot;stat&quot;: &quot;pjstat -v -H day=3 --choose st,ec&quot;,
-    &quot;del&quot;: &quot;pjdel&quot;,
-    &quot;reJobID&quot;: &quot;pjsub Job (\\d+) submitted.&quot;,
-    &quot;reFinishedState&quot;: &quot;^ST *EC *\\ nEXT *0&quot;,
-    &quot;reReturnCode&quot;: &quot;^ST *EC *\\nEXT *(\\d+)&quot;,
-    &quot;reFailedState&quot;: &quot;^ST *EC *\\n(CCL|ERR|EXT|RJT)&quot;,
-    &quot;reJobStatus&quot;: &quot;^ST *EC *\\n(\\S+)&quot;
-　}
-}
-</code></pre>
 <hr>
 <p><a href="../index.html">リファレンスマニュアルのトップページに戻る</a></p>
 

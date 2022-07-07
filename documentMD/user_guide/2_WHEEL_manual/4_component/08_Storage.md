@@ -25,7 +25,7 @@ hostには実際にファイルを保存するホストを設定できます。
 保存されます。
 
 ### path
-[img](./img/storage_path.png "storage_path")
+![img](./img/storage_path.png "storage_path")
 
 pathに指定したディレクトリ下にstorageコンポーネントに転送されてきた
 ファイルをコピーします。

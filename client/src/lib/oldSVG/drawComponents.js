@@ -39,7 +39,7 @@ function drawComponents (currentWf, argSvg, argPresentState, argProjectRootDir, 
   parentnode = []
 
   drawNodes(currentWf.descendants, parentID)
-  drawParentFileRelation(currentWf)
+  drawParentFileRelation(currentWf, projectRootDir)
   drawLinks(nodes)
   drawParentLinks(parentnode, nodes)
 }
@@ -48,8 +48,8 @@ function drawComponents (currentWf, argSvg, argPresentState, argProjectRootDir, 
   * draw parent children file relation
   * @param  files list in workflow Json
   */
-function drawParentFileRelation (parentwf) {
-  const node = new svgNode.SvgParentNodeUI(svg, parentwf)
+function drawParentFileRelation (parentwf, projectRootDir) {
+  const node = new svgNode.SvgParentNodeUI(svg, parentwf, projectRootDir)
   parentnode.push(node)
 }
 

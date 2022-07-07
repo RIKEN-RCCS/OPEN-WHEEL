@@ -327,9 +327,10 @@ export class SvgParentNodeUI {
    * @param SIO  socket.io's instance
    * @param parentnode parent inputFiles instance to draw
    */
-  constructor (svg, parentnode) {
+  constructor (svg, parentnode, projectRootDir) {
     /** svg.js's instance*/
     this.svg = svg
+    this.projectRootDir = projectRootDir
 
     this.parentID=parentnode.ID
 

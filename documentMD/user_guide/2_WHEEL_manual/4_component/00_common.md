@@ -28,7 +28,7 @@ WHEELにはコンポーネント内のファイルを別のコンポーネント
 必要なファイルに対してシンボリックリンクを作成するので
 後続コンポーネント内のスクリプトからもファイルにアクセスすることができます。
 
-TODO 結線した様子のスクショを入れる
+![img](./img/input_output_connect.png "connected input and output file")
 
 inputFileとoutpuFileの指定方法によってそれぞれ次のような挙動を示します。
 
