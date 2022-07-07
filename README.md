@@ -1,5 +1,5 @@
-# WHEEL
-__W__ orkflow in __H__ ierarchical distribut __E__ d parall __EL__.
+# OPEN-WHEEL
+Workflow in Hierarchical distributEd parallEL
 
 [public repo] (https://github.com/RIKEN-RCCS/WHEEL)
 
