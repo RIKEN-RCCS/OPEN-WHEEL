@@ -1238,6 +1238,9 @@ class Dispatcher extends EventEmitter {
         const hasGlob = glob.hasMagic(recipe.srcName);
 
         for (const srcFile of srces) {
+          if (srcFile === "cmp.wheel.json") {
+            continue;
+          }
           const oldPath = path.resolve(recipe.srcRoot, srcFile);
           let newPath = path.resolve(dstRoot, recipe.dstName);
 
