@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <v-dialog
     v-model="openDialog"
@@ -9,6 +14,7 @@
       </v-card-title>
       <v-text-field
         v-model="password"
+        class="mx-6"
         autofocus
         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
         :type="showPassword ? 'text' : 'password'"

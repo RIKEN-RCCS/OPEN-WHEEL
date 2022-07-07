@@ -1,4 +1,10 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 "use strict";
+
 
 export default function () {
   return {
@@ -10,10 +16,11 @@ export default function () {
     for: { color: "#247780", img: require("@/assets/img_for.png") },
     while: { color: "#247780", img: require("@/assets/img_while.png") },
     foreach: { color: "#247780", img: require("@/assets/img_foreach.png") },
-    source: { color: "#00bff0", img: require("@/assets/img_source.png") },
-    viewer: { color: "#00b050", img: require("@/assets/img_viewer.png") },
     parameterStudy: { color: "#666622", img: require("@/assets/img_parameterStudy.png") },
     workflow: { color: "#803DB3", img: require("@/assets/img_workflow.png") },
+    storage: { color: "#00b8a0", img: require("@/assets/database.svg") },
+    source: { color:  "#00bff0", img: require("@/assets/img_source.png") },
+    viewer: { color:  "#00b050", img: require("@/assets/img_viewer.png") },
     stepjob: { color: "#803DB3", img: require("@/assets/img_stepjob.png") },
     stepjobTask: { color: "#3B55B3", img: require("@/assets/img_stepjobTask.png") },
     bulkjobTask: { color: "#3B55B3", img: require("@/assets/img_stepjobTask.png") },

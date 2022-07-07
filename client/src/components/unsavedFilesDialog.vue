@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <v-dialog
-    v-model="dialog"
+    v-model="show"
     persistent
   >
     <v-card>
@@ -10,7 +15,7 @@
       <v-card-text>
         <v-data-table
           :headers="headers"
-          :items="unsavedFiles"
+          :items="items"
           disable-pagination
           hide-default-footer
           dense
@@ -42,39 +47,41 @@
 <script>
   import SIO from "@/lib/socketIOWrapper.js";
   export default {
+    props:{
+        unsavedFiles: {
+          type: Array,
+          required: true
+        },
+        dialog: {
+          type: Boolean,
+          required: true
+        }
+    },
     data () {
       return {
-        dialog: false,
-        unsavedFiles: [],
         headers: [
           { text: "status", value: "status" },
           { text: "filename", value: "name" },
         ],
       };
     },
-    mounted () {
-      SIO.on("unsavedFiles", (unsavedFiles, cb)=>{
-        if (unsavedFiles.length === 0) {
-          return;
-        }
-        this.cb = cb;
-        this.unsavedFiles = unsavedFiles;
-        // this.unsavedFiles.splice();//force update DOM //現状では要らないっぽい?
-        this.dialog = true;
-      });
+    computed:{
+      show(){
+        return this.dialog;
+      },
+      items(){
+        return this.unsavedFiles;
+      }
     },
     methods: {
       closeDialog () {
-        this.unsavedFiles.splice(0);
-        this.dialog = false;
+        this.$emit("closed","cancel");
       },
       discardChanges () {
-        this.cb(false);
-        this.closeDialog();
+        this.$emit("closed","discard");
       },
       saveAll () {
-        this.cb(true);
-        this.closeDialog();
+        this.$emit("closed","save");
       },
     },
 

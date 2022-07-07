@@ -1,13 +1,14 @@
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License.txt in the project root for the license information.
+ * See License in the project root for the license information.
  */
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
 const ARsshClient = require("arssh2-client");
 const { convertPathSep } = require("./pathUtils");
+const { emitAll } = require("../handlers/commUtils.js");
 
 const db = new Map();
 
@@ -111,12 +112,12 @@ function removeSsh(projectRootDir) {
 
 /**
  * ask password to client
- * @param {Object} sio - instance of SocketIO.socket
+ * @param {string} clientID - socket's ID
  * @param {string} hostname - name or kind of label for the host
  */
-function askPassword(sio, hostname) {
+function askPassword(clientID, hostname) {
   return new Promise((resolve, reject)=>{
-    sio.emit("askPassword", hostname, (data)=>{
+    emitAll(clientID, "askPassword", hostname, (data)=>{
       if (data === null) {
         const err = new Error("user canceled ssh password prompt");
         err.reason = "CANCELED";
@@ -132,13 +133,13 @@ function askPassword(sio, hostname) {
  * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
  * @param {string} remoteHostName - name property in hostInfo object
  * @param {Object} hostinfo - one of the ssh connection setting in remotehost json
- * @param {Object} sio - instance of SocketIO.socket
+ * @param {string} clientID - socket's ID
  */
-async function createSsh(projectRootDir, remoteHostName, hostinfo, sio) {
+async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID) {
   if (hasEntry(projectRootDir, hostinfo.id)) {
     return getSsh(projectRootDir, hostinfo.id);
   }
-  const password = await askPassword(sio, remoteHostName);
+  const password = await askPassword(clientID, remoteHostName);
   const config = await createSshConfig(hostinfo, password);
   const arssh = new ARsshClient(config, { connectionRetryDelay: 1000, verbose: true });
 
@@ -166,7 +167,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, sio) {
       if (failCount >= 3) {
         return Promise.reject(new Error(`wrong password for ${failCount} times`));
       }
-      const newPassword = await askPassword(sio, remoteHostName);
+      const newPassword = await askPassword(clientID, remoteHostName);
 
       if (config.passphrase) {
         config.passphrase = newPassword;

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <v-navigation-drawer
     v-if="selectedComponent !== null"
@@ -140,6 +145,13 @@
               :disabled="! copySelectedComponent.useJobScheduler"
               outlined
               @change="updateComponentProperty('submitOption')"
+            />
+            <v-text-field
+              v-if="isStorage"
+              v-model.lazy="copySelectedComponent.storagePath"
+              label="directory path"
+              outlined
+              @change="updateComponentProperty('storagePath')"
             />
           </v-expansion-panel-content>
         </v-expansion-panel>
@@ -451,6 +463,7 @@
               @remove="removeFromExcludeList"
               @update="updateExcludeList"
             />
+            clean up flag
             <v-radio-group
               v-model="copySelectedComponent.cleanupFlag"
               :disabled="disableRemoteSetting"
@@ -475,6 +488,12 @@
           <v-expansion-panel-header>Files</v-expansion-panel-header>
           <v-expansion-panel-content>
             <file-browser
+              v-if="! isRemoteComponent"
+              :readonly="false"
+              :project-root-dir="projectRootDir"
+            />
+            <remote-file-browser
+              v-if="isRemoteComponent"
               :readonly="false"
               :project-root-dir="projectRootDir"
             />
@@ -488,6 +507,7 @@
 <script>
   import listForm from "@/components/common/listForm.vue";
   import fileBrowser from "@/components/fileBrowser.vue";
+  import remoteFileBrowser from "@/components/remoteFileBrowser.vue";
   import { isValidName } from "@/lib/utility.js";
   import { glob2Array, addGlobPattern, removeGlobPattern, updateGlobPattern } from "@/lib/clientUtility.js";
   import { mapState, mapGetters, mapMutations } from "vuex";
@@ -502,6 +522,7 @@
     components: {
       listForm,
       fileBrowser,
+      remoteFileBrowser
     },
     data: function () {
       return {
@@ -527,6 +548,11 @@
     computed: {
       ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler"]),
       ...mapGetters(["selectedComponentAbsPath"]),
+      isRemoteComponent(){
+      return this.selectedComponent.type === "storage"
+                           && typeof this.selectedComponent.host === "string"
+                           && this.selectedComponent.host !== "localhost";
+      },
       disableRemoteSetting () {
         if(this.isStepjobTask){
           return false;
@@ -534,7 +560,7 @@
         return this.copySelectedComponent.host === "localhost";
       },
       hasHost(){
-        return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
+        return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask", "storage"].includes(this.selectedComponent.type);
       },
       hasJobScheduler(){
         return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
@@ -574,6 +600,9 @@
       },
       isBulkjobTask(){
         return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "bulkjobTask";
+      },
+      isStorage(){
+        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "storage";
       },
       includeList: function () {
         if (typeof this.copySelectedComponent.include !== "string") {
@@ -629,8 +658,8 @@
         }
         this.commitSelectedComponent(null);
       },
-      selectedComponent () {
-        if (this.selectedComponent === null) {
+      selectedComponent (nv, ov) {
+        if (this.selectedComponent === null || ( nv !== null && ov !== null && nv.ID === ov.ID)) {
           return;
         }
         this.reopening = true;
@@ -654,15 +683,13 @@
         commitSelectedComponent: "selectedComponent",
       }),
       deleteComponent () {
-        SIO.emit("removeNode", this.selectedComponent.ID, (rt)=>{
+        SIO.emitGlobal("removeNode", this.projectRootDir, this.selectedComponent.ID, this.currentComponent.ID, (rt)=>{
           if (!rt) {
             return;
           }
           this.commitSelectedComponent(null);
           // update componentTree
-          SIO.emit("getComponentTree", this.projectRootDir, (componentTree)=>{
-            this.commitComponentTree(componentTree);
-          });
+          SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
         });
       },
       deleteSourceOutputFile(){
@@ -686,10 +713,10 @@
         const ID = this.selectedComponent.ID;
         // event がrenameInputFile, renameOutputFileの時だけindex引数をもってくれば良い
         if (event === "renameInputFile" || event === "renameOutputFile") {
-          SIO.emit(event, ID, index, v.name);
+          SIO.emitGlobal(event, this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
           return;
         }
-        SIO.emit(event, ID, v.name);
+        SIO.emitGlobal(event, this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
       },
       updateIndexList (op, e, index) {
         if (op === "add") {
@@ -703,7 +730,7 @@
         }
         const ID = this.selectedComponent.ID;
         const newValue = this.copySelectedComponent.indexList;
-        SIO.emit("updateNode", ID, "indexList", newValue);
+        SIO.emitGlobal("updateNode", this.projectRootDir, ID, "indexList", newValue, SIO.generalCallback);
       },
       updateComponentProperty (prop) {
         if (prop === "name" && !this.validName) return;
@@ -718,19 +745,7 @@
         // 仕様を検討のうえ、ガードするなら何か方法を考える必要がある
         if (this.selectedComponent === null) return;
 
-        SIO.emit("updateNode", ID, prop, newValue, (rt)=>{
-          if(rt === false){
-            console.log("update node failed", rt);
-            return;
-          }
-          if (prop === "name" ){
-            SIO.emit("getFileList", this.selectedComponentAbsPath, (rt2)=>{
-              if(rt2 === false){
-                console.log("getFileList failed", rt2);
-              }
-            });
-          }
-        });
+        SIO.emitGlobal("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
       },
       addToIncludeList (v) {
         this.copySelectedComponent.include = addGlobPattern(this.copySelectedComponent.include, v.name);

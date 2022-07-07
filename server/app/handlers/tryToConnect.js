@@ -1,8 +1,14 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 "use strict";
 const { createSshConfig } = require("../core/sshManager");
 const ARsshClient = require("arssh2-client");
 const { getLogger } = require("../logSettings");
 const logger = getLogger();
+const { remoteHost } = require("../db/db");
 
 /**
  * try to connect remote host via ssh
@@ -36,4 +42,13 @@ async function tryToConnect(hostInfo, password, cb) {
       cb("error");
     });
 }
-module.exports = tryToConnect;
+
+async function onTryToConnectById(id, password, cb) {
+  const hostInfo = remoteHost.get(id);
+  await tryToConnect(hostInfo, password, cb);
+}
+
+module.exports = {
+  onTryToConnectById,
+  onTryToConnect: tryToConnect
+};

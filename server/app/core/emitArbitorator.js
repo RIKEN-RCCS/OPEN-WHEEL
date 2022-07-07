@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License.txt in the project root for the license information.
+ * See License in the project root for the license information.
  */
 "use strict";
 const { EventEmitter } = require("events");
@@ -30,8 +30,8 @@ class EmitArbitrator extends EventEmitter {
         const tmp = this.buffer.splice(0, this.chunkSize);
         await this.promisedEmit(tmp);
       }
-      for (const cb of this.callbacks) {
-        cb();
+      for (const func of this.callbacks) {
+        func();
       }
     } finally {
       setTimeout(()=>{

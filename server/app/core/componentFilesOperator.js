@@ -1,26 +1,61 @@
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License.txt in the project root for the license information.
+ * See License in the project root for the license information.
  */
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
 const isPathInside = require("is-path-inside");
+const { diff } = require("just-diff");
+const { diffApply } = require("just-diff-apply");
 const { promisify } = require("util");
 const glob = require("glob");
 const { componentFactory } = require("./workflowComponent");
 const { updateComponentPath, removeComponentPath, getComponentDir, getDescendantsIDs, getAllComponentIDs } = require("./projectFilesOperator");
-const { projectJsonFilename, componentJsonFilename, remoteHost, jobScheduler } = require("../db/db");
+const { projectJsonFilename, componentJsonFilename, remoteHost, jobScheduler, defaultPSconfigFilename } = require("../db/db");
 const { readJsonGreedy } = require("./fileUtils");
 const { gitAdd, gitRm, gitResetHEAD, gitClean } = require("./gitOperator2");
 const { isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
 const { hasChild, isInitialComponent } = require("./workflowComponent");
 const { replacePathsep } = require("../core/pathUtils");
 
-/*
- * private functions
+function isLocal(component) {
+  return typeof component.host === "undefined" || component.host === "localhost";
+}
+
+/**
+ * check if specified components are executed on same remote host
+ * @param {string} projectRootDir - root directory path of project
+ * @param {string} left -  first componentID
+ * @param {string} right - second componentID
+ * @returns {boolean} - on same remote or not
  */
+async function isSameRemoteHost(projectRootDir, left, right) {
+  if (left === right) {
+    return null;
+  }
+  const leftComponent = await readComponentJsonByID(projectRootDir, left);
+  const rightComponent = await readComponentJsonByID(projectRootDir, right);
+
+  if (isLocal(leftComponent) || isLocal(rightComponent)) {
+    return false;
+  }
+
+  if (leftComponent.host === rightComponent.host) {
+    return true;
+  }
+  const leftHost = remoteHost.query("name", leftComponent.host);
+  const rightHost = remoteHost.query("name", rightComponent.host);
+  const leftSharedHost = remoteHost.query("sharedHost", leftHost.sharedHost);
+  const rightSharedHost = remoteHost.query("sharedHost", rightHost.sharedHost);
+
+  if (leftHost === rightSharedHost || rightHost === leftSharedHost || leftSharedHost === rightSharedHost) {
+    return true;
+  }
+  return false;
+}
+
 
 /**
  * write component Json file and git add
@@ -41,11 +76,30 @@ async function readComponentJson(componentDir) {
 }
 
 /**
+ * write componentJson by ID
+ */
+async function writeComponentJsonByID(projectRootDir, ID, component) {
+  const componentDir = await getComponentDir(projectRootDir, ID, true);
+  return writeComponentJson(projectRootDir, componentDir, component);
+}
+
+/**
  * read componentJson by ID
  */
-async function getComponent(projectRootDir, ID) {
+async function readComponentJsonByID(projectRootDir, ID) {
   const componentDir = await getComponentDir(projectRootDir, ID, true);
   return readComponentJson(componentDir);
+}
+
+/**
+ * modify component json
+ */
+async function modifyComponentJson(projectRootDir, ID, modifier) {
+  const componentDir = await getComponentDir(projectRootDir, ID, true);
+  const componentJson = await readComponentJson(componentDir);
+  await modifier(componentJson);
+  await writeComponentJson(projectRootDir, componentDir, componentJson);
+  return componentJson;
 }
 
 
@@ -59,7 +113,7 @@ async function isParent(projectRootDir, parentID, childID) {
   if (childID === "parent") {
     return false;
   }
-  const childJson = await getComponent(projectRootDir, childID);
+  const childJson = await readComponentJsonByID(projectRootDir, childID);
   if (childJson === null || typeof childID !== "string") {
     return false;
   }
@@ -69,11 +123,11 @@ async function isParent(projectRootDir, parentID, childID) {
 
 async function removeAllLink(projectRootDir, ID) {
   const counterparts = new Map();
-  const component = await getComponent(projectRootDir, ID);
+  const component = await readComponentJsonByID(projectRootDir, ID);
 
   if (Object.prototype.hasOwnProperty.call(component, "previous")) {
     for (const previousComponent of component.previous) {
-      const counterpart = counterparts.get(previousComponent) || await getComponent(projectRootDir, previousComponent);
+      const counterpart = counterparts.get(previousComponent) || await readComponentJsonByID(projectRootDir, previousComponent);
       counterpart.next = counterpart.next.filter((e)=>{
         return e !== component.ID;
       });
@@ -89,7 +143,7 @@ async function removeAllLink(projectRootDir, ID) {
 
   if (Object.prototype.hasOwnProperty.call(component, "next")) {
     for (const nextComponent of component.next) {
-      const counterpart = counterparts.get(nextComponent) || await getComponent(projectRootDir, nextComponent);
+      const counterpart = counterparts.get(nextComponent) || await readComponentJsonByID(projectRootDir, nextComponent);
       counterpart.previous = counterpart.previous.filter((e)=>{
         return e !== component.ID;
       });
@@ -99,7 +153,7 @@ async function removeAllLink(projectRootDir, ID) {
 
   if (Object.prototype.hasOwnProperty.call(component, "else")) {
     for (const elseComponent of component.else) {
-      const counterpart = counterparts.get(elseComponent) || await getComponent(projectRootDir, elseComponent);
+      const counterpart = counterparts.get(elseComponent) || await readComponentJsonByID(projectRootDir, elseComponent);
       counterpart.previous = counterpart.previous.filter((e)=>{
         return e !== component.ID;
       });
@@ -111,7 +165,7 @@ async function removeAllLink(projectRootDir, ID) {
     for (const inputFile of component.inputFiles) {
       for (const src of inputFile.src) {
         const srcComponent = src.srcNode;
-        const counterpart = counterparts.get(srcComponent) || await getComponent(projectRootDir, srcComponent);
+        const counterpart = counterparts.get(srcComponent) || await readComponentJsonByID(projectRootDir, srcComponent);
 
         for (const outputFile of counterpart.outputFiles) {
           outputFile.dst = outputFile.dst.filter((e)=>{
@@ -127,7 +181,7 @@ async function removeAllLink(projectRootDir, ID) {
     for (const outputFile of component.outputFiles) {
       for (const dst of outputFile.dst) {
         const dstComponent = dst.dstNode;
-        const counterpart = counterparts.get(dstComponent) || await getComponent(projectRootDir, dstComponent);
+        const counterpart = counterparts.get(dstComponent) || await readComponentJsonByID(projectRootDir, dstComponent);
 
         for (const inputFile of counterpart.inputFiles) {
           inputFile.src = inputFile.src.filter((e)=>{
@@ -550,6 +604,16 @@ async function validateForeach(component) {
   return Promise.resolve();
 }
 
+async function validateStorage(component) {
+  if (typeof component.storagePath !== "string") {
+    return Promise.reject(new Error("storagePath is not set"));
+  }
+  if (isLocal(component) && !fs.pathExists(component.storagePath)) {
+    return Promise.reject(new Error("specified path is not exist on localhost"));
+  }
+  return Promise.resolve();
+}
+
 /**
  * validate inputFiles
  * @param {Object} component - any component object which has inputFiles prop
@@ -565,11 +629,29 @@ async function validateInputFiles(component) {
   return true;
 }
 
+/**
+ * validate outputFiles
+ * @param {Object} component - any component object which has putFiles prop
+ * @returns {true|Error} - outputFile is valid or not
+ */
+async function validateOutputFiles(component) {
+  for (const outputFile of component.outputFiles) {
+    const filename = outputFile.name;
+    if (!isValidOutputFilename(filename)) {
+      return Promise.reject(new Error(`${component.name} '${outputFile.name}' is not allowed.`));
+    }
+  }
+  return true;
+}
+
 async function recursiveGetHosts(projectRootDir, parentID, hosts) {
   const promises = [];
   const children = await getChildren(projectRootDir, parentID);
 
   for (const component of children) {
+    if (component.disable) {
+      continue;
+    }
     if (component.type === "task" && component.host !== "localhost" || component.type === "stepjob") {
       hosts.push(component.host);
     }
@@ -597,9 +679,17 @@ async function getHosts(projectRootDir, rootID) {
 /**
  * validate all components in workflow
  */
-async function validateComponents(projectRootDir, parentID) {
-  const promises = [];
+async function validateComponents(projectRootDir, argParentID) {
+  let parentID;
+  if (typeof argParentID !== "string") {
+    const rootWF = await readComponentJson(projectRootDir);
+    parentID = rootWF.ID;
+  } else {
+    parentID = argParentID;
+  }
+
   const children = await getChildren(projectRootDir, parentID);
+  const promises = [];
 
   for (const component of children) {
     if (component.disable) {
@@ -621,9 +711,14 @@ async function validateComponents(projectRootDir, parentID) {
       promises.push(validateParameterStudy(projectRootDir, component));
     } else if (component.type === "foreach") {
       promises.push(validateForeach(component));
+    } else if (component.type === "storage") {
+      promises.push(validateStorage(component));
     }
     if (Object.prototype.hasOwnProperty.call(component, "inputFiles")) {
       promises.push(validateInputFiles(component));
+    }
+    if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
+      promises.push(validateOutputFiles(component));
     }
     if (hasChild(component)) {
       promises.push(validateComponents(projectRootDir, component.ID));
@@ -668,6 +763,10 @@ async function createNewComponent(projectRootDir, parentDir, type, pos) {
   newComponent.name = path.basename(absDirName);
   await writeComponentJson(projectRootDir, absDirName, newComponent);
   await updateComponentPath(projectRootDir, newComponent.ID, absDirName);
+
+  if (type === "PS") {
+    await fs.writeJson(path.resolve(absDirName, defaultPSconfigFilename), { version: 2, targetFiles: [], params: [], scatter: [], gather: [] }, { spaces: 4 });
+  }
   return newComponent;
 }
 
@@ -689,6 +788,22 @@ async function renameComponentDir(projectRootDir, ID, newName) {
   return updateComponentPath(projectRootDir, ID, newDir);
 }
 
+async function replaceEnv(projectRootDir, ID, newEnv) {
+  const componentJson = await readComponentJsonByID(projectRootDir, ID);
+  const env = componentJson.env || {};
+  const patch = diff(env, newEnv);
+  diffApply(env, patch);
+  componentJson.env = env;
+  await writeComponentJsonByID(projectRootDir, ID, componentJson);
+  return componentJson;
+}
+
+async function getEnv(projectRootDir, ID) {
+  const componentJson = await readComponentJsonByID(projectRootDir, ID);
+  const env = componentJson.env;
+  return env;
+}
+
 async function updateComponent(projectRootDir, ID, prop, value) {
   if (prop === "path") {
     return Promise.reject(new Error("path property is deprecated. please use 'name' instead."));
@@ -696,15 +811,15 @@ async function updateComponent(projectRootDir, ID, prop, value) {
   if (prop === "inputFiles" || prop === "outputFiles") {
     return Promise.reject(new Error(`updateNode does not support ${prop}. please use renameInputFile or renameOutputFile`));
   }
+  if (prop === "env") {
+    return Promise.reject(new Error("updateNode does not support env. please use updateEnv"));
+  }
   if (prop === "name") {
     await renameComponentDir(projectRootDir, ID, value);
   }
-
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  const componentJson = await readComponentJson(componentDir);
-  componentJson[prop] = value;
-  await writeComponentJson(projectRootDir, componentDir, componentJson);
-  return componentJson;
+  return modifyComponentJson(projectRootDir, ID, (componentJson)=>{
+    componentJson[prop] = value;
+  });
 }
 
 async function updateStepNumber(projectRootDir) {
@@ -765,6 +880,7 @@ async function arrangeComponent(stepjobGroupArray) {
       }
 
       let nextComponent = [];
+      /*eslint-disable-next-line no-loop-func*/
       nextComponent = stepjobTaskComponents.filter((stepjobTask)=>{
         return stepjobTask.ID === arrangeArraytemp[i - 1].next[0];
       });
@@ -892,6 +1008,13 @@ async function renameInputFile(projectRootDir, ID, index, newName) {
         }
       }
     }
+    for (const inputFile of counterpartJson.inputFiles) {
+      for (const dst of inputFile.forwardTo) {
+        if (dst.dstNode === ID && dst.dstName === oldName) {
+          dst.dstName = newName;
+        }
+      }
+    }
     p.push(writeComponentJson(projectRootDir, counterpartDir, counterpartJson));
   }
   return Promise.all(p);
@@ -920,6 +1043,13 @@ async function renameOutputFile(projectRootDir, ID, index, newName) {
     const counterpartJson = await readComponentJson(counterpartDir);
     for (const inputFile of counterpartJson.inputFiles) {
       for (const src of inputFile.src) {
+        if (src.srcNode === ID && src.srcName === oldName) {
+          src.srcName = newName;
+        }
+      }
+    }
+    for (const outputFile of counterpartJson.outputFiles) {
+      for (const src of outputFile.origin) {
         if (src.srcNode === ID && src.srcName === oldName) {
           src.srcName = newName;
         }
@@ -1034,7 +1164,6 @@ async function removeComponent(projectRootDir, ID) {
   //so, gitRm and fs.remove must be called in this order
   await gitRm(projectRootDir, targetDir);
   await fs.remove(targetDir);
-
   return removeComponentPath(projectRootDir, descendantsIDs);
 }
 
@@ -1046,7 +1175,7 @@ async function getSourceComponents(projectRootDir) {
     }));
 
   return components.filter((componentJson)=>{
-    return componentJson.type === "source" && !componentJson.subComponent;
+    return componentJson.type === "source" && !componentJson.subComponent && !componentJson.disable;
   });
 }
 
@@ -1112,7 +1241,8 @@ async function getComponentTree(projectRootDir, rootDir) {
 module.exports = {
   getHosts,
   getSourceComponents,
-  getComponent,
+  getChildren,
+  readComponentJsonByID,
   validateComponents,
   componentJsonReplacer,
   createNewComponent,
@@ -1129,8 +1259,13 @@ module.exports = {
   addFileLink,
   removeLink,
   removeFileLink,
+  getEnv,
+  replaceEnv,
   cleanComponent,
   removeComponent,
   isComponentDir,
-  getComponentTree
+  getComponentTree,
+  readComponentJson,
+  isLocal,
+  isSameRemoteHost
 };

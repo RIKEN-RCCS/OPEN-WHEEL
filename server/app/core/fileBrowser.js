@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License.txt in the project root for the license information.
+ * See License in the project root for the license information.
  */
 "use strict";
 const fs = require("fs-extra");
@@ -127,7 +127,7 @@ async function ls(targetDir, options = {}) {
       if (dirFilter && !dirFilter.test(name)) {
         return;
       }
-      dirList.push({ path: request, name, type: "dir", islink: false, isComponentDir: await isComponentDir(request) });
+      dirList.push({ path: request, name, type: "dir", islink: false, isComponentDir: await isComponentDir(path.resolve(request, name)) });
     } else if (stats.isFile() && sendFilename) {
       if (fileFilter && !fileFilter.test(name)) {
         return;
@@ -143,7 +143,7 @@ async function ls(targetDir, options = {}) {
           if (dirFilter && !dirFilter.test(name)) {
             return;
           }
-          dirList.push({ path: request, name, type: "dir", islink: true, isComponentDir: await isComponentDir(request) });
+          dirList.push({ path: request, name, type: "dir", islink: true, isComponentDir: await isComponentDir(path.resolve(request, name)) });
         }
 
         if (stats2.isFile() && sendFilename) {

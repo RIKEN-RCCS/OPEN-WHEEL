@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      /*! ADAPTED
+    Typeplate : Starter Kit
+    URL ........... http://typeplate.com
+    Version ....... 3.0.2
+    Github ........ https://github.com/typeplate/starter-kit
+    Authors ....... Dennis Gaebel (@gryghostvisuals) & Zachary Kain (@zakkain)
+    License ....... Creative Commmons Attribution 3.0
+    License URL ... https://github.com/typeplate/starter-kit/blob/master/license.txt
+    */
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        text-rendering: optimizeLegibility;
+        line-height: 1;
+        margin-top: 0;
+        color: #222;
+      }
+
+      blockquote + figcaption cite {
+        display: block;
+        font-size: inherit;
+        text-align: right;
+      }
+
+      body {
+        word-wrap: break-word;
+      }
+
+      pre code {
+        word-wrap: normal;
+      }
+
+      body {
+        -webkit-hyphens: auto;
+        -ms-hyphens: auto;
+        hyphens: auto;
+        color: #444;
+      }
+
+      h1 {
+        font-size: 2em;
+        /* 2*16 = 32 */
+      }
+
+      h2 {
+        font-size: 1.5em;
+        /* 1.5*16 = 24 */
+      }
+
+      h3 {
+        font-size: 1.17em;
+        /* 1.17*16 = 18.72 */
+      }
+
+      h4 {
+        font-size: 1em;
+        /* 1*16 = 16 */
+      }
+
+      h5 {
+        font-size: 0.83em;
+        /* 0.83*16 = 13.28 */
+      }
+
+      h6 {
+        font-size: 0.75em;
+        /* 0.75*16 = 12 */
+      }
+
+      h1 {
+        margin: 2.42424rem 0 1.454544rem;
+      }
+
+      h2 {
+        margin: 2.0202rem 0 1.21212rem;
+      }
+
+      h3 {
+        margin: 1.61616rem 0 1rem;
+      }
+
+      h4 {
+        margin: 1.21212rem 0 1;
+      }
+
+      h5 {
+        margin: 0.80808rem 0;
+      }
+
+      h6 {
+        margin: 0.70707rem 0;
+      }
+
+      p {
+        margin: auto auto 1.5rem;
+      }
+
+      small {
+        font-size: 65%;
+      }
+
+      input,
+      abbr,
+      acronym,
+      blockquote,
+      code,
+      kbd,
+      q,
+      samp,
+      var {
+        -webkit-hyphens: none;
+        -ms-hyphens: none;
+        hyphens: none;
+      }
+
+      pre {
+        white-space: pre;
+      }
+
+      pre code {
+        white-space: -moz-pre-wrap;
+        white-space: pre-wrap;
+      }
+
+      code {
+        white-space: pre;
+        font-family: SF Mono, Consolas, Dejavu Sans Mono, Menlo, monospace;
+      }
+
+      abbr {
+        -webkit-font-variant: small-caps;
+        -moz-font-variant: small-caps;
+        -ms-font-variant: small-caps;
+        font-variant: small-caps;
+        font-weight: 600;
+        text-transform: lowercase;
+        color: gray;
+      }
+
+      abbr[title]:hover {
+        cursor: help;
+      }
+
+      /* FROM http://purecss.io/layouts/side-menu/  adapted to remove pure classes*/
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+          "Segoe UI Symbol";
+        color: #444;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: auto;
+      }
+
+      code,
+      pre {
+        background-color: #f5f5f5;
+        color: #444;
+        border-radius: 2px;
+        text-shadow: 0px 1px 0px white;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+      }
+
+      pre code {
+        border: none;
+        box-shadow: none;
+      }
+
+      pre {
+        padding: 0.5em;
+      }
+
+      code {
+        display: inline-block;
+        padding: 0 0.5em;
+        line-height: 1.4;
+        font-size: 0.9em;
+      }
+
+      table {
+        border-spacing: 0;
+        margin-bottom: 1.5rem;
+      }
+
+      table th,
+      table td {
+        padding: 0.3em 0.7em;
+      }
+
+      table th {
+        background-color: #f4f4f4;
+        border-bottom: 2px solid #444;
+      }
+
+      table td {
+        border: 1px solid #f5f5f5;
+      }
+
+      /* Add transition to containers so they can push in and out. */
+
+      #layout,
+      #menu,
+      .menu-link {
+        -webkit-transition: all 0.2s ease-out;
+        -moz-transition: all 0.2s ease-out;
+        -ms-transition: all 0.2s ease-out;
+        -o-transition: all 0.2s ease-out;
+        transition: all 0.2s ease-out;
+      }
+
+      /* This is the parent `<div>` that contains the menu and the content area. */
+
+      #layout {
+        position: relative;
+        padding-left: 0;
+      }
+
+      #layout.active #menu {
+        left: 250px;
+        width: 250px;
+      }
+
+      #layout.active .menu-link {
+        left: 250px;
+      }
+
+      /* The content `<div>` is where all your content goes. */
+
+      .content {
+        margin: 50px auto;
+        padding: 0 2em;
+        max-width: 80ex;
+        line-height: 1.6em;
+      }
+
+      /*
+      The `#menu` `<div>` is the parent `<div>` that contains the menu that
+      appears on the left side of the page.
+      */
+
+      #menu {
+        margin-left: -250px;
+        /* "#menu" width */
+        width: 250px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1000;
+        /* so the menu or its navicon stays above all content */
+        background: #f4f4f4;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        font-size: 0.9em;
+      }
+
+      @media print {
+        #menu,
+        .menu-link {
+          display: none !important;
+        }
+      }
+
+      a,
+      a * {
+        text-decoration: none;
+        color: #2483cc;
+      }
+
+      a:visited {
+        text-decoration: none;
+        color: #2483cc;
+      }
+
+      /* All anchors inside the menu should be styled like this. */
+
+      #menu a {
+        display: block;
+        padding: 0.5em 0.5em;
+      }
+
+      #menu a:first-letter {
+        text-transform: capitalize;
+      }
+
+      #menu ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 1em 0.5em;
+      }
+
+      #menu ul ul {
+        margin-top: 0.5em;
+        margin-left: 0.5em;
+        border-left: 4px solid rgba(255, 255, 255, 0.5);
+      }
+
+      /* Change color of the anchor links on hover/focus. */
+
+      #menu li a:hover,
+      #menu li a:focus {
+        background: rgba(255, 255, 255, 0.4);
+      }
+
+      /* This styles the selected menu item `<li>`. */
+
+      #menu li a.active {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      /* This styles a link within a selected menu item `<li>`. */
+
+      #menu li a.active {
+        color: #222;
+      }
+
+      /* This styles the menu heading. */
+
+      #menu li.heading {
+        font-size: 0.9em;
+        text-transform: uppercase;
+        color: #000;
+      }
+
+      #menu li.heading > * {
+        padding: 0.5em;
+        display: block;
+      }
+
+      #menu li.heading a {
+        color: #0c68af;
+      }
+
+      /* -- Dynamic Button For Responsive Menu -------------------------------------*/
+
+      /*
+      `.menu-link` represents the responsive menu toggle that shows/hides on
+      small screens.
+      */
+
+      .menu-link {
+        position: fixed;
+        display: block;
+        /* show this only on small screens */
+        top: 0;
+        left: 0;
+        /* "#menu width" */
+        font-size: 10px;
+        /* change this value to increase/decrease button size */
+        z-index: 10;
+        width: 2em;
+        height: auto;
+        padding: 1.6em 1.2em;
+        border-radius: 0 2px 2px 0;
+      }
+
+      .menu-link:hover {
+        background: #f4f4f4;
+      }
+
+      .menu-link span {
+        position: relative;
+        display: block;
+      }
+
+      .menu-link span,
+      .menu-link span:before,
+      .menu-link span:after {
+        background-color: #555;
+        width: 100%;
+        height: 0.2em;
+        border-radius: 1em;
+      }
+
+      .menu-link span:before,
+      .menu-link span:after {
+        position: absolute;
+        margin-top: -0.6em;
+        content: " ";
+      }
+
+      .menu-link span:after {
+        margin-top: 0.6em;
+      }
+
+      /* Hides the menu at `48em`, but modify this based on your app's needs. */
+
+      @media (min-width: 48em) {
+        .header,
+        .content {
+          padding-left: 2em;
+          padding-right: 2em;
+        }
+
+        #layout {
+          padding-left: 250px;
+          /* left col width "#menu" */
+          left: 0;
+        }
+        #menu {
+          left: 250px;
+        }
+
+        .menu-link {
+          position: fixed;
+          left: 250px;
+          display: none;
+        }
+
+        #layout.active .menu-link {
+          left: 250px;
+        }
+      }
+
+      @media (max-width: 48em) {
+        /* Only apply this when the window is small. Otherwise, the following case results in extra padding on the left:
+         * Make the window small.
+         * Tap the menu to trigger the active state.
+         * Make the window large again.
+         */
+        #layout.active {
+          position: relative;
+          left: 250px;
+        }
+      }
+
+      /* Heading anchors and permalinks */
+      h1[id],
+      h2[id],
+      h3[id],
+      h4[id],
+      h5[id],
+      h6[id] {
+        position: relative;
+      }
+      .heading-anchor-permalink {
+        /* Position the permalink to the left of the title */
+        position: absolute;
+        right: 100%;
+        /* Add some spacing as padding to not lose the hover */
+        padding-right: 0.6rem;
+        /* Make it only visible on heading hover, see below */
+        opacity: 0;
+      }
+      h1[id]:hover .heading-anchor-permalink,
+      h2[id]:hover .heading-anchor-permalink,
+      h3[id]:hover .heading-anchor-permalink,
+      h4[id]:hover .heading-anchor-permalink,
+      h5[id]:hover .heading-anchor-permalink,
+      h6[id]:hover .heading-anchor-permalink {
+        opacity: 0.5;
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+  </head>
+
+  <body>
+    <div id="layout">
+      <!-- Menu toggle -->
+      <a href="#menu" id="menuLink" class="menu-link">
+        <!-- Hamburger icon -->
+        <span></span>
+      </a>
+      <nav id="menu">
+        <ul>
+<li><a class="" href="../../index.html">index</a></li>
+<li class="heading"><span>1 WHEEL introduction</span></li>
+<ul>
+<li class="heading"><span>how to boot</span></li>
+<ul>
+<li><a class="" href="../../1_WHEEL_introduction/how_to_boot/boot.html">boot</a></li>
+</ul>
+</ul>
+<li class="heading"><a class="" href="../../2_WHEEL_manual/index.html">2 WHEEL manual</a></li>
+<ul>
+<li class="heading"><span>1 home screen</span></li>
+<ul>
+<li><a class="" href="../../2_WHEEL_manual/1_home_screen/home.html">home</a></li>
+</ul>
+<li class="heading"><span>2 remotehost screen</span></li>
+<ul>
+<li><a class="" href="../../2_WHEEL_manual/2_remotehost_screen/remotehost.html">remotehost</a></li>
+</ul>
+<li class="heading"><span>3 workflow screen</span></li>
+<ul>
+<li><a class="" href="../../2_WHEEL_manual/3_workflow_screen/1_graphview.html">1 graphview</a></li>
+<li><a class="" href="../../2_WHEEL_manual/3_workflow_screen/2_listview.html">2 listview</a></li>
+<li><a class="" href="../../2_WHEEL_manual/3_workflow_screen/3_editor.html">3 editor</a></li>
+</ul>
+<li class="heading"><span>4 component</span></li>
+<ul>
+<li><a class="" href="../../2_WHEEL_manual/4_component/00_common.html">00 common</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/01_Task.html">01 Task</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/02_If.html">02 If</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/03_For.html">03 For</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/04_while.html">04 while</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/05_Foreach.html">05 Foreach</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/06_PS.html">06 PS</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/07_Workflow.html">07 Workflow</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/08_Storage.html">08 Storage</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/09_Source.html">09 Source</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/10_Viewer.html">10 Viewer</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/11_Stepjob.html">11 Stepjob</a></li>
+<li><a class="" href="../../2_WHEEL_manual/4_component/12_BulkjobTask.html">12 BulkjobTask</a></li>
+</ul>
+
+</ul>
+<li class="heading"><a class="" href="../index.html">3 WHEEL tutorial</a></li>
+<ul>
+<li><a class="" href="../1_hello_world.html">1 hello world</a></li>
+<li class="heading"><span>2 OpenFOAM PS sample</span></li>
+<ul>
+<li><a class="" href="../2_OpenFOAM_PS_sample/OpenFOAM_PS_sample.html">OpenFOAM PS sample</a></li>
+</ul>
+<li class="heading"><span>3 OpenFOAM KPrepostCloud sample</span></li>
+<ul>
+<li><a class="active" href="OpenFOAM_KPrepostCloud_sample.html">OpenFOAM KPrepostCloud sample</a></li>
+</ul>
+<li class="heading"><span>4 OpenFOAM TCS sample</span></li>
+<ul>
+<li><a class="" href="../4_OpenFOAM_TCS_sample/OpenFOAM_TCS_sample.html">OpenFOAM TCS sample</a></li>
+</ul>
+<li class="heading"><span>5 TensorFlow UGE sample</span></li>
+<ul>
+<li><a class="" href="../5_TensorFlow_UGE_sample/TensorFlow_UGE_sample.html">TensorFlow UGE sample</a></li>
+</ul>
+
+</ul>
+<li class="heading"><span>4 ATTENTION</span></li>
+<ul>
+<li><a class="" href="../../4_ATTENTION/ATTENTION.html">ATTENTION</a></li>
+</ul>
+</ul>
+      </nav>
+      <article id="main" class="content">
+        <h1 id="%E4%BA%AC%E3%83%97%E3%83%AA%E3%83%9D%E3%82%B9%E3%83%88%E3%82%AF%E3%83%A9%E3%82%A6%E3%83%89%E3%82%92%E7%94%A8%E3%81%84%E3%81%9Fopenfoam%E8%A7%A3%E6%9E%90%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E5%AE%9F%E8%A1%8C">京プリポストクラウドを用いたOpenFOAM解析ワークフローの実行 <a class="heading-anchor-permalink" href="#%E4%BA%AC%E3%83%97%E3%83%AA%E3%83%9D%E3%82%B9%E3%83%88%E3%82%AF%E3%83%A9%E3%82%A6%E3%83%89%E3%82%92%E7%94%A8%E3%81%84%E3%81%9Fopenfoam%E8%A7%A3%E6%9E%90%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h1>
+<p>本章では、前章で紹介した「OpenFOAMを利用したcavityケースの解析ワークフロー」の京プリポストクラウド上での実行方法について説明します。<br>
+以降、下記の順にて内容を紹介します。</p>
+<p>また、本章で使用するモデルデータは前章でダウンロード可能です。
+Taskコンポーネントで使用するスクリプトは、下記よりダウンロード可能です。<br>
+<a href="./sample/OpenFOAM_KPrepostCloud_sample.zip">OpenFOAMサンプルデータ(京プリポストクラウド)</a></p>
+<ol>
+<li>京プリポストクラウドインスタンスへのOpenFOAM環境設定</li>
+<li>ワークフローの作成<br>
+　1. Task コンポーネント - 1<br>
+　2. Task コンポーネント - 2<br>
+　3. Task コンポーネント - 3</li>
+<li>解析の実行</li>
+</ol>
+<h2 id="1.-%E4%BA%AC%E3%83%97%E3%83%AA%E3%83%9D%E3%82%B9%E3%83%88%E3%82%AF%E3%83%A9%E3%82%A6%E3%83%89%E3%82%A4%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%B3%E3%82%B9%E3%81%B8%E3%81%AEopenfoam%E7%92%B0%E5%A2%83%E8%A8%AD%E5%AE%9A">1. 京プリポストクラウドインスタンスへのOpenFOAM環境設定 <a class="heading-anchor-permalink" href="#1.-%E4%BA%AC%E3%83%97%E3%83%AA%E3%83%9D%E3%82%B9%E3%83%88%E3%82%AF%E3%83%A9%E3%82%A6%E3%83%89%E3%82%A4%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%B3%E3%82%B9%E3%81%B8%E3%81%AEopenfoam%E7%92%B0%E5%A2%83%E8%A8%AD%E5%AE%9A">#</a></h2>
+<h3 id="%E4%BA%AC%E3%83%97%E3%83%AA%E3%83%9D%E3%82%B9%E3%83%88%E3%82%AF%E3%83%A9%E3%82%A6%E3%83%89%E3%82%A4%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%B3%E3%82%B9">京プリポストクラウドインスタンス <a class="heading-anchor-permalink" href="#%E4%BA%AC%E3%83%97%E3%83%AA%E3%83%9D%E3%82%B9%E3%83%88%E3%82%AF%E3%83%A9%E3%82%A6%E3%83%89%E3%82%A4%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%B3%E3%82%B9">#</a></h3>
+<p>京プリポストクラウドサービスに関しては、理化学研究所のHPをご確認下さい。</p>
+<p><a href="https://www.r-ccs.riken.jp/ungi/prpstcloud/">https://www.r-ccs.riken.jp/ungi/prpstcloud/</a></p>
+<p>本事例では、下記の構成をもつインスタンスを使用しています。</p>
+<pre><code>イメージ名：Ubuntu16.04_LTS  
+サイズ　　：A4.medium  
+</code></pre>
+<h3 id="openfoam%E7%92%B0%E5%A2%83%E8%A8%AD%E5%AE%9A">OpenFOAM環境設定 <a class="heading-anchor-permalink" href="#openfoam%E7%92%B0%E5%A2%83%E8%A8%AD%E5%AE%9A">#</a></h3>
+<p>京プリポストクラウドでOpenFOAMを実行するためには、ユーザ自身でアプリケーションをインストールする必要があります。<br>
+本節では、OpenFOAM(v6)のインストール方法について説明します。</p>
+<h4 id="%E3%83%AA%E3%83%9D%E3%82%B8%E3%83%88%E3%83%AA%E3%81%AE%E8%BF%BD%E5%8A%A0">リポジトリの追加 <a class="heading-anchor-permalink" href="#%E3%83%AA%E3%83%9D%E3%82%B8%E3%83%88%E3%83%AA%E3%81%AE%E8%BF%BD%E5%8A%A0">#</a></h4>
+<p>作成したインスタンスへログイン後、以下のコマンドをターミナルで実行します。</p>
+<pre><code>sudo sh -c &quot;wget -O - http://dl.openfoam.org/gpg.key | apt-key add -&quot;
+</code></pre>
+<p>OKが表示されることを確認します。</p>
+<pre><code>--20XX-XX-XX hh:mm:ss--  http://dl.openfoam.org/gpg.key
+Resolving dl.openfoam.org (dl.openfoam.org)... 52.208.208.42
+Connecting to dl.openfoam.org (dl.openfoam.org)|52.208.208.42|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1710 (1.7K) [application/pgp-keys]
+Saving to: ‘STDOUT’
+
+-                             100%[=================================================&gt;]   1.67K  --.-KB/s    in 0s
+
+20XX-XX-XX hh:mm:ss (61.8 MB/s) - written to stdout [1710/1710]
+
+OK
+</code></pre>
+<p>続いて以下のコマンドを実行します。<br>
+メッセージは表示されません。</p>
+<pre><code>sudo add-apt-repository http://dl.openfoam.org/ubuntu
+</code></pre>
+<h4 id="%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88">アップデート <a class="heading-anchor-permalink" href="#%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88">#</a></h4>
+<p>以下のコマンドを実行します。</p>
+<pre><code>sudo apt-get update
+</code></pre>
+<p>以下のメッセージを確認します。</p>
+<pre><code>～中略～
+Reading package lists... Done
+</code></pre>
+<h4 id="%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E3%81%AE%E5%AE%9F%E8%A1%8C">インストールの実行 <a class="heading-anchor-permalink" href="#%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h4>
+<p>以下のコマンドを実行します。</p>
+<pre><code>sudo apt-get -y install openfoam6
+</code></pre>
+<p>実行完了後、以下のメッセージが表示されます。<br>
+従って、次節でbashrcの編集を行います。</p>
+<pre><code>～中略～
+** To use OpenFOAM please add
+**
+**    . /opt/openfoam6/etc/bashrc
+**
+** To your ~/.bashrc
+～中略～
+</code></pre>
+<h4 id="bashrc%E3%81%AE%E7%B7%A8%E9%9B%86">bashrcの編集 <a class="heading-anchor-permalink" href="#bashrc%E3%81%AE%E7%B7%A8%E9%9B%86">#</a></h4>
+<p>OpenFOAM v6を使用するためにはパスを通す必要があります。
+ここでは、viを用いてbashrcを編集します。</p>
+<p>以下のコマンドを実行します。</p>
+<pre><code>vi ~/.bashrc
+</code></pre>
+<p>ページの最下部に移動し、iキーを押し、入力モードに変更します。<br>
+以下を記入します。</p>
+<pre><code>source /opt/openfoam6/etc/bashrc
+</code></pre>
+<p>ESCキーを押し、入力モードから離脱後、下記コマンドにより保存します。</p>
+<pre><code>:wq
+</code></pre>
+<h4 id="%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E3%81%AE%E7%A2%BA%E8%AA%8D">インストールの確認 <a class="heading-anchor-permalink" href="#%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E3%81%AE%E7%A2%BA%E8%AA%8D">#</a></h4>
+<p>インスタンスを再起動(ソフトリブート)後、下記のコマンドを実行します。</p>
+<pre><code>simpleFoam -help
+</code></pre>
+<p>以下が表示されることを確認してください。</p>
+<pre><code>Usage: simpleFoam [OPTIONS]
+options:
+  -case &lt;dir&gt;       specify alternate case directory, default is the cwd
+  -fileHandler &lt;handler&gt;
+                    override the fileHandler
+  -hostRoots &lt;(((host1 dir1) .. (hostN dirN))&gt;
+                    slave root directories (per host) for distributed running
+  -listFunctionObjects
+                    List functionObjects
+  -listFvOptions    List fvOptions
+  -listRegisteredSwitches
+                    List switches registered for run-time modification
+  -listScalarBCs    List scalar field boundary conditions (fvPatchField&lt;scalar&gt;)
+  -listSwitches     List switches declared in libraries but not set in
+                    etc/controlDict
+  -listTurbulenceModels
+                    List turbulenceModels
+  -listUnsetSwitches
+                    List switches declared in libraries but not set in
+                    etc/controlDict
+  -listVectorBCs    List vector field boundary conditions (fvPatchField&lt;vector&gt;)
+  -noFunctionObjects
+                    do not execute functionObjects
+  -parallel         run in parallel
+  -postProcess      Execute functionObjects only
+  -roots &lt;(dir1 .. dirN)&gt;
+                    slave root directories for distributed running
+  -srcDoc           display source code in browser
+  -doc              display application documentation in browser
+  -help             print the usage
+
+Using: OpenFOAM-6 (see www.OpenFOAM.org)
+Build: 6-fa1285188035
+</code></pre>
+<p>以上で京プリポストクラウドインスタンスへのOpenFOAM環境設定は完了です。</p>
+<h2 id="2.-%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">2. ワークフローの作成 <a class="heading-anchor-permalink" href="#2.-%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">#</a></h2>
+<p>ワークフローの構成は前章と同様に以下の構成となっております。
+各コンポーネントの詳細に関しては、前章をご確認ください。</p>
+<ul>
+<li>Task コンポーネント - 1：ITOへのジョブ投入及びOpenFOAM前処理</li>
+<li>Task コンポーネント - 2：ITOへのジョブ投入及びOpenFOAM実行用</li>
+<li>Task コンポーネント - 3：ITOへのジョブ投入及びファイル回収用</li>
+</ul>
+<p>京プリポストクラウドでは、ジョブスケジューラは利用できないため各Taskコンポーネントに設定する
+スクリプトファイルは以下のようになります。</p>
+<h3 id="task%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88-1-prerunopenfoam_task">Taskコンポーネント-1 PreRunOpenFOAM_Task <a class="heading-anchor-permalink" href="#task%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88-1-prerunopenfoam_task">#</a></h3>
+<blockquote>
+<p><a href="http://PreRunOpenFOAM.sh">PreRunOpenFOAM.sh</a></p>
+</blockquote>
+<pre><code>#!/bin/bash
+source /opt/openfoam6/etc/bashrc
+tar xvzf cavity.tar.gz
+mkdir ../WORK
+mv cavity ../WORK
+cd ../WORK/cavity
+blockMesh
+</code></pre>
+<h3 id="task%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88-2-solrunopenfoam_task">Taskコンポーネント-2 SolRunOpenFOAM_Task <a class="heading-anchor-permalink" href="#task%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88-2-solrunopenfoam_task">#</a></h3>
+<blockquote>
+<p><a href="http://SolRunOpenFOAM.sh">SolRunOpenFOAM.sh</a></p>
+</blockquote>
+<pre><code>#!/bin/bash
+source /opt/openfoam6/etc/bashrc
+cd ../WORK/cavity
+icoFoam &gt; ./log.icoFoam 2&gt;&amp;1
+</code></pre>
+<h3 id="task%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88-3-resultrunopenfoam_task">Taskコンポーネント-3 ResultRunOpenFOAM_Task <a class="heading-anchor-permalink" href="#task%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88-3-resultrunopenfoam_task">#</a></h3>
+<blockquote>
+<p><a href="http://ResultRunOpenFOAM.sh">ResultRunOpenFOAM.sh</a></p>
+</blockquote>
+<pre><code>#!/bin/bash
+cd ../WORK/cavity
+touch result.foam
+cd ../  
+tar cvzf cavity.tar.gz cavity
+mv cavity.tar.gz ../ResultRunOpenFOAM_Task/
+</code></pre>
+<h2 id="3.-%E8%A7%A3%E6%9E%90%E3%81%AE%E5%AE%9F%E8%A1%8C">3. 解析の実行 <a class="heading-anchor-permalink" href="#3.-%E8%A7%A3%E6%9E%90%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h2>
+<h3 id="%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E6%83%85%E5%A0%B1%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">リモートホスト登録情報に関して <a class="heading-anchor-permalink" href="#%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E6%83%85%E5%A0%B1%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">#</a></h3>
+<p>解析の実行にあたり、リモートホスト画面にてユーザが作成した京プリポストクラウドのインスタンス情報を登録する必要があります。
+参考として、本事例で設定したホスト情報の中で注意すべき項目を示します。</p>
+<ul>
+<li>Host Name：10.9.X.X</li>
+<li>User ID：ubuntu</li>
+<li>Host Work Dir：/home/ubuntu</li>
+</ul>
+<h3 id="%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E5%AE%9F%E8%A1%8C">ワークフローの実行 <a class="heading-anchor-permalink" href="#%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h3>
+<p>上記スクリプトを各コンポーネントに設定後、プロジェクト実行ボタンを押下することで計算が開始されます。<br>
+プロジェクト実行時には京プリポストクラウドとVPN接続されている必要があります。<br>
+京プリポストクラウドとのVPN接続に関しては、理化学研究所のHPをご確認下さい。</p>
+<p><img src="./img/execute_project.png" alt="img" title="プロジェクトの実行"></p>
+<p>結果の確認方法は前章をご確認下さい。</p>
+<p>京プリポストクラウドを用いたOpenFOAM解析ワークフローの実行例は以上になります。</p>
+
+      </article>
+    </div>
+    <script>
+      // Load contents.json if you need it
+    </script>
+    <script>
+      // FROM http://purecss.io/js/ui.js
+      (function(window, document) {
+        var layout = document.getElementById("layout"),
+          menu = document.getElementById("menu"),
+          menuLink = document.getElementById("menuLink");
+
+        function toggleClass(element, className) {
+          var classes = element.className.split(/\s+/),
+            length = classes.length,
+            i = 0;
+
+          for (; i < length; i++) {
+            if (classes[i] === className) {
+              classes.splice(i, 1);
+              break;
+            }
+          }
+          // The className is not found
+          if (length === classes.length) {
+            classes.push(className);
+          }
+
+          element.className = classes.join(" ");
+        }
+
+        menuLink.onclick = function(e) {
+          var active = "active";
+
+          e.preventDefault();
+          toggleClass(layout, active);
+          toggleClass(menu, active);
+          toggleClass(menuLink, active);
+        };
+      })(this, this.document);
+    </script>
+  </body>
+</html>

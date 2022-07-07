@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License.txt in the project root for the license information.
+ * See License in the project root for the license information.
  */
 
 import * as svgNode from "./svgNodeUI"
@@ -11,16 +11,18 @@ let nodes = []
 let parentnode = []
 let svg = null
 let presentState = null
+let projectRootDir = null
 let commit = null
 let dispatch = null
 
 /**
    * draw components
    */
-function drawComponents (currentWf, argSvg, argPresentState, argCommit, argDispatch) {
+function drawComponents (currentWf, argSvg, argPresentState, argProjectRootDir, argCommit, argDispatch, parentID) {
   if (!currentWf) return
   svg = argSvg
   presentState = argPresentState
+  projectRootDir = argProjectRootDir
   commit = argCommit
   dispatch = argDispatch
 
@@ -36,8 +38,8 @@ function drawComponents (currentWf, argSvg, argPresentState, argCommit, argDispa
   })
   parentnode = []
 
-  drawNodes(currentWf.descendants)
-  drawParentFileRelation(currentWf)
+  drawNodes(currentWf.descendants, parentID)
+  drawParentFileRelation(currentWf, projectRootDir)
   drawLinks(nodes)
   drawParentLinks(parentnode, nodes)
 }
@@ -46,8 +48,8 @@ function drawComponents (currentWf, argSvg, argPresentState, argCommit, argDispa
   * draw parent children file relation
   * @param  files list in workflow Json
   */
-function drawParentFileRelation (parentwf) {
-  const node = new svgNode.SvgParentNodeUI(svg, parentwf)
+function drawParentFileRelation (parentwf, projectRootDir) {
+  const node = new svgNode.SvgParentNodeUI(svg, parentwf, projectRootDir)
   parentnode.push(node)
 }
 
@@ -75,9 +77,9 @@ function drawParentLinks (parentnode, nodes) {
    * draw nodes
    * @param nodeInWF node list in workflow Json
    */
-function drawNodes (nodesInWF) {
+function drawNodes (nodesInWF, parentID) {
   nodesInWF.forEach(function (v) {
-    const node = new svgNode.SvgNodeUI(svg, v)
+    const node = new svgNode.SvgNodeUI(svg, v, projectRootDir, parentID)
     node.ID = v.ID
     node
       .onClick(function (e) {
@@ -87,8 +89,8 @@ function drawNodes (nodesInWF) {
       .onDblclick(function (e) {
         const nodeType = e.target.instance.parent(".node").data("type")
         if (nodeType === "workflow" || nodeType === "parameterStudy" || nodeType === "for" || nodeType === "while" || nodeType === "foreach" || nodeType === "stepjob") {
-          const currentWorkFlow = e.target.instance.parent(".node").data("ID")
-          SIO.emit("getWorkflow", currentWorkFlow)
+          const currentWorkFlowID = e.target.instance.parent(".node").data("ID")
+          SIO.emitGlobal("getWorkflow", projectRootDir, currentWorkFlowID, SIO.generalCallback)
         }
       })
     nodes.push(node)

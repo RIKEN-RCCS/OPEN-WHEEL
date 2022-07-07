@@ -1,16 +1,27 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <v-data-table
+    v-model="selectedItems"
     :items="tableData"
     :headers="headersWithActions"
     disable-filterling
     disable-pagination
     hide-default-header
     hide-default-footer
+    :show-select="selectable"
+    :single-select="true"
   >
     <template #header>
       {{ label }}
     </template>
-    <template #item.name="props">
+    <template
+      v-if="allowRenameInline"
+      #item.name="props"
+    >
       <v-edit-dialog
         large
         persistent
@@ -18,7 +29,9 @@
         @save="onSaveEditDialog(props.item, props)"
       >
         {{ props.item.name }}
-        <template #input>
+        <template
+          #input
+        >
           <v-text-field
             v-model="edittingField"
             :rules="[editingItemIsNotDuplicate]"
@@ -62,13 +75,33 @@
       actionRow,
     },
     props: {
-      label: String,
+      label: {
+        type: String,
+        default: ""
+      },
       allowEditButton: {
         type: Boolean,
         default: false,
       },
+      allowRenameInline:{
+        type: Boolean,
+        default: true,
+      },
+      inputColumn: {
+        type: Boolean,
+        default: true
+      },
+      selectable:{
+        type: Boolean,
+        default: false
+      },
+      value:{
+        type: Array,
+        default: ()=>{return [];}
+      },
       stringItems: {
-        type: Boolean, default: false,
+        type: Boolean,
+        default: false,
       },
       items: { type: Array, required: true },
       headers: {
@@ -83,8 +116,7 @@
           return { name: "" };
         },
       },
-      disabled: Boolean,
-      inputColumn: { type: Boolean, default: true },
+      disabled: Boolean
     },
     data: function () {
       return {
@@ -94,6 +126,14 @@
       };
     },
     computed: {
+      selectedItems:{
+        get(){
+          return this.value;
+        },
+        set(newVal){
+          this.$emit("input", newVal);
+        }
+      },
       headersWithActions: function () {
         const rt = this.headers.filter((e)=>{
           return e.value !== "actions";
@@ -135,7 +175,7 @@
       editingItemIsNotDuplicate: function (newItem) {
         return this.isDuplicate(newItem) && this.editTarget !== newItem ? "duplicated name is not allowed" : true;
       },
-      // 2nd argument also have item ,isMobile, header, and value prop. and value is old value
+      // 2nd argument also have item ,isMobile, header, and value prop. value has old value
       onSaveEditDialog: function (item, { index }) {
         if (this.isDuplicate(this.edittingField) && this.editTarget !== this.edittingField) {
           return;

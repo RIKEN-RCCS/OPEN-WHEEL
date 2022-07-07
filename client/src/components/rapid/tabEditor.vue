@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License.txt in the project root for the license information.
+ * See License in the project root for the license information.
  */
 <template>
   <div>
@@ -116,6 +116,7 @@
         activeTab: 0,
         files: [],
         editor: null,
+        isJobScript: false
       };
     },
     computed: {
@@ -142,8 +143,12 @@
         readOnly: this.readOnly,
       });
       this.editor.on("changeSession", this.editor.resize.bind(this.editor));
+      this.editor.on("changeSession", ({session})=>{
+        const isJobScript = typeof this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}})!== "undefined";
+        this.$emit("jobscript", isJobScript);
+      });
 
-      SIO.on("file", (file)=>{
+      SIO.onGlobal("file", (file)=>{
         // check arraived file is already opened or not
         const existingTab = this.files.findIndex((e)=>{
           return e.filename === file.filename && e.dirname === file.dirname;
@@ -170,7 +175,11 @@
       });
 
       if (typeof this.selectedFile === "string") {
-        SIO.emit("openFile", this.selectedFile, false);
+        SIO.emitGlobal("openFile", this.projectRootDir, this.selectedFile, false, (rt)=>{
+          if(rt instanceof Error){
+            console.log(rt);
+          }
+        });
       }
     },
     methods: {
@@ -190,8 +199,8 @@
         });
         if (existingTab === -1) {
           const absFilename = `${dirname}${this.pathSep}${filename}`;
-          SIO.emit("openFile", absFilename, false, (rt)=>{
-            if (!rt) {
+          SIO.emitGlobal("openFile", this.projectRootDir, absFilename, false, (rt)=>{
+            if (rt instanceof Error) {
               console.log("file open error!", rt);
             }
           });
@@ -204,6 +213,16 @@
         // clear temporaly variables and close prompt
         this.newFilename = null;
         this.newFilePrompt = false;
+      },
+      insertSnipet(argSnipet){
+        // this function will be called from parent component
+        const session = this.editor.getSession();
+        const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}}) || new ace.Range(0,0,0,0);
+        range.start.row=0;
+        range.start.column=0;
+        const snipet = range.end.row === 0 && range.end.column === 0 ? argSnipet : argSnipet.trimEnd();
+        session.replace(range, snipet);
+        this.$emit("jobscript", true);
       },
       insertBraces () {
         // this function will be called from parent component
@@ -221,7 +240,7 @@
           if (file.content === content) {
             console.log("do not call 'saveFile' API because file is not changed. index=", index);
           }
-          SIO.emit("saveFile", file.filename, file.dirname, content, (rt)=>{
+          SIO.emitGlobal("saveFile", this.projectRootDir,  file.filename, file.dirname, content, (rt)=>{
             if (!rt) {
               console.log("ERROR: file save failed:", rt);
               reject(rt);
@@ -250,7 +269,7 @@
             console.log(`INFO: ${file.filename} is not changed.`);
           } else {
             changed = true;
-            SIO.emit("saveFile", file.filename, file.dirname, content, (rt)=>{
+            SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, content, (rt)=>{
               if (!rt) {
                 console.log("ERROR: file save failed:", rt);
               }

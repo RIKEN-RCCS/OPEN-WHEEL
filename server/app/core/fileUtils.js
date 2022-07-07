@@ -1,16 +1,17 @@
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License.txt in the project root for the license information.
+ * See License in the project root for the license information.
  */
 "use strict";
 const promiseRetry = require("promise-retry");
 const fs = require("fs-extra");
 const path = require("path");
 const Mode = require("stat-mode");
+const { getLogger } = require("../logSettings.js");
 const { gitAdd } = require("./gitOperator2");
 const { projectJsonFilename } = require("../db/db");
-
+const { getSsh } = require("./sshManager.js");
 
 /**
  * read Json file until get some valid JSON data
@@ -110,6 +111,25 @@ async function deliverFile(src, dst) {
 }
 
 /**
+ * execut ln -s command on remotehost to make shallow symlink
+ */
+async function deliverFileOnRemote(recipe) {
+  const logger = getLogger(recipe.projectRootDir);
+  if (!recipe.onRemote) {
+    logger.warn("deliverFileOnremote must be called with onRemote flag");
+    return null;
+  }
+  const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
+  const sshCmd = `bash -O failglob -c 'mkdir ${recipe.dstRoot} 2>/dev/null; cd ${recipe.dstRoot} && for i in ${recipe.srcRoot}/${recipe.srcName}; do ln -sf \${i} ${recipe.dstName} ;done'`;
+  logger.debug("execute on remote", sshCmd);
+  const rt = await ssh.exec(sshCmd, {}, logger.debug.bind(logger), logger.debug.bind(logger));
+  if (rt !== 0) {
+    logger.warn("deliver file on remote failed", rt);
+  }
+  return rt;
+}
+
+/**
  * @typedef File
  * @param {Object} File
  * @param {string} File.filename - filename
@@ -144,7 +164,7 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
   } catch (err) {
     //just ignore if JSON.parse() failed
   }
-  if (!contentJson.hasOwnProperty("targetFiles") || !Array.isArray(contentJson.targetFiles) || forceNormal) {
+  if (!Object.prototype.hasOwnProperty.call(contentJson, "targetFiles") || !Array.isArray(contentJson.targetFiles) || forceNormal) {
     return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
   }
 
@@ -156,10 +176,10 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
       if (typeof targetFile === "string") {
         return path.resolve(dirname, targetFile);
       }
-      if (!targetFile.hasOwnProperty("targetName")) {
+      if (!Object.prototype.hasOwnProperty.call(targetFile, "targetName")) {
         return null;
       }
-      if (targetFile.hasOwnProperty("targetNode")) {
+      if (Object.prototype.hasOwnProperty.call(targetFile, "targetNode")) {
         //to avoid circurler dependency, do not use getComponentDir in projectFilesOperator.js
         const ID = targetFile.targetNode;
         const projectJson = JSON.parse(fs.readFileSync(path.resolve(projectRootDir, projectJsonFilename)).toString());
@@ -215,11 +235,30 @@ async function saveFile(argFilename, content) {
   await gitAdd(repoDir, absFilename);
 }
 
+/**
+ * get unused path string
+ * @param {string} parent - parent directory
+ * @param {string} name - desired name
+ * @returns {string} - file or directory name with suffix
+ */
+async function getUnusedPath(parent, name) {
+  const desiredPath = path.resolve(parent, name);
+  if (!await fs.pathExists(desiredPath)) {
+    return desiredPath;
+  }
+  let suffix = 1;
+  while (await fs.pathExists(path.resolve(parent, `${name}.${suffix}`))) {
+    ++suffix;
+  }
+  return path.resolve(parent, `${name}.${suffix}`);
+}
 
 module.exports = {
   readJsonGreedy,
   addX,
   deliverFile,
+  deliverFileOnRemote,
   openFile,
-  saveFile
+  saveFile,
+  getUnusedPath
 };

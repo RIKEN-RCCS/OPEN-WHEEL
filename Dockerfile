@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 #build WHEEL client code
 FROM --platform=linux/amd64 node:fermium-slim as builder
 WORKDIR /usr/src/
@@ -6,11 +7,12 @@ WORKDIR /usr/src/
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
 
 # copy necessary files
+COPY package.json package.json
 COPY client client
 COPY server server
-COPY build.sh build.sh
 
-RUN ./build.sh
+RUN cd server; npm install
+RUN cd client; npm install; npm run build -- --no-clean --mode development
 
 #build base image to run WHEEL
 FROM --platform=linux/amd64 node:fermium-slim as runner
@@ -24,7 +26,7 @@ RUN apt-get update && apt -y install curl git &&\
 FROM runner as test
 WORKDIR /usr/src/
 COPY --from=builder /usr/src/server/ .
-CMD ["npm", "run", "coverage:server"]
+CMD ["npm", "run", "test"]
 
 # run WHEEL
 FROM runner as exec

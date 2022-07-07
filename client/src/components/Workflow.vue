@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <v-app>
     <nav-drawer
@@ -22,8 +27,8 @@
       <v-btn
         rounded
         outlined
-        plain
         :ripple="false"
+        :style="{backgroundColor : stateColor}"
       >
         status: {{ projectState }}
       </v-btn>
@@ -81,6 +86,7 @@
               <v-btn
                 outlined
                 replace
+                :disabled="! (isEdittable && selectedComponent !== null)"
                 :to="{name: 'editor' }"
                 v-bind="attrs"
                 v-on="on"
@@ -99,7 +105,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="isDisabled('runProject')"
+                :disabled="! canRun"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('runProject')"
@@ -118,7 +124,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="isDisabled('pauseProject')"
+                :disabled="! running"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('pauseProject')"
@@ -134,7 +140,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="isDisabled('stopProject')"
+                :disabled="canRun"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('stopProject')"
@@ -150,7 +156,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="isDisabled('cleanProject')"
+                :disabled="canRun"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('cleanProject')"
@@ -163,12 +169,26 @@
         </v-card>
 
         <v-spacer />
+        <v-tooltip bottom>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              v-bind="attrs"
+              :disabled="viewerDataDir === null"
+              v-on="on"
+              @click="openViewerScreen"
+            >
+              <v-icon>mdi-image-multiple-outline</v-icon>
+            </v-btn>
+          </template>
+          <span>open viewer screen</span>
+        </v-tooltip>
+        <v-spacer />
         <v-card>
           <v-tooltip bottom>
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
-                :disabled="isDisabled('saveProject')"
+                :disabled="! isEdittable"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('saveProject')"
@@ -182,7 +202,7 @@
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
-                :disabled="isDisabled('revertProject')"
+                :disabled="! isEdittable"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('revertProject')"
@@ -220,6 +240,7 @@
         >
           <log-screen 
             v-show="showLogScreen"
+            ref="logscreen"
             :show="showLogScreen"
           />
         </v-col>
@@ -231,7 +252,11 @@
         size="64"
       />
     </v-overlay>
-    <unsaved-files-dialog />
+    <unsaved-files-dialog
+      :unsaved-files="unsavedFiles"
+      :dialog="showUnsavedFilesDialog"
+      @closed="unsavedFilesDialogClosed"
+    />
     <password-dialog
       v-model="pwDialog"
       :title="pwDialogTitle"
@@ -259,17 +284,25 @@
     </v-snackbar>
     <versatile-dialog
       v-model="descriptionDialog"
+      max-width="50vw"
       title="project description"
       @ok="updateDescription"
       @cancel="descriptionDialog=false"
     >
-      <template>
+      <template slot="message">
         <v-textarea
           v-model="projectDescription"
           outlined
         />
       </template>
     </versatile-dialog>
+    <versatile-dialog
+      v-model="viewerScreenDialog"
+      max-width="50vw"
+      title="open viewer screen"
+      @ok="openViewerScreen();viewerScreenDialog=false"
+      @cancel="viewerScreenDialog=false"
+    />
   </v-app>
 </template>
 
@@ -282,9 +315,10 @@
   import unsavedFilesDialog from "@/components/unsavedFilesDialog.vue";
   import versatileDialog from "@/components/versatileDialog.vue";
   import SIO from "@/lib/socketIOWrapper.js";
-  import { readCookie } from "@/lib/utility.js";
+  import { readCookie, state2color } from "@/lib/utility.js";
   import Debug from "debug";
   const debug = Debug("wheel:workflow:main");
+  let viewerWindow = null;
 
   export default {
     name: "Workflow",
@@ -305,7 +339,13 @@
         pwDialogTitle: "",
         pwCallback: ()=>{},
         descriptionDialog: false,
-        projectDescription: ""
+        viewerScreenDialog: false,
+        projectDescription: "",
+        cb: null,
+        unsavedFiles:[],
+        showUnsavedFilesDialog:false,
+        viewerDataDir: null,
+        firstViewDataAlived: false,
       };
     },
     computed: {
@@ -315,34 +355,26 @@
         "openSnackbar",
         "currentComponent",
         "snackbarMessage",
-        "projectRootDir"
+        "projectRootDir",
+        "selectedComponent",
       ]),
-      ...mapGetters(["waiting"]),
+      ...mapGetters(["waiting", "isEdittable", "canRun", "running"]),
+      stateColor(){
+        return state2color(this.projectState);
+      }
     },
     mounted: function () {
       const projectRootDir = readCookie("rootDir");
+      SIO.init({projectRootDir});
       const ID = readCookie("root");
       this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);
 
-      SIO.on("projectJson", (projectJson)=>{
-        this.projectJson = projectJson;
-        this.commitProjectState(projectJson.state.toLowerCase());
-        this.commitComponentPath(projectJson.componentPath);
-        this.commitWaitingProjectJson(false);
-      });
-      SIO.on("workflow", (wf)=>{
-        if(this.currentComponent!==null && wf.ID !== this.currentComponent.ID){
-          this.commitSelectedComponent(null);
-        }
-        this.commitCurrentComponent(wf);
-        this.commitWaitingWorkflow(false);
-      });
-      SIO.on("componentTree", (componentTree)=>{
+      SIO.onGlobal("componentTree", (componentTree)=>{
         this.commitComponentTree(componentTree);
       });
-      SIO.on("showMessage", this.showSnackbar);
-      SIO.on("askPassword", (hostname, cb)=>{
+      SIO.onGlobal("showMessage", this.showSnackbar);
+      SIO.onGlobal("askPassword", (hostname, cb)=>{
         this.pwCallback = (pw)=>{
           cb(pw);
         };
@@ -352,21 +384,43 @@
       SIO.onGlobal("hostList", (hostList)=>{
         this.commitRemoteHost(hostList);
       });
+      SIO.onGlobal("projectJson", (projectJson)=>{
+        this.projectJson = projectJson;
+        this.commitProjectState(projectJson.state.toLowerCase());
+        this.commitComponentPath(projectJson.componentPath);
+        this.commitWaitingProjectJson(false);
+      });
+      SIO.onGlobal("workflow", (wf)=>{
+        if(this.currentComponent!==null && wf.ID !== this.currentComponent.ID){
+          this.commitSelectedComponent(null);
+        }
+        this.commitCurrentComponent(wf);
+
+        if(this.selectedComponent){
+          const update = wf.descendants.find((e)=>{
+            return e.ID === this.selectedComponent.ID;
+          });
+          if(update){
+            this.commitSelectedComponent(update);
+          }
+        }
+        this.commitWaitingWorkflow(false);
+      });
+
       SIO.emitGlobal("getHostList", (hostList)=>{
         this.commitRemoteHost(hostList);
       });
       SIO.emitGlobal("getJobSchedulerList", (JSList)=>{
         this.commitJobScheduler(JSList);
       });
-      SIO.emit("getComponentTree", projectRootDir, (componentTree)=>{
-        this.commitComponentTree(componentTree);
-      });
+      SIO.emitGlobal("getComponentTree", projectRootDir, projectRootDir, SIO.generalCallback);
+
       this.commitWaitingProjectJson(true);
-      SIO.emit("getProjectJson", (rt)=>{
+      SIO.emitGlobal("getProjectJson", projectRootDir, (rt)=>{
         debug("getProjectJson done", rt);
       });
       this.commitWaitingWorkflow(true);
-      SIO.emit("getWorkflow", ID, (rt)=>{
+      SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
         debug("getWorkflow done", rt);
       });
       this.$router.replace({ name: "graph" })
@@ -376,8 +430,57 @@
           }
           throw err;
         });
+      SIO.onGlobal("unsavedFiles", (unsavedFiles, cb)=>{
+        if (unsavedFiles.length === 0) {
+          return;
+        }
+        this.cb = cb;
+        this.unsavedFiles.splice(0, this.unsavedFiles.length, ...unsavedFiles);
+        this.showUnsavedFilesDialog= true;
+      });
+      SIO.onGlobal("resultFilesReady", (dir)=>{
+        this.viewerDataDir=dir;
+
+        if(! this.firstViewDataAlived){
+          this.viewerScreenDialog=true;
+          this.firstViewDataAlived=true;
+        }
+        return;
+      });
+
+      // call back for log-screen
+      for (const event of ["logINFO", "logWARN", "logERR", "logStdout", "logStderr", "logSSHout", "logSSHerr"]) {
+        SIO.onGlobal(event, (data)=>{
+          this.$refs.logscreen.logRecieved(event, data);
+        });
+      }
     },
     methods: {
+      openViewerScreen(){
+        viewerWindow = window.open("/viewer", "viewer");
+        const form = document.createElement("form");
+        form.setAttribute("target", "viewer");
+        form.setAttribute("action", "/viewer");
+        form.setAttribute("method", "post");
+        form.style.display = "none";
+        document.body.appendChild(form);
+        const input = document.createElement("input");
+        input.setAttribute("type", "hidden");
+        input.setAttribute("name", "dir");
+        input.setAttribute("value", this.viewerDataDir);
+        form.appendChild(input);
+        const input2 = document.createElement("input");
+        input2.setAttribute("type", "hidden");
+        input2.setAttribute("name", "rootDir");
+        input2.setAttribute("value", this.projectRootDir);
+        form.appendChild(input2);
+        form.submit();
+      },
+      unsavedFilesDialogClosed(...args){
+        this.unsavedFiles.splice(0);
+        this.cb(args);
+        this.showUnsavedFilesDialog=false;
+      },
       ...mapActions(["showSnackbar", "closeSnackbar"]),
       ...mapMutations(
         {
@@ -394,25 +497,22 @@
           commitWaitingWorkflow: "waitingWorkflow",
         },
       ),
-      isDisabled (operation) {
-        if (operation === "runProject") {
-          return !["not-started", "paused"].includes(this.projectState);
-        } else if (operation === "pauseProject") {
-          return this.projectState !== "running";
-        } else if (operation === "stopProject") {
-          return ["not-started", "preparing"].includes(this.projectState);
-        } else if (operation === "cleanProject") {
-          return ["not-started", "preparing"].includes(this.projectState);
-        } else if (operation === "saveProject") {
-          return this.projectState !== "not-started";
-        } else if (operation === "revertProject") {
-          return this.projectState !== "not-started";
-        }
-        debug("upsupported operation", operation);
-      },
       emitProjectOperation (operation) {
-        SIO.emit(operation, (rt)=>{
+        if(operation === "cleanProject"){
+          this.firstViewDataAlived=false;
+        }
+        if(operation === "stopProject" || operation === "cleanProject"){
+          this.commitWaitingWorkflow(true);
+        }
+        SIO.emitGlobal(operation, this.projectRootDir, (rt)=>{
           debug(operation, "done", rt);
+
+          if(operation === "stopProject" || operation === "cleanProject"){
+            this.commitWaitingWorkflow(false);
+          }
+          if(operation === "cleanProject"){
+            this.viewerDataDir=null;
+          }
         });
       },
       updateDescription(){

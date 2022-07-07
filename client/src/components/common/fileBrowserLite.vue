@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <!-- update event is not well tested. please check !! -->
   <v-treeview
@@ -81,10 +86,10 @@
       };
     },
     mounted () {
-      SIO.emitGlobal("getFileList", { mode: this.mode, path: this.requestRoot}, (fileList)=>{
-        this.items = fileList.map(fileListModifier.bind(null, this.pathSep));
+      SIO.emitGlobal("getFileList", null, { mode: this.mode, path: this.requestRoot}, (fileList)=>{
         this.root=this.requestRoot || fileList[0].path || "/";
         this.pathSep=this.root[0] === "/" ? "/" : "\\";
+        this.items = fileList.map(fileListModifier.bind(null, this.pathSep));
       });
     },
     methods: {
@@ -96,7 +101,7 @@
           const path = [this.root];
           getActiveItem(this.items, item.id, path);
           const currentDir = path.join(this.pathSep);
-          SIO.emitGlobal("getFileList", { mode: this.mode, path: currentDir }, (fileList)=>{
+          SIO.emitGlobal("getFileList", null, { mode: this.mode, path: currentDir }, (fileList)=>{
             if (!Array.isArray(fileList)) {
               reject(fileList);
             }

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <v-treeview
     ref="tree"
@@ -37,6 +42,7 @@
   </v-treeview>
 </template>
 <script>
+  import { mapState } from "vuex";
   import SIO from "@/lib/socketIOWrapper.js";
   import { taskStateList2Tree } from "@/lib/taskStateList2Tree.js";
   import componentButton from "@/components/common/componentButton.vue";
@@ -59,9 +65,12 @@
       list: function () {
         return [this.taskStateTree];
       },
+      ...mapState([
+        "projectRootDir"
+      ]),
     },
     mounted: function () {
-      SIO.on("taskStateList", async (taskStateList)=>{
+      SIO.onGlobal("taskStateList", async (taskStateList)=>{
         let isChanged=false;
         if(taskStateList.length===0){
           this.taskStateTree = { children: [], root: true, ...headers };
@@ -69,16 +78,12 @@
         }else{
           isChanged = await taskStateList2Tree(taskStateList, this.taskStateTree);
         }
-        console.log(isChanged);
-        console.log(this.firstTime);
-        console.log(this.taskStateTree);
-
         if(this.$refs.tree && (this.firstTime || isChanged)){
           this.firstTime=false;
           this.$refs.tree.updateAll(true);
         }
       });
-      SIO.emit("getTaskStateList", (rt)=>{
+      SIO.emitGlobal("getTaskStateList", this.projectRootDir, (rt)=>{
         console.log("getTaskStateList done", rt);
       });
     },

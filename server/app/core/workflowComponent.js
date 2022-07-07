@@ -1,10 +1,11 @@
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License.txt in the project root for the license information.
+ * See License in the project root for the license information.
  */
 "use strict";
 const uuidv1 = require("uuid/v1");
+const { defaultPSconfigFilename } = require("../db/db.js");
 
 class BaseWorkflowComponent {
   constructor(pos, parent) {
@@ -35,6 +36,19 @@ class BaseWorkflowComponent {
      *  - 'unknown'    failed to check status (e.g. qstat command failed)
      */
     this.state = "not-started";
+
+    this.env = {};
+  }
+}
+
+class Storage extends BaseWorkflowComponent {
+  constructor(pos, parent) {
+    super(pos, parent);
+    this.type = "storage";
+    this.inputFiles = [];
+    this.outputFiles = [];
+    this.host = "localhost";
+    this.storagePath = null;
   }
 }
 
@@ -173,7 +187,7 @@ class ParameterStudy extends GeneralComponent {
   constructor(...args) {
     super(...args);
     this.type = "parameterStudy";
-    this.parameterFile = null;
+    this.parameterFile = defaultPSconfigFilename;
     this.numTotal = null;
     this.numFinished = null;
     this.numFailed = null;
@@ -302,6 +316,9 @@ function componentFactory(type, ...args) {
     case "foreach":
       component = new Foreach(...args);
       break;
+    case "storage":
+      component = new Storage(...args);
+      break;
     case "source":
       component = new Source(...args);
       break;
@@ -328,6 +345,9 @@ function hasChild(component) {
 }
 
 function isInitialComponent(component) {
+  if (component.type === "storage") {
+    return false;
+  }
   if (component.type === "source" && component.outputFiles[0].dst.length > 0) {
     return true;
   }
@@ -337,26 +357,38 @@ function isInitialComponent(component) {
   if (component.previous.length > 0) {
     return false;
   }
+  //components which have file-based dependency is initial component
+  //it will be suspended in dispatcher._dispatch()
 
-  if (component.inputFiles.length > 0) {
-    for (const inputFile of component.inputFiles) {
-      const isConnected = inputFile.src.some((e)=>{
-        if (e.srcNode === component.parent) {
-          return false;
-        }
-        return e.srcNode !== null;
-      });
-      if (isConnected) {
-        return false;
-      }
-    }
-  }
   return true;
+}
+
+function isComponent(componentJson) {
+  return componentJson instanceof BaseWorkflowComponent;
+}
+
+/**
+ * remove duplicated component from array
+ * @param {Object[]} components - array of component
+ * @returns {Object[]} - unique components
+ */
+function removeDuplicatedComponent(components) {
+  const IDs = components.map((component)=>{
+    return component.ID;
+  });
+  const uniqueIDs = Array.from(new Set(IDs));
+  return uniqueIDs.map((id)=>{
+    return components.find((e)=>{
+      return e.ID === id;
+    });
+  });
 }
 
 
 module.exports = {
   componentFactory,
   hasChild,
-  isInitialComponent
+  isInitialComponent,
+  isComponent,
+  removeDuplicatedComponent
 };

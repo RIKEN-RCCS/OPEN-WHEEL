@@ -1,7 +1,6 @@
 .DS_Store
 *.map
 node_modules
-src
 TestLogFile.txt
 remotehost.json
 projectList.json

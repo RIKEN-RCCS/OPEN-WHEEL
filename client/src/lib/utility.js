@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License.txt in the project root for the license information.
+ * See License in the project root for the license information.
  */
 "use strict";
 
@@ -140,6 +140,21 @@ function readCookie (key) {
   return decodeURIComponent(encodedValue);
 }
 
+/**
+ * get color corresponding to state
+ * @param {string} state - project or component status
+ * @return {string} - corresponding color
+ */
+function state2color(state){
+  const table={
+    "running": "#88BB00",
+    "failed": "#E60000",
+    "unknown": "#E60000",
+    "paused":"#444480",
+  };
+  return typeof table[state] === "undefined" ? "#1E1E1E" : table[state];
+}
+
 module.exports = {
   escapeRegExp,
   isValidName,
@@ -151,4 +166,5 @@ module.exports = {
   getDateString,
   isContainer,
   readCookie,
+  state2color
 };

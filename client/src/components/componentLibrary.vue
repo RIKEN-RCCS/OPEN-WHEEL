@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <v-navigation-drawer
     permanent
@@ -67,7 +72,7 @@
           });
         }
         return this.componentDefinitions.filter((e)=>{
-          return ["task", "if", "for", "while", "foreach", "source", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"].includes(e.type);
+          return ["task", "if", "for", "while", "foreach", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"].includes(e.type);
         });
       },
     },

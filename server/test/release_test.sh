@@ -2,11 +2,16 @@
 TAG=wheel_release_test
 TAG_TEST_SERVER=wheel_release_test_server
 
+# crate config files
+#
+CONFIG_DIR=$(mktemp -d tmp.XXXXXXXXXX)
+# self-signed-certification files
+SSL_CONFIG=$(mktemp tmp_config.XXXXXXXXXX)
 function cleanup()
 {
     echo "============================================="
     echo "start cleanup process"
-    docker stop ${TAG} ${TAG_TEST_SERVER}
+    docker stop ${TAG}
     rm -fr ${CONFIG_DIR}
     rm ${SSL_CONFIG}
     echo "remaining containers"
@@ -17,14 +22,14 @@ function cleanup()
     return
 }
 
-pushd $(dirname $0)
+TEST_DIR=$(cd $(dirname $0);pwd)
+pushd ${TEST_DIR}
 
 # stop container
 docker stop ${TAG} >& /dev/null
+docker stop ${TAG_TEST_SERVER} >& /dev/null
 # remove container
 docker rm ${TAG} >& /dev/null
-# remove image
-docker rmi ${TAG} >& /dev/null
 
 set -e -o pipefail
 trap cleanup EXIT
@@ -48,12 +53,6 @@ if [ ${rt} -ne 0 ];then
   exit 3
 fi
 
-#
-# crate config files
-#
-CONFIG_DIR=$(mktemp -d tmp.XXXXXXXXXX)
-# self-signed-certification files
-SSL_CONFIG=$(mktemp tmp_config.XXXXXXXXXX)
 echo '[dn]
 CN=localhost
 [req]
@@ -74,9 +73,9 @@ cp ../app/config/{server,jobScheduler}.json ${CONFIG_DIR}
 echo '[{'
 echo '  "name": "testServer",'
 echo '  "host": "'${IPAddress}'",'
-echo '  "path": "/home/pbsuser",'
+echo '  "path": "/home/testuser",'
 echo '  "keyFile": null,'
-echo '  "username": "pbsuser",'
+echo '  "username": "testuser",'
 echo '  "numJob": 5,'
 echo '  "port": 22,'
 echo '  "id": "dummy-id",'
@@ -90,16 +89,16 @@ echo '}]'
 } > ${CONFIG_DIR}/remotehost.json
 
 #run UT in container
-docker run --env "WHEEL_TEST_REMOTEHOST=testServer" \
-           --env "WHEEL_TEST_REMOTE_PASSWORD=hoge"  \
-           -v ${PWD}/${CONFIG_DIR}:/usr/src/app/config  \
-           -p 8089:8089  \
-           -p 8090:8090  \
+docker run --rm\
+           --env "WHEEL_TEST_REMOTEHOST=testServer"\
+           --env "WHEEL_TEST_REMOTE_PASSWORD=passw0rd"\
+           -v ${PWD}/${CONFIG_DIR}:/usr/src/app/config\
+           -p 8089:8089\
            --name ${TAG} ${TAG}
 rt=$?
 
 #get log files from container
-LOG_DIR=$(date "+%Y%m%d-%H%M")
+LOG_DIR=$(dirname ${TEST_DIR})/$(date "+%Y%m%d-%H%M")
 mkdir $LOG_DIR
 docker cp ${TAG}:/usr/src/coverage/ $LOG_DIR
 

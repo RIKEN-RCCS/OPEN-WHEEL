@@ -1,8 +1,8 @@
-<!--
-Copyright (c) Center for Computational Science, RIKEN All rights reserved.
-Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
-See License.txt in the project root for the license information.
--->
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <div>
     <target-files
@@ -79,11 +79,11 @@ See License.txt in the project root for the license information.
       };
     },
     computed: {
-      ...mapState(["selectedFile"]),
+      ...mapState(["selectedFile", "projectRootDir"]),
       ...mapGetters(["selectedComponentAbsPath"]),
     },
     mounted () {
-      SIO.on("parameterSettingFile", (file)=>{
+      SIO.onGlobal("parameterSettingFile", (file)=>{
         if (!file.isParameterSettingFile) {
           console.log("ERROR: illegal parameter setting file data", file);
           return;
@@ -117,7 +117,7 @@ See License.txt in the project root for the license information.
           console.log("paramter setting is not changed!");
           return false;
         }
-        SIO.emit("saveFile", this.filename, this.dirname || this.selectedComponentAbsPath,
+        SIO.emitGlobal("saveFile", this.projectRootDir, this.filename, this.dirname || this.selectedComponentAbsPath,
                  JSON.stringify(this.parameterSetting), (rt)=>{
                    if (!rt) {
                      console.log("ERROR: parameter setting file save failed");

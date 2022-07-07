@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 <template>
   <v-toolbar
     dense
@@ -66,7 +71,11 @@
       };
     },
     computed: {
-      ...mapState({ tree: "componentTree", currentComponent: "currentComponent" }),
+      ...mapState({
+        tree: "componentTree",
+        currentComponent: "currentComponent",
+        projectRootDir: "projectRootDir"
+      }),
       pathToCurrentComponent: function () {
         const rt = [];
         if (this.currentComponent !== null) {
@@ -81,7 +90,7 @@
     methods: {
       goto: function (item) {
         const requestID = isContainer(item) ? item.ID : item.parent;
-        SIO.emit("getWorkflow", requestID);
+        SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);
         this.showComponentTree = false;
       },
     },

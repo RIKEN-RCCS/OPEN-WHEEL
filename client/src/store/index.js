@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
 import Vue from "vue";
 import Vuex from "vuex";
 import Debug from "debug";
@@ -41,6 +46,8 @@ const mutationFactory = (types)=>{
  * @property { Boolean } waitingWorkflow - flag for loading Worgflow data for graph component
  * @property { Boolean } waitingFile - flag for loading file data for rapid
  * @property { Boolean } waitingSave - flag for waiting save (=commit)
+ * @property { Boolean } waitingEnv  - flag for loading environment variable data
+ * @property { Boolean } waitingDownload  - flag for prepareing download file
  * @property { number } canvasWidth - width of canvas in component graph
  * @property { number } canvasHeight - width of canvas in component graph
  * @property { string[] } scriptCandidates - filenames directly under selected component directory
@@ -67,6 +74,8 @@ const state = {
   waitingWorkflow: false,
   waitingFile: false,
   waitingSave: false,
+  waitingEnv: false,
+  waitingDownload: false,
   canvasWidth: null,
   canvasHeight: null,
   scriptCandidates: [],
@@ -91,16 +100,6 @@ export default new Vuex.Store({
       context.commit("selectedComponent", payload);
       const dup = Object.assign({}, payload);
       context.commit("copySelectedComponent", dup);
-      SIO.emit("getFileList", context.getters.selectedComponentAbsPath, (fileList)=>{
-        const scriptCandidates = fileList
-          .filter((e)=>{
-            return e.type.startsWith("file");
-          })
-          .map((e)=>{
-            return e.name;
-          });
-        context.commit("scriptCandidates", scriptCandidates);
-      });
     },
     showSnackbar: (context, payload)=>{
       if (typeof payload === "string") {
@@ -154,10 +153,19 @@ export default new Vuex.Store({
     },
     // flag to show loading screen
     waiting: (state)=>{
-      return state.waitingProjectJson || state.waitingWorkflow || state.waitingFile || state.waitingSave;
+      return state.waitingProjectJson || state.waitingWorkflow || state.waitingFile || state.waitingSave || state.waitingEnv || state.waitingDownload;
     },
     pathSep: (state)=>{
       return typeof state.projectRootDir === "string" && state.projectRootDir[0] !== "/" ? "\\" : "/";
+    },
+    isEdittable: (state)=>{
+      return state.projectState === "not-started";
+    },
+    canRun: (state)=>{
+      return ["not-started", "paused"].includes(state.projectState);
+    },
+    running:(state)=>{
+      return state.projectState === "running";
     },
   },
   modules: {
