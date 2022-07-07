@@ -1008,6 +1008,13 @@ async function renameInputFile(projectRootDir, ID, index, newName) {
         }
       }
     }
+    for (const inputFile of counterpartJson.inputFiles) {
+      for (const dst of inputFile.forwardTo) {
+        if (dst.dstNode === ID && dst.dstName === oldName) {
+          dst.dstName = newName;
+        }
+      }
+    }
     p.push(writeComponentJson(projectRootDir, counterpartDir, counterpartJson));
   }
   return Promise.all(p);
@@ -1036,6 +1043,13 @@ async function renameOutputFile(projectRootDir, ID, index, newName) {
     const counterpartJson = await readComponentJson(counterpartDir);
     for (const inputFile of counterpartJson.inputFiles) {
       for (const src of inputFile.src) {
+        if (src.srcNode === ID && src.srcName === oldName) {
+          src.srcName = newName;
+        }
+      }
+    }
+    for (const outputFile of counterpartJson.outputFiles) {
+      for (const src of outputFile.origin) {
         if (src.srcNode === ID && src.srcName === oldName) {
           src.srcName = newName;
         }
