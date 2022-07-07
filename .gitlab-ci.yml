@@ -14,7 +14,8 @@ serverTest:
   script:
     - cd server
     - npm install
-    - ./test/release_test.sh
+    - cd test
+    - ./release_test.sh
 
 makedoc:
   script:
