@@ -550,18 +550,30 @@
         <h1 id="viewer">Viewer <a class="heading-anchor-permalink" href="#viewer">#</a></h1>
 <p><img src="./img/viewer.png" alt="img" title="viewer"></p>
 <p>Viewerコンポーネントはプロジェクト実行中に生成される画像ファイルなどを
-ブラウザから確認するためのコンポーネントです。</p>
+ブラウザから確認するためのコンポーネントです。
+表示可能なファイルは次のとおりです。</p>
+<ul>
+<li>apng (Animated Portable Network Graphics)</li>
+<li>avif (AV1 Image File Format)</li>
+<li>gif (Graphics Interchange Format)</li>
+<li>jpeg (Joint Photographic Expert Group image)</li>
+<li>png (Portable Network Graphics)</li>
+<li>webp (Web Picture format)</li>
+<li>tiff (Tagged Image File Format)</li>
+<li>bmp (BitMaP image)</li>
+<li>svg (Scalable Vector Graphics)</li>
+</ul>
 <p>Viewerコンポーネントに指定できる固有のプロパティはありません。
 また、ViewerコンポーネントにはoutputFilesプロパティを設定することはできません。</p>
 <h3 id="viewer%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E6%8C%99%E5%8B%95">Viewerコンポーネントの挙動 <a class="heading-anchor-permalink" href="#viewer%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E6%8C%99%E5%8B%95">#</a></h3>
 <p>Viewerコンポーネントは先行するコンポーネントの実行終了後に
 inputFileから接続されたファイルを受け取ります。</p>
-<p>これらのファイルに、ブラウザで表示可能な画像ファイル(bmp, jpeg, pngなど)が含まれている時は
-(初回のみ)ブラウザ上にダイアログが表示され、
+<p>これらのファイルに、ブラウザで表示可能な画像ファイルが含まれている時は
+初回のみブラウザ上にダイアログが表示され、
 <code>OK</code>をクリックすると別のタブでビューワー画面が表示されます。</p>
 <p><img src="./img/viewer_dialog.png" alt="img" title="viewer_dialog"></p>
 <p>また、画面上部のビューワー画面表示ボタンが有効になり
-以降はこのボタンをクリックすることでもビューワー画面を表示することができます。</p>
+以降はこのボタンをクリックすることでビューワー画面を表示することができます。</p>
 <hr>
 <p><a href="../index.html">リファレンスマニュアルのトップページに戻る</a></p>
 
