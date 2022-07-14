@@ -21,8 +21,8 @@ WHEELを起動する前に、設定ファイルを格納するためのディレ
 十分な容量のストレージデバイス上に作成してください。
 
 `CONFIG_DIR`にgithubから次の2つのファイルをダウンロードして保存してください。
--  [jobScheduler.json](https://raw.githubusercontent.com/RIKEN-RCCS/WHEEL/master/app/config/jobScheduler.json)
--  [server.json](https://raw.githubusercontent.com/RIKEN-RCCS/WHEEL/master/app/config/server.json)
+-  [jobScheduler.json](https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/app/config/jobScheduler.json)
+-  [server.json](https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/app/config/server.json)
 
 jobScheduler.jsonファイルには、WHEELがバッチサーバに対してジョブを投入する際に用いる設定が記載されています。
 詳細は[jobScheduler setting](#jobScheduler setting)を参照してください。
@@ -227,7 +227,7 @@ dockerhubで配布されているイメージよりも新しいバージョン�
 ### インストール方法
 dockerを使わずにホストOSでWHEELを起動する場合は以下の手順でインストールを行ないます。
 ```
-> git clone https://github.com/RIKEN-RCCS/WHEEL.git
+> git clone https://github.com/RIKEN-RCCS/OPEN-WHEEL.git
 > cd WHEEL
 > npm install
 ```

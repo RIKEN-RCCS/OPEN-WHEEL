@@ -42,8 +42,9 @@ const psJson = {
 };
 
 //helper functions
-describe("file utility functions", ()=>{
+describe("file utility functions", function() {
   beforeEach(async()=>{
+    this.timeout(10000);
     await fs.remove(testDirRoot);
     await fs.mkdir(testDirRoot);
     await gitInit(testDirRoot, "foo", "foo@example.com");

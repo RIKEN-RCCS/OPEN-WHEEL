@@ -42,7 +42,7 @@
         </v-list-item>
       </a>
       <a
-        href="https://riken-rccs.github.io/WHEEL/"
+        href="https://riken-rccs.github.io/OPEN-WHEEL"
         target="_blank"
       >
         <v-list-item>

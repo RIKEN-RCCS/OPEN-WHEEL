@@ -131,7 +131,7 @@ describe("UT for executer class", function() {
         await arssh.exec(`cd ${task0.remoteWorkingDir};(echo -n foo > foo && echo -n bar > bar && echo baz > baz)`);
       });
       it("issue 462", async()=>{
-        task0.outputFiles = [{ name: "hu/ga" }, { name: "ho/ge" }];
+        task0.outputFiles = [{ name: "hu/ga", dst: [] }, { name: "ho/ge", dst: [] }];
         await gatherFiles(task0, arssh);
         expect(path.join(task0.workingDir, "hu/ga")).not.to.be.a.path();
         expect(path.join(task0.workingDir, "ho/ge")).not.to.be.a.path();
@@ -155,14 +155,14 @@ describe("UT for executer class", function() {
         expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime))).to.be.an("array").that.is.empty;
       });
       it("get outputFiles after successfully run", async()=>{
-        task0.outputFiles = [{ name: "hoge" }];
+        task0.outputFiles = [{ name: "hoge", dst: [] }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(0)}`);
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
         expect(path.join(task0.workingDir, "hoge")).to.be.a.file().with.content("hoge");
       });
       it("do nothing if outputFile is not found", async()=>{
-        task0.outputFiles = [{ name: "huga" }];
+        task0.outputFiles = [{ name: "huga", dst: [] }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(0)}`);
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");

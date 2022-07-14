@@ -1,7 +1,7 @@
 # OPEN-WHEEL
 Workflow in Hierarchical distributEd parallEL
 
-[public repo] (https://github.com/RIKEN-RCCS/WHEEL)
+[public repo] (https://github.com/RIKEN-RCCS/OPEN-WHEEL)
 
 [docker image] (https://hub.docker.com/r/tmkawanabe/wheel)
 
@@ -9,15 +9,15 @@ Workflow in Hierarchical distributEd parallEL
 latest version of [docker](https://www.docker.com/)
 
 ## user guide
-user guild and tutorials are availbale here.
+user guide and tutorials are available here.
 
-https://riken-rccs.github.io/WHEEL/
+https://riken-rccs.github.io/OPEN-WHEEL/
 
 ## How to use with docker
 1. create new directory (hereafter referrd to as `CONFIG_DIR`)
 2. download following 2 files to the `CONFIG_DIR`
-    - [jobScheduler.json](https://raw.githubusercontent.com/RIKEN-RCCS/WHEEL/master/app/config/jobScheduler.json)
-    - [server.json](https://raw.githubusercontent.com/RIKEN-RCCS/WHEEL/master/app/config/server.json)
+    - [jobScheduler.json](https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/server/app/config/jobScheduler.json)
+    - [server.json](https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/server/app/config/server.json)
 3. create or server certification and key file for https, and put them into `CONFIG_DIR`
 4. type following command
 
@@ -65,7 +65,7 @@ client and server has client and server code respectively.
 ```
 > ./build.sh
 ```
-2. start serever
+2. start server
 ```
 > cd server
 > npm start
