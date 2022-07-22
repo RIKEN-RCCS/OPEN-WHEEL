@@ -1,4 +1,8 @@
 image: docker:latest
+stages:
+  - test
+  - build
+
 variables:
   DOCKER_TLS_CERTDIR: "/certs"
 services:
@@ -8,6 +12,7 @@ before_script:
   - apk add bash openssl nodejs npm git git-lfs
 
 serverTest:
+  stage: "test"
   script:
     - cd server
     - npm install
@@ -36,6 +41,9 @@ makeDoc:
 makeContainer:
   stage: "build"
   script:
+    - echo "$CI_REGISTRY_USER" $CI_REGISTRY_USER
+    - echo "$CI_REGISTRY_PASSWORD" $CI_REGISTRY_PASSWORD
+    - echo 
     - docker build --platform linux/amd64 --target=exec -t $CI_REGISTRY_USER/wheel .
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
     - docker push $CI_REGISTRY_USER/wheel
