@@ -1,11 +1,8 @@
-workflow:
-  rules:
-    - if: $CI_COMMIT_BRANCH != "master"
-image: docker:19.03.13
+image: docker:latest
 variables:
   DOCKER_TLS_CERTDIR: "/certs"
 services:
-  - docker:19.03.13-dind
+    - docker:dind
 before_script:
   - docker info
   - apk add bash openssl nodejs npm git git-lfs
@@ -16,18 +13,13 @@ serverTest:
     - npm install
     - cd test
     - ./release_test.sh
+    
 
-makedoc:
+makeDoc:
+  stage: "build"
   script:
     - npm install
     - npm run buildDoc
-  artifacts:
-    paths:
-      - docs/
-
-storedoc:
-  stage: "deploy"
-  script:
     - eval `ssh-agent -s`
     - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null # add ssh key
     - git config --global user.email "${GITLAB_USER_EMAIL}"
@@ -37,4 +29,15 @@ storedoc:
     - git status
     - git commit -m "generated html docs from $CI_COMMIT_SHORT_SHA [skip ci]" || echo "No changes, nothing to commit!"
     - git remote rm origin && git remote add origin git@gitlab.com:$CI_PROJECT_PATH.git
-    - git push origin HEAD:$CI_COMMIT_REF_NAME # Pushes to the same branch as the trigger
+    - git push origin HEAD:$CI_COMMIT_REF_NAME # Pushes to the same branch as the trigger      
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+
+makeContainer:
+  stage: "build"
+  script:
+    - docker build --platform linux/amd64 --target=exec -t $CI_REGISTRY_USER/wheel .
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - docker push $CI_REGISTRY_USER/wheel
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
