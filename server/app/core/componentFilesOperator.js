@@ -781,6 +781,10 @@ async function renameComponentDir(projectRootDir, ID, newName) {
   if (oldDir === projectRootDir) {
     return Promise.reject(new Error("updateNode can not rename root workflow"));
   }
+  if (path.basename(oldDir) === newName) {
+    //nothing to be done when you attempt to rename to the same name
+    return true;
+  }
   const newDir = path.resolve(path.dirname(oldDir), newName);
   await gitRm(projectRootDir, oldDir);
   await fs.move(oldDir, newDir);

@@ -120,7 +120,7 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
 async function onRemoveFile(projectRootDir, target, cb) {
   try {
     await gitRm(projectRootDir, target);
-    await fs.remove(target, { force: true });
+    await fs.remove(target);
   } catch (err) {
     getLogger(projectRootDir).warn(`removeFile failed: ${err}`);
     cb(false);
