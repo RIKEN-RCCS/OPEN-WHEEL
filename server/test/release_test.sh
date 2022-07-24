@@ -47,7 +47,7 @@ IPAddress=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}
 
 # build WHEEL docker image
 pushd ../../
-docker build --platform linux/amd64 --target=test -t ${TAG} .
+docker build --platform linux/amd64 --target=UT -t ${TAG} .
 rt=$?
 popd
 if [ ${rt} -ne 0 ];then
@@ -93,7 +93,7 @@ echo '}]'
 #run UT in container
 docker run --env "WHEEL_TEST_REMOTEHOST=testServer"\
            --env "WHEEL_TEST_REMOTE_PASSWORD=passw0rd"\
-           -v ${PWD}/${CONFIG_DIR}:/usr/src/app/config\
+           -v ${PWD}/${CONFIG_DIR}:/usr/src/server/app/config\
            -p 8089:8089\
            --name ${TAG} ${TAG}
 rt=$?
@@ -102,7 +102,7 @@ rt=$?
 if [ x$1 == x-c ];then
   LOG_DIR=$(dirname ${TEST_DIR})/$(date "+%Y%m%d-%H%M")
   mkdir $LOG_DIR
-  docker cp ${TAG}:/usr/src/coverage $LOG_DIR
+  docker cp ${TAG}:/usr/src/server/coverage $LOG_DIR
 fi
 
 if [ ${rt} -ne 0 ];then
