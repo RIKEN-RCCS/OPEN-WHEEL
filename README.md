@@ -22,7 +22,7 @@ https://riken-rccs.github.io/OPEN-WHEEL/
 4. type following command
 
 ```
-> docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/app/config -p 8089:8089 tmkawanabe/wheel:latest
+> docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
 ```
 
 `CONFIG_DIR` must be absolute path in host machine.
