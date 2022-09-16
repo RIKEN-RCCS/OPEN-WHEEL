@@ -17,26 +17,34 @@ const { getLogger } = require("./logSettings");
 const { registerHandlers } = require("./handlers/registerHandlers");
 const { setSio } = require("./core/global.js");
 
-/*
- * read SSL related files
- */
-const key = fs.readFileSync(keyFilename);
-const cert = fs.readFileSync(certFilename);
+//setup logger
+const logger = getLogger();
+process.on("unhandledRejection", logger.debug.bind(logger));
+process.on("uncaughtException", logger.debug.bind(logger));
 
 /*
- * set up express, http and socket.io
+ * setup express, socketIO
  */
 const app = express();
-const opt = { key, cert };
-const server = require("https").createServer(opt, app);
+function createHTTPSServer(argApp) {
+  //read SSL related files
+  const key = fs.readFileSync(keyFilename);
+  const cert = fs.readFileSync(certFilename);
+  const opt = { key, cert };
+  return require("https").createServer(opt, argApp);
+}
+function createHTTPServer(argApp) {
+  return require("http").createServer(argApp);
+}
+
+const server = process.env.WHEEL_USE_HTTP ? createHTTPServer(app) : createHTTPSServer(app);
 const sio = require("socket.io")(server);
 setSio(sio);
 
-//setup logger
-const logger = getLogger();
-
-process.on("unhandledRejection", logger.debug.bind(logger));
-process.on("uncaughtException", logger.debug.bind(logger));
+//port number
+const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;
+let portNumber = port || defaultPort;
+portNumber = portNumber > 0 ? portNumber : defaultPort;
 
 //middlewares
 app.use(cors());
@@ -93,11 +101,6 @@ app.use("/editor", routes.workflow);
 app.use("/viewer", routes.viewer);
 
 
-//port number
-const defaultPort = 443;
-let portNumber = parseInt(process.env.WHEEL_PORT, 10) || port || defaultPort;
-portNumber = portNumber > 0 ? portNumber : defaultPort;
-
 //handle 404 not found
 app.use((req, res, next)=>{
   res.status(404).send("reqested page is not found");
@@ -152,10 +155,12 @@ function onError(error) {
       logger.error(`${bind} requires elevated privileges`);
       //eslint-disable-next-line no-process-exit
       process.exit(1);
+      break;
     case "EADDRINUSE":
       logger.error(`${bind} is already in use`);
       //eslint-disable-next-line no-process-exit
       process.exit(1);
+      break;
     default:
       throw error;
   }

@@ -21,6 +21,9 @@ function isExists(target, file) {
   }
 }
 
+/**
+ * search specified file in order of WHEEL_CONFIG_DIR, ${HOME}/.wheel, WHEEL_INSTALL_PATH/app/config
+ */
 function getConfigFile(filename, failIfNotFound) {
   const envFile = typeof process.env.WHEEL_CONFIG_DIR === "string"
     ? path.resolve(process.env.WHEEL_CONFIG_DIR, filename) : null;
@@ -54,6 +57,15 @@ function getConfigFile(filename, failIfNotFound) {
   throw new Error(filename, "not found");
 }
 
+function getVar(target, alt) {
+  return typeof target !== "undefined" ? target : alt;
+}
+function getIntVar(target, alt) {
+  return Number.isInteger(target) ? target : alt;
+}
+function getStringVar(target, alt) {
+  return typeof target === "string" ? target : alt;
+}
 
 const config = require(getConfigFile("server.json", true));
 const jobScheduler = require(getConfigFile("jobScheduler.json", true));
@@ -77,17 +89,17 @@ module.exports.certFilename = certFilename;
 module.exports.logFilename = logFilename;
 
 //re-export server settings
-module.exports.interval = config.interval;
-module.exports.port = config.port;
-module.exports.rootDir = config.rootDir || os.homedir() || "/";
-module.exports.defaultCleanupRemoteRoot = config.defaultCleanupRemoteRoot;
-module.exports.numLogFiles = config.numLogFiles;
-module.exports.maxLogSize = config.maxLogSize;
-module.exports.compressLogFile = config.compressLogFile;
-module.exports.numJobOnLocal = config.numJobOnLocal;
-module.exports.defaultTaskRetryCount = config.defaultTaskRetryCount;
-module.exports.shutdownDelay = config.shutdownDelay;
-module.exports.gitLFSSize = config.gitLFSSize;
+module.exports.interval = getIntVar(config.interval, 1000);
+module.exports.port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
+module.exports.rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
+module.exports.defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);
+module.exports.numLogFiles = getIntVar(config.numLogFiles, 5);
+module.exports.maxLogSize = getIntVar(config.maxLogSize, 8388608);
+module.exports.compressLogFile = getVar(config.compressLogFile, true);
+module.exports.numJobOnLocal = getIntVar(config.numJobOnLocal, 1);
+module.exports.defaultTaskRetryCount = getIntVar(config.defaultTaskRetryCount, 1);
+module.exports.shutdownDelay = getIntVar(config.shutdownDelay, 0);
+module.exports.gitLFSSize = getIntVar(config.gitLFSSize, 200);
 
 //export setting files
 module.exports.jobScheduler = jobScheduler;
