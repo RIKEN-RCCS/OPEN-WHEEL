@@ -85,6 +85,9 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
+if (process.env.WHEEL_BASE_URL) {
+  app.set("base", process.env.WHEEL_BASE_URL);
+}
 const routes = {
   home: require(path.resolve(__dirname, "routes/home")),
   workflow: require(path.resolve(__dirname, "routes/workflow")),
