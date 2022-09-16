@@ -29,19 +29,6 @@
         </v-list-item>
       </a>
       <a
-        href="/jobScript"
-        target="_blank"
-      >
-        <v-list-item>
-          <v-list-item-icon>
-            <v-icon>mdi-file-document-edit-outline</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title>
-            Jobscript editor
-          </v-list-item-title>
-        </v-list-item>
-      </a>
-      <a
         href="https://riken-rccs.github.io/OPEN-WHEEL"
         target="_blank"
       >
