@@ -74,7 +74,7 @@ const jobScriptFilename = getConfigFile(config.jobScriptJsonFile);
 const projectListFilename = getConfigFile(config.projectListJsonFile);
 const keyFilename = getConfigFile("server.key", true);
 const certFilename = getConfigFile("server.crt", true);
-const logFilename = getConfigFile(config.logFilename);
+const logFilename = getConfigFile(getStringVar(config.logFilename, "wheel.log"));
 
 //export constants
 module.exports.suffix = ".wheel";
