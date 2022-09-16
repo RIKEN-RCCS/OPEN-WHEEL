@@ -1217,8 +1217,9 @@ async function getComponentTree(projectRootDir, rootDir) {
   }));
 
   //Naive implementation
-  const rootIndex = componentJsonFileList.find((e)=>{
-    return path.basename(e) === start;
+  const startStriped = start.endsWith("/") ? start.slice(0, -1) : start;
+  const rootIndex = componentJsonFileList.findIndex((e)=>{
+    return path.dirname(e) === startStriped;
   });
   if (rootIndex === -1) {
     throw Promise.reject(new Error("root component not found"));
@@ -1226,8 +1227,7 @@ async function getComponentTree(projectRootDir, rootDir) {
 
   const root = componentJsonList.splice(rootIndex, 1)[0];
 
-  while (componentJsonList.length > 0) {
-    const target = componentJsonList.pop();
+  for (const target of componentJsonList) {
     const parentComponent = componentJsonList.find((e)=>{
       return e.ID === target.parent;
     }) || root;
