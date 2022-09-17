@@ -26,6 +26,8 @@ process.on("uncaughtException", logger.debug.bind(logger));
  * setup express, socketIO
  */
 const app = express();
+const router = express.Router(); //eslint-disable-line new-cap
+
 function createHTTPSServer(argApp) {
   //read SSL related files
   const key = fs.readFileSync(keyFilename);
@@ -85,23 +87,24 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
-if (process.env.WHEEL_BASE_URL) {
-  app.set("base", process.env.WHEEL_BASE_URL);
-}
 const routes = {
   home: require(path.resolve(__dirname, "routes/home")),
   workflow: require(path.resolve(__dirname, "routes/workflow")),
   remotehost: require(path.resolve(__dirname, "routes/remotehost")),
   viewer: require(path.resolve(__dirname, "routes/viewer"))
 };
-app.get("/", routes.home);
-app.get("/home", routes.home);
-app.get("/remotehost", routes.remotehost);
-app.use("/workflow", routes.workflow);
-app.use("/graph", routes.workflow);
-app.use("/list", routes.workflow);
-app.use("/editor", routes.workflow);
-app.use("/viewer", routes.viewer);
+router.get("/", routes.home);
+router.get("/home", routes.home);
+router.get("/remotehost", routes.remotehost);
+router.use("/workflow", routes.workflow);
+router.use("/graph", routes.workflow);
+router.use("/list", routes.workflow);
+router.use("/editor", routes.workflow);
+router.use("/viewer", routes.viewer);
+
+if (process.env.WHEEL_BASE_URL) {
+  app.use(process.env.WHEEL_BASE_URL, router);
+}
 
 
 //handle 404 not found
