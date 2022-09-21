@@ -26,7 +26,6 @@ process.on("uncaughtException", logger.debug.bind(logger));
  * setup express, socketIO
  */
 const app = express();
-const router = express.Router(); //eslint-disable-line new-cap
 
 function createHTTPSServer(argApp) {
   //read SSL related files
@@ -54,6 +53,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 const baseURL = process.env.WHEEL_BASE_URL || "/";
+logger.info("base URL = ", baseURL);
 
 app.use(express.static(path.resolve(__dirname, "public"), { index: false }));
 app.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
@@ -89,11 +89,12 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
+const router = express.Router(); //eslint-disable-line new-cap
 const routes = {
-  home: require(path.resolve(__dirname, "routes/home")),
-  workflow: require(path.resolve(__dirname, "routes/workflow")),
-  remotehost: require(path.resolve(__dirname, "routes/remotehost")),
-  viewer: require(path.resolve(__dirname, "routes/viewer"))
+  home: require(path.resolve(__dirname, "routes/home"))(router),
+  workflow: require(path.resolve(__dirname, "routes/workflow"))(router),
+  remotehost: require(path.resolve(__dirname, "routes/remotehost"))(router),
+  viewer: require(path.resolve(__dirname, "routes/viewer"))(router)
 };
 app.use("/", routes.home);
 app.use("/home", routes.home);

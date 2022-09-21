@@ -5,12 +5,10 @@
  */
 "use strict";
 const path = require("path");
-const express = require("express");
 
-//eslint-disable-next-line new-cap
-const router = express.Router();
-
-router.get("/", (req, res)=>{
-  res.sendFile(path.resolve(__dirname, "../public/remotehost.html"));
-});
-module.exports = router;
+module.exports = function(router) {
+  router.get("/", (req, res)=>{
+    res.sendFile(path.resolve(__dirname, "../public/remotehost.html"));
+  });
+  return router;
+};
