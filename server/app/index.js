@@ -53,6 +53,8 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+const baseURL = process.env.WHEEL_BASE_URL || "/";
+
 app.use(express.static(path.resolve(__dirname, "public"), { index: false }));
 app.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
 app.use(express.static(path.resolve(__dirname, "download"), { index: false }));
@@ -93,18 +95,16 @@ const routes = {
   remotehost: require(path.resolve(__dirname, "routes/remotehost")),
   viewer: require(path.resolve(__dirname, "routes/viewer"))
 };
-router.get("/", routes.home);
-router.get("/home", routes.home);
-router.get("/remotehost", routes.remotehost);
-router.use("/workflow", routes.workflow);
-router.use("/graph", routes.workflow);
-router.use("/list", routes.workflow);
-router.use("/editor", routes.workflow);
-router.use("/viewer", routes.viewer);
+app.use("/", routes.home);
+app.use("/home", routes.home);
+app.use("/remotehost", routes.remotehost);
+app.use("/workflow", routes.workflow);
+app.use("/graph", routes.workflow);
+app.use("/list", routes.workflow);
+app.use("/editor", routes.workflow);
+app.use("/viewer", routes.viewer);
 
-if (process.env.WHEEL_BASE_URL) {
-  app.use(process.env.WHEEL_BASE_URL, router);
-}
+app.use(baseURL, router);
 
 
 //handle 404 not found
