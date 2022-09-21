@@ -16,7 +16,7 @@
       dense
     >
       <a
-        href="/remotehost"
+        href="./remotehost"
         target="_blank"
       >
         <v-list-item>

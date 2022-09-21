@@ -52,13 +52,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-const baseURL = process.env.WHEEL_BASE_URL || "/";
-logger.info("base URL = ", baseURL);
-
-app.use(express.static(path.resolve(__dirname, "public"), { index: false }));
-app.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
-app.use(express.static(path.resolve(__dirname, "download"), { index: false }));
-
 app.use(Siofu.router);
 
 //global socket IO handler
@@ -89,7 +82,14 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
+const baseURL = process.env.WHEEL_BASE_URL || "/";
+logger.info("base URL = ", baseURL);
+
 const router = express.Router(); //eslint-disable-line new-cap
+router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
+router.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
+router.use(express.static(path.resolve(__dirname, "download"), { index: false }));
+
 const routes = {
   home: require(path.resolve(__dirname, "routes/home"))(router),
   workflow: require(path.resolve(__dirname, "routes/workflow"))(router),

@@ -24,6 +24,8 @@ module.exports = function(router) {
     res.cookie("root", ID);
     res.cookie("rootDir", projectRootDir);
     res.cookie("project", path.resolve(projectRootDir, projectJsonFilename));
+    const baseURL = process.env.WHEEL_BASE_URL || "/";
+    res.cookie("socketIOPath", baseURL);
     res.sendFile(path.resolve(__dirname, "../public/workflow.html"));
   });
   return router;

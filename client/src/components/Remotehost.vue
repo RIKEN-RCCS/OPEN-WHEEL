@@ -13,7 +13,7 @@
       extended
     >
       <a
-        href="/home"
+        href="./home"
         class="text-uppercase text-decoration-none text-h4 white--text"
       > WHEEL </a>
       <span
