@@ -6,10 +6,15 @@
 "use strict";
 const path = require("path");
 const { rootDir } = require("../db/db");
+const express = require("express");
 
-module.exports = function(req, res) {
+//eslint-disable-next-line new-cap
+const router = express.Router();
+
+router.get("/", (req, res)=>{
   res.cookie("home", rootDir);
   res.cookie("pathSep", path.sep);
 
   res.sendFile(path.join(__dirname, "../public/home.html"));
-};
+});
+module.exports = router;
