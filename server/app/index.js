@@ -26,7 +26,6 @@ process.on("uncaughtException", logger.debug.bind(logger));
  * setup express, socketIO
  */
 const app = express();
-
 function createHTTPSServer(argApp) {
   //read SSL related files
   const key = fs.readFileSync(keyFilename);
@@ -52,6 +51,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(express.static(path.resolve(__dirname, "public"), { index: false }));
+app.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
+app.use(express.static(path.resolve(__dirname, "download"), { index: false }));
+
 app.use(Siofu.router);
 
 //global socket IO handler
@@ -82,30 +85,23 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
-const baseURL = process.env.WHEEL_BASE_URL || "/";
-logger.info("base URL = ", baseURL);
-
-const router = express.Router(); //eslint-disable-line new-cap
-router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
-router.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
-router.use(express.static(path.resolve(__dirname, "download"), { index: false }));
-
+if (process.env.WHEEL_BASE_URL) {
+  app.set("base", process.env.WHEEL_BASE_URL);
+}
 const routes = {
-  home: require(path.resolve(__dirname, "routes/home"))(router),
-  workflow: require(path.resolve(__dirname, "routes/workflow"))(router),
-  remotehost: require(path.resolve(__dirname, "routes/remotehost"))(router),
-  viewer: require(path.resolve(__dirname, "routes/viewer"))(router)
+  home: require(path.resolve(__dirname, "routes/home")),
+  workflow: require(path.resolve(__dirname, "routes/workflow")),
+  remotehost: require(path.resolve(__dirname, "routes/remotehost")),
+  viewer: require(path.resolve(__dirname, "routes/viewer"))
 };
-app.use("/", routes.home);
-app.use("/home", routes.home);
-app.use("/remotehost", routes.remotehost);
+app.get("/", routes.home);
+app.get("/home", routes.home);
+app.get("/remotehost", routes.remotehost);
 app.use("/workflow", routes.workflow);
 app.use("/graph", routes.workflow);
 app.use("/list", routes.workflow);
 app.use("/editor", routes.workflow);
 app.use("/viewer", routes.viewer);
-
-app.use(baseURL, router);
 
 
 //handle 404 not found

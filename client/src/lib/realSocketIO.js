@@ -11,8 +11,8 @@ let initialized=false;
 let socket = null;
 let uploader = null;
 
-const init = (auth={}, path="/")=>{
-  socket = io(path, { transposrts: ["websocket"], auth });
+const init = (auth)=>{
+  socket = auth ? io("/", { transposrts: ["websocket"], auth }) : io("/", { transposrts: ["websocket"] });
   uploader = new SocketIOFileUpload(socket);
   uploader.chunkSize = 1024 * 100;
   initialized=true;
@@ -24,7 +24,7 @@ const generalCallback = (rt)=>{
 };
 const initIfNeeded = (auth)=>{
   if (! initialized) {
-    init(auth );
+    init(auth);
   }
 };
 const   onGlobal= (event, callback)=>{

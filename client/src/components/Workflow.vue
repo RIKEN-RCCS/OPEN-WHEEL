@@ -13,7 +13,7 @@
       extended
     >
       <a
-        href="./home"
+        href="/home"
         class="text-uppercase text-decoration-none text-h4 white--text"
       > WHEEL </a>
       <v-spacer />
@@ -365,8 +365,7 @@
     },
     mounted: function () {
       const projectRootDir = readCookie("rootDir");
-      const path=readCookie("socketIOPath");
-      SIO.init({projectRootDir}, path);
+      SIO.init({projectRootDir});
       const ID = readCookie("root");
       this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);

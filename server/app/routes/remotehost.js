@@ -6,9 +6,6 @@
 "use strict";
 const path = require("path");
 
-module.exports = function(router) {
-  router.get("/", (req, res)=>{
-    res.sendFile(path.resolve(__dirname, "../public/remotehost.html"));
-  });
-  return router;
+module.exports = function(req, res) {
+  res.sendFile(path.resolve(__dirname, "../public/remotehost.html"));
 };

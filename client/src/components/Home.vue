@@ -10,7 +10,7 @@
     />
     <v-app-bar app>
       <a
-        href="./home"
+        href="/home"
         class="text-uppercase text-decoration-none text-h4 white--text"
       > WHEEL </a>
       <span
@@ -219,8 +219,7 @@
     mounted: function () {
       this.pathSep = readCookie("pathSep");
       this.home = readCookie("home");
-      const path=readCookie("socketIOPath");
-      SIO.init({},path);
+      SIO.init();
       SIO.onGlobal("projectList", (data)=>{
         this.projectList.splice(0, this.projectList.length, ...data);
       });
