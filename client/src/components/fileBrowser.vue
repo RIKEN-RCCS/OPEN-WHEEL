@@ -37,7 +37,9 @@
       </v-tooltip>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn>
+          <v-btn
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -51,7 +53,9 @@
       </v-tooltip>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn>
+          <v-btn
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -79,7 +83,9 @@
       </v-tooltip>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn>
+          <v-btn
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -93,7 +99,9 @@
       </v-tooltip>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn>
+          <v-btn
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -322,6 +330,9 @@
       ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
       storagePath(){
         return this.copySelectedComponent.storagePath || "/"
+      },
+      isSND(){
+        return this.activeItem !== null && this.activeItem.type === "snd"
       }
     },
     watch: {
