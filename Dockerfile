@@ -4,21 +4,23 @@ FROM --platform=linux/amd64 node:fermium-slim as builder
 WORKDIR /usr/src/
 # to install phantomjs
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
-
 # copy necessary files
 COPY client client
 RUN cd client; npm install; npm run build
 
 #build base image to run WHEEL
-FROM --platform=linux/amd64 node:fermium-slim as runner
+FROM --platform=linux/amd64 node:fermium-slim as base
 WORKDIR /usr/src/
-COPY server server
 RUN apt-get update && apt -y install curl git &&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
     apt -y install git-lfs &&\
     apt-get clean  &&\
-    rm -rf /var/lib/apt/lists/* &&\
-    cd server && npm install --production
+    rm -rf /var/lib/apt/lists/*
+
+FROM base as runner
+WORKDIR /usr/src/
+COPY server server
+RUN cd server && npm install --production
 
 # run UT
 FROM runner as UT
@@ -33,6 +35,6 @@ FROM runner as exec
 WORKDIR /usr/src/server
 
 COPY --from=builder /usr/src/server/app/public /usr/src/server/app/public
-RUN rm -fr server/app/config/*
+RUN rm -fr server/app/config/* server/test/
 
 CMD [ "npm", "start" ]
