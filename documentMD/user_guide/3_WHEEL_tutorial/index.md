@@ -2,9 +2,11 @@
 
 最新のチュートリアルは以下のリンク先にて公開されているビデオを御参照ください
 
-[基本編](https://youtu.be/BmamdFh5wL0)
+[基本編 日本語](https://youtu.be/1sh_XA6o7Zw)
+[応用編 日本語](https://youtu.be/1c-88BGdhPM)
+[基本編 英語](https://youtu.be/10FP6lnVISk)
+[応用編 英語](https://youtu.be/XR-zGcDhR50)
 
-[応用編](https://youtu.be/ya55_R_iSf8)
 
 以下のチュートリアルは、旧バージョンのWHEEL用のものであり
 画面の構成などが最新のものとは異なります。
