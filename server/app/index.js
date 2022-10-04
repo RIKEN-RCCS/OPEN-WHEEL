@@ -26,6 +26,7 @@ process.on("uncaughtException", logger.debug.bind(logger));
  * setup express, socketIO
  */
 const app = express();
+
 function createHTTPSServer(argApp) {
   //read SSL related files
   const key = fs.readFileSync(keyFilename);
@@ -51,10 +52,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.static(path.resolve(__dirname, "public"), { index: false }));
-app.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
-app.use(express.static(path.resolve(__dirname, "download"), { index: false }));
-
 app.use(Siofu.router);
 
 //global socket IO handler
@@ -85,23 +82,36 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
-if (process.env.WHEEL_BASE_URL) {
-  app.set("base", process.env.WHEEL_BASE_URL);
-}
+const baseURL = process.env.WHEEL_BASE_URL || "/";
+logger.info("base URL = ", baseURL);
+
+const router = express.Router(); //eslint-disable-line new-cap
+router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
+router.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
+router.use(express.static(path.resolve(__dirname, "download"), { index: false }));
+
 const routes = {
   home: require(path.resolve(__dirname, "routes/home")),
   workflow: require(path.resolve(__dirname, "routes/workflow")),
   remotehost: require(path.resolve(__dirname, "routes/remotehost")),
   viewer: require(path.resolve(__dirname, "routes/viewer"))
 };
-app.get("/", routes.home);
-app.get("/home", routes.home);
-app.get("/remotehost", routes.remotehost);
-app.use("/workflow", routes.workflow);
-app.use("/graph", routes.workflow);
-app.use("/list", routes.workflow);
-app.use("/editor", routes.workflow);
-app.use("/viewer", routes.viewer);
+
+router.get("/", routes.home);
+router.get("/home", routes.home);
+router.get("/remotehost", routes.remotehost);
+router.route("/workflow").get(routes.workflow.get)
+  .post(routes.workflow.post);
+router.route("/graph").get(routes.workflow.get)
+  .post(routes.workflow.post);
+router.route("/list").get(routes.workflow.get)
+  .post(routes.workflow.post);
+router.route("/editor").get(routes.workflow.get)
+  .post(routes.workflow.post);
+router.route("/viewer").get(routes.viewer.get)
+  .post(routes.viewer.post);
+
+app.use(baseURL, router);
 
 
 //handle 404 not found

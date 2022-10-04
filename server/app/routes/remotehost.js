@@ -6,6 +6,6 @@
 "use strict";
 const path = require("path");
 
-module.exports = function(req, res) {
+module.exports = (req, res)=>{
   res.sendFile(path.resolve(__dirname, "../public/remotehost.html"));
 };

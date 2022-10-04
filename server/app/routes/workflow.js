@@ -5,28 +5,27 @@
  */
 "use strict";
 const path = require("path");
-const express = require("express");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { getComponent } = require("../core/workflowUtil");
 const { importProject } = require("../core/projectFilesOperator");
 
-//eslint-disable-next-line new-cap
-const router = express.Router();
-
-//accept GET method only for reload case
-router.get("/", async(req, res)=>{
-  if (!req.cookies || !req.cookies.rootDir) {
-    return;
+module.exports = {
+  get: async(req, res)=>{
+    //accept GET method only for reload case
+    if (!req.cookies || !req.cookies.rootDir) {
+      return;
+    }
+    res.sendFile(path.resolve(__dirname, "../public/workflow.html"));
+  },
+  post: async(req, res)=>{
+    const projectRootDir = req.body.project;
+    await importProject(projectRootDir);
+    const { ID } = await getComponent(projectRootDir, path.resolve(projectRootDir, componentJsonFilename));
+    res.cookie("root", ID);
+    res.cookie("rootDir", projectRootDir);
+    res.cookie("project", path.resolve(projectRootDir, projectJsonFilename));
+    const baseURL = process.env.WHEEL_BASE_URL || "/";
+    res.cookie("socketIOPath", baseURL);
+    res.sendFile(path.resolve(__dirname, "../public/workflow.html"));
   }
-  res.sendFile(path.resolve(__dirname, "../public/workflow.html"));
-});
-router.post("/", async(req, res)=>{
-  const projectRootDir = req.body.project;
-  await importProject(projectRootDir);
-  const { ID } = await getComponent(projectRootDir, path.resolve(projectRootDir, componentJsonFilename));
-  res.cookie("root", ID);
-  res.cookie("rootDir", projectRootDir);
-  res.cookie("project", path.resolve(projectRootDir, projectJsonFilename));
-  res.sendFile(path.resolve(__dirname, "../public/workflow.html"));
-});
-module.exports = router;
+};
