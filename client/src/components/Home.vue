@@ -10,7 +10,7 @@
     />
     <v-app-bar app>
       <a
-        href="/home"
+        href="./home"
         class="text-uppercase text-decoration-none text-h4 white--text"
       > WHEEL </a>
       <span
@@ -262,7 +262,7 @@
           return;
         }
         const form = document.createElement("form");
-        form.setAttribute("action", "/workflow");
+        form.setAttribute("action", "./workflow");
         form.setAttribute("method", "post");
         form.style.display = "none";
         document.body.appendChild(form);
