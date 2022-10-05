@@ -25,6 +25,10 @@ process.on("uncaughtException", logger.debug.bind(logger));
 /*
  * setup express, socketIO
  */
+
+const baseURL = process.env.WHEEL_BASE_URL || "/";
+logger.info("base URL = ", baseURL);
+
 const app = express();
 
 function createHTTPSServer(argApp) {
@@ -39,7 +43,7 @@ function createHTTPServer(argApp) {
 }
 
 const server = process.env.WHEEL_USE_HTTP ? createHTTPServer(app) : createHTTPSServer(app);
-const sio = require("socket.io")(server);
+const sio = require("socket.io")(server, { path: path.normalize(`${baseURL}/socket.io/`) });
 setSio(sio);
 
 //port number
@@ -82,9 +86,6 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
-const baseURL = process.env.WHEEL_BASE_URL || "/";
-logger.info("base URL = ", baseURL);
-
 const router = express.Router(); //eslint-disable-line new-cap
 router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
 router.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));

@@ -365,7 +365,8 @@
     },
     mounted: function () {
       const projectRootDir = readCookie("rootDir");
-      SIO.init({projectRootDir});
+      const baseURL=readCookie("socketIOPath");
+      SIO.init({projectRootDir}, baseURL);
       const ID = readCookie("root");
       this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);
