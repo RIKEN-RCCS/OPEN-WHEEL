@@ -553,17 +553,28 @@
 最新の <a href="https://www.docker.com/">docker</a> を取得してください。</p>
 <h2 id="%E8%B5%B7%E5%8B%95%E6%96%B9%E6%B3%95">起動方法 <a class="heading-anchor-permalink" href="#%E8%B5%B7%E5%8B%95%E6%96%B9%E6%B3%95">#</a></h2>
 <ol>
-<li>任意の場所にディレクトリを作成します。(以降では、このディレクトリを<code>CONFIG_DIR</code>とします。)</li>
-<li><code>CONFIG_DIR</code>に以下の2つのファイルをダウンロードします。
+<li>
+<p>任意の場所にディレクトリを作成します。(以降では、このディレクトリを<code>CONFIG_DIR</code>とします。)</p>
+</li>
+<li>
+<p><code>CONFIG_DIR</code>に以下の2つのファイルをダウンロードします。</p>
 <ul>
-<li><a href="https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/app/config/jobScheduler.json">jobScheduler.json</a></li>
-<li><a href="https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/app/config/server.json">server.json</a></li>
+<li><a href="https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/server/app/config/jobScheduler.json">jobScheduler.json</a></li>
+<li><a href="https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/server/app/config/server.json">server.json</a></li>
 </ul>
 </li>
-<li>HTTP通信用のサーバ証明書および鍵ファイルを作成し、<code>CONFIG_DIR</code>に格納します。(HTTP通信用自己証明書の作成方法は、<a href="../../../self-signed_certification.html">self-signed certification</a>を参考ください。)</li>
-<li>ターミナルを起動し、以下のコマンドを入力します。</li>
+<li>
+<p>HTTPS通信用のサーバ証明書および鍵ファイルを、それぞれ<code>server.crt</code>, <code>server.key</code>という名前で<code>CONFIG_DIR</code>に格納します。
+自己証明書を使用する際は次のURLのドキュメントを参考にしてください。</p>
+<p><a href="https://letsencrypt.org/docs/certificates-for-localhost/">https://letsencrypt.org/docs/certificates-for-localhost/</a></p>
+<p>また、起動時に環境変数 WHEEL_USE_HTTP=1を指定することで、httpでの通信を行なうこともできます。
+ローカルネットワーク内での試用など、セキュリティ上の問題が無い環境でのみお使いください。</p>
+</li>
+<li>
+<p>ターミナルを起動し、以下のコマンドを入力します。</p>
+</li>
 </ol>
-<pre><code>&gt; docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/app/config -p 8089:8089 tmkawanabe/wheel:latest
+<pre><code>&gt; docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
 </code></pre>
 <p>このとき、<code>CONFIG_DIR</code>は、ホストマシン上での絶対パスである必要があります。</p>
 <p>上記コマンドでは、</p>
@@ -571,7 +582,7 @@
 <li>プロジェクトファイルの作成先を${HOME}に指定しています</li>
 <li>WHHELのポート番号を8089に指定しています。</li>
 </ul>
-<p>WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、<code>https://localhost:8089</code>にアクセスしてください。</p>
+<p>WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、<code>http(s)://localhost:8089</code>にアクセスしてください。</p>
 <hr>
 <p><a href="../../index.html">トップページに戻る</a></p>
 
