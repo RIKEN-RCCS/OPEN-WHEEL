@@ -27,8 +27,6 @@ process.on("uncaughtException", logger.debug.bind(logger));
  */
 
 const baseURL = process.env.WHEEL_BASE_URL || "/";
-logger.info("base URL = ", baseURL);
-
 const app = express();
 
 function createHTTPSServer(argApp) {
@@ -45,6 +43,8 @@ function createHTTPServer(argApp) {
 const server = process.env.WHEEL_USE_HTTP ? createHTTPServer(app) : createHTTPSServer(app);
 const sio = require("socket.io")(server, { path: path.normalize(`${baseURL}/socket.io/`) });
 setSio(sio);
+//do not call log functions above this line !!
+logger.info("base URL = ", baseURL);
 
 //port number
 const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;
