@@ -77,6 +77,8 @@
       if(typeof dir !== "string" || typeof projectRootDir !== "string"){
         return;
       }
+      const baseURL=readCookie("socketIOPath");
+      SIO.init(null, baseURL);
       SIO.onGlobal("resultFiles", (results)=>{
         this.items=results;
       });
