@@ -818,6 +818,9 @@ async function updateComponent(projectRootDir, ID, prop, value) {
   if (prop === "env") {
     return Promise.reject(new Error("updateNode does not support env. please use updateEnv"));
   }
+  if (prop === "uploadOnDemand" && value === true) {
+    await setUploadOndemandOutputFile(projectRootDir, ID);
+  }
   if (prop === "name") {
     await renameComponentDir(projectRootDir, ID, value);
   }
@@ -939,7 +942,43 @@ async function addOutputFile(projectRootDir, ID, name) {
     err.component = componentJson;
     return Promise.reject(err);
   }
+  if (componentJson.outputFiles.find((outputFile)=>{
+    return outputFile.name === name;
+  })) {
+    return Promise.reject(new Error(`${name} is already exists`));
+  }
   componentJson.outputFiles.push({ name, dst: [] });
+  return writeComponentJson(projectRootDir, componentDir, componentJson);
+}
+async function setUploadOndemandOutputFile(projectRootDir, ID) {
+  const componentDir = await getComponentDir(projectRootDir, ID, true);
+  const componentJson = await readComponentJson(componentDir);
+  if (!Object.prototype.hasOwnProperty.call(componentJson, "outputFiles")) {
+    const err = new Error(`${componentJson.name} does not have outputFiles`);
+    err.component = componentJson;
+    return Promise.reject(err);
+  }
+  if (componentJson.outputFiles.length === 0) {
+    return addOutputFile(projectRootDir, ID, "UPLOAD_ONDEMAND");
+  }
+  if (componentJson.outputFiles.length > 1) {
+    const p = [];
+
+    for (let i = 1; i < componentJson.outputFiles.length; i++) {
+      const counterparts = new Set();
+
+      for (const dst of componentJson.outputFiles[i].dst) {
+        counterparts.add(dst);
+      }
+      for (const counterPart of counterparts) {
+        p.push(removeFileLink(projectRootDir, ID, componentJson.outputFiles[i].name, counterPart.dstNode, counterPart.dstName));
+      }
+    }
+    await Promise.all(p);
+    componentJson.outputFiles.splice(1, componentJson.outputFiles.length - 1);
+  }
+
+  componentJson.outputFiles[0].name = "UPLOAD_ONDEMAND";
   return writeComponentJson(projectRootDir, componentDir, componentJson);
 }
 async function removeInputFile(projectRootDir, ID, name) {

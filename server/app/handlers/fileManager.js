@@ -178,20 +178,28 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
 const onUploadFileSaved = async(event)=>{
   const projectRootDir = event.file.meta.projectRootDir;
   if (!event.file.success) {
-    getLogger(projectRootDir).error("file upload failed", event.file.meta.name);
+    getLogger(projectRootDir).error("file upload failed", event.file.name);
     return;
   }
-  const uploadDir = event.file.meta.currentDir;
+  const uploadDir = path.resolve(projectRootDir, event.file.meta.currentDir);
   const uploadClient = event.file.meta.clientID;
-  const absFilename = await getUnusedPath(uploadDir, event.file.meta.orgName);
+  const absFilename = event.file.meta.overwrite ? path.resolve(uploadDir, event.file.meta.orgName)
+    : await getUnusedPath(uploadDir, event.file.meta.orgName);
+  if (event.file.meta.overwrite) {
+    await fs.remove(absFilename);
+  }
   await fs.move(event.file.pathName, absFilename);
   const fileSizeMB = parseInt(event.file.size / 1024 / 1024, 10);
   getLogger(projectRootDir).info(`upload completed ${absFilename} [${fileSizeMB > 1 ? `${fileSizeMB} MB` : `${event.file.size} Byte`}]`);
 
-  if (fileSizeMB > gitLFSSize) {
-    await gitLFSTrack(projectRootDir, absFilename);
+  if (event.file.meta.skipGit) {
+    getLogger(projectRootDir).debug("git add skipped", event.file.name);
+  } else {
+    if (fileSizeMB > gitLFSSize) {
+      await gitLFSTrack(projectRootDir, absFilename);
+    }
+    await gitAdd(projectRootDir, absFilename);
   }
-  await gitAdd(projectRootDir, absFilename);
   const result = await fileBrowser(path.dirname(absFilename), {
     request: path.dirname(absFilename),
     sendFilename: true,

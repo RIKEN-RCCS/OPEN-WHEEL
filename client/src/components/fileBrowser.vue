@@ -397,7 +397,8 @@
           .map(fileListModifier.bind(null, this.pathSep))
         }
         const path = this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
-        SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
+        const withOutSND = this.selectedComponent.type === "source"
+        SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "sourceComponent"}, cb)
       },
       noDuplicate(v){
        return ! this.items.map((e)=>{ return e.name }).includes(v)
