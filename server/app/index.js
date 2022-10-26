@@ -11,7 +11,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const Siofu = require("socketio-file-upload");
-const { port, keyFilename, certFilename, projectList } = require("./db/db");
+const { port, projectList } = require("./db/db");
 const { setProjectState, checkRunningJobs } = require("./core/projectFilesOperator");
 const { getLogger } = require("./logSettings");
 const { registerHandlers } = require("./handlers/registerHandlers");
@@ -30,6 +30,7 @@ const baseURL = process.env.WHEEL_BASE_URL || "/";
 const app = express();
 
 function createHTTPSServer(argApp) {
+const { keyFilename, certFilename} = require("./db/db");
   //read SSL related files
   const key = fs.readFileSync(keyFilename);
   const cert = fs.readFileSync(certFilename);
