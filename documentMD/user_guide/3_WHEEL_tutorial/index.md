@@ -3,8 +3,11 @@
 最新のチュートリアルは以下のリンク先にて公開されているビデオを御参照ください
 
 [基本編 日本語](https://youtu.be/1sh_XA6o7Zw)
+
 [応用編 日本語](https://youtu.be/1c-88BGdhPM)
+
 [基本編 英語](https://youtu.be/10FP6lnVISk)
+
 [応用編 英語](https://youtu.be/XR-zGcDhR50)
 
 
