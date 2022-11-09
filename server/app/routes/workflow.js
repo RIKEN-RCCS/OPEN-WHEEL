@@ -15,6 +15,8 @@ module.exports = {
     if (!req.cookies || !req.cookies.rootDir) {
       return;
     }
+    const baseURL = process.env.WHEEL_BASE_URL || "/";
+    res.cookie("socketIOPath", baseURL);
     res.sendFile(path.resolve(__dirname, "../public/workflow.html"));
   },
   post: async(req, res)=>{
