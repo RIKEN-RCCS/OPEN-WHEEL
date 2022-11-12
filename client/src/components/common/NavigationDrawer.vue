@@ -16,7 +16,7 @@
       dense
     >
       <a
-        href="./remotehost"
+        :href="link2remotehost"
         target="_blank"
       >
         <v-list-item>
@@ -47,6 +47,10 @@
     name: "NavDrawer",
     props: {
       value: Boolean,
+      link2remotehost:{
+        type: String,
+        default: "./remotehost",
+      }
     },
     computed: {
       drawer: {

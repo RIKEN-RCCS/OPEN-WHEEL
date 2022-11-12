@@ -7,13 +7,14 @@
   <v-app>
     <nav-drawer
       v-model="drawer"
+      :link2remotehost="link2remotehost"
     />
     <v-app-bar
       app
       extended
     >
       <a
-        href="./home"
+        :href="link2home"
         class="text-uppercase text-decoration-none text-h4 white--text"
       > WHEEL </a>
       <v-spacer />
@@ -378,6 +379,8 @@
         selectedSourceFilenames:[],
         selectSourceFileDialogTitle: "",
         uploadSourceFileDialog:false,
+        link2home: "",
+        link2remotehost:""
       };
     },
     computed: {
@@ -402,6 +405,8 @@
       const projectRootDir = readCookie("rootDir");
       const baseURL=readCookie("socketIOPath");
       SIO.init({projectRootDir}, baseURL);
+      this.link2home=`${baseURL === "/" ? "." : baseURL}/home`
+      this.link2remotehost=`${baseURL === "/" ? "." : baseURL}/remotehost`
       const ID = readCookie("root");
       this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);
