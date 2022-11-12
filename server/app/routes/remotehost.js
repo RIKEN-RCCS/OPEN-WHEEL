@@ -6,6 +6,8 @@
 "use strict";
 const path = require("path");
 
-module.exports = function(req, res) {
+module.exports = (req, res)=>{
+  const baseURL = process.env.WHEEL_BASE_URL || "/";
+  res.cookie("socketIOPath", baseURL);
   res.sendFile(path.resolve(__dirname, "../public/remotehost.html"));
 };

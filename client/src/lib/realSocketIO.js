@@ -11,8 +11,12 @@ let initialized=false;
 let socket = null;
 let uploader = null;
 
-const init = (auth)=>{
-  socket = auth ? io("/", { transposrts: ["websocket"], auth }) : io("/", { transposrts: ["websocket"] });
+const init = (auth, argBaseURL="/")=>{
+  if(initialized){
+    return;
+  }
+  const baseURL=(argBaseURL+"/socket.io/").replace(/\/\/+/g,"/");
+  socket = auth ? io({path: baseURL, transports: ["websocket"], auth }) : io({path:baseURL, transports: ["websocket"] });
   uploader = new SocketIOFileUpload(socket);
   uploader.chunkSize = 1024 * 100;
   initialized=true;
@@ -22,39 +26,34 @@ const generalCallback = (rt)=>{
     console.log(rt);
   }
 };
-const initIfNeeded = (auth)=>{
-  if (! initialized) {
-    init(auth);
-  }
-};
 const   onGlobal= (event, callback)=>{
-  initIfNeeded();
+  init();
   socket.on(event, callback);
 };
 const  emitGlobal= (event, ...args)=>{
-  initIfNeeded();
+  init();
   socket.emit(event, ...args);
 };
-const   close= ()=>{
+const close= ()=>{
   if (socket) {
     socket.close();
     socket = null;
   }
 };
 const  listenOnDrop= (...args)=>{
-  initIfNeeded();
+  init();
   uploader.listenOnDrop(...args);
 };
 const  prompt= ()=>{
-  initIfNeeded();
+  init();
   uploader.prompt();
 };
 const  onUploaderEvent= (event, callback)=>{
-  initIfNeeded();
+  init();
   uploader.addEventListener(event, callback);
 };
 const removeUploaderEvent= (event, callback)=>{
-  initIfNeeded();
+  init();
   uploader.removeEventListener(event, callback);
 };
 const getID=()=>{
@@ -64,7 +63,6 @@ const getID=()=>{
 export default {
   init,
   generalCallback,
-  initIfNeeded,
   onGlobal,
   emitGlobal,
   close,

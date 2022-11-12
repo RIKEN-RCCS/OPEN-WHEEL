@@ -10,7 +10,7 @@
       extended
     >
       <a
-        href="/home"
+        href="./home"
         class="text-uppercase text-decoration-none text-h4 white--text"
       > WHEEL </a>
       <v-spacer />
@@ -77,6 +77,8 @@
       if(typeof dir !== "string" || typeof projectRootDir !== "string"){
         return;
       }
+      const baseURL=readCookie("socketIOPath");
+      SIO.init(null, baseURL);
       SIO.onGlobal("resultFiles", (results)=>{
         this.items=results;
       });

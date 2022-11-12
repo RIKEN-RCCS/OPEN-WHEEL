@@ -72,8 +72,6 @@ const jobScheduler = require(getConfigFile("jobScheduler.json", true));
 const remotehostFilename = getConfigFile(config.remotehostJsonFile);
 const jobScriptFilename = getConfigFile(config.jobScriptJsonFile);
 const projectListFilename = getConfigFile(config.projectListJsonFile);
-const keyFilename = getConfigFile("server.key", true);
-const certFilename = getConfigFile("server.crt", true);
 const logFilename = getConfigFile(getStringVar(config.logFilename, "wheel.log"));
 
 //export constants
@@ -84,8 +82,11 @@ module.exports.statusFilename = "status.wheel.txt";
 module.exports.jobManagerJsonFilename = "jm.wheel.json";
 module.exports.filesJsonFilename = "files.wheel.json";
 module.exports.defaultPSconfigFilename = "parameterSetting.json";
-module.exports.keyFilename = keyFilename;
-module.exports.certFilename = certFilename;
+
+if (!process.env.WHEEL_USE_HTTP) {
+  module.exports.keyFilename = getConfigFile("server.key", true);
+  module.exports.certFilename = getConfigFile("server.crt", true);
+}
 module.exports.logFilename = logFilename;
 
 //re-export server settings

@@ -11,7 +11,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const Siofu = require("socketio-file-upload");
-const { port, keyFilename, certFilename, projectList } = require("./db/db");
+const { port, projectList } = require("./db/db");
 const { setProjectState, checkRunningJobs } = require("./core/projectFilesOperator");
 const { getLogger } = require("./logSettings");
 const { registerHandlers } = require("./handlers/registerHandlers");
@@ -25,8 +25,12 @@ process.on("uncaughtException", logger.debug.bind(logger));
 /*
  * setup express, socketIO
  */
+
+const baseURL = process.env.WHEEL_BASE_URL || "/";
 const app = express();
+
 function createHTTPSServer(argApp) {
+const { keyFilename, certFilename} = require("./db/db");
   //read SSL related files
   const key = fs.readFileSync(keyFilename);
   const cert = fs.readFileSync(certFilename);
@@ -38,8 +42,10 @@ function createHTTPServer(argApp) {
 }
 
 const server = process.env.WHEEL_USE_HTTP ? createHTTPServer(app) : createHTTPSServer(app);
-const sio = require("socket.io")(server);
+const sio = require("socket.io")(server, { path: path.normalize(`${baseURL}/socket.io/`) });
 setSio(sio);
+//do not call log functions above this line !!
+logger.info("base URL = ", baseURL);
 
 //port number
 const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;
@@ -51,10 +57,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.static(path.resolve(__dirname, "public"), { index: false }));
-app.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
-app.use(express.static(path.resolve(__dirname, "download"), { index: false }));
-
 app.use(Siofu.router);
 
 //global socket IO handler
@@ -85,23 +87,33 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
-if (process.env.WHEEL_BASE_URL) {
-  app.set("base", process.env.WHEEL_BASE_URL);
-}
+const router = express.Router(); //eslint-disable-line new-cap
+router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
+router.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
+router.use(express.static(path.resolve(__dirname, "download"), { index: false }));
+
 const routes = {
   home: require(path.resolve(__dirname, "routes/home")),
   workflow: require(path.resolve(__dirname, "routes/workflow")),
   remotehost: require(path.resolve(__dirname, "routes/remotehost")),
   viewer: require(path.resolve(__dirname, "routes/viewer"))
 };
-app.get("/", routes.home);
-app.get("/home", routes.home);
-app.get("/remotehost", routes.remotehost);
-app.use("/workflow", routes.workflow);
-app.use("/graph", routes.workflow);
-app.use("/list", routes.workflow);
-app.use("/editor", routes.workflow);
-app.use("/viewer", routes.viewer);
+
+router.get("/", routes.home);
+router.get("/home", routes.home);
+router.get("/remotehost", routes.remotehost);
+router.route("/workflow").get(routes.workflow.get)
+  .post(routes.workflow.post);
+router.route("/graph").get(routes.workflow.get)
+  .post(routes.workflow.post);
+router.route("/list").get(routes.workflow.get)
+  .post(routes.workflow.post);
+router.route("/editor").get(routes.workflow.get)
+  .post(routes.workflow.post);
+router.route("/viewer").get(routes.viewer.get)
+  .post(routes.viewer.post);
+
+app.use(baseURL, router);
 
 
 //handle 404 not found

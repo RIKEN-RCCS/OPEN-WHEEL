@@ -7,9 +7,12 @@
 const path = require("path");
 const { rootDir } = require("../db/db");
 
-module.exports = function(req, res) {
+
+module.exports = (req, res)=>{
   res.cookie("home", rootDir);
   res.cookie("pathSep", path.sep);
+  const baseURL = process.env.WHEEL_BASE_URL || "/";
+  res.cookie("socketIOPath", baseURL);
 
   res.sendFile(path.join(__dirname, "../public/home.html"));
 };

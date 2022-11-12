@@ -13,7 +13,7 @@
       extended
     >
       <a
-        href="/home"
+        href="./home"
         class="text-uppercase text-decoration-none text-h4 white--text"
       > WHEEL </a>
       <span
@@ -90,6 +90,7 @@
 <script>
   "use strict";
   import SIO from "@/lib/socketIOWrapper.js";
+  import { readCookie } from "@/lib/utility.js";
   import actionRow from "@/components/common/actionRow.vue";
   import navDrawer from "@/components/common/NavigationDrawer.vue";
   import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
@@ -140,6 +141,8 @@
       }
     },
     mounted () {
+      const baseURL=readCookie("socketIOPath");
+      SIO.init(null, baseURL);
       SIO.emitGlobal("getJobSchedulerLabelList", (data)=>{
         this.jobSchedulerNames.splice(0,this.jobSchedulerNames.length, ...data);
       });

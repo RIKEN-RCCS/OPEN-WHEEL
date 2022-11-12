@@ -4,6 +4,7 @@ module.exports = {
     "vuetify",
   ],
   outputDir: "../server/app/public/",
+  publicPath: "./",
   pages: {
     workflow: {
       entry: "src/workflow.js",

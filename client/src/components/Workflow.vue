@@ -7,13 +7,14 @@
   <v-app>
     <nav-drawer
       v-model="drawer"
+      :link2remotehost="link2remotehost"
     />
     <v-app-bar
       app
       extended
     >
       <a
-        href="/home"
+        :href="link2home"
         class="text-uppercase text-decoration-none text-h4 white--text"
       > WHEEL </a>
       <v-spacer />
@@ -303,6 +304,31 @@
       @ok="openViewerScreen();viewerScreenDialog=false"
       @cancel="viewerScreenDialog=false"
     />
+    <versatile-dialog
+      v-model="selectSourceFileDialog"
+      max-width="50vw"
+      :title="selectSourceFileDialogTitle"
+      @ok="selectSourceFileDialogCallback(true)"
+      @cancel="selectSourceFileDialogCallback(false)"
+    >
+      <template slot="message">
+        <v-data-table
+          v-model="selectedSourceFilenames"
+          :items="sourceFileCandidates"
+          item-key="filename"
+          :headers="[{value: 'filename', text: 'filename'}]"
+          disable-filterling
+          disable-pagination
+          hide-default-header
+          hide-default-footer
+          show-select
+          :single-select="true"
+        />
+      </template>
+    </versatile-dialog>
+    <source-file-upload-dialog 
+      v-model="uploadSourceFileDialog"
+    />
   </v-app>
 </template>
 
@@ -313,6 +339,7 @@
   import NavDrawer from "@/components/common/NavigationDrawer.vue";
   import passwordDialog from "@/components/common/passwordDialog.vue";
   import unsavedFilesDialog from "@/components/unsavedFilesDialog.vue";
+  import sourceFileUploadDialog from "@/components/uploadSourceFileDialog.vue";
   import versatileDialog from "@/components/versatileDialog.vue";
   import SIO from "@/lib/socketIOWrapper.js";
   import { readCookie, state2color } from "@/lib/utility.js";
@@ -327,6 +354,7 @@
       NavDrawer,
       unsavedFilesDialog,
       versatileDialog,
+      sourceFileUploadDialog,
       passwordDialog,
     },
     data: ()=>{
@@ -346,6 +374,13 @@
         showUnsavedFilesDialog:false,
         viewerDataDir: null,
         firstViewDataAlived: false,
+        selectSourceFileDialog:false,
+        sourceFileCandidates:[],
+        selectedSourceFilenames:[],
+        selectSourceFileDialogTitle: "",
+        uploadSourceFileDialog:false,
+        link2home: "",
+        link2remotehost:""
       };
     },
     computed: {
@@ -361,19 +396,21 @@
       ...mapGetters(["waiting", "isEdittable", "canRun", "running"]),
       stateColor(){
         return state2color(this.projectState);
+      },
+      selectedSourceFilename(){
+        return this.selectedSourceFilenames[0].filename;
       }
     },
     mounted: function () {
       const projectRootDir = readCookie("rootDir");
-      SIO.init({projectRootDir});
+      const baseURL=readCookie("socketIOPath");
+      SIO.init({projectRootDir}, baseURL);
+      this.link2home=`${baseURL === "/" ? "." : baseURL}/home`
+      this.link2remotehost=`${baseURL === "/" ? "." : baseURL}/remotehost`
       const ID = readCookie("root");
       this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);
 
-      SIO.onGlobal("componentTree", (componentTree)=>{
-        this.commitComponentTree(componentTree);
-      });
-      SIO.onGlobal("showMessage", this.showSnackbar);
       SIO.onGlobal("askPassword", (hostname, cb)=>{
         this.pwCallback = (pw)=>{
           cb(pw);
@@ -381,8 +418,29 @@
         this.pwDialogTitle = `input password or passphrase for ${hostname}`;
         this.pwDialog = true;
       });
+      SIO.onGlobal("askSourceFilename", ( ID, name, description, candidates, cb)=>{
+        this.selectSourceFileDialogTitle=`select source file for ${name}`;
+        this.sourceFileCandidates=candidates.map((filename)=>{
+          return {filename};
+        });
+
+        this.selectSourceFileDialogCallback=(result)=>{
+          cb(result ? this.selectedSourceFilename : null);
+          this.selectedSourceFilenames=[];
+          this.sourceFileCandidates=[];
+          this.selectSourceFileDialog=false;
+        };
+        this.selectSourceFileDialog=true;
+      });
+      SIO.onGlobal("componentTree", (componentTree)=>{
+        this.commitComponentTree(componentTree);
+      });
+      SIO.onGlobal("showMessage", this.showSnackbar);
       SIO.onGlobal("hostList", (hostList)=>{
         this.commitRemoteHost(hostList);
+      });
+      SIO.onGlobal("projectState", (state)=>{
+        this.commitProjectState(state.toLowerCase());
       });
       SIO.onGlobal("projectJson", (projectJson)=>{
         this.projectJson = projectJson;
@@ -406,30 +464,6 @@
         }
         this.commitWaitingWorkflow(false);
       });
-
-      SIO.emitGlobal("getHostList", (hostList)=>{
-        this.commitRemoteHost(hostList);
-      });
-      SIO.emitGlobal("getJobSchedulerList", (JSList)=>{
-        this.commitJobScheduler(JSList);
-      });
-      SIO.emitGlobal("getComponentTree", projectRootDir, projectRootDir, SIO.generalCallback);
-
-      this.commitWaitingProjectJson(true);
-      SIO.emitGlobal("getProjectJson", projectRootDir, (rt)=>{
-        debug("getProjectJson done", rt);
-      });
-      this.commitWaitingWorkflow(true);
-      SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
-        debug("getWorkflow done", rt);
-      });
-      this.$router.replace({ name: "graph" })
-        .catch((err)=>{
-          if (err.name === "NavigationDuplicated") {
-            return;
-          }
-          throw err;
-        });
       SIO.onGlobal("unsavedFiles", (unsavedFiles, cb)=>{
         if (unsavedFiles.length === 0) {
           return;
@@ -454,6 +488,30 @@
           this.$refs.logscreen.logRecieved(event, data);
         });
       }
+
+      SIO.emitGlobal("getHostList", (hostList)=>{
+        this.commitRemoteHost(hostList);
+      });
+      SIO.emitGlobal("getJobSchedulerList", (JSList)=>{
+        this.commitJobScheduler(JSList);
+      });
+      SIO.emitGlobal("getComponentTree", projectRootDir, projectRootDir, SIO.generalCallback);
+
+      this.commitWaitingProjectJson(true);
+      SIO.emitGlobal("getProjectJson", projectRootDir, (rt)=>{
+        debug("getProjectJson done", rt);
+      });
+      this.commitWaitingWorkflow(true);
+      SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
+        debug("getWorkflow done", rt);
+      });
+      this.$router.replace({ name: "graph" })
+        .catch((err)=>{
+          if (err.name === "NavigationDuplicated") {
+            return;
+          }
+          throw err;
+        });
     },
     methods: {
       openViewerScreen(){

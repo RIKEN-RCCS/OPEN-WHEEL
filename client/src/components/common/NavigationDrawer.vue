@@ -16,7 +16,7 @@
       dense
     >
       <a
-        href="/remotehost"
+        :href="link2remotehost"
         target="_blank"
       >
         <v-list-item>
@@ -25,19 +25,6 @@
           </v-list-item-icon>
           <v-list-item-title>
             Remotehost editor
-          </v-list-item-title>
-        </v-list-item>
-      </a>
-      <a
-        href="/jobScript"
-        target="_blank"
-      >
-        <v-list-item>
-          <v-list-item-icon>
-            <v-icon>mdi-file-document-edit-outline</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title>
-            Jobscript editor
           </v-list-item-title>
         </v-list-item>
       </a>
@@ -60,6 +47,10 @@
     name: "NavDrawer",
     props: {
       value: Boolean,
+      link2remotehost:{
+        type: String,
+        default: "./remotehost",
+      }
     },
     computed: {
       drawer: {

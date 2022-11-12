@@ -111,19 +111,30 @@ async function askUnsavedFiles(clientID, projectRootDir) {
 
 async function getSourceCandidates(projectRootDir, ID) {
   const componentDir = await getComponentDir(projectRootDir, ID);
-  return promisify(glob)("*", { cwd: componentDir, ignore: componentJsonFilename });
+  return promisify(glob)("*", { cwd: path.join(projectRootDir, componentDir), ignore: componentJsonFilename });
 }
 
-//memo askSourceFilename eventのクライアント側ハンドラが無いかもしれない
 async function askSourceFilename(clientID, ID, name, description, candidates) {
   return new Promise((resolve, reject)=>{
     emitAll(clientID, "askSourceFilename", ID, name, description, candidates, (filename)=>{
       if (isValidOutputFilename(filename)) {
-        //ここでファイルが存在するか確認する。ファイルがアップロードされるパターンでは
-        //アップロード完了を待ちたいがそんなイベントは無い気がする・・・
         resolve(filename);
+      } else if (filename === null) {
+        reject(new Error(`source file selection for ${name} canceled`));
       } else {
         reject(new Error(`invalid filename: ${filename}`));
+      }
+    });
+  });
+}
+
+async function askUploadSourceFile(clientID, ID, name, description) {
+  return new Promise((resolve, reject)=>{
+    emitAll(clientID, "askUploadSourceFile", ID, name, description, (filename)=>{
+      if (filename === null) {
+        reject(new Error(`source file upload for ${name} canceled`));
+      } else {
+        resolve(filename);
       }
     });
   });
@@ -133,6 +144,9 @@ async function askSourceFilename(clientID, ID, name, description, candidates) {
  * ask user what file to be used
  */
 async function getSourceFilename(projectRootDir, component, clientID) {
+  if (component.uploadOnDemand) {
+    return askUploadSourceFile(clientID, component.ID, component.name, component.description);
+  }
   const filelist = await getSourceCandidates(projectRootDir, component.ID);
   getLogger(projectRootDir).trace("sourceFile: candidates=", filelist);
 
@@ -162,24 +176,31 @@ async function onRunProject(clientID, projectRootDir, ack) {
       //resolve source files
       const sourceComponents = await getSourceComponents(projectRootDir);
 
+      console.log("DEBUG 1");
+
       for (const component of sourceComponents) {
         if (component.disable) {
           getLogger(projectRootDir).debug(`disabled component: ${component.name}(${component.ID})`);
           continue;
         }
+        console.log("DEBUG 2");
         //ask to user if needed
         const filename = await getSourceFilename(projectRootDir, component, clientID);
-
+        console.log("DEBUG 3");
         const componentDir = await getComponentDir(projectRootDir, component.ID);
+        console.log("DEBUG 4");
         const outputFilenames = component.outputFiles.map((e)=>{
           return e.name;
         });
+        console.log("DEBUG 5");
         getLogger(projectRootDir).trace("sourceFile:", filename, "will be used as", outputFilenames);
 
         await Promise.all(
           outputFilenames.map((outputFile)=>{
+            console.log("DEBUG 6", outputFile, filename);
+
             if (filename !== outputFile) {
-              return deliverFile(path.resolve(componentDir, filename), path.resolve(componentDir, outputFile));
+              return deliverFile(path.resolve(projectRootDir, componentDir, filename), path.resolve(projectRootDir, componentDir, outputFile));
             }
             return Promise.resolve(true);
           })

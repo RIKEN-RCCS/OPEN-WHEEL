@@ -5,27 +5,26 @@
  */
 "use strict";
 const path = require("path");
-const express = require("express");
 const fs = require("fs-extra");
 
-//eslint-disable-next-line new-cap
-const router = express.Router();
-
-//accept GET method only for reload case
-router.get("/", async(req, res)=>{
-  if (!req.dir) {
-    return;
+module.exports = {
+  get: async(req, res)=>{
+    //accept GET method only for reload case
+    if (!req.dir) {
+      return;
+    }
+    res.sendFile(path.resolve(__dirname, "../public/viewer.html"));
+  },
+  post: async(req, res)=>{
+    const projectRootDir = req.body.rootDir;
+    const dir = req.body.dir;
+    if (!await fs.pathExists(dir)) {
+      return;
+    }
+    const baseURL = process.env.WHEEL_BASE_URL || "/";
+    res.cookie("socketIOPath", baseURL);
+    res.cookie("dir", dir);
+    res.cookie("rootDir", projectRootDir);
+    res.sendFile(path.resolve(__dirname, "../public/viewer.html"));
   }
-  res.sendFile(path.resolve(__dirname, "../public/viewer.html"));
-});
-router.post("/", async(req, res)=>{
-  const projectRootDir = req.body.rootDir;
-  const dir = req.body.dir;
-  if (!await fs.pathExists(dir)) {
-    return;
-  }
-  res.cookie("dir", dir);
-  res.cookie("rootDir", projectRootDir);
-  res.sendFile(path.resolve(__dirname, "../public/viewer.html"));
-});
-module.exports = router;
+};
