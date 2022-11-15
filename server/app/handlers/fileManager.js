@@ -43,6 +43,7 @@ const onGetFileList = async(projectRootDir, msg, cb)=>{
   const filterTable = {
     dirWithProjectJson: projectJsonFileOnly,
     underComponent: exceptSystemFiles,
+    sourceComponent: exceptSystemFiles,
     SND: exceptSystemFiles
   };
   const fileFilter = filterTable[msg.mode] || null;

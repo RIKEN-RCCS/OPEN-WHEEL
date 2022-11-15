@@ -302,7 +302,6 @@ async function onCleanProject(clientID, projectRootDir, ack) {
 
   try {
     await cleanProject(projectRootDir);
-    await sendWorkflow(ack, projectRootDir, projectRootDir);
     await Promise.all([removeTempd(projectRootDir, "viewer"), removeTempd(projectRootDir, "download")]);
   } catch (e) {
     ack(e);
@@ -316,7 +315,6 @@ async function onCleanProject(clientID, projectRootDir, ack) {
     removeCluster(projectRootDir);
   }
   getLogger(projectRootDir).debug("clean project done");
-  ack(true);
 }
 async function onSaveProject(projectRootDir, cb) {
   const projectState = await getProjectState(projectRootDir);
