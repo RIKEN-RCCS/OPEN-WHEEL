@@ -224,7 +224,8 @@ const onDownload = async(projectRootDir, target, cb)=>{
   } else {
     await deliverFile(target, `${tmpDir}/${path.basename(target)}`);
   }
-  const url = `/${path.join(path.relative(downloadRootDir, tmpDir), path.basename(target))}${stats.isDirectory() ? ".zip" : ""}`;
+  const baseURL = process.env.WHEEL_BASE_URL || "";
+  const url = `${baseURL}/${path.join(path.relative(downloadRootDir, tmpDir), path.basename(target))}${stats.isDirectory() ? ".zip" : ""}`;
   getLogger(projectRootDir).debug("Download url is ready", url);
   cb(url);
 };
