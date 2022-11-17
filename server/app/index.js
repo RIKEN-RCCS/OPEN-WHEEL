@@ -16,6 +16,7 @@ const { setProjectState, checkRunningJobs } = require("./core/projectFilesOperat
 const { getLogger } = require("./logSettings");
 const { registerHandlers } = require("./handlers/registerHandlers");
 const { setSio } = require("./core/global.js");
+const { tempdRoot } = require("./core/tempd.js");
 
 //setup logger
 const logger = getLogger();
@@ -30,7 +31,7 @@ const baseURL = process.env.WHEEL_BASE_URL || "/";
 const app = express();
 
 function createHTTPSServer(argApp) {
-const { keyFilename, certFilename} = require("./db/db");
+  const { keyFilename, certFilename } = require("./db/db");
   //read SSL related files
   const key = fs.readFileSync(keyFilename);
   const cert = fs.readFileSync(certFilename);
@@ -89,8 +90,9 @@ sio.on("connection", (socket)=>{
 //routing
 const router = express.Router(); //eslint-disable-line new-cap
 router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
-router.use(express.static(path.resolve(__dirname, "viewer"), { index: false }));
-router.use(express.static(path.resolve(__dirname, "download"), { index: false }));
+logger.info(`${tempdRoot} is used as static content directory`);
+router.use(express.static(path.resolve(tempdRoot, "viewer"), { index: false }));
+router.use(express.static(path.resolve(tempdRoot, "download"), { index: false }));
 
 const routes = {
   home: require(path.resolve(__dirname, "routes/home")),

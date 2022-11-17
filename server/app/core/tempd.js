@@ -7,10 +7,10 @@
 const path = require("path");
 const fs = require("fs-extra");
 const { readComponentJson } = require("./componentFilesOperator");
-const tmpdRoot = process.env.WHEEL_TEMPD || path.dirname(__dirname);
+const tempdRoot = process.env.WHEEL_TEMPD || path.dirname(__dirname);
 
 async function createTempd(projectRootDir, prefix) {
-  const root = path.resolve(tmpdRoot, prefix);
+  const root = path.resolve(tempdRoot, prefix);
   const { ID } = await readComponentJson(projectRootDir);
   const dir = path.join(root, ID);
   await fs.ensureDir(dir);
@@ -19,11 +19,12 @@ async function createTempd(projectRootDir, prefix) {
 
 async function removeTempd(projectRootDir, prefix) {
   const { ID } = await readComponentJson(projectRootDir);
-  return fs.remove(tmpdRoot, prefix, ID);
+  return fs.remove(tempdRoot, prefix, ID);
 }
 
 
 module.exports = {
+  tempdRoot,
   createTempd,
   removeTempd
 };
