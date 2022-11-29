@@ -65,10 +65,10 @@ function makeEnv(task) {
  * make part of submit command line about queue argument
  * @param {Object} task - task component instance
  * @param {Object} JS - Jobscheduler.json's entry
- * @param {string|undefined} queues - comma separated queue name list or undefined
+ * @param {string} queues - comma separated queue name list
  */
 function makeQueueOpt(task, JS, queues) {
-  if (typeof queues === "undefined") {
+  if (typeof queues !== "string") {
     return "";
   }
   const queueList = queues.split(",");

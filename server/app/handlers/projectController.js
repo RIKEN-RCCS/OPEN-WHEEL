@@ -176,29 +176,21 @@ async function onRunProject(clientID, projectRootDir, ack) {
       //resolve source files
       const sourceComponents = await getSourceComponents(projectRootDir);
 
-      console.log("DEBUG 1");
-
       for (const component of sourceComponents) {
         if (component.disable) {
           getLogger(projectRootDir).debug(`disabled component: ${component.name}(${component.ID})`);
           continue;
         }
-        console.log("DEBUG 2");
         //ask to user if needed
         const filename = await getSourceFilename(projectRootDir, component, clientID);
-        console.log("DEBUG 3");
         const componentDir = await getComponentDir(projectRootDir, component.ID);
-        console.log("DEBUG 4");
         const outputFilenames = component.outputFiles.map((e)=>{
           return e.name;
         });
-        console.log("DEBUG 5");
         getLogger(projectRootDir).trace("sourceFile:", filename, "will be used as", outputFilenames);
 
         await Promise.all(
           outputFilenames.map((outputFile)=>{
-            console.log("DEBUG 6", outputFile, filename);
-
             if (filename !== outputFile) {
               return deliverFile(path.resolve(projectRootDir, componentDir, filename), path.resolve(projectRootDir, componentDir, outputFile));
             }
