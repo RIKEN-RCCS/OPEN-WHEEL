@@ -17,7 +17,7 @@ const fileBrowser = require("../core/fileBrowser");
 const { getLogger } = require("../logSettings");
 const { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir } = require("../db/db");
 const { emitAll } = require("./commUtils.js");
-const { createTempd } = require("../core/tempd.js");
+const { getTempd, createTempd } = require("../core/tempd.js");
 
 const oldProjectJsonFilename = "swf.prj.json";
 const noDotFiles = /^[^.].*$/;
@@ -231,7 +231,7 @@ const onDownload = async(projectRootDir, target, cb)=>{
 };
 
 const onRemoveDownloadFile = async(projectRootDir, URL, cb)=>{
-  const { dir } = await createTempd(projectRootDir, "download");
+  const { dir } = await getTempd(projectRootDir, "download");
   const target = path.join(dir, path.basename(path.dirname(URL)));
   getLogger(projectRootDir).debug(`remove ${target}`);
   await fs.remove(target);

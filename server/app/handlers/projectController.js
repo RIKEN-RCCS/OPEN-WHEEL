@@ -293,9 +293,13 @@ async function onCleanProject(clientID, projectRootDir, ack) {
   }
 
   try {
-    await cleanProject(projectRootDir);
-    await Promise.all([removeTempd(projectRootDir, "viewer"), removeTempd(projectRootDir, "download")]);
+    await Promise.all([
+      cleanProject(projectRootDir),
+      removeTempd(projectRootDir, "viewer"),
+      removeTempd(projectRootDir, "download")
+    ]);
   } catch (e) {
+    getLogger(projectRootDir).error("clean project failed", e);
     ack(e);
   } finally {
     await Promise.all([
@@ -308,46 +312,59 @@ async function onCleanProject(clientID, projectRootDir, ack) {
   }
   getLogger(projectRootDir).debug("clean project done");
 }
-async function onSaveProject(projectRootDir, cb) {
+
+async function onSaveProject(projectRootDir, ack) {
   const projectState = await getProjectState(projectRootDir);
   if (projectState === "not-started") {
     await setProjectState(projectRootDir, "not-started", true);
     await gitCommit(projectRootDir, "wheel", "wheel@example.com");
   } else {
     getLogger(projectRootDir).error(projectState, "project can not be saved");
-    return cb(null);
+    return ack(null);
   }
   getLogger(projectRootDir).debug("save project done");
   const projectJson = await getProjectJson(projectRootDir);
-  return cb(projectJson);
-}
-async function onRevertProject(clientID, projectRootDir, cb) {
-  await askUnsavedFiles(clientID, projectRootDir);
-  await gitResetHEAD(projectRootDir);
-  await sendWorkflow(cb, projectRootDir);
-  await Promise.all([removeTempd(projectRootDir, "viewer"), removeTempd(projectRootDir, "download")]);
-  getLogger(projectRootDir).debug("revert project done");
-  const projectJson = await getProjectJson(projectRootDir);
-  cb(projectJson);
+  return ack(projectJson);
 }
 
-async function onGetProjectJson(projectRootDir, cb) {
+async function onRevertProject(clientID, projectRootDir, ack) {
+  await askUnsavedFiles(clientID, projectRootDir);
+
+  try {
+    await Promise.all([
+      gitResetHEAD(projectRootDir),
+      removeTempd(projectRootDir, "viewer"),
+      removeTempd(projectRootDir, "download")
+    ]);
+  } catch (e) {
+    await Promise.all([
+      sendWorkflow(ack, projectRootDir),
+      emitAll(projectRootDir, "taskStateList", []),
+      emitAll(projectRootDir, "projectJson", await getProjectJson(projectRootDir))
+    ]);
+  }
+  getLogger(projectRootDir).debug("revert project done");
+  const projectJson = await getProjectJson(projectRootDir);
+  ack(projectJson);
+}
+
+async function onGetProjectJson(projectRootDir, ack) {
   try {
     const projectJson = await getProjectJson(projectRootDir);
     emitAll(projectRootDir, "projectJson", projectJson);
   } catch (e) {
-    return cb(false);
+    return ack(false);
   }
-  return cb(true);
+  return ack(true);
 }
-async function onGetWorkflow(clientID, projectRootDir, componentID, cb) {
+async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
   const requestedComponentDir = await getComponentDir(projectRootDir, componentID);
-  return sendWorkflow(cb, projectRootDir, requestedComponentDir, clientID);
+  return sendWorkflow(ack, projectRootDir, requestedComponentDir, clientID);
 }
 
-async function onUpdateProjectDescription(projectRootDir, description, cb) {
+async function onUpdateProjectDescription(projectRootDir, description, ack) {
   await updateProjectDescription(projectRootDir, description);
-  cb(true);
+  ack(true);
 }
 
 

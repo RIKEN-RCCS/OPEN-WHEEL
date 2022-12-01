@@ -44,10 +44,13 @@ async function sendComponentTree(projectRootDir, rootDir) {
 }
 
 //read and send projectJson
-async function sendProjectJson(projectRootDir) {
-  getLogger(projectRootDir).trace("projectState: sendProjectJson", projectRootDir);
-  const filename = path.resolve(projectRootDir, projectJsonFilename);
-  const projectJson = await readJsonGreedy(filename);
+async function sendProjectJson(projectRootDir, argProjectJson) {
+  getLogger(projectRootDir).trace("projectState: sendProjectJson", projectRootDir, argProjectJson);
+  let projectJson = argProjectJson;
+  if (!argProjectJson) {
+    const filename = path.resolve(projectRootDir, projectJsonFilename);
+    projectJson = await readJsonGreedy(filename);
+  }
   getLogger(projectRootDir).trace("projectState: stat=", projectJson.state);
   await emitAll(projectRootDir, "projectJson", projectJson);
 }
