@@ -151,12 +151,20 @@
         return relativePath.startsWith("./") ? relativePath.slice(2) : relativePath;
       },
       modes(){
-        const disablePS=this.selectedComponent !== null ? this.selectedComponent.type !== "parameterStudy" : false;
         const disableJobScriptEditor=this.selectedComponent !== null ? this.selectedComponent.type !== "task" : false;
         return [ {text: "normal", value:"normal"},
-          {text: "PS-config", value:"PS-config", disabled: disablePS},
+          {text: "PS-config", value:"PS-config", disabled: this.disablePS},
           {text: "jobScriptEditor", value: "jobScriptEditor", disabled: disableJobScriptEditor}];
       },
+      disablePS(){
+        if (this.selectedComponent === null){
+          return true;
+        }
+        if(this.selectedComponent.type === "parameterStudy" || this.selectedComponent.type === "bulkjobTask"){
+          return false;
+        }
+        return true;
+      }
     },
     mounted () {
       SIO.onGlobal("parameterSettingFile", (file)=>{
