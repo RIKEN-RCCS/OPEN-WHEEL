@@ -63,7 +63,7 @@ const cleanProject = async(projectRootDir)=>{
   await gitResetHEAD(projectRootDir);
   await gitClean(projectRootDir);
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  await updateProjectState(projectRootDir, projectJson);
+  await updateProjectState(projectRootDir, "not-started", projectJson);
 };
 
 async function pauseProject(projectRootDir) {
@@ -73,7 +73,7 @@ async function pauseProject(projectRootDir) {
   }
 
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  await updateProjectState("paused", projectJson);
+  await updateProjectState(projectRootDir, "paused", projectJson);
 }
 
 async function stopProject(projectRootDir) {
@@ -83,7 +83,7 @@ async function stopProject(projectRootDir) {
   }
 
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  await updateProjectState("not-started", projectJson);
+  await updateProjectState(projectRootDir, "not-started", projectJson);
 }
 
 async function runProject(projectRootDir) {
