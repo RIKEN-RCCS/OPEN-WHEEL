@@ -24,7 +24,10 @@ function getMaxNumJob(hostinfo) {
   if (hostinfo === null) {
     return numJobOnLocal;
   }
-  return !Number.isNaN(parseInt(hostinfo.numJob, 10)) ? Math.max(parseInt(hostinfo.numJob, 10), 1) : 1;
+  if (!Number.isNaN(parseInt(hostinfo.numJob, 10))) {
+    return Math.max(parseInt(hostinfo.numJob, 10), 1);
+  }
+  return 1;
 }
 
 /**
@@ -148,7 +151,7 @@ class Executer {
     this.hostinfo = hostinfo;
     const maxNumJob = getMaxNumJob(hostinfo);
     const hostname = hostinfo != null ? hostinfo.host : null;
-    const execInterval = hostinfo != null ? hostinfo.execInterval : 1;
+    const execInterval = hostinfo != null && typeof (hostinfo.statusCheckInterval) === "number" ? hostinfo.statusCheckInterval : 60;
     this.batch = new SBS({
       exec: async(task)=>{
         task.startTime = getDateString(true, true);
@@ -374,6 +377,7 @@ function createExecuter(task) {
   getLogger(task.projectRootDir).debug("createExecuter called");
   const onRemote = task.remotehostID !== "localhost";
   const hostinfo = onRemote ? getSshHostinfo(task.projectRootDir, task.remotehostID) : null;
+
   if (task.useJobScheduler && typeof jobScheduler[hostinfo.jobScheduler] === "undefined") {
     const err = new Error("illegal job Scheduler specifies");
     err.task = task.name;
@@ -393,7 +397,7 @@ function createExecuter(task) {
 
 /**
  * enqueue task
- * @param {Task} task - instance of Task class (dfined in workflowComponent.js)
+ * @param {Task} task - instance of Task class (defined in workflowComponent.js)
  */
 async function exec(task) {
   task.remotehostID = remoteHost.getID("name", task.host) || "localhost";
@@ -404,9 +408,7 @@ async function exec(task) {
     const onRemote = task.remotehostID !== "localhost";
     const hostinfo = onRemote ? getSshHostinfo(task.projectRootDir, task.remotehostID) : null;
     const maxNumJob = getMaxNumJob(hostinfo);
-    const execInterval = hostinfo != null ? hostinfo.execInterval : 1;
     executer.setMaxNumJob(maxNumJob);
-    executer.setExecInterval(execInterval);
 
     if (task.useJobScheduler) {
       const JS = Object.keys(jobScheduler).includes(hostinfo.jobScheduler) ? jobScheduler[hostinfo.jobScheduler] : null;

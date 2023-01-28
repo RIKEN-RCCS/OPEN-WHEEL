@@ -40,7 +40,9 @@ async function updateProjectState(projectRootDir, state, projectJson) {
   projectJson.state = state;
   projectJson.mtime = getDateString(true);
   const ee = eventEmitters.get(projectRootDir);
-  ee.emit("projectStateChanged", projectJson);
+  if (ee) {
+    ee.emit("projectStateChanged", projectJson);
+  }
   return fs.writeJson(path.resolve(projectRootDir, projectJsonFilename), projectJson, { spaces: 4 });
 }
 
