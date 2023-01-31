@@ -606,9 +606,8 @@ class Dispatcher extends EventEmitter {
     cancelDispatchedTasks(this.runningTasks);
     this.emit("stop");
     this.removeListener("dispatch", this._dispatch);
-    //to be discussed kill task or
-    this.cancelTasks();
 
+    //to be discussed kill task or
     for (const child of this.children) {
       child.pause();
     }
