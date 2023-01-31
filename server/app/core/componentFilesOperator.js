@@ -652,7 +652,10 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts) {
     if (component.disable) {
       continue;
     }
-    if (component.type === "task" && component.host !== "localhost" || component.type === "stepjob") {
+    if (component.host === "localhost") {
+      continue;
+    }
+    if (["task", "stepjob", "bulkjobTask"].includes(component.type)) {
       hosts.push(component.host);
     }
     if (hasChild(component)) {
