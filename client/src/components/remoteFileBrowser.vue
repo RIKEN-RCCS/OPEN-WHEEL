@@ -439,6 +439,8 @@
           file.meta.projectRootDir=this.projectRootDir
           file.meta.componentDir=this.selectedComponentAbsPath
           file.meta.clientID=SIO.getID()
+          file.meta.skipGit=true;
+          file.meta.overwrite=true;
         }
         this.uploading=true;
       },

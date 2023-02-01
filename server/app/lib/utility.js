@@ -7,7 +7,7 @@
 
 
 //NG
-const reWin32ReservedNames = /(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
+const reWin32ReservedNames = /^(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
 const reOnlyWhilteSpace = /^\s*$/;
 //OK
 const alphanumeric = "a-zA-Z0-9";
@@ -87,7 +87,6 @@ function isValidOutputFilename(name) {
   if (!isSane(name)) {
     return false;
   }
-
   const forbidonChars = new RegExp(`[^${escapeRegExp(alphanumeric + pathseps + metaCharactors) + bars}]`);
   if (forbidonChars.test(name)) {
     return false;

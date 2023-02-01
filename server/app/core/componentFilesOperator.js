@@ -652,7 +652,10 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts) {
     if (component.disable) {
       continue;
     }
-    if (component.type === "task" && component.host !== "localhost" || component.type === "stepjob") {
+    if (component.host === "localhost") {
+      continue;
+    }
+    if (["task", "stepjob", "bulkjobTask"].includes(component.type)) {
       hosts.push(component.host);
     }
     if (hasChild(component)) {
@@ -1052,9 +1055,11 @@ async function renameInputFile(projectRootDir, ID, index, newName) {
       }
     }
     for (const inputFile of counterpartJson.inputFiles) {
-      for (const dst of inputFile.forwardTo) {
-        if (dst.dstNode === ID && dst.dstName === oldName) {
-          dst.dstName = newName;
+      if (!Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
+        for (const dst of inputFile.forwardTo) {
+          if (dst.dstNode === ID && dst.dstName === oldName) {
+            dst.dstName = newName;
+          }
         }
       }
     }
@@ -1092,9 +1097,11 @@ async function renameOutputFile(projectRootDir, ID, index, newName) {
       }
     }
     for (const outputFile of counterpartJson.outputFiles) {
-      for (const src of outputFile.origin) {
-        if (src.srcNode === ID && src.srcName === oldName) {
-          src.srcName = newName;
+      if (!Object.prototype.hasOwnProperty.call(outputFile, "origin")) {
+        for (const src of outputFile.origin) {
+          if (src.srcNode === ID && src.srcName === oldName) {
+            src.srcName = newName;
+          }
         }
       }
     }

@@ -421,6 +421,8 @@
           file.meta.projectRootDir=this.projectRootDir
           file.meta.componentDir=this.selectedComponentAbsPath
           file.meta.clientID=SIO.getID()
+          file.meta.skipGit=false;
+          file.meta.overwrite=false;
         }
         this.uploading=true;
       },
