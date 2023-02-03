@@ -25,7 +25,8 @@ async function expandArrayOfGlob(globs, cwd) {
 function isValidParamAxis(min, max, step) {
   if (max > min) {
     return step > 0;
-  } if (max < min) {
+  }
+  if (max < min) {
     return step < 0;
   }
   //max == min
@@ -56,32 +57,26 @@ function calcParamAxisSize(min, max, step) {
 }
 
 function getParamAxisSize(axis) {
-  let size = 0;
   if (typeof axis.type === "undefined") {
-    //for version 2
-    if (axis.hasOwnProperty("list")) {
-      size = axis.list.length;
-    } else {
-      size = calcParamAxisSize(axis.min, axis.max, axis.step);
+    if (Array.isArray(axis.list)) {
+      return axis.list.length;
     }
-  } else {
-    //for version 1
-    switch (axis.type) {
-      case "string":
-        size = axis.list.length;
-        break;
-      case "file":
-        size = axis.list.length;
-        break;
-      case "integer":
-        size = calcParamAxisSize(axis.min, axis.max, axis.step);
-        break;
-      case "float":
-        size = calcParamAxisSize(axis.min, axis.max, axis.step);
-        break;
-    }
+    return calcParamAxisSize(axis.min, axis.max, axis.step);
   }
-  return size;
+  switch (axis.type) {
+    case "string":
+      return axis.list.length;
+    case "file":
+      return axis.list.length;
+    case "integer":
+      return calcParamAxisSize(axis.min, axis.max, axis.step);
+    case "float":
+      return calcParamAxisSize(axis.min, axis.max, axis.step);
+    case "min-max-step":
+      return calcParamAxisSize(axis.min, axis.max, axis.step);
+    default:
+      return new Error("unknown axis.type");
+  }
 }
 
 function getDigitsAfterTheDecimalPoint(floatVal) {
@@ -105,8 +100,9 @@ function getNthValue(n, axis) {
   return rt.toString();
 }
 
-function getNthParamVec(n, ParamSpace) {
+function getNthParamVec(argN, ParamSpace) {
   const paramVec = [];
+  let n = argN;
 
   for (let i = 0; i < ParamSpace.length; i++) {
     const axis = ParamSpace[i];
@@ -179,20 +175,22 @@ function removeInvalidv1(paramSpace) {
 
 function removeInvalidv2(paramSpace) {
   return paramSpace.filter((e)=>{
-    if (e.hasOwnProperty("min") && e.hasOwnProperty("max") && e.hasOwnProperty("step")) {
+    if (Object.prototype.hasOwnProperty.call(e, "min") &&
+      Object.prototype.hasOwnProperty.call(e, "max") &&
+      Object.prototype.hasOwnProperty.call(e, "step")) {
       return isValidParamAxis(e.min, e.max, e.step);
-    } if (e.hasOwnProperty("list")) {
-      return Array.isArray(e.list) && e.list.length > 0;
-    } if (e.hasOwnProperty("files")) {
-      return Array.isArray(e.files) && e.files.length > 0;
     }
+    if (Array.isArray(e.list) || Array.isArray(e.files)) {
+      return e.list.length > 0;
+    }
+    return false;
   });
 }
 
 async function getParamSpacev2(paramSpace, cwd) {
   const cleanParamSpace = removeInvalidv2(paramSpace);
   for (const param of cleanParamSpace) {
-    if (param.hasOwnProperty("files")) {
+    if (Object.prototype.hasOwnProperty.call(param, "files")) {
       param.type = "file";
       param.list = await expandArrayOfGlob(param.files, cwd);
     }
