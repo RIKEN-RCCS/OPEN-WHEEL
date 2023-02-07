@@ -16,7 +16,7 @@ const outputFile=path.resolve(__dirname,"../user_guide.pdf");
   const PDFs= glob.sync(`${inputDir}/**/*.pdf`)
   let readme;
   const inputFiles=PDFs.filter((e)=>{
-    if(e.endsWith("readme.pdf")){
+    if(e.endsWith("index.pdf")){
       readme=e;
       return false
     }
