@@ -8,7 +8,7 @@ const { promisify } = require("util");
 const fs = require("fs-extra");
 const path = require("path");
 const isPathInside = require("is-path-inside");
-const uuidv1 = require("uuid/v1");
+const uuid = require("uuid");
 const glob = require("glob");
 const { componentFactory } = require("./workflowComponent");
 const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix } = require("../db/db");
@@ -242,7 +242,7 @@ async function convertComponentJson(projectRootDir, componentPath, parentCompone
   delete componentJson.path;
   delete componentJson.index;
 
-  componentJson.ID = parentID || uuidv1();
+  componentJson.ID = parentID || uuid.v1();
 
   //remove depricated props, add ID to child components and register to componentPath
   for (const node of componentJson.nodes) {
@@ -253,7 +253,7 @@ async function convertComponentJson(projectRootDir, componentPath, parentCompone
     delete node.path;
     delete node.index;
     node.parent = componentJson.ID;
-    node.ID = uuidv1();
+    node.ID = uuid.v1();
     componentPath[node.ID] = path.relative(projectRootDir, path.join(path.dirname(parentComponentJson), node.name));
   }
   //fix next, else, previous, inputFiles, outputFiles and indexList then write json file and recursive call if component has child

@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const uuidv1 = require("uuid/v1");
+const uuid = require("uuid");
 const { defaultPSconfigFilename } = require("../db/db.js");
 
 class BaseWorkflowComponent {
@@ -17,7 +17,7 @@ class BaseWorkflowComponent {
      */
     this.pos = pos;
 
-    this.ID = uuidv1();
+    this.ID = uuid.v1();
     this.type = null;
     this.name = null;
     this.description = null;

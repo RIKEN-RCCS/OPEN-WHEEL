@@ -99,7 +99,7 @@ async function getScatterFilesV2(templateRoot, paramSettings) {
 
 async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params) {
   return Promise.all(
-    targetFiles.map(async(targetFile)=>{
+    targetFiles.map(async (targetFile)=>{
       const template = (await fs.readFile(path.resolve(templateRoot, targetFile))).toString();
       const result = nunjucks.renderString(template, params);
       return fs.outputFile(path.resolve(instanceRoot, targetFile), result);
@@ -109,7 +109,7 @@ async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params
 
 async function replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber) {
   return Promise.all(
-    targetFiles.map(async(targetFile)=>{
+    targetFiles.map(async (targetFile)=>{
       const template = (await fs.readFile(path.resolve(templateRoot, targetFile))).toString();
       const temp = replacePathsep(targetFile);
       const arrTargetPath = temp.split(path.posix.sep);
@@ -126,7 +126,7 @@ async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumb
   const paramsKeys = Object.keys(params);
   let targetNum = 0;
   return Promise.all(
-    targetFiles.map(async(targetFile, index)=>{
+    targetFiles.map(async (targetFile, index)=>{
       const label = `BULKNUM_${bulkNumber}`;
       const target = replacePathsep(targetFile);
       const targetKey = paramsKeys[index];
