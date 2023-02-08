@@ -146,12 +146,22 @@ async function decideFinishState(task) {
   return rt;
 }
 
+function getExecInterval(hostinfo, isJob) {
+  if (hostinfo != null && typeof (hostinfo.statusCheckInterval) === "number") {
+    return hostinfo.statusCheckInterval;
+  }
+  if (isJob) {
+    return 60;
+  }
+  return 1;
+}
+
 class Executer {
-  constructor(hostinfo) {
+  constructor(hostinfo, isJob) {
     this.hostinfo = hostinfo;
     const maxNumJob = getMaxNumJob(hostinfo);
     const hostname = hostinfo != null ? hostinfo.host : null;
-    const execInterval = hostinfo != null && typeof (hostinfo.statusCheckInterval) === "number" ? hostinfo.statusCheckInterval : 60;
+    const execInterval = getExecInterval(hostinfo, isJob);
     this.batch = new SBS({
       exec: async(task)=>{
         task.startTime = getDateString(true, true);
@@ -238,8 +248,8 @@ class Executer {
 }
 
 class RemoteJobExecuter extends Executer {
-  constructor(hostinfo) {
-    super(hostinfo);
+  constructor(hostinfo, isJob) {
+    super(hostinfo, isJob);
     this.queues = hostinfo != null ? hostinfo.queue : null;
     this.JS = hostinfo != null ? jobScheduler[hostinfo.jobScheduler] : null;
     this.grpName = hostinfo != null ? hostinfo.grpName : null;
@@ -294,8 +304,8 @@ class RemoteJobExecuter extends Executer {
 }
 
 class RemoteTaskExecuter extends Executer {
-  constructor(hostinfo) {
-    super(hostinfo);
+  constructor(hostinfo, isJob) {
+    super(hostinfo, isJob);
   }
 
   async exec(task) {
@@ -350,8 +360,8 @@ function promisifiedSpawn(task, script, options) {
 }
 
 class LocalTaskExecuter extends Executer {
-  constructor(hostinfo) {
-    super(hostinfo);
+  constructor(hostinfo, isJob) {
+    super(hostinfo, isJob);
   }
 
   async exec(task) {
@@ -388,11 +398,11 @@ function createExecuter(task) {
   }
   if (onRemote) {
     if (task.useJobScheduler) {
-      return new RemoteJobExecuter(hostinfo);
+      return new RemoteJobExecuter(hostinfo, true);
     }
-    return new RemoteTaskExecuter(hostinfo);
+    return new RemoteTaskExecuter(hostinfo, false);
   }
-  return new LocalTaskExecuter(hostinfo);
+  return new LocalTaskExecuter(hostinfo, false);
 }
 
 /**
