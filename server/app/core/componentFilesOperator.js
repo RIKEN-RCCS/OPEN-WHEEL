@@ -405,7 +405,9 @@ async function validateTask(projectRootDir, component) {
     const hostinfo = remoteHost.query("name", component.host);
     if (typeof hostinfo === "undefined") {
       //local job is not implemented
-    } else if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
+      return Promise.reject(new Error(`remote host setting for ${component.host} not found`));
+    }
+    if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
       return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
     }
     if (component.submitOption) {
@@ -492,8 +494,10 @@ async function validateBulkjobTask(projectRootDir, component) {
   if (component.useJobScheduler) {
     const hostinfo = remoteHost.query("name", component.host);
     if (typeof hostinfo === "undefined") {
-      //assume local job
-    } else if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
+      //TODO local jobが将来実装されたらここを変更する必要がある
+      return Promise.reject(new Error(`remote host setting for ${component.host} not found`));
+    }
+    if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
       return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
     }
     const setJobScheduler = jobScheduler[hostinfo.jobScheduler];

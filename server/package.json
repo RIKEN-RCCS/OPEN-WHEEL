@@ -24,12 +24,13 @@
     "mocha": "mocha",
     "lint": "eslint --fix app/**/*.js",
     "test": "cross-env WHEEL_LOGLEVEL=OFF mocha --recursive --unhandled-rejections=strict",
-    "coverage": "nyc --reporter=html --reporter=text npm run test"
+    "coverage": "nyc --reporter=html --reporter=text npm run test",
+    "check_version_string": "git status -s app/db/version.json |grep '^M  app/db/version.json'"
   },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged",
-      "pre-push": "npm run test"
+      "pre-push": "npm run check_version_string; npm run test"
     }
   },
   "lint-staged": {
