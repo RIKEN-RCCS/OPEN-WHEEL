@@ -4,6 +4,7 @@
  * See Licensethe project root for the license information.
  */
 "use strict";
+const { version } = require("./db/version.json");
 const path = require("path");
 const fs = require("fs-extra");
 const cors = require("cors");
@@ -45,7 +46,10 @@ function createHTTPServer(argApp) {
 const server = process.env.WHEEL_USE_HTTP ? createHTTPServer(app) : createHTTPSServer(app);
 const sio = require("socket.io")(server, { path: path.normalize(`${baseURL}/socket.io/`) });
 setSio(sio);
+//
 //do not call log functions above this line !!
+//
+logger.info(`starting WHEEL server (version ${version})`);
 logger.info("base URL = ", baseURL);
 
 //port number
