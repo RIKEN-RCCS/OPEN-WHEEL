@@ -180,8 +180,11 @@ function removeInvalidv2(paramSpace) {
       Object.prototype.hasOwnProperty.call(e, "step")) {
       return isValidParamAxis(e.min, e.max, e.step);
     }
-    if (Array.isArray(e.list) || Array.isArray(e.files)) {
+    if (Array.isArray(e.list)) {
       return e.list.length > 0;
+    }
+    if (Array.isArray(e.files)) {
+      return e.files.length > 0;
     }
     return false;
   });
