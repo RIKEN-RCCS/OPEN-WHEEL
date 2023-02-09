@@ -7,14 +7,13 @@
   <v-app>
     <nav-drawer
       v-model="drawer"
-      :link2remotehost="link2remotehost"
     />
     <v-app-bar
       app
       extended
     >
       <a
-        :href="link2home"
+        href="home"
         class="text-uppercase text-decoration-none text-h4 white--text"
       > WHEEL </a>
       <v-spacer />
@@ -379,9 +378,6 @@
         selectedSourceFilenames:[],
         selectSourceFileDialogTitle: "",
         uploadSourceFileDialog:false,
-        link2home: "",
-        link2remotehost:"",
-        link2viewer:""
       };
     },
     computed: {
@@ -405,10 +401,8 @@
     mounted: function () {
       const projectRootDir = readCookie("rootDir");
       const baseURL=readCookie("socketIOPath");
+      this.$router.history.base=baseURL === "/" ? "" : baseURL;
       SIO.init({projectRootDir}, baseURL);
-      this.link2home=`${baseURL === "/" ? "." : baseURL}/home`
-      this.link2remotehost=`${baseURL === "/" ? "." : baseURL}/remotehost`
-      this.link2viewer=`${baseURL === "/" ? "." : baseURL}/viewer`
       const ID = readCookie("root");
       this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);
@@ -517,10 +511,10 @@
     },
     methods: {
       openViewerScreen(){
-        viewerWindow = window.open(this.link2viewer, "viewer");
+        viewerWindow = window.open("viewer", "viewer");
         const form = document.createElement("form");
         form.setAttribute("target", "viewer");
-        form.setAttribute("action", this.link2viewer);
+        form.setAttribute("action", "viewer");
         form.setAttribute("method", "post");
         form.style.display = "none";
         document.body.appendChild(form);
