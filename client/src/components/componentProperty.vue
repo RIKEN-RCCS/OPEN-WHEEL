@@ -547,7 +547,7 @@
     },
     computed: {
       ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler"]),
-      ...mapGetters(["selectedComponentAbsPath"]),
+      ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
       isRemoteComponent(){
       return this.selectedComponent.type === "storage"
                            && typeof this.selectedComponent.host === "string"
@@ -662,6 +662,21 @@
         if (this.selectedComponent === null || ( nv !== null && ov !== null && nv.ID === ov.ID)) {
           return;
         }
+        // get script candidate
+        if(["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
+          return;
+        }
+        const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent";
+        SIO.emitGlobal("getFileList",this.projectRootDir,  {path:this.selectedComponentAbsPath, mode}, (fileList)=>{
+        const scriptCandidates = fileList
+          .filter((e)=>{
+            return e.type === "file";
+          })
+          .map((e)=>{
+            return e.name;
+          });
+          this.commitScriptCandidates(scriptCandidates);
+        });
         this.reopening = true;
         this.openPanels = [0];
         this.open = false;
