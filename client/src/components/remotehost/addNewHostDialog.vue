@@ -290,11 +290,11 @@
         host: {
           port: 22
         },
-        usePubkey: false,
         openPanel: [0],
         pathSep: "/",
         home: "/",
         openFileBrowser: false,
+        usePubkey: false,
         selectedFile:null
       };
     },
@@ -319,6 +319,7 @@
     watch:{
       openDialog(v){
         this.host = Object.assign(this.host, this.initialValue);
+        this.usePubkey= typeof this.host.keyFile === "string" && this.host.keyFile.length >0;
       }
     },
     methods: {
