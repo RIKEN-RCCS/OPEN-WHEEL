@@ -98,7 +98,6 @@
   import SIO from "@/lib/socketIOWrapper.js";
   import { isValidInputFilename } from "@/lib/utility.js";
   import ace from "ace-builds";
-  import "ace-builds/webpack-resolver";
   import "ace-builds/src-noconflict/theme-idle_fingers.js";
 
   export default {

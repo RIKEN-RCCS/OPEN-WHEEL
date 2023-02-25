@@ -20,7 +20,7 @@
       <v-spacer />
     </v-app-bar>
     <v-main>
-      <v-viewer
+      <vue-viewer
         ref="viewer"
         :options="options"
         :images="images"
@@ -37,7 +37,7 @@
             :alt="title"
           >
         </template>
-      </v-viewer>
+      </vue-viewer>
     </v-main>
     <v-footer app />
   </v-app>
@@ -46,14 +46,14 @@
 <script>
   "use strict";
   import "viewerjs/dist/viewer.css";
-  import { component as VViewer }  from "v-viewer";
+  import { component as vueViewer}  from "v-viewer";
   import SIO from "@/lib/socketIOWrapper.js";
   import { readCookie } from "@/lib/utility.js";
 
   export default{
     name: "Viewer",
     components:{
-     VViewer
+      vueViewer
     },
     data(){
       return {

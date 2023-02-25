@@ -5,7 +5,7 @@
  */
 "use strict";
 import { io } from "socket.io-client";
-const SocketIOFileUpload = require("socketio-file-upload");
+// const SocketIOFileUpload = require("socketio-file-upload");
 
 let initialized=false;
 let socket = null;
