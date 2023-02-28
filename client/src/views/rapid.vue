@@ -33,6 +33,7 @@
         <v-switch
           v-model="readOnly"
           label="read only"
+          :disabled="! isEdittable"
           class="pt-3"
         />
         <v-btn @click="saveAllFiles">
@@ -73,7 +74,7 @@
 <script>
 
   "use strict";
-  import { mapState, mapActions } from "vuex";
+  import { mapState, mapGetters,mapActions } from "vuex";
   import getNodeAndPath from "@/lib/getNodeAndPath.js";
   import unsavedFileDialog from "@/components/rapid/unsavedFileDialog.vue";
   import componentButton from "@/components/common/componentButton.vue";
@@ -124,7 +125,7 @@
     data: ()=>{
       return {
         mode: "normal",
-        readOnly: false,
+        readOnly_: false,
         isJobScript: false
       };
     },
@@ -136,6 +137,15 @@
         currentComponent: "currentComponent",
         tree: "componentTree"
       }),
+      ...mapGetters([ "isEdittable"]),
+      readOnly:{
+        get(){
+          return this.isEdittable ? this.readOnly_: true;
+        },
+        set(v){
+          this.readOnly_=v;
+        }
+      },
       pathToCurrentComponent: function () {
         const rt = [];
         if (this.currentComponent !== null) {
