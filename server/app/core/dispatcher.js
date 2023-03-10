@@ -404,7 +404,6 @@ class Dispatcher extends EventEmitter {
       return Promise.reject(err);
     } finally {
       this.setStateFlag(target.state);
-      await this._addNextComponent(target);
 
       if (isFinishedState(target.state)) {
         this.logger.info(`finished component: ${target.name}(${target.ID})`);
@@ -629,6 +628,7 @@ class Dispatcher extends EventEmitter {
     if (component.type !== "source" && component.type !== "viewer" && component.type !== "storage") {
       nextComponentIDs = useElse ? Array.from(component.else) : Array.from(component.next);
     }
+
     if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
       const behindIfComponentList = await this._getBehindIfComponentList(component);
       component.outputFiles.forEach((outputFile)=>{
@@ -721,6 +721,7 @@ class Dispatcher extends EventEmitter {
     const childDir = path.resolve(this.cwfDir, component.name);
     const currentIndex = Object.prototype.hasOwnProperty.call(this.cwfJson, "currentIndex") ? this.cwfJson.currentIndex : null;
     const condition = await evalCondition(this.projectRootDir, component.condition, childDir, currentIndex);
+    this.logger.debug("condition check result=", condition);
     await this._addNextComponent(component, !condition);
     await this._setComponentState(component, "finished");
   }
@@ -1101,6 +1102,7 @@ class Dispatcher extends EventEmitter {
       const ssh = getSsh(this.projectRootDir, remotehostID);
       await ssh.send(storagePath, currentDir);
     }
+    await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
   }
 
