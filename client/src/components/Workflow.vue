@@ -12,17 +12,14 @@
       app
       extended
     >
-      <a
-        href="home"
-        class="text-uppercase text-decoration-none text-h4 white--text"
-      > WHEEL </a>
+      <a href="home"> <v-img src="@/assets/wheel_logomark.png" /></a>
       <v-spacer />
-      <p
+      <span
         class="text-decoration-none text-h5 white--text"
         @click="projectDescription=projectJson.description;descriptionDialog=true"
       >
         {{ projectJson !== null ? projectJson.name : "" }}
-      </p>
+      </span>
       <v-spacer />
       <v-btn
         rounded

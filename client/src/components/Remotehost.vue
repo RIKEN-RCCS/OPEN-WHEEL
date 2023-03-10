@@ -12,10 +12,7 @@
       app
       extended
     >
-      <a
-        href="./home"
-        class="text-uppercase text-decoration-none text-h4 white--text"
-      > WHEEL </a>
+      <a href="home"> <v-img src="@/assets/wheel_logomark.png" /></a>
       <span
         class="text-lowercase text-decoration-none text-h5 white--text ml-4"
       >
