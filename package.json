@@ -19,21 +19,16 @@
     "start": "cd server; npm start",
     "build": "cd server; npm install; cd ../client; npm install; npm run build",
     "buildDoc": "run-s convertDoc removeDoc replaceDoc",
-    "buildPDFDoc": "run-s removeTmp copyUserGuide md2pdf concatPDF removeTmp",
+    "buildPDFDoc": "bin/concatPDF.sh",
     "licenseReport": "run-s licenseReport-doc licenseReport-server licenseReport-client",
     "convertDoc": "markdown-folder-to-html documentMD/user_guide",
     "removeDoc": "shx rm -fr docs",
     "replaceDoc": "shx mv documentMD/_user_guide ./docs",
     "licenseReport-doc": "license-report --output=csv --csvHeaders --config license-report-config.json",
     "licenseReport-server": "license-report --package=server/package.json --output=csv --csvHeaders --config license-report-config.json",
-    "licenseReport-client": "license-report --package=client/package.json --output=csv --csvHeaders --config license-report-config.json",
-    "copyUserGuide": "shx cp -r documentMD/user_guide/ tmp",
-    "md2pdf": "md-to-pdf --stylesheet=https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css --body-class=markdown-body tmp/*.md tmp/*/*.md tmp/*/*/*.md",
-    "concatPDF": "node bin/concatPDF.js",
-    "removeTmp": "shx rm -fr tmp"
+    "licenseReport-client": "license-report --package=client/package.json --output=csv --csvHeaders --config license-report-config.json"
   },
   "devDependencies": {
-    "glob": "^8.1.0",
     "license-report": "^6.3.0",
     "markdown-folder-to-html": "^2.4.0",
     "md-to-pdf": "^5.2.1",
