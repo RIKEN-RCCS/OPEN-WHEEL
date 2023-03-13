@@ -20,7 +20,7 @@ const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
-const { componentJsonReplacer, getComponent, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
+const { componentJsonReplacer, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
 const { evalCondition, getRemoteWorkingDir } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
@@ -454,7 +454,7 @@ class Dispatcher extends EventEmitter {
       }
 
       if (target.type === "stepjobTask") {
-        const parentComponent = await getComponent(this.projectRootDir, target.parent);
+        const parentComponent = await readComponentJsonByID(this.projectRootDir, target.parent);
         target.host = parentComponent.host;
         target.queue = parentComponent.queue;
         target.parentName = parentComponent.name;
