@@ -1167,6 +1167,7 @@ class Dispatcher extends EventEmitter {
     this.logger.debug(`getInputFiles for ${component.name}`);
     const promises = [];
     const deliverRecipes = new Set();
+    const forceCopy = component.type === "storage";
 
     for (const inputFile of component.inputFiles) {
       const dstName = inputFile.name;
@@ -1191,7 +1192,7 @@ class Dispatcher extends EventEmitter {
                 }
                 for (const e of srcEntry.src) {
                   const originalSrcRoot = this._getComponentDir(e.srcNode);
-                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName });
+                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName, forceCopy });
                 }
               })
           );
@@ -1200,7 +1201,7 @@ class Dispatcher extends EventEmitter {
           const srcRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent);
           const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const remotehostID = remoteHost.getID("name", component.host);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName: src.srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID });
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName: src.srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
         } else {
           const srcRoot = this._getComponentDir(src.srcNode);
           promises.push(
@@ -1216,10 +1217,10 @@ class Dispatcher extends EventEmitter {
                 if (Object.prototype.hasOwnProperty.call(srcEntry, "origin")) {
                   for (const e of srcEntry.origin) {
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName });
+                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName, forceCopy });
                   }
                 } else {
-                  deliverRecipes.add({ dstName, srcRoot, srcName: src.srcName });
+                  deliverRecipes.add({ dstName, srcRoot, srcName: src.srcName, forceCopy });
                 }
               })
           );
@@ -1250,7 +1251,7 @@ class Dispatcher extends EventEmitter {
           if (hasGlob || recipe.dstName.endsWith(path.posix.sep) || recipe.dstName.endsWith(path.win32.sep)) {
             newPath = path.resolve(newPath, srcFile);
           }
-          p2.push(deliverFile(oldPath, newPath));
+          p2.push(deliverFile(oldPath, newPath, recipe.forceCopy));
         }
       }
     }
