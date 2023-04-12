@@ -174,7 +174,7 @@
             <v-autocomplete
               v-if="!retryByJS"
               v-model.lazy="copySelectedComponent.retryCondition"
-              label="script name for confition check"
+              label="script name for condition check"
               :items="scriptCandidates"
               clearable
               outlined
@@ -376,7 +376,7 @@
               <v-autocomplete
                 v-if="!conditionCheckByJS"
                 v-model.lazy="copySelectedComponent.condition"
-                label="script name for confition check"
+                label="script name for condition check"
                 :items="scriptCandidates"
                 clearable
                 outlined
@@ -400,7 +400,7 @@
             <v-autocomplete
               v-if="!conditionCheckByJS"
               v-model.lazy="copySelectedComponent.condition"
-              label="script name for confition check"
+              label="script name for condition check"
               :items="scriptCandidates"
               clearable
               outlined

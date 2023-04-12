@@ -1301,7 +1301,7 @@ function createLCPlugAndCable (svg, originX, originY, moveY, color, plugShape, c
           const myIndex = plug.parent().node.instance.data("ID")
           if (hitIndex !== myIndex) {
             if (type === "stepjobTask") {
-              SIO.emitGlobal("updateStepNumber", projectRootDir, SIO.generalCallback)
+              SIO.emitGlobal("updateStepNumber", projectRootDir, parentID, SIO.generalCallback)
             }
             callback(myIndex, hitIndex, plug, hitPlug)
           }
@@ -1317,7 +1317,7 @@ function createLCPlugAndCable (svg, originX, originY, moveY, color, plugShape, c
 
 export function createLower (svg, originX, originY, offsetX, offsetY, color, SIO, type, projectRootDir, parentID) {
   return createLCPlugAndCable(svg, originX + offsetX, originY + offsetY, true, color, DPlug, "DU", ".upperPlug", type, false, SIO, projectRootDir, parentID, function (myIndex, hitIndex, plug) {
-    SIO.emitGlobal("addLink", projectRootDir, { src: myIndex, dst: hitIndex, isElse: plug.hasClass("elsePlug") }, SIO.generalCallback)
+    SIO.emitGlobal("addLink", projectRootDir, { src: myIndex, dst: hitIndex, isElse: plug.hasClass("elsePlug") }, parentID, SIO.generalCallback)
   })
 }
 

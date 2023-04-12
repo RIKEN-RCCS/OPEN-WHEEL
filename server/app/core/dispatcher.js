@@ -20,7 +20,7 @@ const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
-const { componentJsonReplacer, getComponent, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
+const { componentJsonReplacer, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
 const { evalCondition, getRemoteWorkingDir } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
@@ -404,7 +404,6 @@ class Dispatcher extends EventEmitter {
       return Promise.reject(err);
     } finally {
       this.setStateFlag(target.state);
-      await this._addNextComponent(target);
 
       if (isFinishedState(target.state)) {
         this.logger.info(`finished component: ${target.name}(${target.ID})`);
@@ -455,7 +454,7 @@ class Dispatcher extends EventEmitter {
       }
 
       if (target.type === "stepjobTask") {
-        const parentComponent = await getComponent(this.projectRootDir, target.parent);
+        const parentComponent = await readComponentJsonByID(this.projectRootDir, target.parent);
         target.host = parentComponent.host;
         target.queue = parentComponent.queue;
         target.parentName = parentComponent.name;
@@ -629,6 +628,7 @@ class Dispatcher extends EventEmitter {
     if (component.type !== "source" && component.type !== "viewer" && component.type !== "storage") {
       nextComponentIDs = useElse ? Array.from(component.else) : Array.from(component.next);
     }
+
     if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
       const behindIfComponentList = await this._getBehindIfComponentList(component);
       component.outputFiles.forEach((outputFile)=>{
@@ -721,6 +721,7 @@ class Dispatcher extends EventEmitter {
     const childDir = path.resolve(this.cwfDir, component.name);
     const currentIndex = Object.prototype.hasOwnProperty.call(this.cwfJson, "currentIndex") ? this.cwfJson.currentIndex : null;
     const condition = await evalCondition(this.projectRootDir, component.condition, childDir, currentIndex);
+    this.logger.debug("condition check result=", condition);
     await this._addNextComponent(component, !condition);
     await this._setComponentState(component, "finished");
   }
@@ -1101,6 +1102,7 @@ class Dispatcher extends EventEmitter {
       const ssh = getSsh(this.projectRootDir, remotehostID);
       await ssh.send(storagePath, currentDir);
     }
+    await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
   }
 
@@ -1165,6 +1167,7 @@ class Dispatcher extends EventEmitter {
     this.logger.debug(`getInputFiles for ${component.name}`);
     const promises = [];
     const deliverRecipes = new Set();
+    const forceCopy = component.type === "storage";
 
     for (const inputFile of component.inputFiles) {
       const dstName = inputFile.name;
@@ -1189,7 +1192,7 @@ class Dispatcher extends EventEmitter {
                 }
                 for (const e of srcEntry.src) {
                   const originalSrcRoot = this._getComponentDir(e.srcNode);
-                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName });
+                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName, forceCopy });
                 }
               })
           );
@@ -1198,7 +1201,7 @@ class Dispatcher extends EventEmitter {
           const srcRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent);
           const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const remotehostID = remoteHost.getID("name", component.host);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName: src.srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID });
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName: src.srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
         } else {
           const srcRoot = this._getComponentDir(src.srcNode);
           promises.push(
@@ -1214,10 +1217,10 @@ class Dispatcher extends EventEmitter {
                 if (Object.prototype.hasOwnProperty.call(srcEntry, "origin")) {
                   for (const e of srcEntry.origin) {
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName });
+                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName, forceCopy });
                   }
                 } else {
-                  deliverRecipes.add({ dstName, srcRoot, srcName: src.srcName });
+                  deliverRecipes.add({ dstName, srcRoot, srcName: src.srcName, forceCopy });
                 }
               })
           );
@@ -1248,7 +1251,7 @@ class Dispatcher extends EventEmitter {
           if (hasGlob || recipe.dstName.endsWith(path.posix.sep) || recipe.dstName.endsWith(path.win32.sep)) {
             newPath = path.resolve(newPath, srcFile);
           }
-          p2.push(deliverFile(oldPath, newPath));
+          p2.push(deliverFile(oldPath, newPath, recipe.forceCopy));
         }
       }
     }

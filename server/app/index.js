@@ -51,6 +51,12 @@ setSio(sio);
 //
 logger.info(`starting WHEEL server (version ${version})`);
 logger.info("base URL = ", baseURL);
+logger.info("environment variables");
+logger.info(`WHEEL_TEMPD = ${process.env.WHEEL_TEMPD}`);
+logger.info(`WHEEL_CONFIG_DIR = ${process.env.WHEEL_CONFIG_DIR}`);
+logger.info(`WHEEL_USE_HTTP = ${process.env.WHEEL_USE_HTTP}`);
+logger.info(`WHEEL_PORT = ${process.env.WHEEL_PORT}`);
+logger.info(`WHEEL_LOGLEVEL = ${process.env.WHEEL_LOGLEVEL}`);
 
 //port number
 const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;

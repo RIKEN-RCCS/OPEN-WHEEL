@@ -123,8 +123,8 @@ async function onRemoveFileLink(projectRootDir, srcNode, srcName, dstNode, dstNa
 async function onUpdateEnv(projectRootDir, ID, newEnv, parentID, cb) {
   return generalHandler(replaceEnv.bind(null, projectRootDir, ID, newEnv), "updateEnv", projectRootDir, parentID, cb);
 }
-async function onUpdateStepNumber(projectRootDir, cb) {
-  return generalHandler(updateStepNumber.bind(null, projectRootDir), "updateStepNumber", projectRootDir, cb);
+async function onUpdateStepNumber(projectRootDir, parentID, cb) {
+  return generalHandler(updateStepNumber.bind(null, projectRootDir), "updateStepNumber", projectRootDir, parentID, cb);
 }
 
 

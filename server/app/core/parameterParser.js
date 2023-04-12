@@ -56,11 +56,13 @@ function calcParamAxisSize(min, max, step) {
   return Math.floor((modifiedMax - modifiedMin) / Math.abs(modifiedStep)) + 1;
 }
 
+//FIXME
 function getParamAxisSize(axis) {
+  if (Array.isArray(axis.list)) {
+    return axis.list.length;
+  }
+
   if (typeof axis.type === "undefined") {
-    if (Array.isArray(axis.list)) {
-      return axis.list.length;
-    }
     return calcParamAxisSize(axis.min, axis.max, axis.step);
   }
   switch (axis.type) {

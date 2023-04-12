@@ -336,7 +336,7 @@ async function onRevertProject(clientID, projectRootDir, ack) {
       removeTempd(projectRootDir, "viewer"),
       removeTempd(projectRootDir, "download")
     ]);
-  } catch (e) {
+  } finally {
     await Promise.all([
       sendWorkflow(ack, projectRootDir),
       emitAll(projectRootDir, "taskStateList", []),

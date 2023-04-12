@@ -91,15 +91,21 @@ async function addX(file) {
  * deliver src to dst
  * @param {string} src - absolute path of src path
  * @param {string} dst - absolute path of dst path
+ * @param {boolean} forceCopy - use copy instead of symlink
  *
  */
-async function deliverFile(src, dst) {
+async function deliverFile(src, dst, forceCopy = false) {
   const stats = await fs.lstat(src);
   const type = stats.isDirectory() ? "dir" : "file";
 
   try {
+    if (forceCopy) {
+      await fs.copy(src, dst, { overwrite: false });
+      return { type: "copy", src, dst };
+    }
     await fs.remove(dst);
     await fs.ensureSymlink(src, dst, type);
+
     return { type: `link-${type}`, src, dst };
   } catch (e) {
     if (e.code === "EPERM") {
@@ -111,7 +117,7 @@ async function deliverFile(src, dst) {
 }
 
 /**
- * execut ln -s command on remotehost to make shallow symlink
+ * execut ln -s or cp -r command on remotehost to make shallow symlink
  */
 async function deliverFileOnRemote(recipe) {
   const logger = getLogger(recipe.projectRootDir);
@@ -120,7 +126,8 @@ async function deliverFileOnRemote(recipe) {
     return null;
   }
   const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
-  const sshCmd = `bash -O failglob -c 'mkdir ${recipe.dstRoot} 2>/dev/null; cd ${recipe.dstRoot} && for i in ${recipe.srcRoot}/${recipe.srcName}; do ln -sf \${i} ${recipe.dstName} ;done'`;
+  const cmd = recipe.forceCopy ? "cp -r " : "ln -sf";
+  const sshCmd = `bash -O failglob -c 'mkdir ${recipe.dstRoot} 2>/dev/null; cd ${recipe.dstRoot} && for i in ${recipe.srcRoot}/${recipe.srcName}; do ${cmd} \${i} ${recipe.dstName} ;done'`;
   logger.debug("execute on remote", sshCmd);
   const rt = await ssh.exec(sshCmd, {}, logger.debug.bind(logger), logger.debug.bind(logger));
   if (rt !== 0) {

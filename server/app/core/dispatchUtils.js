@@ -57,7 +57,8 @@ async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
     const dir = path.dirname(script);
     const options = {
       env: process.env,
-      cwd: dir
+      cwd: dir,
+      shell: "bash"
     };
 
     if (typeof currentIndex === "number") {
