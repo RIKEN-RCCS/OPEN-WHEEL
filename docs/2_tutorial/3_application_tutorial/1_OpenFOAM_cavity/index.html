@@ -552,330 +552,103 @@
       </nav>
       <article id="main" class="content">
         <h1 id="openfoam%E3%82%92%E5%88%A9%E7%94%A8%E3%81%97%E3%81%9Fcavity%E3%82%B1%E3%83%BC%E3%82%B9%E3%81%AE%E8%A7%A3%E6%9E%90%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC">OpenFOAMを利用したcavityケースの解析ワークフロー <a class="heading-anchor-permalink" href="#openfoam%E3%82%92%E5%88%A9%E7%94%A8%E3%81%97%E3%81%9Fcavity%E3%82%B1%E3%83%BC%E3%82%B9%E3%81%AE%E8%A7%A3%E6%9E%90%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC">#</a></h1>
-<p>本章では、WHEELを用いた計算事例として「OpenFOAMを利用したcavityケースの解析ワークフロー」を紹介します。<br>
-九大ITOコンピュータのito-g-16-dbgキューを利用して行います。<br>
-以降、下記の順にて事例内容を紹介します。</p>
-<p>また、本章で使用するモデルデータ、OpenFOAMの計算実行ファイル、及びTaskコンポーネントで使用するスクリプト例は、<br>
-下記よりダウンロード可能です。<br>
-<a href="./sample/OpenFOAM_tutorial_sample.zip">OpenFOAMサンプルデータ</a></p>
+<p>本章では、WHEELを用いた計算事例として「OpenFOAMを利用したcavityケースの解析ワークフロー」を紹介します。</p>
+<p>目次</p>
 <ol>
 <li>解析概要</li>
-<li>ワークフローの作成<br>
-　1. Task コンポーネント - 1<br>
-　2. Task コンポーネント - 2<br>
-　3. Task コンポーネント - 3</li>
-<li>ジョブの投入</li>
+<li>ワークフローの作成</li>
+<li>ワークフローの実行</li>
 <li>解析結果の確認</li>
 </ol>
 <h2 id="1.-%E8%A7%A3%E6%9E%90%E6%A6%82%E8%A6%81">1. 解析概要 <a class="heading-anchor-permalink" href="#1.-%E8%A7%A3%E6%9E%90%E6%A6%82%E8%A6%81">#</a></h2>
-<p>本事例で使用する解析対象モデルは、CFDソフトウェアの基礎的な検証例として著名な「cavity」で行いました。<br>
-上端の壁が水平方向に一定速度で動き、引きずられるように内部の流体が動くようなモデルの解析です。</p>
+<p>この章で扱うモデルはCFDソフトウェアの基礎的な検証として有名な &quot;cavity&quot;モデルです。
+上端の壁が水平方向に一定速度で動き、引きずられるように内部の流体が動くようなモデルの解析を行ないます。</p>
 <p><img src="./img/cavity.png" alt="img" title="cavity"></p>
-<h2 id="2.-wheel%E3%81%AB%E3%82%88%E3%82%8B%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">2. WHEELによるワークフローの作成 <a class="heading-anchor-permalink" href="#2.-wheel%E3%81%AB%E3%82%88%E3%82%8B%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">#</a></h2>
-<p>本節では、WHEELでのパラメトリックスタディ解析に必要なワークフローコンポーネントについて説明します。<br>
-本事例で必要なコンポーネントとその役割は以下です。</p>
-<ul>
-<li>Task コンポーネント - 1：ITOへのジョブ投入及びOpenFOAM前処理</li>
-<li>Task コンポーネント - 2：ITOへのジョブ投入及びOpenFOAM実行用</li>
-<li>Task コンポーネント - 3：ITOへのジョブ投入及びファイル回収用</li>
-</ul>
-<p>以降で、各コンポーネントについて説明します。</p>
-<h3 id="task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---1">Task コンポーネント - 1 <a class="heading-anchor-permalink" href="#task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---1">#</a></h3>
-<p>続いて、ITOコンピュータへのジョブ投入用及びOpenFOAM解析実行前処理用コンポーネント「PreRunOpenFOAM_Task」について説明します。<br>
-本コンポーネントは、ITOコンピュータのito-g-1-dbgキューを用いてOpenFOAMによる分配管の流体解析を実行するための前処理を行うコンポーネントです。</p>
-<p>PreRunOpenFOAM_Taskコンポーネントに設定するプロパティ、及びスクリプトの中身は以下です。</p>
-<h5 id="prerunopenfoam_task">PreRunOpenFOAM_Task <a class="heading-anchor-permalink" href="#prerunopenfoam_task">#</a></h5>
-<table>
-<thead>
-<tr>
-<th>プロパティ名</th>
-<th>設定値</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Name</td>
-<td>PreRunOpenFOAM_Task</td>
-</tr>
-<tr>
-<td>Script</td>
-<td><a href="http://PreRunOpenFOAM.sh">PreRunOpenFOAM.sh</a></td>
-</tr>
-<tr>
-<td>InputFiles</td>
-<td>-</td>
-</tr>
-<tr>
-<td>OutputFiles</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Remotehost</td>
-<td>TCSjobScheduler_1</td>
-</tr>
-<tr>
-<td>UseJobScheduler</td>
-<td>true</td>
-</tr>
-<tr>
-<td>Queue</td>
-<td>ito-g-1-dbg</td>
-</tr>
-<tr>
-<td>Clean up flag</td>
-<td>keep files</td>
-</tr>
-<tr>
-<td>include</td>
-<td>-</td>
-</tr>
-<tr>
-<td>exclude</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Files</td>
-<td><a href="http://PreRunOpenFOAM.sh">PreRunOpenFOAM.sh</a>, cavity.tar.gz*</td>
-</tr>
-</tbody>
-</table>
-<p>*OpenFOAMの計算実行ファイル一式</p>
-<blockquote>
-<p><a href="http://PreRunOpenFOAM.sh">PreRunOpenFOAM.sh</a></p>
-</blockquote>
-<pre><code>#!/bin/bash
-#PJM -L &quot;rscgrp=ito-g-1-dbg&quot;
-#PJM -L &quot;rscunit=ito-b&quot;
-#PJM -L &quot;elapse=1:00:00&quot;
-#PJM -j -X -S
+<p>OpenFOAMの配布物には例題として、このモデルを用いる解析用のデータが含まれているので
+そのファイルを用いて計算を実行します。</p>
+<h2 id="2.-%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">2. ワークフローの作成 <a class="heading-anchor-permalink" href="#2.-%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">#</a></h2>
+<p>新規プロジェクトを作成し、始めに3つのTaskコンポーネントを追加してください。</p>
+<p>各コンポーネントのプロパティ画面から、名前をそれぞれ <strong>preprocess</strong> <strong>solve</strong> <strong>extract</strong> に変更してください。</p>
+<h3 id="preprocess-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E8%A8%AD%E5%AE%9A">preprocess コンポーネントの設定 <a class="heading-anchor-permalink" href="#preprocess-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E8%A8%AD%E5%AE%9A">#</a></h3>
+<p><strong>preprocess</strong> コンポーネントに、
+<strong><a href="http://run.sh">run.sh</a></strong>  という名前で新規ファイルを作成し次の内容を記入してください。</p>
+<pre><code>. /vol0004/apps/oss/spack-v0.17.0/share/spack/setup-env.sh
 
-tar xvzf cavity.tar.gz
-mkdir ../WORK
-mv cavity ../WORK
-cd ../WORK/cavity
+spack load 'openfoam@2012%fj@4.8.0'
+
+echo $FOAM_TUTORIALS
+cp -r ${FOAM_TUTORIALS}/incompressible/icoFoam/cavity/cavity ./
+mv decomposeParDict cavity/system/
+
+cd cavity
 blockMesh
 decomposePar
 </code></pre>
-<p><img src="./img/PreRunOpenFOAM_Task.png" alt="img" title="OpenFOAM_PreRunOpenFOAM_Task">  :q</p>
-<p>設定は以下です。</p>
-<ol>
-<li>ITOコンピュータでOpenFOAMを実行するために必要なデータ（OpenFOAMの入力ファイル「cavity.tar.gz」）及びジョブスクリプトPreRunOpenFOAM.shをインポートします</li>
-<li>プロパティ[ script ]にPreRunOpenFOAM.shを設定します</li>
-<li>プロパティ[ remotehost ]に事前に登録しているITOのリモートホスト情報「TCSjobScheduler_1」設定します*</li>
-<li>プロパティ[ useJobScheduler ]をチェックし、プロパティ[ queue ]に「ito-g-1-dbg」を設定します</li>
-</ol>
-<p>*　ITOコンピュータでTCSを使用して計算を行うため「TCSjobScheduler_1」としています。<br>
-　 ユーザの環境に合わせて設定の変更が必要です。</p>
-<h3 id="task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---2">Task コンポーネント - 2 <a class="heading-anchor-permalink" href="#task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---2">#</a></h3>
-<p>続いて、ITOコンピュータへのジョブ投入用及びOpenFOAM解析実行用コンポーネント「SolRunOpenFOAM_Task」について説明します。<br>
-本コンポーネントは、ITOコンピュータのito-g-4-dbgキューを用いてOpenFOAMによるcavityの解析を実行するためのコンポーネントです。</p>
-<p>SolRunOpenFOAM_Taskコンポーネントに設定するプロパティ、及びスクリプトの中身は以下です。</p>
-<h5 id="solrunopenfoam_task">SolRunOpenFOAM_Task <a class="heading-anchor-permalink" href="#solrunopenfoam_task">#</a></h5>
-<table>
-<thead>
-<tr>
-<th>プロパティ名</th>
-<th>設定値</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Name</td>
-<td>SolRunOpenFOAM_Task</td>
-</tr>
-<tr>
-<td>Script</td>
-<td><a href="http://SolRunOpenFOAM.sh">SolRunOpenFOAM.sh</a></td>
-</tr>
-<tr>
-<td>InputFiles</td>
-<td>-</td>
-</tr>
-<tr>
-<td>OutputFiles</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Remotehost</td>
-<td>TCSjobScheduler_4</td>
-</tr>
-<tr>
-<td>UseJobScheduler</td>
-<td>true</td>
-</tr>
-<tr>
-<td>Queue</td>
-<td>ito-g-4-dbg</td>
-</tr>
-<tr>
-<td>Clean up flag</td>
-<td>keep files</td>
-</tr>
-<tr>
-<td>include</td>
-<td>-</td>
-</tr>
-<tr>
-<td>exclude</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Files</td>
-<td><a href="http://SolRunOpenFOAM.sh">SolRunOpenFOAM.sh</a></td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p><a href="http://SolRunOpenFOAM.sh">SolRunOpenFOAM.sh</a></p>
-</blockquote>
-<pre><code>#!/bin/bash
-#PJM -L &quot;rscgrp=ito-g-4-dbg&quot;
-#PJM -L &quot;rscunit=ito-b&quot;
-#PJM -L &quot;vnode=4&quot;
-#PJM -L &quot;vnode-core=9&quot;
-#PJM -L &quot;elapse=1:00:00&quot;
-#PJM -j -X -S
-
-## OpenFOAM-v1706
-. /home/app/a/OpenFOAM/OpenFOAM-v1706/etc/bashrc
-source /etc/bashrc
-cd ../WORK/cavity
-mpiexec -np 4 icoFoam -parallel &gt; ./log.icoFoam 2&gt;&amp;1
-</code></pre>
-<p><img src="./img/SolRunOpenFOAM_Task.png" alt="img" title="OpenFOAM_SolRunOpenFOAM_Task"></p>
-<p>設定は以下です。</p>
-<ol>
-<li>ITOコンピュータでOpenFOAMを実行するために必要なジョブスクリプトSolRunOpenFOAM.shをインポートします</li>
-<li>プロパティ[ script ]にSolRunOpenFOAM.shを設定します</li>
-<li>プロパティ[ remotehost ]に事前に登録しているITOのリモートホスト情報「TCSjobScheduler_4」設定します*</li>
-<li>プロパティ[ useJobScheduler ]をチェックし、プロパティ[ queue ]に「ito-g-4-dbg」を設定します</li>
-</ol>
-<h3 id="task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---3">Task コンポーネント - 3 <a class="heading-anchor-permalink" href="#task-%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88---3">#</a></h3>
-<p>続いて、ITOコンピュータへのジョブ投入用及びOpenFOAM解析実行後処理用コンポーネント「ResultRunOpenFOAM_Task」について説明します。<br>
-本コンポーネントは、ITOコンピュータのito-g-1-dbgキューを用いてOpenFOAMによるcavityの解析を実行するためのコンポーネントです。</p>
-<p>ResultRunOpenFOAM_Taskコンポーネントに設定するプロパティ、及びスクリプトの中身は以下です。</p>
-<h5 id="resultrunopenfoam_task">ResultRunOpenFOAM_Task <a class="heading-anchor-permalink" href="#resultrunopenfoam_task">#</a></h5>
-<table>
-<thead>
-<tr>
-<th>プロパティ名</th>
-<th>設定値</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Name</td>
-<td>ResultRunOpenFOAM_Task</td>
-</tr>
-<tr>
-<td>Script</td>
-<td><a href="http://ResultRunOpenFOAM.sh">ResultRunOpenFOAM.sh</a></td>
-</tr>
-<tr>
-<td>InputFiles</td>
-<td>-</td>
-</tr>
-<tr>
-<td>OutputFiles</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Remotehost</td>
-<td>TCSjobScheduler_1</td>
-</tr>
-<tr>
-<td>UseJobScheduler</td>
-<td>true</td>
-</tr>
-<tr>
-<td>Queue</td>
-<td>ito-g-1-dbg</td>
-</tr>
-<tr>
-<td>Clean up flag</td>
-<td>keep files</td>
-</tr>
-<tr>
-<td>include</td>
-<td>cavity.tar.gz</td>
-</tr>
-<tr>
-<td>exclude</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Files</td>
-<td><a href="http://ResultRunOpenFOAM.sh">ResultRunOpenFOAM.sh</a></td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p><a href="http://ResultRunOpenFOAM.sh">ResultRunOpenFOAM.sh</a></p>
-</blockquote>
-<pre><code>#!/bin/bash
-#PJM -L &quot;rscgrp=ito-g-1-dbg&quot;
-#PJM -L &quot;rscunit=ito-b&quot;
-#PJM -L &quot;elapse=1:00:00&quot;
-#PJM -j -X -S
-
-cd ../WORK/cavity
-reconstructPar  
-touch result.foam  
-cd ../
-tar cvzf cavity.tar.gz cavity
-</code></pre>
-<p><img src="./img/ResultRunOpenFOAM_Task.png" alt="img" title="OpenFOAM_ResultRunOpenFOAM_Task"></p>
-<p>設定は以下です。</p>
-<ol>
-<li>ITOコンピュータでOpenFOAMを実行するために必要なジョブスクリプトrunOpenFOAM.shをインポートします</li>
-<li>プロパティ[ script ]にResultRunOpenFOAM.shを設定します</li>
-<li>プロパティ[ remotehost ]に事前に登録しているITOのリモートホスト情報「TCSjobScheduler_1」設定すします*</li>
-<li>プロパティ[ useJobScheduler ]をチェックし、プロパティ[ queue ]に「ito-g-1-dbg」を設定します</li>
-<li>includeに回収するファイル名「cavity.tar.gz」を設定します</li>
-</ol>
-<h3 id="%E3%82%B8%E3%83%A7%E3%83%96%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">ジョブスクリプトに関して <a class="heading-anchor-permalink" href="#%E3%82%B8%E3%83%A7%E3%83%96%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">#</a></h3>
-<p>WHEELは、リソースグループを用い、効率的に計算資源を利用することを目的としています。<br>
-よって、キュー内で解析が完了するようにモデル規模、またノード数、プロセス数を設定しジョブを投入する必要があります。<br>
-本解析は<strong>4ノード36プロセス</strong>にて解析を行っております。</p>
-<p>また、ジョブスクリプトrunOpenFOAM.shには、#PJMで始まるジョブへのオプション設定の他に「OpenFOAMを実行するためのコマンド」を用意しています。<br>
-ここでは、ITOでOpenFOAMを実行するためのコマンドを紹介します。</p>
-<p>ITOで利用できるOpenFOAMのバージョンを確認するためには、</p>
-<pre><code>$ module avail
-</code></pre>
-<p>コマンドで確認してください。</p>
-<p>また、解析完了後、Paraviewで解析結果を確認するためには、空の「○○.foam」ファイル（○○は任意の文字列）が<br>
-必要であるため、空ファイルを作成するコマンド</p>
-<pre><code>$ touch ○○.foam
-</code></pre>
-<p>をスクリプト内に組み込んでおくと結果確認をスムーズに行うことができます。</p>
-<h3 id="%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E6%83%85%E5%A0%B1%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">リモートホスト登録情報に関して <a class="heading-anchor-permalink" href="#%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E7%99%BB%E9%8C%B2%E6%83%85%E5%A0%B1%E3%81%AB%E9%96%A2%E3%81%97%E3%81%A6">#</a></h3>
-<p>本事例は、ITOのリソースグループを利用してジョブを投入することを前提としております。<br>
-そのため、前述のホスト情報登録方法に従い、ITOのリソースグループにジョブを投入するためのホスト情報を登録しておく必要があります。<br>
-本サンプルでは、ITOコンピュータでリソースグループito-g-1-dbgを使用して計算を行うため「TCSjobScheduler_1」としています。</p>
-<p>参考として、本事例で設定したホスト情報の中で注意すべき項目を示します。</p>
+<p>このスクリプトでは、OpenFOAMのシステムディレクトリから
+cavityケースをコピーした後、blockMeshによるメッシュ生成、decomposeParによる
+領域分割を行ないます。</p>
+<p>コンポーネントのプロパティ画面を開いて以下の4項目を設定してください。</p>
 <ul>
-<li>Host Work Dir：/scratch/groupname/…<br>
-※リソースグループを用いてジョブを投入する場合、/home,/dataからジョブを投入することはできません。詳細はITOのユーザガイドをご確認ください。</li>
-<li>Job Scheduler：TCS
-※ジョブスケジューラの設定は、WHEELのモジュールディレクトリ内[ app/db/jobSceduler.json ]にて行ってください。</li>
-<li>Queue：ito-g-1-dbg
-※ホスト情報のQueue欄に[ ito-g-1-dbg ]登録を登録しておくことで、Taskのプロパティからの選択が可能となります。</li>
+<li>script: <a href="http://run.sh">run.sh</a></li>
+<li>host: fugaku</li>
+<li>useJobScheduler: 有効</li>
+<li>outputFiles: cavity</li>
 </ul>
-<p>以上でワークフローの設定は終了です。</p>
-<h2 id="3.-%E3%82%B8%E3%83%A7%E3%83%96%E3%81%AE%E6%8A%95%E5%85%A5">3. ジョブの投入 <a class="heading-anchor-permalink" href="#3.-%E3%82%B8%E3%83%A7%E3%83%96%E3%81%AE%E6%8A%95%E5%85%A5">#</a></h2>
-<p>ジョブの投入を行います。前述の「9.ワークフローの作成」にありますように、ジョブの投入は、ワークフロー実行画面上部の実行ボタンより行います。<br>
-実行状況の確認は、ログエリアやコンポーネント右上の実行状況表示アイコン、及びリストビュー画面から行います。</p>
-<p><img src="./img/finishState.png" alt="img" title="ジョブの投入"></p>
+<p>以上で <strong>preprocess</strong> の設定は終了です。</p>
+<h3 id="solve%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E8%A8%AD%E5%AE%9A">solveコンポーネントの設定 <a class="heading-anchor-permalink" href="#solve%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E8%A8%AD%E5%AE%9A">#</a></h3>
+<p><strong>solve</strong> コンポーネントに
+<strong><a href="http://run.sh">run.sh</a></strong>  という名前で新規ファイルを作成し次の内容を記入してください。</p>
+<pre><code>. /vol0004/apps/oss/spack-v0.17.0/share/spack/setup-env.sh
+
+spack load 'openfoam@2012%fj@4.8.0'
+
+cd  cavity
+mpiexec -np 4 icoFoam -parallel &gt; ./log.icoFoam 2&gt;&amp;1
+reconstructPar
+touch result.foam
+
+cd ../
+tar cfzh  cavity.tgz ./cavity/
+</code></pre>
+<p>このスクリプトでは、 <strong>preprocess</strong> コンポーネントで作成した入力データを用いて
+icoFoamを用いた解析を実施します。
+また、paraviewでの可視化のために後処理を行ない、結果ファイルを圧縮しています。</p>
+<p>コンポーネントのプロパティ画面を開いて、以下の4項目を設定してください。</p>
+<ul>
+<li>script: <a href="http://run.sh">run.sh</a></li>
+<li>host: fugaku</li>
+<li>useJobScheduler: 有効</li>
+<li>outputFiles: cavity.tgz</li>
+</ul>
+<h3 id="extract%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E8%A8%AD%E5%AE%9A">extractコンポーネントの設定 <a class="heading-anchor-permalink" href="#extract%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E8%A8%AD%E5%AE%9A">#</a></h3>
+<p><strong>extract</strong> コンポーネントに
+<strong><a href="http://run.sh">run.sh</a></strong>  という名前で新規ファイルを作成し次の内容を記入してください。</p>
+<pre><code>tar xfz cavity.tgz
+</code></pre>
+<p>このスクリプトは、 <strong>solve</strong> コンポーネントの出力結果を展開し、paraviewを起動する準備をします。</p>
+<p>最後にコンポーネントのプロパティを開いて、scriptに <strong><a href="http://run.sh">run.sh</a></strong> を設定してください。</p>
+<h3 id="%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E4%BE%9D%E5%AD%98%E9%96%A2%E4%BF%82%E3%81%AE%E8%A8%AD%E5%AE%9A">ファイル依存関係の設定 <a class="heading-anchor-permalink" href="#%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E4%BE%9D%E5%AD%98%E9%96%A2%E4%BF%82%E3%81%AE%E8%A8%AD%E5%AE%9A">#</a></h3>
+<p><strong>preprocess</strong> のoutputFileに設定した <code>cavity</code> を <strong>solve</strong> コンポーネントにドロップして接続してください。
+また、<strong>solve</strong> コンポーネントのoutputFileに設定した <code>cavity.tgz</code> を <strong>extract</strong> コンポーネントにドロップして接続してください。</p>
+<p>以上でワークフローの作成は完了です。</p>
+<h2 id="3.-%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AE%E5%AE%9F%E8%A1%8C">3. プロジェクトの実行 <a class="heading-anchor-permalink" href="#3.-%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h2>
+<p><strong>run</strong> ボタンをクリックして、プロジェクトを実行してください。
+初めに、富岳へのログインに必要な秘密鍵のパスワードが聞かれますが、それ移行はワークフローの終了まで操作は不要です。</p>
 <h2 id="4.-%E8%A7%A3%E6%9E%90%E7%B5%90%E6%9E%9C%E3%81%AE%E7%A2%BA%E8%AA%8D">4. 解析結果の確認 <a class="heading-anchor-permalink" href="#4.-%E8%A7%A3%E6%9E%90%E7%B5%90%E6%9E%9C%E3%81%AE%E7%A2%BA%E8%AA%8D">#</a></h2>
-<p>解析結果の確認を行います。<br>
-リモート環境から回収した計算結果ファイルをローカル環境に移動し、「Paraview」にて確認します。</p>
-<h3 id="%E8%A7%A3%E6%9E%90%E7%B5%90%E6%9E%9C%E3%81%AE%E3%82%AA%E3%83%BC%E3%83%97%E3%83%B3">解析結果のオープン <a class="heading-anchor-permalink" href="#%E8%A7%A3%E6%9E%90%E7%B5%90%E6%9E%9C%E3%81%AE%E3%82%AA%E3%83%BC%E3%83%97%E3%83%B3">#</a></h3>
-<p>Paraviewを起動し、[ File ] -&gt; [ Open ]… より、「result.foam *1」ファイルを選択し、[ OK ]ボタンを押下します。　　
-*1 result.foam ファイルは、ジョブスクリプト内の「touch」コマンドにて作成したものです。（詳細は、前述の「ジョブスクリプトに関して」をご参照ください）</p>
+<p>解析結果の確認を行います。</p>
+<p><strong>extract</strong> コンポーネントのプロパティ画面を開いてFilesエリアを表示し
+<code>cavity</code> ディレクトリを開いてください。
+その下に <code>result.foam</code> ファイルが表示されるので、これをクリックして選択し
+shareボタンをクリックしてください。</p>
+<p><img src="./img/file_share_button.png" alt="img" title="ファイル共有ボタン"></p>
+<p><strong>result.foam</strong> ファイルのパスが表示されるので、
+コピーボタンをクリックしてコピーしこのファイル名を引数に
+paraviewを起動してください。</p>
+<p><img src="./img/file_share_dialog.png" alt="img" title="ファイル共有ダイアログ"></p>
 <h3 id="%E8%A7%A3%E6%9E%90%E7%B5%90%E6%9E%9C">解析結果 <a class="heading-anchor-permalink" href="#%E8%A7%A3%E6%9E%90%E7%B5%90%E6%9E%9C">#</a></h3>
-<p>参考として風速ベクトルの可視化結果を記載します。</p>
-<p><img src="./img/cavity_result.png" alt="img" title="風速ベクトル"></p>
-<p>OpenFOAMを利用した九大ITOによる解析ワークフロー例は以上になります。</p>
+<p>参考として流速ベクトルの可視化結果を記載します。</p>
+<p><img src="./img/cavity_result.png" alt="img" title="流速ベクトル"></p>
+<p>以上で、cavityケースの実行ワークフローは終了です。</p>
 
       </article>
     </div>
