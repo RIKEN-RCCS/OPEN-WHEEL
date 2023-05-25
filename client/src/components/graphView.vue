@@ -138,7 +138,7 @@
   import { removeFromArray } from "@/lib/clientUtility.js";
 
   export default {
-    name: "ComponentGraph",
+    name: "GraphView",
     components: {
       actionRow,
       buttons

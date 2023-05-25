@@ -5,30 +5,30 @@
  */
 <template>
   <div>
-    <componentTreeComponent />
+    <component-tree/>
     <v-row
       no-gutters
     >
-      <componentLibrary />
-      <componentGraph />
-      <componentProperty />
+      <component-library />
+      <graph-view />
+      <component-property />
     </v-row>
   </div>
 </template>
 
 <script>
-  import componentGraph from "@/components/componentGraph.vue";
-  import componentLibrary from "@/components/componentLibrary.vue";
-  import componentProperty from "@/components/componentProperty.vue";
-  import componentTreeComponent from "@/components/componentTree.vue";
+  import GraphView from "@/components/graphView.vue";
+  import ComponentLibrary from "@/components/componentLibrary.vue";
+  import ComponentProperty from "@/components/componentProperty.vue";
+  import ComponentTree from "@/components/componentTree.vue";
 
   export default {
     name: "Graph",
     components: {
-      componentGraph,
-      componentLibrary,
-      componentProperty,
-      componentTreeComponent,
+      GraphView,
+      ComponentLibrary,
+      ComponentProperty,
+      ComponentTree,
     },
   };
 </script>
