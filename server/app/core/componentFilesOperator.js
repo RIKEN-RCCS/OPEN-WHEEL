@@ -811,7 +811,7 @@ async function replaceEnv(projectRootDir, ID, newEnv) {
 
 async function getEnv(projectRootDir, ID) {
   const componentJson = await readComponentJsonByID(projectRootDir, ID);
-  const env = componentJson.env;
+  const env = componentJson.env || {};
   return env;
 }
 
