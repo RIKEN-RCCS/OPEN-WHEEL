@@ -121,7 +121,7 @@ async function isParent(projectRootDir, parentID, childID) {
 }
 
 
-async function removeAllLink(projectRootDir, ID) {
+async function removeAllLinkFromComponent(projectRootDir, ID) {
   const counterparts = new Map();
   const component = await readComponentJsonByID(projectRootDir, ID);
 
@@ -1171,6 +1171,34 @@ async function removeLink(projectRootDir, src, dst, isElse) {
   await writeComponentJson(projectRootDir, dstDir, dstJson);
 }
 
+async function removeAllLink(projectRootDir, componentID) {
+  const dstDir = await getComponentDir(projectRootDir, componentID, true);
+  const dstJson = await readComponentJson(dstDir);
+
+  const srcComponents = dstJson.previous;
+  const p = [];
+  for (const src of srcComponents) {
+    const srcDir = await getComponentDir(projectRootDir, src, true);
+    const srcJson = await readComponentJson(srcDir);
+
+    if (Array.isArray(srcJson.next)) {
+      srcJson.next = srcJson.next.filter((e)=>{
+        return e !== componentID;
+      });
+    }
+    if (Array.isArray(srcJson.else)) {
+      srcJson.else = srcJson.else.filter((e)=>{
+        return e !== componentID;
+      });
+    }
+    p.push(writeComponentJson(projectRootDir, srcDir, srcJson));
+  }
+
+  dstJson.previous = [];
+  p.push(writeComponentJson(projectRootDir, dstDir, dstJson));
+  return Promise.all(p);
+}
+
 async function addFileLink(projectRootDir, srcNode, srcName, dstNode, dstName) {
   if (srcNode === dstNode) {
     return Promise.reject(new Error("cyclic link is not allowed"));
@@ -1194,6 +1222,38 @@ async function removeFileLink(projectRootDir, srcNode, srcName, dstNode, dstName
   return removeFileLinkBetweenSiblings(projectRootDir, srcNode, srcName, dstNode, dstName);
 }
 
+async function removeAllFileLink(projectRootDir, componentID, inputFilename, fromChildren) {
+  const targetDir = await getComponentDir(projectRootDir, componentID, true);
+  const componentJson = await readComponentJson(targetDir);
+  const p = [];
+
+  if (fromChildren) {
+    const outputFile = componentJson.outputFiles.find((e)=>{
+      return e.name === inputFilename;
+    });
+    if (!outputFile) {
+      return new Error(`${inputFilename} not found in parent's outputFiles`);
+    }
+    if (!Array.isArray(outputFile.origin)) {
+      return true;
+    }
+    for (const { srcNode, srcName } of outputFile.origin) {
+      p.push(removeFileLinkToParent(projectRootDir, srcNode, srcName, inputFilename));
+    }
+  } else {
+    const inputFile = componentJson.inputFiles.find((e)=>{
+      return e.name === inputFilename;
+    });
+    if (!inputFile) {
+      return new Error(`${inputFilename} not found in inputFiles`);
+    }
+    for (const { srcNode, srcName } of inputFile.src) {
+      p.push(removeFileLinkBetweenSiblings(projectRootDir, srcNode, srcName, componentID, inputFilename));
+    }
+  }
+  return Promise.all(p);
+}
+
 
 async function cleanComponent(projectRootDir, ID) {
   const targetDir = await getComponentDir(projectRootDir, ID, true);
@@ -1212,7 +1272,7 @@ async function removeComponent(projectRootDir, ID) {
 
   //remove all link/filelink to or from components to be removed
   for (const descendantID of descendantsIDs) {
-    await removeAllLink(projectRootDir, descendantID);
+    await removeAllLinkFromComponent(projectRootDir, descendantID);
   }
   //gitOperator.rm() only remove existing files from git repo if directory is passed
   //so, gitRm and fs.remove must be called in this order
@@ -1312,7 +1372,9 @@ module.exports = {
   addLink,
   addFileLink,
   removeLink,
+  removeAllLink,
   removeFileLink,
+  removeAllFileLink,
   getEnv,
   replaceEnv,
   cleanComponent,

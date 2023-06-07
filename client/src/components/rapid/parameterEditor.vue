@@ -38,12 +38,11 @@
 <script>
   "use strict";
   import { mapState, mapGetters } from "vuex";
+  import deepEqual from "deep-eql"
   import SIO from "@/lib/socketIOWrapper.js";
   import targetFiles from "@/components/rapid/targetFiles.vue";
   import gatherScatter from "@/components/rapid/gatherScatter.vue";
   import parameter from "@/components/rapid/parameter.vue";
-  const equal = require("fast-deep-equal");
-  const clone = require("rfdc")();
 
   export default {
     name: "ParameterEditor",
@@ -110,10 +109,10 @@
         this.$emit("insertBraces");
       },
       hasChange () {
-        return !equal(this.initialParameterSetting, this.parameterSetting);
+        return !deepEqual(this.initialParameterSetting, this.parameterSetting);
       },
       save () {
-        if (equal(this.initialParameterSetting, this.parameterSetting)) {
+        if (deepEqual(this.initialParameterSetting, this.parameterSetting)) {
           console.log("paramter setting is not changed!");
           return false;
         }
@@ -123,7 +122,7 @@
                      console.log("ERROR: parameter setting file save failed");
                    }
 
-                   this.initialParameterSetting = clone(this.parameterSetting);
+                   this.initialParameterSetting = structuredClone(this.parameterSetting);
                  });
         return true;
       },

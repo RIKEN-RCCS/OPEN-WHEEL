@@ -4,12 +4,7 @@
  * See License in the project root for the license information.
  */
 <template>
-  <div
-    id="node_svg"
-    @drop="onDrop($event)"
-    @dragover.prevent
-    @dragenter.prevent
-  >
+  <div>
     <v-btn
       fab
       absolute
@@ -123,17 +118,20 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <component-graph
+      @drop="onDrop($event)"
+      @dragover.prevent
+      @dragenter.prevent
+    />
   </div>
 </template>
 
 <script>
   import { mapState, mapMutations, mapGetters } from "vuex";
-  import SVG from "svgjs/dist/svg.js";
-  import "svg.draggable.js/dist/svg.draggable.js";
   import SIO from "@/lib/socketIOWrapper.js";
-  import drawComponents from "@/lib/oldSVG/drawComponents.js";
   import actionRow from "@/components/common/actionRow.vue";
   import buttons from "@/components/common/buttons.vue";
+  import ComponentGraph from "@/components/componentGraph/componentGraph.vue"
   import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "@/lib/componentSizes.json";
   import { removeFromArray } from "@/lib/clientUtility.js";
 
@@ -141,11 +139,11 @@
     name: "GraphView",
     components: {
       actionRow,
-      buttons
+      buttons,
+      ComponentGraph
     },
     data: function () {
       return {
-        svg: null,
         envSetting: false,
         env: [],
         newKey: null,
@@ -161,33 +159,9 @@
       ...mapState(["projectState", "currentComponent", "projectRootDir","rootComponentID"]),
       ...mapGetters(["currentComponentAbsPath", "isEdittable"]),
     },
-    watch: {
-      currentComponent: function () {
-        drawComponents(this.currentComponent,
-                       this.svg,
-                       this.projectState,
-                       this.projectRootDir,
-                       this.$store.commit.bind(this),
-                       this.$store.dispatch.bind(this),
-                       this.currentComponent.ID
-        );
-      },
-    },
     mounted: function () {
-      this.svg = SVG("node_svg");
       this.fit();
       window.addEventListener("resize", this.fit.bind(this));
-
-      if(this.currentComponent !== null){
-        drawComponents(this.currentComponent,
-                       this.svg,
-                       this.projectState,
-                       this.projectRootDir,
-                       this.$store.commit.bind(this),
-                       this.$store.dispatch.bind(this),
-                       this.currentComponent.ID 
-        );
-      }
     },
     beforeDestroy: function () {
       window.removeEventListener("resize", this.fit.bind(this));
@@ -261,15 +235,15 @@
         SIO.emitGlobal("createNode", this.projectRootDir, payload, this.currentComponent.ID, SIO.generalCallback);
       },
       fit: function () {
-        const magicNumber = 17;
+        const magicNumberH = 17;
+        const magicNumberW = 24;
         const baseWidth = window.innerWidth < this.$parent.$parent.$el.clientWidth ? window.innerWidth : this.$parent.$parent.$el.clientWidth;
-        const width = baseWidth - widthComponentLibrary - 1;
-        const height = window.innerHeight - heightToolbar - heightDenseToolbar * 2 - heightFooter - magicNumber;
+        const width = baseWidth - widthComponentLibrary - magicNumberW;
+        const height = window.innerHeight - heightToolbar - heightDenseToolbar * 2 - heightFooter - magicNumberH;
 
         if (width > 0 && height > 0) {
           this.commitCanvasWidth(width);
           this.commitCanvasHeight(height);
-          this.svg.size(width, height);
         }
       },
     },

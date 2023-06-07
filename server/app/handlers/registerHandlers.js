@@ -25,7 +25,9 @@ const {
   onRemoveInputFile,
   onRemoveOutputFile,
   onRemoveLink,
+  onRemoveAllLink,
   onRemoveFileLink,
+  onRemoveAllFileLink,
   onGetEnv,
   onUpdateEnv,
   onUpdateStepNumber
@@ -77,7 +79,9 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("removeInputFile", onRemoveInputFile);
   socket.on("removeOutputFile", onRemoveOutputFile);
   socket.on("removeLink", onRemoveLink);
+  socket.on("removeAllLink", onRemoveAllLink);
   socket.on("removeFileLink", onRemoveFileLink);
+  socket.on("removeAllFileLink", onRemoveAllFileLink);
 
   //
   //filemanager

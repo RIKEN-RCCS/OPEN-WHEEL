@@ -12,7 +12,12 @@
       app
       extended
     >
-      <a href="home"> <v-img src="@/assets/wheel_logomark.png" /></a>
+      <a href="home"> <v-img :src="imgLogo" /></a>
+      <span
+        class="text-lowercase text-decoration-none text-h5 white--text ml-4"
+      >
+        workflow
+      </span>
       <v-spacer />
       <span
         class="text-decoration-none text-h5 white--text"
@@ -331,6 +336,7 @@
 <script>
   "use strict";
   import { mapState, mapMutations, mapActions, mapGetters } from "vuex";
+  import imgLogo from "@/assets/wheel_logomark.png";
   import logScreen from "@/components/logScreen.vue";
   import NavDrawer from "@/components/common/NavigationDrawer.vue";
   import passwordDialog from "@/components/common/passwordDialog.vue";
@@ -355,6 +361,7 @@
     },
     data: ()=>{
       return {
+        imgLogo,
         projectJson: null,
         drawer: false,
         mode: 0,

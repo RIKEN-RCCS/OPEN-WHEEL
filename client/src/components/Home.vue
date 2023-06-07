@@ -9,7 +9,7 @@
       v-model="drawer"
     />
     <v-app-bar app>
-      <a href="home"> <v-img src="@/assets/wheel_logomark.png" /></a>
+      <a href="home"> <v-img :src="imgLogo" /></a>
       <span
         class="text-lowercase text-decoration-none text-h5 white--text ml-4"
       >
@@ -140,6 +140,7 @@
 </template>
 <script>
   "use strict";
+  import imgLogo from "@/assets/wheel_logomark.png";
   import navDrawer from "@/components/common/NavigationDrawer.vue";
   import fileBrowser from "@/components/common/fileBrowserLite.vue";
   import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
@@ -162,6 +163,7 @@
     },
     data: ()=>{
       return {
+        imgLogo,
         batchMode: false,
         drawer: false,
         dialog: false,

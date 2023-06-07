@@ -112,8 +112,6 @@
   import versatileDialog from "@/components/versatileDialog.vue";
   import listForm from "@/components/common/listForm.vue";
 
-  const clone = require("rfdc")();
-
   export default {
     name: "JobScriptEditor",
     components:{
@@ -133,7 +131,7 @@
     data: function () {
       return {
         centerNames: Object.keys(hpcCenters),
-        hpcCenters: clone(hpcCenters),
+        hpcCenters: structuredClone(hpcCenters),
         jobScriptList: [],
         loadedCenterInfo: null,
         center: 0,
@@ -173,7 +171,7 @@
        this.saveDialog=false;
      },
      clear(){
-       this.hpcCenters=clone(hpcCenters);
+       this.hpcCenters=structuredClone(hpcCenters);
        this.loadedCenterInfo=null;
      },
      removeTemplate(item){

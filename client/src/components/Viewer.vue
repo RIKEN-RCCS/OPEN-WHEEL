@@ -9,8 +9,7 @@
       app
       extended
     >
-      <a href="home"> <v-img src="@/assets/wheel_logomark.png" /></a>
-      <v-spacer />
+      <a href="home"> <v-img :src="imgLogo" /></a>
       <span
         class="text-lowercase text-decoration-none text-h5 white--text ml-4"
       >
@@ -45,6 +44,7 @@
 <script>
   "use strict";
   import "viewerjs/dist/viewer.css";
+  import imgLogo from "@/assets/wheel_logomark.png";
   import { component as vueViewer}  from "v-viewer";
   import SIO from "@/lib/socketIOWrapper.js";
   import { readCookie } from "@/lib/utility.js";
@@ -56,6 +56,7 @@
     },
     data(){
       return {
+        imgLogo,
         items:[],
         options:
           {

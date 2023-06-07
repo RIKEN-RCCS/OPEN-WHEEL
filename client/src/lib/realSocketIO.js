@@ -5,6 +5,8 @@
  */
 "use strict";
 import { io } from "socket.io-client";
+import SocketIOFileUpload from "socketio-file-upload/client.min.js";
+
 // const SocketIOFileUpload = require("socketio-file-upload");
 
 let initialized=false;

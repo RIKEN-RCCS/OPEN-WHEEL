@@ -12,7 +12,7 @@
       app
       extended
     >
-      <a href="home"> <v-img src="@/assets/wheel_logomark.png" /></a>
+      <a href="home"> <v-img :src="imgLogo" /></a>
       <span
         class="text-lowercase text-decoration-none text-h5 white--text ml-4"
       >
@@ -87,6 +87,7 @@
 <script>
   "use strict";
   import SIO from "@/lib/socketIOWrapper.js";
+  import imgLogo from "@/assets/wheel_logomark.png";
   import { readCookie } from "@/lib/utility.js";
   import actionRow from "@/components/common/actionRow.vue";
   import navDrawer from "@/components/common/NavigationDrawer.vue";
@@ -107,6 +108,7 @@
     },
     data: ()=>{
       return {
+        imgLogo,
         drawer: false,
         pwDialog: false,
         rmDialog: false,
