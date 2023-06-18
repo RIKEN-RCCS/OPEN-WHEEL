@@ -119,7 +119,6 @@
       </v-card>
     </v-dialog>
     <component-graph
-      @drop="onDrop($event)"
       @dragover.prevent
       @dragenter.prevent
     />
@@ -210,29 +209,6 @@
           return a;
         }, {});
         SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID,  SIO.generalCallback);
-      },
-      onDrop (event) {
-        const offsetX = event.dataTransfer.getData("offsetX");
-        const offsetY = event.dataTransfer.getData("offsetY");
-        const type = event.dataTransfer.getData("type");
-
-        const payload = {
-          type,
-          pos: {
-            x: event.clientX - widthComponentLibrary - offsetX,
-            y: event.clientY - heightToolbar - heightDenseToolbar * 2 - offsetY,
-          },
-          path: this.currentComponentAbsPath,
-        };
-        if (payload.type === "parameterStudy") {
-          payload.type = "PS";
-        }
-        // if (payload.pos.x < 0 || this.canvasWidth + widthComponentLibrary < payload.pos.x ||
-        //   payload.pos.y < 0 || this.canvasHeight + heightToolbar + heightDenseToolbar * 2 < payload.pos.y) {
-        //   console.log("DEUBG: out of range drop!", payload.pos);
-        // }
-
-        SIO.emitGlobal("createNode", this.projectRootDir, payload, this.currentComponent.ID, SIO.generalCallback);
       },
       fit: function () {
         const magicNumberH = 17;
