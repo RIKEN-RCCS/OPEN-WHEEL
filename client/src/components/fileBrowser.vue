@@ -392,9 +392,12 @@
       },
       getComponentDirRootFiles(){
         const cb= (fileList)=>{
-        this.items = fileList
-          .filter((e)=>{return !e.isComponentDir})
-          .map(fileListModifier.bind(null, this.pathSep))
+          if(fileList === null){
+            return;
+          }
+          this.items = fileList
+            .filter((e)=>{return !e.isComponentDir})
+            .map(fileListModifier.bind(null, this.pathSep))
         }
         const path = this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
         const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent"
