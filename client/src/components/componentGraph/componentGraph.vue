@@ -194,6 +194,9 @@
                 }else if(dst.dstNode === "parent" || dst.dstNode === this.currentComponent.ID){
                   // file link to parent level components
                   const dstIndex=this.currentComponent.outputFiles.findIndex((parentOutputFile)=>{
+                    if(! Array.isArray(parentOutputFile.origin)){
+                      return true
+                    }
                     return dst.dstName === parentOutputFile.name && parentOutputFile.origin.some((e)=>{
                       return e.srcNode === component.ID
                     });
@@ -217,6 +220,7 @@
         // file link from parent level components
         if(Array.isArray(this.currentComponent.inputFiles)){
           for(let srcIndex=0; srcIndex < this.currentComponent.inputFiles.length; srcIndex++){
+            if(Array.isArray(this.currentComponent.inputFiles[srcIndex].forwardTo)){
             for(const dst of this.currentComponent.inputFiles[srcIndex].forwardTo){
               const dstComponent=this.currentComponent.descendants.find((e)=>{
                 return e.ID === dst.dstNode
@@ -239,6 +243,7 @@
                   })
                 }
               }
+            }
             }
           }
         }
