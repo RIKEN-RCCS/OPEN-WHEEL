@@ -16,7 +16,9 @@ async function cancelRemoteJob(task) {
   const cancelCmd = `${JS.del} ${task.jobID}`;
   getLogger(task.projectRootDir).debug(`cancel job: ${cancelCmd}`);
   const output = [];
-  await ssh.exec(cancelCmd, {}, output, output);
+  await ssh.exec(cancelCmd, (data)=>{
+    output.push(data);
+  });
   getLogger(task.projectRootDir).debug("cacnel done", output.join());
 }
 

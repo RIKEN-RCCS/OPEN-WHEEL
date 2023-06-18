@@ -8,7 +8,7 @@ const path = require("path");
 const { promisify } = require("util");
 const EventEmitter = require("events");
 const glob = require("glob");
-const ARsshClient = require("arssh2-client");
+const SshClientWrapper = require("ssh-client-wrapper");
 const { create } = require("abc4");
 const { getLogger } = require("../logSettings");
 const { remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
@@ -58,7 +58,7 @@ async function createCloudInstance(projectRootDir, hostinfo, clientID) {
     password: null
   };
 
-  const arssh = new ARsshClient(config, { connectionRetryDelay: 1000, verbose: true });
+  const ssh = new SshClientWrapper(config);
   if (hostinfo.type === "aws") {
     logger.debug("wait for cloud-init");
     await arssh.watch("tail /var/log/cloud-init-output.log >&2 && cloud-init status", { out: /done|error|disabled/ }, 30000, 60, {}, logger.debug.bind(logger), logger.debug.bind(logger));

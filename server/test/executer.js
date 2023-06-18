@@ -6,7 +6,7 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const ARssh2 = require("arssh2-client");
+const SshClientWrapper = require("ssh-client-wrapper");
 
 //setup test framework
 const chai = require("chai");
@@ -43,7 +43,7 @@ const { addSsh, createSshConfig } = require("../app/core/sshManager");
 describe("UT for executer class", function() {
   this.timeout(0);
   let task0;
-  beforeEach(async()=>{
+  beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
     task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
@@ -67,16 +67,16 @@ describe("UT for executer class", function() {
     task0.doCleanup = false;
     task0.emitForDispatcher = sinon.stub();
   });
-  after(async()=>{
+  after(async ()=>{
     await fs.remove(testDirRoot);
   });
   describe("#local exec", ()=>{
-    it("run shell script which returns 0 and status should be Finished", async()=>{
+    it("run shell script which returns 0 and status should be Finished", async ()=>{
       await exec(task0);
       expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
       expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "finished");
     });
-    it("run shell script which returns 1 and status should be failed", async()=>{
+    it("run shell script which returns 1 and status should be failed", async ()=>{
       await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
       await exec(task0);
       expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
@@ -97,8 +97,8 @@ describe("UT for executer class", function() {
         this.skip();
       }
       const hostInfo = remoteHost.query("name", remotehostID);
-      const sshConfig = await createSshConfig(hostInfo, password);
-      arssh = new ARssh2(sshConfig, { connectionRetry: 1, connectionRetryDelay: 2000 });
+      hostInfo.password = password;
+      arssh = new SshClientWrapper(hostInfo);
 
       try {
         await arssh.canConnect();
@@ -116,21 +116,21 @@ describe("UT for executer class", function() {
       task0.remotehostID = remoteHost.getID("name", task0.host) || "localhost";
       task0.remoteWorkingDir = path.posix.join(remoteHome, task0.projectStartTime);
     });
-    afterEach(async()=>{
+    afterEach(async ()=>{
       await arssh.exec(`rm -fr ${path.posix.join(remoteHome, task0.projectStartTime)}`);
     });
-    after(async()=>{
+    after(async ()=>{
       if (arssh) {
         await arssh.disconnect();
       }
     });
 
     describe("#gatherFiles", ()=>{
-      beforeEach(async()=>{
+      beforeEach(async ()=>{
         await arssh.mkdir_p(task0.remoteWorkingDir);
         await arssh.exec(`cd ${task0.remoteWorkingDir};(echo -n foo > foo && echo -n bar > bar && echo baz > baz)`);
       });
-      it("issue 462", async()=>{
+      it("issue 462", async ()=>{
         task0.outputFiles = [{ name: "hu/ga", dst: [] }, { name: "ho/ge", dst: [] }];
         await gatherFiles(task0, arssh);
         expect(path.join(task0.workingDir, "hu/ga")).not.to.be.a.path();
@@ -138,7 +138,7 @@ describe("UT for executer class", function() {
       });
     });
     describe("#remote exec", ()=>{
-      it("run shell script which returns 0 and status should be Finished", async()=>{
+      it("run shell script which returns 0 and status should be Finished", async ()=>{
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
         expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
@@ -148,32 +148,32 @@ describe("UT for executer class", function() {
           path.posix.join(remoteHome, task0.projectStartTime, task0.name, componentJsonFilename)
         ]);
       });
-      it("cleanup remote directory after successfully run", async()=>{
+      it("cleanup remote directory after successfully run", async ()=>{
         task0.doCleanup = true;
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
         expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime))).to.be.an("array").that.is.empty;
       });
-      it("get outputFiles after successfully run", async()=>{
+      it("get outputFiles after successfully run", async ()=>{
         task0.outputFiles = [{ name: "hoge", dst: [] }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(0)}`);
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
         expect(path.join(task0.workingDir, "hoge")).to.be.a.file().with.content("hoge");
       });
-      it("do nothing if outputFile is not found", async()=>{
+      it("do nothing if outputFile is not found", async ()=>{
         task0.outputFiles = [{ name: "huga", dst: [] }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(0)}`);
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
         expect(path.join(task0.workingDir, "huga")).not.to.be.a.path();
       });
-      it("run shell script which returns 1 and status should be failed", async()=>{
+      it("run shell script which returns 1 and status should be failed", async ()=>{
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
       });
-      it("do not cleanup remote directory after failed run", async()=>{
+      it("do not cleanup remote directory after failed run", async ()=>{
         task0.doCleanup = true;
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
         await exec(task0);
@@ -185,7 +185,7 @@ describe("UT for executer class", function() {
           path.posix.join(remoteHome, task0.projectStartTime, task0.name, componentJsonFilename)
         ]);
       });
-      it("do not get outputFiles after failed run", async()=>{
+      it("do not get outputFiles after failed run", async ()=>{
         task0.outputFiles = [{ name: "hoge" }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(1)}`);
         await exec(task0);
@@ -197,7 +197,7 @@ describe("UT for executer class", function() {
       beforeEach(()=>{
         task0.useJobScheduler = true;
       });
-      it("run shell script which returns 0 and status should be Finished", async()=>{
+      it("run shell script which returns 0 and status should be Finished", async ()=>{
         await exec(task0);
         //92 means job was successfully finished on PBS Pro
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\n92");
@@ -207,7 +207,7 @@ describe("UT for executer class", function() {
         const JS = hostInfo.jobScheduler;
         expect(path.resolve(projectRootDir, `${hostname}-${JS}.${jobManagerJsonFilename}`)).not.to.be.a.path();
       });
-      it("run shell script which returns 1 and status should be failed", async()=>{
+      it("run shell script which returns 1 and status should be failed", async ()=>{
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
         await exec(task0);
         //93 means job was finished but failed on PBS Pro
@@ -218,7 +218,7 @@ describe("UT for executer class", function() {
         const JS = hostInfo.jobScheduler;
         expect(path.resolve(projectRootDir, `${hostname}-${JS}.${jobManagerJsonFilename}`)).not.to.be.a.path();
       });
-      it("add submit option", async()=>{
+      it("add submit option", async ()=>{
         task0.submitOption = "-N testjob";
         await exec(task0);
         //92 means job was successfully finished on PBS Pro

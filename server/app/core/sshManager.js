@@ -6,7 +6,7 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const ARsshClient = require("arssh2-client");
+const SshClientWrapper = require("ssh-client-wrapper");
 const { convertPathSep } = require("./pathUtils");
 const { emitAll } = require("../handlers/commUtils.js");
 
@@ -139,9 +139,8 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID) {
   if (hasEntry(projectRootDir, hostinfo.id)) {
     return getSsh(projectRootDir, hostinfo.id);
   }
-  const password = await askPassword(clientID, remoteHostName);
-  const config = await createSshConfig(hostinfo, password);
-  const arssh = new ARsshClient(config, { connectionRetryDelay: 1000, verbose: true });
+  hostinfo.password = askPassword.bind(null, clientID, remoteHostName);
+  const arssh = new SshClientWrapper(hostinfo);
 
   if (hostinfo.renewInterval) {
     arssh.renewInterval = hostinfo.renewInterval * 60 * 1000;
@@ -157,7 +156,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID) {
   let done = false;
   while (!done) {
     try {
-      done = await arssh.canConnect();
+      done = await arssh.canConnect(2);
     } catch (e) {
       if (e.reason !== "invalid passphrase" && e.reason !== "authentication failure" && e.reason !== "invalid private key") {
         return Promise.reject(e);

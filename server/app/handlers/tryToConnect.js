@@ -4,8 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { createSshConfig } = require("../core/sshManager");
-const ARsshClient = require("arssh2-client");
+const SshClientWrapper = require("ssh-client-wrapper");
 const { getLogger } = require("../logSettings");
 const logger = getLogger();
 const { remoteHost } = require("../db/db");
@@ -17,28 +16,15 @@ const { remoteHost } = require("../db/db");
  * @param {Function} cb - call back function called with string "success" or "error"
  */
 async function tryToConnect(hostInfo, password, cb) {
-  const config = await createSshConfig(hostInfo, password);
-  const arssh = new ARsshClient(config, { connectionRetry: 1, connectionRetryDelay: 2000 });
-  logger.debug("try to connect", config.host, ":", config.port);
-  arssh.canConnect()
+  hostInfo.password = password;
+  const arssh = new SshClientWrapper(hostInfo);
+  logger.debug("try to connect", hostInfo.host, ":", hostInfo.port);
+  arssh.canConnect(2)
     .then(()=>{
       cb("success");
     })
     .catch((err)=>{
-      err.config = Object.assign({}, config);
-
-      if (Object.prototype.hasOwnProperty.call(err.config, "privateKey")) {
-        err.config.privateKey = "privateKey was defined but omitted";
-      }
-
-      if (Object.prototype.hasOwnProperty.call(err.config, "password")) {
-        err.config.password = "password  was defined but omitted";
-      }
-
-      if (Object.prototype.hasOwnProperty.call(err.config, "passphrase")) {
-        err.config.passphrase = "passphrase  was defined but omitted";
-      }
-      logger.error(err);
+      logger.error("tryToConnect failed with", err);
       cb("error");
     });
 }

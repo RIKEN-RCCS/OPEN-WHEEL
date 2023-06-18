@@ -116,6 +116,16 @@ function getDateString(humanReadable = false, withMilliseconds = false) {
   return withMilliseconds ? `${yyyy}${mm}${dd}-${HH}${MM}${ss}${ms}` : `${yyyy}${mm}${dd}-${HH}${MM}${ss}`;
 }
 
+function formatSshOutput(outputArray) {
+  return outputArray.join(" ")
+    .replace(/\n/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((e)=>{
+      return e !== "";
+    });
+}
+
 
 module.exports = {
   escapeRegExp,
@@ -125,5 +135,6 @@ module.exports = {
   reWin32ReservedNames,
   pathseps,
   metaCharactors,
-  getDateString
+  getDateString,
+  formatSshOutput
 };

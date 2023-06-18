@@ -12,6 +12,7 @@ const { remoteHost } = require("../db/db");
 const { getLogger } = require("../logSettings");
 const { createSsh, getSsh } = require("../core/sshManager");
 const { createTempd } = require("../core/tempd.js");
+const { formatSshOutput } = require("../lib/utility.js");
 
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
@@ -36,16 +37,14 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
     const stdout = [];
-    const rt = await ssh.exec(`ls -F ${target}`, {}, stdout);
+    const rt = await ssh.exec(`ls -F ${target}`, (output)=>{
+      stdout.push(output);
+    });
     if (rt !== 0) {
       getLogger(projectRootDir).error(projectRootDir, "ls on remotehost failed", rt);
       return cb(null);
     }
-    const lsResults = stdout.join("\n")
-      .split("\n")
-      .filter((e)=>{
-        return e !== "";
-      });
+    const lsResults = formatSshOutput(stdout);
     const links = lsResults.filter((e)=>{
       return e.endsWith("@");
     }).map((e)=>{
@@ -54,17 +53,15 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
     const stdout2 = [];
     if (links.length > 0) {
       //eslint-disable-next-line no-useless-escape
-      const rt2 = await ssh.exec(` cd ${target};for i in ${links.join(" ")};do echo $i; stat -c %F $(readlink -f $i);done`, {}, stdout2);
+      const rt2 = await ssh.exec(` cd ${target};for i in ${links.join(" ")};do echo $i; stat -c %F $(readlink -f $i);done`, (output)=>{
+        stdout2.push(output);
+      });
       if (rt2 !== 0) {
         getLogger(projectRootDir).error(projectRootDir, "ls on remotehost failed", rt);
         return cb(null);
       }
     }
-    const readlinkResults = stdout2.join("\n")
-      .split("\n")
-      .filter((e)=>{
-        return e !== "";
-      });
+    const readlinkResults = formatSshOutput(stdout2);
 
     const content = lsResults.map((e)=>{
       const islink = e.endsWith("@");
