@@ -96,15 +96,10 @@
         const icon = this.$el.querySelector(`#${item.type}`);
         event.dataTransfer.setDragImage(icon, event.offsetX, event.offsetY);
         event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.dropEffect = "move";
-        window.addEventListener("drop",(e)=>{
-          console.log("Drop:", e);
-        });
       },
       onDragend(event, item){
         const x = event.clientX - widthComponentLibrary - this.offsetX;
         const y = event.clientY - heightToolbar - heightDenseToolbar * 2 - this.offsetY;
-        console.log("dragend", event.dataTransfer);
 
         if ( x < 0 || x > this.canvasWidth || y < 0 || y > this.canvasHeight){
           debug("out of range ",x,y)

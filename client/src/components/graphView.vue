@@ -118,10 +118,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <component-graph
+    <div
       @dragover.prevent
       @dragenter.prevent
-    />
+    >
+    <component-graph />
+    </div>
   </div>
 </template>
 
