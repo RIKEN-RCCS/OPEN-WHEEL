@@ -20,6 +20,36 @@ const { hasChild } = require("../core/workflowComponent");
 const { getLogger } = require("../logSettings");
 
 /**
+ * check feather given token is surrounded by { and }
+ * @param {string} token - string to be checked
+ * @returns {boolean} - true if token is surrounded by {}
+ */
+function isSurrounded(token) {
+  return token.startsWith("{") && token.endsWith("}");
+}
+
+/**
+ * remove heading '{' and trailing '}'
+ * @param {string} token - string to be checked
+ * @returns {string} - trimed token
+ */
+function trimSurrounded(token) {
+  if (!isSurrounded(token)) {
+    return token;
+  }
+  const rt = /{+(.*)}+/.exec(token);
+  return (Array.isArray(rt) && typeof rt[1] === "string") ? rt[1] : token;
+}
+
+/**
+ * transform grob string to array
+ * @param {string} token - grob pattern
+ */
+function glob2Array(token) {
+  return trimSurrounded(token).split(",");
+}
+
+/**
  * remove trailing path sep from string
  * @param {string} filename - string possibly with trailing path sep
  * @returns {string} - string without trailing path sep
@@ -372,7 +402,49 @@ function avoidDuplicatedProjectName(basename, argSuffix) {
   return basename + suffixNumber;
 }
 
+/*
+ * convert old include exclude format (comma separated string) to array of string
+ * @params {string} filename - component json filename
+ */
+async function rewriteIncludeExclude(filename) {
+  let needToWrite = false;
+  const componentJson = await readJsonGreedy(filename);
+  if (typeof componentJson.include === "string" && !Array.isArray(componentJson.include)) {
+    getLogger().info("convert include property", filename);
+    componentJson.include = glob2Array(componentJson.include).map((e)=>{
+      return { name: e };
+    });
+    needToWrite = true;
+  }
+  if (componentJson.include === null) {
+    componentJson.include = [];
+    needToWrite = true;
+  }
+  if (typeof componentJson.exclude === "string" && !Array.isArray(componentJson.exclude)) {
+    getLogger().info("convert exclude property", filename);
+    componentJson.exclude = glob2Array(componentJson.exclude).map((e)=>{
+      return { name: e };
+    });
+    needToWrite = true;
+  }
+  if (componentJson.exclude === null) {
+    componentJson.exclude = [];
+    needToWrite = true;
+  }
+  if (needToWrite) {
+    await fs.writeJson(filename, componentJson, { spaces: 4 });
+  }
+}
+
+
 async function importProject(projectRootDir) {
+  //convert include and exclude property to array
+  const files = await promisify(glob)(`./**/${componentJsonFilename}`, { cwd: projectRootDir });
+  await Promise.all(files.map((filename)=>{
+    return rewriteIncludeExclude(path.resolve(projectRootDir, filename));
+  }));
+
+  //skip following import process if project is already on projectList
   if (projectList.query("path", projectRootDir)) {
     //already registerd
     return;
@@ -399,6 +471,7 @@ async function importProject(projectRootDir) {
   const projectJson = await readJsonGreedy(projectJsonFilepath);
   const rootWF = await readJsonGreedy(path.join(projectRootDir, componentJsonFilename));
 
+  //chek and repair project name(= basename of projectRootDir)
   let projectName = projectJson.name;
   if (!isValidName(projectName)) {
     getLogger().error(projectName, "is not allowed for project name");
@@ -439,8 +512,13 @@ async function importProject(projectRootDir) {
     }
   }
 
+
+  //set up project directory as git repo
   if (!await fs.pathExists(path.resolve(newProjectRootDir, ".git"))) {
     try {
+      //gitリポジトリになっていないものは、wheelから開くのは初めてのはず
+      //TODO wheel.logはignoreする
+      //TODO satusを全部not-startedに戻す
       await gitInit(newProjectRootDir, "wheel", "wheel@example.com");
       await gitAdd(newProjectRootDir, "./");
       await gitCommit(newProjectRootDir, "import project");
@@ -449,7 +527,7 @@ async function importProject(projectRootDir) {
       return;
     }
   } else {
-    await gitAdd(newProjectRootDir, "./");
+    await gitAdd(newProjectRootDir, "./", true);
     await gitCommit(newProjectRootDir, "import project");
   }
   projectList.unshift({ path: newProjectRootDir });

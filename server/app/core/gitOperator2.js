@@ -91,10 +91,16 @@ async function gitCommit(rootDir, message = "save project") {
  * performe git add
  * @param {string} rootDir - repo's root dir
  * @param {string} filename - filename which should be add to repo.
+ * @param {boolean} updateOnly - add -u option to git add
  * filename should be absolute path or relative path from rootDir.
  */
-async function gitAdd(rootDir, filename) {
-  return gitPromise(rootDir, ["add", filename], rootDir)
+async function gitAdd(rootDir, filename, updateOnly) {
+  const args = ["add"];
+  if (updateOnly) {
+    args.push("-u");
+  }
+  args.push(filename);
+  return gitPromise(rootDir, args, rootDir)
     .catch((err)=>{
       if (!/fatal: Unable to create '.*index.lock': File exists/.test(err)) {
         throw err;

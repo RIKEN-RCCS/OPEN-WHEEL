@@ -604,26 +604,20 @@
       isStorage(){
         return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "storage";
       },
-      includeList: function () {
-        if (typeof this.copySelectedComponent.include !== "string") {
-          return [];
-        }
-        return glob2Array(this.copySelectedComponent.include)
+      excludeList (){
+        return this.copySelectedComponent.exclude
+          .map((e)=>{
+            return { name: e };
+          });
+      },
+      includeList (){
+        return this.copySelectedComponent.include
           .map((e)=>{
             return { name: e };
           });
       },
       indexList: function () {
         return this.copySelectedComponent.indexList
-          .map((e)=>{
-            return { name: e };
-          });
-      },
-      excludeList: function () {
-        if (typeof this.copySelectedComponent.exclude !== "string") {
-          return [];
-        }
-        return glob2Array(this.copySelectedComponent.exclude)
           .map((e)=>{
             return { name: e };
           });
@@ -763,27 +757,27 @@
         SIO.emitGlobal("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
       },
       addToIncludeList (v) {
-        this.copySelectedComponent.include = addGlobPattern(this.copySelectedComponent.include, v.name);
+        this.copySelectedComponent.include.push(v.name)
         this.updateComponentProperty("include");
       },
       addToExcludeList (v) {
-        this.copySelectedComponent.exclude = addGlobPattern(this.copySelectedComponent.exclude, v.name);
+        this.copySelectedComponent.exclude.push(v.name)
         this.updateComponentProperty("exclude");
       },
       removeFromIncludeList (v, index) {
-        this.copySelectedComponent.include = removeGlobPattern(this.copySelectedComponent.include, v.name, index);
+        this.copySelectedComponent.include.splice(index,1)
         this.updateComponentProperty("include");
       },
       removeFromExcludeList (v, index) {
-        this.copySelectedComponent.exclude = removeGlobPattern(this.copySelectedComponent.exclude, v.name, index);
+        this.copySelectedComponent.exclude.splice(index,1)
         this.updateComponentProperty("exclude");
       },
       updateIncludeList (v, index) {
-        this.copySelectedComponent.include = updateGlobPattern(this.copySelectedComponent.include, v.name, index);
+        this.copySelectedComponent.include[index] = v.name;
         this.updateComponentProperty("include");
       },
       updateExcludeList (v, index) {
-        this.copySelectedComponent.include = updateGlobPattern(this.copySelectedComponent.include, v.name, index);
+        this.copySelectedComponent.exclude[index]=v.name;
         this.updateComponentProperty("exclude");
       },
       isUniqueName (v) {

@@ -142,10 +142,10 @@ class Task extends GeneralComponent {
     //note on filters
     //if include filter is set, matched files are transferd if it does not match exclude filter
     /**include filter for recieve files from remote host */
-    this.include = null;
+    this.include = [];
 
     /**exclude filter for recieve files from remote host */
-    this.exclude = null;
+    this.exclude = [];
   }
 }
 
