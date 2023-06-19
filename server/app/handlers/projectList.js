@@ -66,11 +66,11 @@ const onGetProjectList = async (socket, cb)=>{
 };
 
 const onReorderProjectList = async (socket, orderList, cb)=>{
-  await projectListAdaptor(socket, cb, projectList.reorder.bind(null, projectList, orderList));
+  await projectListAdaptor(socket, cb, projectList.reorder.bind(projectList, orderList));
 };
 
 const onRemoveProjectsFromList = async (socket, ids, cb)=>{
-  await projectListAdaptor(socket, cb, projectList.removeMany.bind(null, projectList, ids));
+  await projectListAdaptor(socket, cb, projectList.removeMany.bind(projectList, ids));
 };
 
 const onRemoveProjects = async (socket, ids, cb)=>{
