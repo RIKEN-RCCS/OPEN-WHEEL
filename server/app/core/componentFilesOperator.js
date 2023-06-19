@@ -248,7 +248,10 @@ async function addFileLinkFromParent(projectRootDir, srcName, dstNode, dstName) 
   const dstInputFile = dstJson.inputFiles.find((e)=>{
     return e.name === dstName;
   });
-  if (!dstInputFile.src.includes({ srcNode: parentID, srcName })) {
+
+  if (typeof dstInputFile === "undefined") {
+    dstJson.inputFiles.push({ name: dstName, src: [{ srcNode: parentID, srcName }] });
+  } else if (!dstInputFile.src.includes({ srcNode: parentID, srcName })) {
     dstInputFile.src.push({ srcNode: parentID, srcName });
   }
   await p;
@@ -270,7 +273,10 @@ async function addFileLinkBetweenSiblings(projectRootDir, srcNode, srcName, dstN
   const dstInputFile = dstJson.inputFiles.find((e)=>{
     return e.name === dstName;
   });
-  if (!dstInputFile.src.includes({ srcNode, srcName })) {
+
+  if (typeof dstInputFile === "undefined") {
+    dstJson.inputFiles.push({ name: dstName, src: [{ srcNode, srcName }] });
+  } else if (!dstInputFile.src.includes({ srcNode, srcName })) {
     dstInputFile.src.push({ srcNode, srcName });
   }
   await p1;
