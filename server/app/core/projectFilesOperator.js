@@ -101,17 +101,38 @@ async function getAllComponentIDs(projectRootDir) {
   return Object.keys(projectJson.componentPath);
 }
 
+function getSuffixNumberFromProjectName(projectName) {
+  const reResult = /.*(\d+)$/.exec(projectName);
+  return reResult === null ? 0 : reResult[1];
+}
+
+async function getUnusedProjectDir(projectRootDir) {
+  if (!await fs.pathExists(projectRootDir)) {
+    return projectRootDir;
+  }
+
+  const dirname = path.dirname(projectRootDir);
+  const projectName = path.basename(projectRootDir);
+  let suffixNumber = getSuffixNumberFromProjectName(projectName);
+  while (await fs.pathExists(path.resolve(dirname, (projectName + suffixNumber)))) {
+    ++suffixNumber;
+  }
+  return path.resolve(dirname, projectName + suffixNumber);
+}
+
+
 /**
  * create new project dir, initial files and new git repository
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} argProjectRootDir - project projectRootDir's absolute path
  * @param {string} name - project name without suffix
  * @param {string} argDescription - project description text
  * @param {string} user - username of project owner
  * @param {string} mail - mail address of project owner
  * @returns {*} -
  */
-async function createNewProject(projectRootDir, name, argDescription, user, mail) {
+async function createNewProject(argProjectRootDir, name, argDescription, user, mail) {
   const description = argDescription != null ? argDescription : "This is new project.";
+  const projectRootDir = getUnusedProjectDir(argProjectRootDir);
   await fs.ensureDir(projectRootDir);
 
   //write root workflow
@@ -436,6 +457,13 @@ async function rewriteIncludeExclude(filename) {
   }
 }
 
+function getUnusedProjectName(projectName) {
+  if (!isDuplicateProjectName(projectName)) {
+    return projectName;
+  }
+  const suffixNumber = getSuffixNumberFromProjectName(projectName);
+  return avoidDuplicatedProjectName(projectName, suffixNumber);
+}
 
 async function importProject(projectRootDir) {
   //convert include and exclude property to array
@@ -456,7 +484,7 @@ async function importProject(projectRootDir) {
     const oldProjectJsonFilename = "swf.prj.json";
     //serch old version file
     const oldProjectJsonFilepath = convertPathSep(path.resolve(projectRootDir, oldProjectJsonFilename));
-    if (fs.pathExistsconvertPathSep(oldProjectJsonFilepath)) {
+    if (fs.pathExists(convertPathSep(oldProjectJsonFilepath))) {
       getLogger().debug("converting old format project");
 
       try {
@@ -472,21 +500,16 @@ async function importProject(projectRootDir) {
   const rootWF = await readJsonGreedy(path.join(projectRootDir, componentJsonFilename));
 
   //chek and repair project name(= basename of projectRootDir)
-  let projectName = projectJson.name;
-  if (!isValidName(projectName)) {
-    getLogger().error(projectName, "is not allowed for project name");
+  if (!isValidName(projectJson.name)) {
+    getLogger().error(projectJson.name, "is not allowed for project name");
+    return;
   }
-  if (isDuplicateProjectName(projectName)) {
-    const reResult = /.*(\d+)$/.exec(projectName);
-    projectName = reResult === null ? projectName : projectName.slice(0, reResult.index);
-    const suffixNumber = reResult === null ? 0 : reResult[1];
-    const newName = avoidDuplicatedProjectName(projectName, suffixNumber);
-    getLogger().warn(projectName, "is already used. so this project is renamed to", newName);
-    projectName = newName;
-  }
+  const projectName = getUnusedProjectName(projectJson.name);
   const newProjectRootDir = path.resolve(path.dirname(projectRootDir), projectName + suffix);
 
   if (projectRootDir !== newProjectRootDir) {
+    getLogger().warn(projectJson.name, "is already used. so this project is renamed to", projectName);
+
     try {
       await fs.move(projectRootDir, newProjectRootDir);
     } catch (e) {
@@ -512,7 +535,6 @@ async function importProject(projectRootDir) {
     }
   }
 
-
   //set up project directory as git repo
   if (!await fs.pathExists(path.resolve(newProjectRootDir, ".git"))) {
     try {
@@ -532,6 +554,7 @@ async function importProject(projectRootDir) {
   }
   projectList.unshift({ path: newProjectRootDir });
 }
+
 async function updateProjectDescription(projectRootDir, description) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
   const projectJson = await readJsonGreedy(filename);
