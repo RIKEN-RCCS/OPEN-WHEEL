@@ -132,7 +132,8 @@ async function getUnusedProjectDir(projectRootDir) {
  */
 async function createNewProject(argProjectRootDir, name, argDescription, user, mail) {
   const description = argDescription != null ? argDescription : "This is new project.";
-  const projectRootDir = getUnusedProjectDir(argProjectRootDir);
+  const projectRootDir = await getUnusedProjectDir(argProjectRootDir);
+  console.log("DEBUG:", projectRootDir);
   await fs.ensureDir(projectRootDir);
 
   //write root workflow
