@@ -189,6 +189,13 @@
         home: "/",
       };
     },
+    watch:{
+      batchMode(newMode, oldMode){
+        if(!newMode){
+          this.selectedInTable.splice(0,this.selectedInTable.length);
+        }
+      }
+    },
     computed: {
       selected () {
         if (this.selectedInTree) {
