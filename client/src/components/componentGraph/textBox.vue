@@ -3,7 +3,7 @@
 </template>
 <script>
   "use strict";
-  import { textHeight,boxWidth, textLengthLimit, textOffset, maxTextChar} from "@/components/componentGraph/constants.json"
+  import { textHeight,boxWidth, textLengthLimit, textOffset, maxTextChar} from "@/lib/constants.json"
 
   export default {
     name: "TextBox",

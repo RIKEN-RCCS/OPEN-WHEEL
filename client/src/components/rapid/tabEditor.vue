@@ -88,6 +88,7 @@
     <v-card
       id="editor"
       grow
+      :height=editorHeight
     />
   </div>
 </template>
@@ -97,6 +98,7 @@
   import { mapState, mapGetters, mapMutations } from "vuex";
   import SIO from "@/lib/socketIOWrapper.js";
   import { isValidInputFilename } from "@/lib/utility.js";
+  import { editorHeight } from "@/lib/constants.json"
   import ace from "ace-builds";
   import "ace-builds/src-noconflict/theme-idle_fingers.js";
 
@@ -115,7 +117,8 @@
         activeTab: 0,
         files: [],
         editor: null,
-        isJobScript: false
+        isJobScript: false,
+        editorHeight
       };
     },
     computed: {
@@ -167,6 +170,7 @@
           this.activeTab = this.files.length;
           const session = this.files[this.activeTab - 1].editorSession;
           this.editor.setSession(session);
+          this.editor.resize()
           session.selection.on("changeSelection", ()=>{
             this.commitSelectedText(this.editor.getSelectedText());
           });

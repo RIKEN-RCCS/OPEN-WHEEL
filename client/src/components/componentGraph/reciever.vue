@@ -9,7 +9,7 @@
 </template>
 <script>
 "use strict";
-import { boxWidth, plugColor, textHeight, socketLongSideLength, socketShortSideLength} from "@/components/componentGraph/constants.json"
+import { boxWidth, plugColor, textHeight, socketLongSideLength, socketShortSideLength} from "@/lib/constants.json"
 
 export default {
   name: "Reciever",

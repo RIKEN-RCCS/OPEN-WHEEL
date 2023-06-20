@@ -8,7 +8,7 @@
 </template>
 <script>
   "use strict";
-  import { boxWidth, textHeight} from "@/components/componentGraph/constants.json";
+  import { boxWidth, textHeight} from "@/lib/constants.json";
   import imgNotStarted from "@/assets/img_stateQue.png";
   import imgRunning from "@/assets/img_statePlay.png";
   import imgFinished from "@/assets/img_stateDone.png";

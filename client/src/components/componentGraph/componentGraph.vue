@@ -58,7 +58,7 @@
   import OutputFileBox from "@/components/componentGraph/outputFileBox.vue"
   import Vconnector from "@/components/componentGraph/vconnector.vue"
   import Connector from "@/components/componentGraph/connector.vue"
-  import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor } from "@/components/componentGraph/constants.json"
+  import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor } from "@/lib/constants.json"
   import { calcBoxHeight, calcRecieverPos, calcSenderPos, calcElseSenderPos, calcFsenderPos, calcFreceiverPos } from "@/lib/utils.js"
   import {isContainer} from "@/lib/utility.js";
 

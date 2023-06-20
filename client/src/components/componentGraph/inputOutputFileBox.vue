@@ -22,7 +22,7 @@
   "use strict";
   import InputFileBox from "@/components/componentGraph/inputFileBox.vue"
   import OutputFileBox from "@/components/componentGraph/outputFileBox.vue"
-  import { boxWidth, textHeight, componentBackgroundColor } from "@/components/componentGraph/constants.json"
+  import { boxWidth, textHeight, componentBackgroundColor } from "@/lib/constants.json"
 
   export default{
     name: "inputOutputFileBox",

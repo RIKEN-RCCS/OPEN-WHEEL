@@ -12,7 +12,7 @@
 <script>
   "use strict";
   import CubicBezierCurve from "@/components/componentGraph/cubicBezierCurve.vue";
-  import { offsetRatio, boxHeightRatio} from "@/components/componentGraph/constants.json"
+  import { offsetRatio, boxHeightRatio} from "@/lib/constants.json"
 
   export default {
     name: "Connector",

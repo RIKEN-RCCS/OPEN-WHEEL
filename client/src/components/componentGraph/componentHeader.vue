@@ -13,7 +13,7 @@
   "use strict";
   import TextBox from "@/components/componentGraph/textBox.vue"
   import StatusIcon from "@/components/componentGraph/statusIcon.vue"
-  import { boxWidth, textHeight } from "@/components/componentGraph/constants.json"
+  import { boxWidth, textHeight } from "@/lib/constants.json"
   import {getComponentIcon, getColor} from "@/lib/utils.js"
 
   export default{

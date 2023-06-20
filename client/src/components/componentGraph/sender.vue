@@ -29,7 +29,7 @@
   import EquilateralTriangle from "@/components/componentGraph/triangle.vue";
   import Vconnector from "@/components/componentGraph/vconnector.vue";
 
-  import {boxWidth, offsetRatio, boxWidthRatio, plugColor, elsePlugColor, plugSize} from "@/components/componentGraph/constants.json"
+  import {boxWidth, offsetRatio, boxWidthRatio, plugColor, elsePlugColor, plugSize} from "@/lib/constants.json"
 
   export default {
     name: "Sender",

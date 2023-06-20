@@ -23,7 +23,7 @@
 
 <script>
   "use strict";
-  import { boxWidth, textHeight, iconSize, componentBackgroundColor  } from "@/components/componentGraph/constants.json"
+  import { boxWidth, textHeight, iconSize, componentBackgroundColor  } from "@/lib/constants.json"
   import { getComponentIcon, getColor, calcSubgraphHeight } from "@/lib/utils.js"
   export default{
     name: "sub-graph",

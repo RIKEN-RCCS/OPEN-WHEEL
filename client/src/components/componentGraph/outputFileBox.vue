@@ -9,7 +9,7 @@
   "use strict";
   import Fsender from "@/components/componentGraph/fsender.vue"
   import TextBox from "@/components/componentGraph/textBox.vue"
-  import { textHeight, boxWidth } from "@/components/componentGraph/constants.json"
+  import { textHeight, boxWidth } from "@/lib/constants.json"
   import {calcFsenderPos} from "@/lib/utils.js"
 
   export default{

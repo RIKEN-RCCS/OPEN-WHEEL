@@ -15,5 +15,6 @@
   "plugSize": 20,
   "iconSize": 24,
   "componentBackgroundColor": "rgba(68,68,73,0.5)",
-  "recieverMargine": 4
+  "recieverMargine": 4,
+  "editorHeight": 760
 }

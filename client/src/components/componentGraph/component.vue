@@ -65,7 +65,7 @@
   import SubGraph from "@/components/componentGraph/subgraph.vue"
   import Sender from "@/components/componentGraph/sender.vue"
   import Reciever from "@/components/componentGraph/reciever.vue"
-  import { boxWidth, textHeight } from "@/components/componentGraph/constants.json"
+  import { boxWidth, textHeight } from "@/lib/constants.json"
   import { calcRecieverPos, calcNumIOFiles, calcBoxHeight, calcSenderPos, calcElseSenderPos } from "@/lib/utils.js"
 
   export default{

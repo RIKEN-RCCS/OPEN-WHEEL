@@ -1,6 +1,6 @@
 "use strict";
 
-import { textHeight, boxWidth, iconSize } from "@/components/componentGraph/constants.json"
+import { textHeight, boxWidth, iconSize } from "@/lib/constants.json"
 import loadComponentDefinition from "@/lib/componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
 
