@@ -17,21 +17,27 @@
     />
     <gather-scatter
       :container="parameterSetting.scatter"
-      :headers="[ { value: 'srcName', text: 'srcName', sortable: true },
-                  { value: 'dstName', text: 'dstName', sortable: true },
-                  { value: 'dstNode', text: 'dstNode', sortable: true},
+      :headers="[ { value: 'srcName', text: 'srcName', sortable: false },
+                  { value: 'dstNode', text: 'dstNode', sortable: false },
+                  { value: 'dstName', text: 'dstName', sortable: false },
                   { text: 'Actions', value: 'action', sortable: false }]"
       :label="'scatter'"
       :read-only="readOnly"
+      @addNewItem="onAddNewItem"
+      @updateItem="onUpdateItem"
+      @deleteItem="onDeleteItem"
     />
     <gather-scatter
       :container="parameterSetting.gather"
-      :headers="[ { value: 'srcName', text: 'srcName', sortable: true },
-                  { value: 'srcNode', text: 'srcNode', sortable: true},
-                  { value: 'dstName', text: 'dstName', sortable: true },
+      :headers="[ { value: 'srcNode', text: 'srcNode', sortable: false },
+                  { value: 'srcName', text: 'srcName', sortable: false },
+                  { value: 'dstName', text: 'dstName', sortable: false },
                   { text: 'Actions', value: 'action', sortable: false }]"
       :label="'gather'"
       :read-only="readOnly"
+      @addNewItem="onAddNewItem"
+      @updateItem="onUpdateItem"
+      @deleteItem="onDeleteItem"
     />
   </div>
 </template>
@@ -78,7 +84,7 @@
       };
     },
     computed: {
-      ...mapState(["selectedFile", "projectRootDir"]),
+      ...mapState(["selectedFile", "projectRootDir", "componentPath"]),
       ...mapGetters(["selectedComponentAbsPath"]),
     },
     mounted () {
@@ -101,6 +107,30 @@
       });
     },
     methods: {
+      onAddNewItem(mode, newItem){
+        this.parameterSetting[mode].push(newItem)
+      },
+      onUpdateItem(mode, target, newItem){
+        target.srcName = newItem.srcName;
+        target.dstName = newItem.dstName;
+        if (newItem.dstNode) {
+          target.dstNode = newItem.dstNode;
+        }
+      },
+      onDeleteItem(mode, target){
+        this.parameterSetting[mode]=this.parameterSetting[mode].filter((e)=>{
+          if(e.srcName !== target.srcName || e.dstName !== target.dstName){
+            return true
+          }
+          if(e.dstNode && e.dstNode !== target.dstNode){
+            return true
+          }
+          if(e.srcNode && e.srcNode !== target.srcNode){
+            return true
+          }
+          return false
+        });
+      },
       openNewTab (...args) {
         this.$emit("openNewTab", ...args);
       },

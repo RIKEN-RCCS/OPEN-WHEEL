@@ -66,7 +66,9 @@
             </v-col>
           </v-row>
           {{ label2 }}
-          <lower-component-tree />
+          <lower-component-tree
+            @selected=onDstNodeSelected
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -129,6 +131,18 @@
       };
     },
     computed: {
+      //TODO PSコンポーネントからの相対パスを*NodeNameに入れる
+      // modifiedContainer(){
+      //   return container.map((e)=>{
+      //     if(e.dstNode){
+      //       e.dstNodeName=
+      //     }
+      //     if(e.srcNode){
+      //       e.srcNodeName=
+      //     }
+      //     return e
+      //   });
+      // },
       label2 () {
         return this.label === "scatter" ? "destination node" : "source node";
       },
@@ -136,6 +150,7 @@
         if (this.newItem.srcName === "" || this.newItem.dstName === "") {
           return true;
         }
+        //check duplication or not changed
         const keys = ["srcName", "dstName", "srcNode", "dstNode"]
           .filter((e)=>{
             return Object.keys(this.newItem).includes(e);
@@ -148,6 +163,13 @@
       },
     },
     methods: {
+      onDstNodeSelected(item){
+        if(this.newItem.dstNode){
+          this.newItem.dstNode=item.ID
+        }else{
+          this.$set(this.newItem, 'dstNode', item.ID)
+        }
+      },
       openDialog (item) {
         this.selectedItem = item;
         this.newItem.srcName = this.selectedItem.srcName;
@@ -167,19 +189,16 @@
       },
       commitChange () {
         if (this.selectedItem === null) {
-          this.container.push({ ...this.newItem });
+          //3rd argument means copy of this.newItem
+          //this.newItem will be initialized in closeAndRestDialog()
+          this.$emit("addNewItem", this.label,{ ...this.newItem } );
         } else {
-          this.selectedItem.srcName = this.newItem.srcName;
-          this.selectedItem.dstName = this.newItem.dstName;
-
-          if (this.newItem.dstNode) {
-            this.selectedItem.dstNode = this.newItem.dstNode;
-          }
+          this.$emit("updateItem", this.label, this.selectedItem, { ...this.newItem } );
         }
         this.closeAndResetDialog();
       },
       deleteItem (item) {
-        removeFromArray(this.container, item);
+        this.$emit("deleteItem", this.label, item);
       },
     },
   };

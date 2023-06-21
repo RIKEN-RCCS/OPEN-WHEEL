@@ -605,12 +605,18 @@
         return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "storage";
       },
       excludeList (){
+        if(!Array.isArray(this.copySelectedComponent.exclude)){
+          return []
+        }
         return this.copySelectedComponent.exclude
           .map((e)=>{
             return { name: e };
           });
       },
       includeList (){
+        if(!Array.isArray(this.copySelectedComponent.include)){
+          return []
+        }
         return this.copySelectedComponent.include
           .map((e)=>{
             return { name: e };
