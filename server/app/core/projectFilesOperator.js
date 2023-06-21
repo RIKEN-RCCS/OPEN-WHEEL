@@ -475,7 +475,7 @@ async function importProject(projectRootDir) {
   //skip following import process if project is already on projectList
   if (projectList.query("path", projectRootDir)) {
     //already registerd
-    return;
+    return projectRootDir;
   }
   const projectJsonFilepath = convertPathSep(path.resolve(projectRootDir, projectJsonFilename));
   getLogger().debug("import: ", projectJsonFilepath);
@@ -553,6 +553,7 @@ async function importProject(projectRootDir) {
     await gitCommit(newProjectRootDir, "import project");
   }
   projectList.unshift({ path: newProjectRootDir });
+  return newProjectRootDir;
 }
 
 async function updateProjectDescription(projectRootDir, description) {
