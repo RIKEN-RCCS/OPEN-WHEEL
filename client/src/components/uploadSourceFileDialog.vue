@@ -14,7 +14,7 @@
     @cancel="uploadSourceFileDialogCallback(false)"
   >
     <template slot="message">
-      <p class="text-h2 text-center pa-4">
+      <p class="text-h2 text-center pa-4" ref="uploadarea">
         {{ uploadedFilename ||'drop file here' }}
       </p>
     </template>
@@ -61,6 +61,16 @@
         }
       }
     },
+    watch:{
+      uploadSourceFileDialog(v){
+        if(!v){
+          return
+        }
+        this.$nextTick().then(()=>{
+          SIO.listenOnDrop(this.$refs.uploadarea)
+        });
+      }
+    },
     mounted:function(){
       this.$nextTick().then(()=>{
         SIO.onGlobal("askUploadSourceFile", (ID, name, description, cb)=>{
@@ -74,7 +84,6 @@
           };
           this.uploadSourceFileDialog=true;
         });
-        SIO.listenOnDrop(this.$el)
         SIO.onUploaderEvent("choose", this.onChoose)
         SIO.onUploaderEvent("complete", this.onUploadComplete)
         SIO.onUploaderEvent("progress", this.updateProgressBar)
