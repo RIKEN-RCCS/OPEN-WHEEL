@@ -536,13 +536,13 @@
           name: "",
           dst: [],
         },
-        sourceOutputFile: null,
         propWidth: "512",
         openPanels: [0],
         retryByJS: false,
         conditionCheckByJS: false,
         open: false,
         reopening: false,
+        sourceOutputFile: null
       };
     },
     computed: {
@@ -662,6 +662,7 @@
         if (this.selectedComponent === null || ( nv !== null && ov !== null && nv.ID === ov.ID)) {
           return;
         }
+        this.sourceOutputFile = Array.isArray(this.selectedComponent.outputFiles) && this.selectedComponent.outputFiles[0] ?  this.selectedComponent.outputFiles[0].name : null
         // get script candidate
         if(["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
           return;
@@ -709,19 +710,17 @@
       },
       deleteSourceOutputFile(){
         this.changeInputOutputFiles("removeOutputFile", this.selectedComponent.outputFiles[0] );
-        this.selectedComponent.outputFiles.pop();
-        this.sourceOutputFile=null;
       },
       updateSourceOutputFile(name){
-        if(name===null){
-          return;
+        if(name === null){
+          this.deleteSourceOutputFile()
+          return
         }
         const outputFile={name, dst: []};
         const event = typeof this.selectedComponent.outputFiles[0] === "undefined"
           || typeof this.selectedComponent.outputFiles[0].name === "undefined"
           ? "addOutputFile" :"renameOutputFile";
         this.changeInputOutputFiles(event , outputFile, 0);
-        this.selectedComponent.outputFiles[0] = outputFile;
       },
       changeInputOutputFiles (event, v, index) {
         if (!this.valid) return;

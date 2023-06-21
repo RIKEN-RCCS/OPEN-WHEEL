@@ -150,7 +150,18 @@ async function getSourceFilename(projectRootDir, component, clientID) {
   const filelist = await getSourceCandidates(projectRootDir, component.ID);
   getLogger(projectRootDir).trace("sourceFile: candidates=", filelist);
 
+  if (component.outputFiles && component.outputFiles[0] && component.outputFiles[0].name) {
+    const rt = filelist.find((e)=>{
+      return e === component.outputFiles[0].name;
+    });
+    if (rt) {
+      getLogger(projectRootDir).info(`sourceFile: ${rt} is used as outputFile.`);
+      return rt;
+    }
+    getLogger(projectRootDir).info(`sourceFile: outputFile was set to ${component.outputFiles[0].name} but it was not found.`);
+  }
   if (filelist.length === 1) {
+    getLogger(projectRootDir).debug(`sourceFile: ${filelist[0]} is the only candidate. use it as outputFile`);
     return (filelist[0]);
   }
   return askSourceFilename(clientID, component.ID, component.name, component.description, filelist);
