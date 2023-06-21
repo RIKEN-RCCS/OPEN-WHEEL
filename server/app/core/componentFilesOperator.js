@@ -546,9 +546,16 @@ async function validateConditionalCheck(component) {
   if (!(Object.prototype.hasOwnProperty.call(component, "condition") && typeof component.condition === "string")) {
     return Promise.reject(new Error(`condition is not specified ${component.name}`));
   }
-  if (!(Object.prototype.hasOwnProperty.call(component, "keep") && typeof component.keep === "number" && component.keep >= 0)) {
-    if (component.keep != null) {
-      return Promise.reject(new Error(`keep is not specified ${component.name}`));
+  return Promise.resolve();
+}
+
+async function validateKeepProp(component) {
+  if (Object.prototype.hasOwnProperty.call(component, "keep")) {
+    if (component.keep === null || component.keep === "") {
+      return Promise.resolve();
+    }
+    if (!(Number.isInteger(component.keep) && component.keep >= 0)) {
+      return Promise.reject(new Error(`keep must be positive integer ${component.name}`));
     }
   }
   return Promise.resolve();
@@ -565,12 +572,6 @@ async function validateForLoop(component) {
 
   if (!(Object.prototype.hasOwnProperty.call(component, "end") && typeof component.end === "number")) {
     return Promise.reject(new Error(`end is not specified ${component.name}`));
-  }
-
-  if (!(Object.prototype.hasOwnProperty.call(component, "keep") && typeof component.keep === "number" && component.keep >= 0)) {
-    if (component.keep != null) {
-      return Promise.reject(new Error(`keep is not specified ${component.name}`));
-    }
   }
 
   if (component.step === 0 || (component.end - component.start) * component.step < 0) {
@@ -605,11 +606,6 @@ async function validateForeach(component) {
   }
   if (component.indexList.length <= 0) {
     return Promise.reject(new Error(`index list is empty ${component.name}`));
-  }
-  if (!(Object.prototype.hasOwnProperty.call(component, "keep") && typeof component.keep === "number" && component.keep >= 0)) {
-    if (component.keep != null) {
-      return Promise.reject(new Error(`keep is not specified ${component.name}`));
-    }
   }
   return Promise.resolve();
 }
@@ -716,14 +712,19 @@ async function validateComponents(projectRootDir, argParentID) {
       promises.push(validateStepjob(projectRootDir, component));
     } else if (component.type === "bulkjobTask") {
       promises.push(validateBulkjobTask(projectRootDir, component));
-    } else if (component.type === "if" || component.type === "while") {
+    } else if (component.type === "if") {
       promises.push(validateConditionalCheck(component));
+    } else if (component.type === "while") {
+      promises.push(validateConditionalCheck(component));
+      promises.push(validateKeepProp(component));
     } else if (component.type === "for") {
       promises.push(validateForLoop(component));
+      promises.push(validateKeepProp(component));
     } else if (component.type === "parameterStudy") {
       promises.push(validateParameterStudy(projectRootDir, component));
     } else if (component.type === "foreach") {
       promises.push(validateForeach(component));
+      promises.push(validateKeepProp(component));
     } else if (component.type === "storage") {
       promises.push(validateStorage(component));
     }

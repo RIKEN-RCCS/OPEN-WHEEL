@@ -21,7 +21,7 @@
               outlined
               class="pt-4"
               dense
-              :rules="[isValidName, isUniqueName]"
+              :rules="[rules.isValidName, isUniqueName]"
               @change="updateComponentProperty('name')"
               @submit.prevent
             />
@@ -163,7 +163,7 @@
               label="number of retry"
               hide-details
               type="number"
-              :rules="[zeroOrMore]"
+              :rules="[rules.isInteger, rules.isZeroOrMore]"
               outlined
               @change="updateComponentProperty('retry')"
             />
@@ -195,24 +195,29 @@
                 v-model.number="copySelectedComponent.start"
                 label="start"
                 type="number"
+                :rules="[rules.isInteger]"
                 @change="updateComponentProperty('start')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.end"
                 label="end"
                 type="number"
+                :rules="[rules.isInteger]"
                 @change="updateComponentProperty('end')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.step"
                 label="step"
                 type="number"
+                :rules="[rules.isInteger]"
                 @change="updateComponentProperty('step')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.keep"
                 label="number of instances to keep"
                 type="number"
+                clearable
+                :rules="[rules.isValidKeepProp ]"
                 @change="updateComponentProperty('keep')"
               />
             </v-form>
@@ -513,9 +518,23 @@
   import { mapState, mapGetters, mapMutations } from "vuex";
   import SIO from "@/lib/socketIOWrapper.js";
 
-  const zeroOrMore = (v)=>{
-    return v >= 0 ? true : "retry time must be positive value";
+  const isZeroOrMore = (v) => {
+    return v >= 0 ? true : "0 or more value required";
   };
+  const isPositiveNumber = (v) => {
+    return  v > 0 ? true : "positive value required"
+  }
+  const isInteger = (v)=>{
+    return Number.isInteger(v) ? true : "integer value required";
+  }
+  const isValidKeepProp = (v)=>{
+    if (v === ""){
+      return true
+    }
+    const rt1 = isInteger(v);
+    const rt2 = isZeroOrMore(v);
+    return rt1 !== true ? rt1 : rt2
+  }
 
   export default {
     name: "ComponentProperty",
@@ -542,7 +561,14 @@
         conditionCheckByJS: false,
         open: false,
         reopening: false,
-        sourceOutputFile: null
+        sourceOutputFile: null,
+        rules:{
+          isValidName,
+          isZeroOrMore,
+          isPositiveNumber,
+          isInteger,
+          isValidKeepProp
+        }
       };
     },
     computed: {
@@ -664,20 +690,19 @@
         }
         this.sourceOutputFile = Array.isArray(this.selectedComponent.outputFiles) && this.selectedComponent.outputFiles[0] ?  this.selectedComponent.outputFiles[0].name : null
         // get script candidate
-        if(["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
-          return;
-        }
-        const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent";
-        SIO.emitGlobal("getFileList",this.projectRootDir,  {path:this.selectedComponentAbsPath, mode}, (fileList)=>{
-        const scriptCandidates = fileList
-          .filter((e)=>{
-            return e.type === "file";
-          })
-          .map((e)=>{
-            return e.name;
+        if(!["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
+          const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent";
+          SIO.emitGlobal("getFileList",this.projectRootDir,  {path:this.selectedComponentAbsPath, mode}, (fileList)=>{
+          const scriptCandidates = fileList
+            .filter((e)=>{
+              return e.type === "file";
+            })
+            .map((e)=>{
+              return e.name;
+            });
+            this.commitScriptCandidates(scriptCandidates);
           });
-          this.commitScriptCandidates(scriptCandidates);
-        });
+        }
         this.reopening = true;
         this.openPanels = [0];
         this.open = false;
@@ -803,8 +828,6 @@
           return name === this.copySelectedComponent.name;
         });
       },
-      isValidName,
-      zeroOrMore,
     },
   };
 </script>
