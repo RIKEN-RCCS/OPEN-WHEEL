@@ -348,8 +348,8 @@ function isInitialComponent(component) {
   if (component.type === "storage") {
     return false;
   }
-  if (component.type === "source" && component.outputFiles[0].dst.length > 0) {
-    return true;
+  if (component.type === "source") {
+    return component.outputFiles[0].dst.length > 0;
   }
   if (component.type === "viewer") {
     return true;
