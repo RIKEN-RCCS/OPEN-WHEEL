@@ -437,9 +437,12 @@
         this.commitComponentTree(componentTree);
       });
       SIO.onGlobal("showMessage", this.showSnackbar);
-      SIO.onGlobal("hostList", (hostList)=>{
-        this.commitRemoteHost(hostList);
+      SIO.onGlobal("logERR", (message)=>{
+        const rt=/^\[.*ERROR\].*\- *(.*?)$/m.exec(message)
+        const output= rt ? rt[1] || rt[0] : message;
+        this.showSnackbar(output)
       });
+      SIO.onGlobal("hostList", this.commitRemoteHost);
       SIO.onGlobal("projectState", (state)=>{
         this.commitProjectState(state.toLowerCase());
       });
