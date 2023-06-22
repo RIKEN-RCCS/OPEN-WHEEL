@@ -45,7 +45,6 @@
   </v-dialog>
 </template>
 <script>
-  import SIO from "@/lib/socketIOWrapper.js";
   export default {
     props:{
         unsavedFiles: {
