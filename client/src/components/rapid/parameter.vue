@@ -123,7 +123,7 @@
         <v-card-actions>
           <v-spacer />
           <v-btn @click="commitChange">
-            <v-icon>mdi-content-save</v-icon>save
+            <v-icon>mdi-check</v-icon>OK
           </v-btn>
           <v-btn @click="closeAndResetDialog">
             <v-icon>mdi-cancel</v-icon>cancel
@@ -147,10 +147,10 @@
         <v-card-actions>
           <v-spacer />
           <v-btn @click="updateFilter">
-            <v-icon>save</v-icon>save
+            <v-icon>mdi-check</v-icon>check
           </v-btn>
           <v-btn @click="closeFilterDialog">
-            <v-icon>cancel</v-icon>cancel
+            <v-icon>mdi-cancel</v-icon>cancel
           </v-btn>
         </v-card-actions>
       </v-card>

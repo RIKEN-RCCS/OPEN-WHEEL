@@ -253,15 +253,22 @@
           });
         });
       },
-      hasChange () {
-        for (const file of this.files) {
+      getChangedFiles(){
+        return this.files.map((file)=>{
           const document = file.editorSession.getDocument();
           const content = document.getValue();
           if (file.content !== content) {
-            return true;
+            return {name: `${file.dirname}/${file.filename}`}
           }
-        }
-        return false;
+          return null;
+        })
+        .filter((e)=>{
+          return e !== null;
+        });
+      },
+      hasChange () {
+        const changedFiles=this.getChangedFiles();
+        return changedFiles.length > 0;
       },
       saveAll () {
         let changed = false;

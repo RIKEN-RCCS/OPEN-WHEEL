@@ -77,13 +77,13 @@
             :disabled="isInValid"
             @click="commitChange"
           >
-            OK
+            <v-icon> mdi-check</v-icon> OK
           </v-btn>
           <v-btn
             text
             @click="closeAndResetDialog"
           >
-            Cancel
+            <v-icon> mdi-cancel</v-icon> Cancel
           </v-btn>
         </v-card-actions>
       </v-card>
