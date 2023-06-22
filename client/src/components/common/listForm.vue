@@ -53,7 +53,7 @@
     >
       <v-text-field
         v-model="inputField"
-        :rules="[newItemIsNotDuplicate]"
+        :rules=newItemValidator
         :disabled="disabled"
         outlined
         dense
@@ -123,6 +123,7 @@
         inputField: null,
         edittingField: null,
         editTarget: null,
+        newItemValidator: [this.newItemIsNotDuplicate]
       };
     },
     computed: {
@@ -198,10 +199,16 @@
         this.inputField = null;
       },
       deleteItem: function (v) {
-        const target = this.stringItems ? v.name : v;
-        const index = this.items.find((e)=>{
-          return e === target;
-        });
+        let index=-1
+        if (this.stringItems){
+          index = this.items.findIndex((e)=>{
+            return e === v;
+          });
+        }else{
+          index = this.items.findIndex((e)=>{
+            return e.name === v.name;
+          });
+        }
         if (index !== -1) {
           this.$emit("remove", v, index);
         }

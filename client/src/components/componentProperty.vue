@@ -229,9 +229,9 @@
             <list-form
               :label="'foreach'"
               :items="indexList"
-              @add=" (...args)=>{ updateIndexList('add', ...args)}"
-              @remove="(...args)=>{ updateIndexList('remove', ...args)}"
-              @update="(...args)=>{ updateIndexList('rename', ...args)}"
+              @add="addToIndexList"
+              @remove="removeFromIndexList"
+              @update="updateIndexList"
             />
             <v-text-field
               v-model.number="copySelectedComponent.keep"
@@ -258,13 +258,13 @@
                   :items="scriptCandidates"
                   clearable
                   outlined
-                  @change="updateSourceOutputFile(sourceOutputFile)"
+                  @change="updateSourceOutputFile"
                 />
               </v-col>
               <v-col
                 class="mt-2"
                 cols="2"
-                @click="deleteSourceOutputFile()"
+                @click="deleteSourceOutputFile"
               >
                 <v-btn
                   v-if="!copySelectedComponent.uploadOnDemand"
@@ -282,9 +282,9 @@
               :label="'input files'"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
-              @add=" (...args)=>{ changeInputOutputFiles('addInputFile', ...args)}"
-              @remove="(...args)=>{ changeInputOutputFiles('removeInputFile', ...args)}"
-              @update="(...args)=>{ changeInputOutputFiles('renameInputFile', ...args)}"
+              @add="addToInputFiles"
+              @remove="removeFromInputFiles"
+              @update="updateInputFiles"
             />
           </v-expansion-panel-content>
         </v-expansion-panel>
@@ -432,17 +432,17 @@
               :label="'input files'"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
-              @add=" (...args)=>{ changeInputOutputFiles('addInputFile', ...args)}"
-              @remove="(...args)=>{ changeInputOutputFiles('removeInputFile', ...args)}"
-              @update="(...args)=>{ changeInputOutputFiles('renameInputFile', ...args)}"
+              @add="addToInputFiles"
+              @remove="removeFromInputFiles"
+              @update="updateInputFiles"
             />
             <list-form
               :label="'output files'"
               :items="copySelectedComponent.outputFiles"
               :new-item-template="outputFileTemplate"
-              @add=" (...args)=>{ changeInputOutputFiles('addOutputFile', ...args)}"
-              @remove="(...args)=>{ changeInputOutputFiles('removeOutputFile', ...args)}"
-              @update="(...args)=>{ changeInputOutputFiles('renameOutputFile', ...args)}"
+              @add="addToOutputFiles"
+              @remove="removeFromOutputFiles"
+              @update="updateOutputFiles"
             />
           </v-expansion-panel-content>
         </v-expansion-panel>
@@ -733,44 +733,6 @@
           SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
         });
       },
-      deleteSourceOutputFile(){
-        this.changeInputOutputFiles("removeOutputFile", this.selectedComponent.outputFiles[0] );
-      },
-      updateSourceOutputFile(name){
-        if(name === null){
-          this.deleteSourceOutputFile()
-          return
-        }
-        const outputFile={name, dst: []};
-        const event = typeof this.selectedComponent.outputFiles[0] === "undefined"
-          || typeof this.selectedComponent.outputFiles[0].name === "undefined"
-          ? "addOutputFile" :"renameOutputFile";
-        this.changeInputOutputFiles(event , outputFile, 0);
-      },
-      changeInputOutputFiles (event, v, index) {
-        if (!this.valid) return;
-        const ID = this.selectedComponent.ID;
-        // event がrenameInputFile, renameOutputFileの時だけindex引数をもってくれば良い
-        if (event === "renameInputFile" || event === "renameOutputFile") {
-          SIO.emitGlobal(event, this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
-          return;
-        }
-        SIO.emitGlobal(event, this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
-      },
-      updateIndexList (op, e, index) {
-        if (op === "add") {
-          this.copySelectedComponent.indexList.push(e.name);
-        } else if (op === "remove") {
-          this.copySelectedComponent.indexList.splice(index, 1);
-        } else if (op === "rename") {
-          this.copySelectedComponent.indexList[index] = e.name;
-        } else {
-          return;
-        }
-        const ID = this.selectedComponent.ID;
-        const newValue = this.copySelectedComponent.indexList;
-        SIO.emitGlobal("updateNode", this.projectRootDir, ID, "indexList", newValue, SIO.generalCallback);
-      },
       updateComponentProperty (prop) {
         if (prop === "name" && !this.validName) return;
         if (prop !== "name" && !this.valid) return;
@@ -786,28 +748,89 @@
 
         SIO.emitGlobal("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
       },
+      updateSourceOutputFile(){
+        const name = this.sourceOutputFile
+        if(name === null){
+          this.deleteSourceOutputFile()
+          return
+        }
+        const outputFile={name, dst: []};
+        if(typeof this.selectedComponent.outputFiles[0] === "undefined"){
+          this.addToOutputFiles(outputFile);
+          return;
+        }
+        this.updateOutputFiles(outputFile, 0);
+      },
+      deleteSourceOutputFile(){
+        this.sourceOutputFile=null;
+        this.removeFromOutputFiles(this.selectedComponent.outputFiles[0], 0)
+      },
+      addToInputFiles(v) {
+        this.copySelectedComponent.inputFiles.push(v)
+        const ID = this.selectedComponent.ID;
+        SIO.emitGlobal("addInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
+      },
+      updateInputFiles(v, index) {
+        console.log(v, index);
+        this.copySelectedComponent.inputFiles.splice(index, 1, v);
+        const ID = this.selectedComponent.ID;
+        SIO.emitGlobal("renameInputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
+      },
+      removeFromInputFiles(v, index) {
+        this.copySelectedComponent.inputFiles.splice(index,1)
+        const ID = this.selectedComponent.ID;
+        SIO.emitGlobal("removeInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
+      },
+      addToOutputFiles(v) {
+        this.copySelectedComponent.outputFiles.push(v)
+        const ID = this.selectedComponent.ID;
+        SIO.emitGlobal("addOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
+      },
+      updateOutputFiles(v, index) {
+        console.log(v, index);
+        this.copySelectedComponent.outputFiles.splice(index, 1, v);
+        const ID = this.selectedComponent.ID;
+        SIO.emitGlobal("renameOutputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
+      },
+      removeFromOutputFiles(v, index) {
+        this.copySelectedComponent.outputFiles.splice(index,1)
+        const ID = this.selectedComponent.ID;
+        SIO.emitGlobal("removeOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
+      },
+      addToIndexList (v) {
+        this.copySelectedComponent.indexList.push(v.name)
+        this.updateComponentProperty("indexList");
+      },
+      updateIndexList (v, index) {
+        this.copySelectedComponent.indexList.splice(index, 1, v.name);
+        this.updateComponentProperty("indexList");
+      },
+      removeFromIndexList (v, index) {
+        this.copySelectedComponent.indexList.splice(index,1)
+        this.updateComponentProperty("indexList");
+      },
       addToIncludeList (v) {
         this.copySelectedComponent.include.push(v.name)
+        this.updateComponentProperty("include");
+      },
+      updateIncludeList (v, index) {
+        this.copySelectedComponent.include.splice(index, 1, v.name);
+        this.updateComponentProperty("include");
+      },
+      removeFromIncludeList (v, index) {
+        this.copySelectedComponent.include.splice(index,1)
         this.updateComponentProperty("include");
       },
       addToExcludeList (v) {
         this.copySelectedComponent.exclude.push(v.name)
         this.updateComponentProperty("exclude");
       },
-      removeFromIncludeList (v, index) {
-        this.copySelectedComponent.include.splice(index,1)
-        this.updateComponentProperty("include");
-      },
       removeFromExcludeList (v, index) {
         this.copySelectedComponent.exclude.splice(index,1)
         this.updateComponentProperty("exclude");
       },
-      updateIncludeList (v, index) {
-        this.copySelectedComponent.include[index] = v.name;
-        this.updateComponentProperty("include");
-      },
       updateExcludeList (v, index) {
-        this.copySelectedComponent.exclude[index]=v.name;
+        this.copySelectedComponent.exclude.splice(index, 1, v.name);
         this.updateComponentProperty("exclude");
       },
       isUniqueName (v) {
