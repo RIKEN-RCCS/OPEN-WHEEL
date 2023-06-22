@@ -282,6 +282,7 @@
               :label="'input files'"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
+              :additionalRules="[isValidInputFilename]"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
@@ -432,6 +433,7 @@
               :label="'input files'"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
+              :additional-rules="[isValidInputFilename]"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
@@ -440,6 +442,7 @@
               :label="'output files'"
               :items="copySelectedComponent.outputFiles"
               :new-item-template="outputFileTemplate"
+              :additional-rules="[isValidOutputFilename]"
               @add="addToOutputFiles"
               @remove="removeFromOutputFiles"
               @update="updateOutputFiles"
@@ -514,8 +517,8 @@
   import fileBrowser from "@/components/fileBrowser.vue";
   import remoteFileBrowser from "@/components/remoteFileBrowser.vue";
   import { isValidName } from "@/lib/utility.js";
-  import { glob2Array, addGlobPattern, removeGlobPattern, updateGlobPattern } from "@/lib/clientUtility.js";
-  import { mapState, mapGetters, mapMutations } from "vuex";
+  import { isValidInputFilename, isValidOutputFilename } from "@/lib/clientUtility.js";
+  import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
   import SIO from "@/lib/socketIOWrapper.js";
 
   const isZeroOrMore = (v) => {
@@ -718,11 +721,14 @@
       }
     },
     methods: {
+      ...mapActions(["showSnackbar"]),
       ...mapMutations({
         commitScriptCandidates: "scriptCandidates",
         commitComponentTree: "componentTree",
         commitSelectedComponent: "selectedComponent",
       }),
+      isValidInputFilename,
+      isValidOutputFilename,
       deleteComponent () {
         SIO.emitGlobal("removeNode", this.projectRootDir, this.selectedComponent.ID, this.currentComponent.ID, (rt)=>{
           if (!rt) {
@@ -752,6 +758,10 @@
         const name = this.sourceOutputFile
         if(name === null){
           this.deleteSourceOutputFile()
+          return
+        }
+        if(!this.isValidOutputFilename(name)){
+          this.showSnackbar(`${name} is not valid output filename`)
           return
         }
         const outputFile={name, dst: []};

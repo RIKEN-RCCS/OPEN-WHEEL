@@ -5,6 +5,71 @@
  */
 "use strict";
 
+//NG
+const reWin32ReservedNames = /^(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
+const reOnlyWhilteSpace = /^\s*$/;
+//OK
+const alphanumeric = "a-zA-Z0-9";
+//due to escapeRegExp's spec, bars must be added separately any other regexp strings
+//eslint-disable-next-line no-useless-escape
+const bars = "_\-";
+const pathseps = "/\\";
+const metaCharactors = "*?[]{}()!?+@.";
+
+/**
+ * escape meta character of regex (from MDN)
+ * please note that this function can not treat '-' in the '[]'
+ * @param {string} target - target string which will be escaped
+ * @returns {string} escaped regex string
+ */
+function escapeRegExp(target) {
+  //eslint-disable-next-line no-useless-escape
+  return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
+}
+
+function isSane(name) {
+  if (typeof name !== "string") {
+    return false;
+  }
+  if (reOnlyWhilteSpace.test(name)) {
+    return false;
+  }
+  if (reWin32ReservedNames.test(name)) {
+    return false;
+  }
+  return true;
+}
+/**
+ * determin specified name is valid for inputFilename
+ * @param {strint} name - name to be checked
+ * @returns {boolean} - return true if it is ok
+ */
+export function isValidInputFilename(name) {
+  if (!isSane(name)) {
+    return false;
+  }
+
+  const forbidonChars = new RegExp(`[^${escapeRegExp(`${alphanumeric + pathseps}.`) + bars}]`);
+  if (forbidonChars.test(name)) {
+    return false;
+  }
+  return true;
+}
+/**
+ * determin specified name is valid for outputputFilename
+ * @param {string} name - name to be checked
+ * @returns {boolean} - return true if it is ok
+ */
+export function isValidOutputFilename(name) {
+  if (!isSane(name)) {
+    return false;
+  }
+  const forbidonChars = new RegExp(`[^${escapeRegExp(alphanumeric + pathseps + metaCharactors) + bars}]`);
+  if (forbidonChars.test(name)) {
+    return false;
+  }
+  return true;
+}
 /**
  * remove one entry from array
  * @param {Object[] | string[]} array - target array
