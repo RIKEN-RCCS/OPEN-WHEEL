@@ -182,25 +182,26 @@
         }
 
         if (this.stringItems) {
-          this.items.splice(index, 1, this.edittingField);
+          this.$emit("update", this.edittingField, index);
         } else {
-          item.name = this.edittingField;
+          const newItem = {...item}
+          newItem.name = this.edittingField;
+          this.$emit("update", newItem, index);
         }
-        this.$emit("update", item, index);
       },
       addItem: function () {
         if (this.isDuplicate(this.inputField) || typeof this.inputField !== "string") {
           return;
         }
         const newItem = this.stringItems ? this.inputField : Object.assign({}, this.newItemTemplate || {}, { name: this.inputField });
-        this.items.push(newItem);
         this.$emit("add", newItem);
         this.inputField = null;
       },
       deleteItem: function (v) {
         const target = this.stringItems ? v.name : v;
-        const index = removeFromArray(this.items, target, "name");
-
+        const index = this.items.find((e)=>{
+          return e === target;
+        });
         if (index !== -1) {
           this.$emit("remove", v, index);
         }
