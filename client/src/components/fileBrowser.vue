@@ -195,7 +195,8 @@
       >
         <v-row>
           <v-btn class="mx-auto mt-10 mb-6">
-            <a :href="downloadURL">download</a>
+            <!-- Do NOT remove download attribute. some files may open in browser e.g. text, json -->
+            <a :href="downloadURL" download>download</a>
           </v-btn>
         </v-row>
       </template>
