@@ -99,9 +99,10 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
     const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
     const tmpDir = await fs.mkdtemp(`${dir}/`);
     const downloadContentName = path.basename(target);
+
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    await ssh.recv(target, `${tmpDir}/`);
+    await ssh.recv([target], `${tmpDir}/`);
     const stats = await fs.stat(path.resolve(tmpDir, downloadContentName));
 
     if (stats.isDirectory()) {

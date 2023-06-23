@@ -695,7 +695,7 @@
         // get script candidate
         if(!["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
           const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent";
-          SIO.emitGlobal("getFileList",this.projectRootDir,  {path:this.selectedComponentAbsPath, mode}, (fileList)=>{
+          SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponentAbsPath, mode}, (fileList)=>{
           const scriptCandidates = fileList
             .filter((e)=>{
               return e.type === "file";

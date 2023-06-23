@@ -237,29 +237,23 @@
       }
     }
   }
-  function _getActiveItem (items, key, path) {
+
+  //get selected item from displayed items
+  function _getActiveItem (items, key ) {
     for (const item of items) {
       if (Array.isArray(item.children) && item.children.length > 0) {
-        path.push(item.name)
-        const rt = _getActiveItem(item.children, key, path)
-
+        const rt = _getActiveItem(item.children, key)
         if (rt) {
-          if(item.type === "snd" || item.type ==="sndd"){
-            path.pop()
-          }
           return rt
         }
-        path.pop()
       }
       if (item.id === key) {
-        if (item.type === "dir" || item.type === "dir-link") {
-          path.push(item.name)
-        }
         return item
       }
     }
     return null
   }
+
   function getTitle (event, itemName) {
     const titles = {
       createNewDir: "create new directory",
@@ -386,10 +380,7 @@
         this.$copyText(this.dialog.inputField, this.$refs.icon.$el)
       },
       getActiveItem (key) {
-        const pathArray = [this.selectedComponentAbsPath]
-        const activeItem = _getActiveItem(this.items,key,pathArray);
-        const activeItemPath = pathArray.join(this.pathSep)
-        return [activeItem, activeItemPath]
+        return  _getActiveItem(this.items,key);
       },
       getComponentDirRootFiles(){
         const cb= (fileList)=>{
@@ -412,11 +403,13 @@
           this.activeItem=null
           return
         }
-        const [activeItem, activeItemPath] = this.getActiveItem(activeItems[0])
-        this.activeItem=activeItem;
-        this.currentDir=activeItemPath
-        const fullPath = `${this.currentDir}${this.pathSep}${this.activeItem.name}`
-        this.commitSelectedFile(fullPath);
+        this.activeItem = this.getActiveItem(activeItems[0])
+        if(this.activeItem === null){
+          console.log("failed to get current selected Item");
+          return
+        }
+        this.currentDir=this.activeItem.path
+        this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
       },
       onChoose(event){
         for (const file of event.files){
@@ -453,14 +446,18 @@
               .map(fileListModifier.bind(null, this.pathSep))
             resolve()
           }
-          const [activeItem, currentDir] = this.getActiveItem(item.id)
+          const activeItem = this.getActiveItem(item.id)
+          if(activeItem === null){
+            console.log("failed to get current selected Item");
+            return
+          }
           const path = this.selectedComponent.type === "storage"
-            ?  [this.storagePath, currentDir.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
-            : currentDir
+            ?  [this.storagePath, item.id.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
+            : item.id
           if(item.type === "dir" || item.type === "dir-link"){
               SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
           }else{
-            SIO.emitGlobal("getSNDContents", this.projectRootDir, currentDir, item.name, item.type.startsWith("sndd"),cb)
+            SIO.emitGlobal("getSNDContents", this.projectRootDir, item.path, item.name, item.type.startsWith("sndd"),cb)
           }
         })
       },
