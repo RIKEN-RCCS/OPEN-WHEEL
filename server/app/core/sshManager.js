@@ -9,6 +9,7 @@ const fs = require("fs-extra");
 const SshClientWrapper = require("ssh-client-wrapper");
 const { convertPathSep } = require("./pathUtils");
 const { emitAll } = require("../handlers/commUtils.js");
+const { getLogger } = require("../logSettings.js");
 
 const db = new Map();
 
@@ -139,15 +140,13 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID) {
   if (hasEntry(projectRootDir, hostinfo.id)) {
     return getSsh(projectRootDir, hostinfo.id);
   }
-  hostinfo.password = askPassword.bind(null, clientID, remoteHostName);
-  const arssh = new SshClientWrapper(hostinfo);
+  hostinfo.password = askPassword.bind(null, clientID, `${remoteHostName} - password`);
+  hostinfo.passphrase = askPassword.bind(null, clientID, `${remoteHostName} - passpharse`);
+
+  const ssh = new SshClientWrapper(hostinfo);
 
   if (hostinfo.renewInterval) {
-    arssh.renewInterval = hostinfo.renewInterval * 60 * 1000;
-  }
-
-  if (hostinfo.renewDelay) {
-    arssh.renewDelay = hostinfo.renewDelay * 1000;
+    ssh.renewInterval = hostinfo.renewInterval * 60 * 1000;
   }
 
   //remoteHostName is name property of remote host entry
@@ -156,30 +155,18 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID) {
   let done = false;
   while (!done) {
     try {
-      done = await arssh.canConnect(2);
+      done = await ssh.canConnect(60);
     } catch (e) {
-      if (e.reason !== "invalid passphrase" && e.reason !== "authentication failure" && e.reason !== "invalid private key") {
-        return Promise.reject(e);
-      }
+      getLogger(projectRootDir).warn("ssh connection failed:", e);
       ++failCount;
 
       if (failCount >= 3) {
-        return Promise.reject(new Error(`wrong password for ${failCount} times`));
+        return Promise.reject(new Error(`wrong password or passphrase for ${failCount} times`));
       }
-      const newPassword = await askPassword(clientID, remoteHostName);
-
-      if (config.passphrase) {
-        config.passphrase = newPassword;
-      }
-
-      if (config.password) {
-        config.password = newPassword;
-      }
-      arssh.overwriteConfig(config);
     }
   }
-  addSsh(projectRootDir, hostinfo, arssh);
-  return arssh;
+  addSsh(projectRootDir, hostinfo, ssh);
+  return ssh;
 }
 
 
