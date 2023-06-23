@@ -64,8 +64,11 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
     const readlinkResults = formatSshOutput(stdout2);
 
     const content = lsResults.map((e)=>{
+      if (e.endsWith("=") || e.endsWith("%") || e.endsWith("|")) {
+        return null;
+      }
       const islink = e.endsWith("@");
-      const name = e.slice(0, e.length - 1);
+      const name = islink || e.endsWith("*") || e.endsWith("/") ? e.slice(0, e.length - 1) : e;
       let type = null;
       if (islink) {
         const index = readlinkResults.findIndex((result)=>{
@@ -78,6 +81,8 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
         type = e.endsWith("/") ? "dir" : "file";
       }
       return { path: target, name, type, islink };
+    }).filter((e)=>{
+      return e !== null;
     });
     return cb(content);
   } catch (e) {
