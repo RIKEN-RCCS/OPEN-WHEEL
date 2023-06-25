@@ -561,6 +561,7 @@ async function updateProjectDescription(projectRootDir, description) {
   const projectJson = await readJsonGreedy(filename);
   projectJson.description = description;
   await fs.writeJson(filename, projectJson);
+  await gitAdd(projectRootDir, filename);
 }
 
 async function addProject(projectDir, description) {
