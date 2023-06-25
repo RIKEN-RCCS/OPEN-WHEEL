@@ -704,6 +704,12 @@
               return e.name;
             });
             this.commitScriptCandidates(scriptCandidates);
+            if(typeof this.selectedComponent.condition === "string"){
+              this.conditionCheckByJS= !this.scriptCandidates.includes(this.selectedComponent.condition);
+            }
+            if(typeof this.selectedComponent.retryCondition=== "string"){
+              this.retryByJS= !this.scriptCandidates.includes(this.selectedComponent.retryCondition);
+            }
           });
         }
         this.reopening = true;
