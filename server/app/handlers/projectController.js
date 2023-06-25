@@ -375,7 +375,7 @@ async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
 
 async function onUpdateProjectDescription(projectRootDir, description, ack) {
   await updateProjectDescription(projectRootDir, description);
-  ack(true);
+  onGetProjectJson(projectRootDir, ack);
 }
 
 
