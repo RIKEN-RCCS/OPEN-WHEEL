@@ -27,7 +27,7 @@
         <v-data-table
           dense
           :headers="headers"
-          :items="container"
+          :items="modifiedContainer"
           hide-default-footer
         >
           <template #item.action="{ item }">
@@ -92,6 +92,7 @@
 </template>
 <script>
   "use strict";
+  import { mapState } from "vuex"
   import { removeFromArray } from "@/lib/clientUtility.js";
   import actionRow from "@/components/common/actionRow.vue";
   import lowerComponentTree from "@/components/lowerComponentTree.vue";
@@ -131,18 +132,21 @@
       };
     },
     computed: {
-      //TODO PSコンポーネントからの相対パスを*NodeNameに入れる
-      // modifiedContainer(){
-      //   return container.map((e)=>{
-      //     if(e.dstNode){
-      //       e.dstNodeName=
-      //     }
-      //     if(e.srcNode){
-      //       e.srcNodeName=
-      //     }
-      //     return e
-      //   });
-      // },
+      ...mapState(["componentPath", "selectedComponent"]),
+      modifiedContainer(){
+        return this.container.map((e)=>{
+          const parent= this.componentPath[this.selectedComponent.ID];
+          if(e.dstNode){
+            const child = this.componentPath[e.dstNode];
+            e.dstNodeName=child.replace(parent,".");
+          }
+          if(e.srcNode){
+            const child = this.componentPath[e.srcNode];
+            e.srcNodeName=child.replace(parent,".");
+          }
+          return e
+        });
+      },
       label2 () {
         return this.label === "scatter" ? "destination node" : "source node";
       },
@@ -164,10 +168,18 @@
     },
     methods: {
       onDstNodeSelected(item){
-        if(this.newItem.dstNode){
-          this.newItem.dstNode=item.ID
+        if(this.label === "scatter"){
+          if(this.newItem.dstNode){
+            this.newItem.dstNode=item.ID
+          }else{
+            this.$set(this.newItem, 'dstNode', item.ID)
+          }
         }else{
-          this.$set(this.newItem, 'dstNode', item.ID)
+          if(this.newItem.srcNode){
+            this.newItem.srcNode=item.ID
+          }else{
+            this.$set(this.newItem, 'srcNode', item.ID)
+          }
         }
       },
       openDialog (item) {

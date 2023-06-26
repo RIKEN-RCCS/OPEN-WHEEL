@@ -18,7 +18,7 @@
     <gather-scatter
       :container="parameterSetting.scatter"
       :headers="[ { value: 'srcName', text: 'srcName', sortable: false },
-                  { value: 'dstNode', text: 'dstNode', sortable: false },
+                  { value: 'dstNodeName', text: 'dstNode', sortable: false },
                   { value: 'dstName', text: 'dstName', sortable: false },
                   { text: 'Actions', value: 'action', sortable: false }]"
       :label="'scatter'"
@@ -29,7 +29,7 @@
     />
     <gather-scatter
       :container="parameterSetting.gather"
-      :headers="[ { value: 'srcNode', text: 'srcNode', sortable: false },
+      :headers="[ { value: 'srcNodeName', text: 'srcNode', sortable: false },
                   { value: 'srcName', text: 'srcName', sortable: false },
                   { value: 'dstName', text: 'dstName', sortable: false },
                   { text: 'Actions', value: 'action', sortable: false }]"
@@ -147,13 +147,13 @@
           return false;
         }
         SIO.emitGlobal("saveFile", this.projectRootDir, this.filename, this.dirname || this.selectedComponentAbsPath,
-                 JSON.stringify(this.parameterSetting), (rt)=>{
-                   if (!rt) {
-                     console.log("ERROR: parameter setting file save failed");
-                   }
+           JSON.stringify(this.parameterSetting), (rt)=>{
+             if (!rt) {
+               console.log("ERROR: parameter setting file save failed");
+             }
 
-                   this.initialParameterSetting = structuredClone(this.parameterSetting);
-                 });
+             this.initialParameterSetting = structuredClone(this.parameterSetting);
+           });
         return true;
       },
     },
