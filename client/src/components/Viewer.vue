@@ -29,7 +29,7 @@
           <img
             v-for="src in scope.images"
             :key="src.url"
-            class="borderd-img"
+            class="thumbnail-img"
             :src="src.url"
             :data-src="src.url"
             :alt="title"
@@ -60,7 +60,7 @@
         items:[],
         options:
           {
-          navbar: false,
+            navbar: false,
             "url":"data-src"
           }
       };
@@ -98,8 +98,11 @@
   .viewer {
     background-color: #1E1E1E;
   }
-  .borderd-img{
+  .thumbnail-img{
     border: 2px solid white;
     box-sizing: border-box;
+    height: 240px;
+    cursor: pointer;
+    margin: 5px;
   }
 </style>
