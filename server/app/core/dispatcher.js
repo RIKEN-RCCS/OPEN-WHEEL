@@ -26,7 +26,7 @@ const { evalCondition, getRemoteWorkingDir } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
 const { eventEmitters } = require("./global.js");
-const { createTempd } = require("../core/tempd.js");
+const { createTempd } = require("./tempd.js");
 
 
 const viewerSupportedTypes = ["apng", "avif", "gif", "jpg", "png", "webp", "tif", "bmp", "svg"];

@@ -8,10 +8,11 @@ const path = require("path");
 const { promisify } = require("util");
 const EventEmitter = require("events");
 const glob = require("glob");
+const fs = require("fs-extra");
 const SshClientWrapper = require("ssh-client-wrapper");
 const { create } = require("abc4");
 const { getLogger } = require("../logSettings");
-const { remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
+const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getHosts, validateComponents, getSourceComponents } = require("../core/componentFilesOperator");
@@ -24,7 +25,7 @@ const { isValidOutputFilename } = require("../lib/utility");
 const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir } = require("./senders.js");
 const { parentDirs, eventEmitters } = require("../core/global.js");
 const { emitAll, emitWithPromise } = require("./commUtils.js");
-const { removeTempd } = require("../core/tempd.js");
+const { removeTempd, getTempd } = require("../core/tempd.js");
 
 
 async function createCloudInstance(projectRootDir, hostinfo, clientID) {
@@ -363,7 +364,14 @@ async function onGetProjectJson(projectRootDir, ack) {
   try {
     const projectJson = await getProjectJson(projectRootDir);
     emitAll(projectRootDir, "projectJson", projectJson);
+    const resultDir = await getTempd(projectRootDir, "viewer");
+    const filename = path.resolve(resultDir, filesJsonFilename);
+
+    if (await fs.pathExists(filename)) {
+      sendResultsFileDir(projectRootDir, resultDir);
+    }
   } catch (e) {
+    getLogger(projectRootDir).warn("getProjectJson failed", e);
     return ack(false);
   }
   return ack(true);
