@@ -404,12 +404,17 @@
       }
     },
     mounted: function () {
-      const projectRootDir = readCookie("rootDir");
+      let projectRootDir = sessionStorage.getItem("projectRootDir")
+      if(! projectRootDir){
+        projectRootDir = readCookie("rootDir");
+        sessionStorage.setItem("projectRootDir", projectRootDir);
+      }
+      this.commitProjectRootDir(projectRootDir);
+
       const baseURL=readCookie("socketIOPath");
       this.$router.history.base=baseURL === "/" ? "" : baseURL;
       SIO.init({projectRootDir}, baseURL);
       const ID = readCookie("root");
-      this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);
 
       SIO.onGlobal("askPassword", (hostname, cb)=>{
