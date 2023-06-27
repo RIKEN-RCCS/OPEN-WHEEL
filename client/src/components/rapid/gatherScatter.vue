@@ -138,11 +138,15 @@
           const parent= this.componentPath[this.selectedComponent.ID];
           if(e.dstNode){
             const child = this.componentPath[e.dstNode];
-            e.dstNodeName=child.replace(parent,".");
+            if(typeof child === "string"){
+              e.dstNodeName=child.replace(parent,".");
+            }
           }
           if(e.srcNode){
             const child = this.componentPath[e.srcNode];
-            e.srcNodeName=child.replace(parent,".");
+            if(typeof child === "string"){
+              e.srcNodeName=child.replace(parent,".");
+            }
           }
           return e
         });
