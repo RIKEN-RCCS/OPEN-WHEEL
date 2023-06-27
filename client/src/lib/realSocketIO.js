@@ -6,6 +6,8 @@
 "use strict";
 import { io } from "socket.io-client";
 import SocketIOFileUpload from "socketio-file-upload/client.min.js";
+import Debug from "debug";
+const debug = Debug("wheel:socketIO");
 
 // const SocketIOFileUpload = require("socketio-file-upload");
 
@@ -15,9 +17,11 @@ let uploader = null;
 
 const init = (auth, argBaseURL="/")=>{
   if(initialized){
+    debug("socketIO is already initialized");
     return;
   }
   const baseURL=(argBaseURL+"/socket.io/").replace(/\/\/+/g,"/");
+  debug(`socketIO initialized with auth = ${auth}`);
   socket = auth ? io({path: baseURL, transports: ["websocket"], auth }) : io({path:baseURL, transports: ["websocket"] });
   uploader = new SocketIOFileUpload(socket);
   uploader.chunkSize = 1024 * 100;
@@ -29,11 +33,17 @@ const generalCallback = (rt)=>{
   }
 };
 const   onGlobal= (event, callback)=>{
-  init();
+  if(!initialized){
+    debug(`on ${event} called but socketIO is not initialized`);
+    return
+  }
   socket.on(event, callback);
 };
 const  emitGlobal= (event, ...args)=>{
-  init();
+  if(!initialized){
+    debug(`emit ${event} called but socketIO is not initialized`);
+    return
+  }
   socket.emit(event, ...args);
 };
 const close= ()=>{
@@ -43,19 +53,31 @@ const close= ()=>{
   }
 };
 const  listenOnDrop= (...args)=>{
-  init();
+  if(!initialized){
+    debug(`uploader.listenOnDrop called but socketIO is not initialized`);
+    return
+  }
   uploader.listenOnDrop(...args);
 };
 const  prompt= ()=>{
-  init();
+  if(!initialized){
+    debug(`uploader.prompt called but socketIO is not initialized`);
+    return
+  }
   uploader.prompt();
 };
 const  onUploaderEvent= (event, callback)=>{
-  init();
+  if(!initialized){
+    debug(`uploader.addEventListener called but socketIO is not initialized`);
+    return
+  }
   uploader.addEventListener(event, callback);
 };
 const removeUploaderEvent= (event, callback)=>{
-  init();
+  if(!initialized){
+    debug(`uploader.removeEventListener called but socketIO is not initialized`);
+    return
+  }
   uploader.removeEventListener(event, callback);
 };
 const getID=()=>{
