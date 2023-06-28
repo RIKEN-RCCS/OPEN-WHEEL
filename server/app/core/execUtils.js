@@ -95,7 +95,7 @@ async function gatherFiles(task) {
   }
 
   //get files which match include filter
-  const downloadRecipe2 = [];
+  let downloadRecipe2;
   if (Array.isArray(task.include)) {
     downloadRecipe2 = task.include.map((e)=>{
       return makeDownloadRecipe(task.projectRootDir, e, task.remoteWorkingDir, task.workingDir);
