@@ -9,7 +9,10 @@
       <v-spacer />
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn class="ml-4">
+          <v-btn
+            class="ml-4"
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -23,7 +26,10 @@
       </v-tooltip>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn>
+          <v-btn
+            class="ml-4"
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -38,6 +44,7 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
+            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -54,6 +61,7 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
+            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -69,7 +77,10 @@
       </v-tooltip>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn>
+          <v-btn
+            class="ml-4"
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -84,6 +95,7 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
+            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -100,6 +112,7 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
+            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -205,6 +218,8 @@
 </template>
 <script src="/siofu/client.js"></script>
 <script>
+  import Debug from "debug"
+  const debug = Debug("wheel:fileBrowser");
   import { mapState, mapGetters, mapMutations } from "vuex"
   import SIO from "@/lib/socketIOWrapper.js"
   import versatileDialog from "@/components/versatileDialog.vue";
@@ -327,7 +342,7 @@
         return this.copySelectedComponent.storagePath || "/"
       },
       isSND(){
-        return this.activeItem !== null && this.activeItem.type === "snd"
+        return this.activeItem !== null && this.activeItem.type.startsWith("snd");
       }
     },
     watch: {
@@ -523,6 +538,7 @@
       },
       download(){
         this.commitWaitingDownload(true);
+        debug(`download request: ${this.activeItem.id}`);
         SIO.emitGlobal('download', this.projectRootDir, this.activeItem.id, (url)=>{
           this.downloadURL=url
           this.downloadDialog=true
