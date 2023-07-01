@@ -186,8 +186,8 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getResultFiles", onGetResultFiles.bind(null, socket.id));
 
   //auxiliary
-  socket.on("tryToConnect", onTryToConnect);
-  socket.on("tryToConnectById", onTryToConnectById);
+  socket.on("tryToConnect", onTryToConnect.bind(null, socket.id));
+  socket.on("tryToConnectById", onTryToConnectById.bind(null, socket.id));
   socket.on("requestRemoteConnection", onRequestRemoteConnection.bind(null, socket));
 };
 module.exports = {

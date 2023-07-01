@@ -54,7 +54,7 @@ function formatSrcFilename(remoteWorkingDir, filename) {
   return path.posix.join(remoteWorkingDir, filename);
 }
 
-async function makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingDir) {
+function makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingDir) {
   const reRemoteWorkingDir = new RegExp(remoteWorkingDir);
   const src = formatSrcFilename(remoteWorkingDir, filename);
   if (filename.slice(0, -1).includes("/")) {
@@ -94,14 +94,6 @@ async function gatherFiles(task) {
     promises.push(ssh.recv(srces, dst));
   }
 
-  //get files which match include filter
-  let downloadRecipe2;
-  if (Array.isArray(task.include)) {
-    downloadRecipe2 = task.include.map((e)=>{
-      return makeDownloadRecipe(task.projectRootDir, e, task.remoteWorkingDir, task.workingDir);
-    });
-  }
-
   let opt;
   if (Array.isArray(task.exclude)) {
     opt = task.exclude.map((e)=>{
@@ -109,17 +101,24 @@ async function gatherFiles(task) {
     });
   }
 
-  const dsts2 = Array.from(new Set(downloadRecipe2.map((e)=>{
-    return e.dst;
-  })));
-  for (const dst of dsts2) {
-    const srces = downloadRecipe2.filter((e)=>{
-      return e.dst === dst;
-    }).map((e)=>{
-      return e.src;
+  //get files which match include filter
+  if (Array.isArray(task.include) && task.include.length > 0) {
+    const downloadRecipe2 = task.include.map((e)=>{
+      return makeDownloadRecipe(task.projectRootDir, e, task.remoteWorkingDir, task.workingDir);
     });
-    promises.push(ssh.recv(srces, dst, opt));
+    const dsts2 = Array.from(new Set(downloadRecipe2.map((e)=>{
+      return e.dst;
+    })));
+    for (const dst of dsts2) {
+      const srces = downloadRecipe2.filter((e)=>{
+        return e.dst === dst;
+      }).map((e)=>{
+        return e.src;
+      });
+      promises.push(ssh.recv(srces, dst, opt));
+    }
   }
+
   await Promise.all(promises);
 
   //clean up remote working directory

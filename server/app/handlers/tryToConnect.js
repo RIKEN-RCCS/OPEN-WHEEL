@@ -8,18 +8,23 @@ const SshClientWrapper = require("ssh-client-wrapper");
 const { getLogger } = require("../logSettings");
 const logger = getLogger();
 const { remoteHost } = require("../db/db");
+const { askPassword } = require("../core/sshManager.js");
+
+//渡されてきたパスワードは無視してaskPassword()を呼び出す
+//クライアント側も修正の必要あり
 
 /**
  * try to connect remote host via ssh
  * @param {Hostinfo} hostInfo - target host
- * @param {string} password - password or passphrase for private key
  * @param {Function} cb - call back function called with string "success" or "error"
  */
-async function tryToConnect(hostInfo, password, cb) {
-  hostInfo.password = password;
-  const arssh = new SshClientWrapper(hostInfo);
+async function tryToConnect(clientID, hostInfo, cb) {
+  //hostInfo.password = password;
+  hostInfo.password = askPassword.bind(null, clientID, `${hostInfo.host} - password`);
+  hostInfo.passphrase = askPassword.bind(null, clientID, `${hostInfo.host} - passpharse`);
+  const ssh = new SshClientWrapper(hostInfo);
   logger.debug("try to connect", hostInfo.host, ":", hostInfo.port);
-  arssh.canConnect(2)
+  ssh.canConnect(120)
     .then(()=>{
       cb("success");
     })
@@ -29,9 +34,9 @@ async function tryToConnect(hostInfo, password, cb) {
     });
 }
 
-async function onTryToConnectById(id, password, cb) {
+async function onTryToConnectById(clientID, id, cb) {
   const hostInfo = remoteHost.get(id);
-  await tryToConnect(hostInfo, password, cb);
+  await tryToConnect(clientID, hostInfo, password, cb);
 }
 
 module.exports = {

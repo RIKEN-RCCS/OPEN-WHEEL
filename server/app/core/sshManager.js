@@ -58,12 +58,14 @@ async function createSshConfig(hostInfo, password) {
  * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
  * @param {Object} hostinfo - one of the ssh connection setting in remotehost json
  * @param {Object} ssh -  ssh connection instance
+ * @param {string} pw - password
+ * @param {string} ph - passphrase
  */
-function addSsh(projectRootDir, hostinfo, ssh) {
+function addSsh(projectRootDir, hostinfo, ssh, pw, ph) {
   if (!db.has(projectRootDir)) {
     db.set(projectRootDir, new Map());
   }
-  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo });
+  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph });
 }
 
 /**
@@ -94,6 +96,36 @@ function getSshHostinfo(projectRootDir, id) {
     throw err;
   }
   return db.get(projectRootDir).get(id).hostinfo;
+}
+
+/**
+ * get password
+ * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} id - id value of hostinfo
+ */
+function getSshPW(projectRootDir, id) {
+  if (!hasEntry(projectRootDir, id)) {
+    const err = new Error("hostinfo is not registerd for the project");
+    err.projectRootDir = projectRootDir;
+    err.id = id;
+    throw err;
+  }
+  return db.get(projectRootDir).get(id).pw;
+}
+
+/**
+ * get passphrase
+ * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} id - id value of hostinfo
+ */
+function getSshPH(projectRootDir, id) {
+  if (!hasEntry(projectRootDir, id)) {
+    const err = new Error("hostinfo is not registerd for the project");
+    err.projectRootDir = projectRootDir;
+    err.id = id;
+    throw err;
+  }
+  return db.get(projectRootDir).get(id).ph;
 }
 
 /**
@@ -140,32 +172,56 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID) {
   if (hasEntry(projectRootDir, hostinfo.id)) {
     return getSsh(projectRootDir, hostinfo.id);
   }
-  hostinfo.password = askPassword.bind(null, clientID, `${remoteHostName} - password`);
-  hostinfo.passphrase = askPassword.bind(null, clientID, `${remoteHostName} - passpharse`);
+
+  let pw;
+  hostinfo.password = async ()=>{
+    if (hasEntry(projectRootDir, hostinfo.id)) {
+      pw = getSshPW(projectRootDir, hostinfo.id);
+
+      if (typeof pw === "string") {
+        return pw;
+      }
+    }
+    //pw will be used after canConnect
+    pw = await askPassword(clientID, `${remoteHostName} - password`);
+    return pw;
+  };
+
+  let ph;
+  hostinfo.passphrase = async ()=>{
+    if (hasEntry(projectRootDir, hostinfo.id)) {
+      ph = getSshPH(projectRootDir, hostinfo.id);
+
+      if (typeof ph === "string") {
+        return ph;
+      }
+    }
+    ph = await askPassword(clientID, `${remoteHostName} - passpharse`);
+    return ph;
+  };
+
+  if (hostinfo.renewInterval) {
+    hostinfo.ControlPersist *= 60;
+  }
+  if (hostinfo.readyTimeout) {
+    hostinfo.ConnectTimeout = Math.floor(hostinfo.readyTimeout / 1000);
+  }
 
   const ssh = new SshClientWrapper(hostinfo);
 
-  if (hostinfo.renewInterval) {
-    ssh.renewInterval = hostinfo.renewInterval * 60 * 1000;
-  }
-
   //remoteHostName is name property of remote host entry
   //hostinfo.host is hostname or IP address of remote host
-  let failCount = 0;
-  let done = false;
-  while (!done) {
-    try {
-      done = await ssh.canConnect(60);
-    } catch (e) {
-      getLogger(projectRootDir).warn("ssh connection failed:", e);
-      ++failCount;
-
-      if (failCount >= 3) {
-        return Promise.reject(new Error(`wrong password or passphrase for ${failCount} times`));
-      }
-    }
+  let success = false;
+  try {
+    success = await ssh.canConnect(hostinfo.ConnectTimeout || 300);
+  } catch (e) {
+    getLogger(projectRootDir).warn("ssh connection failed:", e);
   }
-  addSsh(projectRootDir, hostinfo, ssh);
+  if (success) {
+    addSsh(projectRootDir, hostinfo, ssh, pw, ph);
+  } else {
+    throw new Error("ssh connection failed due to unknown reason");
+  }
   return ssh;
 }
 
