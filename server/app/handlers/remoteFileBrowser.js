@@ -23,7 +23,7 @@ async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb
   try {
     const id = remoteHost.getID("name", component.host);
     const hostInfo = remoteHost.get(id);
-    await createSsh(projectRootDir, component.host, hostInfo, socket.id);
+    await createSsh(projectRootDir, component.host, hostInfo, socket.id, true);
   } catch (e) {
     cb(false);
     return;

@@ -213,16 +213,16 @@ async function onRunProject(clientID, projectRootDir, ack) {
 
       //create remotehost connection
       const hosts = await getHosts(projectRootDir, null);
-      for (const remoteHostName of hosts) {
-        const id = remoteHost.getID("name", remoteHostName);
+      for (const host of hosts) {
+        const id = remoteHost.getID("name", host.hostname);
         const hostInfo = remoteHost.get(id);
         if (!hostInfo) {
-          return Promise.reject(new Error(`illegal remote host specified ${remoteHostName}`));
+          return Promise.reject(new Error(`illegal remote host specified ${host.name}`));
         }
         if (hostInfo.type === "aws") {
           await createCloudInstance(projectRootDir, hostInfo, clientID);
         } else {
-          await createSsh(projectRootDir, remoteHostName, hostInfo, clientID);
+          await createSsh(projectRootDir, host.name, hostInfo, clientID, host.isStorage);
         }
       }
     } catch (err) {

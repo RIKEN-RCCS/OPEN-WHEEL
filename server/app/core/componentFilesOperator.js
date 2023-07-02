@@ -650,7 +650,7 @@ async function validateOutputFiles(component) {
   return true;
 }
 
-async function recursiveGetHosts(projectRootDir, parentID, hosts) {
+async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) {
   const promises = [];
   const children = await getChildren(projectRootDir, parentID);
 
@@ -662,10 +662,12 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts) {
       continue;
     }
     if (["task", "stepjob", "bulkjobTask"].includes(component.type)) {
-      hosts.push(component.host);
+      hosts.push({ hostname: component.host, isStorage: false });
+    } else if (component.type === "storage") {
+      storageHosts.push({ hostname: component.host, isStorage: true });
     }
     if (hasChild(component)) {
-      promises.push(recursiveGetHosts(projectRootDir, component.ID, hosts));
+      promises.push(recursiveGetHosts(projectRootDir, component.ID, hosts, storageHosts));
     }
   }
   return Promise.all(promises);
@@ -681,8 +683,14 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts) {
  */
 async function getHosts(projectRootDir, rootID) {
   const hosts = [];
-  await recursiveGetHosts(projectRootDir, rootID, hosts);
-  return Array.from(new Set(hosts)); //remove duplicate
+  const storageHosts = [];
+  await recursiveGetHosts(projectRootDir, rootID, hosts, storageHosts);
+  const storageHosts2 = Array.from(new Set(storageHosts));
+  const hosts2 = Array.from(new Set(hosts))
+    .filter((host)=>{
+      return !storageHosts2.includes(host.hostname);
+    });
+  return [...storageHosts2, ...hosts2];
 }
 
 /**

@@ -60,12 +60,13 @@ async function createSshConfig(hostInfo, password) {
  * @param {Object} ssh -  ssh connection instance
  * @param {string} pw - password
  * @param {string} ph - passphrase
+ * @param {boolean} isStorage - whether this host is used for remote storage component or not
  */
-function addSsh(projectRootDir, hostinfo, ssh, pw, ph) {
+function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage) {
   if (!db.has(projectRootDir)) {
     db.set(projectRootDir, new Map());
   }
-  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph });
+  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph, isStorage });
 }
 
 /**
@@ -137,10 +138,17 @@ function removeSsh(projectRootDir) {
   if (!target) {
     return;
   }
+  let clearDB = true;
   for (const e of target.values()) {
+    if (e.isStorage) {
+      clearDB = false;
+      continue;
+    }
     e.ssh.disconnect();
   }
-  db.get(projectRootDir).clear();
+  if (clearDB) {
+    db.get(projectRootDir).clear();
+  }
 }
 
 /**
@@ -167,8 +175,9 @@ function askPassword(clientID, hostname) {
  * @param {string} remoteHostName - name property in hostInfo object
  * @param {Object} hostinfo - one of the ssh connection setting in remotehost json
  * @param {string} clientID - socket's ID
+ * @param {boolean} isStorage - whether this host is used for remote storage component or not
  */
-async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID) {
+async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isStorage) {
   if (hasEntry(projectRootDir, hostinfo.id)) {
     return getSsh(projectRootDir, hostinfo.id);
   }
@@ -218,7 +227,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID) {
     getLogger(projectRootDir).warn("ssh connection failed:", e);
   }
   if (success) {
-    addSsh(projectRootDir, hostinfo, ssh, pw, ph);
+    addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
   } else {
     throw new Error("ssh connection failed due to unknown reason");
   }

@@ -504,6 +504,7 @@
               v-if="isRemoteComponent"
               :readonly="false"
               :project-root-dir="projectRootDir"
+              ref=rfb
             />
           </v-expansion-panel-content>
         </v-expansion-panel>
@@ -759,6 +760,10 @@
         if (this.selectedComponent === null) return;
 
         SIO.emitGlobal("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
+        if(this.selectedComponent.type === "storage" && prop === "path"){
+          //一回componenntpropertyを閉じる
+          this.$refs.rfb.connected=false;
+        }
       },
       updateSourceOutputFile(){
         const name = this.sourceOutputFile
