@@ -223,6 +223,7 @@
       },
     },
     mounted: function () {
+      sessionStorage.setItem("projectRootDir", null);
       this.pathSep = readCookie("pathSep");
       this.home = readCookie("home");
       const baseURL=readCookie("socketIOPath");

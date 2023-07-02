@@ -71,9 +71,17 @@
       }
     },
     mounted(){
-      // dirをcookieから取得
+      // get viewer directory name from cookie
       const dir=readCookie("dir");
-      const projectRootDir=readCookie("rootDir");
+      //projectRootDir is not set in sessionStorage useually,
+      //because viewer window opens in another window.
+      //But while reloading page, projectRootDir in Cookie can be changed.
+      //So, we read it from sessionStorage here
+      let projectRootDir = sessionStorage.getItem("projectRootDir")
+      if(! projectRootDir){
+        projectRootDir = readCookie("rootDir");
+        sessionStorage.setItem("projectRootDir", projectRootDir);
+      }
       if(typeof dir !== "string" || typeof projectRootDir !== "string"){
         return;
       }
