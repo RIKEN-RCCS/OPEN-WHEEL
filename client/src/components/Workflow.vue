@@ -405,7 +405,7 @@
     },
     mounted: function () {
       let projectRootDir = sessionStorage.getItem("projectRootDir")
-      if(! projectRootDir){
+      if(projectRootDir === "not-set"){
         projectRootDir = readCookie("rootDir");
         sessionStorage.setItem("projectRootDir", projectRootDir);
       }

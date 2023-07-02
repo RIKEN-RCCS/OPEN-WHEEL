@@ -223,7 +223,6 @@
       },
     },
     mounted: function () {
-      sessionStorage.setItem("projectRootDir", null);
       this.pathSep = readCookie("pathSep");
       this.home = readCookie("home");
       const baseURL=readCookie("socketIOPath");
@@ -269,6 +268,7 @@
           this.dialog = true;
           return;
         }
+        sessionStorage.setItem("projectRootDir", "not-set");
         const form = document.createElement("form");
         form.setAttribute("action", "./workflow");
         form.setAttribute("method", "post");
