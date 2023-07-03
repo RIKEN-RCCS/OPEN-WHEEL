@@ -13,7 +13,7 @@ const FileType = require("file-type");
 const isSvg = require("is-svg");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { remoteHost, componentJsonFilename, filesJsonFilename } = require("../db/db");
+const { remoteHost, componentJsonFilename, filesJsonFilename, projectJsonFilename } = require("../db/db");
 const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString } = require("../lib/utility");
@@ -1100,7 +1100,7 @@ class Dispatcher extends EventEmitter {
     } else {
       const remotehostID = remoteHost.getID("name", component.host);
       const ssh = getSsh(this.projectRootDir, remotehostID);
-      await ssh.send(storagePath, currentDir);
+      await ssh.send([`${currentDir}/`], `${storagePath}/`, [`--exclude=${componentJsonFilename}`, `--exclude=${projectJsonFilename}`]);
     }
     await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
