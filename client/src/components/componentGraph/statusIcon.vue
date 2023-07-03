@@ -3,6 +3,9 @@
     <circle :cx=x :cy=y :r=radius stroke=black fill="black" />
     <path :d=successCmd stroke=black fill="#88BB00" v-if=showPiChart />
     <path :d=failedCmd  stroke=black fill="#E60000" v-if=showPiChart />
+    <circle :cx=x :cy=y :r=radius stroke=black fill="#88BB00" v-if="showPiChart && successRatio === 100"/>
+    <circle :cx=x :cy=y :r=radius stroke=black fill="#E60000" v-if="showPiChart && failedRatio === 100"/>
+    <circle :cx=x :cy=y :r=radius*0.8 stroke=black fill="black" v-if="state !== 'not-started'" />
     <image :href=iconImg :x=x-radius*0.4*2 :y=y-radius*0.4*2 :width=radius*0.8*2 :height=radius*0.8*2 v-if="state !== 'not-started'" />
  </g>
 </template>
@@ -55,7 +58,9 @@
         return this.numFailed / this.numTotal * 100
       },
       showPiChart(){
-        return this.numTotal && this.numFinished && this.numFailed
+        return Number.isInteger(this.numTotal) && this.numTotal >0
+        && Number.isInteger(this.numFinished) && this.numFinished >=0
+        && Number.isInteger(this.numFailed) && this.numFailed >=0
       },
       successChartEndCoord(){
         return { x: this.x + this.radius*Math.sin(this.successRatio/100*Math.PI*2),

@@ -94,7 +94,6 @@
         this.onRemoveFileLink(this.currentComponent.ID, inputFilename, this.currentComponent.parent, true);
       },
       onAddFileLink( srcNode, srcName, dstNode, dstName){
-        console.log("AddFileLink");
         SIO.emitGlobal("addFileLink", this.projectRootDir,
         srcNode, srcName, dstNode, dstName,
         this.currentComponent.ID, SIO.generalCallback)

@@ -94,9 +94,19 @@ function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, compo
   return replacePathsep(path.posix.join(remoteRootWorkingDir, localWorkingDir));
 }
 
+/**
+ * check state is finished or not
+ * @param {string} state - state string
+ * @returns {boolean} is finished or not?
+ */
+function isFinishedState(state) {
+  return state === "finished" || state === "failed" || state === "unknown";
+}
+
 
 module.exports = {
   evalCondition,
   getRemoteWorkingDir,
-  getRemoteRootWorkingDir
+  getRemoteRootWorkingDir,
+  isFinishedState
 };
