@@ -529,7 +529,7 @@
     return  v > 0 ? true : "positive value required"
   }
   const isInteger = (v)=>{
-    return Number.isInteger(v) ? true : "integer value required";
+    return Number.isInteger(Number(v)) ? true : "integer value required";
   }
   const isValidKeepProp = (v)=>{
     if (v === ""){
@@ -750,7 +750,8 @@
         if (prop === "name" && !this.validName) return;
         if (prop !== "name" && !this.valid) return;
         const ID = this.selectedComponent.ID;
-        const newValue = this.copySelectedComponent[prop];
+        //[workaround] v-textfield convert input value to string even if type=number
+        const newValue = ["start", "step", "end", "retry"].includes(prop) ? Number(this.copySelectedComponent[prop]): this.copySelectedComponent[prop];
         if(newValue === null && (prop === "script" || (!this.conditionCheckByJS && prop === "condition"))) return;
 
         // closeボタン押下時に、selectedComponentをnullにするより先に
@@ -792,7 +793,6 @@
         SIO.emitGlobal("addInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
       },
       updateInputFiles(v, index) {
-        console.log(v, index);
         this.copySelectedComponent.inputFiles.splice(index, 1, v);
         const ID = this.selectedComponent.ID;
         SIO.emitGlobal("renameInputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
@@ -808,7 +808,6 @@
         SIO.emitGlobal("addOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
       },
       updateOutputFiles(v, index) {
-        console.log(v, index);
         this.copySelectedComponent.outputFiles.splice(index, 1, v);
         const ID = this.selectedComponent.ID;
         SIO.emitGlobal("renameOutputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
