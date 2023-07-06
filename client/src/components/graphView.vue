@@ -213,7 +213,7 @@
         SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID,  SIO.generalCallback);
       },
       fit: function () {
-        const magicNumberH = 17;
+        const magicNumberH = 17 +25;
         const magicNumberW = 24;
         const baseWidth = window.innerWidth < this.$parent.$parent.$el.clientWidth ? window.innerWidth : this.$parent.$parent.$el.clientWidth;
         const width = baseWidth - widthComponentLibrary - magicNumberW;
