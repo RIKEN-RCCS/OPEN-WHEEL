@@ -64,6 +64,7 @@
           :read-only="readOnly"
           :is-job-script="isJobScript"
           @insert="insertSnipet"
+          @remove="removeSnipet"
         />
       </v-col>
     </v-row>
@@ -190,6 +191,9 @@
       },
       insertSnipet(snipet){
         this.$refs.text.insertSnipet(snipet);
+      },
+      removeSnipet(){
+        this.$refs.text.removeSnipet();
       },
       hasChange () {
         return this.$refs.text.hasChange() || this.$refs.param.hasChange(); // ||this.$refs.jse.hasChange();

@@ -69,9 +69,9 @@ function getStringVar(target, alt) {
 
 const config = require(getConfigFile("server.json", true));
 const jobScheduler = require(getConfigFile("jobScheduler.json", true));
-const remotehostFilename = getConfigFile(config.remotehostJsonFile);
-const jobScriptFilename = getConfigFile(config.jobScriptJsonFile);
-const projectListFilename = getConfigFile(config.projectListJsonFile);
+const remotehostFilename = getConfigFile(getStringVar(config.remotehostJsonFile, "remotehost.json"));
+const jobScriptTemplateFilename = getConfigFile(getStringVar(config.jobScriptTemplateJsonFile, "jobScriptTemplate.json"));
+const projectListFilename = getConfigFile(getStringVar(config.projectListJsonFile, "projectList.json"));
 const logFilename = getConfigFile(getStringVar(config.logFilename, "wheel.log"));
 
 //export constants
@@ -105,5 +105,5 @@ module.exports.gitLFSSize = getIntVar(config.gitLFSSize, 200);
 //export setting files
 module.exports.jobScheduler = jobScheduler;
 module.exports.remoteHost = new JsonArrayManager(remotehostFilename);
-module.exports.jobScript = new JsonArrayManager(jobScriptFilename);
+module.exports.jobScriptTemplate = new JsonArrayManager(jobScriptTemplateFilename);
 module.exports.projectList = new JsonArrayManager(projectListFilename);
