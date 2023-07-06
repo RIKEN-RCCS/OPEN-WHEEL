@@ -73,6 +73,9 @@ Falthyな値を返せば失敗と判定されます。
 
 ![img](./img/task_retry_expression_enable.png "task_retry_expression_enable")
 
+スクリプト名、javascript式ともに未設定で、number of retryの値のみを設定していた場合は
+スクリプトが正常終了するか、retryに設定した回数に達するまで再実行を繰り返します。
+
 ### include, exclude
 Taskコンポーネントがリモートホストで実行された後、リモートホスト上のディレクトリ内にあるファイルは
 outputFileに指定されているなど、その後の処理で必要にならない限りそのままの状態で残されます。

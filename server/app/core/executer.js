@@ -123,6 +123,9 @@ function makeBulkOpt(task) {
 
 async function needsRetry(task) {
   let rt = false;
+  if (typeof task.retryCondition === "undefined" || task.retryCondition === null) {
+    return task.retry > 0;
+  }
   try {
     rt = await evalCondition(task.projectRootDir, task.retryCondition, task.workingDir, task.currentIndex);
   } catch (err) {
@@ -211,13 +214,11 @@ class Executer {
   async submit(task) {
     const job = {
       args: task,
-      maxRetry: task.retryTimes || defaultTaskRetryCount,
+      maxRetry: task.retry || defaultTaskRetryCount,
       retry: false
     };
 
-    if (Object.prototype.hasOwnProperty.call(task, "retryCondition")) {
-      job.retry = needsRetry.bind(null, task);
-    }
+    job.retry = needsRetry.bind(null, task);
     task.sbsID = this.batch.qsub(job);
 
     if (task.sbsID !== null) {
