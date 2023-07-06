@@ -7,10 +7,10 @@
 const path = require("path");
 const childProcess = require("child_process");
 const fs = require("fs-extra");
-const { addX } = require("./fileUtils");
+const { addX, readJsonGreedy } = require("./fileUtils");
 const { getLogger } = require("../logSettings.js");
 const { replacePathsep } = require("./pathUtils");
-const { remoteHost } = require("../db/db");
+const { remoteHost, componentJsonFilename } = require("../db/db");
 const { getSshHostinfo } = require("./sshManager.js");
 
 async function pspawn(projectRootDir, script, options) {
@@ -103,10 +103,25 @@ function isFinishedState(state) {
   return state === "finished" || state === "failed" || state === "unknown";
 }
 
+/**
+ * check if given path is wheel generated component of not
+ * @param {string} target - path to be investigated
+ * @returns {Promise} true if give path is subComponent dir
+ */
+async function isSubComponent(target) {
+  const stats = await fs.stat(target);
+  if (!stats.isDirectory()) {
+    return false;
+  }
+  const componentJson = await readJsonGreedy(path.resolve(target, componentJsonFilename));
+  return componentJson.subComponent === true;
+}
+
 
 module.exports = {
   evalCondition,
   getRemoteWorkingDir,
   getRemoteRootWorkingDir,
-  isFinishedState
+  isFinishedState,
+  isSubComponent
 };

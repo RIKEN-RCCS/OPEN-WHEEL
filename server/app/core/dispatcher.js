@@ -20,7 +20,7 @@ const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtil
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
 const { componentJsonReplacer, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
-const { evalCondition, getRemoteWorkingDir, isFinishedState } = require("./dispatchUtils");
+const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
 const { eventEmitters } = require("./global.js");
@@ -579,7 +579,16 @@ class Dispatcher extends EventEmitter {
 
     try {
       this.logger.debug("copy from", srcDir, "to ", dstDir);
-      await fs.copy(srcDir, dstDir, { dereference: true });
+      await fs.copy(srcDir, dstDir, {
+        dereference: true,
+        filter: async (target)=>{
+          if (srcDir === target) {
+            return true;
+          }
+          const subComponent = await isSubComponent(target);
+          return !subComponent;
+        }
+      });
       await setStateR(dstDir, "not-started");
       await fs.writeJson(path.resolve(dstDir, componentJsonFilename), newComponent, { spaces: 4, replacer: componentJsonReplacer });
       await this._delegate(newComponent);
