@@ -1,9 +1,9 @@
 # OPEN-WHEEL
 Workflow in Hierarchical distributEd parallEL
 
-[public repo] (https://github.com/RIKEN-RCCS/OPEN-WHEEL)
+[public repo](https://github.com/RIKEN-RCCS/OPEN-WHEEL)
 
-[docker image] (https://hub.docker.com/r/tmkawanabe/wheel)
+[docker image](https://hub.docker.com/r/tmkawanabe/wheel)
 
 ## Prerequirements
 latest version of [docker](https://www.docker.com/)
@@ -15,11 +15,8 @@ https://riken-rccs.github.io/OPEN-WHEEL/
 
 ## How to use with docker
 1. create new directory (hereafter referrd to as `CONFIG_DIR`)
-2. download following 2 files to the `CONFIG_DIR`
-    - [jobScheduler.json](https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/server/app/config/jobScheduler.json)
-    - [server.json](https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/server/app/config/server.json)
-3. create or server certification and key file for https, and put them into `CONFIG_DIR`
-4. type following command
+2. put server certificatin and key file into `CONFIG_DIR` for https
+3. type following command
 
 ```
 > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
@@ -31,6 +28,13 @@ above command line, we specify following options
 
 - project files will be create under ${HOME}
 - port 8089 is used for WHEEL
+
+if you would like to use http instead of https add following option to `docker run`.
+you do not need to put certification and key file into `CONFIG_DIR` in this case
+
+```
+-e WHEEL_USE_HTTP=1
+```
 
 for detailed information about configuration, see [administrator's guide](./documentMD/AdminGuide.md)
 
@@ -63,7 +67,7 @@ client and server has client and server code respectively.
 ### how to run without docker
 1. install and build
 ```
-> ./build.sh
+> npm build
 ```
 2. start server
 ```

@@ -39,7 +39,9 @@ function getConfigFile(filename, failIfNotFound) {
     return defaultPath;
   }
   if (failIfNotFound) {
-    throw new Error(filename, "not found");
+    const err = new Error("file not found");
+    err.filename = filename;
+    throw err;
   }
   const envFileDir = typeof process.env.WHEEL_CONFIG_DIR === "string"
     ? path.resolve(process.env.WHEEL_CONFIG_DIR) : null;
@@ -54,7 +56,9 @@ function getConfigFile(filename, failIfNotFound) {
   if (isExists(defaultDir, false)) {
     return path.resolve(defaultDir, filename);
   }
-  throw new Error(filename, "not found");
+  const err = new Error("file not found");
+  err.filename = filename;
+  throw err;
 }
 
 function getVar(target, alt) {
@@ -67,8 +71,25 @@ function getStringVar(target, alt) {
   return typeof target === "string" ? target : alt;
 }
 
-const config = require(getConfigFile("server.json", true));
-const jobScheduler = require(getConfigFile("jobScheduler.json", true));
+function readAndMergeConfigFile(filename) {
+  let userConfigFilename;
+  try {
+    userConfigFilename = getConfigFile(filename, true);
+  } catch (e) {
+    if (e.message !== "file not found") {
+      throw e;
+    }
+  }
+  const defaultConfig = require(`./${filename}`);
+  if (!userConfigFilename) {
+    return defaultConfig;
+  }
+  const userConfig = require(userConfigFilename);
+  return { ...defaultConfig, ...userConfig };
+}
+
+const config = readAndMergeConfigFile("server.json");
+const jobScheduler = readAndMergeConfigFile("jobScheduler.json");
 const remotehostFilename = getConfigFile(getStringVar(config.remotehostJsonFile, "remotehost.json"));
 const jobScriptTemplateFilename = getConfigFile(getStringVar(config.jobScriptTemplateJsonFile, "jobScriptTemplate.json"));
 const projectListFilename = getConfigFile(getStringVar(config.projectListJsonFile, "projectList.json"));
