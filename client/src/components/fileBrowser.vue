@@ -10,7 +10,6 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
-            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -27,7 +26,6 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
-            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -44,7 +42,6 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
-            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -61,7 +58,6 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
-            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -78,7 +74,6 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
-            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -95,7 +90,6 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
-            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
@@ -112,7 +106,6 @@
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <v-btn
-            class="ml-4"
             :disabled="isSND"
           >
             <v-icon
