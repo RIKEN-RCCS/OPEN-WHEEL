@@ -9,16 +9,14 @@ COPY client client
 RUN cd client; npm install; npm run build
 
 #build base image to run WHEEL
-FROM --platform=linux/amd64 node:hydrogen-slim as base
+#FROM --platform=linux/amd64 node:hydrogen-slim as base
+FROM builder as runner
 WORKDIR /usr/src/
 RUN apt-get update && apt -y install curl git &&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
     apt -y install git-lfs &&\
     apt-get clean  &&\
     rm -rf /var/lib/apt/lists/*
-
-FROM base as runner
-WORKDIR /usr/src/
 COPY server server
 RUN cd server && npm install --production
 

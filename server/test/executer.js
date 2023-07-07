@@ -93,15 +93,18 @@ describe("UT for executer class", function() {
         this.skip();
       }
       if (!password) {
-        console.log("remote exec test will be skipped because WHEEL_TEST_REMOTE_PASSWORD is not set");
-        this.skip();
+        console.log("remote exec test will be done without password because WHEEL_TEST_REMOTE_PASSWORD is not set");
       }
       const hostInfo = remoteHost.query("name", remotehostID);
       hostInfo.password = password;
       arssh = new SshClientWrapper(hostInfo);
 
       try {
-        await arssh.canConnect();
+        const rt = await arssh.canConnect();
+
+        if (!rt) {
+          throw new Error("canConnect failed");
+        }
         addSsh(projectRootDir, hostInfo, arssh);
       } catch (e) {
         console.log(`ssh connection failed to ${remotehostID} due to ${e} so remote exec test is skiiped`);
@@ -127,8 +130,11 @@ describe("UT for executer class", function() {
 
     describe("#gatherFiles", ()=>{
       beforeEach(async ()=>{
-        await arssh.mkdir_p(task0.remoteWorkingDir);
-        await arssh.exec(`cd ${task0.remoteWorkingDir};(echo -n foo > foo && echo -n bar > bar && echo baz > baz)`);
+        await arssh.exec("pwd;ls /home;ls /home/testuser/");
+        await arssh.exec(`mkdir -p ${task0.remoteWorkingDir}`);
+        await arssh.exec(`echo -n foo > ${task0.remoteWorkingDir}/foo`);
+        await arssh.exec(`echo -n bar > ${task0.remoteWorkingDir}/bar`);
+        await arssh.exec(`echo -n baz > ${task0.remoteWorkingDir}/baz`);
       });
       it("issue 462", async ()=>{
         task0.outputFiles = [{ name: "hu/ga", dst: [] }, { name: "ho/ge", dst: [] }];
@@ -141,9 +147,9 @@ describe("UT for executer class", function() {
       it("run shell script which returns 0 and status should be Finished", async ()=>{
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
-        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
+        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime)}`))
           .to.have.members([path.posix.join(remoteHome, task0.projectStartTime, task0.name)]);
-        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime, task0.name))).to.have.members([
+        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime, task0.name)}`)).to.have.members([
           path.posix.join(remoteHome, task0.projectStartTime, task0.name, "run.sh"),
           path.posix.join(remoteHome, task0.projectStartTime, task0.name, componentJsonFilename)
         ]);
@@ -152,7 +158,7 @@ describe("UT for executer class", function() {
         task0.doCleanup = true;
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
-        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime))).to.be.an("array").that.is.empty;
+        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime)}`)).to.be.an("array").that.is.empty;
       });
       it("get outputFiles after successfully run", async ()=>{
         task0.outputFiles = [{ name: "hoge", dst: [] }];
@@ -178,9 +184,9 @@ describe("UT for executer class", function() {
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
-        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
+        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime)}`))
           .to.have.members([path.posix.join(remoteHome, task0.projectStartTime, task0.name)]);
-        expect(await arssh.ls(path.posix.join(remoteHome, task0.projectStartTime, task0.name))).to.have.members([
+        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime, task0.name)}`)).to.have.members([
           path.posix.join(remoteHome, task0.projectStartTime, task0.name, "run.sh"),
           path.posix.join(remoteHome, task0.projectStartTime, task0.name, componentJsonFilename)
         ]);

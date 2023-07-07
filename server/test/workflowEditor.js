@@ -42,6 +42,10 @@ const testDirRoot = "WHEEL_TEST_TMP";
 
 //helper functions
 const { createNewProject } = require("../app/core/projectFilesOperator");
+async function outputJson(filename) {
+  const tmp = await fs.readJson(filename);
+  console.log(tmp);
+}
 
 describe("workflow editor UT", function() {
   this.timeout(0);

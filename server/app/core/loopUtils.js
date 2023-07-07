@@ -41,9 +41,9 @@ function forIsFinished(component) {
 }
 
 function forTripCount(component) {
-  const length = Math.abs(component.end - component.start) + 1;
+  const length = Math.abs(component.end - component.start);
   const step = Math.abs(component.step);
-  return length / step + (length % step > 0 ? 1 : 0);
+  return Math.floor(length / step) + 1;
 }
 
 function forKeepLoopInstance(component, cwfDir) {

@@ -204,8 +204,8 @@ class TaskSchema extends GeneralWorkflowComponentSchema {
     this.properties.host = { type: "string" };
     this.properties.useJobScheduler = { type: "boolean" };
     this.properties.queue = { type: "null" };
-    this.properties.include = { type: "null" };
-    this.properties.exclude = { type: "null" };
+    this.properties.include = { type: "array", minItems: 0, maxItems: 0, items: [] };
+    this.properties.exclude = { type: "array", minItems: 0, maxItems: 0, items: [] };
     this.properties.state = this.properties.state.enum.concat(["stage-in", "waiting", "queued", "stage-out"]);
   }
 }

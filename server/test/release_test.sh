@@ -67,9 +67,6 @@ extendedKeyUsage=serverAuth
 openssl req -x509 -out ${CONFIG_DIR}/server.crt -keyout ${CONFIG_DIR}/server.key  -newkey rsa:2048 \
 -nodes -sha256  -subj '/CN=localhost' -extensions EXT -config ${SSL_CONFIG}
 
-#copy default setting files
-cp ../app/config/{server,jobScheduler}.json ${CONFIG_DIR}
-
 #create rmeotehost.json
 {
 echo '[{'
