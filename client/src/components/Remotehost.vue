@@ -126,7 +126,7 @@
           { text: "usrename", value: "username" },
           { text: "port", value: "port" },
           { text: "private key", value: "keyFile" },
-          { text: "delete", value: "action", sortable: false },
+          { text: "action", value: "action", sortable: false },
         ],
         hosts: [],
         jobSchedulerNames: [],
