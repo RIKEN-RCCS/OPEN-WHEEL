@@ -37,7 +37,7 @@ const { scriptName, pwdCmd, scriptHeader, exit } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
 const { remoteHost } = require("../app/db/db");
-const { addSsh, createSshConfig } = require("../app/core/sshManager");
+const { addSsh } = require("../app/core/sshManager");
 
 
 describe("UT for executer class", function() {
@@ -84,61 +84,61 @@ describe("UT for executer class", function() {
     });
   });
   describe("run on remote host", ()=>{
-    let arssh;
+    let ssh;
+    const remotehostName = process.env.WHEEL_TEST_REMOTEHOST;
+    const password = process.env.WHEEL_TEST_REMOTE_PASSWORD;
     before(async function() {
-      const remotehostID = process.env.WHEEL_TEST_REMOTEHOST;
-      const password = process.env.WHEEL_TEST_REMOTE_PASSWORD;
-      if (!remotehostID) {
+      if (!remotehostName) {
         console.log("remote exec test will be skipped because WHEEL_TEST_REMOTEHOST is not set");
         this.skip();
       }
+
       if (!password) {
         console.log("remote exec test will be done without password because WHEEL_TEST_REMOTE_PASSWORD is not set");
       }
-      const hostInfo = remoteHost.query("name", remotehostID);
+      const hostInfo = remoteHost.query("name", remotehostName);
       hostInfo.password = password;
-      arssh = new SshClientWrapper(hostInfo);
+      ssh = new SshClientWrapper(hostInfo);
 
       try {
-        const rt = await arssh.canConnect();
+        const rt = await ssh.canConnect();
 
         if (!rt) {
           throw new Error("canConnect failed");
         }
-        addSsh(projectRootDir, hostInfo, arssh);
+        addSsh(projectRootDir, hostInfo, ssh);
       } catch (e) {
-        console.log(`ssh connection failed to ${remotehostID} due to ${e} so remote exec test is skiiped`);
+        console.log(`ssh connection failed to ${remotehostName} due to ${e} so remote exec test is skiiped`);
         this.skip();
       } finally {
-        await arssh.disconnect();
+        await ssh.disconnect();
       }
     });
     beforeEach(()=>{
-      task0.host = "testServer";
+      task0.host = remotehostName;
       //following lines are from Executer.exec but planning to move to Dispatcher._dispatchTask()
       task0.remotehostID = remoteHost.getID("name", task0.host) || "localhost";
       task0.remoteWorkingDir = path.posix.join(remoteHome, task0.projectStartTime);
     });
     afterEach(async ()=>{
-      await arssh.exec(`rm -fr ${path.posix.join(remoteHome, task0.projectStartTime)}`);
+      await ssh.exec(`rm -fr ${path.posix.join(remoteHome, task0.projectStartTime)}`);
     });
     after(async ()=>{
-      if (arssh) {
-        await arssh.disconnect();
+      if (ssh) {
+        await ssh.disconnect();
       }
     });
 
     describe("#gatherFiles", ()=>{
       beforeEach(async ()=>{
-        await arssh.exec("pwd;ls /home;ls /home/testuser/");
-        await arssh.exec(`mkdir -p ${task0.remoteWorkingDir}`);
-        await arssh.exec(`echo -n foo > ${task0.remoteWorkingDir}/foo`);
-        await arssh.exec(`echo -n bar > ${task0.remoteWorkingDir}/bar`);
-        await arssh.exec(`echo -n baz > ${task0.remoteWorkingDir}/baz`);
+        await ssh.exec(`mkdir -p ${task0.remoteWorkingDir}`);
+        await ssh.exec(`echo -n foo > ${task0.remoteWorkingDir}/foo`);
+        await ssh.exec(`echo -n bar > ${task0.remoteWorkingDir}/bar`);
+        await ssh.exec(`echo -n baz > ${task0.remoteWorkingDir}/baz`);
       });
       it("issue 462", async ()=>{
         task0.outputFiles = [{ name: "hu/ga", dst: [] }, { name: "ho/ge", dst: [] }];
-        await gatherFiles(task0, arssh);
+        await gatherFiles(task0, ssh);
         expect(path.join(task0.workingDir, "hu/ga")).not.to.be.a.path();
         expect(path.join(task0.workingDir, "ho/ge")).not.to.be.a.path();
       });
@@ -147,21 +147,20 @@ describe("UT for executer class", function() {
       it("run shell script which returns 0 and status should be Finished", async ()=>{
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
-        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime)}`))
-          .to.have.members([path.posix.join(remoteHome, task0.projectStartTime, task0.name)]);
-        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime, task0.name)}`)).to.have.members([
-          path.posix.join(remoteHome, task0.projectStartTime, task0.name, "run.sh"),
-          path.posix.join(remoteHome, task0.projectStartTime, task0.name, componentJsonFilename)
-        ]);
+        expect(await ssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
+          .to.have.members([task0.name]);
+        expect(await ssh.ls(path.posix.join(remoteHome, task0.projectStartTime, task0.name))).to.have.members(["run.sh", componentJsonFilename]);
       });
       it("cleanup remote directory after successfully run", async ()=>{
         task0.doCleanup = true;
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
-        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime)}`)).to.be.an("array").that.is.empty;
+        expect(await ssh.ls(path.posix.join(remoteHome, task0.projectStartTime))).to.be.an("array").that.is.empty;
       });
       it("get outputFiles after successfully run", async ()=>{
-        task0.outputFiles = [{ name: "hoge", dst: [] }];
+        const task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
+        task1.inputFiles = [{ name: "dummy", src: [{ srcNode: task0.ID, srcName: "hoge" }] }];
+        task0.outputFiles = [{ name: "hoge", dst: [{ dstNode: task1.ID, dstName: "dummy" }] }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(0)}`);
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\nundefined");
@@ -184,12 +183,9 @@ describe("UT for executer class", function() {
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
         await exec(task0);
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
-        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime)}`))
-          .to.have.members([path.posix.join(remoteHome, task0.projectStartTime, task0.name)]);
-        expect(await arssh.exec(`ls ${path.posix.join(remoteHome, task0.projectStartTime, task0.name)}`)).to.have.members([
-          path.posix.join(remoteHome, task0.projectStartTime, task0.name, "run.sh"),
-          path.posix.join(remoteHome, task0.projectStartTime, task0.name, componentJsonFilename)
-        ]);
+        expect(await ssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
+          .to.have.members([task0.name]);
+        expect(await ssh.ls(path.posix.join(remoteHome, task0.projectStartTime, task0.name))).to.have.members(["run.sh", componentJsonFilename]);
       });
       it("do not get outputFiles after failed run", async ()=>{
         task0.outputFiles = [{ name: "hoge" }];
@@ -199,7 +195,7 @@ describe("UT for executer class", function() {
         expect(path.join(task0.workingDir, "hoge")).not.to.be.a.path();
       });
     });
-    describe.skip("#remote job", ()=>{
+    describe.skip("#remote job (test bed has some trouble never run jobs on it)", ()=>{
       beforeEach(()=>{
         task0.useJobScheduler = true;
       });

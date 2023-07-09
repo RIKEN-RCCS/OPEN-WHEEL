@@ -48,7 +48,7 @@ async function prepareRemoteExecDir(task) {
   const remoteScriptPath = path.posix.join(task.remoteWorkingDir, task.script);
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
   getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} start`);
-  await ssh.send([task.workingDir], path.posix.dirname(task.remoteWorkingDir));
+  await ssh.send([task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
   await ssh.exec(`chmod 744 ${remoteScriptPath}`);
   task.preparedTime = getDateString(true, true);
   getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} finished`);
