@@ -6,6 +6,7 @@
 <template>
   <v-dialog
     v-model="show"
+    max-width="50vw"
     persistent
   >
     <v-card>
@@ -45,7 +46,6 @@
   </v-dialog>
 </template>
 <script>
-  import SIO from "@/lib/socketIOWrapper.js";
   export default {
     props:{
         unsavedFiles: {
@@ -55,6 +55,10 @@
         dialog: {
           type: Boolean,
           required: true
+        },
+        withoutStatus:{
+          type: Boolean,
+          default: false
         }
     },
     data () {
@@ -64,6 +68,11 @@
           { text: "filename", value: "name" },
         ],
       };
+    },
+    mounted(){
+      if(this.withoutStatus){
+        this.headers.splice(0,1);
+      }
     },
     computed:{
       show(){

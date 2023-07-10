@@ -8,7 +8,7 @@ const { promisify } = require("util");
 const fs = require("fs-extra");
 const path = require("path");
 const isPathInside = require("is-path-inside");
-const uuidv1 = require("uuid/v1");
+const uuid = require("uuid");
 const glob = require("glob");
 const { componentFactory } = require("./workflowComponent");
 const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix } = require("../db/db");
@@ -18,6 +18,36 @@ const { readJsonGreedy } = require("./fileUtils");
 const { gitInit, gitAdd, gitCommit, gitResetHEAD, gitClean, gitRm } = require("./gitOperator2");
 const { hasChild } = require("../core/workflowComponent");
 const { getLogger } = require("../logSettings");
+
+/**
+ * check feather given token is surrounded by { and }
+ * @param {string} token - string to be checked
+ * @returns {boolean} - true if token is surrounded by {}
+ */
+function isSurrounded(token) {
+  return token.startsWith("{") && token.endsWith("}");
+}
+
+/**
+ * remove heading '{' and trailing '}'
+ * @param {string} token - string to be checked
+ * @returns {string} - trimed token
+ */
+function trimSurrounded(token) {
+  if (!isSurrounded(token)) {
+    return token;
+  }
+  const rt = /{+(.*)}+/.exec(token);
+  return (Array.isArray(rt) && typeof rt[1] === "string") ? rt[1] : token;
+}
+
+/**
+ * transform grob string to array
+ * @param {string} token - grob pattern
+ */
+function glob2Array(token) {
+  return trimSurrounded(token).split(",");
+}
 
 /**
  * remove trailing path sep from string
@@ -71,17 +101,38 @@ async function getAllComponentIDs(projectRootDir) {
   return Object.keys(projectJson.componentPath);
 }
 
+function getSuffixNumberFromProjectName(projectName) {
+  const reResult = /.*(\d+)$/.exec(projectName);
+  return reResult === null ? 0 : reResult[1];
+}
+
+async function getUnusedProjectDir(projectRootDir) {
+  if (!await fs.pathExists(projectRootDir)) {
+    return projectRootDir;
+  }
+
+  const dirname = path.dirname(projectRootDir);
+  const projectName = path.basename(projectRootDir);
+  let suffixNumber = getSuffixNumberFromProjectName(projectName);
+  while (await fs.pathExists(path.resolve(dirname, (projectName + suffixNumber)))) {
+    ++suffixNumber;
+  }
+  return path.resolve(dirname, projectName + suffixNumber);
+}
+
+
 /**
  * create new project dir, initial files and new git repository
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} argProjectRootDir - project projectRootDir's absolute path
  * @param {string} name - project name without suffix
  * @param {string} argDescription - project description text
  * @param {string} user - username of project owner
  * @param {string} mail - mail address of project owner
  * @returns {*} -
  */
-async function createNewProject(projectRootDir, name, argDescription, user, mail) {
+async function createNewProject(argProjectRootDir, name, argDescription, user, mail) {
   const description = argDescription != null ? argDescription : "This is new project.";
+  const projectRootDir = await getUnusedProjectDir(argProjectRootDir);
   await fs.ensureDir(projectRootDir);
 
   //write root workflow
@@ -242,7 +293,7 @@ async function convertComponentJson(projectRootDir, componentPath, parentCompone
   delete componentJson.path;
   delete componentJson.index;
 
-  componentJson.ID = parentID || uuidv1();
+  componentJson.ID = parentID || uuid.v1();
 
   //remove depricated props, add ID to child components and register to componentPath
   for (const node of componentJson.nodes) {
@@ -253,7 +304,7 @@ async function convertComponentJson(projectRootDir, componentPath, parentCompone
     delete node.path;
     delete node.index;
     node.parent = componentJson.ID;
-    node.ID = uuidv1();
+    node.ID = uuid.v1();
     componentPath[node.ID] = path.relative(projectRootDir, path.join(path.dirname(parentComponentJson), node.name));
   }
   //fix next, else, previous, inputFiles, outputFiles and indexList then write json file and recursive call if component has child
@@ -372,10 +423,59 @@ function avoidDuplicatedProjectName(basename, argSuffix) {
   return basename + suffixNumber;
 }
 
+/*
+ * convert old include exclude format (comma separated string) to array of string
+ * @params {string} filename - component json filename
+ */
+async function rewriteIncludeExclude(filename) {
+  let needToWrite = false;
+  const componentJson = await readJsonGreedy(filename);
+  if (typeof componentJson.include === "string" && !Array.isArray(componentJson.include)) {
+    getLogger().info("convert include property", filename);
+    componentJson.include = glob2Array(componentJson.include).map((e)=>{
+      return { name: e };
+    });
+    needToWrite = true;
+  }
+  if (componentJson.include === null) {
+    componentJson.include = [];
+    needToWrite = true;
+  }
+  if (typeof componentJson.exclude === "string" && !Array.isArray(componentJson.exclude)) {
+    getLogger().info("convert exclude property", filename);
+    componentJson.exclude = glob2Array(componentJson.exclude).map((e)=>{
+      return { name: e };
+    });
+    needToWrite = true;
+  }
+  if (componentJson.exclude === null) {
+    componentJson.exclude = [];
+    needToWrite = true;
+  }
+  if (needToWrite) {
+    await fs.writeJson(filename, componentJson, { spaces: 4 });
+  }
+}
+
+function getUnusedProjectName(projectName) {
+  if (!isDuplicateProjectName(projectName)) {
+    return projectName;
+  }
+  const suffixNumber = getSuffixNumberFromProjectName(projectName);
+  return avoidDuplicatedProjectName(projectName, suffixNumber);
+}
+
 async function importProject(projectRootDir) {
+  //convert include and exclude property to array
+  const files = await promisify(glob)(`./**/${componentJsonFilename}`, { cwd: projectRootDir });
+  await Promise.all(files.map((filename)=>{
+    return rewriteIncludeExclude(path.resolve(projectRootDir, filename));
+  }));
+
+  //skip following import process if project is already on projectList
   if (projectList.query("path", projectRootDir)) {
     //already registerd
-    return;
+    return projectRootDir;
   }
   const projectJsonFilepath = convertPathSep(path.resolve(projectRootDir, projectJsonFilename));
   getLogger().debug("import: ", projectJsonFilepath);
@@ -384,7 +484,7 @@ async function importProject(projectRootDir) {
     const oldProjectJsonFilename = "swf.prj.json";
     //serch old version file
     const oldProjectJsonFilepath = convertPathSep(path.resolve(projectRootDir, oldProjectJsonFilename));
-    if (fs.pathExistsconvertPathSep(oldProjectJsonFilepath)) {
+    if (fs.pathExists(convertPathSep(oldProjectJsonFilepath))) {
       getLogger().debug("converting old format project");
 
       try {
@@ -399,21 +499,17 @@ async function importProject(projectRootDir) {
   const projectJson = await readJsonGreedy(projectJsonFilepath);
   const rootWF = await readJsonGreedy(path.join(projectRootDir, componentJsonFilename));
 
-  let projectName = projectJson.name;
-  if (!isValidName(projectName)) {
-    getLogger().error(projectName, "is not allowed for project name");
+  //chek and repair project name(= basename of projectRootDir)
+  if (!isValidName(projectJson.name)) {
+    getLogger().error(projectJson.name, "is not allowed for project name");
+    return;
   }
-  if (isDuplicateProjectName(projectName)) {
-    const reResult = /.*(\d+)$/.exec(projectName);
-    projectName = reResult === null ? projectName : projectName.slice(0, reResult.index);
-    const suffixNumber = reResult === null ? 0 : reResult[1];
-    const newName = avoidDuplicatedProjectName(projectName, suffixNumber);
-    getLogger().warn(projectName, "is already used. so this project is renamed to", newName);
-    projectName = newName;
-  }
+  const projectName = getUnusedProjectName(projectJson.name);
   const newProjectRootDir = path.resolve(path.dirname(projectRootDir), projectName + suffix);
 
   if (projectRootDir !== newProjectRootDir) {
+    getLogger().warn(projectJson.name, "is already used. so this project is renamed to", projectName);
+
     try {
       await fs.move(projectRootDir, newProjectRootDir);
     } catch (e) {
@@ -439,8 +535,12 @@ async function importProject(projectRootDir) {
     }
   }
 
+  //set up project directory as git repo
   if (!await fs.pathExists(path.resolve(newProjectRootDir, ".git"))) {
     try {
+      //gitリポジトリになっていないものは、wheelから開くのは初めてのはず
+      //TODO wheel.logはignoreする
+      //TODO satusを全部not-startedに戻す
       await gitInit(newProjectRootDir, "wheel", "wheel@example.com");
       await gitAdd(newProjectRootDir, "./");
       await gitCommit(newProjectRootDir, "import project");
@@ -449,16 +549,19 @@ async function importProject(projectRootDir) {
       return;
     }
   } else {
-    await gitAdd(newProjectRootDir, "./");
+    await gitAdd(newProjectRootDir, "./", true);
     await gitCommit(newProjectRootDir, "import project");
   }
   projectList.unshift({ path: newProjectRootDir });
+  return newProjectRootDir;
 }
+
 async function updateProjectDescription(projectRootDir, description) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
   const projectJson = await readJsonGreedy(filename);
   projectJson.description = description;
   await fs.writeJson(filename, projectJson);
+  await gitAdd(projectRootDir, filename);
 }
 
 async function addProject(projectDir, description) {

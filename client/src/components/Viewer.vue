@@ -9,18 +9,16 @@
       app
       extended
     >
-      <a
-        href="home"
-        class="text-uppercase text-decoration-none text-h4 white--text"
-      > WHEEL </a>
-      <v-spacer />
-      <p>
+      <a href="home"> <v-img :src="imgLogo" /></a>
+      <span
+        class="text-lowercase text-decoration-none text-h5 white--text ml-4"
+      >
         viewer
-      </p>
+      </span>
       <v-spacer />
     </v-app-bar>
     <v-main>
-      <v-viewer
+      <vue-viewer
         ref="viewer"
         :options="options"
         :images="images"
@@ -31,13 +29,13 @@
           <img
             v-for="src in scope.images"
             :key="src.url"
-            class="borderd-img"
+            class="thumbnail-img"
             :src="src.url"
             :data-src="src.url"
             :alt="title"
           >
         </template>
-      </v-viewer>
+      </vue-viewer>
     </v-main>
     <v-footer app />
   </v-app>
@@ -46,21 +44,23 @@
 <script>
   "use strict";
   import "viewerjs/dist/viewer.css";
-  import { component as VViewer }  from "v-viewer";
+  import imgLogo from "@/assets/wheel_logomark.png";
+  import { component as vueViewer}  from "v-viewer";
   import SIO from "@/lib/socketIOWrapper.js";
   import { readCookie } from "@/lib/utility.js";
 
   export default{
     name: "Viewer",
     components:{
-     VViewer
+      vueViewer
     },
     data(){
       return {
+        imgLogo,
         items:[],
         options:
           {
-          navbar: false,
+            navbar: false,
             "url":"data-src"
           }
       };
@@ -71,9 +71,17 @@
       }
     },
     mounted(){
-      // dirをcookieから取得
+      // get viewer directory name from cookie
       const dir=readCookie("dir");
-      const projectRootDir=readCookie("rootDir");
+      //projectRootDir is not set in sessionStorage useually,
+      //because viewer window opens in another window.
+      //But while reloading page, projectRootDir in Cookie can be changed.
+      //So, we read it from sessionStorage here
+      let projectRootDir = sessionStorage.getItem("projectRootDir")
+      if(! projectRootDir){
+        projectRootDir = readCookie("rootDir");
+        sessionStorage.setItem("projectRootDir", projectRootDir);
+      }
       if(typeof dir !== "string" || typeof projectRootDir !== "string"){
         return;
       }
@@ -98,8 +106,11 @@
   .viewer {
     background-color: #1E1E1E;
   }
-  .borderd-img{
+  .thumbnail-img{
     border: 2px solid white;
     box-sizing: border-box;
+    height: 240px;
+    cursor: pointer;
+    margin: 5px;
   }
 </style>

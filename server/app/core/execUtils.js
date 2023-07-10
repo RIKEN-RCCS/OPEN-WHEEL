@@ -29,7 +29,7 @@ function parseFilter(pattern) {
  */
 async function setTaskState(task, state) {
   task.state = state;
-  getLogger(task.proejctRootDir).trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
+  getLogger(task.projectRootDir).trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
   //to avoid git add when task state is changed, we do NOT use updateComponentJson(in workflowUtil) here
   await fs.writeJson(path.resolve(task.workingDir, componentJsonFilename), task, { spaces: 4, replacer: componentJsonReplacer });
   const ee = eventEmitters.get(task.projectRootDir);
@@ -37,67 +37,89 @@ async function setTaskState(task, state) {
   ee.emit("componentStateChanged", task);
 }
 
+async function needDownload(projectRootDir, componentID, outputFile) {
+  const rt = await Promise.all(outputFile.dst.map(({ dstNode })=>{
+    return isSameRemoteHost(projectRootDir, componentID, dstNode);
+  }));
+  return rt.some((isSame)=>{
+    return !isSame;
+  });
+}
+
+function formatSrcFilename(remoteWorkingDir, filename) {
+  if (filename.endsWith("/") || filename.endsWith("\\")) {
+    const dirname = replacePathsep(filename);
+    return path.posix.join(remoteWorkingDir, `${dirname}/*`);
+  }
+  return path.posix.join(remoteWorkingDir, filename);
+}
+
+function makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingDir) {
+  const reRemoteWorkingDir = new RegExp(remoteWorkingDir);
+  const src = formatSrcFilename(remoteWorkingDir, filename);
+  if (filename.slice(0, -1).includes("/")) {
+    const dst = src.replace(reRemoteWorkingDir, workingDir);
+    getLogger(projectRootDir).trace(`${filename} will be downloaded to ${dst}`);
+    return { src, dst };
+  }
+  getLogger(projectRootDir).trace(`${filename} will be downloaded to component root directory`);
+  return { src, dst: workingDir };
+}
+
 async function gatherFiles(task) {
   await setTaskState(task, "stage-out");
-  getLogger(task.proejctRootDir).debug("start to get files from remote server if specified");
-  const ssh = getSsh(task.projectRootDir, task.remotehostID);
-  const filter = task.outputFiles.map(async(outputFile)=>{
-    const rt = await Promise.all(outputFile.dst.map(({ dstNode })=>{
-      return isSameRemoteHost(task.projectRootDir, task.ID, dstNode);
-    }));
-    const needToDownload = rt.some((isSame)=>{
-      return !isSame;
-    });
-    getLogger(task.proejctRootDir).trace(`${outputFile.name} will ${needToDownload ? "" : "NOT"} be download`);
-    return needToDownload;
-  });
+  getLogger(task.projectRootDir).debug("start to get files from remote server if specified");
 
-  const outputFiles = task.outputFiles
-    .filter((v, i)=>{
-      return filter[i];
-    })
-    .map((e)=>{
-      if (e.name.endsWith("/") || e.name.endsWith("\\")) {
-        const dirname = replacePathsep(e.name);
-        return `${dirname}/*`;
-      }
-      return `${e.name}`;
-    });
-
-  for (const outputFile of outputFiles) {
-    const dst = `${path.join(task.workingDir, path.dirname(outputFile))}/`;
-    getLogger(task.proejctRootDir).debug("try to get outputFiles", outputFile, "\n  from:", task.remoteWorkingDir, "\n  to:", dst);
-
-    try {
-      await ssh.recv(path.posix.join(task.remoteWorkingDir, outputFile), dst, null, null);
-    } catch (e) {
-      //ignore if src file is not exists
-      if (e.message !== "src must be existing file or directory") {
-        throw e;
-      } else {
-        getLogger(task.projectRootDir).debug("src file not found but ignored", outputFile);
-      }
+  const downloadRecipe = [];
+  for (const outputFile of task.outputFiles) {
+    if (!await needDownload(task.projectRootDir, task.ID, outputFile)) {
+      getLogger(task.projectRootDir).trace(`${outputFile.name} will NOT be downloaded`);
+      continue;
     }
+    downloadRecipe.push(makeDownloadRecipe(task.projectRootDir, outputFile.name, task.remoteWorkingDir, task.workingDir));
   }
 
+  const ssh = getSsh(task.projectRootDir, task.remotehostID);
+  const promises = [];
+
+  const dsts = Array.from(new Set(downloadRecipe.map((e)=>{
+    return e.dst;
+  })));
+  for (const dst of dsts) {
+    const srces = downloadRecipe.filter((e)=>{
+      return e.dst === dst;
+    }).map((e)=>{
+      return e.src;
+    });
+    promises.push(ssh.recv(srces, dst));
+  }
+
+  let opt;
+  if (Array.isArray(task.exclude)) {
+    opt = task.exclude.map((e)=>{
+      return `--exclude=${e}`;
+    });
+  }
 
   //get files which match include filter
-  if (typeof task.include === "string") {
-    const include = `${task.remoteWorkingDir}/${parseFilter(task.include)}`;
-    const exclude = task.exclude ? `${task.remoteWorkingDir}/${parseFilter(task.exclude)}` : null;
-    getLogger(task.projectRootDir).debug("try to get ", include, "\n  from:", task.remoteWorkingDir, "\n  to:", task.workingDir, "\n  exclude filter:", exclude);
-
-    try {
-      await ssh.recv(include, task.workingDir, null, exclude);
-    } catch (e) {
-      //ignore if src file is not exists
-      if (e.message !== "src must be existing file or directory") {
-        throw e;
-      } else {
-        getLogger(task.projectRootDir).debug("file not found but ignored", e);
-      }
+  if (Array.isArray(task.include) && task.include.length > 0) {
+    const downloadRecipe2 = task.include.map((e)=>{
+      return makeDownloadRecipe(task.projectRootDir, e, task.remoteWorkingDir, task.workingDir);
+    });
+    const dsts2 = Array.from(new Set(downloadRecipe2.map((e)=>{
+      return e.dst;
+    })));
+    for (const dst of dsts2) {
+      const srces = downloadRecipe2.filter((e)=>{
+        return e.dst === dst;
+      }).map((e)=>{
+        return e.src;
+      });
+      promises.push(ssh.recv(srces, dst, opt));
     }
   }
+
+  await Promise.all(promises);
 
   //clean up remote working directory
   if (task.doCleanup) {

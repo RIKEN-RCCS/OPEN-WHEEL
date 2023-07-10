@@ -88,6 +88,7 @@
     <v-card
       id="editor"
       grow
+      :height=editorHeight
     />
   </div>
 </template>
@@ -97,8 +98,8 @@
   import { mapState, mapGetters, mapMutations } from "vuex";
   import SIO from "@/lib/socketIOWrapper.js";
   import { isValidInputFilename } from "@/lib/utility.js";
+  import { editorHeight } from "@/lib/constants.json"
   import ace from "ace-builds";
-  import "ace-builds/webpack-resolver";
   import "ace-builds/src-noconflict/theme-idle_fingers.js";
 
   export default {
@@ -116,7 +117,8 @@
         activeTab: 0,
         files: [],
         editor: null,
-        isJobScript: false
+        isJobScript: false,
+        editorHeight
       };
     },
     computed: {
@@ -168,6 +170,7 @@
           this.activeTab = this.files.length;
           const session = this.files[this.activeTab - 1].editorSession;
           this.editor.setSession(session);
+          this.editor.resize()
           session.selection.on("changeSelection", ()=>{
             this.commitSelectedText(this.editor.getSelectedText());
           });
@@ -224,6 +227,18 @@
         session.replace(range, snipet);
         this.$emit("jobscript", true);
       },
+      removeSnipet(){
+        // this function will be called from parent component
+        const session = this.editor.getSession();
+        const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}});
+        if(!range){
+          return
+        }
+        range.start.row=0;
+        range.start.column=0;
+        session.replace(range,"");
+        this.$emit("jobscript", false);
+      },
       insertBraces () {
         // this function will be called from parent component
         const selectedRange = this.editor.getSelection().getRange();
@@ -250,15 +265,22 @@
           });
         });
       },
-      hasChange () {
-        for (const file of this.files) {
+      getChangedFiles(){
+        return this.files.map((file)=>{
           const document = file.editorSession.getDocument();
           const content = document.getValue();
           if (file.content !== content) {
-            return true;
+            return {name: `${file.dirname}/${file.filename}`}
           }
-        }
-        return false;
+          return null;
+        })
+        .filter((e)=>{
+          return e !== null;
+        });
+      },
+      hasChange () {
+        const changedFiles=this.getChangedFiles();
+        return changedFiles.length > 0;
       },
       saveAll () {
         let changed = false;

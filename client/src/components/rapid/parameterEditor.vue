@@ -17,33 +17,38 @@
     />
     <gather-scatter
       :container="parameterSetting.scatter"
-      :headers="[ { value: 'srcName', text: 'srcName', sortable: true },
-                  { value: 'dstName', text: 'dstName', sortable: true },
-                  { value: 'dstNode', text: 'dstNode', sortable: true},
+      :headers="[ { value: 'srcName', text: 'srcName', sortable: false },
+                  { value: 'dstNodeName', text: 'dstNode', sortable: false },
+                  { value: 'dstName', text: 'dstName', sortable: false },
                   { text: 'Actions', value: 'action', sortable: false }]"
       :label="'scatter'"
       :read-only="readOnly"
+      @addNewItem="onAddNewItem"
+      @updateItem="onUpdateItem"
+      @deleteItem="onDeleteItem"
     />
     <gather-scatter
       :container="parameterSetting.gather"
-      :headers="[ { value: 'srcName', text: 'srcName', sortable: true },
-                  { value: 'srcNode', text: 'srcNode', sortable: true},
-                  { value: 'dstName', text: 'dstName', sortable: true },
+      :headers="[ { value: 'srcNodeName', text: 'srcNode', sortable: false },
+                  { value: 'srcName', text: 'srcName', sortable: false },
+                  { value: 'dstName', text: 'dstName', sortable: false },
                   { text: 'Actions', value: 'action', sortable: false }]"
       :label="'gather'"
       :read-only="readOnly"
+      @addNewItem="onAddNewItem"
+      @updateItem="onUpdateItem"
+      @deleteItem="onDeleteItem"
     />
   </div>
 </template>
 <script>
   "use strict";
   import { mapState, mapGetters } from "vuex";
+  import deepEqual from "deep-eql"
   import SIO from "@/lib/socketIOWrapper.js";
   import targetFiles from "@/components/rapid/targetFiles.vue";
   import gatherScatter from "@/components/rapid/gatherScatter.vue";
   import parameter from "@/components/rapid/parameter.vue";
-  const equal = require("fast-deep-equal");
-  const clone = require("rfdc")();
 
   export default {
     name: "ParameterEditor",
@@ -79,7 +84,7 @@
       };
     },
     computed: {
-      ...mapState(["selectedFile", "projectRootDir"]),
+      ...mapState(["selectedFile", "projectRootDir", "componentPath"]),
       ...mapGetters(["selectedComponentAbsPath"]),
     },
     mounted () {
@@ -102,6 +107,30 @@
       });
     },
     methods: {
+      onAddNewItem(mode, newItem){
+        this.parameterSetting[mode].push(newItem)
+      },
+      onUpdateItem(mode, target, newItem){
+        target.srcName = newItem.srcName;
+        target.dstName = newItem.dstName;
+        if (newItem.dstNode) {
+          target.dstNode = newItem.dstNode;
+        }
+      },
+      onDeleteItem(mode, target){
+        this.parameterSetting[mode]=this.parameterSetting[mode].filter((e)=>{
+          if(e.srcName !== target.srcName || e.dstName !== target.dstName){
+            return true
+          }
+          if(e.dstNode && e.dstNode !== target.dstNode){
+            return true
+          }
+          if(e.srcNode && e.srcNode !== target.srcNode){
+            return true
+          }
+          return false
+        });
+      },
       openNewTab (...args) {
         this.$emit("openNewTab", ...args);
       },
@@ -110,21 +139,21 @@
         this.$emit("insertBraces");
       },
       hasChange () {
-        return !equal(this.initialParameterSetting, this.parameterSetting);
+        return !deepEqual(this.initialParameterSetting, this.parameterSetting);
       },
       save () {
-        if (equal(this.initialParameterSetting, this.parameterSetting)) {
+        if (deepEqual(this.initialParameterSetting, this.parameterSetting)) {
           console.log("paramter setting is not changed!");
           return false;
         }
         SIO.emitGlobal("saveFile", this.projectRootDir, this.filename, this.dirname || this.selectedComponentAbsPath,
-                 JSON.stringify(this.parameterSetting), (rt)=>{
-                   if (!rt) {
-                     console.log("ERROR: parameter setting file save failed");
-                   }
+           JSON.stringify(this.parameterSetting), (rt)=>{
+             if (!rt) {
+               console.log("ERROR: parameter setting file save failed");
+             }
 
-                   this.initialParameterSetting = clone(this.parameterSetting);
-                 });
+             this.initialParameterSetting = structuredClone(this.parameterSetting);
+           });
         return true;
       },
     },

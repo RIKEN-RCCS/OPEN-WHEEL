@@ -121,7 +121,7 @@ async function isParent(projectRootDir, parentID, childID) {
 }
 
 
-async function removeAllLink(projectRootDir, ID) {
+async function removeAllLinkFromComponent(projectRootDir, ID) {
   const counterparts = new Map();
   const component = await readComponentJsonByID(projectRootDir, ID);
 
@@ -248,7 +248,10 @@ async function addFileLinkFromParent(projectRootDir, srcName, dstNode, dstName) 
   const dstInputFile = dstJson.inputFiles.find((e)=>{
     return e.name === dstName;
   });
-  if (!dstInputFile.src.includes({ srcNode: parentID, srcName })) {
+
+  if (typeof dstInputFile === "undefined") {
+    dstJson.inputFiles.push({ name: dstName, src: [{ srcNode: parentID, srcName }] });
+  } else if (!dstInputFile.src.includes({ srcNode: parentID, srcName })) {
     dstInputFile.src.push({ srcNode: parentID, srcName });
   }
   await p;
@@ -270,7 +273,10 @@ async function addFileLinkBetweenSiblings(projectRootDir, srcNode, srcName, dstN
   const dstInputFile = dstJson.inputFiles.find((e)=>{
     return e.name === dstName;
   });
-  if (!dstInputFile.src.includes({ srcNode, srcName })) {
+
+  if (typeof dstInputFile === "undefined") {
+    dstJson.inputFiles.push({ name: dstName, src: [{ srcNode, srcName }] });
+  } else if (!dstInputFile.src.includes({ srcNode, srcName })) {
     dstInputFile.src.push({ srcNode, srcName });
   }
   await p1;
@@ -540,9 +546,16 @@ async function validateConditionalCheck(component) {
   if (!(Object.prototype.hasOwnProperty.call(component, "condition") && typeof component.condition === "string")) {
     return Promise.reject(new Error(`condition is not specified ${component.name}`));
   }
-  if (!(Object.prototype.hasOwnProperty.call(component, "keep") && typeof component.keep === "number" && component.keep >= 0)) {
-    if (component.keep != null) {
-      return Promise.reject(new Error(`keep is not specified ${component.name}`));
+  return Promise.resolve();
+}
+
+async function validateKeepProp(component) {
+  if (Object.prototype.hasOwnProperty.call(component, "keep")) {
+    if (component.keep === null || component.keep === "") {
+      return Promise.resolve();
+    }
+    if (!(Number.isInteger(component.keep) && component.keep >= 0)) {
+      return Promise.reject(new Error(`keep must be positive integer ${component.name}`));
     }
   }
   return Promise.resolve();
@@ -559,12 +572,6 @@ async function validateForLoop(component) {
 
   if (!(Object.prototype.hasOwnProperty.call(component, "end") && typeof component.end === "number")) {
     return Promise.reject(new Error(`end is not specified ${component.name}`));
-  }
-
-  if (!(Object.prototype.hasOwnProperty.call(component, "keep") && typeof component.keep === "number" && component.keep >= 0)) {
-    if (component.keep != null) {
-      return Promise.reject(new Error(`keep is not specified ${component.name}`));
-    }
   }
 
   if (component.step === 0 || (component.end - component.start) * component.step < 0) {
@@ -599,11 +606,6 @@ async function validateForeach(component) {
   }
   if (component.indexList.length <= 0) {
     return Promise.reject(new Error(`index list is empty ${component.name}`));
-  }
-  if (!(Object.prototype.hasOwnProperty.call(component, "keep") && typeof component.keep === "number" && component.keep >= 0)) {
-    if (component.keep != null) {
-      return Promise.reject(new Error(`keep is not specified ${component.name}`));
-    }
   }
   return Promise.resolve();
 }
@@ -648,7 +650,7 @@ async function validateOutputFiles(component) {
   return true;
 }
 
-async function recursiveGetHosts(projectRootDir, parentID, hosts) {
+async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) {
   const promises = [];
   const children = await getChildren(projectRootDir, parentID);
 
@@ -660,10 +662,12 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts) {
       continue;
     }
     if (["task", "stepjob", "bulkjobTask"].includes(component.type)) {
-      hosts.push(component.host);
+      hosts.push({ hostname: component.host, isStorage: false });
+    } else if (component.type === "storage") {
+      storageHosts.push({ hostname: component.host, isStorage: true });
     }
     if (hasChild(component)) {
-      promises.push(recursiveGetHosts(projectRootDir, component.ID, hosts));
+      promises.push(recursiveGetHosts(projectRootDir, component.ID, hosts, storageHosts));
     }
   }
   return Promise.all(promises);
@@ -679,8 +683,14 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts) {
  */
 async function getHosts(projectRootDir, rootID) {
   const hosts = [];
-  await recursiveGetHosts(projectRootDir, rootID, hosts);
-  return Array.from(new Set(hosts)); //remove duplicate
+  const storageHosts = [];
+  await recursiveGetHosts(projectRootDir, rootID, hosts, storageHosts);
+  const storageHosts2 = Array.from(new Set(storageHosts));
+  const hosts2 = Array.from(new Set(hosts))
+    .filter((host)=>{
+      return !storageHosts2.includes(host.hostname);
+    });
+  return [...storageHosts2, ...hosts2];
 }
 
 /**
@@ -710,14 +720,19 @@ async function validateComponents(projectRootDir, argParentID) {
       promises.push(validateStepjob(projectRootDir, component));
     } else if (component.type === "bulkjobTask") {
       promises.push(validateBulkjobTask(projectRootDir, component));
-    } else if (component.type === "if" || component.type === "while") {
+    } else if (component.type === "if") {
       promises.push(validateConditionalCheck(component));
+    } else if (component.type === "while") {
+      promises.push(validateConditionalCheck(component));
+      promises.push(validateKeepProp(component));
     } else if (component.type === "for") {
       promises.push(validateForLoop(component));
+      promises.push(validateKeepProp(component));
     } else if (component.type === "parameterStudy") {
       promises.push(validateParameterStudy(projectRootDir, component));
     } else if (component.type === "foreach") {
       promises.push(validateForeach(component));
+      promises.push(validateKeepProp(component));
     } else if (component.type === "storage") {
       promises.push(validateStorage(component));
     }
@@ -811,7 +826,7 @@ async function replaceEnv(projectRootDir, ID, newEnv) {
 
 async function getEnv(projectRootDir, ID) {
   const componentJson = await readComponentJsonByID(projectRootDir, ID);
-  const env = componentJson.env;
+  const env = componentJson.env || {};
   return env;
 }
 
@@ -1171,6 +1186,34 @@ async function removeLink(projectRootDir, src, dst, isElse) {
   await writeComponentJson(projectRootDir, dstDir, dstJson);
 }
 
+async function removeAllLink(projectRootDir, componentID) {
+  const dstDir = await getComponentDir(projectRootDir, componentID, true);
+  const dstJson = await readComponentJson(dstDir);
+
+  const srcComponents = dstJson.previous;
+  const p = [];
+  for (const src of srcComponents) {
+    const srcDir = await getComponentDir(projectRootDir, src, true);
+    const srcJson = await readComponentJson(srcDir);
+
+    if (Array.isArray(srcJson.next)) {
+      srcJson.next = srcJson.next.filter((e)=>{
+        return e !== componentID;
+      });
+    }
+    if (Array.isArray(srcJson.else)) {
+      srcJson.else = srcJson.else.filter((e)=>{
+        return e !== componentID;
+      });
+    }
+    p.push(writeComponentJson(projectRootDir, srcDir, srcJson));
+  }
+
+  dstJson.previous = [];
+  p.push(writeComponentJson(projectRootDir, dstDir, dstJson));
+  return Promise.all(p);
+}
+
 async function addFileLink(projectRootDir, srcNode, srcName, dstNode, dstName) {
   if (srcNode === dstNode) {
     return Promise.reject(new Error("cyclic link is not allowed"));
@@ -1194,6 +1237,38 @@ async function removeFileLink(projectRootDir, srcNode, srcName, dstNode, dstName
   return removeFileLinkBetweenSiblings(projectRootDir, srcNode, srcName, dstNode, dstName);
 }
 
+async function removeAllFileLink(projectRootDir, componentID, inputFilename, fromChildren) {
+  const targetDir = await getComponentDir(projectRootDir, componentID, true);
+  const componentJson = await readComponentJson(targetDir);
+  const p = [];
+
+  if (fromChildren) {
+    const outputFile = componentJson.outputFiles.find((e)=>{
+      return e.name === inputFilename;
+    });
+    if (!outputFile) {
+      return new Error(`${inputFilename} not found in parent's outputFiles`);
+    }
+    if (!Array.isArray(outputFile.origin)) {
+      return true;
+    }
+    for (const { srcNode, srcName } of outputFile.origin) {
+      p.push(removeFileLinkToParent(projectRootDir, srcNode, srcName, inputFilename));
+    }
+  } else {
+    const inputFile = componentJson.inputFiles.find((e)=>{
+      return e.name === inputFilename;
+    });
+    if (!inputFile) {
+      return new Error(`${inputFilename} not found in inputFiles`);
+    }
+    for (const { srcNode, srcName } of inputFile.src) {
+      p.push(removeFileLinkBetweenSiblings(projectRootDir, srcNode, srcName, componentID, inputFilename));
+    }
+  }
+  return Promise.all(p);
+}
+
 
 async function cleanComponent(projectRootDir, ID) {
   const targetDir = await getComponentDir(projectRootDir, ID, true);
@@ -1212,7 +1287,7 @@ async function removeComponent(projectRootDir, ID) {
 
   //remove all link/filelink to or from components to be removed
   for (const descendantID of descendantsIDs) {
-    await removeAllLink(projectRootDir, descendantID);
+    await removeAllLinkFromComponent(projectRootDir, descendantID);
   }
   //gitOperator.rm() only remove existing files from git repo if directory is passed
   //so, gitRm and fs.remove must be called in this order
@@ -1312,7 +1387,9 @@ module.exports = {
   addLink,
   addFileLink,
   removeLink,
+  removeAllLink,
   removeFileLink,
+  removeAllFileLink,
   getEnv,
   replaceEnv,
   cleanComponent,

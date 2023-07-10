@@ -6,9 +6,10 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const ARsshClient = require("arssh2-client");
+const SshClientWrapper = require("ssh-client-wrapper");
 const { convertPathSep } = require("./pathUtils");
 const { emitAll } = require("../handlers/commUtils.js");
+const { getLogger } = require("../logSettings.js");
 
 const db = new Map();
 
@@ -57,12 +58,15 @@ async function createSshConfig(hostInfo, password) {
  * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
  * @param {Object} hostinfo - one of the ssh connection setting in remotehost json
  * @param {Object} ssh -  ssh connection instance
+ * @param {string} pw - password
+ * @param {string} ph - passphrase
+ * @param {boolean} isStorage - whether this host is used for remote storage component or not
  */
-function addSsh(projectRootDir, hostinfo, ssh) {
+function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage) {
   if (!db.has(projectRootDir)) {
     db.set(projectRootDir, new Map());
   }
-  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo });
+  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph, isStorage });
 }
 
 /**
@@ -96,6 +100,36 @@ function getSshHostinfo(projectRootDir, id) {
 }
 
 /**
+ * get password
+ * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} id - id value of hostinfo
+ */
+function getSshPW(projectRootDir, id) {
+  if (!hasEntry(projectRootDir, id)) {
+    const err = new Error("hostinfo is not registerd for the project");
+    err.projectRootDir = projectRootDir;
+    err.id = id;
+    throw err;
+  }
+  return db.get(projectRootDir).get(id).pw;
+}
+
+/**
+ * get passphrase
+ * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} id - id value of hostinfo
+ */
+function getSshPH(projectRootDir, id) {
+  if (!hasEntry(projectRootDir, id)) {
+    const err = new Error("hostinfo is not registerd for the project");
+    err.projectRootDir = projectRootDir;
+    err.id = id;
+    throw err;
+  }
+  return db.get(projectRootDir).get(id).ph;
+}
+
+/**
  * disconnect ssh and remove existing entry
  * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
  */
@@ -104,10 +138,17 @@ function removeSsh(projectRootDir) {
   if (!target) {
     return;
   }
+  let clearDB = true;
   for (const e of target.values()) {
+    if (e.isStorage) {
+      clearDB = false;
+      continue;
+    }
     e.ssh.disconnect();
   }
-  db.get(projectRootDir).clear();
+  if (clearDB) {
+    db.get(projectRootDir).clear();
+  }
 }
 
 /**
@@ -134,53 +175,63 @@ function askPassword(clientID, hostname) {
  * @param {string} remoteHostName - name property in hostInfo object
  * @param {Object} hostinfo - one of the ssh connection setting in remotehost json
  * @param {string} clientID - socket's ID
+ * @param {boolean} isStorage - whether this host is used for remote storage component or not
  */
-async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID) {
+async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isStorage) {
   if (hasEntry(projectRootDir, hostinfo.id)) {
     return getSsh(projectRootDir, hostinfo.id);
   }
-  const password = await askPassword(clientID, remoteHostName);
-  const config = await createSshConfig(hostinfo, password);
-  const arssh = new ARsshClient(config, { connectionRetryDelay: 1000, verbose: true });
+
+  let pw;
+  hostinfo.password = async ()=>{
+    if (hasEntry(projectRootDir, hostinfo.id)) {
+      pw = getSshPW(projectRootDir, hostinfo.id);
+
+      if (typeof pw === "string") {
+        return pw;
+      }
+    }
+    //pw will be used after canConnect
+    pw = await askPassword(clientID, `${remoteHostName} - password`);
+    return pw;
+  };
+
+  let ph;
+  hostinfo.passphrase = async ()=>{
+    if (hasEntry(projectRootDir, hostinfo.id)) {
+      ph = getSshPH(projectRootDir, hostinfo.id);
+
+      if (typeof ph === "string") {
+        return ph;
+      }
+    }
+    ph = await askPassword(clientID, `${remoteHostName} - passpharse`);
+    return ph;
+  };
 
   if (hostinfo.renewInterval) {
-    arssh.renewInterval = hostinfo.renewInterval * 60 * 1000;
+    hostinfo.ControlPersist *= 60;
+  }
+  if (hostinfo.readyTimeout) {
+    hostinfo.ConnectTimeout = Math.floor(hostinfo.readyTimeout / 1000);
   }
 
-  if (hostinfo.renewDelay) {
-    arssh.renewDelay = hostinfo.renewDelay * 1000;
-  }
+  const ssh = new SshClientWrapper(hostinfo);
 
   //remoteHostName is name property of remote host entry
   //hostinfo.host is hostname or IP address of remote host
-  let failCount = 0;
-  let done = false;
-  while (!done) {
-    try {
-      done = await arssh.canConnect();
-    } catch (e) {
-      if (e.reason !== "invalid passphrase" && e.reason !== "authentication failure" && e.reason !== "invalid private key") {
-        return Promise.reject(e);
-      }
-      ++failCount;
-
-      if (failCount >= 3) {
-        return Promise.reject(new Error(`wrong password for ${failCount} times`));
-      }
-      const newPassword = await askPassword(clientID, remoteHostName);
-
-      if (config.passphrase) {
-        config.passphrase = newPassword;
-      }
-
-      if (config.password) {
-        config.password = newPassword;
-      }
-      arssh.overwriteConfig(config);
-    }
+  let success = false;
+  try {
+    success = await ssh.canConnect(hostinfo.ConnectTimeout || 300);
+  } catch (e) {
+    getLogger(projectRootDir).warn("ssh connection failed:", e);
   }
-  addSsh(projectRootDir, hostinfo, arssh);
-  return arssh;
+  if (success) {
+    addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
+  } else {
+    throw new Error("ssh connection failed due to unknown reason");
+  }
+  return ssh;
 }
 
 

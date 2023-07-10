@@ -9,7 +9,9 @@
       <v-spacer />
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn class="ml-4">
+          <v-btn
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -23,7 +25,9 @@
       </v-tooltip>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn>
+          <v-btn
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -69,7 +73,9 @@
       </v-tooltip>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
-          <v-btn>
+          <v-btn
+            :disabled="isSND"
+          >
             <v-icon
               v-bind="attrs"
               v-on="on"
@@ -195,7 +201,8 @@
       >
         <v-row>
           <v-btn class="mx-auto mt-10 mb-6">
-            <a :href="downloadURL">download</a>
+            <!-- Do NOT remove download attribute. some files may open in browser e.g. text, json -->
+            <a :href="downloadURL" download>download</a>
           </v-btn>
         </v-row>
       </template>
@@ -204,6 +211,8 @@
 </template>
 <script src="/siofu/client.js"></script>
 <script>
+  import Debug from "debug"
+  const debug = Debug("wheel:fileBrowser");
   import { mapState, mapGetters, mapMutations } from "vuex"
   import SIO from "@/lib/socketIOWrapper.js"
   import versatileDialog from "@/components/versatileDialog.vue";
@@ -236,29 +245,23 @@
       }
     }
   }
-  function _getActiveItem (items, key, path) {
+
+  //get selected item from displayed items
+  function _getActiveItem (items, key ) {
     for (const item of items) {
       if (Array.isArray(item.children) && item.children.length > 0) {
-        path.push(item.name)
-        const rt = _getActiveItem(item.children, key, path)
-
+        const rt = _getActiveItem(item.children, key)
         if (rt) {
-          if(item.type === "snd" || item.type ==="sndd"){
-            path.pop()
-          }
           return rt
         }
-        path.pop()
       }
       if (item.id === key) {
-        if (item.type === "dir" || item.type === "dir-link") {
-          path.push(item.name)
-        }
         return item
       }
     }
     return null
   }
+
   function getTitle (event, itemName) {
     const titles = {
       createNewDir: "create new directory",
@@ -332,7 +335,7 @@
         return this.copySelectedComponent.storagePath || "/"
       },
       isSND(){
-        return this.activeItem !== null && this.activeItem.type === "snd"
+        return this.activeItem !== null && this.activeItem.type.startsWith("snd");
       }
     },
     watch: {
@@ -385,16 +388,16 @@
         this.$copyText(this.dialog.inputField, this.$refs.icon.$el)
       },
       getActiveItem (key) {
-        const pathArray = [this.selectedComponentAbsPath]
-        const activeItem = _getActiveItem(this.items,key,pathArray);
-        const activeItemPath = pathArray.join(this.pathSep)
-        return [activeItem, activeItemPath]
+        return  _getActiveItem(this.items,key);
       },
       getComponentDirRootFiles(){
         const cb= (fileList)=>{
-        this.items = fileList
-          .filter((e)=>{return !e.isComponentDir})
-          .map(fileListModifier.bind(null, this.pathSep))
+          if(fileList === null){
+            return;
+          }
+          this.items = fileList
+            .filter((e)=>{return !e.isComponentDir})
+            .map(fileListModifier.bind(null, this.pathSep))
         }
         const path = this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
         const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent"
@@ -408,11 +411,13 @@
           this.activeItem=null
           return
         }
-        const [activeItem, activeItemPath] = this.getActiveItem(activeItems[0])
-        this.activeItem=activeItem;
-        this.currentDir=activeItemPath
-        const fullPath = `${this.currentDir}${this.pathSep}${this.activeItem.name}`
-        this.commitSelectedFile(fullPath);
+        this.activeItem = this.getActiveItem(activeItems[0])
+        if(this.activeItem === null){
+          console.log("failed to get current selected Item");
+          return
+        }
+        this.currentDir=this.activeItem.path
+        this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
       },
       onChoose(event){
         for (const file of event.files){
@@ -449,14 +454,18 @@
               .map(fileListModifier.bind(null, this.pathSep))
             resolve()
           }
-          const [activeItem, currentDir] = this.getActiveItem(item.id)
+          const activeItem = this.getActiveItem(item.id)
+          if(activeItem === null){
+            console.log("failed to get current selected Item");
+            return
+          }
           const path = this.selectedComponent.type === "storage"
-            ?  [this.storagePath, currentDir.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
-            : currentDir
+            ?  [this.storagePath, item.id.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
+            : item.id
           if(item.type === "dir" || item.type === "dir-link"){
               SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
           }else{
-            SIO.emitGlobal("getSNDContents", this.projectRootDir, currentDir, item.name, item.type.startsWith("sndd"),cb)
+            SIO.emitGlobal("getSNDContents", this.projectRootDir, item.path, item.name, item.type.startsWith("sndd"),cb)
           }
         })
       },
@@ -522,6 +531,7 @@
       },
       download(){
         this.commitWaitingDownload(true);
+        debug(`download request: ${this.activeItem.id}`);
         SIO.emitGlobal('download', this.projectRootDir, this.activeItem.id, (url)=>{
           this.downloadURL=url
           this.downloadDialog=true

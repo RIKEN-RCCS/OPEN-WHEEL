@@ -48,8 +48,8 @@ async function prepareRemoteExecDir(task) {
   const remoteScriptPath = path.posix.join(task.remoteWorkingDir, task.script);
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
   getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} start`);
-  await ssh.send(task.workingDir, path.posix.dirname(task.remoteWorkingDir));
-  await ssh.chmod(remoteScriptPath, "744");
+  await ssh.send([task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
+  await ssh.exec(`chmod 744 ${remoteScriptPath}`);
   task.preparedTime = getDateString(true, true);
   getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} finished`);
 }
@@ -123,6 +123,9 @@ function makeBulkOpt(task) {
 
 async function needsRetry(task) {
   let rt = false;
+  if (typeof task.retryCondition === "undefined" || task.retryCondition === null) {
+    return task.retry > 0;
+  }
   try {
     rt = await evalCondition(task.projectRootDir, task.retryCondition, task.workingDir, task.currentIndex);
   } catch (err) {
@@ -163,7 +166,7 @@ class Executer {
     const hostname = hostinfo != null ? hostinfo.host : null;
     const execInterval = getExecInterval(hostinfo, isJob);
     this.batch = new SBS({
-      exec: async(task)=>{
+      exec: async (task)=>{
         task.startTime = getDateString(true, true);
 
         try {
@@ -211,13 +214,11 @@ class Executer {
   async submit(task) {
     const job = {
       args: task,
-      maxRetry: task.retryTimes || defaultTaskRetryCount,
+      maxRetry: task.retry || defaultTaskRetryCount,
       retry: false
     };
 
-    if (Object.prototype.hasOwnProperty.call(task, "retryCondition")) {
-      job.retry = needsRetry.bind(null, task);
-    }
+    job.retry = needsRetry.bind(null, task);
     task.sbsID = this.batch.qsub(job);
 
     if (task.sbsID !== null) {
@@ -275,9 +276,11 @@ class RemoteJobExecuter extends Executer {
     getLogger(task.projectRootDir).debug("submitting job (remote):", submitCmd);
     await setTaskState(task, "running");
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
-    const output = [];
-    const rt = await ssh.exec(submitCmd, {}, output, output);
-    const outputText = output.join("");
+
+    let outputText = "";
+    const rt = await ssh.exec(submitCmd, (data)=>{
+      outputText += data;
+    });
 
     if (rt !== 0) {
       const err = new Error("submit command failed");
@@ -317,14 +320,9 @@ class RemoteTaskExecuter extends Executer {
 
     //if exception occurred in ssh.exec, it will be catched in caller
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
-    const rt = await ssh.exec(cmd, {}, (data)=>{
-      getLogger(task.projectRootDir).sshout(data.toString().trim());
-    },
-    (data)=>{
-      getLogger(task.projectRootDir).ssherr(data.toString().trim());
+    const rt = await ssh.exec(cmd, (data)=>{
+      getLogger(task.projectRootDir).sshout(data);
     });
-
-
     getLogger(task.projectRootDir).debug(task.name, "(remote) done. rt =", rt);
 
     if (rt === 0) {

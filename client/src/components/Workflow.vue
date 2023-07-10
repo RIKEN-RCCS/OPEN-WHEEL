@@ -12,17 +12,19 @@
       app
       extended
     >
-      <a
-        href="home"
-        class="text-uppercase text-decoration-none text-h4 white--text"
-      > WHEEL </a>
+      <a href="home"> <v-img :src="imgLogo" /></a>
+      <span
+        class="text-lowercase text-decoration-none text-h5 white--text ml-4"
+      >
+        workflow
+      </span>
       <v-spacer />
-      <p
+      <span
         class="text-decoration-none text-h5 white--text"
         @click="projectDescription=projectJson.description;descriptionDialog=true"
       >
         {{ projectJson !== null ? projectJson.name : "" }}
-      </p>
+      </span>
       <v-spacer />
       <v-btn
         rounded
@@ -334,6 +336,7 @@
 <script>
   "use strict";
   import { mapState, mapMutations, mapActions, mapGetters } from "vuex";
+  import imgLogo from "@/assets/wheel_logomark.png";
   import logScreen from "@/components/logScreen.vue";
   import NavDrawer from "@/components/common/NavigationDrawer.vue";
   import passwordDialog from "@/components/common/passwordDialog.vue";
@@ -358,6 +361,7 @@
     },
     data: ()=>{
       return {
+        imgLogo,
         projectJson: null,
         drawer: false,
         mode: 0,
@@ -400,12 +404,17 @@
       }
     },
     mounted: function () {
-      const projectRootDir = readCookie("rootDir");
+      let projectRootDir = sessionStorage.getItem("projectRootDir")
+      if(projectRootDir === "not-set"){
+        projectRootDir = readCookie("rootDir");
+        sessionStorage.setItem("projectRootDir", projectRootDir);
+      }
+      this.commitProjectRootDir(projectRootDir);
+
       const baseURL=readCookie("socketIOPath");
       this.$router.history.base=baseURL === "/" ? "" : baseURL;
       SIO.init({projectRootDir}, baseURL);
       const ID = readCookie("root");
-      this.commitProjectRootDir(projectRootDir);
       this.commitRootComponentID(ID);
 
       SIO.onGlobal("askPassword", (hostname, cb)=>{
@@ -433,9 +442,12 @@
         this.commitComponentTree(componentTree);
       });
       SIO.onGlobal("showMessage", this.showSnackbar);
-      SIO.onGlobal("hostList", (hostList)=>{
-        this.commitRemoteHost(hostList);
+      SIO.onGlobal("logERR", (message)=>{
+        const rt=/^\[.*ERROR\].*\- *(.*?)$/m.exec(message)
+        const output= rt ? rt[1] || rt[0] : message;
+        this.showSnackbar(output)
       });
+      SIO.onGlobal("hostList", this.commitRemoteHost);
       SIO.onGlobal("projectState", (state)=>{
         this.commitProjectState(state.toLowerCase());
       });

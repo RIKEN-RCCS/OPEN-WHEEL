@@ -6,6 +6,7 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
+const glob = require("glob");
 const minimatch = require("minimatch");
 const klaw = require("klaw");
 const { zip } = require("zip-a-folder");
@@ -33,7 +34,7 @@ const projectJsonFileOnly = new RegExp(`^.*(?:${escapeRegExp(projectJsonFilename
  * @param {string} msg.mode - mode flag. it must be one of dir, dirWithProjectJson, underComponent, SND
  * @param {Function} cb - call back function
  */
-const onGetFileList = async(projectRootDir, msg, cb)=>{
+const onGetFileList = async (projectRootDir, msg, cb)=>{
   const target = msg.path ? path.normalize(convertPathSep(msg.path)) : rootDir;
   const request = target;
 
@@ -66,7 +67,7 @@ const onGetFileList = async(projectRootDir, msg, cb)=>{
   }
 };
 
-const onGetSNDContents = async(projectRootDir, requestDir, glob, isDir, cb)=>{
+const onGetSNDContents = async (projectRootDir, requestDir, pattern, isDir, cb)=>{
   const modifiedRequestDir = path.normalize(convertPathSep(requestDir));
   getLogger(projectRootDir).debug(projectRootDir, "getSNDContents in", modifiedRequestDir);
 
@@ -77,7 +78,7 @@ const onGetSNDContents = async(projectRootDir, requestDir, glob, isDir, cb)=>{
       sendDirname: isDir,
       sendFilename: !isDir,
       filter: {
-        all: minimatch.makeRe(glob),
+        all: minimatch.makeRe(pattern),
         file: exceptSystemFiles,
         dir: null
       }
@@ -176,7 +177,7 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
   cb(true);
 }
 
-const onUploadFileSaved = async(event)=>{
+const onUploadFileSaved = async (event)=>{
   const projectRootDir = event.file.meta.projectRootDir;
   if (!event.file.success) {
     getLogger(projectRootDir).error("file upload failed", event.file.name);
@@ -215,23 +216,37 @@ const onUploadFileSaved = async(event)=>{
   emitAll(uploadClient, "fileList", result);
 };
 
-const onDownload = async(projectRootDir, target, cb)=>{
+const onDownload = async (projectRootDir, target, cb)=>{
   const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
   const tmpDir = await fs.mkdtemp(`${dir}/`);
-  const stats = await fs.stat(target);
-  if (stats.isDirectory()) {
-    zip(target, `${path.join(tmpDir, path.basename(target))}.zip`);
+
+  let downloadZip = false;
+  let targetBasename = "";
+  if (glob.hasMagic(target)) {
+    targetBasename = path.basename("SND_CONTENT");
+    await zip(target, `${path.join(tmpDir, targetBasename)}.zip`);
+    downloadZip = true;
   } else {
-    await deliverFile(target, `${tmpDir}/${path.basename(target)}`);
+    const stats = await fs.stat(target);
+    targetBasename = path.basename(target);
+
+    if (stats.isDirectory()) {
+      await zip(target, `${path.join(tmpDir, targetBasename)}.zip`);
+      downloadZip = true;
+    } else {
+      await deliverFile(target, `${tmpDir}/${targetBasename}`);
+    }
   }
+
+  const ext = downloadZip ? ".zip" : "";
   const baseURL = process.env.WHEEL_BASE_URL || "";
-  const url = `${baseURL}/${path.join(path.relative(downloadRootDir, tmpDir), path.basename(target))}${stats.isDirectory() ? ".zip" : ""}`;
+  const url = `${baseURL}/${path.join(path.relative(downloadRootDir, tmpDir), targetBasename)}${ext}`;
   getLogger(projectRootDir).debug("Download url is ready", url);
   cb(url);
 };
 
-const onRemoveDownloadFile = async(projectRootDir, URL, cb)=>{
-  const { dir } = await getTempd(projectRootDir, "download");
+const onRemoveDownloadFile = async (projectRootDir, URL, cb)=>{
+  const dir = await getTempd(projectRootDir, "download");
   const target = path.join(dir, path.basename(path.dirname(URL)));
   getLogger(projectRootDir).debug(`remove ${target}`);
   await fs.remove(target);

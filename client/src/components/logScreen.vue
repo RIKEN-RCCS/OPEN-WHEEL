@@ -65,8 +65,7 @@
           { label: "info", id: "info",          clear: 0, log: "",unread: false, eventNames: ["logINFO", "logWARN", "logERR"] },
           { label: "stdout", id: "stdout",      clear: 0, log: "", unread: false, eventNames: ["logStdout"] },
           { label: "stderr", id: "stderr",      clear: 0, log: "", unread: false, eventNames: ["logStderr"] },
-          { label: "stdout(SSH)", id: "sshout", clear: 0, log: "", unread: false, eventNames: ["logSSHout"] },
-          { label: "stderr(SSH)", id: "ssherr", clear: 0, log: "", unread: false, eventNames: ["logSSHerr"] },
+          { label: "output(SSH)", id: "sshout", clear: 0, log: "", unread: false, eventNames: ["logSSHout","logSSHerr"] },
         ],
       };
     },

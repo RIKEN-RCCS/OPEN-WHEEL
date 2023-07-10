@@ -1,0 +1,20 @@
+{
+  "boxWidth": 256,
+  "offsetRatio": 1.8,
+  "boxWidthRatio": 1.5,
+  "boxHeightRatio": 1.5,
+  "plugColor": "#338033",
+  "elsePlugColor": "#9944bb",
+  "filePlugColor": "#5673BF",
+  "textHeight": 32,
+  "textLengthLimit": 100,
+  "maxTextChar": 10,
+  "textOffset": 8,
+  "socketLongSideLength": 20,
+  "socketShortSideLength": 8,
+  "plugSize": 20,
+  "iconSize": 24,
+  "componentBackgroundColor": "rgba(68,68,73,0.5)",
+  "recieverMargine": 4,
+  "editorHeight": 760
+}

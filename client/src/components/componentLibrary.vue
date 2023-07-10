@@ -21,7 +21,10 @@
           :color="item.color"
           tile
           draggable
-          @dragstart.capture="onDragStart($event, item)"
+          @dragstart.capture="onDragstart($event, item)"
+          @dragover.prevent
+          @dragenter.prevent
+          @dragend="onDragend($event, item)"
         >
           <v-tooltip
             right
@@ -43,9 +46,13 @@
   </v-navigation-drawer>
 </template>
 <script>
-  import { mapState, mapMutations } from "vuex";
+  import Debug from "debug";
+  import { mapState, mapMutations, mapGetters } from "vuex";
+  import { widthComponentLibrary, heightToolbar, heightDenseToolbar} from "@/lib/componentSizes.json";
+  import SIO from "@/lib/socketIOWrapper.js";
   import loadComponentDefinition from "@/lib/componentDefinision.js";
   const componentDefinitionObj = loadComponentDefinition();
+  const debug=Debug("wheel:workflow:componentLibrary");
 
   export default {
     name: "ComponentLibrary",
@@ -57,10 +64,13 @@
             ...componentDefinitionObj[e],
           };
         }),
+        offsetX:null,
+        offsetY:null
       };
     },
     computed: {
       ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir"]),
+      ...mapGetters(["currentComponentAbsPath" ]),
       isStepJob: function () {
         if (this.currentComponent === null) return false;
         return this.currentComponent.type === "stepjob";
@@ -78,15 +88,33 @@
     },
     methods: {
       ...mapMutations({ commitComponentTree: "componentTree" }),
-      onDragStart (event, item) {
-        event.dataTransfer.setData("offsetX", event.offsetX);
-        event.dataTransfer.setData("offsetY", event.offsetY);
-        event.dataTransfer.setData("type", item.type);
+      onDragstart (event, item) {
+        this.offsetX=event.offsetX
+        this.offsetY=event.offsetY
+
+        // set icon during drag
         const icon = this.$el.querySelector(`#${item.type}`);
         event.dataTransfer.setDragImage(icon, event.offsetX, event.offsetY);
         event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.dropEffect = "move";
       },
+      onDragend(event, item){
+        const x = event.clientX - widthComponentLibrary - this.offsetX;
+        const y = event.clientY - heightToolbar - heightDenseToolbar * 2 - this.offsetY;
+
+        if ( x < 0 || x > this.canvasWidth || y < 0 || y > this.canvasHeight){
+          debug("out of range ",x,y)
+        }
+
+        const payload = {
+          type: item.type,
+          pos: { x, y },
+          path: this.currentComponentAbsPath,
+        };
+        if (payload.type === "parameterStudy") {
+          payload.type = "PS";
+        }
+        SIO.emitGlobal("createNode", this.projectRootDir, payload, this.currentComponent.ID, SIO.generalCallback);
+      }
     },
   };
 </script>

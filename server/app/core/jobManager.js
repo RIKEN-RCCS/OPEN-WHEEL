@@ -15,6 +15,7 @@ const { gatherFiles } = require("./execUtils");
 const { jobScheduler, jobManagerJsonFilename } = require("../db/db");
 const { createStatusFile, createBulkStatusFile } = require("./execUtils");
 const { eventEmitters } = require("./global.js");
+const { formatSshOutput } = require("../lib/utility.js");
 
 const jobManagers = new Map();
 
@@ -47,7 +48,9 @@ async function issueStatCmd(statCmd, task, output) {
     return Promise.reject(new Error("local submit is not supported"));
   }
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
-  return ssh.exec(statCmd, {}, output, output);
+  return ssh.exec(statCmd, (data)=>{
+    output.push(data);
+  });
 }
 
 function getBulkFirstCapture(outputText, reSubCode) {
@@ -80,7 +83,7 @@ async function isFinished(JS, task) {
 
   const output = [];
   const statCmdRt = await issueStatCmd(statCmd, task, output);
-  const outputText = output.join("");
+  const outputText = formatSshOutput(output);
 
   const rtList = Array.isArray(JS.acceptableRt) ? [0, ...JS.acceptableRt] : [0, JS.acceptableRt];
   if (!rtList.includes(statCmdRt)) {
@@ -178,7 +181,7 @@ class JobManager extends EventEmitter {
       throw err;
     }
     this.batch = new SBS({
-      exec: async(task)=>{
+      exec: async (task)=>{
         getLogger(task.projectRootDir).trace(task.jobID, "status check start");
 
         if (task.state !== "running") {

@@ -4,13 +4,12 @@
  * See License in the project root for the license information.
  */
 <template>
-  <div class="xterm_mount_point" />
+  <div class="xterm_mount_point text-left" />
 </template>
 <script>
   import { Terminal } from "xterm";
   import {FitAddon } from "xterm-addon-fit";
   import "@/../node_modules/xterm/css/xterm.css";
-  import SIO from "@/lib/socketIOWrapper.js";
   export default {
     name: "Xterm",
     props: {

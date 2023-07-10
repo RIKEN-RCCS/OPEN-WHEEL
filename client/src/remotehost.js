@@ -5,7 +5,7 @@
  */
 import Vue from "vue";
 import Remotehost from "./components/Remotehost.vue";
-import vuetify from "./plugins/vuetify";
+import vuetify from '@/plugins/vuetify'
 
 Vue.config.productionTip = false;
 

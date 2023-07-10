@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const uuidv1 = require("uuid/v1");
+const uuid = require("uuid");
 const { defaultPSconfigFilename } = require("../db/db.js");
 
 class BaseWorkflowComponent {
@@ -17,7 +17,7 @@ class BaseWorkflowComponent {
      */
     this.pos = pos;
 
-    this.ID = uuidv1();
+    this.ID = uuid.v1();
     this.type = null;
     this.name = null;
     this.description = null;
@@ -142,10 +142,10 @@ class Task extends GeneralComponent {
     //note on filters
     //if include filter is set, matched files are transferd if it does not match exclude filter
     /**include filter for recieve files from remote host */
-    this.include = null;
+    this.include = [];
 
     /**exclude filter for recieve files from remote host */
-    this.exclude = null;
+    this.exclude = [];
   }
 }
 
@@ -348,8 +348,8 @@ function isInitialComponent(component) {
   if (component.type === "storage") {
     return false;
   }
-  if (component.type === "source" && component.outputFiles[0].dst.length > 0) {
-    return true;
+  if (component.type === "source") {
+    return component.outputFiles[0].dst.length > 0;
   }
   if (component.type === "viewer") {
     return true;

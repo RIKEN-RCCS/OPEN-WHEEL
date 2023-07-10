@@ -9,107 +9,48 @@ const path = require("path");
 const { promisify } = require("util");
 const { EventEmitter } = require("events");
 const glob = require("glob");
-const FileType = require("file-type");
-const isSvg = require("is-svg");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { remoteHost, componentJsonFilename, filesJsonFilename } = require("../db/db");
+const { remoteHost, componentJsonFilename, filesJsonFilename, projectJsonFilename } = require("../db/db");
 const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
-const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
+const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
 const { componentJsonReplacer, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
-const { evalCondition, getRemoteWorkingDir } = require("./dispatchUtils");
+const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
 const { eventEmitters } = require("./global.js");
-const { createTempd } = require("../core/tempd.js");
-
-
-const viewerSupportedTypes = ["apng", "avif", "gif", "jpg", "png", "webp", "tif", "bmp", "svg"];
+const { createTempd } = require("./tempd.js");
+const { viewerSupportedTypes, getFiletype } = require("./viewerUtils.js");
+const {
+  setStateR,
+  loopInitialize,
+  forGetNextIndex,
+  forIsFinished,
+  forTripCount,
+  forKeepLoopInstance,
+  whileGetNextIndex,
+  whileIsFinished,
+  whileKeepLoopInstance,
+  foreachGetNextIndex,
+  foreachIsFinished,
+  foreachTripCount,
+  foreachKeepLoopInstance
+} = require("./loopUtils.js");
+const { makeCmd } = require("./psUtils.js");
 
 const taskDB = new Map();
 
-async function getFiletype(filename) {
-  let rt;
-  const buffer = await fs.readFile(filename);
-  if (isSvg(buffer.toString())) {
-    rt = {
-      ext: "svg",
-      mime: "image/svg+xml"
-    };
-  } else {
-    try {
-      rt = await FileType.fromBuffer(buffer);
-    } catch (e) {
-    //eslint-disable-next-line valid-typeof
-      if (typeof (e) === "EndOfStreamError") {
-        return rt;
-      }
-    }
-  }
-  if (rt) {
-    rt.name = filename;
-  }
-  return rt;
-}
-
-
-/**
- * check state is finished or not
- * @param {string} state - state string
- * @returns {boolean} is finished or not?
- */
-function isFinishedState(state) {
-  return state === "finished" || state === "failed" || state === "unknown";
-}
-
-/**
- * set component and its descendant's state
- */
-async function setStateR(dir, state) {
-  const filenames = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
-  filenames.push(path.join(dir, componentJsonFilename));
-  const p = filenames.map((filename)=>{
-    return readJsonGreedy(filename)
-      .then((component)=>{
-        component.state = state;
-        return fs.writeJson(filename, component, { spaces: 4, replacer: componentJsonReplacer });
-      });
-  });
-  return Promise.all(p);
-}
 
 //private functions
-async function getScatterFilesV2(templateRoot, paramSettings) {
-  if (!(Object.prototype.hasOwnProperty.call(paramSettings, "scatter") && Array.isArray(paramSettings.scatter))) {
-    return [];
-  }
-  const srcNames = await Promise.all(
-    paramSettings.scatter
-      .map((e)=>{
-        return promisify(glob)(e.srcName, { cwd: templateRoot });
-      })
-  );
-  return Array.prototype.concat.apply([], srcNames);
-}
-
-async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params) {
-  return Promise.all(
-    targetFiles.map(async(targetFile)=>{
-      const template = (await fs.readFile(path.resolve(templateRoot, targetFile))).toString();
-      const result = nunjucks.renderString(template, params);
-      return fs.outputFile(path.resolve(instanceRoot, targetFile), result);
-    })
-  );
-}
 
 async function replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber) {
   return Promise.all(
-    targetFiles.map(async(targetFile)=>{
+    targetFiles.map(async (targetFile)=>{
       const template = (await fs.readFile(path.resolve(templateRoot, targetFile))).toString();
       const temp = replacePathsep(targetFile);
       const arrTargetPath = temp.split(path.posix.sep);
@@ -126,7 +67,7 @@ async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumb
   const paramsKeys = Object.keys(params);
   let targetNum = 0;
   return Promise.all(
-    targetFiles.map(async(targetFile, index)=>{
+    targetFiles.map(async (targetFile, index)=>{
       const label = `BULKNUM_${bulkNumber}`;
       const target = replacePathsep(targetFile);
       const targetKey = paramsKeys[index];
@@ -138,191 +79,6 @@ async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumb
   );
 }
 
-async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params) {
-  const p = [];
-  for (const recipe of scatterRecipe) {
-    const srcName = nunjucks.renderString(recipe.srcName, params);
-    const srces = await promisify(glob)(srcName, { cwd: templateRoot });
-    const dstDir = Object.prototype.hasOwnProperty.call(recipe, "dstNode") ? path.join(instanceRoot, recipe.dstNode) : instanceRoot;
-    const dstName = nunjucks.renderString(recipe.dstName, params);
-    for (const src of srces) {
-      const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(dstDir, dstName.slice(0, -1), src) : path.join(dstDir, dstName);
-      p.push(
-        fs.remove(dst)
-          .catch((err)=>{
-            if (err.code !== "ENOEXISTS") {
-              return Promise.reject(err);
-            }
-            return true;
-          })
-          .then(()=>{
-            return fs.copy(path.join(templateRoot, src), dst);
-          })
-      );
-    }
-  }
-  return Promise.all(p).catch((e)=>{
-    if (e.code !== "ENOENT") {
-      return Promise.reject(e);
-    }
-    return true;
-  });
-}
-
-async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params) {
-  const p = [];
-  for (const recipe of gatherRecipe) {
-    const srcDir = Object.prototype.hasOwnProperty.call(recipe, "srcNode") ? path.join(instanceRoot, recipe.srcNode) : instanceRoot;
-    const srcName = nunjucks.renderString(recipe.srcName, params);
-    const srces = await promisify(glob)(srcName, { cwd: srcDir });
-    const dstName = nunjucks.renderString(recipe.dstName, params);
-    for (const src of srces) {
-      const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(templateRoot, dstName.slice(0, -1), src) : path.join(templateRoot, dstName);
-      p.push(
-        fs.remove(dst)
-          .catch((err)=>{
-            if (err.code !== "ENOEXISTS") {
-              return Promise.reject(err);
-            }
-            return true;
-          })
-          .then(()=>{
-            return fs.copy(path.join(srcDir, src), dst);
-          })
-      );
-    }
-  }
-  return Promise.all(p).catch((e)=>{
-    if (e.code !== "ENOENT") {
-      return Promise.reject(e);
-    }
-    return true;
-  });
-}
-
-async function doNothing() {
-}
-
-function makeCmd(paramSettings) {
-  const params = Object.prototype.hasOwnProperty.call(paramSettings, "params") ? paramSettings.params : paramSettings.target_param;
-  if (paramSettings.version === 2) {
-    return [getParamSpacev2.bind(null, params), getScatterFilesV2, scatterFilesV2, gatherFilesV2, replaceByNunjucks];
-  }
-  //version 1 (=unversioned)
-  return [removeInvalidv1.bind(null, params), ()=>{
-    return [];
-  }, doNothing, doNothing, replaceTargetFile];
-}
-
-function forGetNextIndex(component) {
-  return component.currentIndex !== null ? component.currentIndex + component.step : component.start;
-}
-
-function forIsFinished(component) {
-  return (component.currentIndex > component.end && component.step > 0) || (component.currentIndex < component.end && component.step < 0);
-}
-
-function forTripCount(component) {
-  return Math.ceil((component.end - component.start) / component.step) + 1;
-}
-
-function forKeepLoopInstance(component, cwfDir) {
-  if (Number.isInteger(component.keep) && component.keep >= 0) {
-    const deleteComponentInstance = component.keep === 0 ? component.currentIndex - component.step : component.currentIndex - (component.keep * component.step);
-    if (deleteComponentInstance >= 0) {
-      fs.remove(path.resolve(cwfDir, `${component.originalName}_${sanitizePath(deleteComponentInstance)}`));
-    }
-  }
-}
-
-function whileKeepLoopInstance(component, cwfDir) {
-  if (Number.isInteger(component.keep) && component.keep >= 0) {
-    const deleteComponentInstance = component.keep === 0 ? component.currentIndex - 1 : component.currentIndex - component.keep;
-    if (deleteComponentInstance >= 0) {
-      fs.remove(path.resolve(cwfDir, `${component.originalName}_${sanitizePath(deleteComponentInstance)}`));
-    }
-  }
-}
-
-function foreachKeepLoopInstance(component, cwfDir) {
-  if (Number.isInteger(component.keep) && component.keep >= 0) {
-    const currentIndexNumber = component.currentIndex !== null ? component.indexList.indexOf(component.currentIndex) : component.indexList.length;
-    const deleteComponentNumber = component.keep === 0 ? currentIndexNumber - 1 : currentIndexNumber - component.keep;
-    const deleteComponentName = deleteComponentNumber >= 0 ? `${component.originalName}_${sanitizePath(component.indexList[deleteComponentNumber])}` : "";
-    if (deleteComponentName) {
-      fs.remove(path.resolve(cwfDir, deleteComponentName));
-    }
-  }
-}
-
-function whileGetNextIndex(component) {
-  return component.currentIndex !== null ? component.currentIndex + 1 : 0;
-}
-
-async function whileIsFinished(cwfDir, projectRootDir, component) {
-  const cwd = path.resolve(cwfDir, component.name);
-  const condition = await evalCondition(projectRootDir, component.condition, cwd, component.currentIndex);
-  return !condition;
-}
-
-function foreachGetNextIndex(component) {
-  if (component.currentIndex !== null) {
-    const i = component.indexList.findIndex((e)=>{
-      return e === component.currentIndex;
-    });
-
-    if (i === -1 || i === component.indexList.length - 1) {
-      return null;
-    }
-    return component.indexList[i + 1];
-  }
-  return component.indexList[0];
-}
-
-function foreachIsFinished(component) {
-  return component.currentIndex === null;
-}
-function foreachTripCount(component) {
-  return component.indexList.length;
-}
-
-function loopInitialize(component, getTripCount) {
-  component.initialized = true;
-  component.originalName = component.name;
-  component.numFinished = -1; //numFinishd is incremented at the begining of loop
-  component.currentIndex = null;
-
-  if (typeof getTripCount === "function") {
-    component.numTotal = getTripCount(component);
-  }
-  if (!component.env) {
-    component.env = {};
-  }
-  if (component.type.toLowerCase() === "for") {
-    component.env.WHEEL_FOR_START = component.start;
-    component.env.WHEEL_FOR_END = component.end;
-    component.env.WHEEL_FOR_STEP = component.step;
-  } else if (component.type.toLowerCase() === "while") {
-    component.env.WHEEL_FOREACH_LEN = component.numTotal;
-  }
-}
-
-async function replaceTargetFile(srcDir, dstDir, targetFiles, params) {
-  const promises = [];
-  for (const targetFile of targetFiles) {
-    const tmp = await fs.readFile(path.resolve(srcDir, targetFile));
-    let data = tmp.toString();
-    for (const key in params) {
-      if (typeof key === "string") {
-        data = data.replace(new RegExp(`%%${key}%%`, "g"), params[key].toString());
-      }
-    }
-    //fs.writeFile will overwrites existing file.
-    //so, targetFile is always overwrited!!
-    promises.push(fs.writeFile(path.resolve(dstDir, targetFile), data));
-  }
-  return Promise.all(promises);
-}
 
 /**
  * parse workflow graph and dispatch ready tasks to executer
@@ -823,16 +579,27 @@ class Dispatcher extends EventEmitter {
 
     try {
       this.logger.debug("copy from", srcDir, "to ", dstDir);
-      await fs.copy(srcDir, dstDir, { dereference: true });
+      await fs.copy(srcDir, dstDir, {
+        dereference: true,
+        filter: async (target)=>{
+          if (srcDir === target) {
+            return true;
+          }
+          const subComponent = await isSubComponent(target);
+          return !subComponent;
+        }
+      });
       await setStateR(dstDir, "not-started");
       await fs.writeJson(path.resolve(dstDir, componentJsonFilename), newComponent, { spaces: 4, replacer: componentJsonReplacer });
       await this._delegate(newComponent);
-      ++component.numFinished;
 
       keepLoopInstance(component, this.cwfDir);
 
       if (newComponent.state === "failed") {
         component.hasFaild = true;
+        ++component.numFailed;
+      } else {
+        ++component.numFinished;
       }
     } catch (e) {
       e.index = component.currentIndex;
@@ -1100,7 +867,7 @@ class Dispatcher extends EventEmitter {
     } else {
       const remotehostID = remoteHost.getID("name", component.host);
       const ssh = getSsh(this.projectRootDir, remotehostID);
-      await ssh.send(storagePath, currentDir);
+      await ssh.send([`${currentDir}/`], `${storagePath}/`, [`--exclude=${componentJsonFilename}`, `--exclude=${projectJsonFilename}`]);
     }
     await this._addNextComponent(component);
     await this._setComponentState(component, "finished");

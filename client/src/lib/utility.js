@@ -6,15 +6,15 @@
 "use strict";
 
 // NG
-const reWin32ReservedNames = /(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
+export const reWin32ReservedNames = /(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
 const reOnlyWhilteSpace = /^\s*$/;
 // OK
 const alphanumeric = "a-zA-Z0-9";
 // due to escapeRegExp's spec, bars must be added separately any other regexp strings
 // eslint-disable-next-line no-useless-escape
 const bars = "_\-";
-const pathseps = "/\\";
-const metaCharactors = "*?[]{}()!?+@.";
+export const pathseps = "/\\";
+export const metaCharactors = "*?[]{}()!?+@.";
 
 /**
  * escape meta character of regex (from MDN)
@@ -22,7 +22,7 @@ const metaCharactors = "*?[]{}()!?+@.";
  * @param {string} target - target string which will be escaped
  * @returns {string} escaped regex string
  */
-function escapeRegExp (target) {
+export function escapeRegExp (target) {
   // eslint-disable-next-line no-useless-escape
   return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
 }
@@ -45,7 +45,7 @@ function isSane (name) {
  * @param {strint} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
-function isValidName (name) {
+export function isValidName (name) {
   if (!isSane(name)) {
     return false;
   }
@@ -62,7 +62,7 @@ function isValidName (name) {
  * @param {strint} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
-function isValidInputFilename (name) {
+export function isValidInputFilename (name) {
   if (!isSane(name)) {
     return false;
   }
@@ -79,7 +79,7 @@ function isValidInputFilename (name) {
  * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
-function isValidOutputFilename (name) {
+export function isValidOutputFilename (name) {
   if (!isSane(name)) {
     return false;
   }
@@ -97,7 +97,7 @@ function isValidOutputFilename (name) {
  * @param {boolean} withMiliseconds - option flag for time resolution
  * return {string}
  */
-function getDateString (humanReadable = false, withMilliseconds = false) {
+export function getDateString (humanReadable = false, withMilliseconds = false) {
   const now = new Date();
   const yyyy = `0000${now.getFullYear()}`.slice(-4);
   const month = now.getMonth() + 1;
@@ -118,7 +118,7 @@ function getDateString (humanReadable = false, withMilliseconds = false) {
  * @param {componeyt || string} target - component type of component itself
  * @return {boolean} - if true, specified component can have children
  */
-function isContainer (target) {
+export function isContainer (target) {
   const type = typeof target === "string" ? target : target.type;
   return ["workflow", "parameterStudy", "for", "while", "foreach", "stepjob"].includes(type);
 }
@@ -128,7 +128,7 @@ function isContainer (target) {
  * @param { string } key - target cookie's property
  * @return { string } - value
  */
-function readCookie (key) {
+export function readCookie (key) {
   const encodedValue = document.cookie
     .split(";")
     .map((kv)=>{
@@ -145,7 +145,7 @@ function readCookie (key) {
  * @param {string} state - project or component status
  * @return {string} - corresponding color
  */
-function state2color(state){
+export function state2color(state){
   const table={
     "running": "#88BB00",
     "failed": "#E60000",
@@ -155,16 +155,3 @@ function state2color(state){
   return typeof table[state] === "undefined" ? "#1E1E1E" : table[state];
 }
 
-module.exports = {
-  escapeRegExp,
-  isValidName,
-  isValidInputFilename,
-  isValidOutputFilename,
-  reWin32ReservedNames,
-  pathseps,
-  metaCharactors,
-  getDateString,
-  isContainer,
-  readCookie,
-  state2color
-};

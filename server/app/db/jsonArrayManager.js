@@ -5,7 +5,7 @@
  */
 "use strict";
 const fs = require("fs-extra");
-const uuidv1 = require("uuid/v1");
+const uuid = require("uuid");
 
 class JsonArrayManager {
   constructor(filename) {
@@ -33,7 +33,7 @@ class JsonArrayManager {
    * @param {Object} entry - data to be added
    */
   add(entry) {
-    entry.id = uuidv1();
+    entry.id = uuid.v1();
     this.data.push(entry);
     return this.write();
   }
@@ -43,7 +43,7 @@ class JsonArrayManager {
    * @param {Object} entry - data to be added at the begining of array
    */
   async unshift(entry) {
-    entry.id = uuidv1();
+    entry.id = uuid.v1();
     this.data.unshift(entry);
     await this.write();
     return entry.id;
@@ -93,7 +93,7 @@ class JsonArrayManager {
       return e.id === id;
     });
     const duplicate = Object.assign({}, target);
-    duplicate.id = uuidv1();
+    duplicate.id = uuid.v1();
     this.data.unshift(duplicate);
     return this.write();
   }
@@ -114,7 +114,7 @@ class JsonArrayManager {
       return e.id === id;
     });
     const duplicate = Object.assign({}, target);
-    duplicate.id = uuidv1();
+    duplicate.id = uuid.v1();
     duplicate.templateName = newLabel;
     this.data.push(duplicate);
     return this.write();

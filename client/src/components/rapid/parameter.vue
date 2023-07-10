@@ -104,6 +104,9 @@
               :items="newItem.list"
               :headers="listHeaders"
               :string-items="true"
+              @add=addList
+              @update=updateList
+              @remove=removeList
             />
           </div>
           <div v-if="newItem.type==='files'">
@@ -111,13 +114,16 @@
               :items="newItem.files"
               :headers="filesHeaders"
               :string-items="true"
+              @add=addFiles
+              @update=updateFiles
+              @remove=removeFiles
             />
           </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn @click="commitChange">
-            <v-icon>mdi-content-save</v-icon>save
+            <v-icon>mdi-check</v-icon>OK
           </v-btn>
           <v-btn @click="closeAndResetDialog">
             <v-icon>mdi-cancel</v-icon>cancel
@@ -141,10 +147,10 @@
         <v-card-actions>
           <v-spacer />
           <v-btn @click="updateFilter">
-            <v-icon>save</v-icon>save
+            <v-icon>mdi-check</v-icon>check
           </v-btn>
           <v-btn @click="closeFilterDialog">
-            <v-icon>cancel</v-icon>cancel
+            <v-icon>mdi-cancel</v-icon>cancel
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -226,7 +232,7 @@
         this.newItem.list.splice(index, 1, item);
       },
       removeList(item, index){
-        removeFromArray(this.newItem.files, item);
+        this.newItem.list.splice(index,1)
       },
       addFiles(item){
         this.newItem.files.push(item);
@@ -235,7 +241,7 @@
         this.newItem.files.splice(index, 1, item);
       },
       removeFiles(item, index){
-        removeFromArray(this.newItem.files, item);
+        this.newItem.files.splice(index,1)
       },
       reset () {
         this.newItem = {
@@ -264,6 +270,7 @@
       },
       openDialog (item) {
         this.currentItem = item;
+        this.newItem = {...item};
         this.dialog = true;
       },
       deleteItem (item) {

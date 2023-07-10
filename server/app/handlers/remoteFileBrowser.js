@@ -12,6 +12,7 @@ const { remoteHost } = require("../db/db");
 const { getLogger } = require("../logSettings");
 const { createSsh, getSsh } = require("../core/sshManager");
 const { createTempd } = require("../core/tempd.js");
+const { formatSshOutput } = require("../lib/utility.js");
 
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
@@ -22,7 +23,7 @@ async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb
   try {
     const id = remoteHost.getID("name", component.host);
     const hostInfo = remoteHost.get(id);
-    await createSsh(projectRootDir, component.host, hostInfo, socket.id);
+    await createSsh(projectRootDir, component.host, hostInfo, socket.id, true);
   } catch (e) {
     cb(false);
     return;
@@ -36,16 +37,14 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
     const stdout = [];
-    const rt = await ssh.exec(`ls -F ${target}`, {}, stdout);
+    const rt = await ssh.exec(`ls -F ${target}`, (output)=>{
+      stdout.push(output);
+    });
     if (rt !== 0) {
       getLogger(projectRootDir).error(projectRootDir, "ls on remotehost failed", rt);
       return cb(null);
     }
-    const lsResults = stdout.join("\n")
-      .split("\n")
-      .filter((e)=>{
-        return e !== "";
-      });
+    const lsResults = formatSshOutput(stdout);
     const links = lsResults.filter((e)=>{
       return e.endsWith("@");
     }).map((e)=>{
@@ -54,21 +53,22 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
     const stdout2 = [];
     if (links.length > 0) {
       //eslint-disable-next-line no-useless-escape
-      const rt2 = await ssh.exec(` cd ${target};for i in ${links.join(" ")};do echo $i; stat -c %F $(readlink -f $i);done`, {}, stdout2);
+      const rt2 = await ssh.exec(` cd ${target};for i in ${links.join(" ")};do echo $i; stat -c %F $(readlink -f $i);done`, (output)=>{
+        stdout2.push(output);
+      });
       if (rt2 !== 0) {
         getLogger(projectRootDir).error(projectRootDir, "ls on remotehost failed", rt);
         return cb(null);
       }
     }
-    const readlinkResults = stdout2.join("\n")
-      .split("\n")
-      .filter((e)=>{
-        return e !== "";
-      });
+    const readlinkResults = formatSshOutput(stdout2);
 
     const content = lsResults.map((e)=>{
+      if (e.endsWith("=") || e.endsWith("%") || e.endsWith("|")) {
+        return null;
+      }
       const islink = e.endsWith("@");
-      const name = e.slice(0, e.length - 1);
+      const name = islink || e.endsWith("*") || e.endsWith("/") ? e.slice(0, e.length - 1) : e;
       let type = null;
       if (islink) {
         const index = readlinkResults.findIndex((result)=>{
@@ -81,6 +81,8 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
         type = e.endsWith("/") ? "dir" : "file";
       }
       return { path: target, name, type, islink };
+    }).filter((e)=>{
+      return e !== null;
     });
     return cb(content);
   } catch (e) {
@@ -97,9 +99,10 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
     const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
     const tmpDir = await fs.mkdtemp(`${dir}/`);
     const downloadContentName = path.basename(target);
+
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    await ssh.recv(target, `${tmpDir}/`);
+    await ssh.recv([target], `${tmpDir}/`);
     const stats = await fs.stat(path.resolve(tmpDir, downloadContentName));
 
     if (stats.isDirectory()) {

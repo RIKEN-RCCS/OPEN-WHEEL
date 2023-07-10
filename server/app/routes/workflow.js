@@ -10,7 +10,7 @@ const { getComponent } = require("../core/workflowUtil");
 const { importProject } = require("../core/projectFilesOperator");
 
 module.exports = {
-  get: async(req, res)=>{
+  get: async (req, res)=>{
     //accept GET method only for reload case
     if (!req.cookies || !req.cookies.rootDir) {
       return;
@@ -19,13 +19,16 @@ module.exports = {
     res.cookie("socketIOPath", baseURL);
     res.sendFile(path.resolve(__dirname, "../public/workflow.html"));
   },
-  post: async(req, res)=>{
+  post: async (req, res)=>{
     const projectRootDir = req.body.project;
-    await importProject(projectRootDir);
-    const { ID } = await getComponent(projectRootDir, path.resolve(projectRootDir, componentJsonFilename));
+    const newProjectRootDir = await importProject(projectRootDir);
+    if (!newProjectRootDir) {
+      return;
+    }
+    const { ID } = await getComponent(newProjectRootDir, path.resolve(newProjectRootDir, componentJsonFilename));
     res.cookie("root", ID);
-    res.cookie("rootDir", projectRootDir);
-    res.cookie("project", path.resolve(projectRootDir, projectJsonFilename));
+    res.cookie("rootDir", newProjectRootDir);
+    res.cookie("project", path.resolve(newProjectRootDir, projectJsonFilename));
     const baseURL = process.env.WHEEL_BASE_URL || "/";
     res.cookie("socketIOPath", baseURL);
     res.sendFile(path.resolve(__dirname, "../public/workflow.html"));

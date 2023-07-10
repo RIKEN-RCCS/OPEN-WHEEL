@@ -12,10 +12,7 @@
       app
       extended
     >
-      <a
-        href="./home"
-        class="text-uppercase text-decoration-none text-h4 white--text"
-      > WHEEL </a>
+      <a href="home"> <v-img :src="imgLogo" /></a>
       <span
         class="text-lowercase text-decoration-none text-h5 white--text ml-4"
       >
@@ -40,11 +37,11 @@
         :items="hosts"
         :headers="headers"
       >
-        <template #item.connectionTest="{ item }">
+        <template #item.connectionTest="{ item, index }">
           <v-btn
             :color="item.testResult"
             :loading="item.loading"
-            @click="openPasswordDialog(item)"
+            @click="testConnection(index)"
           >
             <v-icon> {{ item.icon }} </v-icon>
             {{ item.connectionStatus }}
@@ -58,10 +55,11 @@
           />
         </template>
       </v-data-table>
-      <password-dialog
-        v-model="pwDialog"
-        @password="testConnection"
-      />
+    <password-dialog
+      v-model="pwDialog"
+      :title="pwDialogTitle"
+      @password="pwCallback"
+    />
       <remove-confirm-dialog
         v-model="rmDialog"
         :title="removeConfirmMessage"
@@ -89,7 +87,10 @@
 </template>
 <script>
   "use strict";
+  import Debug from "debug";
+  const debug = Debug("wheel:remotehost");
   import SIO from "@/lib/socketIOWrapper.js";
+  import imgLogo from "@/assets/wheel_logomark.png";
   import { readCookie } from "@/lib/utility.js";
   import actionRow from "@/components/common/actionRow.vue";
   import navDrawer from "@/components/common/NavigationDrawer.vue";
@@ -110,8 +111,11 @@
     },
     data: ()=>{
       return {
+        imgLogo,
         drawer: false,
         pwDialog: false,
+        pwCallback:null,
+        pwDialogTitle:"",
         rmDialog: false,
         newHostDialog: false,
         newCloudDialog: false,
@@ -122,11 +126,10 @@
           { text: "usrename", value: "username" },
           { text: "port", value: "port" },
           { text: "private key", value: "keyFile" },
-          { text: "delete", value: "action", sortable: false },
+          { text: "action", value: "action", sortable: false },
         ],
         hosts: [],
         jobSchedulerNames: [],
-        testTargetID: null,
         removeConfirmMessage: "",
         currentSetting: {},
       };
@@ -152,6 +155,13 @@
           e.connectionStatus = "test";
         });
         this.hosts.splice(0, this.hosts.length, ...data);
+      });
+      SIO.onGlobal("askPassword", (hostname, cb)=>{
+        this.pwCallback = (pw)=>{
+          cb(pw);
+        };
+        this.pwDialogTitle = `input password or passphrase for ${hostname}`;
+        this.pwDialog = true;
       });
     },
     methods: {
@@ -212,23 +222,16 @@
           }
         });
       },
-      openPasswordDialog (item) {
-        this.testTargetID = item.id;
-        this.pwDialog = true;
-      },
-      testConnection (pw) {
-        const index = this.hosts.findIndex((e)=>{
-          return e.id === this.testTargetID;
-        });
+      testConnection (index) {
         this.$set(this.hosts[index], "loading", true);
-        SIO.emitGlobal("tryToConnect", this.hosts[index], pw, (rt)=>{
-          console.log("get ack",rt);
+        SIO.emitGlobal("tryToConnect", this.hosts[index], (rt)=>{
+          debug("connection test result:",rt);
           this.$set(this.hosts[index],"loading", false);
           this.$set(this.hosts[index],"testResult",rt);
           this.$set(this.hosts[index],"connectionStatus", rt === "success" ? "OK" : "failed");
           this.$set(this.hosts[index],"icon",  rt === "success" ? "mdi-lan-connect" : "mdi-lan-disconnect");
+          this.pwDialog=false
         });
-        this.testTargetID = null;
       },
     },
   };

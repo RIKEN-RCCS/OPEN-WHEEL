@@ -1,29 +1,28 @@
 # syntax=docker/dockerfile:1
 #build WHEEL client code
-FROM --platform=linux/amd64 node:fermium-slim as builder
+FROM --platform=linux/amd64 node:hydrogen-slim as builder
 WORKDIR /usr/src/
 # to install phantomjs
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
-# copy necessary files
+# build WHEEL
+COPY server server
+RUN cd server && npm install --production
 COPY client client
 RUN cd client; npm install; npm run build
 
 #build base image to run WHEEL
-FROM --platform=linux/amd64 node:fermium-slim as base
+FROM --platform=linux/amd64 node:hydrogen-slim as base
 WORKDIR /usr/src/
-RUN apt-get update && apt -y install curl git &&\
+RUN apt-get update && apt -y install curl git rsync &&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
     apt -y install git-lfs &&\
     apt-get clean  &&\
     rm -rf /var/lib/apt/lists/*
-
-FROM base as runner
-WORKDIR /usr/src/
-COPY server server
-RUN cd server && npm install --production
+COPY --from=builder /usr/src/server /usr/src/server
+RUN rm -fr server/app/config/*
 
 # run UT
-FROM runner as UT
+FROM base as UT
 WORKDIR /usr/src/server
 RUN npm install cross-env\
     chai chai-as-promised chai-fs chai-iterator chai-json-schema deep-equal-in-any-order\
@@ -31,7 +30,7 @@ RUN npm install cross-env\
 CMD ["npm", "run", "coverage"]
 
 # run WHEEL
-FROM runner as exec
+FROM base as exec
 WORKDIR /usr/src/server
 
 COPY --from=builder /usr/src/server/app/public /usr/src/server/app/public

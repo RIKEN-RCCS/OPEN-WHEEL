@@ -7,22 +7,29 @@
   <v-card>
     <v-card-actions>
       <v-btn
-        @click="loadDialog=true"
-      >
-        load
-      </v-btn>
-      <v-btn
         @click="insertJobScript"
       >
         {{ isJobScript ? "update" : "insert" }}
+      </v-btn>
+      <v-btn
+        @click="removeJobScript"
+        disable="!isJobSCript"
+      >
+        remove
       </v-btn>
       <v-btn
         @click="clear"
       >
         clear
       </v-btn>
+
       <v-btn
-        class="ml-8"
+        class=ml-8
+        @click="loadDialog=true"
+      >
+        load
+      </v-btn>
+      <v-btn
         @click="saveDialog=true"
       >
         register
@@ -34,37 +41,39 @@
         label="HPC center"
         :items="centerNames"
       />
-      <div
-        v-for="v, index in centerInfo"
-        :key="index"
-      >
-        <v-select
-          v-if="v.type === 'select'"
-          v-model="v.value"
-          :label="v.label"
-          :items="v.items"
-        />
-        <v-text-field
-          v-else-if="v.type==='number'"
-          v-model.lazy.trim="v.value"
-          outlined
-          :label="v.label"
-          type="number"
-          min="1"
-        />
-        <v-text-field
-          v-else-if="v.type==='jobScheduler'"
-          v-model.lazy.trim="v.value"
-          outlined
-          :label="v.label"
-          readonly
-        />
-        <v-text-field
-          v-else-if="v.type==='text'"
-          v-model.lazy.trim="v.value"
-          outlined
-          :label="v.label"
-        />
+      <div v-if="template !== null">
+        <div
+          v-for="v, index in template.optionValues"
+          :key="index"
+        >
+          <v-select
+            v-if="v.type === 'select'"
+            v-model="v.value"
+            :label="v.label"
+            :items="v.items"
+          />
+          <v-text-field
+            v-else-if="v.type==='number'"
+            v-model.lazy.trim="v.value"
+            outlined
+            :label="v.label"
+            type="number"
+            min="1"
+          />
+          <v-text-field
+            v-else-if="v.type==='jobScheduler'"
+            v-model.lazy.trim="v.value"
+            outlined
+            :label="v.label"
+            readonly
+          />
+          <v-text-field
+            v-else-if="v.type==='text'"
+            v-model.lazy.trim="v.value"
+            outlined
+            :label="v.label"
+          />
+        </div>
       </div>
     </v-card-text>
     <versatile-dialog
@@ -112,8 +121,6 @@
   import versatileDialog from "@/components/versatileDialog.vue";
   import listForm from "@/components/common/listForm.vue";
 
-  const clone = require("rfdc")();
-
   export default {
     name: "JobScriptEditor",
     components:{
@@ -132,11 +139,17 @@
     },
     data: function () {
       return {
-        centerNames: Object.keys(hpcCenters),
-        hpcCenters: clone(hpcCenters),
+        centerNames: hpcCenters
+          .filter((e)=>{
+            return e.id.startsWith("builtin");
+          })
+          .map((e)=>{
+            return e.name
+          }) ,
+        builtinTemplates: structuredClone(hpcCenters),
         jobScriptList: [],
         loadedCenterInfo: null,
-        center: 0,
+        center: null,
         loadDialog:false,
         saveDialog:false,
         newTemplateName: "",
@@ -149,8 +162,9 @@
       };
     },
     computed: {
-      centerInfo(){
-        return this.loadedCenterInfo || this.hpcCenters[this.center];
+      template(){
+        const  index = this.centerNames.findIndex((e)=>{return e===this.center});
+        return this.loadedCenterInfo || this.builtinTemplates[index] || null;
       }
    },
    watch:{
@@ -162,6 +176,7 @@
      }
    },
    mounted(){
+     this.center=this.centerNames[0];
      SIO.onGlobal("jobScriptTemplateList", (data)=>{
        this.jobScriptList=data;
      });
@@ -173,7 +188,7 @@
        this.saveDialog=false;
      },
      clear(){
-       this.hpcCenters=clone(hpcCenters);
+       this.builtinTemplates=structuredClone(hpcCenters);
        this.loadedCenterInfo=null;
      },
      removeTemplate(item){
@@ -187,18 +202,24 @@
        this.loadDialog=false;
      },
      saveTemplate(){
-       const eventName = this.centerInfo.name === this.newTemplateName && typeof this.centerInfo.id === "string" ? "updateJobScriptTemplate" : "addJobScriptTemplate";
-       SIO.emitGlobal(eventName, {name: this.newTemplateName, ...this.centerInfo}, SIO.generalCallback);
-     this.cancelSaveDialog();
+       const eventName = this.template.name === this.newTemplateName && typeof this.template.id === "string" ? "updateJobScriptTemplate" : "addJobScriptTemplate";
+       const payload={...this.template};
+       payload.name = this.newTemplateName
+       SIO.emitGlobal(eventName, payload, SIO.generalCallback);
+       this.cancelSaveDialog();
      },
      insertJobScript(){
-       const values=this.centerInfo.reduce((a,c)=>{
+       const values=this.template.optionValues.reduce((a,c)=>{
          a[c.prop]=c.value;
          return a;
        },{});
-       const snipet=createJobScript(this.center, values);
+       const snipet=createJobScript(this.template.centerName, values);
        this.$emit("insert", snipet);
+     },
+     removeJobScript(){
+       this.$emit("remove");
      }
+
    },
   };
 </script>

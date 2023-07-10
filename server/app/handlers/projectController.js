@@ -8,10 +8,11 @@ const path = require("path");
 const { promisify } = require("util");
 const EventEmitter = require("events");
 const glob = require("glob");
-const ARsshClient = require("arssh2-client");
+const fs = require("fs-extra");
+const SshClientWrapper = require("ssh-client-wrapper");
 const { create } = require("abc4");
 const { getLogger } = require("../logSettings");
-const { remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
+const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getHosts, validateComponents, getSourceComponents } = require("../core/componentFilesOperator");
@@ -24,7 +25,7 @@ const { isValidOutputFilename } = require("../lib/utility");
 const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir } = require("./senders.js");
 const { parentDirs, eventEmitters } = require("../core/global.js");
 const { emitAll, emitWithPromise } = require("./commUtils.js");
-const { removeTempd } = require("../core/tempd.js");
+const { removeTempd, getTempd } = require("../core/tempd.js");
 
 
 async function createCloudInstance(projectRootDir, hostinfo, clientID) {
@@ -58,7 +59,7 @@ async function createCloudInstance(projectRootDir, hostinfo, clientID) {
     password: null
   };
 
-  const arssh = new ARsshClient(config, { connectionRetryDelay: 1000, verbose: true });
+  const ssh = new SshClientWrapper(config);
   if (hostinfo.type === "aws") {
     logger.debug("wait for cloud-init");
     await arssh.watch("tail /var/log/cloud-init-output.log >&2 && cloud-init status", { out: /done|error|disabled/ }, 30000, 60, {}, logger.debug.bind(logger), logger.debug.bind(logger));
@@ -150,7 +151,18 @@ async function getSourceFilename(projectRootDir, component, clientID) {
   const filelist = await getSourceCandidates(projectRootDir, component.ID);
   getLogger(projectRootDir).trace("sourceFile: candidates=", filelist);
 
+  if (component.outputFiles && component.outputFiles[0] && component.outputFiles[0].name) {
+    const rt = filelist.find((e)=>{
+      return e === component.outputFiles[0].name;
+    });
+    if (rt) {
+      getLogger(projectRootDir).info(`sourceFile: ${rt} is used as outputFile.`);
+      return rt;
+    }
+    getLogger(projectRootDir).info(`sourceFile: outputFile was set to ${component.outputFiles[0].name} but it was not found.`);
+  }
   if (filelist.length === 1) {
+    getLogger(projectRootDir).debug(`sourceFile: ${filelist[0]} is the only candidate. use it as outputFile`);
     return (filelist[0]);
   }
   return askSourceFilename(clientID, component.ID, component.name, component.description, filelist);
@@ -201,16 +213,16 @@ async function onRunProject(clientID, projectRootDir, ack) {
 
       //create remotehost connection
       const hosts = await getHosts(projectRootDir, null);
-      for (const remoteHostName of hosts) {
-        const id = remoteHost.getID("name", remoteHostName);
+      for (const host of hosts) {
+        const id = remoteHost.getID("name", host.hostname);
         const hostInfo = remoteHost.get(id);
         if (!hostInfo) {
-          return Promise.reject(new Error(`illegal remote host specified ${remoteHostName}`));
+          return Promise.reject(new Error(`illegal remote host specified ${host.name}`));
         }
         if (hostInfo.type === "aws") {
           await createCloudInstance(projectRootDir, hostInfo, clientID);
         } else {
-          await createSsh(projectRootDir, remoteHostName, hostInfo, clientID);
+          await createSsh(projectRootDir, host.name, hostInfo, clientID, host.isStorage);
         }
       }
     } catch (err) {
@@ -352,7 +364,14 @@ async function onGetProjectJson(projectRootDir, ack) {
   try {
     const projectJson = await getProjectJson(projectRootDir);
     emitAll(projectRootDir, "projectJson", projectJson);
+    const resultDir = await getTempd(projectRootDir, "viewer");
+    const filename = path.resolve(resultDir, filesJsonFilename);
+
+    if (await fs.pathExists(filename)) {
+      sendResultsFileDir(projectRootDir, resultDir);
+    }
   } catch (e) {
+    getLogger(projectRootDir).warn("getProjectJson failed", e);
     return ack(false);
   }
   return ack(true);
@@ -364,7 +383,7 @@ async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
 
 async function onUpdateProjectDescription(projectRootDir, description, ack) {
   await updateProjectDescription(projectRootDir, description);
-  ack(true);
+  onGetProjectJson(projectRootDir, ack);
 }
 
 

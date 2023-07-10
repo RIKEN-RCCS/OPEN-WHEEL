@@ -9,10 +9,7 @@
       v-model="drawer"
     />
     <v-app-bar app>
-      <a
-        href="home"
-        class="text-uppercase text-decoration-none text-h4 white--text"
-      > WHEEL </a>
+      <a href="home"> <v-img :src="imgLogo" /></a>
       <span
         class="text-lowercase text-decoration-none text-h5 white--text ml-4"
       >
@@ -143,6 +140,7 @@
 </template>
 <script>
   "use strict";
+  import imgLogo from "@/assets/wheel_logomark.png";
   import navDrawer from "@/components/common/NavigationDrawer.vue";
   import fileBrowser from "@/components/common/fileBrowserLite.vue";
   import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
@@ -165,6 +163,7 @@
     },
     data: ()=>{
       return {
+        imgLogo,
         batchMode: false,
         drawer: false,
         dialog: false,
@@ -189,6 +188,13 @@
         pathSep: "/",
         home: "/",
       };
+    },
+    watch:{
+      batchMode(newMode, oldMode){
+        if(!newMode){
+          this.selectedInTable.splice(0,this.selectedInTable.length);
+        }
+      }
     },
     computed: {
       selected () {
@@ -262,6 +268,7 @@
           this.dialog = true;
           return;
         }
+        sessionStorage.setItem("projectRootDir", "not-set");
         const form = document.createElement("form");
         form.setAttribute("action", "./workflow");
         form.setAttribute("method", "post");

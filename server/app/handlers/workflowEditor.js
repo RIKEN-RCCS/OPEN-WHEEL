@@ -16,7 +16,9 @@ const {
   addLink,
   addFileLink,
   removeLink,
+  removeAllLink,
   removeFileLink,
+  removeAllFileLink,
   removeComponent,
   createNewComponent,
   updateComponent,
@@ -113,11 +115,19 @@ async function onRemoveLink(projectRootDir, msg, parentID, cb) {
   return generalHandler(removeLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "removeLink", projectRootDir, parentID, cb);
 }
 
+async function onRemoveAllLink(projectRootDir, componentID, parentID, cb) {
+  return generalHandler(removeAllLink.bind(null, projectRootDir, componentID), "removeAllLink", projectRootDir, parentID, cb);
+}
+
 async function onAddFileLink(projectRootDir, srcNode, srcName, dstNode, dstName, parentID, cb) {
   return generalHandler(addFileLink.bind(null, projectRootDir, srcNode, srcName, dstNode, dstName), "addFileLink", projectRootDir, parentID, cb);
 }
 async function onRemoveFileLink(projectRootDir, srcNode, srcName, dstNode, dstName, parentID, cb) {
   return generalHandler(removeFileLink.bind(null, projectRootDir, srcNode, srcName, dstNode, dstName), "removeFileLink", projectRootDir, parentID, cb);
+}
+
+async function onRemoveAllFileLink(projectRootDir, componentID, inputFileName, fromChildren, parentID, cb) {
+  return generalHandler(removeAllFileLink.bind(null, projectRootDir, componentID, inputFileName, fromChildren), "removeFileLink", projectRootDir, parentID, cb);
 }
 
 async function onUpdateEnv(projectRootDir, ID, newEnv, parentID, cb) {
@@ -151,7 +161,9 @@ module.exports = {
   onAddLink,
   onAddFileLink,
   onRemoveLink,
+  onRemoveAllLink,
   onRemoveFileLink,
+  onRemoveAllFileLink,
   onUpdateEnv,
   onUpdateStepNumber,
   onGetEnv

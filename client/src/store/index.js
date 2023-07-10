@@ -94,6 +94,11 @@ export default new Vuex.Store({
   mutations,
   actions: {
     selectedComponent: (context, payload)=>{
+      if(payload === null){
+        context.commit("selectedComponent", null);
+        context.commit("copySelectedComponent", null);
+        return
+      }
       if (context.state.selectedComponent !== null && payload.ID === context.state.selectedComponent.ID) {
         return;
       }

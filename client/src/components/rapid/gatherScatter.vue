@@ -27,7 +27,7 @@
         <v-data-table
           dense
           :headers="headers"
-          :items="container"
+          :items="modifiedContainer"
           hide-default-footer
         >
           <template #item.action="{ item }">
@@ -66,7 +66,9 @@
             </v-col>
           </v-row>
           {{ label2 }}
-          <lower-component-tree />
+          <lower-component-tree
+            @selected=onDstNodeSelected
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -75,13 +77,13 @@
             :disabled="isInValid"
             @click="commitChange"
           >
-            OK
+            <v-icon> mdi-check</v-icon> OK
           </v-btn>
           <v-btn
             text
             @click="closeAndResetDialog"
           >
-            Cancel
+            <v-icon> mdi-cancel</v-icon> Cancel
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -90,6 +92,7 @@
 </template>
 <script>
   "use strict";
+  import { mapState } from "vuex"
   import { removeFromArray } from "@/lib/clientUtility.js";
   import actionRow from "@/components/common/actionRow.vue";
   import lowerComponentTree from "@/components/lowerComponentTree.vue";
@@ -129,6 +132,25 @@
       };
     },
     computed: {
+      ...mapState(["componentPath", "selectedComponent"]),
+      modifiedContainer(){
+        return this.container.map((e)=>{
+          const parent= this.componentPath[this.selectedComponent.ID];
+          if(e.dstNode){
+            const child = this.componentPath[e.dstNode];
+            if(typeof child === "string"){
+              e.dstNodeName=child.replace(parent,".");
+            }
+          }
+          if(e.srcNode){
+            const child = this.componentPath[e.srcNode];
+            if(typeof child === "string"){
+              e.srcNodeName=child.replace(parent,".");
+            }
+          }
+          return e
+        });
+      },
       label2 () {
         return this.label === "scatter" ? "destination node" : "source node";
       },
@@ -136,6 +158,7 @@
         if (this.newItem.srcName === "" || this.newItem.dstName === "") {
           return true;
         }
+        //check duplication or not changed
         const keys = ["srcName", "dstName", "srcNode", "dstNode"]
           .filter((e)=>{
             return Object.keys(this.newItem).includes(e);
@@ -148,6 +171,21 @@
       },
     },
     methods: {
+      onDstNodeSelected(item){
+        if(this.label === "scatter"){
+          if(this.newItem.dstNode){
+            this.newItem.dstNode=item.ID
+          }else{
+            this.$set(this.newItem, 'dstNode', item.ID)
+          }
+        }else{
+          if(this.newItem.srcNode){
+            this.newItem.srcNode=item.ID
+          }else{
+            this.$set(this.newItem, 'srcNode', item.ID)
+          }
+        }
+      },
       openDialog (item) {
         this.selectedItem = item;
         this.newItem.srcName = this.selectedItem.srcName;
@@ -167,19 +205,16 @@
       },
       commitChange () {
         if (this.selectedItem === null) {
-          this.container.push({ ...this.newItem });
+          //3rd argument means copy of this.newItem
+          //this.newItem will be initialized in closeAndRestDialog()
+          this.$emit("addNewItem", this.label,{ ...this.newItem } );
         } else {
-          this.selectedItem.srcName = this.newItem.srcName;
-          this.selectedItem.dstName = this.newItem.dstName;
-
-          if (this.newItem.dstNode) {
-            this.selectedItem.dstNode = this.newItem.dstNode;
-          }
+          this.$emit("updateItem", this.label, this.selectedItem, { ...this.newItem } );
         }
         this.closeAndResetDialog();
       },
       deleteItem (item) {
-        removeFromArray(this.container, item);
+        this.$emit("deleteItem", this.label, item);
       },
     },
   };

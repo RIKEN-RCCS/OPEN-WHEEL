@@ -1,0 +1,16 @@
+{
+  "port": 8089,
+  "remotehostJsonFile": "remotehost.json",
+  "projectListJsonFile": "projectList.json",
+  "jobScriptTemplateJsonFile": "jobScriptTemplate.json",
+  "interval": 1000,
+  "defaultCleanupRemoteRoot": true,
+  "logFilename": "wheel.log",
+  "numLogFiles": 5,
+  "maxLogSize": 8388608,
+  "compressLogFile": true,
+  "numJobOnLocal": 1,
+  "defaultTaskRetryCount": 1,
+  "shutdownDelay": 0,
+  "gitLFSSize": 200
+}

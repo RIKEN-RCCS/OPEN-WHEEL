@@ -4,48 +4,39 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { createSshConfig } = require("../core/sshManager");
-const ARsshClient = require("arssh2-client");
+const SshClientWrapper = require("ssh-client-wrapper");
 const { getLogger } = require("../logSettings");
 const logger = getLogger();
 const { remoteHost } = require("../db/db");
+const { askPassword } = require("../core/sshManager.js");
+
+//渡されてきたパスワードは無視してaskPassword()を呼び出す
+//クライアント側も修正の必要あり
 
 /**
  * try to connect remote host via ssh
  * @param {Hostinfo} hostInfo - target host
- * @param {string} password - password or passphrase for private key
  * @param {Function} cb - call back function called with string "success" or "error"
  */
-async function tryToConnect(hostInfo, password, cb) {
-  const config = await createSshConfig(hostInfo, password);
-  const arssh = new ARsshClient(config, { connectionRetry: 1, connectionRetryDelay: 2000 });
-  logger.debug("try to connect", config.host, ":", config.port);
-  arssh.canConnect()
+async function tryToConnect(clientID, hostInfo, cb) {
+  //hostInfo.password = password;
+  hostInfo.password = askPassword.bind(null, clientID, `${hostInfo.host} - password`);
+  hostInfo.passphrase = askPassword.bind(null, clientID, `${hostInfo.host} - passpharse`);
+  const ssh = new SshClientWrapper(hostInfo);
+  logger.debug("try to connect", hostInfo.host, ":", hostInfo.port);
+  ssh.canConnect(120)
     .then(()=>{
       cb("success");
     })
     .catch((err)=>{
-      err.config = Object.assign({}, config);
-
-      if (Object.prototype.hasOwnProperty.call(err.config, "privateKey")) {
-        err.config.privateKey = "privateKey was defined but omitted";
-      }
-
-      if (Object.prototype.hasOwnProperty.call(err.config, "password")) {
-        err.config.password = "password  was defined but omitted";
-      }
-
-      if (Object.prototype.hasOwnProperty.call(err.config, "passphrase")) {
-        err.config.passphrase = "passphrase  was defined but omitted";
-      }
-      logger.error(err);
+      logger.error("tryToConnect failed with", err);
       cb("error");
     });
 }
 
-async function onTryToConnectById(id, password, cb) {
+async function onTryToConnectById(clientID, id, cb) {
   const hostInfo = remoteHost.get(id);
-  await tryToConnect(hostInfo, password, cb);
+  await tryToConnect(clientID, hostInfo, password, cb);
 }
 
 module.exports = {

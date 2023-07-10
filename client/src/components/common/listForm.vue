@@ -34,7 +34,7 @@
         >
           <v-text-field
             v-model="edittingField"
-            :rules="[editingItemIsNotDuplicate]"
+            :rules=edittingFieldValidator
             clearable
           />
         </template>
@@ -53,7 +53,7 @@
     >
       <v-text-field
         v-model="inputField"
-        :rules="[newItemIsNotDuplicate]"
+        :rules=newItemValidator
         :disabled="disabled"
         outlined
         dense
@@ -66,8 +66,11 @@
   </v-data-table>
 </template>
 <script>
-  import { removeFromArray } from "@/lib/clientUtility.js";
   import actionRow from "@/components/common/actionRow.vue";
+
+  const emptyStringIsNotAllowed = (v)=>{
+    return v !== "";
+  }
 
   export default {
     name: "ListForm",
@@ -78,6 +81,9 @@
       label: {
         type: String,
         default: ""
+      },
+      additionalRules:{
+        type: Array
       },
       allowEditButton: {
         type: Boolean,
@@ -118,11 +124,19 @@
       },
       disabled: Boolean
     },
+    mounted(){
+      if(this.additionalRules){
+        this.edittingFieldValidator.push(...this.additionalRules);
+        this.newItemValidator.push(...this.additionalRules);
+      }
+    },
     data: function () {
       return {
         inputField: null,
         edittingField: null,
+        edittingFieldValidator:[this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString],
         editTarget: null,
+        newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString]
       };
     },
     computed: {
@@ -161,6 +175,9 @@
       },
     },
     methods: {
+      isString(){
+        return typeof this.inputField === "string"
+      },
       isDuplicate (newItem) {
         if (typeof newItem !== "string") {
           return false;
@@ -177,35 +194,46 @@
       },
       // 2nd argument also have item ,isMobile, header, and value prop. value has old value
       onSaveEditDialog: function (item, { index }) {
-        if (this.isDuplicate(this.edittingField) && this.editTarget !== this.edittingField) {
-          return;
+        const isInvalid = this.edittingFieldValidator.some((func)=>{
+          return !func(this.inputField)
+        });
+        if(isInvalid){
+          return
         }
-
         if (this.stringItems) {
-          this.items.splice(index, 1, this.edittingField);
+          this.$emit("update", this.edittingField, index);
         } else {
-          item.name = this.edittingField;
+          const newItem = {...item}
+          newItem.name = this.edittingField;
+          this.$emit("update", newItem, index);
         }
-        this.$emit("update", item, index);
       },
       addItem: function () {
-        if (this.isDuplicate(this.inputField) || typeof this.inputField !== "string") {
-          return;
+        const isInvalid = this.newItemValidator.some((func)=>{
+          return !func(this.inputField)
+        });
+        if(isInvalid){
+          return
         }
         const newItem = this.stringItems ? this.inputField : Object.assign({}, this.newItemTemplate || {}, { name: this.inputField });
-        this.items.push(newItem);
         this.$emit("add", newItem);
         this.inputField = null;
       },
       deleteItem: function (v) {
-        const target = this.stringItems ? v.name : v;
-        const index = removeFromArray(this.items, target, "name");
-
+        let index=-1;
+        if (this.stringItems){
+          index = this.items.findIndex((e)=>{
+            return e === v;
+          });
+        }else{
+          index = this.items.findIndex((e)=>{
+            return e.name === v.name;
+          });
+        }
         if (index !== -1) {
           this.$emit("remove", v, index);
         }
       },
     },
-
   };
 </script>

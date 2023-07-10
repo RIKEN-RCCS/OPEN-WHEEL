@@ -64,19 +64,24 @@
           :read-only="readOnly"
           :is-job-script="isJobScript"
           @insert="insertSnipet"
+          @remove="removeSnipet"
         />
       </v-col>
     </v-row>
     <filter-editor />
-    <unsaved-file-dialog />
+    <unsaved-files-dialog
+      :unsaved-files="unsavedFiles"
+      :dialog="showUnsavedFilesDialog"
+      without-status
+      @closed="unsavedFilesDialogClosed"
+    />
   </v-container>
 </template>
 <script>
-
   "use strict";
   import { mapState, mapGetters,mapActions } from "vuex";
   import getNodeAndPath from "@/lib/getNodeAndPath.js";
-  import unsavedFileDialog from "@/components/rapid/unsavedFileDialog.vue";
+  import unsavedFilesDialog from "@/components/unsavedFilesDialog.vue";
   import componentButton from "@/components/common/componentButton.vue";
   import filterEditor from "@/components/rapid/filterEditor.vue";
   import tabEditor from "@/components/rapid/tabEditor.vue";
@@ -88,7 +93,7 @@
     name: "Editor",
     components: {
       componentButton,
-      unsavedFileDialog,
+      unsavedFilesDialog,
       filterEditor,
       tabEditor,
       parameterEditor,
@@ -99,44 +104,34 @@
         next();
         return;
       }
-      const dialogContent = {
-        title: "unsaved files",
-        message: "do you want to save files",
-        withInputField: false,
-        buttons: [
-          {
-            icon: "mdi-content-save-all-outline",
-            label: "save",
-            cb: ()=>{ this.saveAllFiles(); next(); },
-          },
-          {
-            icon: "mdi-alert-circle-outline",
-            label: "discard all unsaved files",
-            cb: next,
-          },
-          {
-            icon: "mdi-close",
-            label: "cancel",
-          },
-        ],
-      };
-      this.showDialog(dialogContent);
+      const changedFilenames=[]
+      if(this.$refs.param.hasChange()){
+        changedFilenames.push({name: `${this.projectRootDir}${this.componentPath[this.selectedComponent.ID].slice(1)}/${this.$refs.param.filename}`})
+      }
+      if(this.$refs.text.hasChange() ){
+        changedFilenames.push(...this.$refs.text.getChangedFiles())
+      }
+      this.unsavedFiles.splice(0,this.unsavedFiles.length, ...changedFilenames);
+      this.showUnsavedFilesDialog= true;
+      this.leave=next
     },
     data: ()=>{
       return {
         mode: "normal",
         readOnly_: false,
-        isJobScript: false
+        isJobScript: false,
+        showUnsavedFilesDialog: false,
+        unsavedFiles:[],
+        leave:null
       };
     },
     computed: {
-      ...mapState({
-        selectedFile: "selectedFile",
-        componentPath: "componentPath",
-        selectedComponent: "selectedComponent",
-        currentComponent: "currentComponent",
-        tree: "componentTree"
-      }),
+      ...mapState(["projectRootDir",
+                  "selectedFile",
+                  "componentPath",
+                  "selectedComponent",
+                  "currentComponent",
+                  "componentTree"]),
       ...mapGetters([ "isEdittable"]),
       readOnly:{
         get(){
@@ -149,7 +144,7 @@
       pathToCurrentComponent: function () {
         const rt = [];
         if (this.currentComponent !== null) {
-          getNodeAndPath(this.currentComponent.ID, this.tree, rt);
+          getNodeAndPath(this.currentComponent.ID, this.componentTree, rt);
         }
         return rt;
       },
@@ -197,12 +192,28 @@
       insertSnipet(snipet){
         this.$refs.text.insertSnipet(snipet);
       },
+      removeSnipet(){
+        this.$refs.text.removeSnipet();
+      },
       hasChange () {
         return this.$refs.text.hasChange() || this.$refs.param.hasChange(); // ||this.$refs.jse.hasChange();
       },
       saveAllFiles () {
         this.$refs.text.saveAll();
         this.$refs.param.save();
+      },
+      unsavedFilesDialogClosed(mode,payload){
+        if(mode === "cancel"){
+          this.unsavedFiles.splice(0);
+          this.showUnsavedFilesDialog=false;
+          return
+        }
+        if (mode === "save"){
+          this.saveAllFiles()
+        }
+        this.unsavedFiles.splice(0);
+        this.showUnsavedFilesDialog=false;
+        this.leave();
       },
     },
   };
