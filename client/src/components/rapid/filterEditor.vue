@@ -59,9 +59,6 @@
 
   export default {
     name: "FilterEditor",
-    props: {
-      filterEditor: Boolean,
-    },
     data: function () {
       return {
         newFilter: "",
@@ -69,6 +66,7 @@
         placeholders: [],
         selected: [],
         tableFooterProps,
+      filterEditor: false,
       };
     },
     methods: {

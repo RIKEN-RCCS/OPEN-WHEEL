@@ -209,7 +209,6 @@
     </versatile-dialog>
   </div>
 </template>
-<script src="/siofu/client.js"></script>
 <script>
   import Debug from "debug"
   const debug = Debug("wheel:fileBrowser");
@@ -375,6 +374,12 @@
         SIO.onUploaderEvent("choose", this.onChoose)
         SIO.onUploaderEvent("complete", this.onUploadComplete)
         SIO.onUploaderEvent("progress", this.updateProgressBar)
+        const recaptchaScript = document.createElement("script");
+        recaptchaScript.setAttribute(
+          "src",
+          "/siofu/client.js"
+        );
+        document.head.appendChild(recaptchaScript);
       }
       this.currentDir=this.selectedComponentAbsPath
     },

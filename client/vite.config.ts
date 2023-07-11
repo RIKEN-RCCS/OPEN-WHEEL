@@ -1,9 +1,7 @@
-import vue from '@vitejs/plugin-vue2'
-import { fileURLToPath, URL } from "url";
+import vue from '@vitejs/plugin-vue'
+import vuetify from 'vite-plugin-vuetify'
 import { resolve } from 'path'
 import { defineConfig } from 'vite'
-import { VuetifyResolver } from 'unplugin-vue-components/resolvers'
-import Components from 'unplugin-vue-components/vite'
 
 const root = resolve(__dirname, "src");
 const outDir=resolve(__dirname, "../server/app/public");
@@ -12,12 +10,13 @@ export default defineConfig({
   base: "./",
   plugins: [
     vue(),
-    Components({
-      resolvers: [VuetifyResolver()],
-    }),
+    vuetify()
   ],
   resolve:{
-    alias: [{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) }],
+    alias: [
+      { find: '@', replacement: root },
+      {find:"vue", replacement:'@vue/compat'}
+    ]
   },
   root,
   build: {

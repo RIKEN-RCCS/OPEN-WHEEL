@@ -20,7 +20,6 @@
     </template>
   </versatile-dialog>
 </template>
-<script src="/siofu/client.js"></script>
 <script>
   import { mapState } from "vuex"
   import versatileDialog from "@/components/versatileDialog.vue";
@@ -72,6 +71,12 @@
       }
     },
     mounted:function(){
+      const recaptchaScript = document.createElement("script");
+      recaptchaScript.setAttribute(
+        "src",
+        "/siofu/client.js"
+      );
+      document.head.appendChild(recaptchaScript);
       this.$nextTick().then(()=>{
         SIO.onGlobal("askUploadSourceFile", (ID, name, description, cb)=>{
           this.uploadSourceFileDialogTitle=`upload source file for ${name}`;

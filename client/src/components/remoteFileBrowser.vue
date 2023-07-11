@@ -206,7 +206,6 @@
     </versatile-dialog>
   </div>
 </template>
-<script src="/siofu/client.js"></script>
 <script>
   import { mapState, mapGetters, mapMutations } from "vuex"
   import SIO from "@/lib/socketIOWrapper.js"
@@ -378,6 +377,12 @@
         SIO.onUploaderEvent("choose", this.onChoose)
         SIO.onUploaderEvent("complete", this.onUploadComplete)
         SIO.onUploaderEvent("progress", this.updateProgressBar)
+        const recaptchaScript = document.createElement("script");
+        recaptchaScript.setAttribute(
+          "src",
+          "/siofu/client.js"
+        );
+        document.head.appendChild(recaptchaScript);
       }
       this.currentDir=this.selectedComponentAbsPath
     },
