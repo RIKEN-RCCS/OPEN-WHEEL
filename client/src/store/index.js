@@ -3,13 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-import Vue from "vue";
 import Vuex from "vuex";
 import Debug from "debug";
 import SIO from "@/lib/socketIOWrapper.js";
 const debug = Debug("wheel:vuex");
-
-Vue.use(Vuex);
 
 const logger = (store)=>{
   store.subscribe((mutation)=>{

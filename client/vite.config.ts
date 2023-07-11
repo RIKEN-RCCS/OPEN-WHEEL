@@ -15,7 +15,6 @@ export default defineConfig({
   resolve:{
     alias: [
       { find: '@', replacement: root },
-      {find:"vue", replacement:'@vue/compat'}
     ]
   },
   root,

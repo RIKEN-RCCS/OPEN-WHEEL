@@ -3,15 +3,13 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-import Vue from "vue";
+import {createApp} from "vue";
 import Viewer from "./components/Viewer.vue";
 import router from "./router";
 import store from "./store";
 import vuetify from '@/plugins/vuetify'
 
-Vue.config.productionTip = false;
-
-new Vue({
+createApp({
   router,
   store,
   vuetify,
