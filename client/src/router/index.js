@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 import Vue from "vue";
-import VueRouter from "vue-router";
+import {createRouter} from "vue-router";
 import Graph from "@/views/graph.vue";
 import List from "@/views/taskList.vue";
 import Editor from "@/views/rapid.vue";
@@ -29,7 +29,7 @@ const routes = [
   },
 ];
 
-const router = new VueRouter({
+const router = createRouter({
   mode: "history",
   routes,
 });
