@@ -17,10 +17,10 @@
         <v-data-table
           :headers="headers"
           :items="items"
-          disable-pagination
-          hide-default-footer
-          dense
-        />
+          density="compact"
+        >
+          <template #bottom />
+        </v-data-table>
       </v-card-text>
       <v-card-actions>
         <v-btn
@@ -64,8 +64,8 @@
     data () {
       return {
         headers: [
-          { text: "status", value: "status" },
-          { text: "filename", value: "name" },
+          { title: "status", key: "status" },
+          { title: "filename", key: "name" },
         ],
       };
     },

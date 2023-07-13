@@ -8,22 +8,10 @@
     <nav-drawer
       v-model="drawer"
     />
-    <v-app-bar
-      app
-      extended
-    >
-      <a href="home"> <v-img :src="imgLogo" /></a>
-      <span
-        class="text-lowercase text-decoration-none text-h5 white--text ml-4"
-      >
-        remotehost
-      </span>
-      <v-spacer />
-      <v-app-bar-nav-icon
-        app
-        @click="drawer = true"
-      />
-    </v-app-bar>
+    <application-tool-bar
+      title="remotehost"
+      @navIconClick="drawer=!drawer"
+    />
     <v-main>
       <v-toolbar>
         <v-btn @click.stop="openEditDialog()">
@@ -39,19 +27,19 @@
       >
         <template #item.connectionTest="{ item, index }">
           <v-btn
-            :color="item.testResult"
-            :loading="item.loading"
+            :color="item.raw.testResult"
+            :loading="item.raw.loading"
             @click="testConnection(index)"
           >
-            <v-icon> {{ item.icon }} </v-icon>
-            {{ item.connectionStatus }}
+            <v-icon> {{ item.raw.icon }} </v-icon>
+            {{ item.raw.connectionStatus }}
           </v-btn>
         </template>
-        <template #item.action="{ item }">
+        <template #item.action="{ item}">
           <action-row
-            :item="item"
-            @delete="openRemoveConfirmDialog(item)"
-            @edit="openEditDialog(item)"
+            :item="item.raw"
+            @delete="openRemoveConfirmDialog(item.raw)"
+            @edit="openEditDialog(item.raw)"
           />
         </template>
       </v-data-table>
@@ -90,7 +78,6 @@
   import Debug from "debug";
   const debug = Debug("wheel:remotehost");
   import SIO from "@/lib/socketIOWrapper.js";
-  import imgLogo from "@/assets/wheel_logomark.png";
   import { readCookie } from "@/lib/utility.js";
   import actionRow from "@/components/common/actionRow.vue";
   import navDrawer from "@/components/common/NavigationDrawer.vue";
@@ -98,11 +85,13 @@
   import passwordDialog from "@/components/common/passwordDialog.vue";
   import addNewHostDialog from "@/components/remotehost/addNewHostDialog.vue";
   import addNewCloudDialog from "@/components/remotehost/addNewCloudDialog.vue";
+  import applicationToolBar from "@/components/common/ApplicationToolBar.vue";
 
   export default {
     name: "Remotehost",
     components: {
       navDrawer,
+      applicationToolBar,
       actionRow,
       passwordDialog,
       removeConfirmDialog,
@@ -111,7 +100,6 @@
     },
     data: ()=>{
       return {
-        imgLogo,
         drawer: false,
         pwDialog: false,
         pwCallback:null,
@@ -120,13 +108,13 @@
         newHostDialog: false,
         newCloudDialog: false,
         headers: [
-          { text: "name", value: "name" },
-          { text: "connection test", value: "connectionTest" },
-          { text: "hostname", value: "host" },
-          { text: "usrename", value: "username" },
-          { text: "port", value: "port" },
-          { text: "private key", value: "keyFile" },
-          { text: "action", value: "action", sortable: false },
+          { title: "name", key: "name" },
+          { title: "connection test", key: "connectionTest" },
+          { title: "hostname", key: "host" },
+          { title: "usrename", key: "username" },
+          { title: "port", key: "port" },
+          { title: "private key", key: "keyFile" },
+          { title: "action", key: "action", sortable: false },
         ],
         hosts: [],
         jobSchedulerNames: [],
@@ -223,13 +211,14 @@
         });
       },
       testConnection (index) {
-        this.$set(this.hosts[index], "loading", true);
+        const target=this.hosts[index];
+        target.loading=true;
         SIO.emitGlobal("tryToConnect", this.hosts[index], (rt)=>{
           debug("connection test result:",rt);
-          this.$set(this.hosts[index],"loading", false);
-          this.$set(this.hosts[index],"testResult",rt);
-          this.$set(this.hosts[index],"connectionStatus", rt === "success" ? "OK" : "failed");
-          this.$set(this.hosts[index],"icon",  rt === "success" ? "mdi-lan-connect" : "mdi-lan-disconnect");
+          target.loading= false
+          target.testResult=rt
+          target.connectionStatus= rt === "success" ? "OK" : "failed"
+          target.icon= rt === "success" ? "mdi-lan-connect" : "mdi-lan-disconnect"
           this.pwDialog=false
         });
       },

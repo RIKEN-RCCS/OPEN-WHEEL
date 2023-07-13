@@ -7,13 +7,12 @@
   <v-navigation-drawer
     v-if="selectedComponent !== null"
     v-model="open"
-    right
+    location="right"
     absolute
     :width="propWidth"
   >
-    <template slot:prepend>
       <v-toolbar flat>
-        <v-toolbar-items>
+        <v-toolbar-title>
           <v-form v-model="validName">
             <v-text-field
               v-model.lazy="copySelectedComponent.name"
@@ -26,7 +25,8 @@
               @submit.prevent
             />
           </v-form>
-        </v-toolbar-items>
+        </v-toolbar-title>
+        <v-spacer />
         <v-tooltip bottom>
           <template #activator="{ on, attrs }">
             <v-switch
@@ -39,7 +39,6 @@
           </template>
           disable
         </v-tooltip>
-        <v-spacer />
         <v-toolbar-items>
           <v-tooltip bottom>
             <template #activator="{ on, attrs }">
@@ -79,7 +78,6 @@
           </v-tooltip>
         </v-toolbar-items>
       </v-toolbar>
-    </template>
     <v-form
       v-model="valid"
       @submit.prevent
@@ -87,11 +85,10 @@
       <v-expansion-panels
         v-model="openPanels"
         multiple
-        accordion
+        variant="accordion"
       >
-        <v-expansion-panel>
-          <v-expansion-panel-header>basic</v-expansion-panel-header>
-          <v-expansion-panel-content>
+        <v-expansion-panel title="basic">
+          <v-expansion-panel-text>
             <v-textarea
               v-model.lazy="copySelectedComponent.description"
               label="description"
@@ -153,11 +150,11 @@
               outlined
               @change="updateComponentProperty('storagePath')"
             />
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isTask">
-          <v-expansion-panel-header>retry setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>retry setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-text-field
               v-model.lazy="copySelectedComponent.retry"
               label="number of retry"
@@ -185,11 +182,11 @@
               v-model.lazy="copySelectedComponent.retryCondition"
               @change="updateComponentProperty('retryCondition')"
             />
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isFor">
-          <v-expansion-panel-header>loop setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>loop setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-form @submit.prevent>
               <v-text-field
                 v-model.number="copySelectedComponent.start"
@@ -221,11 +218,11 @@
                 @change="updateComponentProperty('keep')"
               />
             </v-form>
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isForeach">
-          <v-expansion-panel-header>loop setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>loop setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <list-form
               :label="'foreach'"
               :items="indexList"
@@ -239,11 +236,11 @@
               type="number"
               @change="updateComponentProperty('keep')"
             />
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isSource">
-          <v-expansion-panel-header>upload setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>upload setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-switch
               v-model.lazy="copySelectedComponent.uploadOnDemand"
               label="upload on demand"
@@ -273,11 +270,11 @@
                 </v-btn>
               </v-col>
             </v-row>
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isViewer">
-          <v-expansion-panel-header>input file setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>input file setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <list-form
               :label="'input files'"
               :items="copySelectedComponent.inputFiles"
@@ -287,11 +284,11 @@
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
             />
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isPS">
-          <v-expansion-panel-header>PS setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>PS setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-autocomplete
               v-model.lazy="copySelectedComponent.parameterFile"
               label="parameterFile"
@@ -310,11 +307,11 @@
               label="delete all instances"
               @change="updateComponentProperty('deleteLoopInstance')"
             />
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isStepjobTask">
-          <v-expansion-panel-header>stepjobtask setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>stepjobtask setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-switch
               v-model.lazy="copySelectedComponent.useDependency"
               label="use dependency"
@@ -333,11 +330,11 @@
               :disabled="! copySelectedComponent.useDependency"
               @change="updateComponentProperty('dependencyForm')"
             />
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isBulkjobTask">
-          <v-expansion-panel-header>bulkjob setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>bulkjob setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-switch
               v-model.lazy="copySelectedComponent.usePSSettingFile"
               label="use parameter setting file for bulk number"
@@ -394,11 +391,11 @@
                 @change="updateComponentProperty('condition')"
               />
             </div>
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="hasCondition">
-          <v-expansion-panel-header>condition setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>condition setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-switch
               v-model.lazy="conditionCheckByJS"
               label="use javascript expression for condition check"
@@ -424,11 +421,11 @@
               type="number"
               @change="updateComponentProperty('keep')"
             />
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="! isSource && !isViewer">
-          <v-expansion-panel-header>input/output files</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>input/output files</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <list-form
               :label="'input files'"
               :items="copySelectedComponent.inputFiles"
@@ -447,14 +444,14 @@
               @remove="removeFromOutputFiles"
               @update="updateOutputFiles"
             />
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel
           v-if="hasRemote"
           :disabled="disableRemoteSetting"
         >
-          <v-expansion-panel-header>remote file setting</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>remote file setting</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <list-form
               :label="'include'"
               :items="includeList"
@@ -490,11 +487,11 @@
                 :value="2"
               />
             </v-radio-group>
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel>
-          <v-expansion-panel-header>Files</v-expansion-panel-header>
-          <v-expansion-panel-content>
+          <v-expansion-panel-title>Files</v-expansion-panel-title>
+          <v-expansion-panel-text>
             <file-browser
               v-if="! isRemoteComponent"
               :readonly="false"
@@ -506,7 +503,7 @@
               :project-root-dir="projectRootDir"
               ref=rfb
             />
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
     </v-form>

@@ -8,17 +8,11 @@
     <nav-drawer
       v-model="drawer"
     />
-    <v-app-bar
-      app
-      extended
+    <application-tool-bar
+      title="workflow"
+      @navIconClick="drawer=!drawer"
     >
-      <a href="home"> <v-img :src="imgLogo" /></a>
-      <span
-        class="text-lowercase text-decoration-none text-h5 white--text ml-4"
-      >
-        workflow
-      </span>
-      <v-spacer />
+      <template #append>
       <span
         class="text-decoration-none text-h5 white--text"
         @click="projectDescription=projectJson.description;descriptionDialog=true"
@@ -44,12 +38,7 @@
         last updated: {{ projectJson !== null ? projectJson.mtime : "" }}
       </v-btn>
       <v-spacer />
-
-      <v-app-bar-nav-icon
-        app
-        @click="drawer = true"
-      />
-
+      </template >
       <template #extension>
         <v-btn-toggle
           v-model="mode"
@@ -215,7 +204,7 @@
           </v-tooltip>
         </v-card>
       </template>
-    </v-app-bar>
+    </application-tool-bar>
     <v-main>
       <v-container fluid>
         <router-view />
@@ -324,7 +313,7 @@
           v-model="selectedSourceFilenames"
           :items="sourceFileCandidates"
           item-key="filename"
-          :headers="[{value: 'filename', text: 'filename'}]"
+          :headers="[{key: 'filename', title: 'filename'}]"
           disable-filterling
           disable-pagination
           hide-default-header
@@ -343,7 +332,7 @@
 <script>
   "use strict";
   import { mapState, mapMutations, mapActions, mapGetters } from "vuex";
-  import imgLogo from "@/assets/wheel_logomark.png";
+  import applicationToolBar from "@/components/common/ApplicationToolBar.vue";
   import logScreen from "@/components/logScreen.vue";
   import NavDrawer from "@/components/common/NavigationDrawer.vue";
   import passwordDialog from "@/components/common/passwordDialog.vue";
@@ -378,6 +367,7 @@
     name: "Workflow",
     components: {
       logScreen,
+      applicationToolBar,
       NavDrawer,
       unsavedFilesDialog,
       versatileDialog,
@@ -386,7 +376,6 @@
     },
     data: ()=>{
       return {
-        imgLogo,
         projectJson: null,
         drawer: false,
         mode: 0,
@@ -459,8 +448,9 @@
       this.commitProjectRootDir(projectRootDir);
 
       const baseURL=readCookie("socketIOPath");
-      this.$router.history.base=baseURL === "/" ? "" : baseURL;
+      this.$router.options.history.base = baseURL === "/" ? "" : baseURL;
       SIO.init({projectRootDir}, baseURL);
+
       const ID = readCookie("root");
       this.commitRootComponentID(ID);
 

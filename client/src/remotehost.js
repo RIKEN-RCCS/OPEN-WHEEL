@@ -7,8 +7,4 @@ import {createApp} from "vue";
 import Remotehost from "./components/Remotehost.vue";
 import vuetify from '@/plugins/vuetify'
 
-
-createApp({
-  vuetify,
-  render: function (h) { return h(Remotehost); },
-}).$mount("#app");
+createApp(Remotehost).use(vuetify).mount("#app");

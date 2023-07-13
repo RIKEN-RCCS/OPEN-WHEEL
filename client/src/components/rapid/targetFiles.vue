@@ -26,22 +26,22 @@
       <v-card-text>
         <v-data-table
           dense
-          :headers="[{ value: 'targetName', text: 'filename', sortable: true },
-                     { value: 'targetNode', text: 'component', sortable: true },
-                     { value: 'action', text: 'Actions', sortable: false }]"
+          :headers="[{ key: 'targetName', title: 'filename', sortable: true },
+                     { key: 'targetNode', title: 'component', sortable: true },
+                     { key: 'action', title: 'Actions', sortable: false }]"
           :items="targetFiles"
           hide-default-footer
         >
           <template #item.action="{ item }">
             <action-row
               :item="item"
-              @edit="openDialog(item)"
-              @delete="deleteItem(item)"
+              @edit="openDialog(item.raw)"
+              @delete="deleteItem(item.raw)"
             />
           </template>
           <template #item.targetNode="{ item }">
-            <div v-if="item.hasOwnProperty('targetNode')">
-              {{ getComponentName(item.targetNode) }}
+            <div v-if="item.raw.hasOwnProperty('targetNode')">
+              {{ getComponentName(item.raw.targetNode) }}
             </div>
           </template>
         </v-data-table>

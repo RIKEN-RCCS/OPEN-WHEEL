@@ -5,18 +5,13 @@
  */
 <template>
   <v-app>
-    <v-app-bar
-      app
-      extended
-    >
-      <a href="home"> <v-img :src="imgLogo" /></a>
-      <span
-        class="text-lowercase text-decoration-none text-h5 white--text ml-4"
-      >
-        viewer
-      </span>
-      <v-spacer />
-    </v-app-bar>
+    <application-tool-bar
+      title="viewer"
+      @navIconClick="drawer=!drawer"
+    />
+    <nav-drawer
+      v-model="drawer"
+    />
     <v-main>
       <vue-viewer
         ref="viewer"
@@ -37,14 +32,15 @@
         </template>
       </vue-viewer>
     </v-main>
-    <v-footer app />
+    <v-footer/>
   </v-app>
 </template>
 
 <script>
   "use strict";
   import "viewerjs/dist/viewer.css";
-  import imgLogo from "@/assets/wheel_logomark.png";
+  import applicationToolBar from "@/components/common/ApplicationToolBar.vue";
+  import NavDrawer from "@/components/common/NavigationDrawer.vue";
   import { component as vueViewer}  from "v-viewer";
   import SIO from "@/lib/socketIOWrapper.js";
   import { readCookie } from "@/lib/utility.js";
@@ -52,11 +48,13 @@
   export default{
     name: "Viewer",
     components:{
+      applicationToolBar,
+      NavDrawer,
       vueViewer
     },
     data(){
       return {
-        imgLogo,
+        drawer:false,
         items:[],
         options:
           {

@@ -45,7 +45,7 @@
       buttons,
     },
     props: {
-      value: Boolean,
+      modelValue: Boolean,
       title: { type: String, default: "are you sure you want to remove?" },
       message: String,
       removeCandidates: { type: Array, default: ()=>{ return []; } },
@@ -62,10 +62,10 @@
     computed: {
       openDialog: {
         get () {
-          return this.value;
+          return this.modelValue;
         },
-        set (value) {
-          this.$emit("input", value);
+        set (v) {
+          this.$emit("update:modelValue", v);
         },
       },
     },

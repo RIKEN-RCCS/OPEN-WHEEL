@@ -20,7 +20,7 @@
     </template>
     <template
       v-if="allowRenameInline"
-      #item.name="props"
+      #item.column.name="props"
     >
       <v-edit-dialog
         large
@@ -43,13 +43,17 @@
     <template #item.actions="{ item }">
       <action-row
         :can-edit="allowEditButton"
-        :item="item"
+        :item="item.raw"
         @delete="deleteItem"
       />
     </template>
     <template
+      v-if="! inputColumn"
+      #bottom
+    />
+    <template
       v-if="inputColumn"
-      #footer
+      #bottom
     >
       <v-text-field
         v-model="inputField"
@@ -113,7 +117,7 @@
       headers: {
         type: Array,
         default: function () {
-          return [{ value: "name", sortable: false }];
+          return [{ key: "name", sortable: false }];
         },
       },
       newItemTemplate: {
@@ -150,9 +154,9 @@
       },
       headersWithActions: function () {
         const rt = this.headers.filter((e)=>{
-          return e.value !== "actions";
+          return e.key !== "actions";
         });
-        rt.push({ value: "actions", text: "", sortable: false });
+        rt.push({ key: "actions", title: "", sortable: false });
         rt[0].editable = true;
         return rt;
       },

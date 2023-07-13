@@ -41,10 +41,10 @@
           show-select
           :single-select="false"
           :search="search"
-          :headers="[{ value: 'text', text: 'placeholder', sortable: true },
-                     { value: 'filename', text: 'filename', sortable: true, filterable: false },
-                     { value: 'row', text: 'row', sortable: true, filterable: false},
-                     { value: 'column', text: 'column', sortable: true, filterable: false} ]"
+          :headers="[{ key: 'text', title: 'placeholder', sortable: true },
+                     { key: 'filename', title: 'filename', sortable: true, filterable: false },
+                     { key: 'row', title: 'row', sortable: true, filterable: false},
+                     { key: 'column', title: 'column', sortable: true, filterable: false} ]"
           :items="placeholders"
           :items-per-page="5"
           :footer-props="tableFooterProps"
