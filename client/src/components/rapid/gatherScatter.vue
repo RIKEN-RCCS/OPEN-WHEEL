@@ -32,10 +32,10 @@
         >
           <template #item.action="{ item }">
             <action-row
-              :item="item"
+              :item="item.raw"
               :disabled="readOnly"
-              @edit="openDialog(item)"
-              @delete="deleteItem(item)"
+              @edit="openDialog(item.raw)"
+              @delete="deleteItem(item.raw)"
             />
           </template>
         </v-data-table>

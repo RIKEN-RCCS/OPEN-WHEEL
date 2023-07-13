@@ -41,18 +41,18 @@
       <v-card-text>
         <v-data-table
           dense
-          :headers="[{text: 'placeholder', value: 'keyword', sortable: true},
-                     {text: 'type', value: 'type', sortable: true},
-                     { text: 'Actions', value: 'action', sortable: false }]"
+          :headers="[{title: 'placeholder', key: 'keyword', sortable: true},
+                     {title: 'type', key: 'type', sortable: true},
+                     { title: 'Actions', key: 'action', sortable: false }]"
           :items="params"
           hide-default-footer
         >
           <template #item.action="{ item }">
             <action-row
-              :item="item"
+              :item="item.raw"
               :disabled="readOnly"
-              @edit="openDialog(item)"
-              @delete="deleteItem(item)"
+              @edit="openDialog(item.raw)"
+              @delete="deleteItem(item.raw)"
             />
           </template>
         </v-data-table>
@@ -196,10 +196,10 @@
           step: 1,
         },
         listHeaders: [
-          { text: "value", value: "name", sortable: true },
+          { title: "value", key: "name", sortable: true },
         ],
         filesHeaders: [
-          { text: "filename", value: "name", sortable: true },
+          { title: "filename", key: "name", sortable: true },
         ],
       };
     },

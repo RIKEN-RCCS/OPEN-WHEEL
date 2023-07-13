@@ -8,70 +8,63 @@
     <nav-drawer
       v-model="drawer"
     />
-    <v-app-bar app>
-      <a href="home"> <v-img :src="imgLogo" /></a>
-      <span
-        class="text-lowercase text-decoration-none text-h5 white--text ml-4"
-      >
-        home
-      </span>
-      <v-spacer />
-      <v-app-bar-nav-icon
-        app
-        @click="drawer = true"
-      />
-    </v-app-bar>
+    <application-tool-bar
+      title="home"
+      @navIconClick="drawer=!drawer"
+    />
     <v-main>
-      <v-toolbar extended>
+      <v-toolbar >
         <v-btn
           :disabled="batchMode"
           @click="openProject"
         >
-          <v-icon>mdi-pencil</v-icon>
+        <v-icon>mdi-pencil</v-icon>
           open
         </v-btn>
         <v-btn
           :disabled="batchMode"
-
           @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
         >
-          <v-icon>mdi-plus</v-icon>
+        <v-icon>mdi-plus</v-icon>
           new
         </v-btn>
         <v-btn
           @click="openDeleteProjectDialog(true)"
         >
-          <v-icon>mdi-text-box-remove-outline</v-icon>
+        <v-icon>mdi-text-box-remove-outline</v-icon>
           remove from list
         </v-btn>
         <v-btn
           @click="openDeleteProjectDialog(false)"
         >
-          <v-icon>mdi-trash-can-outline</v-icon>
+        <v-icon>mdi-trash-can-outline</v-icon>
           remove
         </v-btn>
         <v-switch
           v-model="batchMode"
           label="batch mode"
+          class="mt-6"
         />
       </v-toolbar>
       <v-data-table
+        v-if="projectList.length > 0"
         v-model="selectedInTable"
-        show-select
+        :show-select="true"
+        :return-object="true"
         :single-select="!batchMode"
         :headers="headers"
         :items="projectList"
       >
-        <template #item.name="props">
+        <template #item.name="{item}">
           <v-edit-dialog
             class="trancated-row"
-            :return-value.sync="props.item.name"
-            @save="renameProject(props.item)"
+            :return-value.sync="item.columns.name"
+            @save="renameProject(item.columns)"
           >
-            {{ props.item.name }}
+            {{ item.columns.name }}
             <template #input>
               <v-text-field
-                v-model="props.item.name"
+                v-model="item.columns.name"
                 label="rename"
                 single-line
                 counter
@@ -79,15 +72,15 @@
             </template>
           </v-edit-dialog>
         </template>
-        <template #item.description="props">
+        <template #item.description="{item}">
           <span
             class="d-inline-block text-truncate trancated-row"
-          >{{ props.item.description }} </span>
+          >{{ item.columns.description }} </span>
         </template>
-        <template #item.path="props">
+        <template #item.path="{item}">
           <span
             class="d-inline-block text-truncate trancated-row"
-          >{{ props.item.path }} </span>
+          >{{ item.columns.path }} </span>
         </template>
       </v-data-table>
       <v-dialog
@@ -140,8 +133,8 @@
 </template>
 <script>
   "use strict";
-  import imgLogo from "@/assets/wheel_logomark.png";
   import navDrawer from "@/components/common/NavigationDrawer.vue";
+  import applicationToolBar from "@/components/common/ApplicationToolBar.vue";
   import fileBrowser from "@/components/common/fileBrowserLite.vue";
   import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
   import buttons from "@/components/common/buttons.vue";
@@ -157,13 +150,13 @@
     name: "Home",
     components: {
       navDrawer,
+      applicationToolBar,
       fileBrowser,
       buttons,
       removeConfirmDialog,
     },
     data: ()=>{
       return {
-        imgLogo,
         batchMode: false,
         drawer: false,
         dialog: false,
@@ -174,12 +167,12 @@
         selectedInTable: [],
         projectList: [],
         headers: [
-          { text: "Project Name", value: "name", width: "20vw" },
-          { text: "Description", value: "description", width: "20vw" },
-          { text: "Path", value: "path", width: "20vw" },
-          { text: "Create time", value: "ctime" },
-          { text: "Last modified time", value: "mtime" },
-          { text: "State", value: "state" },
+          { title: "Project Name", key: "name", width: "20vw" },
+          { title: "Description", key: "description", width: "20vw" },
+          { title: "Path", key: "path", width: "20vw" },
+          { title: "Create time", key: "ctime" },
+          { title: "Last modified time", key: "mtime" },
+          { title: "State", key: "state" },
         ],
         dialogTitle: "",
         newProjectName: "",

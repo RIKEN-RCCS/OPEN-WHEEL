@@ -9,11 +9,4 @@ import router from "./router";
 import store from "./store";
 import vuetify from '@/plugins/vuetify'
 
-createApp({
-  router,
-  store,
-  vuetify,
-  render: function (h) { return h(Workflow); },
-}).$mount("#app");
-
-
+createApp(Workflow).use(vuetify).use(store).use(router).mount("#app");

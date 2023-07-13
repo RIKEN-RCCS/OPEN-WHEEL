@@ -126,7 +126,7 @@
       />
     </div>
     <v-treeview
-      :active.sync="activeItems"
+      :active="activeItems"
       :items="items"
       :load-children="getChildren"
       activatable
@@ -370,16 +370,16 @@
     mounted () {
       this.getComponentDirRootFiles();
       if(! this.readonly){
-        SIO.listenOnDrop(this.$el)
-        SIO.onUploaderEvent("choose", this.onChoose)
-        SIO.onUploaderEvent("complete", this.onUploadComplete)
-        SIO.onUploaderEvent("progress", this.updateProgressBar)
         const recaptchaScript = document.createElement("script");
         recaptchaScript.setAttribute(
           "src",
           "/siofu/client.js"
         );
         document.head.appendChild(recaptchaScript);
+        SIO.listenOnDrop(this.$el)
+        SIO.onUploaderEvent("choose", this.onChoose)
+        SIO.onUploaderEvent("complete", this.onUploadComplete)
+        SIO.onUploaderEvent("progress", this.updateProgressBar)
       }
       this.currentDir=this.selectedComponentAbsPath
     },

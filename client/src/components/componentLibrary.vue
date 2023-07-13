@@ -6,7 +6,7 @@
 <template>
   <v-navigation-drawer
     permanent
-    mini-variant
+    width=56px
   >
     <v-list
       id="iconlist"
@@ -15,32 +15,24 @@
       <v-list-item
         v-for="item in librarys"
         :key="item.type"
+        :id="item.type"
       >
-        <v-list-item-avatar
-          :id="item.type"
-          :color="item.color"
-          tile
-          draggable
-          @dragstart.capture="onDragstart($event, item)"
-          @dragover.prevent
-          @dragenter.prevent
-          @dragend="onDragend($event, item)"
-        >
-          <v-tooltip
-            right
-            :color="item.color"
-          >
-            <template #activator="{ on, attrs }">
-              <img
-                :src="item.img"
-                :alt="item.type"
-                v-bind="attrs"
-                v-on="on"
-              >
-            </template>
-            <span>{{ item.type }}</span>
-          </v-tooltip>
-        </v-list-item-avatar>
+        <v-tooltip location="end" >
+          <template v-slot:activator="{ props }">
+            <v-avatar
+              v-bind=props
+              :color="item.color"
+              :image="item.img"
+              rounded="0"
+              draggable
+              @dragstart.capture="onDragstart($event, item)"
+              @dragover.prevent
+              @dragenter.prevent
+              @dragend="onDragend($event, item)"
+            />
+          </template>
+          <span>{{item.type}}</span>
+        </v-tooltip>
       </v-list-item>
     </v-list>
   </v-navigation-drawer>

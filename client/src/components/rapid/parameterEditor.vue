@@ -17,10 +17,10 @@
     />
     <gather-scatter
       :container="parameterSetting.scatter"
-      :headers="[ { value: 'srcName', text: 'srcName', sortable: false },
-                  { value: 'dstNodeName', text: 'dstNode', sortable: false },
-                  { value: 'dstName', text: 'dstName', sortable: false },
-                  { text: 'Actions', value: 'action', sortable: false }]"
+      :headers="[ { key: 'srcName', title: 'srcName', sortable: false },
+                  { key: 'dstNodeName', title: 'dstNode', sortable: false },
+                  { key: 'dstName', title: 'dstName', sortable: false },
+                  { title: 'Actions', key: 'action', sortable: false }]"
       :label="'scatter'"
       :read-only="readOnly"
       @addNewItem="onAddNewItem"
@@ -29,10 +29,10 @@
     />
     <gather-scatter
       :container="parameterSetting.gather"
-      :headers="[ { value: 'srcNodeName', text: 'srcNode', sortable: false },
-                  { value: 'srcName', text: 'srcName', sortable: false },
-                  { value: 'dstName', text: 'dstName', sortable: false },
-                  { text: 'Actions', value: 'action', sortable: false }]"
+      :headers="[ { key: 'srcNodeName', title: 'srcNode', sortable: false },
+                  { key: 'srcName', title: 'srcName', sortable: false },
+                  { key: 'dstName', title: 'dstName', sortable: false },
+                  { title: 'Actions', key: 'action', sortable: false }]"
       :label="'gather'"
       :read-only="readOnly"
       @addNewItem="onAddNewItem"

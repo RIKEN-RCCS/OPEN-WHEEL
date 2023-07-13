@@ -24,7 +24,7 @@ async function tryToConnect(clientID, hostInfo, cb) {
     hostInfo.sshOpt = ["-vvv"];
   }
   const ssh = new SshClientWrapper(hostInfo);
-  logger.debug("try to connect", hostInfo.host, ":", hostInfo.port);
+  logger.debug(`try to connect ${hostInfo.username}@${hostInfo.host}:${hostInfo.port}`);
 
   try {
     await ssh.canConnect(120);

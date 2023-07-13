@@ -8,13 +8,10 @@
     v-model="drawer"
     app
     temporary
-    right
+    location="right"
     cliped
   >
-    <v-list
-      nav
-      dense
-    >
+    <v-list >
       <a
         href="remotehost"
         target="_blank"

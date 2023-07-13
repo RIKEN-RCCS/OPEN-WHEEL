@@ -7,8 +7,4 @@ import {createApp} from "vue";
 import Home from "./components/Home.vue";
 import vuetify from '@/plugins/vuetify'
 
-
-createApp({
-  vuetify,
-  render: function (h) { return h(Home); },
-}).$mount("#app");
+createApp(Home).use(vuetify).mount("#app");

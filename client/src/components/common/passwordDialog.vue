@@ -12,6 +12,7 @@
       <v-card-title>
         {{ title }}
       </v-card-title>
+      <v-form @submit.prevent>
       <v-text-field
         v-model="password"
         class="mx-6"
@@ -27,6 +28,7 @@
           @cancel="closeDialog"
         />
       </v-card-actions>
+    </v-form>
     </v-card>
   </v-dialog>
 </template>
