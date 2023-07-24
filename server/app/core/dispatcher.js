@@ -368,12 +368,14 @@ class Dispatcher extends EventEmitter {
     }
   }
 
-  remove() {
+  async remove() {
     this.pause();
+    const p = [];
 
     for (const child of this.children) {
-      child.remove();
+      p.push(child.remove());
     }
+    await Promise.all(p);
     this.children.clear();
     this.currentSearchList = [];
     this.pendingComponents = [];

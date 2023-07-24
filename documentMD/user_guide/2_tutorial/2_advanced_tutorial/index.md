@@ -241,6 +241,9 @@ cat input.txt
 ```
 
 最後にtaskコンポーネントのinputFileに __input.txt__ を追加し、sourceコンポーネントの __UPLOAD_ON_DEMAND__ と接続してください。
+以上でワークフローの作成は完了です。
+
+![img](./img/workflow_source.png "sourceコンポーネントのワークフロー完成図")
 
 実際に、入力ファイルとして使うためのテキストファイルをPC上に用意してください。
 
@@ -262,8 +265,8 @@ STDOUTに出力されます。
 ポストプロセスまで自動化されたワークフローでは、
 計算結果として画像ファイルを出力することがよくあります。
 
-WHEELには、代表的な画像ファイルをブラウザ上で表示するviewerコンポーネントが用意されています。
-このコンポーネントを使うと、計算結果のファイルを毎回PCにダウンロードすることなく
+WHEELには、代表的な形式の画像ファイルをブラウザ上で表示するviewerコンポーネントが用意されています。
+このコンポーネントを使うと、計算結果のファイルをPCにダウンロードすることなく
 簡単に結果を確認することができます。
 
 ![img](./img/component_library_viewer.png "viewerコンポーネント")
@@ -286,6 +289,9 @@ outputFileに、 __*.jpg__ のような形でファイル名を記述してく�
 また、1つにまとめず複数のoutputFileを指定しても問題ありません。
 
 最後にviewerコンポーネントのinputFileに __./__ を追加しtaskコンポーネントのoutputFileと接続してください
+以上でワークフローの作成は完了です。
+
+![img](./img/workflow_viewer.png "viewerコンポーネントのワークフロー完成図")
 
 プロジェクトを実行すると、 __open viewer screen__ というダイアログが表示されるので
 OKボタンをクリックすると別のタブで画像ビューワーが表示されます。
@@ -317,16 +323,19 @@ echo foo >foo.txt
 ```
 
 また、taskコンポーネントのoutputFileに __*.txt__ を追加してください。
-このコンポーネントは __foo.txt__しか出力しませんが、これから出力ファイル名を書き換えながら
+このコンポーネントは __foo.txt__ しか出力しませんが、これから出力ファイル名を書き換えながら
 何回かプロジェクトを実行するため、ファイル名を*で指定しています。
 
 次にstorageコンポーネントのプロパティ画面を開き __directory path__ の欄に
-__ /tmp __ と記述してください。また、inputFileに __./__ を指定してください。
+__/tmp__ と記述してください。また、inputFileに __./__ を指定してください。
 
 > もし、/tmpが存在しない、または/tmpに書き込み権限が無い場合は他の任意のディレクトリを指定してください。
   ただし、プロジェクトファイルが保存されているディレクトリツリーの範囲外のパスを指定する必要があります。
 
 最後に、taskコンポーネントのoutputFileとstorageコンポーネントのintpuFileを接続してください。
+以上でワークフローの作成は完了です。
+
+![img](./img/workflow_storage.png "storageコンポーネントのワークフロー完成図")
 
 プロジェクトを実行すると、task0, storage0それぞれのコンポーネントの下に foo.txtが表示されます。
 
@@ -440,7 +449,7 @@ echo stepjobTask1 > stdout.txt
 ```
 
 まず、stepjobTask0とstepjobTask1の実行順を指定します。
-stepjobTask0の▼をドラッグしてstepjobTask1にドロップしてください
+stepjobTask0の ▼ をドラッグしてstepjobTask1にドロップしてください
 
 線が接続され、stepjobTask1の左肩に表示されているアイコンの番号が1に変わります。
 
@@ -451,6 +460,8 @@ stepjobTask0の▼をドラッグしてstepjobTask1にドロップしてくだ�
 __use dependency__ を有効に、__dependencyForm__ に  `sd=ec==1`
 と入力してください。
 これで、stepjobTask1はstepjobTask0の戻り値が1の時のみ実行されます。
+__dependencyForm__ の記述方法については、TCSのドキュメントやお使いのスパコンシステムの
+ユーザガイドを参照してください。
 
 ![img](./img/property_stepjobTask2.png "依存関係式")
 
@@ -477,4 +488,4 @@ stepjobTask1は実行され、stdout.txtの中に `stepjobTask1` と書かれて
 
 
 --------
-[リファレンスマニュアルのトップページに戻る](../readme.md)
+[チュートリアルのトップページに戻る](../index.md)

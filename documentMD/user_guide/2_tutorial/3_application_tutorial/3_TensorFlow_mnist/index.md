@@ -43,11 +43,10 @@ NNとは、ニューラルネットワークの略で、人間の脳内にある
 
 ## 3. ワークフロー作成
 新規プロジェクトを作成し、taskコンポーネントを2つ追加してください。
-それぞれのコンポーネントの名前は __train__ __estimate__としてください。
+それぞれのコンポーネントの名前は __train__ __estimate__ としてください。
 
 ### trainコンポーネントの設定
-__trainコンポーネントに
-__run.sh__  という名前で新規ファイルを作成し次の内容を記入してください。
+__train__ コンポーネントに __run.sh__ という名前で新規ファイルを作成し次の内容を記入してください。
 
 ```
 #PJM --rsc-list "elapse=01:00:00"
@@ -111,8 +110,7 @@ python kerasMnist.py > learn.log
 - include learn.log
 
 ### estimateコンポーネントの設定
-__estimateコンポーネントに
-__run.sh__  という名前で新規ファイルを作成し次の内容を記入してください。
+__estimate__ コンポーネントに __run.sh__ という名前で新規ファイルを作成し次の内容を記入してください。
 
 ```
 #PJM --rsc-list "elapse=01:00:00"
@@ -169,6 +167,12 @@ python kerasMnist.py > eval.log
 - useJobScheduler: 有効
 - include: eval.log
 
+最後に、trainのoutputFileにある __param.hdf5__ をestimateコンポーネントに
+ドロップして接続すると、ワークフローの作成は完了です。
+
+![img](./img/workflow.png "ワークフロー完成図")
+
+
 ## 5. 実行結果の確認
 
 解析結果の確認を行います。
@@ -190,3 +194,6 @@ python kerasMnist.py > eval.log
 
 accuracyが「0.927」すなわち検証用データにおいて精度92.7%の学習モデルが作成されたことが確認できます。
 TensorFlowを利用したMNISTデータ解析ワークフロー例は以上になります。
+
+--------
+[チュートリアルのトップページに戻る](../../index.md)

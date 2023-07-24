@@ -274,6 +274,7 @@ async function onPauseProject(projectRootDir, ack) {
     await updateProjectState(projectRootDir, "paused");
     await sendWorkflow(ack, projectRootDir);
   } catch (e) {
+    getLogger(projectRootDir).error("fatal error occurred while pausing project", e);
     ack(e);
     return;
   }
@@ -287,6 +288,7 @@ async function onStopProject(projectRootDir, ack) {
     await updateProjectState(projectRootDir, "paused");
     await sendWorkflow(ack, projectRootDir);
   } catch (e) {
+    getLogger(projectRootDir).error("fatal error occurred while stopping project", e);
     ack(e);
     return;
   }
@@ -319,8 +321,8 @@ async function onCleanProject(clientID, projectRootDir, ack) {
       emitAll(projectRootDir, "taskStateList", []),
       emitAll(projectRootDir, "projectJson", await getProjectJson(projectRootDir))
     ]);
-    removeSsh(projectRootDir);
     removeCluster(projectRootDir);
+    removeSsh(projectRootDir);
   }
   getLogger(projectRootDir).debug("clean project done");
 }
