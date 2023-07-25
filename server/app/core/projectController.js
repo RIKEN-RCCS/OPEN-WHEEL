@@ -47,7 +47,7 @@ async function updateProjectState(projectRootDir, state, projectJson) {
 }
 
 
-const cleanProject = async(projectRootDir)=>{
+const cleanProject = async (projectRootDir)=>{
   const rootDispatcher = rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
     await rootDispatcher.remove();
@@ -81,7 +81,7 @@ async function pauseProject(projectRootDir) {
 async function stopProject(projectRootDir) {
   const rootDispatcher = rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
-    await rootDispatcher.stop();
+    await rootDispatcher.pause();
   }
 
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
