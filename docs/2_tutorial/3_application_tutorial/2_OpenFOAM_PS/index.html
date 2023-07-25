@@ -558,8 +558,11 @@
 <ol>
 <li>解析概要</li>
 <li>WHEELによるワークフローの作成
-　1. Parameter Study コンポーネント
-　2. Task コンポーネント</li>
+<ol>
+<li>Parameter Study コンポーネント</li>
+<li>Task コンポーネント</li>
+</ol>
+</li>
 <li>ジョブの投入</li>
 <li>解析結果の確認</li>
 </ol>
@@ -568,7 +571,7 @@
 <h4 id="%E8%A7%A3%E6%9E%90%E3%83%A2%E3%83%87%E3%83%AB-d50-d10">解析モデル D50-d10 <a class="heading-anchor-permalink" href="#%E8%A7%A3%E6%9E%90%E3%83%A2%E3%83%87%E3%83%AB-d50-d10">#</a></h4>
 <p><img src="./img/model.png" alt="img" title="model"></p>
 <p>inletから流入した流体がoutletから出ていく解析を実施します。</p>
-<p>事前に<a href="https://....">こちら</a>のファイルをダウンロードして展開しておいてください。
+<p>事前に<a href="https://riken-rccs.github.io/OPEN-WHEEL/2_tutorial/3_application_tutorial/2_OpenFOAM_PS/sample/OpenFOAM_tutorial_sample.zip">こちら</a>のファイルをダウンロードして展開しておいてください。
 アーカイブ内には次の3つのファイルが含まれます。</p>
 <ul>
 <li><strong>pipe.unv</strong> メッシュ</li>
@@ -577,17 +580,26 @@
 </ul>
 <p>なお、メッシュはCADモデルを元に、「SALOME-MECA」を用いて作成し
 Ideas universal形式でメッシュデータをエキスポートしたものです。</p>
+<p>本チュートリアルの最終ステップでは、WHEELサーバにインストールされた
+ParaViewを使用して計算結果の可視化を行ないます。</p>
+<p>このため、WHEELをリモートのサーバにインストールしてチュートリアルを実行していたり
+ParaViewがインストールされていない環境で実行している場合は、
+「解析結果の確認」の章は実行できません。</p>
 <h2 id="2.-%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E4%BD%9C%E6%88%90">2. ワークフロー作成 <a class="heading-anchor-permalink" href="#2.-%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E4%BD%9C%E6%88%90">#</a></h2>
 <p>新規プロジェクトを作成し、taskコンポーネントを2つとPSコンポーネントを1つ
 追加してください。
-1つ目のtaskコンポーネントの名前は <strong>convert</strong>、2つ目のtaskコンポーネントの名前は
-__extractとしてください。</p>
+1つ目のtaskコンポーネントの名前は <strong>convert</strong> 、2つ目のtaskコンポーネントの名前は
+<strong>extract</strong> としてください。</p>
 <p>また、PSコンポーネント内部にtaskコンポーネントを1つ追加し、
 <strong>solve</strong> という名前にしてください。</p>
 <h3 id="convert%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E8%A8%AD%E5%AE%9A">convertコンポーネントの設定 <a class="heading-anchor-permalink" href="#convert%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E3%81%AE%E8%A8%AD%E5%AE%9A">#</a></h3>
 <p><strong>convert</strong> コンポーネントのファイルエリアを開き、事前にダウンロードした
 <strong>pipe.unv</strong> をアップロードしてください。</p>
-<p>また、<strong><a href="http://run.sh">run.sh</a></strong>  という名前で新規ファイルを作成し次の内容を記入してください。</p>
+<p>ファイルのアップロードは、このエリアにファイルをドロップするか、 uploadボタンをクリックした時に
+表示されるダイアログで、アップロードするファイルを選択することで行ないます。
+詳しい操作方法は、<a href="../../../3_reference_manual/3_workflow_screen/1_graphview.html" title="リファレンスマニュアル-グラフビュー画面">リファレンスマニュアル</a> を
+参照してください。</p>
+<p>続いて、<strong><a href="http://run.sh">run.sh</a></strong>  という名前で新規ファイルを作成し次の内容を記入してください。</p>
 <pre><code>. /vol0004/apps/oss/spack-v0.17.0/share/spack/setup-env.sh
 
 spack load 'openfoam@2012%fj@4.8.0'
@@ -682,6 +694,7 @@ paraviewを起動する準備をします。</p>
 <p>また、PSコンポーネントのoutputFileに設定した <code>results</code> を
 <strong>extract</strong> コンポーネントにドロップして接続してください。</p>
 <p>以上でワークフローの作成は完了です。</p>
+<p><img src="./img/workflow.png" alt="img" title="ワークフロー完成図"></p>
 <h2 id="3.-%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AE%E5%AE%9F%E8%A1%8C">3. プロジェクトの実行 <a class="heading-anchor-permalink" href="#3.-%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h2>
 <p><strong>run</strong> ボタンをクリックして、プロジェクトを実行してください。
 初めに、富岳へのログインに必要な秘密鍵のパスワードが聞かれますが、それ移行はワークフローの終了まで操作は不要です。</p>
@@ -707,6 +720,8 @@ shareボタンをクリックしてください。</p>
 <h5 id="%E6%B5%81%E5%85%A5%E9%80%9F%E5%BA%A67%5Bm%2Fs%5D">流入速度7[m/s] <a class="heading-anchor-permalink" href="#%E6%B5%81%E5%85%A5%E9%80%9F%E5%BA%A67%5Bm%2Fs%5D">#</a></h5>
 <p><img src="./img/result_7.png" alt="img" title="流入速度7m/s結果"></p>
 <p>OpenFOAMを利用したパラメトリックスタディ解析ワークフロー例は以上になります。</p>
+<hr>
+<p><a href="../../index.html">チュートリアルのトップページに戻る</a></p>
 
       </article>
     </div>

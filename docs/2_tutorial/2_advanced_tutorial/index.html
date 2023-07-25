@@ -694,7 +694,9 @@ catコマンドで表示するワークフローを作成して、sourceコン�
 run.shには次の内容を記載してください。</p>
 <pre><code>cat input.txt
 </code></pre>
-<p>最後にtaskコンポーネントのinputFileに <strong>input.txt</strong> を追加し、sourceコンポーネントの <strong>UPLOAD_ON_DEMAND</strong> と接続してください。</p>
+<p>最後にtaskコンポーネントのinputFileに <strong>input.txt</strong> を追加し、sourceコンポーネントの <strong>UPLOAD_ON_DEMAND</strong> と接続してください。
+以上でワークフローの作成は完了です。</p>
+<p><img src="./img/workflow_source.png" alt="img" title="sourceコンポーネントのワークフロー完成図"></p>
 <p>実際に、入力ファイルとして使うためのテキストファイルをPC上に用意してください。</p>
 <p>プロジェトを実行すると、sourceコンポーネントのoutputfileとして使うファイルをアップロードするためのダイアログが表示されるので
 さきほど用意したファイルを指定してください。
@@ -707,8 +709,8 @@ STDOUTに出力されます。</p>
 <h3 id="5.-%E7%B5%90%E6%9E%9C%E8%A1%A8%E7%A4%BA">5. 結果表示 <a class="heading-anchor-permalink" href="#5.-%E7%B5%90%E6%9E%9C%E8%A1%A8%E7%A4%BA">#</a></h3>
 <p>ポストプロセスまで自動化されたワークフローでは、
 計算結果として画像ファイルを出力することがよくあります。</p>
-<p>WHEELには、代表的な画像ファイルをブラウザ上で表示するviewerコンポーネントが用意されています。
-このコンポーネントを使うと、計算結果のファイルを毎回PCにダウンロードすることなく
+<p>WHEELには、代表的な形式の画像ファイルをブラウザ上で表示するviewerコンポーネントが用意されています。
+このコンポーネントを使うと、計算結果のファイルをPCにダウンロードすることなく
 簡単に結果を確認することができます。</p>
 <p><img src="./img/component_library_viewer.png" alt="img" title="viewerコンポーネント"></p>
 <p>ここでは、事前に用意した画像ファイルをviewerコンポーネントに渡すワークフローを作成して
@@ -722,7 +724,9 @@ run.shには次の内容を記載してください。</p>
 outputFileに、 <strong>*.jpg</strong> のような形でファイル名を記述してください。
 1ファイルのみを表示する場合はファイル名をそのまま書いても構いません。
 また、1つにまとめず複数のoutputFileを指定しても問題ありません。</p>
-<p>最後にviewerコンポーネントのinputFileに <strong>./</strong> を追加しtaskコンポーネントのoutputFileと接続してください</p>
+<p>最後にviewerコンポーネントのinputFileに <strong>./</strong> を追加しtaskコンポーネントのoutputFileと接続してください
+以上でワークフローの作成は完了です。</p>
+<p><img src="./img/workflow_viewer.png" alt="img" title="viewerコンポーネントのワークフロー完成図"></p>
 <p>プロジェクトを実行すると、 <strong>open viewer screen</strong> というダイアログが表示されるので
 OKボタンをクリックすると別のタブで画像ビューワーが表示されます。</p>
 <p>初期状態ではタイル表示になっていますが、表示された画像をクリックするとスライドショー状態になります。
@@ -742,15 +746,17 @@ run.shには次の内容を記載してください。</p>
 <pre><code>echo foo &gt;foo.txt
 </code></pre>
 <p>また、taskコンポーネントのoutputFileに <strong>*.txt</strong> を追加してください。
-このコンポーネントは __foo.txt__しか出力しませんが、これから出力ファイル名を書き換えながら
+このコンポーネントは <strong>foo.txt</strong> しか出力しませんが、これから出力ファイル名を書き換えながら
 何回かプロジェクトを実行するため、ファイル名を*で指定しています。</p>
 <p>次にstorageコンポーネントのプロパティ画面を開き <strong>directory path</strong> の欄に
-__ /tmp __ と記述してください。また、inputFileに <strong>./</strong> を指定してください。</p>
+<strong>/tmp</strong> と記述してください。また、inputFileに <strong>./</strong> を指定してください。</p>
 <blockquote>
 <p>もし、/tmpが存在しない、または/tmpに書き込み権限が無い場合は他の任意のディレクトリを指定してください。
 ただし、プロジェクトファイルが保存されているディレクトリツリーの範囲外のパスを指定する必要があります。</p>
 </blockquote>
-<p>最後に、taskコンポーネントのoutputFileとstorageコンポーネントのintpuFileを接続してください。</p>
+<p>最後に、taskコンポーネントのoutputFileとstorageコンポーネントのintpuFileを接続してください。
+以上でワークフローの作成は完了です。</p>
+<p><img src="./img/workflow_storage.png" alt="img" title="storageコンポーネントのワークフロー完成図"></p>
 <p>プロジェクトを実行すると、task0, storage0それぞれのコンポーネントの下に foo.txtが表示されます。</p>
 <p>プロジェクトを初期化すると、task0の下のfoo.txtは削除されますが、storage0の下のfoo.txtは残ります。</p>
 <p>task0のrun.shを編集して、出力ファイル名をbar.txtに変更して再実行すると、storage0コンポーネント内に
@@ -817,14 +823,16 @@ stepjob機能が利用可能なリモートホストを指定してください�
 <pre><code>echo stepjobTask1 &gt; stdout.txt
 </code></pre>
 <p>まず、stepjobTask0とstepjobTask1の実行順を指定します。
-stepjobTask0の▼をドラッグしてstepjobTask1にドロップしてください</p>
+stepjobTask0の ▼ をドラッグしてstepjobTask1にドロップしてください</p>
 <p>線が接続され、stepjobTask1の左肩に表示されているアイコンの番号が1に変わります。</p>
 <p><img src="./img/workflow_stepjobTask.png" alt="img" title="依存関係指定後のワークフロー"></p>
 <p>次に、stepjobTask1の実行条件を指定します。
 プロパティ画面の <strong>stepjobtask setting</strong> の覧をクリックして開き
 <strong>use dependency</strong> を有効に、<strong>dependencyForm</strong> に  <code>sd=ec==1</code>
 と入力してください。
-これで、stepjobTask1はstepjobTask0の戻り値が1の時のみ実行されます。</p>
+これで、stepjobTask1はstepjobTask0の戻り値が1の時のみ実行されます。
+<strong>dependencyForm</strong> の記述方法については、TCSのドキュメントやお使いのスパコンシステムの
+ユーザガイドを参照してください。</p>
 <p><img src="./img/property_stepjobTask2.png" alt="img" title="依存関係式"></p>
 <p>最後にstepjobTask1が出力するファイルを回収するために、
 <strong>remote file setting</strong> の行をクリックして開きincludeの欄に <code>stdout.txt</code> と入力してください。</p>
@@ -840,7 +848,7 @@ stepjobTask1は実行され、stdout.txtの中に <code>stepjobTask1</code> と�
 <a href="../3_application_tutorial/index.html">実践編のチュートリアル</a> に進んでください。</p>
 <p>また、個々の機能の詳細な内容については、<a href="../../3_reference_manual/index.html">リファレンスマニュアル</a> をご参照ください。</p>
 <hr>
-<p><a href="../readme.html">リファレンスマニュアルのトップページに戻る</a></p>
+<p><a href="../index.html">チュートリアルのトップページに戻る</a></p>
 
       </article>
     </div>

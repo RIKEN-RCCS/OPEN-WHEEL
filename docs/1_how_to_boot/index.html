@@ -554,18 +554,11 @@
         <h1 id="wheel%E3%81%AE%E8%B5%B7%E5%8B%95%E6%96%B9%E6%B3%95">WHEELの起動方法 <a class="heading-anchor-permalink" href="#wheel%E3%81%AE%E8%B5%B7%E5%8B%95%E6%96%B9%E6%B3%95">#</a></h1>
 <h2 id="%E4%BA%8B%E5%89%8D%E6%BA%96%E5%82%99">事前準備 <a class="heading-anchor-permalink" href="#%E4%BA%8B%E5%89%8D%E6%BA%96%E5%82%99">#</a></h2>
 <p>WHEELの起動にはdockerを使用します。
-最新の <a href="https://www.docker.com/">docker</a> を取得してください。</p>
+最新の <a href="https://www.docker.com/">docker</a> をインストールしてください。</p>
 <h2 id="%E8%B5%B7%E5%8B%95%E6%96%B9%E6%B3%95">起動方法 <a class="heading-anchor-permalink" href="#%E8%B5%B7%E5%8B%95%E6%96%B9%E6%B3%95">#</a></h2>
 <ol>
 <li>
 <p>任意の場所にディレクトリを作成します。(以降では、このディレクトリを<code>CONFIG_DIR</code>とします。)</p>
-</li>
-<li>
-<p><code>CONFIG_DIR</code>に以下の2つのファイルをダウンロードします。</p>
-<ul>
-<li><a href="https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/server/app/config/jobScheduler.json">jobScheduler.json</a></li>
-<li><a href="https://raw.githubusercontent.com/RIKEN-RCCS/OPEN-WHEEL/master/server/app/config/server.json">server.json</a></li>
-</ul>
 </li>
 <li>
 <p>HTTPS通信用のサーバ証明書および鍵ファイルを、それぞれ<code>server.crt</code>, <code>server.key</code>という名前で<code>CONFIG_DIR</code>に格納します。
@@ -586,9 +579,13 @@
 <li>プロジェクトファイルの作成先を${HOME}に指定しています</li>
 <li>WHHELのポート番号を8089に指定しています。</li>
 </ul>
+<p>httpsの代わりにhttp通信を使いたい場合は<code>docker run</code>に次のオプションを追加して実行してください。
+この場合は、サーバ証明書と鍵ファイルを<code>CONFIG_DIR</code>に置く必要はありません。</p>
+<pre><code>-e WHEEL_USE_HTTP=1
+</code></pre>
 <p>WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、<code>http(s)://localhost:8089</code>にアクセスしてください。</p>
 <hr>
-<p><a href="../../index.html">トップページに戻る</a></p>
+<p><a href="../index.html">トップページに戻る</a></p>
 
       </article>
     </div>

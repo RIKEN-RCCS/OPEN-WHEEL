@@ -614,7 +614,7 @@ Taskコンポーネントでは、実行したいプログラムを直接指定�
 <p>最後に、画面右上の <strong>save project</strong> ボタン(1)をクリックして作成したプロジェクトをsaveしましょう。</p>
 <p>WHEELでは、プロジェクトファイルの管理にgitを使っており、save処理を行なったタイミングで
 リポジトリにコミットされます。
-__revert project__ボタン(2)をクリックすると、直前にsaveした状態まで巻き戻すことができますが
+<strong>revert project</strong> ボタン(2)をクリックすると、直前にsaveした状態まで巻き戻すことができますが
 redo(元に戻す処理を取り止めること)はできませんので、注意してください。</p>
 <p><img src="./img/workflow4.png" alt="img" title="save および revert"></p>
 <h3 id="4.-%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AE%E5%AE%9F%E8%A1%8C">4. プロジェクトの実行 <a class="heading-anchor-permalink" href="#4.-%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h3>
@@ -636,6 +636,7 @@ redo(元に戻す処理を取り止めること)はできませんので、注�
 プロジェクトの修正をしたり、再実行する時には一度実行開始前の状態に戻す必要があります。</p>
 <p>本チュートリアルでは、この後プロジェクトに修正を加えながら何回か再実行していくので
 画面上部にある <strong>stop and clean project</strong> ボタンをクリックして、実行開始前の状態に戻してください。</p>
+<p><img src="./img/stop_and_clean_button.png" alt="img" title="cleanボタン"></p>
 <h3 id="6.-%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E8%A8%AD%E5%AE%9A%E3%81%AE%E4%BD%9C%E6%88%90">6. リモートホスト設定の作成 <a class="heading-anchor-permalink" href="#6.-%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E8%A8%AD%E5%AE%9A%E3%81%AE%E4%BD%9C%E6%88%90">#</a></h3>
 <p>最初のプロジェクトでは、ローカルホスト(WHEELを実行しているマシン)で全てのタスクを実行しました。
 WHEELは、sshでログインした先のマシン上でタスクを実行する機能があります。</p>
@@ -644,18 +645,22 @@ WHEELは、sshでログインした先のマシン上でタスクを実行する
 <p><img src="./img/workflow6.png" alt="img" title="hunburger menu"></p>
 <p>表示されたメニュー内の <strong>Remotehost editor</strong> をクリックすると別のタブでリモートホスト設定画面が表示されます。</p>
 <p><img src="./img/remotehost_editor_button.png" alt="img" title="リモートホストエディタリンク"></p>
-<p>画面上部の <strong>NEW REMOTE HOST SETTING</strong> ボタンをクリックすると新規ホスト設定ダイアログが表示されるので
-次の項目に、値を入力してください。</p>
-<ul>
-<li>label</li>
-<li>Hostname</li>
-<li>User ID</li>
-<li>Host work dir</li>
-</ul>
+<p>画面上部の <strong>NEW REMOTE HOST SETTING</strong> ボタンをクリックすると新規ホスト設定ダイアログが表示されます。</p>
 <p><img src="./img/remotehost_editor.png" alt="img" title="リモートホストエディタ"></p>
+<p>フォームのうち次の項目に、値を入力してください。</p>
+<ul>
+<li>label          任意の文字列</li>
+<li>Hostname       接続先のホスト名またはIPアドレス</li>
+<li>User ID        接続先ホストでのユーザID</li>
+<li>Host work dir  リモートホスト内で使用するディレクトリのパス</li>
+</ul>
+<p>例えば、 <code>foo.example.com</code> ホストに対して、ユーザー <code>bar</code> で接続し
+タスクの実行を <code>/home/users/bar/baz</code> ディレクトリ以下で行なう設定を
+<code>example</code> という名前で作成するとすれば、入力内容は次のようになります。</p>
 <p><img src="./img/new_remotehost.png" alt="img" title="新規ホスト情報設定"></p>
 <p>labelはWHEELが接続先ホストを区別するための文字列で、大文字小文字が区別されます。</p>
-<p>Hostname, UserIDは接続先のホスト名(IPアドレスでも可)とユーザIDです。</p>
+<p>Hostname, UserIDは接続先のホスト名(IPアドレスでも可)とユーザIDです。
+これらのフィールドには、 <code>~/.ssh/config</code> で設定した値を指定することもできます。</p>
 <p>Host work dirには接続先ホストでの作業ディレクトリを絶対パスで指定します。
 WHEELがリモートホストでプログラムを実行する時には、ここで指定したディレクトリの下に
 ファイルを転送してから、実行します。</p>
@@ -666,6 +671,8 @@ WHEELがリモートホストでプログラムを実行する時には、ここ
 のスイッチを有効にしてください。
 下側に、秘密鍵を指定する欄が表示されるので、秘密鍵のパスを入力するか、 <strong>BROWSE</strong> ボタンをクリックして
 ファイルを選択してください。</p>
+<p>その他の詳細な設定内容は<a href="../../3_reference_manual/2_remotehost_screen/index.html" title="remotehost設定">リファレンスマニュアル</a> を
+ご参照ください。</p>
 <h3 id="7.-%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E4%B8%8A%E3%81%A7%E3%81%AE%E3%82%BF%E3%82%B9%E3%82%AF%E3%81%AE%E5%AE%9F%E8%A1%8C">7. リモートホスト上でのタスクの実行 <a class="heading-anchor-permalink" href="#7.-%E3%83%AA%E3%83%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%B9%E3%83%88%E4%B8%8A%E3%81%A7%E3%81%AE%E3%82%BF%E3%82%B9%E3%82%AF%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h3>
 <p>リモートホスト上でプログラムを実行する準備が整ったので、さきほどのタスクをリモートホストで実行してみましょう。</p>
 <p>ワークフロー画面に戻って、task0コンポーネントをクリックしプロパティ画面を表示します。
@@ -679,7 +686,7 @@ WHEELがリモートホストでプログラムを実行する時には、ここ
 <p>パスワード認証での接続の場合はパスワードを、公開鍵認証での接続の場合は
 秘密鍵に設定したパスフレーズを入力して <strong>OK</strong> ボタンをクリックしてください。</p>
 <p><img src="./img/password_dialog.png" alt="img" title="パスワード入力ダイアログ"></p>
-<p>ログ画面を開くと、実行終了時に <strong>STDOU(SSH)</strong> の部分にechoコマンドの出力が表示されています。</p>
+<p>ログ画面を開くと、実行終了時に <strong>OUTPUT(SSH)</strong> の部分にechoコマンドの出力が表示されています。</p>
 <p>出力内容を確認したら、<strong>stop and clean project</strong> ボタンをクリックしてプロジェクトを初期化してください。</p>
 <h3 id="8.-%E3%83%90%E3%83%83%E3%83%81%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E7%B5%8C%E7%94%B1%E3%81%A7%E3%81%AE%E3%82%BF%E3%82%B9%E3%82%AF%E3%81%AE%E5%AE%9F%E8%A1%8C">8. バッチシステム経由でのタスクの実行 <a class="heading-anchor-permalink" href="#8.-%E3%83%90%E3%83%83%E3%83%81%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E7%B5%8C%E7%94%B1%E3%81%A7%E3%81%AE%E3%82%BF%E3%82%B9%E3%82%AF%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h3>
 <p>次は、同じ内容のワークフローをバッチシステム経由で実行してみます。
@@ -688,11 +695,13 @@ WHEELがリモートホストでプログラムを実行する時には、ここ
 ホスト情報編集ダイアログを表示します</p>
 <p><img src="./img/remotehost_editor2.png" alt="img" title="リモートホストエディタ追加編集"></p>
 <p>リモートホストで使われているジョブスケジューラの種類を、 <strong>job scheduler</strong> (1) の欄から選んでください。
-現在WHEELが対応しているジョブスケジューラは以下の4種類です。</p>
+現在設定可能な値は次の6種類です。</p>
 <ul>
 <li>PBSPro</li>
+<li>PBSProWithoutHistory</li>
 <li>SLURM</li>
 <li>TCS (Technical Computing Suite)</li>
+<li>Fugaku</li>
 <li>UGE (Univa Grid Engine)</li>
 </ul>
 <p>富岳では、TCSが採用されていますが他サイトとは一部挙動が違うため、富岳専用の設定(Fugaku)が用意されています。
@@ -820,7 +829,7 @@ task0の方はsleep10 が入っているので10秒後に表示されるはず�
 知りたい方は <a href="../2_advanced_tutorial/index.html">応用編のチュートリアル</a> に進んでください。</p>
 <p>また、個々の機能の詳細な内容については、<a href="../../3_reference_manual/index.html">リファレンスマニュアル</a> をご参照ください。</p>
 <hr>
-<p><a href="../readme.html">リファレンスマニュアルのトップページに戻る</a></p>
+<p><a href="../index.html">チュートリアルのトップページに戻る</a></p>
 
       </article>
     </div>

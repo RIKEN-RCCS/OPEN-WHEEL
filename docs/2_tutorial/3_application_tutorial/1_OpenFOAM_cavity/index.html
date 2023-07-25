@@ -566,6 +566,12 @@
 <p><img src="./img/cavity.png" alt="img" title="cavity"></p>
 <p>OpenFOAMの配布物には例題として、このモデルを用いる解析用のデータが含まれているので
 そのファイルを用いて計算を実行します。</p>
+<p>なお、本チュートリアルの最終ステップでは、WHEELサーバに
+インストールされたParaViewを使用して
+計算結果の可視化を行ないます。</p>
+<p>このため、WHEELをリモートのサーバにインストールしてチュートリアルを実行していたり
+ParaViewがインストールされていない環境で実行している場合は、
+「解析結果の確認」の章は実行できません。</p>
 <h2 id="2.-%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">2. ワークフローの作成 <a class="heading-anchor-permalink" href="#2.-%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90">#</a></h2>
 <p>新規プロジェクトを作成し、始めに3つのTaskコンポーネントを追加してください。</p>
 <p>各コンポーネントのプロパティ画面から、名前をそれぞれ <strong>preprocess</strong> <strong>solve</strong> <strong>extract</strong> に変更してください。</p>
@@ -631,6 +637,7 @@ icoFoamを用いた解析を実施します。
 <p><strong>preprocess</strong> のoutputFileに設定した <code>cavity</code> を <strong>solve</strong> コンポーネントにドロップして接続してください。
 また、<strong>solve</strong> コンポーネントのoutputFileに設定した <code>cavity.tgz</code> を <strong>extract</strong> コンポーネントにドロップして接続してください。</p>
 <p>以上でワークフローの作成は完了です。</p>
+<p><img src="./img/workflow.png" alt="img" title="ワークフロー完成図"></p>
 <h2 id="3.-%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AE%E5%AE%9F%E8%A1%8C">3. プロジェクトの実行 <a class="heading-anchor-permalink" href="#3.-%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AE%E5%AE%9F%E8%A1%8C">#</a></h2>
 <p><strong>run</strong> ボタンをクリックして、プロジェクトを実行してください。
 初めに、富岳へのログインに必要な秘密鍵のパスワードが聞かれますが、それ移行はワークフローの終了まで操作は不要です。</p>
@@ -649,6 +656,8 @@ paraviewを起動してください。</p>
 <p>参考として流速ベクトルの可視化結果を記載します。</p>
 <p><img src="./img/cavity_result.png" alt="img" title="流速ベクトル"></p>
 <p>以上で、cavityケースの実行ワークフローは終了です。</p>
+<hr>
+<p><a href="../../index.html">チュートリアルのトップページに戻る</a></p>
 
       </article>
     </div>
