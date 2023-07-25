@@ -50,7 +50,8 @@ async function killTask(task) {
   }
 }
 
-function cancelDispatchedTasks(tasks) {
+async function cancelDispatchedTasks(tasks) {
+  const p = [];
   for (const task of tasks) {
     if (task.state === "finished" || task.state === "failed") {
       continue;
@@ -58,10 +59,11 @@ function cancelDispatchedTasks(tasks) {
     const canceled = cancel(task);
 
     if (!canceled) {
-      killTask(task);
+      p.push(killTask(task));
     }
     task.state = "not-started";
   }
+  return Promise.all(p);
 }
 
 function taskStateFilter(task) {

@@ -357,19 +357,20 @@ class Dispatcher extends EventEmitter {
     });
   }
 
-  pause() {
-    cancelDispatchedTasks(this.runningTasks);
+  async pause() {
+    const p = [];
+    p.push(cancelDispatchedTasks(this.runningTasks));
     this.emit("stop");
     this.removeListener("dispatch", this._dispatch);
 
-    //to be discussed kill task or
     for (const child of this.children) {
-      child.pause();
+      p.push(child.pause());
     }
+    return Promise.all(p);
   }
 
   async remove() {
-    this.pause();
+    await this.pause();
     const p = [];
 
     for (const child of this.children) {
