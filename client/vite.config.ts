@@ -9,6 +9,7 @@ const root = resolve(__dirname, "src");
 const outDir=resolve(__dirname, "../server/app/public");
 
 export default defineConfig({
+  base: "./",
   plugins: [
     vue(),
     Components({
