@@ -57,6 +57,7 @@ logger.info(`WHEEL_CONFIG_DIR = ${process.env.WHEEL_CONFIG_DIR}`);
 logger.info(`WHEEL_USE_HTTP = ${process.env.WHEEL_USE_HTTP}`);
 logger.info(`WHEEL_PORT = ${process.env.WHEEL_PORT}`);
 logger.info(`WHEEL_LOGLEVEL = ${process.env.WHEEL_LOGLEVEL}`);
+logger.info(`WHEEL_VERBOSE_SSH = ${process.env.WHEEL_VERBOSE_SSH}`);
 
 //port number
 const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;
@@ -82,10 +83,7 @@ sio.on("connection", (socket)=>{
     }
     //get callback argument
     const cb = args.pop();
-    //remove sensitive values
-    if (eventName === "tryToConnect") {
-      args.pop();
-    }
+
     //this must go to trace level(file only, never go to console)
     logger.debug(`[socketIO API] ${eventName} recieved.`, args);
 
@@ -143,7 +141,7 @@ app.use((err, req, res, next)=>{
 
 //check each project has running job or not
 Promise.all(projectList.getAll()
-  .map(async(pj)=>{
+  .map(async (pj)=>{
     const { jmFiles } = await checkRunningJobs(pj.path);
     if (jmFiles.length > 0) {
       setProjectState(pj.path, "holding");

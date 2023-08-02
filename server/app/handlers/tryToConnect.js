@@ -19,6 +19,10 @@ const { askPassword } = require("../core/sshManager.js");
 async function tryToConnect(clientID, hostInfo, cb) {
   hostInfo.password = askPassword.bind(null, clientID, `${hostInfo.host} - password`);
   hostInfo.passphrase = askPassword.bind(null, clientID, `${hostInfo.host} - passpharse`);
+
+  if (process.env.WHEEL_VERBOSE_SSH) {
+    hostInfo.sshOpt = ["-vvv"];
+  }
   const ssh = new SshClientWrapper(hostInfo);
   logger.debug("try to connect", hostInfo.host, ":", hostInfo.port);
 
