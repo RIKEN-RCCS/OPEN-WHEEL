@@ -119,14 +119,13 @@
           </v-tooltip>
 
           <v-tooltip
-            v-if="false"
             bottom
           >
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
                 icon
-                :disabled="! running"
+                disabled=true
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('pauseProject')"
@@ -166,7 +165,7 @@
                 <v-icon>mdi-restore</v-icon>
               </v-btn>
             </template>
-            <span>stop and cleanup project</span>
+            <span>cleanup project</span>
           </v-tooltip>
         </v-card>
 
