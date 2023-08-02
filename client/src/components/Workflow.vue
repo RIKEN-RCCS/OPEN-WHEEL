@@ -128,7 +128,7 @@
                 disabled=true
                 v-bind="attrs"
                 v-on="on"
-                @click="emitProjectOperation('pauseProject')"
+                @click="openProjectOperationComfirmationDialog('pauseProject')"
               >
                 <v-icon>mdi-pause</v-icon>
               </v-btn>
@@ -144,7 +144,7 @@
                 :disabled="canRun"
                 v-bind="attrs"
                 v-on="on"
-                @click="emitProjectOperation('stopProject')"
+                @click="openProjectOperationComfirmationDialog('stopProject')"
               >
                 <v-icon>mdi-stop</v-icon>
               </v-btn>
@@ -160,7 +160,7 @@
                 :disabled="canRun"
                 v-bind="attrs"
                 v-on="on"
-                @click="emitProjectOperation('cleanProject')"
+                @click="openProjectOperationComfirmationDialog('cleanProject')"
               >
                 <v-icon>mdi-restore</v-icon>
               </v-btn>
@@ -206,7 +206,7 @@
                 :disabled="! isEdittable"
                 v-bind="attrs"
                 v-on="on"
-                @click="emitProjectOperation('revertProject')"
+                @click="openProjectOperationComfirmationDialog('revertProject')"
               >
                 <v-icon>mdi-folder-refresh-outline</v-icon>
               </v-btn>
@@ -305,6 +305,14 @@
       @cancel="viewerScreenDialog=false"
     />
     <versatile-dialog
+      v-model="dialog"
+      max-width="50vw"
+      :title=dialogTitle
+      :message=dialogMessage
+      @ok="confirmed();dialog=false"
+      @cancel="dialog=false"
+    />
+    <versatile-dialog
       v-model="selectSourceFileDialog"
       max-width="50vw"
       :title="selectSourceFileDialogTitle"
@@ -381,6 +389,10 @@
         selectedSourceFilenames:[],
         selectSourceFileDialogTitle: "",
         uploadSourceFileDialog:false,
+        dialog:false,
+        dialogTitle:"",
+        dialogMessage:"",
+        confirmed:null
       };
     },
     computed: {
@@ -580,6 +592,14 @@
             this.viewerDataDir=null;
           }
         });
+      },
+      openProjectOperationComfirmationDialog(operation){
+        if(operation === "stopProject" || operation === "cleanProject" || operation === "pauseProject"){
+          this.dialogTitle=operation
+          this.dialogMessage=`are you sure you want to ${operation.replace("P", " p")} ?`
+          this.confirmed=this.emitProjectOperation.bind(this, operation);
+          this.dialog=true
+        }
       },
       updateDescription(){
         SIO.emitGlobal("updateProjectDescription", this.projectRootDir,  this.projectDescription,(rt)=>{
