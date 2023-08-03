@@ -107,7 +107,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="! canRun"
+                :disabled="! runProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('runProject')"
@@ -125,7 +125,7 @@
               <v-btn
                 outlined
                 icon
-                disabled=true
+                :disabled="! pauseProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
                 @click="openProjectOperationComfirmationDialog('pauseProject')"
@@ -141,7 +141,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="canRun"
+                :disabled="! stopProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
                 @click="openProjectOperationComfirmationDialog('stopProject')"
@@ -157,7 +157,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="canRun"
+                :disabled="! cleanProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
                 @click="openProjectOperationComfirmationDialog('cleanProject')"
@@ -189,7 +189,7 @@
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
-                :disabled="! isEdittable"
+                :disabled="! saveProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('saveProject')"
@@ -203,7 +203,7 @@
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
-                :disabled="! isEdittable"
+                :disabled="! revertProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
                 @click="openProjectOperationComfirmationDialog('revertProject')"
@@ -239,7 +239,7 @@
         <v-col
           cols="12"
         >
-          <log-screen 
+          <log-screen
             v-show="showLogScreen"
             ref="logscreen"
             :show="showLogScreen"
@@ -356,6 +356,23 @@
   const debug = Debug("wheel:workflow:main");
   let viewerWindow = null;
 
+  const allowedOperations={
+  "not-started":["runProject", "saveProject", "revertProject"],
+  "prepareing" :[],
+  "running" :["stopProject"],
+  "stopped":["cleanProject"],
+  "finished":["cleanProject"],
+  "failed":["cleanProject"],
+  "unknown":["cleanProject"],
+  "paused":[],
+  }
+  const isAllowed = (state, operation)=>{
+    if(! allowedOperations[state]){
+      return false
+    }
+    return allowedOperations[state].includes(operation)
+  }
+
   export default {
     name: "Workflow",
     components: {
@@ -406,13 +423,31 @@
         "selectedComponent",
         "selectedFile",
       ]),
-      ...mapGetters(["waiting", "isEdittable", "canRun", "running"]),
+      ...mapGetters(["waiting"]),
       stateColor(){
         return state2color(this.projectState);
       },
       selectedSourceFilename(){
         return this.selectedSourceFilenames[0].filename;
-      }
+      },
+      runProjectAllowed(){
+        return isAllowed(this.projectState, 'runProject')
+      },
+      pauseProjectAllowed(){
+        return isAllowed(this.projectState, 'pauseProject')
+      },
+      saveProjectAllowed(){
+        return isAllowed(this.projectState, 'saveProject')
+      },
+      revertProjectAllowed(){
+        return isAllowed(this.projectState, 'revertProject')
+      },
+      stopProjectAllowed(){
+        return isAllowed(this.projectState, 'stopProject')
+      },
+      cleanProjectAllowed(){
+        return isAllowed(this.projectState, 'cleanProject')
+      },
     },
     mounted: function () {
       let projectRootDir = sessionStorage.getItem("projectRootDir")

@@ -11,6 +11,7 @@ const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
 const { removeSsh } = require("./sshManager");
 const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { componentJsonReplacer, readComponentJson } = require("./componentFilesOperator");
+const { setProjectState } = require("../core/projectFilesOperator");
 const Dispatcher = require("./dispatcher");
 const { getDateString } = require("../lib/utility");
 const { getLogger } = require("../logSettings.js");
@@ -36,25 +37,18 @@ const rootDispatchers = new Map();
  */
 
 
-async function updateProjectState(projectRootDir, state, projectJson) {
-  projectJson.state = state;
-  projectJson.mtime = getDateString(true);
-  const ee = eventEmitters.get(projectRootDir);
-  if (ee) {
-    ee.emit("projectStateChanged", projectJson);
+async function updateProjectState(projectRootDir, state) {
+  const projectJson = await setProjectState(projectRootDir, state);
+  if (projectJson) {
+    const ee = eventEmitters.get(projectRootDir);
+    if (ee) {
+      ee.emit("projectStateChanged", projectJson);
+    }
   }
-  return fs.writeJson(path.resolve(projectRootDir, projectJsonFilename), projectJson, { spaces: 4 });
 }
 
 
 const cleanProject = async (projectRootDir)=>{
-  const rootDispatcher = rootDispatchers.get(projectRootDir);
-  if (rootDispatcher) {
-    await rootDispatcher.remove();
-    rootDispatchers.delete(projectRootDir);
-  }
-  removeSsh(projectRootDir);
-
   const { ID } = await readComponentJson(projectRootDir);
   const viewerURLRoot = path.resolve(path.dirname(__dirname), "viewer");
   const viewerDir = path.join(viewerURLRoot, ID);
@@ -64,8 +58,7 @@ const cleanProject = async (projectRootDir)=>{
 
   await gitResetHEAD(projectRootDir);
   await gitClean(projectRootDir);
-  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  await updateProjectState(projectRootDir, "not-started", projectJson);
+  //project state must be updated by onCleanProject()
 };
 
 async function pauseProject(projectRootDir) {
@@ -73,19 +66,17 @@ async function pauseProject(projectRootDir) {
   if (rootDispatcher) {
     await rootDispatcher.pause();
   }
-
-  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  await updateProjectState(projectRootDir, "paused", projectJson);
+  //project state must be updated by onPauseProject()
 }
 
 async function stopProject(projectRootDir) {
   const rootDispatcher = rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
-    await rootDispatcher.pause();
+    await rootDispatcher.remove();
+    rootDispatchers.delete(projectRootDir);
   }
-
-  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  await updateProjectState(projectRootDir, "not-started", projectJson);
+  removeSsh(projectRootDir);
+  //project state must be updated by onStopProject()
 }
 
 async function runProject(projectRootDir) {
