@@ -62,19 +62,19 @@ async function createCloudInstance(projectRootDir, hostinfo, clientID) {
   const ssh = new SshClientWrapper(config);
   if (hostinfo.type === "aws") {
     logger.debug("wait for cloud-init");
-    await arssh.watch("tail /var/log/cloud-init-output.log >&2 && cloud-init status", { out: /done|error|disabled/ }, 30000, 60, {}, logger.debug.bind(logger), logger.debug.bind(logger));
+    await ssh.watch("tail /var/log/cloud-init-output.log >&2 && cloud-init status", { out: /done|error|disabled/ }, 30000, 60, {}, logger.debug.bind(logger), logger.debug.bind(logger));
     logger.debug("cloud-init done");
   }
   if (hostinfo.renewInterval) {
-    arssh.renewInterval = hostinfo.renewInterval * 60 * 1000;
+    ssh.renewInterval = hostinfo.renewInterval * 60 * 1000;
   }
 
   if (hostinfo.renewDelay) {
-    arssh.renewDelay = hostinfo.renewDelay * 1000;
+    ssh.renewDelay = hostinfo.renewDelay * 1000;
   }
 
   hostinfo.host = config.host;
-  addSsh(projectRootDir, hostinfo, arssh);
+  addSsh(projectRootDir, hostinfo, ssh);
 }
 
 
@@ -285,7 +285,7 @@ async function onPauseProject(projectRootDir, ack) {
 async function onStopProject(projectRootDir, ack) {
   try {
     await stopProject(projectRootDir);
-    await updateProjectState(projectRootDir, "paused");
+    await updateProjectState(projectRootDir, "stopped");
     await sendWorkflow(ack, projectRootDir);
   } catch (e) {
     getLogger(projectRootDir).error("fatal error occurred while stopping project", e);

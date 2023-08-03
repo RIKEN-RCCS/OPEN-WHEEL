@@ -13,7 +13,7 @@ RUN cd client; npm install; npm run build
 #build base image to run WHEEL
 FROM --platform=linux/amd64 node:hydrogen-slim as base
 WORKDIR /usr/src/
-RUN apt-get update && apt -y install curl git rsync &&\
+RUN apt-get update && apt -y install curl git rsync openssh-server &&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
     apt -y install git-lfs &&\
     apt-get clean  &&\

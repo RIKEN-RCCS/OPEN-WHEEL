@@ -107,7 +107,7 @@
               <v-btn
                 outlined
                 icon
-                :disabled="! canRun"
+                :disabled="! runProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('runProject')"
@@ -119,17 +119,16 @@
           </v-tooltip>
 
           <v-tooltip
-            v-if="false"
             bottom
           >
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
                 icon
-                :disabled="! running"
+                :disabled="! pauseProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
-                @click="emitProjectOperation('pauseProject')"
+                @click="openProjectOperationComfirmationDialog('pauseProject')"
               >
                 <v-icon>mdi-pause</v-icon>
               </v-btn>
@@ -142,10 +141,10 @@
               <v-btn
                 outlined
                 icon
-                :disabled="canRun"
+                :disabled="! stopProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
-                @click="emitProjectOperation('stopProject')"
+                @click="openProjectOperationComfirmationDialog('stopProject')"
               >
                 <v-icon>mdi-stop</v-icon>
               </v-btn>
@@ -158,15 +157,15 @@
               <v-btn
                 outlined
                 icon
-                :disabled="canRun"
+                :disabled="! cleanProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
-                @click="emitProjectOperation('cleanProject')"
+                @click="openProjectOperationComfirmationDialog('cleanProject')"
               >
                 <v-icon>mdi-restore</v-icon>
               </v-btn>
             </template>
-            <span>stop and cleanup project</span>
+            <span>cleanup project</span>
           </v-tooltip>
         </v-card>
 
@@ -190,7 +189,7 @@
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
-                :disabled="! isEdittable"
+                :disabled="! saveProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
                 @click="emitProjectOperation('saveProject')"
@@ -204,10 +203,10 @@
             <template #activator="{ on, attrs }">
               <v-btn
                 outlined
-                :disabled="! isEdittable"
+                :disabled="! revertProjectAllowed"
                 v-bind="attrs"
                 v-on="on"
-                @click="emitProjectOperation('revertProject')"
+                @click="openProjectOperationComfirmationDialog('revertProject')"
               >
                 <v-icon>mdi-folder-refresh-outline</v-icon>
               </v-btn>
@@ -240,7 +239,7 @@
         <v-col
           cols="12"
         >
-          <log-screen 
+          <log-screen
             v-show="showLogScreen"
             ref="logscreen"
             :show="showLogScreen"
@@ -306,6 +305,14 @@
       @cancel="viewerScreenDialog=false"
     />
     <versatile-dialog
+      v-model="dialog"
+      max-width="50vw"
+      :title=dialogTitle
+      :message=dialogMessage
+      @ok="confirmed();dialog=false"
+      @cancel="dialog=false"
+    />
+    <versatile-dialog
       v-model="selectSourceFileDialog"
       max-width="50vw"
       :title="selectSourceFileDialogTitle"
@@ -349,6 +356,23 @@
   const debug = Debug("wheel:workflow:main");
   let viewerWindow = null;
 
+  const allowedOperations={
+  "not-started":["runProject", "saveProject", "revertProject"],
+  "prepareing" :[],
+  "running" :["stopProject"],
+  "stopped":["cleanProject"],
+  "finished":["cleanProject"],
+  "failed":["cleanProject"],
+  "unknown":["cleanProject"],
+  "paused":[],
+  }
+  const isAllowed = (state, operation)=>{
+    if(! allowedOperations[state]){
+      return false
+    }
+    return allowedOperations[state].includes(operation)
+  }
+
   export default {
     name: "Workflow",
     components: {
@@ -382,6 +406,10 @@
         selectedSourceFilenames:[],
         selectSourceFileDialogTitle: "",
         uploadSourceFileDialog:false,
+        dialog:false,
+        dialogTitle:"",
+        dialogMessage:"",
+        confirmed:null
       };
     },
     computed: {
@@ -395,13 +423,31 @@
         "selectedComponent",
         "selectedFile",
       ]),
-      ...mapGetters(["waiting", "isEdittable", "canRun", "running"]),
+      ...mapGetters(["waiting"]),
       stateColor(){
         return state2color(this.projectState);
       },
       selectedSourceFilename(){
         return this.selectedSourceFilenames[0].filename;
-      }
+      },
+      runProjectAllowed(){
+        return isAllowed(this.projectState, 'runProject')
+      },
+      pauseProjectAllowed(){
+        return isAllowed(this.projectState, 'pauseProject')
+      },
+      saveProjectAllowed(){
+        return isAllowed(this.projectState, 'saveProject')
+      },
+      revertProjectAllowed(){
+        return isAllowed(this.projectState, 'revertProject')
+      },
+      stopProjectAllowed(){
+        return isAllowed(this.projectState, 'stopProject')
+      },
+      cleanProjectAllowed(){
+        return isAllowed(this.projectState, 'cleanProject')
+      },
     },
     mounted: function () {
       let projectRootDir = sessionStorage.getItem("projectRootDir")
@@ -581,6 +627,14 @@
             this.viewerDataDir=null;
           }
         });
+      },
+      openProjectOperationComfirmationDialog(operation){
+        if(operation === "stopProject" || operation === "cleanProject" || operation === "pauseProject"){
+          this.dialogTitle=operation
+          this.dialogMessage=`are you sure you want to ${operation.replace("P", " p")} ?`
+          this.confirmed=this.emitProjectOperation.bind(this, operation);
+          this.dialog=true
+        }
       },
       updateDescription(){
         SIO.emitGlobal("updateProjectDescription", this.projectRootDir,  this.projectDescription,(rt)=>{

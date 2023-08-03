@@ -21,39 +21,6 @@ function hasEntry(projectRootDir, id) {
 }
 
 /**
- * parse hostinfo and create config object of arssh2
- * @param {Object} hostInfo - one of remotehost.json's entry
- * @param {string} password - password or passphrase for private key
- */
-async function createSshConfig(hostInfo, password) {
-  const config = {
-    host: hostInfo.host,
-    port: hostInfo.port,
-    keepaliveInterval: hostInfo.keepaliveInterval || 30000,
-    readyTimeout: hostInfo.readyTimeout || 1000,
-    username: hostInfo.username
-  };
-
-  if (hostInfo.keyFile) {
-    const tmp = await fs.readFile(path.normalize(convertPathSep(hostInfo.keyFile)));
-    config.privateKey = tmp.toString();
-
-    if (password) {
-      config.passphrase = password;
-      config.password = null;
-    }
-  } else {
-    config.privateKey = null;
-
-    if (password) {
-      config.passphrase = null;
-      config.password = password;
-    }
-  }
-  return config;
-}
-
-/**
  * keep ssh instance and its setting at the time the connection was wstablished
  * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
  * @param {Object} hostinfo - one of the ssh connection setting in remotehost json
@@ -215,6 +182,9 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   if (hostinfo.readyTimeout) {
     hostinfo.ConnectTimeout = Math.floor(hostinfo.readyTimeout / 1000);
   }
+  if (process.env.WHEEL_VERBOSE_SSH) {
+    hostInfo.sshOpt = ["-vvv"];
+  }
 
   const ssh = new SshClientWrapper(hostinfo);
 
@@ -240,7 +210,6 @@ module.exports = {
   getSsh,
   getSshHostinfo,
   removeSsh,
-  createSshConfig,
   askPassword,
   createSsh
 };
