@@ -270,7 +270,7 @@
       fileBrowser
     },
     props: {
-      value: Boolean,
+      modelValue: Boolean,
       title: { type: String, default: "remote host" },
       maxWidth: { type: String, default: "50%" },
       hostNames: {type: Array, default: ()=>{return [];}},
@@ -300,10 +300,10 @@
       },
       openDialog: {
         get () {
-          return this.value;
+          return this.modelValue;
         },
         set (value) {
-          this.$emit("input", value);
+          this.$emit("update:modelValue", value);
         },
       },
     },
