@@ -5,6 +5,7 @@
  */
 <template>
   <v-btn
+    variant="flat"
     :color="componentDefinition[item.type].color"
     class="custom-transform-class text-none"
     @click="$emit('clicked')"
