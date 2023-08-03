@@ -72,22 +72,15 @@
                           validate-on-blur
                         />
                       </v-col>
-                      <v-col cols="6">
-                        <v-switch
-                          v-model="usePubkey"
-                          label="use public key authentication"
-                        />
-                      </v-col>
                       <v-col cols="4">
                         <v-text-field
-                          v-if="usePubkey"
                           v-model="host.keyFile"
                           label="private key path"
+                          clearable
                         />
                       </v-col>
                       <v-col cols="2">
                         <v-btn
-                          v-if="usePubkey"
                           @click="openFileBrowser=!openFileBrowser"
                         >
                           browse
@@ -269,7 +262,6 @@
 </template>
 <script>
   "use strict";
-  import SIO from "@/lib/socketIOWrapper.js";
   import fileBrowser from "@/components/common/fileBrowserLite.vue";
   import { required, validPortNumber, positiveNumber } from "@/lib/validationRules.js";
   export default {
@@ -294,7 +286,6 @@
         pathSep: "/",
         home: "/",
         openFileBrowser: false,
-        usePubkey: false,
         selectedFile:null
       };
     },
@@ -319,7 +310,6 @@
     watch:{
       openDialog(v){
         this.host = Object.assign(this.host, this.initialValue);
-        this.usePubkey= typeof this.host.keyFile === "string" && this.host.keyFile.length >0;
       }
     },
     methods: {
