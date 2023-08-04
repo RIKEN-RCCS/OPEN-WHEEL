@@ -5,35 +5,24 @@
  */
 <template>
   <v-toolbar
-    dense
+    density="compact"
   >
     <v-dialog
       v-model="showComponentTree"
       overlay-opacity="0.9"
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props }">
         <v-btn
-          icon
-          v-bind="attrs"
+          icon="mdi-sitemap mdi-rotate-270"
+          v-bind="props"
           class="ms-12"
-          v-on="on"
-        >
-          <v-icon>mdi-sitemap mdi-rotate-270 </v-icon>
-        </v-btn>
+        />
       </template>
 
-      <v-treeview
-        open-all
-        item-key="ID"
+      <component-treeview
         :items="componentTree"
-      >
-        <template #label="{ item }">
-          <component-button
-            :item="item"
-            @clicked="goto(item)"
-          />
-        </template>
-      </v-treeview>
+        @close="showComponentTree=false"
+      />
     </v-dialog>
     <v-breadcrumbs
       :items="pathToCurrentComponent"
@@ -41,8 +30,10 @@
       <template #divider>
         <v-icon>mdi-forward</v-icon>
       </template>
-      <template #item="{ item }">
-        <v-breadcrumbs-item>
+      <template #title="{ item }">
+        <v-breadcrumbs-item
+            :disabled="false"
+        >
           <component-button
             :item="item"
             @clicked="goto(item)"
@@ -58,12 +49,14 @@
   import getNodeAndPath from "@/lib/getNodeAndPath.js";
   import { isContainer } from "@/lib/utility.js";
   import componentButton from "@/components/common/componentButton.vue";
+  import componentTreeview from "@/components/common/componentTreeview.vue";
   import SIO from "@/lib/socketIOWrapper.js";
 
   export default {
     name: "ComponentTree",
     components: {
       componentButton,
+      componentTreeview
     },
     data: ()=>{
       return {
@@ -96,3 +89,8 @@
     },
   };
 </script>
+<style>
+.v-breadcrumbs-item--disabled {
+  opacity: 1.0;
+}
+</style>
