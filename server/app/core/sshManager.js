@@ -183,7 +183,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
     hostinfo.ConnectTimeout = Math.floor(hostinfo.readyTimeout / 1000);
   }
   if (process.env.WHEEL_VERBOSE_SSH) {
-    hostInfo.sshOpt = ["-vvv"];
+    hostinfo.sshOpt = ["-vvv"];
   }
 
   const ssh = new SshClientWrapper(hostinfo);
