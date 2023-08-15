@@ -117,13 +117,13 @@ function getDateString(humanReadable = false, withMilliseconds = false) {
 }
 
 function formatSshOutput(outputArray) {
-  return outputArray.join(" ")
-    .replace(/\n/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter((e)=>{
-      return e !== "";
-    });
+  const rt = [];
+  for (const e of outputArray) {
+    rt.push(...e.split("\n"));
+  }
+  return rt.filter((e)=>{
+    return e !== "";
+  });
 }
 
 
