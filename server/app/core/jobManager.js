@@ -83,7 +83,7 @@ async function isFinished(JS, task) {
 
   const output = [];
   const statCmdRt = await issueStatCmd(statCmd, task, output);
-  const outputText = formatSshOutput(output);
+  const outputText = formatSshOutput(output).join("\n");
 
   const rtList = Array.isArray(JS.acceptableRt) ? [0, ...JS.acceptableRt] : [0, JS.acceptableRt];
   if (!rtList.includes(statCmdRt)) {
