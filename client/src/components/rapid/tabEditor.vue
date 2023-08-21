@@ -186,7 +186,9 @@
       }
     },
     methods: {
-      ...mapMutations({ commitSelectedText: "selectedText" }),
+      ...mapMutations({ commitSelectedFile: "selectedFile",
+                      commitSelectedText: "selectedText" }
+                     ),
       isValidName (v) {
         // allow . / - and alphanumeric chars
         return isValidInputFilename(v) || "invalid filename";
@@ -302,12 +304,17 @@
         return changed;
       },
       closeTab (index) {
+        const file = this.files[index];
+        console.log("file object",file.absPath);
+        console.log("selectedFile",this.selectedFile);
         if (index === 0) {
-          const file = this.files[index];
           const document = file.editorSession.getDocument();
           document.setValue("");
         }
         this.files.splice(index, 1);
+        if(file.absPath === this.selectedFile){
+          this.commitSelectedFile(null);
+        }
       },
       changeTab (argIndex) {
         if (argIndex === 0) {
