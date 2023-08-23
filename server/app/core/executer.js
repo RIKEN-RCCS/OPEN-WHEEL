@@ -149,22 +149,12 @@ async function decideFinishState(task) {
   return rt;
 }
 
-function getExecInterval(hostinfo, isJob) {
-  if (hostinfo != null && typeof (hostinfo.statusCheckInterval) === "number") {
-    return hostinfo.statusCheckInterval;
-  }
-  if (isJob) {
-    return 60;
-  }
-  return 1;
-}
-
 class Executer {
   constructor(hostinfo, isJob) {
     this.hostinfo = hostinfo;
     const maxNumJob = getMaxNumJob(hostinfo);
     const hostname = hostinfo != null ? hostinfo.host : null;
-    const execInterval = getExecInterval(hostinfo, isJob);
+    const execInterval = isJob ? 5 : 1;
     this.batch = new SBS({
       exec: async (task)=>{
         task.startTime = getDateString(true, true);
