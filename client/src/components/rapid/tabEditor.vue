@@ -305,8 +305,6 @@
       },
       closeTab (index) {
         const file = this.files[index];
-        console.log("file object",file.absPath);
-        console.log("selectedFile",this.selectedFile);
         if (index === 0) {
           const document = file.editorSession.getDocument();
           document.setValue("");
