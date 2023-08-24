@@ -364,6 +364,7 @@
   "finished":["cleanProject"],
   "failed":["cleanProject"],
   "unknown":["cleanProject"],
+  "holding":["cleanProject"],
   "paused":[],
   }
   const isAllowed = (state, operation)=>{
