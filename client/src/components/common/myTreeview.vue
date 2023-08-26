@@ -33,7 +33,7 @@
             :load-children="loadChildren"
             :activatable=activatable
             :active=active
-            @update:active="onUpdateActive"
+            @update:active="(e)=>{$emit('update:active', e);}"
             :get-node-icon="getNodeIcon"
             :get-leaf-icon="getLeafIcon"
             :open-all="openAll"
@@ -99,7 +99,7 @@
       getLeafIcon:{
         type: Function,
         default:()=>{return ""}
-      },
+      }
     },
     data:()=>{
       return {
