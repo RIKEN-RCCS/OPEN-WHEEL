@@ -5,63 +5,69 @@
  */
 <template>
   <v-list v-model:opened="open" nav>
-    <template v-for="item in items" :key=item.id >
-      <template v-if="Array.isArray(item.children)" >
+    <template v-for="item in items" :key=item[itemKey] >
+      <template v-if="Array.isArray(item.children) && (typeof loadChildren === 'function' || item.children.length > 0)" >
         <v-list-group
-          :value=item.id
+          :value=item[itemKey]
         >
           <template #activator="{ isOpen, props }">
             <v-list-item
               @click="onActiveted(item)"
-              :class="{'text-primary': active.includes(item[itemKey])}"
+              :class="{'text-primary': activatable && active.includes(item[itemKey])}"
             >
               <template #prepend>
                 <v-icon
-                  :icon="isOpen ? openIcons[item.type] : icons[item.type]"
-                   v-bind="props"
-                   @click="onClickIcon(item)"
+                  :icon="getNodeIcon(isOpen, item)"
+                  v-bind="props"
+                  @click="onClickNodeIcon(item)"
                 />
               </template>
-              {{item.name}}
+              <slot name="label" :item="item">
+                {{item.name}}
+              </slot>
               <template #append />
             </v-list-item>
           </template >
-          <file-treeview
+          <my-treeview
             :items="item.children"
             :load-children="loadChildren"
             :activatable=activatable
             :active=active
             @update:active="onUpdateActive"
-          />
+            :get-node-icon="getNodeIcon"
+            :get-leaf-icon="getLeafIcon"
+            :open-all="openAll"
+          >
+            <template #label={item}>
+              <slot name="label" :item="item">
+                {{item.name}}
+              </slot>
+            </template>
+          </my-treeview>
         </v-list-group>
       </template>
       <template v-else>
         <v-list-item
           @click="onActiveted(item)"
-          :class="{'text-primary': active.includes(item[itemKey])}"
+          :class="{'text-primary': activatable && active.includes(item[itemKey])}"
         >
           <template #prepend>
             <v-icon
-              :icon="icons[item.type]"
+              :icon=getLeafIcon(item)
               v-bind="props"
-              :load-children="getChildren"
-              activatable
-              :active=active
             />
           </template>
-          {{item.name}}
+          <slot name="label" :item="item">
+            {{item.name}}
+          </slot>
         </v-list-item>
       </template>
     </template>
   </v-list>
 </template>
 <script>
-  import { mapState } from "vuex";
-  import { isContainer } from "@/lib/utility.js";
-  import SIO from "@/lib/socketIOWrapper.js";
-
   export default {
-    name: "fileTreeview",
+    name: "myTreeview",
     props:{
       items:{
         type: Array,
@@ -74,6 +80,10 @@
         type: Boolean,
         default: false
       },
+      openAll:{
+        type: Boolean,
+        default: false
+      },
       active:{
         type: Array,
         requred: this.activatable
@@ -81,38 +91,32 @@
       itemKey:{
         type: String,
         default: "id"
-      }
+      },
+      getNodeIcon:{
+        type: Function,
+        default:()=>{return ""}
+      },
+      getLeafIcon:{
+        type: Function,
+        default:()=>{return ""}
+      },
     },
     data:()=>{
       return {
         open:[],
-        icons: {
-          file: "mdi-file-outline",
-          "file-link": "mdi-file-link-outline",
-          dir: "mdi-folder",
-          "dir-link": "mdi-link-box-outline",
-          "deadlink-link": "mdi-file-link",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
-        openIcons: {
-          dir: "mdi-folder-open",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
       }
     },
-    computed: {
-      ...mapState(["projectRootDir"]),
-    },
     methods:{
-      async onClickIcon(item){
+      async onClickNodeIcon(item){
         if(!this.loadChildren){
           return false
         }
         await this.loadChildren(item);
       },
       onActiveted(item){
+        if(! this.activatable){
+          return;
+        }
         if(!this.multipleActive){
           this.active.splice(0,this.active.length);
         }
@@ -120,6 +124,11 @@
           this.active.push(item[this.itemKey]);
         }
         this.$emit("update:active", item);
+      }
+    },
+    mounted(){
+      if(this.openAll){
+        this.open.push(...this.items.map((e)=>{return e[this.itemKey]}))
       }
     }
   }

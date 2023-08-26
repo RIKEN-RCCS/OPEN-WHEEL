@@ -5,17 +5,32 @@
  */
 <template>
   <!-- update event is not well tested. please check !! -->
-  <file-treeview
+  <my-treeview
     :items="items"
     :load-children="getChildren"
     activatable
     :active=active
     @update:active="onUpdateActive"
+    :get-node-icon="getNodeIcon"
+    :get-leaf-icon="getLeafIcon"
   />
 </template>
 <script>
   import SIO from "@/lib/socketIOWrapper.js";
-
+  const  icons = {
+          file: "mdi-file-outline",
+          "file-link": "mdi-file-link-outline",
+          dir: "mdi-folder",
+          "dir-link": "mdi-link-box-outline",
+          "deadlink-link": "mdi-file-link",
+          sndd: "mdi-folder-multiple-outline",
+          snd: "mdi-file-multiple-outline",
+        };
+  const openIcons = {
+         dir: "mdi-folder-open",
+         sndd: "mdi-folder-multiple-outline",
+         snd: "mdi-file-multiple-outline",
+       };
   function fileListModifier (pathsep, e) {
     const rt = {
       id: `${e.path}${pathsep}${e.name}`,
@@ -49,12 +64,12 @@
     }
     return null;
   }
-  import fileTreeview from "@/components/common/fileTreeview.vue"
+  import myTreeview from "@/components/common/myTreeview.vue"
 
   export default {
     name: "FileBrowserLite",
     components:{
-      fileTreeview
+      myTreeview
     },
     props: {
       requestRoot: { type: String, default: undefined },
@@ -65,20 +80,6 @@
         root:null,
         items: [],
         active: [],
-        icons: {
-          file: "mdi-file-outline",
-          "file-link": "mdi-file-link-outline",
-          dir: "mdi-folder",
-          "dir-link": "mdi-link-box-outline",
-          "deadlink-link": "mdi-file-link",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
-        openIcons: {
-          dir: "mdi-folder-open",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
       };
     },
     mounted () {
@@ -91,6 +92,12 @@
     methods: {
       onUpdateActive (active) {
         this.$emit("update", active.id);
+      },
+      getNodeIcon(isOpen, item){
+        return isOpen ? openIcons[item.type] : icons[item.type]
+      },
+      getLeafIcon(item){
+        return icons[item.type]
       },
       getChildren (item) {
         return new Promise((resolve, reject)=>{

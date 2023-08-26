@@ -19,10 +19,19 @@
         />
       </template>
 
-      <component-treeview
+      <my-treeview
         :items="componentTree"
-        @close="showComponentTree=false"
-      />
+        itemKey="ID"
+        :get-node-icon="getNodeIcon"
+        :open-all=true
+      >
+        <template #label="{item}">
+          <component-button
+              :item="item"
+              @clicked="goto(item)"
+          />
+        </template>
+      </my-treeview>
     </v-dialog>
     <v-breadcrumbs
       :items="pathToCurrentComponent"
@@ -49,14 +58,17 @@
   import getNodeAndPath from "@/lib/getNodeAndPath.js";
   import { isContainer } from "@/lib/utility.js";
   import componentButton from "@/components/common/componentButton.vue";
-  import componentTreeview from "@/components/common/componentTreeview.vue";
+  import myTreeview from "@/components/common/myTreeview.vue"
   import SIO from "@/lib/socketIOWrapper.js";
+
+  const nodeOpenIcon= "mdi-menu-down";
+  const nodeCloseIcon= "mdi-menu-right";
 
   export default {
     name: "ComponentTree",
     components: {
       componentButton,
-      componentTreeview
+      myTreeview
     },
     data: ()=>{
       return {
@@ -81,6 +93,9 @@
       },
     },
     methods: {
+      getNodeIcon(isOpen){
+        return isOpen ? nodeOpenIcon : nodeCloseIcon
+      },
       goto: function (item) {
         const requestID = isContainer(item) ? item.ID : item.parent;
         SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);
