@@ -143,7 +143,14 @@ export default new Vuex.Store({
         return state.projectRootDir;
       }
       const relativePath = state.componentPath[state.selectedComponent.ID];
-      return `${state.projectRootDir}${getters.pathSep}${relativePath.slice(1)}`;
+      //remove "./" or "/" at the begining of line 
+      let numRemove=0;
+      if( /^\.\//.test(relativePath)){
+        numRemove=2;
+      }else if(relativePath.startsWith("/")){
+        numRemove=1;
+      }
+      return `${state.projectRootDir}${getters.pathSep}${relativePath.slice(numRemove)}`;
     },
     // get current component's absolute path on server
     currentComponentAbsPath: (state, getters)=>{

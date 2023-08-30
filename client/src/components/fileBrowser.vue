@@ -7,162 +7,140 @@
   <div>
     <div v-if="! readonly">
       <v-spacer />
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            :disabled="isSND"
+        <v-btn
+          :disabled="isSND"
+        >
+          <v-icon
+            @click="openDialog('createNewDir')"
           >
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('createNewDir')"
-            >
-              mdi-folder-plus-outline
-            </v-icon>
-          </v-btn>
-        </template>
-        new folder
-      </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            :disabled="isSND"
+            mdi-folder-plus-outline
+          </v-icon>
+          <v-tooltip
+            activator="parent"
+            location="top">
+            new folder
+          </v-tooltip>
+        </v-btn>
+        <v-btn
+          :disabled="isSND"
+        >
+          <v-icon
+            @click="openDialog('createNewFile')"
           >
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('createNewFile')"
-            >
-              mdi-file-plus-outline
-            </v-icon>
-          </v-btn>
-        </template>
-        new file
-      </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            :disabled="isSND"
+            mdi-file-plus-outline
+          </v-icon>
+        <v-tooltip
+          activator="parent"
+          location="top">
+          new file
+        </v-tooltip>
+        </v-btn>
+        <v-btn
+          :disabled="isSND"
+        >
+          <v-icon
+            @click="openDialog('renameFile')"
           >
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('renameFile')"
-            >
-              mdi-file-move-outline
-            </v-icon>
-          </v-btn>
-        </template>
-        rename
-      </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            :disabled="isSND"
+            mdi-file-move-outline
+          </v-icon>
+          <v-tooltip 
+          activator="parent"
+          location="top">
+            rename
+          </v-tooltip>
+        </v-btn>
+        <v-btn
+          :disabled="isSND"
+        >
+          <v-icon
+            @click="openDialog('removeFile')"
           >
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('removeFile')"
-            >
-              mdi-file-remove-outline
-            </v-icon>
-          </v-btn>
-        </template>
-        delete
-      </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            :disabled="isSND"
+            mdi-file-remove-outline
+          </v-icon>
+          <v-tooltip 
+          activator="parent"
+          location="top">
+            delete
+          </v-tooltip>
+        </v-btn>
+        <v-btn
+          :disabled="isSND"
+        >
+          <v-icon
+            @click="showUploadDialog"
           >
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="showUploadDialog"
-            >
-              mdi-upload
-            </v-icon>
-          </v-btn>
-        </template>
-        upload file
-      </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            :disabled="isSND"
+            mdi-upload
+          </v-icon>
+          <v-tooltip 
+          activator="parent"
+          location="top">
+            upload file
+          </v-tooltip>
+        </v-btn>
+        <v-btn
+          :disabled="isSND"
+        >
+          <v-icon
+            @click="download"
           >
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="download"
-            >
-              mdi-download
-            </v-icon>
-          </v-btn>
-        </template>
-        download
-      </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            :disabled="isSND"
+            mdi-download
+          </v-icon>
+          <v-tooltip 
+          activator="parent"
+          location="top">
+            download
+          </v-tooltip>
+        </v-btn>
+        <v-btn
+          :disabled="isSND"
+        >
+          <v-icon
+            @click="openDialog('shareFile')"
           >
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('shareFile')"
-            >
-              mdi-share-outline
-            </v-icon>
-          </v-btn>
-        </template>
-        share file
-      </v-tooltip>
+            mdi-share-outline
+          </v-icon>
+          <v-tooltip 
+          activator="parent"
+          location="top">
+            share file
+          </v-tooltip>
+        </v-btn>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"
         value="percentUploaded"
       />
     </div>
-    <v-treeview
-      :active="activeItems"
+    <my-treeview
       :items="items"
       :load-children="getChildren"
       activatable
       :open="openItems"
       @update:active="updateSelected"
-    >
-      <template #prepend="{item, open}">
-        <v-icon v-if="item.children !== null">
-          {{ open ? openIcons[item.type] : icons[item.type] }}
-        </v-icon>
-        <v-icon v-else>
-          {{ icons[item.type] }}
-        </v-icon>
-      </template>
-    </v-treeview>
+      :get-node-icon="getNodeIcon"
+      :get-leaf-icon="getLeafIcon"
+    />
     <versatile-dialog
       v-model="dialog.open"
       max-width="40vw"
       :title="dialog.title"
-      :message="dialog.message"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
     >
       <template
+        #message
         v-if="['createNewDir','createNewFile','renameFile'].includes(dialog.submitEvent)"
-        slot="message"
       >
         <v-text-field
           v-model="dialog.inputField"
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
+          variant="outlined"
         />
       </template>
       <template
         v-if="dialog.submitEvent === 'shareFile'"
-        slot="message"
+        #message
       >
         <v-text-field
           v-model="dialog.inputField"
@@ -171,20 +149,18 @@
           :rules="[noDuplicate]"
         >
           <template #append-outer>
-            <v-tooltip
-              bottom
+            <v-icon
+              ref="icon"
+              @click="copyToClipboard"
             >
-              <template #activator="{ on }">
-                <v-icon
-                  ref="icon"
-                  @click="copyToClipboard"
-                  v-on="on"
-                >
-                  mdi-content-copy
-                </v-icon>
-              </template>
-              copy file path
-            </v-tooltip>
+              mdi-content-copy
+              <v-tooltip
+                activator="parent"
+                location="bottom"
+              >
+                copy file path
+              </v-tooltip>
+            </v-icon>
           </template>
         </v-text-field>
       </template>
@@ -196,9 +172,7 @@
       :buttons="downloadDialogButton"
       @close="closeDownloadDialog"
     >
-      <template
-        slot="message"
-      >
+      <template #message >
         <v-row>
           <v-btn class="mx-auto mt-10 mb-6">
             <!-- Do NOT remove download attribute. some files may open in browser e.g. text, json -->
@@ -216,74 +190,14 @@
   import SIO from "@/lib/socketIOWrapper.js"
   import versatileDialog from "@/components/versatileDialog.vue";
   import { removeFromArray } from "@/lib/clientUtility.js"
+  import myTreeview from "@/components/common/myTreeview.vue"
+  import {_getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel  } from "@/components/common/fileTreeUtils.js"
 
-  function fileListModifier (pathsep, e) {
-    const rt = {
-      id: `${e.path}${pathsep}${e.name}`,
-      path: e.path,
-      name: e.name,
-      type: `${e.type}${e.islink ? "-link" : ""}`,
-    }
-    if (["dir", "dir-link", "snd", "snd-link", "sndd", "sndd-link"].includes(e.type)) {
-      rt.children = []
-    }
-    return rt
-  }
-
-  function removeItem (items, key) {
-    for (const item of items) {
-      if (item.id === key) {
-        removeFromArray(items, { id: key }, "id")
-        return true
-      }
-      if (Array.isArray(item.children) && item.children.length > 0) {
-        const found = removeItem(item.children, key)
-        if (found) {
-          return true
-        }
-      }
-    }
-  }
-
-  //get selected item from displayed items
-  function _getActiveItem (items, key ) {
-    for (const item of items) {
-      if (Array.isArray(item.children) && item.children.length > 0) {
-        const rt = _getActiveItem(item.children, key)
-        if (rt) {
-          return rt
-        }
-      }
-      if (item.id === key) {
-        return item
-      }
-    }
-    return null
-  }
-
-  function getTitle (event, itemName) {
-    const titles = {
-      createNewDir: "create new directory",
-      createNewFile: "create new File",
-      removeFile: `are you sure you want to delete ${itemName} ?`,
-      renameFile: `rename ${itemName}`,
-      shareFile:  `copy file path ${itemName}`,
-    }
-    return titles[event]
-  }
-  function getLabel (event) {
-    const labels = {
-      createNewDir: "new directory name",
-      createNewFile: "new file name",
-      renameFile: "new name",
-      shareFile: "file path",
-    }
-    return labels[event]
-  }
   export default {
     name: "FileBrowser",
     components: {
       versatileDialog,
+      myTreeview
     },
     props: {
       readonly: { type: Boolean, default: true },
@@ -295,23 +209,8 @@
         activeItem: null,
         uploading:false,
         percentUploaded: 0,
-        activeItems: [],
         openItems: [],
         items: [],
-        icons: {
-          file: "mdi-file-outline",
-          "file-link": "mdi-file-link-outline",
-          dir: "mdi-folder",
-          "dir-link": "mdi-link-box-outline",
-          "deadlink-link": "mdi-file-link",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
-        openIcons: {
-          dir: "mdi-folder-open",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
         dialog: {
           open: false,
           title: "",
@@ -389,6 +288,12 @@
       SIO.removeUploaderEvent("progress", this.updateProgressBar)
     },
     methods: {
+      getNodeIcon(isOpen, item){
+        return isOpen ? openIcons[item.type] : icons[item.type]
+      },
+      getLeafIcon(item){
+        return icons[item.type]
+      },
       copyToClipboard(){
         this.$copyText(this.dialog.inputField, this.$refs.icon.$el)
       },
@@ -411,12 +316,8 @@
       noDuplicate(v){
        return ! this.items.map((e)=>{ return e.name }).includes(v)
       },
-      updateSelected(activeItems){
-        if(!activeItems[0]){
-          this.activeItem=null
-          return
-        }
-        this.activeItem = this.getActiveItem(activeItems[0])
+      updateSelected(activeItem){
+        this.activeItem=activeItem
         if(this.activeItem === null){
           console.log("failed to get current selected Item");
           return
@@ -465,8 +366,8 @@
             return
           }
           const path = this.selectedComponent.type === "storage"
-            ?  [this.storagePath, item.id.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)
-            : item.id
+            ?  [this.storagePath, item.id.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep) : item.id
+
           if(item.type === "dir" || item.type === "dir-link"){
               SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
           }else{

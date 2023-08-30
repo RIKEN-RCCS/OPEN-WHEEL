@@ -4,6 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
+import { v4 as uuidv4 } from 'uuid';
 
 export function path2Array (pathString) {
   if (typeof pathString !== "string" || pathString === "") {
@@ -17,9 +18,14 @@ export function path2Array (pathString) {
 }
 
 /**
+ * @typedef TaskState
+ * @param {String} - ancestorsName
+ */
+
+/**
  * add path entory to tree
- * @param {string} taskStatelist- path string (path should be posix style)
- * @param {Object} tree - tree object which will be overwrited
+ * @param {TaskState[]} taskStatelist - array of task state object
+ * @param {Object} tree - tree object which will be updated
  * @return {null | boolean} - null if any error occurred, true means some update, false means no update
  */
 export function taskStateList2Tree (taskStatelist, tree) {
@@ -30,11 +36,16 @@ export function taskStateList2Tree (taskStatelist, tree) {
   taskStatelist.forEach((task)=>{
     const ancestorsNames = path2Array(task.ancestorsName);
     const ancestorsTypes = path2Array(task.ancestorsType);
+    //task.ancestorsDIspatchedTime could be undefined (it was implemented later)
+    //and it implies that path2Array could return null
+    //as work around, we assign empty array to ancestorsDispatchedTimes in this case.
+    const ancestorsDispatchedTimes=path2Array(task.ancestorsDispatchedTime) ||[];
     let poi = tree.children; // candidate nodes
     if(ancestorsNames === null){
       const tmp = Object.assign({}, task);
       delete tmp.ancestorsName;
       delete tmp.ancestorsType;
+      delete tmp.ancestorsDispatchedTime
       tmp.type = "task";
       const existingNode=poi.find((e)=>{return e.ID=== task.ID;});
       if(existingNode){
@@ -53,7 +64,9 @@ export function taskStateList2Tree (taskStatelist, tree) {
 
       if (typeof entry === "undefined") {
         const type = ancestorsTypes[index];
-        entry = { name, type, children: [] };
+        const dispatchedTime = ancestorsDispatchedTimes[index];
+        const ID=uuidv4();
+        entry = { name, type, children: [], ID };
         poi.push(entry);
         treeIsChanged = true;
       }

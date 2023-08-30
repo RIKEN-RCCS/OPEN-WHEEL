@@ -65,7 +65,7 @@ async function sendTaskStateList(projectRootDir) {
       }
       p.push(readJsonGreedy(item.path));
     })
-    .on("end", async()=>{
+    .on("end", async ()=>{
       const jsonFiles = await Promise.all(p);
       const data = jsonFiles
         .filter((e)=>{

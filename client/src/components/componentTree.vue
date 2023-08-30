@@ -61,9 +61,6 @@
   import myTreeview from "@/components/common/myTreeview.vue"
   import SIO from "@/lib/socketIOWrapper.js";
 
-  const nodeOpenIcon= "mdi-menu-down";
-  const nodeCloseIcon= "mdi-menu-right";
-
   export default {
     name: "ComponentTree",
     components: {
@@ -93,9 +90,6 @@
       },
     },
     methods: {
-      getNodeIcon(isOpen){
-        return isOpen ? nodeOpenIcon : nodeCloseIcon
-      },
       goto: function (item) {
         const requestID = isContainer(item) ? item.ID : item.parent;
         SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);

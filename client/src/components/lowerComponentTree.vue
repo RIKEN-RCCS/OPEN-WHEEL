@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 <template>
-  <v-treeview
+  <my-treeview
     v-if="lowerLevelComponents!==null"
     open-all
     item-key="ID"
@@ -19,18 +19,20 @@
         :item="item"
       />
     </template>
-  </v-treeview>
+  </my-treeview>
 </template>
 <script>
   "use strict";
   import { mapState } from "vuex";
   import getNodeAndPath from "@/lib/getNodeAndPath.js";
   import componentButton from "@/components/common/componentButton.vue";
+  import myTreeview from "@/components/common/myTreeview.vue"
 
   export default {
     name: "LowerComponentTree",
     components: {
       componentButton,
+      myTreeview
     },
     data () {
       return {

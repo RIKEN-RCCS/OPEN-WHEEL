@@ -121,24 +121,17 @@
         value="percentUploaded"
       />
     </div>
-    <v-treeview
+    <my-treeview
       v-if="connected"
-      :active.sync="activeItems"
+      :active="activeItems"
       :items="items"
       :load-children="getChildren"
       activatable
       :open="openItems"
       @update:active="updateSelected"
-    >
-      <template #prepend="{item, open}">
-        <v-icon v-if="item.children !== null">
-          {{ open ? openIcons[item.type] : icons[item.type] }}
-        </v-icon>
-        <v-icon v-else>
-          {{ icons[item.type] }}
-        </v-icon>
-      </template>
-    </v-treeview>
+      :get-node-icon="getNodeIcon"
+      :get-leaf-icon="getLeafIcon"
+    />
     <versatile-dialog
       v-model="dialog.open"
       max-width="40vw"
@@ -211,80 +204,15 @@
   import SIO from "@/lib/socketIOWrapper.js"
   import versatileDialog from "@/components/versatileDialog.vue";
   import { removeFromArray } from "@/lib/clientUtility.js"
+  import myTreeview from "@/components/common/myTreeview.vue"
+  import {_getActiveItem,icons, openIcons, fileListModifier, removeItem , getTitle, getLabel } from "@/components/common/fileTreeUtils.js"
 
-  function fileListModifier (pathsep, e) {
-    const rt = {
-      id: `${e.path}${pathsep}${e.name}`,
-      path: e.path,
-      name: e.name,
-      type: `${e.type}${e.islink ? "-link" : ""}`,
-    }
-    if (["dir", "dir-link", "snd", "snd-link", "sndd", "sndd-link"].includes(e.type)) {
-      rt.children = []
-    }
-    return rt
-  }
 
-  function removeItem (items, key) {
-    for (const item of items) {
-      if (item.id === key) {
-        removeFromArray(items, { id: key }, "id")
-        return true
-      }
-      if (Array.isArray(item.children) && item.children.length > 0) {
-        const found = removeItem(item.children, key)
-        if (found) {
-          return true
-        }
-      }
-    }
-  }
-  function _getActiveItem (items, key, path) {
-    for (const item of items) {
-      if (Array.isArray(item.children) && item.children.length > 0) {
-        path.push(item.name)
-        const rt = _getActiveItem(item.children, key, path)
-
-        if (rt) {
-          if(item.type === "snd" || item.type ==="sndd"){
-            path.pop()
-          }
-          return rt
-        }
-        path.pop()
-      }
-      if (item.id === key) {
-        if (item.type === "dir" || item.type === "dir-link") {
-          path.push(item.name)
-        }
-        return item
-      }
-    }
-    return null
-  }
-  function getTitle (event, itemName) {
-    const titles = {
-      createNewDir: "create new directory",
-      createNewFile: "create new File",
-      removeFile: `are you sure you want to delete ${itemName} ?`,
-      renameFile: `rename ${itemName}`,
-      shareFile:  `copy file path ${itemName}`,
-    }
-    return titles[event]
-  }
-  function getLabel (event) {
-    const labels = {
-      createNewDir: "new directory name",
-      createNewFile: "new file name",
-      renameFile: "new name",
-      shareFile: "file path",
-    }
-    return labels[event]
-  }
   export default {
     name: "RemoteFileBrowser",
     components: {
       versatileDialog,
+      myTreeview
     },
     props: {
       readonly: { type: Boolean, default: true },
@@ -300,20 +228,6 @@
         activeItems: [],
         openItems: [],
         items: [],
-        icons: {
-          file: "mdi-file-outline",
-          "file-link": "mdi-file-link-outline",
-          dir: "mdi-folder",
-          "dir-link": "mdi-link-box-outline",
-          "deadlink-link": "mdi-file-link",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
-        openIcons: {
-          dir: "mdi-folder-open",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
         dialog: {
           open: false,
           title: "",
@@ -392,6 +306,12 @@
       SIO.removeUploaderEvent("progress", this.updateProgressBar)
     },
     methods: {
+      getNodeIcon(isOpen, item){
+        return isOpen ? openIcons[item.type] : icons[item.type]
+      },
+      getLeafIcon(item){
+        return icons[item.type]
+      },
       closeDownloadDialog(){
         SIO.emitGlobal("removeDownloadFile", this.projectRootDir, this.downloadURL, ()=>{
           this.downloadURL=null
@@ -407,10 +327,7 @@
         this.$copyText(this.dialog.inputField, this.$refs.icon.$el)
       },
       getActiveItem (key) {
-        const pathArray = [this.selectedComponentAbsPath]
-        const activeItem = _getActiveItem(this.items,key,pathArray);
-        const activeItemPath = pathArray.join(this.pathSep)
-        return [activeItem, activeItemPath]
+        return  _getActiveItem(this.items,key);
       },
       getComponentDirRootFiles(){
         const cb= (fileList)=>{
@@ -432,11 +349,13 @@
           this.activeItem=null
           return
         }
-        const [activeItem, activeItemPath] = this.getActiveItem(activeItems[0])
-        this.activeItem=activeItem;
-        this.currentDir=activeItemPath
-        const fullPath = `${this.currentDir}${this.pathSep}${this.activeItem.name}`
-        this.commitSelectedFile(fullPath);
+        this.activeItem = this.getActiveItem(activeItems[0])
+        if(this.activeItem === null){
+          console.log("failed to get current selected Item");
+          return
+        }
+        this.currentDir=this.activeItem.path
+        this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
       },
       onChoose(event){
         for (const file of event.files){
@@ -473,15 +392,18 @@
               .map(fileListModifier.bind(null, this.pathSep))
             resolve()
           }
-          const [activeItem, currentDir] = this.getActiveItem(item.id)
+          const activeItem = this.getActiveItem(item.id)
+          if(activeItem === null){
+            console.log("failed to get current selected Item");
+            return
+          }
           const path = this.selectedComponent.type === "storage"
-            ?  `${[this.storagePath, currentDir.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)}/`
-            : currentDir
+            ?  `${[this.storagePath, item.id.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)}/` : item.id
           if(item.type === "dir" || item.type === "dir-link"){
               SIO.emitGlobal("getRemoteFileList",this.projectRootDir, this.selectedComponent.host, {path, mode: "underComponent"}, cb)
           }else{
             //memo SND content is not supported in remote file browser for now
-            SIO.emitGlobal("getSNDContents", this.projectRootDir, currentDir, item.name, item.type.startsWith("sndd"),cb)
+            SIO.emitGlobal("getSNDContents", this.projectRootDir, item.path , item.name, item.type.startsWith("sndd"),cb)
           }
         })
       },

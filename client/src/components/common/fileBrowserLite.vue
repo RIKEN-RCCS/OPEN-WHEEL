@@ -9,7 +9,6 @@
     :items="items"
     :load-children="getChildren"
     activatable
-    :active=active
     @update:active="onUpdateActive"
     :get-node-icon="getNodeIcon"
     :get-leaf-icon="getLeafIcon"
@@ -17,32 +16,8 @@
 </template>
 <script>
   import SIO from "@/lib/socketIOWrapper.js";
-  const  icons = {
-          file: "mdi-file-outline",
-          "file-link": "mdi-file-link-outline",
-          dir: "mdi-folder",
-          "dir-link": "mdi-link-box-outline",
-          "deadlink-link": "mdi-file-link",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        };
-  const openIcons = {
-         dir: "mdi-folder-open",
-         sndd: "mdi-folder-multiple-outline",
-         snd: "mdi-file-multiple-outline",
-       };
-  function fileListModifier (pathsep, e) {
-    const rt = {
-      id: `${e.path}${pathsep}${e.name}`,
-      path: e.path,
-      name: e.name,
-      type: `${e.type}${e.islink ? "-link" : ""}`,
-    };
-    if (["dir", "dir-link", "snd", "snd-link", "sndd", "sndd-link"].includes(e.type)) {
-      rt.children = [];
-    }
-    return rt;
-  }
+  import myTreeview from "@/components/common/myTreeview.vue"
+  import {icons, openIcons, fileListModifier } from "@/components/common/fileTreeUtils.js"
 
   function getActiveItem (items, key, path) {
     for (const item of items) {
@@ -64,7 +39,6 @@
     }
     return null;
   }
-  import myTreeview from "@/components/common/myTreeview.vue"
 
   export default {
     name: "FileBrowserLite",
@@ -79,7 +53,6 @@
       return {
         root:null,
         items: [],
-        active: [],
       };
     },
     mounted () {
