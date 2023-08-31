@@ -6,28 +6,31 @@
 <template>
   <v-sheet
     class="text-center"
+    max-height="40vh"
   >
     <v-toolbar
-      dense
+      density="compact"
     >
-      <v-btn
-        outlined
-        @click="clearAllLog"
-      >
-        clear all log
-      </v-btn>
-      <v-tabs
-        v-model="currentTab"
-        @change="onChange"
-      >
-        <v-tab
-          v-for="item in items"
-          :key="item.id"
-          :class="{'success--text': item.unread }"
+      <template #extension>
+        <v-btn
+          outlined
+          @click="clearAllLog"
         >
-          {{ item.label }}
-        </v-tab>
-      </v-tabs>
+          clear all log
+        </v-btn>
+        <v-tabs
+          v-model="currentTab"
+          @change="onChange"
+        >
+          <v-tab
+            v-for="item in items"
+            :key="item.id"
+            :class="{'success--text': item.unread }"
+          >
+            {{ item.label }}
+          </v-tab>
+        </v-tabs>
+      </template>
     </v-toolbar>
     <v-tabs-items
       v-model="currentTab"

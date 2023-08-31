@@ -8,7 +8,7 @@
 </template>
 <script>
   import { Terminal } from "xterm";
-  import {FitAddon } from "xterm-addon-fit";
+  import { FitAddon } from "xterm-addon-fit";
   import "@/../node_modules/xterm/css/xterm.css";
   export default {
     name: "Xterm",
