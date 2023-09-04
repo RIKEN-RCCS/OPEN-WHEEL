@@ -32,14 +32,13 @@
         </template>
       </vue-viewer>
     </v-main>
-    <v-footer/>
   </v-app>
 </template>
 
 <script>
   "use strict";
   import "viewerjs/dist/viewer.css";
-  import applicationToolBar from "@/components/common/ApplicationToolBar.vue";
+  import applicationToolBar from "@/components/common/applicationToolBar.vue";
   import NavDrawer from "@/components/common/NavigationDrawer.vue";
   import { component as vueViewer}  from "v-viewer";
   import SIO from "@/lib/socketIOWrapper.js";

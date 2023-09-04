@@ -8,14 +8,17 @@
     class="fill-height"
     fluid
   >
-    <v-toolbar dense>
+    <v-toolbar
+      color="background"
+      density=compact
+    >
       <v-breadcrumbs
         :items="pathToCurrentComponent"
       >
         <template #divider>
-          <v-icon>mdi-forward</v-icon>
+          <v-icon icon="mdi-forward" />
         </template>
-        <template #item="{ item }">
+        <template #title="{ item }">
           <v-breadcrumbs-item>
             <component-button
               :item="item"
@@ -26,20 +29,21 @@
       <v-spacer />
       <v-toolbar-items>
         <v-select
+          class='mt-n1'
           v-model="mode"
           :items="modes"
-          class="pt-3"
         />
         <v-switch
+          class='mt-n1'
           v-model="readOnly"
           label="read only"
           :disabled="! isEdittable"
-          class="pt-3"
+          color="primary"
         />
-        <v-btn @click="saveAllFiles">
-          <v-icon>mdi-content-save-all</v-icon>
-          save all files
-        </v-btn>
+        <v-btn @click="saveAllFiles"
+          prepend-icon=mdi-content-save-all
+          text="save all files"
+        />
       </v-toolbar-items>
     </v-toolbar>
     <v-row no-gutters>
@@ -156,10 +160,15 @@
         return relativePath.startsWith("./") ? relativePath.slice(2) : relativePath;
       },
       modes(){
+        const rt=[ "normal"]
+        if(!this.disablePS){
+          rt.push("PS-config")
+        }
         const disableJobScriptEditor=this.selectedComponent !== null ? this.selectedComponent.type !== "task" : false;
-        return [ {text: "normal", value:"normal"},
-          {text: "PS-config", value:"PS-config", disabled: this.disablePS},
-          {text: "jobScriptEditor", value: "jobScriptEditor", disabled: disableJobScriptEditor}];
+        if(!disableJobScriptEditor){
+          rt.push("jobScriptEditor")
+        }
+        return rt;
       },
       disablePS(){
         if (this.selectedComponent === null){

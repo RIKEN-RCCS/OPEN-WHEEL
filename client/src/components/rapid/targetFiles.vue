@@ -6,9 +6,7 @@
 
 <template>
   <div>
-    <v-card
-      outlined
-    >
+    <v-card >
       <v-card-title>
         targetFiles
         <v-row
@@ -18,20 +16,20 @@
             class="text-capitalize"
             :disabled="readOnly"
             @click="openDialog(null)"
-          >
-            <v-icon> mdi-plus</v-icon> add new target file
-          </v-btn>
+            prepend-icon=mdi-plus
+            text="add new target file"
+          />
         </v-row>
       </v-card-title>
       <v-card-text>
         <v-data-table
-          dense
+          density=compact
           :headers="[{ key: 'targetName', title: 'filename', sortable: true },
                      { key: 'targetNode', title: 'component', sortable: true },
                      { key: 'action', title: 'Actions', sortable: false }]"
           :items="targetFiles"
-          hide-default-footer
         >
+          <template #bottom />
           <template #item.action="{ item }">
             <action-row
               :item="item"
@@ -59,24 +57,24 @@
         <v-card-text>
           <v-text-field
             v-model.trim.lazy="newTargetFilename"
-            :label="'filename'"
+            label="filename"
           />
           <lower-component-tree @selected="targetNodeSelected" />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn
-            text
+            variant=text
             @click="commitTargetFileChange"
-          >
-            <v-icon>mdi-check</v-icon>OK
-          </v-btn>
+            prepend-icon="mdi-check"
+            text="OK"
+          />
           <v-btn
-            text
+            variant=text
             @click="closeAndResetDialog"
-          >
-            <v-icon>mdi-cancel</v-icon>cancel
-          </v-btn>
+            prepend-icon="mdi-cancel"
+            text="cancel"
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>

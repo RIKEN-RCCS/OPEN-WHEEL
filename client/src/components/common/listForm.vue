@@ -8,10 +8,6 @@
     v-model="selectedItems"
     :items="tableData"
     :headers="headersWithActions"
-    disable-filterling
-    disable-pagination
-    hide-default-header
-    hide-default-footer
     :show-select="selectable"
     :single-select="true"
   >
@@ -59,12 +55,12 @@
         v-model="inputField"
         :rules=newItemValidator
         :disabled="disabled"
-        outlined
-        dense
+        variant=outlined
+        density=compact
         clearable
         append-outer-icon="mdi-plus"
         @click:append-outer="addItem"
-        @change="addItem"
+        @update:modelValue="addItem"
       />
     </template>
   </v-data-table>
@@ -149,7 +145,7 @@
           return this.value;
         },
         set(newVal){
-          this.$emit("input", newVal);
+          this.$emit("update:modelValue", newVal);
         }
       },
       headersWithActions: function () {

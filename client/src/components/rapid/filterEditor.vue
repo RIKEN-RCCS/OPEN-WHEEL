@@ -17,9 +17,9 @@
         <v-btn
           class="text-capitalize"
           @click="applyFilter"
-        >
-          <v-icon>add</v-icon> apply
-        </v-btn>
+          prepend-icon="add"
+          text="apply"
+        />
         <v-spacer />
         <v-text-field
           v-model="search"
@@ -30,14 +30,14 @@
         <v-btn
           class="text-capitalize"
           @click="closeFilterEditor"
-        >
-          <v-icon>close</v-icon> close
-        </v-btn>
+          prepend-icon="close"
+          text="close"
+        />
       </v-card-title>
       <v-card-text>
         <v-data-table
           v-model="selected"
-          dense
+          density=compact
           show-select
           :single-select="false"
           :search="search"

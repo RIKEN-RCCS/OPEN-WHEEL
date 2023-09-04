@@ -5,15 +5,10 @@
  */
 <template>
   <v-btn
-    class=ml-12
-    fab
     :disabled="! isEdittable"
     @click.stop="openEnvironmentVariableSetting"
-  >
-    <v-icon>
-      mdi-cog
-    </v-icon>
-  </v-btn>
+    icon="mdi-cog"
+  />
   <v-dialog
     v-model="envSetting"
     persistent
@@ -28,41 +23,7 @@
         <v-data-table
           :items="env"
           :headers="headers"
-          disable-filterling
-          disable-pagination
-          hide-default-header
-          hide-default-footer
         >
-          <template #item.name="props">
-            <v-edit-dialog
-              persistent
-              :return-value.sync="props.item.name"
-            >
-              {{ props.item.name }}
-              <template #input>
-                <v-text-field
-                  v-model="props.item.name"
-                  label="Edit"
-                  single-line
-                />
-              </template>
-            </v-edit-dialog>
-          </template>
-          <template #item.value="props">
-            <v-edit-dialog
-              persistent
-              :return-value.sync="props.item.value"
-            >
-              {{ props.item.value }}
-              <template #input>
-                <v-text-field
-                  v-model="props.item.value"
-                  label="Edit"
-                  single-line
-                />
-              </template>
-            </v-edit-dialog>
-          </template>
           <template #item.actions="{ item }">
             <action-row
               :item="item"
@@ -70,24 +31,22 @@
               @delete="deleteEnv"
             />
           </template>
-          <template
-            #bottom
-          >
+          <template #bottom >
             <v-row>
               <v-col cols="5">
                 <v-text-field
                   v-model="newKey"
                   label="name"
-                  outlined
-                  dense
+                  variant=outlined
+                  density=compact
                   clearable
                 />
               </v-col>
               <v-col cols="5">
                 <v-text-field
                   v-model="newValue"
-                  outlined
-                  dense
+                  variant=outlined
+                  density=compact
                   label="value"
                   clearable
                 />
@@ -95,9 +54,8 @@
               <v-col cols="auto">
                 <v-btn
                   @click="addEnv"
-                >
-                  <v-icon>mdi-plus</v-icon>
-                </v-btn>
+                  icon="mdi-plus"
+                />
               </v-col>
             </v-row>
           </template>
@@ -182,6 +140,7 @@
         this.newValue=null;
       },
       deleteEnv(e){
+        console.log("DEBUG DELETE", e);
         removeFromArray(this.env, e);
       },
       saveEnv(){

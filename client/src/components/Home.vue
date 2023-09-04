@@ -10,39 +10,39 @@
     />
     <application-tool-bar
       title="home"
+      density="comfortable"
       @navIconClick="drawer=!drawer"
     />
     <v-main>
-      <v-toolbar >
+      <v-toolbar
+        color='background'
+      >
         <v-btn
           :disabled="batchMode"
           @click="openProject"
-        >
-        <v-icon>mdi-pencil</v-icon>
-          open
-        </v-btn>
+          prepend-icon="mdi-pencil"
+          text="open"
+        />
         <v-btn
           :disabled="batchMode"
           @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
-        >
-        <v-icon>mdi-plus</v-icon>
-          new
-        </v-btn>
+          prepend-icon="mdi-plus"
+          text="new"
+        />
         <v-btn
           @click="openDeleteProjectDialog(true)"
-        >
-        <v-icon>mdi-text-box-remove-outline</v-icon>
-          remove from list
-        </v-btn>
+          prepend-icon="mdi-text-box-remove-outline"
+          text="remove from list"
+        />
         <v-btn
           @click="openDeleteProjectDialog(false)"
-        >
-        <v-icon>mdi-trash-can-outline</v-icon>
-          remove
-        </v-btn>
+          prepend-icon="mdi-trash-can-outline"
+          text="remove"
+        />
         <v-switch
           v-model="batchMode"
           label="batch mode"
+          color="primary"
           class="mt-6"
         />
       </v-toolbar>
@@ -51,7 +51,7 @@
         v-model="selectedInTable"
         :show-select="true"
         :return-object="true"
-        :single-select="!batchMode"
+        :select-strategy="batchMode?'page':'single'"
         :headers="headers"
         :items="projectList"
       >
@@ -103,7 +103,7 @@
             <v-text-field
               v-model="newProjectName"
               label="project name"
-              outlined
+              variant=outlined
               :rules="[required]"
             />
             <v-textarea
@@ -111,7 +111,6 @@
               label="project description"
               rows="2"
               auto-grow
-              outlined
             />
           </v-card-actions>
           <v-card-text>
@@ -134,7 +133,7 @@
 <script>
   "use strict";
   import navDrawer from "@/components/common/NavigationDrawer.vue";
-  import applicationToolBar from "@/components/common/ApplicationToolBar.vue";
+  import applicationToolBar from "@/components/common/applicationToolBar.vue";
   import fileBrowser from "@/components/common/fileBrowserLite.vue";
   import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
   import buttons from "@/components/common/buttons.vue";
@@ -212,7 +211,7 @@
         return rt;
       },
       removeProjectMessage () {
-        return this.removeFromList ? "remove projects from list" : "remove project files";
+        return this.removeFromList ? "remove following projects from list" : "remove following project files";
       },
     },
     mounted: function () {

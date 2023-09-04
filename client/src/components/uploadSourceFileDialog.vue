@@ -56,7 +56,7 @@
           return this.value;
         },
         set(v){
-          this.$emit("input", v);
+          this.$emit("update:modelValue", v);
         }
       }
     },

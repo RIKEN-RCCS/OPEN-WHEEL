@@ -8,27 +8,29 @@
     v-model="openDialog"
     :max-width="maxWidth"
   >
-    <v-card>
-      <v-card-title>
-        {{ title }}
-      </v-card-title>
-      <v-form @submit.prevent>
-      <v-text-field
-        v-model="password"
-        class="mx-6"
-        autofocus
-        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-        :type="showPassword ? 'text' : 'password'"
-        @click:append="showPassword = !showPassword"
-      />
-      <v-card-actions>
-        <buttons
-          :buttons="buttons"
-          @ok="submitPassword"
-          @cancel="closeDialog"
-        />
-      </v-card-actions>
-    </v-form>
+    <v-card
+      :title=title
+      :subtitle=message
+    >
+      <v-card-text>
+        <v-form @submit.prevent>
+          <v-text-field
+            v-model="password"
+            class="mx-6"
+            autofocus
+            :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+            :type="showPassword ? 'text' : 'password'"
+            @click:append="showPassword = !showPassword"
+          />
+        </v-form>
+        <v-card-actions>
+          <buttons
+            :buttons="buttons"
+            @ok="submitPassword"
+            @cancel="closeDialog"
+          />
+        </v-card-actions>
+      </v-card-text>
     </v-card>
   </v-dialog>
 </template>
@@ -60,7 +62,7 @@
           return this.value;
         },
         set (value) {
-          this.$emit("input", value);
+          this.$emit("update:modelValue", value);
         },
       },
     },

@@ -11,17 +11,15 @@
       small
       class="mr-2"
       @click="$emit('edit', item)"
-    >
-      mdi-pencil
-    </v-icon>
+      icon="mdi-pencil"
+    />
     <v-icon
       v-if="canDelete"
       :disabled="disabled"
       small
       @click="$emit('delete',item)"
-    >
-      mdi-delete
-    </v-icon>
+      icon=mdi-delete
+    />
   </div>
 </template>
 <script>

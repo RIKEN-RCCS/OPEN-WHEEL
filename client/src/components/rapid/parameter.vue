@@ -5,9 +5,7 @@
  */
 <template>
   <div>
-    <v-card
-      outlined
-    >
+    <v-card >
       <v-card-title>
         parameters
         <v-row
@@ -17,36 +15,34 @@
             class="text-capitalize"
             :disabled="readOnly"
             @click="dialog=true"
-          >
-            <v-icon>mdi-plus</v-icon>
-            add new parameter
-          </v-btn>
+            prepend-icon="mdi-plus"
+            text="add new parameter"
+          />
           <v-btn
             class="text-capitalize"
             :disabled="readOnly"
             @click="$emit('openFilterEditor')"
-          >
-            <v-icon> mdi-pencil </v-icon>
-            add filter
-          </v-btn>
+            prepend-icon="mdi-pencil"
+            text="add filter"
+          />
         </v-row>
       </v-card-title>
       <v-card-subtitle>
         <v-text-field
           v-model="selectedText"
-          outlined
+          variant=outlined
           readonly
         />
       </v-card-subtitle>
       <v-card-text>
         <v-data-table
-          dense
+          density=compact
           :headers="[{title: 'placeholder', key: 'keyword', sortable: true},
                      {title: 'type', key: 'type', sortable: true},
                      { title: 'Actions', key: 'action', sortable: false }]"
           :items="params"
-          hide-default-footer
         >
+          <template #bottom />
           <template #item.action="{ item }">
             <action-row
               :item="item.raw"
@@ -70,7 +66,7 @@
         <v-card-text>
           <v-select
             v-model="newItem.type"
-            outlined
+            variant=outlined
             :items="['min-max-step', 'list', 'files']"
           />
           <v-row v-if="newItem.type==='min-max-step'">
@@ -122,12 +118,16 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn @click="commitChange">
-            <v-icon>mdi-check</v-icon>OK
-          </v-btn>
-          <v-btn @click="closeAndResetDialog">
-            <v-icon>mdi-cancel</v-icon>cancel
-          </v-btn>
+          <v-btn
+            @click="commitChange"
+            prepend-icon="mdi-check"
+            text="OK"
+          />
+          <v-btn
+            @click="closeAndResetDialog"
+            prepend-icon="mdi-cancel"
+            text="cancel"
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -146,12 +146,16 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn @click="updateFilter">
-            <v-icon>mdi-check</v-icon>check
-          </v-btn>
-          <v-btn @click="closeFilterDialog">
-            <v-icon>mdi-cancel</v-icon>cancel
-          </v-btn>
+          <v-btn
+            @click="updateFilter"
+            prepend-icon="mdi-check"
+            text="check"
+          />
+          <v-btn
+            prepend-icon="mdi-cancel"
+            text="cancel"
+            @click="closeFilterDialog"
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>

@@ -4,21 +4,16 @@
  * See License in the project root for the license information.
  */
 <template>
-  <v-btn-toggle>
-    <div
-      v-for="item in buttons"
-      :key="item.label"
-    >
+  <v-btn-group>
       <v-btn
+        v-for="item in buttons"
+        :key="item.label"
         @click="$emit(item.label)"
-      >
-        <v-icon>
-          {{ item.icon }}
-        </v-icon>
-        {{ item.label }}
-      </v-btn>
-    </div>
-  </v-btn-toggle>
+        :prepend-icon=item.icon
+        :disabled="item.disabled"
+        :text=item.label 
+      />
+  </v-btn-group>
 </template>
 <script>
 
@@ -31,7 +26,6 @@
     name: "Buttons",
     props: {
       buttons: Array,
-      openDialog: { type: Boolean, default: false },
     },
   };
 </script>

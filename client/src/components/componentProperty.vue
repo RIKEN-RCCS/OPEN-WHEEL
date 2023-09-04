@@ -11,70 +11,62 @@
     absolute
     :width="propWidth"
   >
-      <v-toolbar flat>
+    <v-toolbar
+        color='background'
+      >
         <v-toolbar-title>
           <v-form v-model="validName">
             <v-text-field
               v-model.lazy="copySelectedComponent.name"
               label="name"
-              outlined
+              variant=outlined
               class="pt-4"
-              dense
+              density=compact
               :rules="[rules.isValidName, isUniqueName]"
-              @change="updateComponentProperty('name')"
+              @update:modelValue="updateComponentProperty('name')"
               @submit.prevent
             />
           </v-form>
         </v-toolbar-title>
-        <v-spacer />
-        <v-tooltip bottom>
-          <template #activator="{ on, attrs }">
+        <v-toolbar-items>
+        <v-tooltip location="bottom" text="disable">
+          <template #activator="{ props}">
             <v-switch
               v-model="copySelectedComponent.disable"
               hide-details
-              color="red darken-3"
+              color="error"
               label="disable"
-              @click="updateComponentProperty('disable')"
+              v-bind="props"
+              @update:modelValue="updateComponentProperty('disable')"
             />
           </template>
-          disable
         </v-tooltip>
-        <v-toolbar-items>
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip location="bottom" text="close">
+            <template #activator="{ props }">
               <v-btn
-                v-bind="attrs"
-                v-on="on"
                 @click="open=false"
-              >
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
+                v-bind="props"
+                icon=mdi-close
+              />
             </template>
-            close
           </v-tooltip>
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip location=bottom text="clean" >
+            <template #activator="{ props }">
               <v-btn
                 :disabled="selectedComponent.state === 'not-started'"
-                v-bind="attrs"
-                v-on="on"
-              >
-                <v-icon>mdi-restore</v-icon>
-              </v-btn>
+                v-bind="props"
+                icon="mdi-restore"
+              />
             </template>
-            clean
           </v-tooltip>
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip location=bottom text="delete">
+            <template #activator="{ props }">
               <v-btn
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
                 @click="deleteComponent"
-              >
-                <v-icon>mdi-trash-can-outline</v-icon>
-              </v-btn>
+                icon="mdi-trash-can-outline"
+              />
             </template>
-            delete
           </v-tooltip>
         </v-toolbar-items>
       </v-toolbar>
@@ -92,8 +84,8 @@
             <v-textarea
               v-model.lazy="copySelectedComponent.description"
               label="description"
-              outlined
-              @change="updateComponentProperty('description')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('description')"
             />
             <v-autocomplete
               v-if="hasScript"
@@ -101,22 +93,23 @@
               label="script"
               :items="scriptCandidates"
               clearable
-              outlined
-              @change="updateComponentProperty('script')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('script')"
             />
             <v-select
               v-if="hasHost"
               v-model.lazy="copySelectedComponent.host"
               label="host"
               :items="hostCandidates"
-              outlined
-              @change="updateComponentProperty('host')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('host')"
             />
             <v-switch
               v-if="hasJobScheduler"
               v-model.lazy="copySelectedComponent.useJobScheduler"
               label="use job scheduler"
-              @change="updateComponentProperty('useJobScheduler')"
+              @update:modelValue="updateComponentProperty('useJobScheduler')"
+              color="primary"
             />
             <v-select
               v-if="hasJobScheduler"
@@ -124,8 +117,8 @@
               label="queue"
               :items="queues"
               :disabled="! copySelectedComponent.useJobScheduler"
-              outlined
-              @change="updateComponentProperty('queue')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('queue')"
             />
             <v-text-field
               v-if="hasJobScheduler"
@@ -133,22 +126,22 @@
               readonly
               label="submit command"
               :disabled="! copySelectedComponent.useJobScheduler"
-              outlined
+              variant=outlined
             />
             <v-text-field
               v-if="hasJobScheduler"
               v-model.lazy="copySelectedComponent.submitOption"
               label="submit option"
               :disabled="! copySelectedComponent.useJobScheduler"
-              outlined
-              @change="updateComponentProperty('submitOption')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('submitOption')"
             />
             <v-text-field
               v-if="isStorage"
               v-model.lazy="copySelectedComponent.storagePath"
               label="directory path"
-              outlined
-              @change="updateComponentProperty('storagePath')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('storagePath')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -161,11 +154,12 @@
               hide-details
               type="number"
               :rules="[rules.isInteger, rules.isZeroOrMore]"
-              outlined
-              @change="updateComponentProperty('retry')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('retry')"
             />
             <v-switch
               v-model.lazy="retryByJS"
+              color="primary"
               label="use javascript expression for condition check"
             />
             <v-autocomplete
@@ -174,13 +168,13 @@
               label="script name for condition check"
               :items="scriptCandidates"
               clearable
-              outlined
-              @change="updateComponentProperty('retryCondition')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('retryCondition')"
             />
             <v-textarea
               v-if="retryByJS"
               v-model.lazy="copySelectedComponent.retryCondition"
-              @change="updateComponentProperty('retryCondition')"
+              @update:modelValue="updateComponentProperty('retryCondition')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -193,21 +187,21 @@
                 label="start"
                 type="number"
                 :rules="[rules.isInteger]"
-                @change="updateComponentProperty('start')"
+                @update:modelValue="updateComponentProperty('start')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.end"
                 label="end"
                 type="number"
                 :rules="[rules.isInteger]"
-                @change="updateComponentProperty('end')"
+                @update:modelValue="updateComponentProperty('end')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.step"
                 label="step"
                 type="number"
                 :rules="[rules.isInteger]"
-                @change="updateComponentProperty('step')"
+                @update:modelValue="updateComponentProperty('step')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.keep"
@@ -215,7 +209,7 @@
                 type="number"
                 clearable
                 :rules="[rules.isValidKeepProp ]"
-                @change="updateComponentProperty('keep')"
+                @update:modelValue="updateComponentProperty('keep')"
               />
             </v-form>
           </v-expansion-panel-text>
@@ -234,7 +228,7 @@
               v-model.number="copySelectedComponent.keep"
               label="number of instances to keep"
               type="number"
-              @change="updateComponentProperty('keep')"
+              @update:modelValue="updateComponentProperty('keep')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -243,8 +237,9 @@
           <v-expansion-panel-text>
             <v-switch
               v-model.lazy="copySelectedComponent.uploadOnDemand"
+              color="primary"
               label="upload on demand"
-              @change="updateComponentProperty('uploadOnDemand')"
+              @update:modelValue="updateComponentProperty('uploadOnDemand')"
             />
             <v-row>
               <v-col>
@@ -254,8 +249,8 @@
                   label="source file name"
                   :items="scriptCandidates"
                   clearable
-                  outlined
-                  @change="updateSourceOutputFile"
+                  variant=outlined
+                  @update:modelValue="updateSourceOutputFile"
                 />
               </v-col>
               <v-col
@@ -265,9 +260,8 @@
               >
                 <v-btn
                   v-if="!copySelectedComponent.uploadOnDemand"
-                >
-                  <v-icon>mdi-trash-can-outline</v-icon>
-                </v-btn>
+                  icon=mdi-trash-can-outline
+                />
               </v-col>
             </v-row>
           </v-expansion-panel-text>
@@ -294,18 +288,20 @@
               label="parameterFile"
               :items="scriptCandidates"
               clearable
-              outlined
-              @change="updateComponentProperty('parameterFile')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('parameterFile')"
             />
             <v-switch
+              color="primary"
               v-model.lazy="copySelectedComponent.forceOverwrite"
               label="force overwrite"
-              @change="updateComponentProperty('forceOverwrite')"
+              @update:modelValue="updateComponentProperty('forceOverwrite')"
             />
             <v-switch
+              color="primary"
               v-model.lazy="copySelectedComponent.deleteLoopInstance"
               label="delete all instances"
-              @change="updateComponentProperty('deleteLoopInstance')"
+              @update:modelValue="updateComponentProperty('deleteLoopInstance')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -313,9 +309,10 @@
           <v-expansion-panel-title>stepjobtask setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
+              color="primary"
               v-model.lazy="copySelectedComponent.useDependency"
               label="use dependency"
-              @change="updateComponentProperty('useDependency')"
+              @update:modelValue="updateComponentProperty('useDependency')"
             />
             <v-text-field
               v-model="copySelectedComponent.stepnum"
@@ -328,7 +325,7 @@
               v-model.lazy="copySelectedComponent.dependencyForm"
               label="dependencyForm"
               :disabled="! copySelectedComponent.useDependency"
-              @change="updateComponentProperty('dependencyForm')"
+              @update:modelValue="updateComponentProperty('dependencyForm')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -336,9 +333,10 @@
           <v-expansion-panel-title>bulkjob setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
+              color="primary"
               v-model.lazy="copySelectedComponent.usePSSettingFile"
               label="use parameter setting file for bulk number"
-              @change="updateComponentProperty('usePSSettingFile')"
+              @update:modelValue="updateComponentProperty('usePSSettingFile')"
             />
             <v-autocomplete
               v-if="copySelectedComponent.usePSSettingFile"
@@ -346,8 +344,8 @@
               label="parameter file"
               :items="scriptCandidates"
               clearable
-              outlined
-              @change="updateComponentProperty('parameterFile')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('parameterFile')"
             />
             <v-form
               v-if="! copySelectedComponent.usePSSettingFile"
@@ -357,22 +355,24 @@
                 v-model.number="copySelectedComponent.startBulkNumber"
                 label="start"
                 type="number"
-                @change="updateComponentProperty('startBulkNumber')"
+                @update:modelValue="updateComponentProperty('startBulkNumber')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.endBulkNumber"
                 label="end"
                 type="number"
-                @change="updateComponentProperty('endBulkNumber')"
+                @update:modelValue="updateComponentProperty('endBulkNumber')"
               />
             </v-form>
             <v-switch
+              color="primary"
               v-model="copySelectedComponent.manualFinishCondition"
               label="manual finish condition"
-              @change="updateComponentProperty('manualFinishCondition')"
+              @update:modelValue="updateComponentProperty('manualFinishCondition')"
             />
             <div v-if="copySelectedComponent.manualFinishCondition">
               <v-switch
+              color="primary"
                 v-model.lazy="conditionCheckByJS"
                 label="use javascript expression for condition check"
               />
@@ -382,13 +382,13 @@
                 label="script name for condition check"
                 :items="scriptCandidates"
                 clearable
-                outlined
-                @change="updateComponentProperty('condition')"
+                variant=outlined
+                @update:modelValue="updateComponentProperty('condition')"
               />
               <v-textarea
                 v-if="conditionCheckByJS"
                 v-model.lazy="copySelectedComponent.condition"
-                @change="updateComponentProperty('condition')"
+                @update:modelValue="updateComponentProperty('condition')"
               />
             </div>
           </v-expansion-panel-text>
@@ -397,6 +397,7 @@
           <v-expansion-panel-title>condition setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
+              color="primary"
               v-model.lazy="conditionCheckByJS"
               label="use javascript expression for condition check"
             />
@@ -406,20 +407,20 @@
               label="script name for condition check"
               :items="scriptCandidates"
               clearable
-              outlined
-              @change="updateComponentProperty('condition')"
+              variant=outlined
+              @update:modelValue="updateComponentProperty('condition')"
             />
             <v-textarea
               v-if="conditionCheckByJS"
               v-model.lazy="copySelectedComponent.condition"
-              @change="updateComponentProperty('condition')"
+              @update:modelValue="updateComponentProperty('condition')"
             />
             <v-text-field
               v-if="isWhile"
               v-model.number="copySelectedComponent.keep"
               label="number of instances to keep"
               type="number"
-              @change="updateComponentProperty('keep')"
+              @update:modelValue="updateComponentProperty('keep')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -472,7 +473,7 @@
             <v-radio-group
               v-model="copySelectedComponent.cleanupFlag"
               :disabled="disableRemoteSetting"
-              @change="updateComponentProperty('cleanupFlag')"
+              @update:modelValue="updateComponentProperty('cleanupFlag')"
             >
               <v-radio
                 label="remove files"

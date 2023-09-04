@@ -17,23 +17,23 @@
       </v-card-text>
       <v-card-actions>
         <v-btn
-          text
+          variant=text
           @click.stop="saveAndCloseTab"
-        >
-          <v-icon>save</v-icon> save
-        </v-btn>
+          prepend-icon="save"
+          text="save"
+        />
         <v-btn
-          text
+          variant=text
           @click.stop="closeTab"
-        >
-          <v-icon>delete</v-icon> discard changes
-        </v-btn>
+          prepend-icon="delete"
+          text="discard changes"
+        />
         <v-btn
-          text
+          variant=text
           @click.stop="closeDialog"
-        >
-          <v-icon>cancel</v-icon> cancel
-        </v-btn>
+          prepend-icon="cancel"
+          text="cancel"
+        />
       </v-card-actions>
     </v-card>
   </v-dialog>

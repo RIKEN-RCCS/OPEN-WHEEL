@@ -61,7 +61,6 @@
           <template #prepend>
             <v-icon
               :icon=getLeafIcon(item)
-              v-bind="props"
             />
           </template>
           <slot name="label" :item="item">

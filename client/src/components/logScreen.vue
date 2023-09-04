@@ -10,17 +10,17 @@
   >
     <v-toolbar
       density="compact"
+      color="background"
     >
       <template #extension>
         <v-btn
-          outlined
+          variant=outlined
           @click="clearAllLog"
-        >
-          clear all log
-        </v-btn>
+          text="clear all log"
+        />
         <v-tabs
           v-model="currentTab"
-          @change="onChange"
+          @update:modelValue="onChange"
         >
           <v-tab
             v-for="item in items"

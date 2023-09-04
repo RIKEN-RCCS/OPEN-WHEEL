@@ -10,7 +10,23 @@ import {aliases, mdi} from 'vuetify/iconsets/mdi'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import { VDataTable } from 'vuetify/labs/VDataTable'
+import colors from 'vuetify/lib/util/colors'
 
+
+const wheelTheme={
+  dark: true,
+  colors:{
+    background: colors.grey.darken4,
+    surface:  colors.grey.darken4,
+    primary: '#1976D2',
+    secondary: '#424242',
+    accent: '#82B1FF',
+    error: '#FF5252',
+    info: '#2196F3',
+    success: '#4CAF50',
+    warning: '#FFC107',
+  }
+}
 export default createVuetify({
   components:{
     ...components,
@@ -18,7 +34,10 @@ export default createVuetify({
   },
   directives,
   theme: {
-    defaultTheme: 'dark',
+    defaultTheme: 'wheelTheme',
+    themes:{
+      wheelTheme
+    },
   },
   icons: {
     defaultSet: 'mdi',

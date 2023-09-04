@@ -26,12 +26,9 @@
         >
           <v-btn
             @click="$emit(item.label)"
-          >
-            <v-icon>
-              {{ item.icon }}
-            </v-icon>
-            {{ item.label }}
-          </v-btn>
+            :prepend-icon=item.icon
+            :text=item.label
+          />
         </div>
       </v-card-actions>
     </v-card>
@@ -77,7 +74,7 @@
           return this.value;
         },
         set(v){
-          this.$emit("input", v);
+          this.$emit("update:modelValue", v);
         }
       }
     },

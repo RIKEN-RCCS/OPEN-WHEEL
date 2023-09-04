@@ -8,32 +8,26 @@
     <v-card-actions>
       <v-btn
         @click="insertJobScript"
-      >
-        {{ isJobScript ? "update" : "insert" }}
-      </v-btn>
+        :text="isJobScript ? 'update' : 'insert'"
+      />
       <v-btn
         @click="removeJobScript"
         disable="!isJobSCript"
-      >
-        remove
-      </v-btn>
+        text="remove"
+      />
       <v-btn
         @click="clear"
-      >
-        clear
-      </v-btn>
-
+        text="clear"
+      />
       <v-btn
         class=ml-8
         @click="loadDialog=true"
-      >
-        load
-      </v-btn>
+        text="load"
+      />
       <v-btn
         @click="saveDialog=true"
-      >
-        register
-      </v-btn>
+        text="register"
+      />
     </v-card-actions>
     <v-card-text>
       <v-select
@@ -55,7 +49,7 @@
           <v-text-field
             v-else-if="v.type==='number'"
             v-model.lazy.trim="v.value"
-            outlined
+            variant=outlined
             :label="v.label"
             type="number"
             min="1"
@@ -63,14 +57,14 @@
           <v-text-field
             v-else-if="v.type==='jobScheduler'"
             v-model.lazy.trim="v.value"
-            outlined
+            variant=outlined
             :label="v.label"
             readonly
           />
           <v-text-field
             v-else-if="v.type==='text'"
             v-model.lazy.trim="v.value"
-            outlined
+            variant=outlined
             :label="v.label"
           />
         </div>

@@ -4,27 +4,22 @@
  * See License in the project root for the license information.
  */
 <template>
-  <div >
-    <env-setting-dialog />
-    <div
-      @dragover.prevent
-      @dragenter.prevent
-    >
+  <div
+    @dragover.prevent
+    @dragenter.prevent
+  >
     <component-graph />
-    </div>
   </div>
 </template>
 
 <script>
   import { mapMutations} from "vuex";
   import ComponentGraph from "@/components/componentGraph/componentGraph.vue"
-  import envSettingDialog from "@/components/envSettingDialog.vue"
   import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "@/lib/componentSizes.json";
 
   export default {
     name: "GraphView",
     components: {
-      envSettingDialog,
       ComponentGraph
     },
     mounted: function () {

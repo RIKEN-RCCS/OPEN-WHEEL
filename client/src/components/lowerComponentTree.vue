@@ -10,7 +10,6 @@
     item-key="ID"
     :items="[ lowerLevelComponents ]"
     :active.sync="active"
-    dense
     activatable
     @update:active="onUpdateActive"
   >

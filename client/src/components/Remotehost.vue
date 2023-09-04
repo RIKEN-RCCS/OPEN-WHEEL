@@ -10,16 +10,21 @@
     />
     <application-tool-bar
       title="remotehost"
+      density="comfortable"
       @navIconClick="drawer=!drawer"
     />
     <v-main>
-      <v-toolbar>
-        <v-btn @click.stop="openEditDialog()">
-          new remote host setting
-        </v-btn>
-        <v-btn @click.stop="openEditDialog({type:'aws'})">
-          new cloud setting
-        </v-btn>
+      <v-toolbar
+        color='background'
+      >
+        <v-btn
+          @click.stop="openEditDialog()"
+          text="new remote host setting"
+        />
+        <v-btn
+          @click.stop="openEditDialog({type:'aws'})"
+          text="new cloud setting"
+        />
       </v-toolbar>
       <v-data-table
         :items="hosts"
@@ -30,10 +35,9 @@
             :color="item.raw.testResult"
             :loading="item.raw.loading"
             @click="testConnection(index)"
-          >
-            <v-icon> {{ item.raw.icon }} </v-icon>
-            {{ item.raw.connectionStatus }}
-          </v-btn>
+            :text=item.raw.connectionStatus
+            :prepend-icon=item.raw.icon
+          />
         </template>
         <template #item.action="{ item}">
           <action-row
@@ -85,7 +89,7 @@
   import passwordDialog from "@/components/common/passwordDialog.vue";
   import addNewHostDialog from "@/components/remotehost/addNewHostDialog.vue";
   import addNewCloudDialog from "@/components/remotehost/addNewCloudDialog.vue";
-  import applicationToolBar from "@/components/common/ApplicationToolBar.vue";
+  import applicationToolBar from "@/components/common/applicationToolBar.vue";
 
   export default {
     name: "Remotehost",

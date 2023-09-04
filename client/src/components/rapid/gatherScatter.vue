@@ -5,9 +5,7 @@
  */
 <template>
   <div>
-    <v-card
-      outlined
-    >
+    <v-card >
       <v-card-title>
         {{ label }}
         <v-row
@@ -17,19 +15,18 @@
             class="text-capitalize"
             :disabled="readOnly"
             @click="dialog=true"
-          >
-            <v-icon>mdi-plus</v-icon>
-            add new {{ label }} setting
-          </v-btn>
+            prepend-icon="mdi-plus"
+            :text="`add new ${label} setting`"
+          />
         </v-row>
       </v-card-title>
       <v-card-text>
         <v-data-table
-          dense
+          density=compact
           :headers="headers"
           :items="modifiedContainer"
-          hide-default-footer
         >
+          <template #bottom />
           <template #item.action="{ item }">
             <action-row
               :item="item.raw"
@@ -55,13 +52,13 @@
             <v-col>
               <v-text-field
                 v-model.trim.lazy="newItem.srcName"
-                :label="'srcName'"
+                label="srcName"
               />
             </v-col>
             <v-col>
               <v-text-field
                 v-model.trim.lazy="newItem.dstName"
-                :label="'dstName'"
+                label="dstName"
               />
             </v-col>
           </v-row>
@@ -73,18 +70,18 @@
         <v-card-actions>
           <v-spacer />
           <v-btn
-            text
+            variant=text
             :disabled="isInValid"
             @click="commitChange"
-          >
-            <v-icon> mdi-check</v-icon> OK
-          </v-btn>
+            prepend-icon=mdi-check
+            text=OK
+          />
           <v-btn
-            text
+            variant=text
             @click="closeAndResetDialog"
-          >
-            <v-icon> mdi-cancel</v-icon> Cancel
-          </v-btn>
+            prepend-icon=mdi-cancel
+            text=Cancel
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>

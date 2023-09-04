@@ -8,16 +8,15 @@
     v-model="openDialog"
     :max-width="maxWidth"
   >
-    <v-card>
-      <v-card-title>
-        {{ title }}
-      </v-card-title>
-      <v-card-text>
-        {{ message }}
+    <v-card
+      :title=title
+      :subtitle=message
+    >
+      <v-card-text >
         <v-list
-          dense
+          density=compact
           disabled
-          flat
+          variant=flat
         >
           <v-list-item
             v-for="(item, i) in removeCandidates"

@@ -7,104 +7,77 @@
   <div>
     <div v-if="! readonly">
       <v-spacer />
-        <v-btn
-          :disabled="isSND"
-        >
-          <v-icon
+      <v-tooltip location="top" text="new folder"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+            v-bind="props"
             @click="openDialog('createNewDir')"
-          >
-            mdi-folder-plus-outline
-          </v-icon>
-          <v-tooltip
-            activator="parent"
-            location="top">
-            new folder
-          </v-tooltip>
-        </v-btn>
-        <v-btn
-          :disabled="isSND"
-        >
-          <v-icon
+            icon=mdi-folder-plus-outline
+          />
+        </template>
+      </v-tooltip>
+      <v-tooltip text="new file" location="top">
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+            v-bind="props"
+            icon="mdi-file-plus-outline"
             @click="openDialog('createNewFile')"
-          >
-            mdi-file-plus-outline
-          </v-icon>
-        <v-tooltip
-          activator="parent"
-          location="top">
-          new file
-        </v-tooltip>
-        </v-btn>
-        <v-btn
-          :disabled="isSND"
-        >
-          <v-icon
+          />
+        </template>
+      </v-tooltip>
+      <v-tooltip text="rename" location="top" >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
             @click="openDialog('renameFile')"
-          >
-            mdi-file-move-outline
-          </v-icon>
-          <v-tooltip 
-          activator="parent"
-          location="top">
-            rename
-          </v-tooltip>
-        </v-btn>
-        <v-btn
-          :disabled="isSND"
-        >
-          <v-icon
+            v-bind="props"
+            icon="mdi-file-move-outline"
+          />
+        </template>
+      </v-tooltip>
+      <v-tooltip location="top" text="delete" >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+            v-bind="props"
             @click="openDialog('removeFile')"
-          >
-            mdi-file-remove-outline
-          </v-icon>
-          <v-tooltip 
-          activator="parent"
-          location="top">
-            delete
-          </v-tooltip>
-        </v-btn>
+            icon="mdi-file-remove-outline"
+          />
+        </template>
+      </v-tooltip>
+      <v-tooltip text="upload file" location="top">
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+              v-bind="props"
+            icon="mdi-upload"
+              @click="showUploadDialog"
+            />
+        </template>
+      </v-tooltip>
+      <v-tooltip text="download" location="top" >
+        <template #activator="{ props }">
         <v-btn
           :disabled="isSND"
-        >
-          <v-icon
-            @click="showUploadDialog"
-          >
-            mdi-upload
-          </v-icon>
-          <v-tooltip 
-          activator="parent"
-          location="top">
-            upload file
-          </v-tooltip>
-        </v-btn>
-        <v-btn
-          :disabled="isSND"
-        >
-          <v-icon
+              v-bind="props"
             @click="download"
-          >
-            mdi-download
-          </v-icon>
-          <v-tooltip 
-          activator="parent"
-          location="top">
-            download
-          </v-tooltip>
-        </v-btn>
+            icon="mdi-download"
+          />
+        </template>
+      </v-tooltip>
+          <v-tooltip location="top" text="share file" >
+            <template #activator="{ props }">
         <v-btn
           :disabled="isSND"
-        >
-          <v-icon
             @click="openDialog('shareFile')"
-          >
-            mdi-share-outline
-          </v-icon>
-          <v-tooltip 
-          activator="parent"
-          location="top">
-            share file
+            icon="mdi-share-outline"
+            v-bind="props"
+          />
+            </template>
           </v-tooltip>
-        </v-btn>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"
@@ -148,19 +121,16 @@
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
         >
-          <template #append-outer>
-            <v-icon
-              ref="icon"
-              @click="copyToClipboard"
-            >
-              mdi-content-copy
-              <v-tooltip
-                activator="parent"
-                location="bottom"
-              >
-                copy file path
-              </v-tooltip>
-            </v-icon>
+          <template #append>
+            <v-tooltip text="copy file path" location="bottom" >
+              <template #activator="{ props }">
+                <v-btn
+                  icon="mdi-content-copy"
+                  v-bind="props"
+                  v-clipboard="dialog.inputField"
+                />
+              </template>
+            </v-tooltip>
           </template>
         </v-text-field>
       </template>
@@ -294,8 +264,8 @@
       getLeafIcon(item){
         return icons[item.type]
       },
-      copyToClipboard(){
-        this.$copyText(this.dialog.inputField, this.$refs.icon.$el)
+      async copyToClipboard(){
+        await toClipboard(this.dialog.inputField)
       },
       getActiveItem (key) {
         return  _getActiveItem(this.items,key);
@@ -439,9 +409,13 @@
         this.commitWaitingDownload(true);
         debug(`download request: ${this.activeItem.id}`);
         SIO.emitGlobal('download', this.projectRootDir, this.activeItem.id, (url)=>{
+          this.commitWaitingDownload(false);
+          if(url === null){
+            console.log("download failed.");
+            return
+          }
           this.downloadURL=url
           this.downloadDialog=true
-          this.commitWaitingDownload(false);
         });
       },
       openDialog (event) {

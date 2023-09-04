@@ -7,7 +7,7 @@
   <div>
     <v-tabs
       v-model="activeTab"
-      @change="changeTab"
+      @update:modelValue="changeTab"
     >
       <v-tab
         v-for="(file,index) of files"
@@ -15,21 +15,19 @@
         class="text-none"
       >
         <v-menu
+          location="bottom"
           offset-y
           close-on-content-click
           close-on-click
         >
-          <template #activator="{on: menu,attrs}">
-            <v-tooltip top>
-              <template #activator="{on: tooltip}">
+          <template #activator="{props: menu}">
+            <v-tooltip location="top">
+              <template #activator="{props: tooltip}">
                 <span
-                  v-bind="attrs"
-                  v-on="{...tooltip, ...menu}"
-                >
-                  {{ file.filename }}
-                </span>
+                  v-bind="mergeProps(menu, tooltip)"
+                > {{ file.filename }} </span>
               </template>
-              <span> {{ file.absPath }} </span>
+              <span>{{ file.absPath }}</span>
             </v-tooltip>
           </template>
           <v-list>
@@ -47,23 +45,17 @@
         </v-menu>
         <v-btn
           small
-          icon
+          icon=mdi-close
           @click.stop="save(index).then(()=>closeTab(index))"
-        >
-          <v-icon small>
-            mdi-close
-          </v-icon>
-        </v-btn>
+        />
       </v-tab>
       <v-tab @click.stop>
         <v-dialog v-model="newFilePrompt">
-          <template #activator="{ on }">
+          <template #activator="{ props }">
             <v-btn
-              icon
-              v-on="on"
-            >
-              <v-icon>mdi-plus</v-icon>
-            </v-btn>
+              icon=mdi-plus
+              v-bind="props"
+            />
           </template>
           <v-card>
             <v-card-text>
@@ -74,12 +66,16 @@
               />
             </v-card-text>
             <v-card-actions>
-              <v-btn @click="openNewTab(newFilename);closeNewFileDialog()">
-                <v-icon>mdi-pencil-outline</v-icon>open
-              </v-btn>
-              <v-btn @click="closeNewFileDialog">
-                <v-icon>mdi-close</v-icon>cancel
-              </v-btn>
+              <v-btn
+                @click="openNewTab(newFilename);closeNewFileDialog()"
+                prepend-icon="mdi-pencil-outline"
+                text="open"
+              />
+              <v-btn
+                prepend-icon="mdi-close"
+                text="cancel"
+                @click="closeNewFileDialog"
+              />
             </v-card-actions>
           </v-card>
         </v-dialog>
@@ -95,6 +91,7 @@
 
 <script>
   "use strict";
+  import {mergeProps } from 'vue'
   import { mapState, mapGetters, mapMutations } from "vuex";
   import SIO from "@/lib/socketIOWrapper.js";
   import { isValidInputFilename } from "@/lib/utility.js";
@@ -186,6 +183,7 @@
       }
     },
     methods: {
+      mergeProps,
       ...mapMutations({ commitSelectedFile: "selectedFile",
                       commitSelectedText: "selectedText" }
                      ),

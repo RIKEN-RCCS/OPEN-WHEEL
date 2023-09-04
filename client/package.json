@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@mdi/font": "^7.2.96",
+    "@soerenmartius/vue3-clipboard": "^0.1.2",
     "@vitejs/plugin-vue": "^4.2.3",
-    "@vue/compat": "^3.3.4",
     "ace-builds": "^1.15.2",
     "debug": "^4.3.4",
     "deep-eql": "^4.1.3",

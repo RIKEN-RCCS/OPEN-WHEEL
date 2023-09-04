@@ -6,16 +6,15 @@
 <template>
   <v-toolbar
     density="compact"
+    color="background"
   >
     <v-dialog
       v-model="showComponentTree"
-      overlay-opacity="0.9"
     >
       <template #activator="{ props }">
         <v-btn
           icon="mdi-sitemap mdi-rotate-270"
           v-bind="props"
-          class="ms-12"
         />
       </template>
 
@@ -37,7 +36,7 @@
       :items="pathToCurrentComponent"
     >
       <template #divider>
-        <v-icon>mdi-forward</v-icon>
+        <v-icon icon="mdi-forward"/>
       </template>
       <template #title="{ item }">
         <v-breadcrumbs-item

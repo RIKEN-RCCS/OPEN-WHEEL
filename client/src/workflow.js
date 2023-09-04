@@ -8,5 +8,6 @@ import Workflow from "./components/Workflow.vue";
 import router from "./router";
 import store from "./store";
 import vuetify from '@/plugins/vuetify'
+import { VueClipboard } from '@soerenmartius/vue3-clipboard'
 
-createApp(Workflow).use(vuetify).use(store).use(router).mount("#app");
+createApp(Workflow).use(vuetify).use(store).use(router).use(VueClipboard).mount("#app");

@@ -6,12 +6,16 @@
 <template>
   <v-navigation-drawer
     permanent
-    width=56px
+    :width=widthComponentLibrary
+    class='pt-2'
   >
     <v-list
       id="iconlist"
       nav
     >
+      <v-list-item>
+        <env-setting-dialog class='mb-16'/>
+      </v-list-item>
       <v-list-item
         v-for="item in librarys"
         :key="item.type"
@@ -39,6 +43,7 @@
 </template>
 <script>
   import Debug from "debug";
+  import envSettingDialog from "@/components/envSettingDialog.vue"
   import { mapState, mapMutations, mapGetters } from "vuex";
   import { widthComponentLibrary, heightToolbar, heightDenseToolbar} from "@/lib/componentSizes.json";
   import SIO from "@/lib/socketIOWrapper.js";
@@ -48,6 +53,9 @@
 
   export default {
     name: "ComponentLibrary",
+    components:{
+      envSettingDialog,
+    },
     data: ()=>{
       return {
         componentDefinitions: Object.keys(componentDefinitionObj).map((e)=>{
@@ -57,7 +65,8 @@
           };
         }),
         offsetX:null,
-        offsetY:null
+        offsetY:null,
+        widthComponentLibrary 
       };
     },
     computed: {

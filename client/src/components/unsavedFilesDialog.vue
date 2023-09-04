@@ -26,21 +26,21 @@
         <v-btn
           class="text-capitalize"
           @click="saveAll"
-        >
-          <v-icon>mdi-content-save-all-outline</v-icon>Save All
-        </v-btn>
+          prepend-icon="mdi-content-save-all-outline"
+          text="Save All"
+        />
         <v-btn
           class="text-capitalize"
           @click="discardChanges"
-        >
-          <v-icon>mdi-alert-circle-outline</v-icon>discard all changes
-        </v-btn>
+          prepend-icon=mdi-alert-circle-outline
+          text="discard all changes"
+        />
         <v-btn
           class="text-capitalize"
           @click="closeDialog"
-        >
-          <v-icon>mdi-close</v-icon>cancel
-        </v-btn>
+          prepend-icon=mdi-close
+          text=cancel
+        />
       </v-card-actions>
     </v-card>
   </v-dialog>

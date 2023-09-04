@@ -22,7 +22,7 @@
       <v-spacer />
       <v-btn
         rounded
-        outlined
+        variant=outlined
         :ripple="false"
         :style="{backgroundColor : stateColor}"
       >
@@ -31,7 +31,7 @@
       <v-spacer />
       <v-btn
         shaped
-        outlined
+        variant=outlined
         plain
         :ripple="false"
       >
@@ -44,163 +44,127 @@
           v-model="mode"
           mandatory
         >
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip text="graph view" location="bottom">
+            <template #activator="{ props }">
               <v-btn
-                outlined
+                variant=outlined
                 replace
                 :to="{name: 'graph' }"
-                v-bind="attrs"
-                v-on="on"
-              >
-                <v-icon>mdi-sitemap</v-icon>
-              </v-btn>
+                icon="mdi-sitemap"
+                v-bind="props"
+              />
             </template>
-            <span>graph view</span>
           </v-tooltip>
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip text="list view" location="bottom">
+            <template #activator="{ props }">
               <v-btn
-                outlined
+                variant=outlined
                 replace
                 :to="{name: 'list' }"
-                v-bind="attrs"
-                v-on="on"
-              >
-                <v-icon>mdi-format-list-bulleted</v-icon>
-              </v-btn>
+                v-bind="props"
+                icon="mdi-format-list-bulleted"
+              />
             </template>
-            <span>list view</span>
           </v-tooltip>
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip text="text editor" location="bottom">
+            <template #activator="{ props }">
               <v-btn
-                outlined
+                variant=outlined
                 replace
                 :disabled="selectedComponent === null || selectedFile === null"
                 :to="{name: 'editor' }"
-                v-bind="attrs"
-                v-on="on"
-              >
-                <v-icon>mdi-file-document-edit-outline</v-icon>
-              </v-btn>
+                v-bind="props"
+                icon="mdi-file-document-edit-outline"
+              />
             </template>
-            <span>text editor</span>
           </v-tooltip>
         </v-btn-toggle>
-
         <v-spacer />
         <v-card>
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip text="run project" location=bottom>
+            <template #activator="{ props }">
               <v-btn
-                outlined
-                icon
+                variant=outlined
                 :disabled="! runProjectAllowed"
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
                 @click="emitProjectOperation('runProject')"
-              >
-                <v-icon>mdi-play</v-icon>
-              </v-btn>
+                icon="mdi-play"
+              />
             </template>
-            <span>run project</span>
           </v-tooltip>
 
-          <v-tooltip
-            bottom
-          >
-            <template #activator="{ on, attrs }">
+          <v-tooltip text="pause project" location="bottom">
+            <template #activator="{ props }">
               <v-btn
-                outlined
-                icon
+                variant=outlined
+                icon="mdi-pause"
                 :disabled="! pauseProjectAllowed"
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
                 @click="openProjectOperationComfirmationDialog('pauseProject')"
-              >
-                <v-icon>mdi-pause</v-icon>
-              </v-btn>
+              />
             </template>
-            <span>pause project</span>
           </v-tooltip>
-
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip text="stop project" location="bottom">
+            <template #activator="{ props }">
               <v-btn
-                outlined
-                icon
+                variant=outlined
+                icon="mdi-stop"
                 :disabled="! stopProjectAllowed"
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
                 @click="openProjectOperationComfirmationDialog('stopProject')"
-              >
-                <v-icon>mdi-stop</v-icon>
-              </v-btn>
+              />
             </template>
-            <span>stop project</span>
           </v-tooltip>
-
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip text="cleanup project" location=bottom>
+            <template #activator="{ props }">
               <v-btn
-                outlined
-                icon
+                variant=outlined
+                icon="mdi-restore"
                 :disabled="! cleanProjectAllowed"
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
                 @click="openProjectOperationComfirmationDialog('cleanProject')"
               >
-                <v-icon>mdi-restore</v-icon>
               </v-btn>
             </template>
-            <span>cleanup project</span>
           </v-tooltip>
         </v-card>
 
         <v-spacer />
-        <v-tooltip bottom>
-          <template #activator="{ on, attrs }">
+        <v-tooltip text="open viewer screen" location=bottom>
+          <template #activator="{ props }">
             <v-btn
-              v-bind="attrs"
+              v-bind="props"
               :disabled="viewerDataDir === null"
-              v-on="on"
               @click="openViewerScreen"
-            >
-              <v-icon>mdi-image-multiple-outline</v-icon>
-            </v-btn>
+              icon="mdi-image-multiple-outline"
+            />
           </template>
-          <span>open viewer screen</span>
         </v-tooltip>
         <v-spacer />
         <v-card>
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip text="save project" location="bottom">
+            <template #activator="{ props }">
               <v-btn
-                outlined
+                variant=outlined
+                rounded=0
                 :disabled="! saveProjectAllowed"
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
                 @click="emitProjectOperation('saveProject')"
-              >
-                <v-icon>mdi-content-save</v-icon>
-              </v-btn>
+                icon="mdi-content-save"
+              />
             </template>
-            <span>save project</span>
           </v-tooltip>
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+          <v-tooltip text="revert project" location="bottom">
+            <template #activator="{ props }">
               <v-btn
-                outlined
+                rounded=0
+                variant=outlined
                 :disabled="! revertProjectAllowed"
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
+                icon="mdi-folder-refresh-outline"
                 @click="openProjectOperationComfirmationDialog('revertProject')"
-              >
-                <v-icon>mdi-folder-refresh-outline</v-icon>
-              </v-btn>
+              />
             </template>
-            <span>revert project</span>
           </v-tooltip>
         </v-card>
       </template>
@@ -217,14 +181,8 @@
       >
         <v-btn
           @click="showLogScreen=!showLogScreen"
-        >
-          <v-icon v-if="showLogScreen">
-            mdi-triangle-outline
-          </v-icon>
-          <v-icon v-if="!showLogScreen">
-            mdi-triangle-outline mdi-rotate-180
-          </v-icon>
-        </v-btn>
+          :icon="`mdi-triangle-outline ${showLogScreen? '':'mdi-rotate-180'}`"
+        />
         <v-col
           cols="12"
         >
@@ -236,7 +194,10 @@
         </v-col>
       </v-row>
     </v-footer>
-    <v-overlay :value="waiting">
+    <v-overlay
+      :model-value="waiting"
+      class="align-center justify-center"
+    >
       <v-progress-circular
         indeterminate
         size="64"
@@ -261,15 +222,14 @@
       text
     >
       {{ snackbarMessage }}
-      <template #action="{ attrs }">
+      <template #actions="{ attrs }">
         <v-btn
           color="indigo"
-          text
+          variant=text
           v-bind="attrs"
           @click="closeSnackbar"
-        >
-          Close
-        </v-btn>
+          text="Close"
+        />
       </template>
     </v-snackbar>
     <versatile-dialog
@@ -279,10 +239,10 @@
       @ok="updateDescription"
       @cancel="descriptionDialog=false"
     >
-      <template slot="message">
+      <template #message>
         <v-textarea
           v-model="projectDescription"
-          outlined
+          variant=outlined
         />
       </template>
     </versatile-dialog>
@@ -317,10 +277,11 @@
           disable-filterling
           disable-pagination
           hide-default-header
-          hide-default-footer
           show-select
           :single-select="true"
-        />
+        >
+          <template #bottom />
+        </v-data-table>
       </template>
     </versatile-dialog>
     <source-file-upload-dialog 
@@ -332,7 +293,7 @@
 <script>
   "use strict";
   import { mapState, mapMutations, mapActions, mapGetters } from "vuex";
-  import applicationToolBar from "@/components/common/ApplicationToolBar.vue";
+  import applicationToolBar from "@/components/common/applicationToolBar.vue";
   import logScreen from "@/components/logScreen.vue";
   import NavDrawer from "@/components/common/NavigationDrawer.vue";
   import passwordDialog from "@/components/common/passwordDialog.vue";
@@ -620,7 +581,7 @@
         });
       },
       openProjectOperationComfirmationDialog(operation){
-        if(operation === "stopProject" || operation === "cleanProject" || operation === "pauseProject"){
+        if(operation === "stopProject" || operation === "cleanProject" || operation === "pauseProject" || "revertProject"){
           this.dialogTitle=operation
           this.dialogMessage=`are you sure you want to ${operation.replace("P", " p")} ?`
           this.confirmed=this.emitProjectOperation.bind(this, operation);

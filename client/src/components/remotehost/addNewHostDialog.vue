@@ -23,8 +23,8 @@
               multiple
             >
               <v-expansion-panel>
-                <v-expansion-panel-header>Basic settings</v-expansion-panel-header>
-                <v-expansion-panel-content>
+                <v-expansion-panel-title>Basic settings</v-expansion-panel-title>
+                <v-expansion-panel-text>
                   <v-container>
                     <v-row>
                       <v-col cols="6">
@@ -33,7 +33,7 @@
                           label="label"
                           :rules="[required, notDupulicatedLabel]"
                           placeholder="required"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -42,7 +42,7 @@
                           label="Hostname"
                           :rules="[required]"
                           placeholder="required"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -51,7 +51,7 @@
                           label="Port number"
                           :rules="[validPortNumber]"
                           placeholder="required"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -60,7 +60,7 @@
                           label="User ID"
                           :rules="[required]"
                           placeholder="required"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -69,7 +69,7 @@
                           label="Host work dir"
                           :rules="[required]"
                           placeholder="required"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="4">
@@ -82,9 +82,8 @@
                       <v-col cols="2">
                         <v-btn
                           @click="openFileBrowser=!openFileBrowser"
-                        >
-                          browse
-                        </v-btn>
+                          text=browse
+                        />
                       </v-col>
                       <v-col cols="6">
                         <v-select
@@ -133,11 +132,11 @@
                       </v-col>
                     </v-row>
                   </v-container>
-                </v-expansion-panel-content>
+                </v-expansion-panel-text>
               </v-expansion-panel>
               <v-expansion-panel>
-                <v-expansion-panel-header>Advanced settings</v-expansion-panel-header>
-                <v-expansion-panel-content>
+                <v-expansion-panel-title>Advanced settings</v-expansion-panel-title>
+                <v-expansion-panel-text>
                   <v-container>
                     <v-row>
                       <v-col cols="6">
@@ -145,7 +144,7 @@
                           v-model.number="host.renewInterval"
                           label="connection renewal interval (min.)"
                           :rules="[positiveNumber]"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -153,7 +152,7 @@
                           v-model.number="host.renewDelay"
                           label="connection renewal delay (sec.)"
                           :rules="[positiveNumber]"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -161,7 +160,7 @@
                           v-model.number="host.statusCheckInterval"
                           label="status check interval (sec.)"
                           :rules="[positiveNumber]"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -169,7 +168,7 @@
                           v-model.number="host.maxStatusCheckError"
                           label="max number of status check error allowed"
                           :rules="[positiveNumber]"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -177,7 +176,7 @@
                           v-model.number="host.execInterval"
                           label="interval time between each executions"
                           :rules="[positiveNumber]"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -185,7 +184,7 @@
                           v-model.number="host.readyTimeout"
                           label="timeout during handshake phase (msec.)"
                           :rules="[positiveNumber]"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -193,13 +192,13 @@
                           v-model.number="host.keepaliveInterval"
                           label="interval time between keep alive packet  (msec.)"
                           :rules="[positiveNumber]"
-                          validate-on-blur
+                          validate-on="blur"
                         />
                       </v-col>
                       <v-col cols="6" />
                     </v-row>
                   </v-container>
-                </v-expansion-panel-content>
+                </v-expansion-panel-text>
               </v-expansion-panel>
             </v-expansion-panels>
           </v-form>
@@ -208,18 +207,14 @@
           <v-btn
             :disabled="hasError"
             @click="submitHost"
-          >
-            <v-icon>
-              mdi-check
-            </v-icon>
-            OK
-          </v-btn>
-          <v-btn @click="cancelDialog">
-            <v-icon>
-              mdi-close
-            </v-icon>
-            cancel
-          </v-btn>
+            :prepend-icon="mdi-check"
+            text="OK"
+          />
+          <v-btn
+            @click="cancelDialog"
+            prepend-icon="mdi-close"
+            text="cancel"
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -237,18 +232,14 @@
           <v-btn
             :disabled="!selectedFile"
             @click="host.keyFile=selectedFile;closeFileBrowser()"
-          >
-            <v-icon>
-              mdi-check
-            </v-icon>
-            OK
-          </v-btn>
-          <v-btn @click="closeFileBrowser">
-            <v-icon>
-              mdi-close
-            </v-icon>
-            cancel
-          </v-btn>
+            prepend-icon="mdi-check"
+            text="OK"
+          />
+          <v-btn
+            @click="closeFileBrowser"
+            prepend-icon="mdi-close"
+            text="cancel"
+          />
         </v-card-actions>
         <v-card-text>
           <file-browser
@@ -295,6 +286,7 @@
           || this.required(this.host.name) !== true
           || this.required(this.host.host) !== true
           || this.required(this.host.port) !== true
+          || this.validPortNumber(this.host.port) !== true
           || this.required(this.host.username) !== true
           || this.required(this.host.path) !== true;
       },

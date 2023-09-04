@@ -8,113 +8,81 @@
     <v-btn
       v-if="!connected"
       @click="requestRemoteConnection"
-    >
-      browse files on remotehost
-    </v-btn>
-
+      text="browse files on remotehost"
+    />
     <div v-if="! readonly && connected">
       <v-spacer />
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
+      <v-tooltip location="top" text="new folder"
+      >
+        <template #activator="{ props }">
           <v-btn
-            class="ml-4"
-            disabled
-          >
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('createNewDir')"
-            >
-              mdi-folder-plus-outline
-            </v-icon>
-          </v-btn>
+            :disabled="isSND"
+            v-bind="props"
+            @click="openDialog('createNewDir')"
+            icon=mdi-folder-plus-outline
+          />
         </template>
-        new folder
       </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn disabled>
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('createNewFile')"
-            >
-              mdi-file-plus-outline
-            </v-icon>
-          </v-btn>
+      <v-tooltip text="new file" location="top">
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+            v-bind="props"
+            icon="mdi-file-plus-outline"
+            @click="openDialog('createNewFile')"
+          />
         </template>
-        new file
       </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn disabled>
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('renameFile')"
-            >
-              mdi-file-move-outline
-            </v-icon>
-          </v-btn>
+      <v-tooltip text="rename" location="top" >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+            @click="openDialog('renameFile')"
+            v-bind="props"
+            icon="mdi-file-move-outline"
+          />
         </template>
-        rename
       </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn disabled>
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('removeFile')"
-            >
-              mdi-file-remove-outline
-            </v-icon>
-          </v-btn>
+      <v-tooltip location="top" text="delete" >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+            v-bind="props"
+            @click="openDialog('removeFile')"
+            icon="mdi-file-remove-outline"
+          />
         </template>
-        delete
       </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn disabled>
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
+      <v-tooltip text="upload file" location="top">
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+              v-bind="props"
+            icon="mdi-upload"
               @click="showUploadDialog"
-            >
-              mdi-upload
-            </v-icon>
-          </v-btn>
+            />
         </template>
-        upload file
       </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn>
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="download"
-            >
-              mdi-download
-            </v-icon>
-          </v-btn>
+      <v-tooltip text="download" location="top" >
+        <template #activator="{ props }">
+        <v-btn
+          :disabled="isSND"
+              v-bind="props"
+            @click="download"
+            icon="mdi-download"
+          />
         </template>
-        download
       </v-tooltip>
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <v-btn disabled>
-            <v-icon
-              v-bind="attrs"
-              v-on="on"
-              @click="openDialog('shareFile')"
-            >
-              mdi-share-outline
-            </v-icon>
-          </v-btn>
-        </template>
-        share file
-      </v-tooltip>
+          <v-tooltip location="top" text="share file" >
+            <template #activator="{ props }">
+        <v-btn
+          :disabled="isSND"
+            @click="openDialog('shareFile')"
+            icon="mdi-share-outline"
+            v-bind="props"
+          />
+            </template>
+          </v-tooltip>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"
@@ -123,7 +91,6 @@
     </div>
     <my-treeview
       v-if="connected"
-      :active="activeItems"
       :items="items"
       :load-children="getChildren"
       activatable
@@ -136,23 +103,23 @@
       v-model="dialog.open"
       max-width="40vw"
       :title="dialog.title"
-      :message="dialog.message"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
     >
       <template
+        #message
         v-if="['createNewDir','createNewFile','renameFile'].includes(dialog.submitEvent)"
-        slot="message"
       >
         <v-text-field
           v-model="dialog.inputField"
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
+          variant="outlined"
         />
       </template>
       <template
         v-if="dialog.submitEvent === 'shareFile'"
-        slot="message"
+        #message
       >
         <v-text-field
           v-model="dialog.inputField"
@@ -160,20 +127,15 @@
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
         >
-          <template #append-outer>
-            <v-tooltip
-              bottom
-            >
-              <template #activator="{ on }">
-                <v-icon
-                  ref="icon"
+          <template #append>
+            <v-tooltip text="copy file path" location="bottom" >
+              <template #activator="{ props }">
+                <v-btn
+                  icon="mdi-content-copy"
+                  v-bind="props"
                   @click="copyToClipboard"
-                  v-on="on"
-                >
-                  mdi-content-copy
-                </v-icon>
+                />
               </template>
-              copy file path
             </v-tooltip>
           </template>
         </v-text-field>
@@ -186,9 +148,7 @@
       :buttons="downloadDialogButton"
       @close="closeDownloadDialog"
     >
-      <template
-        slot="message"
-      >
+      <template #message >
         <v-row>
           <v-btn class="mx-auto mt-10 mb-6">
             <!-- Do NOT remove download attribute. some files may open in browser e.g. text, json -->
@@ -225,7 +185,6 @@
         activeItem: null,
         uploading:false,
         percentUploaded: 0,
-        activeItems: [],
         openItems: [],
         items: [],
         dialog: {
@@ -344,12 +303,8 @@
       noDuplicate(v){
        return ! this.items.map((e)=>{ return e.name }).includes(v)
       },
-      updateSelected(activeItems){
-        if(!activeItems[0]){
-          this.activeItem=null
-          return
-        }
-        this.activeItem = this.getActiveItem(activeItems[0])
+      updateSelected(activeItem){
+        this.activeItem=activeItem
         if(this.activeItem === null){
           console.log("failed to get current selected Item");
           return
@@ -461,8 +416,15 @@
         }
         this.clearAndCloseDialog()
       },
+      closeDownloadDialog(){
+        SIO.emitGlobal("removeDownloadFile", this.projectRootDir, this.downloadURL, ()=>{
+          this.downloadURL=null
+          this.downloadDialog=false
+        });
+      },
       download(){
         this.commitWaitingDownload(true);
+
         SIO.emitGlobal('downloadRemote', this.projectRootDir, this.activeItem.id, this.selectedComponent.host, (url)=>{
           this.commitWaitingDownload(false);
           if(url === null){
