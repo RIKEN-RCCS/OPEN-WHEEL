@@ -82,7 +82,9 @@ async function isFinished(JS, task) {
   const statCmd = getStatCommand(JS, task.jobID, task.type);
 
   const output = [];
+  getLogger(task.projectRootDir).trace(task.jobID, "issue stat cmd");
   const statCmdRt = await issueStatCmd(statCmd, task, output);
+  getLogger(task.projectRootDir).trace(task.jobID, "stat cmd rt =", statCmdRt);
   const outputText = formatSshOutput(output).join("\n");
 
   const rtList = Array.isArray(JS.acceptableRt) ? [0, ...JS.acceptableRt] : [0, JS.acceptableRt];
@@ -186,9 +188,8 @@ class JobManager extends EventEmitter {
           getLogger(task.projectRootDir).trace(`${task.jobID} status check will not start due to task state is ${task.state}`);
           return 0;
         }
-        getLogger(task.projectRootDir).trace(task.jobID, "status check start");
+        getLogger(task.projectRootDir).trace(task.jobID, "status check start count=", statusCheckCount);
         task.jobStartTime = task.jobStartTime || getDateString(true, true);
-        getLogger(task.projectRootDir).trace(task.jobID, "status checked", statusCheckCount);
         ++statusCheckCount;
 
         try {
