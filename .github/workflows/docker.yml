@@ -1,8 +1,6 @@
 name: build and push docker container
 on:
   pull_request:
-    branches:
-      - master
     types:
       - closed
 jobs:
