@@ -19,6 +19,7 @@ jobs:
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
       TZ: JST-9
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -64,16 +65,9 @@ jobs:
       - run: cat  server/app/db/version.json
       - name: commit and push version.json
         run: |
+          git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
           git config user.name 'version-number-updater[bot]'
           git config user.email 'action@github.com'
-          echo git status
-          git status
-          echo git diff
-          git diff
-          echo git add 1
           git add  server/app/db/version.json
-          echo git add 2
-          git add -u
-          echo git diff
-          git diff
           git commit -m '[skip ci] update version number'
+          git push origin HEAD:${GITHUB_REF}
