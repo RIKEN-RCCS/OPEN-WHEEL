@@ -1,0 +1,43 @@
+name: run UT
+on:
+  push:
+    branches:
+      - '**'
+      - '!master'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    services:
+      testbed:
+        image: naoso5/openpbs
+        ports:
+          - 4000:22
+    env:
+      WHEEL_USE_HTTP: 1
+      WHEEL_TEST_REMOTEHOST: testServer
+      WHEEL_TEST_REMOTE_PASSWORD: passw0rd
+    runs-on: node:hydrogen-slim
+    steps:
+      - run: mkdir -p ~/.wheel
+      - run: >
+          echo '[{
+            "name": "testServer",
+            "host": "localhost",
+            "path": "/home/testuser",
+            "keyFile": null,
+            "username": "testuser",
+            "numJob": 5,
+            "port": 4000,
+            "id": "dummy-id",
+            "jobScheduler": "PBSPro",
+            "renewInterval": 0,
+            "renewDelay": 0,
+            "statusCheckInterval": 10,
+            "maxStatusCheckError": 10,
+            "readyTimeout": 5000
+          }]' > ~/.wheel/remotehost.json
+      - run: cat ~/.wheel/remotehost.json
+      - run: npm ci
+      - run: npm run test
