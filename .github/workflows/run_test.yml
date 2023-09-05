@@ -51,7 +51,7 @@ jobs:
       - run: cd server
       - run: npm ci
       - run: npm run test
-      - run: echo \{ "version": "$(date +%Y-%m%d-%H%M%S)" \} > app/db/version.json
+      - run: echo \{ "version"\: "$(date +%Y-%m%d-%H%M%S)" \} > app/db/version.json
       - name: commit and push version.json
         run: |
           git config user.name 'version-number-updater[bot]'
