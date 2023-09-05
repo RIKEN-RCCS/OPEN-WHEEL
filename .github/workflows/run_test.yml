@@ -53,6 +53,7 @@ jobs:
       - run: npm run test
         working-directory: ./server
       - run: echo "VERSION_NUMBER=`date '+%Y-%m%d-%H%M%S'`" >>$GITHUB_ENV
+      - run: cat  server/app/db/version.json
       - name: update version.json
         id: create-json
         uses: jsdaniell/create-json@v1.2.2
@@ -63,8 +64,12 @@ jobs:
       - run: cat  server/app/db/version.json
       - name: commit and push version.json
         run: |
+          pwd
           git config user.name 'version-number-updater[bot]'
           git config user.email 'action@github.com'
+          git diff
+          cat  server/app/db/version.json
           git status
           git add -u
+          git diff --cached
           git commit -m '[skip ci] update version number'
