@@ -6,6 +6,12 @@ on:
     types:
       - closed
 jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo test
+      - run: echo ${{ github.event.pull_request.merged }}
+
   build:
     if: github.event.pull_request.merged == true
     env:
