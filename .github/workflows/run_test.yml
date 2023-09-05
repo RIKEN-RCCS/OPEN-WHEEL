@@ -66,5 +66,5 @@ jobs:
           git config user.name 'version-number-updater[bot]'
           git config user.email 'action@github.com'
           git status
-          git add server/app/db/version.json
+          git add -u
           git commit -m '[skip ci] update version number'
