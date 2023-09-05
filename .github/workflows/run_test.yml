@@ -18,6 +18,7 @@ jobs:
       WHEEL_USE_HTTP: 1
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
+      AUTHOR: ${{ github.event.pusher.name }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -47,5 +48,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - run: cd server
       - run: npm ci
-      - run: cd server; npm run test
+      - run: npm run test
+      - run: echo \{ "version": "$(date +%Y-%m%d-%H%M%S)" \} > app/db/version.json
+      - name: commit and push version.json
+        run: |
+          git config user.name 'version-number-updater[bot]'
+          git config user.email 'action@github.com'
+          git commit --author="$AUTHOR" -m '[skip ci] update version number'
