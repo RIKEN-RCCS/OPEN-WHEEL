@@ -64,12 +64,16 @@ jobs:
       - run: cat  server/app/db/version.json
       - name: commit and push version.json
         run: |
-          pwd
           git config user.name 'version-number-updater[bot]'
           git config user.email 'action@github.com'
-          git diff
-          cat  server/app/db/version.json
+          echo git status
           git status
+          echo git diff
+          git diff
+          echo git add 1
+          git add  server/app/db/version.json
+          echo git add 2
           git add -u
-          git diff --cached
+          echo git diff
+          git diff
           git commit -m '[skip ci] update version number'
