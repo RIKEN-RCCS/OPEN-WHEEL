@@ -48,18 +48,19 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: cd server
       - run: npm ci
+        working-directory: ./server
       - run: npm run test
+        working-directory: ./server
       - run: echo "VERSION_NUMBER=`date '+%Y-%m%d-%H%M%S'`" >>$GITHUB_ENV
       - name: update version.json
         id: create-json
         uses: jsdaniell/create-json@v1.2.2
         with:
-          dir: "app/db"
+          dir: "server/app/db"
           name: "version.json"
           json: '{"version": "${{ env.VERSION_NUMBER }}" }'
-      - run: cat  app/db/version.json
+      - run: cat  server/app/db/version.json
       - name: commit and push version.json
         run: |
           git config user.name 'version-number-updater[bot]'
