@@ -52,7 +52,13 @@ jobs:
       - run: npm ci
       - run: npm run test
       - run: echo "VERSION_NUMBER=`date '+%Y-%m%d-%H%M%S'`" >>$GITHUB_ENV
-      - run: echo '{ "version": "${{env.VERSION_NUMBER}}" }' > app/db/version.json
+      - name: update version.json
+        id: create-json
+        uses: jsdaniell/create-json@v1.2.2
+        with:
+          dir: "app/db"
+          name: "version.json"
+          json: '{"version": "${{ env.VERSION_NUMBER }}" }'
       - run: cat  app/db/version.json
       - name: commit and push version.json
         run: |
