@@ -19,7 +19,9 @@
 
   const stateIcon={
     "not-started": imgNotStarted,
+    "stage-in": imgRunning,
     "running": imgRunning,
+    "stage-out": imgRunning,
     "finished": imgFinished,
     "failed": imgError,
     "unknown": imgError

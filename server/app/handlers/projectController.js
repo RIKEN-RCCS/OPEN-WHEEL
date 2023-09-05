@@ -226,6 +226,8 @@ async function onRunProject(clientID, projectRootDir, ack) {
         }
       }
     } catch (err) {
+      await updateProjectState(projectRootDir, "not-started");
+
       if (err.reason === "CANCELED") {
         getLogger(projectRootDir).debug(err.message);
       } else {
@@ -233,7 +235,6 @@ async function onRunProject(clientID, projectRootDir, ack) {
       }
       removeSsh(projectRootDir);
       removeCluster(projectRootDir);
-      await updateProjectState(projectRootDir, "not-started");
       ack(err);
       return false;
     }

@@ -34,6 +34,7 @@ FROM base as exec
 WORKDIR /usr/src/server
 
 COPY --from=builder /usr/src/server/app/public /usr/src/server/app/public
+COPY entrypoint.sh /usr/src/server/
 RUN rm -fr server/app/config/* server/test/
 
-CMD [ "npm", "start" ]
+ENTRYPOINT ["./entrypoint.sh"]

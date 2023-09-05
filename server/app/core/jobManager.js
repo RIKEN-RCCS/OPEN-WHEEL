@@ -82,7 +82,9 @@ async function isFinished(JS, task) {
   const statCmd = getStatCommand(JS, task.jobID, task.type);
 
   const output = [];
+  getLogger(task.projectRootDir).trace(task.jobID, "issue stat cmd");
   const statCmdRt = await issueStatCmd(statCmd, task, output);
+  getLogger(task.projectRootDir).trace(task.jobID, "stat cmd rt =", statCmdRt);
   const outputText = formatSshOutput(output).join("\n");
 
   const rtList = Array.isArray(JS.acceptableRt) ? [0, ...JS.acceptableRt] : [0, JS.acceptableRt];
@@ -182,19 +184,19 @@ class JobManager extends EventEmitter {
     }
     this.batch = new SBS({
       exec: async (task)=>{
-        getLogger(task.projectRootDir).trace(task.jobID, "status check start");
-
         if (task.state !== "running") {
-          return false;
+          getLogger(task.projectRootDir).trace(`${task.jobID} status check will not start due to task state is ${task.state}`);
+          return 0;
         }
+        getLogger(task.projectRootDir).trace(task.jobID, "status check start count=", statusCheckCount);
         task.jobStartTime = task.jobStartTime || getDateString(true, true);
-        getLogger(task.projectRootDir).trace(task.jobID, "status checked", statusCheckCount);
         ++statusCheckCount;
 
         try {
           task.rt = await isFinished(JS, task);
 
           if (task.rt === null) {
+            getLogger(task.projectRootDir).trace(task.jobID, "is not finished");
             return Promise.reject(new Error("not finished"));
           }
           getLogger(task.projectRootDir).info(task.jobID, "is finished (remote). rt =", task.rt);
@@ -219,6 +221,7 @@ class JobManager extends EventEmitter {
             err.maxStatusCheckError = maxStatusCheckError;
             return Promise.reject(err);
           }
+          getLogger(task.projectRootDir).trace(task.jobID, "is not finished");
           return Promise.reject(new Error("not finished"));
         }
       },
