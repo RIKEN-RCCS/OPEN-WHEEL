@@ -1,0 +1,21 @@
+name: build and push docker container
+on:
+  pull_request_target:
+    types:
+      - closed
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo test
+      - run: echo ${{ github.event.pull_request.merged }}
+
+  build:
+    if: github.event.pull_request.merged == true
+    env:
+      CONTAINER_NAME: "tmkawanabe/wheel"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: docker build -t ${CONTAINER_NAME} .
+      - run: docker push ${CONTAINER_NAME}
