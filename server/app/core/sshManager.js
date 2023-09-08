@@ -177,7 +177,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   };
 
   if (hostinfo.renewInterval) {
-    hostinfo.ControlPersist *= 60;
+    hostinfo.ControlPersist = hostinfo.renewInterval * 60;
   }
   if (hostinfo.readyTimeout) {
     hostinfo.ConnectTimeout = Math.floor(hostinfo.readyTimeout / 1000);
