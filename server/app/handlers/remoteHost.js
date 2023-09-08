@@ -92,7 +92,7 @@ async function onUpdateHost(socket, updatedHost, cb) {
     logger.warn("updateHost failed due to validation error");
     return cb(false);
   }
-  await remoteHost.update(updatedHost);
+  await remoteHost.update(updatedHost, true);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
   return cb(updatedHost.id);
 }
