@@ -1,19 +1,52 @@
-{
-  "root": true,
-  "ignorePatterns": [
-    "**/public/*"
-  ],
-  "extends": [
-    "eslint"
-  ],
-  "plugins": [
-    "node"
-  ],
-  "env": {
-    "node": true,
-    "es6": true
+"use strict";
+import js from "@eslint/js";
+import jsdoc from "eslint-plugin-jsdoc";
+import node from "eslint-plugin-node";
+import chaiExpect from "eslint-plugin-chai-expect"
+import chaiFriendly from "eslint-plugin-chai-friendly"
+import vue from "eslint-plugin-vue"
+import vuetify from "eslint-plugin-vuetify"
+
+export default [
+  js.configs.recommended,
+  {
+    files:["server/app/**/*.js"],
+    ignores:["server/app/public/*"],
+    plugins:{
+      jsdoc,
+      node
+    },
+    languageOptions:{
+      sourceType: "commonjs"
+    },
   },
-  "rules": {
+  {
+    files:["server/test/**/*.js"],
+    plugins:{
+      jsdoc,
+      node,
+      chaiExpect,
+      chaiFriendly
+    },
+    languageOptions:{
+      sourceType: "commonjs"
+    },
+  },
+  {
+    files:["client/src/**/*.{js,vue}"],
+    plugins:{
+      jsdoc,
+      vue,
+      vuetify
+    }
+  },
+  {
+    files:["./**/*.{js,vue}"],
+    ignores:["./*/node_modules/**/*", "./node_modules"],
+linterOptions: {
+            reportUnusedDisableDirectives: true
+        },
+    rules: {
     "no-nested-ternary": "off",
     "no-param-reassign": "warn",
     "arrow-parens": [
@@ -153,7 +186,5 @@
     "jsdoc/require-param": "off",
     "jsdoc/require-returns": "off"
   },
-  "parserOptions": {
-    "ecmaVersion": 2018
   }
-}
+]
