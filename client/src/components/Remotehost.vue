@@ -21,10 +21,6 @@
           @click.stop="openEditDialog()"
           text="new remote host setting"
         />
-        <v-btn
-          @click.stop="openEditDialog({type:'aws'})"
-          text="new cloud setting"
-        />
       </v-toolbar>
       <v-data-table
         :items="hosts"
@@ -66,14 +62,6 @@
         @newHost="addNewSetting"
         @cancel="currentSetting={}"
       />
-      <add-new-cloud-dialog
-        v-model="newCloudDialog"
-        max-width="80vw"
-        :initial-value="currentSetting"
-        :host-names="hostList"
-        @newHost="addNewSetting"
-        @cancel="currentSetting={}"
-      />
     </v-main>
   </v-app>
 </template>
@@ -88,7 +76,6 @@
   import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
   import passwordDialog from "@/components/common/passwordDialog.vue";
   import addNewHostDialog from "@/components/remotehost/addNewHostDialog.vue";
-  import addNewCloudDialog from "@/components/remotehost/addNewCloudDialog.vue";
   import applicationToolBar from "@/components/common/applicationToolBar.vue";
 
   export default {
@@ -100,7 +87,6 @@
       passwordDialog,
       removeConfirmDialog,
       addNewHostDialog,
-      addNewCloudDialog,
     },
     data: ()=>{
       return {
@@ -110,7 +96,6 @@
         pwDialogTitle:"",
         rmDialog: false,
         newHostDialog: false,
-        newCloudDialog: false,
         headers: [
           { title: "name", key: "name" },
           { title: "connection test", key: "connectionTest" },
@@ -159,11 +144,6 @@
     methods: {
       openEditDialog (item) {
         this.currentSetting = item || {};
-
-        if (this.currentSetting.type === "aws") {
-          this.newCloudDialog = true;
-          return;
-        }
         this.newHostDialog = true;
       },
       initializeConnectionTestIcon(item){

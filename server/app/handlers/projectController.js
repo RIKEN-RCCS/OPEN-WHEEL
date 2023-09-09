@@ -9,73 +9,19 @@ const { promisify } = require("util");
 const EventEmitter = require("events");
 const glob = require("glob");
 const fs = require("fs-extra");
-const SshClientWrapper = require("ssh-client-wrapper");
-const { create } = require("abc4");
 const { getLogger } = require("../logSettings");
 const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getHosts, validateComponents, getSourceComponents } = require("../core/componentFilesOperator");
 const { getComponentDir, getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
-const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
+const { createSsh, removeSsh } = require("../core/sshManager");
 const { runProject, cleanProject, pauseProject, stopProject } = require("../core/projectController.js");
-const { addCluster, removeCluster } = require("../core/clusterManager.js");
-const { addSsh } = require("../core/sshManager.js");
 const { isValidOutputFilename } = require("../lib/utility");
 const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir } = require("./senders.js");
 const { parentDirs, eventEmitters } = require("../core/global.js");
 const { emitAll, emitWithPromise } = require("./commUtils.js");
 const { removeTempd, getTempd } = require("../core/tempd.js");
-
-
-async function createCloudInstance(projectRootDir, hostinfo, clientID) {
-  const order = hostinfo.additionalParams || {};
-  order.headOnlyParam = hostinfo.additionalParamsForHead || {};
-  order.provider = hostinfo.type;
-  order.os = hostinfo.os;
-  order.region = hostinfo.region;
-  order.numNodes = hostinfo.numNodes;
-  order.InstanceType = hostinfo.InstanceType;
-  order.rootVolume = hostinfo.rootVolume;
-  order.shareStorage = hostinfo.shareStorage;
-  order.playbook = hostinfo.playbook;
-  //order.mpi = hostinfo.mpi;
-  //order.compiler = hostinfo.compiler;
-  order.batch = hostinfo.jobScheduler;
-  order.id = order.id || await askPassword(clientID, "input access key for AWS");
-  order.pw = order.pw || await askPassword(clientID, "input secret access key for AWS");
-  const logger = getLogger(projectRootDir);
-  order.info = logger.debug.bind(logger);
-  order.debug = logger.trace.bind(logger);
-
-  const cluster = await create(order);
-  addCluster(projectRootDir, hostinfo, cluster);
-  const config = {
-    host: cluster.headNodes[0].publicNetwork.hostname,
-    port: hostinfo.port,
-    username: cluster.user,
-    privateKey: cluster.privateKey,
-    passphrase: "",
-    password: null
-  };
-
-  const ssh = new SshClientWrapper(config);
-  if (hostinfo.type === "aws") {
-    logger.debug("wait for cloud-init");
-    await ssh.watch("tail /var/log/cloud-init-output.log >&2 && cloud-init status", { out: /done|error|disabled/ }, 30000, 60, {}, logger.debug.bind(logger), logger.debug.bind(logger));
-    logger.debug("cloud-init done");
-  }
-  if (hostinfo.renewInterval) {
-    ssh.renewInterval = hostinfo.renewInterval * 60 * 1000;
-  }
-
-  if (hostinfo.renewDelay) {
-    ssh.renewDelay = hostinfo.renewDelay * 1000;
-  }
-
-  hostinfo.host = config.host;
-  addSsh(projectRootDir, hostinfo, ssh);
-}
 
 
 async function updateProjectState(projectRootDir, state) {
@@ -217,13 +163,12 @@ async function onRunProject(clientID, projectRootDir, ack) {
         const id = remoteHost.getID("name", host.hostname);
         const hostInfo = remoteHost.get(id);
         if (!hostInfo) {
-          return Promise.reject(new Error(`illegal remote host specified ${host.name}`));
+          throw new Error(`illegal remote host specified ${host.name}`);
         }
         if (hostInfo.type === "aws") {
-          await createCloudInstance(projectRootDir, hostInfo, clientID);
-        } else {
-          await createSsh(projectRootDir, host.name, hostInfo, clientID, host.isStorage);
+          throw new Error(`aws type remotehost is no longer supported ${host.name}`);
         }
+        await createSsh(projectRootDir, host.name, hostInfo, clientID, host.isStorage);
       }
     } catch (err) {
       await updateProjectState(projectRootDir, "not-started");
@@ -234,7 +179,6 @@ async function onRunProject(clientID, projectRootDir, ack) {
         getLogger(projectRootDir).error("fatal error occurred while prepareing phase:", err);
       }
       removeSsh(projectRootDir);
-      removeCluster(projectRootDir);
       ack(err);
       return false;
     }
@@ -264,7 +208,6 @@ async function onRunProject(clientID, projectRootDir, ack) {
     await sendWorkflow(ack, projectRootDir);
     eventEmitters.delete(projectRootDir);
     removeSsh(projectRootDir);
-    removeCluster(projectRootDir);
   }
   return ack(true);
 }
@@ -322,7 +265,6 @@ async function onCleanProject(clientID, projectRootDir, ack) {
       emitAll(projectRootDir, "taskStateList", []),
       emitAll(projectRootDir, "projectJson", await getProjectJson(projectRootDir))
     ]);
-    removeCluster(projectRootDir);
     removeSsh(projectRootDir);
   }
   getLogger(projectRootDir).debug("clean project done");
