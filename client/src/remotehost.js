@@ -5,6 +5,7 @@
  */
 import {createApp} from "vue";
 import Remotehost from "./components/Remotehost.vue";
-import vuetify from '@/plugins/vuetify'
+import vuetify from "@/plugins/vuetify"
 
-createApp(Remotehost).use(vuetify).mount("#app");
+createApp(Remotehost).use(vuetify)
+  .mount("#app");

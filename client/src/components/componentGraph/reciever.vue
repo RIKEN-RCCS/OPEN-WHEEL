@@ -36,10 +36,10 @@ export default {
   },
   methods:{
     onDrop(e){
-      this.$emit('drop', e);
+      this.$emit("drop", e);
     },
     onClick(e){
-      this.$emit('click', e);
+      this.$emit("click", e);
     }
   }
 }

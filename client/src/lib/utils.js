@@ -20,17 +20,17 @@ export function getComponentIcon(type, host, useJobScheduler){
   }
   return componentDefinitionObj[type].img
 }
- export function getColor(type){
-   return componentDefinitionObj[type].color
- }
+export function getColor(type){
+  return componentDefinitionObj[type].color
+}
 
 export function calcFreceiverPos(componentCenter, index){
   return {x: componentCenter.x - boxWidth/2,
-          y: componentCenter.y + textHeight*(index+1)}
+    y: componentCenter.y + textHeight*(index+1)}
 }
 export function calcFsenderPos(componentCenter, index){
   return {x: componentCenter.x + boxWidth/2 ,
-          y: componentCenter.y + textHeight*(index+1)}
+    y: componentCenter.y + textHeight*(index+1)}
 }
 
 export function calcRecieverPos(componentCenter){

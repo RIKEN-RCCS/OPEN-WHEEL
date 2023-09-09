@@ -21,37 +21,37 @@
   </my-treeview>
 </template>
 <script>
-  "use strict";
-  import { mapState } from "vuex";
-  import getNodeAndPath from "@/lib/getNodeAndPath.js";
-  import componentButton from "@/components/common/componentButton.vue";
-  import myTreeview from "@/components/common/myTreeview.vue"
+"use strict";
+import { mapState } from "vuex";
+import getNodeAndPath from "@/lib/getNodeAndPath.js";
+import componentButton from "@/components/common/componentButton.vue";
+import myTreeview from "@/components/common/myTreeview.vue"
 
-  export default {
-    name: "LowerComponentTree",
-    components: {
-      componentButton,
-      myTreeview
+export default {
+  name: "LowerComponentTree",
+  components: {
+    componentButton,
+    myTreeview
+  },
+  data () {
+    return {
+      active: [],
+      lowerLevelComponents: null,
+    };
+  },
+  computed: {
+    ...mapState(["selectedComponent", "componentPath", "componentTree"]),
+  },
+  mounted () {
+    const targetID = this.selectedComponent.ID;
+    this.lowerLevelComponents = getNodeAndPath(targetID, this.componentTree);
+  },
+  methods: {
+    onUpdateActive (actives) {
+      const activeComponentID = actives[0];
+      const activeComponent = getNodeAndPath(activeComponentID, this.componentTree);
+      this.$emit("selected", activeComponent);
     },
-    data () {
-      return {
-        active: [],
-        lowerLevelComponents: null,
-      };
-    },
-    computed: {
-      ...mapState(["selectedComponent", "componentPath", "componentTree"]),
-    },
-    mounted () {
-      const targetID = this.selectedComponent.ID;
-      this.lowerLevelComponents = getNodeAndPath(targetID, this.componentTree);
-    },
-    methods: {
-      onUpdateActive (actives) {
-        const activeComponentID = actives[0];
-        const activeComponent = getNodeAndPath(activeComponentID, this.componentTree);
-        this.$emit("selected", activeComponent);
-      },
-    },
-  };
+  },
+};
 </script>

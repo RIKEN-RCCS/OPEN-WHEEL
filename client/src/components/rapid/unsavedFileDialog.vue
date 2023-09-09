@@ -39,17 +39,17 @@
   </v-dialog>
 </template>
 <script>
-  "use strict";
-  export default {
-    name: "UnsavedFileDialog",
-    props: {
-      unsavedFileDialog: Boolean,
-      closingFilename: String,
-    },
-    data: function () {
-      return {
-      };
-    },
-    methods: {},
-  };
+"use strict";
+export default {
+  name: "UnsavedFileDialog",
+  props: {
+    unsavedFileDialog: Boolean,
+    closingFilename: String,
+  },
+  data: function () {
+    return {
+    };
+  },
+  methods: {},
+};
 </script>

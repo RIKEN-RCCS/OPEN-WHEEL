@@ -6,44 +6,44 @@
  </g>
 </template>
 <script>
-  "use strict";
-  import Fsender from "@/components/componentGraph/fsender.vue"
-  import TextBox from "@/components/componentGraph/textBox.vue"
-  import { textHeight, boxWidth } from "@/lib/constants.json"
-  import {calcFsenderPos} from "@/lib/utils.js"
+"use strict";
+import Fsender from "@/components/componentGraph/fsender.vue"
+import TextBox from "@/components/componentGraph/textBox.vue"
+import { textHeight, boxWidth } from "@/lib/constants.json"
+import {calcFsenderPos} from "@/lib/utils.js"
 
-  export default{
-    name: "outputFileBox",
-    components:{
-      Fsender,
-      TextBox
+export default{
+  name: "outputFileBox",
+  components:{
+    Fsender,
+    TextBox
+  },
+  props:{
+    center:{
+      required: true,
+      type: Object
     },
-    props:{
-      center:{
-        required: true,
-        type: Object
-      },
-      index:{
-        required: true,
-        type: Number
-      },
-      componentId:{
-        required: true,
-        type:String,
-      },
-      outputFilename:{
-        type:String,
-        default: ""
-      },
-      boxHeight:{
-        required: true,
-        type:Number
-      }
+    index:{
+      required: true,
+      type: Number
     },
-    computed:{
-      fsenderPos(){
-        return calcFsenderPos(this.center, this.index);
-      },
+    componentId:{
+      required: true,
+      type:String,
+    },
+    outputFilename:{
+      type:String,
+      default: ""
+    },
+    boxHeight:{
+      required: true,
+      type:Number
     }
+  },
+  computed:{
+    fsenderPos(){
+      return calcFsenderPos(this.center, this.index);
+    },
   }
+}
 </script>

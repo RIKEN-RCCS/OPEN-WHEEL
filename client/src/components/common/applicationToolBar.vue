@@ -32,7 +32,7 @@ import imgLogo from "@/assets/wheel_logomark.png";
 export default{
   data:()=>{
     return {
-        imgLogo,
+      imgLogo,
     }
   },
   props:{
@@ -41,7 +41,7 @@ export default{
       required: true
     },
   },
-  emits: ['navIconClick']
+  emits: ["navIconClick"]
 }
 </script>
 

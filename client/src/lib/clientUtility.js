@@ -39,6 +39,7 @@ function isSane(name) {
   }
   return true;
 }
+
 /**
  * determin specified name is valid for inputFilename
  * @param {strint} name - name to be checked
@@ -55,6 +56,7 @@ export function isValidInputFilename(name) {
   }
   return true;
 }
+
 /**
  * determin specified name is valid for outputputFilename
  * @param {string} name - name to be checked
@@ -70,11 +72,12 @@ export function isValidOutputFilename(name) {
   }
   return true;
 }
+
 /**
  * remove one entry from array
  * @param {Object[] | string[]} array - target array
  * @param {Object | string} target - element to be removed
- * @param {string} [prop]- element's property which to be used at compare
+ * @param {string} [prop]- - element's property which to be used at compare
  * @return {number} - removed element's index
  */
 export function removeFromArray (array, target, prop) {
@@ -114,11 +117,9 @@ export function trimSurrounded (token) {
 
 /**
  * transform grob string to array
- * @param {string} - grob pattern
+ * @param {string} - - grob pattern
  */
 export function glob2Array (token) {
-  // TODO {}で囲われているものは1つのエントリにする必要がある!!
-  // が、この制約に対処するよりは、include/excludeのエントリをglobパターンの配列とする変更をしたい。
   return trimSurrounded(token).split(",");
 }
 
@@ -141,17 +142,17 @@ export function array2Glob (tokens) {
  * @return {string} - combined glob pattern
  */
 export function addGlobPattern (old, added) {
-  // for the first time
+  //for the first time
   if (typeof old !== "string" || old === "") {
     return added;
   }
 
-  // only one entry in include
+  //only one entry in include
   if (!isSurrounded(old)) {
     return `{${old},${added}}`;
   }
 
-  // more than one entry in include
+  //more than one entry in include
   const tmp = glob2Array(old);
   tmp.push(added);
   return array2Glob(tmp);

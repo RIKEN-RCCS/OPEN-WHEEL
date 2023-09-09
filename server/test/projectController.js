@@ -36,7 +36,7 @@ async function sleep(time) {
 }
 
 describe("project Controller UT", function() {
-  this.timeout(0); //eslint-disable-line no-invalid-this
+  this.timeout(0);  
   beforeEach(async()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");

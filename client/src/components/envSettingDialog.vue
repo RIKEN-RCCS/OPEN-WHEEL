@@ -77,79 +77,79 @@
 
 </template>
 <script>
-  import { mapState, mapMutations, mapGetters } from "vuex";
-  import SIO from "@/lib/socketIOWrapper.js";
-  import actionRow from "@/components/common/actionRow.vue";
-  import buttons from "@/components/common/buttons.vue";
-  import { removeFromArray } from "@/lib/clientUtility.js";
+import { mapState, mapMutations, mapGetters } from "vuex";
+import SIO from "@/lib/socketIOWrapper.js";
+import actionRow from "@/components/common/actionRow.vue";
+import buttons from "@/components/common/buttons.vue";
+import { removeFromArray } from "@/lib/clientUtility.js";
 
-  export default{
-    name: "envSettingDialog",
-    components:{
-      actionRow,
-      buttons,
-    },
-    computed: {
-      ...mapState(["projectState", "currentComponent", "projectRootDir","rootComponentID"]),
-      ...mapGetters(["currentComponentAbsPath", "isEdittable"]),
-    },
-    data: function(){
-      return {
-        envSetting: false,
-        env: [],
-        newKey: null,
-        newValue:null,
-        headers:[
-          {title: "name", key: "name"},
-          {title: "value", key: "value" },
-          {title: "" ,key: "actions"}
-        ]
-      }
-    },
-    methods:{
-      ...mapMutations(
-        {
-          commitComponentTree: "componentTree",
-          commitWaitingEnv: "waitingEnv"
-        }),
-      openEnvironmentVariableSetting(){
-        this.commitWaitingEnv(true);
-        SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID,  (data)=>{
-            // FIXME this determination does not work
-          if(data instanceof Error){
-            console.log("getEnv API return error", data);
-            this.commitWaitingEnv(false);
-            return;
-          }
-          const env=Object.entries(data).map(([k,v])=>{
-            return {name: k, value:v};
-          });
-          this.env.splice(0, this.env.length, ...env);
-          this.commitWaitingEnv(false);
-          this.envSetting=true;
-        });
-      },
-      closeEnvironmentVariableSetting(){
-        this.newKey=null;
-        this.newValue=null;
-        this.envSetting=false;
-      },
-      addEnv(){
-        this.env.push({name: this.newKey, value: this.newValue});
-        this.newKey=null;
-        this.newValue=null;
-      },
-      deleteEnv(e){
-        console.log("DEBUG DELETE", e);
-        removeFromArray(this.env, e);
-      },
-      saveEnv(){
-        const env=this.env.reduce((a, e)=>{
-          a[e.name]=e.value;
-          return a;
-        }, {});
-        SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID,  SIO.generalCallback);
-      },
+export default{
+  name: "envSettingDialog",
+  components:{
+    actionRow,
+    buttons,
+  },
+  computed: {
+    ...mapState(["projectState", "currentComponent", "projectRootDir","rootComponentID"]),
+    ...mapGetters(["currentComponentAbsPath", "isEdittable"]),
+  },
+  data: function(){
+    return {
+      envSetting: false,
+      env: [],
+      newKey: null,
+      newValue:null,
+      headers:[
+        {title: "name", key: "name"},
+        {title: "value", key: "value" },
+        {title: "" ,key: "actions"}
+      ]
     }
+  },
+  methods:{
+    ...mapMutations(
+      {
+        commitComponentTree: "componentTree",
+        commitWaitingEnv: "waitingEnv"
+      }),
+    openEnvironmentVariableSetting(){
+      this.commitWaitingEnv(true);
+      SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID,  (data)=>{
+        //FIXME this determination does not work
+        if(data instanceof Error){
+          console.log("getEnv API return error", data);
+          this.commitWaitingEnv(false);
+          return;
+        }
+        const env=Object.entries(data).map(([k,v])=>{
+          return {name: k, value:v};
+        });
+        this.env.splice(0, this.env.length, ...env);
+        this.commitWaitingEnv(false);
+        this.envSetting=true;
+      });
+    },
+    closeEnvironmentVariableSetting(){
+      this.newKey=null;
+      this.newValue=null;
+      this.envSetting=false;
+    },
+    addEnv(){
+      this.env.push({name: this.newKey, value: this.newValue});
+      this.newKey=null;
+      this.newValue=null;
+    },
+    deleteEnv(e){
+      console.log("DEBUG DELETE", e);
+      removeFromArray(this.env, e);
+    },
+    saveEnv(){
+      const env=this.env.reduce((a, e)=>{
+        a[e.name]=e.value;
+        return a;
+      }, {});
+      SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID,  SIO.generalCallback);
+    },
   }
+}
 </script>

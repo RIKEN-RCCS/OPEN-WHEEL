@@ -73,7 +73,7 @@ async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
     conditionExpression += `var WHEEL_CURRENT_INDEX=${currentIndex};`;
   }
   conditionExpression += condition;
-  //eslint-disable-next-line no-eval
+   
   return eval(conditionExpression);
 }
 function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component) {

@@ -4,6 +4,7 @@
  */
 import {createApp} from "vue";
 import Viewer from "./components/Viewer.vue";
-import vuetify from '@/plugins/vuetify'
+import vuetify from "@/plugins/vuetify"
 
-createApp(Viewer).use(vuetify).mount("#app");
+createApp(Viewer).use(vuetify)
+  .mount("#app");

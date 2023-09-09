@@ -96,7 +96,7 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
-const router = express.Router(); //eslint-disable-line new-cap
+const router = express.Router();  
 router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
 logger.info(`${tempdRoot} is used as static content directory`);
 router.use(express.static(path.resolve(tempdRoot, "viewer"), { index: false }));
@@ -156,10 +156,9 @@ Promise.all(projectList.getAll()
       if (logger) {
         logger.info("WHEEL will shut down because Control-C pressed");
       } else {
-        //eslint-disable-next-line no-console
         console.log("WHEEL will shut down because Control-C pressed");
       }
-      process.exit(); //eslint-disable-line no-process-exit
+      process.exit();  
     });
   });
 
@@ -178,12 +177,12 @@ function onError(error) {
   switch (error.code) {
     case "EACCES":
       logger.error(`${bind} requires elevated privileges`);
-      //eslint-disable-next-line no-process-exit
+       
       process.exit(1);
       break;
     case "EADDRINUSE":
       logger.error(`${bind} is already in use`);
-      //eslint-disable-next-line no-process-exit
+       
       process.exit(1);
       break;
     default:

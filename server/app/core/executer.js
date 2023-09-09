@@ -4,8 +4,8 @@
  * See License in the project root for the license information.
  */
 "use strict";
-/*eslint-disable no-useless-constructor*/
-/*eslint-disable class-methods-use-this*/
+ 
+ 
 const path = require("path");
 const childProcess = require("child_process");
 const fs = require("fs-extra");

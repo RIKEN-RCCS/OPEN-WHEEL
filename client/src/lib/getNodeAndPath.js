@@ -45,7 +45,7 @@ const getNodeAndPath = (targetID, root, path)=>{
       return found;
     }
   }
-  // implicitly return undefined if target node not found
+  //implicitly return undefined if target node not found
 };
 
 export { getNodeAndPath as default };

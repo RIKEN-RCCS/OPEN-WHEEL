@@ -9,7 +9,7 @@ import SocketIOFileUpload from "socketio-file-upload/client.min.js";
 import Debug from "debug";
 const debug = Debug("wheel:socketIO");
 
-// const SocketIOFileUpload = require("socketio-file-upload");
+//const SocketIOFileUpload = require("socketio-file-upload");
 
 let initialized=false;
 let socket = null;
@@ -54,28 +54,28 @@ const close= ()=>{
 };
 const  listenOnDrop= (...args)=>{
   if(!initialized){
-    debug(`uploader.listenOnDrop called but socketIO is not initialized`);
+    debug("uploader.listenOnDrop called but socketIO is not initialized");
     return
   }
   uploader.listenOnDrop(...args);
 };
 const  prompt= ()=>{
   if(!initialized){
-    debug(`uploader.prompt called but socketIO is not initialized`);
+    debug("uploader.prompt called but socketIO is not initialized");
     return
   }
   uploader.prompt();
 };
 const  onUploaderEvent= (event, callback)=>{
   if(!initialized){
-    debug(`uploader.addEventListener called but socketIO is not initialized`);
+    debug("uploader.addEventListener called but socketIO is not initialized");
     return
   }
   uploader.addEventListener(event, callback);
 };
 const removeUploaderEvent= (event, callback)=>{
   if(!initialized){
-    debug(`uploader.removeEventListener called but socketIO is not initialized`);
+    debug("uploader.removeEventListener called but socketIO is not initialized");
     return
   }
   uploader.removeEventListener(event, callback);

@@ -46,53 +46,53 @@
   </v-dialog>
 </template>
 <script>
-  export default {
-    props:{
-        unsavedFiles: {
-          type: Array,
-          required: true
-        },
-        dialog: {
-          type: Boolean,
-          required: true
-        },
-        withoutStatus:{
-          type: Boolean,
-          default: false
-        }
+export default {
+  props:{
+    unsavedFiles: {
+      type: Array,
+      required: true
     },
-    data () {
-      return {
-        headers: [
-          { title: "status", key: "status" },
-          { title: "filename", key: "name" },
-        ],
-      };
+    dialog: {
+      type: Boolean,
+      required: true
     },
-    mounted(){
-      if(this.withoutStatus){
-        this.headers.splice(0,1);
-      }
+    withoutStatus:{
+      type: Boolean,
+      default: false
+    }
+  },
+  data () {
+    return {
+      headers: [
+        { title: "status", key: "status" },
+        { title: "filename", key: "name" },
+      ],
+    };
+  },
+  mounted(){
+    if(this.withoutStatus){
+      this.headers.splice(0,1);
+    }
+  },
+  computed:{
+    show(){
+      return this.dialog;
     },
-    computed:{
-      show(){
-        return this.dialog;
-      },
-      items(){
-        return this.unsavedFiles;
-      }
+    items(){
+      return this.unsavedFiles;
+    }
+  },
+  methods: {
+    closeDialog () {
+      this.$emit("closed","cancel");
     },
-    methods: {
-      closeDialog () {
-        this.$emit("closed","cancel");
-      },
-      discardChanges () {
-        this.$emit("closed","discard");
-      },
-      saveAll () {
-        this.$emit("closed","save");
-      },
+    discardChanges () {
+      this.$emit("closed","discard");
     },
+    saveAll () {
+      this.$emit("closed","save");
+    },
+  },
 
-  };
+};
 </script>

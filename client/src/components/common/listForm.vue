@@ -66,174 +66,174 @@
   </v-data-table>
 </template>
 <script>
-  import actionRow from "@/components/common/actionRow.vue";
+import actionRow from "@/components/common/actionRow.vue";
 
-  const emptyStringIsNotAllowed = (v)=>{
-    return v !== "";
-  }
+const emptyStringIsNotAllowed = (v)=>{
+  return v !== "";
+}
 
-  export default {
-    name: "ListForm",
-    components: {
-      actionRow,
+export default {
+  name: "ListForm",
+  components: {
+    actionRow,
+  },
+  props: {
+    label: {
+      type: String,
+      default: ""
     },
-    props: {
-      label: {
-        type: String,
-        default: ""
-      },
-      additionalRules:{
-        type: Array
-      },
-      allowEditButton: {
-        type: Boolean,
-        default: false,
-      },
-      allowRenameInline:{
-        type: Boolean,
-        default: true,
-      },
-      inputColumn: {
-        type: Boolean,
-        default: true
-      },
-      selectable:{
-        type: Boolean,
-        default: false
-      },
-      value:{
-        type: Array,
-        default: ()=>{return [];}
-      },
-      stringItems: {
-        type: Boolean,
-        default: false,
-      },
-      items: { type: Array, required: true },
-      headers: {
-        type: Array,
-        default: function () {
-          return [{ key: "name", sortable: false }];
-        },
-      },
-      newItemTemplate: {
-        type: Object,
-        default: function () {
-          return { name: "" };
-        },
-      },
-      disabled: Boolean
+    additionalRules:{
+      type: Array
     },
-    mounted(){
-      if(this.additionalRules){
-        this.edittingFieldValidator.push(...this.additionalRules);
-        this.newItemValidator.push(...this.additionalRules);
+    allowEditButton: {
+      type: Boolean,
+      default: false,
+    },
+    allowRenameInline:{
+      type: Boolean,
+      default: true,
+    },
+    inputColumn: {
+      type: Boolean,
+      default: true
+    },
+    selectable:{
+      type: Boolean,
+      default: false
+    },
+    value:{
+      type: Array,
+      default: ()=>{return [];}
+    },
+    stringItems: {
+      type: Boolean,
+      default: false,
+    },
+    items: { type: Array, required: true },
+    headers: {
+      type: Array,
+      default: function () {
+        return [{ key: "name", sortable: false }];
+      },
+    },
+    newItemTemplate: {
+      type: Object,
+      default: function () {
+        return { name: "" };
+      },
+    },
+    disabled: Boolean
+  },
+  mounted(){
+    if(this.additionalRules){
+      this.edittingFieldValidator.push(...this.additionalRules);
+      this.newItemValidator.push(...this.additionalRules);
+    }
+  },
+  data: function () {
+    return {
+      inputField: null,
+      edittingField: null,
+      edittingFieldValidator:[this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString],
+      editTarget: null,
+      newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString]
+    };
+  },
+  computed: {
+    selectedItems:{
+      get(){
+        return this.value;
+      },
+      set(newVal){
+        this.$emit("update:modelValue", newVal);
       }
     },
-    data: function () {
-      return {
-        inputField: null,
-        edittingField: null,
-        edittingFieldValidator:[this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString],
-        editTarget: null,
-        newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString]
-      };
+    headersWithActions: function () {
+      const rt = this.headers.filter((e)=>{
+        return e.key !== "actions";
+      });
+      rt.push({ key: "actions", title: "", sortable: false });
+      rt[0].editable = true;
+      return rt;
     },
-    computed: {
-      selectedItems:{
-        get(){
-          return this.value;
-        },
-        set(newVal){
-          this.$emit("update:modelValue", newVal);
-        }
-      },
-      headersWithActions: function () {
-        const rt = this.headers.filter((e)=>{
-          return e.key !== "actions";
+    editableRows: function () {
+      return this.headersWithActions
+        .filter((e)=>{
+          return e.editable;
+        })
+        .map((e)=>{
+          return e.value;
         });
-        rt.push({ key: "actions", title: "", sortable: false });
-        rt[0].editable = true;
-        return rt;
-      },
-      editableRows: function () {
-        return this.headersWithActions
-          .filter((e)=>{
-            return e.editable;
-          })
-          .map((e)=>{
-            return e.value;
-          });
-      },
-      tableData () {
-        if (!this.stringItems) {
-          return this.items;
-        }
-        return this.items.map((e)=>{
-          return { name: e };
-        });
-      },
     },
-    methods: {
-      isString(){
-        return typeof this.inputField === "string"
-      },
-      isDuplicate (newItem) {
-        if (typeof newItem !== "string") {
-          return false;
-        }
-        return this.tableData.some((e)=>{
-          return e.name === newItem;
-        });
-      },
-      newItemIsNotDuplicate: function (newItem) {
-        return this.isDuplicate(newItem) ? "duplicated name is not allowed" : true;
-      },
-      editingItemIsNotDuplicate: function (newItem) {
-        return this.isDuplicate(newItem) && this.editTarget !== newItem ? "duplicated name is not allowed" : true;
-      },
-      // 2nd argument also have item ,isMobile, header, and value prop. value has old value
-      onSaveEditDialog: function (item, { index }) {
-        const isInvalid = this.edittingFieldValidator.some((func)=>{
-          return !func(this.inputField)
-        });
-        if(isInvalid){
-          return
-        }
-        if (this.stringItems) {
-          this.$emit("update", this.edittingField, index);
-        } else {
-          const newItem = {...item}
-          newItem.name = this.edittingField;
-          this.$emit("update", newItem, index);
-        }
-      },
-      addItem: function () {
-        const isInvalid = this.newItemValidator.some((func)=>{
-          return !func(this.inputField)
-        });
-        if(isInvalid){
-          return
-        }
-        const newItem = this.stringItems ? this.inputField : Object.assign({}, this.newItemTemplate || {}, { name: this.inputField });
-        this.$emit("add", newItem);
-        this.inputField = null;
-      },
-      deleteItem: function (v) {
-        let index=-1;
-        if (this.stringItems){
-          index = this.items.findIndex((e)=>{
-            return e === v;
-          });
-        }else{
-          index = this.items.findIndex((e)=>{
-            return e.name === v.name;
-          });
-        }
-        if (index !== -1) {
-          this.$emit("remove", v, index);
-        }
-      },
+    tableData () {
+      if (!this.stringItems) {
+        return this.items;
+      }
+      return this.items.map((e)=>{
+        return { name: e };
+      });
     },
-  };
+  },
+  methods: {
+    isString(){
+      return typeof this.inputField === "string"
+    },
+    isDuplicate (newItem) {
+      if (typeof newItem !== "string") {
+        return false;
+      }
+      return this.tableData.some((e)=>{
+        return e.name === newItem;
+      });
+    },
+    newItemIsNotDuplicate: function (newItem) {
+      return this.isDuplicate(newItem) ? "duplicated name is not allowed" : true;
+    },
+    editingItemIsNotDuplicate: function (newItem) {
+      return this.isDuplicate(newItem) && this.editTarget !== newItem ? "duplicated name is not allowed" : true;
+    },
+    //2nd argument also have item ,isMobile, header, and value prop. value has old value
+    onSaveEditDialog: function (item, { index }) {
+      const isInvalid = this.edittingFieldValidator.some((func)=>{
+        return !func(this.inputField)
+      });
+      if(isInvalid){
+        return
+      }
+      if (this.stringItems) {
+        this.$emit("update", this.edittingField, index);
+      } else {
+        const newItem = {...item}
+        newItem.name = this.edittingField;
+        this.$emit("update", newItem, index);
+      }
+    },
+    addItem: function () {
+      const isInvalid = this.newItemValidator.some((func)=>{
+        return !func(this.inputField)
+      });
+      if(isInvalid){
+        return
+      }
+      const newItem = this.stringItems ? this.inputField : Object.assign({}, this.newItemTemplate || {}, { name: this.inputField });
+      this.$emit("add", newItem);
+      this.inputField = null;
+    },
+    deleteItem: function (v) {
+      let index=-1;
+      if (this.stringItems){
+        index = this.items.findIndex((e)=>{
+          return e === v;
+        });
+      }else{
+        index = this.items.findIndex((e)=>{
+          return e.name === v.name;
+        });
+      }
+      if (index !== -1) {
+        this.$emit("remove", v, index);
+      }
+    },
+  },
+};
 </script>

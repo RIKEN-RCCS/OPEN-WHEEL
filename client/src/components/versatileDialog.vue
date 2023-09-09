@@ -35,49 +35,49 @@
   </v-dialog>
 </template>
 <script>
-  export default {
-    name: "VersatileDialog",
-    props:{
-      value: {
-        type: Boolean,
-        required: true
-      },
-      persistent: {
-        type: Boolean,
-        default: true
-      },
-      buttons: {
-        type: Array,
-        default: function(){
-          return [
-            { icon: "mdi-check", label: "ok" },
-            { icon: "mdi-close", label: "cancel" },
-          ];
-        }
-      },
-      title:{
-        type: String,
-        default: ""
-      },
-      message:{
-        type: String,
-        default: ""
-      },
-      maxWidth:{
-        type: [String, Number],
-        default: undefined
+export default {
+  name: "VersatileDialog",
+  props:{
+    value: {
+      type: Boolean,
+      required: true
+    },
+    persistent: {
+      type: Boolean,
+      default: true
+    },
+    buttons: {
+      type: Array,
+      default: function(){
+        return [
+          { icon: "mdi-check", label: "ok" },
+          { icon: "mdi-close", label: "cancel" },
+        ];
       }
     },
-    computed:{
-      dialog:{
-        get(){
-          return this.value;
-        },
-        set(v){
-          this.$emit("update:modelValue", v);
-        }
-      }
+    title:{
+      type: String,
+      default: ""
     },
+    message:{
+      type: String,
+      default: ""
+    },
+    maxWidth:{
+      type: [String, Number],
+      default: undefined
+    }
+  },
+  computed:{
+    dialog:{
+      get(){
+        return this.value;
+      },
+      set(v){
+        this.$emit("update:modelValue", v);
+      }
+    }
+  },
 
-  };
+};
 </script>

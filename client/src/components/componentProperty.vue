@@ -512,189 +512,190 @@
 </template>
 
 <script>
-  import listForm from "@/components/common/listForm.vue";
-  import fileBrowser from "@/components/fileBrowser.vue";
-  import remoteFileBrowser from "@/components/remoteFileBrowser.vue";
-  import { isValidName } from "@/lib/utility.js";
-  import { isValidInputFilename, isValidOutputFilename } from "@/lib/clientUtility.js";
-  import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-  import SIO from "@/lib/socketIOWrapper.js";
+import listForm from "@/components/common/listForm.vue";
+import fileBrowser from "@/components/fileBrowser.vue";
+import remoteFileBrowser from "@/components/remoteFileBrowser.vue";
+import { isValidName } from "@/lib/utility.js";
+import { isValidInputFilename, isValidOutputFilename } from "@/lib/clientUtility.js";
+import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+import SIO from "@/lib/socketIOWrapper.js";
 
-  const isZeroOrMore = (v) => {
-    return v >= 0 ? true : "0 or more value required";
-  };
-  const isPositiveNumber = (v) => {
-    return  v > 0 ? true : "positive value required"
+const isZeroOrMore = (v)=>{
+  return v >= 0 ? true : "0 or more value required";
+};
+const isPositiveNumber = (v)=>{
+  return  v > 0 ? true : "positive value required"
+}
+const isInteger = (v)=>{
+  return Number.isInteger(Number(v)) ? true : "integer value required";
+}
+const isValidKeepProp = (v)=>{
+  if (v === ""){
+    return true
   }
-  const isInteger = (v)=>{
-    return Number.isInteger(Number(v)) ? true : "integer value required";
-  }
-  const isValidKeepProp = (v)=>{
-    if (v === ""){
-      return true
-    }
-    const rt1 = isInteger(v);
-    const rt2 = isZeroOrMore(v);
-    return rt1 !== true ? rt1 : rt2
-  }
+  const rt1 = isInteger(v);
+  const rt2 = isZeroOrMore(v);
+  return rt1 !== true ? rt1 : rt2
+}
 
-  export default {
-    name: "ComponentProperty",
-    components: {
-      listForm,
-      fileBrowser,
-      remoteFileBrowser
-    },
-    data: function () {
-      return {
-        valid: true,
-        validName: true,
-        inputFileTemplate: {
-          name: "",
-          src: [],
-        },
-        outputFileTemplate: {
-          name: "",
-          dst: [],
-        },
-        propWidth: "512",
-        openPanels: [0],
-        retryByJS: false,
-        conditionCheckByJS: false,
-        open: false,
-        reopening: false,
-        sourceOutputFile: null,
-        rules:{
-          isValidName,
-          isZeroOrMore,
-          isPositiveNumber,
-          isInteger,
-          isValidKeepProp
-        }
-      };
-    },
-    computed: {
-      ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler"]),
-      ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
-      isRemoteComponent(){
+export default {
+  name: "ComponentProperty",
+  components: {
+    listForm,
+    fileBrowser,
+    remoteFileBrowser
+  },
+  data: function () {
+    return {
+      valid: true,
+      validName: true,
+      inputFileTemplate: {
+        name: "",
+        src: [],
+      },
+      outputFileTemplate: {
+        name: "",
+        dst: [],
+      },
+      propWidth: "512",
+      openPanels: [0],
+      retryByJS: false,
+      conditionCheckByJS: false,
+      open: false,
+      reopening: false,
+      sourceOutputFile: null,
+      rules:{
+        isValidName,
+        isZeroOrMore,
+        isPositiveNumber,
+        isInteger,
+        isValidKeepProp
+      }
+    };
+  },
+  computed: {
+    ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler"]),
+    ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
+    isRemoteComponent(){
       return this.selectedComponent.type === "storage"
                            && typeof this.selectedComponent.host === "string"
                            && this.selectedComponent.host !== "localhost";
-      },
-      disableRemoteSetting () {
-        if(this.isStepjobTask){
-          return false;
-        }
-        return this.copySelectedComponent.host === "localhost";
-      },
-      hasHost(){
-        return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask", "storage"].includes(this.selectedComponent.type);
-      },
-      hasJobScheduler(){
-        return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
-      },
-      hasScript(){
-        return typeof this.selectedComponent !== "undefined" && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
-      },
-      hasCondition () {
-        return typeof this.selectedComponent !== "undefined" && ["if", "while"].includes(this.selectedComponent.type);
-      },
-      hasRemote(){
-        return typeof this.selectedComponent !== "undefined" && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
-      },
-      isTask () {
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "task";
-      },
-      isFor () {
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "for";
-      },
-      isForeach () {
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "foreach";
-      },
-      isWhile () {
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "while";
-      },
-      isSource () {
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "source";
-      },
-      isViewer() {
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "viewer";
-      },
-      isPS () {
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "parameterStudy";
-      },
-      isStepjobTask(){
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "stepjobTask";
-      },
-      isBulkjobTask(){
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "bulkjobTask";
-      },
-      isStorage(){
-        return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "storage";
-      },
-      excludeList (){
-        if(!Array.isArray(this.copySelectedComponent.exclude)){
-          return []
-        }
-        return this.copySelectedComponent.exclude
-          .map((e)=>{
-            return { name: e };
-          });
-      },
-      includeList (){
-        if(!Array.isArray(this.copySelectedComponent.include)){
-          return []
-        }
-        return this.copySelectedComponent.include
-          .map((e)=>{
-            return { name: e };
-          });
-      },
-      indexList: function () {
-        return this.copySelectedComponent.indexList
-          .map((e)=>{
-            return { name: e };
-          });
-      },
-      hostCandidates () {
-        const hostInRemoteHost = this.remoteHost.map((e)=>{
-          return e.name;
-        });
-        return ["localhost", ...hostInRemoteHost];
-      },
-      queues () {
-        const currentHostSetting = this.remoteHost.find((e)=>{
-          return e.name === this.copySelectedComponent.host;
-        });
-        return currentHostSetting && typeof currentHostSetting.queue === "string" ? currentHostSetting.queue.split(",") : [];
-      },
-      submitCmd(){
-        const currentHostSetting = this.remoteHost.find((e)=>{
-          return e.name === this.copySelectedComponent.host;
-        });
-        if(!currentHostSetting){
-          return null;
-        }
-        const JS=currentHostSetting.jobScheduler;
-        return JS?this.jobScheduler[JS].submit : null;
-      }
     },
-    watch: {
-      open () {
-        if (this.reopening || this.open) {
-          return;
-        }
-        this.commitSelectedComponent(null);
-      },
-      selectedComponent (nv, ov) {
-        if (this.selectedComponent === null || ( nv !== null && ov !== null && nv.ID === ov.ID)) {
-          return;
-        }
-        this.sourceOutputFile = Array.isArray(this.selectedComponent.outputFiles) && this.selectedComponent.outputFiles[0] ?  this.selectedComponent.outputFiles[0].name : null
-        // get script candidate
-        if(!["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
-          const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent";
-          SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponentAbsPath, mode}, (fileList)=>{
+    disableRemoteSetting () {
+      if(this.isStepjobTask){
+        return false;
+      }
+      return this.copySelectedComponent.host === "localhost";
+    },
+    hasHost(){
+      return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask", "storage"].includes(this.selectedComponent.type);
+    },
+    hasJobScheduler(){
+      return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
+    },
+    hasScript(){
+      return typeof this.selectedComponent !== "undefined" && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
+    },
+    hasCondition () {
+      return typeof this.selectedComponent !== "undefined" && ["if", "while"].includes(this.selectedComponent.type);
+    },
+    hasRemote(){
+      return typeof this.selectedComponent !== "undefined" && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
+    },
+    isTask () {
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "task";
+    },
+    isFor () {
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "for";
+    },
+    isForeach () {
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "foreach";
+    },
+    isWhile () {
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "while";
+    },
+    isSource () {
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "source";
+    },
+    isViewer() {
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "viewer";
+    },
+    isPS () {
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "parameterStudy";
+    },
+    isStepjobTask(){
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "stepjobTask";
+    },
+    isBulkjobTask(){
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "bulkjobTask";
+    },
+    isStorage(){
+      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "storage";
+    },
+    excludeList (){
+      if(!Array.isArray(this.copySelectedComponent.exclude)){
+        return []
+      }
+      return this.copySelectedComponent.exclude
+        .map((e)=>{
+          return { name: e };
+        });
+    },
+    includeList (){
+      if(!Array.isArray(this.copySelectedComponent.include)){
+        return []
+      }
+      return this.copySelectedComponent.include
+        .map((e)=>{
+          return { name: e };
+        });
+    },
+    indexList: function () {
+      return this.copySelectedComponent.indexList
+        .map((e)=>{
+          return { name: e };
+        });
+    },
+    hostCandidates () {
+      const hostInRemoteHost = this.remoteHost.map((e)=>{
+        return e.name;
+      });
+      return ["localhost", ...hostInRemoteHost];
+    },
+    queues () {
+      const currentHostSetting = this.remoteHost.find((e)=>{
+        return e.name === this.copySelectedComponent.host;
+      });
+      return currentHostSetting && typeof currentHostSetting.queue === "string" ? currentHostSetting.queue.split(",") : [];
+    },
+    submitCmd(){
+      const currentHostSetting = this.remoteHost.find((e)=>{
+        return e.name === this.copySelectedComponent.host;
+      });
+      if(!currentHostSetting){
+        return null;
+      }
+      const JS=currentHostSetting.jobScheduler;
+      return JS?this.jobScheduler[JS].submit : null;
+    }
+  },
+  watch: {
+    open () {
+      if (this.reopening || this.open) {
+        return;
+      }
+      this.commitSelectedComponent(null);
+    },
+    selectedComponent (nv, ov) {
+      if (this.selectedComponent === null || ( nv !== null && ov !== null && nv.ID === ov.ID)) {
+        return;
+      }
+      this.sourceOutputFile = Array.isArray(this.selectedComponent.outputFiles) && this.selectedComponent.outputFiles[0] ?  this.selectedComponent.outputFiles[0].name : null
+
+      //get script candidate
+      if(!["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
+        const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent";
+        SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponentAbsPath, mode}, (fileList)=>{
           const scriptCandidates = fileList
             .filter((e)=>{
               return e.type === "file";
@@ -702,173 +703,175 @@
             .map((e)=>{
               return e.name;
             });
-            this.commitScriptCandidates(scriptCandidates);
-            if(typeof this.selectedComponent.condition === "string"){
-              this.conditionCheckByJS= !this.scriptCandidates.includes(this.selectedComponent.condition);
-            }
-            if(typeof this.selectedComponent.retryCondition=== "string"){
-              this.retryByJS= !this.scriptCandidates.includes(this.selectedComponent.retryCondition);
-            }
-          });
-        }
-        this.reopening = true;
-        this.openPanels = [0];
-        this.open = false;
-        setTimeout(()=>{
-          this.open = true;
-          this.reopening = false;
-        }, 200);
-      },
-    },
-    mounted () {
-      if (this.selectedComponent !== null) {
-        this.open = true;
-      }
-    },
-    methods: {
-      ...mapActions(["showSnackbar"]),
-      ...mapMutations({
-        commitScriptCandidates: "scriptCandidates",
-        commitComponentTree: "componentTree",
-        commitSelectedComponent: "selectedComponent",
-      }),
-      isValidInputFilename,
-      isValidOutputFilename,
-      deleteComponent () {
-        SIO.emitGlobal("removeNode", this.projectRootDir, this.selectedComponent.ID, this.currentComponent.ID, (rt)=>{
-          if (!rt) {
-            return;
+          this.commitScriptCandidates(scriptCandidates);
+
+          if(typeof this.selectedComponent.condition === "string"){
+            this.conditionCheckByJS= !this.scriptCandidates.includes(this.selectedComponent.condition);
           }
-          this.commitSelectedComponent(null);
-          // update componentTree
-          SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
+          if(typeof this.selectedComponent.retryCondition=== "string"){
+            this.retryByJS= !this.scriptCandidates.includes(this.selectedComponent.retryCondition);
+          }
         });
-      },
-      updateComponentProperty (prop) {
-        if (prop === "name" && !this.validName) return;
-        if (prop !== "name" && !this.valid) return;
-        const ID = this.selectedComponent.ID;
-        //[workaround] v-textfield convert input value to string even if type=number
-        const newValue = ["start", "step", "end", "retry"].includes(prop) ? Number(this.copySelectedComponent[prop]): this.copySelectedComponent[prop];
-        if(newValue === null && (prop === "script" || (!this.conditionCheckByJS && prop === "condition"))) return;
-
-        // closeボタン押下時に、selectedComponentをnullにするより先に
-        // blurイベントが発生してこちらの処理が走ってしまうので
-        // 次行のif文の条件は常に満たさない。
-        // 仕様を検討のうえ、ガードするなら何か方法を考える必要がある
-        if (this.selectedComponent === null) return;
-
-        SIO.emitGlobal("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
-        if(this.selectedComponent.type === "storage" && prop === "path"){
-          //一回componenntpropertyを閉じる
-          this.$refs.rfb.connected=false;
-        }
-      },
-      updateSourceOutputFile(){
-        const name = this.sourceOutputFile
-        if(name === null){
-          this.deleteSourceOutputFile()
-          return
-        }
-        if(!this.isValidOutputFilename(name)){
-          this.showSnackbar(`${name} is not valid output filename`)
-          return
-        }
-        const outputFile={name, dst: []};
-        if(typeof this.selectedComponent.outputFiles[0] === "undefined"){
-          this.addToOutputFiles(outputFile);
+      }
+      this.reopening = true;
+      this.openPanels = [0];
+      this.open = false;
+      setTimeout(()=>{
+        this.open = true;
+        this.reopening = false;
+      }, 200);
+    },
+  },
+  mounted () {
+    if (this.selectedComponent !== null) {
+      this.open = true;
+    }
+  },
+  methods: {
+    ...mapActions(["showSnackbar"]),
+    ...mapMutations({
+      commitScriptCandidates: "scriptCandidates",
+      commitComponentTree: "componentTree",
+      commitSelectedComponent: "selectedComponent",
+    }),
+    isValidInputFilename,
+    isValidOutputFilename,
+    deleteComponent () {
+      SIO.emitGlobal("removeNode", this.projectRootDir, this.selectedComponent.ID, this.currentComponent.ID, (rt)=>{
+        if (!rt) {
           return;
         }
-        this.updateOutputFiles(outputFile, 0);
-      },
-      deleteSourceOutputFile(){
-        this.sourceOutputFile=null;
-        this.removeFromOutputFiles(this.selectedComponent.outputFiles[0], 0)
-      },
-      addToInputFiles(v) {
-        this.copySelectedComponent.inputFiles.push(v)
-        const ID = this.selectedComponent.ID;
-        SIO.emitGlobal("addInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
-      },
-      updateInputFiles(v, index) {
-        this.copySelectedComponent.inputFiles.splice(index, 1, v);
-        const ID = this.selectedComponent.ID;
-        SIO.emitGlobal("renameInputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
-      },
-      removeFromInputFiles(v, index) {
-        this.copySelectedComponent.inputFiles.splice(index,1)
-        const ID = this.selectedComponent.ID;
-        SIO.emitGlobal("removeInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
-      },
-      addToOutputFiles(v) {
-        this.copySelectedComponent.outputFiles.push(v)
-        const ID = this.selectedComponent.ID;
-        SIO.emitGlobal("addOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
-      },
-      updateOutputFiles(v, index) {
-        this.copySelectedComponent.outputFiles.splice(index, 1, v);
-        const ID = this.selectedComponent.ID;
-        SIO.emitGlobal("renameOutputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
-      },
-      removeFromOutputFiles(v, index) {
-        this.copySelectedComponent.outputFiles.splice(index,1)
-        const ID = this.selectedComponent.ID;
-        SIO.emitGlobal("removeOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
-      },
-      addToIndexList (v) {
-        this.copySelectedComponent.indexList.push(v.name)
-        this.updateComponentProperty("indexList");
-      },
-      updateIndexList (v, index) {
-        this.copySelectedComponent.indexList.splice(index, 1, v.name);
-        this.updateComponentProperty("indexList");
-      },
-      removeFromIndexList (v, index) {
-        this.copySelectedComponent.indexList.splice(index,1)
-        this.updateComponentProperty("indexList");
-      },
-      addToIncludeList (v) {
-        this.copySelectedComponent.include.push(v.name)
-        this.updateComponentProperty("include");
-      },
-      updateIncludeList (v, index) {
-        this.copySelectedComponent.include.splice(index, 1, v.name);
-        this.updateComponentProperty("include");
-      },
-      removeFromIncludeList (v, index) {
-        this.copySelectedComponent.include.splice(index,1)
-        this.updateComponentProperty("include");
-      },
-      addToExcludeList (v) {
-        this.copySelectedComponent.exclude.push(v.name)
-        this.updateComponentProperty("exclude");
-      },
-      removeFromExcludeList (v, index) {
-        this.copySelectedComponent.exclude.splice(index,1)
-        this.updateComponentProperty("exclude");
-      },
-      updateExcludeList (v, index) {
-        this.copySelectedComponent.exclude.splice(index, 1, v.name);
-        this.updateComponentProperty("exclude");
-      },
-      isUniqueName (v) {
-        const names = this.currentComponent.descendants
-          .map((e)=>{
-            if (e === null) {
-              return null;
-            }
-            if (e.name === this.selectedComponent.name) {
-              return null;
-            }
-            return e.name;
-          })
-          .filter((e)=>{
-            return e !== null;
-          });
-        return !names.some((name)=>{
-          return name === this.copySelectedComponent.name;
-        });
-      },
+        this.commitSelectedComponent(null);
+        //update componentTree
+        SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
+      });
     },
-  };
+    updateComponentProperty (prop) {
+      if (prop === "name" && !this.validName) return;
+      if (prop !== "name" && !this.valid) return;
+      const ID = this.selectedComponent.ID;
+      //[workaround] v-textfield convert input value to string even if type=number
+      const newValue = ["start", "step", "end", "retry"].includes(prop) ? Number(this.copySelectedComponent[prop]): this.copySelectedComponent[prop];
+      if(newValue === null && (prop === "script" || (!this.conditionCheckByJS && prop === "condition"))) return;
+
+      //closeボタン押下時に、selectedComponentをnullにするより先に
+      //blurイベントが発生してこちらの処理が走ってしまうので
+      //次行のif文の条件は常に満たさない。
+      //仕様を検討のうえ、ガードするなら何か方法を考える必要がある
+      if (this.selectedComponent === null) return;
+
+      SIO.emitGlobal("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
+
+      if(this.selectedComponent.type === "storage" && prop === "path"){
+        //一回componenntpropertyを閉じる
+        this.$refs.rfb.connected=false;
+      }
+    },
+    updateSourceOutputFile(){
+      const name = this.sourceOutputFile
+      if(name === null){
+        this.deleteSourceOutputFile()
+        return
+      }
+      if(!this.isValidOutputFilename(name)){
+        this.showSnackbar(`${name} is not valid output filename`)
+        return
+      }
+      const outputFile={name, dst: []};
+      if(typeof this.selectedComponent.outputFiles[0] === "undefined"){
+        this.addToOutputFiles(outputFile);
+        return;
+      }
+      this.updateOutputFiles(outputFile, 0);
+    },
+    deleteSourceOutputFile(){
+      this.sourceOutputFile=null;
+      this.removeFromOutputFiles(this.selectedComponent.outputFiles[0], 0)
+    },
+    addToInputFiles(v) {
+      this.copySelectedComponent.inputFiles.push(v)
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("addInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
+    },
+    updateInputFiles(v, index) {
+      this.copySelectedComponent.inputFiles.splice(index, 1, v);
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("renameInputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
+    },
+    removeFromInputFiles(v, index) {
+      this.copySelectedComponent.inputFiles.splice(index,1)
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("removeInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
+    },
+    addToOutputFiles(v) {
+      this.copySelectedComponent.outputFiles.push(v)
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("addOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
+    },
+    updateOutputFiles(v, index) {
+      this.copySelectedComponent.outputFiles.splice(index, 1, v);
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("renameOutputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
+    },
+    removeFromOutputFiles(v, index) {
+      this.copySelectedComponent.outputFiles.splice(index,1)
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("removeOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
+    },
+    addToIndexList (v) {
+      this.copySelectedComponent.indexList.push(v.name)
+      this.updateComponentProperty("indexList");
+    },
+    updateIndexList (v, index) {
+      this.copySelectedComponent.indexList.splice(index, 1, v.name);
+      this.updateComponentProperty("indexList");
+    },
+    removeFromIndexList (v, index) {
+      this.copySelectedComponent.indexList.splice(index,1)
+      this.updateComponentProperty("indexList");
+    },
+    addToIncludeList (v) {
+      this.copySelectedComponent.include.push(v.name)
+      this.updateComponentProperty("include");
+    },
+    updateIncludeList (v, index) {
+      this.copySelectedComponent.include.splice(index, 1, v.name);
+      this.updateComponentProperty("include");
+    },
+    removeFromIncludeList (v, index) {
+      this.copySelectedComponent.include.splice(index,1)
+      this.updateComponentProperty("include");
+    },
+    addToExcludeList (v) {
+      this.copySelectedComponent.exclude.push(v.name)
+      this.updateComponentProperty("exclude");
+    },
+    removeFromExcludeList (v, index) {
+      this.copySelectedComponent.exclude.splice(index,1)
+      this.updateComponentProperty("exclude");
+    },
+    updateExcludeList (v, index) {
+      this.copySelectedComponent.exclude.splice(index, 1, v.name);
+      this.updateComponentProperty("exclude");
+    },
+    isUniqueName (v) {
+      const names = this.currentComponent.descendants
+        .map((e)=>{
+          if (e === null) {
+            return null;
+          }
+          if (e.name === this.selectedComponent.name) {
+            return null;
+          }
+          return e.name;
+        })
+        .filter((e)=>{
+          return e !== null;
+        });
+      return !names.some((name)=>{
+        return name === this.copySelectedComponent.name;
+      });
+    },
+  },
+};
 </script>

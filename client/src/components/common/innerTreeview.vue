@@ -76,88 +76,89 @@
 </template>
 <script>
 
-  export default {
-    name: "innerTreeview",
-    props:{
-      items:{
-        type: Array,
-        required: true
-      },
-      loadChildren:{
-        type: Function,
-      },
-      activatable:{
-        type: Boolean,
-        default: false
-      },
-      openAll:{
-        type: Boolean,
-        default: false
-      },
-      active:{
-        type: Array,
-        required: this.activatable
-      },
-      itemKey:{
-        type: String,
-        default: "id"
-      },
-      getNodeIcon:{
-        type: Function,
-        default:()=>{return ""}
-      },
-      getLeafIcon:{
-        type: Function,
-        default:()=>{return ""}
+export default {
+  name: "innerTreeview",
+  props:{
+    items:{
+      type: Array,
+      required: true
+    },
+    loadChildren:{
+      type: Function,
+    },
+    activatable:{
+      type: Boolean,
+      default: false
+    },
+    openAll:{
+      type: Boolean,
+      default: false
+    },
+    active:{
+      type: Array,
+      required: this.activatable
+    },
+    itemKey:{
+      type: String,
+      default: "id"
+    },
+    getNodeIcon:{
+      type: Function,
+      default:()=>{return ""}
+    },
+    getLeafIcon:{
+      type: Function,
+      default:()=>{return ""}
+    }
+  },
+  data:()=>{
+    return {
+      open:[],
+    }
+  },
+  methods:{
+    async onClickNodeIcon(item){
+      if(!this.loadChildren){
+        return false
+      }
+      await this.loadChildren(item);
+    },
+    onActiveted(item){
+      if(! this.activatable){
+        return;
+      }
+      if(!this.multipleActive){
+        this.active.splice(0,this.active.length);
+      }
+      if (!this.active.includes(item[this.itemKey])){
+        this.active.push(item[this.itemKey]);
+      }
+      this.$emit("update:active", item);
+    },
+    updateAll(){
+      this.openChild();
+
+      if(Array.isArray(this.$refs.childNodes)){
+        this.$refs.childNodes.forEach((e)=>{e.updateAll()});
       }
     },
-    data:()=>{
-      return {
-        open:[],
+    openChild(){
+      if(!Array.isArray(this.items)){
+        return
       }
-    },
-    methods:{
-      async onClickNodeIcon(item){
-        if(!this.loadChildren){
-          return false
-        }
-        await this.loadChildren(item);
-      },
-      onActiveted(item){
-        if(! this.activatable){
-          return;
-        }
-        if(!this.multipleActive){
-          this.active.splice(0,this.active.length);
-        }
-        if (!this.active.includes(item[this.itemKey])){
-          this.active.push(item[this.itemKey]);
-        }
-        this.$emit("update:active", item);
-      },
-      updateAll(){
-        this.openChild();
-        if(Array.isArray(this.$refs.childNodes)){
-          this.$refs.childNodes.forEach((e)=>{e.updateAll()});
-        }
-      },
-      openChild(){
-        if(!Array.isArray(this.items)){
-          return
-        }
-        this.open.splice(0,this.open.length,...this.items.filter((item)=>{
-          return item && Array.isArray(item.children);
-        })
-       .map((e)=>{
+      this.open.splice(0,this.open.length,...this.items.filter((item)=>{
+        return item && Array.isArray(item.children);
+      })
+        .map((e)=>{
           return e[this.itemKey]
         }))
-      }
-    },
-    mounted(){
-      if(this.openAll){
-        this.openChild()
-      }
+    }
+  },
+  mounted(){
+    if(this.openAll){
+      this.openChild()
     }
   }
+}
 </script>
 

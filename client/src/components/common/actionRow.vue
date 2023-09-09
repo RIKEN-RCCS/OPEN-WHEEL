@@ -23,22 +23,22 @@
   </div>
 </template>
 <script>
-  export default {
-    name: "ActionRow",
-    props: {
-      item: [Object, String],
-      canEdit: {
-        type: Boolean,
-        default: true,
-      },
-      canDelete: {
-        type: Boolean,
-        default: true,
-      },
-      disabled: {
-        type: Boolean,
-        default: false,
-      },
+export default {
+  name: "ActionRow",
+  props: {
+    item: [Object, String],
+    canEdit: {
+      type: Boolean,
+      default: true,
     },
-  };
+    canDelete: {
+      type: Boolean,
+      default: true,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+  },
+};
 </script>

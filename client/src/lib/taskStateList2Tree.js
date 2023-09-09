@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 export function path2Array (pathString) {
   if (typeof pathString !== "string" || pathString === "") {
@@ -19,7 +19,7 @@ export function path2Array (pathString) {
 
 /**
  * @typedef TaskState
- * @param {String} - ancestorsName
+ * @param {String} - - ancestorsName
  */
 
 /**
@@ -36,11 +36,11 @@ export function taskStateList2Tree (taskStatelist, tree) {
   taskStatelist.forEach((task)=>{
     const ancestorsNames = path2Array(task.ancestorsName);
     const ancestorsTypes = path2Array(task.ancestorsType);
-    //task.ancestorsDIspatchedTime could be undefined (it was implemented later)
+    //task.ancestorsDispatchedTime could be undefined (it was implemented later)
     //and it implies that path2Array could return null
     //as work around, we assign empty array to ancestorsDispatchedTimes in this case.
-    const ancestorsDispatchedTimes=path2Array(task.ancestorsDispatchedTime) ||[];
-    let poi = tree.children; // candidate nodes
+    //const ancestorsDispatchedTimes=path2Array(task.ancestorsDispatchedTime) ||[];
+    let poi = tree.children; //candidate nodes
     if(ancestorsNames === null){
       const tmp = Object.assign({}, task);
       delete tmp.ancestorsName;
@@ -56,7 +56,7 @@ export function taskStateList2Tree (taskStatelist, tree) {
       treeIsChanged = true;
       return;
     }
-    let entry; // current operating node
+    let entry; //current operating node
     ancestorsNames.forEach((name, index)=>{
       entry = poi.find((e)=>{
         return e.name === name;
@@ -64,7 +64,8 @@ export function taskStateList2Tree (taskStatelist, tree) {
 
       if (typeof entry === "undefined") {
         const type = ancestorsTypes[index];
-        const dispatchedTime = ancestorsDispatchedTimes[index];
+        //ancestorsDispatchedTimes is not set in Disptcher for now
+        //const dispatchedTime = ancestorsDispatchedTimes[index];
         const ID=uuidv4();
         entry = { name, type, children: [], ID };
         poi.push(entry);
@@ -84,9 +85,9 @@ export function taskStateList2Tree (taskStatelist, tree) {
       const tmp = Object.assign({}, task);
       delete tmp.ancestorsName;
       delete tmp.ancestorsType;
-      // TODO in this section, read host and useJobScheduler porp
-      // to store taskAndUsejobscheluler,remotetask, or remotetask to type prop
-      // (currently, host and useJobScheduler porp is not sent from server)
+      //in this section, read host and useJobScheduler porp
+      //should be stored taskAndUsejobscheluler,remotetask, or remotetask to type prop
+      //But, host and useJobScheduler porp is not sent from server for now
       tmp.type = "task";
       entry.children.push(tmp);
       treeIsChanged = true;

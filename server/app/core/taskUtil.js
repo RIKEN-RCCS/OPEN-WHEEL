@@ -23,7 +23,6 @@ async function cancelRemoteJob(task) {
 }
 
 async function cancelLocalJob() {
-  //eslint-disable-next-line no-console
   console.log("not implimented yet!!");
 }
 

@@ -243,82 +243,82 @@
   </div>
 </template>
 <script>
-  "use strict";
-  import fileBrowser from "@/components/common/fileBrowserLite.vue";
-  import { required, validPortNumber, positiveNumber } from "@/lib/validationRules.js";
-  export default {
-    Name: "newHostDialog",
-    components:{
-      fileBrowser
-    },
-    props: {
-      modelValue: Boolean,
-      title: { type: String, default: "remote host" },
-      maxWidth: { type: String, default: "50%" },
-      hostNames: {type: Array, default: ()=>{return [];}},
-      initialValue: {type: Object, default: ()=>{return {};}},
-      availableJobSchedulers: {type: Array, default: ()=>{return [];}},
-    },
-    data: function () {
-      return {
-        host: {
-          port: 22
-        },
-        openPanel: [0],
-        pathSep: "/",
-        home: "/",
-        openFileBrowser: false,
-        selectedFile:null
-      };
-    },
-    computed: {
-      hasError (){
-        return this.hostNames.includes(this.host.name)
+"use strict";
+import fileBrowser from "@/components/common/fileBrowserLite.vue";
+import { required, validPortNumber, positiveNumber } from "@/lib/validationRules.js";
+export default {
+  Name: "newHostDialog",
+  components:{
+    fileBrowser
+  },
+  props: {
+    modelValue: Boolean,
+    title: { type: String, default: "remote host" },
+    maxWidth: { type: String, default: "50%" },
+    hostNames: {type: Array, default: ()=>{return [];}},
+    initialValue: {type: Object, default: ()=>{return {};}},
+    availableJobSchedulers: {type: Array, default: ()=>{return [];}},
+  },
+  data: function () {
+    return {
+      host: {
+        port: 22
+      },
+      openPanel: [0],
+      pathSep: "/",
+      home: "/",
+      openFileBrowser: false,
+      selectedFile:null
+    };
+  },
+  computed: {
+    hasError (){
+      return this.hostNames.includes(this.host.name)
           || this.required(this.host.name) !== true
           || this.required(this.host.host) !== true
           || this.required(this.host.port) !== true
           || this.validPortNumber(this.host.port) !== true
           || this.required(this.host.username) !== true
           || this.required(this.host.path) !== true;
+    },
+    openDialog: {
+      get () {
+        return this.modelValue;
       },
-      openDialog: {
-        get () {
-          return this.modelValue;
-        },
-        set (value) {
-          this.$emit("update:modelValue", value);
-        },
+      set (value) {
+        this.$emit("update:modelValue", value);
       },
     },
-    watch:{
-      openDialog(v){
-        this.host = Object.assign(this.host, this.initialValue);
-      }
+  },
+  watch:{
+    openDialog(v){
+      this.host = Object.assign(this.host, this.initialValue);
+    }
+  },
+  methods: {
+    closeFileBrowser(){
+      this.selectedFile=null;
+      this.openFileBrowser=false;
     },
-    methods: {
-      closeFileBrowser(){
-        this.selectedFile=null;
-        this.openFileBrowser=false;
-      },
-      notDupulicatedLabel (v){
-        return !this.hostNames.includes(v) ||"label is already in use";
-      },
-      required,
-      validPortNumber,
-      positiveNumber: positiveNumber.bind(null, true),
-      submitHost () {
-        this.$emit("newHost", this.host);
-        this.closeDialog();
-      },
-      cancelDialog(){
-        this.$emit("cancel");
-        this.closeDialog();
-      },
-      closeDialog () {
-        this.host = {};
-        this.$refs.form.reset();
-        this.openDialog = false;
-      },
+    notDupulicatedLabel (v){
+      return !this.hostNames.includes(v) ||"label is already in use";
     },
-  };
+    required,
+    validPortNumber,
+    positiveNumber: positiveNumber.bind(null, true),
+    submitHost () {
+      this.$emit("newHost", this.host);
+      this.closeDialog();
+    },
+    cancelDialog(){
+      this.$emit("cancel");
+      this.closeDialog();
+    },
+    closeDialog () {
+      this.host = {};
+      this.$refs.form.reset();
+      this.openDialog = false;
+    },
+  },
+};
 </script>

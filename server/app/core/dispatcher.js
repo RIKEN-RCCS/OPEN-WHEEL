@@ -843,7 +843,7 @@ class Dispatcher extends EventEmitter {
       }).map((e)=>{
         return e.value;
       })
-        .map((e)=>{ //eslint-disable-line no-loop-func
+        .map((e)=>{  
           //I dont know it's OK or harmful to disable no-loop-func here
           const src = path.resolve(templateRoot, e);
           const dst = path.resolve(templateRoot, `${countBulkNum}.${e}`);

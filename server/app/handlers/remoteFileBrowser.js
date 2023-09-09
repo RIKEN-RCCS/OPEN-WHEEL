@@ -52,7 +52,6 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
     });
     const stdout2 = [];
     if (links.length > 0) {
-      //eslint-disable-next-line no-useless-escape
       const rt2 = await ssh.exec(` cd ${target};for i in ${links.join(" ")};do echo $i; stat -c %F $(readlink -f $i);done`, (output)=>{
         stdout2.push(output);
       });

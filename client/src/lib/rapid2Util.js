@@ -7,8 +7,8 @@
 
 export function targetFile2absPath (targetFile, componentPath, pathSep, prefix, PSID) {
   const PSDir = componentPath[PSID];
-  let dirname = targetFile.hasOwnProperty("targetNode") ? componentPath[targetFile.targetNode] : PSDir;
-  dirname = dirname.replace(/^\.\//, ""); // remove prefix
+  let dirname = Object.prototype.hasOwnProperty.call(targetFile,"targetNode") ? componentPath[targetFile.targetNode] : PSDir;
+  dirname = dirname.replace(/^\.\//, ""); //remove prefix
   let absPath = prefix + dirname + pathSep + targetFile.targetName;
   if (pathSep === "\\") {
     absPath = absPath.replace("/", pathSep);

@@ -42,55 +42,54 @@
   </my-treeview>
 </template>
 <script>
-  import { mapState } from "vuex";
-  import SIO from "@/lib/socketIOWrapper.js";
-  import { taskStateList2Tree } from "@/lib/taskStateList2Tree.js";
-  import componentButton from "@/components/common/componentButton.vue";
-  import myTreeview from "@/components/common/myTreeview.vue"
+import { mapState } from "vuex";
+import SIO from "@/lib/socketIOWrapper.js";
+import { taskStateList2Tree } from "@/lib/taskStateList2Tree.js";
+import componentButton from "@/components/common/componentButton.vue";
+import myTreeview from "@/components/common/myTreeview.vue"
 
-  const headers = { state: "state", startTime: "startTime", endTime: "endTime" };
+const headers = { state: "state", startTime: "startTime", endTime: "endTime" };
 
-  export default {
-    name: "List",
-    components: {
-      componentButton,
-      myTreeview
+export default {
+  name: "List",
+  components: {
+    componentButton,
+    myTreeview
+  },
+  data: function () {
+    return {
+      taskStateTree: { children: [], root: true, ...headers , ID:"root"},
+      headers: Object.keys(headers),
+      firstTime: true
+    };
+  },
+  computed: {
+    list: function () {
+      return [this.taskStateTree];
     },
-    data: function () {
-      return {
-        taskStateTree: { children: [], root: true, ...headers , ID:"root"},
-        headers: Object.keys(headers),
-        firstTime: true
-      };
-    },
-    computed: {
-      list: function () {
-        return [this.taskStateTree];
-      },
-      ...mapState([
-        "projectRootDir"
-      ]),
-    },
-    mounted: function () {
-      SIO.onGlobal("taskStateList", async (taskStateList)=>{
-        let isChanged=false;
-        if(taskStateList.length===0){
-          this.taskStateTree = { children: [], root: true, ...headers, ID:"root" };
-          isChanged=true;
-        }else{
-          isChanged = await taskStateList2Tree(taskStateList, this.taskStateTree);
-        }
-        if(this.$refs.tree && (this.firstTime || isChanged)){
-          this.firstTime=false;
-          this.$refs.tree.updateAll(true);
-        }
-
-      });
-      SIO.emitGlobal("getTaskStateList", this.projectRootDir, (rt)=>{
-        console.log("getTaskStateList done", rt);
-      });
-    },
-  };
+    ...mapState([
+      "projectRootDir"
+    ]),
+  },
+  mounted: function () {
+    SIO.onGlobal("taskStateList", async (taskStateList)=>{
+      let isChanged=false;
+      if(taskStateList.length===0){
+        this.taskStateTree = { children: [], root: true, ...headers, ID:"root" };
+        isChanged=true;
+      }else{
+        isChanged = await taskStateList2Tree(taskStateList, this.taskStateTree);
+      }
+      if(this.$refs.tree && (this.firstTime || isChanged)){
+        this.firstTime=false;
+        this.$refs.tree.updateAll(true);
+      }
+    });
+    SIO.emitGlobal("getTaskStateList", this.projectRootDir, (rt)=>{
+      console.log("getTaskStateList done", rt);
+    });
+  },
+};
 </script>
 <style>
 #append{

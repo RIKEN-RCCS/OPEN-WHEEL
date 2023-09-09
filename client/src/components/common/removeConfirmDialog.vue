@@ -37,45 +37,45 @@
   </v-dialog>
 </template>
 <script>
-  import buttons from "@/components/common/buttons.vue";
-  export default {
-    name: "RemoveConfirmDialog",
-    components: {
-      buttons,
-    },
-    props: {
-      modelValue: Boolean,
-      title: { type: String, default: "are you sure you want to remove?" },
-      message: String,
-      removeCandidates: { type: Array, default: ()=>{ return []; } },
-      maxWidth: { type: String, default: "50%" },
-    },
-    data: function () {
-      return {
-        buttons: [
-          { icon: "mdi-trash-can-outline", label: "remove" },
-          { icon: "mdi-close", label: "cancel" },
-        ],
-      };
-    },
-    computed: {
-      openDialog: {
-        get () {
-          return this.modelValue;
-        },
-        set (v) {
-          this.$emit("update:modelValue", v);
-        },
+import buttons from "@/components/common/buttons.vue";
+export default {
+  name: "RemoveConfirmDialog",
+  components: {
+    buttons,
+  },
+  props: {
+    modelValue: Boolean,
+    title: { type: String, default: "are you sure you want to remove?" },
+    message: String,
+    removeCandidates: { type: Array, default: ()=>{ return []; } },
+    maxWidth: { type: String, default: "50%" },
+  },
+  data: function () {
+    return {
+      buttons: [
+        { icon: "mdi-trash-can-outline", label: "remove" },
+        { icon: "mdi-close", label: "cancel" },
+      ],
+    };
+  },
+  computed: {
+    openDialog: {
+      get () {
+        return this.modelValue;
+      },
+      set (v) {
+        this.$emit("update:modelValue", v);
       },
     },
-    methods: {
-      remove () {
-        this.$emit("remove");
-        this.closeDialog();
-      },
-      closeDialog () {
-        this.openDialog = false;
-      },
+  },
+  methods: {
+    remove () {
+      this.$emit("remove");
+      this.closeDialog();
     },
-  };
+    closeDialog () {
+      this.openDialog = false;
+    },
+  },
+};
 </script>

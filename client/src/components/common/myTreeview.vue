@@ -27,55 +27,55 @@
   </inner-treeview>
 </template>
 <script>
-  import innerTreeview from "@/components/common/innerTreeview.vue";
+import innerTreeview from "@/components/common/innerTreeview.vue";
 
-  const nodeOpenIcon= "mdi-menu-down";
-  const nodeCloseIcon= "mdi-menu-right";
+const nodeOpenIcon= "mdi-menu-down";
+const nodeCloseIcon= "mdi-menu-right";
 
-  export default {
-    name: "myTreeview",
-    components:{
-      innerTreeview
+export default {
+  name: "myTreeview",
+  components:{
+    innerTreeview
+  },
+  props:{
+    items:{
+      type: Array,
+      required: true
     },
-    props:{
-      items:{
-        type: Array,
-        required: true
-      },
-      loadChildren:{
-        type: Function,
-      },
-      activatable:{
-        type: Boolean,
-        default: false
-      },
-      openAll:{
-        type: Boolean,
-        default: false
-      },
-      itemKey:{
-        type: String,
-        default: "id"
-      },
-      getNodeIcon:{
-        type: Function,
-        default:(isOpen)=>{ return isOpen ? nodeOpenIcon : nodeCloseIcon }
-      },
-      getLeafIcon:{
-        type: Function,
-        default:()=>{return ""}
-      }
+    loadChildren:{
+      type: Function,
     },
-    data:()=>{
-      return {
-        active: []
-      }
+    activatable:{
+      type: Boolean,
+      default: false
     },
-    methods:{
-      updateAll(){
-        this.$refs.tree.updateAll();
-      }
+    openAll:{
+      type: Boolean,
+      default: false
+    },
+    itemKey:{
+      type: String,
+      default: "id"
+    },
+    getNodeIcon:{
+      type: Function,
+      default:(isOpen)=>{ return isOpen ? nodeOpenIcon : nodeCloseIcon }
+    },
+    getLeafIcon:{
+      type: Function,
+      default:()=>{return ""}
+    }
+  },
+  data:()=>{
+    return {
+      active: []
+    }
+  },
+  methods:{
+    updateAll(){
+      this.$refs.tree.updateAll();
     }
   }
+}
 </script>
 

@@ -5,13 +5,13 @@
  */
 "use strict";
 
-// NG
+//NG
 export const reWin32ReservedNames = /(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
 const reOnlyWhilteSpace = /^\s*$/;
-// OK
+//OK
 const alphanumeric = "a-zA-Z0-9";
-// due to escapeRegExp's spec, bars must be added separately any other regexp strings
-// eslint-disable-next-line no-useless-escape
+//due to escapeRegExp's spec, bars must be added separately any other regexp strings
+//eslint-disable-next-line no-useless-escape
 const bars = "_\-";
 export const pathseps = "/\\";
 export const metaCharactors = "*?[]{}()!?+@.";
@@ -23,7 +23,7 @@ export const metaCharactors = "*?[]{}()!?+@.";
  * @returns {string} escaped regex string
  */
 export function escapeRegExp (target) {
-  // eslint-disable-next-line no-useless-escape
+  //eslint-disable-next-line no-useless-escape
   return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
 }
 

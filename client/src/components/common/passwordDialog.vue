@@ -35,50 +35,50 @@
   </v-dialog>
 </template>
 <script>
-  import buttons from "@/components/common/buttons.vue";
-  export default {
-    name: "PasswordDialog",
-    components: {
-      buttons,
-    },
-    props: {
-      value: Boolean,
-      title: { type: String, default: "input password" },
-      maxWidth: { type: String, default: "50%" },
-    },
-    data: function () {
-      return {
-        showPassword: false,
-        password: "",
-        buttons: [
-          { icon: "mdi-check", label: "ok" },
-          { icon: "mdi-close", label: "cancel" },
-        ],
-      };
-    },
-    computed: {
-      openDialog: {
-        get () {
-          return this.value;
-        },
-        set (value) {
-          this.$emit("update:modelValue", value);
-        },
+import buttons from "@/components/common/buttons.vue";
+export default {
+  name: "PasswordDialog",
+  components: {
+    buttons,
+  },
+  props: {
+    value: Boolean,
+    title: { type: String, default: "input password" },
+    maxWidth: { type: String, default: "50%" },
+  },
+  data: function () {
+    return {
+      showPassword: false,
+      password: "",
+      buttons: [
+        { icon: "mdi-check", label: "ok" },
+        { icon: "mdi-close", label: "cancel" },
+      ],
+    };
+  },
+  computed: {
+    openDialog: {
+      get () {
+        return this.value;
+      },
+      set (value) {
+        this.$emit("update:modelValue", value);
       },
     },
-    methods: {
-      submitPassword () {
-        this.$emit("password", this.password);
-        this.closeDialog();
-      },
-      cancel () {
-        this.$emit("cancel");
-        this.closeDialog();
-      },
-      closeDialog () {
-        this.password = "";
-        this.openDialog = false;
-      },
+  },
+  methods: {
+    submitPassword () {
+      this.$emit("password", this.password);
+      this.closeDialog();
     },
-  };
+    cancel () {
+      this.$emit("cancel");
+      this.closeDialog();
+    },
+    closeDialog () {
+      this.password = "";
+      this.openDialog = false;
+    },
+  },
+};
 </script>

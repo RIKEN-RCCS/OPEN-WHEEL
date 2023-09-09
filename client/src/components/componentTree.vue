@@ -53,49 +53,49 @@
 </template>
 
 <script>
-  import { mapState } from "vuex";
-  import getNodeAndPath from "@/lib/getNodeAndPath.js";
-  import { isContainer } from "@/lib/utility.js";
-  import componentButton from "@/components/common/componentButton.vue";
-  import myTreeview from "@/components/common/myTreeview.vue"
-  import SIO from "@/lib/socketIOWrapper.js";
+import { mapState } from "vuex";
+import getNodeAndPath from "@/lib/getNodeAndPath.js";
+import { isContainer } from "@/lib/utility.js";
+import componentButton from "@/components/common/componentButton.vue";
+import myTreeview from "@/components/common/myTreeview.vue"
+import SIO from "@/lib/socketIOWrapper.js";
 
-  export default {
-    name: "ComponentTree",
-    components: {
-      componentButton,
-      myTreeview
+export default {
+  name: "ComponentTree",
+  components: {
+    componentButton,
+    myTreeview
+  },
+  data: ()=>{
+    return {
+      showComponentTree: false,
+    };
+  },
+  computed: {
+    ...mapState({
+      tree: "componentTree",
+      currentComponent: "currentComponent",
+      projectRootDir: "projectRootDir"
+    }),
+    pathToCurrentComponent: function () {
+      const rt = [];
+      if (this.currentComponent !== null) {
+        getNodeAndPath(this.currentComponent.ID, this.tree, rt);
+      }
+      return rt;
     },
-    data: ()=>{
-      return {
-        showComponentTree: false,
-      };
+    componentTree: function () {
+      return [this.tree];
     },
-    computed: {
-      ...mapState({
-        tree: "componentTree",
-        currentComponent: "currentComponent",
-        projectRootDir: "projectRootDir"
-      }),
-      pathToCurrentComponent: function () {
-        const rt = [];
-        if (this.currentComponent !== null) {
-          getNodeAndPath(this.currentComponent.ID, this.tree, rt);
-        }
-        return rt;
-      },
-      componentTree: function () {
-        return [this.tree];
-      },
+  },
+  methods: {
+    goto: function (item) {
+      const requestID = isContainer(item) ? item.ID : item.parent;
+      SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);
+      this.showComponentTree = false;
     },
-    methods: {
-      goto: function (item) {
-        const requestID = isContainer(item) ? item.ID : item.parent;
-        SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);
-        this.showComponentTree = false;
-      },
-    },
-  };
+  },
+};
 </script>
 <style>
 .v-breadcrumbs-item--disabled {

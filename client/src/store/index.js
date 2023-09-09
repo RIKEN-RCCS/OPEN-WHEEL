@@ -5,7 +5,6 @@
  */
 import Vuex from "vuex";
 import Debug from "debug";
-import SIO from "@/lib/socketIOWrapper.js";
 const debug = Debug("wheel:vuex");
 
 const logger = (store)=>{
@@ -123,21 +122,21 @@ export default new Vuex.Store({
       }
     },
     showDialog: (context, payload)=>{
-      // ignore if dialog is already opend
-      // we have to use dialog queue for this case
+      //ignore if dialog is already opend
+      //we have to use dialog queue for this case
       if (context.state.openDialog) {
         return;
       }
       context.commit("dialogContent", payload);
       context.commit("openDialog", true);
     },
-    closeDialog: (context, payload)=>{
+    closeDialog: (context )=>{
       context.commit("dialogContent", null);
       context.commit("openDialog", false);
     },
   },
   getters: {
-    // get selected component's absolute path on server
+    //get selected component's absolute path on server
     selectedComponentAbsPath: (state, getters)=>{
       if (state.selectedComponent === null || typeof state.selectedComponent.ID === "undefined") {
         return state.projectRootDir;
@@ -152,7 +151,7 @@ export default new Vuex.Store({
       }
       return `${state.projectRootDir}${getters.pathSep}${relativePath.slice(numRemove)}`;
     },
-    // get current component's absolute path on server
+    //get current component's absolute path on server
     currentComponentAbsPath: (state, getters)=>{
       if (state.currentComponent.ID === state.rootComponentID) {
         return state.projectRootDir;
@@ -160,7 +159,7 @@ export default new Vuex.Store({
       const relativePath = state.componentPath[state.currentComponent.ID];
       return `${state.projectRootDir}${getters.pathSep}${relativePath.slice(1)}`;
     },
-    // flag to show loading screen
+    //flag to show loading screen
     waiting: (state)=>{
       return state.waitingProjectJson || state.waitingWorkflow || state.waitingFile || state.waitingSave || state.waitingEnv || state.waitingDownload;
     },

@@ -36,68 +36,68 @@
 </template>
 
 <script>
-  "use strict";
-  import "viewerjs/dist/viewer.css";
-  import applicationToolBar from "@/components/common/applicationToolBar.vue";
-  import NavDrawer from "@/components/common/NavigationDrawer.vue";
-  import { component as vueViewer}  from "v-viewer";
-  import SIO from "@/lib/socketIOWrapper.js";
-  import { readCookie } from "@/lib/utility.js";
+"use strict";
+import "viewerjs/dist/viewer.css";
+import applicationToolBar from "@/components/common/applicationToolBar.vue";
+import NavDrawer from "@/components/common/NavigationDrawer.vue";
+import { component as vueViewer}  from "v-viewer";
+import SIO from "@/lib/socketIOWrapper.js";
+import { readCookie } from "@/lib/utility.js";
 
-  export default{
-    name: "Viewer",
-    components:{
-      applicationToolBar,
-      NavDrawer,
-      vueViewer
-    },
-    data(){
-      return {
-        drawer:false,
-        items:[],
-        options:
+export default{
+  name: "Viewer",
+  components:{
+    applicationToolBar,
+    NavDrawer,
+    vueViewer
+  },
+  data(){
+    return {
+      drawer:false,
+      items:[],
+      options:
           {
             navbar: false,
             "url":"data-src"
           }
-      };
-    },
-    computed: {
-      images(){
-        return this.items;
-      }
-    },
-    mounted(){
-      // get viewer directory name from cookie
-      const dir=readCookie("dir");
-      //projectRootDir is not set in sessionStorage useually,
-      //because viewer window opens in another window.
-      //But while reloading page, projectRootDir in Cookie can be changed.
-      //So, we read it from sessionStorage here
-      let projectRootDir = sessionStorage.getItem("projectRootDir")
-      if(! projectRootDir){
-        projectRootDir = readCookie("rootDir");
-        sessionStorage.setItem("projectRootDir", projectRootDir);
-      }
-      if(typeof dir !== "string" || typeof projectRootDir !== "string"){
-        return;
-      }
-      const baseURL=readCookie("socketIOPath");
-      SIO.init(null, baseURL);
-      SIO.onGlobal("resultFiles", (results)=>{
-        this.items=results;
-      });
-      SIO.emitGlobal("getResultFiles", projectRootDir, dir, SIO.generalCallback);
-    },
-    methods:{
-      inited (viewer) {
-        this.$viewer = viewer;
-      },
-      show () {
-        this.$viewer.show();
-      }
+    };
+  },
+  computed: {
+    images(){
+      return this.items;
     }
-  };
+  },
+  mounted(){
+    //get viewer directory name from cookie
+    const dir=readCookie("dir");
+    //projectRootDir is not set in sessionStorage useually,
+    //because viewer window opens in another window.
+    //But while reloading page, projectRootDir in Cookie can be changed.
+    //So, we read it from sessionStorage here
+    let projectRootDir = sessionStorage.getItem("projectRootDir")
+    if(! projectRootDir){
+      projectRootDir = readCookie("rootDir");
+      sessionStorage.setItem("projectRootDir", projectRootDir);
+    }
+    if(typeof dir !== "string" || typeof projectRootDir !== "string"){
+      return;
+    }
+    const baseURL=readCookie("socketIOPath");
+    SIO.init(null, baseURL);
+    SIO.onGlobal("resultFiles", (results)=>{
+      this.items=results;
+    });
+    SIO.emitGlobal("getResultFiles", projectRootDir, dir, SIO.generalCallback);
+  },
+  methods:{
+    inited (viewer) {
+      this.$viewer = viewer;
+    },
+    show () {
+      this.$viewer.show();
+    }
+  }
+};
 </script>
 <style>
   .viewer {

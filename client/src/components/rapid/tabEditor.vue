@@ -90,243 +90,244 @@
 </template>
 
 <script>
-  "use strict";
-  import {mergeProps } from 'vue'
-  import { mapState, mapGetters, mapMutations } from "vuex";
-  import SIO from "@/lib/socketIOWrapper.js";
-  import { isValidInputFilename } from "@/lib/utility.js";
-  import { editorHeight } from "@/lib/constants.json"
-  import ace from "ace-builds";
-  import "ace-builds/src-noconflict/theme-idle_fingers.js";
+"use strict";
+import {mergeProps } from "vue"
+import { mapState, mapGetters, mapMutations } from "vuex";
+import SIO from "@/lib/socketIOWrapper.js";
+import { isValidInputFilename } from "@/lib/utility.js";
+import { editorHeight } from "@/lib/constants.json"
+import ace from "ace-builds";
+import "ace-builds/src-noconflict/theme-idle_fingers.js";
 
-  export default {
-    name: "TabEditor",
-    props: {
-      readOnly: {
-        type: Boolean,
-        required: true,
-      },
+export default {
+  name: "TabEditor",
+  props: {
+    readOnly: {
+      type: Boolean,
+      required: true,
     },
-    data: function () {
-      return {
-        newFilePrompt: false,
-        newFilename: null,
-        activeTab: 0,
-        files: [],
-        editor: null,
-        isJobScript: false,
-        editorHeight
-      };
+  },
+  data: function () {
+    return {
+      newFilePrompt: false,
+      newFilename: null,
+      activeTab: 0,
+      files: [],
+      editor: null,
+      isJobScript: false,
+      editorHeight
+    };
+  },
+  computed: {
+    ...mapState(["selectedFile",
+      "selectedText",
+      "projectRootDir",
+      "componentPath",
+      "selectedComponent",
+    ]),
+    ...mapGetters(["pathSep", "selectedComponentAbsPath"]),
+  },
+  watch: {
+    readOnly () {
+      this.editor.setReadOnly(this.readOnly);
     },
-    computed: {
-      ...mapState(["selectedFile",
-                   "selectedText",
-                   "projectRootDir",
-                   "componentPath",
-                   "selectedComponent",
-      ]),
-      ...mapGetters(["pathSep", "selectedComponentAbsPath"]),
-    },
-    watch: {
-      readOnly () {
-        this.editor.setReadOnly(this.readOnly);
-      },
-    },
-    mounted: function () {
-      this.editor = ace.edit("editor");
-      this.editor.setOptions({
-        theme: "ace/theme/idle_fingers",
-        autoScrollEditorIntoView: true,
-        highlightSelectedWord: true,
-        highlightActiveLine: true,
-        readOnly: this.readOnly,
-      });
-      this.editor.on("changeSession", this.editor.resize.bind(this.editor));
-      this.editor.on("changeSession", ({session})=>{
-        const isJobScript = typeof this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}})!== "undefined";
-        this.$emit("jobscript", isJobScript);
-      });
+  },
+  mounted: function () {
+    this.editor = ace.edit("editor");
+    this.editor.setOptions({
+      theme: "ace/theme/idle_fingers",
+      autoScrollEditorIntoView: true,
+      highlightSelectedWord: true,
+      highlightActiveLine: true,
+      readOnly: this.readOnly,
+    });
+    this.editor.on("changeSession", this.editor.resize.bind(this.editor));
+    this.editor.on("changeSession", ({session})=>{
+      const isJobScript = typeof this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}})!== "undefined";
+      this.$emit("jobscript", isJobScript);
+    });
 
-      SIO.onGlobal("file", (file)=>{
-        // check arraived file is already opened or not
-        const existingTab = this.files.findIndex((e)=>{
-          return e.filename === file.filename && e.dirname === file.dirname;
+    SIO.onGlobal("file", (file)=>{
+      //check arraived file is already opened or not
+      const existingTab = this.files.findIndex((e)=>{
+        return e.filename === file.filename && e.dirname === file.dirname;
+      });
+        //just switch tab if arraived file is already opened
+      if (existingTab !== -1) {
+        this.activeTab = existingTab + 1;
+        return;
+      }
+      //open new tab for arraived file
+      file.editorSession = ace.createEditSession(file.content);
+      file.absPath = `${file.dirname}${this.pathSep}${file.filename}`;
+      this.files.push(file);
+
+      //select last tab after DOM is updated
+      this.$nextTick(function () {
+        this.activeTab = this.files.length;
+        const session = this.files[this.activeTab - 1].editorSession;
+        this.editor.setSession(session);
+        this.editor.resize()
+        session.selection.on("changeSelection", ()=>{
+          this.commitSelectedText(this.editor.getSelectedText());
         });
-        // just switch tab if arraived file is already opened
-        if (existingTab !== -1) {
-          this.activeTab = existingTab + 1;
-          return;
+      });
+    });
+
+    if (typeof this.selectedFile === "string") {
+      SIO.emitGlobal("openFile", this.projectRootDir, this.selectedFile, false, (rt)=>{
+        if(rt instanceof Error){
+          console.log(rt);
         }
-        // open new tab for arraived file
-        file.editorSession = ace.createEditSession(file.content);
-        file.absPath = `${file.dirname}${this.pathSep}${file.filename}`;
-        this.files.push(file);
-
-        // select last tab after DOM is updated
-        this.$nextTick(function () {
-          this.activeTab = this.files.length;
-          const session = this.files[this.activeTab - 1].editorSession;
-          this.editor.setSession(session);
-          this.editor.resize()
-          session.selection.on("changeSelection", ()=>{
-            this.commitSelectedText(this.editor.getSelectedText());
-          });
-        });
       });
+    }
+  },
+  methods: {
+    mergeProps,
+    ...mapMutations({ commitSelectedFile: "selectedFile",
+      commitSelectedText: "selectedText" }
+    ),
+    isValidName (v) {
+      //allow . / - and alphanumeric chars
+      return isValidInputFilename(v) || "invalid filename";
+    },
+    async openNewTab (filename, argDirname) {
+      const dirname = argDirname || this.selectedComponentAbsPath;
 
-      if (typeof this.selectedFile === "string") {
-        SIO.emitGlobal("openFile", this.projectRootDir, this.selectedFile, false, (rt)=>{
-          if(rt instanceof Error){
-            console.log(rt);
+      if (!isValidInputFilename(filename)) {
+        return this.closeNewFileDialog();
+      }
+      const existingTab = this.files.findIndex((e)=>{
+        return e.filename === filename && e.dirname === dirname;
+      });
+      if (existingTab === -1) {
+        const absFilename = `${dirname}${this.pathSep}${filename}`;
+        SIO.emitGlobal("openFile", this.projectRootDir, absFilename, false, (rt)=>{
+          if (rt instanceof Error) {
+            console.log("file open error!", rt);
           }
         });
+      } else {
+        this.activeTab = existingTab + 1;
+        this.changeTab(existingTab + 1);
       }
     },
-    methods: {
-      mergeProps,
-      ...mapMutations({ commitSelectedFile: "selectedFile",
-                      commitSelectedText: "selectedText" }
-                     ),
-      isValidName (v) {
-        // allow . / - and alphanumeric chars
-        return isValidInputFilename(v) || "invalid filename";
-      },
-      async openNewTab (filename, argDirname) {
-        const dirname = argDirname || this.selectedComponentAbsPath;
-
-        if (!isValidInputFilename(filename)) {
-          return this.closeNewFileDialog();
+    closeNewFileDialog () {
+      //clear temporaly variables and close prompt
+      this.newFilename = null;
+      this.newFilePrompt = false;
+    },
+    insertSnipet(argSnipet){
+      //this function will be called from parent component
+      const session = this.editor.getSession();
+      const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}}) || new ace.Range(0,0,0,0);
+      range.start.row=0;
+      range.start.column=0;
+      const snipet = range.end.row === 0 && range.end.column === 0 ? argSnipet : argSnipet.trimEnd();
+      session.replace(range, snipet);
+      this.$emit("jobscript", true);
+    },
+    removeSnipet(){
+      //this function will be called from parent component
+      const session = this.editor.getSession();
+      const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}});
+      if(!range){
+        return
+      }
+      range.start.row=0;
+      range.start.column=0;
+      session.replace(range,"");
+      this.$emit("jobscript", false);
+    },
+    insertBraces () {
+      //this function will be called from parent component
+      const selectedRange = this.editor.getSelection().getRange();
+      const session = this.editor.getSession();
+      session.insert(selectedRange.end, " }}");
+      session.insert(selectedRange.start, "{{ ");
+      this.editor.getSelection().clearSelection();
+    },
+    save (index) {
+      return new Promise((resolve, reject)=>{
+        const file = this.files[index];
+        const document = file.editorSession.getDocument();
+        const content = document.getValue();
+        if (file.content === content) {
+          console.log("do not call 'saveFile' API because file is not changed. index=", index);
         }
-        const existingTab = this.files.findIndex((e)=>{
-          return e.filename === filename && e.dirname === dirname;
-        });
-        if (existingTab === -1) {
-          const absFilename = `${dirname}${this.pathSep}${filename}`;
-          SIO.emitGlobal("openFile", this.projectRootDir, absFilename, false, (rt)=>{
-            if (rt instanceof Error) {
-              console.log("file open error!", rt);
-            }
-          });
-        } else {
-          this.activeTab = existingTab + 1;
-          this.changeTab(existingTab + 1);
-        }
-      },
-      closeNewFileDialog () {
-        // clear temporaly variables and close prompt
-        this.newFilename = null;
-        this.newFilePrompt = false;
-      },
-      insertSnipet(argSnipet){
-        // this function will be called from parent component
-        const session = this.editor.getSession();
-        const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}}) || new ace.Range(0,0,0,0);
-        range.start.row=0;
-        range.start.column=0;
-        const snipet = range.end.row === 0 && range.end.column === 0 ? argSnipet : argSnipet.trimEnd();
-        session.replace(range, snipet);
-        this.$emit("jobscript", true);
-      },
-      removeSnipet(){
-        // this function will be called from parent component
-        const session = this.editor.getSession();
-        const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}});
-        if(!range){
-          return
-        }
-        range.start.row=0;
-        range.start.column=0;
-        session.replace(range,"");
-        this.$emit("jobscript", false);
-      },
-      insertBraces () {
-        // this function will be called from parent component
-        const selectedRange = this.editor.getSelection().getRange();
-        const session = this.editor.getSession();
-        session.insert(selectedRange.end, " }}");
-        session.insert(selectedRange.start, "{{ ");
-        this.editor.getSelection().clearSelection();
-      },
-      save (index) {
-        return new Promise((resolve, reject)=>{
-          const file = this.files[index];
-          const document = file.editorSession.getDocument();
-          const content = document.getValue();
-          if (file.content === content) {
-            console.log("do not call 'saveFile' API because file is not changed. index=", index);
+        SIO.emitGlobal("saveFile", this.projectRootDir,  file.filename, file.dirname, content, (rt)=>{
+          if (!rt) {
+            console.log("ERROR: file save failed:", rt);
+            reject(rt);
           }
-          SIO.emitGlobal("saveFile", this.projectRootDir,  file.filename, file.dirname, content, (rt)=>{
-            if (!rt) {
-              console.log("ERROR: file save failed:", rt);
-              reject(rt);
-            }
-            file.content = content;
-            resolve(rt);
-          });
+          file.content = content;
+          resolve(rt);
         });
-      },
-      getChangedFiles(){
-        return this.files.map((file)=>{
-          const document = file.editorSession.getDocument();
-          const content = document.getValue();
-          if (file.content !== content) {
-            return {name: `${file.dirname}/${file.filename}`}
-          }
-          return null;
-        })
+      });
+    },
+    getChangedFiles(){
+      return this.files.map((file)=>{
+        const document = file.editorSession.getDocument();
+        const content = document.getValue();
+        if (file.content !== content) {
+          return {name: `${file.dirname}/${file.filename}`}
+        }
+        return null;
+      })
         .filter((e)=>{
           return e !== null;
         });
-      },
-      hasChange () {
-        const changedFiles=this.getChangedFiles();
-        return changedFiles.length > 0;
-      },
-      saveAll () {
-        let changed = false;
-        for (const file of this.files) {
-          const document = file.editorSession.getDocument();
-          const content = document.getValue();
-          if (file.content === content) {
-            console.log(`INFO: ${file.filename} is not changed.`);
-          } else {
-            changed = true;
-            SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, content, (rt)=>{
-              if (!rt) {
-                console.log("ERROR: file save failed:", rt);
-              }
-              file.content = content;
-            });
-          }
-        }
-        return changed;
-      },
-      closeTab (index) {
-        const file = this.files[index];
-        if (index === 0) {
-          const document = file.editorSession.getDocument();
-          document.setValue("");
-        }
-        this.files.splice(index, 1);
-        if(file.absPath === this.selectedFile){
-          this.commitSelectedFile(null);
-        }
-      },
-      changeTab (argIndex) {
-        if (argIndex === 0) {
-          // just ignored
-          return;
-        }
-        const index = argIndex - 1;
-        if (index < this.files.length) {
-          const session = this.files[index].editorSession;
-          this.editor.setSession(session);
-          this.commitSelectedText("");
-          session.selection.on("changeSelection", ()=>{
-            this.commitSelectedText(this.editor.getSelectedText());
+    },
+    hasChange () {
+      const changedFiles=this.getChangedFiles();
+      return changedFiles.length > 0;
+    },
+    saveAll () {
+      let changed = false;
+      for (const file of this.files) {
+        const document = file.editorSession.getDocument();
+        const content = document.getValue();
+        if (file.content === content) {
+          console.log(`INFO: ${file.filename} is not changed.`);
+        } else {
+          changed = true;
+          SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, content, (rt)=>{
+            if (!rt) {
+              console.log("ERROR: file save failed:", rt);
+            }
+            file.content = content;
           });
         }
-      },
+      }
+      return changed;
     },
-  };
+    closeTab (index) {
+      const file = this.files[index];
+      if (index === 0) {
+        const document = file.editorSession.getDocument();
+        document.setValue("");
+      }
+      this.files.splice(index, 1);
+
+      if(file.absPath === this.selectedFile){
+        this.commitSelectedFile(null);
+      }
+    },
+    changeTab (argIndex) {
+      if (argIndex === 0) {
+        //just ignored
+        return;
+      }
+      const index = argIndex - 1;
+      if (index < this.files.length) {
+        const session = this.files[index].editorSession;
+        this.editor.setSession(session);
+        this.commitSelectedText("");
+        session.selection.on("changeSelection", ()=>{
+          this.commitSelectedText(this.editor.getSelectedText());
+        });
+      }
+    },
+  },
+};
 </script>

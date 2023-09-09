@@ -22,10 +22,10 @@
  * @prop {string} icon
  * @prop {string} label
  */
-  export default {
-    name: "Buttons",
-    props: {
-      buttons: Array,
-    },
-  };
+export default {
+  name: "Buttons",
+  props: {
+    buttons: Array,
+  },
+};
 </script>

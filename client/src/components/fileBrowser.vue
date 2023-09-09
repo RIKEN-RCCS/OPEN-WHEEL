@@ -154,293 +154,296 @@
   </div>
 </template>
 <script>
-  import Debug from "debug"
-  const debug = Debug("wheel:fileBrowser");
-  import { mapState, mapGetters, mapMutations } from "vuex"
-  import SIO from "@/lib/socketIOWrapper.js"
-  import versatileDialog from "@/components/versatileDialog.vue";
-  import { removeFromArray } from "@/lib/clientUtility.js"
-  import myTreeview from "@/components/common/myTreeview.vue"
-  import {_getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel  } from "@/components/common/fileTreeUtils.js"
+import Debug from "debug"
+const debug = Debug("wheel:fileBrowser");
+import { mapState, mapGetters, mapMutations } from "vuex"
+import SIO from "@/lib/socketIOWrapper.js"
+import versatileDialog from "@/components/versatileDialog.vue";
+import { removeFromArray } from "@/lib/clientUtility.js"
+import myTreeview from "@/components/common/myTreeview.vue"
+import {_getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel  } from "@/components/common/fileTreeUtils.js"
 
-  export default {
-    name: "FileBrowser",
-    components: {
-      versatileDialog,
-      myTreeview
-    },
-    props: {
-      readonly: { type: Boolean, default: true },
-      projectRootDir: { type: String, default: null }
-    },
-    data: function () {
-      return {
-        currentDir: null,
-        activeItem: null,
-        uploading:false,
-        percentUploaded: 0,
-        openItems: [],
-        items: [],
-        dialog: {
-          open: false,
-          title: "",
-          withInputField: true,
-          inputFieldLabel: "",
-          inputField: "",
-          submitArgs: [],
-        },
-        downloadDialogButton:[
-          {icon: "mdi-close", label: "close"}
-        ],
-        downloadURL:null,
-        downloadDialog:false
-      }
-    },
-    computed: {
-      ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
-      ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
-      storagePath(){
-        return this.copySelectedComponent.storagePath || "/"
+export default {
+  name: "FileBrowser",
+  components: {
+    versatileDialog,
+    myTreeview
+  },
+  props: {
+    readonly: { type: Boolean, default: true },
+    projectRootDir: { type: String, default: null }
+  },
+  data: function () {
+    return {
+      currentDir: null,
+      activeItem: null,
+      uploading:false,
+      percentUploaded: 0,
+      openItems: [],
+      items: [],
+      dialog: {
+        open: false,
+        title: "",
+        withInputField: true,
+        inputFieldLabel: "",
+        inputField: "",
+        submitArgs: [],
       },
-      isSND(){
-        return this.activeItem !== null && this.activeItem.type.startsWith("snd");
-      }
+      downloadDialogButton:[
+        {icon: "mdi-close", label: "close"}
+      ],
+      downloadURL:null,
+      downloadDialog:false
+    }
+  },
+  computed: {
+    ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
+    ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
+    storagePath(){
+      return this.copySelectedComponent.storagePath || "/"
     },
-    watch: {
-      items () {
-        if(["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
-          return;
+    isSND(){
+      return this.activeItem !== null && this.activeItem.type.startsWith("snd");
+    }
+  },
+  watch: {
+    items () {
+      if(["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
+        return;
+      }
+      const scriptCandidates = this.items
+        .filter((e)=>{
+          return e.type.startsWith("file")
+        })
+        .map((e)=>{
+          return e.name
+        })
+      this.commitScriptCandidates(scriptCandidates)
+    },
+    currentComponent: {
+      //edit workflow -> server respond workflow data -> fire this event
+      handler(nv,ov){
+        if(nv.descendants.some((e)=>{
+          return e.ID === this.selectedComponent.ID
+        })){
+          this.getComponentDirRootFiles();
         }
-        const scriptCandidates = this.items
-          .filter((e)=>{
-            return e.type.startsWith("file")
-          })
-          .map((e)=>{
-            return e.name
-          })
-        this.commitScriptCandidates(scriptCandidates)
       },
-      currentComponent: {
-        // edit workflow -> server respond workflow data -> fire this event
-        handler(nv,ov){
-          if(nv.descendants.some((e)=> {
-            return e.ID === this.selectedComponent.ID
-          })){
-            this.getComponentDirRootFiles();
-          }
-        },
-        deep: true
-      },
-      selectedComponent(){
-        this.getComponentDirRootFiles();
-        this.currentDir=this.selectedComponentAbsPath
-      },
+      deep: true
     },
-    mounted () {
+    selectedComponent(){
       this.getComponentDirRootFiles();
-      if(! this.readonly){
-        const recaptchaScript = document.createElement("script");
-        recaptchaScript.setAttribute(
-          "src",
-          "/siofu/client.js"
-        );
-        document.head.appendChild(recaptchaScript);
-        SIO.listenOnDrop(this.$el)
-        SIO.onUploaderEvent("choose", this.onChoose)
-        SIO.onUploaderEvent("complete", this.onUploadComplete)
-        SIO.onUploaderEvent("progress", this.updateProgressBar)
-      }
       this.currentDir=this.selectedComponentAbsPath
     },
-    beforeDestroy(){
-      SIO.removeUploaderEvent("choose", this.onChoose)
-      SIO.removeUploaderEvent("complete", this.onUploadComplete)
-      SIO.removeUploaderEvent("progress", this.updateProgressBar)
+  },
+  mounted () {
+    this.getComponentDirRootFiles();
+
+    if(! this.readonly){
+      const recaptchaScript = document.createElement("script");
+      recaptchaScript.setAttribute(
+        "src",
+        "/siofu/client.js"
+      );
+      document.head.appendChild(recaptchaScript);
+      SIO.listenOnDrop(this.$el)
+      SIO.onUploaderEvent("choose", this.onChoose)
+      SIO.onUploaderEvent("complete", this.onUploadComplete)
+      SIO.onUploaderEvent("progress", this.updateProgressBar)
+    }
+    this.currentDir=this.selectedComponentAbsPath
+  },
+  beforeDestroy(){
+    SIO.removeUploaderEvent("choose", this.onChoose)
+    SIO.removeUploaderEvent("complete", this.onUploadComplete)
+    SIO.removeUploaderEvent("progress", this.updateProgressBar)
+  },
+  methods: {
+    getNodeIcon(isOpen, item){
+      return isOpen ? openIcons[item.type] : icons[item.type]
     },
-    methods: {
-      getNodeIcon(isOpen, item){
-        return isOpen ? openIcons[item.type] : icons[item.type]
-      },
-      getLeafIcon(item){
-        return icons[item.type]
-      },
-      async copyToClipboard(){
-        await toClipboard(this.dialog.inputField)
-      },
-      getActiveItem (key) {
-        return  _getActiveItem(this.items,key);
-      },
-      getComponentDirRootFiles(){
-        const cb= (fileList)=>{
-          if(fileList === null){
-            return;
+    getLeafIcon(item){
+      return icons[item.type]
+    },
+    async copyToClipboard(){
+      await toClipboard(this.dialog.inputField)
+    },
+    getActiveItem (key) {
+      return  _getActiveItem(this.items,key);
+    },
+    getComponentDirRootFiles(){
+      const cb= (fileList)=>{
+        if(fileList === null){
+          return;
+        }
+        this.items = fileList
+          .filter((e)=>{return !e.isComponentDir})
+          .map(fileListModifier.bind(null, this.pathSep))
+      }
+      const path = this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
+      const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent"
+      SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode}, cb)
+    },
+    noDuplicate(v){
+      return ! this.items.map((e)=>{ return e.name }).includes(v)
+    },
+    updateSelected(activeItem){
+      this.activeItem=activeItem
+
+      if(this.activeItem === null){
+        console.log("failed to get current selected Item");
+        return
+      }
+      this.currentDir=this.activeItem.path
+      this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
+    },
+    onChoose(event){
+      for (const file of event.files){
+        file.meta.currentDir=this.currentDir
+        file.meta.orgName=file.name
+        file.meta.projectRootDir=this.projectRootDir
+        file.meta.componentDir=this.selectedComponentAbsPath
+        file.meta.clientID=SIO.getID()
+        file.meta.skipGit=false;
+        file.meta.overwrite=false;
+      }
+      this.uploading=true;
+    },
+    onUploadComplete(){
+      this.uploading=false;
+      this.getComponentDirRootFiles();
+    },
+    updateProgressBar(event){
+      this.percentUploaded=(event.bytesLoaded / event.file.size)*100
+    },
+    ...mapMutations({
+      commitScriptCandidates: "scriptCandidates",
+      commitSelectedFile: "selectedFile",
+      commitWaitingDownload: "waitingDownload"
+    }),
+    getChildren (item) {
+      return new Promise((resolve, reject)=>{
+        const cb=(fileList)=>{
+          if (!Array.isArray(fileList)) {
+            reject(fileList)
           }
-          this.items = fileList
+          item.children = fileList
             .filter((e)=>{return !e.isComponentDir})
             .map(fileListModifier.bind(null, this.pathSep))
+          resolve()
         }
-        const path = this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
-        const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent"
-        SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode}, cb)
-      },
-      noDuplicate(v){
-       return ! this.items.map((e)=>{ return e.name }).includes(v)
-      },
-      updateSelected(activeItem){
-        this.activeItem=activeItem
-        if(this.activeItem === null){
+        const activeItem = this.getActiveItem(item.id)
+        if(activeItem === null){
           console.log("failed to get current selected Item");
           return
         }
-        this.currentDir=this.activeItem.path
-        this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
-      },
-      onChoose(event){
-        for (const file of event.files){
-          file.meta.currentDir=this.currentDir
-          file.meta.orgName=file.name
-          file.meta.projectRootDir=this.projectRootDir
-          file.meta.componentDir=this.selectedComponentAbsPath
-          file.meta.clientID=SIO.getID()
-          file.meta.skipGit=false;
-          file.meta.overwrite=false;
+        const path = this.selectedComponent.type === "storage"
+          ?  [this.storagePath, item.id.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep) : item.id
+
+        if(item.type === "dir" || item.type === "dir-link"){
+          SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
+        }else{
+          SIO.emitGlobal("getSNDContents", this.projectRootDir, item.path, item.name, item.type.startsWith("sndd"),cb)
         }
-        this.uploading=true;
-      },
-      onUploadComplete(){
-        this.uploading=false;
-        this.getComponentDirRootFiles();
-      },
-      updateProgressBar(event){
-        this.percentUploaded=(event.bytesLoaded / event.file.size)*100
-      },
-      ...mapMutations({
-        commitScriptCandidates: "scriptCandidates",
-        commitSelectedFile: "selectedFile",
-        commitWaitingDownload: "waitingDownload"
-      }),
-      getChildren (item) {
-        return new Promise((resolve, reject)=>{
-          const cb=(fileList)=>{
-            if (!Array.isArray(fileList)) {
-              reject(fileList)
-            }
-            item.children = fileList
-              .filter((e)=>{return !e.isComponentDir})
-              .map(fileListModifier.bind(null, this.pathSep))
-            resolve()
-          }
-          const activeItem = this.getActiveItem(item.id)
-          if(activeItem === null){
-            console.log("failed to get current selected Item");
+      })
+    },
+    clearAndCloseDialog () {
+      this.dialog.title = ""
+      this.dialog.inputFieldLabel = ""
+      this.dialog.inputField = ""
+      this.dialog.open = false
+    },
+    submitAndCloseDialog () {
+      if (this.dialog.submitEvent === "removeFile") {
+        SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
+          if (!rt) {
             return
           }
-          const path = this.selectedComponent.type === "storage"
-            ?  [this.storagePath, item.id.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep) : item.id
+          removeItem(this.items, this.activeItem.id)
+          this.commitSelectedFile(null);
+          this.currentDir=this.selectedComponentAbsPath
+        })
+      } else if (this.dialog.submitEvent === "renameFile") {
+        const newName = this.dialog.inputField
 
-          if(item.type === "dir" || item.type === "dir-link"){
-              SIO.emitGlobal("getFileList",this.projectRootDir,  {path, mode: "underComponent"}, cb)
-          }else{
-            SIO.emitGlobal("getSNDContents", this.projectRootDir, item.path, item.name, item.type.startsWith("sndd"),cb)
+        SIO.emitGlobal("renameFile", this.projectRootDir, this.currentDir, this.activeItem.name, newName, (rt)=>{
+          if (!rt) {
+            return
+          }
+          this.activeItem.name = newName
+        })
+      } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
+        const name = this.dialog.inputField
+        const fullPath = `${this.currentDir}${this.pathSep}${name}`
+        if(!this.noDuplicate(name)){
+          console.log("duplicated name is not allowed")
+          this.clearAndCloseDialog()
+          return
+        }
+        const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir"
+        SIO.emitGlobal(this.dialog.submitEvent, this.projectRootDir, fullPath, (rt)=>{
+          if (!rt) {
+            return
+          }
+          const newItem = { id: fullPath, name, path:this.currentDir, type }
+          if (this.dialog.submitEvent === "createNewDir") {
+            newItem.children = []
+          }
+          const container = this.activeItem ? this.activeItem.children : this.items
+          container.push(newItem)
+
+          if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
+            this.openItems.push(this.activeItem.id)
           }
         })
-      },
-      clearAndCloseDialog () {
-        this.dialog.title = ""
-        this.dialog.inputFieldLabel = ""
-        this.dialog.inputField = ""
-        this.dialog.open = false
-      },
-      submitAndCloseDialog () {
-        if (this.dialog.submitEvent === "removeFile") {
-          SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
-            if (!rt) {
-              return
-            }
-            removeItem(this.items, this.activeItem.id)
-            this.commitSelectedFile(null);
-            this.currentDir=this.selectedComponentAbsPath
-          })
-        } else if (this.dialog.submitEvent === "renameFile") {
-          const newName = this.dialog.inputField
-
-          SIO.emitGlobal("renameFile", this.projectRootDir, this.currentDir, this.activeItem.name, newName, (rt)=>{
-            if (!rt) {
-              return
-            }
-            this.activeItem.name = newName
-          })
-        } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
-          const name = this.dialog.inputField
-          const fullPath = `${this.currentDir}${this.pathSep}${name}`
-          if(!this.noDuplicate(name)){
-            console.log("duplicated name is not allowed")
-            this.clearAndCloseDialog()
-            return
-          }
-          const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir"
-          SIO.emitGlobal(this.dialog.submitEvent, this.projectRootDir, fullPath, (rt)=>{
-            if (!rt) {
-              return
-            }
-            const newItem = { id: fullPath, name, path:this.currentDir, type }
-            if (this.dialog.submitEvent === "createNewDir") {
-              newItem.children = []
-            }
-            const container = this.activeItem ? this.activeItem.children : this.items
-            container.push(newItem)
-
-            if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
-              this.openItems.push(this.activeItem.id)
-            }
-          })
-        } else {
-          console.log("unsupported event", this.dialog.submitEvent)
-        }
-        this.clearAndCloseDialog()
-      },
-      closeDownloadDialog(){
-        SIO.emitGlobal("removeDownloadFile", this.projectRootDir, this.downloadURL, ()=>{
-          this.downloadURL=null
-          this.downloadDialog=false
-        });
-      },
-      download(){
-        this.commitWaitingDownload(true);
-        debug(`download request: ${this.activeItem.id}`);
-        SIO.emitGlobal('download', this.projectRootDir, this.activeItem.id, (url)=>{
-          this.commitWaitingDownload(false);
-          if(url === null){
-            console.log("download failed.");
-            return
-          }
-          this.downloadURL=url
-          this.downloadDialog=true
-        });
-      },
-      openDialog (event) {
-        if (["removeFile", "renameFile", "shareFile"].includes(event)) {
-          if (!this.activeItem) {
-            console.log("remove or rename without active item is not allowed")
-            return
-          }
-          if (this.activeItem.type.startsWith("snd")) {
-            console.log(`${event.replace("File", "")} SND or SNDD is not allowed`)
-            return
-          }
-        }
-        if(event === "shareFile"){
-          this.dialog.inputField=this.activeItem.id
-        }
-
-        this.dialog.title = getTitle(event, this.activeItem ? this.activeItem.name : null)
-        this.dialog.inputFieldLabel = getLabel(event)
-        this.dialog.submitEvent = event
-        this.dialog.open = true
-      },
-      showUploadDialog () {
-          SIO.prompt();
-      },
+      } else {
+        console.log("unsupported event", this.dialog.submitEvent)
+      }
+      this.clearAndCloseDialog()
     },
-  }
+    closeDownloadDialog(){
+      SIO.emitGlobal("removeDownloadFile", this.projectRootDir, this.downloadURL, ()=>{
+        this.downloadURL=null
+        this.downloadDialog=false
+      });
+    },
+    download(){
+      this.commitWaitingDownload(true);
+      debug(`download request: ${this.activeItem.id}`);
+      SIO.emitGlobal("download", this.projectRootDir, this.activeItem.id, (url)=>{
+        this.commitWaitingDownload(false);
+
+        if(url === null){
+          console.log("download failed.");
+          return
+        }
+        this.downloadURL=url
+        this.downloadDialog=true
+      });
+    },
+    openDialog (event) {
+      if (["removeFile", "renameFile", "shareFile"].includes(event)) {
+        if (!this.activeItem) {
+          console.log("remove or rename without active item is not allowed")
+          return
+        }
+        if (this.activeItem.type.startsWith("snd")) {
+          console.log(`${event.replace("File", "")} SND or SNDD is not allowed`)
+          return
+        }
+      }
+      if(event === "shareFile"){
+        this.dialog.inputField=this.activeItem.id
+      }
+
+      this.dialog.title = getTitle(event, this.activeItem ? this.activeItem.name : null)
+      this.dialog.inputFieldLabel = getLabel(event)
+      this.dialog.submitEvent = event
+      this.dialog.open = true
+    },
+    showUploadDialog () {
+      SIO.prompt();
+    },
+  },
+}
 </script>

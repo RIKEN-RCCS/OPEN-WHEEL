@@ -30,20 +30,20 @@
   </v-navigation-drawer>
 </template>
 <script>
-  export default {
-    name: "NavDrawer",
-    props: {
-      value: Boolean,
-    },
-    computed: {
-      drawer: {
-        get () {
-          return this.value;
-        },
-        set (value) {
-          this.$emit("update:modelValue", value);
-        },
+export default {
+  name: "NavDrawer",
+  props: {
+    value: Boolean,
+  },
+  computed: {
+    drawer: {
+      get () {
+        return this.value;
+      },
+      set (value) {
+        this.$emit("update:modelValue", value);
       },
     },
-  };
+  },
+};
 </script>
