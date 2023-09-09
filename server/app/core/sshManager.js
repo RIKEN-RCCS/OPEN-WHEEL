@@ -177,7 +177,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   };
 
   if (hostinfo.renewInterval) {
-    hostinfo.ControlPersist *= 60;
+    hostinfo.ControlPersist = hostinfo.renewInterval * 60;
   }
   if (hostinfo.readyTimeout) {
     hostinfo.ConnectTimeout = Math.floor(hostinfo.readyTimeout / 1000);
@@ -192,7 +192,8 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   //hostinfo.host is hostname or IP address of remote host
   let success = false;
   try {
-    success = await ssh.canConnect(hostinfo.ConnectTimeout || 300);
+    const timeout = hostinfo.ConnectTimeout > 120 ? hostinfo.ConnectTimeout : 120;
+    success = await ssh.canConnect(timeout);
   } catch (e) {
     getLogger(projectRootDir).warn("ssh connection failed:", e);
   }

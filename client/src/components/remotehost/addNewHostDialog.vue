@@ -187,15 +187,6 @@
                           validate-on="blur"
                         />
                       </v-col>
-                      <v-col cols="6">
-                        <v-text-field
-                          v-model.number="host.keepaliveInterval"
-                          label="interval time between keep alive packet  (msec.)"
-                          :rules="[positiveNumber]"
-                          validate-on="blur"
-                        />
-                      </v-col>
-                      <v-col cols="6" />
                     </v-row>
                   </v-container>
                 </v-expansion-panel-text>

@@ -4,18 +4,17 @@ on:
     types:
       - closed
 jobs:
-  debug:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo test
-      - run: echo ${{ github.event.pull_request.merged }}
-
   build:
     if: github.event.pull_request.merged == true
     env:
       CONTAINER_NAME: "tmkawanabe/wheel"
+      CI_REGISTRY_USER: tmkawanabe
+      CI_REGISTRY_PASSWORD: ${{ secrets.CI_REGISTRY_PASSWORD }}
+
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - run: docker build -t ${CONTAINER_NAME} .
+      - run: docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD}
       - run: docker push ${CONTAINER_NAME}
