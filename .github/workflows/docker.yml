@@ -12,7 +12,7 @@ jobs:
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}
@@ -23,7 +23,9 @@ jobs:
       GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: echo push to ${BRANCH_NAME}
       - name: push to gitlab for backup
         run: |
