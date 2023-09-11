@@ -71,7 +71,6 @@ jobs:
           git add  server/app/db/version.json
           git commit -m '[skip ci] update version number'
           git push origin HEAD:${GITHUB_REF}
-      - uses: ./.github/workflows/backup_to_gitlab.yml
       # - name: push to gitlab for backup
       #   env:
       #     BRANCH_NAME: ${{ github.ref_name }}
