@@ -27,4 +27,4 @@ jobs:
       - run: echo push to ${BRANCH_NAME}
       - name: push to gitlab for backup
         run: |
-          git push https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.com/aicshud/WHEEL.git HEAD:${BRANCH_NAME}
+          git push -f https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.com/aicshud/WHEEL.git HEAD:${BRANCH_NAME}
