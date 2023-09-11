@@ -1,4 +1,4 @@
-name: build and push docker container
+name: build container and deploy, make backup
 on:
   pull_request_target:
     types:
@@ -16,3 +16,7 @@ jobs:
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}
+  backup:
+    if: github.event.pull_request.merged == true
+    steps:
+      - uses: ./.github/workflows/backup_to_gitlab.yml
