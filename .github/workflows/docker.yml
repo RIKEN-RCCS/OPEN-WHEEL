@@ -1,10 +1,10 @@
-name: build and push docker container
+name: build and deploy container
 on:
   pull_request_target:
     types:
       - closed
 jobs:
-  build:
+  build_and_deploy:
     if: github.event.pull_request.merged == true
     env:
       DOCKER_USER_NAME: ${{ vars.DOCKER_USER_NAME }}
@@ -12,7 +12,6 @@ jobs:
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}
