@@ -81,6 +81,4 @@ jobs:
           BRANCH_NAME: ${{ github.ref_name }}
           GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
         run: |
-          git branch
-          git pull https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.com/aicshud/WHEEL.git HEAD:${BRANCH_NAME}
           git push https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.com/aicshud/WHEEL.git HEAD:${BRANCH_NAME}
