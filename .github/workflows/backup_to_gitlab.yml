@@ -4,6 +4,8 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+jobs:
+  backup:
     steps:
       - uses: actions/checkout@v3
       - name: push to gitlab for backup
