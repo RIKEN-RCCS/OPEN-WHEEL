@@ -2,8 +2,8 @@ name: push repo to gitlab for backup
 on:
   workflow_run:
     workflows:
-      - "test"
-      - "build_and_deploy"
+      - "run UT"
+      - "build and deploy container"
     types:
       - completed
 jobs:
