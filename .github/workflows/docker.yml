@@ -1,20 +1,32 @@
-name: build and push docker container
+name: build and deploy container
 on:
   pull_request_target:
     types:
       - closed
 jobs:
-  build:
+  build_and_deploy:
     if: github.event.pull_request.merged == true
     env:
-      CONTAINER_NAME: "tmkawanabe/wheel"
-      CI_REGISTRY_USER: tmkawanabe
-      CI_REGISTRY_PASSWORD: ${{ secrets.CI_REGISTRY_PASSWORD }}
-
-
+      DOCKER_USER_NAME: ${{ vars.DOCKER_USER_NAME }}
+      DOCKER_CONTAINER_NAME: ${{ vars.DOCKER_CONTAINER_NAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: docker build -t ${CONTAINER_NAME} .
-      - run: docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD}
-      - run: docker push ${CONTAINER_NAME}
+      - uses: actions/checkout@v4
+      - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME} .
+      - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
+      - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}
+  backup:
+    needs: ["build_and_deploy"]
+    env:
+      BRANCH_NAME: ${{ github.ref_name }}
+      GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: echo push to ${BRANCH_NAME}
+      - name: push to gitlab for backup
+        run: |
+          git push -f https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.com/aicshud/WHEEL.git HEAD:${BRANCH_NAME}
