@@ -51,13 +51,18 @@ class JsonArrayManager {
 
   /**
    * update entry
-   * @param {Object} entry
+   * @param {Object} entry - data to be updated
+   * @param {boolean} removeNoExists - if true, properties which are not contained in entry will be removed
    */
-  async update(entry) {
+  async update(entry, removeNoExists) {
     const targetIndex = this.data.findIndex((e)=>{
       return e.id === entry.id;
     });
-    Object.assign(this.data[targetIndex], entry);
+    if (removeNoExists) {
+      this.data[targetIndex] = Object.assign({}, entry);
+    } else {
+      Object.assign(this.data[targetIndex], entry);
+    }
     return this.write();
   }
 
