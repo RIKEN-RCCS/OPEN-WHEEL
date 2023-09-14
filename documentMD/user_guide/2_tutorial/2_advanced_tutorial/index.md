@@ -204,16 +204,16 @@ __run.sh__ の __number__ の部分は、 __{{ number }}__ と書き換えられ
 
 
 #### パラメータ置換に関する補足
-さきほどの、 __{{ number }}__ をtargetfileに指定したファイル内の別の場所に記載すれば、そちらも同様にパラメータに置換されます。
+さきほどの、 __{% raw %}{{ number }}{% endraw %}__ をtargetfileに指定したファイル内の別の場所に記載すれば、そちらも同様にパラメータに置換されます。
 
 また、二重括弧の中には、フィルタを追加することができます。
-例えば __{{ number | upper }}__ とすればパラメータを大文字にすることができます。
+例えば __{% raw %}{{ number | upper }}{% endraw %}__ とすればパラメータを大文字にすることができます。
 
-他にも __{{ "true" if number == "foo" else "false" }}__ とすれば、number がfooの時のみ "true"それ以外の時は"false" に置き換えられます。
+他にも __{% raw %}{{ "true" if number == "foo" else "false" }}{% endraw %}__ とすれば、number がfooの時のみ "true"それ以外の時は"false" に置き換えられます。
 
 利用可能なフィルタはこちらをご参照ください
 
-https://mozilla.github.io/nunjucks/templating.html#builtin-filters
+[https://mozilla.github.io/nunjucks/templating.html#builtin-filters](https://mozilla.github.io/nunjucks/templating.html#builtin-filters)
 
 
 ### 4. 入力ファイル
@@ -482,7 +482,7 @@ stepjobTask1は実行され、stdout.txtの中に `stepjobTask1` と書かれて
 これで、応用編のチュートリアルは終了です。
 
 実際にアプリケーションを動かすワークフローについて知りたい方は
-[実践編のチュートリアル](../3_application_tutorial/index.md ) に進んでください。
+[実践編のチュートリアル](../3_application_tutorial/index.md) に進んでください。
 
 また、個々の機能の詳細な内容については、[リファレンスマニュアル](../../3_reference_manual/index.md) をご参照ください。
 
