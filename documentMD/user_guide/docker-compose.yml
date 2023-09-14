@@ -1,0 +1,12 @@
+version: "3"
+services:
+  service_jekyll:
+    image: "jekyll/jekyll:pages"
+    volumes:
+      - .:/srv/jekyll/
+    command: >
+      bash -c "gem install webrick && jekyll serve"
+    ports:
+      - "4000:4000"
+    tty: true
+    stdin_open: true
