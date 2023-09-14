@@ -16,3 +16,4 @@ server.key
 _user_guide
 *.swp
 server/app/viewer
+**/_site

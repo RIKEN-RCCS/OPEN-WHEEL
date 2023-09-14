@@ -1,7 +1,7 @@
 # WHEEL　ユーザーガイド
 本ユーザガイドは次の3部構成となっています。
 
-[WHEEL起動手順書](1_how_to_boot/index.md )
+[WHEEL起動手順書](1_how_to_boot/index.md)
 
 [WHEEL チュートリアル](2_tutorial/index.md)
 

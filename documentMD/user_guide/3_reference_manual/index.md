@@ -1,9 +1,9 @@
 # WHEEL リファレンスマニュアル
 本ドキュメントはWHEELの画面構成、機能を網羅的に説明するリファレンスマニュアルです。
 
-[1. ホーム画面](1_home_screen/home.md)
+[1. ホーム画面](1_home_screen/index.md)
 
-[2. リモートホスト画面](2_remotehost_screen/remotehost.md)
+[2. リモートホスト画面](2_remotehost_screen/index.md)
 
 [3. ワークフロー画面-グラフビュー](3_workflow_screen/1_graphview.md)
 
