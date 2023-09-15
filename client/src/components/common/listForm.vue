@@ -16,25 +16,12 @@
     </template>
     <template
       v-if="allowRenameInline"
-      #item.column.name="props"
+      #item.name="props"
     >
-      <v-edit-dialog
-        large
-        persistent
-        @open="edittingField=props.item.name;editTarget=props.item.name"
-        @save="onSaveEditDialog(props.item, props)"
-      >
-        {{ props.item.name }}
-        <template
-          #input
-        >
-          <v-text-field
-            v-model="edittingField"
-            :rules=edittingFieldValidator
-            clearable
-          />
-        </template>
-      </v-edit-dialog>
+      <v-btn variant="text"
+        :text=props.item.columns.name
+        @click="openDialog(props.item.columns.name, props.index)"
+      />
     </template>
     <template #item.actions="{ item }">
       <action-row
@@ -52,21 +39,37 @@
       #bottom
     >
       <v-text-field
-        v-model="inputField"
+        v-model.lazy="inputField"
         :rules=newItemValidator
         :disabled="disabled"
         variant=outlined
         density=compact
         clearable
-        append-outer-icon="mdi-plus"
-        @click:append-outer="addItem"
-        @update:modelValue="addItem"
+        append-icon="mdi-plus"
+        @click:append="addItem"
+        @keyup.enter="addItem"
       />
     </template>
   </v-data-table>
+        <versatile-dialog
+          v-model="editDialog"
+        max-width="50vw"
+        @ok="saveEditDialog"
+        @cancel="closeDialog"
+        >
+          <template #message>
+            <v-text-field
+              v-model="edittingField"
+              :rules=edittingFieldValidator
+              clearable
+              @keyup.enter="saveEditDialog"
+            />
+        </template>
+      </versatile-dialog>
 </template>
 <script>
 import actionRow from "@/components/common/actionRow.vue";
+import versatileDialog from "@/components/versatileDialog.vue";
 
 const emptyStringIsNotAllowed = (v)=>{
   return v !== "";
@@ -76,6 +79,7 @@ export default {
   name: "ListForm",
   components: {
     actionRow,
+    versatileDialog,
   },
   props: {
     label: {
@@ -134,6 +138,8 @@ export default {
     return {
       inputField: null,
       edittingField: null,
+      edittingIndex: null,
+      editDialog: false,
       edittingFieldValidator:[this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString],
       editTarget: null,
       newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString]
@@ -192,8 +198,21 @@ export default {
     editingItemIsNotDuplicate: function (newItem) {
       return this.isDuplicate(newItem) && this.editTarget !== newItem ? "duplicated name is not allowed" : true;
     },
-    //2nd argument also have item ,isMobile, header, and value prop. value has old value
-    onSaveEditDialog: function (item, { index }) {
+    openDialog(name,index){
+      this.edittingIndex=index
+      this.edittingField=name;
+      this.editTarget=name
+      this.editDialog=true
+    },
+    closeDialog(){
+      this.edittingIndex=null
+      this.edittingField=null;
+      this.editTarget=null
+      this.editDialog=false;
+    },
+    saveEditDialog: function () {
+      const item=this.edittingField
+      const index=this.edittingIndex
       const isInvalid = this.edittingFieldValidator.some((func)=>{
         return !func(this.inputField)
       });
@@ -207,11 +226,13 @@ export default {
         newItem.name = this.edittingField;
         this.$emit("update", newItem, index);
       }
+      this.onCloseDialog();
     },
     addItem: function () {
       const isInvalid = this.newItemValidator.some((func)=>{
-        return !func(this.inputField)
+        return func(this.inputField) !== true
       });
+
       if(isInvalid){
         return
       }
@@ -237,3 +258,6 @@ export default {
   },
 };
 </script>
+<style>
+  .v-btn__content { text-transform: none !important; }
+</style>

@@ -6,6 +6,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    :activator=activator
     :max-width="maxWidth"
     persistent
   >
@@ -38,6 +39,9 @@
 export default {
   name: "VersatileDialog",
   props:{
+    activator:{
+      required:false
+    },
     value: {
       type: Boolean,
       required: true
