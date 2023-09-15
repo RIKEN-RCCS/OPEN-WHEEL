@@ -220,6 +220,7 @@
             <list-form
               :label="'foreach'"
               :items="indexList"
+              :edit-dialog-min-width="propWidth"
               @add="addToIndexList"
               @remove="removeFromIndexList"
               @update="updateIndexList"
@@ -274,6 +275,7 @@
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
               :additionalRules="[isValidInputFilename]"
+              :edit-dialog-min-width="propWidth"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
@@ -432,6 +434,7 @@
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
               :additional-rules="[isValidInputFilename]"
+              :edit-dialog-min-width="propWidth"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
@@ -441,6 +444,7 @@
               :items="copySelectedComponent.outputFiles"
               :new-item-template="outputFileTemplate"
               :additional-rules="[isValidOutputFilename]"
+              :edit-dialog-min-width="propWidth"
               @add="addToOutputFiles"
               @remove="removeFromOutputFiles"
               @update="updateOutputFiles"
@@ -457,6 +461,7 @@
               :label="'include'"
               :items="includeList"
               :disabled="disableRemoteSetting"
+              :edit-dialog-min-width="propWidth"
               @add="addToIncludeList"
               @remove="removeFromIncludeList"
               @update="updateIncludeList"
@@ -465,6 +470,7 @@
               :label="'exclude'"
               :items="excludeList"
               :disabled="disableRemoteSetting"
+              :edit-dialog-min-width="propWidth"
               @add="addToExcludeList"
               @remove="removeFromExcludeList"
               @update="updateExcludeList"
@@ -519,6 +525,7 @@ import { isValidName } from "@/lib/utility.js";
 import { isValidInputFilename, isValidOutputFilename } from "@/lib/clientUtility.js";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
+import {propWidth} from "@/lib/componentSizes.json";
 
 const isZeroOrMore = (v)=>{
   return v >= 0 ? true : "0 or more value required";
@@ -557,7 +564,7 @@ export default {
         name: "",
         dst: [],
       },
-      propWidth: "512",
+      propWidth,
       openPanels: [0],
       retryByJS: false,
       conditionCheckByJS: false,

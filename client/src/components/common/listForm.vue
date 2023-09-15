@@ -18,10 +18,36 @@
       v-if="allowRenameInline"
       #item.name="props"
     >
-      <v-btn variant="text"
+          <v-menu
+            location="start"
+            v-model="editDialog[props.index]"
+            :close-on-content-click="false"
+            :min-width="editDialogMinWidth"
+            :max-width="editDialogMaxWidth"
+          >
+            <template v-slot:activator="{ props: menuProps }">
+      <v-btn
+        variant="text"
+        v-bind="menuProps"
+        block
+        class="justify-start"
         :text=props.item.columns.name
         @click="openDialog(props.item.columns.name, props.index)"
       />
+    </template>
+            <v-sheet
+
+            :min-width="editDialogMinWidth"
+            :max-width="editDialogMaxWidth"
+            >
+              <v-text-field
+                v-model="newVal"
+                :rules=updateItemValidator
+                clearable
+                @keyup.enter="saveEditDialog"
+              />
+          </v-sheet>
+        </v-menu>
     </template>
     <template #item.actions="{ item }">
       <action-row
@@ -30,10 +56,6 @@
         @delete="deleteItem"
       />
     </template>
-    <template
-      v-if="! inputColumn"
-      #bottom
-    />
     <template
       v-if="inputColumn"
       #bottom
@@ -50,22 +72,11 @@
         @keyup.enter="addItem"
       />
     </template>
+    <template
+      v-else
+      #bottom
+    />
   </v-data-table>
-        <versatile-dialog
-          v-model="editDialog"
-        max-width="50vw"
-        @ok="saveEditDialog"
-        @cancel="closeDialog"
-        >
-          <template #message>
-            <v-text-field
-              v-model="edittingField"
-              :rules=edittingFieldValidator
-              clearable
-              @keyup.enter="saveEditDialog"
-            />
-        </template>
-      </versatile-dialog>
 </template>
 <script>
 import actionRow from "@/components/common/actionRow.vue";
@@ -73,6 +84,9 @@ import versatileDialog from "@/components/versatileDialog.vue";
 
 const emptyStringIsNotAllowed = (v)=>{
   return v !== "";
+}
+const isString = (v)=>{
+  return typeof v === "string";
 }
 
 export default {
@@ -82,6 +96,14 @@ export default {
     versatileDialog,
   },
   props: {
+    editDialogMinWidth:{
+      type: [String, Number],
+      default: "auto"
+    },
+    editDialogMaxWidth:{
+      type: [String, Number],
+      default: "auto"
+    },
     label: {
       type: String,
       default: ""
@@ -130,19 +152,26 @@ export default {
   },
   mounted(){
     if(this.additionalRules){
-      this.edittingFieldValidator.push(...this.additionalRules);
+      this.updateItemValidator.push(...this.additionalRules);
       this.newItemValidator.push(...this.additionalRules);
+    }
+    //store array of false with the same length as this.items
+    this.editDialog.push(...this.items.map(()=>{return false}))
+  },
+  watch:{
+    items(){
+      this.editDialog.push(...this.items.map(()=>{return false}))
     }
   },
   data: function () {
     return {
       inputField: null,
-      edittingField: null,
-      edittingIndex: null,
-      editDialog: false,
-      edittingFieldValidator:[this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString],
-      editTarget: null,
-      newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString]
+      editDialog: [],
+      newVal: null,
+      oldVal: null,
+      targetIndex: null,
+      updateItemValidator:[this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, isString],
+      newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, isString]
     };
   },
   computed: {
@@ -150,8 +179,8 @@ export default {
       get(){
         return this.value;
       },
-      set(newVal){
-        this.$emit("update:modelValue", newVal);
+      set(v){
+        this.$emit("update:modelValue", v);
       }
     },
     headersWithActions: function () {
@@ -181,52 +210,54 @@ export default {
     },
   },
   methods: {
-    isString(){
-      return typeof this.inputField === "string"
-    },
-    isDuplicate (newItem) {
+    isDuplicate (newItem, except=[]) {
       if (typeof newItem !== "string") {
         return false;
       }
       return this.tableData.some((e)=>{
-        return e.name === newItem;
+        return !except.includes(e.name) && e.name === newItem;
       });
     },
     newItemIsNotDuplicate: function (newItem) {
       return this.isDuplicate(newItem) ? "duplicated name is not allowed" : true;
     },
     editingItemIsNotDuplicate: function (newItem) {
-      return this.isDuplicate(newItem) && this.editTarget !== newItem ? "duplicated name is not allowed" : true;
+      return this.isDuplicate(newItem, [this.oldVal]) ? "duplicated name is not allowed" : true;
     },
     openDialog(name,index){
-      this.edittingIndex=index
-      this.edittingField=name;
-      this.editTarget=name
-      this.editDialog=true
+      this.targetIndex=index
+      this.newVal=name;
+      this.oldVal=name
+      this.editDialog[index]=true
     },
-    closeDialog(){
-      this.edittingIndex=null
-      this.edittingField=null;
-      this.editTarget=null
-      this.editDialog=false;
+    closeDialog(index){
+      this.targetIndex=null
+      this.newVal=null;
+      this.oldVal=null
+      this.editDialog[index]=false;
     },
     saveEditDialog: function () {
-      const item=this.edittingField
-      const index=this.edittingIndex
-      const isInvalid = this.edittingFieldValidator.some((func)=>{
-        return !func(this.inputField)
+      const index=this.targetIndex
+      const isValid = this.updateItemValidator.every((func)=>{
+        return func(this.newVal) === true
       });
-      if(isInvalid){
-        return
+      if(!isValid){
+        console.log("new value is not valid", this.newVal)
+        this.closeDialog(index);
+        return 
+      }
+      if( this.newVal === this.oldVal){
+        console.log("new value is not changed", this.newVal)
+        this.closeDialog(index);
+        return 
       }
       if (this.stringItems) {
-        this.$emit("update", this.edittingField, index);
+        this.$emit("update", this.newVal, index);
       } else {
-        const newItem = {...item}
-        newItem.name = this.edittingField;
+        const newItem = this.stringItems ? this.newVal : Object.assign({}, this.newItemTemplate || {}, { name: this.newVal });
         this.$emit("update", newItem, index);
       }
-      this.onCloseDialog();
+      this.closeDialog(index);
     },
     addItem: function () {
       const isInvalid = this.newItemValidator.some((func)=>{
@@ -259,5 +290,7 @@ export default {
 };
 </script>
 <style>
-  .v-btn__content { text-transform: none !important; }
+.v-btn__content {
+  text-transform: none !important;
+}
 </style>

@@ -2,5 +2,6 @@
   "widthComponentLibrary": 56,
   "heightToolbar": 64,
   "heightDenseToolbar": 48,
-  "heightFooter": 36
+  "heightFooter": 36,
+  "propWidth": "512"
 }

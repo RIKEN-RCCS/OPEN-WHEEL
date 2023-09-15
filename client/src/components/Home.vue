@@ -21,27 +21,27 @@
           :disabled="batchMode"
           @click="openProject"
           prepend-icon="mdi-pencil"
-          text="open"
+          text="OPEN"
         />
         <v-btn
           :disabled="batchMode"
           @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
           prepend-icon="mdi-plus"
-          text="new"
+          text="NEW"
         />
         <v-btn
           @click="openDeleteProjectDialog(true)"
           prepend-icon="mdi-text-box-remove-outline"
-          text="remove from list"
+          text="REMOVE FROM LIST"
         />
         <v-btn
           @click="openDeleteProjectDialog(false)"
           prepend-icon="mdi-trash-can-outline"
-          text="remove"
+          text="REMOVE"
         />
         <v-switch
           v-model="batchMode"
-          label="batch mode"
+          label="BATCH MODE"
           color="primary"
           class="mt-6"
         />
@@ -55,27 +55,41 @@
         :headers="headers"
         :items="projectList"
       >
-        <template #item.name="{item}">
-          <v-edit-dialog
-            class="trancated-row"
-            :return-value.sync="item.columns.name"
-            @save="renameProject(item.columns)"
+        <template #item.name="props">
+          <v-menu
+            location="bottom"
+            v-model="editDialog[props.index]"
+            :close-on-content-click="false"
+            min-width="auto"
+            max-width="50vw"
           >
-            {{ item.columns.name }}
-            <template #input>
-              <v-text-field
-                v-model="item.columns.name"
-                label="rename"
-                single-line
-                counter
+            <template v-slot:activator="{ props: menuProps }">
+              <v-btn
+                variant="text"
+                v-bind="menuProps"
+                block
+                class="justify-start"
+                :text=props.item.columns.name
+                @click="openInlineEditDialog(props.item.columns.name, props.index)"
               />
             </template>
-          </v-edit-dialog>
-        </template>
+            <v-sheet
+            min-width="auto"
+            max-width="50vw"
+            >
+              <v-text-field
+                v-model="newVal"
+                :rules="[required]"
+                clearable
+                @keyup.enter="renameProject(props.item.columns, props.index)"
+              />
+          </v-sheet>
+          </v-menu>
+    </template>
         <template #item.description="{item}">
-          <span
-            class="d-inline-block text-truncate trancated-row"
-          >{{ item.columns.description }} </span>
+          <span class="d-inline-block text-truncate trancated-row" >
+            {{ item.columns.description }}
+          </span>
         </template>
         <template #item.path="{item}">
           <span
@@ -179,6 +193,9 @@ export default {
       removeCandidates: [],
       pathSep: "/",
       home: "/",
+      editDialog:[],
+      newVal:null,
+      edittingIndex:null
     };
   },
   watch:{
@@ -226,6 +243,12 @@ export default {
   },
   methods: {
     required,
+    openInlineEditDialog(name, index){
+      this.newVal=name
+      this.oldVal=name
+      this.edittingIndex=index
+      this.editDialog[index]=true
+    },
     forceUpdateProjectList(){
       SIO.emitGlobal("getProjectList", (data)=>{
         if (!Array.isArray(data)) {
@@ -273,13 +296,18 @@ export default {
       form.appendChild(input);
       form.submit();
     },
-    renameProject (item) {
-      SIO.emitGlobal("renameProject", item.id, item.name, item.path, (rt)=>{
-        if(!rt){
-          console.log("rename failed", item.id, item.name, item.path);
+    renameProject (item, index) {
+      if(this.newVal === item.name){
+        console.log("project name not changed");
+      }else{
+        SIO.emitGlobal("renameProject", item.id, this.newVal, item.path, (rt)=>{
+          if(!rt){
+            console.log("rename failed", item.id, this.newVal, item.path);
+          }
           this.forceUpdateProjectList();
-        }
-      });
+        });
+      }
+      this.editDialog[index]=false
     },
     openDeleteProjectDialog (fromListOnly) {
       this.removeFromList = fromListOnly;
@@ -306,5 +334,10 @@ export default {
 <style>
 .trancated-row{
   max-width: 20vw;
+}
+</style>
+<style>
+.v-btn__content {
+  text-transform: none !important;
 }
 </style>
