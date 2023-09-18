@@ -49,7 +49,7 @@ export default {
     const unwatch=this.$watch(()=>{
       return this.term._core._renderService.dimensions;
     },
-    (newVal, oldVal)=>{
+    ()=>{
       this.fit2();
 
       if(unwatch){

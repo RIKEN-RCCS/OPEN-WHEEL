@@ -163,7 +163,6 @@
 import { mapState, mapGetters, mapMutations } from "vuex"
 import SIO from "@/lib/socketIOWrapper.js"
 import versatileDialog from "@/components/versatileDialog.vue";
-import { removeFromArray } from "@/lib/clientUtility.js"
 import myTreeview from "@/components/common/myTreeview.vue"
 import {_getActiveItem,icons, openIcons, fileListModifier, removeItem , getTitle, getLabel } from "@/components/common/fileTreeUtils.js"
 
@@ -225,7 +224,7 @@ export default {
     },
     currentComponent: {
       //edit workflow -> server respond workflow data -> fire this event
-      handler(nv,ov){
+      handler(nv){
         if(nv.descendants.some((e)=>{
           return e.ID === this.selectedComponent.ID
         })){
@@ -270,12 +269,6 @@ export default {
     },
     getLeafIcon(item){
       return icons[item.type]
-    },
-    closeDownloadDialog(){
-      SIO.emitGlobal("removeDownloadFile", this.projectRootDir, this.downloadURL, ()=>{
-        this.downloadURL=null
-        this.downloadDialog=false
-      });
     },
     requestRemoteConnection(){
       SIO.emitGlobal("requestRemoteConnection", this.projectRootDir, this.selectedComponent.ID, (isReady)=>{

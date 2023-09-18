@@ -199,7 +199,7 @@ export default {
     };
   },
   watch:{
-    batchMode(newMode, oldMode){
+    batchMode(newMode){
       if(!newMode){
         this.selectedInTable.splice(0,this.selectedInTable.length);
       }

@@ -876,7 +876,7 @@ export default {
           return e !== null;
         });
       return !names.some((name)=>{
-        return name === this.copySelectedComponent.name;
+        return name === v;
       });
     },
   },

@@ -304,7 +304,6 @@ import SIO from "@/lib/socketIOWrapper.js";
 import { readCookie, state2color } from "@/lib/utility.js";
 import Debug from "debug";
 const debug = Debug("wheel:workflow:main");
-let viewerWindow = null;
 
 const allowedOperations={
   "not-started":["runProject", "saveProject", "revertProject"],
@@ -441,7 +440,7 @@ export default {
     });
     SIO.onGlobal("showMessage", this.showSnackbar);
     SIO.onGlobal("logERR", (message)=>{
-      const rt=/^\[.*ERROR\].*\- *(.*?)$/m.exec(message)
+      const rt=/^\[.*ERROR\].*- *(.*?)$/m.exec(message)
       const output= rt ? rt[1] || rt[0] : message;
       this.showSnackbar(output)
     });
@@ -522,7 +521,6 @@ export default {
   },
   methods: {
     openViewerScreen(){
-      viewerWindow = window.open("viewer", "viewer");
       const form = document.createElement("form");
       form.setAttribute("target", "viewer");
       form.setAttribute("action", "viewer");
@@ -581,7 +579,7 @@ export default {
       });
     },
     openProjectOperationComfirmationDialog(operation){
-      if(operation === "stopProject" || operation === "cleanProject" || operation === "pauseProject" || "revertProject"){
+      if(["stopProject","cleanProject","pauseProject","revertProject"].includes(operation)){
         this.dialogTitle=operation
         this.dialogMessage=`are you sure you want to ${operation.replace("P", " p")} ?`
         this.confirmed=this.emitProjectOperation.bind(this, operation);

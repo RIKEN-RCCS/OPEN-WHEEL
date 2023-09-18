@@ -211,7 +211,7 @@ export default {
       this.$refs.text.saveAll();
       this.$refs.param.save();
     },
-    unsavedFilesDialogClosed(mode,payload){
+    unsavedFilesDialogClosed(mode){
       if(mode === "cancel"){
         this.unsavedFiles.splice(0);
         this.showUnsavedFilesDialog=false;

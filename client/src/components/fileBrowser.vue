@@ -159,9 +159,11 @@ const debug = Debug("wheel:fileBrowser");
 import { mapState, mapGetters, mapMutations } from "vuex"
 import SIO from "@/lib/socketIOWrapper.js"
 import versatileDialog from "@/components/versatileDialog.vue";
-import { removeFromArray } from "@/lib/clientUtility.js"
 import myTreeview from "@/components/common/myTreeview.vue"
 import {_getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel  } from "@/components/common/fileTreeUtils.js"
+import useClipboard from "vue-clipboard3"
+
+const { toClipboard } = useClipboard()
 
 export default {
   name: "FileBrowser",
@@ -222,7 +224,7 @@ export default {
     },
     currentComponent: {
       //edit workflow -> server respond workflow data -> fire this event
-      handler(nv,ov){
+      handler(nv){
         if(nv.descendants.some((e)=>{
           return e.ID === this.selectedComponent.ID
         })){
