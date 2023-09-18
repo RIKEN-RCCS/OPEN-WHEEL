@@ -50,6 +50,7 @@
     "vue-eslint-parser": "^9.3.1"
   },
   "lint-staged": {
-    "*.js": "eslint --fix"
+    "*.js": "eslint --fix",
+    "*.vue": "eslint --fix"
   }
 }
