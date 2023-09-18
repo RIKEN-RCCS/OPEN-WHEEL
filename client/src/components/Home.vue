@@ -58,7 +58,7 @@
         <template #item.name="props">
           <v-menu
             location="bottom"
-            v-model="editDialog[props.index]"
+            v-model="renameDialog[props.index]"
             :close-on-content-click="false"
             min-width="auto"
             max-width="50vw"
@@ -70,7 +70,7 @@
                 block
                 class="justify-start"
                 :text=props.item.columns.name
-                @click="openInlineEditDialog(props.item.columns.name, props.index)"
+                @click="openInlineEditDialog(props.item.columns.name, props.index, 'name')"
               />
             </template>
             <v-sheet
@@ -83,13 +83,38 @@
                 clearable
                 @keyup.enter="renameProject(props.item.columns, props.index)"
               />
-          </v-sheet>
+            </v-sheet>
           </v-menu>
-    </template>
-        <template #item.description="{item}">
-          <span class="d-inline-block text-truncate trancated-row" >
-            {{ item.columns.description }}
-          </span>
+        </template>
+        <template #item.description="props">
+          <v-menu
+            location="bottom"
+            v-model="editDescriptionDialog[props.index]"
+            :close-on-content-click="false"
+            min-width="auto"
+            max-width="50vw"
+          >
+            <template v-slot:activator="{ props: menuProps }">
+              <v-btn
+                variant="text"
+                class="justify-start text-truncate trancated-row"
+                v-bind="menuProps"
+                block
+                @click="openInlineEditDialog(props.item.columns.description, props.index, 'description')"
+                :text=props.item.columns.description
+              />
+            </template>
+            <v-sheet
+            min-width="auto"
+            max-width="50vw"
+            >
+              <v-textarea
+                v-model="newVal"
+                clearable
+                @keyup.enter="changeDescripton(props.item.columns, props.index)"
+              />
+            </v-sheet>
+          </v-menu>
         </template>
         <template #item.path="{item}">
           <span
@@ -193,7 +218,8 @@ export default {
       removeCandidates: [],
       pathSep: "/",
       home: "/",
-      editDialog:[],
+      renameDialog:[],
+      editDescriptionDialog:[],
       newVal:null,
       edittingIndex:null
     };
@@ -243,11 +269,16 @@ export default {
   },
   methods: {
     required,
-    openInlineEditDialog(name, index){
+    openInlineEditDialog(name, index, prop){
       this.newVal=name
       this.oldVal=name
       this.edittingIndex=index
-      this.editDialog[index]=true
+
+      if(prop === "name"){
+        this.renameDialog[index]=true
+      }else if(prop === "description"){
+        this.editDescriptionDialog[index]=true
+      }
     },
     forceUpdateProjectList(){
       SIO.emitGlobal("getProjectList", (data)=>{
@@ -296,6 +327,19 @@ export default {
       form.appendChild(input);
       form.submit();
     },
+    changeDescripton(item, index){
+      if(this.newVal === item.description){
+        console.log("project name not changed");
+      }else{
+        SIO.emitGlobal("updateProjectDescription", item.path,  this.newVal,(rt)=>{
+          if(!rt){
+            console.log("update description failed", item.path, this.newVal);
+          }
+          this.forceUpdateProjectList();
+        });
+      }
+      this.editDescriptionDialog[index]=false
+    },
     renameProject (item, index) {
       if(this.newVal === item.name){
         console.log("project name not changed");
@@ -307,7 +351,7 @@ export default {
           this.forceUpdateProjectList();
         });
       }
-      this.editDialog[index]=false
+      this.renameDialog[index]=false
     },
     openDeleteProjectDialog (fromListOnly) {
       this.removeFromList = fromListOnly;
