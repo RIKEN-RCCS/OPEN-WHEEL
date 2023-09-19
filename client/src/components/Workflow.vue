@@ -193,6 +193,23 @@
           />
         </v-col>
       </v-row>
+    <v-snackbar
+      v-model="openSnackbar"
+      multi-line
+      :timeout="-1"
+      centered
+      variant="outlined"
+    >
+      {{ snackbarMessage }}
+      <template #actions>
+        <v-btn
+          class="justify-end"
+          variant="outlined"
+          @click="closeSnackbar"
+          text="Close"
+        />
+      </template>
+    </v-snackbar>
     </v-footer>
     <v-overlay
       :model-value="waiting"
@@ -213,25 +230,6 @@
       :title="pwDialogTitle"
       @password="pwCallback"
     />
-    <v-snackbar
-      v-model="openSnackbar"
-      :vertical="true"
-      :multi-line="true"
-      :timeout="-1"
-      centered
-      text
-    >
-      {{ snackbarMessage }}
-      <template #actions="{ attrs }">
-        <v-btn
-          color="indigo"
-          variant=text
-          v-bind="attrs"
-          @click="closeSnackbar"
-          text="Close"
-        />
-      </template>
-    </v-snackbar>
     <versatile-dialog
       v-model="descriptionDialog"
       max-width="50vw"
