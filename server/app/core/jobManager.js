@@ -48,7 +48,7 @@ async function issueStatCmd(statCmd, task, output) {
     return Promise.reject(new Error("local submit is not supported"));
   }
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
-  return ssh.exec(statCmd, (data)=>{
+  return ssh.exec(statCmd, 30, (data)=>{
     output.push(data);
   });
 }

@@ -129,7 +129,7 @@ async function deliverFileOnRemote(recipe) {
   const cmd = recipe.forceCopy ? "cp -r " : "ln -sf";
   const sshCmd = `bash -O failglob -c 'mkdir ${recipe.dstRoot} 2>/dev/null; cd ${recipe.dstRoot} && for i in ${recipe.srcRoot}/${recipe.srcName}; do ${cmd} \${i} ${recipe.dstName} ;done'`;
   logger.debug("execute on remote", sshCmd);
-  const rt = await ssh.exec(sshCmd, logger.debug.bind(logger));
+  const rt = await ssh.exec(sshCmd, 0, logger.debug.bind(logger));
   if (rt !== 0) {
     logger.warn("deliver file on remote failed", rt);
   }

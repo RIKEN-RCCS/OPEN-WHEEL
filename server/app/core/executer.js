@@ -49,7 +49,7 @@ async function prepareRemoteExecDir(task) {
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
   getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} start`);
   await ssh.send([task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
-  await ssh.exec(`chmod 744 ${remoteScriptPath}`);
+  await ssh.exec(`chmod 744 ${remoteScriptPath}`, 30);
   task.preparedTime = getDateString(true, true);
   getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} finished`);
 }
@@ -268,7 +268,7 @@ class RemoteJobExecuter extends Executer {
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
 
     let outputText = "";
-    const rt = await ssh.exec(submitCmd, (data)=>{
+    const rt = await ssh.exec(submitCmd, 60, (data)=>{
       outputText += data;
     });
 
@@ -310,7 +310,7 @@ class RemoteTaskExecuter extends Executer {
 
     //if exception occurred in ssh.exec, it will be catched in caller
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
-    const rt = await ssh.exec(cmd, (data)=>{
+    const rt = await ssh.exec(cmd, 0, (data)=>{
       getLogger(task.projectRootDir).sshout(data);
     });
     getLogger(task.projectRootDir).debug(task.name, "(remote) done. rt =", rt);
