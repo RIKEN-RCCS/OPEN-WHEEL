@@ -37,6 +37,8 @@
 
 <script>
 "use strict";
+import Debug from "debug";
+const debug = Debug("wheel:viewer");
 import "viewerjs/dist/viewer.css";
 import applicationToolBar from "@/components/common/applicationToolBar.vue";
 import NavDrawer from "@/components/common/NavigationDrawer.vue";
@@ -83,6 +85,7 @@ export default{
       return;
     }
     const baseURL=readCookie("socketIOPath");
+    debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
     SIO.onGlobal("resultFiles", (results)=>{
       this.items=results;

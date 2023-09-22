@@ -6,7 +6,7 @@
 <template>
     <v-app-bar >
       <template #prepend>
-      <a href="home">
+        <a :href="homeURL">
         <v-img height=72px width=180px :src="imgLogo" />
       </a>
       </template>
@@ -40,6 +40,12 @@ export default{
       type: String,
       required: true
     },
+    baseUrl: String
+  },
+  computed:{
+    homeURL(){
+      return `${this.baseUrl || "."}/home`
+    }
   },
   emits: ["navIconClick"]
 }

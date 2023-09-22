@@ -122,6 +122,7 @@ export default {
   },
   mounted () {
     const baseURL=readCookie("socketIOPath");
+    debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
     SIO.emitGlobal("getJobSchedulerLabelList", (data)=>{
       this.jobSchedulerNames.splice(0,this.jobSchedulerNames.length, ...data);

@@ -12,7 +12,7 @@
     <v-list >
       <v-btn
         prepend-icon=mdi-cog-outline
-        href="remotehost"
+        :href="remotehostURL"
         target="_blank"
         variant=text
         class="text-capitalize"
@@ -34,8 +34,12 @@ export default {
   name: "NavDrawer",
   props: {
     value: Boolean,
+    baseUrl: String,
   },
   computed: {
+    remotehostURL(){
+      return `${this.baseUrl || "."}/remotehost`
+    },
     drawer: {
       get () {
         return this.value;

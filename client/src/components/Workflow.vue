@@ -7,10 +7,12 @@
   <v-app>
     <nav-drawer
       v-model="drawer"
+      :base-url="baseURL"
     />
     <application-tool-bar
       title="workflow"
       @navIconClick="drawer=!drawer"
+      :base-url="baseURL"
     >
       <template #append>
       <span
@@ -357,7 +359,8 @@ export default {
       dialog:false,
       dialogTitle:"",
       dialogMessage:"",
-      confirmed:null
+      confirmed:null,
+      baseURL:"."
     };
   },
   computed: {
@@ -405,9 +408,11 @@ export default {
     }
     this.commitProjectRootDir(projectRootDir);
 
-    const baseURL=readCookie("socketIOPath");
-    this.$router.options.history.base = baseURL === "/" ? "" : baseURL;
-    SIO.init({projectRootDir}, baseURL);
+    const socketIOPath=readCookie("socketIOPath");
+    debug(`beseURL=${socketIOPath}`);
+    this.$router.options.history.base = socketIOPath === "/" ? "" : socketIOPath;
+    this.baseURL=this.$router.options.history.base || ".";
+    SIO.init({projectRootDir}, socketIOPath);
 
     const ID = readCookie("root");
     this.commitRootComponentID(ID);
@@ -520,8 +525,8 @@ export default {
   methods: {
     openViewerScreen(){
       const form = document.createElement("form");
-      form.setAttribute("target", "viewer");
-      form.setAttribute("action", "viewer");
+      form.setAttribute("target", `${this.baseURL}/viewer`);
+      form.setAttribute("action", `${this.baseURL}/viewer`);
       form.setAttribute("method", "post");
       form.style.display = "none";
       document.body.appendChild(form);

@@ -171,6 +171,8 @@
 </template>
 <script>
 "use strict";
+import Debug from "debug";
+const debug = Debug("wheel:home");
 import navDrawer from "@/components/common/NavigationDrawer.vue";
 import applicationToolBar from "@/components/common/applicationToolBar.vue";
 import fileBrowser from "@/components/common/fileBrowserLite.vue";
@@ -261,6 +263,7 @@ export default {
     this.pathSep = readCookie("pathSep");
     this.home = readCookie("home");
     const baseURL=readCookie("socketIOPath");
+    debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
     SIO.onGlobal("projectList", (data)=>{
       this.projectList.splice(0, this.projectList.length, ...data);
