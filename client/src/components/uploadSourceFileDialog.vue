@@ -71,12 +71,6 @@ export default {
     }
   },
   mounted:function(){
-    const recaptchaScript = document.createElement("script");
-    recaptchaScript.setAttribute(
-      "src",
-      "/siofu/client.js"
-    );
-    document.head.appendChild(recaptchaScript);
     this.$nextTick().then(()=>{
       SIO.onGlobal("askUploadSourceFile", (ID, name, description, cb)=>{
         this.uploadSourceFileDialogTitle=`upload source file for ${name}`;
