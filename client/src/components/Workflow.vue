@@ -410,7 +410,6 @@ export default {
 
     const socketIOPath=readCookie("socketIOPath");
     debug(`beseURL=${socketIOPath}`);
-    this.$router.options.history.base = socketIOPath === "/" ? "" : socketIOPath;
     this.baseURL=this.$router.options.history.base || ".";
     SIO.init({projectRootDir}, socketIOPath);
 

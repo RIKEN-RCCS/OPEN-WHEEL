@@ -94,7 +94,7 @@ export default {
       this.offsetY=event.offsetY
 
       //set icon during drag
-      const icon = this.$el.querySelector(`#${item.type}`);
+      const icon = this.$el.querySelector(`#${item.type}`); //$el.querySelector is not function
       event.dataTransfer.setDragImage(icon, event.offsetX, event.offsetY);
       event.dataTransfer.effectAllowed = "move";
     },
