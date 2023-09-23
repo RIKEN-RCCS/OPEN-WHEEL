@@ -81,7 +81,7 @@
                 v-model="newVal"
                 :rules="[required]"
                 clearable
-                @keyup.enter="renameProject(props.item.columns, props.index)"
+                @keyup.enter="renameProject(props.item.raw, props.index)"
               />
             </v-sheet>
           </v-menu>
@@ -337,8 +337,8 @@ export default {
         SIO.emitGlobal("updateProjectDescription", item.path,  this.newVal,(rt)=>{
           if(!rt){
             console.log("update description failed", item.path, this.newVal);
+            this.forceUpdateProjectList();
           }
-          this.forceUpdateProjectList();
         });
       }
       this.editDescriptionDialog[index]=false
@@ -350,8 +350,8 @@ export default {
         SIO.emitGlobal("renameProject", item.id, this.newVal, item.path, (rt)=>{
           if(!rt){
             console.log("rename failed", item.id, this.newVal, item.path);
+            this.forceUpdateProjectList();
           }
-          this.forceUpdateProjectList();
         });
       }
       this.renameDialog[index]=false
