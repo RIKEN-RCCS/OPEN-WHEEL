@@ -127,7 +127,7 @@
                 <v-btn
                   icon="mdi-content-copy"
                   v-bind="props"
-                  v-clipboard="dialog.inputField"
+                  @click=copyToClipboard
                 />
               </template>
             </v-tooltip>
@@ -161,9 +161,6 @@ import SIO from "@/lib/socketIOWrapper.js"
 import versatileDialog from "@/components/versatileDialog.vue";
 import myTreeview from "@/components/common/myTreeview.vue"
 import {_getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel  } from "@/components/common/fileTreeUtils.js"
-import useClipboard from "vue-clipboard3"
-
-const { toClipboard } = useClipboard()
 
 export default {
   name: "FileBrowser",
@@ -268,7 +265,8 @@ export default {
       return icons[item.type]
     },
     async copyToClipboard(){
-      await toClipboard(this.dialog.inputField)
+      debug("copy file path",this.dialog.inputField)
+      navigator.clipboard.writeText(this.dialog.inputField)
     },
     getActiveItem (key) {
       return  _getActiveItem(this.items,key);

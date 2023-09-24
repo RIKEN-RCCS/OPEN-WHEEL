@@ -160,6 +160,8 @@
   </div>
 </template>
 <script>
+import Debug from "debug"
+const debug = Debug("wheel:remoteFileBrowser");
 import { mapState, mapGetters, mapMutations } from "vuex"
 import SIO from "@/lib/socketIOWrapper.js"
 import versatileDialog from "@/components/versatileDialog.vue";
@@ -249,12 +251,6 @@ export default {
       SIO.onUploaderEvent("choose", this.onChoose)
       SIO.onUploaderEvent("complete", this.onUploadComplete)
       SIO.onUploaderEvent("progress", this.updateProgressBar)
-      const recaptchaScript = document.createElement("script");
-      recaptchaScript.setAttribute(
-        "src",
-        "/siofu/client.js"
-      );
-      document.head.appendChild(recaptchaScript);
     }
     this.currentDir=this.selectedComponentAbsPath
   },
@@ -276,7 +272,8 @@ export default {
       });
     },
     copyToClipboard(){
-      this.$copyText(this.dialog.inputField, this.$refs.icon.$el)
+      debug("copy file path",this.dialog.inputField)
+      navigator.clipboard.writeText(this.dialog.inputField)
     },
     getActiveItem (key) {
       return  _getActiveItem(this.items,key);
