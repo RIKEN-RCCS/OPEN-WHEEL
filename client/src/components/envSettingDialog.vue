@@ -24,6 +24,66 @@
           :items="env"
           :headers="headers"
         >
+        <template #item.name="props">
+          <v-menu
+            location="bottom"
+            v-model="editKeyDialog[props.index]"
+            :close-on-content-click="false"
+            min-width="auto"
+            max-width="50vw"
+          >
+            <template v-slot:activator="{ props: menuProps }">
+              <v-btn
+                variant="text"
+                v-bind="menuProps"
+                block
+                class="justify-start"
+                :text=props.item.columns.name
+              />
+            </template>
+            <v-sheet
+            min-width="auto"
+            max-width="50vw"
+            >
+              <v-text-field
+                v-model="props.item.raw.name"
+                :rules="[required]"
+                clearable
+                @keyup.enter="editKeyDialog[props.index]=false"
+              />
+            </v-sheet>
+          </v-menu>
+        </template>
+        <template #item.value="props">
+          <v-menu
+            location="bottom"
+            v-model="editValueDialog[props.index]"
+            :close-on-content-click="false"
+            min-width="auto"
+            max-width="50vw"
+          >
+            <template v-slot:activator="{ props: menuProps }">
+              <v-btn
+                variant="text"
+                v-bind="menuProps"
+                block
+                class="justify-start"
+                :text=props.item.columns.value
+              />
+            </template>
+            <v-sheet
+            min-width="auto"
+            max-width="50vw"
+            >
+              <v-text-field
+                v-model="props.item.raw.value"
+                :rules="[required]"
+                clearable
+                @keyup.enter="editValueDialog[props.index]=false"
+              />
+            </v-sheet>
+          </v-menu>
+        </template>
           <template #item.actions="{ item }">
             <action-row
               :item="item"
@@ -40,6 +100,7 @@
                   variant=outlined
                   density=compact
                   clearable
+                  :rules="[noDuplicatedName]"
                 />
               </v-col>
               <v-col cols="5">
@@ -82,6 +143,7 @@ import SIO from "@/lib/socketIOWrapper.js";
 import actionRow from "@/components/common/actionRow.vue";
 import buttons from "@/components/common/buttons.vue";
 import { removeFromArray } from "@/lib/clientUtility.js";
+import { required } from "@/lib/validationRules.js";
 
 export default{
   name: "envSettingDialog",
@@ -97,6 +159,8 @@ export default{
     return {
       envSetting: false,
       env: [],
+      editKeyDialog: [],
+      editValueDialog: [],
       newKey: null,
       newValue:null,
       headers:[
@@ -112,6 +176,12 @@ export default{
         commitComponentTree: "componentTree",
         commitWaitingEnv: "waitingEnv"
       }),
+    noDuplicatedName(newName){
+      const hasDup = this.env.some((e)=>{
+        return e.name === newName
+      });
+      return hasDup ? "duplicated name is not allowed": true;
+    },
     openEnvironmentVariableSetting(){
       this.commitWaitingEnv(true);
       SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID,  (data)=>{
@@ -141,7 +211,7 @@ export default{
     },
     deleteEnv(e){
       console.log("DEBUG DELETE", e);
-      removeFromArray(this.env, e);
+      removeFromArray(this.env, e.raw);
     },
     saveEnv(){
       const env=this.env.reduce((a, e)=>{
