@@ -7,6 +7,7 @@
   "elsePlugColor": "#9944bb",
   "filePlugColor": "#5673BF",
   "textHeight": 32,
+  "borderWidth": 1.5,
   "textLengthLimit": 100,
   "maxTextChar": 10,
   "textOffset": 8,

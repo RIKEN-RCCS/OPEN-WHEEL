@@ -27,8 +27,8 @@ const mutationFactory = (types)=>{
 /**
  * @typedef state
  * @property { Object } currentComponent  - parent component of displayed boxes this is set by componentGraph or componentTree
- * @property { string } selectedComponent - component which is editing in property window and text editor. this is set by clicking in componentGraph
- * @property { string } copySelectedComponent - copy of selectedComponent at the slected moment
+ * @property { Object } selectedComponent - component which is editing in property window and text editor. this is set by clicking in componentGraph
+ * @property { Object } copySelectedComponent - copy of selectedComponent at the slected moment
  * @property { string } projectRootDir - absolute path of project's root directory
  * @property { string } rootComponentID - root workflow component's ID
  * @property { string } projectState - project's satate. this value is never changed from client-side

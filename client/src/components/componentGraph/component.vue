@@ -4,6 +4,16 @@
     @dblclick.stop="onDblclick"
     @click.right.prevent.stop="onRightclick"
   >
+    <rect
+      :x="componentPos.x-boxWidth/2-borderWidth"
+      :y="componentPos.y-textHeight/2-borderWidth"
+      :width="boxWidth + borderWidth*2"
+      :height="boxHeight + borderWidth*2"
+      fill="transparent"
+      stroke="yellow"
+      :stroke-width=borderWidth
+      v-if=isSelected
+    />
     <component-header
       :center=componentPos
       :name=componentData.name
@@ -65,7 +75,7 @@ import InputOutputFileBox from "@/components/componentGraph/inputOutputFileBox.v
 import SubGraph from "@/components/componentGraph/subgraph.vue"
 import Sender from "@/components/componentGraph/sender.vue"
 import Reciever from "@/components/componentGraph/reciever.vue"
-import { boxWidth, textHeight } from "@/lib/constants.json"
+import { boxWidth, textHeight, borderWidth} from "@/lib/constants.json"
 import { calcRecieverPos, calcNumIOFiles, calcBoxHeight, calcSenderPos, calcElseSenderPos } from "@/lib/utils.js"
 
 export default{
@@ -81,6 +91,10 @@ export default{
     componentData:{
       required:true,
       type:Object
+    },
+    isSelected:{
+      type: Boolean,
+      default: false
     }
   },
   mounted(){
@@ -104,7 +118,10 @@ export default{
       startX: null,
       startY: null,
       oldcenter:{x:null, y:null},
-      dragging: false
+      dragging: false,
+      boxWidth,
+      textHeight,
+      borderWidth
     }
   },
   computed: {

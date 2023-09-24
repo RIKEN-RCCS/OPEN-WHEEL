@@ -1,6 +1,9 @@
 <template>
   <svg :width=canvasWidth :height=canvasHeight xxmlns="http://www.w3.org/2000/svg" fill=black>
-    <rect x=0 y=0 :width=canvasWidth :height=canvasHeight fill="black" />
+    <rect x=0 y=0
+      :width=canvasWidth :height=canvasHeight fill="black"
+      @click.stop="commitSelectedComponent(null)"
+    />
     <g v-if="currentComponent !== null" >
       <vconnector
         v-for="item in linkGraph"
@@ -20,6 +23,7 @@
       <wheel-component
         v-for="(componentData, index) in currentComponent.descendants"
         :component-data=componentData
+        :is-selected="selectedComponent !==null && componentData.ID === selectedComponent.ID"
         @drag="updatePosition(index, $event)"
         @dragend="commitNewPosition(index, $event)"
         @chdir=onChdir
@@ -72,11 +76,12 @@ export default {
     Connector
   },
   methods:{
+    ...mapMutations({commitSelectedComponent: "selectedComponent"}),
     updatePosition(index, event){
       this.currentComponent.descendants[index].pos.x=event.newX
       this.currentComponent.descendants[index].pos.y=event.newY
     },
-    commitNewPosition(index, event){
+    commitNewPosition(index ){
       const ID=this.currentComponent.descendants[index].ID
       const pos=this.currentComponent.descendants[index].pos
       SIO.emitGlobal("updateNode", this.projectRootDir, ID, "pos", pos, SIO.generalCallback)
@@ -114,8 +119,7 @@ export default {
     }
   },
   computed:{
-    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir"]),
-    ...mapMutations({commitSelectedComponent: "selectedComponent"}),
+    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent"]),
     linkGraph(){
       const rt=[]
       if(this.currentComponent === null){
