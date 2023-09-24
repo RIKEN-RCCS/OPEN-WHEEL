@@ -207,7 +207,7 @@ export default {
     ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
     storagePath(){
-      return this.copySelectedComponent.storagePath || "/"
+      return this.copySelectedComponent.storagePath || "./"
     }
   },
   watch: {
