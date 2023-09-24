@@ -67,7 +67,7 @@ async function gitInit(rootDir, user, mail) {
   }
   const { dir, base } = path.parse(path.resolve(rootDir));
   await fs.ensureDir(dir);
-  await gitPromise(dir, ["init", base], rootDir);
+  await gitPromise(dir, ["init", "--", base], rootDir);
   await gitPromise(rootDir, ["config", "user.name", user], rootDir);
   await gitPromise(rootDir, ["config", "user.email", mail], rootDir);
   return gitPromise(rootDir, ["lfs", "install"], rootDir);
@@ -99,6 +99,7 @@ async function gitAdd(rootDir, filename, updateOnly) {
   if (updateOnly) {
     args.push("-u");
   }
+  args.push("--");
   args.push(filename);
   return gitPromise(rootDir, args, rootDir)
     .catch((err)=>{
@@ -115,7 +116,7 @@ async function gitAdd(rootDir, filename, updateOnly) {
  * filename should be absolute path or relative path from rootDir.
  */
 async function gitRm(rootDir, filename) {
-  return gitPromise(rootDir, ["rm", "-r", "--cached", filename], rootDir)
+  return gitPromise(rootDir, ["rm", "-r", "--cached", "--", filename], rootDir)
     .catch((err)=>{
       if (!/fatal: pathspec '.*' did not match any files/.test(err)) {
         throw err;
@@ -180,7 +181,7 @@ async function gitStatus(rootDir) {
  * @param {string} filePatterns - files to be reset
  */
 async function gitClean(rootDir, filePatterns = "") {
-  return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", filePatterns], rootDir);
+  return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", "--", filePatterns], rootDir);
 }
 
 function getRelativeFilename(rootDir, filename) {
@@ -204,7 +205,7 @@ async function isLFS(rootDir, filename) {
  * @param {string} filename - files to be track
  */
 async function gitLFSTrack(rootDir, filename) {
-  await gitPromise(rootDir, ["lfs", "track", makeLFSPattern(rootDir, filename)], rootDir);
+  await gitPromise(rootDir, ["lfs", "track", "--", makeLFSPattern(rootDir, filename)], rootDir);
   getLogger(rootDir).trace(`${filename} is treated as large file`);
   return gitAdd(rootDir, ".gitattributes");
 }
@@ -215,7 +216,7 @@ async function gitLFSTrack(rootDir, filename) {
  * @param {string} filename - files to be untracked
  */
 async function gitLFSUntrack(rootDir, filename) {
-  await gitPromise(rootDir, ["lfs", "untrack", makeLFSPattern(rootDir, filename)], rootDir);
+  await gitPromise(rootDir, ["lfs", "untrack", "--", makeLFSPattern(rootDir, filename)], rootDir);
   getLogger(rootDir).trace(`${filename} never treated as large file`);
 
   if (await fs.pathExists(path.resolve(rootDir, ".gitattributes"))) {
