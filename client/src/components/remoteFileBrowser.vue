@@ -312,6 +312,8 @@ export default {
         file.meta.clientID=SIO.getID()
         file.meta.skipGit=true;
         file.meta.overwrite=true;
+        file.meta.remoteUploadPath=this.storagePath
+        file.meta.remotehost=this.selectedComponent.host 
       }
       this.uploading=true;
     },

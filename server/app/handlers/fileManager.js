@@ -16,9 +16,10 @@ const { getUnusedPath, deliverFile } = require("../core/fileUtils.js");
 const { escapeRegExp } = require("../lib/utility");
 const fileBrowser = require("../core/fileBrowser");
 const { getLogger } = require("../logSettings");
-const { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir } = require("../db/db");
+const { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir, remoteHost } = require("../db/db");
 const { emitAll } = require("./commUtils.js");
 const { getTempd, createTempd } = require("../core/tempd.js");
+const {getSsh} = require("../core/sshManager.js");
 
 const oldProjectJsonFilename = "swf.prj.json";
 const noDotFiles = /^[^.].*$/;
@@ -201,6 +202,12 @@ const onUploadFileSaved = async (event)=>{
       await gitLFSTrack(projectRootDir, absFilename);
     }
     await gitAdd(projectRootDir, absFilename);
+  }
+  if(event.file.meta.remotehost &&event.file.meta.remoteUploadPath){
+    getLogger(projectRootDir).debug(`upload ${absFilename} to ${event.file.meta.remotehost}`);
+    const id = remoteHost.getID("name", event.file.meta.remotehost );
+    const ssh = await getSsh(projectRootDir, id);
+    await ssh.send([absFilename], event.file.meta.remoteUploadPath, ["--remove-source-files"])
   }
   const result = await fileBrowser(path.dirname(absFilename), {
     request: path.dirname(absFilename),
