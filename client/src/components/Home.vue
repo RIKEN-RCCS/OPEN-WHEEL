@@ -33,11 +33,13 @@
           @click="openDeleteProjectDialog(true)"
           prepend-icon="mdi-text-box-remove-outline"
           text="REMOVE FROM LIST"
+          :disabled="selectedInTable.length === 0"
         />
         <v-btn
           @click="openDeleteProjectDialog(false)"
           prepend-icon="mdi-trash-can-outline"
           text="REMOVE"
+          :disabled="selectedInTable.length === 0"
         />
         <v-switch
           v-model="batchMode"
