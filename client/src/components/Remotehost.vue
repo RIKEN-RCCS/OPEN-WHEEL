@@ -28,6 +28,7 @@
       >
         <template #item.connectionTest="{ item, index }">
           <v-btn
+            :disable="testing !== null && testing !== index"
             :color="item.raw.testResult"
             :loading="item.raw.loading"
             @click="testConnection(index)"
@@ -43,6 +44,23 @@
           />
         </template>
       </v-data-table>
+    <v-snackbar
+      v-model="openSnackbar"
+      multi-line
+      :timeout="-1"
+      centered
+      variant="outlined"
+    >
+      {{ snackbarMessage }}
+      <template #actions>
+        <v-btn
+          class="justify-end"
+          variant="outlined"
+          @click="snackbarMessage='';openSnackbar=false"
+          text="Close"
+        />
+      </template>
+    </v-snackbar>
     <password-dialog
       v-model="pwDialog"
       :title="pwDialogTitle"
@@ -109,6 +127,9 @@ export default {
       jobSchedulerNames: [],
       removeConfirmMessage: "",
       currentSetting: {},
+      testing:null,
+      openSnackbar: false,
+      snackbarMessage:"",
     };
   },
   computed:{
@@ -196,6 +217,17 @@ export default {
       });
     },
     testConnection (index) {
+      if(this.testing === index){
+        debug(`ssh test for ${this.hosts[index].name} is already running`)
+        return
+      }
+      if(this.testing !== null ){
+        this.snackbarMessage="another ssh test is running"
+        debug(this.snackbarMessage);
+        this.openSnackbar=true;
+        return
+      }
+      this.testing=index;
       const target=this.hosts[index];
       target.loading=true;
       SIO.emitGlobal("tryToConnect", this.hosts[index], (rt)=>{
@@ -205,6 +237,7 @@ export default {
         target.connectionStatus= rt === "success" ? "OK" : "failed"
         target.icon= rt === "success" ? "mdi-lan-connect" : "mdi-lan-disconnect"
         this.pwDialog=false
+        this.testing=null;
       });
     },
   },
