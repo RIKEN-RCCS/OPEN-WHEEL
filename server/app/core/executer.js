@@ -220,7 +220,7 @@ class Executer {
       getLogger(task.projectRootDir).warn(task.name, "failed due to", e);
     } finally {
       await createStatusFile(task);
-      getLogger(task.projectRootDir).debug(task.name, "completed");
+      getLogger(task.projectRootDir).trace(`${task.name} done`);
       task.emitForDispatcher("taskCompleted", task.state);
     }
   }
