@@ -25,20 +25,22 @@
           <v-tab
             v-for="item in items"
             :key="item.id"
-            :class="{'success--text': item.unread }"
+            :slider-color="item.unread ? 'primary' :'white'"
           >
-            {{ item.label }}
+            <span :class="{'text-success' : item.unread }" >
+              {{ item.label }}
+            </span>
           </v-tab>
         </v-tabs>
       </template>
     </v-toolbar>
-    <v-tabs-items
+    <v-window
       v-model="currentTab"
     >
-      <v-tab-item
+      <v-window-item
         v-for="item of items"
         :key="item.id"
-        eager
+        :eager="true"
         :transition="false"
         :reverse-transition="false"
       >
@@ -46,8 +48,8 @@
           :clear="item.clear"
           :log="item.log"
         />
-      </v-tab-item>
-    </v-tabs-items>
+      </v-window-item>
+    </v-window>
   </v-sheet>
 </template>
 
@@ -58,6 +60,9 @@ export default {
   components: {
     xterm,
   },
+  mounted(){
+    console.log("logscreen mounted");
+  },
   props:{
     show: Boolean
   },
@@ -65,7 +70,7 @@ export default {
     return {
       currentTab: 0,
       items: [
-        { label: "info", id: "info",          clear: 0, log: "",unread: false, eventNames: ["logINFO", "logWARN", "logERR"] },
+        { label: "info", id: "info",          clear: 0, log: "", unread: false, eventNames: ["logINFO", "logWARN", "logERR"] },
         { label: "stdout", id: "stdout",      clear: 0, log: "", unread: false, eventNames: ["logStdout"] },
         { label: "stderr", id: "stderr",      clear: 0, log: "", unread: false, eventNames: ["logStderr"] },
         { label: "output(SSH)", id: "sshout", clear: 0, log: "", unread: false, eventNames: ["logSSHout","logSSHerr"] },
@@ -83,7 +88,9 @@ export default {
   methods: {
     getItemByEventName(eventName){
       return this.items.find((item)=>{
-        return item.eventNames.some((e)=>{return e=== eventName;});
+        return item.eventNames.some((e)=>{
+          return e === eventName;
+        });
       });
     },
     logRecieved(eventName, data){
