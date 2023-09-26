@@ -6,12 +6,25 @@ Workflow in Hierarchical distributEd parallEL
 [docker image](https://hub.docker.com/r/tmkawanabe/wheel)
 
 ## Prerequirements
-latest version of [docker](https://www.docker.com/)
+latest version of [docker](https://www.docker.com/) and [git](https://git-scm.com/)
 
 ## user guide
 user guide and tutorials are available here.
 
 https://riken-rccs.github.io/OPEN-WHEEL/
+
+## prepareation
+If you have never use git on your machine, you have to install it.
+(even if you want to boot wheel from docker container, you need to install it to host OS)
+
+after installation, please type following commands to minimum setup
+
+```
+> git config --global user.name "YOUR NAME"
+> git config --global user.email "YOUR EMAIL ADDRESS"
+```
+
+this preparation required only once.
 
 ## How to use with docker
 1. create new directory (hereafter referrd to as `CONFIG_DIR`)
@@ -48,21 +61,18 @@ RIKEN R-CCS forks it and continues the development
 
 ## for developpers
 ### directory structure
-we have 4 main directories at top level
+we have 3 main directories at top level
 
-- docs
 - documentMD
 - client
 - server
 
-docs contains html documents it will generated from md documents in `documentMD/user_guide` by gitlab's CI/CD pipeline.
-and it is publishd by github.io pages. please do not change any files under this directory.
+"documentMD" contains documents written in markdown.
+Only files under `documentMD/user_guide` will be converted to html and be publishd at github.io pages
+when pull request will be merged to master branch
+Any other markdown files under documentMD is detailed informatin for developpers
 
-documentMD contains document written in markdown. as mentioned above, files under `documentMD/user_guide`
-will be publishd at github.io pages. please put detaild information and/or documents for developers
-to outside of user\_guide directory
-
-client and server has client and server code respectively.
+"client" and "server" has client and server code respectively.
 
 ### how to run without docker
 1. install and build
@@ -76,6 +86,5 @@ client and server has client and server code respectively.
 ```
 
 ### CI/CD process
-if you push new commit which includes user guide update,
-CI runner will commit new version of html user guide.
-so, you have to git pull for master branch after CI process is finished.
+when you push new commit to github, server/app/db/version.json will be updated during CI/CD process.
+So, you have to pull before make further commit.
