@@ -8,12 +8,12 @@ Workflow in Hierarchical distributEd parallEL
 ## Prerequirements
 latest version of [docker](https://www.docker.com/) and [git](https://git-scm.com/)
 
-## user guide
+## User guide
 user guide and tutorials are available here.
 
 https://riken-rccs.github.io/OPEN-WHEEL/
 
-## prepareation
+## Prepareation
 If you have never use git on your machine, you have to install it.
 (even if you want to boot wheel from docker container, you need to install it to host OS)
 
@@ -59,8 +59,8 @@ It is still hosted at https://github.com/RIIT-KyushuUniv/WHEEL
 RIKEN R-CCS forks it and continues the development
 
 
-## for developpers
-### directory structure
+## For developpers
+### Directory structure
 we have 3 main directories at top level
 
 - documentMD
@@ -74,7 +74,7 @@ Any other markdown files under documentMD is detailed informatin for developpers
 
 "client" and "server" has client and server code respectively.
 
-### how to run without docker
+### How to run without docker
 1. install and build
 ```
 > npm build
