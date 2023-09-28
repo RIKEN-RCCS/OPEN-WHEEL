@@ -11,7 +11,7 @@
     :show-select="selectable"
     :single-select="true"
   >
-    <template #header>
+    <template #headers>
       {{ label }}
     </template>
     <template
