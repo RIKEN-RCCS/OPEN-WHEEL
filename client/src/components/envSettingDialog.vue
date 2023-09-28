@@ -219,6 +219,7 @@ export default{
         return a;
       }, {});
       SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID,  SIO.generalCallback);
+      this.closeEnvironmentVariableSetting()
     },
   }
 }
