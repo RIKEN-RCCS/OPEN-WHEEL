@@ -8,10 +8,6 @@
     v-model="selectedItems"
     :items="tableData"
     :headers="headersWithActions"
-    disable-filterling
-    disable-pagination
-    hide-default-header
-    hide-default-footer
     :show-select="selectable"
     :single-select="true"
   >
@@ -22,218 +18,279 @@
       v-if="allowRenameInline"
       #item.name="props"
     >
-      <v-edit-dialog
-        large
-        persistent
-        @open="edittingField=props.item.name;editTarget=props.item.name"
-        @save="onSaveEditDialog(props.item, props)"
-      >
-        {{ props.item.name }}
-        <template
-          #input
-        >
-          <v-text-field
-            v-model="edittingField"
-            :rules=edittingFieldValidator
-            clearable
-          />
-        </template>
-      </v-edit-dialog>
+          <v-menu
+            location="start"
+            v-model="editDialog[props.index]"
+            :close-on-content-click="false"
+            :min-width="editDialogMinWidth"
+            :max-width="editDialogMaxWidth"
+          >
+            <template v-slot:activator="{ props: menuProps }">
+      <v-btn
+        variant="text"
+        v-bind="menuProps"
+        block
+        class="justify-start"
+        :text=props.item.columns.name
+        @click="openDialog(props.item.columns.name, props.index)"
+      />
+    </template>
+            <v-sheet
+
+            :min-width="editDialogMinWidth"
+            :max-width="editDialogMaxWidth"
+            >
+              <v-text-field
+                v-model="newVal"
+                :rules=updateItemValidator
+                clearable
+                @keyup.enter="saveEditDialog"
+              />
+          </v-sheet>
+        </v-menu>
     </template>
     <template #item.actions="{ item }">
       <action-row
         :can-edit="allowEditButton"
-        :item="item"
+        :item="item.raw"
         @delete="deleteItem"
       />
     </template>
     <template
       v-if="inputColumn"
-      #footer
+      #bottom
     >
       <v-text-field
-        v-model="inputField"
+        v-model.lazy="inputField"
         :rules=newItemValidator
         :disabled="disabled"
-        outlined
-        dense
+        variant=outlined
+        density=compact
         clearable
-        append-outer-icon="mdi-plus"
-        @click:append-outer="addItem"
-        @change="addItem"
+        append-icon="mdi-plus"
+        @click:append="addItem"
+        @keyup.enter="addItem"
       />
     </template>
+    <template
+      v-else
+      #bottom
+    />
   </v-data-table>
 </template>
 <script>
-  import actionRow from "@/components/common/actionRow.vue";
+import actionRow from "@/components/common/actionRow.vue";
+import versatileDialog from "@/components/versatileDialog.vue";
 
-  const emptyStringIsNotAllowed = (v)=>{
-    return v !== "";
-  }
+const emptyStringIsNotAllowed = (v)=>{
+  return v !== "";
+}
+const isString = (v)=>{
+  return typeof v === "string";
+}
 
-  export default {
-    name: "ListForm",
-    components: {
-      actionRow,
+export default {
+  name: "ListForm",
+  components: {
+    actionRow,
+    versatileDialog,
+  },
+  props: {
+    editDialogMinWidth:{
+      type: [String, Number],
+      default: "auto"
     },
-    props: {
-      label: {
-        type: String,
-        default: ""
-      },
-      additionalRules:{
-        type: Array
-      },
-      allowEditButton: {
-        type: Boolean,
-        default: false,
-      },
-      allowRenameInline:{
-        type: Boolean,
-        default: true,
-      },
-      inputColumn: {
-        type: Boolean,
-        default: true
-      },
-      selectable:{
-        type: Boolean,
-        default: false
-      },
-      value:{
-        type: Array,
-        default: ()=>{return [];}
-      },
-      stringItems: {
-        type: Boolean,
-        default: false,
-      },
-      items: { type: Array, required: true },
-      headers: {
-        type: Array,
-        default: function () {
-          return [{ value: "name", sortable: false }];
-        },
-      },
-      newItemTemplate: {
-        type: Object,
-        default: function () {
-          return { name: "" };
-        },
-      },
-      disabled: Boolean
+    editDialogMaxWidth:{
+      type: [String, Number],
+      default: "auto"
     },
-    mounted(){
-      if(this.additionalRules){
-        this.edittingFieldValidator.push(...this.additionalRules);
-        this.newItemValidator.push(...this.additionalRules);
+    label: {
+      type: String,
+      default: ""
+    },
+    additionalRules:{
+      type: Array
+    },
+    allowEditButton: {
+      type: Boolean,
+      default: false,
+    },
+    allowRenameInline:{
+      type: Boolean,
+      default: true,
+    },
+    inputColumn: {
+      type: Boolean,
+      default: true
+    },
+    selectable:{
+      type: Boolean,
+      default: false
+    },
+    value:{
+      type: Array,
+      default: ()=>{return [];}
+    },
+    stringItems: {
+      type: Boolean,
+      default: false,
+    },
+    items: { type: Array, required: true },
+    headers: {
+      type: Array,
+      default: function () {
+        return [{ key: "name", sortable: false }];
+      },
+    },
+    newItemTemplate: {
+      type: Object,
+      default: function () {
+        return { name: "" };
+      },
+    },
+    disabled: Boolean
+  },
+  mounted(){
+    if(this.additionalRules){
+      this.updateItemValidator.push(...this.additionalRules);
+      this.newItemValidator.push(...this.additionalRules);
+    }
+    //store array of false with the same length as this.items
+    this.editDialog.push(...this.items.map(()=>{return false}))
+  },
+  watch:{
+    items(){
+      this.editDialog.push(...this.items.map(()=>{return false}))
+    }
+  },
+  data: function () {
+    return {
+      inputField: null,
+      editDialog: [],
+      newVal: null,
+      oldVal: null,
+      targetIndex: null,
+      updateItemValidator:[this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, isString],
+      newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, isString]
+    };
+  },
+  computed: {
+    selectedItems:{
+      get(){
+        return this.value;
+      },
+      set(v){
+        this.$emit("update:modelValue", v);
       }
     },
-    data: function () {
-      return {
-        inputField: null,
-        edittingField: null,
-        edittingFieldValidator:[this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString],
-        editTarget: null,
-        newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, this.isString]
-      };
+    headersWithActions: function () {
+      const rt = this.headers.filter((e)=>{
+        return e.key !== "actions";
+      });
+      rt.push({ key: "actions", title: "", sortable: false });
+      rt[0].editable = true;
+      return rt;
     },
-    computed: {
-      selectedItems:{
-        get(){
-          return this.value;
-        },
-        set(newVal){
-          this.$emit("input", newVal);
-        }
-      },
-      headersWithActions: function () {
-        const rt = this.headers.filter((e)=>{
-          return e.value !== "actions";
+    editableRows: function () {
+      return this.headersWithActions
+        .filter((e)=>{
+          return e.editable;
+        })
+        .map((e)=>{
+          return e.value;
         });
-        rt.push({ value: "actions", text: "", sortable: false });
-        rt[0].editable = true;
-        return rt;
-      },
-      editableRows: function () {
-        return this.headersWithActions
-          .filter((e)=>{
-            return e.editable;
-          })
-          .map((e)=>{
-            return e.value;
-          });
-      },
-      tableData () {
-        if (!this.stringItems) {
-          return this.items;
-        }
-        return this.items.map((e)=>{
-          return { name: e };
-        });
-      },
     },
-    methods: {
-      isString(){
-        return typeof this.inputField === "string"
-      },
-      isDuplicate (newItem) {
-        if (typeof newItem !== "string") {
-          return false;
-        }
-        return this.tableData.some((e)=>{
-          return e.name === newItem;
-        });
-      },
-      newItemIsNotDuplicate: function (newItem) {
-        return this.isDuplicate(newItem) ? "duplicated name is not allowed" : true;
-      },
-      editingItemIsNotDuplicate: function (newItem) {
-        return this.isDuplicate(newItem) && this.editTarget !== newItem ? "duplicated name is not allowed" : true;
-      },
-      // 2nd argument also have item ,isMobile, header, and value prop. value has old value
-      onSaveEditDialog: function (item, { index }) {
-        const isInvalid = this.edittingFieldValidator.some((func)=>{
-          return !func(this.inputField)
-        });
-        if(isInvalid){
-          return
-        }
-        if (this.stringItems) {
-          this.$emit("update", this.edittingField, index);
-        } else {
-          const newItem = {...item}
-          newItem.name = this.edittingField;
-          this.$emit("update", newItem, index);
-        }
-      },
-      addItem: function () {
-        const isInvalid = this.newItemValidator.some((func)=>{
-          return !func(this.inputField)
-        });
-        if(isInvalid){
-          return
-        }
-        const newItem = this.stringItems ? this.inputField : Object.assign({}, this.newItemTemplate || {}, { name: this.inputField });
-        this.$emit("add", newItem);
-        this.inputField = null;
-      },
-      deleteItem: function (v) {
-        let index=-1;
-        if (this.stringItems){
-          index = this.items.findIndex((e)=>{
-            return e === v;
-          });
-        }else{
-          index = this.items.findIndex((e)=>{
-            return e.name === v.name;
-          });
-        }
-        if (index !== -1) {
-          this.$emit("remove", v, index);
-        }
-      },
+    tableData () {
+      if (!this.stringItems) {
+        return this.items;
+      }
+      return this.items.map((e)=>{
+        return { name: e };
+      });
     },
-  };
+  },
+  methods: {
+    isDuplicate (newItem, except=[]) {
+      if (typeof newItem !== "string") {
+        return false;
+      }
+      return this.tableData.some((e)=>{
+        return !except.includes(e.name) && e.name === newItem;
+      });
+    },
+    newItemIsNotDuplicate: function (newItem) {
+      return this.isDuplicate(newItem) ? "duplicated name is not allowed" : true;
+    },
+    editingItemIsNotDuplicate: function (newItem) {
+      return this.isDuplicate(newItem, [this.oldVal]) ? "duplicated name is not allowed" : true;
+    },
+    openDialog(name,index){
+      this.targetIndex=index
+      this.newVal=name;
+      this.oldVal=name
+      this.editDialog[index]=true
+    },
+    closeDialog(index){
+      this.targetIndex=null
+      this.newVal=null;
+      this.oldVal=null
+      this.editDialog[index]=false;
+    },
+    saveEditDialog: function () {
+      const index=this.targetIndex
+      const isValid = this.updateItemValidator.every((func)=>{
+        return func(this.newVal) === true
+      });
+      if(!isValid){
+        console.log("new value is not valid", this.newVal)
+        this.closeDialog(index);
+        return 
+      }
+      if( this.newVal === this.oldVal){
+        console.log("new value is not changed", this.newVal)
+        this.closeDialog(index);
+        return 
+      }
+      if (this.stringItems) {
+        this.$emit("update", this.newVal, index);
+      } else {
+        const newItem = this.stringItems ? this.newVal : Object.assign({}, this.newItemTemplate || {}, { name: this.newVal });
+        this.$emit("update", newItem, index);
+      }
+      this.closeDialog(index);
+    },
+    addItem: function () {
+      const isInvalid = this.newItemValidator.some((func)=>{
+        return func(this.inputField) !== true
+      });
+
+      if(isInvalid){
+        return
+      }
+      const newItem = this.stringItems ? this.inputField : Object.assign({}, this.newItemTemplate || {}, { name: this.inputField });
+      this.$emit("add", newItem);
+      this.inputField = null;
+    },
+    deleteItem: function (v) {
+      let index=-1;
+      if (this.stringItems){
+        index = this.items.findIndex((e)=>{
+          return e === v;
+        });
+      }else{
+        index = this.items.findIndex((e)=>{
+          return e.name === v.name;
+        });
+      }
+      if (index !== -1) {
+        this.$emit("remove", v, index);
+      }
+    },
+  },
+};
 </script>
+<style>
+.v-btn__content {
+  text-transform: none !important;
+}
+</style>

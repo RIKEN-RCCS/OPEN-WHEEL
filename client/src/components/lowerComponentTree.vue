@@ -4,13 +4,12 @@
  * See License in the project root for the license information.
  */
 <template>
-  <v-treeview
+  <my-treeview
     v-if="lowerLevelComponents!==null"
     open-all
     item-key="ID"
     :items="[ lowerLevelComponents ]"
     :active.sync="active"
-    dense
     activatable
     @update:active="onUpdateActive"
   >
@@ -19,38 +18,40 @@
         :item="item"
       />
     </template>
-  </v-treeview>
+  </my-treeview>
 </template>
 <script>
-  "use strict";
-  import { mapState } from "vuex";
-  import getNodeAndPath from "@/lib/getNodeAndPath.js";
-  import componentButton from "@/components/common/componentButton.vue";
+"use strict";
+import { mapState } from "vuex";
+import getNodeAndPath from "@/lib/getNodeAndPath.js";
+import componentButton from "@/components/common/componentButton.vue";
+import myTreeview from "@/components/common/myTreeview.vue"
 
-  export default {
-    name: "LowerComponentTree",
-    components: {
-      componentButton,
+export default {
+  name: "LowerComponentTree",
+  components: {
+    componentButton,
+    myTreeview
+  },
+  data () {
+    return {
+      active: [],
+      lowerLevelComponents: null,
+    };
+  },
+  computed: {
+    ...mapState(["selectedComponent", "componentPath", "componentTree"]),
+  },
+  mounted () {
+    const targetID = this.selectedComponent.ID;
+    this.lowerLevelComponents = getNodeAndPath(targetID, this.componentTree);
+  },
+  methods: {
+    onUpdateActive (actives) {
+      const activeComponentID = actives[0];
+      const activeComponent = getNodeAndPath(activeComponentID, this.componentTree);
+      this.$emit("selected", activeComponent);
     },
-    data () {
-      return {
-        active: [],
-        lowerLevelComponents: null,
-      };
-    },
-    computed: {
-      ...mapState(["selectedComponent", "componentPath", "componentTree"]),
-    },
-    mounted () {
-      const targetID = this.selectedComponent.ID;
-      this.lowerLevelComponents = getNodeAndPath(targetID, this.componentTree);
-    },
-    methods: {
-      onUpdateActive (actives) {
-        const activeComponentID = actives[0];
-        const activeComponent = getNodeAndPath(activeComponentID, this.componentTree);
-        this.$emit("selected", activeComponent);
-      },
-    },
-  };
+  },
+};
 </script>

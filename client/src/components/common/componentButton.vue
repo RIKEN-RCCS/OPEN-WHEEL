@@ -5,6 +5,7 @@
  */
 <template>
   <v-btn
+    variant="flat"
     :color="componentDefinition[item.type].color"
     class="custom-transform-class text-none"
     @click="$emit('clicked')"
@@ -17,16 +18,16 @@
   </v-btn>
 </template>
 <script>
-  "use strict";
-  import loadComponentDefinition from "@/lib/componentDefinision.js";
-  export default {
-    name: "ComponentButton",
-    props: { item: Object },
-    data: ()=>{
-      return {
-        componentDefinition: loadComponentDefinition(),
-      };
-    },
+"use strict";
+import loadComponentDefinition from "@/lib/componentDefinision.js";
+export default {
+  name: "ComponentButton",
+  props: { item: Object },
+  data: ()=>{
+    return {
+      componentDefinition: loadComponentDefinition(),
+    };
+  },
 
-  };
+};
 </script>

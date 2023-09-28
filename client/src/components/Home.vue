@@ -8,86 +8,120 @@
     <nav-drawer
       v-model="drawer"
     />
-    <v-app-bar app>
-      <a href="home"> <v-img :src="imgLogo" /></a>
-      <span
-        class="text-lowercase text-decoration-none text-h5 white--text ml-4"
-      >
-        home
-      </span>
-      <v-spacer />
-      <v-app-bar-nav-icon
-        app
-        @click="drawer = true"
-      />
-    </v-app-bar>
+    <application-tool-bar
+      title="home"
+      density="comfortable"
+      @navIconClick="drawer=!drawer"
+    />
     <v-main>
-      <v-toolbar extended>
+      <v-toolbar
+        color='background'
+      >
         <v-btn
           :disabled="batchMode"
           @click="openProject"
-        >
-          <v-icon>mdi-pencil</v-icon>
-          open
-        </v-btn>
+          prepend-icon="mdi-pencil"
+          text="OPEN"
+        />
         <v-btn
           :disabled="batchMode"
-
           @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
-        >
-          <v-icon>mdi-plus</v-icon>
-          new
-        </v-btn>
+          prepend-icon="mdi-plus"
+          text="NEW"
+        />
         <v-btn
           @click="openDeleteProjectDialog(true)"
-        >
-          <v-icon>mdi-text-box-remove-outline</v-icon>
-          remove from list
-        </v-btn>
+          prepend-icon="mdi-text-box-remove-outline"
+          text="REMOVE FROM LIST"
+          :disabled="selectedInTable.length === 0"
+        />
         <v-btn
           @click="openDeleteProjectDialog(false)"
-        >
-          <v-icon>mdi-trash-can-outline</v-icon>
-          remove
-        </v-btn>
+          prepend-icon="mdi-trash-can-outline"
+          text="REMOVE"
+          :disabled="selectedInTable.length === 0"
+        />
         <v-switch
           v-model="batchMode"
-          label="batch mode"
+          label="BATCH MODE"
+          color="primary"
+          class="mt-6"
         />
       </v-toolbar>
       <v-data-table
+        v-if="projectList.length > 0"
         v-model="selectedInTable"
-        show-select
-        :single-select="!batchMode"
+        :show-select="true"
+        :return-object="true"
+        :select-strategy="batchMode?'page':'single'"
         :headers="headers"
         :items="projectList"
       >
         <template #item.name="props">
-          <v-edit-dialog
-            class="trancated-row"
-            :return-value.sync="props.item.name"
-            @save="renameProject(props.item)"
+          <v-menu
+            location="bottom"
+            v-model="renameDialog[props.index]"
+            :close-on-content-click="false"
+            min-width="auto"
+            max-width="50vw"
           >
-            {{ props.item.name }}
-            <template #input>
-              <v-text-field
-                v-model="props.item.name"
-                label="rename"
-                single-line
-                counter
+            <template v-slot:activator="{ props: menuProps }">
+              <v-btn
+                variant="text"
+                v-bind="menuProps"
+                block
+                class="justify-start"
+                :text=props.item.columns.name
+                @click="openInlineEditDialog(props.item.columns.name, props.index, 'name')"
               />
             </template>
-          </v-edit-dialog>
+            <v-sheet
+            min-width="auto"
+            max-width="50vw"
+            >
+              <v-text-field
+                v-model="newVal"
+                :rules="[required]"
+                clearable
+                @keyup.enter="renameProject(props.item.raw, props.index)"
+              />
+            </v-sheet>
+          </v-menu>
         </template>
         <template #item.description="props">
-          <span
-            class="d-inline-block text-truncate trancated-row"
-          >{{ props.item.description }} </span>
+          <v-menu
+            location="bottom"
+            v-model="editDescriptionDialog[props.index]"
+            :close-on-content-click="false"
+            min-width="auto"
+            max-width="50vw"
+          >
+            <template v-slot:activator="{ props: menuProps }">
+              <v-btn
+                variant="text"
+                class="justify-start text-truncate trancated-row"
+                v-bind="menuProps"
+                block
+                @click="openInlineEditDialog(props.item.columns.description, props.index, 'description')"
+                :text=props.item.columns.description
+              />
+            </template>
+            <v-sheet
+            min-width="auto"
+            max-width="50vw"
+            >
+              <v-textarea
+                v-model="newVal"
+                clearable
+                @keyup.enter="changeDescripton(props.item.columns, props.index)"
+              />
+            </v-sheet>
+          </v-menu>
         </template>
-        <template #item.path="props">
+        <template #item.path="{item}">
           <span
             class="d-inline-block text-truncate trancated-row"
-          >{{ props.item.path }} </span>
+          >{{ item.columns.path }} </span>
         </template>
       </v-data-table>
       <v-dialog
@@ -110,7 +144,7 @@
             <v-text-field
               v-model="newProjectName"
               label="project name"
-              outlined
+              variant=outlined
               :rules="[required]"
             />
             <v-textarea
@@ -118,7 +152,6 @@
               label="project description"
               rows="2"
               auto-grow
-              outlined
             />
           </v-card-actions>
           <v-card-text>
@@ -139,180 +172,221 @@
   </v-app>
 </template>
 <script>
-  "use strict";
-  import imgLogo from "@/assets/wheel_logomark.png";
-  import navDrawer from "@/components/common/NavigationDrawer.vue";
-  import fileBrowser from "@/components/common/fileBrowserLite.vue";
-  import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
-  import buttons from "@/components/common/buttons.vue";
-  import { readCookie } from "@/lib/utility.js";
-  import SIO from "@/lib/socketIOWrapper.js";
-  import { required } from "@/lib/validationRules.js";
+"use strict";
+import Debug from "debug";
+const debug = Debug("wheel:home");
+import navDrawer from "@/components/common/NavigationDrawer.vue";
+import applicationToolBar from "@/components/common/applicationToolBar.vue";
+import fileBrowser from "@/components/common/fileBrowserLite.vue";
+import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
+import buttons from "@/components/common/buttons.vue";
+import { readCookie } from "@/lib/utility.js";
+import SIO from "@/lib/socketIOWrapper.js";
+import { required } from "@/lib/validationRules.js";
 
-  // it should be get from server
-  const projectJsonFilename = "prj.wheel.json";
-  const reProjectJsonFilename = new RegExp(`/${projectJsonFilename}$`);
+//it should be get from server
+const projectJsonFilename = "prj.wheel.json";
+const reProjectJsonFilename = new RegExp(`/${projectJsonFilename}$`);
 
-  export default {
-    name: "Home",
-    components: {
-      navDrawer,
-      fileBrowser,
-      buttons,
-      removeConfirmDialog,
+export default {
+  name: "Home",
+  components: {
+    navDrawer,
+    applicationToolBar,
+    fileBrowser,
+    buttons,
+    removeConfirmDialog,
+  },
+  data: ()=>{
+    return {
+      batchMode: false,
+      drawer: false,
+      dialog: false,
+      rmDialog: false,
+      removeFromList: false,
+      dialogMode: "default",
+      selectedInTree: null,
+      selectedInTable: [],
+      projectList: [],
+      headers: [
+        { title: "Project Name", key: "name", width: "20vw" },
+        { title: "Description", key: "description", width: "20vw" },
+        { title: "Path", key: "path", width: "20vw" },
+        { title: "Create time", key: "ctime" },
+        { title: "Last modified time", key: "mtime" },
+        { title: "State", key: "state" },
+      ],
+      dialogTitle: "",
+      newProjectName: "",
+      newProjectDescription: "",
+      removeCandidates: [],
+      pathSep: "/",
+      home: "/",
+      renameDialog:[],
+      editDescriptionDialog:[],
+      newVal:null,
+      edittingIndex:null
+    };
+  },
+  watch:{
+    batchMode(newMode){
+      if(!newMode){
+        this.selectedInTable.splice(0,this.selectedInTable.length);
+      }
+    }
+  },
+  computed: {
+    selected () {
+      if (this.selectedInTree) {
+        return this.selectedInTree.replace(reProjectJsonFilename, "");
+      }
+      return this.selectedInTable.length > 0 ? this.selectedInTable[0].path : this.home;
     },
-    data: ()=>{
-      return {
-        imgLogo,
-        batchMode: false,
-        drawer: false,
-        dialog: false,
-        rmDialog: false,
-        removeFromList: false,
-        dialogMode: "default",
-        selectedInTree: null,
-        selectedInTable: [],
-        projectList: [],
-        headers: [
-          { text: "Project Name", value: "name", width: "20vw" },
-          { text: "Description", value: "description", width: "20vw" },
-          { text: "Path", value: "path", width: "20vw" },
-          { text: "Create time", value: "ctime" },
-          { text: "Last modified time", value: "mtime" },
-          { text: "State", value: "state" },
-        ],
-        dialogTitle: "",
-        newProjectName: "",
-        newProjectDescription: "",
-        removeCandidates: [],
-        pathSep: "/",
-        home: "/",
-      };
+    buttons () {
+      const open = { icon: "mdi-check", label: "open" };
+      const create = { icon: "mdi-plus", label: "create" };
+      const cancel = { icon: "mdi-close", label: "cancel" };
+      const rt = [cancel];
+      switch (this.dialogMode) {
+        case "newProject":
+          rt.unshift(create);
+          break;
+        default:
+          rt.unshift(open);
+          break;
+      }
+      return rt;
     },
-    watch:{
-      batchMode(newMode, oldMode){
-        if(!newMode){
-          this.selectedInTable.splice(0,this.selectedInTable.length);
-        }
+    removeProjectMessage () {
+      return this.removeFromList ? "remove following projects from list" : "remove following project files";
+    },
+  },
+  mounted: function () {
+    this.pathSep = readCookie("pathSep");
+    this.home = readCookie("home");
+    const baseURL=readCookie("socketIOPath");
+    debug(`beseURL=${baseURL}`);
+    SIO.init(null, baseURL);
+    SIO.onGlobal("projectList", (data)=>{
+      this.projectList.splice(0, this.projectList.length, ...data);
+    });
+    this.forceUpdateProjectList();
+  },
+  methods: {
+    required,
+    openInlineEditDialog(name, index, prop){
+      this.newVal=name
+      this.oldVal=name
+      this.edittingIndex=index
+
+      if(prop === "name"){
+        this.renameDialog[index]=true
+      }else if(prop === "description"){
+        this.editDescriptionDialog[index]=true
       }
     },
-    computed: {
-      selected () {
-        if (this.selectedInTree) {
-          return this.selectedInTree.replace(reProjectJsonFilename, "");
-        }
-        return this.selectedInTable.length > 0 ? this.selectedInTable[0].path : this.home;
-      },
-      buttons () {
-        const open = { icon: "mdi-check", label: "open" };
-        const create = { icon: "mdi-plus", label: "create" };
-        const cancel = { icon: "mdi-close", label: "cancel" };
-        const rt = [cancel];
-        switch (this.dialogMode) {
-          case "newProject":
-            rt.unshift(create);
-            break;
-          default:
-            rt.unshift(open);
-            break;
-        }
-        return rt;
-      },
-      removeProjectMessage () {
-        return this.removeFromList ? "remove projects from list" : "remove project files";
-      },
-    },
-    mounted: function () {
-      this.pathSep = readCookie("pathSep");
-      this.home = readCookie("home");
-      const baseURL=readCookie("socketIOPath");
-      SIO.init(null, baseURL);
-      SIO.onGlobal("projectList", (data)=>{
-        this.projectList.splice(0, this.projectList.length, ...data);
-      });
-      this.forceUpdateProjectList();
-    },
-    methods: {
-      required,
-      forceUpdateProjectList(){
-        SIO.emitGlobal("getProjectList", (data)=>{
-           if (!Array.isArray(data)) {
-             console.log("unexpected projectlist recieved", data);
-             return;
-           }
-           this.projectList.splice(0, this.projectList.length, ...data);
-        });
-      },
-      closeDialog () {
-        this.dialog = false;
-        this.dialogMode = "default";
-        this.selectedInTree = null;
-        this.newProjectName = "";
-        this.newProjectDescription = "";
-        this.dialogTitle = "";
-      },
-      createProject () {
-        const path = `${this.selected || "."}/${this.newProjectName}`;
-        SIO.emitGlobal("addProject", path, this.newProjectDescription, (rt)=>{
-          if(!rt){
-            console.log("create project failed", this.selected, this.newProjectName, this.newProjectDescription, path);
-            this.forceUpdateProjectList();
-          }
-        });
-        this.closeDialog();
-      },
-      openProject () {
-        if (this.selected === this.home) {
-          this.dialogTitle = "select project path";
-          this.dialogMode = "default";
-          this.dialog = true;
+    forceUpdateProjectList(){
+      SIO.emitGlobal("getProjectList", (data)=>{
+        if (!Array.isArray(data)) {
+          console.log("unexpected projectlist recieved", data);
           return;
         }
-        sessionStorage.setItem("projectRootDir", "not-set");
-        const form = document.createElement("form");
-        form.setAttribute("action", "./workflow");
-        form.setAttribute("method", "post");
-        form.style.display = "none";
-        document.body.appendChild(form);
-        const input = document.createElement("input");
-        input.setAttribute("type", "hidden");
-        input.setAttribute("name", "project");
-        input.setAttribute("value", this.selected);
-        form.appendChild(input);
-        form.submit();
-      },
-      renameProject (item) {
-        SIO.emitGlobal("renameProject", item.id, item.name, item.path, (rt)=>{
-          if(!rt){
-            console.log("rename failed", item.id, item.name, item.path);
-            this.forceUpdateProjectList();
-          }
-        });
-      },
-      openDeleteProjectDialog (fromListOnly) {
-        this.removeFromList = fromListOnly;
-        this.removeCandidates = this.selectedInTable.map((e)=>{ return e.name; });
-        this.rmDialog = true;
-      },
-      commitRemoveProjects () {
-        const removeIDs = this.selectedInTable
-          .map((e)=>{
-            return e.id;
-          });
-        const eventName = this.removeFromList ? "removeProjectsFromList" : "removeProjects";
-        SIO.emitGlobal(eventName, removeIDs, (rt)=>{
-          if(!rt){
-            console.log("remove failed", eventName, removeIDs);
-            this.forceUpdateProjectList();
-          }
-          this.selectedInTable = [];
-        });
-      },
+        this.projectList.splice(0, this.projectList.length, ...data);
+      });
     },
-  };
+    closeDialog () {
+      this.dialog = false;
+      this.dialogMode = "default";
+      this.selectedInTree = null;
+      this.newProjectName = "";
+      this.newProjectDescription = "";
+      this.dialogTitle = "";
+    },
+    createProject () {
+      const path = `${this.selected || "."}/${this.newProjectName}`;
+      SIO.emitGlobal("addProject", path, this.newProjectDescription, (rt)=>{
+        if(!rt){
+          console.log("create project failed", this.selected, this.newProjectName, this.newProjectDescription, path);
+          this.forceUpdateProjectList();
+        }
+      });
+      this.closeDialog();
+    },
+    openProject () {
+      if (this.selected === this.home) {
+        this.dialogTitle = "select project path";
+        this.dialogMode = "default";
+        this.dialog = true;
+        return;
+      }
+      sessionStorage.setItem("projectRootDir", "not-set");
+      const form = document.createElement("form");
+      form.setAttribute("action", "./workflow");
+      form.setAttribute("method", "post");
+      form.style.display = "none";
+      document.body.appendChild(form);
+      const input = document.createElement("input");
+      input.setAttribute("type", "hidden");
+      input.setAttribute("name", "project");
+      input.setAttribute("value", this.selected);
+      form.appendChild(input);
+      form.submit();
+    },
+    changeDescripton(item, index){
+      if(this.newVal === item.description){
+        console.log("project name not changed");
+      }else{
+        SIO.emitGlobal("updateProjectDescription", item.path,  this.newVal,(rt)=>{
+          if(!rt){
+            console.log("update description failed", item.path, this.newVal);
+            this.forceUpdateProjectList();
+          }
+        });
+      }
+      this.editDescriptionDialog[index]=false
+    },
+    renameProject (item, index) {
+      if(this.newVal === item.name){
+        console.log("project name not changed");
+      }else{
+        SIO.emitGlobal("renameProject", item.id, this.newVal, item.path, (rt)=>{
+          if(!rt){
+            console.log("rename failed", item.id, this.newVal, item.path);
+            this.forceUpdateProjectList();
+          }
+        });
+      }
+      this.renameDialog[index]=false
+    },
+    openDeleteProjectDialog (fromListOnly) {
+      this.removeFromList = fromListOnly;
+      this.removeCandidates = this.selectedInTable.map((e)=>{ return e.name; });
+      this.rmDialog = true;
+    },
+    commitRemoveProjects () {
+      const removeIDs = this.selectedInTable
+        .map((e)=>{
+          return e.id;
+        });
+      const eventName = this.removeFromList ? "removeProjectsFromList" : "removeProjects";
+      SIO.emitGlobal(eventName, removeIDs, (rt)=>{
+        if(!rt){
+          console.log("remove failed", eventName, removeIDs);
+          this.forceUpdateProjectList();
+        }
+        this.selectedInTable = [];
+      });
+    },
+  },
+};
 </script>
 <style>
 .trancated-row{
   max-width: 20vw;
+}
+</style>
+<style>
+.v-btn__content {
+  text-transform: none !important;
 }
 </style>

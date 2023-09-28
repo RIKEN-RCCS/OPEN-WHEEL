@@ -5,111 +5,88 @@
  */
 <template>
   <!-- update event is not well tested. please check !! -->
-  <v-treeview
+  <my-treeview
     :items="items"
     :load-children="getChildren"
     activatable
     @update:active="onUpdateActive"
-  >
-    <template #prepend="{item, open}">
-      <v-icon v-if="item.children !== null">
-        {{ open ? openIcons[item.type] : icons[item.type] }}
-      </v-icon>
-      <v-icon v-else>
-        {{ icons[item.type] }}
-      </v-icon>
-    </template>
-  </v-treeview>
+    :get-node-icon="getNodeIcon"
+    :get-leaf-icon="getLeafIcon"
+  />
 </template>
 <script>
-  import SIO from "@/lib/socketIOWrapper.js";
+import SIO from "@/lib/socketIOWrapper.js";
+import myTreeview from "@/components/common/myTreeview.vue"
+import {icons, openIcons, fileListModifier } from "@/components/common/fileTreeUtils.js"
 
-  function fileListModifier (pathsep, e) {
-    const rt = {
-      id: `${e.path}${pathsep}${e.name}`,
-      path: e.path,
-      name: e.name,
-      type: `${e.type}${e.islink ? "-link" : ""}`,
-    };
-    if (["dir", "dir-link", "snd", "snd-link", "sndd", "sndd-link"].includes(e.type)) {
-      rt.children = [];
+function getActiveItem (items, key, path) {
+  for (const item of items) {
+    if (Array.isArray(item.children) && item.children.length > 0) {
+      path.push(item.name);
+      const rt = getActiveItem(item.children, key, path);
+
+      if (rt) {
+        return rt;
+      }
+      path.pop();
     }
-    return rt;
-  }
-
-  function getActiveItem (items, key, path) {
-    for (const item of items) {
-      if (Array.isArray(item.children) && item.children.length > 0) {
+    if (item.id === key) {
+      if (item.type === "dir" || item.type === "dir-link") {
         path.push(item.name);
-        const rt = getActiveItem(item.children, key, path);
-
-        if (rt) {
-          return rt;
-        }
-        path.pop();
       }
-      if (item.id === key) {
-        if (item.type === "dir" || item.type === "dir-link") {
-          path.push(item.name);
-        }
-        return item;
-      }
+      return item;
     }
-    return null;
   }
+  return null;
+}
 
-  export default {
-    name: "FileBrowserLite",
-    props: {
-      requestRoot: { type: String, default: undefined },
-      mode: { type: String, default: "dirWithProjectJson" },
+export default {
+  name: "FileBrowserLite",
+  components:{
+    myTreeview
+  },
+  props: {
+    requestRoot: { type: String, default: undefined },
+    mode: { type: String, default: "dirWithProjectJson" },
+  },
+  data: function () {
+    return {
+      root:null,
+      items: [],
+    };
+  },
+  mounted () {
+    SIO.emitGlobal("getFileList", null, { mode: this.mode, path: this.requestRoot}, (fileList)=>{
+      this.root=this.requestRoot || fileList[0].path || "/";
+      const pathSep = this.root[0] === "/" ? "/" : "\\";
+      this.items.splice(0,this.items.length, ...fileList.map(fileListModifier.bind(null, pathSep)));
+    });
+  },
+  methods: {
+    onUpdateActive (active) {
+      this.$emit("update", active.id);
     },
-    data: function () {
-      return {
-        root:null,
-        pathSep:null,
-        items: [],
-        icons: {
-          file: "mdi-file-outline",
-          "file-link": "mdi-file-link-outline",
-          dir: "mdi-folder",
-          "dir-link": "mdi-link-box-outline",
-          "deadlink-link": "mdi-file-link",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
-        openIcons: {
-          dir: "mdi-folder-open",
-          sndd: "mdi-folder-multiple-outline",
-          snd: "mdi-file-multiple-outline",
-        },
-      };
+    getNodeIcon(isOpen, item){
+      return isOpen ? openIcons[item.type] : icons[item.type]
     },
-    mounted () {
-      SIO.emitGlobal("getFileList", null, { mode: this.mode, path: this.requestRoot}, (fileList)=>{
-        this.root=this.requestRoot || fileList[0].path || "/";
-        this.pathSep=this.root[0] === "/" ? "/" : "\\";
-        this.items = fileList.map(fileListModifier.bind(null, this.pathSep));
+    getLeafIcon(item){
+      return icons[item.type]
+    },
+    getChildren (item) {
+      return new Promise((resolve, reject)=>{
+        const path = [this.root];
+        const pathSep = this.root[0] === "/" ? "/" : "\\";
+        getActiveItem(this.items, item.id, path);
+        const currentDir = path.join(pathSep);
+        SIO.emitGlobal("getFileList", null, { mode: this.mode, path: currentDir }, (fileList)=>{
+          if (!Array.isArray(fileList)) {
+            reject(fileList);
+          }
+          item.children = fileList.map(fileListModifier.bind(null, pathSep));
+          resolve();
+        });
       });
     },
-    methods: {
-      onUpdateActive (active) {
-        this.$emit("update", active[0]);
-      },
-      getChildren (item) {
-        return new Promise((resolve, reject)=>{
-          const path = [this.root];
-          getActiveItem(this.items, item.id, path);
-          const currentDir = path.join(this.pathSep);
-          SIO.emitGlobal("getFileList", null, { mode: this.mode, path: currentDir }, (fileList)=>{
-            if (!Array.isArray(fileList)) {
-              reject(fileList);
-            }
-            item.children = fileList.map(fileListModifier.bind(null, this.pathSep));
-            resolve();
-          });
-        });
-      },
-    },
-  };
+  },
+};
 </script>

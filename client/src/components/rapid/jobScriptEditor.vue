@@ -8,32 +8,26 @@
     <v-card-actions>
       <v-btn
         @click="insertJobScript"
-      >
-        {{ isJobScript ? "update" : "insert" }}
-      </v-btn>
+        :text="isJobScript ? 'update' : 'insert'"
+      />
       <v-btn
         @click="removeJobScript"
         disable="!isJobSCript"
-      >
-        remove
-      </v-btn>
+        text="remove"
+      />
       <v-btn
         @click="clear"
-      >
-        clear
-      </v-btn>
-
+        text="clear"
+      />
       <v-btn
         class=ml-8
         @click="loadDialog=true"
-      >
-        load
-      </v-btn>
+        text="load"
+      />
       <v-btn
         @click="saveDialog=true"
-      >
-        register
-      </v-btn>
+        text="register"
+      />
     </v-card-actions>
     <v-card-text>
       <v-select
@@ -55,7 +49,7 @@
           <v-text-field
             v-else-if="v.type==='number'"
             v-model.lazy.trim="v.value"
-            outlined
+            variant=outlined
             :label="v.label"
             type="number"
             min="1"
@@ -63,14 +57,14 @@
           <v-text-field
             v-else-if="v.type==='jobScheduler'"
             v-model.lazy.trim="v.value"
-            outlined
+            variant=outlined
             :label="v.label"
             readonly
           />
           <v-text-field
             v-else-if="v.type==='text'"
             v-model.lazy.trim="v.value"
-            outlined
+            variant=outlined
             :label="v.label"
           />
         </div>
@@ -113,113 +107,113 @@
   </v-card>
 </template>
 <script>
-  "use strict";
-  import { mapState, mapGetters } from "vuex";
-  import SIO from "@/lib/socketIOWrapper.js";
-  import hpcCenters from "@/lib/hpcCenter.json";
-  import createJobScript from "@/lib/jobScripts.js";
-  import versatileDialog from "@/components/versatileDialog.vue";
-  import listForm from "@/components/common/listForm.vue";
+"use strict";
+import { mapState, mapGetters } from "vuex";
+import SIO from "@/lib/socketIOWrapper.js";
+import hpcCenters from "@/lib/hpcCenter.json";
+import createJobScript from "@/lib/jobScripts.js";
+import versatileDialog from "@/components/versatileDialog.vue";
+import listForm from "@/components/common/listForm.vue";
 
-  export default {
-    name: "JobScriptEditor",
-    components:{
-      versatileDialog,
-      listForm
+export default {
+  name: "JobScriptEditor",
+  components:{
+    versatileDialog,
+    listForm
+  },
+  props: {
+    readOnly: {
+      type: Boolean,
+      required: true,
     },
-    props: {
-      readOnly: {
-        type: Boolean,
-        required: true,
-      },
-      isJobScript:{
-        type: Boolean,
-        required: true,
+    isJobScript:{
+      type: Boolean,
+      required: true,
+    }
+  },
+  data: function () {
+    return {
+      centerNames: hpcCenters
+        .filter((e)=>{
+          return e.id.startsWith("builtin");
+        })
+        .map((e)=>{
+          return e.name
+        }) ,
+      builtinTemplates: structuredClone(hpcCenters),
+      jobScriptList: [],
+      loadedCenterInfo: null,
+      center: null,
+      loadDialog:false,
+      saveDialog:false,
+      newTemplateName: "",
+      buttons:[
+        {label: "load", icon: "mdi-check"},
+        {label: "remove", icon: "mdi-trash"},
+        {label: "cancel", icon: "mdi-close"}
+      ],
+      selected:[]
+    };
+  },
+  computed: {
+    template(){
+      const  index = this.centerNames.findIndex((e)=>{return e===this.center});
+      return this.loadedCenterInfo || this.builtinTemplates[index] || null;
+    }
+  },
+  watch:{
+    center(newVal, oldVal){
+      if(newVal===oldVal){
+        return;
       }
+      this.loadedCenterInfo=null;
+    }
+  },
+  mounted(){
+    this.center=this.centerNames[0];
+    SIO.onGlobal("jobScriptTemplateList", (data)=>{
+      this.jobScriptList=data;
+    });
+    SIO.emitGlobal("getJobscriptTemplates", SIO.generalCallback);
+  },
+  methods: {
+    cancelSaveDialog(){
+      this.newTemplateName="";
+      this.saveDialog=false;
     },
-    data: function () {
-      return {
-        centerNames: hpcCenters
-          .filter((e)=>{
-            return e.id.startsWith("builtin");
-          })
-          .map((e)=>{
-            return e.name
-          }) ,
-        builtinTemplates: structuredClone(hpcCenters),
-        jobScriptList: [],
-        loadedCenterInfo: null,
-        center: null,
-        loadDialog:false,
-        saveDialog:false,
-        newTemplateName: "",
-        buttons:[
-          {label: "load", icon: "mdi-check"},
-          {label: "remove", icon: "mdi-trash"},
-          {label: "cancel", icon: "mdi-close"}
-        ],
-        selected:[]
-      };
+    clear(){
+      this.builtinTemplates=structuredClone(hpcCenters);
+      this.loadedCenterInfo=null;
     },
-    computed: {
-      template(){
-        const  index = this.centerNames.findIndex((e)=>{return e===this.center});
-        return this.loadedCenterInfo || this.builtinTemplates[index] || null;
+    removeTemplate(item){
+      SIO.emitGlobal("removeJobScriptTemplate", item.id, SIO.generalCallback);
+    },
+    loadTemplate(){
+      if(this.selected.length > 0){
+        this.loadedCenterInfo=this.selected[0];
+        this.selected.splice(0);
       }
-   },
-   watch:{
-     center(newVal, oldVal){
-       if(newVal===oldVal){
-         return;
-       }
-       this.loadedCenterInfo=null;
-     }
-   },
-   mounted(){
-     this.center=this.centerNames[0];
-     SIO.onGlobal("jobScriptTemplateList", (data)=>{
-       this.jobScriptList=data;
-     });
-     SIO.emitGlobal("getJobscriptTemplates", SIO.generalCallback);
-   },
-   methods: {
-     cancelSaveDialog(){
-       this.newTemplateName="";
-       this.saveDialog=false;
-     },
-     clear(){
-       this.builtinTemplates=structuredClone(hpcCenters);
-       this.loadedCenterInfo=null;
-     },
-     removeTemplate(item){
-       SIO.emitGlobal("removeJobScriptTemplate", item.id, SIO.generalCallback);
-     },
-     loadTemplate(){
-       if(this.selected.length > 0){
-         this.loadedCenterInfo=this.selected[0];
-         this.selected.splice(0);
-       }
-       this.loadDialog=false;
-     },
-     saveTemplate(){
-       const eventName = this.template.name === this.newTemplateName && typeof this.template.id === "string" ? "updateJobScriptTemplate" : "addJobScriptTemplate";
-       const payload={...this.template};
-       payload.name = this.newTemplateName
-       SIO.emitGlobal(eventName, payload, SIO.generalCallback);
-       this.cancelSaveDialog();
-     },
-     insertJobScript(){
-       const values=this.template.optionValues.reduce((a,c)=>{
-         a[c.prop]=c.value;
-         return a;
-       },{});
-       const snipet=createJobScript(this.template.centerName, values);
-       this.$emit("insert", snipet);
-     },
-     removeJobScript(){
-       this.$emit("remove");
-     }
+      this.loadDialog=false;
+    },
+    saveTemplate(){
+      const eventName = this.template.name === this.newTemplateName && typeof this.template.id === "string" ? "updateJobScriptTemplate" : "addJobScriptTemplate";
+      const payload={...this.template};
+      payload.name = this.newTemplateName
+      SIO.emitGlobal(eventName, payload, SIO.generalCallback);
+      this.cancelSaveDialog();
+    },
+    insertJobScript(){
+      const values=this.template.optionValues.reduce((a,c)=>{
+        a[c.prop]=c.value;
+        return a;
+      },{});
+      const snipet=createJobScript(this.template.centerName, values);
+      this.$emit("insert", snipet);
+    },
+    removeJobScript(){
+      this.$emit("remove");
+    }
 
-   },
-  };
+  },
+};
 </script>

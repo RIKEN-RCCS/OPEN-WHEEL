@@ -6,57 +6,48 @@
 <template>
   <v-navigation-drawer
     v-model="drawer"
-    app
     temporary
-    right
-    cliped
+    location="right"
   >
-    <v-list
-      nav
-      dense
-    >
-      <a
-        href="remotehost"
+    <v-list >
+      <v-btn
+        prepend-icon=mdi-cog-outline
+        :href="remotehostURL"
         target="_blank"
-      >
-        <v-list-item>
-          <v-list-item-icon>
-            <v-icon>mdi-cog-outline</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title>
-            Remotehost editor
-          </v-list-item-title>
-        </v-list-item>
-      </a>
-      <a
+        variant=text
+        class="text-capitalize"
+        text="Remotehost editor"
+      />
+      <v-btn
+        prepend-icon=mdi-help-circle-outline
         href="https://riken-rccs.github.io/OPEN-WHEEL"
         target="_blank"
-      >
-        <v-list-item>
-          <v-list-item-icon>
-            <v-icon>mdi-help-circle-outline</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title>User guide</v-list-item-title>
-        </v-list-item>
-      </a>
+        variant=text
+        class="text-capitalize"
+        text="User guide"
+      />
     </v-list>
   </v-navigation-drawer>
 </template>
 <script>
-  export default {
-    name: "NavDrawer",
-    props: {
-      value: Boolean,
+export default {
+  name: "NavDrawer",
+  props: {
+    value: Boolean,
+    baseUrl: String,
+  },
+  computed: {
+    remotehostURL(){
+      return `${this.baseUrl || "."}/remotehost`
     },
-    computed: {
-      drawer: {
-        get () {
-          return this.value;
-        },
-        set (value) {
-          this.$emit("input", value);
-        },
+    drawer: {
+      get () {
+        return this.value;
+      },
+      set (value) {
+        this.$emit("update:modelValue", value);
       },
     },
-  };
+  },
+};
 </script>

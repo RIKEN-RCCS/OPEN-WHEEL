@@ -12,8 +12,9 @@
     "Yuki Tanaka"
   ],
   "license": "BSD-2-Clause",
+  "type": "module",
   "engines": {
-    "node": ">=12"
+    "node": ">=20"
   },
   "scripts": {
     "start": "cd server; npm start",
@@ -26,14 +27,30 @@
     "replaceDoc": "shx mv documentMD/_user_guide ./docs",
     "licenseReport-doc": "license-report --output=csv --csvHeaders --config license-report-config.json",
     "licenseReport-server": "license-report --package=server/package.json --output=csv --csvHeaders --config license-report-config.json",
-    "licenseReport-client": "license-report --package=client/package.json --output=csv --csvHeaders --config license-report-config.json"
+    "licenseReport-client": "license-report --package=client/package.json --output=csv --csvHeaders --config license-report-config.json",
+    "prepare": "husky install"
   },
   "devDependencies": {
+    "eslint": "^8.49.0",
+    "eslint-plugin-chai-expect": "^3.0.0",
+    "eslint-plugin-chai-friendly": "^0.7.2",
+    "eslint-plugin-jsdoc": "^46.5.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "eslint-plugin-vuetify": "^2.0.5",
+    "globals": "^13.21.0",
+    "husky": "^8.0.3",
     "license-report": "^6.3.0",
+    "lint-staged": "^14.0.1",
     "markdown-folder-to-html": "^2.4.0",
     "md-to-pdf": "^5.2.1",
     "npm-run-all": "^4.1.5",
     "pdf-merger-js": "^4.2.0",
-    "shx": "^0.3.4"
+    "shx": "^0.3.4",
+    "vue-eslint-parser": "^9.3.1"
+  },
+  "lint-staged": {
+    "*.js": "eslint --fix",
+    "*.vue": "eslint --fix"
   }
 }

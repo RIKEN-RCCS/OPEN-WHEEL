@@ -5,10 +5,12 @@
  */
 <template>
   <div>
-    <component-tree/>
-    <v-row
-      no-gutters
-    >
+    <v-row no-gutters >
+      <v-col cols=12>
+        <component-tree/>
+      </v-col>
+    </v-row>
+    <v-row no-gutters >
       <component-library />
       <graph-view />
       <component-property />
@@ -17,18 +19,18 @@
 </template>
 
 <script>
-  import GraphView from "@/components/graphView.vue";
-  import ComponentLibrary from "@/components/componentLibrary.vue";
-  import ComponentProperty from "@/components/componentProperty.vue";
-  import ComponentTree from "@/components/componentTree.vue";
+import GraphView from "@/components/graphView.vue";
+import ComponentLibrary from "@/components/componentLibrary.vue";
+import ComponentProperty from "@/components/componentProperty.vue";
+import ComponentTree from "@/components/componentTree.vue";
 
-  export default {
-    name: "Graph",
-    components: {
-      GraphView,
-      ComponentLibrary,
-      ComponentProperty,
-      ComponentTree,
-    },
-  };
+export default {
+  name: "Graph",
+  components: {
+    GraphView,
+    ComponentLibrary,
+    ComponentProperty,
+    ComponentTree,
+  },
+};
 </script>

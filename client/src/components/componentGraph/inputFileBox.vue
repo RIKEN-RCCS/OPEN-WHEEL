@@ -12,50 +12,50 @@
  </g>
 </template>
 <script>
-  "use strict";
-  import { mapState } from "vuex";
-  import Freciever from "@/components/componentGraph/freciever.vue"
-  import TextBox from "@/components/componentGraph/textBox.vue"
-  import {calcFreceiverPos} from "@/lib/utils.js"
-  import SIO from "@/lib/socketIOWrapper.js";
+"use strict";
+import { mapState } from "vuex";
+import Freciever from "@/components/componentGraph/freciever.vue"
+import TextBox from "@/components/componentGraph/textBox.vue"
+import {calcFreceiverPos} from "@/lib/utils.js"
+import SIO from "@/lib/socketIOWrapper.js";
 
-  export default{
-    name: "inputFileBox",
-    components:{
-      Freciever,
-      TextBox
+export default{
+  name: "inputFileBox",
+  components:{
+    Freciever,
+    TextBox
+  },
+  props:{
+    center:{
+      required: true,
+      type: Object
     },
-    props:{
-      center:{
-        required: true,
-        type: Object
-      },
-      index:{
-        required: true,
-        type: Number
-      },
-      componentId:{
-        required: true,
-        type:String,
-      },
-      inputFilename:{
-        type:String,
-        default: ""
-      }
+    index:{
+      required: true,
+      type: Number
     },
-    computed:{
-      ...mapState(["projectRootDir", "currentComponent"]),
-      frecieverPos(){
-        return calcFreceiverPos(this.center, this.index);
-      },
+    componentId:{
+      required: true,
+      type:String,
     },
-    methods:{
-      onDrop(e){
-        this.$emit("addFileLink", e.detail.componentID, e.detail.srcName, this.inputFilename);
-      },
-      onClick(){
-        this.$emit("removeFileLink", this.inputFilename);
-      }
+    inputFilename:{
+      type:String,
+      default: ""
+    }
+  },
+  computed:{
+    ...mapState(["projectRootDir", "currentComponent"]),
+    frecieverPos(){
+      return calcFreceiverPos(this.center, this.index);
+    },
+  },
+  methods:{
+    onDrop(e){
+      this.$emit("addFileLink", e.detail.componentID, e.detail.srcName, this.inputFilename);
+    },
+    onClick(){
+      this.$emit("removeFileLink", this.inputFilename);
     }
   }
+}
 </script>

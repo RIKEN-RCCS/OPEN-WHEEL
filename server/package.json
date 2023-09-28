@@ -24,17 +24,7 @@
     "mocha": "mocha",
     "lint": "eslint --fix app/**/*.js",
     "test": "cross-env WHEEL_LOGLEVEL=OFF mocha --recursive --unhandled-rejections=strict",
-    "coverage": "nyc --reporter=html --reporter=text npm run test",
-    "check_version_string": "git diff --stat origin |grep server/app/db/version.json"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged",
-      "pre-push": "npm run check_version_string && npm run test"
-    }
-  },
-  "lint-staged": {
-    "*.js": "eslint --fix"
+    "coverage": "nyc --reporter=html --reporter=text npm run test"
   },
   "files": [
     "app",
@@ -65,8 +55,9 @@
     "simple-batch-system": "^1.15.0",
     "socket.io": "^4.6.0",
     "socketio-file-upload": "^0.7.3",
-    "ssh-client-wrapper": "^1.8.3",
+    "ssh-client-wrapper": "^2.0.2",
     "stat-mode": "^1.0.0",
+    "through2": "^4.0.2",
     "uuid": "^9.0.0",
     "zip-a-folder": "^2.0.0"
   },
@@ -79,16 +70,8 @@
     "chokidar-cli": "^3.0.0",
     "cross-env": "^7.0.3",
     "deep-equal-in-any-order": "^2.0.2",
-    "eslint": "^8.33.0",
-    "eslint-config-eslint": "^7.0.0",
-    "eslint-plugin-chai-expect": "^3.0.0",
-    "eslint-plugin-chai-friendly": "^0.7.2",
-    "eslint-plugin-jsdoc": "^39.8.0",
-    "eslint-plugin-node": "^11.1.0",
-    "husky": "^8.0.3",
     "js-cookie": "^3.0.1",
     "jsdoc-to-markdown": "^8.0.0",
-    "lint-staged": "^13.1.1",
     "mocha": "^10.2.0",
     "npm-check-updates": "^16.6.5",
     "npm-run-all": "^4.1.5",

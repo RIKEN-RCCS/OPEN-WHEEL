@@ -16,14 +16,13 @@ async function cancelRemoteJob(task) {
   const cancelCmd = `${JS.del} ${task.jobID}`;
   getLogger(task.projectRootDir).debug(`cancel job: ${cancelCmd}`);
   const output = [];
-  await ssh.exec(cancelCmd, (data)=>{
+  await ssh.exec(cancelCmd, 60, (data)=>{
     output.push(data);
   });
   getLogger(task.projectRootDir).debug("cacnel done", output.join());
 }
 
 async function cancelLocalJob() {
-  //eslint-disable-next-line no-console
   console.log("not implimented yet!!");
 }
 

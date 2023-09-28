@@ -8,14 +8,17 @@
     class="fill-height"
     fluid
   >
-    <v-toolbar dense>
+    <v-toolbar
+      color="background"
+      density=compact
+    >
       <v-breadcrumbs
         :items="pathToCurrentComponent"
       >
         <template #divider>
-          <v-icon>mdi-forward</v-icon>
+          <v-icon icon="mdi-forward" />
         </template>
-        <template #item="{ item }">
+        <template #title="{ item }">
           <v-breadcrumbs-item>
             <component-button
               :item="item"
@@ -26,20 +29,21 @@
       <v-spacer />
       <v-toolbar-items>
         <v-select
+          class='mt-n1'
           v-model="mode"
           :items="modes"
-          class="pt-3"
         />
         <v-switch
+          class='mt-n1'
           v-model="readOnly"
           label="read only"
           :disabled="! isEdittable"
-          class="pt-3"
+          color="primary"
         />
-        <v-btn @click="saveAllFiles">
-          <v-icon>mdi-content-save-all</v-icon>
-          save all files
-        </v-btn>
+        <v-btn @click="saveAllFiles"
+          prepend-icon=mdi-content-save-all
+          text="save all files"
+        />
       </v-toolbar-items>
     </v-toolbar>
     <v-row no-gutters>
@@ -56,6 +60,7 @@
           :read-only="readOnly"
           @openNewTab="openNewTab"
           @insertBraces="insertBraces"
+          @openFilterEditor=openFilterEditor
         />
       </v-col>
       <v-col v-show="mode === 'jobScriptEditor'">
@@ -68,7 +73,11 @@
         />
       </v-col>
     </v-row>
-    <filter-editor />
+    <filter-editor
+      v-model=filterDialog
+      :placeholders=placeholders
+      @updatePlaceholders=getAllPlaceholders
+    />
     <unsaved-files-dialog
       :unsaved-files="unsavedFiles"
       :dialog="showUnsavedFilesDialog"
@@ -78,145 +87,162 @@
   </v-container>
 </template>
 <script>
-  "use strict";
-  import { mapState, mapGetters,mapActions } from "vuex";
-  import getNodeAndPath from "@/lib/getNodeAndPath.js";
-  import unsavedFilesDialog from "@/components/unsavedFilesDialog.vue";
-  import componentButton from "@/components/common/componentButton.vue";
-  import filterEditor from "@/components/rapid/filterEditor.vue";
-  import tabEditor from "@/components/rapid/tabEditor.vue";
-  import parameterEditor from "@/components/rapid/parameterEditor.vue";
-  import jobScriptEditor  from "@/components/rapid/jobScriptEditor.vue";
-  import SIO from "@/lib/socketIOWrapper.js";
+"use strict";
+import { mapState, mapGetters,mapActions } from "vuex";
+import getNodeAndPath from "@/lib/getNodeAndPath.js";
+import unsavedFilesDialog from "@/components/unsavedFilesDialog.vue";
+import componentButton from "@/components/common/componentButton.vue";
+import filterEditor from "@/components/rapid/filterEditor.vue";
+import tabEditor from "@/components/rapid/tabEditor.vue";
+import parameterEditor from "@/components/rapid/parameterEditor.vue";
+import jobScriptEditor  from "@/components/rapid/jobScriptEditor.vue";
+import SIO from "@/lib/socketIOWrapper.js";
 
-  export default {
-    name: "Editor",
-    components: {
-      componentButton,
-      unsavedFilesDialog,
-      filterEditor,
-      tabEditor,
-      parameterEditor,
-      jobScriptEditor,
-    },
-    beforeRouteLeave (to, from, next) {
-      if (!this.hasChange()) {
-        next();
-        return;
+export default {
+  name: "Editor",
+  components: {
+    componentButton,
+    unsavedFilesDialog,
+    filterEditor,
+    tabEditor,
+    parameterEditor,
+    jobScriptEditor,
+  },
+  beforeRouteLeave (to, from, next) {
+    if (!this.hasChange()) {
+      next();
+      return;
+    }
+    const changedFilenames=[]
+    if(this.$refs.param.hasChange()){
+      changedFilenames.push({name: `${this.projectRootDir}${this.componentPath[this.selectedComponent.ID].slice(1)}/${this.$refs.param.filename}`})
+    }
+    if(this.$refs.text.hasChange() ){
+      changedFilenames.push(...this.$refs.text.getChangedFiles())
+    }
+    this.unsavedFiles.splice(0,this.unsavedFiles.length, ...changedFilenames);
+    this.showUnsavedFilesDialog= true;
+    this.leave=next
+  },
+  data: ()=>{
+    return {
+      mode: "normal",
+      readOnly_: false,
+      isJobScript: false,
+      showUnsavedFilesDialog: false,
+      unsavedFiles:[],
+      leave:null,
+      filterDialog:false,
+      placeholders:[]
+    };
+  },
+  computed: {
+    ...mapState(["projectRootDir",
+      "selectedFile",
+      "componentPath",
+      "selectedComponent",
+      "currentComponent",
+      "componentTree"]),
+    ...mapGetters([ "isEdittable"]),
+    readOnly:{
+      get(){
+        return this.isEdittable ? this.readOnly_: true;
+      },
+      set(v){
+        this.readOnly_=v;
       }
-      const changedFilenames=[]
-      if(this.$refs.param.hasChange()){
-        changedFilenames.push({name: `${this.projectRootDir}${this.componentPath[this.selectedComponent.ID].slice(1)}/${this.$refs.param.filename}`})
-      }
-      if(this.$refs.text.hasChange() ){
-        changedFilenames.push(...this.$refs.text.getChangedFiles())
-      }
-      this.unsavedFiles.splice(0,this.unsavedFiles.length, ...changedFilenames);
-      this.showUnsavedFilesDialog= true;
-      this.leave=next
     },
-    data: ()=>{
-      return {
-        mode: "normal",
-        readOnly_: false,
-        isJobScript: false,
-        showUnsavedFilesDialog: false,
-        unsavedFiles:[],
-        leave:null
-      };
+    pathToCurrentComponent: function () {
+      const rt = [];
+      if (this.currentComponent !== null) {
+        getNodeAndPath(this.currentComponent.ID, this.componentTree, rt);
+      }
+      return rt;
     },
-    computed: {
-      ...mapState(["projectRootDir",
-                  "selectedFile",
-                  "componentPath",
-                  "selectedComponent",
-                  "currentComponent",
-                  "componentTree"]),
-      ...mapGetters([ "isEdittable"]),
-      readOnly:{
-        get(){
-          return this.isEdittable ? this.readOnly_: true;
-        },
-        set(v){
-          this.readOnly_=v;
-        }
-      },
-      pathToCurrentComponent: function () {
-        const rt = [];
-        if (this.currentComponent !== null) {
-          getNodeAndPath(this.currentComponent.ID, this.componentTree, rt);
-        }
-        return rt;
-      },
-      selectedComponentRelativePath(){
-        if(this.selectedComponent === null){
-          return null;
-        }
-        const relativePath=this.componentPath[this.selectedComponent.ID];
-        return relativePath.startsWith("./") ? relativePath.slice(2) : relativePath;
-      },
-      modes(){
-        const disableJobScriptEditor=this.selectedComponent !== null ? this.selectedComponent.type !== "task" : false;
-        return [ {text: "normal", value:"normal"},
-          {text: "PS-config", value:"PS-config", disabled: this.disablePS},
-          {text: "jobScriptEditor", value: "jobScriptEditor", disabled: disableJobScriptEditor}];
-      },
-      disablePS(){
-        if (this.selectedComponent === null){
-          return true;
-        }
-        if(this.selectedComponent.type === "parameterStudy" || this.selectedComponent.type === "bulkjobTask"){
-          return false;
-        }
+    selectedComponentRelativePath(){
+      if(this.selectedComponent === null){
+        return null;
+      }
+      const relativePath=this.componentPath[this.selectedComponent.ID];
+      return relativePath.startsWith("./") ? relativePath.slice(2) : relativePath;
+    },
+    modes(){
+      const rt=[ "normal"]
+      if(!this.disablePS){
+        rt.push("PS-config")
+      }
+      const disableJobScriptEditor=this.selectedComponent !== null ? this.selectedComponent.type !== "task" : false;
+      if(!disableJobScriptEditor){
+        rt.push("jobScriptEditor")
+      }
+      return rt;
+    },
+    disablePS(){
+      if (this.selectedComponent === null){
         return true;
       }
+      if(this.selectedComponent.type === "parameterStudy" || this.selectedComponent.type === "bulkjobTask"){
+        return false;
+      }
+      return true;
+    }
+  },
+  mounted () {
+    SIO.onGlobal("parameterSettingFile", (file)=>{
+      if(file.isParameterSettingFile){
+        this.mode="PS-config";
+      }
+    });
+  },
+  methods: {
+    ...mapActions(["showDialog"]),
+    setIsJobScript(v){
+      this.isJobScript=v;
     },
-    mounted () {
-      SIO.onGlobal("parameterSettingFile", (file)=>{
-        if(file.isParameterSettingFile){
-            this.mode="PS-config";
-        }
-      });
+    openNewTab (...args) {
+      this.$refs.text.openNewTab(...args);
     },
-    methods: {
-      ...mapActions(["showDialog"]),
-      setIsJobScript(v){
-        this.isJobScript=v;
-      },
-      openNewTab (...args) {
-        this.$refs.text.openNewTab(...args);
-      },
-      insertBraces () {
-        this.$refs.text.insertBraces();
-      },
-      insertSnipet(snipet){
-        this.$refs.text.insertSnipet(snipet);
-      },
-      removeSnipet(){
-        this.$refs.text.removeSnipet();
-      },
-      hasChange () {
-        return this.$refs.text.hasChange() || this.$refs.param.hasChange(); // ||this.$refs.jse.hasChange();
-      },
-      saveAllFiles () {
-        this.$refs.text.saveAll();
-        this.$refs.param.save();
-      },
-      unsavedFilesDialogClosed(mode,payload){
-        if(mode === "cancel"){
-          this.unsavedFiles.splice(0);
-          this.showUnsavedFilesDialog=false;
-          return
-        }
-        if (mode === "save"){
-          this.saveAllFiles()
-        }
+    insertBraces () {
+      this.$refs.text.insertBraces();
+    },
+    insertSnipet(snipet){
+      this.$refs.text.insertSnipet(snipet);
+    },
+    removeSnipet(){
+      this.$refs.text.removeSnipet();
+    },
+    hasChange () {
+      return this.$refs.text.hasChange() || this.$refs.param.hasChange(); //||this.$refs.jse.hasChange();
+    },
+    saveAllFiles () {
+      this.$refs.text.saveAll();
+      this.$refs.param.save();
+    },
+    unsavedFilesDialogClosed(mode){
+      if(mode === "cancel"){
         this.unsavedFiles.splice(0);
         this.showUnsavedFilesDialog=false;
-        this.leave();
-      },
+        return
+      }
+      if (mode === "save"){
+        this.saveAllFiles()
+      }
+      this.unsavedFiles.splice(0);
+      this.showUnsavedFilesDialog=false;
+      this.leave();
     },
-  };
+    getAllPlaceholders(){
+      return this.$refs.text.getAllPlaceholders()
+    },
+    openFilterEditor(){
+      const rt=this.$refs.text.getAllPlaceholders()
+      this.placeholders.splice(0,this.placeholders.length,...rt);
+      this.$nextTick(()=>{
+        this.filterDialog=true;
+      });
+    }
+  },
+};
 </script>
 <style>
 .v-select__selections {

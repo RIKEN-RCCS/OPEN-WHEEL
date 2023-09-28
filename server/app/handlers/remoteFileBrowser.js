@@ -37,7 +37,7 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
     const stdout = [];
-    const rt = await ssh.exec(`ls -F ${target}`, (output)=>{
+    const rt = await ssh.exec(`ls -F ${target}`, 120,(output)=>{
       stdout.push(output);
     });
     if (rt !== 0) {
@@ -52,8 +52,7 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
     });
     const stdout2 = [];
     if (links.length > 0) {
-      //eslint-disable-next-line no-useless-escape
-      const rt2 = await ssh.exec(` cd ${target};for i in ${links.join(" ")};do echo $i; stat -c %F $(readlink -f $i);done`, (output)=>{
+      const rt2 = await ssh.exec(` cd ${target};for i in ${links.join(" ")};do echo $i; stat -c %F $(readlink -f $i);done`, 0, (output)=>{
         stdout2.push(output);
       });
       if (rt2 !== 0) {

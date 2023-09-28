@@ -33,16 +33,16 @@ ${v.other ? `${v.other}` : ""}
 
 function createOtherScript(v){
   return `"#!/bin/bash";
-${v.rsctype && v.rscnum ? `#$ -l ${buffer.rsctype}=${buffer.rscnum}\n` : ""}
-${v.elapseTime          ? `#$ -l h_rt=${buffer.elapseTime}\n` : ""}
-${v.Priority            ? `#$ -p ${buffer.Priority}\n` : ""}
-${v.taskId              ? `#$ -t ${buffer.taskId}\n` : ""}//n[-m[:s]]で指定
-${v.holdId              ? `#$ -hold_jid ${buffer.holdId}\n` : ""}
-${v.arId                ? `#$ -ar ${buffer.arId}\n` : ""}
-${v.stdoutName          ? `#$ -o ${buffer.stdoutName}\n` : ""}
-${v.stderrName          ? `#$ -e ${buffer.stderrName}\n` : ""}
-${v.jobName             ? `#$ -N ${buffer.jobName}\n` : ""}
-${v.other ? `${buffer.other}` : ""}
+${v.rsctype && v.rscnum ? `#$ -l ${v.rsctype}=${v.rscnum}\n` : ""}
+${v.elapseTime          ? `#$ -l h_rt=${v.elapseTime}\n` : ""}
+${v.Priority            ? `#$ -p ${v.Priority}\n` : ""}
+${v.taskId              ? `#$ -t ${v.taskId}\n` : ""}//n[-m[:s]]で指定
+${v.holdId              ? `#$ -hold_jid ${v.holdId}\n` : ""}
+${v.arId                ? `#$ -ar ${v.arId}\n` : ""}
+${v.stdoutName          ? `#$ -o ${v.stdoutName}\n` : ""}
+${v.stderrName          ? `#$ -e ${v.stderrName}\n` : ""}
+${v.jobName             ? `#$ -N ${v.jobName}\n` : ""}
+${v.other ? `${v.other}` : ""}
 #### WHEEL inserted lines ####
 `.replaceAll(/^\n/mg,"");
 }

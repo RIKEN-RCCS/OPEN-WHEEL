@@ -6,6 +6,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    :activator=activator
     :max-width="maxWidth"
     persistent
   >
@@ -26,61 +27,61 @@
         >
           <v-btn
             @click="$emit(item.label)"
-          >
-            <v-icon>
-              {{ item.icon }}
-            </v-icon>
-            {{ item.label }}
-          </v-btn>
+            :prepend-icon=item.icon
+            :text=item.label
+          />
         </div>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 <script>
-  export default {
-    name: "VersatileDialog",
-    props:{
-      value: {
-        type: Boolean,
-        required: true
-      },
-      persistent: {
-        type: Boolean,
-        default: true
-      },
-      buttons: {
-        type: Array,
-        default: function(){
-          return [
-            { icon: "mdi-check", label: "ok" },
-            { icon: "mdi-close", label: "cancel" },
-          ];
-        }
-      },
-      title:{
-        type: String,
-        default: ""
-      },
-      message:{
-        type: String,
-        default: ""
-      },
-      maxWidth:{
-        type: [String, Number],
-        default: undefined
+export default {
+  name: "VersatileDialog",
+  props:{
+    activator:{
+      required:false
+    },
+    value: {
+      type: Boolean,
+      required: true
+    },
+    persistent: {
+      type: Boolean,
+      default: true
+    },
+    buttons: {
+      type: Array,
+      default: function(){
+        return [
+          { icon: "mdi-check", label: "ok" },
+          { icon: "mdi-close", label: "cancel" },
+        ];
       }
     },
-    computed:{
-      dialog:{
-        get(){
-          return this.value;
-        },
-        set(v){
-          this.$emit("input", v);
-        }
-      }
+    title:{
+      type: String,
+      default: ""
     },
+    message:{
+      type: String,
+      default: ""
+    },
+    maxWidth:{
+      type: [String, Number],
+      default: undefined
+    }
+  },
+  computed:{
+    dialog:{
+      get(){
+        return this.value;
+      },
+      set(v){
+        this.$emit("update:modelValue", v);
+      }
+    }
+  },
 
-  };
+};
 </script>

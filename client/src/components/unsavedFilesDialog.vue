@@ -17,82 +17,82 @@
         <v-data-table
           :headers="headers"
           :items="items"
-          disable-pagination
-          hide-default-footer
-          dense
-        />
+          density="compact"
+        >
+          <template #bottom />
+        </v-data-table>
       </v-card-text>
       <v-card-actions>
         <v-btn
           class="text-capitalize"
           @click="saveAll"
-        >
-          <v-icon>mdi-content-save-all-outline</v-icon>Save All
-        </v-btn>
+          prepend-icon="mdi-content-save-all-outline"
+          text="Save All"
+        />
         <v-btn
           class="text-capitalize"
           @click="discardChanges"
-        >
-          <v-icon>mdi-alert-circle-outline</v-icon>discard all changes
-        </v-btn>
+          prepend-icon=mdi-alert-circle-outline
+          text="discard all changes"
+        />
         <v-btn
           class="text-capitalize"
           @click="closeDialog"
-        >
-          <v-icon>mdi-close</v-icon>cancel
-        </v-btn>
+          prepend-icon=mdi-close
+          text=cancel
+        />
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 <script>
-  export default {
-    props:{
-        unsavedFiles: {
-          type: Array,
-          required: true
-        },
-        dialog: {
-          type: Boolean,
-          required: true
-        },
-        withoutStatus:{
-          type: Boolean,
-          default: false
-        }
+export default {
+  props:{
+    unsavedFiles: {
+      type: Array,
+      required: true
     },
-    data () {
-      return {
-        headers: [
-          { text: "status", value: "status" },
-          { text: "filename", value: "name" },
-        ],
-      };
+    dialog: {
+      type: Boolean,
+      required: true
     },
-    mounted(){
-      if(this.withoutStatus){
-        this.headers.splice(0,1);
-      }
+    withoutStatus:{
+      type: Boolean,
+      default: false
+    }
+  },
+  data () {
+    return {
+      headers: [
+        { title: "status", key: "status" },
+        { title: "filename", key: "name" },
+      ],
+    };
+  },
+  mounted(){
+    if(this.withoutStatus){
+      this.headers.splice(0,1);
+    }
+  },
+  computed:{
+    show(){
+      return this.dialog;
     },
-    computed:{
-      show(){
-        return this.dialog;
-      },
-      items(){
-        return this.unsavedFiles;
-      }
+    items(){
+      return this.unsavedFiles;
+    }
+  },
+  methods: {
+    closeDialog () {
+      this.$emit("closed","cancel");
     },
-    methods: {
-      closeDialog () {
-        this.$emit("closed","cancel");
-      },
-      discardChanges () {
-        this.$emit("closed","discard");
-      },
-      saveAll () {
-        this.$emit("closed","save");
-      },
+    discardChanges () {
+      this.$emit("closed","discard");
     },
+    saveAll () {
+      this.$emit("closed","save");
+    },
+  },
 
-  };
+};
 </script>

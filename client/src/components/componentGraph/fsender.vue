@@ -24,72 +24,72 @@
 </g>
 </template>
 <script>
-  "use strict";
-  import EquilateralTriangle from "@/components/componentGraph/triangle.vue";
-  import Connector from "@/components/componentGraph/connector.vue";
-  import {filePlugColor, plugSize } from "@/lib/constants.json"
+"use strict";
+import EquilateralTriangle from "@/components/componentGraph/triangle.vue";
+import Connector from "@/components/componentGraph/connector.vue";
+import {filePlugColor, plugSize } from "@/lib/constants.json"
 
 
-  export default {
-    name: "Fsender",
-    components:{
-      EquilateralTriangle,
-      Connector
+export default {
+  name: "Fsender",
+  components:{
+    EquilateralTriangle,
+    Connector
+  },
+  props:{
+    start:{
+      required: true,
+      type: Object
     },
-    props:{
-      start:{
-        required: true,
-        type: Object
-      },
-      boxHeight :{
-        type: Number,
-        required: true
-      },
-      componentId:{
-        required: true,
-        type:String,
-      },
-      outputFilename:{
-        required: true,
-        type:String,
-      }
+    boxHeight :{
+      type: Number,
+      required: true
     },
-    data(){
-      return {
-        color: filePlugColor,
-        end: {x: this.start.x ,y: this.start.y},
-        dragging: false,
-        size: plugSize
-      }
+    componentId:{
+      required: true,
+      type:String,
     },
-    watch:{
-      start(e){
-        this.end.x=e.x
-        this.end.y=e.y
-      }
-    },
-    methods:{
-      onDragStart(event){
-        this.dragging=true
-      },
-      onDragEnd(event){
-        this.dragging=false
-        this.end.x=this.start.x
-        this.end.y=this.start.y
-        const dropEvent=new CustomEvent('drop', {detail:{
-          type: "fsender",
-          componentID: this.componentId,
-            srcName: this.outputFilename
-        }})
-        const elements = document.elementsFromPoint(event.clientX, event.clientY)
-        elements.forEach((element)=>{
-          if(element.dataset.droparea){
-            element.dispatchEvent(dropEvent)
-          }
-        });
-      },
+    outputFilename:{
+      required: true,
+      type:String,
     }
+  },
+  data(){
+    return {
+      color: filePlugColor,
+      end: {x: this.start.x ,y: this.start.y},
+      dragging: false,
+      size: plugSize
+    }
+  },
+  watch:{
+    start(e){
+      this.end.x=e.x
+      this.end.y=e.y
+    }
+  },
+  methods:{
+    onDragStart(event){
+      this.dragging=true
+    },
+    onDragEnd(event){
+      this.dragging=false
+      this.end.x=this.start.x
+      this.end.y=this.start.y
+      const dropEvent=new CustomEvent("drop", {detail:{
+        type: "fsender",
+        componentID: this.componentId,
+        srcName: this.outputFilename
+      }})
+      const elements = document.elementsFromPoint(event.clientX, event.clientY)
+      elements.forEach((element)=>{
+        if(element.dataset.droparea){
+          element.dispatchEvent(dropEvent)
+        }
+      });
+    },
   }
+}
 
 </script>
 

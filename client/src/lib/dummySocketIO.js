@@ -39,12 +39,12 @@ export default {
       logCallbacks[event] = callback;
     }
   },
-  once: (event, callback)=>{
-    // ダイアログまわりで使ってたかもしれないので用意してるけど
-    // 使わない可能性大
+  once: (event)=>{
+    //ダイアログまわりで使ってたかもしれないので用意してるけど
+    //使わない可能性大
     debug("add one-time event listener to ", event);
   },
-  off: (event, callback)=>{
+  off: (event)=>{
     debug("remove event listener from ", event);
   },
   emit: (event, ...args)=>{

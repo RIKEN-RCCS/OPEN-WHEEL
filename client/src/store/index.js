@@ -3,13 +3,9 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-import Vue from "vue";
 import Vuex from "vuex";
 import Debug from "debug";
-import SIO from "@/lib/socketIOWrapper.js";
 const debug = Debug("wheel:vuex");
-
-Vue.use(Vuex);
 
 const logger = (store)=>{
   store.subscribe((mutation)=>{
@@ -31,8 +27,8 @@ const mutationFactory = (types)=>{
 /**
  * @typedef state
  * @property { Object } currentComponent  - parent component of displayed boxes this is set by componentGraph or componentTree
- * @property { string } selectedComponent - component which is editing in property window and text editor. this is set by clicking in componentGraph
- * @property { string } copySelectedComponent - copy of selectedComponent at the slected moment
+ * @property { Object } selectedComponent - component which is editing in property window and text editor. this is set by clicking in componentGraph
+ * @property { Object } copySelectedComponent - copy of selectedComponent at the slected moment
  * @property { string } projectRootDir - absolute path of project's root directory
  * @property { string } rootComponentID - root workflow component's ID
  * @property { string } projectState - project's satate. this value is never changed from client-side
@@ -126,29 +122,36 @@ export default new Vuex.Store({
       }
     },
     showDialog: (context, payload)=>{
-      // ignore if dialog is already opend
-      // we have to use dialog queue for this case
+      //ignore if dialog is already opend
+      //we have to use dialog queue for this case
       if (context.state.openDialog) {
         return;
       }
       context.commit("dialogContent", payload);
       context.commit("openDialog", true);
     },
-    closeDialog: (context, payload)=>{
+    closeDialog: (context )=>{
       context.commit("dialogContent", null);
       context.commit("openDialog", false);
     },
   },
   getters: {
-    // get selected component's absolute path on server
+    //get selected component's absolute path on server
     selectedComponentAbsPath: (state, getters)=>{
       if (state.selectedComponent === null || typeof state.selectedComponent.ID === "undefined") {
         return state.projectRootDir;
       }
       const relativePath = state.componentPath[state.selectedComponent.ID];
-      return `${state.projectRootDir}${getters.pathSep}${relativePath.slice(1)}`;
+      //remove "./" or "/" at the begining of line 
+      let numRemove=0;
+      if( /^\.\//.test(relativePath)){
+        numRemove=2;
+      }else if(relativePath.startsWith("/")){
+        numRemove=1;
+      }
+      return `${state.projectRootDir}${getters.pathSep}${relativePath.slice(numRemove)}`;
     },
-    // get current component's absolute path on server
+    //get current component's absolute path on server
     currentComponentAbsPath: (state, getters)=>{
       if (state.currentComponent.ID === state.rootComponentID) {
         return state.projectRootDir;
@@ -156,7 +159,7 @@ export default new Vuex.Store({
       const relativePath = state.componentPath[state.currentComponent.ID];
       return `${state.projectRootDir}${getters.pathSep}${relativePath.slice(1)}`;
     },
-    // flag to show loading screen
+    //flag to show loading screen
     waiting: (state)=>{
       return state.waitingProjectJson || state.waitingWorkflow || state.waitingFile || state.waitingSave || state.waitingEnv || state.waitingDownload;
     },

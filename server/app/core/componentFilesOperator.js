@@ -500,7 +500,7 @@ async function validateBulkjobTask(projectRootDir, component) {
   if (component.useJobScheduler) {
     const hostinfo = remoteHost.query("name", component.host);
     if (typeof hostinfo === "undefined") {
-      //TODO local jobが将来実装されたらここを変更する必要がある
+      //local job is not supported for now
       return Promise.reject(new Error(`remote host setting for ${component.host} not found`));
     }
     if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
@@ -761,7 +761,6 @@ async function validateComponents(projectRootDir, argParentID) {
 
 function componentJsonReplacer(key, value) {
   if (["handler", "doCleanup", "sbsID", "childLoopRunning"].includes(key)) {
-    //eslint-disable-next-line no-undefined
     return undefined;
   }
   return value;
@@ -909,7 +908,7 @@ async function arrangeComponent(stepjobGroupArray) {
       }
 
       let nextComponent = [];
-      /*eslint-disable-next-line no-loop-func*/
+       
       nextComponent = stepjobTaskComponents.filter((stepjobTask)=>{
         return stepjobTask.ID === arrangeArraytemp[i - 1].next[0];
       });

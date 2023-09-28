@@ -5,44 +5,43 @@
  */
 <template>
   <v-toolbar
-    dense
+    density="compact"
+    color="background"
   >
     <v-dialog
       v-model="showComponentTree"
-      overlay-opacity="0.9"
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props }">
         <v-btn
-          icon
-          v-bind="attrs"
-          class="ms-12"
-          v-on="on"
-        >
-          <v-icon>mdi-sitemap mdi-rotate-270 </v-icon>
-        </v-btn>
+          icon="mdi-sitemap mdi-rotate-270"
+          v-bind="props"
+        />
       </template>
 
-      <v-treeview
-        open-all
-        item-key="ID"
+      <my-treeview
         :items="componentTree"
+        itemKey="ID"
+        :get-node-icon="getNodeIcon"
+        :open-all=true
       >
-        <template #label="{ item }">
+        <template #label="{item}">
           <component-button
-            :item="item"
-            @clicked="goto(item)"
+              :item="item"
+              @clicked="goto(item)"
           />
         </template>
-      </v-treeview>
+      </my-treeview>
     </v-dialog>
     <v-breadcrumbs
       :items="pathToCurrentComponent"
     >
       <template #divider>
-        <v-icon>mdi-forward</v-icon>
+        <v-icon icon="mdi-forward"/>
       </template>
-      <template #item="{ item }">
-        <v-breadcrumbs-item>
+      <template #title="{ item }">
+        <v-breadcrumbs-item
+            :disabled="false"
+        >
           <component-button
             :item="item"
             @clicked="goto(item)"
@@ -54,45 +53,52 @@
 </template>
 
 <script>
-  import { mapState } from "vuex";
-  import getNodeAndPath from "@/lib/getNodeAndPath.js";
-  import { isContainer } from "@/lib/utility.js";
-  import componentButton from "@/components/common/componentButton.vue";
-  import SIO from "@/lib/socketIOWrapper.js";
+import { mapState } from "vuex";
+import getNodeAndPath from "@/lib/getNodeAndPath.js";
+import { isContainer } from "@/lib/utility.js";
+import componentButton from "@/components/common/componentButton.vue";
+import myTreeview from "@/components/common/myTreeview.vue"
+import SIO from "@/lib/socketIOWrapper.js";
 
-  export default {
-    name: "ComponentTree",
-    components: {
-      componentButton,
+export default {
+  name: "ComponentTree",
+  components: {
+    componentButton,
+    myTreeview
+  },
+  data: ()=>{
+    return {
+      showComponentTree: false,
+    };
+  },
+  computed: {
+    ...mapState({
+      tree: "componentTree",
+      currentComponent: "currentComponent",
+      projectRootDir: "projectRootDir"
+    }),
+    pathToCurrentComponent: function () {
+      const rt = [];
+      if (this.currentComponent !== null) {
+        getNodeAndPath(this.currentComponent.ID, this.tree, rt);
+      }
+      return rt;
     },
-    data: ()=>{
-      return {
-        showComponentTree: false,
-      };
+    componentTree: function () {
+      return [this.tree];
     },
-    computed: {
-      ...mapState({
-        tree: "componentTree",
-        currentComponent: "currentComponent",
-        projectRootDir: "projectRootDir"
-      }),
-      pathToCurrentComponent: function () {
-        const rt = [];
-        if (this.currentComponent !== null) {
-          getNodeAndPath(this.currentComponent.ID, this.tree, rt);
-        }
-        return rt;
-      },
-      componentTree: function () {
-        return [this.tree];
-      },
+  },
+  methods: {
+    goto: function (item) {
+      const requestID = isContainer(item) ? item.ID : item.parent;
+      SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);
+      this.showComponentTree = false;
     },
-    methods: {
-      goto: function (item) {
-        const requestID = isContainer(item) ? item.ID : item.parent;
-        SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);
-        this.showComponentTree = false;
-      },
-    },
-  };
+  },
+};
 </script>
+<style>
+.v-breadcrumbs-item--disabled {
+  opacity: 1.0;
+}
+</style>

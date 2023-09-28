@@ -4,8 +4,8 @@
  * See License in the project root for the license information.
  */
 "use strict";
-/*eslint-disable no-useless-constructor*/
-/*eslint-disable class-methods-use-this*/
+ 
+ 
 const path = require("path");
 const childProcess = require("child_process");
 const fs = require("fs-extra");
@@ -49,7 +49,7 @@ async function prepareRemoteExecDir(task) {
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
   getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} start`);
   await ssh.send([task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
-  await ssh.exec(`chmod 744 ${remoteScriptPath}`);
+  await ssh.exec(`chmod 744 ${remoteScriptPath}`, 30);
   task.preparedTime = getDateString(true, true);
   getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} finished`);
 }
@@ -220,7 +220,7 @@ class Executer {
       getLogger(task.projectRootDir).warn(task.name, "failed due to", e);
     } finally {
       await createStatusFile(task);
-      getLogger(task.projectRootDir).debug(task.name, "completed");
+      getLogger(task.projectRootDir).trace(`${task.name} done`);
       task.emitForDispatcher("taskCompleted", task.state);
     }
   }
@@ -268,7 +268,7 @@ class RemoteJobExecuter extends Executer {
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
 
     let outputText = "";
-    const rt = await ssh.exec(submitCmd, (data)=>{
+    const rt = await ssh.exec(submitCmd, 60, (data)=>{
       outputText += data;
     });
 
@@ -310,7 +310,7 @@ class RemoteTaskExecuter extends Executer {
 
     //if exception occurred in ssh.exec, it will be catched in caller
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
-    const rt = await ssh.exec(cmd, (data)=>{
+    const rt = await ssh.exec(cmd, 0, (data)=>{
       getLogger(task.projectRootDir).sshout(data);
     });
     getLogger(task.projectRootDir).debug(task.name, "(remote) done. rt =", rt);

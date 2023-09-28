@@ -3,13 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-import Vue from "vue";
-import VueRouter from "vue-router";
+import { createRouter, createMemoryHistory } from "vue-router"
 import Graph from "@/views/graph.vue";
 import List from "@/views/taskList.vue";
 import Editor from "@/views/rapid.vue";
-
-Vue.use(VueRouter);
 
 const routes = [
   {
@@ -29,8 +26,8 @@ const routes = [
   },
 ];
 
-const router = new VueRouter({
-  mode: "history",
+const router = createRouter({
+  history: createMemoryHistory(),
   routes,
 });
 
