@@ -71,7 +71,7 @@ export default {
   },
   computed: {
     ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir"]),
-    ...mapGetters(["currentComponentAbsPath" ]),
+    ...mapGetters(["currentComponentAbsPath", "isEdittable" ]),
     isStepJob: function () {
       if (this.currentComponent === null) return false;
       return this.currentComponent.type === "stepjob";
@@ -99,11 +99,16 @@ export default {
       event.dataTransfer.effectAllowed = "move";
     },
     onDragend(event, item){
+      if( !this.isEdittable ){
+        debug("new component can not be added current project status")
+        return
+      }
       const x = event.clientX - widthComponentLibrary - this.offsetX;
       const y = event.clientY - heightToolbar - heightDenseToolbar * 2 - this.offsetY;
 
       if ( x < 0 || x > this.canvasWidth || y < 0 || y > this.canvasHeight){
         debug("out of range ",x,y)
+        return
       }
 
       const payload = {
