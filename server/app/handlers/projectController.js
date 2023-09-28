@@ -293,6 +293,9 @@ async function onRevertProject(clientID, projectRootDir, ack) {
       removeTempd(projectRootDir, "viewer"),
       removeTempd(projectRootDir, "download")
     ]);
+  } catch (e) {
+    getLogger(projectRootDir).error("revert project failed", e);
+    ack(e);
   } finally {
     await Promise.all([
       sendWorkflow(ack, projectRootDir),
