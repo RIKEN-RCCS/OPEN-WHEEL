@@ -27,6 +27,7 @@
               v-bind=props
               :color="item.color"
               :image="item.img"
+              :ref="item.type"
               rounded="0"
               draggable
               @dragstart.capture="onDragstart($event, item)"
@@ -94,8 +95,8 @@ export default {
       this.offsetY=event.offsetY
 
       //set icon during drag
-      const icon = this.$el.querySelector(`#${item.type}`); //$el.querySelector is not function
-      event.dataTransfer.setDragImage(icon, event.offsetX, event.offsetY);
+      const target=this.$refs[item.type][0]._.subTree.el
+      event.dataTransfer.setDragImage(target, event.offsetX, event.offsetY);
       event.dataTransfer.effectAllowed = "move";
     },
     onDragend(event, item){
