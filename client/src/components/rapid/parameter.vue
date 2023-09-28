@@ -8,9 +8,16 @@
     <v-card >
       <v-card-title>
         parameters
-        <v-row
-          justify="end"
+      </v-card-title>
+      <v-card-text>
+        <v-toolbar
+          color='background'
         >
+        <v-text-field
+          v-model="selectedText"
+          label="current selected text"
+          readonly
+        />
           <v-btn
             class="text-capitalize"
             :disabled="readOnly"
@@ -25,16 +32,7 @@
             prepend-icon="mdi-pencil"
             text="add filter"
           />
-        </v-row>
-      </v-card-title>
-      <v-card-subtitle>
-        <v-text-field
-          v-model="selectedText"
-          variant=outlined
-          readonly
-        />
-      </v-card-subtitle>
-      <v-card-text>
+        </v-toolbar>
         <v-data-table
           density=compact
           :headers="[{title: 'placeholder', key: 'keyword', sortable: true},
@@ -131,34 +129,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog
-      v-model="filterDialog"
-      width="auto "
-      persistent
-    >
-      <v-card>
-        <v-card-title />
-        <v-card-text>
-          <v-text-field
-            v-model="filterText"
-            label="filter"
-          />
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            @click="updateFilter"
-            prepend-icon="mdi-check"
-            text="check"
-          />
-          <v-btn
-            prepend-icon="mdi-cancel"
-            text="cancel"
-            @click="closeFilterDialog"
-          />
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 <script>
@@ -188,9 +158,6 @@ export default {
     return {
       currentItem: null,
       dialog: false,
-      filterEdittingItem: null,
-      filterText: "",
-      filterDialog: false,
       newItem: {
         type: "min-max-step",
         list: [],
@@ -259,18 +226,6 @@ export default {
     },
     required (v) {
       return v !== "" || "must be number.";
-    },
-    openFilterDialog (item) {
-      this.filterEdittingItem = item;
-      this.filterDialog = true;
-    },
-    updateFilter () {
-      this.$emit("updateFilter", this.filterText);
-      this.closeFilterDialog();
-    },
-    closeFilterDialog () {
-      this.filterEdittingItem = null;
-      this.filterDialog = false;
     },
     openDialog (item) {
       this.currentItem = item;

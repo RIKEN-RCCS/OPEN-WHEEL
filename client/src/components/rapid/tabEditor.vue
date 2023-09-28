@@ -301,6 +301,26 @@ export default {
       }
       return changed;
     },
+    getAllPlaceholders(){
+      const placeholders=[]
+      this.editor.$search.setOptions({
+        needle: /{{.*?}}/,
+        wholeWord: true,
+        regExp: true,
+      })
+
+      for(const file of this.files){
+        const rt = this.editor.$search.findAll(file.editorSession);
+        placeholders.push(...rt.map((e)=>{
+          const text = file.editorSession.getDocument()
+            .getTextRange(e)
+            .replace(/{{ */,"")
+            .replace(/ *}}/,"");
+          return {text, end:e.end, row: e.start.row, column: e.start.column, filename:file.filename, absPath: file.absPath, editorSession:file.editorSession}
+        }));
+      }
+      return placeholders;
+    },
     closeTab (index) {
       const file = this.files[index];
       if (index === 0) {

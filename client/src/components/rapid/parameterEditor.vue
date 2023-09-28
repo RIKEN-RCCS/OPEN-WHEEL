@@ -14,6 +14,7 @@
       :params="parameterSetting.params"
       :read-only="readOnly"
       @newParamAdded="newParamAdded"
+      @openFilterEditor="$emit('openFilterEditor')"
     />
     <gather-scatter
       :container="parameterSetting.scatter"
@@ -43,16 +44,18 @@
 </template>
 <script>
 "use strict";
+import { toRaw } from 'vue'
 import { mapState, mapGetters } from "vuex";
 import deepEqual from "deep-eql"
 import SIO from "@/lib/socketIOWrapper.js";
 import targetFiles from "@/components/rapid/targetFiles.vue";
 import gatherScatter from "@/components/rapid/gatherScatter.vue";
 import parameter from "@/components/rapid/parameter.vue";
+import Debug from "debug";
+const debug = Debug("wheel:workflow:textEditor:paramEditor");
 
 export default {
   name: "ParameterEditor",
-
   components: {
     targetFiles,
     gatherScatter,
@@ -90,7 +93,7 @@ export default {
   mounted () {
     SIO.onGlobal("parameterSettingFile", (file)=>{
       if (!file.isParameterSettingFile) {
-        console.log("ERROR: illegal parameter setting file data", file);
+        debug("ERROR: illegal parameter setting file data", file);
         return;
       }
       this.initialParameterSetting = JSON.parse(file.content);
@@ -144,16 +147,18 @@ export default {
     },
     save () {
       if (deepEqual(this.initialParameterSetting, this.parameterSetting)) {
-        console.log("paramter setting is not changed!");
+        debug("paramter setting is not changed!");
         return false;
       }
+      const payload=JSON.stringify(this.parameterSetting)
       SIO.emitGlobal("saveFile", this.projectRootDir, this.filename, this.dirname || this.selectedComponentAbsPath,
-        JSON.stringify(this.parameterSetting), (rt)=>{
+        payload, (rt)=>{
           if (!rt) {
-            console.log("ERROR: parameter setting file save failed");
+            debug("ERROR: parameter setting file save failed");
+            return;
           }
-
-          this.initialParameterSetting = structuredClone(this.parameterSetting);
+          this.initialParameterSetting = JSON.parse(payload)
+          debug("new initial PS-setting=",this.initialParameterSetting )
         });
       return true;
     },

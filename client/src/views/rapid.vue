@@ -60,6 +60,7 @@
           :read-only="readOnly"
           @openNewTab="openNewTab"
           @insertBraces="insertBraces"
+          @openFilterEditor=openFilterEditor
         />
       </v-col>
       <v-col v-show="mode === 'jobScriptEditor'">
@@ -72,7 +73,11 @@
         />
       </v-col>
     </v-row>
-    <filter-editor />
+    <filter-editor
+      v-model=filterDialog
+      :placeholders=placeholders
+      @updatePlaceholders=getAllPlaceholders
+    />
     <unsaved-files-dialog
       :unsaved-files="unsavedFiles"
       :dialog="showUnsavedFilesDialog"
@@ -126,7 +131,9 @@ export default {
       isJobScript: false,
       showUnsavedFilesDialog: false,
       unsavedFiles:[],
-      leave:null
+      leave:null,
+      filterDialog:false,
+      placeholders:[]
     };
   },
   computed: {
@@ -224,6 +231,16 @@ export default {
       this.showUnsavedFilesDialog=false;
       this.leave();
     },
+    getAllPlaceholders(){
+      return this.$refs.text.getAllPlaceholders()
+    },
+    openFilterEditor(){
+      const rt=this.$refs.text.getAllPlaceholders()
+      this.placeholders.splice(0,this.placeholders.length,...rt);
+      this.$nextTick(()=>{
+        this.filterDialog=true;
+      });
+    }
   },
 };
 </script>

@@ -7,6 +7,7 @@
   <v-dialog
     v-model="filterEditor"
     persistent
+    max-width="50vw"
   >
     <v-card>
       <v-card-title>
@@ -14,18 +15,12 @@
           v-model="newFilter"
           label="filter"
         />
+        <v-row>
         <v-btn
           class="text-capitalize"
           @click="applyFilter"
           prepend-icon="add"
           text="apply"
-        />
-        <v-spacer />
-        <v-text-field
-          v-model="search"
-          append-icon="mdi-magnify"
-          label="Search"
-          single-line
         />
         <v-btn
           class="text-capitalize"
@@ -33,22 +28,23 @@
           prepend-icon="close"
           text="close"
         />
+      </v-row>
       </v-card-title>
       <v-card-text>
         <v-data-table
           v-model="selected"
-          density=compact
+          density="compact"
           show-select
-          :single-select="false"
-          :search="search"
+          return-object
+          select-strategy="all"
           :headers="[{ key: 'text', title: 'placeholder', sortable: true },
                      { key: 'filename', title: 'filename', sortable: true, filterable: false },
                      { key: 'row', title: 'row', sortable: true, filterable: false},
                      { key: 'column', title: 'column', sortable: true, filterable: false} ]"
           :items="placeholders"
-          :items-per-page="5"
-          :footer-props="tableFooterProps"
-        />
+        >
+          <template #bottom />
+      </v-data-table>
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -59,31 +55,49 @@ import { tableFooterProps } from "@/lib/rapid2Util.js";
 
 export default {
   name: "FilterEditor",
+  props:{
+    modelValue: {
+      type:Boolean,
+      required: true
+    },
+    placeholders:{
+      type: Array,
+      required: true
+    }
+  },
+  computed: {
+    filterEditor:{
+      get(){
+        return this.modelValue
+      },
+      set(v){
+        this.$emit("update:modelValue", v);
+      }
+    }
+  },
   data: function () {
     return {
       newFilter: "",
       search: "",
-      placeholders: [],
       selected: [],
       tableFooterProps,
-      filterEditor: false,
     };
   },
   methods: {
     applyFilter () {
-      const placeholders = Array.from(this.selected);
-      placeholders.sort((a, b)=>{
+      const placeholdersToApply = Array.from(this.selected);
+      placeholdersToApply.sort((a, b)=>{
         if (a.filename === b.filename) {
-          return a.row_end - b.row_end !== 0 ? b.row_end - a.row_end : b.column_end - a.column_end;
+          return a.end.row - b.end.row !== 0 ? b.end.row- a.end.row: b.end.column - a.end.column;
         }
         return a.filename > b.filename ? 1 : -1;
       });
       const filter = "| " + this.newFilter + " ";
-      placeholders.forEach((ph)=>{
-        ph.editorSession.insert({ row: ph.row_end, column: ph.column_end - 2 }, filter);
+      placeholdersToApply.forEach((ph)=>{
+        ph.editorSession.insert({ row: ph.end.row, column: ph.end.column - 2 }, filter);
       });
-      console.log(placeholders); //DEBUG
-      this.updatePlaceholderList();
+      console.log(placeholdersToApply); //DEBUG
+      this.$emit("updatePlaceholders");
     },
 
     closeFilterEditor () {
