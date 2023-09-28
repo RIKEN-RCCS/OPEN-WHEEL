@@ -23,9 +23,14 @@
           <template #activator="{props: menu}">
             <v-tooltip location="top">
               <template #activator="{props: tooltip}">
+                <v-btn
+                  variant=plain
+                  :ripple="false"
+                />
                 <span
                   v-bind="mergeProps(menu, tooltip)"
-                > {{ file.filename }} </span>
+                >
+                  {{ file.filename }} </span>
               </template>
               <span>{{ file.absPath }}</span>
             </v-tooltip>
@@ -53,6 +58,7 @@
         <v-dialog v-model="newFilePrompt">
           <template #activator="{ props }">
             <v-btn
+              block
               icon=mdi-plus
               v-bind="props"
             />
@@ -131,6 +137,11 @@ export default {
     readOnly () {
       this.editor.setReadOnly(this.readOnly);
     },
+    activeTab (nv, ov){
+      if (nv >= this.files.length) {
+        this.activeTab=ov
+      }
+    }
   },
   mounted: function () {
     this.editor = ace.edit("editor");
@@ -154,7 +165,7 @@ export default {
       });
         //just switch tab if arraived file is already opened
       if (existingTab !== -1) {
-        this.activeTab = existingTab + 1;
+        this.activeTab = existingTab;
         return;
       }
       //open new tab for arraived file
@@ -164,8 +175,8 @@ export default {
 
       //select last tab after DOM is updated
       this.$nextTick(function () {
-        this.activeTab = this.files.length;
-        const session = this.files[this.activeTab - 1].editorSession;
+        this.activeTab = this.files.length -1 ;
+        const session = this.files[this.activeTab].editorSession;
         this.editor.setSession(session);
         this.editor.resize()
         session.selection.on("changeSelection", ()=>{
@@ -208,8 +219,8 @@ export default {
           }
         });
       } else {
-        this.activeTab = existingTab + 1;
-        this.changeTab(existingTab + 1);
+        this.activeTab = existingTab;
+        this.changeTab(existingTab);
       }
     },
     closeNewFileDialog () {
@@ -333,20 +344,18 @@ export default {
         this.commitSelectedFile(null);
       }
     },
-    changeTab (argIndex) {
-      if (argIndex === 0) {
+    changeTab (argIndex, old) {
+      if (argIndex >= this.files.length) {
         //just ignored
         return;
       }
-      const index = argIndex - 1;
-      if (index < this.files.length) {
+      const index = argIndex;
         const session = this.files[index].editorSession;
         this.editor.setSession(session);
         this.commitSelectedText("");
         session.selection.on("changeSelection", ()=>{
           this.commitSelectedText(this.editor.getSelectedText());
         });
-      }
     },
   },
 };
