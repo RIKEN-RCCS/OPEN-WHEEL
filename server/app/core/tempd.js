@@ -12,8 +12,8 @@ const { getLogger } = require("../logSettings.js");
 
 async function createTempd(projectRootDir, prefix) {
   const root = path.resolve(tempdRoot, prefix);
-const hash=createHash('sha256');
-  const ID=hash.update(projectRootDir).digest('hex')
+  const hash=createHash("sha256");
+  const ID=hash.update(projectRootDir).digest("hex")
   const dir = path.join(root, ID);
   await fs.emptyDir(dir);
   getLogger(projectRootDir).debug(`create temporary directory ${dir}`);
@@ -21,16 +21,16 @@ const hash=createHash('sha256');
 }
 
 async function removeTempd(projectRootDir, prefix) {
-const hash=createHash('sha256');
-  const ID=hash.update(projectRootDir).digest('hex')
+  const hash=createHash("sha256");
+  const ID=hash.update(projectRootDir).digest("hex")
   const dir = path.resolve(tempdRoot, prefix, ID);
   getLogger(projectRootDir).debug(`remove temporary directory ${dir}`);
   return fs.remove(dir);
 }
 
 async function getTempd(projectRootDir, prefix) {
-  const hash=createHash('sha256');
-  const ID=hash.update(projectRootDir).digest('hex')
+  const hash=createHash("sha256");
+  const ID=hash.update(projectRootDir).digest("hex")
   return path.resolve(tempdRoot, prefix, ID);
 }
 

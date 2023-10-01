@@ -4,10 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const path = require("path");
-const fs = require("fs-extra");
 const SshClientWrapper = require("ssh-client-wrapper");
-const { convertPathSep } = require("./pathUtils");
 const { emitAll } = require("../handlers/commUtils.js");
 const { getLogger } = require("../logSettings.js");
 

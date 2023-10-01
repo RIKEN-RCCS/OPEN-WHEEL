@@ -60,12 +60,15 @@ const validate = ajv.compile(schema);
 
 async function onAddHost(socket, newHost, cb) {
   validate(newHost);
-  const missingRequiredKey = validate.errors.includes((e)=>{
-    return e.keyword === "required";
-  });
-  if (missingRequiredKey) {
-    logger.warn("addHost failed due to validation error");
-    return cb(false);
+
+  if(Array.isArray(validate.errors)){
+    const missingRequiredKey = validate.errors.includes((e)=>{
+      return e.keyword === "required";
+    });
+    if (missingRequiredKey) {
+      logger.warn("addHost failed due to validation error");
+      return cb(false);
+    }
   }
   const id = await remoteHost.unshift(newHost);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
@@ -84,13 +87,16 @@ async function onGetHostList(cb) {
 
 async function onUpdateHost(socket, updatedHost, cb) {
   validate(updatedHost);
-  const missingRequiredKey = validate.errors.includes((e)=>{
-    return e.keyword === "required";
-  });
 
-  if (missingRequiredKey) {
-    logger.warn("updateHost failed due to validation error");
-    return cb(false);
+  if(Array.isArray(validate.errors)){
+    const missingRequiredKey = validate.errors.includes((e)=>{
+      return e.keyword === "required";
+    });
+
+    if (missingRequiredKey) {
+      logger.warn("updateHost failed due to validation error");
+      return cb(false);
+    }
   }
   await remoteHost.update(updatedHost, true);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
