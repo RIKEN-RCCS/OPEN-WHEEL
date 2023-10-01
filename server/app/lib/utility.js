@@ -17,9 +17,8 @@ const bars = "_\-";
 const pathseps = "/\\";
 const metaCharactors = "*?[]{}()!?+@.";
 
+const reMustBeEscapedChars=/([.*+?^=!:${}()|[\]/\\])/g
 
-//TODO define re object outside of functions
-//
 /**
  * escape meta character of regex (from MDN)
  * please note that this function can not treat '-' in the '[]'
@@ -27,8 +26,7 @@ const metaCharactors = "*?[]{}()!?+@.";
  * @returns {string} escaped regex string
  */
 function escapeRegExp(target) {
-  //eslint-disable-next-line no-useless-escape
-  return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
+  return target.replace(reMustBeEscapedChars, "\\$1");
 }
 
 function isSane(name) {

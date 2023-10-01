@@ -13,16 +13,6 @@ const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
 const { eventEmitters } = require("./global.js");
 
-/**
- * parse filter string from client and return validate glob pattern
- */
-function parseFilter(pattern) {
-  if ((pattern.startsWith("{") && pattern.endsWith("}")) || !pattern.includes(",")) {
-    return pattern;
-  }
-  return `{${pattern}}`;
-}
-
 
 /**
  * set task component's status and notice it's changed

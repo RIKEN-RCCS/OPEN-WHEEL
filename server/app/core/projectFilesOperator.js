@@ -538,9 +538,7 @@ async function importProject(projectRootDir) {
   //set up project directory as git repo
   if (!await fs.pathExists(path.resolve(newProjectRootDir, ".git"))) {
     try {
-      //gitリポジトリになっていないものは、wheelから開くのは初めてのはず
-      //TODO wheel.logはignoreする
-      //TODO satusを全部not-startedに戻す
+      //this directory does not have ".git" that means its first time opening from WHEEL
       await gitInit(newProjectRootDir, "wheel", "wheel@example.com");
       await gitAdd(newProjectRootDir, "./");
       await gitCommit(newProjectRootDir, "import project");
