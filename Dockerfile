@@ -6,7 +6,7 @@ WORKDIR /usr/src/
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
 # build WHEEL
 COPY server server
-RUN cd server && npm install --production
+RUN cd server && npm install --omit=dev
 COPY client client
 RUN cd client; npm install; npm run build
 
