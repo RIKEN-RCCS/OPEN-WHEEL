@@ -12,14 +12,13 @@
         >
           <template #activator="{ isOpen, props }">
             <v-list-item
-              @click="onActiveted(item)"
+              v-bind="props"
+              @click="onActiveted(item);onClickNodeIcon(item)"
               :class="{'text-primary': activatable && active.includes(item[itemKey])}"
             >
               <template #prepend>
                 <v-icon
                   :icon="getNodeIcon(isOpen, item)"
-                  v-bind="props"
-                  @click="onClickNodeIcon(item)"
                 />
               </template>
               <slot name="label" :item="item">
@@ -161,4 +160,3 @@ export default {
   }
 }
 </script>
-
