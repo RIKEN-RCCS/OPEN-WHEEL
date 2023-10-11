@@ -23,11 +23,12 @@ const Dispatcher = require("../app/core/dispatcher");
 const { eventEmitters } = require("../app/core/global.js");
 eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
-
 //helper functions
 const { projectJsonFilename, componentJsonFilename } = require("../app/db/db");
 const { createNewProject } = require("../app/core/projectFilesOperator");
-const { updateComponent, createNewComponent, addInputFile, addOutputFile, addFileLink } = require("../app/core/componentFilesOperator");
+const { updateComponent, createNewComponent, addInputFile, addOutputFile, addFileLink, renameOutputFile } = require("../app/core/componentFilesOperator");
+const { scriptName, pwdCmd, scriptHeader } = require("./testScript");
+const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
 const wait = ()=>{
   return new Promise((resolve)=>{
@@ -302,6 +303,163 @@ describe("UT for Dispatcher class", function() {
       expect(path.resolve(projectRootDir, `${while0.name}_0`)).not.to.be.a.path();
       expect(path.resolve(projectRootDir, `${while0.name}_1`)).not.to.be.a.path();
       expect(path.resolve(projectRootDir, `${while0.name}_2`)).not.to.be.a.path();
+    });
+  });
+  describe("[reproduction test] root workflow has only source and connected task", ()=>{
+    let task0;
+    let for0;
+    let source0;
+    beforeEach(async ()=>{
+      source0 = await createNewComponent(projectRootDir, projectRootDir, "source", { x: 10, y: 10 });
+      await renameOutputFile(projectRootDir, source0.ID, 0, "foo");
+
+      for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
+      await updateComponent(projectRootDir, for0.ID, "start", 0);
+      await updateComponent(projectRootDir, for0.ID, "end", 2);
+      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await addInputFile(projectRootDir, for0.ID, "foo");
+
+      task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "task", { x: 10, y: 10 });
+      await updateComponent(projectRootDir, task0.ID, "script" , scriptName);
+      await addInputFile(projectRootDir, task0.ID, "foo");
+      await fs.outputFile(path.join(projectRootDir, for0.name, task0.name, scriptName), "echo hoge ${WHEEL_CURRENT_INDEX} > hoge");
+
+      await addFileLink(projectRootDir, source0.ID, "foo", for0.ID, "foo");
+      await addFileLink(projectRootDir, for0.ID, "foo", task0.ID, "foo");
+
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+    });
+    it("should run task0", async ()=>{
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+      expect(path.resolve(projectRootDir, for0.name, task0.name, "hoge")).to.be.a.file().with.content("hoge 2\n");
+      expect(path.resolve(projectRootDir, `${for0.name}_0`, task0.name, "hoge")).to.be.a.file().with.content("hoge 0\n");
+      expect(path.resolve(projectRootDir, `${for0.name}_1`, task0.name, "hoge")).to.be.a.file().with.content("hoge 1\n");
+      expect(path.resolve(projectRootDir, `${for0.name}_2`, task0.name, "hoge")).to.be.a.file().with.content("hoge 2\n");
+    });
+  });
+  describe("[reproduction test] task in a For component with sub directory", ()=>{
+    beforeEach(async()=>{
+      const for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
+      await updateComponent(projectRootDir, for0.ID, "start", 0);
+      await updateComponent(projectRootDir, for0.ID, "end", 2);
+      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "task", { x: 10, y: 10 });
+      await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+      await fs.outputFile(path.join(projectRootDir, "for0", "task0", scriptName), scriptPwd);
+      await fs.mkdir(path.join(projectRootDir, "for0", "task0", "empty_dir"));
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+    });
+    it("should run and successfully finished", async()=>{
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+      expect(path.resolve(projectRootDir, "for0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        required: ["state"],
+        properties: {
+          state: { enum: ["finished"] }
+        }
+      });
+      expect(path.resolve(projectRootDir, "for0_0", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        required: ["state"],
+        properties: {
+          state: { enum: ["finished"] }
+        }
+      });
+      expect(path.resolve(projectRootDir, "for0_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        required: ["state"],
+        properties: {
+          state: { enum: ["finished"] }
+        }
+      });
+      expect(path.resolve(projectRootDir, "for0_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        required: ["state"],
+        properties: {
+          state: { enum: ["finished"] }
+        }
+      });
+      expect(path.resolve(projectRootDir, "for0", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        required: ["state"],
+        properties: {
+          state: { enum: ["finished"] }
+        }
+      });
+    });
+  });
+  describe.only("[reproduction test] PS in loop", ()=>{
+    let for0;
+    let PS0;
+    let task0;
+    beforeEach(async ()=>{
+      for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
+      await updateComponent(projectRootDir, for0.ID, "start", 0);
+      await updateComponent(projectRootDir, for0.ID, "end", 2);
+      await updateComponent(projectRootDir, for0.ID, "step", 1);
+
+      PS0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir,for0.name), "PS", { x: 10, y: 10 });
+      await updateComponent(projectRootDir, PS0.ID, "parameterFile", "input.txt.json");
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      await fs.outputFile(path.join(projectRootDir, for0.name, PS0.name, "input.txt"), "%%KEYWORD1%%");
+      const parameterSetting = {
+        target_file: "input.txt",
+        target_param: [
+          {
+            target: "hoge",
+            keyword: "KEYWORD1",
+            type: "integer",
+            min: "1",
+            max: "3",
+            step: "1",
+            list: ""
+          }
+        ]
+      };
+      await fs.writeJson(path.join(projectRootDir, for0.name, PS0.name, "input.txt.json"), parameterSetting, { spaces: 4 });
+
+      task0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, for0.name, PS0.name), "task", { x: 10, y: 10 });
+      await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+      await fs.outputFile(path.join(projectRootDir, for0.name, PS0.name, task0.name, scriptName), scriptPwd);
+    });
+    it("should run project and successfully finish", async()=>{
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        properties: {
+          numFinishd: {
+            type: "integer",
+            minimum: 2,
+            maximum: 2
+          },
+          numTotal: {
+            type: "integer",
+            minimum: 2,
+            maximum: 2
+          }
+        }
+      });
+      expect(path.resolve(projectRootDir, for0.name, PS0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        properties: {
+          numFinishd: {
+            type: "integer",
+            minimum: 3,
+            maximum: 3
+          },
+          numTotal: {
+            type: "integer",
+            minimum: 3,
+            maximum: 3
+          }
+        }
+      });
+      expect(path.resolve(projectRootDir, for0.name, PS0.name, task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        properties: {
+          state:{
+            type: "string",
+            pattern: "^finished$"
+          }
+        }
+      });
     });
   });
 });
