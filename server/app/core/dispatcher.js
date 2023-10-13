@@ -19,7 +19,7 @@ const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
 const { componentJsonReplacer, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
-const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent");
+const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent.js");
 const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
@@ -172,7 +172,6 @@ class Dispatcher extends EventEmitter {
   async _dispatch() {
     this.logger.trace("_dispatch called", this.cwfDir);
 
-
     if (this.firstCall) {
       await this._asyncInit();
       const childComponents = await getChildren(this.projectRootDir, this.cwfID);
@@ -192,28 +191,14 @@ class Dispatcher extends EventEmitter {
     while (this.currentSearchList.length > 0) {
       const target = this.currentSearchList.shift();
 
-
       if (target.disable) {
         this.logger.info(`disabled component: ${target.name}(${target.ID})`);
-        continue;
-      }
-
-      if (target.type === "source") {
-        await this._setComponentState(target, "finished");
-        this._addNextComponent(target);
         continue;
       }
 
       if (!await this._isReady(target)) {
         this.pendingComponents.push(target);
         continue;
-      }
-
-      if (target.type === "stepjobTask") {
-        const parentComponent = await readComponentJsonByID(this.projectRootDir, target.parent);
-        target.host = parentComponent.host;
-        target.queue = parentComponent.queue;
-        target.parentName = parentComponent.name;
       }
 
       await this._getInputFiles(target);
@@ -384,7 +369,8 @@ class Dispatcher extends EventEmitter {
 
   async _addNextComponent(component, useElse = false) {
     let nextComponentIDs = [];
-    if (component.type !== "source" && component.type !== "viewer" && component.type !== "storage") {
+    const componentsWithoutNextProp=["source", "viewer", "storage"]
+    if(! componentsWithoutNextProp.includes(component.type)){
       nextComponentIDs = useElse ? Array.from(component.else) : Array.from(component.next);
     }
 
@@ -449,6 +435,14 @@ class Dispatcher extends EventEmitter {
     task.projectRootDir = this.projectRootDir;
     task.workingDir = path.resolve(this.cwfDir, task.name);
     task.emitForDispatcher = this.emit.bind(this);
+
+    if (task.type === "stepjobTask") {
+      const parentComponent = await readComponentJsonByID(this.projectRootDir, task.parent);
+      task.host = parentComponent.host;
+      task.queue = parentComponent.queue;
+      task.parentName = parentComponent.name;
+    }
+
 
     task.ancestorsName = replacePathsep(path.relative(task.projectRootDir, path.dirname(task.workingDir)));
     task.ancestorsType = this.ancestorsType;
@@ -843,7 +837,7 @@ class Dispatcher extends EventEmitter {
       }).map((e)=>{
         return e.value;
       })
-        .map((e)=>{  
+        .map((e)=>{
           //I dont know it's OK or harmful to disable no-loop-func here
           const src = path.resolve(templateRoot, e);
           const dst = path.resolve(templateRoot, `${countBulkNum}.${e}`);
@@ -874,6 +868,11 @@ class Dispatcher extends EventEmitter {
     }
     await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
+  }
+
+  async _sourceHandler(source){
+    await this._setComponentState(source, "finished");
+    this._addNextComponent(source);
   }
 
   async _isReady(component) {
@@ -934,10 +933,14 @@ class Dispatcher extends EventEmitter {
   }
 
   async _getInputFiles(component) {
+    if(component.type === "source"){
+      return
+    }
     this.logger.debug(`getInputFiles for ${component.name}`);
     const promises = [];
     const deliverRecipes = new Set();
     const forceCopy = component.type === "storage";
+
 
     for (const inputFile of component.inputFiles) {
       const dstName = inputFile.name;
@@ -1076,6 +1079,9 @@ class Dispatcher extends EventEmitter {
         break;
       case "storage":
         cmd = this._storageHandler;
+        break;
+      case "source":
+        cmd=this._sourceHandler;
         break;
       default:
         this.logger.error("illegal type specified", type);
