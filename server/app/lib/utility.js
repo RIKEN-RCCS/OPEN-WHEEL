@@ -124,7 +124,6 @@ function formatSshOutput(outputArray) {
   });
 }
 
-
 module.exports = {
   escapeRegExp,
   isValidName,

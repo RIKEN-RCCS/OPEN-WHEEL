@@ -113,8 +113,18 @@ async function isSubComponent(target) {
   if (!stats.isDirectory()) {
     return false;
   }
-  const componentJson = await readJsonGreedy(path.resolve(target, componentJsonFilename));
-  return componentJson.subComponent === true;
+
+  let rt=false
+  try{
+    const componentJson = await readJsonGreedy(path.resolve(target, componentJsonFilename));
+    rt = componentJson.subComponent === true;
+  }catch(e){
+    if(e.code === "ENOENT"){
+      return false
+    }
+    throw e
+  }
+  return rt
 }
 
 

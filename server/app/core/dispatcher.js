@@ -150,7 +150,6 @@ class Dispatcher extends EventEmitter {
     }
   }
 
-
   async _dispatchOneComponent(target) {
     try {
       await this._cmdFactory(target.type).call(this, target);
@@ -183,6 +182,7 @@ class Dispatcher extends EventEmitter {
       }));
       this.firstCall = false;
     }
+
     this.logger.trace("currentList:", this.currentSearchList.map((e)=>{
       return e.name;
     }));
@@ -222,13 +222,6 @@ class Dispatcher extends EventEmitter {
       return !isFinishedState(task.state);
     });
 
-
-    if (this.needToRerun) {
-      this.needToRerun = false;
-      this.logger.debug("revoke _dispatch()");
-      return this._dispatch();
-    }
-
     if (this._isFinished()) {
       const state = this._getState();
       this.emit("done", state);
@@ -238,6 +231,12 @@ class Dispatcher extends EventEmitter {
       }));
 
       this.once("dispatch", this._dispatch);
+    }
+
+    if (this.needToRerun) {
+      this.needToRerun = false;
+      this.logger.debug("revoke _dispatch()");
+      return this._reserveDispatch()
     }
     return true;
   }
@@ -302,7 +301,7 @@ class Dispatcher extends EventEmitter {
   }
 
   _isFinished() {
-    this.logger.trace(`${this.cwfDir} number of runningTask, waiting component = ${this.runningTasks.length}, ${this.currentSearchList.length}`);
+    this.logger.trace(`${this.cwfDir} number of running task, waiting component = ${this.runningTasks.length}, ${this.currentSearchList.length}`);
     return this.runningTasks.length === 0 && this.currentSearchList.length === 0;
   }
 
@@ -542,6 +541,7 @@ class Dispatcher extends EventEmitter {
 
     let prevIndex;
     let srcDir;
+
     if (!component.initialized) {
       loopInitialize(component, getTripCount);
       srcDir = path.resolve(this.cwfDir, component.name);
@@ -871,8 +871,8 @@ class Dispatcher extends EventEmitter {
   }
 
   async _sourceHandler(source){
-    await this._setComponentState(source, "finished");
     this._addNextComponent(source);
+    await this._setComponentState(source, "finished");
   }
 
   async _isReady(component) {
