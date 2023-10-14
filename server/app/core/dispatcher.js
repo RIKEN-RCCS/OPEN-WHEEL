@@ -507,7 +507,6 @@ class Dispatcher extends EventEmitter {
 
   async _loopFinalize(component, lastDir, keepLoopInstance) {
     const dstDir = path.resolve(this.cwfDir, component.originalName);
-
     if (lastDir !== dstDir) {
       this.logger.debug("copy ", lastDir, "to", dstDir);
       await fs.copy(lastDir, dstDir, { overwrite: true, dereference: true }); //dst will be overwrite always
@@ -575,7 +574,7 @@ class Dispatcher extends EventEmitter {
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
     try {
-      this.logger.debug("copy from", srcDir, "to ", dstDir);
+      this.logger.debug(`copy from ${srcDir} to ${dstDir}`);
       await fs.copy(srcDir, dstDir, {
         dereference: true,
         filter: async (target)=>{

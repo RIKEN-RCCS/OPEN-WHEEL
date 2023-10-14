@@ -394,12 +394,11 @@ describe("UT for Dispatcher class", function() {
     beforeEach(async ()=>{
       for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
       await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 2);
+      await updateComponent(projectRootDir, for0.ID, "end", 3);
       await updateComponent(projectRootDir, for0.ID, "step", 1);
 
       PS0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir,for0.name), "PS", { x: 10, y: 10 });
       await updateComponent(projectRootDir, PS0.ID, "parameterFile", "input.txt.json");
-      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
       await fs.outputFile(path.join(projectRootDir, for0.name, PS0.name, "input.txt"), "%%KEYWORD1%%");
       const parameterSetting = {
         target_file: "input.txt",
@@ -419,7 +418,9 @@ describe("UT for Dispatcher class", function() {
 
       task0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, for0.name, PS0.name), "task", { x: 10, y: 10 });
       await updateComponent(projectRootDir, task0.ID, "script", scriptName);
-      await fs.outputFile(path.join(projectRootDir, for0.name, PS0.name, task0.name, scriptName), scriptPwd);
+      await fs.outputFile(path.join(projectRootDir, for0.name, PS0.name, task0.name, scriptName), "if [ ${WHEEL_CURRENT_INDEX} -eq 0 ];then echo hoge ${WHEEL_CURRENT_INDEX} > hoge;fi");
+
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     });
     it("should run project and successfully finish", async()=>{
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
@@ -428,13 +429,13 @@ describe("UT for Dispatcher class", function() {
         properties: {
           numFinishd: {
             type: "integer",
-            minimum: 2,
-            maximum: 2
+            minimum: 4,
+            maximum: 4
           },
           numTotal: {
             type: "integer",
-            minimum: 2,
-            maximum: 2
+            minimum: 4,
+            maximum: 4
           }
         }
       });
@@ -452,7 +453,7 @@ describe("UT for Dispatcher class", function() {
           }
         }
       });
-      expect(path.resolve(projectRootDir, for0.name, PS0.name, task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_1", task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
         properties: {
           state:{
             type: "string",
@@ -460,6 +461,34 @@ describe("UT for Dispatcher class", function() {
           }
         }
       });
+      expect(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_2", task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        properties: {
+          state:{
+            type: "string",
+            pattern: "^finished$"
+          }
+        }
+      });
+      expect(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_3", task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        properties: {
+          state:{
+            type: "string",
+            pattern: "^finished$"
+          }
+        }
+      });
+      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_1", task0.name,"hoge")).to.be.a.file().with.content("hoge 0\n");
+      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_2", task0.name,"hoge")).to.be.a.file().with.content("hoge 0\n");
+      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_3", task0.name,"hoge")).to.be.a.file().with.content("hoge 0\n");
+      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_1", task0.name,"hoge")).not.to.be.a.path()
+      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_2", task0.name,"hoge")).not.to.be.a.path()
+      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_3", task0.name,"hoge")).not.to.be.a.path()
+      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_1", task0.name,"hoge")).not.to.be.a.path()
+      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_2", task0.name,"hoge")).not.to.be.a.path()
+      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_3", task0.name,"hoge")).not.to.be.a.path()
+      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_1", task0.name,"hoge")).not.to.be.a.path()
+      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_2", task0.name,"hoge")).not.to.be.a.path()
+      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_3", task0.name,"hoge")).not.to.be.a.path()
     });
   });
 });
