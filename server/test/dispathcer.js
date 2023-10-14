@@ -305,7 +305,7 @@ describe("UT for Dispatcher class", function() {
       expect(path.resolve(projectRootDir, `${while0.name}_2`)).not.to.be.a.path();
     });
   });
-  describe("[reproduction test] root workflow has only source and connected task", ()=>{
+  describe("[reproduction test] root workflow has only source and connected for loop", ()=>{
     let task0;
     let for0;
     let source0;
@@ -339,7 +339,7 @@ describe("UT for Dispatcher class", function() {
       expect(path.resolve(projectRootDir, `${for0.name}_2`, task0.name, "hoge")).to.be.a.file().with.content("hoge 2\n");
     });
   });
-  describe("[reproduction test] task in a For component with sub directory", ()=>{
+  describe("[reproduction test] task with sub directory in a for loop", ()=>{
     beforeEach(async()=>{
       const for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
       await updateComponent(projectRootDir, for0.ID, "start", 0);
