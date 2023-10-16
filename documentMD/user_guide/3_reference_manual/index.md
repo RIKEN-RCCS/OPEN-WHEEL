@@ -15,7 +15,7 @@
 
 具体的なプロジェクトの作成・実行方法は次のドキュメントをご参照ください
 
-[WHEELチュートリアル](../3_WHEEL_tutorial/index.md)
+[WHEELチュートリアル](../2_tutorial/index.md)
 
 
 
