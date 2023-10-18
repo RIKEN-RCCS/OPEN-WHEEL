@@ -48,11 +48,13 @@ const {
 
 //test data
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
-const initialCommitResponse = /\[master \(root-commit\) .*\] initial commit\n/;
+const initialCommitResponse = /\[(master|main) \(root-commit\) .*\] initial commit\n/;
 
 describe("git operator UT", ()=>{
   after(async()=>{
-    await fs.remove(testDirRoot);
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
   });
   describe("#gitInit", ()=>{
     beforeEach(async()=>{

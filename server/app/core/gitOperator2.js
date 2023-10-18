@@ -81,8 +81,8 @@ async function gitInit(rootDir, user, mail) {
  * @param {string} rootDir - repo's root dir
  * @param {string} message - commmit message
  */
-async function gitCommit(rootDir, message = "save project") {
-  return gitPromise(rootDir, ["commit", "-m", `"${message}"`], rootDir)
+async function gitCommit(rootDir, message = "save project", additionalOption=[]) {
+  return gitPromise(rootDir, ["commit", "-m", `"${message}"`, ...additionalOption], rootDir)
     .catch((err)=>{
       if (!/(no changes|nothing)( added | )to commit/m.test(err)) {
         throw err;

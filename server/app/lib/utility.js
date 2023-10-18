@@ -133,7 +133,7 @@ function formatSshOutput(outputArray) {
 }
 
 function writeJsonWrapper(filename, data){
-  fs.writeJson(filename, data, { spaces: 4 });
+  return fs.writeJson(filename, data, { spaces: 4 });
 }
 
 module.exports = {

@@ -6,6 +6,7 @@
 "use strict";
 const fs = require("fs-extra");
 const uuid = require("uuid");
+const { writeJsonWrapper } = require("../lib/utility");
 
 class JsonArrayManager {
   constructor(filename) {
@@ -24,7 +25,7 @@ class JsonArrayManager {
   }
 
   async write() {
-    return fs.writeJson(this.filename, this.data, { spaces: 4 });
+    return writeJsonWrapper(this.filename, this.data);
   }
 
   /**

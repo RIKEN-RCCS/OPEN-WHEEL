@@ -12,10 +12,10 @@ const uuid = require("uuid");
 const glob = require("glob");
 const { componentFactory } = require("./workflowComponent");
 const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, jobScheduler, defaultPSconfigFilename  } = require("../db/db");
-const { getDateString, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
+const { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
 const { replacePathsep, convertPathSep } = require("./pathUtils");
 const { readJsonGreedy } = require("./fileUtils");
-const { gitInit, gitAdd, gitCommit, gitResetHEAD, gitClean, gitRm } = require("./gitOperator2");
+const { gitInit, gitAdd, gitCommit, gitResetHEAD, gitClean, gitRm} = require("./gitOperator2");
 const { hasChild, isInitialComponent } = require("./workflowComponent");
 const { getLogger } = require("../logSettings");
 
@@ -72,6 +72,17 @@ function removeTrailingPathSep(filename) {
  */
 async function getProjectJson(projectRootDir) {
   return readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+}
+
+/**
+ * write project Json
+ * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {Object} projectJSON - project JSON data
+ */
+async function writeProjectJson(projectRootDir, projectJson){
+  const filename=path.resolve(projectRootDir,projectJsonFilename)
+  await writeJsonWrapper(filename, projectJson);
+  return gitAdd(projectRootDir, filename);
 }
 
 /**
@@ -138,15 +149,15 @@ async function createNewProject(argProjectRootDir, name, argDescription, user, m
   const description = argDescription != null ? argDescription : "This is new project.";
   const projectRootDir = await getUnusedProjectDir(argProjectRootDir);
   await fs.ensureDir(projectRootDir);
+  await gitInit(projectRootDir, user, mail);
 
   //write root workflow
-  const rootWorkflowFileFullpath = path.join(projectRootDir, componentJsonFilename);
   const rootWorkflow = componentFactory("workflow");
   rootWorkflow.name = name;
   rootWorkflow.cleanupFlag = defaultCleanupRemoteRoot === 0 ? 0 : 1;
 
   getLogger().debug(rootWorkflow);
-  await fs.writeJson(rootWorkflowFileFullpath, rootWorkflow, { spaces: 4 });
+  await writeComponentJson(projectRootDir, projectRootDir, rootWorkflow)
 
   //write project JSON
   const timestamp = getDateString(true);
@@ -163,8 +174,7 @@ async function createNewProject(argProjectRootDir, name, argDescription, user, m
   projectJson.componentPath[rootWorkflow.ID] = "./";
   const projectJsonFileFullpath = path.resolve(projectRootDir, projectJsonFilename);
   getLogger().debug(projectJson);
-  await fs.writeJson(projectJsonFileFullpath, projectJson, { spaces: 4 });
-  await gitInit(projectRootDir, user, mail);
+  await writeJsonWrapper(projectJsonFileFullpath, projectJson)
   await gitAdd(projectRootDir, "./");
   await gitCommit(projectRootDir, "create new project");
 }
@@ -182,7 +192,7 @@ async function removeComponentPath(projectRootDir, IDs, force = false) {
   }
 
   //write project Json file
-  await fs.writeJson(filename, projectJson, { spaces: 4 });
+  await writeJsonWrapper(filename, projectJson)
   return gitAdd(projectRootDir, filename);
 }
 
@@ -217,7 +227,7 @@ async function updateComponentPath(projectRootDir, ID, absPath) {
   projectJson.componentPath[ID] = newRelativePath;
 
   //write project Json file
-  await fs.writeJson(filename, projectJson, { spaces: 4 });
+  await writeJsonWrapper(filename, projectJson)
   await gitAdd(projectRootDir, filename);
   return projectJson.componentPath;
 }
@@ -229,7 +239,7 @@ async function setProjectState(projectRootDir, state, force) {
     projectJson.state = state;
     const timestamp = getDateString(true);
     projectJson.mtime = timestamp;
-    await fs.writeJson(filename, projectJson, { spaces: 4 });
+    await writeJsonWrapper(filename, projectJson)
     await gitAdd(projectRootDir, filename);
     return projectJson;
   }
@@ -353,11 +363,10 @@ async function convertComponentJson(projectRootDir, componentPath, parentCompone
       return { name: outputFile.name, dst };
     });
 
-    const filename = path.resolve(path.dirname(parentComponentJson), node.name, componentJsonFilename);
+    const componentDir = path.resolve(path.dirname(parentComponentJson), node.name);
     delete node.nodes;
-    await fs.writeJson(filename, node, { spaces: 4 });
-    await gitAdd(projectRootDir, filename);
-    getLogger().debug(`write converted componentJson file to ${filename}`);
+    await writeComponentJson(projectRootDir, componentDir, node);
+    getLogger().debug(`write converted componentJson file into ${componentDir}`);
     getLogger().debug(node);
   }
 
@@ -382,8 +391,7 @@ async function convertProjectFormat(projectJsonFilepath) {
     const rootWF = await convertComponentJson(projectRootDir, projectJson.componentPath, path.resolve(projectRootDir, rootWorkflow));
     rootWF.paret = "this is root";
     projectJson.componentPath[rootWF.ID] = "./";
-    await fs.writeJson(path.resolve(projectRootDir, componentJsonFilename), rootWF, { spaces: 4 });
-    await gitAdd(projectRootDir, path.resolve(projectRootDir, componentJsonFilename));
+    await writeComponentJson(projectRootDir,projectRootDir, rootWF)
   } catch (e) {
     //revert by clean project
     const files = await promisify(glob)(`./**/${componentJsonFilename}`, { cwd: projectRootDir });
@@ -396,7 +404,8 @@ async function convertProjectFormat(projectJsonFilepath) {
   }
 
   rewriteAllIncludeExcludeProperty(projectRootDir)
-  await fs.writeJson(path.resolve(projectRootDir, projectJsonFilename), projectJson, { spaces: 4 });
+  const filename=path.resolve(projectRootDir, projectJsonFilename)
+  await writeJsonWrapper(filename, projectJson)
   await gitAdd(projectRootDir, path.resolve(projectRootDir, projectJsonFilename));
 
   getLogger().debug(`write converted projectJson file to ${path.resolve(projectRootDir, projectJsonFilename)}`);
@@ -438,7 +447,7 @@ function avoidDuplicatedProjectName(projectRootDir, basename, argSuffix) {
  * convert old include exclude format (comma separated string) to array of string
  * @params {string} filename - component json filename
  */
-async function rewriteIncludeExclude(projectRootDir, filename) {
+async function rewriteIncludeExclude(projectRootDir, filename, changed) {
   let needToWrite = false;
   const componentJson = await readJsonGreedy(filename);
   if (typeof componentJson.include === "string" && !Array.isArray(componentJson.include)) {
@@ -464,7 +473,8 @@ async function rewriteIncludeExclude(projectRootDir, filename) {
     needToWrite = true;
   }
   if (needToWrite) {
-    await fs.writeJson(filename, componentJson, { spaces: 4 });
+    await writeComponentJson(projectRootDir, path.dirname(filename), componentJson);
+    changed.push(filename);
   }
 }
 
@@ -479,16 +489,17 @@ function getUnusedProjectName(projectRootDir, projectName) {
 /**
  * convert comma separated include and exclude prop to array of string
  */
-async function rewriteAllIncludeExcludeProperty(projectRootDir){
+async function rewriteAllIncludeExcludeProperty(projectRootDir, changed){
   //convert include and exclude property to array
   const files = await promisify(glob)(`./**/${componentJsonFilename}`, { cwd: projectRootDir });
   await Promise.all(files.map((filename)=>{
-    return rewriteIncludeExclude(projectRootDir, path.resolve(projectRootDir, filename));
+    return rewriteIncludeExclude(projectRootDir, path.resolve(projectRootDir, filename), changed);
   }));
 }
 
 async function importProject(projectRootDir) {
   const projectJsonFilepath = convertPathSep(path.resolve(projectRootDir, projectJsonFilename));
+  const toBeCommited=[]
 
   //convert v1 to v2
   if (!fs.pathExists(projectJsonFilepath)) {
@@ -510,7 +521,7 @@ async function importProject(projectRootDir) {
   //convert include/exclude prop
   const projectJson = await getProjectJson(projectRootDir);
   if(projectJson.version <= 2){
-    await rewriteAllIncludeExcludeProperty(projectRootDir)
+    await rewriteAllIncludeExcludeProperty(projectRootDir, toBeCommited)
     projectJson.version = 2.1;
   }
 
@@ -526,9 +537,11 @@ async function importProject(projectRootDir) {
     return;
   }
 
+
   let newProjectRootDir = projectRootDir
   //if projectRootDir is not based on projectJson.name, fix it
   const projectBasename=path.basename(projectRootDir);
+
   if(projectBasename !== projectJson.name+suffix){
     const projectName = getUnusedProjectName(projectRootDir, projectJson.name);
     const oldProjectName=projectJson.name
@@ -549,20 +562,23 @@ async function importProject(projectRootDir) {
         getLogger().error("directory move failed", e);
         return;
       }
-
       try {
         projectJson.root = newProjectRootDir;
         projectJson.name = projectName;
-        await fs.writeJson(path.resolve(newProjectRootDir, projectJsonFilename), projectJson);
+        const filename=path.resolve(newProjectRootDir, projectJsonFilename)
+        await writeJsonWrapper(filename, projectJson)
+        toBeCommited.push(filename);
       } catch (e) {
         getLogger().error("rewrite project JSON failed", e);
         return;
       }
-
       try {
-        const rootWF=await readComponentJson(projectRootDir);
+        const rootWF=await readComponentJson(newProjectRootDir);
         rootWF.name = projectName;
-        await writeComponentJson(newProjectRootDir, "./", rootWF);
+        //do not use writeComponentJson because we do not know project files are git-controlled or not here
+        const filename=path.resolve(newProjectRootDir,componentJsonFilename);
+        await writeJsonWrapper(filename, rootWF)
+        toBeCommited.push(filename);
       } catch (e) {
         getLogger().error("rewrite root WF JSON failed", e);
         return;
@@ -576,7 +592,7 @@ async function importProject(projectRootDir) {
       //this directory does not have ".git" that means its first time opening from WHEEL
       await gitInit(newProjectRootDir, "wheel", "wheel@example.com");
       await setProjectState(newProjectRootDir, "not-started");
-      await setComponentStateR(newProjectRootDir,"not-started");
+      await setComponentStateR(newProjectRootDir, newProjectRootDir,"not-started");
       await gitAdd(newProjectRootDir, "./");
       await gitCommit(newProjectRootDir, "import project");
     } catch (e) {
@@ -585,11 +601,15 @@ async function importProject(projectRootDir) {
     }
   } else {
     const ignoreFile=path.join(newProjectRootDir,".gitignore")
-    if(!fs.pathExists(ignoreFile)){
+
+    if(! await fs.pathExists(ignoreFile)){
       await fs.outputFile(ignoreFile, "wheel.log");
+      await gitAdd(newProjectRootDir, ".gitignore");
     }
-    await gitAdd(newProjectRootDir, "./", true);
-    await gitCommit(newProjectRootDir, "import project");
+    await Promise.all( toBeCommited.map((name)=>{
+      return gitAdd(newProjectRootDir, name);
+    }));
+    await gitCommit(newProjectRootDir, "import project", ["--", ".gitignore", ...toBeCommited]);
   }
   projectList.unshift({ path: newProjectRootDir });
   return newProjectRootDir;
@@ -597,17 +617,19 @@ async function importProject(projectRootDir) {
 
 /**
  * set component and its descendant's state
+ * @param {string} projectRootDir - git repo's root directory
  * @param {string} dir - root component directory
  * @param {string} state  - state to be set
  */
-async function setComponentStateR(dir, state) {
+async function setComponentStateR(projectRootDir, dir, state) {
   const filenames = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
   filenames.push(path.join(dir, componentJsonFilename));
   const p = filenames.map((filename)=>{
     return readJsonGreedy(filename)
       .then((component)=>{
         component.state = state;
-        return fs.writeJson(filename, component, { spaces: 4, replacer: componentJsonReplacer });
+        const componentDir=path.dirname(filename);
+        return writeComponentJson(projectRootDir, componentDir, component )
       });
   });
   return Promise.all(p);
@@ -618,7 +640,7 @@ async function updateProjectDescription(projectRootDir, description) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
   const projectJson = await readJsonGreedy(filename);
   projectJson.description = description;
-  await fs.writeJson(filename, projectJson);
+  await writeJsonWrapper(filename, projectJson)
   await gitAdd(projectRootDir, filename);
 }
 
@@ -662,12 +684,11 @@ async function renameProject(id, newName, oldDir) {
   projectJson.name = newName;
   projectJson.root = newDir;
   projectJson.mtime = getDateString(true);
-  await fs.writeJson(path.resolve(newDir, projectJsonFilename), projectJson);
+  await writeProjectJson(newDir, projectJson);
+
   const rootWorkflow = await readJsonGreedy(path.resolve(newDir, componentJsonFilename));
   rootWorkflow.name = newName;
-  await fs.writeJson(path.resolve(newDir, componentJsonFilename), rootWorkflow);
-  await gitAdd(newDir, projectJsonFilename);
-  await gitAdd(newDir, componentJsonFilename);
+  await writeComponentJson(newDir, newDir, rootWorkflow);
 
   const name = "wheel";
   const mail = "wheel.example.com";
@@ -717,16 +738,26 @@ async function isSameRemoteHost(projectRootDir, left, right) {
 
 
 /**
- * write component Json file and git add
+ * write component JSON file and git add
+ * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} componentDir - absolute or relative path to component directory
+ * @param {Object} component - component JSON data
+ * @param {Boolean} doNotAdd- - call gitAdd if false
  */
-async function writeComponentJson(projectRootDir, componentDir, component) {
+async function writeComponentJson(projectRootDir, componentDir, component, doNotAdd=false ) {
   const filename = path.join(componentDir, componentJsonFilename);
   await fs.writeJson(filename, component, { spaces: 4, replacer: componentJsonReplacer });
+
+  if(doNotAdd){
+    return
+  }
   return gitAdd(projectRootDir, filename);
 }
 
 /**
  * read component Json by directory
+ * @param {string} componentDir - absolute or relative path to component directory
+ * @return {Object} - component JSON data
  */
 async function readComponentJson(componentDir) {
   const filename = path.join(componentDir, componentJsonFilename);
@@ -736,6 +767,9 @@ async function readComponentJson(componentDir) {
 
 /**
  * write componentJson by ID
+ * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} ID - component's ID string
+ * @param {Object} component - component JSON data
  */
 async function writeComponentJsonByID(projectRootDir, ID, component) {
   const componentDir = await getComponentDir(projectRootDir, ID, true);
@@ -744,23 +778,14 @@ async function writeComponentJsonByID(projectRootDir, ID, component) {
 
 /**
  * read componentJson by ID
+ * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} ID - component's ID string
+ * @return {Object} - component JSON data
  */
 async function readComponentJsonByID(projectRootDir, ID) {
   const componentDir = await getComponentDir(projectRootDir, ID, true);
   return readComponentJson(componentDir);
 }
-
-/**
- * modify component json
- */
-async function modifyComponentJson(projectRootDir, ID, modifier) {
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  const componentJson = await readComponentJson(componentDir);
-  await modifier(componentJson);
-  await writeComponentJson(projectRootDir, componentDir, componentJson);
-  return componentJson;
-}
-
 
 /**
  * check if given 2 id's has parent-child relationship
@@ -853,8 +878,7 @@ async function removeAllLinkFromComponent(projectRootDir, ID) {
   }
 
   for (const [counterPartID, counterpart] of counterparts) {
-    const componentDir = await getComponentDir(projectRootDir, counterPartID, true);
-    await writeComponentJson(projectRootDir, componentDir, counterpart);
+    await writeComponentJsonByID(projectRootDir, counterPartID, counterpart);
   }
 }
 
@@ -1445,7 +1469,7 @@ async function createNewComponent(projectRootDir, parentDir, type, pos) {
   await updateComponentPath(projectRootDir, newComponent.ID, absDirName);
 
   if (type === "PS") {
-    await fs.writeJson(path.resolve(absDirName, defaultPSconfigFilename), { version: 2, targetFiles: [], params: [], scatter: [], gather: [] }, { spaces: 4 });
+    await writeJsonWrapper(path.resolve(absDirName, defaultPSconfigFilename), { version: 2, targetFiles: [], params: [], scatter: [], gather: [] });
   }
   return newComponent;
 }
@@ -1504,9 +1528,10 @@ async function updateComponent(projectRootDir, ID, prop, value) {
   if (prop === "name") {
     await renameComponentDir(projectRootDir, ID, value);
   }
-  return modifyComponentJson(projectRootDir, ID, (componentJson)=>{
-    componentJson[prop] = value;
-  });
+  const componentJson = await readComponentJsonByID(projectRootDir, ID)
+  componentJson[prop] = value;
+  await writeComponentJsonByID(projectRootDir, ID, componentJson);
+  return componentJson
 }
 
 async function updateStepNumber(projectRootDir) {
@@ -2070,6 +2095,7 @@ module.exports = {
   isComponentDir,
   getComponentTree,
   readComponentJson,
+  writeComponentJson,
   isLocal,
   isSameRemoteHost,
 };

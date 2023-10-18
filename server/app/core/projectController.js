@@ -10,7 +10,7 @@ const { readJsonGreedy } = require("../core/fileUtils");
 const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
 const { removeSsh } = require("./sshManager");
 const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { componentJsonReplacer, readComponentJson , setProjectState } = require("../core/projectFilesOperator");
+const { writeComponentJson, readComponentJson , setProjectState } = require("../core/projectFilesOperator");
 const Dispatcher = require("./dispatcher");
 const { getDateString } = require("../lib/utility");
 const { getLogger } = require("../logSettings.js");
@@ -103,7 +103,7 @@ async function runProject(projectRootDir) {
   rootWF.state = await rootDispatcher.start();
   getLogger(projectRootDir).info("project finished");
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
-  await fs.writeJson(path.resolve(projectRootDir, componentJsonFilename), rootWF, { spaces: 4, replacer: componentJsonReplacer });
+  await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
   rootDispatchers.delete(projectRootDir);
   return rootWF.state;
 }

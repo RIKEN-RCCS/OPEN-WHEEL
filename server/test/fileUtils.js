@@ -55,7 +55,7 @@ describe("file utility functions", function() {
     await fs.outputFile(path.resolve(testDirRoot, "baz"), "baz");
     await fs.outputJson(path.resolve(testDirRoot, "ps.json"), psJson);
     await gitAdd(testDirRoot, "./");
-    await gitCommit(testDirRoot, "foo", "foo@example.com");
+    await gitCommit(testDirRoot);
   });
   after(async()=>{
     await fs.remove(testDirRoot);

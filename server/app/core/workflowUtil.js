@@ -10,8 +10,7 @@ const { promisify } = require("util");
 const glob = require("glob");
 const { readJsonGreedy } = require("./fileUtils");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { gitAdd } = require("./gitOperator2");
-const { componentJsonReplacer } = require("./projectFilesOperator");
+const { writeComponentJson } = require("./projectFilesOperator");
 const { hasChild, isComponent } = require("./workflowComponent");
 
 async function getComponentDir(projectRootDir, targetID) {
@@ -94,9 +93,7 @@ async function updateComponentJson(projectRootDir, component, modifier) {
   //resolve component json filename from parenet dirname, component.name, and componentJsonFilename constant
   //to avoid using old path in componentPath when component's name is changed
   const parentDir = componentJson.parent ? await getComponentDir(projectRootDir, componentJson.parent) : projectRootDir;
-  const filename = path.resolve(parentDir, componentJson.name, componentJsonFilename);
-  await fs.writeJson(filename, componentJson, { spaces: 4, replacer: componentJsonReplacer });
-  return gitAdd(projectRootDir, filename);
+  return writeComponentJson(projectRootDir, path.resolve(parentDir, componentJson.name), componentJson);
 }
 
 /**
