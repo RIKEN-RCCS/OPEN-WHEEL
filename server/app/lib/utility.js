@@ -4,7 +4,9 @@
  * See License in the project root for the license information.
  */
 "use strict";
+const fs=require("fs-extra");
 
+//DO NOT require any other WHEEL modules in this file
 
 //NG
 const reWin32ReservedNames = /^(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
@@ -130,6 +132,10 @@ function formatSshOutput(outputArray) {
   });
 }
 
+function writeJsonWrapper(filename, data){
+  fs.writeJson(filename, data, { spaces: 4 });
+}
+
 module.exports = {
   escapeRegExp,
   isValidName,
@@ -139,5 +145,6 @@ module.exports = {
   pathseps,
   metaCharactors,
   getDateString,
-  formatSshOutput
+  formatSshOutput,
+  writeJsonWrapper
 };
