@@ -48,8 +48,7 @@ const {
 
 //test data
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
-
-const gitLFSInstallMessage = /Updated [gG]it hooks.\nGit LFS initialized.\n/;
+const initialCommitResponse = /\[master \(root-commit\) .*\] initial commit\n/;
 
 describe("git operator UT", ()=>{
   after(async()=>{
@@ -61,27 +60,27 @@ describe("git operator UT", ()=>{
       await asyncExecFile("git", ["init", testDirRoot]);
     });
     it("should re-initialize repo and return undefined when attempting to init again", async()=>{
-      expect(await gitInit(testDirRoot, "testUser", "testUser@example.com")).to.match(gitLFSInstallMessage);
+      expect(await gitInit(testDirRoot, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
       await checkLFSenabled(testDirRoot);
     });
     it("should initialize git repo on nonExisting directory", async()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge");
-      expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(gitLFSInstallMessage);
-      expect(newRepoDir).to.be.a.directory().with.contents([".git"]);
+      expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
+      expect(newRepoDir).to.be.a.directory().with.contents([".git", ".gitignore"]);
       await checkLFSenabled(newRepoDir);
     });
     it("should initialize git repo on nonExisting directory in nonExisting directory", async()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge", "huga");
-      expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(gitLFSInstallMessage);
-      expect(newRepoDir).to.be.a.directory().with.contents([".git"]);
+      expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
+      expect(newRepoDir).to.be.a.directory().with.contents([".git", ".gitignore"]);
       await checkLFSenabled(newRepoDir);
     });
     it("should initialize git repo on existing directory", async()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge");
       await fs.mkdir(newRepoDir);
       expect(newRepoDir).to.be.a.directory().and.empty;
-      expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(gitLFSInstallMessage);
-      expect(newRepoDir).to.be.a.directory().with.contents([".git"]);
+      expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
+      expect(newRepoDir).to.be.a.directory().with.contents([".git", ".gitignore"]);
       await checkLFSenabled(newRepoDir);
     });
     it("should reject while attempting to initialize on existing file", async()=>{
@@ -326,7 +325,7 @@ describe("git operator UT", ()=>{
         const { stdout } = await asyncExecFile("git", ["ls-files"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
-        expect(stdout).to.be.empty;
+        expect(stdout).to.be.equal(".gitignore\n");
       });
       it("should do nothing if no files are indexed", async()=>{
         await asyncExecFile("git", ["add", "."], { cwd: testDirRoot }).catch((e)=>{
@@ -337,7 +336,7 @@ describe("git operator UT", ()=>{
         const { stdout } = await asyncExecFile("git", ["ls-files"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
-        expect(stdout).to.be.equal("foo\n");
+        expect(stdout).to.be.equal(".gitignore\nfoo\n");
       });
       it("should commit indexed files", async()=>{
         await asyncExecFile("git", ["add", "foo"], { cwd: testDirRoot }).catch((e)=>{

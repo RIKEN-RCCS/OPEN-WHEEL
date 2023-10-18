@@ -70,7 +70,10 @@ async function gitInit(rootDir, user, mail) {
   await gitPromise(dir, ["init", "--", base], rootDir);
   await gitPromise(rootDir, ["config", "user.name", user], rootDir);
   await gitPromise(rootDir, ["config", "user.email", mail], rootDir);
-  return gitPromise(rootDir, ["lfs", "install"], rootDir);
+  await gitPromise(rootDir, ["lfs", "install"], rootDir);
+  await fs.outputFile(path.join(rootDir,".gitignore"), "wheel.log");
+  await gitAdd(rootDir, ".gitignore")
+  return gitCommit(rootDir, "initial commit");
 }
 
 /**
