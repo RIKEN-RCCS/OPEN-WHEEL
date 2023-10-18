@@ -29,8 +29,7 @@ const remoteHome = "/home/testuser";
 
 //helper functions
 const { componentJsonFilename, statusFilename, jobManagerJsonFilename } = require("../app/db/db");
-const { createNewProject } = require("../app/core/projectFilesOperator");
-const { updateComponent, createNewComponent } = require("../app/core/componentFilesOperator");
+const { createNewProject, updateComponent, createNewComponent  } = require("../app/core/projectFilesOperator");
 const { replacePathsep } = require("../app/core/pathUtils");
 
 const { scriptName, pwdCmd, scriptHeader, exit } = require("./testScript");

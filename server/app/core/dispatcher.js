@@ -18,7 +18,7 @@ const { getDateString } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
-const { componentJsonReplacer, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
+const { componentJsonReplacer, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent.js");
 const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
@@ -27,7 +27,6 @@ const { eventEmitters } = require("./global.js");
 const { createTempd } = require("./tempd.js");
 const { viewerSupportedTypes, getFiletype } = require("./viewerUtils.js");
 const {
-  setStateR,
   loopInitialize,
   forGetNextIndex,
   forIsFinished,
@@ -585,7 +584,7 @@ class Dispatcher extends EventEmitter {
           return !subComponent;
         }
       });
-      await setStateR(dstDir, "not-started");
+      await setComponentStateR(dstDir, "not-started");
       await fs.writeJson(path.resolve(dstDir, componentJsonFilename), newComponent, { spaces: 4, replacer: componentJsonReplacer });
       await this._delegate(newComponent);
 
@@ -942,7 +941,8 @@ class Dispatcher extends EventEmitter {
 
 
     for (const inputFile of component.inputFiles) {
-      const dstName = inputFile.name;
+      const dstName = nunjucks.renderString( inputFile.name, this.env);
+
       //resolve real src
       for (const src of inputFile.src) {
         //get files from upper level
@@ -964,7 +964,8 @@ class Dispatcher extends EventEmitter {
                 }
                 for (const e of srcEntry.src) {
                   const originalSrcRoot = this._getComponentDir(e.srcNode);
-                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName, forceCopy });
+                  const srcName= nunjucks.renderString( e.srcName, this.env);
+                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName , forceCopy });
                 }
               })
           );
@@ -973,7 +974,8 @@ class Dispatcher extends EventEmitter {
           const srcRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent);
           const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const remotehostID = remoteHost.getID("name", component.host);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName: src.srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
+          const srcName= nunjucks.renderString( src.srcName, this.env);
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
         } else {
           const srcRoot = this._getComponentDir(src.srcNode);
           promises.push(
@@ -988,11 +990,13 @@ class Dispatcher extends EventEmitter {
                 //get files from lower level component
                 if (Object.prototype.hasOwnProperty.call(srcEntry, "origin")) {
                   for (const e of srcEntry.origin) {
+                    const srcName= nunjucks.renderString( e.srcName, this.env);
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName, forceCopy });
+                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy });
                   }
                 } else {
-                  deliverRecipes.add({ dstName, srcRoot, srcName: src.srcName, forceCopy });
+                  const srcName= nunjucks.renderString( src.srcName, this.env);
+                  deliverRecipes.add({ dstName, srcRoot, srcName , forceCopy });
                 }
               })
           );

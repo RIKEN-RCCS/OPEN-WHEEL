@@ -25,7 +25,7 @@ const {
   getEnv,
   updateStepNumber,
   replaceEnv
-} = require("../core/componentFilesOperator.js");
+} = require("../core/projectFilesOperator.js");
 const { getComponentDir } = require("../core/projectFilesOperator.js");
 const { sendWorkflow, sendProjectJson, sendComponentTree } = require("./senders.js");
 const { projectJsonFilename } = require("../db/db");

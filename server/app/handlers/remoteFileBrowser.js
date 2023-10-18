@@ -7,7 +7,7 @@
 const path = require("path");
 const fs = require("fs-extra");
 const { zip } = require("zip-a-folder");
-const { readComponentJsonByID, isLocal } = require("../core/componentFilesOperator.js");
+const { readComponentJsonByID, isLocal } = require("../core/projectFilesOperator.js");
 const { remoteHost } = require("../db/db");
 const { getLogger } = require("../logSettings");
 const { createSsh, getSsh } = require("../core/sshManager");

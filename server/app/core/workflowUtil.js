@@ -11,7 +11,7 @@ const glob = require("glob");
 const { readJsonGreedy } = require("./fileUtils");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { gitAdd } = require("./gitOperator2");
-const { componentJsonReplacer } = require("./componentFilesOperator");
+const { componentJsonReplacer } = require("./projectFilesOperator");
 const { hasChild, isComponent } = require("./workflowComponent");
 
 async function getComponentDir(projectRootDir, targetID) {

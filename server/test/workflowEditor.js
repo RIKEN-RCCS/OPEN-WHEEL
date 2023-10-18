@@ -19,7 +19,7 @@ chai.use(require("chai-json-schema"));
 chai.use(require("deep-equal-in-any-order"));
 
 //testee
-const {
+const { createNewProject,
   createNewComponent,
   updateComponent,
   addInputFile,
@@ -34,18 +34,17 @@ const {
   removeFileLink,
   removeComponent,
   getComponentTree
-} = require("../app/core/componentFilesOperator");
+} = require("../app/core/projectFilesOperator");
 
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 
 //helper functions
-const { createNewProject } = require("../app/core/projectFilesOperator");
-async function outputJson(filename) {
-  const tmp = await fs.readJson(filename);
-  console.log(tmp);
-}
+//async function outputJson(filename) {
+//const tmp = await fs.readJson(filename);
+//console.log(tmp);
+//}
 
 describe("workflow editor UT", function() {
   this.timeout(0);

@@ -24,8 +24,7 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
 const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../app/db/db");
-const { createNewProject } = require("../app/core/projectFilesOperator");
-const { updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink } = require("../app/core/componentFilesOperator");
+const { updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink,createNewProject } = require("../app/core/projectFilesOperator");
 
 const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
