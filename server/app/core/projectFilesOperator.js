@@ -414,9 +414,7 @@ async function convertProjectFormat(projectJsonFilepath) {
   //remove old project Json file
   await gitRm(projectRootDir, projectJsonFilepath);
   await fs.remove(projectJsonFilepath);
-  const name = "wheel";
-  const mail = "wheel.example.com";
-  await gitCommit(projectRootDir, name, mail, "convert old format project");
+  await gitCommit(projectRootDir,"convert old format project");
 }
 
 function isDuplicateProjectName(projectRootDir, newName) {
@@ -689,10 +687,7 @@ async function renameProject(id, newName, oldDir) {
   const rootWorkflow = await readJsonGreedy(path.resolve(newDir, componentJsonFilename));
   rootWorkflow.name = newName;
   await writeComponentJson(newDir, newDir, rootWorkflow);
-
-  const name = "wheel";
-  const mail = "wheel.example.com";
-  await gitCommit(newDir, name, mail);
+  await gitCommit(newDir);
 
   //rewrite path in project List entry
   const target = projectList.get(id);

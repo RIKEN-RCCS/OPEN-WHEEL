@@ -119,7 +119,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
   //validation check
     try {
       await validateComponents(projectRootDir);
-      await gitCommit(projectRootDir, "wheel", "wheel@example.com");
+      await gitCommit(projectRootDir, "auto saved: project starting");
     } catch (err) {
       getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
       ack(err);
@@ -273,7 +273,7 @@ async function onSaveProject(projectRootDir, ack) {
   const projectState = await getProjectState(projectRootDir);
   if (projectState === "not-started") {
     await setProjectState(projectRootDir, "not-started", true);
-    await gitCommit(projectRootDir, "wheel", "wheel@example.com");
+    await gitCommit(projectRootDir);
   } else {
     getLogger(projectRootDir).error(projectState, "project can not be saved");
     return ack(null);
