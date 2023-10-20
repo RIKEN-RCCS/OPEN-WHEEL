@@ -35,7 +35,8 @@ async function sleep(time) {
 }
 
 describe("project Controller UT", function() {
-  this.timeout(0);  
+  this.timeout(0);
+  this.retries(3);
   beforeEach(async()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");

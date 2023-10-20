@@ -65,6 +65,7 @@
       v-model="pwDialog"
       :title="pwDialogTitle"
       @password="pwCallback"
+      @cancel="pwCallback(null)"
     />
       <remove-confirm-dialog
         v-model="rmDialog"
@@ -156,9 +157,7 @@ export default {
       this.hosts.splice(0, this.hosts.length, ...data);
     });
     SIO.onGlobal("askPassword", (hostname, cb)=>{
-      this.pwCallback = (pw)=>{
-        cb(pw);
-      };
+      this.pwCallback = cb
       this.pwDialogTitle = `input password or passphrase for ${hostname}`;
       this.pwDialog = true;
     });
@@ -233,9 +232,12 @@ export default {
       SIO.emitGlobal("tryToConnect", this.hosts[index], (rt)=>{
         debug("connection test result:",rt);
         target.loading= false
-        target.testResult=rt
-        target.connectionStatus= rt === "success" ? "OK" : "failed"
-        target.icon= rt === "success" ? "mdi-lan-connect" : "mdi-lan-disconnect"
+
+        if(rt !== "canceled"){
+          target.testResult=rt
+          target.connectionStatus= rt === "success" ? "OK" : "failed"
+          target.icon= rt === "success" ? "mdi-lan-connect" : "mdi-lan-disconnect"
+        }
         this.pwDialog=false
         this.testing=null;
       });

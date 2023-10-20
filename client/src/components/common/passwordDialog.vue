@@ -27,7 +27,7 @@
           <buttons
             :buttons="buttons"
             @ok="submitPassword"
-            @cancel="closeDialog"
+            @cancel="cancel"
           />
         </v-card-actions>
       </v-card-text>

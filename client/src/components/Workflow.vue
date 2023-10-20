@@ -231,6 +231,7 @@
       v-model="pwDialog"
       :title="pwDialogTitle"
       @password="pwCallback"
+      @cancel="pwCallback(null)"
     />
     <versatile-dialog
       v-model="descriptionDialog"
