@@ -10,7 +10,7 @@ const fs = require("fs-extra");
 const SBS = require("simple-batch-system");
 const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
-const { getDateString } = require("../lib/utility");
+const { getDateString, writeJsonWrapper } = require("../lib/utility");
 const { gatherFiles } = require("./execUtils");
 const { jobScheduler, jobManagerJsonFilename } = require("../db/db");
 const { createStatusFile, createBulkStatusFile } = require("./execUtils");
@@ -240,7 +240,7 @@ class JobManager extends EventEmitter {
     getLogger(this.projectRootDir).trace("taskListUpdated");
 
     if (this.tasks.length > 0) {
-      await fs.writeJson(this.taskListFilename, this.tasks);
+      await writeJsonWrapper(this.taskListFilename, this.tasks);
     } else {
       await fs.remove(this.taskListFilename);
     }

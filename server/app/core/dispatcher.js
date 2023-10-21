@@ -14,11 +14,11 @@ nunjucks.configure({ autoescape: true });
 const { remoteHost, componentJsonFilename, filesJsonFilename, projectJsonFilename } = require("../db/db");
 const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
-const { getDateString } = require("../lib/utility");
+const { getDateString, writeJsonWrapper } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
-const { componentJsonReplacer, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost } = require("./componentFilesOperator");
+const { writeComponentJson, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent.js");
 const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
@@ -27,7 +27,6 @@ const { eventEmitters } = require("./global.js");
 const { createTempd } = require("./tempd.js");
 const { viewerSupportedTypes, getFiletype } = require("./viewerUtils.js");
 const {
-  setStateR,
   loopInitialize,
   forGetNextIndex,
   forIsFinished,
@@ -464,7 +463,7 @@ class Dispatcher extends EventEmitter {
     this.dispatchedTasks.add(task);
     const ee = eventEmitters.get(this.projectRootDir);
     ee.emit("taskDispatched", task);
-    await fs.writeJson(path.resolve(task.workingDir, componentJsonFilename), task, { spaces: 4, replacer: componentJsonReplacer });
+    await writeComponentJson(this.projectRootDir, task.workingDir, task, true);
     await this._addNextComponent(task);
   }
 
@@ -489,7 +488,7 @@ class Dispatcher extends EventEmitter {
     //exception should be catched in caller
     try {
       component.state = await child.start();
-      await fs.writeJson(path.join(childDir, componentJsonFilename), component, { spaces: 4, replacer: componentJsonReplacer });
+      await writeComponentJson(this.projectRootDir,childDir, component,true);
 
       //if component type is not workflow, it must be copied component of PS, for, while or foreach
       //so, it is no need to emit "componentStateChanged" here.
@@ -526,7 +525,7 @@ class Dispatcher extends EventEmitter {
     //write to file
     //to avoid git add when task state is changed, we do NOT use updateComponentJson(in workflowUtil) here
     const componentDir = this._getComponentDir(component.ID);
-    await fs.writeJson(path.join(componentDir, componentJsonFilename), component, { spaces: 4, replacer: componentJsonReplacer });
+    await writeComponentJson(this.projectRootDir, componentDir, component, true);
   }
 
   async _loopHandler(getNextIndex, isFinished, getTripCount, keepLoopInstance, component) {
@@ -540,6 +539,7 @@ class Dispatcher extends EventEmitter {
 
     let prevIndex;
     let srcDir;
+
 
     if (!component.initialized) {
       loopInitialize(component, getTripCount);
@@ -585,8 +585,8 @@ class Dispatcher extends EventEmitter {
           return !subComponent;
         }
       });
-      await setStateR(dstDir, "not-started");
-      await fs.writeJson(path.resolve(dstDir, componentJsonFilename), newComponent, { spaces: 4, replacer: componentJsonReplacer });
+      await setComponentStateR(this.projectRootDir, dstDir, "not-started");
+      await writeComponentJson(this.projectRootDir, dstDir, newComponent, true);
       await this._delegate(newComponent);
 
       keepLoopInstance(component, this.cwfDir);
@@ -602,6 +602,7 @@ class Dispatcher extends EventEmitter {
       this.logger.warn("fatal error occurred during loop child dispatching.", e);
       return Promise.reject(e);
     }
+
     if (component.childLoopRunning) {
       this.logger.debug("finished for index =", component.currentIndex);
       component.childLoopRunning = false;
@@ -721,7 +722,7 @@ class Dispatcher extends EventEmitter {
       newComponent.subComponent = true;
       const newComponentFilename = path.join(instanceRoot, componentJsonFilename);
       if (!await fs.pathExists(newComponentFilename)) {
-        await fs.writeJson(newComponentFilename, newComponent, { spaces: 4, replacer: componentJsonReplacer });
+        await writeComponentJson(this.projectRootDir, instanceRoot, newComponent,true);
       }
       const p = this._delegate(newComponent)
         .then(()=>{
@@ -732,7 +733,7 @@ class Dispatcher extends EventEmitter {
           } else {
             this.logger.warn("child state is illegal", newComponent.state);
           }
-          fs.writeJson(path.join(templateRoot, componentJsonFilename), component, { spaces: 4, replacer: componentJsonReplacer })
+          writeComponentJson(this.projectRootDir, templateRoot, component,true)
             .then(()=>{
               const ee = eventEmitters.get(this.projectRootDir);
               ee.emit("componentStateChanged");
@@ -807,7 +808,7 @@ class Dispatcher extends EventEmitter {
         filesJson.push(e);
       }
     });
-    await fs.writeJson(filename, filesJson);
+    await writeJsonWrapper(filename, filesJson);
     const ee = eventEmitters.get(this.projectRootDir);
     ee.emit("resultFilesReady", dir);
     await this._setComponentState(component, "finished");
@@ -849,7 +850,7 @@ class Dispatcher extends EventEmitter {
       await writeParameterSetFile(templateRoot, targetFiles, params, countBulkNum);
       countBulkNum++;
     }
-    fs.writeJson(path.join(templateRoot, componentJsonFilename), component, { spaces: 4, replacer: componentJsonReplacer });
+    return writeComponentJson(this.projectRootDir, templateRoot, component,true);
   }
 
   async _storageHandler(component) {
@@ -924,9 +925,7 @@ class Dispatcher extends EventEmitter {
   async _setComponentState(component, state) {
     component.state = state; //update in memory
     const componentDir = this._getComponentDir(component.ID);
-    //write to file
-    //to avoid git add when task state is changed, we do NOT use updateComponentJson(in workflowUtil) here
-    await fs.writeJson(path.join(componentDir, componentJsonFilename), component, { spaces: 4, replacer: componentJsonReplacer });
+    await writeComponentJson(this.projectRootDir, componentDir, component, true);
     const ee = eventEmitters.get(this.projectRootDir);
     ee.emit("componentStateChanged");
   }
@@ -942,7 +941,8 @@ class Dispatcher extends EventEmitter {
 
 
     for (const inputFile of component.inputFiles) {
-      const dstName = inputFile.name;
+      const dstName = nunjucks.renderString( inputFile.name, this.env);
+
       //resolve real src
       for (const src of inputFile.src) {
         //get files from upper level
@@ -964,7 +964,8 @@ class Dispatcher extends EventEmitter {
                 }
                 for (const e of srcEntry.src) {
                   const originalSrcRoot = this._getComponentDir(e.srcNode);
-                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName, forceCopy });
+                  const srcName= nunjucks.renderString( e.srcName, this.env);
+                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName , forceCopy });
                 }
               })
           );
@@ -973,7 +974,8 @@ class Dispatcher extends EventEmitter {
           const srcRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent);
           const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const remotehostID = remoteHost.getID("name", component.host);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName: src.srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
+          const srcName= nunjucks.renderString( src.srcName, this.env);
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
         } else {
           const srcRoot = this._getComponentDir(src.srcNode);
           promises.push(
@@ -988,11 +990,13 @@ class Dispatcher extends EventEmitter {
                 //get files from lower level component
                 if (Object.prototype.hasOwnProperty.call(srcEntry, "origin")) {
                   for (const e of srcEntry.origin) {
+                    const srcName= nunjucks.renderString( e.srcName, this.env);
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName: e.srcName, forceCopy });
+                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy });
                   }
                 } else {
-                  deliverRecipes.add({ dstName, srcRoot, srcName: src.srcName, forceCopy });
+                  const srcName= nunjucks.renderString( src.srcName, this.env);
+                  deliverRecipes.add({ dstName, srcRoot, srcName , forceCopy });
                 }
               })
           );

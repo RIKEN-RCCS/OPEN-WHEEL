@@ -11,7 +11,7 @@
 
 [5. ワークフロー画面-テキストエディタ](3_workflow_screen/3_editor.md)
 
-[6. コンポーネントの詳細](4_component/00_common.md)
+[6. コンポーネントの詳細](4_component/index.md)
 
 具体的なプロジェクトの作成・実行方法は次のドキュメントをご参照ください
 

@@ -37,13 +37,7 @@ cd ${TEST_DIR}
 set -e -o pipefail
 trap cleanup EXIT
 
-# start test server
-docker run --platform linux/amd64 --rm -d -p 4000:22 --name ${TAG_TEST_SERVER} naoso5/openpbs
-if [ $? -ne 0 ];then
-  echo "ERROR: run test server failed $?"
-  exit 2
-fi
-IPAddress=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${TAG_TEST_SERVER})
+./prepare_remotehost_container.sh ${CONFIG_DIR} ${TAG_TEST_SERVER}
 
 # build WHEEL docker image
 pushd ../../
@@ -67,25 +61,6 @@ extendedKeyUsage=serverAuth
 openssl req -x509 -out ${CONFIG_DIR}/server.crt -keyout ${CONFIG_DIR}/server.key  -newkey rsa:2048 \
 -nodes -sha256  -subj '/CN=localhost' -extensions EXT -config ${SSL_CONFIG}
 
-#create rmeotehost.json
-{
-echo '[{'
-echo '  "name": "testServer",'
-echo '  "host": "'${IPAddress}'",'
-echo '  "path": "/home/testuser",'
-echo '  "keyFile": null,'
-echo '  "username": "testuser",'
-echo '  "numJob": 5,'
-echo '  "port": 22,'
-echo '  "id": "dummy-id",'
-echo '  "jobScheduler": "PBSPro",'
-echo '  "renewInterval": 0,'
-echo '  "renewDelay": 0,'
-echo '  "statusCheckInterval": 10,'
-echo '  "maxStatusCheckError": 10,'
-echo '  "readyTimeout": 5000'
-echo '}]'
-} > ${CONFIG_DIR}/remotehost.json
 
 #run UT in container
 docker run --env "WHEEL_TEST_REMOTEHOST=testServer"\

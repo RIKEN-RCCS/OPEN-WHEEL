@@ -231,6 +231,7 @@
       v-model="pwDialog"
       :title="pwDialogTitle"
       @password="pwCallback"
+      @cancel="pwCallback(null)"
     />
     <versatile-dialog
       v-model="descriptionDialog"
@@ -546,22 +547,23 @@ export default {
       this.cb(args);
       this.showUnsavedFilesDialog=false;
     },
-    ...mapActions(["showSnackbar", "closeSnackbar"]),
-    ...mapMutations(
-      {
-        commitComponentTree: "componentTree",
-        commitProjectState: "projectState",
-        commitComponentPath: "componentPath",
-        commitCurrentComponent: "currentComponent",
-        commitSelectedComponent: "selectedComponent",
-        commitProjectRootDir: "projectRootDir",
-        commitRootComponentID: "rootComponentID",
-        commitRemoteHost: "remoteHost",
-        commitJobScheduler: "jobScheduler",
-        commitWaitingProjectJson: "waitingProjectJson",
-        commitWaitingWorkflow: "waitingWorkflow",
-      },
-    ),
+    ...mapActions({
+      showSnackbar:"showSnackbar",
+      closeSnackbar:"closeSnackbar",
+      commitSelectedComponent: "selectedComponent"
+    }),
+    ...mapMutations({
+      commitComponentTree: "componentTree",
+      commitProjectState: "projectState",
+      commitComponentPath: "componentPath",
+      commitCurrentComponent: "currentComponent",
+      commitProjectRootDir: "projectRootDir",
+      commitRootComponentID: "rootComponentID",
+      commitRemoteHost: "remoteHost",
+      commitJobScheduler: "jobScheduler",
+      commitWaitingProjectJson: "waitingProjectJson",
+      commitWaitingWorkflow: "waitingWorkflow",
+    }),
     emitProjectOperation (operation) {
       if(operation === "cleanProject"){
         this.firstViewDataAlived=false;

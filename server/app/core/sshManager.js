@@ -6,7 +6,6 @@
 "use strict";
 const SshClientWrapper = require("ssh-client-wrapper");
 const { emitAll } = require("../handlers/commUtils.js");
-const { getLogger } = require("../logSettings.js");
 
 const db = new Map();
 
@@ -184,16 +183,9 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   }
 
   const ssh = new SshClientWrapper(hostinfo);
+  const timeout = hostinfo.ConnectTimeout > 120 ? hostinfo.ConnectTimeout : 120;
+  const success = await ssh.canConnect(timeout);
 
-  //remoteHostName is name property of remote host entry
-  //hostinfo.host is hostname or IP address of remote host
-  let success = false;
-  try {
-    const timeout = hostinfo.ConnectTimeout > 120 ? hostinfo.ConnectTimeout : 120;
-    success = await ssh.canConnect(timeout);
-  } catch (e) {
-    getLogger(projectRootDir).warn("ssh connection failed:", e);
-  }
   if (success) {
     addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
   } else {

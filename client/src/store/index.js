@@ -95,9 +95,12 @@ export default new Vuex.Store({
         context.commit("copySelectedComponent", null);
         return
       }
-      if (context.state.selectedComponent !== null && payload.ID === context.state.selectedComponent.ID) {
-        return;
-      }
+
+      //これのせいで、選択中のコンポーネントがアップデートされても更新されていなかった
+      //一旦コメントアウトして様子見
+      //if (context.state.selectedComponent !== null && payload.ID === context.state.selectedComponent.ID) {
+      //return;
+      //}
       context.commit("selectedComponent", payload);
       const dup = Object.assign({}, payload);
       context.commit("copySelectedComponent", dup);

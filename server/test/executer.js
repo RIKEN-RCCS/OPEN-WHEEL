@@ -29,8 +29,7 @@ const remoteHome = "/home/testuser";
 
 //helper functions
 const { componentJsonFilename, statusFilename, jobManagerJsonFilename } = require("../app/db/db");
-const { createNewProject } = require("../app/core/projectFilesOperator");
-const { updateComponent, createNewComponent } = require("../app/core/componentFilesOperator");
+const { createNewProject, updateComponent, createNewComponent  } = require("../app/core/projectFilesOperator");
 const { replacePathsep } = require("../app/core/pathUtils");
 
 const { scriptName, pwdCmd, scriptHeader, exit } = require("./testScript");
@@ -108,7 +107,7 @@ describe("UT for executer class", function() {
         }
         addSsh(projectRootDir, hostInfo, ssh);
       } catch (e) {
-        console.log(`ssh connection failed to ${remotehostName} due to ${e} so remote exec test is skiiped`);
+        console.log(`ssh connection failed to ${remotehostName} due to "${e}" so remote exec test is skipped`);
         this.skip();
       } finally {
         await ssh.disconnect();

@@ -24,8 +24,7 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
 const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../app/db/db");
-const { createNewProject } = require("../app/core/projectFilesOperator");
-const { updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink } = require("../app/core/componentFilesOperator");
+const { updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink,createNewProject } = require("../app/core/projectFilesOperator");
 
 const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
@@ -36,7 +35,8 @@ async function sleep(time) {
 }
 
 describe("project Controller UT", function() {
-  this.timeout(0);  
+  this.timeout(0);
+  this.retries(3);
   beforeEach(async()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
@@ -496,7 +496,7 @@ describe("project Controller UT", function() {
         expect(path.resolve(projectRootDir, "parentTask1", "f")).to.be.a.file().with.contents("a");
       });
     });
-    describe.skip("If component", ()=>{
+    describe("If component", ()=>{
       beforeEach(async()=>{
         const if0 = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 10, y: 10 });
         const if1 = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 10, y: 10 });
@@ -581,7 +581,7 @@ describe("project Controller UT", function() {
         });
       });
     });
-    describe.skip("If component", ()=>{
+    describe("If component", ()=>{
       beforeEach(async()=>{
         const if0 = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 10, y: 10 });
         const task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });

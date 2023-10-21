@@ -35,14 +35,13 @@ WHEELでは、ワークフロー画面（Taskコンポーネント）にて使�
 |Hostname| 接続先のホスト名(IPアドレスでも可)|
 |Port number| 接続先のポート番号|
 |User ID| ログインに使用するユーザ名|
-|Host work dir| 接続先で、実行に使うディレクトリの最上位のパス|
-|use public key authentication| on にすると公開鍵認証が、offにするとパスワード認証が使われます。|
-|private key path|秘密鍵のファイルパス(use public key...がonの時のみ表示されます |
-|job scheduler|リモートホストで使われているジョブサーバ|
+|Host work dir| 接続先で、Taskの実行やジョブ投入に使うディレクトリの最上位のパス|
+|private key path|秘密鍵のファイルパス |
+|job scheduler|リモートホストで使われているジョブサーバの種類|
 |max number of jobs|同時に投入するジョブの最大値|
 |available queues|リモートホスト上で利用可能なキューの名前。カンマ区切りで記載してください|
-|use bulkjob|(富岳のみ)バルクジョブを使えるサイトかどうか|
-|use stepjob|(富岳のみ)ステップジョブを使えるサイトかどうか|
+|use bulkjob|(富士通TCS使用サイトのみ)バルクジョブを使えるサイトかどうか|
+|use stepjob|(富士通TCS使用サイトのみ)ステップジョブを使えるサイトかどうか|
 |shared host|ストレージを共用している他のリモートホストのラベル|
 |shared path on shared host|shared host上でHost work dirへアクセスするためのパス|
 
@@ -52,47 +51,13 @@ WHEELでは、ワークフロー画面（Taskコンポーネント）にて使�
 
 |||
 |----------|---------------------------------|
-| connection renewal interval(min.) | sshを定期的に再接続する時の間隔 [分]<br> 0の時(デフォルト)は再接続しない|
-| connection renewal delay(sec.) | 再接続時の待ち時間[秒] （デフォルト値 0）|
-| status check interval(sec.) | ジョブ投入後のステータス確認を行う間隔[秒]（デフォルト値 10）|
-| max number of status check error allowed | ステータス確認の失敗を何回まで許容するか|
-| interval time between each executions | 1つのジョブ実行が終わった後、次のジョブを実行するまでの待ち時間[秒] |
-| timeout during handhake phase(msec.) | sshのハンドシェイク時の待ち時間[ミリ秒]|
-| interval time between keep alive packet(msec.) | sshクライアントがkeep alive packetを投げる間隔[ミリ秒]|
+| connection renewal interval(min.) | ssh接続を切断するまでのアイドル時間 [分]<br> 0の時は切断しない(デフォルト値3)|
+| status check interval(sec.) | ジョブ投入後のステータス確認を行う間隔[秒]（デフォルト値 60）|
+| max number of status check error allowed | ステータス確認の失敗を何回まで許容するか（デフォルト値 10）|
+| interval time between each executions | 1つのジョブ実行が終わった後、次のジョブを実行するまでの待ち時間[秒] （デフォルト値 ジョブでは5、タスクでは1）|
+| timeout during handhake phase(msec.) | sshのハンドシェイク時の待ち時間[ミリ秒] （デフォルト値 60000）|
 
 必要な情報を入力し、OKボタンをクリックするとリモートホスト接続設定が保存されます。
-
-### Cloud
-詳細は[Cloud(AWS)インスタンス利用方法](../../../doc/Cloud.md)を参照ください
-
-新規クラウド設定登録ボタンをクリックすると次の画面が表示されます。
-
-![img](./img/new_cloud.png "new_cloud")
-
-フォームの各部には次の情報を設定してください。
-
-||||
-|----|----|----|
-| Label | リモートホスト識別ラベル | 重複不可 * |
-| Cloud service provider | クラウドサービスプロバイダー名 | 現バージョン(ver2.1.0)では、「aws」のみ対応 * |
-| OS | OS名 | 現バージョン(ver2.1.0)では、「ubuntu16」のみ対応 * |
-| region | インスタンスを起動するリージョン | *  ex. ap-northeast-1 |
-| numNodes | 起動するノード数 | * |
-| InstanceType | 起動するインスタンスタイプ | * ex. t2.micro |
-| rootVolume | rootのEBSボリューム | 起動するインスタンスにアタッチされるrootのEBSボリュームのサイズ（デフォルト値 8 [GB]） |
-| shareStorage | 共有ストレージの利用設定 |（デフォルト値 利用する）|
-| mpi | MPI | ー |
-| compiler | コンパイラ | ー |
-| playbook | 起動時に実行されるplaybook | ー |
-| additionalParams | aws-sdkのEC2.runInstancesに渡すことのできる設定値 | access keyおよび secret access key等を設定可能 |
-| additionalParamsForHead | additionalParamsのうちヘッドノードのみに適用する値 | ー |
-| JobScheduler | WHEELに登録されているジョブスケジューラ名 | app/config/jobSceduler.jsonに定義されているジョブスケジューラ名を設定する <br> ただし、インスタンスにジョブスケジューラがインストールされている必要がある。<br> ジョブスケジューラ「PBSPro」を設定した場合、WHEELが起動するクラスタにPBSProをインストールする|
-| Max Job | ジョブ投入制限数 | 接続先リモートホストから同時に投入できる最大ジョブ数（デフォルト値 5）|
-| Queue | Queue名 | 接続先ホストからジョブを投入する時に使えるキュー、カンマ区切りで複数入力可（ex. A, B, C）|
-
-`Advance settings` の項目はリモートホストと同じです。
-
-必要な情報を入力し、OKボタンをクリックするとクラウド設定が登録されます。
 
 
 --------

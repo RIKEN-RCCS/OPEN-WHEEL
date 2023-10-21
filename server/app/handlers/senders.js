@@ -9,7 +9,7 @@ const klaw = require("klaw");
 
 const { getThreeGenerationFamily } = require("../core/workflowUtil.js");
 const { getLogger } = require("../logSettings");
-const { getComponentTree } = require("../core/componentFilesOperator");
+const { getComponentTree } = require("../core/projectFilesOperator");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { taskStateFilter } = require("../core/taskUtil");

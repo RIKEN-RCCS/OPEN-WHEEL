@@ -6,30 +6,8 @@
 "use strict";
 const fs = require("fs-extra");
 const path = require("path");
-const { promisify } = require("util");
-const glob = require("glob");
-const { readJsonGreedy } = require("./fileUtils");
-const { componentJsonReplacer } = require("./componentFilesOperator");
-const { componentJsonFilename } = require("../db/db");
 const { sanitizePath } = require("./pathUtils");
 const { evalCondition } = require("./dispatchUtils");
-
-
-/**
- * set component and its descendant's state
- */
-async function setStateR(dir, state) {
-  const filenames = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
-  filenames.push(path.join(dir, componentJsonFilename));
-  const p = filenames.map((filename)=>{
-    return readJsonGreedy(filename)
-      .then((component)=>{
-        component.state = state;
-        return fs.writeJson(filename, component, { spaces: 4, replacer: componentJsonReplacer });
-      });
-  });
-  return Promise.all(p);
-}
 
 
 function forGetNextIndex(component) {
@@ -129,7 +107,6 @@ function loopInitialize(component, getTripCount) {
 }
 
 module.exports = {
-  setStateR,
   loopInitialize,
   forGetNextIndex,
   forIsFinished,

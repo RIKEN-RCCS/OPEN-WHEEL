@@ -25,8 +25,7 @@ eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 //helper functions
 const { projectJsonFilename, componentJsonFilename } = require("../app/db/db");
-const { createNewProject } = require("../app/core/projectFilesOperator");
-const { updateComponent, createNewComponent, addInputFile, addOutputFile, addFileLink, renameOutputFile } = require("../app/core/componentFilesOperator");
+const { createNewProject,  updateComponent, createNewComponent, addInputFile, addOutputFile, addFileLink, renameOutputFile  } = require("../app/core/projectFilesOperator");
 const { scriptName, pwdCmd, scriptHeader } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
@@ -69,7 +68,7 @@ describe("UT for Dispatcher class", function() {
       expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
       expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
     });
-    it("should nothing if outputFile has glob which match nothing", async ()=>{
+    it("should do nothing if outputFile has glob which match nothing", async ()=>{
       await addOutputFile(projectRootDir, previous.ID, "a*");
       await addInputFile(projectRootDir, next.ID, "b");
       await addFileLink(projectRootDir, previous.ID, "a*", next.ID, "b");
@@ -77,6 +76,28 @@ describe("UT for Dispatcher class", function() {
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, next.name, "b")).not.to.be.a.path();
       expect(path.resolve(projectRootDir, next.name, "a*")).not.to.be.a.path();
+    });
+    it("should accept environment variable as part of outputFile name ", async ()=>{
+      await addOutputFile(projectRootDir, previous.ID, "{{ WHEEL_CURRENT_INDEX }}a");
+      await addInputFile(projectRootDir, next.ID, "b");
+      await addFileLink(projectRootDir, previous.ID, "{{ WHEEL_CURRENT_INDEX }}a", next.ID, "b");
+      await fs.outputFile(path.resolve(projectRootDir, previous.name, "3a"), "hoge");
+      projectJson.env={WHEEL_CURRENT_INDEX: 3}
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, projectJson.env, "");
+      expect(await DP.start()).to.be.equal("finished");
+      expect(path.resolve(projectRootDir, next.name, "3a")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "3a"));
+    });
+    it("should accept environment variable as part of inputFile name ", async ()=>{
+      await addOutputFile(projectRootDir, previous.ID, "a");
+      await addInputFile(projectRootDir, next.ID, "b{{ WHEEL_CURRENT_INDEX }}");
+      await addFileLink(projectRootDir, previous.ID, "a", next.ID, "b{{ WHEEL_CURRENT_INDEX }}");
+      await fs.outputFile(path.resolve(projectRootDir, previous.name, "a"), "hoge");
+      projectJson.env={WHEEL_CURRENT_INDEX: "hoge"}
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, projectJson.env, "");
+      expect(await DP.start()).to.be.equal("finished");
+      expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, next.name, "bhoge")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
     });
   });
   describe("#For component", ()=>{
@@ -387,7 +408,7 @@ describe("UT for Dispatcher class", function() {
       });
     });
   });
-  describe.only("[reproduction test] PS in loop", ()=>{
+  describe("[reproduction test] PS in loop", ()=>{
     let for0;
     let PS0;
     let task0;

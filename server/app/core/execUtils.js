@@ -6,9 +6,9 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const { componentJsonFilename, statusFilename } = require("../db/db");
+const { statusFilename } = require("../db/db");
 const { replacePathsep } = require("./pathUtils");
-const { componentJsonReplacer, isSameRemoteHost } = require("./componentFilesOperator");
+const { writeComponentJson, isSameRemoteHost } = require("./projectFilesOperator.js");
 const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
 const { eventEmitters } = require("./global.js");
@@ -20,8 +20,7 @@ const { eventEmitters } = require("./global.js");
 async function setTaskState(task, state) {
   task.state = state;
   getLogger(task.projectRootDir).trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
-  //to avoid git add when task state is changed, we do NOT use updateComponentJson(in workflowUtil) here
-  await fs.writeJson(path.resolve(task.workingDir, componentJsonFilename), task, { spaces: 4, replacer: componentJsonReplacer });
+  await writeComponentJson(task.projectRootDir, task.workingDir, task, true);
   const ee = eventEmitters.get(task.projectRootDir);
   ee.emit("taskStateChanged", task);
   ee.emit("componentStateChanged", task);

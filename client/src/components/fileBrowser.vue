@@ -203,22 +203,12 @@ export default {
     },
     isSND(){
       return this.activeItem !== null && this.activeItem.type.startsWith("snd");
+    },
+    needScriptCandidate(){
+      return !["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)
     }
   },
   watch: {
-    items () {
-      if(["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
-        return;
-      }
-      const scriptCandidates = this.items
-        .filter((e)=>{
-          return e.type.startsWith("file")
-        })
-        .map((e)=>{
-          return e.name
-        })
-      this.commitScriptCandidates(scriptCandidates)
-    },
     currentComponent: {
       //edit workflow -> server respond workflow data -> fire this event
       handler(nv){
@@ -258,6 +248,19 @@ export default {
     SIO.removeUploaderEvent("progress", this.updateProgressBar)
   },
   methods: {
+    updateScriptCandidate(){
+      if(!this.needScriptCandidate){
+        return
+      }
+      const scriptCandidates = this.items
+        .filter((e)=>{
+          return e.type.startsWith("file")
+        })
+        .map((e)=>{
+          return e.name
+        })
+      this.commitScriptCandidates(scriptCandidates)
+    },
     getNodeIcon(isOpen, item){
       return isOpen ? openIcons[item.type] : icons[item.type]
     },
@@ -279,6 +282,7 @@ export default {
         this.items = fileList
           .filter((e)=>{return !e.isComponentDir})
           .map(fileListModifier.bind(null, this.pathSep))
+        this.updateScriptCandidate()
       }
       const path = this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
       const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent"
@@ -360,6 +364,7 @@ export default {
             return
           }
           removeItem(this.items, this.activeItem.id)
+          this.updateScriptCandidate()
           this.commitSelectedFile(null);
           this.currentDir=this.selectedComponentAbsPath
         })
@@ -389,8 +394,13 @@ export default {
           if (this.dialog.submitEvent === "createNewDir") {
             newItem.children = []
           }
-          const container = this.activeItem ? this.activeItem.children : this.items
-          container.push(newItem)
+
+          if(this.activeItem.type === "dir" || this.activeItem.type === "dir-link"){
+            this.activeItem.children.push(newItem);
+          }else{
+            this.items.push(newItem)
+            this.updateScriptCandidate()
+          }
 
           if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
             this.openItems.push(this.activeItem.id)

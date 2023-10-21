@@ -70,7 +70,10 @@ async function gitInit(rootDir, user, mail) {
   await gitPromise(dir, ["init", "--", base], rootDir);
   await gitPromise(rootDir, ["config", "user.name", user], rootDir);
   await gitPromise(rootDir, ["config", "user.email", mail], rootDir);
-  return gitPromise(rootDir, ["lfs", "install"], rootDir);
+  await gitPromise(rootDir, ["lfs", "install"], rootDir);
+  await fs.outputFile(path.join(rootDir,".gitignore"), "wheel.log");
+  await gitAdd(rootDir, ".gitignore")
+  return gitCommit(rootDir, "initial commit");
 }
 
 /**
@@ -78,8 +81,8 @@ async function gitInit(rootDir, user, mail) {
  * @param {string} rootDir - repo's root dir
  * @param {string} message - commmit message
  */
-async function gitCommit(rootDir, message = "save project") {
-  return gitPromise(rootDir, ["commit", "-m", `"${message}"`], rootDir)
+async function gitCommit(rootDir, message = "save project", additionalOption=[]) {
+  return gitPromise(rootDir, ["commit", "-m", `"${message}"`, ...additionalOption], rootDir)
     .catch((err)=>{
       if (!/(no changes|nothing)( added | )to commit/m.test(err)) {
         throw err;

@@ -6,7 +6,7 @@
 "use strict";
 const fs = require("fs-extra");
 const path = require("path");
-const { isComponentDir } = require("./componentFilesOperator");
+const { isComponentDir } = require("./projectFilesOperator");
 
 function getSNDs(fileList, isDir) {
   const reNumber = /\d+/g;
