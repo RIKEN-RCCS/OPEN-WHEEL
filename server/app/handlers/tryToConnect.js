@@ -29,6 +29,10 @@ async function tryToConnect(clientID, hostInfo, cb) {
   try {
     await ssh.canConnect(120);
   } catch (err) {
+    if(err.reason === "CANCELED"){
+      logger.info("tryToConnect canceled by user");
+      return cb("canceled")
+    }
     logger.error("tryToConnect failed with", err);
     return cb("error");
   }

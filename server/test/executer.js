@@ -107,7 +107,7 @@ describe("UT for executer class", function() {
         }
         addSsh(projectRootDir, hostInfo, ssh);
       } catch (e) {
-        console.log(`ssh connection failed to ${remotehostName} due to ${e} so remote exec test is skiiped`);
+        console.log(`ssh connection failed to ${remotehostName} due to "${e}" so remote exec test is skipped`);
         this.skip();
       } finally {
         await ssh.disconnect();

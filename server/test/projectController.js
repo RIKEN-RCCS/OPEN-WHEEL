@@ -496,7 +496,7 @@ describe("project Controller UT", function() {
         expect(path.resolve(projectRootDir, "parentTask1", "f")).to.be.a.file().with.contents("a");
       });
     });
-    describe.skip("If component", ()=>{
+    describe("If component", ()=>{
       beforeEach(async()=>{
         const if0 = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 10, y: 10 });
         const if1 = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 10, y: 10 });
@@ -581,7 +581,7 @@ describe("project Controller UT", function() {
         });
       });
     });
-    describe.skip("If component", ()=>{
+    describe("If component", ()=>{
       beforeEach(async()=>{
         const if0 = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 10, y: 10 });
         const task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });

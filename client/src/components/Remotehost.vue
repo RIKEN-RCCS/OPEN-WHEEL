@@ -232,12 +232,9 @@ export default {
       SIO.emitGlobal("tryToConnect", this.hosts[index], (rt)=>{
         debug("connection test result:",rt);
         target.loading= false
-
-        if(rt !== "canceled"){
-          target.testResult=rt
-          target.connectionStatus= rt === "success" ? "OK" : "failed"
-          target.icon= rt === "success" ? "mdi-lan-connect" : "mdi-lan-disconnect"
-        }
+        target.connectionStatus = rt === "canceled" ? "test":rt === "success" ? "OK" : "failed"
+        target.icon = rt === "canceled" ? "mdi-lan-pending":rt === "success" ? "mdi-lan-connect" : "mdi-lan-disconnect";
+        target.testResult=rt === "canceled" ? "background" :rt
         this.pwDialog=false
         this.testing=null;
       });
