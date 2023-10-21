@@ -149,14 +149,6 @@
                       </v-col>
                       <v-col cols="6">
                         <v-text-field
-                          v-model.number="host.renewDelay"
-                          label="connection renewal delay (sec.)"
-                          :rules="[positiveNumber]"
-                          validate-on="blur"
-                        />
-                      </v-col>
-                      <v-col cols="6">
-                        <v-text-field
                           v-model.number="host.statusCheckInterval"
                           label="status check interval (sec.)"
                           :rules="[positiveNumber]"
@@ -291,7 +283,7 @@ export default {
     },
   },
   watch:{
-    openDialog(v){
+    openDialog(){
       this.host = Object.assign(this.host, this.initialValue);
     }
   },

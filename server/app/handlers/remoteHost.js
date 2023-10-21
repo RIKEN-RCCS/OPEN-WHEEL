@@ -31,11 +31,10 @@ const schema = {
     port: {
       type: "number",
       minimum: 0,
-      maximum: 65535,
-      default: 22
+      maximum: 65535
     },
-    keyFile: { type: "string", default: "" },
-    path: { type: "string", default: "" },
+    keyFile: { type: "string" },
+    path: { type: "string" },
     jobScheduler: { type: "string" },
     numJob: { type: "number", default: 5, minimum: 0 },
     queue: { type: "string", default: "" },
@@ -44,11 +43,10 @@ const schema = {
     sharedHost: { type: "string", default: "" },
     sharedPath: { type: "string", default: "" },
     renewInterval: { type: "number", default: 0, minimum: 0 },
-    renewDelay: { type: "number", default: 0, minimum: 0 },
-    statusCheckInterval: { type: "number", default: 0, minimum: 0 },
-    maxStatusCheckError: { type: "number", default: 0, minimum: 0 },
-    execInterval: { type: "number", default: 0, minimum: 0 },
-    readyTimeout: { type: "number", default: 0, minimum: 0 }
+    statusCheckInterval: { type: "number", default: 60, minimum: 0 },
+    maxStatusCheckError: { type: "number", default: 10, minimum: 0 },
+    execInterval: { type: "number", minimum: 0 },
+    readyTimeout: { type: "number", minimum: 0 }
   },
   required: ["name", "host", "username"]
 };
