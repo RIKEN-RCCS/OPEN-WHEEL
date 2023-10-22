@@ -165,19 +165,28 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
     throw err;
   }
 
+  if(forceNormal){
+    return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
+  }
+
+  //try to parse specified file as parameter setting file
   let contentJson = {};
   try {
     contentJson = JSON.parse(content);
   } catch (err) {
-    //just ignore if JSON.parse() failed
-  }
-  if (!Object.prototype.hasOwnProperty.call(contentJson, "targetFiles") || !Array.isArray(contentJson.targetFiles) || forceNormal) {
+    //read file is not parameter setting file
     return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
   }
 
-  //resolve targetFile's path
+  if (!Object.prototype.hasOwnProperty.call(contentJson, "targetFiles") || !Array.isArray(contentJson.targetFiles)) {
+    return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
+  }
+
   const rt = [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename), isParameterSettingFile: true }];
+
+  //resolve targetFile's path
   const dirname = path.dirname(absFilename);
+  const {componentPath} = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   const absTargetFiles = contentJson.targetFiles
     .map((targetFile)=>{
       if (typeof targetFile === "string") {
@@ -188,9 +197,10 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
       }
       if (Object.prototype.hasOwnProperty.call(targetFile, "targetNode")) {
         //to avoid circurler dependency, do not use getComponentDir in projectFilesOperator.js
-        const ID = targetFile.targetNode;
-        const projectJson = JSON.parse(fs.readFileSync(path.resolve(projectRootDir, projectJsonFilename)).toString());
-        const relativePath = projectJson.componentPath[ID];
+        const relativePath = componentPath[targetFile.targetNode];
+        if(typeof relativePath !== "string"){
+          getLogger(projectRootDir).warn("illegal targetNode: ", targetFile.targetNode);
+        }
         return path.resolve(projectRootDir, relativePath, targetFile.targetName);
       }
       return path.resolve(dirname, targetFile.targetName);
