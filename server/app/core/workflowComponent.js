@@ -346,7 +346,9 @@ function hasChild(component) {
 
 function isInitialComponent(component) {
   if (component.type === "storage") {
-    return false;
+    return component.outputFiles.some((outputFile)=>{
+      return outputFile.dst.length > 0;
+    });
   }
   if (component.type === "source") {
     return component.outputFiles[0].dst.length > 0;
