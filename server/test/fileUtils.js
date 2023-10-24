@@ -14,7 +14,7 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
 //helper functions
-const { gitInit, gitAdd, gitCommit, gitStatus } = require("../app/core/gitOperator2");
+const { gitAdd, gitCommit, gitStatus } = require("../app/core/gitOperator2");
 
 //testee
 const {
@@ -25,9 +25,9 @@ const {
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
-const notExisting = path.resolve(testDirRoot, "notExisting");
 
 const psJson = {
+  "version": 2,
   targetFiles: ["foo", "bar"],
   hoge: "hoge",
   nested: {
@@ -41,24 +41,30 @@ const psJson = {
   }
 };
 
+const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
+const notExisting = path.resolve(projectRootDir, "notExisting");
+const { createNewComponent, createNewProject } = require("../app/core/projectFilesOperator");
+
 //helper functions
 describe("file utility functions", function() {
+  let ps0;
   beforeEach(async()=>{
     this.timeout(10000);
     await fs.remove(testDirRoot);
-    await fs.mkdir(testDirRoot);
-    await gitInit(testDirRoot, "foo", "foo@example.com");
+    await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    ps0 = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 10, y: 10 });
+    await fs.outputFile(path.resolve(projectRootDir, ps0.name, "foo"), "foo");
+    await fs.outputFile(path.resolve(projectRootDir, ps0.name, "bar"), "bar");
+    await fs.outputFile(path.resolve(projectRootDir, ps0.name, "baz"), "baz");
+    await fs.outputJson(path.resolve(projectRootDir, ps0.name, "parameterSetting.json"), psJson);
+    await gitAdd(projectRootDir, "./");
+    await gitCommit(projectRootDir);
     await fs.remove(notExisting);
-    await fs.mkdir(path.resolve(testDirRoot, "hoge"));
-    await fs.outputFile(path.resolve(testDirRoot, "foo"), "foo");
-    await fs.outputFile(path.resolve(testDirRoot, "bar"), "bar");
-    await fs.outputFile(path.resolve(testDirRoot, "baz"), "baz");
-    await fs.outputJson(path.resolve(testDirRoot, "ps.json"), psJson);
-    await gitAdd(testDirRoot, "./");
-    await gitCommit(testDirRoot);
   });
   after(async()=>{
-    await fs.remove(testDirRoot);
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
   });
 
   describe("#openFile", ()=>{
@@ -67,52 +73,55 @@ describe("file utility functions", function() {
       expect(notExisting).to.be.a.file().and.empty;
       expect(rt).to.be.an("array").that.have.lengthOf(1);
       expect(rt[0]).to.deep.equal({ content: "", filename: path.basename(notExisting), dirname: path.dirname(notExisting) });
-      const { untracked } = await gitStatus(testDirRoot);
+      const { untracked } = await gitStatus(projectRootDir);
       expect(untracked).to.have.members([path.basename(notExisting)]);
     });
     it("should return existing file", async()=>{
-      const rt = await openFile(testDirRoot, path.resolve(testDirRoot, "foo"));
+      const rt = await openFile(projectRootDir, path.resolve(projectRootDir, ps0.name, "foo"));
       expect(rt).to.be.an("array").that.have.lengthOf(1);
-      expect(rt[0]).to.deep.equal({ content: "foo", filename: "foo", dirname: path.dirname(notExisting) });
+      const dirname=path.resolve(projectRootDir, ps0.name)
+      expect(rt[0]).to.deep.equal({ content: "foo", filename: "foo", dirname });
     });
     it("should return json file and targetFiles in the json", async()=>{
-      const rt = await openFile(testDirRoot, path.resolve(testDirRoot, "ps.json"));
+      const rt = await openFile(projectRootDir, path.resolve(projectRootDir, ps0.name, "parameterSetting.json"));
       expect(rt).to.be.an("array").that.have.lengthOf(3);
-      expect(rt[0].filename).to.equal("ps.json");
-      expect(rt[0].dirname).to.equal(path.dirname(notExisting));
+      const dirname=path.resolve(projectRootDir, ps0.name)
+      expect(rt[0].filename).to.equal("parameterSetting.json");
+      expect(rt[0].dirname).to.equal(dirname);
       expect(rt[0].isParameterSettingFile).to.be.true;
       expect(JSON.parse(rt[0].content)).to.deep.equal(psJson);
       expect(rt.slice(1)).to.have.deep.members([
-        { content: "foo", filename: "foo", dirname: path.dirname(notExisting) },
-        { content: "bar", filename: "bar", dirname: path.dirname(notExisting) }
+        { content: "foo", filename: "foo", dirname },
+        { content: "bar", filename: "bar", dirname }
       ]);
     });
     it("should return only json file if forceNormal==true", async()=>{
-      const rt = await openFile(testDirRoot, path.resolve(testDirRoot, "ps.json"), true);
+      const rt = await openFile(projectRootDir, path.resolve(projectRootDir, ps0.name, "parameterSetting.json"), true);
       expect(rt).to.be.an("array").that.have.lengthOf(1);
-      expect(rt[0].filename).to.equal("ps.json");
-      expect(rt[0].dirname).to.equal(path.dirname(notExisting));
+      expect(rt[0].filename).to.equal("parameterSetting.json");
+      const dirname=path.resolve(projectRootDir, ps0.name)
+      expect(rt[0].dirname).to.equal(dirname);
       expect(JSON.parse(rt[0].content)).to.deep.equal(psJson);
     });
     it("should throw error while attempting to open directory", async()=>{
-      return expect(openFile(testDirRoot, path.resolve(testDirRoot, "hoge"))).to.be.rejectedWith("EISDIR");
+      return expect(openFile(projectRootDir, path.resolve(projectRootDir, ps0.name))).to.be.rejectedWith("EISDIR");
     });
   });
   describe("#saveFile", ()=>{
     it("should overwrite existing file", async()=>{
-      await saveFile(path.resolve(testDirRoot, "foo"), "bar");
-      expect(path.resolve(testDirRoot, "foo")).to.be.a.file().with.content("bar");
-      const { modified } = await gitStatus(testDirRoot);
-      expect(modified).to.have.members(["foo"]);
+      await saveFile(path.resolve(projectRootDir, ps0.name, "foo"), "bar");
+      expect(path.resolve(projectRootDir, ps0.name, "foo")).to.be.a.file().with.content("bar");
+      const { modified } = await gitStatus(projectRootDir);
+      expect(modified).to.have.members(["PS0/foo"]);
     });
     it("should write new file", async()=>{
-      await saveFile(path.resolve(testDirRoot, "huga"), "huga");
-      expect(path.resolve(testDirRoot, "huga")).to.be.a.file().with.content("huga");
-      const { added } = await gitStatus(testDirRoot);
-      expect(added).to.have.members(["huga"]);
+      await saveFile(path.resolve(projectRootDir, ps0.name, "huga"), "huga");
+      expect(path.resolve(projectRootDir, ps0.name, "huga")).to.be.a.file().with.content("huga");
+      const { added } = await gitStatus(projectRootDir);
+      expect(added).to.have.members(["PS0/huga"]);
     });
     it("should throw error while attempting to write directory", async()=>{
-      return expect(saveFile(path.resolve(testDirRoot, "hoge"), "hoge")).to.be.rejectedWith("EISDIR");
+      return expect(saveFile(path.resolve(projectRootDir, ps0.name), "hoge")).to.be.rejectedWith("EISDIR");
     });
   });
 });
