@@ -16,11 +16,11 @@ class JsonArrayManager {
     try {
       this.data = fs.readJsonSync(this.filename);
     } catch (e) {
-      if (e.code === "ENOENT") {
-        this.write();
-      } else {
-        throw e;
+      if (e.code !== "ENOENT") {
+        fs.move(this.filename, `${this.filename}.bak`);
       }
+      this.data = [];
+      this.write();
     }
   }
 
