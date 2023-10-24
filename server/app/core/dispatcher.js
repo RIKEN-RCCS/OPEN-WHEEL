@@ -974,13 +974,12 @@ class Dispatcher extends EventEmitter {
           );
         } else if (await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID)) {
           const srcComponent = await this._getComponent(src.srcNode);
-          const srcRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent);
+          const srcRoot = srcComponent.type !== "storage" ? getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent) : srcComponent.storagePath;
           const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const remotehostID = remoteHost.getID("name", component.host);
           const srcName= nunjucks.renderString( src.srcName, this.env);
           deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID});
         } else {
-          const srcRoot = this._getComponentDir(src.srcNode);
           promises.push(
             this._getComponent(src.srcNode)
               .then((srcComponent)=>{
@@ -999,6 +998,7 @@ class Dispatcher extends EventEmitter {
                   }
                 } else {
                   const srcName= nunjucks.renderString( src.srcName, this.env);
+                  const srcRoot=srcComponent.type!== "storage"? this._getComponentDir(src.srcNode):srcComponent.storagePath
                   deliverRecipes.add({ dstName, srcRoot, srcName});
                 }
               })
