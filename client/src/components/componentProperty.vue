@@ -674,7 +674,7 @@ export default {
       const currentHostSetting = this.remoteHost.find((e)=>{
         return e.name === this.copySelectedComponent.host;
       });
-      return currentHostSetting && typeof currentHostSetting.queue === "string" ? currentHostSetting.queue.split(",") : [];
+      return currentHostSetting && typeof currentHostSetting.queue === "string" ? currentHostSetting.queue.split(",").map((e)=>{return e.trim()}) : [];
     },
     submitCmd(){
       const currentHostSetting = this.remoteHost.find((e)=>{

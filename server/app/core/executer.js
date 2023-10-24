@@ -72,7 +72,7 @@ function makeQueueOpt(task, JS, queues) {
   if (typeof queues !== "string") {
     return "";
   }
-  const queueList = queues.split(",");
+  const queueList = queues.split(",").map((e)=>{return e.trim()});
   if (queueList.length === 0) {
     return "";
   }
