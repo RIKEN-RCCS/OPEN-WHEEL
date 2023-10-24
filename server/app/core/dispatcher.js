@@ -860,6 +860,7 @@ class Dispatcher extends EventEmitter {
     if (isLocal(component)) {
       if (currentDir !== storagePath) {
         await fs.copy(currentDir, storagePath, {
+          dereference: true,
           filter(name){
             return !name.endsWith(componentJsonFilename);
           }
@@ -941,8 +942,6 @@ class Dispatcher extends EventEmitter {
     this.logger.debug(`getInputFiles for ${component.name}`);
     const promises = [];
     const deliverRecipes = new Set();
-    const forceCopy = component.type === "storage";
-
 
     for (const inputFile of component.inputFiles) {
       const dstName = nunjucks.renderString( inputFile.name, this.env);
@@ -969,7 +968,7 @@ class Dispatcher extends EventEmitter {
                 for (const e of srcEntry.src) {
                   const originalSrcRoot = this._getComponentDir(e.srcNode);
                   const srcName= nunjucks.renderString( e.srcName, this.env);
-                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName , forceCopy });
+                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName });
                 }
               })
           );
@@ -979,7 +978,7 @@ class Dispatcher extends EventEmitter {
           const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const remotehostID = remoteHost.getID("name", component.host);
           const srcName= nunjucks.renderString( src.srcName, this.env);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID});
         } else {
           const srcRoot = this._getComponentDir(src.srcNode);
           promises.push(
@@ -996,11 +995,11 @@ class Dispatcher extends EventEmitter {
                   for (const e of srcEntry.origin) {
                     const srcName= nunjucks.renderString( e.srcName, this.env);
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy });
+                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName});
                   }
                 } else {
                   const srcName= nunjucks.renderString( src.srcName, this.env);
-                  deliverRecipes.add({ dstName, srcRoot, srcName , forceCopy });
+                  deliverRecipes.add({ dstName, srcRoot, srcName});
                 }
               })
           );
@@ -1031,7 +1030,7 @@ class Dispatcher extends EventEmitter {
           if (hasGlob || recipe.dstName.endsWith(path.posix.sep) || recipe.dstName.endsWith(path.win32.sep)) {
             newPath = path.resolve(newPath, srcFile);
           }
-          p2.push(deliverFile(oldPath, newPath, recipe.forceCopy));
+          p2.push(deliverFile(oldPath, newPath));
         }
       }
     }
