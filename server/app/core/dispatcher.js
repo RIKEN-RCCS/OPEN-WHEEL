@@ -859,7 +859,11 @@ class Dispatcher extends EventEmitter {
 
     if (isLocal(component)) {
       if (currentDir !== storagePath) {
-        await fs.copy(currentDir, storagePath);
+        await fs.copy(currentDir, storagePath, {
+          filter(name){
+            return !name.endsWith(componentJsonFilename);
+          }
+        });
       }
     } else {
       const remotehostID = remoteHost.getID("name", component.host);
