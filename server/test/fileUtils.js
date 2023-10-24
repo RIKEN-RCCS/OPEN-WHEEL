@@ -49,7 +49,7 @@ const { createNewComponent, createNewProject } = require("../app/core/projectFil
 describe("file utility functions", function() {
   let ps0;
   beforeEach(async()=>{
-    this.timeout(10000);
+    this.timeout(20000);
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
     ps0 = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 10, y: 10 });
@@ -57,9 +57,9 @@ describe("file utility functions", function() {
     await fs.outputFile(path.resolve(projectRootDir, ps0.name, "bar"), "bar");
     await fs.outputFile(path.resolve(projectRootDir, ps0.name, "baz"), "baz");
     await fs.outputJson(path.resolve(projectRootDir, ps0.name, "parameterSetting.json"), psJson);
+    await fs.remove(notExisting);
     await gitAdd(projectRootDir, "./");
     await gitCommit(projectRootDir);
-    await fs.remove(notExisting);
   });
   after(async()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {

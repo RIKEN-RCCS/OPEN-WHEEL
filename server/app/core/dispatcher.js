@@ -968,7 +968,7 @@ class Dispatcher extends EventEmitter {
                 for (const e of srcEntry.src) {
                   const originalSrcRoot = this._getComponentDir(e.srcNode);
                   const srcName= nunjucks.renderString( e.srcName, this.env);
-                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName });
+                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false });
                 }
               })
           );
@@ -978,7 +978,8 @@ class Dispatcher extends EventEmitter {
           const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const remotehostID = remoteHost.getID("name", component.host);
           const srcName= nunjucks.renderString( src.srcName, this.env);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID});
+          const forceCopy = srcComponent.type === "storage"
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy});
         } else {
           promises.push(
             this._getComponent(src.srcNode)
@@ -994,12 +995,13 @@ class Dispatcher extends EventEmitter {
                   for (const e of srcEntry.origin) {
                     const srcName= nunjucks.renderString( e.srcName, this.env);
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName});
+                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false});
                   }
                 } else {
                   const srcName= nunjucks.renderString( src.srcName, this.env);
+                  const forceCopy = srcComponent.type === "storage"
                   const srcRoot=srcComponent.type!== "storage"? this._getComponentDir(src.srcNode):srcComponent.storagePath
-                  deliverRecipes.add({ dstName, srcRoot, srcName});
+                  deliverRecipes.add({ dstName, srcRoot, srcName, forceCopy});
                 }
               })
           );
@@ -1030,7 +1032,7 @@ class Dispatcher extends EventEmitter {
           if (hasGlob || recipe.dstName.endsWith(path.posix.sep) || recipe.dstName.endsWith(path.win32.sep)) {
             newPath = path.resolve(newPath, srcFile);
           }
-          p2.push(deliverFile(oldPath, newPath));
+          p2.push(deliverFile(oldPath, newPath, recipe.forceCopy));
         }
       }
     }

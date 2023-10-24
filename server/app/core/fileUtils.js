@@ -100,7 +100,7 @@ async function deliverFile(src, dst, forceCopy = false) {
 
   try {
     if (forceCopy) {
-      await fs.copy(src, dst, { overwrite: false });
+      await fs.copy(src, dst, { overwrite: true});
       return { type: "copy", src, dst };
     }
     await fs.remove(dst);

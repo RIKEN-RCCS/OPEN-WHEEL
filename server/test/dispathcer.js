@@ -103,7 +103,7 @@ describe("UT for Dispatcher class", function() {
       expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
       expect(path.resolve(projectRootDir, next.name, "bhoge")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
     });
-    it("should make link from storage component's outputFile to inputFile", async ()=>{
+    it("should copy files from storage component's outputFile to inputFile", async ()=>{
       await addOutputFile(projectRootDir, storage.ID, "a");
       await addInputFile(projectRootDir, next.ID, "b");
       await addFileLink(projectRootDir, storage.ID, "a", next.ID, "b");
@@ -112,6 +112,8 @@ describe("UT for Dispatcher class", function() {
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
       expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(storageArea, "a"));
+      const stats=await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
+      expect(stats.isSymbolicLink()).to.be.false;
     });
     it("should make link from outputFile to storage component's inputFile", async ()=>{
       await addOutputFile(projectRootDir, previous.ID, "a");
