@@ -8,6 +8,8 @@ Workflow in Hierarchical distributEd parallEL
 ## Prerequirements
 latest version of [docker](https://www.docker.com/) and [git](https://git-scm.com/)
 
+remotehost must have [rsync](https://rsync.samba.org/)
+
 ## User guide
 user guide and tutorials are available here.
 
