@@ -71,7 +71,7 @@ function isValidInputFilename(name) {
     return false;
   }
 
-  const forbidonChars = new RegExp(`[^${escapeRegExp(`${alphanumeric + pathseps}.`) + bars}]`);
+  const forbidonChars = new RegExp(`[^${escapeRegExp(`${alphanumeric + pathseps}.`) + bars + "{}"}]`);
 
   //ignore white space between {{ and }}
   const modifiedName = name.replace(/\{\{.*?\}\}/g,"")
@@ -90,7 +90,7 @@ function isValidOutputFilename(name) {
   if (!isSane(name)) {
     return false;
   }
-  const forbidonChars = new RegExp(`[^${escapeRegExp(alphanumeric + pathseps + metaCharactors) + bars}]`);
+  const forbidonChars = new RegExp(`[^${escapeRegExp(alphanumeric + pathseps + metaCharactors) + bars + "{}"}]`);
 
   //ignore white space between {{ and }}
   const modifiedName = name.replace(/\{\{.*?\}\}/g,"")

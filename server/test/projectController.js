@@ -16,7 +16,7 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
 
 //testee
-const { runProject } = require("../app/core/projectController.js");
+const { runProject, cleanProject } = require("../app/core/projectController.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -24,7 +24,8 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
 const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../app/db/db");
-const { updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink,createNewProject } = require("../app/core/projectFilesOperator");
+const { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink,createNewProject } = require("../app/core/projectFilesOperator");
+const {gitAdd, gitCommit} = require("../app/core/gitOperator2.js");
 
 const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
@@ -1437,6 +1438,108 @@ describe("project Controller UT", function() {
         expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "task0", "result.log")).to.be.a.file().with.content(`${path.resolve(projectRootDir, "PS0_KEYWORD1_1", "task0")}${os.EOL}`);
         expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "task0", "result.log")).to.be.a.file().with.content(`${path.resolve(projectRootDir, "PS0_KEYWORD1_2", "task0")}${os.EOL}`);
         expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "task0", "result.log")).to.be.a.file().with.content(`${path.resolve(projectRootDir, "PS0_KEYWORD1_3", "task0")}${os.EOL}`);
+      });
+    });
+    describe("[reproduction test] root workflow has only source and connected for loop", ()=>{
+      let task0;
+      let for0;
+      let source0;
+      beforeEach(async ()=>{
+        source0 = await createNewComponent(projectRootDir, projectRootDir, "source", { x: 10, y: 10 });
+        await renameOutputFile(projectRootDir, source0.ID, 0, "foo");
+
+        for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
+        await updateComponent(projectRootDir, for0.ID, "start", 0);
+        await updateComponent(projectRootDir, for0.ID, "end", 2);
+        await updateComponent(projectRootDir, for0.ID, "step", 1);
+        await addInputFile(projectRootDir, for0.ID, "foo");
+
+        task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "task", { x: 10, y: 10 });
+        await updateComponent(projectRootDir, task0.ID, "script" , scriptName);
+        await addInputFile(projectRootDir, task0.ID, "foo");
+        await fs.outputFile(path.join(projectRootDir, for0.name, task0.name, scriptName), "echo hoge ${WHEEL_CURRENT_INDEX} > hoge");
+        await gitAdd(projectRootDir, path.join(projectRootDir, for0.name, task0.name, scriptName));
+
+        await addFileLink(projectRootDir, source0.ID, "foo", for0.ID, "foo");
+        await addFileLink(projectRootDir, for0.ID, "foo", task0.ID, "foo");
+        await gitCommit(projectRootDir);
+      });
+      it("should run after cleanProject", async ()=>{
+        await runProject(projectRootDir);
+        expect(path.resolve(projectRootDir, projectJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["finished"] }
+          }
+        });
+        expect(path.resolve(projectRootDir, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["finished"] }
+          }
+        });
+        expect(path.resolve(projectRootDir,"for0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["finished"] }
+          }
+        });
+        expect(path.resolve(projectRootDir, "for0","task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["finished"] }
+          }
+        });
+        await cleanProject(projectRootDir);
+        expect(path.resolve(projectRootDir, projectJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["not-started"] }
+          }
+        });
+        expect(path.resolve(projectRootDir, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["not-started"] }
+          }
+        });
+        expect(path.resolve(projectRootDir,"for0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["not-started"] }
+          }
+        });
+        expect(path.resolve(projectRootDir, "for0","task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["not-started"] }
+          }
+        });
+        await runProject(projectRootDir);
+        expect(path.resolve(projectRootDir, projectJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["finished"] }
+          }
+        });
+        expect(path.resolve(projectRootDir, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["finished"] }
+          }
+        });
+        expect(path.resolve(projectRootDir,"for0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["finished"] }
+          }
+        });
+        expect(path.resolve(projectRootDir, "for0","task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+          required: ["state"],
+          properties: {
+            state: { enum: ["finished"] }
+          }
+        });
       });
     });
   });

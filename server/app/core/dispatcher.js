@@ -739,27 +739,38 @@ class Dispatcher extends EventEmitter {
               ee.emit("componentStateChanged");
             });
         })
-        .then(()=>{
-          this.logger.debug("gather files");
-          return gatherFiles(templateRoot, instanceRoot, gatherRecipe, params);
-        });
       promises.push(p);
     }
     await Promise.all(promises);
+    this.logger.debug("gather files");
+
+    const promiseGather=[]
+    for (const paramVec of paramVecGenerator(paramSpace)) {
+      const params = paramVec.reduce((p, c)=>{
+        p[c.key] = c.value;
+        return p;
+      }, {});
+      const newName = sanitizePath(paramVec.reduce((p, e)=>{
+        return `${p}_${e.key}_${e.value}`;
+      }, component.name));
+      const instanceRoot = path.resolve(this.cwfDir, newName);
+      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params));
+    }
+    await Promise.all(promiseGather);
     await this._addNextComponent(component);
     const state = component.numFailed > 0 ? "failed" : "finished";
     await this._setComponentState(component, state);
 
     if (component.deleteLoopInstance) {
-      const pm = [];
+      const promiseDelete = [];
       for (const paramVec of paramVecGenerator(paramSpace)) {
         const deleteComponentName = sanitizePath(paramVec.reduce((p, e)=>{
           return `${p}_${e.key}_${e.value}`;
         }, component.name));
         const deleteDir = path.resolve(this.cwfDir, deleteComponentName);
-        pm.push(fs.remove(deleteDir));
+        promiseDelete.push(fs.remove(deleteDir));
       }
-      await Promise.all(pm);
+      await Promise.all(promiseDelete);
     }
   }
 
@@ -859,7 +870,12 @@ class Dispatcher extends EventEmitter {
 
     if (isLocal(component)) {
       if (currentDir !== storagePath) {
-        await fs.copy(currentDir, storagePath);
+        await fs.copy(currentDir, storagePath, {
+          dereference: true,
+          filter(name){
+            return !name.endsWith(componentJsonFilename);
+          }
+        });
       }
     } else {
       const remotehostID = remoteHost.getID("name", component.host);
@@ -937,8 +953,6 @@ class Dispatcher extends EventEmitter {
     this.logger.debug(`getInputFiles for ${component.name}`);
     const promises = [];
     const deliverRecipes = new Set();
-    const forceCopy = component.type === "storage";
-
 
     for (const inputFile of component.inputFiles) {
       const dstName = nunjucks.renderString( inputFile.name, this.env);
@@ -965,19 +979,19 @@ class Dispatcher extends EventEmitter {
                 for (const e of srcEntry.src) {
                   const originalSrcRoot = this._getComponentDir(e.srcNode);
                   const srcName= nunjucks.renderString( e.srcName, this.env);
-                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName , forceCopy });
+                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false });
                 }
               })
           );
         } else if (await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID)) {
           const srcComponent = await this._getComponent(src.srcNode);
-          const srcRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent);
+          const srcRoot = srcComponent.type !== "storage" ? getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent) : srcComponent.storagePath;
           const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const remotehostID = remoteHost.getID("name", component.host);
           const srcName= nunjucks.renderString( src.srcName, this.env);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
+          const forceCopy = srcComponent.type === "storage"
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy});
         } else {
-          const srcRoot = this._getComponentDir(src.srcNode);
           promises.push(
             this._getComponent(src.srcNode)
               .then((srcComponent)=>{
@@ -992,11 +1006,13 @@ class Dispatcher extends EventEmitter {
                   for (const e of srcEntry.origin) {
                     const srcName= nunjucks.renderString( e.srcName, this.env);
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy });
+                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false});
                   }
                 } else {
                   const srcName= nunjucks.renderString( src.srcName, this.env);
-                  deliverRecipes.add({ dstName, srcRoot, srcName , forceCopy });
+                  const forceCopy = srcComponent.type === "storage"
+                  const srcRoot=srcComponent.type!== "storage"? this._getComponentDir(src.srcNode):srcComponent.storagePath
+                  deliverRecipes.add({ dstName, srcRoot, srcName, forceCopy});
                 }
               })
           );

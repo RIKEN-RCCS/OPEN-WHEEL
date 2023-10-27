@@ -109,9 +109,17 @@ function isFinishedState(state) {
  * @returns {Promise} true if give path is subComponent dir
  */
 async function isSubComponent(target) {
-  const stats = await fs.stat(target);
-  if (!stats.isDirectory()) {
-    return false;
+  try{
+    const stats = await fs.stat(target);
+    if (!stats.isDirectory()) {
+      return false;
+    }
+  }catch(err){
+    //just in case, for race condition of reading and removing
+    if(err.code === "ENOENT"){
+      return false
+    }
+    throw err
   }
 
   let rt=false

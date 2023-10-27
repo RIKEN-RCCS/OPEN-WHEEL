@@ -53,9 +53,13 @@ describe("UT for Dispatcher class", function() {
   describe("#outputFile delivery functionality", async ()=>{
     let previous;
     let next;
+    let storage
+    const storageArea=path.resolve(testDirRoot,"storageArea")
     beforeEach(async ()=>{
       previous = await createNewComponent(projectRootDir, projectRootDir, "workflow", { x: 10, y: 10 });
       next = await createNewComponent(projectRootDir, projectRootDir, "workflow", { x: 10, y: 10 });
+      storage = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 10, y: 10 });
+      await updateComponent(projectRootDir, storage.ID, "storagePath", storageArea);
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     });
     it("should make link from outputFile to inputFile", async ()=>{
@@ -98,6 +102,31 @@ describe("UT for Dispatcher class", function() {
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
       expect(path.resolve(projectRootDir, next.name, "bhoge")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
+    });
+    it("should copy files from storage component's outputFile to inputFile", async ()=>{
+      await addOutputFile(projectRootDir, storage.ID, "a");
+      await addInputFile(projectRootDir, next.ID, "b");
+      await addFileLink(projectRootDir, storage.ID, "a", next.ID, "b");
+      await fs.outputFile(path.join(storageArea, "a"), "hoge");
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(storageArea, "a"));
+      const stats=await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
+      expect(stats.isSymbolicLink()).to.be.false;
+    });
+    it("should make link from outputFile to storage component's inputFile", async ()=>{
+      await addOutputFile(projectRootDir, previous.ID, "a");
+      await addInputFile(projectRootDir, storage.ID, "b");
+      await addFileLink(projectRootDir, previous.ID, "a", storage.ID, "b");
+      await fs.outputFile(path.resolve(projectRootDir, previous.name, "a"), "hoge");
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      expect(path.resolve(projectRootDir, storage.name, "a")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, storage.name, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
+      const stats=await fs.lstat(path.resolve(projectRootDir, storage.name, "b"));
+      expect(stats.isSymbolicLink()).to.be.true;
+      expect(path.resolve(storageArea, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
     });
   });
   describe("#For component", ()=>{
