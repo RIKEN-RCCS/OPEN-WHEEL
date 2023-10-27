@@ -102,7 +102,7 @@ async function onCreateNewFile(projectRootDir, argFilename, cb) {
     cb(null);
     return;
   }
-  cb(filename);
+  cb({filename, parent:path.dirname(filename)});
 }
 
 async function onCreateNewDir(projectRootDir, argDirname, cb) {
@@ -117,7 +117,7 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
     cb(null);
     return;
   }
-  cb(dirname);
+  cb({dirname, parent: path.dirname(dirname)});
 }
 
 async function onRemoveFile(projectRootDir, target, cb) {
