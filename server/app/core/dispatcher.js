@@ -598,7 +598,9 @@ class Dispatcher extends EventEmitter {
         ++component.numFinished;
       }
     } catch (e) {
-      e.index = component.currentIndex;
+      if(typeof e !== "string"){
+        e.index = component.currentIndex;
+      }
       this.logger.warn("fatal error occurred during loop child dispatching.", e);
       return Promise.reject(e);
     }
@@ -882,6 +884,13 @@ class Dispatcher extends EventEmitter {
       const ssh = getSsh(this.projectRootDir, remotehostID);
       await ssh.send([`${currentDir}/`], `${storagePath}/`, [`--exclude=${componentJsonFilename}`, `--exclude=${projectJsonFilename}`]);
     }
+    const contents=await fs.readdir(currentDir);
+    const removeTargets = contents.filter((name)=>{
+      return ! name.endsWith(componentJsonFilename)
+    });
+    await Promise.all(removeTargets.map((name)=>{
+      return fs.remove(name)
+    }));
     await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
   }
