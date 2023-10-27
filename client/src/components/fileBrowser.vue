@@ -119,7 +119,6 @@
           v-model="dialog.inputField"
           readonly
           :label="dialog.inputFieldLabel"
-          :rules="[noDuplicate]"
         >
           <template #append>
             <v-tooltip text="copy file path" location="bottom" >
@@ -379,7 +378,16 @@ export default {
         })
       } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
         const name = this.dialog.inputField
-        const fullPath = `${this.currentDir}${this.pathSep}${name}`
+        let parentDir=this.currentDir
+        if(this.activeItem){
+          if(this.activeItem.type === "dir" || this.activeItem.type === "dir-link"){
+            parentDir = this.activeItem.id
+          }else if(this.activeItem.typw === "file" || this.activeItem.type === "file-link"){
+            parentDir = this.activeItem.path
+          }
+        }
+
+        const fullPath = `${parentDir}${this.pathSep}${name}`
         if(!this.noDuplicate(name)){
           console.log("duplicated name is not allowed")
           this.clearAndCloseDialog()
@@ -390,20 +398,26 @@ export default {
           if (!rt) {
             return
           }
-          const newItem = { id: fullPath, name, path:this.currentDir, type }
+          const newItem = { id: fullPath, name, path:rt.parent, type }
           if (this.dialog.submitEvent === "createNewDir") {
             newItem.children = []
           }
-
-          if(this.activeItem.type === "dir" || this.activeItem.type === "dir-link"){
-            this.activeItem.children.push(newItem);
-          }else{
+          if(rt.parent === this.selectedComponentAbsPath){
             this.items.push(newItem)
-            this.updateScriptCandidate()
-          }
 
-          if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
-            this.openItems.push(this.activeItem.id)
+            if( type === "file") {
+              this.updateScriptCandidate()
+            }
+            return
+          }
+          const parent=this.getActiveItem(rt.parent);
+          if(parent.type !== "dir" && parent.type !== "dir-link"){
+            return
+          }
+          if(Array.isArray(parent.children)){
+            parent.children.push(newItem);
+          }else{
+            parent.children=[newItem];
           }
         })
       } else {
