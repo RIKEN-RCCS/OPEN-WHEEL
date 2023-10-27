@@ -739,27 +739,38 @@ class Dispatcher extends EventEmitter {
               ee.emit("componentStateChanged");
             });
         })
-        .then(()=>{
-          this.logger.debug("gather files");
-          return gatherFiles(templateRoot, instanceRoot, gatherRecipe, params);
-        });
       promises.push(p);
     }
     await Promise.all(promises);
+    this.logger.debug("gather files");
+
+    const promiseGather=[]
+    for (const paramVec of paramVecGenerator(paramSpace)) {
+      const params = paramVec.reduce((p, c)=>{
+        p[c.key] = c.value;
+        return p;
+      }, {});
+      const newName = sanitizePath(paramVec.reduce((p, e)=>{
+        return `${p}_${e.key}_${e.value}`;
+      }, component.name));
+      const instanceRoot = path.resolve(this.cwfDir, newName);
+      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params));
+    }
+    await Promise.all(promiseGather);
     await this._addNextComponent(component);
     const state = component.numFailed > 0 ? "failed" : "finished";
     await this._setComponentState(component, state);
 
     if (component.deleteLoopInstance) {
-      const pm = [];
+      const promiseDelete = [];
       for (const paramVec of paramVecGenerator(paramSpace)) {
         const deleteComponentName = sanitizePath(paramVec.reduce((p, e)=>{
           return `${p}_${e.key}_${e.value}`;
         }, component.name));
         const deleteDir = path.resolve(this.cwfDir, deleteComponentName);
-        pm.push(fs.remove(deleteDir));
+        promiseDelete.push(fs.remove(deleteDir));
       }
-      await Promise.all(pm);
+      await Promise.all(promiseDelete);
     }
   }
 
