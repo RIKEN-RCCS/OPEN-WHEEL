@@ -212,6 +212,7 @@ class Dispatcher extends EventEmitter {
         this.emit("error", e);
       }
     }
+    this.logger.debug("search next components");
 
     //remove duplicated entry
     this.currentSearchList = removeDuplicatedComponent(this.pendingComponents);
@@ -578,6 +579,8 @@ class Dispatcher extends EventEmitter {
       await fs.copy(srcDir, dstDir, {
         dereference: true,
         filter: async (target)=>{
+          this.logger.trace("[loopHandler] copy filter on :",target);
+
           if (srcDir === target) {
             return true;
           }
@@ -715,7 +718,7 @@ class Dispatcher extends EventEmitter {
         }));
 
       this.logger.debug("scatter files");
-      await scatterFiles(templateRoot, instanceRoot, scatterRecipe, params);
+      await scatterFiles(templateRoot, instanceRoot, scatterRecipe, params, this.logger);
       this.logger.debug("rewrite target files");
       await rewriteTargetFile(templateRoot, instanceRoot, targetFiles, params);
 
@@ -756,20 +759,25 @@ class Dispatcher extends EventEmitter {
         return `${p}_${e.key}_${e.value}`;
       }, component.name));
       const instanceRoot = path.resolve(this.cwfDir, newName);
-      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params));
+      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params, this.logger));
     }
     await Promise.all(promiseGather);
+    this.logger.trace("gather files done");
     await this._addNextComponent(component);
+    this.logger.trace("add next component done");
     const state = component.numFailed > 0 ? "failed" : "finished";
     await this._setComponentState(component, state);
+    this.logger.trace("set component state done");
 
     if (component.deleteLoopInstance) {
+      this.logger.debug("remove instance directories");
       const promiseDelete = [];
       for (const paramVec of paramVecGenerator(paramSpace)) {
         const deleteComponentName = sanitizePath(paramVec.reduce((p, e)=>{
           return `${p}_${e.key}_${e.value}`;
         }, component.name));
         const deleteDir = path.resolve(this.cwfDir, deleteComponentName);
+        this.logger.trace(`remove ${deleteDir}`);
         promiseDelete.push(fs.remove(deleteDir));
       }
       await Promise.all(promiseDelete);
