@@ -111,14 +111,14 @@ if (!process.env.WHEEL_USE_HTTP) {
 module.exports.logFilename = logFilename;
 
 //re-export server settings
-module.exports.interval = getIntVar(config.interval, 1000);
+module.exports.interval = parseInt(process.env.WHEEL_INTERVAL,10) || getIntVar(config.interval, 1000);
 module.exports.port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
 module.exports.rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
 module.exports.defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);
 module.exports.numLogFiles = getIntVar(config.numLogFiles, 5);
 module.exports.maxLogSize = getIntVar(config.maxLogSize, 8388608);
 module.exports.compressLogFile = getVar(config.compressLogFile, true);
-module.exports.numJobOnLocal = getIntVar(config.numJobOnLocal, 1);
+module.exports.numJobOnLocal = parseInt(process.env.WHEEL_NUM_LOCAL_JOB, 10) || getIntVar(config.numJobOnLocal, 1);
 module.exports.defaultTaskRetryCount = getIntVar(config.defaultTaskRetryCount, 1);
 module.exports.shutdownDelay = getIntVar(config.shutdownDelay, 0);
 module.exports.gitLFSSize = getIntVar(config.gitLFSSize, 200);

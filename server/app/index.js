@@ -58,6 +58,8 @@ logger.info(`WHEEL_USE_HTTP = ${process.env.WHEEL_USE_HTTP}`);
 logger.info(`WHEEL_PORT = ${process.env.WHEEL_PORT}`);
 logger.info(`WHEEL_LOGLEVEL = ${process.env.WHEEL_LOGLEVEL}`);
 logger.info(`WHEEL_VERBOSE_SSH = ${process.env.WHEEL_VERBOSE_SSH}`);
+logger.info(`WHEEL_INTERVAL= ${process.env.WHEEL_INTERVAL}`);
+logger.info(`WHEEL_NUM_LOCAL_JOB= ${process.env.WHEEL_NUM_LOCAL_JOB}`);
 
 //port number
 const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;

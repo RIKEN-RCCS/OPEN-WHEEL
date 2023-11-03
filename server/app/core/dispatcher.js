@@ -905,7 +905,7 @@ class Dispatcher extends EventEmitter {
       return ! name.endsWith(componentJsonFilename)
     });
     await Promise.all(removeTargets.map((name)=>{
-      return fs.remove(name)
+      return fs.remove(path.resolve(currentDir,name))
     }));
     await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
