@@ -567,10 +567,18 @@ class Dispatcher extends EventEmitter {
     if (!newComponent.env) {
       newComponent.env = {};
     }
+    newComponent.env.WHEEL_CURRENT_INDEX = component.currentIndex;
+
     if (typeof prevIndex !== "undefined") {
       newComponent.env.WHEEL_PREV_INDEX = prevIndex;
+    }else{
+      if(component.type === "foreach"){
+        newComponent.env.WHEEL_PREV_INDEX = "";
+      }else{
+        const step = component.step || 1;
+        newComponent.env.WHEEL_PREV_INDEX = component.currentIndex - step;
+      }
     }
-    newComponent.env.WHEEL_CURRENT_INDEX = component.currentIndex;
     newComponent.env.WHEEL_NEXT_INDEX = getNextIndex(component);
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
