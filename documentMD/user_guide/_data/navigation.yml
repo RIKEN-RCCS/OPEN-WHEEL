@@ -29,4 +29,44 @@ user-docs:
 admin-docs:
   - title: For administrators
 refs:
-  - title: Reference
+  - title: 1. ホーム画面
+    url: /reference/1_home_screen/
+  - title: 2. リモートホスト画面
+    url: /reference/2_remotehost_screen/
+  - title: 3. ワークフロー画面
+    children:
+      - title: グラフビュー
+        url: /reference/3_workflow_screen/1_graphview.html
+      - title: リストビュー
+        url: /reference/3_workflow_screen/2_listview.html
+      - title: テキストエディタ
+        url: /reference/3_workflow_screen/3_editor.html
+  - title: 4. コンポーネント
+    children:
+      - title: 共通項目
+        url: /reference/4_component/00_common.html
+      - title: Task
+        url: /reference/4_component/01_Task.html
+      - title: If
+        url: /reference/4_component/02_If.html
+      - title: For
+        url: /reference/4_component/03_For.html
+      - title: while
+        url: /reference/4_component/04_while.html
+      - title: Foreach
+        url: /reference/4_component/05_Foreach.html
+      - title: PS
+        url: /reference/4_component/06_PS.html
+      - title: Workflow
+        url: /reference/4_component/07_Workflow.html
+      - title: Storage
+        url: /reference/4_component/08_Storage.html
+      - title: Source
+        url: /reference/4_component/09_Source.html
+      - title: Viewer
+        url: /reference/4_component/10_Viewer.html
+      - title: Stepjob
+        url: /reference/4_component/11_Stepjob.html
+      - title: BulkjobTask
+        url: /reference/4_component/12_BulkjobTask.html
+ 

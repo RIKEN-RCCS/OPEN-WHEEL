@@ -1,4 +1,6 @@
-# Viewer
+---
+title: Viewer
+---
 
 ![img](./img/viewer.png "viewer")
 

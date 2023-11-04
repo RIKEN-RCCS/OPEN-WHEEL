@@ -1,5 +1,5 @@
 repository: taki-036/OPEN-WHEEL
-remote_theme: "mmistakes/minimal-mistakes@4.24.0"
+remote_theme: "mmistakes/minimal-mistakes"
 plugins:
 - jekyll-remote-theme
 - jekyll-include-cache
@@ -12,13 +12,16 @@ url: "https://taki-036.github.io/OPEN-WHEEL/"
 
 locate: "ja-JP"
 search: true
-# search_full_content: true
+search_full_content: true
 search_provider: "lunr"
 lunr:
   search_within_pages: true
 
 include:
   - _pages
+
+atom_feed:
+  hide: true
 
 collections:
   reference:

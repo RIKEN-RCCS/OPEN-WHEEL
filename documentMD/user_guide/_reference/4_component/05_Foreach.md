@@ -1,4 +1,6 @@
-# Foreach
+---
+title: Foreach
+---
 
 ![img](./img/foreach.png "foreach")
 

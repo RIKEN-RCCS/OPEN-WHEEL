@@ -1,4 +1,6 @@
-# Storage
+---
+title: Storage
+---
 
 ![img](./img/storage.png "storage")
 

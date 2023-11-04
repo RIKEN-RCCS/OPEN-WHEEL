@@ -1,4 +1,6 @@
-# For
+---
+title: For
+---
 
 ![img](./img/for.png "for")
 

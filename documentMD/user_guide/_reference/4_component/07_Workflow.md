@@ -1,4 +1,6 @@
-# Workflow
+---
+title: Workflow
+---
 
 ![img](./img/workflow.png "workflow")
 

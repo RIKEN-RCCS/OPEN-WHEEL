@@ -1,4 +1,6 @@
-# While
+---
+title: While
+---
 
 ![img](./img/while.png "while")
 

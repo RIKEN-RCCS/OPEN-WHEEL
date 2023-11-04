@@ -1,4 +1,6 @@
-# Task
+---
+title: Task
+---
 
 ![img](./img/task.png "task")
 
