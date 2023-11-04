@@ -9,3 +9,65 @@ strict_front_matter: true
 
 
 url: "https://taki-036.github.io/OPEN-WHEEL/"
+
+locate: "ja-JP"
+search: true
+# search_full_content: true
+search_provider: "lunr"
+lunr:
+  search_within_pages: true
+
+include:
+  - _pages
+
+collections:
+  reference:
+    output: true
+    permalink: /:collection/:path
+  tutorial:
+    output: true
+    permalink: /:collection/:path
+  how_to_boot:
+    output: true
+    permalink: /:collection/:path
+  attention:
+    output: true
+    permalink: /:collection/:path
+
+
+defaults:
+  - scope:
+      path: ""
+      type: reference
+    values:
+      layout: single
+      toc: true
+      toc_sticky: true
+      sidebar:
+        nav: "refs"
+  - scope:
+      path: ""
+      type: tutorial
+    values:
+      layout: single
+      toc: true
+      toc_sticky: true
+      sidebar:
+        nav: "user-docs"
+  - scope:
+      path: ""
+      type: how_to_boot
+    values:
+      layout: single
+      toc: true
+      toc_sticky: true
+      sidebar:
+        nav: "admin-docs"
+  - scope:
+      path: ""
+      type: attention
+    values:
+      layout: single
+      toc: true
+      toc_sticky: true
+

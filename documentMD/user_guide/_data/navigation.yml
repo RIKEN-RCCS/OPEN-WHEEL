@@ -1,0 +1,34 @@
+main:
+  - title: "WHEELについて"
+    url: /about/
+  - title: "リファレンス"
+    url: /reference/
+  - title: "管理者向け"
+    url: /how_to_boot/
+  - title: "利用者向け"
+    url: /tutorial/
+
+user-docs:
+  - title: WHEELについて
+  - title: 利用者向けマニュアル
+    url: /tutorial/
+    children:
+      - title: 基礎編
+        url: /tutorial/1_basic_tutorial/
+      - title: 応用編
+        url: /tutorial/2_advanced_tutorial/
+      - title: 実践編
+        url: /tutorial/3_application_tutorial/
+      - title: OpenFOAMを利用したcavityケースの解析ワークフロー
+        url: /tutorial/3_application_tutorial/1_OpenFOAM_cavity/
+      - title: OpenFOAMを利用したパラメトリックスタディ解析ワークフロー
+        url: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
+      - title: TensorFlowを利用したMNISTデータ解析ワークフロー
+        url: /tutorial/3_application_tutorial/3_TensorFlow_mnist/
+          children:
+            - title: test
+  - title: Attention
+admin-docs:
+  - title: For administrators
+refs:
+  - title: Reference
