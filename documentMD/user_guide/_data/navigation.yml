@@ -1,6 +1,6 @@
 main:
   - title: "WHEELについて"
-    url: /about/
+    url: /about.html
   - title: "リファレンス"
     url: /reference/
   - title: "管理者向け"
