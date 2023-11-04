@@ -1,5 +1,11 @@
-repository: RIKEN-RCCS/OPEN-WHEEL
-remote_theme: pages-themes/slate@v0.2.0
+repository: taki-036/OPEN-WHEEL
+remote_theme: "mmistakes/minimal-mistakes@4.24.0"
 plugins:
 - jekyll-remote-theme
-title: WHEEL user guide
+- jekyll-include-cache
+title: "WHEEL user guide"
+subtitle: "Workflow in Hierarchical distributEd parallEL"
+strict_front_matter: true
+
+
+url: "https://taki-036.github.io/OPEN-WHEEL/"
