@@ -25,8 +25,6 @@ user-docs:
         url: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
       - title: TensorFlowを利用したMNISTデータ解析ワークフロー
         url: /tutorial/3_application_tutorial/3_TensorFlow_mnist/
-          children:
-            - title: test
   - title: Attention
 admin-docs:
   - title: For administrators
