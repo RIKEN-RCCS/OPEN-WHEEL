@@ -1,4 +1,6 @@
-# WHEELの起動方法
+---
+title: WHEELの起動方法
+---
 
 ## 事前準備
 WHEELの起動にはdockerを使用します。

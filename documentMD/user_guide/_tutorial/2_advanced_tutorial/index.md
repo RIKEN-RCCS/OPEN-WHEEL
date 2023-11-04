@@ -1,4 +1,6 @@
-# Advanced tutorial
+---
+title: Advanced tutorial
+---
 
 ## 応用編チュートリアルについて
 本チュートリアルでは、基礎編では触れなかった機能を扱います。

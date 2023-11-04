@@ -1,4 +1,6 @@
-# Application tutorial
+---
+title: Application tutorial
+---
 
 ## 実践編チュートリアルについて
 実践編チュートリアルでは、富岳を利用してOpenFOAM, TensorFlowといった

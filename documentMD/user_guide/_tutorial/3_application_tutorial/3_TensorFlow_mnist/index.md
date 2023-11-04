@@ -1,4 +1,6 @@
-# TensorFlowを利用したMNISTデータ解析ワークフロー
+---
+title: TensorFlowを利用したMNISTデータ解析ワークフロー
+---
 本章では、WHEELを用いた計算事例として「TensorFlowを利用したMNISTデータの解析ワークフロー」を紹介します。
 
 目次
@@ -65,11 +67,15 @@ from tensorflow.keras.layers import Dense, Dropout, InputLayer
 from tensorflow.keras.optimizers import RMSprop
 
 print('download data')
-# load mnist data
+---
+title: load mnist data
+---
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 print('download done')
 
-# set input data
+---
+title: set input data
+---
 x_train  = x_train.reshape(60000, 784)
 x_test   = x_test.reshape(10000, 784)
 x_train  = x_train.astype('float32')
@@ -79,20 +85,26 @@ x_test  /= 255
 y_train  = keras.utils.to_categorical(y_train, 10)
 y_test   = keras.utils.to_categorical(y_test, 10)
 
-# create model
+---
+title: create model
+---
 model = Sequential()
 model.add(InputLayer(input_shape=(784,)))
 model.add(Dense(10, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
 
-# train model
+---
+title: train model
+---
 print('start learning')
 epochs = 20
 batch_size = 128
 history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, verbose=1, validation_data=(x_test, y_test))
 
-# save weights
+---
+title: save weights
+---
 print('save weights')
 model.save_weights('param.hdf5')
 EOF
@@ -129,27 +141,37 @@ from tensorflow.keras.layers import Dense, Dropout, InputLayer
 from tensorflow.keras.optimizers import RMSprop
 
 print('download data')
-# load mnist data
+---
+title: load mnist data
+---
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 print('download done')
 
-# set input data
+---
+title: set input data
+---
 x_test   = x_test.reshape(10000, 784)
 x_test   = x_test.astype('float32')
 x_test  /= 255
 y_test   = keras.utils.to_categorical(y_test, 10)
 
-# create model
+---
+title: create model
+---
 model = Sequential()
 model.add(InputLayer(input_shape=(784,)))
 model.add(Dense(10, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
-# load weights
+---
+title: load weights
+---
 print('loadweights')
 model.load_weights('param.hdf5')
 
-# eval model
+---
+title: eval model
+---
 print('eval')
 score = model.evaluate(x_test, y_test, verbose=1)
 print()
