@@ -2,6 +2,16 @@
 title: WHEELの起動方法
 ---
 
+## 構成検討
+はじめに、WHEELの構成を検討します。  
+代表的な構成パターンは以下の通りです。利用ユーザー数や使用可能なマシンなどの環境に従い、最適な構成をご検討ください。
+
+### 構成パターン1：ユーザごとにWHEEL環境を構築
+![構成パターン1](img/configuration_pattern_01.svg)
+
+### 構成パターン2：サーバにWHEEL環境を集約し構築
+![構成パターン2](img/configuration_pattern_02.svg)
+
 ## 事前準備
 WHEELの起動にはdockerを使用します。
 最新の [docker](https://www.docker.com/) をインストールしてください。
