@@ -59,7 +59,7 @@ const validate = ajv.compile(schema);
 async function onAddHost(socket, newHost, cb) {
   validate(newHost);
 
-  if(Array.isArray(validate.errors)){
+  if(validate !== null && Array.isArray(validate.errors)){
     const missingRequiredKey = validate.errors.includes((e)=>{
       return e.keyword === "required";
     });

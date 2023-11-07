@@ -477,10 +477,11 @@
               @update="updateExcludeList"
             />
             clean up flag
+
             <v-radio-group
               v-model="copySelectedComponent.cleanupFlag"
               :disabled="disableRemoteSetting"
-              @update:focused="updateComponentProperty('cleanupFlag')"
+              @update:modelValue="updateComponentProperty('cleanupFlag')"
             >
               <v-radio
                 label="remove files"
@@ -756,8 +757,8 @@ export default {
     },
     updateComponentProperty (prop) {
       if (prop === "name" && !this.validName) return;
-      if (prop !== "name" && !this.valid) return;
-      if(this.copySelectedComponent[prop] === this.selectedComponent[prop]) return;
+      if (!["name", "include","exclude", "cleanupFlag"].includes(prop) && !this.valid) return;
+      if(!Array.isArray(this.copySelectedComponent[prop]) && this.copySelectedComponent[prop] === this.selectedComponent[prop]) return;
       const ID = this.selectedComponent.ID;
       //[workaround] v-textfield convert input value to string even if type=number
       const newValue = ["start", "step", "end", "retry"].includes(prop) ? Number(this.copySelectedComponent[prop]): this.copySelectedComponent[prop];
