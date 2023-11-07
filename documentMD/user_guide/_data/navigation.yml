@@ -1,12 +1,12 @@
 main:
   - title: "WHEELについて"
-    url: /about.html
-  - title: "リファレンス"
-    url: /reference/
+    url: /about/
   - title: "管理者向け"
     url: /how_to_boot/
   - title: "利用者向け"
     url: /tutorial/
+  - title: "リファレンス"
+    url: /reference/
 
 user-docs:
   - title: WHEELについて
@@ -26,6 +26,7 @@ user-docs:
       - title: TensorFlowを利用したMNISTデータ解析ワークフロー
         url: /tutorial/3_application_tutorial/3_TensorFlow_mnist/
   - title: Attention
+    url: /attention/
 admin-docs:
   - title: For administrators
 refs:

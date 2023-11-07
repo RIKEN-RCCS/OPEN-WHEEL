@@ -33,10 +33,6 @@ collections:
   how_to_boot:
     output: true
     permalink: /:collection/:path
-  attention:
-    output: true
-    permalink: /:collection/:path
-
 
 defaults:
   - scope:
@@ -66,11 +62,4 @@ defaults:
       toc_sticky: true
       sidebar:
         nav: "admin-docs"
-  - scope:
-      path: ""
-      type: attention
-    values:
-      layout: single
-      toc: true
-      toc_sticky: true
 

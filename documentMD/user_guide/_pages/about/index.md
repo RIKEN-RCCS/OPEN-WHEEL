@@ -1,7 +1,7 @@
 ---
 title: WHEELの概要
 layout: single
-permalink: /about.html
+permalink: /about/
 toc: true
 ---
 WHEELは、解析ジョブの作成/実行をインタラクティブに操作するWebツールです。
@@ -12,7 +12,7 @@ WHEELは、2016年に九州大学情報工学研究所 (RITT) によって開発
 
 ## WHEELのシステム構成図
 システム構成のイメージは以下の通りです。
-![システム構成図]({{ "/assets/images/system_diagram.svg" | relative_url }})
+![システム構成図](img/system_diagram.svg)
 
 ### ★修正コメント
 * ユーザとPCの間にブラウザを入れる

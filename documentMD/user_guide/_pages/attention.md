@@ -1,4 +1,10 @@
-# 注意事項
+---
+title: 注意事項
+permalink: /attention/
+toc: true
+toc_sticky: true
+layout: single
+---
 ## はじめに
 本ドキュメントは、ワークフローシステムWHEELの仕様上の制限について説明いたします。
 以下の内容によって構成されています。
