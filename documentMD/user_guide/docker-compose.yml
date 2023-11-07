@@ -7,6 +7,6 @@ services:
     command: >
       bash -c "gem install webrick && jekyll serve"
     ports:
-      - "4000:4000"
+      - "4001:4000"
     tty: true
     stdin_open: true
