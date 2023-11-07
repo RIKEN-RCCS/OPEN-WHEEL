@@ -1,5 +1,5 @@
 ---
-title: WHEELの概要
+title: WHEELについて
 layout: single
 permalink: /about/
 toc: true
