@@ -34,7 +34,7 @@ async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params
   );
 }
 
-async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params) {
+async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, logger) {
   const p = [];
   for (const recipe of scatterRecipe) {
     const srcName = nunjucks.renderString(recipe.srcName, params);
@@ -43,29 +43,21 @@ async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params)
     const dstName = nunjucks.renderString(recipe.dstName, params);
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(dstDir, dstName.slice(0, -1), src) : path.join(dstDir, dstName);
-      p.push(
-        fs.remove(dst)
-          .catch((err)=>{
-            if (err.code !== "ENOEXISTS") {
-              return Promise.reject(err);
-            }
-            return true;
-          })
-          .then(()=>{
-            return fs.copy(path.join(templateRoot, src), dst);
-          })
-      );
+      logger.trace(`scatter copy ${path.join(templateRoot, src)} to ${dst}`);
+      p.push(fs.copy(path.join(templateRoot, src), dst, {overwrite: true}));
     }
   }
-  return Promise.all(p).catch((e)=>{
-    if (e.code !== "ENOENT") {
-      return Promise.reject(e);
+  return Promise.all(p).catch((err)=>{
+    logger.trace("error occurred at scatter", err);
+
+    if (err.code !== "ENOENT" || err.code !== "EEXIST") {
+      return Promise.reject(err);
     }
     return true;
   });
 }
 
-async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params) {
+async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, logger) {
   const p = [];
   for (const recipe of gatherRecipe) {
     const srcDir = Object.prototype.hasOwnProperty.call(recipe, "srcNode") ? path.join(instanceRoot, recipe.srcNode) : instanceRoot;
@@ -74,23 +66,15 @@ async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params) {
     const dstName = nunjucks.renderString(recipe.dstName, params);
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(templateRoot, dstName.slice(0, -1), src) : path.join(templateRoot, dstName);
-      p.push(
-        fs.remove(dst)
-          .catch((err)=>{
-            if (err.code !== "ENOEXISTS") {
-              return Promise.reject(err);
-            }
-            return true;
-          })
-          .then(()=>{
-            return fs.copy(path.join(srcDir, src), dst);
-          })
-      );
+      logger.trace(`gather copy ${path.join(srcDir, src)} to ${dst}`);
+      p.push( fs.copy(path.join(srcDir, src), dst, {overwrite: true}));
     }
   }
-  return Promise.all(p).catch((e)=>{
-    if (e.code !== "ENOENT") {
-      return Promise.reject(e);
+  return Promise.all(p).catch((err)=>{
+    logger.trace("error occurred at gather", err);
+
+    if (err.code !== "ENOENT" || err.code === "EEXIST") {
+      return Promise.reject(err);
     }
     return true;
   });

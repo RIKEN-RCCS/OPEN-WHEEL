@@ -115,7 +115,7 @@ describe("UT for Dispatcher class", function() {
       const stats=await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
       expect(stats.isSymbolicLink()).to.be.false;
     });
-    it("should make link from outputFile to storage component's inputFile", async ()=>{
+    it("should move storage component's inputFile to storagePath", async ()=>{
       await addOutputFile(projectRootDir, previous.ID, "a");
       await addInputFile(projectRootDir, storage.ID, "b");
       await addFileLink(projectRootDir, previous.ID, "a", storage.ID, "b");
@@ -123,9 +123,7 @@ describe("UT for Dispatcher class", function() {
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, storage.name, "a")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, storage.name, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
-      const stats=await fs.lstat(path.resolve(projectRootDir, storage.name, "b"));
-      expect(stats.isSymbolicLink()).to.be.true;
+      expect(path.resolve(projectRootDir, storage.name, "b")).not.to.be.a.path();
       expect(path.resolve(storageArea, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
     });
   });

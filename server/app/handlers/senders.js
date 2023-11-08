@@ -38,9 +38,15 @@ async function sendWorkflow(cb, projectRootDir, parentComponentDir = "", clientI
 }
 
 async function sendComponentTree(projectRootDir, rootDir) {
-  const targetDir = path.isAbsolute(rootDir) ? rootDir : path.resolve(projectRootDir, rootDir);
-  const rt = await getComponentTree(projectRootDir, targetDir);
-  await emitAll(projectRootDir, "componentTree", rt);
+  try{
+    const targetDir = path.isAbsolute(rootDir) ? rootDir : path.resolve(projectRootDir, rootDir);
+    const rt = await getComponentTree(projectRootDir, targetDir);
+    await emitAll(projectRootDir, "componentTree", rt);
+  }catch(err){
+    if(err.code === "ENOENT"){
+      getLogger(projectRootDir).error(err);
+    }
+  }
 }
 
 //read and send projectJson

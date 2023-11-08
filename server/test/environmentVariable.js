@@ -127,7 +127,7 @@ describe("UT for environment variables", function() {
     expect(path.join(projectRootDir, "for0_0", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_STEP=2$/m);
     expect(path.join(projectRootDir, "for0_0", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_CURRENT_INDEX=0$/m);
     expect(path.join(projectRootDir, "for0_0", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_NEXT_INDEX=2$/m);
-    expect(path.join(projectRootDir, "for0_0", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_PREV_INDEX=$/m);
+    expect(path.join(projectRootDir, "for0_0", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_PREV_INDEX=-2$/m);
   });
   it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under for component", ()=>{
     expect(path.join(projectRootDir, "for0_2", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_START=0$/m);

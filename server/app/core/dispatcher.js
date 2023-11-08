@@ -212,6 +212,7 @@ class Dispatcher extends EventEmitter {
         this.emit("error", e);
       }
     }
+    this.logger.debug("search next components");
 
     //remove duplicated entry
     this.currentSearchList = removeDuplicatedComponent(this.pendingComponents);
@@ -566,10 +567,18 @@ class Dispatcher extends EventEmitter {
     if (!newComponent.env) {
       newComponent.env = {};
     }
+    newComponent.env.WHEEL_CURRENT_INDEX = component.currentIndex;
+
     if (typeof prevIndex !== "undefined") {
       newComponent.env.WHEEL_PREV_INDEX = prevIndex;
+    }else{
+      if(component.type === "foreach"){
+        newComponent.env.WHEEL_PREV_INDEX = "";
+      }else{
+        const step = component.step || 1;
+        newComponent.env.WHEEL_PREV_INDEX = component.currentIndex - step;
+      }
     }
-    newComponent.env.WHEEL_CURRENT_INDEX = component.currentIndex;
     newComponent.env.WHEEL_NEXT_INDEX = getNextIndex(component);
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
@@ -578,6 +587,8 @@ class Dispatcher extends EventEmitter {
       await fs.copy(srcDir, dstDir, {
         dereference: true,
         filter: async (target)=>{
+          this.logger.trace("[loopHandler] copy filter on :",target);
+
           if (srcDir === target) {
             return true;
           }
@@ -598,7 +609,9 @@ class Dispatcher extends EventEmitter {
         ++component.numFinished;
       }
     } catch (e) {
-      e.index = component.currentIndex;
+      if(typeof e !== "string"){
+        e.index = component.currentIndex;
+      }
       this.logger.warn("fatal error occurred during loop child dispatching.", e);
       return Promise.reject(e);
     }
@@ -713,7 +726,7 @@ class Dispatcher extends EventEmitter {
         }));
 
       this.logger.debug("scatter files");
-      await scatterFiles(templateRoot, instanceRoot, scatterRecipe, params);
+      await scatterFiles(templateRoot, instanceRoot, scatterRecipe, params, this.logger);
       this.logger.debug("rewrite target files");
       await rewriteTargetFile(templateRoot, instanceRoot, targetFiles, params);
 
@@ -754,20 +767,25 @@ class Dispatcher extends EventEmitter {
         return `${p}_${e.key}_${e.value}`;
       }, component.name));
       const instanceRoot = path.resolve(this.cwfDir, newName);
-      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params));
+      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params, this.logger));
     }
     await Promise.all(promiseGather);
+    this.logger.trace("gather files done");
     await this._addNextComponent(component);
+    this.logger.trace("add next component done");
     const state = component.numFailed > 0 ? "failed" : "finished";
     await this._setComponentState(component, state);
+    this.logger.trace("set component state done");
 
     if (component.deleteLoopInstance) {
+      this.logger.debug("remove instance directories");
       const promiseDelete = [];
       for (const paramVec of paramVecGenerator(paramSpace)) {
         const deleteComponentName = sanitizePath(paramVec.reduce((p, e)=>{
           return `${p}_${e.key}_${e.value}`;
         }, component.name));
         const deleteDir = path.resolve(this.cwfDir, deleteComponentName);
+        this.logger.trace(`remove ${deleteDir}`);
         promiseDelete.push(fs.remove(deleteDir));
       }
       await Promise.all(promiseDelete);
@@ -882,6 +900,13 @@ class Dispatcher extends EventEmitter {
       const ssh = getSsh(this.projectRootDir, remotehostID);
       await ssh.send([`${currentDir}/`], `${storagePath}/`, [`--exclude=${componentJsonFilename}`, `--exclude=${projectJsonFilename}`]);
     }
+    const contents=await fs.readdir(currentDir);
+    const removeTargets = contents.filter((name)=>{
+      return ! name.endsWith(componentJsonFilename)
+    });
+    await Promise.all(removeTargets.map((name)=>{
+      return fs.remove(path.resolve(currentDir,name))
+    }));
     await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
   }
