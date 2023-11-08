@@ -107,12 +107,12 @@ async function onRemoveNode(projectRootDir, ID, parentID, cb) {
 }
 
 
-async function onAddLink(projectRootDir, msg, parentID, cb) {
-  return generalHandler(addLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "addLink", projectRootDir, parentID, cb);
+async function onAddLink(projectRootDir, src, dst, isElse, parentID, cb) {
+  return generalHandler(addLink.bind(null, projectRootDir, src, dst, isElse), "addLink", projectRootDir, parentID, cb);
 }
 
-async function onRemoveLink(projectRootDir, msg, parentID, cb) {
-  return generalHandler(removeLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "removeLink", projectRootDir, parentID, cb);
+async function onRemoveLink(projectRootDir, src, dst, isElse, parentID, cb) {
+  return generalHandler(removeLink.bind(null, projectRootDir, src, dst, isElse), "removeLink", projectRootDir, parentID, cb);
 }
 
 async function onRemoveAllLink(projectRootDir, componentID, parentID, cb) {

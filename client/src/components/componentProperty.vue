@@ -60,15 +60,6 @@
               />
             </template>
           </v-tooltip>
-          <v-tooltip location=bottom text="delete">
-            <template #activator="{ props }">
-              <v-btn
-                v-bind="props"
-                @click="deleteComponent"
-                icon="mdi-trash-can-outline"
-              />
-            </template>
-          </v-tooltip>
         </v-toolbar-items>
       </v-toolbar>
     <v-form
@@ -745,16 +736,6 @@ export default {
     }),
     isValidInputFilename,
     isValidOutputFilename,
-    deleteComponent () {
-      SIO.emitGlobal("removeNode", this.projectRootDir, this.selectedComponent.ID, this.currentComponent.ID, (rt)=>{
-        if (!rt) {
-          return;
-        }
-        this.commitSelectedComponent(null);
-        //update componentTree
-        SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
-      });
-    },
     updateComponentProperty (prop) {
       if (prop === "name" && !this.validName) return;
       if (!["name", "include","exclude", "cleanupFlag"].includes(prop) && !this.valid) return;

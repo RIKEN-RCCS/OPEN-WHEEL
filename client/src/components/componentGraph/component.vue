@@ -215,9 +215,8 @@ export default{
       this.$emit("chdir", this.componentData.ID, this.componentData.type);
     },
     onRightclick(e){
-      //not implemented yet
-      console.log("right clicked");
-    }
+      this.$emit("openContextMenu", e);
+    },
   },
 }
 

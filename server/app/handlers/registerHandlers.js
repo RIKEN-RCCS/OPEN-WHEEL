@@ -8,7 +8,7 @@ const os = require("os");
 const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } = require("./fileManager.js");
 const { onTryToConnect, onTryToConnectById } = require("./tryToConnect.js");
 const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./projectList.js");
-const { onGetProjectJson, onGetWorkflow, onRunProject, onPauseProject, onStopProject, onCleanProject, onSaveProject, onRevertProject, onUpdateProjectDescription } = require("./projectController.js");
+const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription } = require("./projectController.js");
 const { onSaveFile, onOpenFile } = require("./rapid.js");
 const { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } = require("./remoteHost.js");
 const { onGetJobSchedulerList, onGetJobSchedulerLabelList } = require("./jobScheduler.js");
@@ -50,12 +50,25 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //projectController
   //
-  socket.on("runProject", onRunProject.bind(null, socket.id));
-  socket.on("pauseProject", onPauseProject);
-  socket.on("stopProject", onStopProject);
-  socket.on("cleanProject", onCleanProject.bind(null, socket.id));
-  socket.on("saveProject", onSaveProject);
-  socket.on("revertProject", onRevertProject.bind(null, socket.id));
+  socket.on("projectOperation", onProjectOperation.bind(null, socket.id));
+  socket.on("runProject", (clientID, projectRootDir, ack)=>{
+    getLogger(projectRootDir).error("[deprecated] runProject API is no longer available");
+  });
+  socket.on("pauseProject", (projectRootDir, ack)=>{
+    getLogger(projectRootDir).error("[deprecated] pauseProject API is no longer available");
+  });
+  socket.on("stopProject", (projectRootDir, ack)=>{
+    getLogger(projectRootDir).error("[deprecated] stopProject API is no longer available");
+  });
+  socket.on("cleanProject", (clientID, projectRootDir, ack)=>{
+    getLogger(projectRootDir).error("[deprecated] cleanProject API is no longer available");
+  });
+  socket.on("saveProject", (projectRootDir, ack)=>{
+    getLogger(projectRootDir).error("[deprecated] saveProject API is no longer available");
+  });
+  socket.on("revertProject", (clientID, projectRootDir, ack)=>{
+    getLogger(projectRootDir).error("[deprecated] revertProject API is no longer available");
+  });
 
   //
   //workflow editor

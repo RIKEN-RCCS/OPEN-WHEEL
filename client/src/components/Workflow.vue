@@ -571,7 +571,7 @@ export default {
       if(operation === "stopProject" || operation === "cleanProject"){
         this.commitWaitingWorkflow(true);
       }
-      SIO.emitGlobal(operation, this.projectRootDir, (rt)=>{
+      SIO.emitGlobal("projectOperation", operation, this.projectRootDir, (rt)=>{
         debug(operation, "done", rt);
 
         if(operation === "stopProject" || operation === "cleanProject"){
