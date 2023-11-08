@@ -22,6 +22,8 @@ const { parentDirs, eventEmitters } = require("../core/global.js");
 const { emitAll, emitWithPromise } = require("./commUtils.js");
 const { removeTempd, getTempd } = require("../core/tempd.js");
 
+const projectOperationQueue=[]
+
 
 async function updateProjectState(projectRootDir, state) {
   const projectJson = await setProjectState(projectRootDir, state);
@@ -333,15 +335,25 @@ async function onUpdateProjectDescription(projectRootDir, description, ack) {
   onGetProjectJson(projectRootDir, ack);
 }
 
+async function onProjectOperation(clientID, projectRootDir, opration, ack){
+  console.log("to be implemented");
+  //1. キューの末尾と同じoperationはログだけ出して終了
+  //2. プロジェクトの状態確認
+  const { state } = await getProjectJson(projectRootDir);
+  //3. 許可されたoperationでなければログだけ出して終了
+
+  //4. キューに新規operationを追加
+  // SBSを使う。ハウスキーピングはenqueue時のhookを追加して対応
+
+  //5. キューのハウスキーピング
+  //cleanProjectがあったら、その前のキューを全て削除
+  //
+}
+
 
 module.exports = {
-  onRunProject,
-  onPauseProject,
-  onStopProject,
-  onCleanProject,
-  onSaveProject,
-  onRevertProject,
-  onGetWorkflow,
   onGetProjectJson,
-  onUpdateProjectDescription
+  onGetWorkflow,
+  onUpdateProjectDescription,
+  onProjectOperation
 };
