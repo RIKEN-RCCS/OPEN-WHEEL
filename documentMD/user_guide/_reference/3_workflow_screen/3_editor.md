@@ -47,7 +47,7 @@ readonlyモード切り替えスイッチを有効にすると、表示された
 ### PS-configモード
 本節ではPS-configモードの機能を説明します。
 
-パラメータスタディ機能自体は、[PSコンポーネント]( ../4_component/06_PS.md)に解説されているので、そちらも合わせてご確認ください。
+パラメータスタディ機能自体は、[PSコンポーネント]({{ site.baseurl }}/reference/4_component/06_PS.html)に解説されているので、そちらも合わせてご確認ください。
 
 ![img](./img/editor_ps_config.png "editor_ps_config")
 
@@ -115,4 +115,4 @@ jobScriptEditorモードでは、編集中のテキストファイルに対し�
 
 
 --------
-[リファレンスマニュアルのトップページに戻る](../index.md)
+[リファレンスマニュアルのトップページに戻る]({{ site.baseurl }}/reference/)

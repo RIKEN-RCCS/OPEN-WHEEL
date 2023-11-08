@@ -218,4 +218,5 @@ accuracyが「0.927」すなわち検証用データにおいて精度92.7%の�
 TensorFlowを利用したMNISTデータ解析ワークフロー例は以上になります。
 
 --------
-[チュートリアルのトップページに戻る](../../index.md)
+[実践編チュートリアルに戻る]({{ site.baseurl }}/tutorial/3_application_tutorial/)
+

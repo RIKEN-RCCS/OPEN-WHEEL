@@ -24,5 +24,6 @@ toc: false
 
 [応用編 英語](https://youtu.be/XR-zGcDhR50)
 
+
 --------
-[トップページに戻る](../)
+[トップページに戻る]({{ site.baseurl }}/)

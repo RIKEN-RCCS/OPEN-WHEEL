@@ -10,16 +10,16 @@ title: Application tutorial
 富岳にアクセスできることを前提としていますので、
 事前に富岳のリモートホスト設定を作成してから、チュートリアルを始めてください。
 
-リモートホスト設定の作成方法については、[基礎編](../1_basic_tutorial/index.md) の6章をご参照ください。
+リモートホスト設定の作成方法については、[管理者向け 初期設定]({{ site.baseurl }}/how_to_boot/#初期設定) をご参照ください。
 
-[OpenFOAMを利用したcavityケースの解析ワークフロー](1_OpenFOAM_cavity/index.md)
+[OpenFOAMを利用したcavityケースの解析ワークフロー](1_OpenFOAM_cavity/)
 
-[OpenFOAMを利用したパラメトリックスタディ解析ワークフロー](2_OpenFOAM_PS/index.md)
+[OpenFOAMを利用したパラメトリックスタディ解析ワークフロー](2_OpenFOAM_PS/)
 
-[TensorFlowを利用したMNISTデータ解析ワークフロー](3_TensorFlow_mnist/index.md)
+[TensorFlowを利用したMNISTデータ解析ワークフロー](3_TensorFlow_mnist/)
 
 なお、これらのチュートリアルで用いたアプリケーションの動作確認は、2023年3月に行ないました。
 それ以降のアップデート等により、ファイルのパスなどが変更されている可能性もありますのでご注意ください。
 
 --------
-[チュートリアルのトップページに戻る](../index.md)
+[チュートリアルのトップページに戻る]({{ site.baseurl }}/tutorial/)

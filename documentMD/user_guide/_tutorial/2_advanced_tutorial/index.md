@@ -484,10 +484,10 @@ stepjobTask1は実行され、stdout.txtの中に `stepjobTask1` と書かれて
 これで、応用編のチュートリアルは終了です。
 
 実際にアプリケーションを動かすワークフローについて知りたい方は
-[実践編のチュートリアル](../3_application_tutorial/index.md) に進んでください。
+[実践編のチュートリアル]({{ site.baseurl }}/tutorial/3_application_tutorial/) に進んでください。
 
-また、個々の機能の詳細な内容については、[リファレンスマニュアル](../../3_reference_manual/index.md) をご参照ください。
+また、個々の機能の詳細な内容については、[リファレンスマニュアル]({{ site.baseurl }}/reference/) をご参照ください。
 
 
 --------
-[チュートリアルのトップページに戻る](../index.md)
+[チュートリアルのトップページに戻る]({{ site.baseurl }}/tutorial/)

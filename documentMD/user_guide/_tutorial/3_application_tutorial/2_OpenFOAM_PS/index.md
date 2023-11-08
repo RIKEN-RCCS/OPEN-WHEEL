@@ -22,7 +22,7 @@ title: OpenFOAMを利用したパラメトリックスタディ解析ワーク�
 
 inletから流入した流体がoutletから出ていく解析を実施します。
 
-事前に[こちら](https://riken-rccs.github.io/OPEN-WHEEL/2_tutorial/3_application_tutorial/2_OpenFOAM_PS/sample/OpenFOAM_tutorial_sample.zip)のファイルをダウンロードして展開しておいてください。
+事前に[こちら](sample/OpenFOAM_tutorial_sample.zip)のファイルをダウンロードして展開しておいてください。
 アーカイブ内には次の3つのファイルが含まれます。
 
 - __pipe.unv__ メッシュ
@@ -56,7 +56,7 @@ __pipe.unv__ をアップロードしてください。
 
 ファイルのアップロードは、このエリアにファイルをドロップするか、 uploadボタンをクリックした時に
 表示されるダイアログで、アップロードするファイルを選択することで行ないます。
-詳しい操作方法は、[リファレンスマニュアル](../../../3_reference_manual/3_workflow_screen/1_graphview.md "リファレンスマニュアル-グラフビュー画面") を
+詳しい操作方法は、[リファレンスマニュアル]({{ site.baseurl }}/reference/3_workflow_screen/1_graphview.html "リファレンスマニュアル-グラフビュー画面") を
 参照してください。
 
 続いて、__run.sh__  という名前で新規ファイルを作成し次の内容を記入してください。
@@ -234,4 +234,4 @@ __result.foam__ ファイルのパスが表示されるので、
 OpenFOAMを利用したパラメトリックスタディ解析ワークフロー例は以上になります。
 
 --------
-[チュートリアルのトップページに戻る](../../index.md)
+[実践編チュートリアルに戻る]({{ site.baseurl }}/tutorial/3_application_tutorial/)

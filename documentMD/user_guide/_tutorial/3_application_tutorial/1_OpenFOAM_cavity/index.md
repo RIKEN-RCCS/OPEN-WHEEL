@@ -143,4 +143,4 @@ paraviewを起動してください。
 以上で、cavityケースの実行ワークフローは終了です。
 
 --------
-[チュートリアルのトップページに戻る](../../index.md)
+[実践編チュートリアルに戻る]({{ site.baseurl }}/tutorial/3_application_tutorial/)

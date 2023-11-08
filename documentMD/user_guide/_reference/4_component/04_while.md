@@ -37,4 +37,5 @@ ForeachコンポーネントもForコンポーネントと同様の挙動をし�
 Javascript式の評価結果を用います。
 
 --------
-[ページの先頭に戻る](#コンポーネントの詳細)
+[コンポーネントの詳細に戻る]({{ site.baseurl }}/reference/4_component/)
+

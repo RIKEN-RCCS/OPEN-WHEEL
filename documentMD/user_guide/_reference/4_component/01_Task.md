@@ -8,7 +8,7 @@ Taskコンポーネントは、WHEELの用意するコンポーネントの中�
 [ script ]プロパティに設定されたスクリプトファイルを実行環境(host/useJobScheduler/queueプロパティ)の設定に応じて実行します。
 
 Taskコンポーネントに指定することのできるプロパティは以下のとおりです。
-なお、name, description, inputFile, outpuFileの4項目については[共通項目](./00_common.md)をご参照ください。
+なお、name, description, inputFile, outpuFileの4項目については[共通項目]({{ site.baseurl }}/reference/4_component/00_common.html)をご参照ください。
 
 ### script
 Taskコンポーネントの実行時に呼ぶスクリプトのファイル名を設定します。
@@ -19,7 +19,7 @@ scriptプロパティの入力欄はセレクトボックスになっており�
 Taskコンポーネント内に存在するファイルの中から選ぶことができます。
 
 ### host
-[リモートホスト設定](../../2_remotehost_screen/remotehost.md)にて設定されたリモートホストのラベル
+[リモートホスト設定]({{ site.baseurl }}/reference/2_remotehost_screen/)にて設定されたリモートホストのラベル
 または"localhost"を設定します。
 
 ![img](./img/task_host.png "task_host")
@@ -99,4 +99,5 @@ Filesエリアで確認することができます。
 デフォルト設定は`same as parent`が指定されており、上位コンポーネントの設定と同じ動作をします。
 
 --------
-[ページの先頭に戻る](#コンポーネントの詳細)
+[コンポーネントの詳細に戻る]({{ site.baseurl }}/reference/4_component/)
+
