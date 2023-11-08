@@ -8,7 +8,8 @@ subtitle: "Workflow in Hierarchical distributEd parallEL"
 strict_front_matter: true
 
 
-url: "https://taki-036.github.io/OPEN-WHEEL/"
+url: "https://taki-036.github.io"
+baseurl: "/OPEN-WHEEL"
 
 locate: "ja-JP"
 search: true
