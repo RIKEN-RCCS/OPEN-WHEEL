@@ -53,12 +53,14 @@
               <v-text-field
                 v-model.trim.lazy="newItem.srcName"
                 label="srcName"
+                :rules="[required, notDupulicated]"
               />
             </v-col>
             <v-col>
               <v-text-field
                 v-model.trim.lazy="newItem.dstName"
                 label="dstName"
+                :rules="[required, notDupulicated]"
               />
             </v-col>
           </v-row>
@@ -71,7 +73,7 @@
           <v-spacer />
           <v-btn
             variant=text
-            :disabled="isInValid"
+            :disabled="hasError"
             @click="commitChange"
             prepend-icon=mdi-check
             text=OK
@@ -90,9 +92,9 @@
 <script>
 "use strict";
 import { mapState } from "vuex"
-import { removeFromArray } from "@/lib/clientUtility.js";
 import actionRow from "@/components/common/actionRow.vue";
 import lowerComponentTree from "@/components/lowerComponentTree.vue";
+import { required } from "@/lib/validationRules.js";
 
 export default {
   name: "GatherScatter",
@@ -151,23 +153,31 @@ export default {
     label2 () {
       return this.label === "scatter" ? "destination node" : "source node";
     },
-    isInValid () {
-      if (this.newItem.srcName === "" || this.newItem.dstName === "") {
-        return true;
+    hasError(){
+      return this.required(this.newItem.srcName) !== true ||
+              this.required(this.newItem.dstName)!== true ||
+              this.notDupulicated(null) !== true 
+    },
+  },
+  methods: {
+    required,
+    notDupulicated() {
+      if(this.container.length === 0){
+        return true
       }
       //check duplication or not changed
       const keys = ["srcName", "dstName", "srcNode", "dstNode"]
         .filter((e)=>{
           return Object.keys(this.newItem).includes(e);
         });
-      return this.container.some((e)=>{
-        return keys.every((key)=>{
+
+      const hasSameEntry = !this.container.some((e)=>{
+        return  keys.every((key)=>{
           return this.newItem[key] === e[key];
         });
       });
+      return hasSameEntry || "duplicated entry is not allowed"
     },
-  },
-  methods: {
     onDstNodeSelected(item){
       if(this.label === "scatter"){
         if(this.newItem.dstNode){

@@ -56,8 +56,9 @@
         </v-card-title>
         <v-card-text>
           <v-text-field
-            v-model.trim.lazy="newTargetFilename"
+            v-model.trim="newTargetFilename"
             label="filename"
+            :rules="[required, notDupulicated]"
           />
           <lower-component-tree @selected="targetNodeSelected" />
         </v-card-text>
@@ -67,6 +68,7 @@
             variant=text
             @click="commitTargetFileChange"
             prepend-icon="mdi-check"
+            :disabled="hasError"
             text="OK"
           />
           <v-btn
@@ -82,10 +84,11 @@
 </template>
 <script>
 import { mapState, mapGetters } from "vuex";
-import { tableFooterProps, targetFile2absPath } from "@/lib/rapid2Util.js";
+import { tableFooterProps } from "@/lib/rapid2Util.js";
 import { removeFromArray } from "@/lib/clientUtility.js";
 import actionRow from "@/components/common/actionRow.vue";
 import lowerComponentTree from "@/components/lowerComponentTree.vue";
+import { required } from "@/lib/validationRules.js";
 
 export default {
   name: "TargetFiles",
@@ -119,8 +122,23 @@ export default {
       "selectedComponent",
     ]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
+    hasError(){
+      return this.required(this.newTargetFilename) !== true ||
+              this.notDupulicated(this.newTargetFilename) !== true
+    }
   },
   methods: {
+    required,
+    notDupulicated(v){
+      for(const targetFile of this.targetFiles){
+        if(typeof targetFile === "string" && targetFile === v){
+          return "dupricated targert file is not allowd"
+        }else if(targetFile.targetName === v &&(!targetFile.targetNode || targetFile.targetNode === this.newTargetNode) ){
+          return "dupricated targert file is not allowd"
+        }
+      }
+      return true
+    },
     getComponentName (id) {
       const name = this.componentPath[id];
       const tmp = name.split("/");
