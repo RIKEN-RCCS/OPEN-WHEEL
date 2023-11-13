@@ -73,7 +73,7 @@ SAVEボタンをクリックするまではgitリポジトリには登録され�
 revertボタンをクリックすると最後にコミットしてから後に行なった変更を全て破棄して
 リポジトリに最後にコミットした時の状態に戻します
 
-git操作の詳細については開発者向けドキュメント[詳細設計書](../../../doc/design/design.md)をご確認ください。
+git操作の詳細については開発者向けドキュメント[詳細設計書](https://github.com/{{ site.repository }}/blob/master/documentMD/design/design.md)をご確認ください。
 
 
 ### 画面表示切替ボタン
