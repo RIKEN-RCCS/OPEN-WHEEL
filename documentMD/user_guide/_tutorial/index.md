@@ -16,13 +16,10 @@ toc: false
 
 また、旧バージョンのWHEELを使ったものですがビデオ資料も以下のURLで公開されています。
 
-[基本編 日本語](https://youtu.be/1sh_XA6o7Zw)
+基本編 [日本語](https://youtu.be/1sh_XA6o7Zw) [英語](https://youtu.be/10FP6lnVISk)
 
-[応用編 日本語](https://youtu.be/1c-88BGdhPM)
+応用編 [日本語](https://youtu.be/1c-88BGdhPM) [英語](https://youtu.be/XR-zGcDhR50)
 
-[基本編 英語](https://youtu.be/10FP6lnVISk)
-
-[応用編 英語](https://youtu.be/XR-zGcDhR50)
 
 
 --------
