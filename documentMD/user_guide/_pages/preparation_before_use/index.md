@@ -11,19 +11,19 @@ WHEELの利用開始前に、初期設定として行われたリモートホス
 ### リモートホスト設定の確認
 まず、WHEELにアクセスし、画面右上のハンバーガーメニューをクリックします。
 
-![img](img/workflow6.png "hamburger menu")
+![hamburger menu](img/workflow6.png)
 
-表示されたメニュー内の __Remotehost editor__ をクリックすると別のタブでリモートホスト設定画面が表示されます。
+表示されたメニュー内の __Remotehost editor__ をクリックします。リモートホスト設定画面が別タブで表示されます。
 
-![img](img/remotehost_editor_button.png "リモートホストエディタリンク")
+!["リモートホストエディタリンク"](img/remotehost_editor_button.png)
 
-[リモートホスト設定](#リモートホスト設定)で登録されたリモートホストが表示されているので、右端の鉛筆アイコンをクリックしてホスト情報編集ダイアログを表示します。
+[リモートホスト設定]({{ site.baseurl }}/how_to_boot/#リモートホスト設定)で登録されたリモートホスト一覧が表示されます。右端の鉛筆アイコンをクリックしてホスト情報編集ダイアログを表示します。
 
-![img](img/remotehost_editor2.png "リモートホストエディタ追加編集")
+!["リモートホストエディタ追加編集"](img/remotehost_editor2.png)
 
 設定内容が正しいことを確認します。
 
-![img](img/add_new_host.png "check the add new host dialog")
+!["check the add new host dialog"](img/add_new_host.png)
 
 Hostname
 : 接続先のホスト名またはIPアドレス
@@ -34,28 +34,31 @@ User ID
 Host work dir
 : リモートホスト内で使用するディレクトリのパス
 
-設定内容に誤りがある場合は、修正してください。
-__Remotehost editor__ ボタンをクリックして、ダイアログを閉じます。
+もし設定内容に誤りがある場合は修正してください。
+__OK__ ボタンをクリックして、ダイアログを閉じます。
 
-## リモートホストへの接続確認
+### リモートホストへの接続確認
 続いて、WHEELからリモートホストに接続できることを確認します。
 
 リモートホスト設定画面を表示します。
-![img](img/remotehost_list.png "List of remote hosts")
+!["List of remote hosts"](img/remotehost_list.png)
 
-リモートホスト一覧の __connection test__ 列に表示された __TEST__ ボタンをクリックし、リモートホストへの接続テストを行います。
-![img](img/connection_test.png "Connection test button")
+__connection test__ 列に表示された __TEST__ ボタンをクリックし、リモートホストへの接続テストを行います。
+!["Connection test button"](img/connection_test.png)
 
-パスワード入力ダイアログが表示されるので、リモートホストに接続するためのパスワードを入力し、 __OK__ ボタンをクリックします。
-![img](img/input_password.png "Input password")
+パスワード入力ダイアログが表示されます。リモートホストに接続するためのパスワードを入力し、 __OK__ ボタンをクリックします。
+!["Input password"](img/input_password.png)
 
 リモートホストへの接続テストが実施され、リモートホスト一覧の __connection test__ 列に結果が表示されます。
-リモートホストへの接続が成功した場合は、以下の __OK__ ボタンが表示されます。
-![img](img/result_ok.png "Result ok")
 
-リモートホストへの接続が失敗した場合は、以下の __FAILED__ ボタンが表示されます。  
+
+リモートホストへの接続が成功した場合は、 __OK__ ボタン表示になります。
+!["Result ok"](img/result_ok.png)
+
+リモートホストへの接続が失敗した場合は、 __FAILED__ ボタン表示になります。  
 [リモートホスト設定の確認](#リモートホスト設定の確認)に従い、設定内容を見直してください。
-![img](img/result_failed.png "Result failed")
+!["Result failed"](img/result_failed.png)
+
 
 
 
