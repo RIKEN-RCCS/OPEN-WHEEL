@@ -124,7 +124,7 @@ export default {
     },
     onActiveted(item){
       if(! this.activatable){
-        return;
+        return null;
       }
       if(!this.multipleActive){
         this.active.splice(0,this.active.length);

@@ -180,17 +180,9 @@ export default {
     },
     onDstNodeSelected(item){
       if(this.label === "scatter"){
-        if(this.newItem.dstNode){
-          this.newItem.dstNode=item.ID
-        }else{
-          this.$set(this.newItem, "dstNode", item.ID)
-        }
+        this.newItem.dstNode=item.ID
       }else{
-        if(this.newItem.srcNode){
-          this.newItem.srcNode=item.ID
-        }else{
-          this.$set(this.newItem, "srcNode", item.ID)
-        }
+        this.newItem.srcNode=item.ID
       }
     },
     openDialog (item) {
@@ -201,6 +193,9 @@ export default {
       if (this.selectedItem.dstNode) {
         this.newItem.dstNode = this.selectedItem.dstNode;
       }
+      if (this.selectedItem.srcNode) {
+        this.newItem.srcNode = this.selectedItem.srcNode;
+      }
       this.dialog = true;
     },
     closeAndResetDialog () {
@@ -208,6 +203,7 @@ export default {
       this.newItem.srcName = "";
       this.newItem.dstName = "";
       delete this.newItem.dstNode;
+      delete this.newItem.srcNode;
       this.selectedItem = null;
     },
     commitChange () {

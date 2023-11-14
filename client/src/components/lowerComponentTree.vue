@@ -47,8 +47,8 @@ export default {
     this.lowerLevelComponents = getNodeAndPath(targetID, this.componentTree);
   },
   methods: {
-    onUpdateActive (actives) {
-      const activeComponentID = actives[0];
+    onUpdateActive (item) {
+      const activeComponentID = item.ID;
       const activeComponent = getNodeAndPath(activeComponentID, this.componentTree);
       this.$emit("selected", activeComponent);
     },
