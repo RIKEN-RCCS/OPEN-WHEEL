@@ -1,7 +1,7 @@
 ---
 title: リモートホスト設定の確認
 layout: single
-permalink: /preparation_before_use/
+permalink: /preparation_for_use/
 toc: true
 ---
 
