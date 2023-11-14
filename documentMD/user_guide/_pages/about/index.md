@@ -12,7 +12,7 @@ WHEELは、2016年に九州大学情報工学研究所 (RITT) によって開発
 
 ## WHEELのシステム構成図
 システム構成のイメージは以下の通りです。
-![システム構成図](img/system_diagram.svg)
+![システム構成図]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/system_diagram.svg "システム構成図")
 
 ## 動作環境
 WHEELはDocker上で起動します。したがって、PCには最新のDockerをインストールしてください。
