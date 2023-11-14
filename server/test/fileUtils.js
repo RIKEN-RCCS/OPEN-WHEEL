@@ -48,7 +48,7 @@ const { createNewComponent, createNewProject } = require("../app/core/projectFil
 //helper functions
 describe("file utility functions", function() {
   let ps0;
-  beforeEach(async()=>{
+  beforeEach(async function(){
     this.timeout(20000);
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
