@@ -1,5 +1,5 @@
 ---
-title: WHEEL チュートリアル
+title: チュートリアル
 toc: false
 ---
 
