@@ -1,5 +1,5 @@
 ---
-title: 注意事項
+title: 制約事項
 permalink: /attention/
 toc: true
 toc_sticky: true

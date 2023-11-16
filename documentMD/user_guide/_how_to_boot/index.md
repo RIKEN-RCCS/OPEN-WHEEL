@@ -1,5 +1,7 @@
 ---
 title: WHEELの起動方法
+sidebar:
+    nav: "admin-docs"
 ---
 
 ## 事前準備

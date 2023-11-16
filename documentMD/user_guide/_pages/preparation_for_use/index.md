@@ -1,15 +1,17 @@
 ---
-title: リモートホスト設定の確認
+title: 利用開始前の設定確認
 layout: single
 permalink: /preparation_for_use/
 toc: true
+toc_sticky: true
+sidebar:
+    nav: "user-docs"
 ---
 
-## 利用開始前の確認
 WHEELの利用開始前に、初期設定として行われたリモートホスト設定の内容が正しいことを確認します。
 
 ### リモートホスト設定の確認
-まず、WHEELにアクセスし、画面右上のハンバーガーメニューをクリックします。
+WHEELにアクセスし、画面右上のハンバーガーメニューをクリックします。
 
 ![hamburger menu]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/workflow6.png "hamburger menu")
 
