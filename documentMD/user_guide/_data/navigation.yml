@@ -12,7 +12,6 @@ user-docs:
   - title: 利用開始前の設定確認
     url: /preparation_for_use/
   - title: チュートリアル
-    url: /tutorial/
     children:
       - title: 基礎編
         url: /tutorial/1_basic_tutorial/
