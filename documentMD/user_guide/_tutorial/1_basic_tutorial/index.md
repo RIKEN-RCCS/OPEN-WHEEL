@@ -290,10 +290,20 @@ echoコマンドの行末に追記して `echo Hello WHEEL > stdout.txt` と変�
 
 ![img](./img/text_editor3.png "ファイル毎の保存メニュー")
 
-__close without save__ をクリックすると編集したテキストが破棄されてタブが閉じられます。
+__ファイル編集の破棄方法__  
+ファイルの編集を破棄したい場合は、__close without save__ ボタンを利用します。  
+__close without save__ ボタンをクリックすると、編集したテキストが破棄されてタブが閉じられます。
+{: .notice--info}
 
-今は、1ファイルしか開いていませんが複数ファイルを開いて編集し、一部のファイルのみを保存したい場合は
-__close without save__ で不要なファイル編集を破棄し、__SAVE ALL FILES__ ボタンで一括保存(または、 __save__ にて必要なファイルを個別に保存)してください。
+{% capture notice-save %}
+__一部のファイルのみを保存する方法__  
+複数ファイルを開いて編集し、一部のファイルのみを保存したい場合は以下の手順で保存します。  
+1. __close without save__ ボタンをクリックし、不要なファイル編集を破棄します。  
+1. __SAVE ALL FILES__ ボタンで一括保存(または、 __save__ ボタンにて必要なファイルを個別に保存)します。
+{% endcapture %}
+<div class="notice--info">
+  {{ notice-save | markdownify }}
+</div>
 
 スクリプトの編集が終わったらグラフビュー画面に戻って、再びtask0のプロパティを編集します。
 
@@ -312,7 +322,7 @@ __close without save__ で不要なファイル編集を破棄し、__SAVE ALL F
 
 ![img](./img/property_screen6.png "remote file setting")
 
-includeの欄(1)に __stdout.txt__ と入力してエンターキーを押すか、
+includeの欄(1)に __stdout.txt__ と入力してEnterキーを押すか、
 右にある __+__ ボタン(2)をクリックしてください。
 
 ![img](./img/property_screen7.png "include設定")
@@ -328,8 +338,8 @@ echoコマンドの実行結果がファイルに出力されています。
 
 ![img](./img/job_result2.png "ジョブ実行結果出力")
 
-以上でバッチシステム経由でのタスク実行は終了です。次のチュートリアルのために
-__stop and cleanup project__ ボタンをクリックしてプロジェクトを初期化してください。
+以上でバッチシステム経由でのタスク実行は終了です。  
+次のチュートリアルのために __stop and cleanup project__ ボタンをクリックしてプロジェクトを初期化してください。
 
 <!--### 9. 入出力ファイルの受け渡し-->
 ### 8. 入出力ファイルの受け渡し
@@ -340,7 +350,7 @@ __stop and cleanup project__ ボタンをクリックしてプロジェクトを
 ここでは、WHEELのタスクコンポーネント間でファイルを受け渡す方法について学びましょう。
 
 まず、ワークフローに2つ目のタスクを追加してください。
-最初のタスクの名前を変更しておらずtask0のままにしていた場合、task1という名前のタスクが作成されます。
+最初のタスクの名前をデフォルトのtask0から変更していない場合、task1という名前のタスクが作成されます。
 
 ![img](./img/workflow7.png "2つ目のタスク")
 
@@ -457,8 +467,8 @@ task0コンポーネントの下部にある▼(1)をドラッグして、task1�
 
 これで基本編のチュートリアルは終了です。
 
-本チュートリアルでは扱わなかったWHEELの高度な機能について
-知りたい方は [応用編のチュートリアル]({{ site.baseurl }}/tutorial/2_advanced_tutorial/) に進んでください。
+本チュートリアルでは扱わなかったWHEELの高度な機能について知りたい方は
+[応用編チュートリアル]({{ site.baseurl }}/tutorial/2_advanced_tutorial/) に進んでください。
 
 また、個々の機能の詳細な内容については、[リファレンスマニュアル]({{ site.baseurl }}/reference/) をご参照ください。
 
