@@ -46,19 +46,23 @@ __OK__ ボタンをクリックして、ダイアログを閉じます。
 !["リモートホスト一覧"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/remotehost_list.png "リモートホスト一覧")
 
 __connection test__ 列に表示された __TEST__ ボタンをクリックし、リモートホストへの接続テストを行います。
+
 !["connection test"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/connection_test.png "connection test")
 
 パスワード入力ダイアログが表示されます。リモートホストに接続するためのパスワードを入力し、 __OK__ ボタンをクリックします。
+
 !["Input password"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/input_password.png "Input password")
 
 リモートホストへの接続テストが実施され、リモートホスト一覧の __connection test__ 列に結果が表示されます。
 
 
 リモートホストへの接続が成功した場合は、 __OK__ ボタン表示になります。
+
 !["Result ok"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/result_ok.png "Result ok")
 
 リモートホストへの接続が失敗した場合は、 __FAILED__ ボタン表示になります。  
 [リモートホスト設定の確認](#リモートホスト設定の確認)に従い、設定内容を見直してください。
+
 !["Result failed"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/result_failed.png "Result failed")
 
 

@@ -1,8 +1,7 @@
 ---
-title: Advanced tutorial
+title: 応用編チュートリアル
 ---
 
-## 応用編チュートリアルについて
 本チュートリアルでは、基礎編では触れなかった機能を扱います。
 
 基礎編とは違い全ての項目は独立しています。
@@ -490,4 +489,4 @@ stepjobTask1は実行され、stdout.txtの中に `stepjobTask1` と書かれて
 
 
 --------
-[チュートリアルのトップページに戻る]({{ site.baseurl }}/tutorial/)
+[利用者向けのトップページに戻る]({{ site.baseurl }}/tutorial/)
