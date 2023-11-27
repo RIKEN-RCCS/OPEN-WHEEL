@@ -47,7 +47,7 @@ decomposePar
 cavityケースをコピーした後、blockMeshによるメッシュ生成、decomposeParによる
 領域分割を行ないます。
 
-コンポーネントのプロパティ画面を開いて以下の4項目を設定してください。
+コンポーネントのプロパティ画面を開いて、以下の4項目を設定してください。
 
 - script: run.sh
 - host: fugaku
