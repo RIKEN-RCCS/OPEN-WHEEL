@@ -71,6 +71,7 @@ refs:
       - title: テキストエディタ
         url: /reference/3_workflow_screen/3_editor.html
   - title: 4. コンポーネント
+    url: /reference/4_component/
     children:
       - title: 共通項目
         url: /reference/4_component/00_common.html
