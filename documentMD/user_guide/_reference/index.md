@@ -6,7 +6,7 @@ toc: false
 
 [1. ホーム画面](1_home_screen/)
 
-[2. リモートホスト画面](2_remotehost_screen/)
+[2. リモートホスト設定画面](2_remotehost_screen/)
 
 __3. ワークフロー画面__  
 

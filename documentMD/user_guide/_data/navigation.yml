@@ -60,7 +60,7 @@ admin-docs:
 refs:
   - title: 1. ホーム画面
     url: /reference/1_home_screen/
-  - title: 2. リモートホスト画面
+  - title: 2. リモートホスト設定画面
     url: /reference/2_remotehost_screen/
   - title: 3. ワークフロー画面
     children:
