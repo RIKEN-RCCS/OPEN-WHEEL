@@ -38,7 +38,11 @@ async function gitPromise(cwd, args, rootDir) {
     });
     cp.on("exit", (rt)=>{
       if (rt !== 0) {
-        reject(output);
+        const err = new Error(output)
+        err.cwd = cwd;
+        err.abs_cwd = path.resolve(cwd);
+        err.args = args;
+        reject(err);
       }
       resolve(output);
     });
