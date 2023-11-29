@@ -206,8 +206,7 @@ class JobManager extends EventEmitter {
             await gatherFiles(task);
           }
           await createStatusFile(task);
-          //ここでスクリプトの終了コードとジョブの終了コード両方を見て値を返す必要がある
-          return task.rt;
+          return task.jobStatus !== 0 ? task.jobStatus : task.rt;
         } catch (err) {
           ++statusCheckFailedCount;
           err.jobID = task.jobID;
