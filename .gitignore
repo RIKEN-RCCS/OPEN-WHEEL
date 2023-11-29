@@ -17,3 +17,5 @@ _user_guide
 *.swp
 server/app/viewer
 **/_site
+tmp.*
+tmp_config.*
