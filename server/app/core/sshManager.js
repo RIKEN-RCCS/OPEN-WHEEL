@@ -117,11 +117,11 @@ function removeSsh(projectRootDir) {
 /**
  * ask password to client
  * @param {string} clientID - socket's ID
- * @param {string} hostname - name or kind of label for the host
+ * @param {string} message - text to be shown on dialog screen at client side
  */
-function askPassword(clientID, hostname) {
+function askPassword(clientID, message) {
   return new Promise((resolve, reject)=>{
-    emitAll(clientID, "askPassword", hostname, (data)=>{
+    emitAll(clientID, "askPassword", message, (data)=>{
       if (data === null) {
         const err = new Error("user canceled ssh password prompt");
         err.reason = "CANCELED";

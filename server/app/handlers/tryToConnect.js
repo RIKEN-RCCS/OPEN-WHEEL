@@ -17,8 +17,8 @@ const { askPassword } = require("../core/sshManager.js");
  * @param {Function} cb - call back function called with string "success" or "error"
  */
 async function tryToConnect(clientID, hostInfo, cb) {
-  hostInfo.password = askPassword.bind(null, clientID, `${hostInfo.host} - password`);
-  hostInfo.passphrase = askPassword.bind(null, clientID, `${hostInfo.host} - passpharse`);
+  hostInfo.password = askPassword.bind(null, clientID, `${hostInfo.name} - password`);
+  hostInfo.passphrase = askPassword.bind(null, clientID, `${hostInfo.name} - passpharse`);
 
   if (process.env.WHEEL_VERBOSE_SSH) {
     hostInfo.sshOpt = ["-vvv"];
