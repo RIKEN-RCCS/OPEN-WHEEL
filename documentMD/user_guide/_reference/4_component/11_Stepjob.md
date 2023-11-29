@@ -4,7 +4,7 @@ title: Stepjob
 
 ![img](./img/stepjob.png)
 
-stepjob/stepjobTaskコンポーネントは、ジョブスケジューラ「FUJITSU Software Technical Computing Suite（TCS）」のステップジョブ機能に基づいた機能です。
+stepjob/stepjobTaskコンポーネントは、HPCミドルウェア「FUJITSU Software Technical Computing Suite（TCS）」のステップジョブ機能に基づいた機能です。
 ステップジョブを利用できるリモートホストが設定されている場合のみ使用することができます。
 
 本機能は、stepjobコンポーネントとstepjobコンポーネント内でのみ使用できるstepjobTaskコンポーネントを組み合わせて使用します。
@@ -15,7 +15,7 @@ stepjobコンポーネントは特殊なworkflowコンポーネントとして�
 stepjobtaskコンポーネントは実行順と依存関係式を指定することができます。
 これらの設定に基づいてTCSのステップジョブ機能を用いてサブジョブとして投入されます。
 
-ステップジョブ機能の詳細に関しては、ジョブスケジューラ「FUJITSU Software Technical Computing Suite（TCS）」のドキュメントをご確認ください。
+ステップジョブ機能の詳細に関しては、HPCミドルウェア「FUJITSU Software Technical Computing Suite（TCS）」のドキュメントをご確認ください。
 
 Stepjob/StepjobTaskコンポーネントに設定できるプロパティは以下のとおりです。
 

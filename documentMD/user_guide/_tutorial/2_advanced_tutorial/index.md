@@ -364,7 +364,7 @@ foo.txt, bar.txtが表示されます。
 
 
 ### 7. バルクジョブ
-富岳を初めとした、富士通株式会社製の "Technical Computing Suite" ジョブスケジューラを
+富岳を初めとした、富士通株式会社製HPCミドルウェア「FUJITSU Software Technical Computing Suite」を
 採用したシステムでは、バルクジョブ機能を使用することができます。
 
 WHEELには、この機能をGUIから簡単に使うための bulkjobTask コンポーネントが用意されています。
@@ -379,7 +379,7 @@ WHEELには、この機能をGUIから簡単に使うための bulkjobTask コ�
 bulkjob機能が利用可能なリモートホストを指定してください。
 
 __バルクジョブ機能使用時のリモートホスト設定について__  
-実際に利用するホストで稼動しているジョブスケジューラがバルクジョブ機能をサポートしていても、
+実際に利用するホストで稼動しているバッチシステムがバルクジョブ機能をサポートしていても、
 remotehost設定で __use bulkjob__ を有効にしていないとバルクジョブ機能は使えませんので、ご注意ください。  
 ![img](./img/remotehost.png "use bulkjobの設定")
 {: .notice--info}
@@ -407,7 +407,7 @@ __include__ に `run.sh*` と指定してください。
 
 
 ### 8. ステップジョブ
-富岳を初めとした、富士通株式会社製の "Technical Computing Suite" ジョブスケジューラを
+富岳を初めとした、富士通株式会社製のHPCミドルウェア「FUJITSU Software Technical Computing Suite」を
 採用したシステムでは、ステップジョブ機能を使用することができます。
 
 WHEELには、この機能をGUIから簡単に使うための stepJob および stepJobTask コンポーネントが
@@ -416,7 +416,7 @@ WHEELには、この機能をGUIから簡単に使うための stepJob および
 ![img](./img/component_library_stepjob.png "stepjobコンポーネント")
 
 WHEELのステップジョブ機能は、stepJobコンポーネントの中にstepJobTaskコンポーネントを複数定義して
-依存関係を定義したものを、ジョブスケジューラのstepjob機能を用いて実行するものです。
+依存関係を定義したものを、バッチシステムのstepjob機能を用いて実行するものです。
 
 はじめに、新規プロジェクトを作成しstepJobコンポーネントを1つ追加してください。
 
@@ -426,7 +426,7 @@ stepjob機能が利用可能なリモートホストを指定してください�
 ![img](./img/workflow_stepjob.png "stepjobコンポーネントの設定")
 
 __ステップジョブ機能使用時のリモートホスト設定について__  
-実際に利用するホストで稼動しているジョブスケジューラがステップジョブ機能をサポートしていても、
+実際に利用するホストで稼動しているバッチシステムがステップジョブ機能をサポートしていても、
 remotehost設定で __use stepjob__ を有効にしていないとステップジョブ機能は使えませんので、ご注意ください。  
 ![img](./img/remotehost2.png "use stepjobの設定")
 {: .notice--info}

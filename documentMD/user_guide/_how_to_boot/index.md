@@ -137,7 +137,7 @@ __リモートホストへの接続にHTTPS通信を使用する場合__
 
 ![img](./img/edit_remotehost_setting.png "ホスト情報編集ダイアログ")
 
-リモートホストで使われているジョブスケジューラの種類を、 __job scheduler__ の欄(1)から選びます。
+リモートホストで使われているバッチシステムの種類を、 __job scheduler__ の欄(1)から選びます。
 現在設定可能な値は次の6種類です。
 
 - PBSPro
@@ -148,7 +148,7 @@ __リモートホストへの接続にHTTPS通信を使用する場合__
 - UGE (Univa Grid Engine)
 
 __PBSProWithoutHistoryについて__  
-PBSProには、ジョブスケジューラの設定で実行終了したジョブの情報を保存しないものがあります。  
+PBSProには、バッチシステムの設定で実行終了したジョブの情報を保存しないものがあります。  
 この場合 __PBSPro__ ではなく __PBSProWithoutHistory__ を使用してください。
 {: .notice--info}
 

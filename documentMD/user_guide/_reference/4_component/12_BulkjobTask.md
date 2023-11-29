@@ -4,13 +4,13 @@ title: BulkjobTask
 
 ![img](./img/bulkjobTask.png)
 
-bulkjobTaskコンポーネントは、ジョブスケジューラ「FUJITSU Software Technical Computing Suite（TCS）」のバルクジョブ機能に基づいた機能です。
+bulkjobTaskコンポーネントは、HPCミドルウェア「FUJITSU Software Technical Computing Suite（TCS）」のバルクジョブ機能に基づいた機能です。
 バルクジョブを利用できるリモートホストが設定されている場合のみ使用することができます。
 
 buildjobTaskコンポーネントには、バルク番号、インプットファイルを指定することができ
 これらの設定に基づいてサブジョブとして複数のジョブが投入されます。
 
-バルクジョブ機能の詳細に関しては、ジョブスケジューラ「FUJITSU Software Technical Computing Suite（TCS）」のドキュメントをご確認ください。
+バルクジョブ機能の詳細に関しては、HPCミドルウェア「FUJITSU Software Technical Computing Suite（TCS）」のドキュメントをご確認ください。
 
 bulkjobTaskコンポーネントに設定できるプロパティは以下のとおりです。
 
