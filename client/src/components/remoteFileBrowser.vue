@@ -345,10 +345,9 @@ export default {
           console.log("failed to get current selected Item");
           return
         }
-        const path = this.selectedComponent.type === "storage"
-          ?  `${[this.storagePath, item.id.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)}/` : item.id
+
         if(item.type === "dir" || item.type === "dir-link"){
-          SIO.emitGlobal("getRemoteFileList",this.projectRootDir, this.selectedComponent.host, {path, mode: "underComponent"}, cb)
+          SIO.emitGlobal("getRemoteFileList",this.projectRootDir, this.selectedComponent.host, {path: item.id, mode: "underComponent"}, cb)
         }else{
           //memo SND content is not supported in remote file browser for now
           SIO.emitGlobal("getSNDContents", this.projectRootDir, item.path , item.name, item.type.startsWith("sndd"),cb)
