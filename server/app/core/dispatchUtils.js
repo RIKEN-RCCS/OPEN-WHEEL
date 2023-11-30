@@ -20,6 +20,7 @@ async function pspawn(projectRootDir, script, options) {
         reject(err);
       }
     });
+    cp.on("error", reject);
     cp.on("close", (code)=>{
       getLogger(projectRootDir).debug("return value of conditional expression = ", code);
       resolve(code === 0);
