@@ -15,6 +15,7 @@
               v-bind="props"
               @click="onActiveted(item);onClickNodeIcon(item)"
               :class="{'text-primary': activatable && active.includes(item[itemKey])}"
+              :key=item[itemKey] 
             >
               <template #prepend>
                 <v-icon
@@ -56,6 +57,7 @@
         <v-list-item
           @click="onActiveted(item)"
           :class="{'text-primary': activatable && active.includes(item[itemKey])}"
+          :key=item[itemKey] 
         >
           <template #prepend>
             <v-icon
