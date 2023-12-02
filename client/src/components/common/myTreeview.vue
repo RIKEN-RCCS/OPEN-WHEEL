@@ -4,27 +4,31 @@
  * See License in the project root for the license information.
  */
 <template>
-  <inner-treeview
-    :items=items
-    :load-children=loadChildren
-    :activatable=activatable
-    :open-all=openAll
-    :item-key=itemKey
-    :get-node-icon="getNodeIcon"
-    :get-leaf-icon="getLeafIcon"
-    :active=active
-    @update:active="(e)=>{$emit('update:active', e);}"
-    ref=tree
-  >
-    <template #label={item}>
-      <slot name="label" :item="item">
-        {{item.name}}
-      </slot>
+  <v-list v-model:opened="open" density="compact">
+    <template v-for="item in items" :key=item[itemKey] >
+      <inner-treeview
+        :item=item
+        :load-children=loadChildren
+        :activatable=activatable
+        :open-all=openAll
+        :item-key=itemKey
+        :get-node-icon="getNodeIcon"
+        :get-leaf-icon="getLeafIcon"
+        :active=active
+        @update:active="(e)=>{$emit('update:active', e);}"
+        ref=tree
+      >
+        <template #label={item}>
+          <slot name="label" :item="item">
+            {{item.name}}
+          </slot>
+        </template>
+        <template #append={item}>
+          <slot name="append" :item="item"/>
+        </template>
+      </inner-treeview>
     </template>
-    <template #append={item}>
-      <slot name="append" :item="item"/>
-    </template>
-  </inner-treeview>
+  </v-list>
 </template>
 <script>
 import innerTreeview from "@/components/common/innerTreeview.vue";
@@ -68,12 +72,18 @@ export default {
   },
   data:()=>{
     return {
+      open:[],
       active: []
     }
   },
-  methods:{
-    updateAll(){
-      this.$refs.tree.updateAll();
+  mounted(){
+    if(this.openAll){
+      this.open.splice(0,this.open.length,...this.items.filter((item)=>{
+        return item && Array.isArray(item.children);
+      })
+        .map((e)=>{
+          return e[this.itemKey]
+        }))
     }
   }
 }
