@@ -1,7 +1,10 @@
 ---
 title: コンポーネントの詳細
-toc: none
+toc: false
 ---
+
+各コンポーネントの詳細について、説明します。
+
 * [共通項目](00_common.html)
 * [Task](01_Task.html)
 * [If](02_If.html)
