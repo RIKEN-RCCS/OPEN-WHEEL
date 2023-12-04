@@ -9,7 +9,7 @@ toc: false
 * [Task](01_Task.html)
 * [If](02_If.html)
 * [For](03_For.html)
-* [while](04_while.html)
+* [While](04_while.html)
 * [Foreach](05_Foreach.html)
 * [PS](06_PS.html)
 * [Workflow](07_Workflow.html)
