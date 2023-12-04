@@ -3,7 +3,7 @@ title: 共通項目
 ---
 本節では、全コンポーネントに共通する仕様について説明します。
 
-## name,description
+## name, description
 全てのコンポーネントは共通して、__name__ プロパティと __description__ プロパティを持ちます。
 
 ![img](./img/name_description.png "name_and_description")
@@ -22,9 +22,10 @@ nameのみでは識別し難いコンポーネントを区別したり、
 コンポーネントの処理内容を説明する(スクリプトやソースコードにおける)コメントのような使い方をしたりすることができます。
 
 
-## input files / output files
-WHEELには、コンポーネント内のファイルを別のコンポーネントで使うために
-転送するinput files / output filesという機能があります。
+## input files, output files
+WHEELには、コンポーネント内のファイルを 
+ 別のコンポーネントで使うために転送する機能があります。
+この機能には、input filesプロパティとoutput filesプロパティを用います。
 
 ![img](./img/input_output_files.png "inputFiles_outputFiles")
 
