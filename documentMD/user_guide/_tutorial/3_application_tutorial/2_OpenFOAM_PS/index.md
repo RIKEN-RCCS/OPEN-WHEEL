@@ -142,7 +142,7 @@ min=5, max=7, step=1 を設定してください。
 
 __Add New Gather Setting__ ボタンをクリックしてgather設定ダイアログを表示します。
 __solve__ を選択し、 __srcName__ に `D50-d10.tar.gz`、__dstName__ に
-`results/{{ U }}/D50-d10.tar.gz` と入力してください。
+<code>results/&lbrace;&lbrace; U &rbrace;&rbrace;/D50-d10.tar.gz</code> と入力してください。
 
 ![img](./img/PS_gather_setting.png "PS結果ファイル回収設定")
 
