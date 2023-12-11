@@ -36,7 +36,7 @@ const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemp
 const { onGetResultFiles } = require("./resultFiles.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
-const { onRequestRemoteConnection, onGetRemoteFileList, onGetRemoteSNDContents, onRemoteDownload } = require("./remoteFileBrowser.js");
+const { onCreateNewRemoteFile, onCreateNewRemoteDir, onRequestRemoteConnection, onGetRemoteFileList, onGetRemoteSNDContents, onRemoteDownload,  onRenameRemoteFile, onRemoveRemoteFile, } = require("./remoteFileBrowser.js");
 
 
 const registerHandlers = (socket, Siofu)=>{
@@ -121,9 +121,17 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //remote file browser
   //
+  //create
+  socket.on("createNewRemoteFile", onCreateNewRemoteFile);
+  socket.on("createNewRemoteDir", onCreateNewRemoteDir);
+  //read
   socket.on("getRemoteFileList", onGetRemoteFileList);
   socket.on("getRemoteSNDContents", onGetRemoteSNDContents);
   socket.on("downloadRemote", onRemoteDownload);
+  //update
+  socket.on("renameRemoteFile", onRenameRemoteFile);
+  //delete
+  socket.on("removeRemoteFile", onRemoveRemoteFile);
 
 
   //
@@ -190,6 +198,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("tryToConnectById", onTryToConnectById.bind(null, socket.id));
   socket.on("requestRemoteConnection", onRequestRemoteConnection.bind(null, socket));
 };
+
 module.exports = {
   registerHandlers
 };

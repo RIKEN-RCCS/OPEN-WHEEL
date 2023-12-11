@@ -297,7 +297,7 @@ export default {
         console.log("failed to get current selected Item");
         return
       }
-      this.currentDir=this.activeItem.path
+      this.currentDir=this.activeItem.type === "file" ?this.activeItem.path : this.activeItem.id
       this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
     },
     onChoose(event){
@@ -358,6 +358,7 @@ export default {
       if (this.dialog.submitEvent === "removeFile") {
         SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
           if (!rt) {
+            console.log(rt);
             return
           }
           removeItem(this.items, this.activeItem.id)
@@ -367,12 +368,17 @@ export default {
         })
       } else if (this.dialog.submitEvent === "renameFile") {
         const newName = this.dialog.inputField
+        const oldName = this.activeItem.name
 
         SIO.emitGlobal("renameFile", this.projectRootDir, this.currentDir, this.activeItem.name, newName, (rt)=>{
           if (!rt) {
+            console.log(rt);
             return
           }
           this.activeItem.name = newName
+          const re=new RegExp(oldName+"$")
+          this.activeItem.id = this.activeItem.id.replace(re,newName);
+          this.updateSelected(this.activeItem);
         })
       } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
         const name = this.dialog.inputField
@@ -394,6 +400,7 @@ export default {
         const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir"
         SIO.emitGlobal(this.dialog.submitEvent, this.projectRootDir, fullPath, (rt)=>{
           if (!rt) {
+            console.log(rt);
             return
           }
           const newItem = { id: fullPath, name, path:rt.parent, type }
