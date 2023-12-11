@@ -154,7 +154,7 @@ async function createNewProject(argProjectRootDir, name, argDescription, user, m
   //write root workflow
   const rootWorkflow = componentFactory("workflow");
   rootWorkflow.name = name;
-  rootWorkflow.cleanupFlag = defaultCleanupRemoteRoot === 0 ? 0 : 1;
+  rootWorkflow.cleanupFlag = defaultCleanupRemoteRoot ? 0 : 1;
 
   getLogger().debug(rootWorkflow);
   await writeComponentJson(projectRootDir, projectRootDir, rootWorkflow)
