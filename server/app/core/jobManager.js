@@ -206,7 +206,7 @@ class JobManager extends EventEmitter {
             await gatherFiles(task);
           }
           await createStatusFile(task);
-          return task.rt;
+          return task.jobStatus !== 0 ? task.jobStatus : task.rt;
         } catch (err) {
           ++statusCheckFailedCount;
           err.jobID = task.jobID;

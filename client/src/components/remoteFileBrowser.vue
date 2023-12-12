@@ -252,7 +252,7 @@ export default {
       SIO.onUploaderEvent("complete", this.onUploadComplete)
       SIO.onUploaderEvent("progress", this.updateProgressBar)
     }
-    this.currentDir=this.selectedComponentAbsPath
+    this.currentDir=this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
   },
   beforeDestroy(){
     SIO.removeUploaderEvent("choose", this.onChoose)
@@ -300,8 +300,8 @@ export default {
         console.log("failed to get current selected Item");
         return
       }
-      this.currentDir=this.activeItem.path
-      this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
+      this.currentDir=this.activeItem.type === "file" ?this.activeItem.path : this.activeItem.id
+      this.commitSelectedFile(null); //we cant open remote file with text editor
     },
     onChoose(event){
       for (const file of event.files){
@@ -313,7 +313,7 @@ export default {
         file.meta.skipGit=true;
         file.meta.overwrite=true;
         file.meta.remoteUploadPath=this.storagePath
-        file.meta.remotehost=this.selectedComponent.host 
+        file.meta.remotehost=this.selectedComponent.host
       }
       this.uploading=true;
     },
@@ -345,10 +345,9 @@ export default {
           console.log("failed to get current selected Item");
           return
         }
-        const path = this.selectedComponent.type === "storage"
-          ?  `${[this.storagePath, item.id.replace(this.selectedComponentAbsPath+this.pathSep,"")].join(this.pathSep)}/` : item.id
+
         if(item.type === "dir" || item.type === "dir-link"){
-          SIO.emitGlobal("getRemoteFileList",this.projectRootDir, this.selectedComponent.host, {path, mode: "underComponent"}, cb)
+          SIO.emitGlobal("getRemoteFileList",this.projectRootDir, this.selectedComponent.host, {path: item.id, mode: "underComponent"}, cb)
         }else{
           //memo SND content is not supported in remote file browser for now
           SIO.emitGlobal("getSNDContents", this.projectRootDir, item.path , item.name, item.type.startsWith("sndd"),cb)
@@ -363,22 +362,28 @@ export default {
     },
     submitAndCloseDialog () {
       if (this.dialog.submitEvent === "removeFile") {
-        SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
+        SIO.emitGlobal("removeRemoteFile", this.projectRootDir, this.activeItem.id, this.selectedComponent.host, (rt)=>{
           if (!rt) {
+            console.log(rt);
             return
           }
           removeItem(this.items, this.activeItem.id)
           this.commitSelectedFile(null);
-          this.currentDir=this.selectedComponentAbsPath
+          this.currentDir=this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
         })
       } else if (this.dialog.submitEvent === "renameFile") {
         const newName = this.dialog.inputField
+        const oldName = this.activeItem.name
 
-        SIO.emitGlobal("renameFile", this.projectRootDir, this.currentDir, this.activeItem.name, newName, (rt)=>{
+        SIO.emitGlobal("renameRemoteFile", this.projectRootDir, this.activeItem.path, this.activeItem.name, newName, this.selectedComponent.host, (rt)=>{
           if (!rt) {
+            console.log(rt);
             return
           }
           this.activeItem.name = newName
+          const re=new RegExp(oldName+"$")
+          this.activeItem.id = this.activeItem.id.replace(re,newName);
+          this.updateSelected(this.activeItem);
         })
       } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
         const name = this.dialog.inputField
@@ -389,8 +394,10 @@ export default {
           return
         }
         const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir"
-        SIO.emitGlobal(this.dialog.submitEvent, this.projectRootDir, fullPath, (rt)=>{
+        const event = this.dialog.submitEvent === "createNewFile" ? "createNewRemoteFile":"createNewRemoteDir"
+        SIO.emitGlobal(event, this.projectRootDir, fullPath, this.selectedComponent.host, (rt)=>{
           if (!rt) {
+            console.log(rt);
             return
           }
           const newItem = { id: fullPath, name, path:this.currentDir, type }

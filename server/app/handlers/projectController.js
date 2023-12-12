@@ -162,12 +162,12 @@ async function onRunProject(clientID, projectRootDir, ack) {
         const id = remoteHost.getID("name", host.hostname);
         const hostInfo = remoteHost.get(id);
         if (!hostInfo) {
-          throw new Error(`illegal remote host specified ${host.name}`);
+          throw new Error(`illegal remote host specified ${hostInfo.name}`);
         }
         if (hostInfo.type === "aws") {
-          throw new Error(`aws type remotehost is no longer supported ${host.name}`);
+          throw new Error(`aws type remotehost is no longer supported ${hostInfo.name}`);
         }
-        await createSsh(projectRootDir, host.name, hostInfo, clientID, host.isStorage);
+        await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage);
       }
     } catch (err) {
       await updateProjectState(projectRootDir, "not-started");

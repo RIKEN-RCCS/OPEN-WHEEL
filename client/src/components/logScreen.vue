@@ -60,9 +60,6 @@ export default {
   components: {
     xterm,
   },
-  mounted(){
-    console.log("logscreen mounted");
-  },
   props:{
     show: Boolean
   },

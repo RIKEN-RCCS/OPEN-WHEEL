@@ -154,7 +154,7 @@ async function createNewProject(argProjectRootDir, name, argDescription, user, m
   //write root workflow
   const rootWorkflow = componentFactory("workflow");
   rootWorkflow.name = name;
-  rootWorkflow.cleanupFlag = defaultCleanupRemoteRoot === 0 ? 0 : 1;
+  rootWorkflow.cleanupFlag = defaultCleanupRemoteRoot ? 0 : 1;
 
   getLogger().debug(rootWorkflow);
   await writeComponentJson(projectRootDir, projectRootDir, rootWorkflow)
@@ -618,8 +618,9 @@ async function importProject(projectRootDir) {
  * @param {string} projectRootDir - git repo's root directory
  * @param {string} dir - root component directory
  * @param {string} state  - state to be set
+ * @param {Boolean} doNotAdd- - call gitAdd if false
  */
-async function setComponentStateR(projectRootDir, dir, state) {
+async function setComponentStateR(projectRootDir, dir, state, doNotAdd=false) {
   const filenames = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
   filenames.push(path.join(dir, componentJsonFilename));
   const p = filenames.map((filename)=>{
@@ -627,7 +628,7 @@ async function setComponentStateR(projectRootDir, dir, state) {
       .then((component)=>{
         component.state = state;
         const componentDir=path.dirname(filename);
-        return writeComponentJson(projectRootDir, componentDir, component )
+        return writeComponentJson(projectRootDir, componentDir, component, doNotAdd )
       });
   });
   return Promise.all(p);
@@ -739,7 +740,7 @@ async function isSameRemoteHost(projectRootDir, left, right) {
  * @param {Object} component - component JSON data
  * @param {Boolean} doNotAdd- - call gitAdd if false
  */
-async function writeComponentJson(projectRootDir, componentDir, component, doNotAdd=false ) {
+async function writeComponentJson(projectRootDir, componentDir, component, doNotAdd=false) {
   const filename = path.join(componentDir, componentJsonFilename);
   await fs.writeJson(filename, component, { spaces: 4, replacer: componentJsonReplacer });
 

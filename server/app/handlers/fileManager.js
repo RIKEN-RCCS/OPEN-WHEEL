@@ -10,6 +10,7 @@ const glob = require("glob");
 const minimatch = require("minimatch");
 const klaw = require("klaw");
 const { zip } = require("zip-a-folder");
+const isPathInside = require("is-path-inside");
 const { gitAdd, gitRm, gitLFSTrack, gitLFSUntrack, isLFS } = require("../core/gitOperator2");
 const { convertPathSep } = require("../core/pathUtils");
 const { getUnusedPath, deliverFile } = require("../core/fileUtils.js");
@@ -96,7 +97,10 @@ async function onCreateNewFile(projectRootDir, argFilename, cb) {
 
   try {
     await fs.writeFile(filename, "");
-    await gitAdd(projectRootDir, filename);
+
+    if(isPathInside(filename, projectRootDir)){
+      await gitAdd(projectRootDir, filename);
+    }
   } catch (e) {
     getLogger(projectRootDir).error(projectRootDir, "create new file failed", e);
     cb(null);
@@ -110,8 +114,11 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
 
   try {
     await fs.mkdir(dirname);
-    await fs.writeFile(path.resolve(dirname, ".gitkeep"), "");
-    await gitAdd(projectRootDir, path.resolve(dirname, ".gitkeep"));
+
+    if(isPathInside(dirname, projectRootDir)){
+      await fs.writeFile(path.resolve(dirname, ".gitkeep"), "");
+      await gitAdd(projectRootDir, path.resolve(dirname, ".gitkeep"));
+    }
   } catch (e) {
     getLogger(projectRootDir).error(projectRootDir, "create new directory failed", e);
     cb(null);
@@ -122,7 +129,9 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
 
 async function onRemoveFile(projectRootDir, target, cb) {
   try {
-    await gitRm(projectRootDir, target);
+    if(isPathInside(target, projectRootDir)){
+      await gitRm(projectRootDir, target);
+    }
     await fs.remove(target);
   } catch (err) {
     getLogger(projectRootDir).warn(`removeFile failed: ${err}`);
@@ -149,23 +158,28 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
 
 
   try {
-    await gitRm(projectRootDir, oldName);
-    const stats = await fs.stat(oldName);
+    if(isPathInside(oldName, projectRootDir)){
+      await gitRm(projectRootDir, oldName);
+      const stats = await fs.stat(oldName);
 
-    if (stats.isFile() && await isLFS(projectRootDir, oldName)) {
-      await gitLFSUntrack(projectRootDir, oldName);
-      await gitLFSTrack(projectRootDir, newName);
-    } else {
-      for await (const file of klaw(oldName)) {
-        if (file.stats.isFile() && await isLFS(projectRootDir, file.path)) {
-          await gitLFSUntrack(projectRootDir, file.path);
-          const newAbsFilename = file.path.replace(oldName, newName);
-          await gitLFSTrack(projectRootDir, newAbsFilename);
+      if (stats.isFile() && await isLFS(projectRootDir, oldName)) {
+        await gitLFSUntrack(projectRootDir, oldName);
+        await gitLFSTrack(projectRootDir, newName);
+      } else {
+        for await (const file of klaw(oldName)) {
+          if (file.stats.isFile() && await isLFS(projectRootDir, file.path)) {
+            await gitLFSUntrack(projectRootDir, file.path);
+            const newAbsFilename = file.path.replace(oldName, newName);
+            await gitLFSTrack(projectRootDir, newAbsFilename);
+          }
         }
       }
     }
     await fs.move(oldName, newName);
-    await gitAdd(projectRootDir, newName);
+
+    if(isPathInside(newName, projectRootDir)){
+      await gitAdd(projectRootDir, newName);
+    }
   } catch (e) {
     const err = typeof e === "string" ? new Error(e) : e;
     err.path = parentDir;
@@ -195,7 +209,7 @@ const onUploadFileSaved = async (event)=>{
   const fileSizeMB = parseInt(event.file.size / 1024 / 1024, 10);
   getLogger(projectRootDir).info(`upload completed ${absFilename} [${fileSizeMB > 1 ? `${fileSizeMB} MB` : `${event.file.size} Byte`}]`);
 
-  if (event.file.meta.skipGit) {
+  if (event.file.meta.skipGit || !isPathInside(absFilename, projectRootDir)) {
     getLogger(projectRootDir).debug("git add skipped", event.file.name);
   } else {
     if (fileSizeMB > gitLFSSize) {

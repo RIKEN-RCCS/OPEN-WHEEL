@@ -115,9 +115,65 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
     return cb(null);
   }
 }
+
+/**
+ * create new empty file by touch on remotehost
+ * @param {string} projectRootDir -
+ * @param {string} argFilename -
+ * @param {string} host - label of hostInof
+ * @param {Function} cb - call back function should be called on client
+ */
+async function  onCreateNewRemoteFile(projectRootDir, argFilename, host, cb){
+  try{
+    const id = remoteHost.getID("name", host);
+    const ssh = await getSsh(projectRootDir, id);
+    const rt = await ssh.exec(`touch ${argFilename}`)
+    getLogger(projectRootDir).debug(`create ${argFilename} on ${host}`);
+    return cb(rt === 0 ? true : rt);
+  }catch(e){
+    return cb(e)
+  }
+}
+async function  onCreateNewRemoteDir(projectRootDir, argDirname, host, cb){
+  try{
+    const id = remoteHost.getID("name", host);
+    const ssh = await getSsh(projectRootDir, id);
+    const rt =  await ssh.exec(`mkdir ${argDirname}`)
+    return cb(rt === 0 ? true : rt);
+  }catch(e){
+    return cb(e)
+  }
+}
+async function  onRemoveRemoteFile(projectRootDir, target, host, cb){
+  try{
+    const id = remoteHost.getID("name", host);
+    const ssh = await getSsh(projectRootDir, id);
+    const rt =  await ssh.exec(`rm -fr ${target}`)
+    return cb(rt === 0 ? true : rt);
+  }catch(e){
+    return cb(e)
+  }
+}
+async function  onRenameRemoteFile(projectRootDir, parentDir, argOldName, argNewName, host, cb){
+  try{
+    const oldName=path.join(parentDir, argOldName)
+    const newName=path.join(parentDir, argNewName)
+    const id = remoteHost.getID("name", host);
+    const ssh = await getSsh(projectRootDir, id);
+    const rt = await ssh.exec(`mv ${oldName} ${newName}`)
+    return cb(rt === 0 ? true : rt);
+  }catch(e){
+    return cb(e)
+  }
+}
+
 module.exports = {
   onRequestRemoteConnection,
   onGetRemoteFileList,
   onGetRemoteSNDContents,
-  onRemoteDownload
+  onRemoteDownload,
+  onCreateNewRemoteFile,
+  onCreateNewRemoteDir,
+  onRemoveRemoteFile,
+  onRenameRemoteFile
 };

@@ -168,77 +168,78 @@ class Dispatcher extends EventEmitter {
   }
 
   async _dispatch() {
-    this.logger.trace("_dispatch called", this.cwfDir);
+    try{
+      this.logger.trace("_dispatch called", this.cwfDir);
 
-    if (this.firstCall) {
-      await this._asyncInit();
-      const childComponents = await getChildren(this.projectRootDir, this.cwfID);
-      this.currentSearchList = childComponents.filter((component)=>{
-        return isInitialComponent(component);
-      });
-      this.logger.debug("initial tasks : ", this.currentSearchList.map((e)=>{
+      if (this.firstCall) {
+        await this._asyncInit();
+        const childComponents = await getChildren(this.projectRootDir, this.cwfID);
+        this.currentSearchList = childComponents.filter((component)=>{
+          return isInitialComponent(component);
+        });
+        this.logger.debug("initial tasks : ", this.currentSearchList.map((e)=>{
+          return e.name;
+        }));
+        this.firstCall = false;
+      }
+
+      this.logger.trace("currentList:", this.currentSearchList.map((e)=>{
         return e.name;
       }));
-      this.firstCall = false;
-    }
 
-    this.logger.trace("currentList:", this.currentSearchList.map((e)=>{
-      return e.name;
-    }));
+      const promises = [];
+      while (this.currentSearchList.length > 0) {
+        const target = this.currentSearchList.shift();
 
-    const promises = [];
-    while (this.currentSearchList.length > 0) {
-      const target = this.currentSearchList.shift();
+        if (target.disable) {
+          this.logger.info(`disabled component: ${target.name}(${target.ID})`);
+          continue;
+        }
 
-      if (target.disable) {
-        this.logger.info(`disabled component: ${target.name}(${target.ID})`);
-        continue;
-      }
+        if (!await this._isReady(target)) {
+          this.pendingComponents.push(target);
+          continue;
+        }
 
-      if (!await this._isReady(target)) {
-        this.pendingComponents.push(target);
-        continue;
-      }
+        await this._getInputFiles(target);
+        await this._setComponentState(target, "running");
+        promises.push(this._dispatchOneComponent(target));
+      }//end of while loop
 
-      await this._getInputFiles(target);
-      await this._setComponentState(target, "running");
-      promises.push(this._dispatchOneComponent(target));
-    }//end of while loop
-
-    if (promises.length > 0) {
-      try {
+      if (promises.length > 0) {
         await Promise.all(promises);
-      } catch (e) {
-        this.emit("error", e);
       }
+      this.logger.debug("search next components");
+
+      //remove duplicated entry
+      this.currentSearchList = removeDuplicatedComponent(this.pendingComponents);
+      this.currentSearchList = await this._removeComponentsWhichHasDisabledDependency(this.currentSearchList);
+      this.pendingComponents = [];
+      this.runningTasks = this.runningTasks.filter((task)=>{
+        return !isFinishedState(task.state);
+      });
+
+      if (this._isFinished()) {
+        const state = this._getState();
+        this.emit("done", state);
+      } else {
+        this.logger.trace("waiting component", this.currentSearchList.map((e)=>{
+          return e.name;
+        }));
+
+        this.once("dispatch", this._dispatch);
+      }
+
+      if (this.needToRerun) {
+        this.needToRerun = false;
+        this.logger.debug("revoke _dispatch()");
+        return this._reserveDispatch()
+      }
+      return true;
+    } catch (e) {
+      this.emit("error", e);
+      return false
     }
-    this.logger.debug("search next components");
-
-    //remove duplicated entry
-    this.currentSearchList = removeDuplicatedComponent(this.pendingComponents);
-    this.currentSearchList = await this._removeComponentsWhichHasDisabledDependency(this.currentSearchList);
-    this.pendingComponents = [];
-    this.runningTasks = this.runningTasks.filter((task)=>{
-      return !isFinishedState(task.state);
-    });
-
-    if (this._isFinished()) {
-      const state = this._getState();
-      this.emit("done", state);
-    } else {
-      this.logger.trace("waiting component", this.currentSearchList.map((e)=>{
-        return e.name;
-      }));
-
-      this.once("dispatch", this._dispatch);
-    }
-
-    if (this.needToRerun) {
-      this.needToRerun = false;
-      this.logger.debug("revoke _dispatch()");
-      return this._reserveDispatch()
-    }
-    return true;
   }
 
   async _hasDisabledDependency(component) {
@@ -309,15 +310,20 @@ class Dispatcher extends EventEmitter {
     if (this.listenerCount("dispatch") === 0) {
       this.once("dispatch", this._dispatch);
     }
-
-    for (const child of this.children) {
-      child.start();
-    }
-    setImmediate(()=>{
-      this.emit("dispatch");
-    });
     return new Promise((resolve, reject)=>{
+      for (const child of this.children) {
+        child.start()
+          .then(()=>{
+            this.children.forEach((e)=>{
+              if(e.done){
+                this.children.delete(e)
+              }
+            });
+          })
+          .catch((e)=>{this.onError(e)});
+      }
       const onStop = ()=>{
+        this.removeListener("dispatch", this._dispatch);
         /*eslint-disable no-use-before-define */
         this.removeListener("error", onError);
         this.removeListener("done", onDone);
@@ -338,6 +344,10 @@ class Dispatcher extends EventEmitter {
       this.once("done", onDone);
       this.once("error", onError);
       this.once("stop", onStop);
+
+      setImmediate(()=>{
+        this.emit("dispatch");
+      });
     });
   }
 
@@ -523,8 +533,6 @@ class Dispatcher extends EventEmitter {
     component.name = component.originalName;
     await this._addNextComponent(component);
     component.state = component.hasFaild ? "failed" : "finished";
-    //write to file
-    //to avoid git add when task state is changed, we do NOT use updateComponentJson(in workflowUtil) here
     const componentDir = this._getComponentDir(component.ID);
     await writeComponentJson(this.projectRootDir, componentDir, component, true);
   }
@@ -596,7 +604,7 @@ class Dispatcher extends EventEmitter {
           return !subComponent;
         }
       });
-      await setComponentStateR(this.projectRootDir, dstDir, "not-started");
+      await setComponentStateR(this.projectRootDir, dstDir, "not-started", true);
       await writeComponentJson(this.projectRootDir, dstDir, newComponent, true);
       await this._delegate(newComponent);
 

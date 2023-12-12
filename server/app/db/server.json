@@ -4,7 +4,7 @@
   "projectListJsonFile": "projectList.json",
   "jobScriptTemplateJsonFile": "jobScriptTemplate.json",
   "interval": 1000,
-  "defaultCleanupRemoteRoot": true,
+  "defaultCleanupRemoteRoot": false,
   "logFilename": "wheel.log",
   "numLogFiles": 5,
   "maxLogSize": 8388608,
