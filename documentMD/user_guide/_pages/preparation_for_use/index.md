@@ -13,7 +13,7 @@ WHEELの利用開始前に、初期設定として行われたリモートホス
 ### リモートホスト設定の確認
 WHEELにアクセスし、画面右上のハンバーガーメニューをクリックします。
 
-![hamburger menu]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/workflow6.png "hamburger menu")
+![hamburger menu]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/hamburger_menu.png "hamburger menu")
 
 表示されたメニュー内の __Remotehost editor__ をクリックします。リモートホスト設定画面が別タブで表示されます。
 
