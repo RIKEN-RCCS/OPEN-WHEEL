@@ -5,7 +5,9 @@ services:
     volumes:
       - .:/srv/jekyll/
     command: >
-      bash -c "gem install webrick && jekyll serve"
+      bash -c "gem install webrick &&
+      gem install jekyll-polyglot -v 1.5.1 &&
+      jekyll serve"
     ports:
       - "4000:4000"
     tty: true

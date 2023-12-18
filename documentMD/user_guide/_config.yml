@@ -1,8 +1,8 @@
 repository: taki-036/OPEN-WHEEL
 remote_theme: "mmistakes/minimal-mistakes"
 plugins:
-- jekyll-remote-theme
-- jekyll-include-cache
+  - jekyll-include-cache
+  - jekyll-remote-theme
 title: "WHEEL user guide"
 subtitle: "Workflow in Hierarchical distributEd parallEL"
 strict_front_matter: true
