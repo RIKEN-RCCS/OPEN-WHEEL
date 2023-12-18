@@ -106,6 +106,9 @@ __include__ には、ディレクトリ名やglobなどを指定することが�
 __remove files__ を指定すれば削除、
 __keep files__ を指定すればリモートホスト上に保存されます。  
 デフォルト設定では __same as parent__ が指定されており、上位コンポーネントの設定と同じ動作をします。
+なお、最上位コンポーネントで __same as parent__ を指定した場合は、__keep files__ を指定したときと同じ動作になります。
+
+
 
 --------
 [コンポーネントの詳細に戻る]({{ site.baseurl }}/reference/4_component/)
