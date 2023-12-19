@@ -17,12 +17,34 @@ BulkjobTaskコンポーネントに設定できるプロパティは以下のと
 ### use parameter setting file for bulk number
 バルク番号をパラメータ設定ファイルから指定するかどうかを設定します。
 
-有効の時はパラメータ設定ファイルを指定することができます。
+有効のときは、パラメータ設定ファイルを指定することができます。
 
-無効の時は、startおよびendの値を指定することができ、それぞれ開始バルク番号、終了バルク番号として扱われます。
+無効のときは、startおよびendの値を指定することができ、それぞれ開始バルク番号、終了バルク番号として扱われます。
 
 ### manual finish condition
-コンポーネントの終了状態の判定を独自に指定するかどうかを設定します。
+コンポーネントの終了状態の判定を独自に指定するかどうかを設定します。  
+有効にした場合は、さらにコンポーネントの終了状態の判定基準を設定することができます。
+
+![img](./img/manual_finish_condition.png)
+
+#### use javascript expression for condition check
+コンポーネントの成功 / 失敗を判定するのに
+javascript式を用いるか、シェルスクリプトを用いるかを指定します。
+
+ - 無効のとき  
+ ![img](./img/task_retry_expression_disable.png "task_retry_expression_disable")<br/>
+無効のときは、シェルスクリプトを選択するドロップダウンリストが表示されます。  
+ここで指定されたシェルスクリプトが、コンポーネント実行終了後に実行され、
+戻り値が0であれば成功、0以外であれば失敗と判定されます。<br/><br/>
+なお、無指定のときは __script__ に指定したスクリプトの戻り値で同様の判定が行われます。
+
+ - 有効のとき  
+![img](./img/task_retry_expression_enable.png "task_retry_expression_enable")<br/>
+有効のときは、javascript式を記述することができます。  
+ここで入力した式が、コンポーネントの実行終了後に評価され、
+Truthyな値を返せば成功、
+Falsyな値を返せば失敗と判定されます。
+
 
 --------
 [コンポーネントの詳細に戻る]({{ site.baseurl }}/reference/4_component/)
