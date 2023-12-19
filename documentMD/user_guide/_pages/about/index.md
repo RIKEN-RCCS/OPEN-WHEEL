@@ -4,6 +4,7 @@ layout: single
 permalink: /about/
 toc: true
 toc_sticky: true
+lang: ja
 ---
 WHEELは、解析ジョブの作成/実行をインタラクティブに操作するWebツールです。
 ブラウザ上でワークフローを作成することで、CUIを使わずに複雑な解析ジョブを実行できます。

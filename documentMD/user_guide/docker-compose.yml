@@ -1,12 +1,14 @@
 version: "3"
 services:
   service_jekyll:
-    image: "jekyll/jekyll:pages"
+    image: "jekyll/jekyll:latest"
     volumes:
       - .:/srv/jekyll/
     command: >
       bash -c "gem install webrick &&
-      gem install jekyll-polyglot -v 1.5.1 &&
+      gem install jekyll-remote-theme &&
+      gem install jekyll-include-cache &&
+      gem install jekyll-polyglot &&
       jekyll serve"
     ports:
       - "4000:4000"

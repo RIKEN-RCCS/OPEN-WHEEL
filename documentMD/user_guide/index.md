@@ -1,6 +1,8 @@
 ---
 layout: single
 title: はじめに
+permalink: /
+lang: ja
 ---
 
 ## [WHEELについて](about/)
