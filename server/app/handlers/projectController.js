@@ -352,7 +352,6 @@ async function onProjectOperation(clientID, projectRootDir, operation, ack){
   getLogger(projectRootDir).info(`${operation} done with ${rt}`);
 }
 
-
 module.exports = {
   onGetProjectJson,
   onGetWorkflow,
