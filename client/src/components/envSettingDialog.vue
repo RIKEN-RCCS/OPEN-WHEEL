@@ -171,6 +171,7 @@ export default{
     }
   },
   methods:{
+    required,
     ...mapMutations(
       {
         commitComponentTree: "componentTree",

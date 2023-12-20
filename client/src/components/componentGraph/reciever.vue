@@ -9,7 +9,7 @@
 </template>
 <script>
 "use strict";
-import { boxWidth, plugColor, textHeight, socketLongSideLength, socketShortSideLength} from "@/lib/constants.json"
+import { plugColor, socketLongSideLength, socketShortSideLength} from "@/lib/constants.json"
 
 export default {
   name: "Reciever",

@@ -194,22 +194,22 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //deprecated APIs which are left for DEBUG
   //
-  socket.on("runProject", (clientID, projectRootDir, ack)=>{
+  socket.on("runProject", (clientID, projectRootDir)=>{
     getLogger(projectRootDir).error("[deprecated] runProject API is no longer available");
   });
-  socket.on("pauseProject", (projectRootDir, ack)=>{
+  socket.on("pauseProject", (projectRootDir)=>{
     getLogger(projectRootDir).error("[deprecated] pauseProject API is no longer available");
   });
-  socket.on("stopProject", (projectRootDir, ack)=>{
+  socket.on("stopProject", (projectRootDir)=>{
     getLogger(projectRootDir).error("[deprecated] stopProject API is no longer available");
   });
-  socket.on("cleanProject", (clientID, projectRootDir, ack)=>{
+  socket.on("cleanProject", (clientID, projectRootDir)=>{
     getLogger(projectRootDir).error("[deprecated] cleanProject API is no longer available");
   });
-  socket.on("saveProject", (projectRootDir, ack)=>{
+  socket.on("saveProject", (projectRootDir)=>{
     getLogger(projectRootDir).error("[deprecated] saveProject API is no longer available");
   });
-  socket.on("revertProject", (clientID, projectRootDir, ack)=>{
+  socket.on("revertProject", (clientID, projectRootDir)=>{
     getLogger(projectRootDir).error("[deprecated] revertProject API is no longer available");
   });
 };
