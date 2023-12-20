@@ -5,7 +5,7 @@
  */
 "use strict";
 const debug = require("debug")("wheel");
-const parentDirs = new Map(); // workflow path which is displayed on graphview 
+const parentDirs = new Map(); //workflow path which is displayed on graphview 
 const eventEmitters = new Map(); //event emitter object which is used to communicate while running project
 const watchers = new Map(); //result file watcher
 let sio = null; //Singleton SocketIO instance

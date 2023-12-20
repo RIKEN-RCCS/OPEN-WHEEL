@@ -108,7 +108,6 @@
 </template>
 <script>
 "use strict";
-import { mapState, mapGetters } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
 import hpcCenters from "@/lib/hpcCenter.json";
 import createJobScript from "@/lib/jobScripts.js";
