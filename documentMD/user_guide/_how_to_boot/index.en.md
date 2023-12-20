@@ -18,6 +18,8 @@ This pattern installs Docker on each of the user's work PCs. Then, expand and la
 
 ### Configuration pattern 2: Aggregating and building the WHEEL environment on the server
 This pattern installs Docker on a single server. Then, unpack the WHEEL container image for the number of users using WHEEL and launch it on the server. To separate the WHEEL used for each user, you need to control by port number.
+
+
 ![Configuration Pattern 2](img/configuration_pattern_02.svg)
 
 ## How to start
@@ -25,7 +27,7 @@ The method for starting the WHEEL is as follows.
 This section assumes that the [Configuration Pattern 1](#configuration-pattern-1-building-a-wheel-environment-for-each-user) is followed.
 
 {% capture notice-http %}
-__How to Use HTTP Communication__
+__How to Use HTTP Communication__  
 If you want to use HTTP instead of HTTPS communication, add the following options when you run `docker run` in step 3.
 ```
 -e WHEEL_USE_HTTP=1
@@ -56,8 +58,8 @@ HTTP communication should be used only in environments where there are no securi
     - The project file is created in ${HOME}.
     - WHHEL port number is specified as 8089.
 
-        1. When the WHEEL server starts, open a web browser on the host machine and click
-    Go to `http (s) :// localhost: 8089`.
+1. When the WHEEL server starts, open a web browser on the host machine and click
+    Go to `http(s)://localhost:8089`.
 
 <div class="notice--info">{{ notice-http | markdownify }}</div>
 
@@ -67,9 +69,9 @@ WHEEL can perform tasks on the compute server where you logged in via ssh.
 In this section, you configure the remote host settings for connecting to the compute server from the WHEEL.
 
 There are two patterns of remote host configuration:. Specify settings according to the calculation server to be used.
-- [Without a batch system](#without-a-batch-system)
+- [Without a batch system](#without-a-batch-system)  
 Perform this procedure if the compute server does not have a batch system, or if the compute server has a batch system but you do not want to use it.
-- [Additional settings if you have a batch system](#additional-settings-if-you-have-a-batch-system)
+- [Additional settings if you have a batch system](#additional-settings-if-you-have-a-batch-system)  
 If you are using a batch system on a compute server, perform this step in addition to the steps in [Without a batch system](#without-a-batch-system).
 
 ### Without a batch system
@@ -120,8 +122,7 @@ Normally you would specify the home directory of the host you are connecting to,
 Select an appropriate directory by referring to the connection destination system usage guide, etc.
 
 {% capture notice-https %}
-__Using public key authentication to connect to a remote host__
-
+__Using public key authentication to connect to a remote host__  
 Enable the __use public key authentication__ switch when you use public key authentication to connect to remote hosts.
 At the bottom, a field for specifying the private key appears, enter the path of the private key or click the __BROWSE__ button to select the file.
 {% endcapture %}
@@ -129,11 +130,10 @@ At the bottom, a field for specifying the private key appears, enter the path of
   {{ notice-https | markdownify }}
 </div>
 
-For other detailed settings, refer to the [Reference Manual]({{ site.baseurl }}/reference/2_remotehost_screen/"remotehost-configuration").
+For other detailed settings, refer to the [Reference Manual]({{ site.baseurl }}/reference/2_remotehost_screen/ "remotehost configuration").
 
 ### Additional settings if you have a batch system
-This section describes the additional remote host configuration required if the compute server has a batch system.
-Before performing this procedure, perform the procedure described in # If you do not have a batch system.
+This section describes the additional remote host configuration required if the compute server has a batch system. Before performing this procedure, perform the procedure described in [Without a batch system](#without-a-batch-system) .
 
 Start the Remote Host Editor.
 When the remote host that you registered under [Without a batch system](#without-a-batch-system) is displayed, click the pencil icon on the far right to display the Edit Host Information dialog.
@@ -153,14 +153,14 @@ The following six values are currently available.
 - TCS (Technical Computing Suite)
 - UGE (Univa Grid Engine)
 
-__About PBSProWithoutHistory__
+__About PBSProWithoutHistory__  
 Some PBSPros do not store information about jobs that have finished running in the batch system settings.
 In this case, use __PBSProWithoutHistory__ instead of __PBSPro__.
 {: .notice--info}
 
-__About Fugaku__
+__About Fugaku__  
 At Fugaku, TCS is used, but some of the behavior is different from other sites, so we have a special setting (Fugaku) for Fugaku.
-If you use Fugaku, choose __Fugaku__ instead of __TCS (Technical Computing Suite) __.
+If you use Fugaku, choose __Fugaku__ instead of __TCS (Technical Computing Suite)__.
 {: .notice--info}
 
 
