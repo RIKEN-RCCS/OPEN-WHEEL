@@ -618,14 +618,18 @@ async function importProject(projectRootDir) {
  * @param {string} projectRootDir - git repo's root directory
  * @param {string} dir - root component directory
  * @param {string} state  - state to be set
- * @param {Boolean} doNotAdd- - call gitAdd if false
+ * @param {Boolean} doNotAdd - call gitAdd if false
+ * @param {string[]} ignoreStates - do not change state if one of this state
  */
-async function setComponentStateR(projectRootDir, dir, state, doNotAdd=false) {
+async function setComponentStateR(projectRootDir, dir, state, doNotAdd=false, ignoreStates=[]) {
   const filenames = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
   filenames.push(path.join(dir, componentJsonFilename));
   const p = filenames.map((filename)=>{
     return readJsonGreedy(filename)
       .then((component)=>{
+        if(ignoreStates.includes(component.state)){
+          return true;
+        }
         component.state = state;
         const componentDir=path.dirname(filename);
         return writeComponentJson(projectRootDir, componentDir, component, doNotAdd )

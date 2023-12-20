@@ -9,21 +9,22 @@ const { promisify } = require("util");
 const EventEmitter = require("events");
 const glob = require("glob");
 const fs = require("fs-extra");
+const SBS = require("simple-batch-system");
 const { getLogger } = require("../logSettings");
 const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
-const { getHosts, validateComponents, getSourceComponents,getComponentDir, getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
+const { getHosts, validateComponents, getSourceComponents,getComponentDir, getProjectJson, getProjectState, setComponentStateR,setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh } = require("../core/sshManager");
-const { runProject, cleanProject, pauseProject, stopProject } = require("../core/projectController.js");
+const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
 const { isValidOutputFilename } = require("../lib/utility");
-const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir } = require("./senders.js");
+const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, sendComponentTree } = require("./senders.js");
 const { parentDirs, eventEmitters } = require("../core/global.js");
 const { emitAll, emitWithPromise } = require("./commUtils.js");
 const { removeTempd, getTempd } = require("../core/tempd.js");
+const allowedOperations = require("../../../common/allowedOperations.cjs");
 
-const projectOperationQueue=[]
-
+const projectOperationQueues=new Map()
 
 async function updateProjectState(projectRootDir, state) {
   const projectJson = await setProjectState(projectRootDir, state);
@@ -115,8 +116,36 @@ async function getSourceFilename(projectRootDir, component, clientID) {
   return askSourceFilename(clientID, component.ID, component.name, component.description, filelist);
 }
 
+async function onGetProjectJson(projectRootDir, ack) {
+  try {
+    const projectJson = await getProjectJson(projectRootDir);
+    emitAll(projectRootDir, "projectJson", projectJson);
+    const resultDir = await getTempd(projectRootDir, "viewer");
+    const filename = path.resolve(resultDir, filesJsonFilename);
+
+    if (await fs.pathExists(filename)) {
+      sendResultsFileDir(projectRootDir, resultDir);
+    }
+  } catch (e) {
+    getLogger(projectRootDir).warn("getProjectJson failed", e);
+    return ack(false);
+  }
+  return ack(true);
+}
+async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
+  const requestedComponentDir = await getComponentDir(projectRootDir, componentID);
+  return sendWorkflow(ack, projectRootDir, requestedComponentDir, clientID);
+}
+
+async function onUpdateProjectDescription(projectRootDir, description, ack) {
+  await updateProjectDescription(projectRootDir, description);
+  onGetProjectJson(projectRootDir, ack);
+}
+
+
 async function onRunProject(clientID, projectRootDir, ack) {
   const projectState = await getProjectState(projectRootDir);
+  //FIXME
   if (projectState !== "paused") {
   //validation check
     try {
@@ -210,144 +239,117 @@ async function onRunProject(clientID, projectRootDir, ack) {
     eventEmitters.delete(projectRootDir);
     removeSsh(projectRootDir);
   }
-  return ack(true);
+  return;
 }
 
-async function onPauseProject(projectRootDir, ack) {
-  try {
-    await pauseProject(projectRootDir);
-    await updateProjectState(projectRootDir, "paused");
-    await sendWorkflow(ack, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).error("fatal error occurred while pausing project", e);
-    ack(e);
-    return;
-  }
-  getLogger(projectRootDir).debug("pause project done");
-  ack(true);
+async function onStopProject(projectRootDir) {
+  await stopProject(projectRootDir);
+  await updateProjectState(projectRootDir, "stopped");
 }
 
-async function onStopProject(projectRootDir, ack) {
-  try {
-    await stopProject(projectRootDir);
-    await updateProjectState(projectRootDir, "stopped");
-    await sendWorkflow(ack, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).error("fatal error occurred while stopping project", e);
-    ack(e);
-    return;
-  }
-  getLogger(projectRootDir).debug("stop project done");
-  ack(true);
+async function onCleanProject(clientID, projectRootDir) {
+  await askUnsavedFiles(clientID, projectRootDir);
+  await Promise.all([
+    cleanProject(projectRootDir),
+    removeTempd(projectRootDir, "viewer"),
+    removeTempd(projectRootDir, "download")
+  ]);
 }
 
-async function onCleanProject(clientID, projectRootDir, ack) {
-  try {
-    await askUnsavedFiles(clientID, projectRootDir);
-  } catch (e) {
-    getLogger(projectRootDir).info("clean project canceled due to", e.message);
-    getLogger(projectRootDir).debug(e);
-    ack(e);
-    return;
-  }
-
-  try {
-    await Promise.all([
-      cleanProject(projectRootDir),
-      removeTempd(projectRootDir, "viewer"),
-      removeTempd(projectRootDir, "download")
-    ]);
-  } catch (e) {
-    getLogger(projectRootDir).error("clean project failed", e);
-    ack(e);
-  } finally {
-    await Promise.all([
-      sendWorkflow(ack, projectRootDir),
-      emitAll(projectRootDir, "taskStateList", []),
-      emitAll(projectRootDir, "projectJson", await getProjectJson(projectRootDir))
-    ]);
-    removeSsh(projectRootDir);
-  }
-  getLogger(projectRootDir).debug("clean project done");
+async function onRevertProject(clientID, projectRootDir ) {
+  await askUnsavedFiles(clientID, projectRootDir);
+  await Promise.all([
+    gitResetHEAD(projectRootDir),
+    removeTempd(projectRootDir, "viewer"),
+    removeTempd(projectRootDir, "download")
+  ]);
 }
 
 async function onSaveProject(projectRootDir, ack) {
-  const projectState = await getProjectState(projectRootDir);
-  if (projectState === "not-started") {
-    await setProjectState(projectRootDir, "not-started", true);
-    await gitCommit(projectRootDir);
-  } else {
-    getLogger(projectRootDir).error(projectState, "project can not be saved");
-    return ack(null);
+  const { readOnly} = await getProjectJson(projectRootDir);
+  if(readOnly){
+    getLogger(projectRootDir).error("readOnly project can not be saved", projectRootDir);
+    return ack(new Error("project is read-only"));
   }
-  getLogger(projectRootDir).debug("save project done");
-  const projectJson = await getProjectJson(projectRootDir);
-  return ack(projectJson);
+  const projectState = await getProjectState(projectRootDir);
+  if(! allowedOperations[projectState].includes("saveProject")){
+    getLogger(projectRootDir).error(projectState, "project can not be saved", projectRootDir);
+    return ack(new Error(`${projectState} project is not allowed to save`));
+  }
+
+  await setProjectState(projectRootDir, "not-started", true);
+  await setComponentStateR(projectRootDir, projectRootDir, "not-started", false, ["finished"]);
+  await gitCommit(projectRootDir);
 }
 
-async function onRevertProject(clientID, projectRootDir, ack) {
-  await askUnsavedFiles(clientID, projectRootDir);
-
-  try {
-    await Promise.all([
-      gitResetHEAD(projectRootDir),
-      removeTempd(projectRootDir, "viewer"),
-      removeTempd(projectRootDir, "download")
-    ]);
-  } catch (e) {
-    getLogger(projectRootDir).error("revert project failed", e);
+async function projectOperator(clientID, projectRootDir, ack, operation){
+  const projectState = await getProjectState(projectRootDir);
+  //ignore disallowd operation for this state
+  if(!allowedOperations[projectState].includes(operation)){
+    getLogger(projectRootDir).debug(`${operation} is not allowed at ${projectState} state`);
+    return false;
+  }
+  try{
+    switch(operation){
+      case "runProject":
+        //do not wait onRunProject
+        onRunProject(clientID, projectRootDir, ack);
+        break;
+      case "stopProject":
+        await onStopProject(projectRootDir, ack)
+        break;
+      case "cleanProject":
+        await onCleanProject(clientID, projectRootDir, ack);
+        break;
+      case "rvertProject":
+        await onRevertProject(clientID, projectRootDir, ack);
+        break;
+      case "saveProject":
+        await onSaveProject(projectRootDir, ack)
+        break;
+    }
+  } catch(e){
+    getLogger(projectRootDir).error(`${operation} failed`, e);
     ack(e);
   } finally {
     await Promise.all([
-      sendWorkflow(ack, projectRootDir),
-      emitAll(projectRootDir, "taskStateList", []),
-      emitAll(projectRootDir, "projectJson", await getProjectJson(projectRootDir))
+      sendWorkflow(null, projectRootDir),
+      sendTaskStateList(projectRootDir),
+      sendProjectJson(projectRootDir),
+      sendComponentTree(projectRootDir)
     ]);
   }
-  getLogger(projectRootDir).debug("revert project done");
-  const projectJson = await getProjectJson(projectRootDir);
-  ack(projectJson);
-}
-
-async function onGetProjectJson(projectRootDir, ack) {
-  try {
-    const projectJson = await getProjectJson(projectRootDir);
-    emitAll(projectRootDir, "projectJson", projectJson);
-    const resultDir = await getTempd(projectRootDir, "viewer");
-    const filename = path.resolve(resultDir, filesJsonFilename);
-
-    if (await fs.pathExists(filename)) {
-      sendResultsFileDir(projectRootDir, resultDir);
-    }
-  } catch (e) {
-    getLogger(projectRootDir).warn("getProjectJson failed", e);
-    return ack(false);
-  }
+  getLogger(projectRootDir).debug(`${operation} done`);
   return ack(true);
 }
-async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
-  const requestedComponentDir = await getComponentDir(projectRootDir, componentID);
-  return sendWorkflow(ack, projectRootDir, requestedComponentDir, clientID);
+
+function getProjectOperationQueue(clientID, projectRootDir, ack){
+  if(!projectOperationQueues.has(projectRootDir)){
+    const tmp = new SBS({
+      name: "projectOperator",
+      exec: projectOperator.bind(null, clientID, projectRootDir, ack),
+      submitHook: async (queue, operation)=>{
+        const last=queue.getLastEntry();
+        if( last === operation){
+          getLogger(projectRootDir).debug("duplicated operation is ignored", operation);
+          return false
+        }
+        //flush operation queue if cleanProject is called
+        if(operation === "cleanProject"){
+          queue.clear()
+        }
+        return true;
+      }
+    });
+    projectOperationQueues.set(projectRootDir, tmp)
+  }
+  return projectOperationQueues.get(projectRootDir);
 }
 
-async function onUpdateProjectDescription(projectRootDir, description, ack) {
-  await updateProjectDescription(projectRootDir, description);
-  onGetProjectJson(projectRootDir, ack);
-}
-
-async function onProjectOperation(clientID, projectRootDir, opration, ack){
-  console.log("to be implemented");
-  //1. キューの末尾と同じoperationはログだけ出して終了
-  //2. プロジェクトの状態確認
-  const { state } = await getProjectJson(projectRootDir);
-  //3. 許可されたoperationでなければログだけ出して終了
-
-  //4. キューに新規operationを追加
-  // SBSを使う。ハウスキーピングはenqueue時のhookを追加して対応
-
-  //5. キューのハウスキーピング
-  //cleanProjectがあったら、その前のキューを全て削除
-  //
+async function onProjectOperation(clientID, projectRootDir, operation, ack){
+  const queue=getProjectOperationQueue(clientID, projectRootDir, ack);
+  const rt=await queue.qsub(operation);
+  getLogger(projectRootDir).info(`${operation} done with ${rt}`);
 }
 
 

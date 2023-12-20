@@ -304,19 +304,10 @@ import versatileDialog from "@/components/versatileDialog.vue";
 import SIO from "@/lib/socketIOWrapper.js";
 import { readCookie, state2color } from "@/lib/utility.js";
 import Debug from "debug";
+
+import allowedOperations from "@/../../common/allowedOperations.cjs"
 const debug = Debug("wheel:workflow:main");
 
-const allowedOperations={
-  "not-started":["runProject", "saveProject", "revertProject"],
-  "prepareing" :[],
-  "running" :["stopProject"],
-  "stopped":["cleanProject"],
-  "finished":["cleanProject"],
-  "failed":["cleanProject"],
-  "unknown":["cleanProject"],
-  "holding":["cleanProject"],
-  "paused":[],
-}
 const isAllowed = (state, operation)=>{
   if(! allowedOperations[state]){
     return false
@@ -571,8 +562,8 @@ export default {
       if(operation === "stopProject" || operation === "cleanProject"){
         this.commitWaitingWorkflow(true);
       }
-      SIO.emitGlobal("projectOperation", operation, this.projectRootDir, (rt)=>{
-        debug(operation, "done", rt);
+      SIO.emitGlobal("projectOperation",this.projectRootDir, operation,  (rt)=>{
+        debug(`${operation} ${rt ? "finished":`failed with ${rt}`}`);
 
         if(operation === "stopProject" || operation === "cleanProject"){
           this.commitWaitingWorkflow(false);
