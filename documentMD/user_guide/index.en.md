@@ -14,7 +14,7 @@ The manual is organized as follows:
 ### [For Administrators](how_to_boot/)
 This section describes how to install and initialize WHEEL. Read this when setting up a WHEEL environment on your PC. This guide is intended for users with general Linux/Unix operations knowledge.
 
-### For Users
+### [For Users](tutorial/)
 * [Check settings before use](preparation_for_use/)
 This section describes the settings that users should check before using WHEEL.
 * Tutorial
