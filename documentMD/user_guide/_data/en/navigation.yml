@@ -19,11 +19,11 @@ user-docs:
         url: /tutorial/2_advanced_tutorial/
       - title: Plactical
         url: /tutorial/3_application_tutorial/
-      - title: OpenFOAMを利用したcavityケースの解析ワークフロー
+      - title: Analyzing cavity cases using OpenFOAM Workflow
         url: /tutorial/3_application_tutorial/1_OpenFOAM_cavity/
-      - title: OpenFOAMを利用したパラメトリックスタディ解析ワークフロー
+      - title: Parametric Study Analysis Workflow Using OpenFOAM
         url: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
-      - title: TensorFlowを利用したMNISTデータ解析ワークフロー
+      - title: MNIST Data Analysis Workflow Using TensorFlow
         url: /tutorial/3_application_tutorial/3_TensorFlow_mnist/
   - title: Restrictions
     url: /attention/
@@ -58,22 +58,22 @@ admin-docs:
 #  - title: For administrators
 
 refs:
-  - title: 1. ホーム画面
+  - title: 1. Home screen
     url: /reference/1_home_screen/
-  - title: 2. リモートホスト設定画面
+  - title: 2. Remote host settings screen
     url: /reference/2_remotehost_screen/
-  - title: 3. ワークフロー画面
+  - title: 3. Workflow Screen
     children:
-      - title: グラフビュー
+      - title: Graph View
         url: /reference/3_workflow_screen/1_graphview.html
-      - title: リストビュー
+      - title: List View
         url: /reference/3_workflow_screen/2_listview.html
-      - title: テキストエディタ
+      - title: Text Editor
         url: /reference/3_workflow_screen/3_editor.html
-  - title: 4. コンポーネント
+  - title: 4. Component
     url: /reference/4_component/
     children:
-      - title: 共通項目
+      - title: Common Items
         url: /reference/4_component/00_common.html
       - title: Task
         url: /reference/4_component/01_Task.html
