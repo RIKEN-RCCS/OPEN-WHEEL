@@ -4,6 +4,7 @@ permalink: /attention/
 toc: true
 toc_sticky: true
 layout: single
+lang: ja
 ---
 
 WHEELの仕様上の制限について説明します。  

@@ -1,5 +1,7 @@
 ---
 title: OpenFOAMを利用したパラメトリックスタディ解析ワークフロー
+lang: ja
+permalink: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
 ---
 本章では、WHEELを用いた計算事例として「OpenFOAMを利用したパラメトリックスタディ解析ワークフロー」を紹介します。
 

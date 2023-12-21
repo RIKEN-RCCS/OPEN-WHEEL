@@ -1,5 +1,7 @@
 ---
 title: While
+lang: ja
+permalink: /reference/4_component/04_while.html
 ---
 
 ![img](./img/while.png "while")

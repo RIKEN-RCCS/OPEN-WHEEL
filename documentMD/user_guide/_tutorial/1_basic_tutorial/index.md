@@ -1,5 +1,7 @@
 ---
 title: チュートリアル 基礎編
+lang: ja
+permalink: /tutorial/1_basic_tutorial/
 ---
 
 本チュートリアルでは、WHEELの基本的な機能のみを使ってワークフローを作成・実行することでWHEELの使い方を学んでいきます。

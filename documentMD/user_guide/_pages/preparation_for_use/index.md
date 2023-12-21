@@ -6,6 +6,7 @@ toc: true
 toc_sticky: true
 sidebar:
     nav: "user-docs"
+lang: en
 ---
 
 WHEELの利用開始前に、初期設定として行われたリモートホスト設定の内容が正しいことを確認します。

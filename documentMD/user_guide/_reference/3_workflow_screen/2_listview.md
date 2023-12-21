@@ -1,5 +1,7 @@
 ---
 title: リストビュー画面
+lang: ja
+permalink: /reference/3_workflow_screen/2_listview.html
 ---
 本章では、リストビュー画面の機能について説明します。
 

@@ -1,5 +1,7 @@
 ---
 title: Stepjob
+lang: en
+permalink: /reference/4_component/11_Stepjob.html
 ---
 
 ![img](./img/stepjob.png)

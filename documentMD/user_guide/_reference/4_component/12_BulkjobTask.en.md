@@ -1,5 +1,7 @@
 ---
 title: BulkjobTask
+lang: en
+permalink: /reference/4_component/12_BulkjobTask.html
 ---
 
 ![img](./img/bulkjobTask.png)

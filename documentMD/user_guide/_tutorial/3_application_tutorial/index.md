@@ -2,6 +2,8 @@
 title: 実践編チュートリアル
 toc: false
 toc_sticky: false
+lang: ja
+permalink: /tutorial/3_application_tutorial/
 ---
 
 本チュートリアルでは、富岳を利用してOpenFOAM, TensorFlowといったアプリケーションを使ったワークフローを作成・実行します。

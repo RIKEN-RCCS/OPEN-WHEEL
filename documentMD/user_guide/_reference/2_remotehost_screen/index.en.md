@@ -1,5 +1,7 @@
 ---
 title: Remote Host Configuration Screen
+lang: en
+permalink: /reference/2_remotehost_screen/
 ---
 If a calculation environment (The following are remote hosts:) outside the WHEEL server is used in the workflow, SSH to the target remote host and perform processing.  
 The remote host information to be used when creating a workflow and the user information to be used when making an SSH connection to a remote host are registered in the Remote Host Configuration window.

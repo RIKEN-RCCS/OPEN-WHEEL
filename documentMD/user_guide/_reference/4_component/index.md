@@ -1,6 +1,8 @@
 ---
 title: コンポーネントの詳細
 toc: false
+lang: ja
+permalink: /reference/4_component/
 ---
 
 各コンポーネントの詳細について、説明します。

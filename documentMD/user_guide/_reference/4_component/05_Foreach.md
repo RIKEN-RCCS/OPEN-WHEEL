@@ -1,5 +1,7 @@
 ---
 title: Foreach
+lang: ja
+permalink: /reference/4_component/05_Foreach.html
 ---
 
 ![img](./img/foreach.png "foreach")

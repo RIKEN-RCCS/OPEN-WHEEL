@@ -1,5 +1,7 @@
 ---
 title: テキストエディタ画面
+lang: ja
+permalink: /reference/3_workflow_screen/3_editor.html
 ---
 本章では、テキストエディタ画面の機能について説明します。
 

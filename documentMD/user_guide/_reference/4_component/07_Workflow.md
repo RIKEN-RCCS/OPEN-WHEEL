@@ -1,6 +1,8 @@
 ---
 title: Workflow
 toc: false
+lang: ja
+permalink: /reference/4_component/07_Workflow.html
 ---
 
 ![img](./img/workflow.png "workflow")

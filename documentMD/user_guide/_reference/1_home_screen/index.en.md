@@ -1,5 +1,7 @@
 ---
 title: Home Screen
+lang: en
+permalink: /reference/1_home_screen/
 ---
 Create a new project or edit an existing project from the Home screen.
 The Home screen is organized as follows.

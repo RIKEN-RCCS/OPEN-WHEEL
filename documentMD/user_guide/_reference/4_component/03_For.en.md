@@ -1,5 +1,7 @@
 ---
 title: For
+lang: en
+permalink: /reference/4_component/03_For.html
 ---
 
 ![img](./img/for.png "for")

@@ -1,6 +1,8 @@
 ---
 title: リファレンスマニュアル
 toc: false
+lang: ja
+permalink: /reference/
 ---
 本ドキュメントは、WHEELの画面構成・機能を網羅的に説明するリファレンスマニュアルです。
 

@@ -1,5 +1,7 @@
 ---
 title: Task
+lang: ja
+permalink: /reference/4_component/01_Task.html
 ---
 
 ![img](./img/task.png "task")

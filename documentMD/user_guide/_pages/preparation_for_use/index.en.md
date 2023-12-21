@@ -6,6 +6,7 @@ toc: true
 toc_sticky: true
 sidebar:
     nav: "user-docs"
+lang: en
 ---
 
 Before you start using WHEEL, make sure that the initial remote host settings are correct.

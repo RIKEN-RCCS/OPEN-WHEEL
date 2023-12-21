@@ -1,5 +1,7 @@
 ---
 title: Analyzing cavity cases using OpenFOAM Workflow
+lang: en
+permalink: /tutorial/3_application_tutorial/1_OpenFOAM_cavity/
 ---
 In this chapter, we introduce a calculation example using WHEEL, "Analysis workflow of cavity case using OpenFOAM."
 

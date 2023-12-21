@@ -1,6 +1,8 @@
 ---
 title: User's Guide
 toc: false
+lang: en
+permalink: /tutorial/
 ---
 
 ## [Confirm settings before starting use] ({{site.baseurl}}/preparation_for_use /)

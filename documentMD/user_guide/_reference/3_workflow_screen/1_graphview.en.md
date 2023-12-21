@@ -1,5 +1,7 @@
 ---
 title: Graph View Screen
+lang: en
+permalink: /reference/3_workflow_screen/1_graphview.html
 ---
 This chapter describes the functions of the graph view screen.
 

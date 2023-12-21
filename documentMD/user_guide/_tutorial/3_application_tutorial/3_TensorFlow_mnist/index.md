@@ -1,5 +1,7 @@
 ---
 title: TensorFlowを利用したMNISTデータ解析ワークフロー
+lang: ja
+permalink: /tutorial/3_application_tutorial/3_TensorFlow_mnist/
 ---
 本章では、WHEELを用いた計算事例として「TensorFlowを利用したMNISTデータの解析ワークフロー」を紹介します。
 

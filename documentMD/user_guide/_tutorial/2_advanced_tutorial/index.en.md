@@ -1,5 +1,7 @@
 ---
 title: Tutorial Application
+lang: en
+permalink: /tutorial/2_advanced_tutorial/
 ---
 
 This tutorial covers features not covered in the basics.

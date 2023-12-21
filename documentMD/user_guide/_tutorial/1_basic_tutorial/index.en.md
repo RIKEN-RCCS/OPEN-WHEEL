@@ -1,5 +1,7 @@
 ---
 title: Tutorial Basics
+lang: en
+permalink: /tutorial/1_basic_tutorial/
 ---
 
 In this tutorial, you will learn how to use WHEEL by creating and executing workflows using only basic WHEEL functionality.

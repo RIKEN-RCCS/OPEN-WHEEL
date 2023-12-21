@@ -1,5 +1,7 @@
 ---
 title: Viewer
+lang: en
+permalink: /reference/4_component/10_Viewer.html
 ---
 
 ![img](./img/viewer.png "viewer")

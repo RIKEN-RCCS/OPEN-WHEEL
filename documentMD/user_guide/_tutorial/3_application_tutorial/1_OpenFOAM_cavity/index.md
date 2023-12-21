@@ -1,5 +1,7 @@
 ---
 title: OpenFOAMを利用したcavityケースの解析ワークフロー
+lang: ja
+permalink: /tutorial/3_application_tutorial/1_OpenFOAM_cavity/
 ---
 本章では、WHEELを用いた計算事例として「OpenFOAMを利用したcavityケースの解析ワークフロー」を紹介します。
 

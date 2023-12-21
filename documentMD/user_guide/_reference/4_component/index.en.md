@@ -1,6 +1,8 @@
 ---
 title: Component Details
 toc: false
+lang: en
+permalink: /reference/4_component/
 ---
 
 Learn more about each component.

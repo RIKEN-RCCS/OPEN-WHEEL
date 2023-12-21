@@ -1,5 +1,7 @@
 ---
 title: Common Items
+lang: en
+permalink: /reference/4_component/00_common.html
 ---
 This section describes the specifications common to all components.
 

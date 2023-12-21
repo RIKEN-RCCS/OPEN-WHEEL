@@ -1,5 +1,7 @@
 ---
 title: MNIST Data Analysis Workflow Using TensorFlow
+lang: en
+permalink: /tutorial/3_application_tutorial/3_TensorFlow_mnist/
 ---
 In this chapter, we will introduce an example of computing using WHEEL, "MNIST data analysis workflow using TensorFlow."
 

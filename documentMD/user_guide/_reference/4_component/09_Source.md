@@ -1,5 +1,7 @@
 ---
 title: Source
+lang: ja
+permalink: /reference/4_component/09_Source.html
 ---
 
 ![img](./img/source.png "source")

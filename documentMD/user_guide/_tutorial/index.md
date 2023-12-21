@@ -1,6 +1,8 @@
 ---
 title: 利用者向けユーザガイド
 toc: false
+lang: ja
+permalink: /tutorial/
 ---
 
 ## [利用開始前の設定確認]({{ site.baseurl }}/preparation_for_use/)

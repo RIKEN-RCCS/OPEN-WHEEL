@@ -1,6 +1,9 @@
 ---
 title: ホーム画面
+lang: ja
+permalink: /reference/1_home_screen/
 ---
+
 新規プロジェクトの作成や既存プロジェクトの編集はホーム画面で行います。
 ホーム画面の構成は以下のとおりです。
 

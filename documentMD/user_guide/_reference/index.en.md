@@ -1,6 +1,8 @@
 ---
 title: Reference Manual
 toc: false
+lang: en
+permalink: /reference/
 ---
 This document is a reference manual that comprehensively explains the screen structure and functions of WHEEL.
 

@@ -1,5 +1,7 @@
 ---
 title: Parametric Study Analysis Workflow Using OpenFOAM
+lang: en
+permalink: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
 ---
 This chapter introduces the parametric study analysis workflow using OpenFOAM as a calculation example using WHEEL.
 

@@ -1,5 +1,7 @@
 ---
 title: チュートリアル 応用編
+lang: ja
+permalink: /tutorial/2_advanced_tutorial/
 ---
 
 本チュートリアルでは、基礎編では触れなかった機能を扱います。

@@ -1,5 +1,7 @@
 ---
 title: 共通項目
+lang: ja
+permalink: /reference/4_component/00_common.html
 ---
 本節では、全コンポーネントに共通する仕様について説明します。
 

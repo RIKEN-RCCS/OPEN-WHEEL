@@ -1,5 +1,7 @@
 ---
 title: Storage
+lang: ja
+permalink: /reference/4_component/08_Storage.html
 ---
 
 ![img](./img/storage.png "storage")

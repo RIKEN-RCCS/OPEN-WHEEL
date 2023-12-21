@@ -2,6 +2,8 @@
 title: Practical Tutorial
 toc: false
 toc_sticky: false
+lang: en
+permalink: /tutorial/3_application_tutorial/
 ---
 
 In this tutorial, you use Fugaku to create and execute workflows using applications such as OpenFOAM and TensorFlow.

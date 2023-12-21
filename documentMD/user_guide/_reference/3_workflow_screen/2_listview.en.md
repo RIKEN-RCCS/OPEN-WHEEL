@@ -1,5 +1,7 @@
 ---
 title: List view screen
+lang: en
+permalink: /reference/3_workflow_screen/2_listview.html
 ---
 This chapter describes the functions of the list view screen.
 

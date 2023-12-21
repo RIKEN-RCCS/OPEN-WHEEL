@@ -1,5 +1,7 @@
 ---
 title: グラフビュー画面
+lang: ja
+permalink: /reference/3_workflow_screen/1_graphview.html
 ---
 本章では、グラフビュー画面の機能について説明します。
 

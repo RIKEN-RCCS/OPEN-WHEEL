@@ -1,5 +1,7 @@
 ---
 title: Text Editor Screen
+lang: en
+permalink: /reference/3_workflow_screen/3_editor.html
 ---
 This chapter describes the functions of the text editor screen.
 
