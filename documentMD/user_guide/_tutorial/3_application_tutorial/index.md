@@ -1,5 +1,5 @@
 ---
-title: 実践編チュートリアル
+title: チュートリアル 実践編
 toc: false
 toc_sticky: false
 lang: ja
