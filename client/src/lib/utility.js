@@ -151,6 +151,7 @@ export function state2color(state){
     "failed": "#E60000",
     "unknown": "#E60000",
     "paused":"#444480",
+    "holding": "#444480"
   };
   return typeof table[state] === "undefined" ? "#1E1E1E" : table[state];
 }

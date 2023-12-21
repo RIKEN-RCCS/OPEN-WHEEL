@@ -95,17 +95,17 @@
             </template>
           </v-tooltip>
 
-          <v-tooltip text="pause project" location="bottom">
-            <template #activator="{ props }">
-              <v-btn
-                variant=outlined
-                icon="mdi-pause"
-                :disabled="! pauseProjectAllowed"
-                v-bind="props"
-                @click="openProjectOperationComfirmationDialog('pauseProject')"
-              />
-            </template>
-          </v-tooltip>
+          <!-- <v-tooltip text="pause project" location="bottom"> -->
+          <!--   <template #activator="{ props }"> -->
+          <!--     <v-btn -->
+          <!--       variant=outlined -->
+          <!--       icon="mdi-pause" -->
+          <!--       :disabled="! pauseProjectAllowed" -->
+          <!--       v-bind="props" -->
+          <!--       @click="openProjectOperationComfirmationDialog('pauseProject')" -->
+          <!--     /> -->
+          <!--   </template> -->
+          <!-- </v-tooltip> -->
           <v-tooltip text="stop project" location="bottom">
             <template #activator="{ props }">
               <v-btn
