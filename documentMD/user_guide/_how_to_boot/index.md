@@ -13,11 +13,11 @@ WHEELの起動にはDockerを使用します。最新の [Docker](https://www.do
 ### 構成パターン1：ユーザごとにWHEEL環境を構築
 本パターンでは、ユーザの作業用PCそれぞれにDockerをインストールします。その上で、WHEELのコンテナイメージを展開し起動します。
 
-
 ![構成パターン1](img/configuration_pattern_01.svg)
 
 ### 構成パターン2：サーバにWHEEL環境を集約し構築
 本パターンでは、1台のサーバにDockerをインストールします。その上で、WHEELを使用するユーザ数分のWHEELコンテナイメージを展開し、サーバ上で起動します。ユーザごとに使用するWHEELを分けるため、port番号での制御が必要となります。
+
 ![構成パターン2](img/configuration_pattern_02.svg)
 
 ## 起動方法

@@ -17,7 +17,7 @@ user-docs:
         url: /tutorial/1_basic_tutorial/
       - title: Application
         url: /tutorial/2_advanced_tutorial/
-      - title: Plactical
+      - title: Practical
         url: /tutorial/3_application_tutorial/
       - title: Analyzing cavity cases using OpenFOAM Workflow
         url: /tutorial/3_application_tutorial/1_OpenFOAM_cavity/
