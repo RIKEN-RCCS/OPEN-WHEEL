@@ -3,7 +3,6 @@ remote_theme: "mmistakes/minimal-mistakes"
 plugins:
   - jekyll-include-cache
   - jekyll-remote-theme
-  - jekyll-polyglot
 title: "WHEEL user guide"
 subtitle: "Workflow in Hierarchical distributEd parallEL"
 strict_front_matter: true
