@@ -29,6 +29,7 @@ Sourceコンポーネントに設定できるプロパティは以下のとお�
 ファイルが存在せずupload on demandが有効なときは、
 ブラウザ上にファイルアップロードダイアログが表示され
 ユーザがアップロードしたファイルがoutputFileとして扱われます。
+
 ![img](./img/upload_source_file_dialog.png "upload source file dialog")
 
 
