@@ -88,7 +88,6 @@ operator (= =,! =, <,>, <=,> =) and value. -->
 
 The following is an example of specifying a Form:
 ```
-ex.
 ec==0
 ```
 <! -- operator == or! If you specify =, you can specify multiple values separated by commas (,). -->
@@ -105,9 +104,9 @@ You can specify the following three types of deletetype:
 
 <br />
 The following is an example of a dependency expression for the dependencyForm property:
+The following is an example of a dependency expression that indicates that if the return code of the job script for the subjob with step number 0 is non-zero, the subjob will not be executed.
+<! --ex. If the return code of the job script for the subjob with step number 0 is non-zero, do not execute the job after this subjob -->
 ```
-ex. If the return code of the job script of the subjob with step number 0 is other than 0, this subjob is not executed.
-
 sd=ec!=0:all:0
 ```
 

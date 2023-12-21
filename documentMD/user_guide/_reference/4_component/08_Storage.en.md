@@ -9,14 +9,14 @@ permalink: /reference/4_component/08_Storage.html
 Storage component is outside the scope of the project directory
 A component for saving files to a directory.
 
-The files in the workflow are managed by git
+The files in the workflow are managed by WHEEL
 Files generated or modified during execution
 Click the cleanup project button to return to the previous state.
 
 Repeating the same project with different settings
 The files you want to keep after initializing the project are:
 By forwarding to the Storage component using the input files/output files mechanism
-You can save files to a location outside of git's control.
+You can save files to a location outside the control of WHEEL.
 
 
 You can set the following properties for the Storage component:

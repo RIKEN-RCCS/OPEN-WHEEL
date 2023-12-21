@@ -19,12 +19,34 @@ The following properties can be set for the BulkjobTask component:
 ### use parameter setting file for bulk number
 Sets whether the bulk number is specified from the parameter configuration file.
 
-When enabled, a parameter configuration file can be specified.
+When enabled, you can specify a parameter configuration file.
 
-When off, the start and end values can be specified and are treated as the start and end bulk numbers, respectively.
+When disabled, start and end values can be specified and are treated as the start and end bulk numbers, respectively.
 
 ### manual finish condition
-Specify whether to specify the judgment of the end status of the component.
+Specifies whether to specify the judgment of the end status of the component.  
+When enabled, you can set additional criteria for determining the end status of components.
+
+![img](./img/manual_finish_condition.png)
+
+#### use javascript expression for condition check
+To determine the success or failure of a component
+Specifies whether to use a javascript expression or a shell script.
+
+ - When invalid  
+ ![img](./img/task_retry_expression_disable.png "task_retry_expression_disable")<br/>
+When disabled, a drop-down list appears to select a shell script.  
+The shell script specified here is executed after component execution has finished.
+A return value of 0 indicates success, and a non-zero value indicates failure. <br/><br/>
+If none is specified, the return code of the script specified in __script__ performs the same judgment.
+
+ - When enabled  
+![img](./img/task_retry_expression_enable.png "task_retry_expression_enable")<br/>
+When enabled, you can write javascript expressions.  
+The expression entered here is evaluated after the component has finished executing.
+If it returns a Truthy value, it succeeds.
+A falsy value is considered a failure.
+
 
 --------
 Return to Component Details ({{site.baseurl}}/reference/4_component /)
