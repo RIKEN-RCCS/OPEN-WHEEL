@@ -1,5 +1,5 @@
 ---
-title: Checking the settings before using
+title: Check settings before use
 layout: single
 permalink: /preparation_for_use/
 toc: true
@@ -20,31 +20,32 @@ Click __Remotehost editor__ in the menu that appears. The Remote Host Settings w
 
 !["Remotehost editor"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/remotehost_editor_button.png "Remotehost editor")
 
-Displays the list of remote hosts registered in Remote Host Settings ({{site.baseurl}}/how_to_boot/# Remote Host Configuration). Click the pencil icon on the far right to display the Edit Host Information dialog.
+Displays the list of remote hosts registered in [Remote Host Settings]({{site.baseurl}}/how_to_boot/#remote-host-settings). Click the pencil icon on the far right to display the Edit Host Information dialog.
 
 !["edit icon"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/remotehost_editor2.png "edit icon")
 
 Make sure that the settings are correct.
 
-! ["Check settings"] ({{site.baseurl}}/{{site.include}} {{page.url}} img/add_new_host.png "Check settings")
+!["Check settings"]({{site.baseurl}}/{{site.include}}{{page.url}}img/add_new_host.png "Check settings")
 
 Hostname
 : Host name or IP address to connect to
 
 User ID
-— User ID on the destination host
+: User ID on the destination host
 
 Host work dir
-— Directory path used within the remote host
+: Directory path used within the remote host
 
 If the settings are incorrect, correct them.
-Click the OK button to close the dialog.
+Click the __OK__ button to close the dialog.
 
 ### Verifying the connection to the remote host
 Then, verify that WHEEL can connect to the remote host.
 
 Displays the remote host setting screen.
-! Remote Host List ({{site.baseurl}}/{{site.include}} {{page.url}} img/remotehost_list.png "Remote Host List")
+
+![Remote Host List]({{site.baseurl}}/{{site.include}}{{page.url}}img/remotehost_list.png "Remote Host List")
 
 Click the __TEST__ button in the __connection test__ column to test the connection to the remote host.
 
@@ -57,12 +58,12 @@ The password entry dialog appears. Enter the password to connect to the remote h
 The connection to the remote host is tested and the results are displayed in the __connection test__ column of the remote host list.
 
 
-If the connection to the remote host is successful, the OK button is displayed.
+If the connection to the remote host is successful, the __OK__ button is displayed.
 
 !["Result ok"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/result_ok.png "Result ok")
 
 If the connection to the remote host fails, the __FAILED__ button display appears.  
-Check the remote host settings (# Check remote host settings), and then revise the settings.
+Check and, if necessary, revise the settings in accordance with [Verifying the remote host configuration](#verifying-the-remote-host-configuration).
 
 !["Result failed"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/result_failed.png "Result failed")
 
@@ -70,4 +71,4 @@ Check the remote host settings (# Check remote host settings), and then revise t
 
 
 --------
-Return to home page ({{site.baseurl}} /)
+[Return to home page]({{site.baseurl}}/tutorial/)

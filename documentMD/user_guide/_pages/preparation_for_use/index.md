@@ -44,6 +44,7 @@ __OK__ ボタンをクリックして、ダイアログを閉じます。
 続いて、WHEELからリモートホストに接続できることを確認します。
 
 リモートホスト設定画面を表示します。
+
 !["リモートホスト一覧"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/remotehost_list.png "リモートホスト一覧")
 
 __connection test__ 列に表示された __TEST__ ボタンをクリックし、リモートホストへの接続テストを行います。
@@ -70,4 +71,4 @@ __connection test__ 列に表示された __TEST__ ボタンをクリックし�
 
 
 --------
-[トップページに戻る]({{ site.baseurl }}/)
+[利用者向けのトップページに戻る]({{ site.baseurl }}/tutorial/)

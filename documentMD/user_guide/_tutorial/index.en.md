@@ -5,7 +5,7 @@ lang: en
 permalink: /tutorial/
 ---
 
-## [Confirm settings before starting use]({{site.baseurl}}/preparation_for_use/)
+## [Check settings before use]({{site.baseurl}}/preparation_for_use/)
 This section describes the settings that users should check before using WHEEL. Please read it first.
 
 ## Tutorial
