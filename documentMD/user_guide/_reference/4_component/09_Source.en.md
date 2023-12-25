@@ -34,4 +34,4 @@ The file uploaded by the user is treated as outputFile.
 
 
 --------
-Return to Component Details ({{site.baseurl}}/reference/4_component /)
+[Return to Component Details]({{site.baseurl}}/reference/4_component/)
