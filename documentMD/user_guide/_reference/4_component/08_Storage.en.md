@@ -37,4 +37,4 @@ WHEEL does not determine whether the specified directory path is in the project 
 If necessary, set the path outside the project directory.
 
 --------
-Return to Component Details ({{site.baseurl}}/reference/4_component /)
+[Return to Component Details]({{site.baseurl}}/reference/4_component/)
