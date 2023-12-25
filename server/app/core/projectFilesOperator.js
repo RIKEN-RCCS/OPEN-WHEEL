@@ -10,7 +10,7 @@ const path = require("path");
 const isPathInside = require("is-path-inside");
 const uuid = require("uuid");
 const glob = require("glob");
-const { componentFactory } = require("./workflowComponent");
+const { componentFactory, getComponentDefaultName } = require("./workflowComponent");
 const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, jobScheduler, defaultPSconfigFilename  } = require("../db/db");
 const { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
 const { replacePathsep, convertPathSep } = require("./pathUtils");
@@ -1445,6 +1445,7 @@ function componentJsonReplacer(key, value) {
   return value;
 }
 
+
 /**
  * create new component in parentDir
  * @param {string} projectRootDir - project root directory path
@@ -1456,9 +1457,10 @@ function componentJsonReplacer(key, value) {
 async function createNewComponent(projectRootDir, parentDir, type, pos) {
   const parentJson = await readJsonGreedy(path.resolve(parentDir, componentJsonFilename));
   const parentID = parentJson.ID;
+  const componentBasename=getComponentDefaultName(type)
 
   //create component directory and Json file
-  const absDirName = await makeDir(path.resolve(parentDir, type), 0);
+  const absDirName = await makeDir(path.resolve(parentDir, componentBasename), 0);
   const newComponent = componentFactory(type, pos, parentID);
   newComponent.name = path.basename(absDirName);
   await writeComponentJson(projectRootDir, absDirName, newComponent);
