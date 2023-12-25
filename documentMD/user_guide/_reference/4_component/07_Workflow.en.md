@@ -13,4 +13,4 @@ Using the Workflow component, you can consolidate each process on the workflow e
 The Workflow component has no unique properties.
 
 --------
-Return to Component Details ({{site.baseurl}}/reference/4_component /)
+[Return to Component Details]({{site.baseurl}}/reference/4_component/)
