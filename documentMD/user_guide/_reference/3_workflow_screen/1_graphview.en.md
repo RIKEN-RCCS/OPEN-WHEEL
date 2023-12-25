@@ -5,7 +5,7 @@ permalink: /reference/3_workflow_screen/1_graphview.html
 ---
 This chapter describes the functions of the graph view screen.
 
-For specific examples of how to create and execute workflows, see [Tutorial] ({{site.baseurl}}/tutorial /).
+For specific examples of how to create and execute workflows, see [Tutorial]({{site.baseurl}}/tutorial/).
 
 The graph view screen is organized as follows.
 
@@ -66,13 +66,13 @@ This area contains buttons for saving edited projects.
 |1|save project button  | Save project |
 |2|revert project button | Revert project to previous save state |
 
-__ About save project button/revert project button behavior __  
+__About save project button/revert project button behavior__  
 WHEEL manages files using git.  
 Edits on the graph view screen are immediately reflected in the server-side file.
 It is not registered in the git repository until you click the save project button.
 Click the revert project button to discard all changes made since the last commit.
 Restores the repository to the state it was in when it was last committed. <br/><br/>
-For more information about git operations, see the developer documentation (https://github.com/ {{site.repository}}/blob/master/documentMD/design/design.md).
+For more information about git operations, see the developer documentation [detailed design document](https://github.com/{{site.repository}}/blob/master/documentMD/design/design.md).
 {: .notice--info}
 
 ### Workflow screen changeover button area
@@ -86,7 +86,7 @@ This area displays buttons that switch the workflow screen between graph view, l
 |2|list view button    | Switch to the list view screen |
 |3|text editor button  | Switch to the text editor screen |
 
-__ About Transitions to Text Editor Screens __  
+__About Transitions to Text Editor Screens__  
 Transitions to the text editor screen are limited by the selected state of the file or the selected state of the project.  
 If the transition cannot be made, the text editor button is displayed in a state that cannot be clicked.
 {: .notice--info}
@@ -118,7 +118,7 @@ The setting screen is displayed.
  - Create environment variables  
 You can add a new environment variable by entering the environment variable name in __name__ and the value in __value__ and clicking the __+__ button.
  - Edit environment variables  
-You can change it by clicking the __ environment variable name __ or __value__ in the environment variable row you want to edit.
+You can change it by clicking the __environment variable name__ or __value__ in the environment variable row you want to edit.
  - Delete environment variable  
 You can delete a previously set environment variable by clicking the trash can icon at the right end of the environment variable row that you want to delete.
 
@@ -177,7 +177,7 @@ The log display is output to multiple tabs depending on the contents.
 The label colors indicate the following meanings:
 - Blue: Currently visible
 - Green: New information, not displayed
-- Ashes: Hidden
+- Gray: Hidden
 
 Click the __CLEAR ALL LOG__ button to clear all previously displayed logs.
 
@@ -185,4 +185,4 @@ Click the △ button at the top to collapse the log display area to the bottom.
 
 
 --------
-Return to Reference Manual home page ({{site.baseurl}}/reference /)
+[Return to Reference Manual home page]({{site.baseurl}}/reference/)
