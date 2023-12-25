@@ -7,7 +7,7 @@ permalink: /reference/4_component/
 
 Learn more about each component.
 
-* Common Items (00_common.html)
+* [Common Items](00_common.html)
 * [Task](01_Task.html)
 * [If](02_If.html)
 * [For](03_For.html)
