@@ -49,4 +49,4 @@ A falsy value is considered a failure.
 
 
 --------
-Return to Component Details ({{site.baseurl}}/reference/4_component /)
+[Return to Component Details]({{site.baseurl}}/reference/4_component/)
