@@ -370,6 +370,7 @@ export default {
           removeItem(this.items, this.activeItem.id)
           this.commitSelectedFile(null);
           this.currentDir=this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
+          this.activeItem=null;
         })
       } else if (this.dialog.submitEvent === "renameFile") {
         const newName = this.dialog.inputField
