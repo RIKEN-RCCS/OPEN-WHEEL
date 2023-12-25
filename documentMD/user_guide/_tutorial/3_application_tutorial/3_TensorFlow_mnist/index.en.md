@@ -25,13 +25,13 @@ MNIST data
 For each image data, label data which is correct data is given one by one.
 
 
-## 2. About Neural Networks (NNs)
+## 2. About NN (Neural Network)
 
 This section describes the NN method used to analyze MNIST data.
 NN stands for neural network, which is a mathematical model of artificial neurons representing nerve cells (neurons) and their connections, or networks, in the human brain.
 It consists of an input layer, an output layer, and a hidden layer, with a "weight" between the layers that indicates the strength of the connections between the neurons.
 
-! img (./img/NN.PNG "About Neural Networks")
+![img](./img/NN.PNG "About Neural Networks")
 
 Features are extracted from the image, and the weights of nodes are updated and learned.
 In this case, the MNIST data set is used, so the input layer is 784 nodes and the output layer is 10 nodes in order to obtain an output of one of 0~9 digits from an input of 28*28 pixels.
@@ -110,7 +110,7 @@ Open the component properties window and set the following five items.
 
 - script: run.sh
 - host: fugaku
--use job scheduler: Enabled
+- use job scheduler: Enabled
 - output files: param.hdf5
 - include: learn.log
 
@@ -179,14 +179,14 @@ Open the component properties window and set the following four items.
 
 - script: run.sh
 - host: fugaku
--use job scheduler: Enabled
+- use job scheduler: Enabled
 - include: eval.log
 
 ### Setting File Dependencies
 Finally, set the output files of __train__ to ▶ in `param.hdf5` to the estimate component.
 After dropping and connecting, the workflow creation is complete.
 
-! img (./img/workflow.png "Complete Workflow")
+![img](./img/workflow.png "Complete Workflow")
 
 
 ## 4. Checking the execution results
@@ -213,5 +213,5 @@ The above results confirm that __accuracy__ is __0.927__, that is, a learning mo
 That's all for an example MNIST data analysis workflow using TensorFlow.
 
 --------
-Return to Practical Tutorial ({{site.baseurl}}/tutorial/3_application_tutorial /)
+[Return to Practical Tutorial]({{site.baseurl}}/tutorial/3_application_tutorial/)
 
