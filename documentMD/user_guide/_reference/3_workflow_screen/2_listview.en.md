@@ -1,5 +1,5 @@
 ---
-title: List view screen
+title: List View Screen
 lang: en
 permalink: /reference/3_workflow_screen/2_listview.html
 ---
@@ -31,10 +31,10 @@ state is categorized and displayed as follows:
 | unknown | Indicates a status check that could not be determined whether a Task submitted through the batch system terminated normally or abnormally, for example <br> |
 | failed | Indicates an abnormal end of processing |
 
-__ About Viewing Components __  
+__About Viewing Components__  
 Components that run multiple times during a single project run, such as the For component, are displayed by the number of times they are run (see above).  
 Task components, which are subcomponents of other components, also appear nested in the upstream component tree.
 {: .notice--info}
 
 --------
-Return to Reference Manual home page ({{site.baseurl}}/reference /)
+[Return to Reference Manual home page]({{site.baseurl}}/reference/)
