@@ -11,11 +11,13 @@ permalink: /reference/2_remotehost_screen/
 表示された __Remotehost editor__ リンクをクリックして表示します。
 
 ![img](./img/hanberger.png "hanberger.png")
+
 ![img](./img/drawer.png "drawer.png")
 
 
 ## リモートホスト設定画面
 リモートホスト設定画面の構成は、以下のとおりです。
+
 ![img](./img/remotehost.png "remotehost")
 
 ||構成要素|説明|

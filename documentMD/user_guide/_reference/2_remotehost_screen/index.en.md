@@ -1,5 +1,5 @@
 ---
-title: Remote Host Configuration Screen
+title: Remote Host Settings Screen
 lang: en
 permalink: /reference/2_remotehost_screen/
 ---
@@ -11,11 +11,13 @@ To display the Remote Host Settings screen, click the hamburger menu in the uppe
 Click the __Remotehost editor__ link that appears to view it.
 
 ![img](./img/hanberger.png "hanberger.png")
+
 ![img](./img/drawer.png "drawer.png")
 
 
 ## Remote host setting screen
 The following shows the configuration of the Remote Host Settings window.
+
 ![img](./img/remotehost.png "remotehost")
 
 || Component | Description |
@@ -66,4 +68,4 @@ Enter the required information and click the __OK__ button to save the remote ho
 
 
 --------
-Return to Reference Manual home page ({{site.baseurl}}/reference /)
+[Return to Reference Manual home page]({{site.baseurl}}/reference/)
