@@ -20,7 +20,7 @@ The script property is a select box.
 You can choose from the files that exist in the Task component.
 
 ### host
-Remote host set in Remote host settings ({{site.baseurl}}/how_to_boot/# Remote Host Configuration) as the script execution environment
+Remote host set in [Remote host settings]({{site.baseurl}}/how_to_boot/#remote-host-settings) as the script execution environment
 or "localhost."
 
 ![img](./img/task_host.png "task_host")
@@ -48,9 +48,8 @@ Select the queue in which the job is to be submitted from the queue specified in
 If not specified, the job is submitted to the batch system default queue.
 
 ### submit command
-Remote Host Settings ({{site.baseurl}}/how_to_boot/# Remote Host Configuration)
-Displays the name of the command used to submit the job to the batch system specified in.
-<! -- This column is not actually a property of the Task component. -->  
+Displays the name of the command used to submit the job to the batch system specified by [Remote host settings]({{site.baseurl}}/how_to_boot/#remote-host-settings).
+<!-- This column is not actually a property of the Task component. -->  
 Therefore, it cannot be changed here.
 
 ### submit option
@@ -97,7 +96,7 @@ When the Task component finishes executing, it is copied to the WHEEL server and
 __include__ can be a directory name, glob, etc.
 You can also specify __exclude__ to exclude downloads.
 
-For example, suppose you specify `* .txt` for __include__ and `foo.txt` for __exclude__, and foo.txt, bar.txt, baz.txt are generated at the end of execution.
+For example, suppose you specify `*.txt` for __include__ and `foo.txt` for __exclude__, and foo.txt, bar.txt, baz.txt are generated at the end of execution.
 In this case, only two files are actually downloaded: bar.txt, baz.txt.
 
 ### clean up flag
@@ -113,5 +112,5 @@ Note that if __same as parent__ is specified for the top-level component, the be
 
 
 --------
-Return to Component Details ({{site.baseurl}}/reference/4_component /)
+[Return to Component Details]({{site.baseurl}}/reference/4_component/)
 
