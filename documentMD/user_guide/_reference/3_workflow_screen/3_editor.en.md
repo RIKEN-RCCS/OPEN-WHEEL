@@ -6,15 +6,15 @@ permalink: /reference/3_workflow_screen/3_editor.html
 This chapter describes the functions of the text editor screen.
 
 The text editor screen has three modes:
--normal mode
--PS-config mode
--jobScriptEditor mode
+- ormal mode
+- PS-config mode
+- jobScriptEditor mode
 
 You can switch between these modes in the drop-down list at the top of the screen.
 
 ![img](./img/editor_mode.png "editor_mode")
 
-__ About Mode Switching __  
+__About Mode Switching__  
 Some modes cannot be migrated depending on the component selected in the graph view screen before the transition to the text editor screen.
 {: .notice--info}
 
@@ -55,13 +55,13 @@ When the read only switch is enabled, the displayed text is read-only and cannot
 Use this function to check the contents of a text file.
 
 #### SAVE ALL FILES button
-Click the SAVE ALL FILES button to save all currently open tabs as well as all parameter study settings currently configured in the PS-config mode (#ps-config mode) described below.  
+Click the SAVE ALL FILES button to save all currently open tabs as well as all parameter study settings currently configured in the [PS-config mode](#ps-config-mode) described below.  
 As with the __save__ menu on the Files tab, in this state you have not yet committed to the git repository, so clicking the revert project button at the top of the screen discards your edits.
 
 ### PS-config mode
 This section describes the features of PS-config mode.
 
-The parameter study function itself is described in PS Components ({{site.baseurl}}/reference/4_component/06_PS.html).
+The parameter study function itself is described in [PS Components]({{site.baseurl}}/reference/4_component/06_PS.html).
 
 ![img](./img/editor_ps_config.png "editor_ps_config")
 
@@ -102,28 +102,28 @@ A form is displayed to fill in the options used by the batch system.
 |5| Option input form |
 
 #### LOAD button
-Click the __LOAD__ button to load the option settings saved with the __REGISTER__ button into the __ option input form __.
+Click the __LOAD__ button to load the option settings saved with the __REGISTER__ button into the __option input form__.
 
 #### INSERT button
-Click the __INDERT__ button to set the option value in the __ option input form __.
+Click the __INSERT__ button to set the option value in the __option input form__.
 Use a format suitable for job scripts and insert it at the beginning of the file open in the tab editor.
 
 Also, if an option value has already been inserted into a file that is open on the tab editor side, the __INSERT__ button's label display switches to __UPDATE__.
 If you click the __UPDATE__ button, the current settings will replace what you have already entered.
 
 #### CLEAR button
-Click the __CLEAR__ button to reset the contents of the __ option entry form to the default values.
+Click the __CLEAR__ button to reset the contents of the __option input form__ to the default values.
 At this time, the contents already inserted in the file on the tab editor side remain.
 
 #### REGISTER button
-Click the __REGISTER__ button to name and save the settings entered in the __ option input form.
+Click the __REGISTER__ button to name and save the settings entered in the __option input form__.
 You can easily enter the same settings in multiple scripts by loading the saved content with the __LOAD__ button.
 
 The settings you enter with the __REGISTER__ button are stored in a different location than the project file, so you can recall settings you used in other projects.
 
 To delete saved content, click the trash can icon at the far right of the list that appears when you click the __LOAD__ button.
 
-__ About Input Values in the Options Input Form __  
+__About Input Values in the Options Input Form__  
 The input values are not validated in the form in jobScriptEditor mode. <br/><br/>
 For example, if you set an option in a format different from the one you can specify,
 You may have entered an option that requires more resources than are allowed.
@@ -133,4 +133,4 @@ Therefore, check the documentation of the system to be used by the user himself,
 
 
 --------
-Return to Reference Manual home page ({{site.baseurl}}/reference /)
+[Return to Reference Manual home page]({{site.baseurl}}/reference/)
