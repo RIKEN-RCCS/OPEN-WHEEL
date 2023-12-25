@@ -4,6 +4,7 @@
 
     :data-droparea=true @drop=onDrop
   />
+  <text :x=x+height/1.2 font-size="90%" :y=center.y fill="white" text-anchor="start" v-if="stepnum !== null"> {{ stepnum }} </text>
     <image :href=iconImg :x=x :y=center.y-height/2 :width=height :height=height />
     <text-box :center=nameCenter :text=name :color=nameColor />
     <status-icon :x=statusIconX :y=center.y :state=state :num-total=numTotal :num-finished=numFinished :num-failed=numFailed />
@@ -56,6 +57,10 @@ export default{
     },
     disable:{
       type: Boolean
+    },
+    stepnum:{
+      type: [Number, null],
+      default: null
     }
   },
   data(){

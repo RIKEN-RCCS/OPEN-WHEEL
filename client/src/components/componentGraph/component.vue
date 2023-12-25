@@ -25,6 +25,7 @@
       :num-total=componentData.numTotal
       :num-finished=componentData.numFinished
       :num-failed=componentData.numFailed
+      :stepnum=componentData.stepnum
       @drop=onDropToHeader
     />
     <input-output-file-box v-for="(item, i) in inputOutputFiles"
@@ -214,7 +215,7 @@ export default{
     onDblclick(){
       this.$emit("chdir", this.componentData.ID, this.componentData.type);
     },
-    onRightclick(e){
+    onRightclick(){
       //not implemented yet
       console.log("right clicked");
     }
