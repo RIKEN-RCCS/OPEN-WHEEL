@@ -53,7 +53,7 @@ Open the component properties window and set the following four items.
 
 - script: run.sh
 - host: fugaku
--use job scheduler: Enabled
+- use job scheduler: Enabled
 - output files: cavity
 
 This completes the __preprocess__ setting.
@@ -84,7 +84,7 @@ Open the component properties window and set the following four items.
 
 - script: run.sh
 - host: fugaku
--use job scheduler: Enabled
+- use job scheduler: Enabled
 - output files: cavity.tgz
 
 ### Configuring the extract Component
@@ -105,7 +105,7 @@ Also, drop ▶ of `cavity.tgz` set in the output files of the __solve__ componen
 
 This completes the workflow creation process. Click the __save project__ button to save the project you created.
 
-! img (./img/workflow.png "Complete Workflow")
+![img](./img/workflow.png "Complete Workflow")
 
 ## 3. Run Project
 Click the __run project__ button to run the project.
@@ -119,23 +119,23 @@ Open the __extract__ component properties screen to display the Files area,
 Open the `cavity` directory.
 The `result.foam` file appears below it, click to select it and click the __share file__ button.
 
-! img (./img/file_share_button.png "File Share Button")
+![img](./img/file_share_button.png "File Share Button")
 
 Displays the path to the __result.foam__ file.
 Click the Copy button to copy and use this file name as an argument
 Start ParaView.
 
-! img (./img/file_share_dialog.png "File Sharing Dialog")
+![img](./img/file_share_dialog.png "File Sharing Dialog")
 
 
 ### Analysis Results
 
 The flow velocity vector visualization result is shown as a reference.
 
-! img (./img/cavity_result.png "Velocity Vector")
+![img](./img/cavity_result.png "Velocity Vector")
 
 
 This completes the cavity case execution workflow.
 
 --------
-Return to Practical Tutorial ({{site.baseurl}}/tutorial/3_application_tutorial /)
+[Return to Practical Tutorial]({{site.baseurl}}/tutorial/3_application_tutorial/)
