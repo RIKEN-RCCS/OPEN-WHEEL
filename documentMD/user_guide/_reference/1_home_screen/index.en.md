@@ -38,8 +38,7 @@ To create a new project:
 ![img](./img/new.png "new")
 
 When a new project is created, it appears in the Project List area.
-Follow the steps in the next section, Open Project (# Open Project)
-Switch to the workflow screen.
+Follow the steps in [Open Project](#open-project) below to enter the workflow screen.
 
 ## Open Project
 To open a project and transition to the workflow screen:
@@ -55,7 +54,7 @@ Edit the project name and press the __Enter__ key to rename the project.
 
 ![img](./img/changeName.png "changeName")
 
-__ About Project Names ___  
+__About Project Names__  
 The project name is used as part of the directory name.  
 Therefore, if the directory name after the project name change overlaps with an existing directory name, the project name will end with .1
 (When .1 is also used, the value of .2.3 ・・・ is successively larger.) is automatically granted.
@@ -73,4 +72,4 @@ Enabling the __batch mode__ switch allows you to select multiple projects.
 In this state, you can delete multiple projects at once by clicking the __REMOVE__ or __REMOVE FROM LIST__ button.
 
 --------
-Return to Reference Manual home page ({{site.baseurl}}/reference /)
+[Return to Reference Manual home page]({{site.baseurl}}/reference/)
