@@ -18,8 +18,8 @@ You can set the following properties for Foreach components:
 Sets the list of index values.  
 Enter the desired index value in the input field and click the + button to add it. 
 
-__ About Referencing Index Values __  
-To use the current index value from a subcomponent during a loop, it can be referenced in the __$ WHEEL_CURRENT_INDEX__ environment variable.  
+__About Referencing Index Values__  
+To use the current index value from a subcomponent during a loop, it can be referenced in the __$WHEEL_CURRENT_INDEX__ environment variable.  
 {: .notice--info}
 
 ### number of instances to keep
@@ -34,5 +34,5 @@ The values set in indexList are used from the beginning of the list.
 Terminates execution of the entire component when it reaches the end of the list.
 
 --------
-Return to Component Details ({{site.baseurl}}/reference/4_component /)
+[Return to Component Details]({{site.baseurl}}/reference/4_component/)
 
