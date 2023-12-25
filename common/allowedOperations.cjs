@@ -12,6 +12,7 @@ const allowedOperations={
   stopped:["cleanProject", "saveProject"],
   finished:["cleanProject", "saveProject"],
   failed:["cleanProject",  "saveProject"],
+  holding:[],
   unknown:["cleanProject",  "saveProject"]
 }
 

@@ -132,6 +132,7 @@ async function onGetProjectJson(projectRootDir, ack) {
   }
   return ack(true);
 }
+
 async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
   const requestedComponentDir = await getComponentDir(projectRootDir, componentID);
   return sendWorkflow(ack, projectRootDir, requestedComponentDir, clientID);
@@ -141,7 +142,6 @@ async function onUpdateProjectDescription(projectRootDir, description, ack) {
   await updateProjectDescription(projectRootDir, description);
   onGetProjectJson(projectRootDir, ack);
 }
-
 
 async function onRunProject(clientID, projectRootDir, ack) {
   const projectState = await getProjectState(projectRootDir);
@@ -301,7 +301,7 @@ async function projectOperator(clientID, projectRootDir, ack, operation){
       case "cleanProject":
         await onCleanProject(clientID, projectRootDir, ack);
         break;
-      case "rvertProject":
+      case "revertProject":
         await onRevertProject(clientID, projectRootDir, ack);
         break;
       case "saveProject":
@@ -312,12 +312,14 @@ async function projectOperator(clientID, projectRootDir, ack, operation){
     getLogger(projectRootDir).error(`${operation} failed`, e);
     ack(e);
   } finally {
-    await Promise.all([
-      sendWorkflow(null, projectRootDir),
-      sendTaskStateList(projectRootDir),
-      sendProjectJson(projectRootDir),
-      sendComponentTree(projectRootDir)
-    ]);
+    if(operation !== "runProject"){
+      await Promise.all([
+        sendWorkflow(null, projectRootDir),
+        sendTaskStateList(projectRootDir),
+        sendProjectJson(projectRootDir),
+        sendComponentTree(projectRootDir)
+      ]);
+    }
   }
   getLogger(projectRootDir).debug(`${operation} done`);
   return ack(true);
@@ -330,7 +332,8 @@ function getProjectOperationQueue(clientID, projectRootDir, ack){
       exec: projectOperator.bind(null, clientID, projectRootDir, ack),
       submitHook: async (queue, operation)=>{
         const last=queue.getLastEntry();
-        if( last === operation){
+
+        if( last !== null && last.args === operation){
           getLogger(projectRootDir).debug("duplicated operation is ignored", operation);
           return false
         }
@@ -350,6 +353,7 @@ async function onProjectOperation(clientID, projectRootDir, operation, ack){
   const queue=getProjectOperationQueue(clientID, projectRootDir, ack);
   const rt=await queue.qsub(operation);
   getLogger(projectRootDir).info(`${operation} done with ${rt}`);
+  return rt;
 }
 
 async function onProjectOperation(clientID, projectRootDir, opration, ack){

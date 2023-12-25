@@ -151,7 +151,12 @@ class Dispatcher extends EventEmitter {
 
   async _dispatchOneComponent(target) {
     try {
-      await this._cmdFactory(target.type).call(this, target);
+      if(target.state === "finished"){
+        this.logger.info(`finished component don't re-run at this time: ${target.name}(${target.ID})`);
+      }else{
+        await this._setComponentState(target, "running");
+        await this._cmdFactory(target.type).call(this, target);
+      }
     } catch (err) {
       await this._setComponentState(target, "failed");
       this.hasFailedComponent = true;
@@ -195,14 +200,12 @@ class Dispatcher extends EventEmitter {
           this.logger.info(`disabled component: ${target.name}(${target.ID})`);
           continue;
         }
-
         if (!await this._isReady(target)) {
           this.pendingComponents.push(target);
           continue;
         }
 
         await this._getInputFiles(target);
-        await this._setComponentState(target, "running");
         promises.push(this._dispatchOneComponent(target));
       }//end of while loop
 
