@@ -15,7 +15,7 @@ If a process running on a remote host is terminated by a signal,
 Because the WHEEL specification does not allow the remote signal number to be supplemented, the operation is judged to have terminated normally.
 
 {% capture notice-words %}
-__ About Task Types __  
+__About Task Types__  
 The terms used to describe the various tasks have the following meanings:
 
 | Term               | Meaning                                                                |
@@ -30,15 +30,14 @@ The terms used to describe the various tasks have the following meanings:
 </div>
 
 ***
-Handling Running Scripts When Stopping a Project
+## Handling Running Scripts When Stopping a Project
 If the Stop Project button stops the project, the script set to WHEEL is stopped, but any child processes called from the script are not stopped.
 
 ***
 ## Handling Large Files
 WHEEL uses git to manage data handled by projects.
 Therefore, placing large files in the project directory can cause various problems due to poor performance of repository operations.  
-To avoid this problem, upload files larger than a certain size from the WHEEL graph view.
-[git LFS] (https://git-lfs.github.com/).
+To avoid this problem, configure files larger than a certain size uploaded from the WHEEL graph view to be managed by [git LFS](https://git-lfs.github.com/).
 Be aware that if you add files to your project's git repository by means other than WHEEL, you may not be able to work with them properly depending on their size.
 
 ***
@@ -75,4 +74,4 @@ Therefore, check the state of the project and components before loading.
 
 
 --------
-Return to home page ({{site.baseurl}} /)
+[Return to home page]({{site.baseurl}}/)
