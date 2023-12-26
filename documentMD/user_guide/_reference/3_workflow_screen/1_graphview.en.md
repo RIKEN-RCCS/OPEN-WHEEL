@@ -31,17 +31,21 @@ The following describes each area and button in detail.
 ### Status display area
 The status display area shows the following statuses depending on the execution status of the entire project:
 
-1. NOT-STARTED: before project execution  
+1. not-started: Before project execution  
 ![img](./img/not-started.png "not_started")  
-2. RUNNING    : Project running  
+1. preparing  : Preparing for Project Execution  
+![img](./img/preparing.png "preparing")  
+2. running    : Project running  
 ![img](./img/running.png "running")  
-3. FINISHED   : Project Finish (Normal Finish)  
+1. stopped    : Project execution stopped  
+![img](./img/stopped.png "stopped")  
+1. finished   : Project Finish (Normal Finish)  
 ![img](./img/finished.png "finished")  
-4. FAILED     : End Project (Error occurs)  
+1. failed     : End Project (Error occurs)  
 ![img](./img/failed.png "failed")  
-5. HOLDING     : Confirming submitted jobs  
+1. holding     : Confirming submitted jobs  
 ![img](./img/holding.png "holding")  
-6. UNKNOWN     : Project status unknown  
+1. unknown     : Project status unknown  
 ![img](./img/unknown.png "unknown")
 
 ### Project Operation Button Area
@@ -52,9 +56,8 @@ This area displays the buttons involved in running the project.
 || Component | Description |
 |----------|----------|---------------------------------|
 |1|run project button      | Start running the project |
-|2|pause project button    | Pause project |
-|3|stop project button     | Stops project execution and returns to its previous state |
-|4|cleanup project button  | Deletes files generated during project execution and restores them to their original state before execution started |
+|2|stop project button     | Stops project execution and returns to its previous state |
+|3|cleanup project button  | Deletes files generated during project execution and restores them to their original state before execution started |
 
 ### Save button area
 This area contains buttons for saving edited projects.
@@ -122,8 +125,8 @@ You can change it by clicking the __environment variable name__ or __value__ in 
  - Delete environment variable  
 You can delete a previously set environment variable by clicking the trash can icon at the right end of the environment variable row that you want to delete.
 
-After changing the settings, clicking the __SAVE__ button will actually take effect.
-Click the __CANCEL__ button to discard your changes and exit.
+After changing the settings, clicking the __save__ button will actually take effect.
+Click the __cancel__ button to discard your changes and exit.
 
 ### Workflow Creation Area
 Displays the child components of the currently displayed component.
@@ -168,18 +171,17 @@ The log display is output to multiple tabs depending on the contents.
 
 || Component | Description |
 |----------|----------|---------------------------------|
-|1|INFO tab | Displays critical information such as errors, warnings, and general information about project execution and operations |
-|2|STDOUT tab | Displays the standard output of tasks executed on the local host |
-|3|STDERR tab | Displays standard error output for tasks executed on the local host |
-|4|STDOUT (SSH) tab | Displays the standard output of tasks executed on the remote host |
-|5|STDERR (SSH) tab | Displays the standard error output for tasks executed on the remote host |
+|1|info tab | Displays critical information such as errors, warnings, and general information about project execution and operations |
+|2|stdout tab | Displays the standard output of tasks executed on the local host |
+|3|stderr tab | Displays standard error output for tasks executed on the local host |
+|4|output(SSH) tab | Displays standard output and standard error output for tasks executed on the remote host |
 
 The label colors indicate the following meanings:
 - Blue: Currently visible
 - Green: New information, not displayed
 - Gray: Hidden
 
-Click the __CLEAR ALL LOG__ button to clear all previously displayed logs.
+Click the __clear all log__ button to clear all previously displayed logs.
 
 Click the △ button at the top to collapse the log display area to the bottom.
 
