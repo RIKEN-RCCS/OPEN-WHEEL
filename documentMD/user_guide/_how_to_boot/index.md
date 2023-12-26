@@ -94,9 +94,9 @@ label
 Hostname
 : 接続先のホスト名またはIPアドレス
 
-Port number
+<!-- Port number
 : 接続先のポート番号
-
+-->
 User ID
 : 接続先ホストでのユーザID
 
