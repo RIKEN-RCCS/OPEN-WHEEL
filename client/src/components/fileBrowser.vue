@@ -365,6 +365,7 @@ export default {
           this.updateScriptCandidate()
           this.commitSelectedFile(null);
           this.currentDir=this.selectedComponentAbsPath
+          this.activeItem=null;
         })
       } else if (this.dialog.submitEvent === "renameFile") {
         const newName = this.dialog.inputField

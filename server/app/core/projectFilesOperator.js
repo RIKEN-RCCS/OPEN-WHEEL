@@ -10,7 +10,7 @@ const path = require("path");
 const isPathInside = require("is-path-inside");
 const uuid = require("uuid");
 const glob = require("glob");
-const { componentFactory } = require("./workflowComponent");
+const { componentFactory, getComponentDefaultName } = require("./workflowComponent");
 const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, jobScheduler, defaultPSconfigFilename  } = require("../db/db");
 const { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
 const { replacePathsep, convertPathSep } = require("./pathUtils");
@@ -121,18 +121,31 @@ function getSuffixNumberFromProjectName(projectName) {
   return reResult === null ? 0 : reResult[1];
 }
 
-async function getUnusedProjectDir(projectRootDir) {
+/**
+ * return unused projectRootDir
+ * @param {string} projectRootDir - desired projectRootDir
+ * @param {string} projectName - project name without suffix
+ * @return {string} - absolute path of project root directory
+ */
+async function getUnusedProjectDir(projectRootDir, projectName) {
   if (!await fs.pathExists(projectRootDir)) {
     return projectRootDir;
   }
 
   const dirname = path.dirname(projectRootDir);
-  const projectName = path.basename(projectRootDir);
-  let suffixNumber = getSuffixNumberFromProjectName(projectName);
-  while (await fs.pathExists(path.resolve(dirname, (projectName + suffixNumber)))) {
-    ++suffixNumber;
+  let projectRootDirCandidate=path.resolve(dirname, `${projectName}${suffix}`)
+  if(!await fs.pathExists(projectRootDirCandidate)) {
+    return projectRootDirCandidate
   }
-  return path.resolve(dirname, projectName + suffixNumber);
+
+  let suffixNumber = getSuffixNumberFromProjectName(projectName);
+  projectRootDirCandidate=path.resolve(dirname, `${projectName}${suffixNumber}${suffix}`)
+
+  while (await fs.pathExists(projectRootDirCandidate)) {
+    ++suffixNumber;
+    projectRootDirCandidate=path.resolve(dirname, `${projectName}${suffixNumber}${suffix}`)
+  }
+  return projectRootDirCandidate
 }
 
 
@@ -147,13 +160,13 @@ async function getUnusedProjectDir(projectRootDir) {
  */
 async function createNewProject(argProjectRootDir, name, argDescription, user, mail) {
   const description = argDescription != null ? argDescription : "This is new project.";
-  const projectRootDir = await getUnusedProjectDir(argProjectRootDir);
+  const projectRootDir = await getUnusedProjectDir(argProjectRootDir, name);
   await fs.ensureDir(projectRootDir);
   await gitInit(projectRootDir, user, mail);
 
   //write root workflow
   const rootWorkflow = componentFactory("workflow");
-  rootWorkflow.name = name;
+  rootWorkflow.name = path.basename(projectRootDir.slice(0, -suffix.length));
   rootWorkflow.cleanupFlag = defaultCleanupRemoteRoot ? 0 : 1;
 
   getLogger().debug(rootWorkflow);
@@ -163,7 +176,7 @@ async function createNewProject(argProjectRootDir, name, argDescription, user, m
   const timestamp = getDateString(true);
   const projectJson = {
     version: 2,
-    name,
+    name: rootWorkflow.name,
     description,
     state: "not-started",
     root: projectRootDir,
@@ -177,6 +190,7 @@ async function createNewProject(argProjectRootDir, name, argDescription, user, m
   await writeJsonWrapper(projectJsonFileFullpath, projectJson)
   await gitAdd(projectRootDir, "./");
   await gitCommit(projectRootDir, "create new project");
+  return projectRootDir
 }
 
 async function removeComponentPath(projectRootDir, IDs, force = false) {
@@ -417,30 +431,6 @@ async function convertProjectFormat(projectJsonFilepath) {
   await gitCommit(projectRootDir,"convert old format project");
 }
 
-function isDuplicateProjectName(projectRootDir, newName) {
-  const projectBasename=path.basename(projectRootDir);
-  if(projectBasename === newName+suffix){
-    return true;
-  }
-  const currentProjectList = projectList.getAll();
-  if (currentProjectList.length === 0) {
-    return false;
-  }
-  const rt = currentProjectList.some((e)=>{
-    const projectName = path.basename(e.path.slice(0, -suffix.length));
-    return projectName === newName;
-  });
-  return rt;
-}
-
-function avoidDuplicatedProjectName(projectRootDir, basename, argSuffix) {
-  let suffixNumber = argSuffix;
-  while (isDuplicateProjectName(projectRootDir, basename + suffixNumber)) {
-    ++suffixNumber;
-  }
-  return basename + suffixNumber;
-}
-
 /*
  * convert old include exclude format (comma separated string) to array of string
  * @params {string} filename - component json filename
@@ -476,13 +466,6 @@ async function rewriteIncludeExclude(projectRootDir, filename, changed) {
   }
 }
 
-function getUnusedProjectName(projectRootDir, projectName) {
-  if (!isDuplicateProjectName(projectRootDir, projectName)) {
-    return projectName;
-  }
-  const suffixNumber = getSuffixNumberFromProjectName(projectName);
-  return avoidDuplicatedProjectName(projectRootDir, projectName, suffixNumber);
-}
 
 /**
  * convert comma separated include and exclude prop to array of string
@@ -541,15 +524,14 @@ async function importProject(projectRootDir) {
   const projectBasename=path.basename(projectRootDir);
 
   if(projectBasename !== projectJson.name+suffix){
-    const projectName = getUnusedProjectName(projectRootDir, projectJson.name);
+    newProjectRootDir = await getUnusedProjectDir(projectRootDir, projectJson.name);
+    const projectName = path.basename(newProjectRootDir.slice(0, -suffix.length));
     const oldProjectName=projectJson.name
 
     if (oldProjectName !== projectName) {
       projectJson.name=projectName
       getLogger().warn(projectJson.name, "is already used. so this project is renamed to", projectName);
     }
-
-    newProjectRootDir = path.resolve(path.dirname(projectRootDir), projectName + suffix);
 
     if (projectRootDir !== newProjectRootDir) {
       getLogger().debug(`rename ${projectRootDir} to ${newProjectRootDir}`);
@@ -657,12 +639,7 @@ async function addProject(projectDir, description) {
     getLogger().error(projectName, "is not allowed for project name");
     throw (new Error("illegal project name"));
   }
-  if (isDuplicateProjectName(projectName)) {
-    getLogger().error(projectName, "is already used");
-    throw (new Error("already exists"));
-  }
-
-  await createNewProject(projectRootDir, projectName, description, "wheel", "wheel@example.com");
+  projectRootDir=await createNewProject(projectRootDir, projectName, description, "wheel", "wheel@example.com");
   projectList.unshift({ path: projectRootDir });
 }
 
@@ -671,12 +648,11 @@ async function renameProject(id, newName, oldDir) {
     getLogger().error(newName, "is not allowed for project name");
     throw (new Error("illegal project name"));
   }
-  if (isDuplicateProjectName(newName)) {
+  const newDir = path.resolve(path.dirname(oldDir), newName + suffix);
+  if (await fs.pathExists(newDir)){
     getLogger().error(newName, "is already exists");
     throw (new Error("already exists"));
   }
-
-  const newDir = path.resolve(path.dirname(oldDir), newName + suffix);
 
   await fs.move(oldDir, newDir);
   const projectJson = await readJsonGreedy(path.resolve(newDir, projectJsonFilename));
@@ -1445,6 +1421,7 @@ function componentJsonReplacer(key, value) {
   return value;
 }
 
+
 /**
  * create new component in parentDir
  * @param {string} projectRootDir - project root directory path
@@ -1456,9 +1433,10 @@ function componentJsonReplacer(key, value) {
 async function createNewComponent(projectRootDir, parentDir, type, pos) {
   const parentJson = await readJsonGreedy(path.resolve(parentDir, componentJsonFilename));
   const parentID = parentJson.ID;
+  const componentBasename=getComponentDefaultName(type)
 
   //create component directory and Json file
-  const absDirName = await makeDir(path.resolve(parentDir, type), 0);
+  const absDirName = await makeDir(path.resolve(parentDir, componentBasename), 0);
   const newComponent = componentFactory(type, pos, parentID);
   newComponent.name = path.basename(absDirName);
   await writeComponentJson(projectRootDir, absDirName, newComponent);
@@ -1565,7 +1543,7 @@ async function updateStepNumber(projectRootDir) {
     p.push(writeComponentJson(projectRootDir, componentDir, componentJson));
     stepnum++;
   }
-  await Promise.all(p);
+  return Promise.all(p);
 }
 
 async function arrangeComponent(stepjobGroupArray) {
@@ -1840,7 +1818,11 @@ async function addLink(projectRootDir, src, dst, isElse = false) {
   if (!dstJson.previous.includes(src)) {
     dstJson.previous.push(src);
   }
-  return writeComponentJson(projectRootDir, dstDir, dstJson);
+  await writeComponentJson(projectRootDir, dstDir, dstJson);
+
+  if(srcJson.type === "stepjobTask" && dstJson.type === "stepjobTask"){
+    await updateStepNumber(projectRootDir);
+  }
 }
 
 async function removeLink(projectRootDir, src, dst, isElse) {

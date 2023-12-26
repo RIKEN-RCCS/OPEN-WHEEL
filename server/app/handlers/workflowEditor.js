@@ -23,7 +23,6 @@ const {
   createNewComponent,
   updateComponent,
   getEnv,
-  updateStepNumber,
   replaceEnv
 } = require("../core/projectFilesOperator.js");
 const { getComponentDir } = require("../core/projectFilesOperator.js");
@@ -133,10 +132,6 @@ async function onRemoveAllFileLink(projectRootDir, componentID, inputFileName, f
 async function onUpdateEnv(projectRootDir, ID, newEnv, parentID, cb) {
   return generalHandler(replaceEnv.bind(null, projectRootDir, ID, newEnv), "updateEnv", projectRootDir, parentID, cb);
 }
-async function onUpdateStepNumber(projectRootDir, parentID, cb) {
-  return generalHandler(updateStepNumber.bind(null, projectRootDir), "updateStepNumber", projectRootDir, parentID, cb);
-}
-
 
 async function onGetEnv(projectRootDir, ID, cb) {
   try {
@@ -165,6 +160,5 @@ module.exports = {
   onRemoveFileLink,
   onRemoveAllFileLink,
   onUpdateEnv,
-  onUpdateStepNumber,
   onGetEnv
 };

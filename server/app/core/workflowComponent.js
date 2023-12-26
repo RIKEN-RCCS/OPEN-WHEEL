@@ -386,11 +386,27 @@ function removeDuplicatedComponent(components) {
   });
 }
 
+/**
+ * return component's default basename
+ * @param {string} type - component type
+ * @returns {string} - component's basename
+ */
+function getComponentDefaultName(type){
+  if (type === "stepjobTask"){
+    return "sjTask"
+  }
+  if(type === "bulkjobTask"){
+    return "bjTask"
+  }
+  return type
+}
+
 
 module.exports = {
   componentFactory,
   hasChild,
   isInitialComponent,
   isComponent,
-  removeDuplicatedComponent
+  removeDuplicatedComponent,
+  getComponentDefaultName
 };
