@@ -143,7 +143,7 @@ describe("importProject UT", function (){
   it("should rename root directory to projectJson.name if that is differ", async ()=>{
     const projectJson=await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     projectJson.name = "hoge"
-    fs.writeJson(path.resolve(projectRootDir, projectJsonFilename), projectJson);
+    await fs.writeJson(path.resolve(projectRootDir, projectJsonFilename), projectJson);
     await gitAdd(projectRootDir, projectJsonFilename);
     await gitCommit(projectRootDir);
     await importProject(projectRootDir);

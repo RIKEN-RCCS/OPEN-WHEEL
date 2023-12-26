@@ -133,9 +133,14 @@ async function getUnusedProjectDir(projectRootDir, projectName) {
   }
 
   const dirname = path.dirname(projectRootDir);
-  let suffixNumber = getSuffixNumberFromProjectName(projectName);
+  let projectRootDirCandidate=path.resolve(dirname, `${projectName}${suffix}`)
+  if(!await fs.pathExists(projectRootDirCandidate)) {
+    return projectRootDirCandidate
+  }
 
-  let projectRootDirCandidate=path.resolve(dirname, `${projectName}${suffixNumber}${suffix}`)
+  let suffixNumber = getSuffixNumberFromProjectName(projectName);
+  projectRootDirCandidate=path.resolve(dirname, `${projectName}${suffixNumber}${suffix}`)
+
   while (await fs.pathExists(projectRootDirCandidate)) {
     ++suffixNumber;
     projectRootDirCandidate=path.resolve(dirname, `${projectName}${suffixNumber}${suffix}`)
@@ -519,8 +524,8 @@ async function importProject(projectRootDir) {
   const projectBasename=path.basename(projectRootDir);
 
   if(projectBasename !== projectJson.name+suffix){
-    newProjectRootDir = getUnusedProjectDir(projectRootDir, projectJson.name);
-    const projectName = path.basename(newProjectRootDir);
+    newProjectRootDir = await getUnusedProjectDir(projectRootDir, projectJson.name);
+    const projectName = path.basename(newProjectRootDir.slice(0, -suffix.length));
     const oldProjectName=projectJson.name
 
     if (oldProjectName !== projectName) {

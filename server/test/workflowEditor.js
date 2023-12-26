@@ -209,7 +209,7 @@ describe("workflow editor UT", function() {
     foreach0Schema.addValue("previous", components.wf1.ID);
     foreach0Schema.addInputFile("hoge", components.wf1.ID, "hoge");
 
-    rootSchema = getSchema("workflow", "test project", rootWf.ID);
+    rootSchema = getSchema("workflow", "testProject", rootWf.ID);
 
     viewer0Schema = getSchema("viewer", "viewer0", viewer0.ID, rootWf.ID);
     viewer0Schema.addInputFile("viewer");
