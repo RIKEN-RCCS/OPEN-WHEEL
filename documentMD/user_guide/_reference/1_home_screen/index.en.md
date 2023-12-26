@@ -14,7 +14,7 @@ The Home screen is organized as follows.
 |2| NEW button                 | Creates a new project                                                                         |
 |3| REMOVE FROM LIST button    | Deletes the project from the project list area (the entity file remains).                       |
 |4| REMOVE button              | Deletes the project                                                                             |
-|5| batch mode switch        | Switches to mass delete mode for multiple projects. When enabled, multiple projects can be selected |
+|5| BATCH MODE switch        | Switches to mass delete mode for multiple projects. When enabled, multiple projects can be selected |
 |6| Navigation drawer     | Opens a drawer with links to the User Guide, Remote Host Configuration screen                               |
 |7| Project List Area | Lists previously opened projects.                                                         |
 
@@ -33,7 +33,7 @@ To create a new project:
 1. Click the __NEW__ button to display the Create New Project dialog.
 1. Optionally, select a project data creation location in the directory tree.
 1. Enter a project name.
-1. Click the __CREATE__ button.
+1. Click the __create__ button.
 
 ![img](./img/new.png "new")
 
@@ -68,7 +68,7 @@ To delete a project:
    It is removed from the project list area, but the files that constitute the project can remain on the server side.
 
 ## Mass Delete Multiple Projects
-Enabling the __batch mode__ switch allows you to select multiple projects.
+Enabling the __BATCH MODE__ switch allows you to select multiple projects.
 In this state, you can delete multiple projects at once by clicking the __REMOVE__ or __REMOVE FROM LIST__ button.
 
 --------
