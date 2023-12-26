@@ -3,7 +3,7 @@ title: How to start WHEEL
 sidebar:
     nav: "admin-docs"
 lang: en
-permalink: /how_to_boot
+permalink: /how_to_boot/
 ---
 
 ## Advance Preparation
