@@ -1538,7 +1538,7 @@ async function updateStepNumber(projectRootDir) {
     p.push(writeComponentJson(projectRootDir, componentDir, componentJson));
     stepnum++;
   }
-  await Promise.all(p);
+  return Promise.all(p);
 }
 
 async function arrangeComponent(stepjobGroupArray) {
@@ -1813,7 +1813,11 @@ async function addLink(projectRootDir, src, dst, isElse = false) {
   if (!dstJson.previous.includes(src)) {
     dstJson.previous.push(src);
   }
-  return writeComponentJson(projectRootDir, dstDir, dstJson);
+  await writeComponentJson(projectRootDir, dstDir, dstJson);
+
+  if(srcJson.type === "stepjobTask" && dstJson.type === "stepjobTask"){
+    await updateStepNumber(projectRootDir);
+  }
 }
 
 async function removeLink(projectRootDir, src, dst, isElse) {

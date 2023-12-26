@@ -30,7 +30,6 @@ const {
   onRemoveAllFileLink,
   onGetEnv,
   onUpdateEnv,
-  onUpdateStepNumber
 } = require("./workflowEditor.js");
 const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } = require("./jobScript.js");
 const { onGetResultFiles } = require("./resultFiles.js");
@@ -73,7 +72,6 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("renameOutputFile", onRenameOutputFile);
   socket.on("updateNode", onUpdateNode);
   socket.on("updateEnv", onUpdateEnv);
-  socket.on("updateStepNumber", onUpdateStepNumber);
   //delete
   socket.on("removeNode", onRemoveNode);
   socket.on("removeInputFile", onRemoveInputFile);
