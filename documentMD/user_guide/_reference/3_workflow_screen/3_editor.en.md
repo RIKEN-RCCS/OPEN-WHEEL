@@ -4,6 +4,16 @@ lang: en
 permalink: /reference/3_workflow_screen/3_editor.html
 ---
 This chapter describes the functions of the text editor screen.
+<!-- start -->
+The text editor screen is displayed by clicking the __text editor__ button.
+
+![img](./img/open_text_editor.png "open text editor")
+
+__About Transitions to Text Editor Screens__  
+Transitions to the text editor screen are limited by the selected state of the file or the selected state of the project.  
+If the transition cannot be made, the text editor button is displayed in a state that cannot be clicked.
+{: .notice--info}
+<!-- end -->
 
 The text editor screen has three modes:
 - ormal mode
@@ -30,7 +40,7 @@ When a text editor screen is opened, it normally starts in normal mode. This mod
 |1| File tab |
 |2| New file open button |
 |3|read only switch |
-|4|SAVE ALL FILES button |
+|4|save all files button |
 
 #### File tab
 Displays the file name of the opened file. The currently displayed tab is shown in blue.
@@ -45,17 +55,17 @@ Click __close without save__ to discard your edits and close the tab.
 #### New File Open Button
 Click the New File Open (+) button to open a window for creating a new file.
 
-![img](./img/new_faile_name_dialog.png "new_faile_name_dialog")
+![img](./img/new_file_name_dialog.png "new_file_name_dialog")
 
-Enter a valid file name and click the __OPEN__ button to create a blank file that is tabbed.
+Enter a valid file name and click the __open__ button to create a blank file that is tabbed.
 Add the contents of the file and save it.
 
 #### read only switch
 When the read only switch is enabled, the displayed text is read-only and cannot be changed.  
 Use this function to check the contents of a text file.
 
-#### SAVE ALL FILES button
-Click the SAVE ALL FILES button to save all currently open tabs as well as all parameter study settings currently configured in the [PS-config mode](#ps-config-mode) described below.  
+#### save all files button
+Click the save all files button to save all currently open tabs as well as all parameter study settings currently configured in the [PS-config mode](#ps-config-mode) described below.  
 As with the __save__ menu on the Files tab, in this state you have not yet committed to the git repository, so clicking the revert project button at the top of the screen discards your edits.
 
 ### PS-config mode
@@ -95,33 +105,37 @@ A form is displayed to fill in the options used by the batch system.
 
 || Component |
 |----------|----------|
-|1|LOAD button |
-|2|INSERT button |
-|3|CLEAR button |
-|4|REGISTER button |
-|5| Option input form |
+|1|insert button |
+|2|remove button |
+|3|clear button |
+|4|load button |
+|5|register button |
+|6| Option input form |
 
-#### LOAD button
-Click the __LOAD__ button to load the option settings saved with the __REGISTER__ button into the __option input form__.
-
-#### INSERT button
-Click the __INSERT__ button to set the option value in the __option input form__.
+#### insert button
+Click the __insert__ button to set the option value in the __option input form__.
 Use a format suitable for job scripts and insert it at the beginning of the file open in the tab editor.
 
-Also, if an option value has already been inserted into a file that is open on the tab editor side, the __INSERT__ button's label display switches to __UPDATE__.
-If you click the __UPDATE__ button, the current settings will replace what you have already entered.
+Also, if an option value has already been inserted into a file that is open on the tab editor side, the __insert__ button's label display switches to __update__.
+If you click the __update__ button, the current settings will replace what you have already entered.
 
-#### CLEAR button
-Click the __CLEAR__ button to reset the contents of the __option input form__ to the default values.
+### remove button
+Click the __remove__ button to remove the option settings saved with the __register__ button.
+
+#### clear button
+Click the __clear__ button to reset the contents of the __option input form__ to the default values.
 At this time, the contents already inserted in the file on the tab editor side remain.
 
-#### REGISTER button
-Click the __REGISTER__ button to name and save the settings entered in the __option input form__.
-You can easily enter the same settings in multiple scripts by loading the saved content with the __LOAD__ button.
+#### load button
+Click the __load__ button to load the option settings saved with the __register__ button into the __option input form__.
 
-The settings you enter with the __REGISTER__ button are stored in a different location than the project file, so you can recall settings you used in other projects.
+#### register button
+Click the __register__ button to name and save the settings entered in the __option input form__.
+You can easily enter the same settings in multiple scripts by loading the saved content with the __load__ button.
 
-To delete saved content, click the trash can icon at the far right of the list that appears when you click the __LOAD__ button.
+The settings you enter with the __register__ button are stored in a different location than the project file, so you can recall settings you used in other projects.
+
+To delete saved content, click the trash can icon at the far right of the list that appears when you click the __load__ button.
 
 __About Input Values in the Options Input Form__  
 The input values are not validated in the form in jobScriptEditor mode. <br/><br/>
