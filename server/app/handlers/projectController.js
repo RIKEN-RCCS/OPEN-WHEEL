@@ -356,22 +356,6 @@ async function onProjectOperation(clientID, projectRootDir, operation, ack){
   return rt;
 }
 
-async function onProjectOperation(clientID, projectRootDir, opration, ack){
-  console.log("to be implemented");
-  //1. キューの末尾と同じoperationはログだけ出して終了
-  //2. プロジェクトの状態確認
-  const { state } = await getProjectJson(projectRootDir);
-  //3. 許可されたoperationでなければログだけ出して終了
-
-  //4. キューに新規operationを追加
-  // SBSを使う。ハウスキーピングはenqueue時のhookを追加して対応
-
-  //5. キューのハウスキーピング
-  //cleanProjectがあったら、その前のキューを全て削除
-  //
-}
-
-
 module.exports = {
   onGetProjectJson,
   onGetWorkflow,
