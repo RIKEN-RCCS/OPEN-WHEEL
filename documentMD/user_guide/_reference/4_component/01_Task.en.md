@@ -7,7 +7,7 @@ permalink: /reference/4_component/01_Task.html
 ![img](./img/task.png "task")
 
 The Task component is the most basic and important component of WHEEL.  
-Executes the script file set in the __script__ property according to the settings in the execution environment (host/useJobScheduler/queue property).
+Executes the script file set in the __script__ property according to the settings in the execution environment (host/use job scheduler/queue property).
 
 The following properties can be specified for a Task component:
 
@@ -28,11 +28,11 @@ or "localhost."
 - When "localhost" is selected  
 script is run on the machine running WHEEL.  
 - When other than "localhost" is selected  
-ssh transfers the entire directory to the remote host, and script runs on the remote host. (When useJobScheduler is set, described below, the job is submitted to the batch system.)
+ssh transfers the entire directory to the remote host, and script runs on the remote host. (When use job scheduler is set, described below, the job is submitted to the batch system.)
 
-### useJobScheduler
+### use job scheduler
 Enables script execution when it is submitted to the batch system.  
-The following queue, submit option properties can only be set when useJobScheduler is enabled:
+The following queue, submit option properties can only be set when use job scheduler is enabled:
 
 - When invalid
 
