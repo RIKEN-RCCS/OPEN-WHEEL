@@ -1,11 +1,16 @@
 ---
 title: リストビュー画面
+toc: false
 lang: ja
 permalink: /reference/3_workflow_screen/2_listview.html
 ---
 本章では、リストビュー画面の機能について説明します。
 
 リストビュー画面は、プロジェクトに含まれるTaskコンポーネントの実行状況をツリー形式で表示する画面です。
+__list view__ ボタンをクリックすることで表示されます。
+
+![img](./img/open_list_view.png "open listview")
+
 表示内容は以下のように構成されています。
 
 ![img](./img/listview.png "workflow_listview")

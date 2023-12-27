@@ -1,11 +1,16 @@
 ---
 title: List View Screen
+toc: false
 lang: en
 permalink: /reference/3_workflow_screen/2_listview.html
 ---
 This chapter describes the functions of the list view screen.
 
 The list view displays the execution status of Task components in a project in a tree format.
+This is displayed by clicking the __list view__ button.
+
+![img](./img/open_list_view.png "open listview")
+
 The contents of the display are as follows.
 
 ![img](./img/listview.png "workflow_listview")
