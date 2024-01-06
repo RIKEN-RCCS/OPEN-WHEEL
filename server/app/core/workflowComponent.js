@@ -21,6 +21,7 @@ class BaseWorkflowComponent {
     this.type = null;
     this.name = null;
     this.description = null;
+    this.env={}
 
     /**
      * component state
@@ -274,7 +275,7 @@ class BulkjobTask extends Task {
   constructor(pos, parent, stepnum, ...args) {
     super(pos, parent, stepnum, ...args);
     this.type = "bulkjobTask";
-    this.useJobScheduler = true;
+    this.useJobScheduler = true; //memo should be ignored
 
     /*bulkjob parameter */
     this.usePSSettingFile = true;

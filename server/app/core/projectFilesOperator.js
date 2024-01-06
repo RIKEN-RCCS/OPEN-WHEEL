@@ -2080,4 +2080,5 @@ module.exports = {
   writeComponentJson,
   isLocal,
   isSameRemoteHost,
+  writeComponentJsonByID
 };

@@ -79,7 +79,7 @@
 
 <script>
 "use strict";
-import { mapState, mapMutations, mapGetters } from "vuex";
+import { mapState, mapActions, mapGetters } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
 import WheelComponent from "@/components/componentGraph/component.vue"
 import InputFileBox from "@/components/componentGraph/inputFileBox.vue"
@@ -170,7 +170,7 @@ export default {
       }
 
       SIO.emitGlobal("removeLink",
-        this.projectRootDir, 
+        this.projectRootDir,
         this.targetVconnector.src,
         this.targetVconnector.dst,
         this.targetVconnector.isElse,
@@ -211,7 +211,7 @@ export default {
       this.targetVconnector=item
       this.openContextMenu(event, "vconnector");
     },
-    ...mapMutations({commitSelectedComponent: "selectedComponent"}),
+    ...mapActions({commitSelectedComponent: "selectedComponent"}),
     ...mapGetters(["isEdittable"]),
     updatePosition(index, event){
       this.currentComponent.descendants[index].pos.x=event.newX
@@ -222,9 +222,9 @@ export default {
       const pos=this.currentComponent.descendants[index].pos
       if(!this.isEdittable()){
         debug("component is moved but this project is not edittable for now");
-        return 
+        return
       }
-      SIO.emitGlobal("updateNode", this.projectRootDir, ID, "pos", pos, SIO.generalCallback)
+      SIO.emitGlobal("updateComponentPos", this.projectRootDir, ID,  pos, this.currentComponent.parent, SIO.generalCallback)
     },
     onChdir(componentID, componentType){
       if(!isContainer(componentType)){
@@ -241,7 +241,7 @@ export default {
     onAddFileLink( srcNode, srcName, dstNode, dstName){
       if(!this.isEdittable()){
         debug("file link is added but this project is not edittable for now");
-        return 
+        return
       }
       SIO.emitGlobal("addFileLink", this.projectRootDir,
         srcNode, srcName, dstNode, dstName,
@@ -250,7 +250,7 @@ export default {
     onRemoveFileLink(componentId, inputFilename, fromChildren){
       if(!this.isEdittable()){
         debug("file link is removed but this project is not edittable for now");
-        return 
+        return
       }
       SIO.emitGlobal("removeAllFileLink", this.projectRootDir,
         componentId, inputFilename, fromChildren,
@@ -259,7 +259,7 @@ export default {
     onAddLink(src, dst, isElse ){
       if(!this.isEdittable()){
         debug("link is added but this project is not edittable for now");
-        return 
+        return
       }
       SIO.emitGlobal("addLink", this.projectRootDir, src, dst, isElse,
         this.currentComponent.ID, SIO.generalCallback)
@@ -267,7 +267,7 @@ export default {
     onRemoveLink(componentId){
       if(!this.isEdittable()){
         debug("link is removed but this project is not edittable for now");
-        return 
+        return
       }
       SIO.emitGlobal("removeAllLink", this.projectRootDir,
         componentId, this.currentComponent.ID, SIO.generalCallback)
