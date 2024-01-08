@@ -620,6 +620,12 @@ async function setComponentStateR(projectRootDir, dir, state, doNotAdd=false, ig
   return Promise.all(p);
 }
 
+async function updateProjectROStatus(projectRootDir, isRO){
+  const filename = path.resolve(projectRootDir, projectJsonFilename);
+  const projectJson = await readJsonGreedy(filename);
+  projectJson.readOnly = isRO;
+  await writeJsonWrapper(filename, projectJson)
+}
 
 async function updateProjectDescription(projectRootDir, description) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
@@ -2043,6 +2049,7 @@ module.exports = {
   getProjectState,
   checkRunningJobs,
   importProject,
+  updateProjectROStatus,
   updateProjectDescription,
   getProjectJson,
   addProject,

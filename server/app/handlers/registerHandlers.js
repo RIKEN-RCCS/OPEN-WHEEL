@@ -8,7 +8,7 @@ const os = require("os");
 const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } = require("./fileManager.js");
 const { onTryToConnect, onTryToConnectById } = require("./tryToConnect.js");
 const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./projectList.js");
-const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription } = require("./projectController.js");
+const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription, onUpdateProjectROStatus } = require("./projectController.js");
 const { onSaveFile, onOpenFile } = require("./rapid.js");
 const { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } = require("./remoteHost.js");
 const { onGetJobSchedulerList, onGetJobSchedulerLabelList } = require("./jobScheduler.js");
@@ -138,6 +138,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getWorkflow", onGetWorkflow.bind(null, socket.id));
   //update
   socket.on("updateProjectDescription", onUpdateProjectDescription);
+  socket.on("updateProjectROStatus", onUpdateProjectROStatus);
 
   //
   //remotehost

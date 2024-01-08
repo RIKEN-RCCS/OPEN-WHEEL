@@ -14,7 +14,8 @@ const { getLogger } = require("../logSettings");
 const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
-const { getHosts, validateComponents, getSourceComponents,getComponentDir, getProjectJson, getProjectState, setComponentStateR,setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
+const { getHosts, validateComponents, getSourceComponents,getComponentDir, getProjectJson, getProjectState, setComponentStateR,setProjectState, updateProjectDescription,  updateProjectROStatus} = require("../core/projectFilesOperator");
+  
 const { createSsh, removeSsh } = require("../core/sshManager");
 const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
 const { isValidOutputFilename } = require("../lib/utility");
@@ -142,76 +143,77 @@ async function onUpdateProjectDescription(projectRootDir, description, ack) {
   await updateProjectDescription(projectRootDir, description);
   onGetProjectJson(projectRootDir, ack);
 }
+async function onUpdateProjectROStatus(projectRootDir, isRO, ack){
+  await updateProjectROStatus(projectRootDir, isRO);
+  onGetProjectJson(projectRootDir, ack);
+}
 
 async function onRunProject(clientID, projectRootDir, ack) {
-  const projectState = await getProjectState(projectRootDir);
-  //FIXME
-  if (projectState !== "paused") {
+  //const projectState = await getProjectState(projectRootDir);
   //validation check
-    try {
-      await validateComponents(projectRootDir);
-      await gitCommit(projectRootDir, "auto saved: project starting");
-    } catch (err) {
-      getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
-      ack(err);
-      return false;
+  try {
+    await validateComponents(projectRootDir);
+    await gitCommit(projectRootDir, "auto saved: project starting");
+  } catch (err) {
+    getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
+    ack(err);
+    return false;
+  }
+
+  //interactive phase
+  try {
+    await updateProjectState(projectRootDir, "prepareing");
+
+    //resolve source files
+    const sourceComponents = await getSourceComponents(projectRootDir);
+
+    for (const component of sourceComponents) {
+      if (component.disable) {
+        getLogger(projectRootDir).debug(`disabled component: ${component.name}(${component.ID})`);
+        continue;
+      }
+      //ask to user if needed
+      const filename = await getSourceFilename(projectRootDir, component, clientID);
+      const componentDir = await getComponentDir(projectRootDir, component.ID);
+      const outputFilenames = component.outputFiles.map((e)=>{
+        return e.name;
+      });
+      getLogger(projectRootDir).trace("sourceFile:", filename, "will be used as", outputFilenames);
+
+      await Promise.all(
+        outputFilenames.map((outputFile)=>{
+          if (filename !== outputFile) {
+            return deliverFile(path.resolve(projectRootDir, componentDir, filename), path.resolve(projectRootDir, componentDir, outputFile));
+          }
+          return Promise.resolve(true);
+        })
+      );
     }
 
-    //interactive phase
-    try {
-      await updateProjectState(projectRootDir, "prepareing");
-
-      //resolve source files
-      const sourceComponents = await getSourceComponents(projectRootDir);
-
-      for (const component of sourceComponents) {
-        if (component.disable) {
-          getLogger(projectRootDir).debug(`disabled component: ${component.name}(${component.ID})`);
-          continue;
-        }
-        //ask to user if needed
-        const filename = await getSourceFilename(projectRootDir, component, clientID);
-        const componentDir = await getComponentDir(projectRootDir, component.ID);
-        const outputFilenames = component.outputFiles.map((e)=>{
-          return e.name;
-        });
-        getLogger(projectRootDir).trace("sourceFile:", filename, "will be used as", outputFilenames);
-
-        await Promise.all(
-          outputFilenames.map((outputFile)=>{
-            if (filename !== outputFile) {
-              return deliverFile(path.resolve(projectRootDir, componentDir, filename), path.resolve(projectRootDir, componentDir, outputFile));
-            }
-            return Promise.resolve(true);
-          })
-        );
+    //create remotehost connection
+    const hosts = await getHosts(projectRootDir, null);
+    for (const host of hosts) {
+      const id = remoteHost.getID("name", host.hostname);
+      const hostInfo = remoteHost.get(id);
+      if (!hostInfo) {
+        throw new Error(`illegal remote host specified ${hostInfo.name}`);
       }
-
-      //create remotehost connection
-      const hosts = await getHosts(projectRootDir, null);
-      for (const host of hosts) {
-        const id = remoteHost.getID("name", host.hostname);
-        const hostInfo = remoteHost.get(id);
-        if (!hostInfo) {
-          throw new Error(`illegal remote host specified ${hostInfo.name}`);
-        }
-        if (hostInfo.type === "aws") {
-          throw new Error(`aws type remotehost is no longer supported ${hostInfo.name}`);
-        }
-        await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage);
+      if (hostInfo.type === "aws") {
+        throw new Error(`aws type remotehost is no longer supported ${hostInfo.name}`);
       }
-    } catch (err) {
-      await updateProjectState(projectRootDir, "not-started");
-
-      if (err.reason === "CANCELED") {
-        getLogger(projectRootDir).debug(err.message);
-      } else {
-        getLogger(projectRootDir).error("fatal error occurred while prepareing phase:", err);
-      }
-      removeSsh(projectRootDir);
-      ack(err);
-      return false;
+      await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage);
     }
+  } catch (err) {
+    await updateProjectState(projectRootDir, "not-started");
+
+    if (err.reason === "CANCELED") {
+      getLogger(projectRootDir).debug(err.message);
+    } else {
+      getLogger(projectRootDir).error("fatal error occurred while prepareing phase:", err);
+    }
+    removeSsh(projectRootDir);
+    ack(err);
+    return false;
   }
 
   //actual run
@@ -228,7 +230,9 @@ async function onRunProject(clientID, projectRootDir, ack) {
     ee.on("taskStateChanged", sendTaskStateList.bind(null, projectRootDir));
     ee.on("resultFilesReady", sendResultsFileDir.bind(null, projectRootDir));
 
+    await updateProjectROStatus(projectRootDir, true);
     await runProject(projectRootDir);
+    await updateProjectROStatus(projectRootDir, false);
   } catch (err) {
     getLogger(projectRootDir).error("fatal error occurred while parsing workflow:", err);
     await updateProjectState(projectRootDir, "failed");
@@ -360,5 +364,6 @@ module.exports = {
   onGetProjectJson,
   onGetWorkflow,
   onUpdateProjectDescription,
+  onUpdateProjectROStatus,
   onProjectOperation
 };
