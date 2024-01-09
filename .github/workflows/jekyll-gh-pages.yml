@@ -35,6 +35,8 @@ jobs:
         run: docker compose -f docker-compose.build.yml up
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./documentMD/user_guide/_site/
 
   # Deployment job
   deploy:
