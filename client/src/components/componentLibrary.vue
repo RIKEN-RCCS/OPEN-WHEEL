@@ -29,7 +29,7 @@
               :image="item.img"
               :ref="item.type"
               rounded="0"
-              draggable
+              draggable="!readOnly"
               @dragstart.capture="onDragstart($event, item)"
               @dragover.prevent
               @dragenter.prevent
@@ -71,7 +71,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir"]),
+    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "readOnly"]),
     ...mapGetters(["currentComponentAbsPath", "isEdittable" ]),
     isStepJob: function () {
       if (this.currentComponent === null) return false;

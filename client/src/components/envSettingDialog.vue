@@ -5,7 +5,6 @@
  */
 <template>
   <v-btn
-    :disabled="! isEdittable"
     @click.stop="openEnvironmentVariableSetting"
     icon="mdi-cog"
   />
@@ -49,6 +48,7 @@
                 v-model="props.item.raw.name"
                 :rules="[required]"
                 clearable
+                :readonly="readOnly"
                 @keyup.enter="editKeyDialog[props.index]=false"
               />
             </v-sheet>
@@ -59,6 +59,7 @@
             location="bottom"
             v-model="editValueDialog[props.index]"
             :close-on-content-click="false"
+            :readonly="readOnly"
             min-width="auto"
             max-width="50vw"
           >
@@ -78,6 +79,7 @@
               <v-text-field
                 v-model="props.item.raw.value"
                 :rules="[required]"
+                :readonly="readOnly"
                 clearable
                 @keyup.enter="editValueDialog[props.index]=false"
               />
@@ -88,6 +90,7 @@
             <action-row
               :item="item"
               :can-edit="false"
+              :readonly="readOnly"
               @delete="deleteEnv"
             />
           </template>
@@ -138,7 +141,7 @@
 
 </template>
 <script>
-import { mapState, mapMutations, mapGetters } from "vuex";
+import { mapState, mapMutations } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
 import actionRow from "@/components/common/actionRow.vue";
 import buttons from "@/components/common/buttons.vue";
@@ -152,8 +155,7 @@ export default{
     buttons,
   },
   computed: {
-    ...mapState(["projectState", "currentComponent", "projectRootDir","rootComponentID"]),
-    ...mapGetters(["currentComponentAbsPath", "isEdittable"]),
+    ...mapState(["projectState", "currentComponent", "projectRootDir","rootComponentID", "readOnly"]),
   },
   data: function(){
     return {
@@ -186,7 +188,7 @@ export default{
     openEnvironmentVariableSetting(){
       this.commitWaitingEnv(true);
       SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID,  (data)=>{
-        //FIXME this determination does not work
+        //this determination does not work
         if(data instanceof Error){
           console.log("getEnv API return error", data);
           this.commitWaitingEnv(false);

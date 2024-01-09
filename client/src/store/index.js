@@ -53,6 +53,7 @@ const mutationFactory = (types)=>{
  * @property { string } snackbarMessage - message on snackbar
  * @property { Boolean } openDialog - flag to show global dialog
  * @property { Object } dialogContent - dialog's content
+ * @property { Boolean } readOnly - project wide read-only flag
  *
  */
 const state = {
@@ -83,6 +84,7 @@ const state = {
   openDialog: false,
   dialogContent: null,
   dialogQueue: [],
+  readOnly: false
 };
 
 const mutations = mutationFactory(Object.keys(state));
@@ -172,9 +174,6 @@ export default new Vuex.Store({
     },
     pathSep: (state)=>{
       return typeof state.projectRootDir === "string" && state.projectRootDir[0] !== "/" ? "\\" : "/";
-    },
-    isEdittable: (state)=>{
-      return state.projectState === "not-started";
     },
     canRun: (state)=>{
       return ["not-started", "paused"].includes(state.projectState);

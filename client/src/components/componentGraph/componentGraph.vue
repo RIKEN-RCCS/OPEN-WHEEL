@@ -79,7 +79,7 @@
 
 <script>
 "use strict";
-import { mapState, mapActions, mapGetters } from "vuex";
+import { mapState, mapActions } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
 import WheelComponent from "@/components/componentGraph/component.vue"
 import InputFileBox from "@/components/componentGraph/inputFileBox.vue"
@@ -126,8 +126,8 @@ export default {
   },
   methods:{
     deleteComponent(){
-      if(!this.isEdittable()){
-        debug("delete component called but this project is not edittable for now");
+      if(this.readOnly){
+        debug("delete component called but this project is not read-only for now");
         return
       }
       SIO.emitGlobal("removeNode", this.projectRootDir, this.targetComponent.ID, this.currentComponent.ID, (rt)=>{
@@ -143,8 +143,8 @@ export default {
     deleteConnector(){
       console.log("deleteConnector called", this.targetConnector);
 
-      if(!this.isEdittable()){
-        debug("delete link called but this project is not edittable for now");
+      if(!this.readOnly){
+        debug("delete link called but this project is read-only for now");
         return
       }
       SIO.emitGlobal("removeFileLink",
@@ -164,8 +164,8 @@ export default {
     deleteVconnector(){
       console.log("deleteVconnector called", this.targetVconnector);
 
-      if(!this.isEdittable()){
-        debug("delete file link called but this project is not edittable for now");
+      if(!this.readOnly){
+        debug("delete file link called but this project is read-only for now");
         return
       }
 
@@ -212,7 +212,6 @@ export default {
       this.openContextMenu(event, "vconnector");
     },
     ...mapActions({commitSelectedComponent: "selectedComponent"}),
-    ...mapGetters(["isEdittable"]),
     updatePosition(index, event){
       this.currentComponent.descendants[index].pos.x=event.newX
       this.currentComponent.descendants[index].pos.y=event.newY
@@ -220,8 +219,8 @@ export default {
     commitNewPosition(index ){
       const ID=this.currentComponent.descendants[index].ID
       const pos=this.currentComponent.descendants[index].pos
-      if(!this.isEdittable()){
-        debug("component is moved but this project is not edittable for now");
+      if(this.readOnly){
+        debug("component is moved but this project is read-only for now");
         return
       }
       SIO.emitGlobal("updateComponentPos", this.projectRootDir, ID,  pos, this.currentComponent.parent, SIO.generalCallback)
@@ -239,8 +238,8 @@ export default {
       this.onRemoveFileLink(this.currentComponent.ID, inputFilename, this.currentComponent.parent, true);
     },
     onAddFileLink( srcNode, srcName, dstNode, dstName){
-      if(!this.isEdittable()){
-        debug("file link is added but this project is not edittable for now");
+      if(this.readOnly){
+        debug("file link is added but this project is read-only for now");
         return
       }
       SIO.emitGlobal("addFileLink", this.projectRootDir,
@@ -248,8 +247,8 @@ export default {
         this.currentComponent.ID, SIO.generalCallback)
     },
     onRemoveFileLink(componentId, inputFilename, fromChildren){
-      if(!this.isEdittable()){
-        debug("file link is removed but this project is not edittable for now");
+      if(this.readOnly){
+        debug("file link is removed but this project is read-only for now");
         return
       }
       SIO.emitGlobal("removeAllFileLink", this.projectRootDir,
@@ -257,16 +256,16 @@ export default {
         this.currentComponent.ID, SIO.generalCallback)
     },
     onAddLink(src, dst, isElse ){
-      if(!this.isEdittable()){
-        debug("link is added but this project is not edittable for now");
+      if(this.readOnly){
+        debug("link is added but this project is read-only for now");
         return
       }
       SIO.emitGlobal("addLink", this.projectRootDir, src, dst, isElse,
         this.currentComponent.ID, SIO.generalCallback)
     },
     onRemoveLink(componentId){
-      if(!this.isEdittable()){
-        debug("link is removed but this project is not edittable for now");
+      if(this.readOnly){
+        debug("link is removed but this project is read-only for now");
         return
       }
       SIO.emitGlobal("removeAllLink", this.projectRootDir,
@@ -274,7 +273,7 @@ export default {
     }
   },
   computed:{
-    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent"]),
+    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly"]),
     linkGraph(){
       const rt=[]
       if(this.currentComponent === null){

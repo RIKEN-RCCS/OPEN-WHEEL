@@ -21,6 +21,7 @@
             <v-text-field
               v-model="copySelectedComponent.name"
               label="name"
+              :readonly="readOnly"
               variant=outlined
               class="pt-4"
               density=compact
@@ -33,6 +34,7 @@
           <template #activator="{ props}">
             <v-switch
               v-model="copySelectedComponent.disable"
+              :readonly="readOnly"
               hide-details
               color="error"
               label="disable"
@@ -74,12 +76,14 @@
             <v-textarea
               v-model="copySelectedComponent.description"
               label="description"
+              :readonly="readOnly"
               variant=outlined
             />
             <v-autocomplete
               v-if="hasScript"
               v-model="copySelectedComponent.script"
               label="script"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
@@ -88,6 +92,7 @@
               v-if="hasHost"
               v-model="copySelectedComponent.host"
               label="host"
+              :readonly="readOnly"
               :items="hostCandidates"
               variant=outlined
             />
@@ -95,12 +100,14 @@
               v-if="hasJobScheduler"
               v-model="copySelectedComponent.useJobScheduler"
               label="use job scheduler"
+              :readonly="readOnly"
               color="primary"
             />
             <v-select
               v-if="hasJobScheduler"
               v-model="copySelectedComponent.queue"
               label="queue"
+              :readonly="readOnly"
               :items="queues"
               :disabled="! copySelectedComponent.useJobScheduler"
               variant=outlined
@@ -108,7 +115,7 @@
             <v-text-field
               v-if="hasJobScheduler"
               v-model="submitCmd"
-              readonly
+              :readonly="readOnly"
               label="submit command"
               :disabled="! copySelectedComponent.useJobScheduler"
               variant=outlined
@@ -117,6 +124,7 @@
               v-if="hasJobScheduler"
               v-model="copySelectedComponent.submitOption"
               label="submit option"
+              :readonly="readOnly"
               :disabled="! copySelectedComponent.useJobScheduler"
               variant=outlined
             />
@@ -124,6 +132,7 @@
               v-if="isStorage"
               v-model="copySelectedComponent.storagePath"
               label="directory path"
+              :readonly="readOnly"
               variant=outlined
             />
           </v-expansion-panel-text>
@@ -134,6 +143,7 @@
             <v-text-field
               v-model="copySelectedComponent.retry"
               label="number of retry"
+              :readonly="readOnly"
               hide-details
               type="number"
               :rules="[rules.isInteger, rules.isZeroOrMore]"
@@ -143,11 +153,13 @@
               v-model.lazy="retryByJS"
               color="primary"
               label="use javascript expression for condition check"
+              :readonly="readOnly"
             />
             <v-autocomplete
               v-if="!retryByJS"
               v-model="copySelectedComponent.retryCondition"
               label="script name for condition check"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
@@ -155,6 +167,7 @@
             <v-textarea
               v-if="retryByJS"
               v-model="copySelectedComponent.retryCondition"
+              :readonly="readOnly"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -165,24 +178,28 @@
               <v-text-field
                 v-model.number="copySelectedComponent.start"
                 label="start"
+              :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.end"
                 label="end"
+              :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.step"
                 label="step"
+              :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.keep"
                 label="number of instances to keep"
+              :readonly="readOnly"
                 type="number"
                 clearable
                 :rules="[rules.isValidKeepProp ]"
@@ -195,6 +212,7 @@
           <v-expansion-panel-text>
             <list-form
               :label="'foreach'"
+              :readonly="readOnly"
               :items="indexList"
               :edit-dialog-min-width="propWidth"
               @add="addToIndexList"
@@ -204,6 +222,7 @@
             <v-text-field
               v-model.number="copySelectedComponent.keep"
               label="number of instances to keep"
+              :readonly="readOnly"
               type="number"
             />
           </v-expansion-panel-text>
@@ -215,6 +234,7 @@
               v-model="copySelectedComponent.uploadOnDemand"
               color="primary"
               label="upload on demand"
+              :readonly="readOnly"
             />
             <v-row>
               <v-col>
@@ -222,6 +242,7 @@
                   v-if="!copySelectedComponent.uploadOnDemand"
                   v-model="sourceOutputFile"
                   label="source file name"
+              :readonly="readOnly"
                   :items="scriptCandidates"
                   clearable
                   variant=outlined
@@ -236,6 +257,7 @@
                 <v-btn
                   v-if="!copySelectedComponent.uploadOnDemand"
                   icon=mdi-trash-can-outline
+              :readonly="readOnly"
                 />
               </v-col>
             </v-row>
@@ -246,6 +268,7 @@
           <v-expansion-panel-text>
             <list-form
               :label="'input files'"
+              :readonly="readOnly"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
               :additionalRules="[isValidInputFilename]"
@@ -262,6 +285,7 @@
             <v-autocomplete
               v-model="copySelectedComponent.parameterFile"
               label="parameterFile"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
@@ -270,11 +294,13 @@
               color="primary"
               v-model="copySelectedComponent.forceOverwrite"
               label="force overwrite"
+              :readonly="readOnly"
             />
             <v-switch
               color="primary"
               v-model="copySelectedComponent.deleteLoopInstance"
               label="delete all instances"
+              :readonly="readOnly"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -285,6 +311,7 @@
               color="primary"
               v-model="copySelectedComponent.useDependency"
               label="use dependency"
+              :readonly="readOnly"
             />
             <v-text-field
               v-model="copySelectedComponent.stepnum"
@@ -296,6 +323,7 @@
             <v-text-field
               v-model="copySelectedComponent.dependencyForm"
               label="dependencyForm"
+              :readonly="readOnly"
               :disabled="! copySelectedComponent.useDependency"
             />
           </v-expansion-panel-text>
@@ -307,11 +335,13 @@
               color="primary"
               v-model="copySelectedComponent.usePSSettingFile"
               label="use parameter setting file for bulk number"
+              :readonly="readOnly"
             />
             <v-autocomplete
               v-if="copySelectedComponent.usePSSettingFile"
               v-model="copySelectedComponent.parameterFile"
               label="parameter file"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
@@ -323,11 +353,13 @@
               <v-text-field
                 v-model.number="copySelectedComponent.startBulkNumber"
                 label="start"
+              :readonly="readOnly"
                 type="number"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.endBulkNumber"
                 label="end"
+              :readonly="readOnly"
                 type="number"
               />
             </v-form>
@@ -335,17 +367,20 @@
               color="primary"
               v-model="copySelectedComponent.manualFinishCondition"
               label="manual finish condition"
+              :readonly="readOnly"
             />
             <div v-if="copySelectedComponent.manualFinishCondition">
               <v-switch
               color="primary"
                 v-model.lazy="conditionCheckByJS"
                 label="use javascript expression for condition check"
+              :readonly="readOnly"
               />
               <v-autocomplete
                 v-if="!conditionCheckByJS"
                 v-model="copySelectedComponent.condition"
                 label="script name for condition check"
+              :readonly="readOnly"
                 :items="scriptCandidates"
                 clearable
                 variant=outlined
@@ -353,6 +388,7 @@
               <v-textarea
                 v-if="conditionCheckByJS"
                 v-model="copySelectedComponent.condition"
+              :readonly="readOnly"
               />
             </div>
           </v-expansion-panel-text>
@@ -364,11 +400,13 @@
               color="primary"
               v-model.lazy="conditionCheckByJS"
               label="use javascript expression for condition check"
+              :readonly="readOnly"
             />
             <v-autocomplete
               v-if="!conditionCheckByJS"
               v-model="copySelectedComponent.condition"
               label="script name for condition check"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
@@ -376,11 +414,13 @@
             <v-textarea
               v-if="conditionCheckByJS"
               v-model="copySelectedComponent.condition"
+              :readonly="readOnly"
             />
             <v-text-field
               v-if="isWhile"
               v-model.number="copySelectedComponent.keep"
               label="number of instances to keep"
+              :readonly="readOnly"
               type="number"
             />
           </v-expansion-panel-text>
@@ -390,6 +430,7 @@
           <v-expansion-panel-text>
             <list-form
               :label="'input files'"
+              :readonly="readOnly"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
               :additional-rules="[isValidInputFilename]"
@@ -400,6 +441,7 @@
             />
             <list-form
               :label="'output files'"
+              :readonly="readOnly"
               :items="copySelectedComponent.outputFiles"
               :new-item-template="outputFileTemplate"
               :additional-rules="[isValidOutputFilename]"
@@ -418,6 +460,7 @@
           <v-expansion-panel-text>
             <list-form
               :label="'include'"
+              :readonly="readOnly"
               :items="includeList"
               :disabled="disableRemoteSetting"
               :edit-dialog-min-width="propWidth"
@@ -427,6 +470,7 @@
             />
             <list-form
               :label="'exclude'"
+              :readonly="readOnly"
               :items="excludeList"
               :disabled="disableRemoteSetting"
               :edit-dialog-min-width="propWidth"
@@ -439,6 +483,7 @@
             <v-radio-group
               v-model="copySelectedComponent.cleanupFlag"
               :disabled="disableRemoteSetting"
+              :readonly="readOnly"
             >
               <v-radio
                 label="remove files"
@@ -540,7 +585,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler"]),
+    ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler", "readOnly"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
     isRemoteComponent(){
       return this.selectedComponent.type === "storage"
