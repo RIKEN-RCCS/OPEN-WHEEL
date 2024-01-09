@@ -45,7 +45,7 @@ __NEW REMOTE HOST SETTING__ ボタンをクリックすると、新規リモー�
 |Host work dir| 接続先で、Taskの実行やジョブ投入に使うディレクトリの最上位のパス|
 |private key path|秘密鍵のファイルパス<br/>(use public key authentication スイッチが有効のときに表示) |
 |job scheduler|リモートホストで使われているバッチシステムの種類|
-|max number of jobs|同時に投入するジョブの最大値|
+|max number of jobs|同時に投入するジョブ数の最大値|
 |available queues|リモートホスト上で利用可能なキューの名前(カンマ区切りで指定)|
 |use bulkjob|(富士通TCS使用サイトのみ)バルクジョブを使えるサイトかどうか|
 |use stepjob|(富士通TCS使用サイトのみ)ステップジョブを使えるサイトかどうか|

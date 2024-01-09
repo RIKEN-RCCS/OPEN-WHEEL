@@ -45,7 +45,7 @@ Each part of the form must have the following information:
 |Host work dir| Top-level path of the directory used to execute Tasks and submit jobs at the destination |
 |private key path| Private key file path <br/> (Displayed when the use public key authentication switch is enabled) |
 |job scheduler| Type of batch system used on the remote host |
-|max number of jobs| Maximum number of jobs to be submitted at the same time |
+|max number of jobs| Maximum number of jobs to be input simultaneously |
 |available queues| Name of the queues available on the remote host, separated by commas |
 |use bulkjob| (Fujitsu TCS sites only) Indicates whether the site can use bulk jobs |
 |use stepjob| (Fujitsu TCS sites only) Whether the site can use step jobs |
