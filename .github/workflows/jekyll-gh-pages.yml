@@ -32,7 +32,7 @@ jobs:
         uses: actions/configure-pages@v3
       - name: Build with Jekyll
         working-directory: ./documentMD/user_guide
-#      - run: docker compose -f docker-compose.build.yml up
+        run: docker compose -f docker-compose.build.yml up
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
 
