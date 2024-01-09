@@ -18,13 +18,17 @@ The Home screen is organized as follows.
 |6| Navigation drawer     | Opens a drawer with links to the User Guide, Remote Host Configuration screen                               |
 |7| Project List Area | Lists previously opened projects.                                                         |
 
+
 The following items are displayed in the Project List area.
-- Project name
-- Description
-- The root directory path of the project file
-- Creation Date
-- Updated
-- Execution status
+
+|| Component | Description |
+|----------|----------|---------------------------------|
+|1| Project Name | Displays the project name |
+|2| Description | Displays a description of the project |
+|3| Path | Displays the root directory path of the project file |
+|4| Create time | Displays the date and time the project was created |
+|5| Last modified time | Displays the date and time the project was modified |
+|6| State | Shows project execution status |
 
 
 ## Creating a New Project
