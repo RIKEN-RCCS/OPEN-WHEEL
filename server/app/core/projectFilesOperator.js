@@ -260,20 +260,6 @@ async function setProjectState(projectRootDir, state, force) {
   return false;
 }
 
-/**
- * return relative path from one component to another
- * @param {string} projectRootDir -
- * @param {string} from - starting point component's ID
- * @param {string} to - endpoint component's ID
- * @returns {string} - relativepath from "from" to "to"
- */
-async function getRelativeComponentPath(projectRootDir, from, to) {
-  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  const fromPath = projectJson.componentPath[from];
-  const toPath = projectJson.componentPath[to];
-  return path.relative(fromPath, toPath);
-}
-
 async function getComponentDir(projectRootDir, ID, isAbsolute) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   const relativePath = projectJson.componentPath[ID];
@@ -1940,18 +1926,6 @@ async function removeAllFileLink(projectRootDir, componentID, inputFilename, fro
   return Promise.all(p);
 }
 
-
-async function cleanComponent(projectRootDir, ID) {
-  const targetDir = await getComponentDir(projectRootDir, ID, true);
-
-  const pathSpec = `${replacePathsep(path.relative(projectRootDir, targetDir))}/*`;
-  await gitResetHEAD(projectRootDir, pathSpec);
-  await gitClean(projectRootDir, pathSpec);
-
-  const descendantsDirs = await getDescendantsIDs(projectRootDir, ID);
-  return removeComponentPath(projectRootDir, descendantsDirs);
-}
-
 async function removeComponent(projectRootDir, ID) {
   const targetDir = await getComponentDir(projectRootDir, ID, true);
   const descendantsIDs = await getDescendantsIDs(projectRootDir, ID);
@@ -2040,11 +2014,7 @@ async function getComponentTree(projectRootDir, rootDir) {
 module.exports = {
   createNewProject,
   updateComponentPath,
-  removeComponentPath,
-  getRelativeComponentPath,
   getComponentDir,
-  getDescendantsIDs,
-  getAllComponentIDs,
   setProjectState,
   getProjectState,
   checkRunningJobs,
@@ -2060,11 +2030,8 @@ module.exports = {
   getChildren,
   readComponentJsonByID,
   validateComponents,
-  componentJsonReplacer,
   createNewComponent,
-  renameComponentDir,
   updateComponent,
-  updateStepNumber,
   addInputFile,
   addOutputFile,
   removeInputFile,
@@ -2079,7 +2046,6 @@ module.exports = {
   removeAllFileLink,
   getEnv,
   replaceEnv,
-  cleanComponent,
   removeComponent,
   isComponentDir,
   getComponentTree,

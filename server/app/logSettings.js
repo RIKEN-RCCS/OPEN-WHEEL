@@ -120,20 +120,6 @@ const logSettings = {
 //configure with default setting
 log4js.configure(logSettings);
 
-async function setLoglevel(appender, loglevel) {
-  if (!["filterdConsole", "filterdFile", "log2client"].includes(appender)) {
-    return;
-  }
-  logSettings.appenders[appender].level = loglevel || getLoglevel();
-  await promisify(log4js.shutdown)();
-  log4js.configure(logSettings);
-}
-
-function reset() {
-  log4js.configure(logSettings);
-}
-
-
 function getLogger(projectRootDir) {
   //please note projectRootDir context will remain after logging
   logger.addContext("projectRootDir", projectRootDir || path.dirname(logFilename));
@@ -143,7 +129,5 @@ function getLogger(projectRootDir) {
 }
 
 module.exports = {
-  setLoglevel,
-  getLogger,
-  reset
+  getLogger
 };
