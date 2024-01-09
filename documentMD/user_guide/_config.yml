@@ -3,6 +3,7 @@ remote_theme: "mmistakes/minimal-mistakes"
 plugins:
   - jekyll-include-cache
   - jekyll-remote-theme
+  - jekyll-polyglot
 title: "WHEEL user guide"
 subtitle: "Workflow in Hierarchical distributEd parallEL"
 strict_front_matter: true
@@ -20,6 +21,10 @@ lunr:
 
 include:
   - _pages
+exclude:
+  - list.txt
+  - docker-compose.yml
+  - docker-compose.build.yml
 
 atom_feed:
   hide: true
@@ -64,7 +69,7 @@ defaults:
 
 # For jekyll-polyglot
 languages: ["ja", "en"]
-default_lang: ["en"]
+default_lang: "ja"
 exclude_from_localization: ["javascript", "images", "css"]
 parallel_localization: true
 lang_from_path: true
