@@ -48,7 +48,7 @@ Follow the steps in [Open Project](#open-project) below to enter the workflow sc
 To open a project and transition to the workflow screen:
 
 1. In the Project Browser area, click to select the check box to the left of the project name you want to open.
-1. Click the __OPEN__ button to switch to the workflow screen.
+1. Click the __OPEN__ button to switch to the [workflow screen]({{site.baseurl}}/reference/3_workflow_screen/1_graphview.html).
 
 ![img](./img/open.png "open")
 

@@ -50,7 +50,7 @@ permalink: /reference/1_home_screen/
 次の手順で、プロジェクトを開いてワークフロー画面に遷移します。
 
 1. プロジェクト一覧表示エリアで、開きたいプロジェクト名の左にあるチェックボックスをクリックして選択します。
-1. __OPEN__ ボタンをクリックするとワークフロー画面に遷移します。
+1. __OPEN__ ボタンをクリックすると[ワークフロー画面]({{site.baseurl}}/reference/3_workflow_screen/1_graphview.html)に遷移します。
 
 ![img](./img/open.png "open")
 
