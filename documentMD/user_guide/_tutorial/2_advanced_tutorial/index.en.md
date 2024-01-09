@@ -115,7 +115,7 @@ It is not displayed because there are no components now.
 ![img](./img/graphview_for.png "Inside the for component")
 
 Add one task component here.
-Also, add an empty file to the task component and specify it in the script property.
+Also, add an empty file run.sh to the task component and specify it in the script property.
 
 ![img](./img/graphview_for2.png "Inside the for component after adding child components")
 
@@ -138,8 +138,7 @@ The internal components are executed.
 
 
 ### 3. parameter study
-In the computer simulation workflow, the parameters of the input data
-The same calculation may be repeated with some changes.
+In a computer simulation workflow, you may want to perform the same calculation over and over again, varying some of the input data parameters incrementally.
 
 WHEEL has a parameterStudy component (The following PS components) that supports such processing.
 
@@ -225,8 +224,8 @@ See here for available filters.
 
 
 ### 4. Input File
-Depending on the content of the simulation, the preprocess may want to be interactive.
-In some cases, you want the workflow to automatically perform subsequent operations.
+Depending on the nature of the simulation, you may want preprocessing to be done interactively before the workflow is run, 
+but you may want the workflow to automatically perform subsequent operations after the solver.
 
 WHEEL uploads a file at run time as __input data__ for the workflow.
 Provides the source component to handle.
@@ -317,8 +316,8 @@ In this state, you can zoom in and out of the image.
 When you run a workflow in WHEEL, the output files that are created, for example,
 It is deleted every time you initialize a project.
 
-When a human intervenes to repeatedly execute a workflow while checking results and adjusting settings,
-You may want to save the results of each run.
+If you run the same workflow over and over with a human intervention, checking results and adjusting settings, 
+you may want to save the results from each run.
 
 In these cases, you can use the storage component to leave it undeleted during project initialization.
 
