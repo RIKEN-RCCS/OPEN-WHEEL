@@ -26,6 +26,8 @@ To use the current index value from a subcomponent during a loop, it can be refe
 Specifies the maximum number of directories to keep for each index.
 If unspecified, all directories are saved.
 
+For details, see [Foreach Component Run-time Behavior](#foreach-component-run-time-behavior) below.
+
 
 ### Foreach Component Run-time Behavior
 The Foreach component behaves like the For component,

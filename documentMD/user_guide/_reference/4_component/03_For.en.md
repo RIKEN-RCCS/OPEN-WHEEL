@@ -28,6 +28,8 @@ To use the current index value from a subcomponent during a loop, it can be refe
 Specifies the maximum number of directories to keep for each index.
 If unspecified, all directories are saved.
 
+For details, see [For Component Run-time Behavior](#for-component-run-time-behavior) below.
+
 ### For Component Run-time Behavior
 The first time the For component is executed, the component directory is named with the index value at the end.
 copied.

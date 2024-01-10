@@ -29,7 +29,9 @@ Sets the javascript expression used for condition judgment.
 Specifies the maximum number of directories to keep for each index.
 If unspecified, all directories are saved.
 
-### While component runtime behavior
+For details, see [While Component Run-time Behavior](#while-component-run-time-behavior) below.
+
+### While Component Run-time Behavior
 The While component behaves similarly to the For component.
 Instead of an index value at the end of the directory name,
 Use a number starting at 0 in increments of 1.
