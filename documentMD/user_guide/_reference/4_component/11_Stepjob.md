@@ -23,7 +23,7 @@ Stepjob/StepjobTaskコンポーネントに設定できるプロパティは以�
 
 ## Stepjob
 ###  host
-Taskコンポーネントと同様ですが、Stepjob機能を利用できるリモートホストを設定する必要があります。
+Taskコンポーネントと同様ですが、Stepjob機能を利用できるリモートホストを選択する必要があります。
 
 ### use job scheduler
 デフォルトで有効になっており、無効に設定すると
