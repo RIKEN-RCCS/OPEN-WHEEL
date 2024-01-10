@@ -77,10 +77,10 @@ The parameter study function itself is described in [PS Components]({{site.baseu
 
 || Component | Description |
 |----------|----------|---------------------------------|
-|1|targetFiles input area | Sets the file from which the contents are overwritten by the parameter values when the parameter is executed |
-|2|parameters input area | Defines the parameter space to be used when executing the parameter |
-|3|scatter settings input area | Specify the settings for the files that will be distributed to each sub-component before parastering |
-|4|gather settings input area | Sets the file to be collected from each sub-component after the parasta is completed |
+|1|targetFiles input area | Sets the file from which to overwrite content with parameter values when running a parameter study |
+|2|parameters input area | Defines the parameter space used when running a parameter study |
+|3|scatter settings input area | Configure the files that will be distributed to each subcomponent separately before running the parameter study |
+|4|gather settings input area | Set the files to be collected from each sub-component after completing the parameter study |
 
 ### jobScriptEditor mode
 This section describes the features of jobScriptEditor mode.
