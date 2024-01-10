@@ -1,5 +1,5 @@
 ---
-title: Remote Host Configuration Screen
+title: Remote Host Settings Screen
 lang: en
 permalink: /reference/2_remotehost_screen/
 ---
@@ -11,11 +11,13 @@ To display the Remote Host Settings screen, click the hamburger menu in the uppe
 Click the __Remotehost editor__ link that appears to view it.
 
 ![img](./img/hanberger.png "hanberger.png")
+
 ![img](./img/drawer.png "drawer.png")
 
 
 ## Remote host setting screen
 The following shows the configuration of the Remote Host Settings window.
+
 ![img](./img/remotehost.png "remotehost")
 
 || Component | Description |
@@ -43,7 +45,7 @@ Each part of the form must have the following information:
 |Host work dir| Top-level path of the directory used to execute Tasks and submit jobs at the destination |
 |private key path| Private key file path <br/> (Displayed when the use public key authentication switch is enabled) |
 |job scheduler| Type of batch system used on the remote host |
-|max number of jobs| Maximum number of jobs to be submitted at the same time |
+|max number of jobs| Maximum number of jobs to be input simultaneously |
 |available queues| Name of the queues available on the remote host, separated by commas |
 |use bulkjob| (Fujitsu TCS sites only) Indicates whether the site can use bulk jobs |
 |use stepjob| (Fujitsu TCS sites only) Whether the site can use step jobs |
@@ -66,4 +68,4 @@ Enter the required information and click the __OK__ button to save the remote ho
 
 
 --------
-Return to Reference Manual home page ({{site.baseurl}}/reference /)
+[Return to Reference Manual home page]({{site.baseurl}}/reference/)

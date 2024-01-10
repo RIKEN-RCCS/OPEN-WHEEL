@@ -3,7 +3,7 @@ title: How to start WHEEL
 sidebar:
     nav: "admin-docs"
 lang: en
-permalink: /how_to_boot
+permalink: /how_to_boot/
 ---
 
 ## Advance Preparation
@@ -16,7 +16,7 @@ This pattern installs Docker on each of the user's work PCs. Then, expand and la
 
 ![Configuration Pattern 1](img/configuration_pattern_01.svg)
 
-### Configuration pattern 2: Aggregating and building the WHEEL environment on the server
+### Configuration Pattern 2: Aggregating and building the WHEEL environment on the server
 This pattern installs Docker on a single server. Then, unpack the WHEEL container image for the number of users using WHEEL and launch it on the server. To separate the WHEEL used for each user, you need to control by port number.
 
 
@@ -68,7 +68,7 @@ HTTP communication should be used only in environments where there are no securi
 WHEEL can perform tasks on the compute server where you logged in via ssh.
 In this section, you configure the remote host settings for connecting to the compute server from the WHEEL.
 
-There are two patterns of remote host configuration:. Specify settings according to the calculation server to be used.
+There are two patterns of remote host configuration. Specify settings according to the calculation server to be used.
 - [Without a batch system](#without-a-batch-system)  
 Perform this procedure if the compute server does not have a batch system, or if the compute server has a batch system but you do not want to use it.
 - [Additional settings if you have a batch system](#additional-settings-if-you-have-a-batch-system)  
@@ -96,9 +96,9 @@ label
 Hostname
 : Host name or IP address to connect to
 
-Port number
+<!-- Port number
 : Port number to connect to
-
+-->
 User ID
 : User ID on the destination host
 

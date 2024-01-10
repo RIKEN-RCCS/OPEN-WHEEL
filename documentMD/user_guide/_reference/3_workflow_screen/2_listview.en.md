@@ -1,11 +1,16 @@
 ---
-title: List view screen
+title: List View Screen
+toc: false
 lang: en
 permalink: /reference/3_workflow_screen/2_listview.html
 ---
 This chapter describes the functions of the list view screen.
 
 The list view displays the execution status of Task components in a project in a tree format.
+This is displayed by clicking the __list view__ button.
+
+![img](./img/open_list_view.png "open listview")
+
 The contents of the display are as follows.
 
 ![img](./img/listview.png "workflow_listview")
@@ -31,10 +36,10 @@ state is categorized and displayed as follows:
 | unknown | Indicates a status check that could not be determined whether a Task submitted through the batch system terminated normally or abnormally, for example <br> |
 | failed | Indicates an abnormal end of processing |
 
-__ About Viewing Components __  
+__About Viewing Components__  
 Components that run multiple times during a single project run, such as the For component, are displayed by the number of times they are run (see above).  
 Task components, which are subcomponents of other components, also appear nested in the upstream component tree.
 {: .notice--info}
 
 --------
-Return to Reference Manual home page ({{site.baseurl}}/reference /)
+[Return to Reference Manual home page]({{site.baseurl}}/reference/)

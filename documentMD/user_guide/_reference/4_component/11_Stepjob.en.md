@@ -65,8 +65,8 @@ sd=form[:[deletetype][:stepno[:stepno[...]]]]
 | Expression Element | Required | Description |
 | ---- | ---- |---- |
 | sd= | O | Prefix |
-| form |  |  An expression that indicates a condition that determines whether to execute the subjob to be submitted. <br/> See [form] (#form) for more information |
-| deletetype |  |  Detailed behavior when no subjobs are executed. See [deletetype] (#deletetype) for more information |
+| form |  |  An expression that indicates a condition that determines whether to execute the subjob to be submitted. <br/> See [form](#form) for more information |
+| deletetype |  |  Detailed behavior when no subjobs are executed. See [deletetype](#deletetype) for more information |
 | stepno |  |  Step number indicating which subjob execution result to apply |
 
 #### form
@@ -83,15 +83,14 @@ operator
 Value
 : operator == or! If you specify =, you can specify multiple values separated by commas (,).
 
-<! --form uses param (ec: Return code of the job script of the dependent subjob, pc: Return code of the job of the dependent subjob) and
+<!--form uses param (ec: Return code of the job script of the dependent subjob, pc: Return code of the job of the dependent subjob) and
 operator (= =,! =, <,>, <=,> =) and value. -->
 
 The following is an example of specifying a Form:
 ```
-ex.
 ec==0
 ```
-<! -- operator == or! If you specify =, you can specify multiple values separated by commas (,). -->
+<!-- operator == or! If you specify =, you can specify multiple values separated by commas (,). -->
 
 #### deletetype
 You can specify the following three types of deletetype:
@@ -105,11 +104,11 @@ You can specify the following three types of deletetype:
 
 <br />
 The following is an example of a dependency expression for the dependencyForm property:
+The following is an example of a dependency expression that indicates that if the return code of the job script for the subjob with step number 0 is non-zero, the subjob will not be executed.
+<!--ex. If the return code of the job script for the subjob with step number 0 is non-zero, do not execute the job after this subjob -->
 ```
-ex. If the return code of the job script of the subjob with step number 0 is other than 0, this subjob is not executed.
-
 sd=ec!=0:all:0
 ```
 
 --------
-Return to Component Details ({{site.baseurl}}/reference/4_component /)
+[Return to Component Details]({{site.baseurl}}/reference/4_component/)

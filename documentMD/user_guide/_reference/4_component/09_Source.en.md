@@ -22,10 +22,6 @@ The file specified in the outputFile of the Source component during project exec
 If it is in a directory, the Source component does nothing.
 Terminates normally.
 
-If the file does not exist and upload on demand is disabled,
-A list of files in the directory is displayed in the browser
-Treats the user-selected file as an outputFile.
-
 If the file does not exist and upload on demand is enabled,
 The file upload dialog appears in the browser
 The file uploaded by the user is treated as outputFile.
@@ -34,4 +30,4 @@ The file uploaded by the user is treated as outputFile.
 
 
 --------
-Return to Component Details ({{site.baseurl}}/reference/4_component /)
+[Return to Component Details]({{site.baseurl}}/reference/4_component/)

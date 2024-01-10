@@ -38,5 +38,5 @@ Also, the end judgment is not the calculation of the index value, but the return
 Use the evaluation result of the javascript expression.
 
 --------
-Return to Component Details ({{site.baseurl}}/reference/4_component /)
+[Return to Component Details]({{site.baseurl}}/reference/4_component/)
 

@@ -14,6 +14,7 @@ It is still hosted on [https://github.com/RIIT-KyushuUniv/WHEEL](https://github.
 
 ## WHEEL System Configuration Diagram
 The following is an image of the system configuration.
+
 ![System Configuration]({{site.baseurl}}/{{site.include}}{{page.url}}img/system_diagram.svg "System Configuration")
 
 ## System Requirements

@@ -7,7 +7,7 @@ permalink: /reference/4_component/01_Task.html
 ![img](./img/task.png "task")
 
 Taskコンポーネントは、WHEELのコンポーネントの中で最も基本的かつ重要なコンポーネントです。  
-__script__ プロパティに設定されたスクリプトファイルを、実行環境(host/useJobScheduler/queueプロパティ)の設定に応じて実行します。
+__script__ プロパティに設定されたスクリプトファイルを、実行環境(host/use job scheduler/queueプロパティ)の設定に応じて実行します。
 
 Taskコンポーネントに指定することのできるプロパティは以下のとおりです。
 
@@ -28,11 +28,11 @@ scriptの実行環境として、[リモートホスト設定]({{ site.baseurl }
 - "localhost"を選択したとき  
 scriptがWHEELが動作しているマシン上で実行されます。  
 - "localhost"以外を選択したとき  
-sshでリモートホストへディレクトリ全体が転送され、scriptがリモートホスト上で実行されます。(後述のuseJobSchedulerが設定されているときは、バッチシステムにジョブが投入されます)
+sshでリモートホストへディレクトリ全体が転送され、scriptがリモートホスト上で実行されます。(後述のuse job schedulerが設定されているときは、バッチシステムにジョブが投入されます)
 
-### useJobScheduler
+### use job scheduler
 scriptの実行をバッチシステムに投入する時に有効にします。  
-useJobSchedulerを有効にしたときのみ、次のqueue, submit optionプロパティを設定することができます。
+use job schedulerを有効にしたときのみ、次のqueue, submit optionプロパティを設定することができます。
 
 - 無効のとき
 
