@@ -70,7 +70,7 @@ permalink: /reference/3_workflow_screen/1_graphview.html
 |2|revert projct ボタン|プロジェクトを直前の保存状態に戻します|
 
 __save projct ボタン / revert projct ボタンの動作について__  
-WHEELでは、gitを用いたファイル管理を行っております。  
+WHEELでは、gitを用いたファイル履歴管理を行っております。  
 グラフビュー画面上での編集内容はサーバサイドのファイルにすぐに反映されますが、
 save projct ボタンをクリックするまではgitリポジトリには登録されません。
 revert projct ボタンをクリックすると、最後にコミットしてから後に行なった変更を全て破棄して

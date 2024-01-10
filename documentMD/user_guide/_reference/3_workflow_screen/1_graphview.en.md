@@ -70,7 +70,7 @@ This area contains buttons for saving edited projects.
 |2|revert project button | Revert project to previous save state |
 
 __About save project button/revert project button behavior__  
-WHEEL manages files using git.  
+WHEEL uses git for file history management.  
 Edits on the graph view screen are immediately reflected in the server-side file.
 It is not registered in the git repository until you click the save project button.
 Click the revert project button to discard all changes made since the last commit.
