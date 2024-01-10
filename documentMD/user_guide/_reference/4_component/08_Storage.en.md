@@ -24,7 +24,7 @@ You can set the following properties for the Storage component:
 ### host
 You can set host to the host where the file is actually saved.
 
-If `localhost` is specified, a copy of the file is saved on the machine running WHEEL.
+If `localhost` is specified, a copy of the file is saved on the machine running the WHEEL server.  
 If anything other than `localhost` is specified, a copy of the file is saved on the remote host.
 
 ### directory path
@@ -33,8 +33,8 @@ If anything other than `localhost` is specified, a copy of the file is saved on 
 Copy the files transferred to the storage component under the directory specified in directory path.
 
 If directory path is set within the project directory, it will be erased during project initialization.
-WHEEL does not determine whether the specified directory path is in the project directory.
-If necessary, set the path outside the project directory.
+WHEEL does not determine whether the directory path you set is in the project directory, 
+so we recommend that you set a path outside the project directory.
 
 --------
 [Return to Component Details]({{site.baseurl}}/reference/4_component/)
