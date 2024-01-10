@@ -3,8 +3,8 @@ services:
   service_jekyll:
     image: "jekyll/jekyll:latest"
     environment:
-      - JEKYLL_UID=1010
-      - JEKYLL_GID=1010
+      - JEKYLL_UID=1001
+      - JEKYLL_GID=127
     volumes:
       - .:/srv/jekyll/
     command: >
