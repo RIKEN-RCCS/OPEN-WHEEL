@@ -26,9 +26,9 @@ or "localhost."
 ![img](./img/task_host.png "task_host")
 
 - When "localhost" is selected  
-script is run on the machine running WHEEL.  
+script is run on the machine where the WHEEL server is running.  
 - When other than "localhost" is selected  
-ssh transfers the entire directory to the remote host, and script runs on the remote host. (When use job scheduler is set, described below, the job is submitted to the batch system.)
+ssh transfers the entire directory to the remote host, and script runs on the remote host. (If use job scheduler is set, as described below, the script is submitted to the batch system as a job script.)
 
 ### use job scheduler
 Enables script execution when it is submitted to the batch system.  
@@ -93,11 +93,11 @@ Therefore, you should check the files that are not required for the subsequent w
 is specified in __include__.
 When the Task component finishes executing, it is copied to the WHEEL server and can be viewed in the Files area.
 
-__include__ can be a directory name, glob, etc.
+__include__ can be a directory name, glob ( wildcard ), etc.
 You can also specify __exclude__ to exclude downloads.
 
 For example, suppose you specify `*.txt` for __include__ and `foo.txt` for __exclude__, and foo.txt, bar.txt, baz.txt are generated at the end of execution.
-In this case, only two files are actually downloaded: bar.txt, baz.txt.
+Only two files, bar.txt and baz.txt, are actually copied to the WHEEL server.
 
 ### clean up flag
 Specifies whether to delete files left on the remote host after execution on the remote host has finished.
