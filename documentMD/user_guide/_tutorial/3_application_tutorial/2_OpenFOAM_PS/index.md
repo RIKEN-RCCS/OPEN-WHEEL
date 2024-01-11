@@ -148,7 +148,7 @@ __solve__ を選択し、 __srcName__ に `D50-d10.tar.gz`、__dstName__ に
 
 ![img](./img/PS_gather_setting.png "PS結果ファイル回収設定")
 
-以上で、PS設定ファイルの編集は完了です。画面右上の __SAVE ALL FILES__ ボタンを
+以上で、PS設定ファイルの編集は完了です。画面右上の __save all files__ ボタンを
 クリックして編集内容を保存してください。
 
 ### extractコンポーネントの設定

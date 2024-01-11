@@ -148,7 +148,7 @@ Select __solve__, set __srcName__ to `D50-d10.tar.gz`, set __dstName__ to
 
 ![img](./img/PS_gather_setting.png "PS Results File Collection Settings")
 
-This completes the editing of the PS configuration file. the __SAVE ALL FILES__ button at the top right of the screen.
+This completes the editing of the PS configuration file. the __save all files__ button at the top right of the screen.
 Click to save your edits.
 
 ### Configuring the extract Component
