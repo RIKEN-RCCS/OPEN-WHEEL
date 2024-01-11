@@ -9,6 +9,9 @@ In this chapter, we will introduce an example of computing using WHEEL, "MNIST d
 In this case, we used TensorFlow on Mt. Fugaku.
 Create and infer handwritten digit image learning models using MNIST data.
 
+This tutorial assumes that you are running on Fugaku. 
+If you are running in a different environment, change the script settings accordingly.
+
 MNIST data is an image data set of 60,000 handwritten digit images and 10,000 test images.
 It is renowned as a very useful image dataset for learning neural networks.  
 The data set contains the following structure:

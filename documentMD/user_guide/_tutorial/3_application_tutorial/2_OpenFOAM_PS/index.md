@@ -17,7 +17,10 @@ permalink: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
 
 inletから流入した流体がoutletから出ていく解析を実施します。
 
-事前に[こちら](sample/OpenFOAM_tutorial_sample.zip)のファイルをダウンロードして展開しておいてください。
+なお、本チュートリアルは、富岳上で実行することを前提としています。
+異なる環境で実行する場合は、スクリプト・設定を適宜変更してください。
+
+また、事前に[こちら](sample/OpenFOAM_tutorial_sample.zip)のファイルをダウンロードして展開しておいてください。
 アーカイブ内には次の3つのファイルが含まれます。
 
 pipe.unv

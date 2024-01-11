@@ -14,6 +14,9 @@ Analyze a model in which the top wall moves horizontally at a constant velocity,
 As an example, the OpenFOAM distribution contains data for analysis using this model.
 Use the file to perform the calculation.
 
+This tutorial assumes that you are running on Fugaku. 
+If you are running in a different environment, change the script settings accordingly.
+
 In the final step of this tutorial, the WHEEL server
 Using the installed ParaView
 Visualize calculation results.

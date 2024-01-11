@@ -17,6 +17,9 @@ The analysis target model used in this example is the distributed-pipe model.
 
 Perform an analysis where the fluid coming in from the inlet leaves the outlet.
 
+This tutorial assumes that you are running on Fugaku. 
+If you are running in a different environment, change the script settings accordingly.
+
 Please download and extract the [file](sample/OpenFOAM_tutorial_sample.zip) in advance.
 The archive contains three files:
 
