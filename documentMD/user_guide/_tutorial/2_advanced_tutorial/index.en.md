@@ -180,7 +180,7 @@ The left side of the screen is the same text editor as before, but the right sid
 
 ![img](./img/texteditor_with_ps_config.png "Scripts to Run in PS")
 
-First, click the __+ Add New Target File__ button at the top right of the screen.
+First, click the __+ add new target file__ button at the top right of the screen.
 The component tree screen appears, click __task0__. Type __run.sh__ for the file name and click the __OK__ button.
 
 ![img](./img/select_target_file.png "targetfile selection dialog")
@@ -190,22 +190,30 @@ The __parameters__ text box on the right side of the screen displays __number__.
 
 ![img](./img/select_parameter_field.png "Parameter substitution field selection state")
 
-In this state, you can click the __+ Add New Parameter__ button to set the parameter for __number__.
-For now, change the drop-down list to __list__ and enter three values: __foo__ __bar__ __baz__.
+In this state, you can click the __+ add new parameter__ button to set the parameter for __number__.
+<!--For now, change the drop-down list to __list__ and enter three values: __foo__ __bar__ __baz__.-->
+For now, change the drop-down list to __list__.
 
 ![img](./img/list_parameter_dialog.png "list parameter dialog")
 
+Next, set three values for __foo__ __bar__ __baz__. Type __foo__ in the text box and click the __+__ button. Follow the same steps to set __bar__ and __baz__.
 
-Finally, click the __SAVE__ button. The parameter settings for __number__ are registered.
+![img](./img/create_parameter.png "Creating Parameters")
+
+Finally, click the __OK__ button.
+
+![img](./img/created_parameters.png "After creating parameters")
+
+The parameter settings for __number__ are registered.
 The __number__ part of __run.sh__ is rewritten as __\{\{ number \}\}__.
 
 ![img](./img/texteditor_ps2.png "Text Editor at End of Edit")
 
 At runtime, this __\{\{ number \}\}__ is replaced by the actual parameters (foo, bar, baz) and executed respectively.
 
-Finally, click the __SAVE ALL FILES__ button at the top right of the screen to save your edits.
+Finally, click the __save all files__ button at the top right of the screen to save your edits.
 
-When you run the project, STDOUT displays foo, bar, and baz, respectively, as output from the echo command.
+When you run the project, stdout displays foo, bar, and baz, respectively, as output from the echo command.
 
 ![img](./img/result_ps.png "PS Execution Results")
 

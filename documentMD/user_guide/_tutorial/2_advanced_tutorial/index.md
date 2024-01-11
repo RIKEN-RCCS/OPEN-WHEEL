@@ -180,7 +180,7 @@ PSコンポーネントのプロパティ画面を開いてFilesエリアを表�
 
 ![img](./img/texteditor_with_ps_config.png "PS内で実行するスクリプト")
 
-まず、画面右上の __+Add New Target File__ ボタンをクリックしてください。
+まず、画面右上の __+ add new target file__ ボタンをクリックしてください。
 コンポーネントツリー画面が表示されるので、 __task0__ をクリックします。ファイル名に __run.sh__ と入力して __OK__ ボタンをクリックしてください。
 
 ![img](./img/select_target_file.png "targetfile 選択ダイアログ")
@@ -190,22 +190,31 @@ PSコンポーネントのプロパティ画面を開いてFilesエリアを表�
 
 ![img](./img/select_parameter_field.png "パラメータ置換フィールド選択状態")
 
-この状態で、 __+ Add New Parameter__ ボタンをクリックすると、 __number__ の部分に対するパラメータ設定を行うことができます。
-ここでは、ドロップダウンリストを __list__ に変更し、 __foo__ __bar__ __baz__ の3つの値を入力してください。
+この状態で、 __+ add new parameter__ ボタンをクリックすると、 __number__ の部分に対するパラメータ設定を行うことができます。
+<!--ここでは、ドロップダウンリストを __list__ に変更し、 __foo__ __bar__ __baz__ の3つの値を入力してください。-->
+ここでは、ドロップダウンリストを __list__ に変更します。
 
 ![img](./img/list_parameter_dialog.png "listパラメータダイアログ")
 
+続いて、 __foo__ __bar__ __baz__ の3つの値を設定します。
+テキストボックスに __foo__ と入力し、__+__ ボタンをクリックしてください。同様の手順で __bar__、__baz__ を設定します。
 
-最後に __SAVE__ ボタンをクリックします。__number__ に対するパラメータ設定が登録され、
+![img](./img/create_parameter.png "パラメータ作成")
+
+最後に __OK__ ボタンをクリックします。
+
+![img](./img/created_parameters.png "パラメータ作成後")
+
+__number__ に対するパラメータ設定が登録され、
 __run.sh__ の __number__ の部分は、 __\{\{ number \}\}__ と書き換えられます。
 
 ![img](./img/texteditor_ps2.png "編集終了時のテキストエディタ")
 
 実行時には、この __\{\{ number \}\}__ が実際のパラメータ(foo, bar, baz)で置き換えられてそれぞれ実行されます。
 
-最後に、画面右上の __SAVE ALL FILES__ ボタンをクリックして編集結果を保存してください。
+最後に、画面右上の __save all files__ ボタンをクリックして編集結果を保存してください。
 
-プロジェクトを実行すると、STDOUTに foo, bar, baz とそれぞれechoコマンドの出力結果が表示されます。
+プロジェクトを実行すると、stdoutに foo, bar, baz とそれぞれechoコマンドの出力結果が表示されます。
 
 ![img](./img/result_ps.png "PS実行結果")
 
