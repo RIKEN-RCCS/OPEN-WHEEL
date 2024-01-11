@@ -12,8 +12,6 @@ services:
       gem install jekyll-remote-theme &&
       gem install jekyll-include-cache &&
       gem install jekyll-polyglot &&
-      jekyll serve"
-    ports:
-      - "4000:4000"
+      jekyll build"
     tty: true
     stdin_open: true
