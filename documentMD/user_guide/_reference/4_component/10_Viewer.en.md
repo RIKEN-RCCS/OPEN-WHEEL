@@ -27,6 +27,10 @@ Also, you cannot set the output files property for the Viewer component.
 After the Viewer component has finished executing its predecessor,
 Receive connected files from input files.
 
+__When "./" is set for input files__  
+Setting input files to __./__ places all files passed as input files (For extensions visible in the Viewer component) directly under the viewer component directory.
+{: .notice--info}
+
 If these files contain image files that can be viewed in a browser
 The dialog appears in the browser only the first time.
 Click the __ok__ button to display the viewer screen in a separate tab.

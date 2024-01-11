@@ -247,7 +247,7 @@ catコマンドで表示するワークフローを作成して、sourceコン�
 まずはじめに、プロジェクトにtaskコンポーネントとsourceコンポーネントを1つずつ追加してください。
 
 sourceコンポーネントのプロパティを開いて、upload settingの行をクリックし __upload on demand__ のスイッチを有効にしてください。
-sourceコンポーネントのoutputFileに __UPLOAD_ON_DEMAND__ と表示されます。
+sourceコンポーネントのoutput filesに __UPLOAD_ON_DEMAND__ と表示されます。
 
 続いて、taskコンポーネント内に `run.sh` という空ファイルを追加してscriptプロパティに指定してください。
 run.shには次の内容を記載してください。
@@ -256,7 +256,7 @@ run.shには次の内容を記載してください。
 cat input.txt
 ```
 
-最後にtaskコンポーネントのinputFileに __input.txt__ を追加し、sourceコンポーネントの __UPLOAD_ON_DEMAND__ と接続してください。
+最後にtaskコンポーネントのinput filesに __input.txt__ を追加し、sourceコンポーネントの __UPLOAD_ON_DEMAND__ と接続してください。
 以上でワークフローの作成は完了です。
 
 ![img](./img/workflow_source.png "sourceコンポーネントのワークフロー完成図")
@@ -300,20 +300,24 @@ ls *
 ```
 
 viewerコンポーネントで表示するための画像データを、taskコンポーネントにアップロードします。
-Fileエリアの __upload file__ ボタン、もしくはFileエリアに画像データをドラッグ&ドロップすることでアップロードしてください。
+Filesエリアの __upload file__ ボタン、もしくはFilesエリアに画像データをドラッグ&ドロップすることでアップロードしてください。
 
 ![img](./img/upload_file.png "upload fileボタン")
 
-outputFileプロパティに、アップロードした画像データのファイル名を記述します。  
+output filesプロパティに、アップロードした画像データのファイル名を記述します。  
 __\*.拡張子__ と記載することで、同じ拡張子のファイルをまとめて指定したり、ファイル名を省略して指定することができます。(例えば、JPEGファイルの場合は、__\*.jpg__ と記載します)  
 画像データとして1ファイルのみを表示する場合は、ファイル名をそのまま指定しても構いません。  
-また、1つにまとめず複数のファイル名をoutputFileプロパティに指定しても問題ありません。
+また、1つにまとめず複数のファイル名をoutput filesプロパティに指定しても問題ありません。
 
 
-最後にviewerコンポーネントのinputFileに __./__ を追加し、taskコンポーネントのoutputFileと接続してください。
+最後にviewerコンポーネントのinput filesに __./__ を追加し、taskコンポーネントのoutput filesと接続してください。
 以上でワークフローの作成は完了です。
 
 ![img](./img/workflow_viewer.png "viewerコンポーネントのワークフロー完成図")
+
+__input filesに "./" と設定した場合について__  
+input filesに __./__ と設定することで、input filesとして渡されるファイル（本チュートリアルの場合、\*.JPGと\*.webp）はすべてviewerコンポーネントディレクトリ直下に置かれます。
+{: .notice--info}
 
 プロジェクトを実行すると、 __open viewer screen__ というダイアログが表示されます。
 OKボタンをクリックすると別のタブで画像ビューワーが表示されます。
@@ -344,19 +348,19 @@ run.shには次の内容を記載してください。
 echo foo >foo.txt
 ```
 
-また、taskコンポーネントのoutputFileに __\*.txt__ を追加してください。
+また、taskコンポーネントのoutput filesに __\*.txt__ を追加してください。
 このコンポーネントは __foo.txt__ しか出力しませんが、これから出力ファイル名を書き換えながら
 何回かプロジェクトを実行するため、ファイル名を __\*__ で指定しています。
 
 次にstorageコンポーネントのプロパティ画面を開き __directory path__ の欄に
-__/tmp__ と記述してください。また、inputFileに __./__ を指定してください。
+__/tmp__ と記述してください。また、input filesに __./__ を指定してください。
 
 __directory pathの設定について__  
 もし、/tmpが存在しない、または/tmpに書き込み権限が無い場合は他の任意のディレクトリを指定してください。  
 ただし、プロジェクトファイルが保存されているディレクトリツリーの範囲外のパスを指定する必要があります。  
 {: .notice--info}
 
-最後に、taskコンポーネントのoutputFileと、storageコンポーネントのintpuFileを接続してください。
+最後に、taskコンポーネントのoutput filesと、storageコンポーネントのintpuFileを接続してください。
 以上でワークフローの作成は完了です。
 
 ![img](./img/workflow_storage.png "storageコンポーネントのワークフロー完成図")

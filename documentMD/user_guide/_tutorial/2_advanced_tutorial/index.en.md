@@ -246,7 +246,7 @@ Learn about the source component by creating a workflow to display with the cat 
 First, add a task component and a source component to your project.
 
 Open the properties of the source component and click the upload setting line to enable the __upload on demand__ switch.
-The outputFile of the source component displays __UPLOAD_ON_DEMAND__.
+The output files of the source component displays __UPLOAD_ON_DEMAND__.
 
 Then add an empty file called `run.sh` in the task component and specify it in the script property.
 In run.sh, include the following:
@@ -255,7 +255,7 @@ In run.sh, include the following:
 cat input.txt
 ```
 
-Finally, add __input.txt__ to the inputFile of the task component and connect to __UPLOAD_ON_DEMAND__ of the source component.
+Finally, add __input.txt__ to the input files of the task component and connect to __UPLOAD_ON_DEMAND__ of the source component.
 This completes the workflow creation process.
 
 ![img](./img/workflow_source.png "Complete workflow of source component")
@@ -299,20 +299,24 @@ ls *
 ```
 
 Uploads image data for display in the viewer component to the task component.
-Upload by dragging and dropping the image data to the File area with the __upload file__ button.
+Upload by dragging and dropping the image data to the Files area with the __upload file__ button.
 
 ![img](./img/upload_file.png "upload file button")
 
-Specify the file name of the uploaded image data in the outputFile property.  
+Specify the file name of the uploaded image data in the output files property.  
 By writing __\*.extension__, you can specify all files with the same extension or omit the file name. (For example, for a JPEG file, write __\*.jpg__)  
 If you want to display only one file as image data, you can specify the file name as it is.  
-It is also acceptable to specify multiple file names in the outputFile property without combining them into one.
+It is also acceptable to specify multiple file names in the output files property without combining them into one.
 
 
-Finally, add __./__ to the inputFile of the viewer component and connect to the outputFile of the task component.
+Finally, add __./__ to the input files of the viewer component and connect to the output files of the task component.
 This completes the workflow creation process.
 
 ![img](./img/workflow_viewer.png "The complete workflow of the viewer component")
+
+__When "./" is set for input files__  
+Setting input files to __./__ places all files passed as input files (In this case, \*.JPG and \*.web) directly under the viewer component directory.
+{: .notice--info}
 
 When you run the project, you will see a dialog called __open viewer screen__.
 Click the OK button to display the Image Viewer in a separate tab.
@@ -343,19 +347,19 @@ In run.sh, include the following:
 echo foo >foo.txt
 ```
 
-Also, add __\*.txt__ to the outputFile of the task component.
+Also, add __\*.txt__ to the output files of the task component.
 This component only prints __foo.txt__, but I'm going to rename the output file
 The file name is __\*__ to run the project several times.
 
 Next, open the storage component properties screen and enter __directory path__
-Write __/tmp__ . Also, specify __./__ for inputFile.
+Write __/tmp__ . Also, specify __./__ for input files.
 
 __About setting directory path__  
 If/tmp does not exist or/tmp does not have write permission, specify any other directory.  
 However, you must specify a path that is outside the scope of the directory tree where the project files are stored.  
 {: .notice--info}
 
-Finally, connect the outputFile of the task component and the intpuFile of the storage component.
+Finally, connect the output files of the task component and the intpuFile of the storage component.
 This completes the workflow creation process.
 
 ![img](./img/workflow_storage.png "Complete storage component workflow")
