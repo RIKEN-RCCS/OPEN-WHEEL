@@ -123,8 +123,10 @@ Click the PS component and add `results` to __output files__.
 __parameterSetting.json__ in __Files__ area
 With the file selected, open a text editor and enter PS configuration mode.
 
-Click the __Add New Target File__ button in the __solve__ component.
-Target __U__.
+<!--Click the __add new target file__ button in the __solve__ component.
+Target __U__.-->
+Click the __add new target file__ button. 
+To target __U__ in the __solve__ component, select __solve__, enter __U__ in the text box, and click the __OK__ button.
 
 ![img](./img/PS_target_file.png "Specify Target File")
 

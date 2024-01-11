@@ -123,8 +123,10 @@ PSコンポーネントをクリックし、__output files__ に `results` を�
 __Files__ エリア内のある __parameterSetting.json__
 ファイルを選択した状態でテキストエディタを開いてPS設定モードにします。
 
-__Add New Target File__ ボタンをクリックして __solve__ コンポーネント内の
-__U__ を対象にします。
+<!--__add new target file__ ボタンをクリックして __solve__ コンポーネント内の
+__U__ を対象にします。-->
+__add new target file__ ボタンをクリックします。
+__solve__ コンポーネント内の __U__ を対象にするため、__solve__ を選択し、テキストボックスに __U__ と入力して、__OK__ ボタンをクリックします。
 
 ![img](./img/PS_target_file.png "ターゲットファイルの指定")
 
