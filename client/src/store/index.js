@@ -3,11 +3,13 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
+import { toRaw } from "vue";
 import Vuex from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:vuex");
 import deepEqual from "deep-eql";
 import SIO from "@/lib/socketIOWrapper.js";
+
 
 const logger = (store)=>{
   store.subscribe((mutation)=>{
@@ -108,7 +110,7 @@ export default new Vuex.Store({
       }
 
       context.commit("selectedComponent", payload);
-      const dup = Object.assign({}, payload);
+      const dup = structuredClone(toRaw(payload));
       context.commit("copySelectedComponent", dup);
     },
     showSnackbar: (context, payload)=>{
