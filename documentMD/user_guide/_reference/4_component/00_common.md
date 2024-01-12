@@ -47,6 +47,16 @@ WHEELには、コンポーネント内のファイルを
 
 ![img](./img/input_output_files.png "inputFiles_outputFiles")
 
+### 追加方法
+テキストボックスにファイル名またはディレクトリ名を入力し、__+__ ボタンをクリックします。
+
+![img](./img/add_file.png "add element")
+
+### 削除方法
+ファイル名またはディレクトリ名の右に表示された __ゴミ箱__ ボタンをクリックします。
+
+![img](./img/delete_file.png "delete element")
+
 ### ファイルの転送方法
 あるコンポーネントのoutput filesに指定したファイルと、別のコンポーネントのinput filesに指定したファイルを画面上で接続します。
 すると、後続コンポーネントにおいて、まず先行コンポーネントのディレクトリ内の必要なファイルに対してシンボリックリンクがinput filesで指定されたファイル名で作成され、
