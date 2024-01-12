@@ -9,7 +9,7 @@ This tutorial covers features not covered in the basics.
 Unlike the basic section, all items are independent.
 Create a new project individually and then follow the tutorial.
 
-### 1. conditional branch
+### 1. Conditional Branch
 In a workflow, depending on the result of a process
 It may change subsequent actions.
 
@@ -137,7 +137,7 @@ If the end property of the for component and the index variable ($WHEEL_CURRENT_
 The internal components are executed.
 
 
-### 3. parameter study
+### 3. Parameter Study
 In a computer simulation workflow, you may want to perform the same calculation over and over again, varying some of the input data parameters incrementally.
 
 WHEEL has a parameterStudy component (The following PS components) that supports such processing.
@@ -217,6 +217,10 @@ When you run the project, stdout displays foo, bar, and baz, respectively, as ou
 
 ![img](./img/result_ps.png "PS Execution Results")
 
+__About the order in which parameter studies are run__  
+The PS component executes the subcomponents as parallel as possible for all combinations in the parameter space specified by parameterFile.  
+Therefore, the execution order of the lower components is out of order, and the output order of the results is out of order.
+{: .notice--info}
 
 #### Addendum to Parameter Replacement
 If __{% raw %}{{ number }}{% endraw %}__ appears elsewhere in the file specified in the targetfile, it will be replaced by a parameter as well.
@@ -376,7 +380,7 @@ It is retained and can be used to save files for restart calculations.
 
 
 
-### 7. bulk job
+### 7. Bulk Job
 Fugaku and other Fujitsu Limited HPC middleware "FUJITSU Software Technical Computing Suite"
 The bulk job feature is available on the adopted system.
 
