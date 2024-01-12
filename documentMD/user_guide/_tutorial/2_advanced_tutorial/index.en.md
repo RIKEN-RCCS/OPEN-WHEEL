@@ -244,7 +244,7 @@ Provides the source component to handle.
 
 ![img](./img/component_library_source.png "source component")
 
-In this section, any text file created on your local PC
+In this section, any text file created on your client PC
 Learn about the source component by creating a workflow to display with the cat command.
 
 First, add a task component and a source component to your project.
@@ -264,7 +264,7 @@ This completes the workflow creation process.
 
 ![img](./img/workflow_source.png "Complete workflow of source component")
 
-In fact, prepare a text file on your PC to use as an input file.
+In fact, prepare a text file on your client PC to use as an input file.
 
 When you run the project, a dialog appears to upload a file to use as the outputfile for the source component.
 Specify the file you prepared earlier.
@@ -285,7 +285,7 @@ For workflows that are automated to post-process,
 Image files are often output as the result of calculations.
 
 WHEEL provides a viewer component that displays image files in typical formats in the browser.
-You can use this component without downloading the resulting file to your PC.
+You can use this component without downloading the resulting file to your client PC.
 You can easily see the results.
 
 ![img](./img/component_library_viewer.png "viewer component")

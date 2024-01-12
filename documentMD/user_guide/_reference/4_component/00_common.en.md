@@ -115,7 +115,7 @@ This also applies to files that are already sequentially numbered, files with th
 Click the ▶ icon to the left of these lines to view the original sequential files and directories individually, similar to the directories.
 {: .notice--info}
 
-You can upload files directly under the component directory by dropping them in the file display area.
+You can upload a file directly under the component directory by dropping the client PC file in the file display area.
 
 ### File Operation Buttons Area
 At the top of the file operation area are buttons for file operations.
