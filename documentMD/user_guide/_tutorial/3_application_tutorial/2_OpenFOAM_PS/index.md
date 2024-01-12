@@ -130,26 +130,29 @@ __solve__ コンポーネント内の __U__ を対象にするため、__solve__
 
 ![img](./img/PS_target_file.png "ターゲットファイルの指定")
 
-左ペインに __U__ ファイルが開かれるので boundaryField -> inlet -> value の行
+<!--左ペインに __U__ ファイルが開かれるので boundaryField -> inlet -> value の行
 にある、 __uniform (5 0 0);__ のうち __5__ の部分を
-ドラッグして選択してください。
+ドラッグして選択してください。-->
+左ペインに __U__ ファイルが開かれます。  
+boundaryField -> inlet -> value の行にある、 __uniform (5 0 0);__ のうち __5__ を __vel_U__ に変更します。
 
-右ペインの __parameters__ テキストボックスに __5__ と表示されます。
+![img](./img/change_value.png "値の変更")
+
+__uniform (vel_U 0 0);__ のうち __vel_U__ の部分をドラッグして選択してください。
+右ペインの __parameters__ テキストボックスに __vel_U__ と表示されます。
 
 ![img](./img/PS_param.png "パラメータ置き換え部分の選択")
 
-この状態で、 __Add New Parameter__ ボタンをクリックしてinletの流速に設定する値を
-入力します。
+この状態で、 __add new parameter__ ボタンをクリックしてinletの流速に設定する値を入力します。  
 ここでは、5 m/sから7m/sまで1m/s刻みでパラメータスタディを行なうので
 min=5, max=7, step=1 を設定してください。
 
 ![img](./img/PS_U_setting.png "パラメータ置き換え部分の選択")
 
-最後に __solve__ コンポーネントの実行結果を回収する設定を追加します。
-
-__Add New Gather Setting__ ボタンをクリックしてgather設定ダイアログを表示します。
+最後に __solve__ コンポーネントの実行結果を回収する設定を追加します。  
+__add new gather setting__ ボタンをクリックしてgather設定ダイアログを表示します。
 __solve__ を選択し、 __srcName__ に `D50-d10.tar.gz`、__dstName__ に
-<code>results/&lbrace;&lbrace; U &rbrace;&rbrace;/D50-d10.tar.gz</code> と入力してください。
+<code>results/&lbrace;&lbrace; vel_U &rbrace;&rbrace;/D50-d10.tar.gz</code> と入力してください。
 
 ![img](./img/PS_gather_setting.png "PS結果ファイル回収設定")
 
