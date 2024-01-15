@@ -119,8 +119,8 @@ Use a format suitable for job scripts and insert it at the beginning of the file
 Also, if an option value has already been inserted into a file that is open on the tab editor side, the __insert__ button's label display switches to __update__.
 If you click the __update__ button, the current settings will replace what you have already entered.
 
-### remove button
-Click the __remove__ button to remove the option settings saved with the __register__ button.
+#### remove button
+Click the __remove__ button to remove text inserted with the __insert__ button.
 
 #### clear button
 Click the __clear__ button to reset the contents of the __option input form__ to the default values.
