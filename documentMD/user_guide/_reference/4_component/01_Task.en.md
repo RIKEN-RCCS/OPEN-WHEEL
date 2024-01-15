@@ -19,6 +19,11 @@ Sets the filename of the script to call when the Task component runs.
 The script property is a select box.
 You can choose from the files that exist in the Task component.
 
+__About Task Component Execution Results__  
+The success or failure of the Task component is determined by the return value of the specified script. (0: Normal end, other than 0: Abnormal end)  
+Therefore, when executing multiple commands in a script, specify the return value accordingly.
+{: .notice--info}
+
 ### host
 Remote host set in [Remote host settings]({{site.baseurl}}/how_to_boot/#remote-host-settings) as the script execution environment
 or "localhost."
