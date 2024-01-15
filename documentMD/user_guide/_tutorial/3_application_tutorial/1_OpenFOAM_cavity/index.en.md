@@ -9,7 +9,7 @@ In this chapter, we introduce a calculation example using WHEEL, "Analysis workf
 The model covered in this chapter is the "cavity" model, which is a well-known basic validation of CFD software.
 Analyze a model in which the top wall moves horizontally at a constant velocity, causing the internal fluid to move as it is dragged.
 
-![img](./img/cavity.png "cavity")
+![img](./img/cavity.en.png "cavity")
 
 As an example, the OpenFOAM distribution contains data for analysis using this model.
 Use the file to perform the calculation.
