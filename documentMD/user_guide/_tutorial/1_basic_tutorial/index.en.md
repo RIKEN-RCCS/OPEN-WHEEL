@@ -91,6 +91,11 @@ Finally, click the __graph view__ button (3) in the upper left of the screen to 
 
 ![img](./img/text_editor.png "Script Edit")
 
+__About Task Component Execution Results__  
+The success or failure of the Task component is determined by the return value of the specified script. (0: Normal end, other than 0: Abnormal end)  
+Therefore, when executing multiple commands in a script, specify the return value accordingly.
+{: .notice--info}
+
 #### Specifying an execution script
 Display the properties subscreen and select the __script__ drop-down list (1).
 Select the script file you just created.
