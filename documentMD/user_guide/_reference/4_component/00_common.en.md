@@ -47,16 +47,6 @@ This feature uses the input files and output files properties.
 
 ![img](./img/input_output_files.png "inputFiles_outputFiles")
 
-### How to Add
-Type a file or directory name in the text box and click the __+__ button.
-
-![img](./img/add_file.png "add element")
-
-### How to delete
-Click the __Trash__ button to the right of the file or directory name.
-
-![img](./img/delete_file.png "delete element")
-
 ### How to transfer files
 Connect the file specified in the output files of one component to the file specified in the input files of another component on the screen.
 Then, the succeeding component first creates a symbolic link to the required file in the preceding component's directory 
@@ -88,6 +78,19 @@ It creates symbolic links to files and directories that match the globs specifie
 A directory with the string specified in input files is created in the subsequent component's directory.
 In it, a symbolic link to the file or directory specified in output files is created.
 
+
+### Setting the files and folders to be transferred
+The input files and output files have the same method for setting the files and folders to be transferred.
+
+#### How to Add
+To add a file or folder to be transferred, type a file or directory name in the text box, and then click the __+__ button.
+
+![img](./img/add_file.png "add element")
+
+#### How to Delete
+To delete the specified file or folder, click the __Trash__ button displayed to the right of the file or directory name.
+
+![img](./img/delete_file.png "delete element")
 
 ## File Operation Area
 Click the __∨ (Details)__ button in the Files group to display the file operation area.
