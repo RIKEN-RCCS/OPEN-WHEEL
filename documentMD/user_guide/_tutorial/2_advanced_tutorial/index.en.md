@@ -73,7 +73,7 @@ STDOUT displays only `task1`.
 
 ![img](./img/workflow_if_result.png "Workflow Execution Results")
 
-Let's initialize the project, change the contents of check.sh to `exit1`, and try again.
+Let's initialize the project, change the contents of check.sh to `exit 1`, and try again.
 This time, only task0 is executed, and STDOUT displays only `task0`.
 
 ### 2. Loop
