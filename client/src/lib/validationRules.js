@@ -10,6 +10,9 @@ export function required (v) {
 }
 
 export function validPortNumber (v) {
+  if(v === ""){
+    return true
+  }
   if (typeof v !== "number") {
     return false;
   }

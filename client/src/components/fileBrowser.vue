@@ -239,7 +239,7 @@ export default {
       SIO.onUploaderEvent("complete", this.onUploadComplete)
       SIO.onUploaderEvent("progress", this.updateProgressBar)
     }
-    this.currentDir=this.selectedComponentAbsPath
+    this.currentDir=this.selectedComponent.type === "storage" ? this.storagePath: this.selectedComponentAbsPath;
   },
   beforeDestroy(){
     SIO.removeUploaderEvent("choose", this.onChoose)
@@ -371,7 +371,7 @@ export default {
         const newName = this.dialog.inputField
         const oldName = this.activeItem.name
 
-        SIO.emitGlobal("renameFile", this.projectRootDir, this.currentDir, this.activeItem.name, newName, (rt)=>{
+        SIO.emitGlobal("renameFile", this.projectRootDir, this.activeItem.path, this.activeItem.name, newName, (rt)=>{
           if (!rt) {
             console.log(rt);
             return
@@ -383,16 +383,7 @@ export default {
         })
       } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
         const name = this.dialog.inputField
-        let parentDir=this.currentDir
-        if(this.activeItem){
-          if(this.activeItem.type === "dir" || this.activeItem.type === "dir-link"){
-            parentDir = this.activeItem.id
-          }else if(this.activeItem.typw === "file" || this.activeItem.type === "file-link"){
-            parentDir = this.activeItem.path
-          }
-        }
-
-        const fullPath = `${parentDir}${this.pathSep}${name}`
+        const fullPath = `${this.currentDir}${this.pathSep}${name}`
         if(!this.noDuplicate(name)){
           console.log("duplicated name is not allowed")
           this.clearAndCloseDialog()
@@ -404,26 +395,15 @@ export default {
             console.log(rt);
             return
           }
-          const newItem = { id: fullPath, name, path:rt.parent, type }
+          const newItem = { id: fullPath, name, path:this.currentDir, type }
           if (this.dialog.submitEvent === "createNewDir") {
             newItem.children = []
           }
-          if(rt.parent === this.selectedComponentAbsPath){
-            this.items.push(newItem)
+          const container = this.activeItem ? this.activeItem.children : this.items
+          container.push(newItem)
 
-            if( type === "file") {
-              this.updateScriptCandidate()
-            }
-            return
-          }
-          const parent=this.getActiveItem(rt.parent);
-          if(parent.type !== "dir" && parent.type !== "dir-link"){
-            return
-          }
-          if(Array.isArray(parent.children)){
-            parent.children.push(newItem);
-          }else{
-            parent.children=[newItem];
+          if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
+            this.openItems.push(this.activeItem.id)
           }
         })
       } else {

@@ -77,7 +77,7 @@
       @ok="saveTemplate"
       @cancel="cancelSaveDialog"
     >
-      <template slot="message">
+      <template #message>
         <v-text-field
           v-model="newTemplateName"
           clearble
@@ -91,7 +91,7 @@
       @ok="loadTemplate"
       @cancel="loadDialog=false"
     >
-      <template slot="message">
+      <template #message>
         <list-form
           v-model="selected"
           :title="'load templates'"
@@ -108,7 +108,6 @@
 </template>
 <script>
 "use strict";
-import { mapState, mapGetters } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
 import hpcCenters from "@/lib/hpcCenter.json";
 import createJobScript from "@/lib/jobScripts.js";
