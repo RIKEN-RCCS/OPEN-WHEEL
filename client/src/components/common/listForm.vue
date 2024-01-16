@@ -272,16 +272,10 @@ export default {
       this.inputField = null;
     },
     deleteItem: function (v) {
-      let index=-1;
-      if (this.stringItems){
-        index = this.items.findIndex((e)=>{
-          return e === v;
-        });
-      }else{
-        index = this.items.findIndex((e)=>{
-          return e.name === v.name;
-        });
-      }
+      const  index = this.items.findIndex((e)=>{
+        return this.stringItems ? e === v.name : e.name === v.name;
+      });
+
       if (index !== -1) {
         this.$emit("remove", v, index);
       }

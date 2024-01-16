@@ -244,7 +244,6 @@ export default {
         const step = Number(this.newItem.step);
         if (Number.isNaN(min) || Number.isNaN(max) || Number.isNaN(step)) {
           console.log("min, max or step is Nan", min, max, step);
-          //TODO エラーメッセージをトーストあたりで出す
           return;
         }
         target.min = min;
