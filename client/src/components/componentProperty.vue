@@ -757,7 +757,7 @@ export default {
     },
     updateComponentProperty (prop) {
       if (prop === "name" && !this.validName) return;
-      if (!["name", "include","exclude", "cleanupFlag"].includes(prop) && !this.valid) return;
+      if (!["name", "include","exclude", "cleanupFlag","retryCondition"].includes(prop) && !this.valid) return;
       if(!Array.isArray(this.copySelectedComponent[prop]) && this.copySelectedComponent[prop] === this.selectedComponent[prop]) return;
       const ID = this.selectedComponent.ID;
       //[workaround] v-textfield convert input value to string even if type=number
