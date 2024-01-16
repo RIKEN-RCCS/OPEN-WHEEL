@@ -48,9 +48,8 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.port"
-                          label="Port number"
+                          :label=portNumberLabel
                           :rules="[validPortNumber]"
-                          placeholder="required"
                           validate-on="blur"
                         />
                       </v-col>
@@ -66,9 +65,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model="host.path"
-                          label="Host work dir"
-                          :rules="[required]"
-                          placeholder="required"
+                          :label=workDirLabel
                           validate-on="blur"
                         />
                       </v-col>
@@ -142,7 +139,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.renewInterval"
-                          label="connection renewal interval (min.)"
+                          label="connection renewal interval (min.) [default: 0]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
                         />
@@ -150,7 +147,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.statusCheckInterval"
-                          label="status check interval (sec.)"
+                          label="status check interval (sec.) [default: 60]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
                         />
@@ -158,7 +155,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.maxStatusCheckError"
-                          label="max number of status check error allowed"
+                          label="max number of status check error allowed [default: 10]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
                         />
@@ -253,9 +250,7 @@ export default {
   },
   data: function () {
     return {
-      host: {
-        port: 22
-      },
+      host: {},
       openPanel: [0],
       pathSep: "/",
       home: "/",
@@ -281,6 +276,12 @@ export default {
         this.$emit("update:modelValue", value);
       },
     },
+    portNumberLabel(){
+      return `Port number ${this.host.port? "" : "[default: 22]"}`
+    },
+    workDirLabel(){
+      return `Host work dir ${this.host.path ? "" :"[default $HOME]"}`
+    }
   },
   watch:{
     openDialog(){
