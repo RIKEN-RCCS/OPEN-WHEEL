@@ -15,7 +15,7 @@ The Home screen is organized as follows.
 |3| REMOVE FROM LIST button    | Deletes the project from the project list area (the entity file remains).                       |
 |4| REMOVE button              | Deletes the project                                                                             |
 |5| BATCH MODE switch        | Switches to mass delete mode for multiple projects. When enabled, multiple projects can be selected |
-|6| Navigation drawer     | Opens a drawer with links to the User Guide, Remote Host Configuration screen                               |
+|6| Hamburger menu    | Opens a drawer with links to the User Guide, Remote Host Configuration screen                               |
 |7| Project List Area | Lists previously opened projects.                                                         |
 
 

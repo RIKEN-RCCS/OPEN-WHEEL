@@ -9,6 +9,9 @@ In this chapter, we will introduce an example of computing using WHEEL, "MNIST d
 In this case, we used TensorFlow on Mt. Fugaku.
 Create and infer handwritten digit image learning models using MNIST data.
 
+This tutorial assumes that you are running on Fugaku. 
+If you are running in a different environment, change the script settings accordingly.
+
 MNIST data is an image data set of 60,000 handwritten digit images and 10,000 test images.
 It is renowned as a very useful image dataset for learning neural networks.  
 The data set contains the following structure:
@@ -31,7 +34,7 @@ This section describes the NN method used to analyze MNIST data.
 NN stands for neural network, which is a mathematical model of artificial neurons representing nerve cells (neurons) and their connections, or networks, in the human brain.
 It consists of an input layer, an output layer, and a hidden layer, with a "weight" between the layers that indicates the strength of the connections between the neurons.
 
-![img](./img/NN.PNG "About Neural Networks")
+![img](./img/NN.en.PNG "About Neural Networks")
 
 Features are extracted from the image, and the weights of nodes are updated and learned.
 In this case, the MNIST data set is used, so the input layer is 784 nodes and the output layer is 10 nodes in order to obtain an output of one of 0~9 digits from an input of 28*28 pixels.

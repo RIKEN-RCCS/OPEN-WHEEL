@@ -9,10 +9,13 @@ In this chapter, we introduce a calculation example using WHEEL, "Analysis workf
 The model covered in this chapter is the "cavity" model, which is a well-known basic validation of CFD software.
 Analyze a model in which the top wall moves horizontally at a constant velocity, causing the internal fluid to move as it is dragged.
 
-![img](./img/cavity.png "cavity")
+![img](./img/cavity.en.png "cavity")
 
 As an example, the OpenFOAM distribution contains data for analysis using this model.
 Use the file to perform the calculation.
+
+This tutorial assumes that you are running on Fugaku. 
+If you are running in a different environment, change the script settings accordingly.
 
 In the final step of this tutorial, the WHEEL server
 Using the installed ParaView
@@ -41,8 +44,8 @@ cp -r ${FOAM_TUTORIALS}/incompressible/icoFoam/cavity/cavity ./
 mv decomposeParDict cavity/system/
 
 cd cavity
-blockMesh
-decomposePar
+blockMesh || exit 1
+decomposePar || exit 1
 ```
 
 This script uses the OpenFOAM system directory
@@ -69,7 +72,7 @@ spack load 'openfoam@2012%fj@4.8.0'
 
 cd  cavity
 mpiexec -np 4 icoFoam -parallel > ./log.icoFoam 2>&1
-reconstructPar
+reconstructPar || exit 1
 touch result.foam
 
 cd ../

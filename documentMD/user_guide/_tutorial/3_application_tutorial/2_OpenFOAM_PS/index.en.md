@@ -17,6 +17,9 @@ The analysis target model used in this example is the distributed-pipe model.
 
 Perform an analysis where the fluid coming in from the inlet leaves the outlet.
 
+This tutorial assumes that you are running on Fugaku. 
+If you are running in a different environment, change the script settings accordingly.
+
 Please download and extract the [file](sample/OpenFOAM_tutorial_sample.zip) in advance.
 The archive contains three files:
 
@@ -98,9 +101,9 @@ tar xvzf D50-d10.tgz
 mv ./U ./D50-d10/0
 cd ./D50-d10
 
-decomposePar
+decomposePar || exit 1
 mpiexec -n 12 simpleFoam -parallel
-reconstructPar
+reconstructPar || exit 1
 touch result.foam
 
 cd ..
@@ -120,35 +123,39 @@ Click the PS component and add `results` to __output files__.
 __parameterSetting.json__ in __Files__ area
 With the file selected, open a text editor and enter PS configuration mode.
 
-Click the __Add New Target File__ button in the __solve__ component.
-Target __U__.
+<!--Click the __add new target file__ button in the __solve__ component.
+Target __U__.-->
+Click the __add new target file__ button. 
+To target __U__ in the __solve__ component, select __solve__, enter __U__ in the text box, and click the __OK__ button.
 
 ![img](./img/PS_target_file.png "Specify Target File")
 
-The __U__ file is opened in the left pane, so the boundaryField -> inlet -> value line
+<!--The __U__ file is opened in the left pane, so the boundaryField -> inlet -> value line
 __uniform (5 0 0);__ the __5__ portion of 
-Drag to select.
+Drag to select.-->
+The __U__ file opens in the left pane.
+In the line boundaryField -> inlet -> value, change __5__ of __uniform (5 0 0);__ to __vel_U__.
 
-The __parameters__ text box in the right pane displays __5__.
+![img](./img/change_value.png "Change Value")
+
+Drag the __vel_U__ part of __uniform (vel_U 0 0);__ to select it. 
+The __parameters__ text box in the right pane displays __vel_U__.
 
 ![img](./img/PS_param.png "Selecting Parameter Replacements")
 
-In this state, click the __Add New Parameter__ button to set the inlet velocity
-Enter.
-In this case, the parameter study will be performed in 1m/s increments from 5m/s to 7m/s.
-Set min=5, max=7, step=1.
+Now click the __add new parameter__ button and enter the value you want to set for the inlet velocity.
+Set min=5, max=7, and step=1 to perform the parameter study in steps of 1 m/s from 5 m/s to 7 m/s.
 
 ![img](./img/PS_U_setting.png "Selecting Parameter Replacements")
 
-Finally, add a setting to collect the execution results of the __solve__ component.
-
-Click the __Add New Gather Setting__ button to display the gather settings dialog.
+Finally, add a setting to collect the execution results of the __solve__ component.  
+Click the __add new gather setting__ button to display the gather settings dialog.
 Select __solve__, set __srcName__ to `D50-d10.tar.gz`, set __dstName__ to
-<code>results/&lbrace;&lbrace; U &rbrace;&rbrace;/D50-d10.tar.gz</code>.
+<code>results/&lbrace;&lbrace; vel_U &rbrace;&rbrace;/D50-d10.tar.gz</code>.
 
 ![img](./img/PS_gather_setting.png "PS Results File Collection Settings")
 
-This completes the editing of the PS configuration file. the __SAVE ALL FILES__ button at the top right of the screen.
+This completes the editing of the PS configuration file. the __save all files__ button at the top right of the screen.
 Click to save your edits.
 
 ### Configuring the extract Component

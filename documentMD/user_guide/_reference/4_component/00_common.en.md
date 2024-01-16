@@ -9,6 +9,8 @@ This section describes the specifications common to all components.
 When you single-click a component displayed in the workflow creation area,
 Displays an area where you can edit the settings (properties) for the component.
 
+The contents of this area differ for each type of component.
+
 ![img](./img/component_property.png "component_property")
 
 || Component | Description |
@@ -18,7 +20,6 @@ Displays an area where you can edit the settings (properties) for the component.
 |3|delete button  | Remove component |
 |4| Details button | Shows or hides property settings for each group |
 
-The contents of this area differ for each type of component.
 
 ## name, description
 All components have the __name__ and __description__ properties in common.
@@ -48,8 +49,8 @@ This feature uses the input files and output files properties.
 
 ### How to transfer files
 Connect the file specified in the output files of one component to the file specified in the input files of another component on the screen.
-Then, before the subsequent component is executed, the
-A symbolic link is created for the required file.
+Then, the succeeding component first creates a symbolic link to the required file in the preceding component's directory 
+with the file name specified by input files and executes the script.
 Therefore, scripts in the successor component can access the files of the predecessor component.
 
 ![img](./img/input_output_connect.png "connected input and output file")
@@ -78,6 +79,19 @@ A directory with the string specified in input files is created in the subsequen
 In it, a symbolic link to the file or directory specified in output files is created.
 
 
+### Setting the files and folders to be transferred
+The input files and output files have the same method for setting the files and folders to be transferred.
+
+#### How to Add
+To add a file or folder to be transferred, type a file or directory name in the text box, and then click the __+__ button.
+
+![img](./img/add_file.png "add element")
+
+#### How to Delete
+To delete the specified file or folder, click the __Trash__ button displayed to the right of the file or directory name.
+
+![img](./img/delete_file.png "delete element")
+
 ## File Operation Area
 Click the __∨ (Details)__ button in the Files group to display the file operation area.
 
@@ -104,7 +118,7 @@ This also applies to files that are already sequentially numbered, files with th
 Click the ▶ icon to the left of these lines to view the original sequential files and directories individually, similar to the directories.
 {: .notice--info}
 
-You can upload files directly under the component directory by dropping them in the file display area.
+You can upload a file directly under the component directory by dropping the client PC file in the file display area.
 
 ### File Operation Buttons Area
 At the top of the file operation area are buttons for file operations.

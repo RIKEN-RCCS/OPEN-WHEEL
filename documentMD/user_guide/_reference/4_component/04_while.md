@@ -25,9 +25,15 @@ use javascript expression for condition checkが無効の時のみ
 use javascript expression for condition checkが有効の時のみ
 条件判定に用いるjavascript式を設定します。
 
+__インデックス値の参照方法について__  
+ループ実行中に下位コンポーネントから現在のインデックス値を利用する場合は、__$WHEEL_CURRENT_INDEX__ 環境変数で参照可能です。  
+{: .notice--info}
+
 ### number of instances to keep
 各インデックスで処理を行なった時のディレクトリを最大何個まで残すかを指定します。
 無指定の時は、全てのディレクトリが保存されます。
+
+詳しくは後述の[Whileコンポーネント実行時の挙動](#whileコンポーネント実行時の挙動)で説明します。
 
 ### Whileコンポーネント実行時の挙動
 Whileコンポーネントも、Forコンポーネントと同様の挙動をしますが

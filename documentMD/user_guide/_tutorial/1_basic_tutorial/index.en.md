@@ -86,10 +86,15 @@ You can edit this file by clicking the __text editor__ button (2) in the upper l
 ![img](./img/workflow3.png "Script File Selection")
 
 Instead of running a numeric program, you create and run a shell script that outputs a string using the echo command.
-Type `echo Hello WHEEL` in the text editor part (1) and click the __SAVE ALL FILES__ button (2) in the upper right corner of the screen.
+Type `echo Hello WHEEL` in the text editor part (1) and click the __save all files__ button (2) in the upper right corner of the screen.
 Finally, click the __graph view__ button (3) in the upper left of the screen to return to the previous screen.
 
 ![img](./img/text_editor.png "Script Edit")
+
+__About Task Component Execution Results__  
+The success or failure of the Task component is determined by the return value of the specified script. (0: Normal end, other than 0: Abnormal end)  
+Therefore, when executing multiple commands in a script, specify the return value accordingly.
+{: .notice--info}
 
 #### Specifying an execution script
 Display the properties subscreen and select the __script__ drop-down list (1).
@@ -192,7 +197,7 @@ At the end of the echo command line, add `echo Hello WHEEL > stdout.txt `.
 
 ![img](./img/text_editor2.png "Modify Script")
 
-The first time you created the script, you saved the file by clicking the __SAVE ALL FILES__ button.
+The first time you created the script, you saved the file by clicking the __save all files__ button.
 Let's save it differently this time.
 
 When you click on the tab that contains the file name, two menus appear: __save__ and __close without save__.
@@ -210,7 +215,7 @@ Click the __close without save__ button to discard the edited text and close the
 __How to save only some files__  
 If you want to open and edit multiple files and save only some of them, use the following procedure.  
 1. Click the __close without save__ button to discard unwanted file edits.  
-1. Use the __SAVE ALL FILES__ button to save all files(Alternatively, use the __save__ button to save the required files individually).
+1. Use the __save all files__ button to save all files(Alternatively, use the __save__ button to save the required files individually).
 {% endcapture %}
 <div class="notice--info">
   {{ notice-save | markdownify }}

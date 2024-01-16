@@ -17,7 +17,10 @@ permalink: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
 
 inletから流入した流体がoutletから出ていく解析を実施します。
 
-事前に[こちら](sample/OpenFOAM_tutorial_sample.zip)のファイルをダウンロードして展開しておいてください。
+なお、本チュートリアルは、富岳上で実行することを前提としています。
+異なる環境で実行する場合は、スクリプト・設定を適宜変更してください。
+
+また、事前に[こちら](sample/OpenFOAM_tutorial_sample.zip)のファイルをダウンロードして展開しておいてください。
 アーカイブ内には次の3つのファイルが含まれます。
 
 pipe.unv
@@ -111,9 +114,9 @@ tar xvzf D50-d10.tgz
 mv ./U ./D50-d10/0
 cd ./D50-d10
 
-decomposePar
+decomposePar || exit 1
 mpiexec -n 12 simpleFoam -parallel
-reconstructPar
+reconstructPar || exit 1
 touch result.foam
 
 cd ..
@@ -133,35 +136,40 @@ PSコンポーネントをクリックし、__output files__ に `results` を�
 __Files__ エリア内のある __parameterSetting.json__
 ファイルを選択した状態でテキストエディタを開いてPS設定モードにします。
 
-__Add New Target File__ ボタンをクリックして __solve__ コンポーネント内の
-__U__ を対象にします。
+<!--__add new target file__ ボタンをクリックして __solve__ コンポーネント内の
+__U__ を対象にします。-->
+__add new target file__ ボタンをクリックします。
+__solve__ コンポーネント内の __U__ を対象にするため、__solve__ を選択し、テキストボックスに __U__ と入力して、__OK__ ボタンをクリックします。
 
 ![img](./img/PS_target_file.png "ターゲットファイルの指定")
 
-左ペインに __U__ ファイルが開かれるので boundaryField -> inlet -> value の行
+<!--左ペインに __U__ ファイルが開かれるので boundaryField -> inlet -> value の行
 にある、 __uniform (5 0 0);__ のうち __5__ の部分を
-ドラッグして選択してください。
+ドラッグして選択してください。-->
+左ペインに __U__ ファイルが開かれます。  
+boundaryField -> inlet -> value の行にある、 __uniform (5 0 0);__ のうち __5__ を __vel_U__ に変更します。
 
-右ペインの __parameters__ テキストボックスに __5__ と表示されます。
+![img](./img/change_value.png "値の変更")
+
+__uniform (vel_U 0 0);__ のうち __vel_U__ の部分をドラッグして選択してください。
+右ペインの __parameters__ テキストボックスに __vel_U__ と表示されます。
 
 ![img](./img/PS_param.png "パラメータ置き換え部分の選択")
 
-この状態で、 __Add New Parameter__ ボタンをクリックしてinletの流速に設定する値を
-入力します。
+この状態で、 __add new parameter__ ボタンをクリックしてinletの流速に設定する値を入力します。  
 ここでは、5 m/sから7m/sまで1m/s刻みでパラメータスタディを行なうので
 min=5, max=7, step=1 を設定してください。
 
 ![img](./img/PS_U_setting.png "パラメータ置き換え部分の選択")
 
-最後に __solve__ コンポーネントの実行結果を回収する設定を追加します。
-
-__Add New Gather Setting__ ボタンをクリックしてgather設定ダイアログを表示します。
+最後に __solve__ コンポーネントの実行結果を回収する設定を追加します。  
+__add new gather setting__ ボタンをクリックしてgather設定ダイアログを表示します。
 __solve__ を選択し、 __srcName__ に `D50-d10.tar.gz`、__dstName__ に
-<code>results/&lbrace;&lbrace; U &rbrace;&rbrace;/D50-d10.tar.gz</code> と入力してください。
+<code>results/&lbrace;&lbrace; vel_U &rbrace;&rbrace;/D50-d10.tar.gz</code> と入力してください。
 
 ![img](./img/PS_gather_setting.png "PS結果ファイル回収設定")
 
-以上で、PS設定ファイルの編集は完了です。画面右上の __SAVE ALL FILES__ ボタンを
+以上で、PS設定ファイルの編集は完了です。画面右上の __save all files__ ボタンを
 クリックして編集内容を保存してください。
 
 ### extractコンポーネントの設定

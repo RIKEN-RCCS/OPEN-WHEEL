@@ -16,7 +16,10 @@ permalink: /tutorial/3_application_tutorial/1_OpenFOAM_cavity/
 OpenFOAMの配布物には例題として、このモデルを用いる解析用のデータが含まれているので
 そのファイルを用いて計算を実行します。
 
-なお、本チュートリアルの最終ステップでは、WHEELサーバに
+なお、本チュートリアルは、富岳上で実行することを前提としています。
+異なる環境で実行する場合は、スクリプト・設定を適宜変更してください。
+
+また、本チュートリアルの最終ステップでは、WHEELサーバに
 インストールされたParaViewを使用して
 計算結果の可視化を行ないます。
 
@@ -58,8 +61,8 @@ cp -r ${FOAM_TUTORIALS}/incompressible/icoFoam/cavity/cavity ./
 mv decomposeParDict cavity/system/
 
 cd cavity
-blockMesh
-decomposePar
+blockMesh || exit 1
+decomposePar || exit 1
 ```
 
 このスクリプトでは、OpenFOAMのシステムディレクトリから
@@ -86,7 +89,7 @@ spack load 'openfoam@2012%fj@4.8.0'
 
 cd  cavity
 mpiexec -np 4 icoFoam -parallel > ./log.icoFoam 2>&1
-reconstructPar
+reconstructPar || exit 1
 touch result.foam
 
 cd ../

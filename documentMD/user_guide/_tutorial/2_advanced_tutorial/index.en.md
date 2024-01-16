@@ -9,7 +9,7 @@ This tutorial covers features not covered in the basics.
 Unlike the basic section, all items are independent.
 Create a new project individually and then follow the tutorial.
 
-### 1. conditional branch
+### 1. Conditional Branch
 In a workflow, depending on the result of a process
 It may change subsequent actions.
 
@@ -73,7 +73,7 @@ STDOUT displays only `task1`.
 
 ![img](./img/workflow_if_result.png "Workflow Execution Results")
 
-Let's initialize the project, change the contents of check.sh to `exit1`, and try again.
+Let's initialize the project, change the contents of check.sh to `exit 1`, and try again.
 This time, only task0 is executed, and STDOUT displays only `task0`.
 
 ### 2. Loop
@@ -137,7 +137,7 @@ If the end property of the for component and the index variable ($WHEEL_CURRENT_
 The internal components are executed.
 
 
-### 3. parameter study
+### 3. Parameter Study
 In a computer simulation workflow, you may want to perform the same calculation over and over again, varying some of the input data parameters incrementally.
 
 WHEEL has a parameterStudy component (The following PS components) that supports such processing.
@@ -180,7 +180,7 @@ The left side of the screen is the same text editor as before, but the right sid
 
 ![img](./img/texteditor_with_ps_config.png "Scripts to Run in PS")
 
-First, click the __+ Add New Target File__ button at the top right of the screen.
+First, click the __+ add new target file__ button at the top right of the screen.
 The component tree screen appears, click __task0__. Type __run.sh__ for the file name and click the __OK__ button.
 
 ![img](./img/select_target_file.png "targetfile selection dialog")
@@ -190,25 +190,37 @@ The __parameters__ text box on the right side of the screen displays __number__.
 
 ![img](./img/select_parameter_field.png "Parameter substitution field selection state")
 
-In this state, you can click the __+ Add New Parameter__ button to set the parameter for __number__.
-For now, change the drop-down list to __list__ and enter three values: __foo__ __bar__ __baz__.
+In this state, you can click the __+ add new parameter__ button to set the parameter for __number__.
+<!--For now, change the drop-down list to __list__ and enter three values: __foo__ __bar__ __baz__.-->
+For now, change the drop-down list to __list__.
 
 ![img](./img/list_parameter_dialog.png "list parameter dialog")
 
+Next, set three values for __foo__ __bar__ __baz__. Type __foo__ in the text box and click the __+__ button. Follow the same steps to set __bar__ and __baz__.
 
-Finally, click the __SAVE__ button. The parameter settings for __number__ are registered.
+![img](./img/create_parameter.png "Creating Parameters")
+
+Finally, click the __OK__ button.
+
+![img](./img/created_parameters.png "After creating parameters")
+
+The parameter settings for __number__ are registered.
 The __number__ part of __run.sh__ is rewritten as __\{\{ number \}\}__.
 
 ![img](./img/texteditor_ps2.png "Text Editor at End of Edit")
 
 At runtime, this __\{\{ number \}\}__ is replaced by the actual parameters (foo, bar, baz) and executed respectively.
 
-Finally, click the __SAVE ALL FILES__ button at the top right of the screen to save your edits.
+Finally, click the __save all files__ button at the top right of the screen to save your edits.
 
-When you run the project, STDOUT displays foo, bar, and baz, respectively, as output from the echo command.
+When you run the project, stdout displays foo, bar, and baz, respectively, as output from the echo command.
 
 ![img](./img/result_ps.png "PS Execution Results")
 
+__About the order in which parameter studies are run__  
+The PS component executes the subcomponents as parallel as possible for all combinations in the parameter space specified by parameterFile.  
+Therefore, the execution order of the lower components is out of order, and the output order of the results is out of order.
+{: .notice--info}
 
 #### Addendum to Parameter Replacement
 If __{% raw %}{{ number }}{% endraw %}__ appears elsewhere in the file specified in the targetfile, it will be replaced by a parameter as well.
@@ -232,13 +244,13 @@ Provides the source component to handle.
 
 ![img](./img/component_library_source.png "source component")
 
-In this section, any text file created on your local PC
+In this section, any text file created on your client PC
 Learn about the source component by creating a workflow to display with the cat command.
 
 First, add a task component and a source component to your project.
 
 Open the properties of the source component and click the upload setting line to enable the __upload on demand__ switch.
-The outputFile of the source component displays __UPLOAD_ON_DEMAND__.
+The output files of the source component displays __UPLOAD_ON_DEMAND__.
 
 Then add an empty file called `run.sh` in the task component and specify it in the script property.
 In run.sh, include the following:
@@ -247,12 +259,12 @@ In run.sh, include the following:
 cat input.txt
 ```
 
-Finally, add __input.txt__ to the inputFile of the task component and connect to __UPLOAD_ON_DEMAND__ of the source component.
+Finally, add __input.txt__ to the input files of the task component and connect to __UPLOAD_ON_DEMAND__ of the source component.
 This completes the workflow creation process.
 
 ![img](./img/workflow_source.png "Complete workflow of source component")
 
-In fact, prepare a text file on your PC to use as an input file.
+In fact, prepare a text file on your client PC to use as an input file.
 
 When you run the project, a dialog appears to upload a file to use as the outputfile for the source component.
 Specify the file you prepared earlier.
@@ -273,7 +285,7 @@ For workflows that are automated to post-process,
 Image files are often output as the result of calculations.
 
 WHEEL provides a viewer component that displays image files in typical formats in the browser.
-You can use this component without downloading the resulting file to your PC.
+You can use this component without downloading the resulting file to your client PC.
 You can easily see the results.
 
 ![img](./img/component_library_viewer.png "viewer component")
@@ -291,20 +303,24 @@ ls *
 ```
 
 Uploads image data for display in the viewer component to the task component.
-Upload by dragging and dropping the image data to the File area with the __upload file__ button.
+Upload by dragging and dropping the image data to the Files area with the __upload file__ button.
 
 ![img](./img/upload_file.png "upload file button")
 
-Specify the file name of the uploaded image data in the outputFile property.  
+Specify the file name of the uploaded image data in the output files property.  
 By writing __\*.extension__, you can specify all files with the same extension or omit the file name. (For example, for a JPEG file, write __\*.jpg__)  
 If you want to display only one file as image data, you can specify the file name as it is.  
-It is also acceptable to specify multiple file names in the outputFile property without combining them into one.
+It is also acceptable to specify multiple file names in the output files property without combining them into one.
 
 
-Finally, add __./__ to the inputFile of the viewer component and connect to the outputFile of the task component.
+Finally, add __./__ to the input files of the viewer component and connect to the output files of the task component.
 This completes the workflow creation process.
 
 ![img](./img/workflow_viewer.png "The complete workflow of the viewer component")
+
+__When "./" is set for input files__  
+Setting input files to __./__ places all files passed as input files (In this case, \*.JPG and \*.web) directly under the viewer component directory.
+{: .notice--info}
 
 When you run the project, you will see a dialog called __open viewer screen__.
 Click the OK button to display the Image Viewer in a separate tab.
@@ -335,19 +351,19 @@ In run.sh, include the following:
 echo foo >foo.txt
 ```
 
-Also, add __\*.txt__ to the outputFile of the task component.
+Also, add __\*.txt__ to the output files of the task component.
 This component only prints __foo.txt__, but I'm going to rename the output file
 The file name is __\*__ to run the project several times.
 
 Next, open the storage component properties screen and enter __directory path__
-Write __/tmp__ . Also, specify __./__ for inputFile.
+Write __/tmp__ . Also, specify __./__ for input files.
 
 __About setting directory path__  
 If/tmp does not exist or/tmp does not have write permission, specify any other directory.  
 However, you must specify a path that is outside the scope of the directory tree where the project files are stored.  
 {: .notice--info}
 
-Finally, connect the outputFile of the task component and the intpuFile of the storage component.
+Finally, connect the output files of the task component and the intpuFile of the storage component.
 This completes the workflow creation process.
 
 ![img](./img/workflow_storage.png "Complete storage component workflow")
@@ -364,7 +380,7 @@ It is retained and can be used to save files for restart calculations.
 
 
 
-### 7. bulk job
+### 7. Bulk Job
 Fugaku and other Fujitsu Limited HPC middleware "FUJITSU Software Technical Computing Suite"
 The bulk job feature is available on the adopted system.
 

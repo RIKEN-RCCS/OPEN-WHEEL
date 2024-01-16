@@ -25,11 +25,17 @@ From the drop-down list, select the shell script to be used for condition determ
 only when use javascript expression for condition check is enabled
 Sets the javascript expression used for condition judgment.
 
+__About Referencing Index Values__  
+To use the current index value from a subcomponent during a loop, it can be referenced in the __$WHEEL_CURRENT_INDEX__ environment variable.  
+{: .notice--info}
+
 ### number of instances to keep
 Specifies the maximum number of directories to keep for each index.
 If unspecified, all directories are saved.
 
-### While component runtime behavior
+For details, see [While Component Run-time Behavior](#while-component-run-time-behavior) below.
+
+### While Component Run-time Behavior
 The While component behaves similarly to the For component.
 Instead of an index value at the end of the directory name,
 Use a number starting at 0 in increments of 1.

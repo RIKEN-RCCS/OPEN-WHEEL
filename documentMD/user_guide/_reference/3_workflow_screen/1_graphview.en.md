@@ -177,9 +177,8 @@ The log display is output to multiple tabs depending on the contents.
 |4|output(SSH) tab | Displays standard output and standard error output for tasks executed on the remote host |
 
 The label colors indicate the following meanings:
-- Blue: Currently visible
 - Green: New information, not displayed
-- Gray: Hidden
+- White: No new information, displayed
 
 Click the __clear all log__ button to clear all previously displayed logs.
 

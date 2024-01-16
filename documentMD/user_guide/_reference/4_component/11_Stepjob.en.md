@@ -23,7 +23,7 @@ You can set the following properties for the Stepjob/StepjobTask component:
 
 ## Stepjob
 ###  host
-Like the Task component, but you must set up a remote host that can take advantage of the StepJob functionality.
+Like the Task component, but you must select a remote host that can take advantage of the StepJob functionality.
 
 ### use job scheduler
 Enabled by default and disabled
