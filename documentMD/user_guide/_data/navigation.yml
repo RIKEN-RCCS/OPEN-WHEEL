@@ -21,32 +21,12 @@ user-docs:
         url: /tutorial/3_application_tutorial/
       - title: OpenFOAMを利用したcavityケースの解析ワークフロー
         url: /tutorial/3_application_tutorial/1_OpenFOAM_cavity/
-      - title: OpenFOAMを利用したパラメトリックスタディ解析ワークフロー
+      - title: OpenFOAMを利用したパラメータスタディ解析ワークフロー
         url: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
       - title: TensorFlowを利用したMNISTデータ解析ワークフロー
         url: /tutorial/3_application_tutorial/3_TensorFlow_mnist/
   - title: 制約事項
     url: /attention/
-
-#user-docs:
-#  - title: WHEELについて
-#  - title: 利用者向けマニュアル
-#    url: /tutorial/
-#    children:
-#      - title: 基礎編
-#        url: /tutorial/1_basic_tutorial/
-#      - title: 応用編
-#        url: /tutorial/2_advanced_tutorial/
-#      - title: 実践編
-#        url: /tutorial/3_application_tutorial/
-#      - title: OpenFOAMを利用したcavityケースの解析ワークフロー
-#        url: /tutorial/3_application_tutorial/1_OpenFOAM_cavity/
-#      - title: OpenFOAMを利用したパラメトリックスタディ解析ワークフロー
-#        url: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
-#      - title: TensorFlowを利用したMNISTデータ解析ワークフロー
-#        url: /tutorial/3_application_tutorial/3_TensorFlow_mnist/
-#  - title: Attention
-#    url: /attention/
 
 admin-docs:
   - title: WHEELの起動方法
@@ -55,9 +35,6 @@ admin-docs:
     url: /for_admins/job_scheduler/
   - title: 制約事項
     url: /attention/
-
-#admin-docs:
-#  - title: For administrators
 
 refs:
   - title: 1. ホーム画面

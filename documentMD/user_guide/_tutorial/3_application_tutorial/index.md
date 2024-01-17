@@ -15,7 +15,7 @@ permalink: /tutorial/3_application_tutorial/
 
  * [OpenFOAMを利用したcavityケースの解析ワークフロー](1_OpenFOAM_cavity/)
 
- * [OpenFOAMを利用したパラメトリックスタディ解析ワークフロー](2_OpenFOAM_PS/)
+ * [OpenFOAMを利用したパラメータスタディ解析ワークフロー](2_OpenFOAM_PS/)
 
  * [TensorFlowを利用したMNISTデータ解析ワークフロー](3_TensorFlow_mnist/)
 
