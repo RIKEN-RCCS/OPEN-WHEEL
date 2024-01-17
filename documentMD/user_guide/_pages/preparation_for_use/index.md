@@ -20,7 +20,7 @@ WHEELにアクセスし、画面右上のハンバーガーメニューをクリ
 
 !["Remotehost editor"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/remotehost_editor_button.png "Remotehost editor")
 
-[リモートホスト設定]({{ site.baseurl }}/how_to_boot/#リモートホスト設定)で登録されたリモートホスト一覧が表示されます。右端の鉛筆アイコンをクリックしてホスト情報編集ダイアログを表示します。
+[リモートホスト設定]({{ site.baseurl }}/for_admins/how_to_boot/#リモートホスト設定)で登録されたリモートホスト一覧が表示されます。右端の鉛筆アイコンをクリックしてホスト情報編集ダイアログを表示します。
 
 !["edit icon"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/remotehost_editor2.png "edit icon")
 

@@ -36,7 +36,7 @@ collections:
   tutorial:
     output: true
     permalink: /:collection/:path
-  how_to_boot:
+  for_admins:
     output: true
     permalink: /:collection/:path
 
@@ -61,7 +61,7 @@ defaults:
         nav: "user-docs"
   - scope:
       path: ""
-      type: how_to_boot
+      type: for_admins
     values:
       layout: single
       toc: true

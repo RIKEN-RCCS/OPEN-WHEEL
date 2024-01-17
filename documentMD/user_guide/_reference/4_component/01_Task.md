@@ -25,7 +25,7 @@ Taskコンポーネントを実行した際の成否は指定されたスクリ�
 {: .notice--info}
 
 ### host
-scriptの実行環境として、[リモートホスト設定]({{ site.baseurl }}/how_to_boot/#リモートホスト設定)にて設定されたリモートホスト
+scriptの実行環境として、[リモートホスト設定]({{ site.baseurl }}/for_admins/how_to_boot/#リモートホスト設定)にて設定されたリモートホスト
 または"localhost"を選択します。
 
 ![img](./img/task_host.png "task_host")
@@ -53,7 +53,7 @@ use job schedulerを有効にしたときのみ、次のqueue, submit optionプ�
 無指定の場合はバッチシステムのデフォルトキューに対してジョブを投入します。
 
 ### submit command
-[リモートホスト設定]({{ site.baseurl }}/how_to_boot/#リモートホスト設定)
+[リモートホスト設定]({{ site.baseurl }}/for_admins/how_to_boot/#リモートホスト設定)
 で指定されたバッチシステムにジョブを投入するときのコマンド名が表示されます。
 <!--この欄は実際にはTaskコンポーネントのプロパティではありません。-->  
 そのため、ここでは変更することはできません。

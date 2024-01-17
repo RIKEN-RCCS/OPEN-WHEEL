@@ -2,7 +2,7 @@ main:
   - title: "About WHEEL"
     url: /about/
   - title: "For Administrators"
-    url: /how_to_boot/
+    url: /for_admins/how_to_boot/
   - title: "For Users"
     url: /tutorial/
   - title: "Reference"
@@ -50,7 +50,7 @@ user-docs:
 
 admin-docs:
   - title: How to start WHEEL
-    url: /how_to_boot/
+    url: /for_admins/how_to_boot/
   - title: Restrictions
     url: /attention/
 

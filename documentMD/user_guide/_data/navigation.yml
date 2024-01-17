@@ -2,7 +2,7 @@ main:
   - title: "WHEELについて"
     url: /about/
   - title: "管理者向け"
-    url: /how_to_boot/
+    url: /for_admins/how_to_boot/
   - title: "利用者向け"
     url: /tutorial/
   - title: "リファレンス"
@@ -50,7 +50,7 @@ user-docs:
 
 admin-docs:
   - title: WHEELの起動方法
-    url: /how_to_boot/
+    url: /for_admins/how_to_boot/
   - title: 制約事項
     url: /attention/
 

@@ -20,7 +20,7 @@ Click __Remotehost editor__ in the menu that appears. The Remote Host Settings w
 
 !["Remotehost editor"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/remotehost_editor_button.png "Remotehost editor")
 
-Displays the list of remote hosts registered in [Remote Host Settings]({{site.baseurl}}/how_to_boot/#remote-host-settings). Click the pencil icon on the far right to display the Edit Host Information dialog.
+Displays the list of remote hosts registered in [Remote Host Settings]({{site.baseurl}}/for_admins/how_to_boot/#remote-host-settings). Click the pencil icon on the far right to display the Edit Host Information dialog.
 
 !["edit icon"]({{ site.baseurl }}/{{ site.include }}{{ page.url }}img/remotehost_editor2.png "edit icon")
 

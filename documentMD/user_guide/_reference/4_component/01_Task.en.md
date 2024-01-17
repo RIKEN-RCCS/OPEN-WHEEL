@@ -25,7 +25,7 @@ Therefore, when executing multiple commands in a script, specify the return valu
 {: .notice--info}
 
 ### host
-Remote host set in [Remote host settings]({{site.baseurl}}/how_to_boot/#remote-host-settings) as the script execution environment
+Remote host set in [Remote host settings]({{site.baseurl}}/for_admins/how_to_boot/#remote-host-settings) as the script execution environment
 or "localhost."
 
 ![img](./img/task_host.png "task_host")
@@ -53,7 +53,7 @@ Select the queue in which the job is to be submitted from the queue specified in
 If not specified, the job is submitted to the batch system default queue.
 
 ### submit command
-Displays the name of the command used to submit the job to the batch system specified by [Remote host settings]({{site.baseurl}}/how_to_boot/#remote-host-settings).
+Displays the name of the command used to submit the job to the batch system specified by [Remote host settings]({{site.baseurl}}/for_admins/how_to_boot/#remote-host-settings).
 <!-- This column is not actually a property of the Task component. -->  
 Therefore, it cannot be changed here.
 

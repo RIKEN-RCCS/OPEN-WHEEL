@@ -11,7 +11,7 @@ permalink: /tutorial/3_application_tutorial/
 以降、リモートホストとして __fugaku__ という名前で富岳にアクセスできることを前提とします。
 事前に富岳のリモートホスト設定を作成してから、チュートリアルを始めてください。
 
-リモートホスト設定の作成方法については、[管理者向け リモートホスト設定]({{ site.baseurl }}/how_to_boot/#リモートホスト設定) をご参照ください。
+リモートホスト設定の作成方法については、[管理者向け リモートホスト設定]({{ site.baseurl }}/for_admins/how_to_boot/#リモートホスト設定) をご参照ください。
 
  * [OpenFOAMを利用したcavityケースの解析ワークフロー](1_OpenFOAM_cavity/)
 

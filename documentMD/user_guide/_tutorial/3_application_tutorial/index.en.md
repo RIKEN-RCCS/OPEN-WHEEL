@@ -11,7 +11,7 @@ In this tutorial, you use Fugaku to create and execute workflows using applicati
 From now on, it is assumed that you can access Fugaku with the name __fugaku__ as the remote host.
 Before you start the tutorial, create a remote host configuration for Fugaku.
 
-For information about how to create remote host settings, see [Remote Host Settings for Administrators]({{site.baseurl}}/how_to_boot/#remote-host-settings).
+For information about how to create remote host settings, see [Remote Host Settings for Administrators]({{site.baseurl}}/for_admins/how_to_boot/#remote-host-settings).
 
  * [Analyzing cavity cases using OpenFOAM Workflow](1_OpenFOAM_cavity/)
 

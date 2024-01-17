@@ -11,7 +11,7 @@ To get an overview of the WHEEL workflow system, read it before using it.
 ## WHEEL Manual
 The manual is organized as follows:
 
-### [For Administrators](how_to_boot/)
+### [For Administrators](for_admins/how_to_boot/)
 This section describes how to install and initialize WHEEL. Read this when setting up a WHEEL environment on your PC. This guide is intended for users with general Linux/Unix operations knowledge.
 
 ### [For Users](tutorial/)
