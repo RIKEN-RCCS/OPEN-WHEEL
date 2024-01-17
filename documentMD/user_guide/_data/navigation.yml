@@ -51,6 +51,8 @@ user-docs:
 admin-docs:
   - title: WHEELの起動方法
     url: /for_admins/how_to_boot/
+  - title: バッチシステムの設定
+    url: /for_admins/job_scheduler/
   - title: 制約事項
     url: /attention/
 
