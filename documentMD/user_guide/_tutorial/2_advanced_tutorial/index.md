@@ -324,10 +324,17 @@ input filesに __./__ と設定することで、input filesとして渡され�
 {: .notice--info}
 
 プロジェクトを実行すると、 __open viewer screen__ というダイアログが表示されます。
-OKボタンをクリックすると別のタブで画像ビューワーが表示されます。
+
+![img](./img/open_viewer_screen_dialog.png "open viewer screen ダイアログ")
+
+okボタンをクリックすると別のタブで画像ビューワーが表示されます。
+
+![img](./img/image_viewer.png "画像ビューワー")
 
 初期状態ではタイル表示になっていますが、表示された画像をクリックするとスライドショー状態になります。
 この状態では、画像の拡大縮小などを行うことができます。
+
+![img](./img/slideshow_display.png "スライドショー表示")
 
 ### 6. ファイル保存
 WHEELでワークフローを実行した時に、作成される出力ファイルなどは

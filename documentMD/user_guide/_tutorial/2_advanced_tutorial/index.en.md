@@ -323,10 +323,17 @@ Setting input files to __./__ places all files passed as input files (In this ca
 {: .notice--info}
 
 When you run the project, you will see a dialog called __open viewer screen__.
-Click the OK button to display the Image Viewer in a separate tab.
+
+![img](./img/open_viewer_screen_dialog.png "open viewer screen daialog")
+
+Click the ok button to display the Image Viewer in a separate tab.
+
+![img](./img/image_viewer.png "image viewer")
 
 By default, the displayed image is tiled, but when you click the displayed image, it enters the slideshow state.
 In this state, you can zoom in and out of the image.
+
+![img](./img/slideshow_display.png "slideshow display")
 
 ### 6. File Save
 When you run a workflow in WHEEL, the output files that are created, for example,
