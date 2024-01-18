@@ -32,13 +32,10 @@ atom_feed:
 collections:
   reference:
     output: true
-    permalink: /:collection/:path
   tutorial:
     output: true
-    permalink: /:collection/:path
   for_admins:
     output: true
-    permalink: /:collection/:path
 
 defaults:
   - scope:
@@ -66,6 +63,8 @@ defaults:
       layout: single
       toc: true
       toc_sticky: true
+      sidebar:
+        nav: "admin-docs"
 
 # For jekyll-polyglot
 languages: ["ja", "en"]

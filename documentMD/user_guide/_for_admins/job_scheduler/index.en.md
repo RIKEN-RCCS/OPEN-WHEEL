@@ -1,7 +1,5 @@
 ---
 title: Configuring the Batch System
-sidebar:
-    nav: "admin-docs"
 lang: en
 permalink: /for_admins/job_scheduler/
 ---

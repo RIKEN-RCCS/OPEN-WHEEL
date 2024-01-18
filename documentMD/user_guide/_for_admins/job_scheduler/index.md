@@ -1,7 +1,5 @@
 ---
 title: バッチシステムの設定
-sidebar:
-    nav: "admin-docs"
 lang: ja
 permalink: /for_admins/job_scheduler/
 ---

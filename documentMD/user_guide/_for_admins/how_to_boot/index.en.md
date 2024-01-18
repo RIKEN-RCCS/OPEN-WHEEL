@@ -1,7 +1,5 @@
 ---
 title: How to start WHEEL
-sidebar:
-    nav: "admin-docs"
 lang: en
 permalink: /for_admins/how_to_boot/
 ---

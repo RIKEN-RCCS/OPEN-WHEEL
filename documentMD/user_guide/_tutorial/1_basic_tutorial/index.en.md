@@ -1,6 +1,6 @@
 ---
 title: Tutorial Basics
-lang: ja
+lang: en
 permalink: /tutorial/1_basic_tutorial/
 ---
 

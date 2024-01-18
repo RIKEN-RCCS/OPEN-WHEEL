@@ -1,7 +1,5 @@
 ---
 title: WHEELの起動方法
-sidebar:
-    nav: "admin-docs"
 lang: ja
 permalink: /for_admins/how_to_boot/
 ---
