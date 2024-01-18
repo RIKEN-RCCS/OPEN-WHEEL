@@ -1,5 +1,5 @@
 ---
-title: バッチシステムの設定について
+title: バッチシステムの設定
 sidebar:
     nav: "admin-docs"
 lang: ja

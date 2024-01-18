@@ -31,6 +31,8 @@ user-docs:
 admin-docs:
   - title: How to start WHEEL
     url: /for_admins/how_to_boot/
+  - title: Configuring the Batch System
+    url: /for_admins/job_scheduler/
   - title: Restrictions
     url: /attention/
 

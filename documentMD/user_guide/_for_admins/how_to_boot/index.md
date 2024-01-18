@@ -57,7 +57,7 @@ HTTPS通信の代わりにHTTP通信を使う場合は、 手順3. にて`docker
     WHEEL上で作成されたプロジェクトは${HOME}に格納されます。
     - WHEELの設定ファイルの置き場所として、`CONFIG_DIR`を指定しています。以下のファイルは必要に応じて参照・編集してください。
         - wheel.log : WHEELのログファイル。編集不可。
-        - jobScheduler.json : バッチシステムの設定。詳細は [バッチシステムの設定について](../job_scheduler/)を参照。
+        - jobScheduler.json : バッチシステムの設定。詳細は [バッチシステムの設定](../job_scheduler/)を参照。
         - server.crt/server.key : サーバ証明書/鍵ファイル
     - WHHELのポート番号を8089に指定しています。
         
@@ -167,6 +167,9 @@ __Fugakuについて__
 富岳を使用する場合は、__TCS (Technical Computing Suite)__ ではなく __Fugaku__ を選択してください。
 {: .notice--info}
 
+__バッチシステムの設定について__  
+バッチシステムの種類を追加・削除したり、設定を変更する際は[バッチシステムの設定](../job_scheduler/)をご参照ください。
+{: .notice--info}
 
 続いて、使用可能なキュー名を __available queues__ の欄(2)にカンマ区切りで入力します。
 デフォルトキューが設定されているシステムで、デフォルトキューのみを使う場合は空欄のままでも構いません。

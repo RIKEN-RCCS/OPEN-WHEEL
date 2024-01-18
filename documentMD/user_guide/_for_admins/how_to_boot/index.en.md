@@ -55,10 +55,15 @@ HTTP communication should be used only in environments where there are no securi
 
     In the above command:
 
-    - The project file is created in ${HOME}.
+    - The project is created in ${HOME}.
+    Projects created on WHEEL are stored in ${HOME}.
+    - Specifies `CONFIG_DIR` as the location for the WHEEL configuration file. Refer to and edit the following files as necessary.
+      - wheel.log : WHEEL log file. Not editable.
+      - jobScheduler.json : Batch system settings. For more information, see [Configuring the Batch System](../job_scheduler/).
+      - server.crt/server.key : Server certificate/key file
     - WHHEL port number is specified as 8089.
 
-1. When the WHEEL server starts, open a web browser on the host machine and click
+2. When the WHEEL server starts, open a web browser on the host machine and click
     Go to `http(s)://localhost:8089`.
 
 <div class="notice--info">{{ notice-http | markdownify }}</div>
@@ -163,6 +168,9 @@ At Fugaku, TCS is used, but some of the behavior is different from other sites, 
 If you use Fugaku, choose __Fugaku__ instead of __TCS (Technical Computing Suite)__.
 {: .notice--info}
 
+__About Setting Up a Batch System__  
+To add or remove batch system types or change settings, refer to [Configuring the batch system](../job_scheduler/).
+{: .notice--info}
 
 Then enter the available queue names in the __available queues__ column (2), separated by commas.
 On a system with a default queue, you can leave this blank if you want to use only the default queue.
