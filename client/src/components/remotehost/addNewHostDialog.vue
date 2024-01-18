@@ -263,10 +263,8 @@ export default {
       return this.hostNames.includes(this.host.name)
           || this.required(this.host.name) !== true
           || this.required(this.host.host) !== true
-          || this.required(this.host.port) !== true
           || this.validPortNumber(this.host.port) !== true
           || this.required(this.host.username) !== true
-          || this.required(this.host.path) !== true;
     },
     openDialog: {
       get () {
