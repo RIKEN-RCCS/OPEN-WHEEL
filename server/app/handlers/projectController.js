@@ -15,7 +15,6 @@ const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilenam
 const { deliverFile } = require("../core/fileUtils");
 const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getHosts, validateComponents, getSourceComponents,getComponentDir, getProjectJson, getProjectState, setComponentStateR,setProjectState, updateProjectDescription,  updateProjectROStatus} = require("../core/projectFilesOperator");
-  
 const { createSsh, removeSsh } = require("../core/sshManager");
 const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
 const { isValidOutputFilename } = require("../lib/utility");
