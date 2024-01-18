@@ -119,9 +119,9 @@ tar xvzf D50-d10.tgz
 mv ./U ./D50-d10/0
 cd ./D50-d10
 
-decomposePar || exit 1
-mpiexec -n 12 simpleFoam -parallel
-reconstructPar || exit 1
+decomposePar || exit $?
+mpiexec -n 12 simpleFoam -parallel || exit $?
+reconstructPar || exit $?
 touch result.foam
 
 cd ..

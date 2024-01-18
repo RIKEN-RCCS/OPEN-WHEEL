@@ -5,15 +5,14 @@ permalink: /tutorial/3_application_tutorial/3_TensorFlow_mnist/
 ---
 In this chapter, we will introduce an example of computing using WHEEL, "MNIST data analysis workflow using TensorFlow."
 
-## 1. Workflow Overview
-In this case, we used TensorFlow on Mt. Fugaku.
-Create and infer handwritten digit image learning models using MNIST data.
+## 1. Overview
+### Computation Overview
+In this case, we use TensorFlow on Fugaku to create and infer a handwritten digit image learning model using MNIST data.
 
-This tutorial assumes that you are running on Fugaku. 
+This tutorial assumes that you are running on Mt. Fugaku.
 If you are running in a different environment, change the script settings accordingly.
 
-MNIST data is an image data set of 60,000 handwritten digit images and 10,000 test images.
-It is renowned as a very useful image dataset for learning neural networks.  
+Also, MNIST data is an image data set consisting of 60,000 handwritten digit images and 10,000 test images, and is famous as a very useful image data set for learning neural networks.
 The data set contains the following structure:
 ```
 MNIST data
@@ -27,8 +26,18 @@ MNIST data
 ```
 For each image data, label data which is correct data is given one by one.
 
+### Workflow Overview
+This tutorial uses two task components:
 
-## 2. About NN (Neural Network)
+train component
+: Create a machine learning model.
+
+estimate component
+: __train__ Validate the model created by the component.
+
+![img](./img/workflow.png "Complete Workflow")
+
+## 2. About Neural Network (NN)
 
 This section describes the NN method used to analyze MNIST data.
 NN stands for neural network, which is a mathematical model of artificial neurons representing nerve cells (neurons) and their connections, or networks, in the human brain.
@@ -44,6 +53,7 @@ Create a new project and add two task components.
 Each component is named __train__ and __estimate__.
 
 ### Configuring the train component
+Create a script for the __train__ component.
 Create a new file named __run.sh__ in the __train__ component and fill in the following:
 
 ```
@@ -55,7 +65,7 @@ Create a new file named __run.sh__ in the __train__ component and fill in the fo
 export PATH=/home/apps/oss/TensorFlow-2.2.0/bin:$PATH
 export LD_LIBRARY_PATH=/home/apps/oss/TensorFlow-2.2.0/lib:$LD_LIBRARY_PATH
 
-cat  <<EOF >kerasMnist.py
+cat <<EOF >kerasMnist.py
 from tensorflow import keras
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras.models import Sequential
@@ -72,14 +82,14 @@ print('download done')
 ---
 title: set input data
 ---
-x_train  = x_train.reshape(60000, 784)
-x_test   = x_test.reshape(10000, 784)
-x_train  = x_train.astype('float32')
-x_test   = x_test.astype('float32')
+x_train = x_train.reshape(60000, 784)
+x_test = x_test.reshape(10000, 784)
+x_train = x_train.astype('float32')
+x_test = x_test.astype('float32')
 x_train /= 255
-x_test  /= 255
-y_train  = keras.utils.to_categorical(y_train, 10)
-y_test   = keras.utils.to_categorical(y_test, 10)
+x_test /= 255
+y_train = keras.utils.to_categorical(y_train, 10)
+y_test = keras.utils.to_categorical(y_test, 10)
 
 ---
 title: create model
@@ -118,6 +128,7 @@ Open the component properties window and set the following five items.
 - include: learn.log
 
 ### estimate component settings
+Create a script for the __estimate__ component.
 Create a new file named __run.sh__ in the __estimate__ component and fill in the following:
 
 ```
@@ -129,7 +140,7 @@ Create a new file named __run.sh__ in the __estimate__ component and fill in the
 export PATH=/home/apps/oss/TensorFlow-2.2.0/bin:$PATH
 export LD_LIBRARY_PATH=/home/apps/oss/TensorFlow-2.2.0/lib:$LD_LIBRARY_PATH
 
-cat  <<EOF >kerasMnist.py
+cat <<EOF >kerasMnist.py
 from tensorflow import keras
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras.models import Sequential
@@ -146,10 +157,10 @@ print('download done')
 ---
 title: set input data
 ---
-x_test   = x_test.reshape(10000, 784)
-x_test   = x_test.astype('float32')
-x_test  /= 255
-y_test   = keras.utils.to_categorical(y_test, 10)
+x_test = x_test.reshape(10000, 784)
+x_test = x_test.astype('float32')
+x_test /= 255
+y_test = keras.utils.to_categorical(y_test, 10)
 
 ---
 title: create model
@@ -186,8 +197,7 @@ Open the component properties window and set the following four items.
 - include: eval.log
 
 ### Setting File Dependencies
-Finally, set the output files of __train__ to ▶ in `param.hdf5` to the estimate component.
-After dropping and connecting, the workflow creation is complete.
+Finally, if you drop ▶ in `param.hdf5` set to output files in __train__ and connect it to the estimate component, the workflow creation is complete.
 
 ![img](./img/workflow.png "Complete Workflow")
 
@@ -217,4 +227,3 @@ That's all for an example MNIST data analysis workflow using TensorFlow.
 
 --------
 [Return to Practical Tutorial]({{site.baseurl}}/tutorial/3_application_tutorial/)
-

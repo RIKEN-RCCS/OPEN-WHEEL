@@ -61,8 +61,8 @@ cp -r ${FOAM_TUTORIALS}/incompressible/icoFoam/cavity/cavity ./
 mv decomposeParDict cavity/system/
 
 cd cavity
-blockMesh || exit 1
-decomposePar || exit 1
+blockMesh || exit $?
+decomposePar || exit $?
 ```
 
 このスクリプトでは、OpenFOAMのシステムディレクトリから
@@ -88,8 +88,8 @@ __solve__ コンポーネント内に __run.sh__  という名前で新規ファ
 spack load 'openfoam@2012%fj@4.8.0'
 
 cd  cavity
-mpiexec -np 4 icoFoam -parallel > ./log.icoFoam 2>&1
-reconstructPar || exit 1
+mpiexec -np 4 icoFoam -parallel > ./log.icoFoam 2>&1 || exit $?
+reconstructPar || exit $?
 touch result.foam
 
 cd ../
