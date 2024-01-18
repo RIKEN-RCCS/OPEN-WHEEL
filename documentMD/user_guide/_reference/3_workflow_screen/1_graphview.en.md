@@ -43,10 +43,20 @@ The status display area shows the following statuses depending on the execution 
 ![img](./img/finished.png "finished")  
 1. failed     : End Project (Error occurs)  
 ![img](./img/failed.png "failed")  
-1. holding     : Confirming submitted jobs  
+1. holding     : Checking for jobs with unknown execution status  
 ![img](./img/holding.png "holding")  
-1. unknown     : Project status unknown  
+1. unknown     : Job with unknown execution status  
 ![img](./img/unknown.png "unknown")
+
+__About holding__  
+After checking the execution status of submitted jobs was interrupted during project execution due to a restart of the WHEEL process, the execution status of jobs is checked when the project is opened.
+In this state, no project operations are accepted, but as soon as the job status check is completed, other states such as stopped/finished/failed/unknonw are transitioned.
+{: .notice--info}
+
+__About unknown__  
+The status changes to unknown when an error occurs more than the specified number of times when checking the execution status of a job submitted by WHEEL.
+Move from the root workflow to the lower components to find the task components that are in the unknown state and check whether the execution status of the job has any effect on the success or failure of the entire workflow.
+{: .notice--info}
 
 ### Project Operation Button Area
 This area displays the buttons involved in running the project.

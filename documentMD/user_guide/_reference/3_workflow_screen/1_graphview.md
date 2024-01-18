@@ -43,10 +43,22 @@ permalink: /reference/3_workflow_screen/1_graphview.html
 ![img](./img/finished.png "finished")  
 1. failed     ：プロジェクト終了(エラー発生)  
 ![img](./img/failed.png "failed")  
-1. holding    ： 投入済ジョブ確認中  
+1. holding    ： 実行状態不明のジョブ確認中  
 ![img](./img/holding.png "holding")  
-1. unknown    ： プロジェクトの状態不明  
+1. unknown    ： 実行状態不明のジョブ発生  
 ![img](./img/unknown.png "unknown")
+
+__holding について__  
+プロジェクト実行中に、WHEELのプロセスの再起動などにより投入したジョブの実行状態確認が中断された後、
+当該プロジェクトを開いたときにまとめてジョブの実行状況を確認している状態です。  
+この状態では、プロジェクトの操作は受け付けませんが、ジョブの状況確認が終わり次第、stopped / finished / failed / unknonwなど他の状態に遷移します。
+{: .notice--info}
+
+__unknown について__  
+WHEELから投入されたジョブの実行状態確認時に、規定の回数以上エラーが発生したときにunknown状態に遷移します。  
+ルートワークフローから順に下位コンポーネントへと移動して、unknown状態となっているタスクコンポーネントを探し、
+当該ジョブの実行状態がワークフロー全体の実行の成否に影響が無いかを確認してください。
+{: .notice--info}
 
 ### プロジェクト操作ボタンエリア
 このエリアには、プロジェクトの実行に関わるボタンが表示されます。
