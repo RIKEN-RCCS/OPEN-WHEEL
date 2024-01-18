@@ -33,7 +33,7 @@ train component
 : Create a machine learning model.
 
 estimate component
-: __train__ Validate the model created by the component.
+: Validate the model created by __train__ component.
 
 ![img](./img/workflow.png "Complete Workflow")
 

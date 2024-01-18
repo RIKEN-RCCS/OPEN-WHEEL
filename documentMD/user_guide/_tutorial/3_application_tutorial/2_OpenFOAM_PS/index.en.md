@@ -35,17 +35,17 @@ D50-d10.tgz
 
 In the final step of this tutorial, you use ParaView, which is installed on the WHEEL server, to visualize the calculation results.
 
-Therefore, if you are running the tutorial with WHEEL installed on a remote server, or if you are running in an environment where ParaView is not installed, you cannot run the Review Analysis Results chapter.
+Therefore, if you are running the tutorial with WHEEL installed on a remote server, or if you are running in an environment where ParaView is not installed, you cannot run the Checking Analysis Results chapter.
 
 ### Workflow Overview
-In this tutorial, we will use the parameter study component as shown below to analyze the inlet velocity in 1 m/s increments from 5 to 7 m/s.
+In this tutorial, we will use the parameter study component as shown below to analyze the inlet velocity in 1m/s increments from 5 to 7m/s.
 
 ![img](./img/workflow.png "Complete Workflow")
 
 convert component
 : Prepare a mesh file for OpenFOAM.
 
-PS0 Component
+PS0 component
 : The analysis is performed while changing the inlet flow velocity. It has the __solve__ component described below as an internal component.
 
 solve component
@@ -128,7 +128,7 @@ Finally, open the component properties window and set the following three items.
 
 
 ### Configuring PS Components
-The __PS__ component provides settings for changing inlet flow velocity.
+The PS component provides settings for changing inlet flow velocity.
 
 #### Preparing a folder for storing calculation results
 Prepare a folder for storing calculation results. Click the PS component and add `results` to __output files__.
@@ -154,7 +154,7 @@ The __parameters__ text box in the right pane displays __vel_U__.
 ![img](./img/PS_param.png "Selecting Parameter Replacements")
 
 Now click the __add new parameter__ button and enter the value you want to set for the inlet velocity.
-Set min=5, max=7, and step=1 to perform the parameter study in steps of 1 m/s from 5 m/s to 7 m/s.
+Set min=5, max=7, and step=1 to perform the parameter study in steps of 1m/s from 5m/s to 7m/s.
 
 ![img](./img/PS_U_setting.png "Selecting Parameter Replacements")
 

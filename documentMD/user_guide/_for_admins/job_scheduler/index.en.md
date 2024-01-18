@@ -99,3 +99,6 @@ Treats the only captured value in this regular expression as a status code. Howe
 A string specifying the command used to delete the job, including options.
 It is called with jobID as the argument of the command specified here.
 
+
+--------
+[Return to home page]({{ site.baseurl }}/)

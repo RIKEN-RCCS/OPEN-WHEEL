@@ -20,7 +20,7 @@ If you are running in a different environment, change the script settings accord
 
 In the final step of this tutorial, you also use ParaView, which is installed on the WHEEL server, to visualize the calculation results.
 
-Therefore, if you are running the tutorial with WHEEL installed on a remote server, or if you are running in an environment where ParaView is not installed, you cannot run the Review Analysis Results chapter.
+Therefore, if you are running the tutorial with WHEEL installed on a remote server, or if you are running in an environment where ParaView is not installed, you cannot run the Checking Analysis Results chapter.
 
 ### Workflow Overview
 
@@ -112,7 +112,7 @@ Finally, open the component properties and set script to __run.sh__.
 
 ### Setting File Dependencies
 Finally, I/O settings between components are made.
-Drop the `cavity` ▶ set in the __preprocess__ output files into the __solve__ component and connect it.
+Drop the ▶ of `cavity` set in the __preprocess__ output files into the __solve__ component and connect it.
 Also, drop ▶ of `cavity.tgz` set in the output files of the __solve__ component into the __extract__ component and connect it.
 
 This completes the workflow creation process. Click the __save project__ button to save the project you created.
@@ -127,7 +127,7 @@ First, you will be asked for the password for the private key you need to log in
 
 This section reviews the analysis results.
 
-To get the path of the calculation result file:
+To get the path of the calculation result file:  
 Open the __extract__ component properties window, display the Files area, and open the `cavity` directory.
 The `result.foam` file appears below it, click to select it and click the __share file__ button.
 
