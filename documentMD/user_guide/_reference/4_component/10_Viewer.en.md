@@ -43,16 +43,16 @@ After that, you can click this button to display the viewer screen.
 ![img](./img/open_viewer_screen.png "open viewer screen button")
 
 ### Viewer screen
-The viewer screen lists the files received from input files.
+The viewer screen tiles the files received from input files.
 
 ![img](./img/image_list.png "file list")
 
-Click the file you want to view from the list to bring it to the foreground.
+Click the file you want to view from the tile view to display the slide show.
 
 ![img](./img/show_image.png "show file")
 
-#### Front display operation
-A toolbar is displayed in front view, and you can control the display of the file with each button.
+#### How to operate during a slide show
+When the slideshow is displayed, a toolbar is displayed and each button can be used to control the display of the file.
 
 ![img](./img/toolbar.png "toolbar")
 
@@ -70,8 +70,8 @@ A toolbar is displayed in front view, and you can control the display of the fil
 |10| flipHorizontal button | Flip horizontally |
 |11| flipVertical button | Flip vertically |
 
-#### How to exit the front view
-To exit the foreground display, click the __×__ button in the upper right corner or anywhere other than the file, or press the __Esc__ key.
+#### How to exit the slide show view
+To exit the slideshow display, click the __×__ button in the upper right corner or anywhere other than the file, or press the __Esc__ key.
 
 --------
 [Return to Component Details]({{site.baseurl}}/reference/4_component/)
