@@ -201,6 +201,10 @@ To initialize the project, click the __cleanup project__ button at the top of th
 
 ![img](./img/clean_button.png "cleanup project button")
 
+A confirmation dialog will appear, click the __ok__ button.
+
+![img](./img/confirmation_dialog.png "cleanProject dialog")
+
 This completes the learning in this step.
 
 
@@ -227,13 +231,13 @@ Click the __run project__ button (2) to start running the project, just as you w
 
 Since the remote host is specified in this case, a dialog box for entering the password to connect to the remote host is displayed.
 Password for password-authenticated connections, or Public Key for public-key connections
-Enter the passphrase set for the private key and click the __OK__ button.
+Enter the passphrase set for the private key and click the __ok__ button.
 
 ![img](./img/password_dialog.png "Password Entry Dialog")
 
-When you open the log screen, the output of the echo command appears in the __STDOUT (SSH)__ tab at the end of execution.
+When you open the log screen, the output of the echo command appears in the __output(SSH)__ tab at the end of execution.
 
-![img](./img/stdout_ssh.png "STDOUT(SSH)")
+![img](./img/stdout_ssh.png "output(SSH)")
 
 After reviewing the output, click the __cleanup project__ button to initialize the project for the next lesson.
 
@@ -335,7 +339,8 @@ If you have not renamed the first component from the default task0, a component 
 Next, we configure task0 to output a file called __stdout.txt__ as the execution result.
 
 If you open the task0 properties screen and scroll down, you will see the line __input/output files__.
-Click this to display the input field and enter __stdout.txt__ in __output files__.
+Click this to display the entry field.
+Type __stdout.txt__ in __output files__ and click the __+__ button.
 
 ![img](./img/output_files.png "output file configuration input")
 
@@ -425,7 +430,7 @@ If you want to change it temporarily, you can leave the settings you don't want 
 
 Now let's save and run the workflow.
 Since we are not controlling the order of execution now, task0 and task1 are executed in random order.
-If you look at the __STDOUT__ tab on the log screen, task1 appears just after execution starts.
+If you look at the __stdout__ tab on the log screen, task1 appears just after execution starts.
 For task0, sleep10 is included, so it should appear after 10 seconds.
 
 ![img](./img/log_screen3.png "Log when execution order is not specified")

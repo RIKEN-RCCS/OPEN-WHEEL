@@ -69,12 +69,12 @@ __script name for condition check__ ドロップダウンリストから `check.
 ![img](./img/workflow_if2.png "接続完了時のワークフロー")
 
 このワークフローを実行すると、check.shは0を返すので、task1のみが実行され
-STDOUTには `task1` とだけ表示されます。
+stdoutには `task1` とだけ表示されます。
 
 ![img](./img/workflow_if_result.png "ワークフロー実行結果")
 
 一度、プロジェクトを初期化してcheck.shの内容を `exit 1` に変更して再度実行してみましょう。
-今度は、task0のみが実行され、STDOUTには `task0`とだけ表示されます。
+今度は、task0のみが実行され、stdoutには `task0`とだけ表示されます。
 
 ### 2. ループ
 ワークフローの中で繰り返し同じ処理を実行することがあります。
@@ -268,16 +268,19 @@ cat input.txt
 実際に、入力ファイルとして使うためのテキストファイルをクライアントPC上に用意してください。
 
 プロジェトを実行すると、sourceコンポーネントのoutputfileとして使うファイルをアップロードするためのダイアログが表示されます。
-先ほど用意したファイルを指定してください。
+__select__ ボタンをクリックし、先ほど用意したファイルを指定してください。
+
+![img](./img/select_upload_file.png "アップロードファイルの選択")
+
 アップロードが完了すると、 __drop file here__ と書かれた部分がアップロードされたファイル名に変更されます。
 
 ![img](./img/upload_dialog.png "sourceコンポーネントのアップロードダイアログ")
 
 
-OKボタンをクリックするとプロジェクトの実行が再開され、catコマンドによってアップロードされたファイルの中身が
-STDOUTに出力されます。
+__ok__ ボタンをクリックするとプロジェクトの実行が再開され、
+catコマンドによってアップロードされたファイルの中身がstdoutに出力されます。
 
-なお、OKボタンをクリックするまでは、ファイルのアップロードは何度でもやり直すことができます。
+なお、__ok__ ボタンをクリックするまでは、ファイルのアップロードは何度でもやり直すことができます。
 指定するファイルを間違えた場合は、再度アップロードすれば後から指定したファイルが使われます。
 
 
@@ -465,54 +468,54 @@ stepjob コンポーネント内には、stepjobTask コンポーネントしか
 
 ここに、stepjobTaskコンポーネントを2つ追加してください。
 
-stepjobTask0とstepjobTask1という2つのコンポーネントができるので、
+sjTask0とsjTask1という2つのコンポーネントができるので、
 それぞれのコンポーネントに __run.sh__ という名前で空ファイルを作成し、
 __script__ プロパティに指定してください。
 
 ![img](./img/property_stepjobTask.png "stepjobtaskのプロパティ")
 
-stepjobTask0のスクリプトには、次のように指定してください。
+sjTask0のスクリプトには、次のように指定してください。
 
 ```
 exit 1
 ```
 
-これでstepjobTask0は毎回エラー終了するようになります。
+これでsjTask0は毎回エラー終了するようになります。
 
-stepjobTask1のスクリプトは次のように指定してください。
+sjTask1のスクリプトは次のように指定してください。
 
 ```
 echo stepjobTask1 > stdout.txt
 ```
 
-続いて、stepjobTask0とstepjobTask1の実行順を指定します。
-stepjobTask0の ▼ をドラッグしてstepjobTask1にドロップしてください
+続いて、sjTask0とsjTask1の実行順を指定します。
+sjTask0の ▼ をドラッグしてsjTask1にドロップしてください
 
-線が接続され、stepjobTask1の左肩に表示されているアイコンの番号が1に変わります。
+線が接続され、sjTask1の左肩に表示されているアイコンの番号が1に変わります。
 
 ![img](./img/workflow_stepjobTask.png "依存関係指定後のワークフロー")
 
-さらに、stepjobTask1の実行条件を指定します。
+さらに、sjTask1の実行条件を指定します。
 プロパティ画面の __stepjobtask setting__ エリアをクリックして開き、
 __use dependency__ を有効に、__dependencyForm__ に  `sd=ec==1`と入力してください。  
-これで、stepjobTask1はstepjobTask0の戻り値が1の時のみ実行されます。  
+これで、sjTask1はsjTask0の戻り値が1の時のみ実行されます。  
 __dependencyForm__ の記述方法については、TCSのドキュメントやお使いのスパコンシステムの
 ユーザガイドを参照してください。
 
 ![img](./img/property_stepjobTask2.png "依存関係式")
 
-最後にstepjobTask1が出力するファイルを回収するために、
+最後にsjTask1が出力するファイルを回収するために、
 __remote file setting__ エリアをクリックして開き、includeテキストボックスに `stdout.txt` と入力してください。
 
 ![img](./img/property_stepjobTask3.png "include指定")
 
-プロジェクトを実行すると、stepjobtask0がfaildとなりますが、
-stepjobTask1は実行され、stdout.txtの中に `stepjobTask1` と出力されています。
+プロジェクトを実行すると、sjTask0がfaildとなりますが、
+sjTask1は実行され、stdout.txtの中に `stepjobTask1` と出力されています。
 
-一度、プロジェクトを初期化してから、stepjobTask1の __dependencyForm__ を
+一度、プロジェクトを初期化してから、sjTask1の __dependencyForm__ を
 `sd=ec==0` と変更して実行してください。
 
-今度は、stepjobTask0がfaildになった後、stepjobTask1は実行されずそのまま
+今度は、sjTask0がfaildになった後、sjTask1は実行されずそのまま
 ワークフロー全体が終了します。
 
 これで、応用編のチュートリアルは終了です。

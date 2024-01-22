@@ -69,12 +69,12 @@ The purple connector (else clause) indicates the component that advances when th
 ![img](./img/workflow_if2.png "Workflow at connection completion")
 
 When you run this workflow, check.sh returns 0, so only task1 is run.
-STDOUT displays only `task1`.
+stdout displays only `task1`.
 
 ![img](./img/workflow_if_result.png "Workflow Execution Results")
 
 Let's initialize the project, change the contents of check.sh to `exit 1`, and try again.
-This time, only task0 is executed, and STDOUT displays only `task0`.
+This time, only task0 is executed, and stdout displays only `task0`.
 
 ### 2. Loop
 The same process may be repeated in a workflow.
@@ -267,16 +267,19 @@ This completes the workflow creation process.
 In fact, prepare a text file on your client PC to use as an input file.
 
 When you run the project, a dialog appears to upload a file to use as the outputfile for the source component.
-Specify the file you prepared earlier.
+Click the __select__ button and specify the file you just prepared.
+
+![img](./img/select_upload_file.png "Select upload file")
+
 When the upload is complete, the part that says __drop file here__ changes to the name of the uploaded file.
 
 ![img](./img/upload_dialog.png "Upload source component dialog")
 
 
-Click the OK button to resume running the project, and the contents of the file uploaded by the cat command
-Output to STDOUT.
+Clicking the __ok__ button resumes project execution 
+and prints the contents of the file uploaded by the cat command to stdout.
 
-You can upload the file again and again until you click the OK button.
+You can upload the file again and again until you click the __ok__ button.
 If you specify the wrong file, upload it again and the specified file will be used later.
 
 
@@ -464,54 +467,54 @@ This switches the component library portion on the left side of the screen to sh
 
 Add two stepjobTask components here.
 
-You have two components, stepjobTask0 and stepjobTask1.
+You have two components, sjTask0 and sjTask1.
 Create an empty file named __run.sh__ for each component.
 Must be specified in the __script__ property.
 
 ![img](./img/property_stepjobTask.png "stepjobtask Properties")
 
-The script for stepjobTask0 should be:
+The script for sjTask0 should be:
 
 ```
 exit 1
 ```
 
-This will cause stepjobTask0 to fail each time.
+This will cause sjTask0 to fail each time.
 
-The script for stepjobTask1 must be:
+The script for sjTask1 must be:
 
 ```
 echo stepjobTask1 > stdout.txt
 ```
 
-It then specifies the order in which stepjobTask0 and stepjobTask1 run.
-Drag the ▼ of stepjobTask0 and drop it on stepjobTask1
+It then specifies the order in which sjTask0 and sjTask1 run.
+Drag the ▼ of sjTask0 and drop it on sjTask1
 
-The lines connect, and the icon on the left shoulder of stepjobTask1 changes to 1.
+The lines connect, and the icon on the left shoulder of sjTask1 changes to 1.
 
 ![img](./img/workflow_stepjobTask.png "Workflow after dependency specification")
 
-In addition, specify a run condition for stepjobTask1.
+In addition, specify a run condition for sjTask1.
 Click to open the __stepjobtask setting__ area of the Properties window.
 Enable __use dependency__ to __dependencyForm__  Enter `sd=ec==1`.  
-Now, stepjobTask1 is executed only when stepjobTask0 returns 1.  
+Now, sjTask1 is executed only when sjTask0 returns 1.  
 For information about how to write __dependencyForm__, see the TCS documentation or the
 See the User Guide.
 
 ![img](./img/property_stepjobTask2.png "Dependency Expression")
 
-Finally, in order to retrieve the file output by stepjobTask1,
+Finally, in order to retrieve the file output by sjTask1,
 Click to open the __remote file setting__ area and type `stdout.txt` in the include text box.
 
 ![img](./img/property_stepjobTask3.png "include specification")
 
-When you run the project, stepjobtask0 fails.
-stepjobTask1 is executed and output as `stepjobTask1` in stdout.txt.
+When you run the project, sjTask0 fails.
+sjTask1 is executed and output as `stepjobTask1` in stdout.txt.
 
-Once the project is initialized, the __dependencyForm__ of stepjobTask1
+Once the project is initialized, the __dependencyForm__ of sjTask1
 Change `sd=ec==0` and execute the command.
 
-Now, after stepjobTask0 fails, stepjobTask1 is not executed and remains
+Now, after sjTask0 fails, sjTask1 is not executed and remains
 The entire workflow ends.
 
 This concludes the application tutorial.
