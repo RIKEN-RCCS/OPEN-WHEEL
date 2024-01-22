@@ -4,7 +4,6 @@ services:
     image: "jekyll/jekyll:latest"
     environment:
       - JEKYLL_UID=1001
-      - JEKYLL_GID=127
     volumes:
       - .:/srv/jekyll/
     command: >

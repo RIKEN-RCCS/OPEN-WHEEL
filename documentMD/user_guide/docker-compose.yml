@@ -3,8 +3,8 @@ services:
   service_jekyll:
     image: "jekyll/jekyll:latest"
     environment:
-      - JEKYLL_UID=1001
-      - JEKYLL_GID=127
+      - JEKYLL_UID=${UID}
+      - JEKYLL_GID=${GID}
     volumes:
       - .:/srv/jekyll/
     command: >
@@ -14,6 +14,6 @@ services:
       gem install jekyll-polyglot &&
       jekyll serve"
     ports:
-      - "4000:4000"
+      - "4001:4000"
     tty: true
     stdin_open: true

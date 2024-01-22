@@ -10,7 +10,7 @@ main:
 
 user-docs:
   - title: Check settings before use
-    url: /preparation_for_use/
+    url: /tutorial/preparation_for_use/
   - title: Tutorials
     children:
       - title: Basics

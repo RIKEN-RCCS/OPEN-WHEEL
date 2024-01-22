@@ -1,4 +1,5 @@
 repository: taki-036/OPEN-WHEEL
+url: "https://taki-036.github.io"
 remote_theme: "mmistakes/minimal-mistakes"
 plugins:
   - jekyll-include-cache
@@ -9,20 +10,22 @@ subtitle: "Workflow in Hierarchical distributEd parallEL"
 strict_front_matter: true
 
 
-url: "https://taki-036.github.io"
 baseurl: "/OPEN-WHEEL"
 
 locate: "ja-JP"
+# For Minimal Mistakes
 search: true
 search_full_content: true
 search_provider: "lunr"
 lunr:
   search_within_pages: true
 
+
 include:
   - _pages
 exclude:
   - list.txt
+  - readme.md
   - docker-compose.yml
   - docker-compose.build.yml
 

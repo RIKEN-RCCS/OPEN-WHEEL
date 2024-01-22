@@ -10,7 +10,7 @@ main:
 
 user-docs:
   - title: 利用開始前の設定確認
-    url: /preparation_for_use/
+    url: /tutorial/preparation_for_use/
   - title: チュートリアル
     children:
       - title: 基礎編

@@ -5,7 +5,7 @@ lang: ja
 permalink: /tutorial/
 ---
 
-## [利用開始前の設定確認]({{ site.baseurl }}/preparation_for_use/)
+## [利用開始前の設定確認](preparation_for_use/)
 WHEELのご使用前に、利用者が確認すべき設定について説明します。はじめにお読みください。
 
 ## チュートリアル
