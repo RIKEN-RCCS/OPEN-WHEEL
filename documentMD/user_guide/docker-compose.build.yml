@@ -1,0 +1,16 @@
+version: "3"
+services:
+  service_jekyll:
+    image: "jekyll/jekyll:latest"
+    environment:
+      - JEKYLL_UID=1001
+    volumes:
+      - .:/srv/jekyll/
+    command: >
+      bash -c "gem install webrick &&
+      gem install jekyll-remote-theme &&
+      gem install jekyll-include-cache &&
+      gem install jekyll-polyglot &&
+      jekyll build"
+    tty: true
+    stdin_open: true
