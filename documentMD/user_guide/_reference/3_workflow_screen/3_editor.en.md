@@ -135,6 +135,10 @@ You can easily enter the same settings in multiple scripts by loading the saved 
 
 The settings you enter with the __register__ button are stored in a different location than the project file, so you can recall settings you used in other projects.
 
+__About saving settings__  
+The settings saved with the __register__ button are saved in <code>jobScriptTemplate.json</code> under <code>CONFIG_DIR</code>.
+{: .notice--info}
+
 To delete saved content, click the trash can icon at the far right of the list that appears when you click the __load__ button.
 
 __About Input Values in the Options Input Form__  
