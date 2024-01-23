@@ -104,9 +104,9 @@ label
 Hostname
 : Host name or IP address to connect to
 
-<!-- Port number
+Port number
 : Port number to connect to
--->
+
 User ID
 : User ID on the destination host
 
