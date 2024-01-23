@@ -44,6 +44,12 @@ To create a new project:
 When a new project is created, it appears in the Project List area.
 Follow the steps in [Open Project](#open-project) below to enter the workflow screen.
 
+__About Directory Trees__   
+The directory tree in the Create New Project dialog shows the folder configuration under the base directory.  
+Also, the base directory is the directory specified by the -v option when WHEEL is started.  
+For details, refer to [How to start]({{site.baseurl}}/for_admins/how_to_boot/#how-to-start).
+{: .notice--info}
+
 ## Open Project
 To open a project and transition to the workflow screen:
 

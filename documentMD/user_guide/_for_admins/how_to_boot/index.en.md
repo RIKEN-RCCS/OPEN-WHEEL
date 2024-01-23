@@ -49,6 +49,11 @@ HTTP communication should be used only in environments where there are no securi
     > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
     ```
 
+    |Option|Description|
+    |-----|-----|
+    |-v|Docker binds to the selected host directory. Only directories in the container can be specified.|
+    |-p|Assigns a port number. The general specification method is as follows:<br/>　-p <Host Machine Port>:<Container Port><br/>　　Host Machine Port：Specifies a specific port number for the host machine.<br/>　　Container Port：Specifies the port number to listen on in the container.<br/>To map multiple ports, separate them with spaces.|
+
     where `CONFIG_DIR` must be the absolute path on the host machine.
 
     In the above command:
