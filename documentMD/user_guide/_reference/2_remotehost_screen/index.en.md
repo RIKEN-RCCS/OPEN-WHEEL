@@ -58,11 +58,11 @@ Click ▽ to the right of `Advanced settings` to open an advanced settings entry
 
 | Item | Setting |
 |----------|---------------------------------|
-| connection renewal interval(min.) | Idle time until ssh connection is disconnected [minutes] <br> Do not disconnect when 0 is set (default value 0) |
-| status check interval(sec.) | Interval for checking status after job submission [seconds] (default value 60) |
-| max number of status check error allowed | How many status check failures are allowed (default 10) |
-| interval time between each execution | Wait time (Default Value 5 for jobs, 1 for tasks) after one job execution before the next job is executed |
-| timeout during handhake phase(msec.) | ssh handshake latency [ms] (default 60,000) |
+| connection renewal interval (min.) | Idle time until ssh connection is disconnected [minutes] <br> Do not disconnect when 0 is set (default value 0) |
+| status check interval (sec.) | Interval for checking status after job submission [seconds] (default value 60) |
+| max number of status check error allowed | How many status check failures are allowed (default value 10) |
+| execution interval (sec.) | Wait time until the next job is executed after one job has been executed (default value 5 for jobs, 1 for tasks) |
+| timeout during handshake phase (msec.) | ssh handshake latency [millisecond] (default value 0) |
 
 Enter the required information and click the __OK__ button to save the remote host connection settings.
 

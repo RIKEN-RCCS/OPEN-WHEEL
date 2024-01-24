@@ -58,11 +58,11 @@ __NEW REMOTE HOST SETTING__ ボタンをクリックすると、新規リモー�
 
 |項目|設定する内容|
 |----------|---------------------------------|
-| connection renewal interval(min.) | ssh接続を切断するまでのアイドル時間 [分]<br> 0の時は切断しない（デフォルト値 0）|
-| status check interval(sec.) | ジョブ投入後のステータス確認を行う間隔[秒]（デフォルト値 60）|
+| connection renewal interval (min.) | ssh接続を切断するまでのアイドル時間 [分]<br> 0の時は切断しない（デフォルト値 0）|
+| status check interval (sec.) | ジョブ投入後のステータス確認を行う間隔 [秒]（デフォルト値 60）|
 | max number of status check error allowed | ステータス確認の失敗を何回まで許容するか（デフォルト値 10）|
-| interval time between each executions | 1つのジョブ実行が終わった後、次のジョブを実行するまでの待ち時間[秒] （デフォルト値 ジョブでは5、タスクでは1）|
-| timeout during handhake phase(msec.) | sshのハンドシェイク時の待ち時間[ミリ秒] （デフォルト値 60000）|
+| execution interval (sec.) | 1つのジョブ実行が終わった後、次のジョブを実行するまでの待ち時間 [秒] （デフォルト値 ジョブでは5、タスクでは1）|
+| timeout during handshake phase (msec.) | sshのハンドシェイク時の待ち時間 [ミリ秒] （デフォルト値 0）|
 
 必要な情報を入力し、__OK__ ボタンをクリックするとリモートホスト接続設定が保存されます。
 
