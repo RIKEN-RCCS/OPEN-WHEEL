@@ -49,19 +49,17 @@ HTTP communication should be used only in environments where there are no securi
     > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
     ```
 
-    |Option|Description|
-    |-----|-----|
-    |-v|Docker binds to the selected host directory. Only directories in the container can be specified.|
-    |-p|Assigns a port number. The general specification method is as follows:<br/>　-p <Host Machine Port>:<Container Port><br/>　　Host Machine Port：Specifies a specific port number for the host machine.<br/>　　Container Port：Specifies the port number to listen on in the container.<br/>To map multiple ports, separate them with spaces.|
-
     where `CONFIG_DIR` must be the absolute path on the host machine.
 
     In the above command:
 
-    - The project is created in ${HOME}.
+    - Mapping the project location (/root) in the container to ${HOME} on the host.
     Projects created on WHEEL are stored in ${HOME}.
-    - Specifies `CONFIG_DIR` as the location for the WHEEL configuration file. Refer to and edit the following files as necessary.
-      - wheel.log : WHEEL log file. Not editable.
+    Therefore, ${HOME} needs write permission because it writes files from WHEEL.   
+    - The location of the configuration file in the container (/usr/src/server/app/config) is mapped to `CONFIG_DIR` on the host.
+    `CONFIG_DIR` must have write permission because it is also written from WHEEL.  
+    Also, refer to and edit the following files as necessary.
+      - wheel.log : WHEEL log file. 
       - jobScheduler.json : Batch system settings. For more information, see [Configuring the Batch System](../job_scheduler/).
       - server.crt/server.key : Server certificate/key file
     - WHHEL port number is specified as 8089.
