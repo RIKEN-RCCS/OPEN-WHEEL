@@ -31,9 +31,9 @@ Through this step, you learn how to create a workflow with one component and how
 Before you begin, you will learn how to create and open a new project in preparation for creating a workflow.
 
 __"Project" means__  
-In WHEEL, the execution configuration of a single workflow is called a __project__.  
-In a project, you create one or more __task components__ that actually run the program.
-You can configure a workflow by exchanging I/O files between them and controlling the execution order.
+In WHEEL, the administrative unit of a workflow is called a __project__.  
+A __project__ contains a workflow and a set of files used to perform operations such as saving, deleting, and executing in the __project__.  
+Although the terms __project__ and __workflow__ are used in this manual to fit the context, it is safe to assume that __project__ and __workflow__ are synonymous operationally.
 {: .notice--info}
 
 Now let's actually create a new empty project.
