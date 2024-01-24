@@ -266,11 +266,8 @@ This completes the workflow creation process.
 
 In fact, prepare a text file on your client PC to use as an input file.
 
-When you run the project, a dialog appears to upload a file to use as the outputfile for the source component.
-Click the __select__ button and specify the file you just prepared.
-
-![img](./img/select_upload_file.png "Select upload file")
-
+When you run the project, you will be prompted to upload a file to use as the outputfile for the source component.
+Specify the file you prepared earlier.
 When the upload is complete, the part that says __drop file here__ changes to the name of the uploaded file.
 
 ![img](./img/upload_dialog.png "Upload source component dialog")
