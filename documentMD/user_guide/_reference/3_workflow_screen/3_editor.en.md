@@ -136,7 +136,8 @@ You can easily enter the same settings in multiple scripts by loading the saved 
 The settings you enter with the __register__ button are stored in a different location than the project file, so you can recall settings you used in other projects.
 
 __About saving settings__  
-The settings saved with the __register__ button are saved in <code>jobScriptTemplate.json</code> under <code>CONFIG_DIR</code>.
+The settings saved with the __register__ button are saved in <code>jobScriptTemplate.json</code> under <code>CONFIG_DIR</code>.  
+<code>CONFIG_DIR</code> is specified at the start of WHEEL, so please check the [How to start]({{ site.baseurl }}/for_admins/how_to_boot/#how-to-start) for details.
 {: .notice--info}
 
 To delete saved content, click the trash can icon at the far right of the list that appears when you click the __load__ button.

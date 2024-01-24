@@ -136,7 +136,8 @@ __register__ ボタンをクリックすると、__オプション入力フォ�
 __register__ ボタンで入力した内容はプロジェクトのファイルとは別の場所に保存されているため、他のプロジェクトで用いた設定値を呼び出すことも可能です。
 
 __設定値の保存先について__  
-__register__ ボタンで保存した設定値は、<code>CONFIG_DIR</code> 配下の <code>jobScriptTemplate.json</code> 内に保存されます。 
+__register__ ボタンで保存した設定値は、<code>CONFIG_DIR</code> 配下の <code>jobScriptTemplate.json</code> 内に保存されます。  
+<code>CONFIG_DIR</code> についてはWHEEL起動時に指定しているので、詳細は [起動方法]({{ site.baseurl }}/for_admins/how_to_boot/#起動方法) をご確認ください。 
 {: .notice--info}
 
 保存済の内容を削除する時は、__load__ ボタンをクリックしたときに表示されるリストの右端にあるゴミ箱アイコンをクリックしてください。
