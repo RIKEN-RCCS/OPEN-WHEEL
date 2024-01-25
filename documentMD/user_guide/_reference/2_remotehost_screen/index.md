@@ -49,7 +49,7 @@ __NEW REMOTE HOST SETTING__ ボタンをクリックすると、新規リモー�
 |available queues|リモートホスト上で利用可能なキューの名前(カンマ区切りで指定)|
 |use bulkjob|(富士通TCS使用サイトのみ)バルクジョブを使えるサイトかどうか|
 |use stepjob|(富士通TCS使用サイトのみ)ステップジョブを使えるサイトかどうか|
-|shared host|ストレージを共用している他のリモートホストのラベル|
+|shared host|ストレージを共用している他のリモートホストのラベル<br/>詳細は [shared hostの使用方法](#shared-hostの使用方法) をご参照ください。|
 |shared path on shared host|shared host上でHost work dirへアクセスするためのパス|
 
 `Advanced settings`の右にある▽をクリックすると、詳細設定の入力フォームが開きます。
@@ -65,6 +65,44 @@ __NEW REMOTE HOST SETTING__ ボタンをクリックすると、新規リモー�
 | timeout during handshake phase (msec.) | sshのハンドシェイク時の待ち時間 [ミリ秒] （デフォルト値 0）|
 
 必要な情報を入力し、__OK__ ボタンをクリックするとリモートホスト接続設定が保存されます。
+
+## shared hostの使用方法
+リモートホスト設定の __shared host__ の使用方法について説明します。
+
+複数のリモートホストを使用してワークフローを実行する際、 __shared host__ を使用することでファイル転送時間を短縮できるケースがあります。
+
+![img](./img/use_case.png "複数のリモートホスト間で実行されるワークフロー")
+
+例として挙げるワークフローの詳細は以下のとおりです。
+- __on_HostA__ のタスクは、HostA上で実行されるタスクです。
+- __on_HostB__ のタスクは、HostB上で実行されるタスクです。
+- HostAからHostBへのファイル転送があります。
+
+また、実行環境は以下と仮定します。
+
+![img](./img/system_configuration_example.svg "システム構成例")
+
+このワークフローが実行されるとき、ファイル（result.txt）は __HostA → WHEELサーバ → HostB__ の経路で転送されます。
+ファイルのサイズが大きかったり、数が多かったりする場合は、転送時間やネットワーク負荷が増大してしまいます。
+
+### 共有ストレージが存在する場合
+実行環境として下図のようにHostAおよびHostBからアクセス可能な共有ストレージ（StorageA）が存在する場合は、リモートホスト設定の __shared host__ を使用することで、ファイルの転送時間を短縮することができます。
+
+![img](./img/system_configuration_example2.svg "システム構成例（共有ストレージあり）")
+
+__shared host__ を使用すると、例としてあげたワークフロー実行時のファイル転送は以下のとおりとなります。
+- __on_HostB__ のタスクが、HostA（との共有ストレージ（StorageA））から直接ファイルを取得します。
+- ファイルの転送経路は、__HostA → HostB__ となり、WHEELサーバを経由しなくなります。そのため、ファイル転送の時間負荷を軽減できます。
+
+このとき、HostAとHostBのリモートホスト設定として定義すべき項目はそれぞれ以下のとおりです。
+
+|項目|HostAのリモートホスト設定|HostBのリモートホスト設定|
+|-----|-----|-----|
+|label|HostA|HostB|
+|Host work dir|/work|/work
+|shared host||HostA|
+|shared path on shared host||/data|
+
 
 
 --------
