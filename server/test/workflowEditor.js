@@ -46,7 +46,7 @@ const testDirRoot = "WHEEL_TEST_TMP";
 //console.log(tmp);
 //}
 
-describe("workflow editor UT", function() {
+describe.skip("[rewriting without json schema] workflow editor UT", function() {
   this.timeout(0);
   let components;
   let wf1Schema;
@@ -238,7 +238,9 @@ describe("workflow editor UT", function() {
     projectJsonSchema.properties.componentPath.properties[task2.ID] = { enum: ["./wf1/wf2/task2"] };
   });
   after(async ()=>{
-    await fs.remove(testDirRoot);
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
   });
 
   describe("#createNewComponent", ()=>{

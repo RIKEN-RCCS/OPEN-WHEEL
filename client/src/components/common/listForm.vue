@@ -53,6 +53,7 @@
       <action-row
         :can-edit="allowEditButton"
         :item="item.raw"
+        :disabled=readOnly
         @delete="deleteItem"
       />
     </template>
@@ -66,6 +67,7 @@
         :disabled="disabled"
         variant=outlined
         density=compact
+        :readonly=readOnly
         clearable
         append-icon="mdi-plus"
         @click:append="addItem"
@@ -148,7 +150,11 @@ export default {
         return { name: "" };
       },
     },
-    disabled: Boolean
+    disabled: Boolean,
+    readOnly: {
+      type: Boolean,
+      default: false
+    }
   },
   mounted(){
     if(this.additionalRules){
@@ -225,6 +231,9 @@ export default {
       return this.isDuplicate(newItem, [this.oldVal]) ? "duplicated name is not allowed" : true;
     },
     openDialog(name,index){
+      if(this.readOnly){
+        return
+      }
       this.targetIndex=index
       this.newVal=name;
       this.oldVal=name

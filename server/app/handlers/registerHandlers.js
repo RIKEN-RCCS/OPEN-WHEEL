@@ -8,22 +8,17 @@ const os = require("os");
 const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } = require("./fileManager.js");
 const { onTryToConnect, onTryToConnectById } = require("./tryToConnect.js");
 const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./projectList.js");
-const { onGetProjectJson, onGetWorkflow, onRunProject, onPauseProject, onStopProject, onCleanProject, onSaveProject, onRevertProject, onUpdateProjectDescription } = require("./projectController.js");
+const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription, onUpdateProjectROStatus } = require("./projectController.js");
 const { onSaveFile, onOpenFile } = require("./rapid.js");
 const { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } = require("./remoteHost.js");
 const { onGetJobSchedulerList, onGetJobSchedulerLabelList } = require("./jobScheduler.js");
 const {
   onCreateNode,
-  onUpdateNode,
+  onUpdateComponent,
+  onUpdatePos,
   onRemoveNode,
-  onAddInputFile,
-  onAddOutputFile,
-  onRenameInputFile,
-  onRenameOutputFile,
   onAddLink,
   onAddFileLink,
-  onRemoveInputFile,
-  onRemoveOutputFile,
   onRemoveLink,
   onRemoveAllLink,
   onRemoveFileLink,
@@ -49,33 +44,23 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //projectController
   //
-  socket.on("runProject", onRunProject.bind(null, socket.id));
-  socket.on("pauseProject", onPauseProject);
-  socket.on("stopProject", onStopProject);
-  socket.on("cleanProject", onCleanProject.bind(null, socket.id));
-  socket.on("saveProject", onSaveProject);
-  socket.on("revertProject", onRevertProject.bind(null, socket.id));
+  socket.on("projectOperation", onProjectOperation.bind(null, socket.id));
 
   //
   //workflow editor
   //
   //create
   socket.on("createNode", onCreateNode);
-  socket.on("addInputFile", onAddInputFile);
-  socket.on("addOutputFile", onAddOutputFile);
   socket.on("addLink", onAddLink);
   socket.on("addFileLink", onAddFileLink);
   //read
   socket.on("getEnv", onGetEnv);
   //update
-  socket.on("renameInputFile", onRenameInputFile);
-  socket.on("renameOutputFile", onRenameOutputFile);
-  socket.on("updateNode", onUpdateNode);
+  socket.on("updateComponent", onUpdateComponent);
+  socket.on("updatePos", onUpdatePos);
   socket.on("updateEnv", onUpdateEnv);
   //delete
   socket.on("removeNode", onRemoveNode);
-  socket.on("removeInputFile", onRemoveInputFile);
-  socket.on("removeOutputFile", onRemoveOutputFile);
   socket.on("removeLink", onRemoveLink);
   socket.on("removeAllLink", onRemoveAllLink);
   socket.on("removeFileLink", onRemoveFileLink);
@@ -153,6 +138,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getWorkflow", onGetWorkflow.bind(null, socket.id));
   //update
   socket.on("updateProjectDescription", onUpdateProjectDescription);
+  socket.on("updateProjectROStatus", onUpdateProjectROStatus);
 
   //
   //remotehost
@@ -195,6 +181,49 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("tryToConnect", onTryToConnect.bind(null, socket.id));
   socket.on("tryToConnectById", onTryToConnectById.bind(null, socket.id));
   socket.on("requestRemoteConnection", onRequestRemoteConnection.bind(null, socket));
+
+  //
+  //deprecated APIs which are left for DEBUG
+  //
+  socket.on("runProject", (clientID, projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] runProject API is no longer available");
+  });
+  socket.on("pauseProject", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] pauseProject API is no longer available");
+  });
+  socket.on("stopProject", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] stopProject API is no longer available");
+  });
+  socket.on("cleanProject", (clientID, projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] cleanProject API is no longer available");
+  });
+  socket.on("saveProject", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] saveProject API is no longer available");
+  });
+  socket.on("revertProject", (clientID, projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] revertProject API is no longer available");
+  });
+  socket.on("updateNode", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] updateNode API is no longer available");
+  });
+  socket.on("addInputFile", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] addInputFile API is no longer available");
+  });
+  socket.on("addOutputFile", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] addOutputFile API is no longer available");
+  });
+  socket.on("renameInputFile", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] renameIntputFile API is no longer available");
+  });
+  socket.on("renameOutputFile", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] renameOutputFile API is no longer available");
+  });
+  socket.on("removeInputFile", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] removeIntputFile API is no longer available");
+  });
+  socket.on("removeOutputFile", (projectRootDir)=>{
+    getLogger(projectRootDir).error("[deprecated] removeOuttputFile API is no longer available");
+  });
 };
 
 module.exports = {

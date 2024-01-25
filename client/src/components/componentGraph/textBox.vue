@@ -3,7 +3,7 @@
 </template>
 <script>
 "use strict";
-import { textHeight,boxWidth, textLengthLimit, textOffset, maxTextChar} from "@/lib/constants.json"
+import { textLengthLimit, textOffset, maxTextChar} from "@/lib/constants.json"
 
 export default {
   name: "TextBox",

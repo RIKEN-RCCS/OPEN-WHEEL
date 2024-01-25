@@ -9,7 +9,7 @@
     temporary
     location="right"
   >
-    <v-list >
+    <v-list>
       <v-btn
         prepend-icon=mdi-cog-outline
         :href="remotehostURL"
@@ -30,6 +30,8 @@
   </v-navigation-drawer>
 </template>
 <script>
+import { mapState } from "vuex";
+import { state2color } from "@/lib/utility.js";
 export default {
   name: "NavDrawer",
   props: {
@@ -37,6 +39,10 @@ export default {
     baseUrl: String,
   },
   computed: {
+    ...mapState(["readOnly"]),
+    readOnlyColor(){
+      return state2color(`${this.readOnly? "paused":""}`);
+    },
     remotehostURL(){
       return `${this.baseUrl || "."}/remotehost`
     },
@@ -48,6 +54,6 @@ export default {
         this.$emit("update:modelValue", value);
       },
     },
-  },
+  }
 };
 </script>
