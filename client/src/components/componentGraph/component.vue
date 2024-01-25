@@ -215,10 +215,9 @@ export default{
     onDblclick(){
       this.$emit("chdir", this.componentData.ID, this.componentData.type);
     },
-    onRightclick(){
-      //not implemented yet
-      console.log("right clicked");
-    }
+    onRightclick(e){
+      this.$emit("openContextMenu", e);
+    },
   },
 }
 

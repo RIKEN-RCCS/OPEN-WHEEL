@@ -60,14 +60,6 @@ const cleanProject = async (projectRootDir)=>{
   //project state must be updated by onCleanProject()
 };
 
-async function pauseProject(projectRootDir) {
-  const rootDispatcher = rootDispatchers.get(projectRootDir);
-  if (rootDispatcher) {
-    await rootDispatcher.pause();
-  }
-  //project state must be updated by onPauseProject()
-}
-
 async function stopProject(projectRootDir) {
   const rootDispatcher = rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
@@ -112,6 +104,5 @@ async function runProject(projectRootDir) {
 module.exports = {
   cleanProject,
   runProject,
-  pauseProject,
   stopProject
 };

@@ -10,20 +10,26 @@ const { sanitizePath } = require("./pathUtils");
 const { evalCondition } = require("./dispatchUtils");
 
 
+function getPrevIndex(component) {
+  if(typeof component.prevIndex !== "undefined"){
+    return component.prevIndex 
+  }
+  const step = component.step || 1;
+  const start = component.start || 0;
+  const candidate = component.currentIndex - step;
+  return  (candidate - start) * step  >= 0 ? candidate : null;
+}
 function forGetNextIndex(component) {
   return component.currentIndex !== null ? component.currentIndex + component.step : component.start;
 }
-
 function forIsFinished(component) {
   return (component.currentIndex > component.end && component.step > 0) || (component.currentIndex < component.end && component.step < 0);
 }
-
 function forTripCount(component) {
   const length = Math.abs(component.end - component.start);
   const step = Math.abs(component.step);
   return Math.floor(length / step) + 1;
 }
-
 function forKeepLoopInstance(component, cwfDir) {
   if (Number.isInteger(component.keep) && component.keep >= 0) {
     const deleteComponentInstance = component.keep === 0 ? component.currentIndex - component.step : component.currentIndex - (component.keep * component.step);
@@ -33,6 +39,14 @@ function forKeepLoopInstance(component, cwfDir) {
   }
 }
 
+function whileGetNextIndex(component) {
+  return component.currentIndex !== null ? component.currentIndex + 1 : 0;
+}
+async function whileIsFinished(cwfDir, projectRootDir, component) {
+  const cwd = path.resolve(cwfDir, component.name);
+  const condition = await evalCondition(projectRootDir, component.condition, cwd, component.currentIndex);
+  return !condition;
+}
 function whileKeepLoopInstance(component, cwfDir) {
   if (Number.isInteger(component.keep) && component.keep >= 0) {
     const deleteComponentInstance = component.keep === 0 ? component.currentIndex - 1 : component.currentIndex - component.keep;
@@ -40,27 +54,6 @@ function whileKeepLoopInstance(component, cwfDir) {
       fs.remove(path.resolve(cwfDir, `${component.originalName}_${sanitizePath(deleteComponentInstance)}`));
     }
   }
-}
-
-function foreachKeepLoopInstance(component, cwfDir) {
-  if (Number.isInteger(component.keep) && component.keep >= 0) {
-    const currentIndexNumber = component.currentIndex !== null ? component.indexList.indexOf(component.currentIndex) : component.indexList.length;
-    const deleteComponentNumber = component.keep === 0 ? currentIndexNumber - 1 : currentIndexNumber - component.keep;
-    const deleteComponentName = deleteComponentNumber >= 0 ? `${component.originalName}_${sanitizePath(component.indexList[deleteComponentNumber])}` : "";
-    if (deleteComponentName) {
-      fs.remove(path.resolve(cwfDir, deleteComponentName));
-    }
-  }
-}
-
-function whileGetNextIndex(component) {
-  return component.currentIndex !== null ? component.currentIndex + 1 : 0;
-}
-
-async function whileIsFinished(cwfDir, projectRootDir, component) {
-  const cwd = path.resolve(cwfDir, component.name);
-  const condition = await evalCondition(projectRootDir, component.condition, cwd, component.currentIndex);
-  return !condition;
 }
 
 function foreachGetNextIndex(component) {
@@ -76,20 +69,46 @@ function foreachGetNextIndex(component) {
   }
   return component.indexList[0];
 }
+function foreachGetPrevIndex(component) {
+  if(typeof component.prevIndex !== "undefined"){
+    return  component.prevIndex
+  }
 
+  const i = component.indexList.findIndex((e)=>{
+    return e === component.currentIndex;
+  }) - 1;
+
+  if (i  < 0 ) {
+    return null;
+  }
+  return component.indexList[i];
+}
 function foreachIsFinished(component) {
   return component.currentIndex === null;
 }
 function foreachTripCount(component) {
   return component.indexList.length;
 }
+function foreachKeepLoopInstance(component, cwfDir) {
+  if (Number.isInteger(component.keep) && component.keep >= 0) {
+    const currentIndexNumber = component.currentIndex !== null ? component.indexList.indexOf(component.currentIndex) : component.indexList.length;
+    const deleteComponentNumber = component.keep === 0 ? currentIndexNumber - 1 : currentIndexNumber - component.keep;
+    const deleteComponentName = deleteComponentNumber >= 0 ? `${component.originalName}_${sanitizePath(component.indexList[deleteComponentNumber])}` : "";
+    if (deleteComponentName) {
+      fs.remove(path.resolve(cwfDir, deleteComponentName));
+    }
+  }
+}
 
-function loopInitialize(component, getTripCount) {
-  component.initialized = true;
+function loopInitialize(component, getTripCount, getPrevIndex) {
+  if(component.restarting){
+    component.currentIndex = getPrevIndex(component)
+  }else{
+    component.numFinished = 0;
+    component.numFailed = 0;
+    component.currentIndex = null;
+  }
   component.originalName = component.name;
-  component.numFinished = 0;
-  component.numFailed = 0;
-  component.currentIndex = null;
 
   if (typeof getTripCount === "function") {
     component.numTotal = getTripCount(component);
@@ -101,13 +120,15 @@ function loopInitialize(component, getTripCount) {
     component.env.WHEEL_FOR_START = component.start;
     component.env.WHEEL_FOR_END = component.end;
     component.env.WHEEL_FOR_STEP = component.step;
-  } else if (component.type.toLowerCase() === "while") {
+  } else if (component.type.toLowerCase() === "foreach") {
     component.env.WHEEL_FOREACH_LEN = component.numTotal;
   }
+  component.initialized = true;
 }
 
 module.exports = {
   loopInitialize,
+  getPrevIndex,
   forGetNextIndex,
   forIsFinished,
   forTripCount,
@@ -116,6 +137,7 @@ module.exports = {
   whileIsFinished,
   whileKeepLoopInstance,
   foreachGetNextIndex,
+  foreachGetPrevIndex,
   foreachIsFinished,
   foreachTripCount,
   foreachKeepLoopInstance

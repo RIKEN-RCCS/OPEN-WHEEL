@@ -31,10 +31,15 @@ async function sendWorkflow(cb, projectRootDir, parentComponentDir = "", clientI
       await emitAll(clientID ? clientID : projectRootDir, "workflow", wf);
     }
   } catch (e) {
+    if(typeof cb !== "function"){
+      throw e;
+    }
     cb(e);
     return;
   }
-  cb(true);
+  if(typeof cb === "function"){
+    cb(true);
+  }
 }
 
 async function sendComponentTree(projectRootDir, rootDir) {
