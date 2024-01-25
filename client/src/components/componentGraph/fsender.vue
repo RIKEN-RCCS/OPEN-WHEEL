@@ -69,7 +69,7 @@ export default {
     }
   },
   methods:{
-    onDragStart(event){
+    onDragStart(){
       this.dragging=true
     },
     onDragEnd(event){

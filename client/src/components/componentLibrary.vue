@@ -29,7 +29,7 @@
               :image="item.img"
               :ref="item.type"
               rounded="0"
-              draggable
+              draggable="!readOnly"
               @dragstart.capture="onDragstart($event, item)"
               @dragover.prevent
               @dragenter.prevent
@@ -67,12 +67,12 @@ export default {
       }),
       offsetX:null,
       offsetY:null,
-      widthComponentLibrary 
+      widthComponentLibrary
     };
   },
   computed: {
-    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir"]),
-    ...mapGetters(["currentComponentAbsPath", "isEdittable" ]),
+    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "readOnly"]),
+    ...mapGetters(["currentComponentAbsPath" ]),
     isStepJob: function () {
       if (this.currentComponent === null) return false;
       return this.currentComponent.type === "stepjob";
@@ -100,7 +100,7 @@ export default {
       event.dataTransfer.effectAllowed = "move";
     },
     onDragend(event, item){
-      if( !this.isEdittable ){
+      if( this.readOnly){
         debug("new component can not be added current project status")
         return
       }

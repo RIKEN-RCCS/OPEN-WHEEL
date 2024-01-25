@@ -28,7 +28,7 @@
         :ripple="false"
         :style="{backgroundColor : stateColor}"
       >
-        status: {{ projectState }}
+        status: {{ projectState }}{{isReadOnly}}
       </v-btn>
       <v-spacer />
       <v-btn
@@ -94,18 +94,6 @@
               />
             </template>
           </v-tooltip>
-
-          <!-- <v-tooltip text="pause project" location="bottom"> -->
-          <!--   <template #activator="{ props }"> -->
-          <!--     <v-btn -->
-          <!--       variant=outlined -->
-          <!--       icon="mdi-pause" -->
-          <!--       :disabled="! pauseProjectAllowed" -->
-          <!--       v-bind="props" -->
-          <!--       @click="openProjectOperationComfirmationDialog('pauseProject')" -->
-          <!--     /> -->
-          <!--   </template> -->
-          <!-- </v-tooltip> -->
           <v-tooltip text="stop project" location="bottom">
             <template #activator="{ props }">
               <v-btn
@@ -144,6 +132,19 @@
         </v-tooltip>
         <v-spacer />
         <v-card>
+          <v-tooltip text="force edit" location="bottom">
+            <template #activator="{ props }">
+              <v-btn
+                icon=mdi-pencil-lock-outline
+                v-if="readOnly"
+                rounded=0
+                variant=outlined
+                v-bind="props"
+                :style="{backgroundColor : readOnlyColor}"
+                @click="forceEditDialog=true"
+              />
+            </template>
+          </v-tooltip>
           <v-tooltip text="save project" location="bottom">
             <template #activator="{ props }">
               <v-btn
@@ -285,9 +286,26 @@
         </v-data-table>
       </template>
     </versatile-dialog>
-    <source-file-upload-dialog 
+    <source-file-upload-dialog
       v-model="uploadSourceFileDialog"
     />
+    <versatile-dialog
+      v-model="forceEditDialog"
+      max-width="50vw"
+      title="Are you sure you want to edit read-only project ?"
+      @ok="makeWritable();forceEditDialog=false"
+      @cancel="forceEditDialog=false"
+    >
+      <template #message>
+        <div>
+          it may cause some problem.
+          <ul>
+            <li> Inconsistencies arise with the results of previous runs </li>
+            <li> After saving project you can not revert project to what it was before project run started</li>
+          </ul>
+        </div>
+      </template>
+    </versatile-dialog>
   </v-app>
 </template>
 
@@ -304,19 +322,10 @@ import versatileDialog from "@/components/versatileDialog.vue";
 import SIO from "@/lib/socketIOWrapper.js";
 import { readCookie, state2color } from "@/lib/utility.js";
 import Debug from "debug";
+
+import allowedOperations from "@/../../common/allowedOperations.cjs"
 const debug = Debug("wheel:workflow:main");
 
-const allowedOperations={
-  "not-started":["runProject", "saveProject", "revertProject"],
-  "prepareing" :[],
-  "running" :["stopProject"],
-  "stopped":["cleanProject"],
-  "finished":["cleanProject"],
-  "failed":["cleanProject"],
-  "unknown":["cleanProject"],
-  "holding":["cleanProject"],
-  "paused":[],
-}
 const isAllowed = (state, operation)=>{
   if(! allowedOperations[state]){
     return false
@@ -357,6 +366,7 @@ export default {
       selectedSourceFilenames:[],
       selectSourceFileDialogTitle: "",
       uploadSourceFileDialog:false,
+      forceEditDialog:false,
       dialog:false,
       dialogTitle:"",
       dialogMessage:"",
@@ -374,10 +384,17 @@ export default {
       "projectRootDir",
       "selectedComponent",
       "selectedFile",
+      "readOnly"
     ]),
     ...mapGetters(["waiting"]),
+    isReadOnly(){
+      return this.readOnly? " - read-only":""
+    },
     stateColor(){
       return state2color(this.projectState);
+    },
+    readOnlyColor(){
+      return state2color(`${this.readOnly? "paused":""}`);
     },
     selectedSourceFilename(){
       return this.selectedSourceFilenames[0].filename;
@@ -454,6 +471,7 @@ export default {
     SIO.onGlobal("projectJson", (projectJson)=>{
       this.projectJson = projectJson;
       this.commitProjectState(projectJson.state.toLowerCase());
+      this.commitProjectReadOnly(projectJson.readOnly);
       this.commitComponentPath(projectJson.componentPath);
       this.commitWaitingProjectJson(false);
     });
@@ -523,6 +541,11 @@ export default {
       });
   },
   methods: {
+    makeWritable(){
+      SIO.emitGlobal("updateProjectROStatus", this.projectRootDir, false, (rt)=>{
+        debug("updateProjectROStatus done", rt);
+      })
+    },
     openViewerScreen(){
       const form = document.createElement("form");
       form.setAttribute("target", `${this.baseURL}/viewer`);
@@ -555,6 +578,7 @@ export default {
     ...mapMutations({
       commitComponentTree: "componentTree",
       commitProjectState: "projectState",
+      commitProjectReadOnly: "readOnly",
       commitComponentPath: "componentPath",
       commitCurrentComponent: "currentComponent",
       commitProjectRootDir: "projectRootDir",
@@ -574,8 +598,8 @@ export default {
       if(operation === "stopProject" || operation === "cleanProject"){
         this.commitWaitingWorkflow(true);
       }
-      SIO.emitGlobal(operation, this.projectRootDir, (rt)=>{
-        debug(operation, "done", rt);
+      SIO.emitGlobal("projectOperation",this.projectRootDir, operation,  (rt)=>{
+        debug(`${operation} ${rt ? "finished":`failed with ${rt}`}`);
 
         if(operation === "stopProject" || operation === "cleanProject"){
           this.commitWaitingWorkflow(false);

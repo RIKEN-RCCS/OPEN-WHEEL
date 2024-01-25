@@ -87,7 +87,6 @@ function taskStateFilter(task) {
 }
 
 module.exports = {
-  killTask,
   cancelDispatchedTasks,
   taskStateFilter
 };

@@ -19,13 +19,13 @@
               @submit.prevent
           >
             <v-text-field
-              v-model.lazy="copySelectedComponent.name"
+              v-model="copySelectedComponent.name"
               label="name"
+              :readonly="readOnly"
               variant=outlined
               class="pt-4"
               density=compact
               :rules="[rules.isValidName, isUniqueName]"
-              @update:focused="updateComponentProperty('name')"
             />
           </v-form>
         </v-toolbar-title>
@@ -34,18 +34,18 @@
           <template #activator="{ props}">
             <v-switch
               v-model="copySelectedComponent.disable"
+              :readonly="readOnly"
               hide-details
               color="error"
               label="disable"
               v-bind="props"
-              @update:focused="updateComponentProperty('disable')"
             />
           </template>
         </v-tooltip>
           <v-tooltip location="bottom" text="close">
             <template #activator="{ props }">
               <v-btn
-                @click="open=false"
+                @click="closeProperty"
                 v-bind="props"
                 icon=mdi-close
               />
@@ -57,15 +57,6 @@
                 :disabled="selectedComponent.state === 'not-started'"
                 v-bind="props"
                 icon="mdi-restore"
-              />
-            </template>
-          </v-tooltip>
-          <v-tooltip location=bottom text="delete">
-            <template #activator="{ props }">
-              <v-btn
-                v-bind="props"
-                @click="deleteComponent"
-                icon="mdi-trash-can-outline"
               />
             </template>
           </v-tooltip>
@@ -83,66 +74,66 @@
         <v-expansion-panel title="basic">
           <v-expansion-panel-text>
             <v-textarea
-              v-model.lazy="copySelectedComponent.description"
+              v-model="copySelectedComponent.description"
               label="description"
+              :readonly="readOnly"
               variant=outlined
-              @update:focused="updateComponentProperty('description')"
             />
             <v-autocomplete
               v-if="hasScript"
-              v-model.lazy="copySelectedComponent.script"
+              v-model="copySelectedComponent.script"
               label="script"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
-              @update:focused="updateComponentProperty('script')"
             />
             <v-select
               v-if="hasHost"
-              v-model.lazy="copySelectedComponent.host"
+              v-model="copySelectedComponent.host"
               label="host"
+              :readonly="readOnly"
               :items="hostCandidates"
               variant=outlined
-              @update:focused="updateComponentProperty('host')"
             />
             <v-switch
               v-if="hasJobScheduler"
-              v-model.lazy="copySelectedComponent.useJobScheduler"
+              v-model="copySelectedComponent.useJobScheduler"
               label="use job scheduler"
-              @update:focused="updateComponentProperty('useJobScheduler')"
+              :readonly="readOnly"
               color="primary"
             />
             <v-select
               v-if="hasJobScheduler"
-              v-model.lazy="copySelectedComponent.queue"
+              v-model="copySelectedComponent.queue"
               label="queue"
+              :readonly="readOnly"
               :items="queues"
               :disabled="! copySelectedComponent.useJobScheduler"
               variant=outlined
-              @update:focused="updateComponentProperty('queue')"
             />
             <v-text-field
               v-if="hasJobScheduler"
-              v-model.lazy="submitCmd"
-              readonly
+              v-model="submitCmd"
+              :readonly="readOnly"
               label="submit command"
               :disabled="! copySelectedComponent.useJobScheduler"
               variant=outlined
             />
             <v-text-field
               v-if="hasJobScheduler"
-              v-model.lazy="copySelectedComponent.submitOption"
+              v-model="copySelectedComponent.submitOption"
               label="submit option"
+              :readonly="readOnly"
               :disabled="! copySelectedComponent.useJobScheduler"
               variant=outlined
-              @update:focused="updateComponentProperty('submitOption')"
             />
             <v-text-field
               v-if="isStorage"
-              v-model.lazy="copySelectedComponent.storagePath"
+              v-model="copySelectedComponent.storagePath"
               label="directory path"
+              :readonly="readOnly"
               variant=outlined
-              @update:focused="updateComponentProperty('storagePath')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -150,32 +141,33 @@
           <v-expansion-panel-title>retry setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-text-field
-              v-model.lazy="copySelectedComponent.retry"
+              v-model="copySelectedComponent.retry"
               label="number of retry"
+              :readonly="readOnly"
               hide-details
               type="number"
               :rules="[rules.isInteger, rules.isZeroOrMore]"
               variant=outlined
-              @update:focused="updateComponentProperty('retry')"
             />
             <v-switch
               v-model.lazy="retryByJS"
               color="primary"
               label="use javascript expression for condition check"
+              :readonly="readOnly"
             />
             <v-autocomplete
               v-if="!retryByJS"
-              v-model.lazy="copySelectedComponent.retryCondition"
+              v-model="copySelectedComponent.retryCondition"
               label="script name for condition check"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
-              @update:focused="updateComponentProperty('retryCondition')"
             />
             <v-textarea
               v-if="retryByJS"
-              v-model.lazy="copySelectedComponent.retryCondition"
-              @update:focused="updateComponentProperty('retryCondition')"
+              v-model="copySelectedComponent.retryCondition"
+              :readonly="readOnly"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -186,31 +178,31 @@
               <v-text-field
                 v-model.number="copySelectedComponent.start"
                 label="start"
+              :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
-                @update:focused="updateComponentProperty('start')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.end"
                 label="end"
+              :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
-                @update:focused="updateComponentProperty('end')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.step"
                 label="step"
+              :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
-                @update:focused="updateComponentProperty('step')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.keep"
                 label="number of instances to keep"
+              :readonly="readOnly"
                 type="number"
                 clearable
                 :rules="[rules.isValidKeepProp ]"
-                @update:focused="updateComponentProperty('keep')"
               />
             </v-form>
           </v-expansion-panel-text>
@@ -220,6 +212,7 @@
           <v-expansion-panel-text>
             <list-form
               :label="'foreach'"
+              :readonly="readOnly"
               :items="indexList"
               :edit-dialog-min-width="propWidth"
               @add="addToIndexList"
@@ -229,8 +222,8 @@
             <v-text-field
               v-model.number="copySelectedComponent.keep"
               label="number of instances to keep"
+              :readonly="readOnly"
               type="number"
-              @update:focused="updateComponentProperty('keep')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -238,10 +231,10 @@
           <v-expansion-panel-title>upload setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
-              v-model.lazy="copySelectedComponent.uploadOnDemand"
+              v-model="copySelectedComponent.uploadOnDemand"
               color="primary"
               label="upload on demand"
-              @update:focused="updateComponentProperty('uploadOnDemand')"
+              :readonly="readOnly"
             />
             <v-row>
               <v-col>
@@ -249,6 +242,7 @@
                   v-if="!copySelectedComponent.uploadOnDemand"
                   v-model="sourceOutputFile"
                   label="source file name"
+              :readonly="readOnly"
                   :items="scriptCandidates"
                   clearable
                   variant=outlined
@@ -263,6 +257,7 @@
                 <v-btn
                   v-if="!copySelectedComponent.uploadOnDemand"
                   icon=mdi-trash-can-outline
+              :readonly="readOnly"
                 />
               </v-col>
             </v-row>
@@ -273,6 +268,7 @@
           <v-expansion-panel-text>
             <list-form
               :label="'input files'"
+              :readonly="readOnly"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
               :additionalRules="[isValidInputFilename]"
@@ -287,24 +283,24 @@
           <v-expansion-panel-title>PS setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-autocomplete
-              v-model.lazy="copySelectedComponent.parameterFile"
+              v-model="copySelectedComponent.parameterFile"
               label="parameterFile"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
-              @update:focused="updateComponentProperty('parameterFile')"
             />
             <v-switch
               color="primary"
-              v-model.lazy="copySelectedComponent.forceOverwrite"
+              v-model="copySelectedComponent.forceOverwrite"
               label="force overwrite"
-              @update:focused="updateComponentProperty('forceOverwrite')"
+              :readonly="readOnly"
             />
             <v-switch
               color="primary"
-              v-model.lazy="copySelectedComponent.deleteLoopInstance"
+              v-model="copySelectedComponent.deleteLoopInstance"
               label="delete all instances"
-              @update:focused="updateComponentProperty('deleteLoopInstance')"
+              :readonly="readOnly"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -313,9 +309,9 @@
           <v-expansion-panel-text>
             <v-switch
               color="primary"
-              v-model.lazy="copySelectedComponent.useDependency"
+              v-model="copySelectedComponent.useDependency"
               label="use dependency"
-              @update:focused="updateComponentProperty('useDependency')"
+              :readonly="readOnly"
             />
             <v-text-field
               v-model="copySelectedComponent.stepnum"
@@ -325,10 +321,10 @@
               :disabled="! copySelectedComponent.useDependency"
             />
             <v-text-field
-              v-model.lazy="copySelectedComponent.dependencyForm"
+              v-model="copySelectedComponent.dependencyForm"
               label="dependencyForm"
+              :readonly="readOnly"
               :disabled="! copySelectedComponent.useDependency"
-              @update:focused="updateComponentProperty('dependencyForm')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -337,18 +333,18 @@
           <v-expansion-panel-text>
             <v-switch
               color="primary"
-              v-model.lazy="copySelectedComponent.usePSSettingFile"
+              v-model="copySelectedComponent.usePSSettingFile"
               label="use parameter setting file for bulk number"
-              @update:focused="updateComponentProperty('usePSSettingFile')"
+              :readonly="readOnly"
             />
             <v-autocomplete
               v-if="copySelectedComponent.usePSSettingFile"
-              v-model.lazy="copySelectedComponent.parameterFile"
+              v-model="copySelectedComponent.parameterFile"
               label="parameter file"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
-              @update:focused="updateComponentProperty('parameterFile')"
             />
             <v-form
               v-if="! copySelectedComponent.usePSSettingFile"
@@ -357,41 +353,42 @@
               <v-text-field
                 v-model.number="copySelectedComponent.startBulkNumber"
                 label="start"
+              :readonly="readOnly"
                 type="number"
-                @update:focused="updateComponentProperty('startBulkNumber')"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.endBulkNumber"
                 label="end"
+              :readonly="readOnly"
                 type="number"
-                @update:focused="updateComponentProperty('endBulkNumber')"
               />
             </v-form>
             <v-switch
               color="primary"
               v-model="copySelectedComponent.manualFinishCondition"
               label="manual finish condition"
-              @update:focused="updateComponentProperty('manualFinishCondition')"
+              :readonly="readOnly"
             />
             <div v-if="copySelectedComponent.manualFinishCondition">
               <v-switch
               color="primary"
                 v-model.lazy="conditionCheckByJS"
                 label="use javascript expression for condition check"
+              :readonly="readOnly"
               />
               <v-autocomplete
                 v-if="!conditionCheckByJS"
-                v-model.lazy="copySelectedComponent.condition"
+                v-model="copySelectedComponent.condition"
                 label="script name for condition check"
+              :readonly="readOnly"
                 :items="scriptCandidates"
                 clearable
                 variant=outlined
-                @update:focused="updateComponentProperty('condition')"
               />
               <v-textarea
                 v-if="conditionCheckByJS"
-                v-model.lazy="copySelectedComponent.condition"
-                @update:focused="updateComponentProperty('condition')"
+                v-model="copySelectedComponent.condition"
+              :readonly="readOnly"
               />
             </div>
           </v-expansion-panel-text>
@@ -403,27 +400,28 @@
               color="primary"
               v-model.lazy="conditionCheckByJS"
               label="use javascript expression for condition check"
+              :readonly="readOnly"
             />
             <v-autocomplete
               v-if="!conditionCheckByJS"
-              v-model.lazy="copySelectedComponent.condition"
+              v-model="copySelectedComponent.condition"
               label="script name for condition check"
+              :readonly="readOnly"
               :items="scriptCandidates"
               clearable
               variant=outlined
-              @update:focused="updateComponentProperty('condition')"
             />
             <v-textarea
               v-if="conditionCheckByJS"
-              v-model.lazy="copySelectedComponent.condition"
-              @update:focused="updateComponentProperty('condition')"
+              v-model="copySelectedComponent.condition"
+              :readonly="readOnly"
             />
             <v-text-field
               v-if="isWhile"
               v-model.number="copySelectedComponent.keep"
               label="number of instances to keep"
+              :readonly="readOnly"
               type="number"
-              @update:focused="updateComponentProperty('keep')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -432,6 +430,7 @@
           <v-expansion-panel-text>
             <list-form
               :label="'input files'"
+              :readonly="readOnly"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
               :additional-rules="[isValidInputFilename]"
@@ -442,6 +441,7 @@
             />
             <list-form
               :label="'output files'"
+              :readonly="readOnly"
               :items="copySelectedComponent.outputFiles"
               :new-item-template="outputFileTemplate"
               :additional-rules="[isValidOutputFilename]"
@@ -460,6 +460,7 @@
           <v-expansion-panel-text>
             <list-form
               :label="'include'"
+              :readonly="readOnly"
               :items="includeList"
               :disabled="disableRemoteSetting"
               :edit-dialog-min-width="propWidth"
@@ -469,6 +470,7 @@
             />
             <list-form
               :label="'exclude'"
+              :readonly="readOnly"
               :items="excludeList"
               :disabled="disableRemoteSetting"
               :edit-dialog-min-width="propWidth"
@@ -481,7 +483,7 @@
             <v-radio-group
               v-model="copySelectedComponent.cleanupFlag"
               :disabled="disableRemoteSetting"
-              @update:modelValue="updateComponentProperty('cleanupFlag')"
+              :readonly="readOnly"
             >
               <v-radio
                 label="remove files"
@@ -583,7 +585,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler"]),
+    ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler", "readOnly"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
     isRemoteComponent(){
       return this.selectedComponent.type === "storage"
@@ -689,14 +691,18 @@ export default {
     }
   },
   watch: {
-    open () {
+    open (newValue) {
+      //another component is selected while componentProperty is open
       if (this.reopening || this.open) {
         return;
       }
-      this.commitSelectedComponent(null);
+      //closing
+      if(newValue===false){
+        this.commitSelectedComponent(null);
+      }
     },
-    selectedComponent (nv, ov) {
-      if (this.selectedComponent === null || ( nv !== null && ov !== null && nv.ID === ov.ID)) {
+    selectedComponent (newValue, oldValue) {
+      if (this.selectedComponent === null || ( newValue !== null && oldValue !== null && newValue.ID === oldValue.ID)) {
         return;
       }
       this.sourceOutputFile = Array.isArray(this.selectedComponent.outputFiles) && this.selectedComponent.outputFiles[0] ?  this.selectedComponent.outputFiles[0].name : null
@@ -705,14 +711,16 @@ export default {
       if(!["for", "foreach", "workflow", "storage",  "viewer"].includes(this.selectedComponent.type)){
         const mode = this.selectedComponent.type === "source" ? "sourceComponent": "underComponent";
         SIO.emitGlobal("getFileList",this.projectRootDir,  {path: this.selectedComponentAbsPath, mode}, (fileList)=>{
-          const scriptCandidates = fileList
-            .filter((e)=>{
-              return e.type === "file";
-            })
-            .map((e)=>{
-              return e.name;
-            });
-          this.commitScriptCandidates(scriptCandidates);
+          if(Array.isArray(fileList)){
+            const scriptCandidates = fileList
+              .filter((e)=>{
+                return e.type === "file";
+              })
+              .map((e)=>{
+                return e.name;
+              });
+            this.commitScriptCandidates(scriptCandidates);
+          }
 
           if(typeof this.selectedComponent.condition === "string"){
             this.conditionCheckByJS= !this.scriptCandidates.includes(this.selectedComponent.condition);
@@ -737,45 +745,19 @@ export default {
     }
   },
   methods: {
-    ...mapActions(["showSnackbar"]),
+    ...mapActions({
+      commitSelectedComponent: "selectedComponent",
+      commitShowSnackbar: "showSnackbar",
+    }),
     ...mapMutations({
       commitScriptCandidates: "scriptCandidates",
       commitComponentTree: "componentTree",
-      commitSelectedComponent: "selectedComponent",
     }),
     isValidInputFilename,
     isValidOutputFilename,
-    deleteComponent () {
-      SIO.emitGlobal("removeNode", this.projectRootDir, this.selectedComponent.ID, this.currentComponent.ID, (rt)=>{
-        if (!rt) {
-          return;
-        }
-        this.commitSelectedComponent(null);
-        //update componentTree
-        SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
-      });
-    },
-    updateComponentProperty (prop) {
-      if (prop === "name" && !this.validName) return;
-      if (!["name", "include","exclude", "cleanupFlag","retryCondition"].includes(prop) && !this.valid) return;
-      if(!Array.isArray(this.copySelectedComponent[prop]) && this.copySelectedComponent[prop] === this.selectedComponent[prop]) return;
-      const ID = this.selectedComponent.ID;
-      //[workaround] v-textfield convert input value to string even if type=number
-      const newValue = ["start", "step", "end", "retry"].includes(prop) ? Number(this.copySelectedComponent[prop]): this.copySelectedComponent[prop];
-      if(newValue === null && (prop === "script" || (!this.conditionCheckByJS && prop === "condition"))) return;
-
-      //closeボタン押下時に、selectedComponentをnullにするより先に
-      //blurイベントが発生してこちらの処理が走ってしまうので
-      //次行のif文の条件は常に満たさない。
-      //仕様を検討のうえ、ガードするなら何か方法を考える必要がある
-      if (this.selectedComponent === null) return;
-
-      SIO.emitGlobal("updateNode", this.projectRootDir,  ID, prop, newValue, SIO.generalCallback);
-
-      if(this.selectedComponent.type === "storage" && prop === "path"){
-        //一回componenntpropertyを閉じる
-        this.$refs.rfb.connected=false;
-      }
+    closeProperty(){
+      this.commitSelectedComponent(null);
+      this.open=false
     },
     updateSourceOutputFile(){
       const name = this.sourceOutputFile
@@ -784,7 +766,7 @@ export default {
         return
       }
       if(!this.isValidOutputFilename(name)){
-        this.showSnackbar(`${name} is not valid output filename`)
+        this.commitShowSnackbar(`${name} is not valid output filename`)
         return
       }
       const outputFile={name, dst: []};
@@ -800,69 +782,48 @@ export default {
     },
     addToInputFiles(v) {
       this.copySelectedComponent.inputFiles.push(v)
-      const ID = this.selectedComponent.ID;
-      SIO.emitGlobal("addInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
     },
     updateInputFiles(v, index) {
       this.copySelectedComponent.inputFiles.splice(index, 1, v);
-      const ID = this.selectedComponent.ID;
-      SIO.emitGlobal("renameInputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
     },
     removeFromInputFiles(v, index) {
       this.copySelectedComponent.inputFiles.splice(index,1)
-      const ID = this.selectedComponent.ID;
-      SIO.emitGlobal("removeInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
     },
     addToOutputFiles(v) {
       this.copySelectedComponent.outputFiles.push(v)
-      const ID = this.selectedComponent.ID;
-      SIO.emitGlobal("addOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
     },
     updateOutputFiles(v, index) {
       this.copySelectedComponent.outputFiles.splice(index, 1, v);
-      const ID = this.selectedComponent.ID;
-      SIO.emitGlobal("renameOutputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID,  SIO.generalCallback);
     },
     removeFromOutputFiles(v, index) {
       this.copySelectedComponent.outputFiles.splice(index,1)
-      const ID = this.selectedComponent.ID;
-      SIO.emitGlobal("removeOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID,  SIO.generalCallback);
     },
     addToIndexList (v) {
       this.copySelectedComponent.indexList.push(v.name)
-      this.updateComponentProperty("indexList");
     },
     updateIndexList (v, index) {
       this.copySelectedComponent.indexList.splice(index, 1, v.name);
-      this.updateComponentProperty("indexList");
     },
     removeFromIndexList (v, index) {
       this.copySelectedComponent.indexList.splice(index,1)
-      this.updateComponentProperty("indexList");
     },
     addToIncludeList (v) {
       this.copySelectedComponent.include.push(v.name)
-      this.updateComponentProperty("include");
     },
     updateIncludeList (v, index) {
       this.copySelectedComponent.include.splice(index, 1, v.name);
-      this.updateComponentProperty("include");
     },
     removeFromIncludeList (v, index) {
       this.copySelectedComponent.include.splice(index,1)
-      this.updateComponentProperty("include");
     },
     addToExcludeList (v) {
       this.copySelectedComponent.exclude.push(v.name)
-      this.updateComponentProperty("exclude");
     },
     removeFromExcludeList (v, index) {
       this.copySelectedComponent.exclude.splice(index,1)
-      this.updateComponentProperty("exclude");
     },
     updateExcludeList (v, index) {
       this.copySelectedComponent.exclude.splice(index, 1, v.name);
-      this.updateComponentProperty("exclude");
     },
     isUniqueName (v) {
       const names = this.currentComponent.descendants

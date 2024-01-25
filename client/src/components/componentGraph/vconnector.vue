@@ -7,6 +7,7 @@
     :control1=control[0]
     :control2=control[1]
     v-if="start.x !== end.x || start.y !== end.y"
+    @click.right.prevent.stop="onRightclick"
   />
 </template>
 <script>
@@ -57,6 +58,11 @@ export default {
       }
     }
   },
+  methods:{
+    onRightclick(e){
+      this.$emit("openContextMenu", e);
+    },
+  }
 }
 </script>
 

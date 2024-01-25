@@ -1,5 +1,5 @@
 {
-  "name": "WHEEL-doc",
+  "name": "WHEEL",
   "version": "2.1.0",
   "description": "Scientific Workflow system",
   "author": {
@@ -19,6 +19,7 @@
   "scripts": {
     "start": "cd server; npm start",
     "build": "cd server; npm install; cd ../client; npm install; npm run build",
+    "lint": "eslint --fix --report-unused-disable-directives ./",
     "licenseReport": "run-s licenseReport-doc licenseReport-server licenseReport-client",
     "licenseReport-doc": "license-report --output=csv --csvHeaders --config license-report-config.json",
     "licenseReport-server": "license-report --package=server/package.json --output=csv --csvHeaders --config license-report-config.json",
@@ -27,7 +28,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^8.50.0",
-    "eslint": "^8.49.0",
     "eslint-plugin-chai-expect": "^3.0.0",
     "eslint-plugin-chai-friendly": "^0.7.2",
     "eslint-plugin-jsdoc": "^46.5.1",
