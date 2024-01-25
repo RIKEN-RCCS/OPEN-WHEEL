@@ -51,7 +51,7 @@ export default {
       this.term.clear();
     },
     log (log){
-      if(log.endsWith('\n')){
+      if(log.endsWith("\n")){
         this.term.write(log);
         return
       }
@@ -59,12 +59,13 @@ export default {
     },
   },
   methods:{
-   fit(){
+    fit(){
       debug(`current size: cols=${this.term.cols}, rows=${this.term.rows}`)
       const height=this.$el.clientHeight > 0 ?this.$el.clientHeight : this.canvasHeight * 0.4
       const width =this.$el.clientWidth  > 0 ?this.$el.clientWidth  :this.canvasWidth
       debug(`area size: width=${width}, height=${height}`);
-      const fontSize = window.getComputedStyle(this.$el, null).getPropertyValue("font-size").replace("px", "")
+      const fontSize = window.getComputedStyle(this.$el, null).getPropertyValue("font-size")
+        .replace("px", "")
       debug(`fontsize = ${fontSize}`);
       const rows=Math.floor(height/fontSize)
       const cols=Math.floor(width/fontSize)
@@ -78,7 +79,7 @@ export default {
   mounted () {
     this.term.open(this.$el);
     //following watch call back will fire immediately after canvasWidth and canvasHeight is set in graphView's mounted hook
-    const unwatch=this.$watch('canvasHeight', ()=>{
+    const unwatch=this.$watch("canvasHeight", ()=>{
       this.fit();
       unwatch();
     });

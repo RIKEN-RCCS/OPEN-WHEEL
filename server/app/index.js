@@ -105,10 +105,10 @@ router.use(express.static(path.resolve(tempdRoot, "viewer"), { index: false }));
 router.use(express.static(path.resolve(tempdRoot, "download"), { index: false }));
 
 const routes = {
-  home: require(path.resolve(__dirname, "routes/home")),
-  workflow: require(path.resolve(__dirname, "routes/workflow")),
-  remotehost: require(path.resolve(__dirname, "routes/remotehost")),
-  viewer: require(path.resolve(__dirname, "routes/viewer"))
+  home: require("./routes/home"),
+  workflow: require("./routes/workflow"),
+  remotehost: require("./routes/remotehost"),
+  viewer: require("./routes/viewer")
 };
 
 router.get("/", routes.home);
