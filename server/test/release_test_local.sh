@@ -26,7 +26,7 @@ echo '}]'
 } > ${CONFIG_DIR}/remotehost.json
 
 echo boot up test server
-docker compose up ${TAG_TEST_SERVER} -d
+docker compose up ${TAG_TEST_SERVER} -d --wait
 
 echo remove entry from known_hosts
 ssh-keygen -R '[localhost]:4000' 2>/dev/null

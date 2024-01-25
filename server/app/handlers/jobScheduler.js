@@ -5,11 +5,9 @@
  */
 "use strict";
 const { jobScheduler } = require("../db/db");
-
 const onGetJobSchedulerList = (cb)=>{
   cb(jobScheduler);
 };
-
 const onGetJobSchedulerLabelList = (cb)=>{
   cb(Object.keys(jobScheduler));
 };

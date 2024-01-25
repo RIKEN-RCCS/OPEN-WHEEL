@@ -23,14 +23,14 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
 const { projectJsonFilename, componentJsonFilename } = require("../app/db/db");
-const { createNewProject, updateComponent, createNewComponent, addInputFile, addFileLink, renameOutputFile  } = require("../app/core/projectFilesOperator");
+const { createNewProject, updateComponent, createNewComponent, addInputFile, addFileLink, renameOutputFile } = require("../app/core/projectFilesOperator");
 
 const { scriptName, pwdCmd, scriptHeader } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
-describe("UT for source component", function() {
+describe("UT for source component", function () {
   this.timeout(0);
-  beforeEach(async()=>{
+  beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
     const source0 = await createNewComponent(projectRootDir, projectRootDir, "source", { x: 11, y: 11 });
@@ -42,11 +42,11 @@ describe("UT for source component", function() {
     await fs.outputFile(path.join(projectRootDir, "task0", scriptName), scriptPwd);
     await addFileLink(projectRootDir, source0.ID, "foo", task0.ID, "bar");
   });
-  after(async()=>{
+  after(async ()=>{
     //await fs.remove(testDirRoot);
   });
   describe("#runProject", ()=>{
-    it("should copy foo to task0/bar", async()=>{
+    it("should copy foo to task0/bar", async ()=>{
       const state = await runProject(projectRootDir);
       expect(state).to.equal("finished");
       expect(path.resolve(projectRootDir, "task0", "bar")).to.be.a.file().with.contents("foo");

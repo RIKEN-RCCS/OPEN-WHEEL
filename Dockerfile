@@ -5,10 +5,12 @@ WORKDIR /usr/src/
 # to install phantomjs
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
 # build WHEEL
+COPY package.json package.json
+COPY common common
 COPY server server
-RUN cd server && npm install --omit=dev
 COPY client client
-RUN cd client; npm install; npm run build
+RUN npm install
+RUN npm install -w server -w client
 
 #build base image to run WHEEL
 FROM --platform=linux/amd64 node:20-slim AS base
@@ -18,7 +20,9 @@ RUN apt-get update && apt -y install curl git rsync openssh-server &&\
     apt -y install git-lfs &&\
     apt-get clean  &&\
     rm -rf /var/lib/apt/lists/*
+COPY --from=builder /usr/src/node_modules /usr/src/node_modules
 COPY --from=builder /usr/src/server /usr/src/server
+COPY common common
 RUN rm -fr server/app/config/*
 
 # run UT

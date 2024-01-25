@@ -16,9 +16,13 @@
       <v-card-text>
         <v-data-table
           id="table-header-with-underline"
+          v-model="selected"
           :headers="headers"
           :items="items"
           density="compact"
+          :return-object="true"
+          :show-select="true"
+          select-strategy="page"
         >
           <template #bottom />
         </v-data-table>
@@ -27,14 +31,20 @@
         <v-spacer />
         <v-btn
           class="text-capitalize"
-          @click="saveAll"
+          @click="commit"
+          prepend-icon="mdi-content-save-outline"
+          text="Save selected files"
+        />
+        <v-btn
+          class="text-capitalize"
+          @click="commitAll"
           prepend-icon="mdi-content-save-all-outline"
           text="Save All"
         />
         <v-btn
           class="text-capitalize"
           @click="discardChanges"
-          prepend-icon=mdi-alert-circle-outline
+          prepend-icon=mdi-close-box-multiple-outline
           text="discard all changes"
         />
         <v-btn
@@ -49,7 +59,7 @@
 </template>
 <script>
 export default {
-  props:{
+  props: {
     unsavedFiles: {
       type: Array,
       required: true
@@ -58,43 +68,47 @@ export default {
       type: Boolean,
       required: true
     },
-    withoutStatus:{
+    withoutStatus: {
       type: Boolean,
       default: false
     }
   },
-  data () {
+  data() {
     return {
       headers: [
         { title: "status", key: "status" },
-        { title: "filename", key: "name" },
+        { title: "filename", key: "name" }
       ],
+      selected: []
     };
   },
-  mounted(){
-    if(this.withoutStatus){
-      this.headers.splice(0,1);
+  mounted() {
+    if (this.withoutStatus) {
+      this.headers.splice(0, 1);
     }
   },
-  computed:{
-    show(){
+  computed: {
+    show() {
       return this.dialog;
     },
-    items(){
+    items() {
       return this.unsavedFiles;
     }
   },
   methods: {
-    closeDialog () {
-      this.$emit("closed","cancel");
+    closeDialog() {
+      this.$emit("closed", "cancel");
     },
-    discardChanges () {
-      this.$emit("closed","discard");
+    commit() {
+      this.$emit("commit", this.selected);
     },
-    saveAll () {
-      this.$emit("closed","save");
+    discardChanges() {
+      this.$emit("closed", "discard");
     },
-  },
+    commitAll() {
+      this.$emit("closed", "commit");
+    }
+  }
 
 };
 </script>

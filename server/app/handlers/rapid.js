@@ -8,8 +8,7 @@ const path = require("path");
 const { getLogger } = require("../logSettings");
 const { openFile, saveFile } = require("../core/fileUtils.js");
 const { emitAll } = require("./commUtils.js");
-
-const onOpenFile = async(clientID, projectRootDir, filename, forceNormal, cb)=>{
+const onOpenFile = async (clientID, projectRootDir, filename, forceNormal, cb)=>{
   try {
     const files = await openFile(projectRootDir, filename, forceNormal);
     const promise = [];
@@ -27,8 +26,7 @@ const onOpenFile = async(clientID, projectRootDir, filename, forceNormal, cb)=>{
   }
   return cb(true);
 };
-
-const onSaveFile = async(projectRootDir, filename, dirname, content, cb)=>{
+const onSaveFile = async (projectRootDir, filename, dirname, content, cb)=>{
   try {
     await saveFile(path.resolve(dirname, filename), content);
   } catch (err) {

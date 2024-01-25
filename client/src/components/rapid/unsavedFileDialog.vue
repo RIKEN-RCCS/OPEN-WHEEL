@@ -44,12 +44,12 @@ export default {
   name: "UnsavedFileDialog",
   props: {
     unsavedFileDialog: Boolean,
-    closingFilename: String,
+    closingFilename: String
   },
   data: function () {
     return {
     };
   },
-  methods: {},
+  methods: {}
 };
 </script>

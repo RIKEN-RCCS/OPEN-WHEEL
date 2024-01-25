@@ -7,7 +7,6 @@
 const path = require("path");
 const { pathseps, reWin32ReservedNames, metaCharactors, escapeRegExp } = require("../lib/utility");
 
-
 /**
  * replace path separator by native path separator
  */

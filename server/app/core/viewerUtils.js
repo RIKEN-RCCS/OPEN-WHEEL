@@ -5,12 +5,11 @@
  */
 "use strict";
 const fs = require("fs-extra");
-const FileType = require("file-type");
 const isSvg = require("is-svg");
 
 const viewerSupportedTypes = ["apng", "avif", "gif", "jpg", "png", "webp", "tif", "bmp", "svg"];
-
 async function getFiletype(filename) {
+  const FileType = await import("file-type");
   let rt;
   const buffer = await fs.readFile(filename);
   if (isSvg(buffer.toString())) {

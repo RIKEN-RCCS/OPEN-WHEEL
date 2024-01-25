@@ -7,43 +7,42 @@
 </template>
 <script>
 "use strict";
-import Fsender from "@/components/componentGraph/fsender.vue"
-import TextBox from "@/components/componentGraph/textBox.vue"
-import { textHeight, boxWidth } from "@/lib/constants.json"
-import {calcFsenderPos} from "@/lib/utils.js"
+import Fsender from "../../components/componentGraph/fsender.vue";
+import TextBox from "../../components/componentGraph/textBox.vue";
+import { calcFsenderPos } from "../../lib/utils.js";
 
-export default{
+export default {
   name: "outputFileBox",
-  components:{
+  components: {
     Fsender,
     TextBox
   },
-  props:{
-    center:{
+  props: {
+    center: {
       required: true,
       type: Object
     },
-    index:{
+    index: {
       required: true,
       type: Number
     },
-    componentId:{
+    componentId: {
       required: true,
-      type:String,
+      type: String
     },
-    outputFilename:{
-      type:String,
+    outputFilename: {
+      type: String,
       default: ""
     },
-    boxHeight:{
+    boxHeight: {
       required: true,
-      type:Number
+      type: Number
     }
   },
-  computed:{
-    fsenderPos(){
+  computed: {
+    fsenderPos() {
       return calcFsenderPos(this.center, this.index);
-    },
+    }
   }
-}
+};
 </script>

@@ -22,7 +22,7 @@ const getNodeAndPath = (targetID, root, path)=>{
         name: root.name,
         type: root.type,
         parent: root.parent,
-        ID: root.ID,
+        ID: root.ID
       });
     }
     return root;
@@ -32,14 +32,13 @@ const getNodeAndPath = (targetID, root, path)=>{
   }
   for (const node of root.children) {
     const found = getNodeAndPath(targetID, node, path);
-
     if (found) {
       if (Array.isArray(path)) {
         path.unshift({
           name: root.name,
           type: root.type,
           parent: root.parent,
-          ID: root.ID,
+          ID: root.ID
         });
       }
       return found;

@@ -1,6 +1,6 @@
 docs
 documentMD
-*/node_modules
+**/node_modules
 bin
 server/coverage
 client/bin

@@ -19,7 +19,6 @@ const { askPassword } = require("../core/sshManager.js");
 async function tryToConnect(clientID, hostInfo, cb) {
   hostInfo.password = askPassword.bind(null, clientID, `${hostInfo.name} - password`);
   hostInfo.passphrase = askPassword.bind(null, clientID, `${hostInfo.name} - passpharse`);
-
   if (process.env.WHEEL_VERBOSE_SSH) {
     hostInfo.sshOpt = ["-vvv"];
   }
@@ -29,9 +28,9 @@ async function tryToConnect(clientID, hostInfo, cb) {
   try {
     await ssh.canConnect(120);
   } catch (err) {
-    if(err.reason === "CANCELED"){
+    if (err.reason === "CANCELED") {
       logger.info("tryToConnect canceled by user");
-      return cb("canceled")
+      return cb("canceled");
     }
     logger.error("tryToConnect failed with", err);
     return cb(err);
@@ -39,7 +38,6 @@ async function tryToConnect(clientID, hostInfo, cb) {
   ssh.disconnect();
   return cb("success");
 }
-
 async function onTryToConnectById(clientID, id, cb) {
   const hostInfo = remoteHost.get(id);
   await tryToConnect(clientID, hostInfo, cb);

@@ -36,7 +36,7 @@ const { gitInit } = require("../app/core/gitOperator2");
 //return { tarace: console.log, info: console.log, debug: console.log, error: console.log, warn: console.log };
 //});
 
-const testDirRoot = "WHEEL_TEST_TMP";
+const testDirRoot = path.resolve("./WHEEL_TEST_TMP");
 
 describe("fileManager UT", ()=>{
   beforeEach(async function (){
@@ -73,13 +73,13 @@ describe("fileManager UT", ()=>{
       fs.ensureSymlink(path.join(testDirRoot, "foo_3"), path.join(testDirRoot, "linkpoyo"))
     ]);
   });
-  after(async()=>{
+  after(async ()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
       await fs.remove(testDirRoot);
     }
   });
   describe("#getFileList", ()=>{
-    it("should send filelist", async()=>{
+    it("should send filelist", async ()=>{
       await onGetFileList(testDirRoot, { mode: "underComponent", path: path.resolve(testDirRoot) }, cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith([{ path: path.resolve(testDirRoot), name: ".git", type: "dir", islink: false, isComponentDir: false },
@@ -102,7 +102,7 @@ describe("fileManager UT", ()=>{
         { path: path.resolve(testDirRoot), name: "linkpuyo", type: "file", islink: true }]);
     });
     describe("reproduction of #518", ()=>{
-      beforeEach(async()=>{
+      beforeEach(async ()=>{
         await fs.remove(testDirRoot);
         await Promise.all([
           fs.outputFile(path.join(testDirRoot, "t_1"), "t_1"),
@@ -110,14 +110,14 @@ describe("fileManager UT", ()=>{
           fs.outputFile(path.join(testDirRoot, "t_bb.txt"), "t_bb.txt")
         ]);
       });
-      it("should send all files", async()=>{
+      it("should send all files", async ()=>{
         await onGetFileList(testDirRoot, { mode: "underComponent", path: path.resolve(testDirRoot) }, cb);
         expect(cb).to.have.been.calledOnce;
         expect(cb).to.have.been.calledWith([{ path: path.resolve(testDirRoot), name: "t_1", type: "file", islink: false },
           { path: path.resolve(testDirRoot), name: "t_aa.sh", type: "file", islink: false },
           { path: path.resolve(testDirRoot), name: "t_bb.txt", type: "file", islink: false }]);
       });
-      it("just bundle t_1 and t_2", async()=>{
+      it("just bundle t_1 and t_2", async ()=>{
         await fs.outputFile(path.join(testDirRoot, "t_2"), "t_2");
         await onGetFileList(testDirRoot, { mode: "underComponent", path: path.resolve(testDirRoot) }, cb);
         expect(cb).to.have.been.calledOnce;
@@ -128,20 +128,20 @@ describe("fileManager UT", ()=>{
     });
   });
   describe("#getSNDContents", ()=>{
-    it("should send contens of SND", async()=>{
+    it("should send contens of SND", async ()=>{
       await onGetSNDContents(testDirRoot, testDirRoot, "huga_*_200", false, cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith([{ path: path.resolve(testDirRoot), name: "huga_1_200", type: "file", islink: false },
         { path: path.resolve(testDirRoot), name: "huga_4_200", type: "file", islink: false }]);
     });
-    it("should send foo_* files", async()=>{
+    it("should send foo_* files", async ()=>{
       await onGetSNDContents(testDirRoot, testDirRoot, "foo_*", false, cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith([{ path: path.resolve(testDirRoot), name: "foo_1", type: "file", islink: false },
         { path: path.resolve(testDirRoot), name: "foo_2", type: "file", islink: false },
         { path: path.resolve(testDirRoot), name: "foo_3", type: "file", islink: false }]);
     });
-    it("should send foo_* directories", async()=>{
+    it("should send foo_* directories", async ()=>{
       await onGetSNDContents(testDirRoot, testDirRoot, "foo_*", true, cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith([{ path: path.resolve(testDirRoot), name: "foo_00", type: "dir", islink: false, isComponentDir: false },
@@ -150,25 +150,25 @@ describe("fileManager UT", ()=>{
     });
   });
   describe("#removeFile", ()=>{
-    it("should remove directory", async()=>{
+    it("should remove directory", async ()=>{
       await onRemoveFile(testDirRoot, path.join(testDirRoot, "baz"), cb);
       expect(path.join(testDirRoot, "baz")).not.to.be.a.path();
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
     });
-    it("should remove reguler file", async()=>{
+    it("should remove reguler file", async ()=>{
       await onRemoveFile(testDirRoot, path.join(testDirRoot, "foo_1"), cb);
       expect(path.join(testDirRoot, "foo_1")).not.to.be.a.path();
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
     });
-    it("should remove symlink to directory", async()=>{
+    it("should remove symlink to directory", async ()=>{
       await onRemoveFile(testDirRoot, path.join(testDirRoot, "linkbar"), cb);
       expect(path.join(testDirRoot, "linkbar")).not.to.be.a.path();
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
     });
-    it("should remove symlink to file", async()=>{
+    it("should remove symlink to file", async ()=>{
       await onRemoveFile(testDirRoot, path.join(testDirRoot, "linkpiyo"), cb);
       expect(path.join(testDirRoot, "linkpiyo")).not.to.be.a.path();
       expect(cb).to.have.been.calledOnce;
@@ -176,28 +176,28 @@ describe("fileManager UT", ()=>{
     });
   });
   describe("#renameFile", ()=>{
-    it("should rename directory", async()=>{
+    it("should rename directory", async ()=>{
       await onRenameFile(testDirRoot, testDirRoot, "baz", "hoge", cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
       expect(path.join(testDirRoot, "baz")).not.to.be.a.path();
       expect(path.join(testDirRoot, "hoge")).to.be.a.directory();
     });
-    it("should rename reguler file", async()=>{
+    it("should rename reguler file", async ()=>{
       await onRenameFile(testDirRoot, testDirRoot, "foo_1", "hoge", cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
       expect(path.join(testDirRoot, "foo_1")).not.to.be.a.path();
       expect(path.join(testDirRoot, "hoge")).to.be.a.file();
     });
-    it("should rename symlink to directory", async()=>{
+    it("should rename symlink to directory", async ()=>{
       await onRenameFile(testDirRoot, testDirRoot, "linkbar", "hoge", cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
       expect(path.join(testDirRoot, "linkbar")).not.to.be.a.path();
       expect(path.join(testDirRoot, "hoge")).to.be.a.directory();
     });
-    it("should rename symlink to file", async()=>{
+    it("should rename symlink to file", async ()=>{
       await onRenameFile(testDirRoot, testDirRoot, "linkpiyo", "hoge", cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
@@ -206,7 +206,7 @@ describe("fileManager UT", ()=>{
     });
   });
   describe.skip("#downloadFile (not implemented for now)", ()=>{
-    it("should send file", async()=>{
+    it("should send file", async ()=>{
       await onDownload(emit, "dummy", { path: testDirRoot, name: "foo_1" }, cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
@@ -215,7 +215,7 @@ describe("fileManager UT", ()=>{
       const sendData = emit.args[0][1];
       expect(sendData.toString()).to.equal("foo_1");
     });
-    it("should not send directory", async()=>{
+    it("should not send directory", async ()=>{
       await onDownload(emit, "dummy", { path: testDirRoot, name: "foo" }, cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(false);
@@ -223,21 +223,21 @@ describe("fileManager UT", ()=>{
     });
   });
   describe("#createNewFile", ()=>{
-    it("should create new file by relative path", async()=>{
+    it("should create new file by relative path", async ()=>{
       await onCreateNewFile(testDirRoot, path.join(testDirRoot, "hoge"), cb);
       expect(path.join(testDirRoot, "hoge")).to.be.a.file().and.empty;
     });
-    it("should create new file by absolute path", async()=>{
+    it("should create new file by absolute path", async ()=>{
       await onCreateNewFile(testDirRoot, path.resolve(testDirRoot, "hoge"), cb);
       expect(path.join(testDirRoot, "hoge")).to.be.a.file().and.empty;
     });
   });
-  describe("#createNewDir", async()=>{
-    it("should create new directory by relative path", async()=>{
+  describe("#createNewDir", async ()=>{
+    it("should create new directory by relative path", async ()=>{
       await onCreateNewDir(testDirRoot, path.join(testDirRoot, "hoge"), cb);
       expect(path.join(testDirRoot, "hoge")).to.be.a.directory().with.files([".gitkeep"]);
     });
-    it("should create new directory by absolute path", async()=>{
+    it("should create new directory by absolute path", async ()=>{
       await onCreateNewDir(testDirRoot, path.resolve(testDirRoot, "hoge"), cb);
       expect(path.join(testDirRoot, "hoge")).to.be.a.directory().with.files([".gitkeep"]);
     });
