@@ -3,9 +3,13 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
+import { toRaw } from "vue";
 import Vuex from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:vuex");
+import deepEqual from "deep-eql";
+import SIO from "@/lib/socketIOWrapper.js";
+
 
 const logger = (store)=>{
   store.subscribe((mutation)=>{
@@ -51,6 +55,7 @@ const mutationFactory = (types)=>{
  * @property { string } snackbarMessage - message on snackbar
  * @property { Boolean } openDialog - flag to show global dialog
  * @property { Object } dialogContent - dialog's content
+ * @property { Boolean } readOnly - project wide read-only flag
  *
  */
 const state = {
@@ -81,6 +86,7 @@ const state = {
   openDialog: false,
   dialogContent: null,
   dialogQueue: [],
+  readOnly: false
 };
 
 const mutations = mutationFactory(Object.keys(state));
@@ -90,19 +96,21 @@ export default new Vuex.Store({
   mutations,
   actions: {
     selectedComponent: (context, payload)=>{
+      const {selectedComponent: selected, copySelectedComponent:copied, projectRootDir, currentComponent} = context.state
+
+      if( copied !== null && !deepEqual(copied, selected)){
+        SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID,(rt)=>{
+          console.log("compoent update done", rt);
+        });
+      }
       if(payload === null){
         context.commit("selectedComponent", null);
         context.commit("copySelectedComponent", null);
         return
       }
 
-      //これのせいで、選択中のコンポーネントがアップデートされても更新されていなかった
-      //一旦コメントアウトして様子見
-      //if (context.state.selectedComponent !== null && payload.ID === context.state.selectedComponent.ID) {
-      //return;
-      //}
       context.commit("selectedComponent", payload);
-      const dup = Object.assign({}, payload);
+      const dup = structuredClone(toRaw(payload));
       context.commit("copySelectedComponent", dup);
     },
     showSnackbar: (context, payload)=>{
@@ -168,9 +176,6 @@ export default new Vuex.Store({
     },
     pathSep: (state)=>{
       return typeof state.projectRootDir === "string" && state.projectRootDir[0] !== "/" ? "\\" : "/";
-    },
-    isEdittable: (state)=>{
-      return state.projectState === "not-started";
     },
     canRun: (state)=>{
       return ["not-started", "paused"].includes(state.projectState);

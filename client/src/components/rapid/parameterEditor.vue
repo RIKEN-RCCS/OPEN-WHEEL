@@ -44,7 +44,6 @@
 </template>
 <script>
 "use strict";
-import { toRaw } from 'vue'
 import { mapState, mapGetters } from "vuex";
 import deepEqual from "deep-eql"
 import SIO from "@/lib/socketIOWrapper.js";

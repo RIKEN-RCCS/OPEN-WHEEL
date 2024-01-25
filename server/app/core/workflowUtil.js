@@ -10,21 +10,12 @@ const { promisify } = require("util");
 const glob = require("glob");
 const { readJsonGreedy } = require("./fileUtils");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { writeComponentJson } = require("./projectFilesOperator");
 const { hasChild, isComponent } = require("./workflowComponent");
 
 async function getComponentDir(projectRootDir, targetID) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   const componentPath = projectJson.componentPath[targetID];
   return componentPath ? path.resolve(projectRootDir, componentPath) : null;
-}
-async function getParentDir(projectRootDir, targetID) {
-  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  const componentPath = projectJson.componentPath[targetID];
-  if (typeof componentPath !== "string" || componentPath === "./") {
-    return projectRootDir;
-  }
-  return path.resolve(projectRootDir, path.dirname(componentPath));
 }
 
 async function getComponentRelativePath(projectRootDir, targetID, srcID) {
@@ -82,20 +73,6 @@ async function getChildren(projectRootDir, parentID) {
   });
 }
 
-//component can be one of "path of component Json file", "component json object", or "component's ID"
-async function updateComponentJson(projectRootDir, component, modifier) {
-  const componentJson = await getComponent(projectRootDir, component);
-
-  if (typeof modifier === "function") {
-    await modifier(componentJson);
-  }
-
-  //resolve component json filename from parenet dirname, component.name, and componentJsonFilename constant
-  //to avoid using old path in componentPath when component's name is changed
-  const parentDir = componentJson.parent ? await getComponentDir(projectRootDir, componentJson.parent) : projectRootDir;
-  return writeComponentJson(projectRootDir, path.resolve(parentDir, componentJson.name), componentJson);
-}
-
 /**
  * return component,  its children, and grandsons
  * @param {string} projectRootDir - project's root path
@@ -127,10 +104,7 @@ async function getThreeGenerationFamily(projectRootDir, rootComponentDir) {
 
 module.exports = {
   getComponentDir,
-  getParentDir,
   getComponent,
-  getChildren,
-  updateComponentJson,
   getComponentRelativePath,
   getThreeGenerationFamily
 };
