@@ -23,76 +23,75 @@
 
 <script>
 "use strict";
-import { boxWidth, textHeight, iconSize, componentBackgroundColor  } from "@/lib/constants.json"
-import { getComponentIcon, getColor, calcSubgraphHeight } from "@/lib/utils.js"
-export default{
+import { boxWidth, textHeight, iconSize, componentBackgroundColor } from "../../lib/constants.json";
+import { getComponentIcon, getColor, calcSubgraphHeight } from "../../lib/utils.js";
+export default {
   name: "sub-graph",
-  props:{
-    descendants:{
+  props: {
+    descendants: {
       required: true,
       type: Array
     },
-    center:{
-      required:true,
-      type:Object
-    },
-    boxHeight:{
+    center: {
       required: true,
-      type:Number
+      type: Object
+    },
+    boxHeight: {
+      required: true,
+      type: Number
     }
   },
-  data(){
+  data() {
     return {
       width: boxWidth,
       componentBackgroundColor: componentBackgroundColor,
       iconSize: iconSize
+    };
+  },
+  computed: {
+    xRatio() {
+      return this.width / (this.maxX - this.minX + 6 * iconSize);
+    },
+    yRatio() {
+      return this.height / (this.maxY - this.minY + 6 * iconSize);
+    },
+    minX() {
+      return this.descendants.reduce((a, c)=>{
+        return a < c.pos.x ? a : c.pos.x;
+      }, 0);
+    },
+    minY() {
+      return this.descendants.reduce((a, c)=>{
+        return a < c.pos.y ? a : c.pos.y;
+      }, 0);
+    },
+    maxX() {
+      return this.descendants.reduce((a, c)=>{
+        return a > c.pos.x ? a : c.pos.x;
+      }, 0);
+    },
+    maxY() {
+      return this.descendants.reduce((a, c)=>{
+        return a > c.pos.y ? a : c.pos.y;
+      }, 0);
+    },
+    height() {
+      return calcSubgraphHeight(this.descendants);
+    },
+    x() {
+      return this.center.x - boxWidth / 2;
+    },
+    y() {
+      return this.center.y - textHeight / 2 + this.boxHeight - this.height;
     }
   },
-  computed:{
-    xRatio(){
-      return this.width/(this.maxX - this.minX + 6 * iconSize)
-    },
-    yRatio(){
-      return this.height/(this.maxY - this.minY + 6 * iconSize)
-    },
-    minX(){
-      return this.descendants.reduce((a,c)=>{
-        return  a < c.pos.x ? a: c.pos.x
-      }, 0);
-    },
-    minY(){
-      return this.descendants.reduce((a,c)=>{
-        return  a < c.pos.y ? a: c.pos.y
-      }, 0);
-    },
-    maxX(){
-      return this.descendants.reduce((a,c)=>{
-        return  a > c.pos.x ? a: c.pos.x
-      }, 0);
-    },
-    maxY(){
-      return this.descendants.reduce((a,c)=>{
-        return  a > c.pos.y ? a: c.pos.y
-      }, 0);
-    },
-    height(){
-      return calcSubgraphHeight(this.descendants)
-    },
-    x(){
-      return this.center.x - boxWidth/2
-    },
-    y(){
-      return this.center.y - textHeight/2 + this.boxHeight - this.height
-    },
-  },
-  methods:{
-    getComponentIcon(...args){
+  methods: {
+    getComponentIcon(...args) {
       return getComponentIcon(...args);
     },
-    getIconColor(type){
-      return getColor(type)
+    getIconColor(type) {
+      return getColor(type);
     }
   }
-}
+};
 </script>
-

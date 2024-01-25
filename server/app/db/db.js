@@ -8,7 +8,6 @@ const os = require("os");
 const path = require("path");
 const fs = require("fs-extra");
 const JsonArrayManager = require("./jsonArrayManager");
-
 function isExists(target, file) {
   try {
     const stats = fs.statSync(target);
@@ -26,7 +25,8 @@ function isExists(target, file) {
  */
 function getConfigFile(filename, failIfNotFound) {
   const envFile = typeof process.env.WHEEL_CONFIG_DIR === "string"
-    ? path.resolve(process.env.WHEEL_CONFIG_DIR, filename) : null;
+    ? path.resolve(process.env.WHEEL_CONFIG_DIR, filename)
+    : null;
   if (envFile !== null && isExists(envFile, true)) {
     return envFile;
   }
@@ -44,7 +44,8 @@ function getConfigFile(filename, failIfNotFound) {
     throw err;
   }
   const envFileDir = typeof process.env.WHEEL_CONFIG_DIR === "string"
-    ? path.resolve(process.env.WHEEL_CONFIG_DIR) : null;
+    ? path.resolve(process.env.WHEEL_CONFIG_DIR)
+    : null;
   if (envFileDir !== null && isExists(envFileDir, false)) {
     return path.resolve(envFileDir, filename);
   }
@@ -60,7 +61,6 @@ function getConfigFile(filename, failIfNotFound) {
   err.filename = filename;
   throw err;
 }
-
 function getVar(target, alt) {
   return typeof target !== "undefined" ? target : alt;
 }
@@ -70,7 +70,6 @@ function getIntVar(target, alt) {
 function getStringVar(target, alt) {
   return typeof target === "string" ? target : alt;
 }
-
 function readAndMergeConfigFile(filename) {
   let userConfigFilename;
   try {
@@ -94,6 +93,7 @@ const remotehostFilename = getConfigFile(getStringVar(config.remotehostJsonFile,
 const jobScriptTemplateFilename = getConfigFile(getStringVar(config.jobScriptTemplateJsonFile, "jobScriptTemplate.json"));
 const projectListFilename = getConfigFile(getStringVar(config.projectListJsonFile, "projectList.json"));
 const logFilename = getConfigFile(getStringVar(config.logFilename, "wheel.log"));
+const credentialFilename = getConfigFile(getStringVar(config.credentialFilename, "credentials.json"));
 
 //export constants
 module.exports.suffix = ".wheel";
@@ -103,18 +103,17 @@ module.exports.statusFilename = "status.wheel.txt";
 module.exports.jobManagerJsonFilename = "jm.wheel.json";
 module.exports.filesJsonFilename = "files.wheel.json";
 module.exports.defaultPSconfigFilename = "parameterSetting.json";
-module.exports.userDBFilename="user.db";
-module.exports.userDBDir= process.env.WHEEL_USER_DB_DIR|| __dirname;
-
+module.exports.userDBFilename = "user.db";
+module.exports.userDBDir = process.env.WHEEL_USER_DB_DIR || __dirname;
 
 if (!process.env.WHEEL_USE_HTTP) {
   module.exports.keyFilename = getConfigFile("server.key", true);
   module.exports.certFilename = getConfigFile("server.crt", true);
 }
 module.exports.logFilename = logFilename;
+module.exports.credentialFilename = credentialFilename;
 
 //re-export server settings
-module.exports.interval = parseInt(process.env.WHEEL_INTERVAL,10) || getIntVar(config.interval, 1000);
 module.exports.port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
 module.exports.rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
 module.exports.defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);
@@ -123,7 +122,6 @@ module.exports.maxLogSize = getIntVar(config.maxLogSize, 8388608);
 module.exports.compressLogFile = getVar(config.compressLogFile, true);
 module.exports.numJobOnLocal = parseInt(process.env.WHEEL_NUM_LOCAL_JOB, 10) || getIntVar(config.numJobOnLocal, 1);
 module.exports.defaultTaskRetryCount = getIntVar(config.defaultTaskRetryCount, 1);
-module.exports.shutdownDelay = getIntVar(config.shutdownDelay, 0);
 module.exports.gitLFSSize = getIntVar(config.gitLFSSize, 200);
 
 //export setting files

@@ -22,6 +22,8 @@ class BaseWorkflowComponent {
     this.type = null;
     this.name = null;
     this.description = null;
+    this.env = {};
+    this.disable = false;
 
     /**
      * component state
@@ -275,7 +277,7 @@ class BulkjobTask extends Task {
   constructor(pos, parent, stepnum, ...args) {
     super(pos, parent, stepnum, ...args);
     this.type = "bulkjobTask";
-    this.useJobScheduler = true;
+    this.useJobScheduler = true; //memo should be ignored
 
     /*bulkjob parameter */
     this.usePSSettingFile = true;
@@ -288,13 +290,34 @@ class BulkjobTask extends Task {
 }
 
 /**
+ * representation of if and break block in loop
+ */
+class Break extends GeneralComponent {
+  constructor(...args) {
+    super(...args);
+    this.type = "break";
+    this.condition = null;
+  }
+}
+
+/**
+ * representation of if and continue block in loop
+ */
+class Continue extends GeneralComponent {
+  constructor(...args) {
+    super(...args);
+    this.type = "continue";
+    this.condition = null;
+  }
+}
+
+/**
  * factory method for workflow component class
  * @param {string} type -  component type
  * @returns {*} - component object
  */
 function componentFactory(type, ...args) {
   let component;
-
   switch (type) {
     case "task":
       component = new Task(...args);
@@ -335,63 +358,68 @@ function componentFactory(type, ...args) {
     case "bulkjobTask":
       component = new BulkjobTask(...args);
       break;
+    case "break":
+      component = new Break(...args);
+      break;
+    case "continue":
+      component = new Continue(...args);
+      break;
     default:
       component = null;
   }
   return component;
 }
-
 function hasChild(component) {
   return component.type === "workflow" || component.type === "parameterStudy" || component.type === "for" || component.type === "while" || component.type === "foreach" || component.type === "stepjob";
 }
 
-async function isBehindIfComponent(projectRootDir, component){
-  const hasPrevious = Array.isArray(component.previous) &&component.previous.length > 0
-  const hasConnectedInputFiles =Array.isArray(component.inputFiles) && component.inputFiles.some((inputFile)=>{
-    return inputFile.src.length > 0
+async function isBehindIfComponent(projectRootDir, component) {
+  const hasPrevious = Array.isArray(component.previous) && component.previous.length > 0;
+  const hasConnectedInputFiles = Array.isArray(component.inputFiles) && component.inputFiles.some((inputFile)=>{
+    return inputFile.src.length > 0;
   });
 
-  if(!(hasPrevious || hasConnectedInputFiles)){
-    return false
+  if (!(hasPrevious || hasConnectedInputFiles)) {
+    return false;
   }
 
-  if(hasPrevious){
-    for(const previous of component.previous){
-      const previousComponent=await readComponentJsonByID(projectRootDir, previous);
+  if (hasPrevious) {
+    for (const previous of component.previous) {
+      const previousComponent = await readComponentJsonByID(projectRootDir, previous);
 
-      if(previousComponent.type === "if"){
-        return true
+      if (previousComponent.type === "if") {
+        return true;
       }
       const rt = await isBehindIfComponent(projectRootDir, previousComponent);
 
-      if(rt){
-        return true
+      if (rt) {
+        return true;
       }
     }
   }
 
-  if(hasConnectedInputFiles){
-    for(const inputFile of component.inputFiles){
-      for(const src of inputFile.src){
-        const srcComponent = await readComponentJsonByID(projectRootDir, src.srcNode)
+  if (hasConnectedInputFiles) {
+    for (const inputFile of component.inputFiles) {
+      for (const src of inputFile.src) {
+        const srcComponent = await readComponentJsonByID(projectRootDir, src.srcNode);
 
-        if(srcComponent.type === "if"){
-          return true
+        if (srcComponent.type === "if") {
+          return true;
         }
         const rt = await isBehindIfComponent(projectRootDir, srcComponent);
 
-        if(rt){
-          return true
+        if (rt) {
+          return true;
         }
       }
     }
   }
-  return false
+  return false;
 }
 
 async function isInitialComponent(projectRootDir, component) {
-  if (await isBehindIfComponent(projectRootDir, component)){
-    return false
+  if (await isBehindIfComponent(projectRootDir, component)) {
+    return false;
   }
   if (component.type === "storage") {
     return component.outputFiles.some((outputFile)=>{
@@ -411,10 +439,6 @@ async function isInitialComponent(projectRootDir, component) {
   //it will be suspended in dispatcher._dispatch()
 
   return true;
-}
-
-function isComponent(componentJson) {
-  return componentJson instanceof BaseWorkflowComponent;
 }
 
 /**
@@ -439,22 +463,30 @@ function removeDuplicatedComponent(components) {
  * @param {string} type - component type
  * @returns {string} - component's basename
  */
-function getComponentDefaultName(type){
-  if (type === "stepjobTask"){
-    return "sjTask"
+function getComponentDefaultName(type) {
+  if (type === "stepjobTask") {
+    return "sjTask";
   }
-  if(type === "bulkjobTask"){
-    return "bjTask"
+  if (type === "bulkjobTask") {
+    return "bjTask";
   }
-  return type
+  return type;
 }
 
+/**
+ * return this component run on localhost or not
+ * @param {Object} component - component object
+ * @return {Boolean} - local component or not
+ */
+function isLocalComponent(component) {
+  return typeof component.host === "undefined" || component.host === "localhost";
+}
 
 module.exports = {
   componentFactory,
   hasChild,
   isInitialComponent,
-  isComponent,
+  isLocalComponent,
   removeDuplicatedComponent,
   getComponentDefaultName
 };

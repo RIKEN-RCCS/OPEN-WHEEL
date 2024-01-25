@@ -6,21 +6,18 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const { zip } = require("zip-a-folder");
 const { readComponentJsonByID } = require("../core/componentJsonIO.js");
-const { isLocal } = require("../core/projectFilesOperator.js");
+const { isLocalComponent } = require("../core/workflowComponent.js");
 const { remoteHost } = require("../db/db");
 const { getLogger } = require("../logSettings");
 const { createSsh, getSsh } = require("../core/sshManager");
 const { createTempd } = require("../core/tempd.js");
 const { formatSshOutput } = require("../lib/utility.js");
-
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
-  if (component.type !== "storage" || isLocal(component)) {
+  if (component.type !== "storage" || isLocalComponent(component)) {
     return;
   }
-
   try {
     const id = remoteHost.getID("name", component.host);
     const hostInfo = remoteHost.get(id);
@@ -31,14 +28,12 @@ async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb
   }
   cb(true);
 }
-
-
 async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
   try {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
     const stdout = [];
-    const rt = await ssh.exec(`ls -F ${target}`, 120,(output)=>{
+    const rt = await ssh.exec(`ls -F ${target}`, 120, (output)=>{
       stdout.push(output);
     });
     if (rt !== 0) {
@@ -93,8 +88,8 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
 async function onGetRemoteSNDContents(projectRootDir) {
   getLogger(projectRootDir).error(projectRootDir, "onGetRemoteSNDContents should not be called any more");
 }
-
 async function onRemoteDownload(projectRootDir, target, host, cb) {
+  const { zip } = await import("zip-a-folder");
   try {
     const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
     const tmpDir = await fs.mkdtemp(`${dir}/`);
@@ -104,7 +99,6 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
     const ssh = await getSsh(projectRootDir, id);
     await ssh.recv([target], `${tmpDir}/`);
     const stats = await fs.stat(path.resolve(tmpDir, downloadContentName));
-
     if (stats.isDirectory()) {
       zip(path.resolve(tmpDir, downloadContentName), `${path.resolve(tmpDir, downloadContentName)}.zip`);
     }
@@ -124,47 +118,47 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
  * @param {string} host - label of hostInof
  * @param {Function} cb - call back function should be called on client
  */
-async function  onCreateNewRemoteFile(projectRootDir, argFilename, host, cb){
-  try{
+async function onCreateNewRemoteFile(projectRootDir, argFilename, host, cb) {
+  try {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    const rt = await ssh.exec(`touch ${argFilename}`)
+    const rt = await ssh.exec(`touch ${argFilename}`);
     getLogger(projectRootDir).debug(`create ${argFilename} on ${host}`);
     return cb(rt === 0 ? true : rt);
-  }catch(e){
-    return cb(e)
+  } catch (e) {
+    return cb(e);
   }
 }
-async function  onCreateNewRemoteDir(projectRootDir, argDirname, host, cb){
-  try{
+async function onCreateNewRemoteDir(projectRootDir, argDirname, host, cb) {
+  try {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    const rt =  await ssh.exec(`mkdir ${argDirname}`)
+    const rt = await ssh.exec(`mkdir ${argDirname}`);
     return cb(rt === 0 ? true : rt);
-  }catch(e){
-    return cb(e)
+  } catch (e) {
+    return cb(e);
   }
 }
-async function  onRemoveRemoteFile(projectRootDir, target, host, cb){
-  try{
+async function onRemoveRemoteFile(projectRootDir, target, host, cb) {
+  try {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    const rt =  await ssh.exec(`rm -fr ${target}`)
+    const rt = await ssh.exec(`rm -fr ${target}`);
     return cb(rt === 0 ? true : rt);
-  }catch(e){
-    return cb(e)
+  } catch (e) {
+    return cb(e);
   }
 }
-async function  onRenameRemoteFile(projectRootDir, parentDir, argOldName, argNewName, host, cb){
-  try{
-    const oldName=path.join(parentDir, argOldName)
-    const newName=path.join(parentDir, argNewName)
+async function onRenameRemoteFile(projectRootDir, parentDir, argOldName, argNewName, host, cb) {
+  try {
+    const oldName = path.join(parentDir, argOldName);
+    const newName = path.join(parentDir, argNewName);
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    const rt = await ssh.exec(`mv ${oldName} ${newName}`)
+    const rt = await ssh.exec(`mv ${oldName} ${newName}`);
     return cb(rt === 0 ? true : rt);
-  }catch(e){
-    return cb(e)
+  } catch (e) {
+    return cb(e);
   }
 }
 

@@ -25,71 +25,69 @@
 </template>
 <script>
 "use strict";
-import EquilateralTriangle from "@/components/componentGraph/triangle.vue";
-import Connector from "@/components/componentGraph/connector.vue";
-import {filePlugColor, plugSize } from "@/lib/constants.json"
-
+import EquilateralTriangle from "../../components/componentGraph/triangle.vue";
+import Connector from "../../components/componentGraph/connector.vue";
+import { filePlugColor, plugSize } from "../../lib/constants.json";
 
 export default {
   name: "Fsender",
-  components:{
+  components: {
     EquilateralTriangle,
     Connector
   },
-  props:{
-    start:{
+  props: {
+    start: {
       required: true,
       type: Object
     },
-    boxHeight :{
+    boxHeight: {
       type: Number,
       required: true
     },
-    componentId:{
+    componentId: {
       required: true,
-      type:String,
+      type: String
     },
-    outputFilename:{
+    outputFilename: {
       required: true,
-      type:String,
+      type: String
     }
   },
-  data(){
+  data() {
     return {
       color: filePlugColor,
-      end: {x: this.start.x ,y: this.start.y},
+      end: { x: this.start.x, y: this.start.y },
       dragging: false,
       size: plugSize
+    };
+  },
+  watch: {
+    start(e) {
+      this.end.x = e.x;
+      this.end.y = e.y;
     }
   },
-  watch:{
-    start(e){
-      this.end.x=e.x
-      this.end.y=e.y
-    }
-  },
-  methods:{
-    onDragStart(event){
-      this.dragging=true
+  methods: {
+    onDragStart() {
+      this.dragging = true;
     },
-    onDragEnd(event){
-      this.dragging=false
-      this.end.x=this.start.x
-      this.end.y=this.start.y
-      const dropEvent=new CustomEvent("drop", {detail:{
+    onDragEnd(event) {
+      this.dragging = false;
+      this.end.x = this.start.x;
+      this.end.y = this.start.y;
+      const dropEvent = new CustomEvent("drop", { detail: {
         type: "fsender",
         componentID: this.componentId,
         srcName: this.outputFilename
-      }})
-      const elements = document.elementsFromPoint(event.clientX, event.clientY)
+      } });
+      const elements = document.elementsFromPoint(event.clientX, event.clientY);
       elements.forEach((element)=>{
-        if(element.dataset.droparea){
-          element.dispatchEvent(dropEvent)
+        if (element.dataset.droparea) {
+          element.dispatchEvent(dropEvent);
         }
       });
-    },
+    }
   }
-}
+};
 
 </script>
-

@@ -29,16 +29,16 @@ export default {
     item: [Object, String],
     canEdit: {
       type: Boolean,
-      default: true,
+      default: true
     },
     canDelete: {
       type: Boolean,
-      default: true,
+      default: true
     },
     disabled: {
       type: Boolean,
-      default: false,
-    },
-  },
+      default: false
+    }
+  }
 };
 </script>

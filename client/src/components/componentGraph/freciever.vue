@@ -10,39 +10,38 @@
 </template>
 <script>
 "use strict";
-import { boxWidth, filePlugColor, textHeight, socketLongSideLength, socketShortSideLength} from "@/lib/constants.json"
+import { filePlugColor, socketLongSideLength, socketShortSideLength } from "../../lib/constants.json";
 
 export default {
   name: "Freciever",
-  data:()=>{
+  data: ()=>{
     return {
       color: filePlugColor,
       width: socketShortSideLength,
       height: socketLongSideLength
-    }
+    };
   },
-  props:{
-    center:{
+  props: {
+    center: {
       required: true,
       type: Object
-    },
-  },
-  computed:{
-    x(){
-      return this.center.x - this.width/2
-    },
-    y(){
-      return this.center.y - this.height/2
     }
   },
-  methods:{
-    onDrop(e){
+  computed: {
+    x() {
+      return this.center.x - this.width / 2;
+    },
+    y() {
+      return this.center.y - this.height / 2;
+    }
+  },
+  methods: {
+    onDrop(e) {
       this.$emit("drop", e);
     },
-    onClick(e){
+    onClick(e) {
       this.$emit("click", e);
     }
   }
-}
+};
 </script>
-

@@ -43,12 +43,12 @@ async function getComponentDir(projectRootDir, ID, isAbsolute) {
  * @param {Object} component - component JSON data
  * @param {Boolean} doNotAdd- - call gitAdd if false
  */
-async function writeComponentJson(projectRootDir, componentDir, component, doNotAdd=false) {
+async function writeComponentJson(projectRootDir, componentDir, component, doNotAdd = false) {
   const filename = path.join(componentDir, componentJsonFilename);
   await fs.writeJson(filename, component, { spaces: 4, replacer: componentJsonReplacer });
 
-  if(doNotAdd){
-    return
+  if (doNotAdd) {
+    return;
   }
   return gitAdd(projectRootDir, filename);
 }
@@ -87,12 +87,10 @@ async function readComponentJsonByID(projectRootDir, ID) {
   return readComponentJson(componentDir);
 }
 
-
 module.exports = {
-  componentJsonReplacer,
   getComponentDir,
   writeComponentJson,
   writeComponentJsonByID,
   readComponentJson,
-  readComponentJsonByID,
+  readComponentJsonByID
 };

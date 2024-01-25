@@ -31,61 +31,60 @@
   </v-list>
 </template>
 <script>
-import innerTreeview from "@/components/common/innerTreeview.vue";
+import innerTreeview from "../../components/common/innerTreeview.vue";
 
-const nodeOpenIcon= "mdi-menu-down";
-const nodeCloseIcon= "mdi-menu-right";
+const nodeOpenIcon = "mdi-menu-down";
+const nodeCloseIcon = "mdi-menu-right";
 
 export default {
   name: "myTreeview",
-  components:{
+  components: {
     innerTreeview
   },
-  props:{
-    items:{
+  props: {
+    items: {
       type: Array,
       required: true
     },
-    loadChildren:{
-      type: Function,
+    loadChildren: {
+      type: Function
     },
-    activatable:{
+    activatable: {
       type: Boolean,
       default: false
     },
-    openAll:{
+    openAll: {
       type: Boolean,
       default: false
     },
-    itemKey:{
+    itemKey: {
       type: String,
       default: "id"
     },
-    getNodeIcon:{
+    getNodeIcon: {
       type: Function,
-      default:(isOpen)=>{ return isOpen ? nodeOpenIcon : nodeCloseIcon }
+      default: (isOpen)=>{ return isOpen ? nodeOpenIcon : nodeCloseIcon; }
     },
-    getLeafIcon:{
+    getLeafIcon: {
       type: Function,
-      default:()=>{return ""}
+      default: ()=>{ return ""; }
     }
   },
-  data:()=>{
+  data: ()=>{
     return {
-      open:[],
+      open: [],
       active: []
-    }
+    };
   },
-  mounted(){
-    if(this.openAll){
-      this.open.splice(0,this.open.length,...this.items.filter((item)=>{
+  mounted() {
+    if (this.openAll) {
+      this.open.splice(0, this.open.length, ...this.items.filter((item)=>{
         return item && Array.isArray(item.children);
       })
         .map((e)=>{
-          return e[this.itemKey]
-        }))
+          return e[this.itemKey];
+        }));
     }
   }
-}
+};
 </script>
-

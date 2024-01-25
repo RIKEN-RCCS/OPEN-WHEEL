@@ -12,90 +12,90 @@
 </template>
 <script>
 "use strict";
-import TextBox from "@/components/componentGraph/textBox.vue"
-import StatusIcon from "@/components/componentGraph/statusIcon.vue"
-import { boxWidth, textHeight } from "@/lib/constants.json"
-import {getComponentIcon, getColor} from "@/lib/utils.js"
+import TextBox from "../../components/componentGraph/textBox.vue";
+import StatusIcon from "../../components/componentGraph/statusIcon.vue";
+import { boxWidth, textHeight } from "../../lib/constants.json";
+import { getComponentIcon, getColor } from "../../lib/utils.js";
 
-export default{
+export default {
   name: "component-header",
-  components:{
+  components: {
     TextBox,
     StatusIcon
   },
-  props:{
-    center:{
+  props: {
+    center: {
       required: true,
       type: Object
     },
-    name:{
+    name: {
       required: true,
       type: String
     },
-    type:{
+    type: {
       required: true,
       type: String
     },
-    state:{
+    state: {
       required: true,
       type: String
     },
-    host:{
+    host: {
       type: String
     },
-    useJobScheduler:{
+    useJobScheduler: {
       type: Boolean
     },
-    numTotal:{
+    numTotal: {
       type: Number
     },
-    numFinished :{
+    numFinished: {
       type: Number
     },
-    numFailed :{
+    numFailed: {
       type: Number
     },
-    disable:{
+    disable: {
       type: Boolean
     },
-    stepnum:{
+    stepnum: {
       type: [Number, null],
       default: null
     }
   },
-  data(){
-    return{
+  data() {
+    return {
       width: boxWidth,
       height: textHeight
+    };
+  },
+  computed: {
+    x() {
+      return this.center.x - boxWidth / 2;
+    },
+    y() {
+      return this.center.y - textHeight / 2;
+    },
+    nameCenter() {
+      return { x: this.x + textHeight, y: this.center.y };
+    },
+    nameColor() {
+      return this.disable ? "red" : "white";
+    },
+    statusIconX() {
+      return this.x + boxWidth - textHeight / 2;
+    },
+    iconImg() {
+      return getComponentIcon(this.type, this.host, this.useJobScheduler);
+    },
+    color() {
+      return getColor(this.type);
     }
   },
-  computed:{
-    x(){
-      return this.center.x - boxWidth/2
-    },
-    y(){
-      return this.center.y - textHeight/2
-    },
-    nameCenter(){
-      return {x: this.x+textHeight, y: this.center.y}
-    },
-    nameColor(){
-      return this.disable ? "red" : "white"
-    },
-    statusIconX(){
-      return this.x + boxWidth - textHeight/2
-    },
-    iconImg(){
-      return getComponentIcon(this.type, this.host, this.useJobScheduler)
-    },
-    color(){
-      return getColor(this.type)
-    }
-  },
-  methods:{
-    onDrop(e){
-      this.$emit("drop", e.detail)
+  methods: {
+    onDrop(e) {
+      this.$emit("drop", e.detail);
     }
   }
-}
+};
 </script>

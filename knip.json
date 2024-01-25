@@ -1,0 +1,17 @@
+{
+  "entry": [
+    "server/app/index.js",
+    "server/bin/passwordDBTool.js",
+    "client/src/*.js",
+    "eslint.config.js",
+    "test/cypress/e2e/*.js",
+    "test/cypress/support/component.js"
+  ],
+  "project": [
+    "**/*.{js,vue,json}"
+  ],
+  "ignore": [
+    "documentMD/**/*",
+    "server/test/testFiles/cycleTestData.js"
+  ]
+}

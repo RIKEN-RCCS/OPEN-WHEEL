@@ -16,34 +16,35 @@ const { getSsh } = require("./sshManager.js");
 /**
  * read Json file until get some valid JSON data
  * @param {string} filename - filename to be read
+ * @param {number} retry - max number of retry
  */
-async function readJsonGreedy(filename) {
+async function readJsonGreedy(filename, retry) {
+  const retries = typeof retry === "number" ? retry : 10;
   return promiseRetry(async (retry)=>{
     const buf = await fs.readFile(filename)
       .catch((e)=>{
         if (e.code === "ENOENT") {
-          retry(e);
+          return retry(e);
         }
         throw e;
       });
     const strData = buf.toString("utf8").replace(/^\uFEFF/, "");
     if (strData.length === 0) {
-      retry(new Error("read failed"));
+      return retry(new Error("read failed"));
     }
     let jsonData;
     try {
       jsonData = JSON.parse(strData);
     } catch (e) {
       if (e instanceof SyntaxError) {
-        retry(e);
+        return retry(e);
       }
       throw e;
     }
-    //need check by jsonSchema but it may cause performance problem
     return jsonData;
   },
   {
-    retries: 10,
+    retries,
     minTimeout: 500,
     factor: 1
   });
@@ -59,27 +60,21 @@ async function addX(file) {
   let u = 4;
   let g = 4;
   let o = 4;
-
   if (mode.owner.read) {
     u += 1;
   }
-
   if (mode.owner.write) {
     u += 2;
   }
-
   if (mode.group.read) {
     g += 1;
   }
-
   if (mode.group.write) {
     g += 2;
   }
-
   if (mode.others.read) {
     o += 1;
   }
-
   if (mode.others.write) {
     o += 2;
   }
@@ -97,10 +92,9 @@ async function addX(file) {
 async function deliverFile(src, dst, forceCopy = false) {
   const stats = await fs.lstat(src);
   const type = stats.isDirectory() ? "dir" : "file";
-
   try {
     if (forceCopy) {
-      await fs.copy(src, dst, { overwrite: true});
+      await fs.copy(src, dst, { overwrite: true });
       return { type: "copy", src, dst };
     }
     await fs.remove(dst);
@@ -132,22 +126,28 @@ async function deliverFileOnRemote(recipe) {
   const rt = await ssh.exec(sshCmd, 0, logger.debug.bind(logger));
   if (rt !== 0) {
     logger.warn("deliver file on remote failed", rt);
+    const err = new Error("deliver file on remote failed");
+    err.rt = rt;
+    return Promise.reject(err);
   }
-  return rt;
+  return { type: "copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
 }
 
-async function deliverFileFromRemote(recipe){
+async function deliverFileFromRemote(recipe) {
   const logger = getLogger(recipe.projectRootDir);
   if (!recipe.remoteToLocal) {
     logger.warn("deliverFileFromRemote must be called with remoteToLocal flag");
     return null;
   }
   const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
-  const rt = await ssh.recv([`${recipe.srcRoot}/${recipe.srcName}`], `${recipe.dstRoot}/${recipe.dstName}`)
-  if (rt !== 0) {
-    logger.warn("deliver file from remote failed", rt);
+
+  try {
+    await ssh.recv([`${recipe.srcRoot}/${recipe.srcName}`], `${recipe.dstRoot}/${recipe.dstName}`, ["-vv"]);
+  } catch (e) {
+    console.log(e);
+    return Promise.reject(e);
   }
-  return rt;
+  return { type: "copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
 }
 
 /**
@@ -178,8 +178,7 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
     }
     throw err;
   }
-
-  if(forceNormal){
+  if (forceNormal) {
     return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
   }
 
@@ -191,7 +190,6 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
     //read file is not parameter setting file
     return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
   }
-
   if (!Object.prototype.hasOwnProperty.call(contentJson, "targetFiles") || !Array.isArray(contentJson.targetFiles)) {
     return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
   }
@@ -200,7 +198,7 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
 
   //resolve targetFile's path
   const dirname = path.dirname(absFilename);
-  const {componentPath} = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+  const { componentPath } = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   const absTargetFiles = contentJson.targetFiles
     .map((targetFile)=>{
       if (typeof targetFile === "string") {
@@ -212,7 +210,7 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
       if (Object.prototype.hasOwnProperty.call(targetFile, "targetNode")) {
         //to avoid circurler dependency, do not use getComponentDir in projectFilesOperator.js
         const relativePath = componentPath[targetFile.targetNode];
-        if(typeof relativePath !== "string"){
+        if (typeof relativePath !== "string") {
           getLogger(projectRootDir).warn("illegal targetNode: ", targetFile.targetNode);
         }
         return path.resolve(projectRootDir, relativePath, targetFile.targetName);
@@ -252,7 +250,6 @@ async function saveFile(argFilename, content) {
 
   const { root } = path.parse(absFilename);
   let repoDir = path.dirname(absFilename);
-
   while (!await fs.pathExists(path.join(repoDir, ".git"))) {
     if (repoDir === root) {
       const err = new Error("git repository not found");
@@ -284,6 +281,16 @@ async function getUnusedPath(parent, name) {
   return path.resolve(parent, `${name}.${suffix}`);
 }
 
+/**
+ * replace CRLF to LF
+ * @param {string} filename - tareget file name
+ */
+async function replaceCRLF(filename) {
+  let contents = await fs.readFile(filename);
+  contents = contents.toString().replace(/\r\n/g, "\n");
+  return fs.writeFile(filename, contents);
+}
+
 module.exports = {
   readJsonGreedy,
   addX,
@@ -292,5 +299,6 @@ module.exports = {
   deliverFileFromRemote,
   openFile,
   saveFile,
-  getUnusedPath
+  getUnusedPath,
+  replaceCRLF
 };

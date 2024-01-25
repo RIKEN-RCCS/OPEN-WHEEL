@@ -12,7 +12,6 @@ const { getLogger } = require("../logSettings.js");
 const { replacePathsep } = require("./pathUtils");
 const { remoteHost, componentJsonFilename } = require("../db/db");
 const { getSshHostinfo } = require("./sshManager.js");
-
 async function pspawn(projectRootDir, script, options) {
   return new Promise((resolve, reject)=>{
     const cp = childProcess.spawn(script, options, (err)=>{
@@ -39,7 +38,7 @@ async function pspawn(projectRootDir, script, options) {
  * @param {string} projectRootDir - root directory path of project
  * @param {string} condition - command name or javascript expression
  * @param {string} cwd - task component's directory
- * @param {number} currentIndex - innermost loop index (WHEEL_CURRENT_INDEX)
+ * @param {Object} env - environment variables
  * @returns {Promise} *
  */
 async function evalCondition(projectRootDir, condition, cwd, env) {
@@ -57,7 +56,7 @@ async function evalCondition(projectRootDir, condition, cwd, env) {
     await addX(script);
     const dir = path.dirname(script);
     const options = {
-      env: Object.assign({},process.env, env),
+      env: Object.assign({}, process.env, env),
       cwd: dir,
       shell: "bash"
     };
@@ -67,7 +66,7 @@ async function evalCondition(projectRootDir, condition, cwd, env) {
   getLogger(projectRootDir).debug("evalute ", condition);
   let conditionExpression = "";
 
-  for(const [key,value] of Object.entries(env)){
+  for (const [key, value] of Object.entries(env)) {
     conditionExpression += `let ${key}="${value}";\n`;
   }
   conditionExpression += condition;
@@ -80,11 +79,12 @@ function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, is
   }
   const hostinfo = getSshHostinfo(projectRootDir, remotehostID);
   let remoteRoot = isSharedHost ? hostinfo.sharedPath : hostinfo.path;
-  if (typeof remoteRoot !== "string"){
-    remoteRoot = ""
+  if (typeof remoteRoot !== "string") {
+    remoteRoot = "";
   }
   return replacePathsep(path.posix.join(remoteRoot, projectStartTime));
 }
+
 function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, component, isSharedHost) {
   const remoteRootWorkingDir = getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, isSharedHost);
   if (remoteRootWorkingDir === null) {
@@ -109,32 +109,31 @@ function isFinishedState(state) {
  * @returns {Promise} true if give path is subComponent dir
  */
 async function isSubComponent(target) {
-  try{
+  try {
     const stats = await fs.stat(target);
     if (!stats.isDirectory()) {
       return false;
     }
-  }catch(err){
+  } catch (err) {
     //just in case, for race condition of reading and removing
-    if(err.code === "ENOENT"){
-      return false
+    if (err.code === "ENOENT") {
+      return false;
     }
-    throw err
+    throw err;
   }
 
-  let rt=false
-  try{
+  let rt = false;
+  try {
     const componentJson = await readJsonGreedy(path.resolve(target, componentJsonFilename));
     rt = componentJson.subComponent === true;
-  }catch(e){
-    if(e.code === "ENOENT"){
-      return false
+  } catch (e) {
+    if (e.code === "ENOENT") {
+      return false;
     }
-    throw e
+    throw e;
   }
-  return rt
+  return rt;
 }
-
 
 module.exports = {
   evalCondition,

@@ -3,9 +3,11 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-import {createApp} from "vue";
+import { createApp } from "vue";
 import Remotehost from "./components/Remotehost.vue";
-import vuetify from "@/plugins/vuetify"
+import store from "./store";
+import vuetify from "./plugins/vuetify";
 
 createApp(Remotehost).use(vuetify)
+  .use(store)
   .mount("#app");
