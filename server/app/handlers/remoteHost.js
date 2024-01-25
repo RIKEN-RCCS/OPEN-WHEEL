@@ -56,16 +56,14 @@ const schema = {
 //so, it is practically required value
 
 const validate = ajv.compile(schema);
-
 async function onAddHost(socket, newHost, cb) {
   Object.keys(newHost).forEach((prop)=>{
-    if(newHost[prop] === null){
-      delete newHost[prop]
+    if (newHost[prop] === null) {
+      delete newHost[prop];
     }
   });
   validate(newHost);
-
-  if(validate !== null && Array.isArray(validate.errors)){
+  if (validate !== null && Array.isArray(validate.errors)) {
     const missingRequiredKey = validate.errors.includes((e)=>{
       return e.keyword === "required";
     });
@@ -78,47 +76,41 @@ async function onAddHost(socket, newHost, cb) {
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
   return cb(id);
 }
-
 async function onCopyHost(socket, id, cb) {
   await remoteHost.copy(id);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
   cb(remoteHost.get(id));
 }
-
 async function onGetHostList(cb) {
-  const hostList = remoteHost.getAll()
+  const hostList = remoteHost.getAll();
   hostList.forEach((hostInfo)=>{
-    if(hostInfo.username){
-      if( !hostInfo.user){
-        hostInfo.user = hostInfo.username
+    if (hostInfo.username) {
+      if (!hostInfo.user) {
+        hostInfo.user = hostInfo.username;
       }
-      delete hostInfo.username
+      delete hostInfo.username;
     }
   });
-  cb(remoteHost.getAll());
+  cb(hostList);
 }
-
 async function onUpdateHost(socket, updatedHost, cb) {
   Object.keys(updatedHost).forEach((prop)=>{
-    if(updatedHost[prop] === null){
-      delete updatedHost[prop]
+    if (updatedHost[prop] === null) {
+      delete updatedHost[prop];
     }
   });
-
-  if(updatedHost.username){
-    if( !updatedHost.user){
-      updatedHost.user = updatedHost.username
+  if (updatedHost.username) {
+    if (!updatedHost.user) {
+      updatedHost.user = updatedHost.username;
     }
-    delete updatedHost.username
+    delete updatedHost.username;
   }
 
   validate(updatedHost);
-
-  if(Array.isArray(validate.errors)){
+  if (Array.isArray(validate.errors)) {
     const missingRequiredKey = validate.errors.includes((e)=>{
       return e.keyword === "required";
     });
-
     if (missingRequiredKey) {
       logger.warn("updateHost failed due to validation error");
       return cb(false);
@@ -128,7 +120,6 @@ async function onUpdateHost(socket, updatedHost, cb) {
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
   return cb(updatedHost.id);
 }
-
 async function onRemoveHost(socket, id, cb) {
   await remoteHost.remove(id);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler

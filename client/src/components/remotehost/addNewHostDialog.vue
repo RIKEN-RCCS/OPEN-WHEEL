@@ -233,20 +233,20 @@
 </template>
 <script>
 "use strict";
-import fileBrowser from "@/components/common/fileBrowserLite.vue";
-import { required, validPortNumber, positiveNumber } from "@/lib/validationRules.js";
+import fileBrowser from "../../components/common/fileBrowserLite.vue";
+import { required, validPortNumber, positiveNumber } from "../../lib/validationRules.js";
 export default {
   Name: "newHostDialog",
-  components:{
+  components: {
     fileBrowser
   },
   props: {
     modelValue: Boolean,
     title: { type: String, default: "remote host" },
     maxWidth: { type: String, default: "50%" },
-    hostNames: {type: Array, default: ()=>{return [];}},
-    initialValue: {type: Object, default: ()=>{return {};}},
-    availableJobSchedulers: {type: Array, default: ()=>{return [];}},
+    hostNames: { type: Array, default: ()=>{ return []; } },
+    initialValue: { type: Object, default: ()=>{ return {}; } },
+    availableJobSchedulers: { type: Array, default: ()=>{ return []; } }
   },
   data: function () {
     return {
@@ -255,61 +255,61 @@ export default {
       pathSep: "/",
       home: "/",
       openFileBrowser: false,
-      selectedFile:null
+      selectedFile: null
     };
   },
   computed: {
-    hasError (){
+    hasError() {
       return this.hostNames.includes(this.host.name)
-          || this.required(this.host.name) !== true
-          || this.required(this.host.host) !== true
-          || this.validPortNumber(this.host.port) !== true
-          || this.required(this.host.user) !== true
+        || this.required(this.host.name) !== true
+        || this.required(this.host.host) !== true
+        || this.validPortNumber(this.host.port) !== true
+        || this.required(this.host.user) !== true;
     },
     openDialog: {
-      get () {
+      get() {
         return this.modelValue;
       },
-      set (value) {
+      set(value) {
         this.$emit("update:modelValue", value);
-      },
+      }
     },
-    portNumberLabel(){
-      return `Port number ${this.host.port? "" : "[default: 22]"}`
+    portNumberLabel() {
+      return `Port number ${this.host.port ? "" : "[default: 22]"}`;
     },
-    workDirLabel(){
-      return `Host work dir ${this.host.path ? "" :"[default $HOME]"}`
+    workDirLabel() {
+      return `Host work dir ${this.host.path ? "" : "[default $HOME]"}`;
     }
   },
-  watch:{
-    openDialog(){
+  watch: {
+    openDialog() {
       this.host = Object.assign(this.host, this.initialValue);
     }
   },
   methods: {
-    closeFileBrowser(){
-      this.selectedFile=null;
-      this.openFileBrowser=false;
+    closeFileBrowser() {
+      this.selectedFile = null;
+      this.openFileBrowser = false;
     },
-    notDupulicatedLabel (v){
-      return !this.hostNames.includes(v) ||"label is already in use";
+    notDupulicatedLabel(v) {
+      return !this.hostNames.includes(v) || "label is already in use";
     },
     required,
     validPortNumber,
     positiveNumber: positiveNumber.bind(null, true),
-    submitHost () {
+    submitHost() {
       this.$emit("newHost", this.host);
       this.closeDialog();
     },
-    cancelDialog(){
+    cancelDialog() {
       this.$emit("cancel");
       this.closeDialog();
     },
-    closeDialog () {
+    closeDialog() {
       this.host = {};
       this.$refs.form.reset();
       this.openDialog = false;
-    },
-  },
+    }
+  }
 };
 </script>

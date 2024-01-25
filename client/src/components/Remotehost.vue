@@ -29,11 +29,11 @@
         <template #item.connectionTest="{ item, index }">
           <v-btn
             :disable="testing !== null && testing !== index"
-            :color="item.raw.testResult"
-            :loading="item.raw.loading"
+            :color="item.testResult"
+            :loading="item.loading"
             @click="testConnection(index)"
-            :text=item.raw.connectionStatus
-            :prepend-icon=item.raw.icon
+            :text=item.connectionStatus
+            :prepend-icon=item.con
           />
         </template>
         <template #item.action="{ item}">
@@ -47,7 +47,7 @@
     <v-snackbar
       v-model="openSnackbar"
       multi-line
-      :timeout="-1"
+      :timeout=snackbarTimeout
       centered
       variant="outlined"
     >
@@ -56,7 +56,7 @@
         <v-btn
           class="justify-end"
           variant="outlined"
-          @click="snackbarMessage='';openSnackbar=false"
+          @click="closeSnackbar"
           text="Close"
         />
       </template>
@@ -86,16 +86,17 @@
 </template>
 <script>
 "use strict";
+import { mapState, mapActions } from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:remotehost");
-import SIO from "@/lib/socketIOWrapper.js";
-import { readCookie } from "@/lib/utility.js";
-import actionRow from "@/components/common/actionRow.vue";
-import navDrawer from "@/components/common/NavigationDrawer.vue";
-import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
-import passwordDialog from "@/components/common/passwordDialog.vue";
-import addNewHostDialog from "@/components/remotehost/addNewHostDialog.vue";
-import applicationToolBar from "@/components/common/applicationToolBar.vue";
+import SIO from "../lib/socketIOWrapper.js";
+import { readCookie } from "../lib/utility.js";
+import actionRow from "../components/common/actionRow.vue";
+import navDrawer from "../components/common/NavigationDrawer.vue";
+import removeConfirmDialog from "../components/common/removeConfirmDialog.vue";
+import passwordDialog from "../components/common/passwordDialog.vue";
+import addNewHostDialog from "../components/remotehost/addNewHostDialog.vue";
+import applicationToolBar from "../components/common/applicationToolBar.vue";
 
 export default {
   name: "Remotehost",
@@ -105,14 +106,14 @@ export default {
     actionRow,
     passwordDialog,
     removeConfirmDialog,
-    addNewHostDialog,
+    addNewHostDialog
   },
   data: ()=>{
     return {
       drawer: false,
       pwDialog: false,
-      pwCallback:null,
-      pwDialogTitle:"",
+      pwCallback: null,
+      pwDialogTitle: "",
       rmDialog: false,
       newHostDialog: false,
       headers: [
@@ -122,19 +123,22 @@ export default {
         { title: "user", key: "user" },
         { title: "port", key: "port" },
         { title: "private key", key: "keyFile" },
-        { title: "action", key: "action", sortable: false },
+        { title: "action", key: "action", sortable: false }
       ],
       hosts: [],
       jobSchedulerNames: [],
       removeConfirmMessage: "",
       currentSetting: {},
-      testing:null,
-      openSnackbar: false,
-      snackbarMessage:"",
+      testing: null
     };
   },
-  computed:{
-    hostList(){
+  computed: {
+    ...mapState([
+      "openSnackbar",
+      "snackbarMessage",
+      "snackbarTimeout"
+    ]),
+    hostList() {
       return this.hosts.map((host)=>{
         return host.name;
       }).filter((hostname)=>{
@@ -142,49 +146,62 @@ export default {
       });
     }
   },
-  mounted () {
-    const baseURL=readCookie("socketIOPath");
+  mounted() {
+    const baseURL = readCookie("socketIOPath");
     debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
     SIO.emitGlobal("getJobSchedulerLabelList", (data)=>{
-      this.jobSchedulerNames.splice(0,this.jobSchedulerNames.length, ...data);
+      this.jobSchedulerNames.splice(0, this.jobSchedulerNames.length, ...data);
     });
     SIO.emitGlobal("getHostList", (data)=>{
       data.forEach((e)=>{
         e.icon = "mdi-lan-pending";
         e.connectionStatus = "test";
+        e.testResult = "background";
       });
       this.hosts.splice(0, this.hosts.length, ...data);
     });
     SIO.onGlobal("askPassword", (hostname, cb)=>{
-      this.pwCallback = cb
+      this.pwCallback = cb;
       this.pwDialogTitle = `input password or passphrase for ${hostname}`;
       this.pwDialog = true;
     });
+    SIO.onGlobal("logERR", (message)=>{
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      this.showSnackbar(output);
+    });
   },
   methods: {
-    openEditDialog (item) {
+    ...mapActions({
+      showSnackbar: "showSnackbar",
+      closeSnackbar: "closeSnackbar"
+    }),
+    openEditDialog(item) {
       this.currentSetting = item || {};
       this.newHostDialog = true;
     },
-    initializeConnectionTestIcon(item){
+    initializeConnectionTestIcon(item) {
       item.loading = false;
       delete (item.testResult);
       item.icon = "mdi-lan-pending";
       item.connectionStatus = "test";
+      item.testResult = "background";
     },
-    addNewSetting (updated) {
-      this.currentSetting={};
+    addNewSetting(updated) {
+      this.currentSetting = {};
       delete (updated.icon);
       delete (updated.connectionStatus);
       delete (updated.testResult);
       delete (updated.loading);
 
       const eventName = updated.id ? "updateHost" : "addHost";
-      const index = updated.id ?this.hosts.findIndex((e)=>{
-        return updated.id === e.id;
-      }):0;
-      const numDelete = updated.id? 1:0;
+      const index = updated.id
+        ? this.hosts.findIndex((e)=>{
+          return updated.id === e.id;
+        })
+        : 0;
+      const numDelete = updated.id ? 1 : 0;
       SIO.emitGlobal(eventName, updated, (id)=>{
         if (!id) {
           console.log(`${eventName} API failed`, id);
@@ -195,12 +212,12 @@ export default {
         this.hosts.splice(index, numDelete, updated);
       });
     },
-    openRemoveConfirmDialog (item) {
+    openRemoveConfirmDialog(item) {
       this.rmTarget = item;
       this.removeConfirmMessage = `Are you shure you want to remove ${item.name} ?`;
       this.rmDialog = true;
     },
-    removeRemotehost () {
+    removeRemotehost() {
       SIO.emitGlobal("removeHost", this.rmTarget.id, (rt)=>{
         if (!rt) {
           console.log("removeHost API failed", this.rmTarget.id);
@@ -209,26 +226,23 @@ export default {
         const index = this.hosts.findIndex((e)=>{
           return e.id === this.rmTarget.id;
         });
-
         if (index >= 0) {
           this.hosts.splice(index, 1);
         }
       });
     },
-    testConnection (index) {
-      if(this.testing === index){
-        debug(`ssh test for ${this.hosts[index].name} is already running`)
-        return
+    testConnection(index) {
+      if (this.testing === index) {
+        debug(`ssh test for ${this.hosts[index].name} is already running`);
+        return;
       }
-      if(this.testing !== null ){
-        this.snackbarMessage="another ssh test is running"
-        debug(this.snackbarMessage);
-        this.openSnackbar=true;
-        return
+      if (this.testing !== null) {
+        this.showSnackbar({ message: "another ssh test is running", timeout: 1000 });
+        return;
       }
-      this.testing=index;
-      const target=this.hosts[index];
-      target.loading=true;
+      this.testing = index;
+      const target = this.hosts[index];
+      target.loading = true;
       SIO.emitGlobal("tryToConnect", this.hosts[index], (rt)=>{
         debug("connection test result:",rt);
         target.loading= false
@@ -260,7 +274,7 @@ export default {
         this.pwDialog=false
         this.testing=null;
       });
-    },
-  },
+    }
+  }
 };
 </script>

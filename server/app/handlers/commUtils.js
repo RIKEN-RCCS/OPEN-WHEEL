@@ -6,7 +6,6 @@
 "use strict";
 const { getSio } = require("../core/global.js");
 
-
 /**
  * promised version of socketIO.emit()
  * @param {Function} emit - socketIO's emit()
@@ -26,6 +25,9 @@ async function emitWithPromise(emit, ...args) {
  */
 async function emitAll(room, eventName, ...args) {
   const sio = getSio();
+  if (!sio) {
+    return false;
+  }
   const sockets = await sio.in(room).fetchSockets();
   for (const socket of sockets) {
     socket.emit(eventName, ...args);

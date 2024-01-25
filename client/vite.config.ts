@@ -20,11 +20,6 @@ export default defineConfig({
   define:{
     __VUE_PROD_DEVTOOLS__: true
   },
-  resolve:{
-    alias: [
-      { find: '@', replacement: root },
-    ]
-  },
   root,
   build: {
     sourcemap: true,

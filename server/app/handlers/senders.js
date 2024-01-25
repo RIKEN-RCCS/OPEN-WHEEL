@@ -15,40 +15,40 @@ const { readJsonGreedy } = require("../core/fileUtils");
 const { taskStateFilter } = require("../core/taskUtil");
 const { parentDirs } = require("../core/global.js");
 const { emitAll } = require("./commUtils.js");
-
 //read and send current workflow and its child and grandson
 async function sendWorkflow(cb, projectRootDir, parentComponentDir = "", clientID = null) {
   if (typeof projectRootDir !== "string") {
     getLogger(projectRootDir).error("sendWorkflow called without projectRootDir!!");
   }
   const target = path.isAbsolute(parentComponentDir) ? parentComponentDir : path.resolve(projectRootDir, parentComponentDir);
-
   try {
     const wf = await getThreeGenerationFamily(projectRootDir, target);
-
     if (wf) {
       parentDirs.set(projectRootDir, target);
       await emitAll(clientID ? clientID : projectRootDir, "workflow", wf);
     }
   } catch (e) {
+    if (typeof cb !== "function") {
+      throw e;
+    }
     cb(e);
     return;
   }
-  cb(true);
+  if (typeof cb === "function") {
+    cb(true);
+  }
 }
-
 async function sendComponentTree(projectRootDir, rootDir) {
-  try{
+  try {
     const targetDir = path.isAbsolute(rootDir) ? rootDir : path.resolve(projectRootDir, rootDir);
     const rt = await getComponentTree(projectRootDir, targetDir);
     await emitAll(projectRootDir, "componentTree", rt);
-  }catch(err){
-    if(err.code === "ENOENT"){
+  } catch (err) {
+    if (err.code === "ENOENT") {
       getLogger(projectRootDir).error(err);
     }
   }
 }
-
 //read and send projectJson
 async function sendProjectJson(projectRootDir, argProjectJson) {
   getLogger(projectRootDir).trace("projectState: sendProjectJson", projectRootDir, argProjectJson);
@@ -60,7 +60,6 @@ async function sendProjectJson(projectRootDir, argProjectJson) {
   getLogger(projectRootDir).trace("projectState: stat=", projectJson.state);
   await emitAll(projectRootDir, "projectJson", projectJson);
 }
-
 //recursive read component meta data and send task state tree data as list
 async function sendTaskStateList(projectRootDir) {
   const p = [];
@@ -81,7 +80,6 @@ async function sendTaskStateList(projectRootDir) {
       await emitAll(projectRootDir, "taskStateList", data);
     });
 }
-
 async function sendResultsFileDir(projectRootDir, dir) {
   await emitAll(projectRootDir, "resultFilesReady", dir);
 }

@@ -8,7 +8,6 @@ const SshClientWrapper = require("ssh-client-wrapper");
 const { emitAll } = require("../handlers/commUtils.js");
 
 const db = new Map();
-
 function hasEntry(projectRootDir, id) {
   if (db.has(projectRootDir)) {
     return db.get(projectRootDir).has(id);
@@ -149,7 +148,6 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   hostinfo.password = async ()=>{
     if (hasEntry(projectRootDir, hostinfo.id)) {
       pw = getSshPW(projectRootDir, hostinfo.id);
-
       if (typeof pw === "string") {
         return pw;
       }
@@ -163,7 +161,6 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   hostinfo.passphrase = async ()=>{
     if (hasEntry(projectRootDir, hostinfo.id)) {
       ph = getSshPH(projectRootDir, hostinfo.id);
-
       if (typeof ph === "string") {
         return ph;
       }
@@ -171,7 +168,6 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
     ph = await askPassword(clientID, `${remoteHostName} - passpharse`);
     return ph;
   };
-
   if (hostinfo.renewInterval) {
     hostinfo.ControlPersist = hostinfo.renewInterval * 60;
   }
@@ -181,33 +177,31 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   if (process.env.WHEEL_VERBOSE_SSH) {
     hostinfo.sshOpt = ["-vvv"];
   }
-  if(hostinfo.username){
-    if( !hostinfo.user){
-      hostinfo.user = hostinfo.username
+  if (hostinfo.username) {
+    if (!hostinfo.user) {
+      hostinfo.user = hostinfo.username;
     }
-    delete hostinfo.username
+    delete hostinfo.username;
   }
 
   const ssh = new SshClientWrapper(hostinfo);
   const timeout = hostinfo.ConnectTimeout > 120 ? hostinfo.ConnectTimeout : 120;
-  try{
+  try {
     const success = await ssh.canConnect(timeout);
-
     if (success) {
       addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
     }
-  }catch(e){
-    if(e.message === "Control socket creation failed"){
-      e.message +="you can avoid this error by using SSH_CONTROL_PERSIST_DIR environment variable\n"
-      e.message +="please refer to https://riken-rccs.github.io/OPEN-WHEEL/attention"
+  } catch (e) {
+    if (e.message === "Control socket creation failed") {
+      e.message += "you can avoid this error by using SSH_CONTROL_PERSIST_DIR environment variable\n";
+      e.message += "please refer to https://riken-rccs.github.io/OPEN-WHEEL/attention";
 
-      throw e
+      throw e;
     }
     throw new Error("ssh connection failed due to unknown reason");
   }
   return ssh;
 }
-
 
 module.exports = {
   addSsh,

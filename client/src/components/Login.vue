@@ -66,8 +66,8 @@
   </v-app>
 </template>
 <script>
-import { required } from "@/lib/validationRules.js";
-import imgLogo from "@/assets/wheel_logomark.png";
+import { required } from "../lib/validationRules.js";
+import imgLogo from "../assets/wheel_logomark.png";
 
 export default {
   name: "Login",

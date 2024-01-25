@@ -50,7 +50,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
-        working-directory: ./server
       - run: npm run test
         working-directory: ./server
       - run: echo "VERSION_NUMBER=`date '+%Y-%m%d-%H%M%S'`" >>$GITHUB_ENV

@@ -4,10 +4,9 @@
  * See License in the project root for the license information.
  */
 "use strict";
-
-export function targetFile2absPath (targetFile, componentPath, pathSep, prefix, PSID) {
+export function targetFile2absPath(targetFile, componentPath, pathSep, prefix, PSID) {
   const PSDir = componentPath[PSID];
-  let dirname = Object.prototype.hasOwnProperty.call(targetFile,"targetNode") ? componentPath[targetFile.targetNode] : PSDir;
+  let dirname = Object.prototype.hasOwnProperty.call(targetFile, "targetNode") ? componentPath[targetFile.targetNode] : PSDir;
   dirname = dirname.replace(/^\.\//, ""); //remove prefix
   let absPath = prefix + dirname + pathSep + targetFile.targetName;
   if (pathSep === "\\") {
@@ -15,12 +14,10 @@ export function targetFile2absPath (targetFile, componentPath, pathSep, prefix, 
   }
   return absPath;
 }
-
-export function file2absPath (file, pathSep) {
+export function file2absPath(file, pathSep) {
   return file.dirname + pathSep + file.filename;
 }
-
-export function isTargetFile (file, rootDir, pathSep, targetFiles, componentPath, ID) {
+export function isTargetFile(file, rootDir, pathSep, targetFiles, componentPath, ID) {
   const dirnamePrefix = rootDir + pathSep;
   return targetFiles.findIndex(
     (e)=>{
@@ -34,5 +31,5 @@ export const tableFooterProps = {
   firstIcon: "fast_rewind",
   lastIcon: "fast_forward",
   prevIcon: "navigate_before",
-  nextIcon: "navigate_next",
+  nextIcon: "navigate_next"
 };

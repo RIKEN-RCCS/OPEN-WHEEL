@@ -11,7 +11,7 @@
         @click="$emit(item.label)"
         :prepend-icon=item.icon
         :disabled="item.disabled"
-        :text=item.label 
+        :text=item.label
       />
   </v-btn-group>
 </template>
@@ -25,7 +25,7 @@
 export default {
   name: "Buttons",
   props: {
-    buttons: Array,
-  },
+    buttons: Array
+  }
 };
 </script>

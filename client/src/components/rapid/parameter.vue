@@ -134,27 +134,27 @@
 <script>
 "use strict";
 import { mapState } from "vuex";
-import { removeFromArray } from "@/lib/clientUtility.js";
-import actionRow from "@/components/common/actionRow.vue";
-import listForm from "@/components/common/listForm.vue";
+import { removeFromArray } from "../../lib/clientUtility.js";
+import actionRow from "../../components/common/actionRow.vue";
+import listForm from "../../components/common/listForm.vue";
 
 export default {
   name: "Parameter",
   components: {
     listForm,
-    actionRow,
+    actionRow
   },
   props: {
     params: {
       type: Array,
-      required: true,
+      required: true
     },
     readOnly: {
       type: Boolean,
-      required: true,
-    },
+      required: true
+    }
   },
-  data () {
+  data() {
     return {
       currentItem: null,
       dialog: false,
@@ -164,27 +164,25 @@ export default {
         files: [],
         min: 0,
         max: 0,
-        step: 1,
+        step: 1
       },
       listHeaders: [
-        { title: "value", key: "name", sortable: true },
+        { title: "value", key: "name", sortable: true }
       ],
       filesHeaders: [
-        { title: "filename", key: "name", sortable: true },
-      ],
+        { title: "filename", key: "name", sortable: true }
+      ]
     };
   },
   computed: {
-    ...mapState(["selectedText"]),
+    ...mapState(["selectedText"])
   },
   mounted: function () {
     this.reset();
-
     if (this.currentItem === null || typeof this.currentItem === "undefined") {
       return;
     }
     this.newItem.type = this.currentItem.type;
-
     if (this.currentItem.type === "min-max-step") {
       this.newItem.min = this.currentItem.min;
       this.newItem.max = this.currentItem.max;
@@ -196,48 +194,47 @@ export default {
     }
   },
   methods: {
-    addList(item){
+    addList(item) {
       this.newItem.list.push(item);
     },
-    updateList(item, index){
+    updateList(item, index) {
       this.newItem.list.splice(index, 1, item);
     },
-    removeList(item, index){
-      this.newItem.list.splice(index,1)
+    removeList(item, index) {
+      this.newItem.list.splice(index, 1);
     },
-    addFiles(item){
+    addFiles(item) {
       this.newItem.files.push(item);
     },
-    updateFiles(item, index){
+    updateFiles(item, index) {
       this.newItem.files.splice(index, 1, item);
     },
-    removeFiles(item, index){
-      this.newItem.files.splice(index,1)
+    removeFiles(item, index) {
+      this.newItem.files.splice(index, 1);
     },
-    reset () {
+    reset() {
       this.newItem = {
         type: this.newItem ? this.newItem.type : "min-max-step",
         list: [],
         files: [],
         min: 0,
         max: 0,
-        step: 1,
+        step: 1
       };
     },
-    required (v) {
+    required(v) {
       return v !== "" || "must be number.";
     },
-    openDialog (item) {
+    openDialog(item) {
       this.currentItem = item;
-      this.newItem = {...item};
+      this.newItem = { ...item };
       this.dialog = true;
     },
-    deleteItem (item) {
+    deleteItem(item) {
       removeFromArray(this.params, item);
     },
-    storeParam (target) {
-      target.type=this.newItem.type;
-
+    storeParam(target) {
+      target.type = this.newItem.type;
       if (this.newItem.type === "min-max-step") {
         const min = Number(this.newItem.min);
         const max = Number(this.newItem.max);
@@ -255,12 +252,12 @@ export default {
         target.files = this.newItem.files;
       }
     },
-    addItem () {
+    addItem() {
       const newParam = { keyword: this.selectedText };
       this.storeParam(newParam);
       this.$emit("newParamAdded", newParam);
     },
-    updateItem (item) {
+    updateItem(item) {
       const targetIndex = this.params.findIndex((e)=>{
         return e === item;
       });
@@ -269,7 +266,7 @@ export default {
       }
       this.storeParam(this.params[targetIndex]);
     },
-    commitChange () {
+    commitChange() {
       if (this.currentItem === null) {
         this.addItem();
       } else {
@@ -280,11 +277,11 @@ export default {
       this.closeAndResetDialog();
       this.newItem.type = tmp;
     },
-    closeAndResetDialog () {
+    closeAndResetDialog() {
       this.dialog = false;
       this.currentItem = null;
       this.reset();
-    },
-  },
+    }
+  }
 };
 </script>

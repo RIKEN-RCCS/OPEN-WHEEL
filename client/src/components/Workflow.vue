@@ -28,7 +28,7 @@
         :ripple="false"
         :style="{backgroundColor : stateColor}"
       >
-        status: {{ projectState }}
+        status: {{ projectState }}{{isReadOnly}}
       </v-btn>
       <v-spacer />
       <v-btn
@@ -94,18 +94,6 @@
               />
             </template>
           </v-tooltip>
-
-          <!-- <v-tooltip text="pause project" location="bottom"> -->
-          <!--   <template #activator="{ props }"> -->
-          <!--     <v-btn -->
-          <!--       variant=outlined -->
-          <!--       icon="mdi-pause" -->
-          <!--       :disabled="! pauseProjectAllowed" -->
-          <!--       v-bind="props" -->
-          <!--       @click="openProjectOperationComfirmationDialog('pauseProject')" -->
-          <!--     /> -->
-          <!--   </template> -->
-          <!-- </v-tooltip> -->
           <v-tooltip text="stop project" location="bottom">
             <template #activator="{ props }">
               <v-btn
@@ -144,6 +132,31 @@
         </v-tooltip>
         <v-spacer />
         <v-card>
+          <v-tooltip text="force edit" location="bottom">
+            <template #activator="{ props }">
+              <v-btn
+                icon=mdi-pencil-lock-outline
+                v-if="readOnly"
+                rounded=0
+                variant=outlined
+                v-bind="props"
+                :style="{backgroundColor : readOnlyColor}"
+                @click="forceEditDialog=true"
+              />
+            </template>
+          </v-tooltip>
+          <v-tooltip text="validation check" location="bottom">
+            <template #activator="{ props }">
+              <v-btn
+                variant=outlined
+                rounded=0
+                :disabled="! checkProjectAllowed"
+                v-bind="props"
+                @click="checkComponents"
+                icon="mdi-check-outline"
+              />
+            </template>
+          </v-tooltip>
           <v-tooltip text="save project" location="bottom">
             <template #activator="{ props }">
               <v-btn
@@ -195,23 +208,23 @@
           />
         </v-col>
       </v-row>
-    <v-snackbar
-      v-model="openSnackbar"
-      multi-line
-      :timeout="-1"
-      centered
-      variant="outlined"
-    >
-      {{ snackbarMessage }}
-      <template #actions>
-        <v-btn
-          class="justify-end"
-          variant="outlined"
-          @click="closeSnackbar"
-          text="Close"
-        />
-      </template>
-    </v-snackbar>
+      <v-snackbar
+        v-model="openSnackbar"
+        multi-line
+        :timeout=snackbarTimeout
+        centered
+        variant="outlined"
+      >
+        {{ snackbarMessage }}
+        <template #actions>
+          <v-btn
+            class="justify-end"
+            variant="outlined"
+            @click="closeSnackbar"
+            text="Close"
+          />
+        </template>
+      </v-snackbar>
     </v-footer>
     <v-overlay
       :model-value="waiting"
@@ -226,6 +239,7 @@
       :unsaved-files="unsavedFiles"
       :dialog="showUnsavedFilesDialog"
       @closed="unsavedFilesDialogClosed"
+      @commit="commitFiles"
     />
     <password-dialog
       v-model="pwDialog"
@@ -285,44 +299,76 @@
         </v-data-table>
       </template>
     </versatile-dialog>
-    <source-file-upload-dialog 
+    <source-file-upload-dialog
       v-model="uploadSourceFileDialog"
     />
+    <versatile-dialog
+      v-model="forceEditDialog"
+      max-width="50vw"
+      title="Are you sure you want to edit read-only project ?"
+      @ok="makeWritable();forceEditDialog=false"
+      @cancel="forceEditDialog=false"
+    >
+      <template #message>
+        <div>
+          it may cause some problem.
+          <ul>
+            <li> Inconsistencies arise with the results of previous runs </li>
+            <li> After saving project you can not revert project to what it was before project run started</li>
+          </ul>
+        </div>
+      </template>
+    </versatile-dialog>
+    <versatile-dialog
+      v-model="validationErrorDialog"
+      title="validation error detected!"
+      max-width="50vw"
+      :buttons="[ { icon: 'mdi-check', label: 'close' }]"
+      @close="validationErrorDialog=false;validationErrors=[];validationErrorFilter=''"
+    >
+      <template #message>
+        <v-text-field
+          v-model="validationErrorFilter"
+          label="filter"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          hide-details
+          single-line
+        ></v-text-field>
+        <v-data-table
+          v-model:sort-by="validationErrorsSortBy"
+          :items="validationErrors"
+          :headers="validationErrorTableHeader"
+          :search="validationErrorFilter"
+          density="compact"
+        />
+      </template>
+    </versatile-dialog>
   </v-app>
 </template>
 
 <script>
 "use strict";
 import { mapState, mapMutations, mapActions, mapGetters } from "vuex";
-import applicationToolBar from "@/components/common/applicationToolBar.vue";
-import logScreen from "@/components/logScreen.vue";
-import NavDrawer from "@/components/common/NavigationDrawer.vue";
-import passwordDialog from "@/components/common/passwordDialog.vue";
-import unsavedFilesDialog from "@/components/unsavedFilesDialog.vue";
-import sourceFileUploadDialog from "@/components/uploadSourceFileDialog.vue";
-import versatileDialog from "@/components/versatileDialog.vue";
-import SIO from "@/lib/socketIOWrapper.js";
-import { readCookie, state2color } from "@/lib/utility.js";
+import applicationToolBar from "../components/common/applicationToolBar.vue";
+import logScreen from "../components/logScreen.vue";
+import NavDrawer from "../components/common/NavigationDrawer.vue";
+import passwordDialog from "../components/common/passwordDialog.vue";
+import unsavedFilesDialog from "../components/unsavedFilesDialog.vue";
+import sourceFileUploadDialog from "../components/uploadSourceFileDialog.vue";
+import versatileDialog from "../components/versatileDialog.vue";
+import SIO from "../lib/socketIOWrapper.js";
+import { readCookie, state2color } from "../lib/utility.js";
 import Debug from "debug";
-const debug = Debug("wheel:workflow:main");
+import allowedOperations from "../../../common/allowedOperations.cjs";
 
-const allowedOperations={
-  "not-started":["runProject", "saveProject", "revertProject"],
-  "prepareing" :[],
-  "running" :["stopProject"],
-  "stopped":["cleanProject"],
-  "finished":["cleanProject"],
-  "failed":["cleanProject"],
-  "unknown":["cleanProject"],
-  "holding":["cleanProject"],
-  "paused":[],
-}
+const debug = Debug("wheel:workflow:main");
 const isAllowed = (state, operation)=>{
-  if(! allowedOperations[state]){
-    return false
+  if (!allowedOperations[state]) {
+    return false;
   }
-  return allowedOperations[state].includes(operation)
-}
+  return allowedOperations[state].includes(operation);
+};
 
 export default {
   name: "Workflow",
@@ -333,7 +379,7 @@ export default {
     unsavedFilesDialog,
     versatileDialog,
     sourceFileUploadDialog,
-    passwordDialog,
+    passwordDialog
   },
   data: ()=>{
     return {
@@ -348,71 +394,92 @@ export default {
       viewerScreenDialog: false,
       projectDescription: "",
       cb: null,
-      unsavedFiles:[],
-      showUnsavedFilesDialog:false,
+      unsavedFiles: [],
+      showUnsavedFilesDialog: false,
       viewerDataDir: null,
       firstViewDataAlived: false,
-      selectSourceFileDialog:false,
-      sourceFileCandidates:[],
-      selectedSourceFilenames:[],
+      selectSourceFileDialog: false,
+      sourceFileCandidates: [],
+      selectedSourceFilenames: [],
       selectSourceFileDialogTitle: "",
-      uploadSourceFileDialog:false,
-      dialog:false,
-      dialogTitle:"",
-      dialogMessage:"",
-      confirmed:null,
-      baseURL:"."
+      uploadSourceFileDialog: false,
+      forceEditDialog: false,
+      dialog: false,
+      dialogTitle: "",
+      dialogMessage: "",
+      confirmed: null,
+      baseURL: ".",
+      validationErrorDialog: false,
+      validationErrors: [],
+      validationErrorsSortBy: [{ key: "component", order: "asc" }],
+      validationErrorFilter: "",
+      validationErrorTableHeader: [
+        { title: "component", value: "name", key: "component" },
+        { title: "error", value: "error", key: "error" }
+      ]
     };
   },
   computed: {
     ...mapState([
       "projectState",
+      "componentPath",
       "rootComponentID",
-      "openSnackbar",
       "currentComponent",
+      "openSnackbar",
       "snackbarMessage",
+      "snackbarTimeout",
       "projectRootDir",
       "selectedComponent",
       "selectedFile",
+      "readOnly"
     ]),
     ...mapGetters(["waiting"]),
-    stateColor(){
+    isReadOnly() {
+      return this.readOnly ? " - read-only" : "";
+    },
+    stateColor() {
       return state2color(this.projectState);
     },
-    selectedSourceFilename(){
+    readOnlyColor() {
+      return state2color(`${this.readOnly ? "paused" : ""}`);
+    },
+    selectedSourceFilename() {
       return this.selectedSourceFilenames[0].filename;
     },
-    runProjectAllowed(){
-      return isAllowed(this.projectState, "runProject")
+    runProjectAllowed() {
+      return isAllowed(this.projectState, "runProject");
     },
-    pauseProjectAllowed(){
-      return isAllowed(this.projectState, "pauseProject")
+    pauseProjectAllowed() {
+      return isAllowed(this.projectState, "pauseProject");
     },
-    saveProjectAllowed(){
-      return isAllowed(this.projectState, "saveProject")
+    checkProjectAllowed() {
+      return isAllowed(this.projectState, "checkProject");
     },
-    revertProjectAllowed(){
-      return isAllowed(this.projectState, "revertProject")
+    saveProjectAllowed() {
+      return isAllowed(this.projectState, "saveProject");
     },
-    stopProjectAllowed(){
-      return isAllowed(this.projectState, "stopProject")
+    revertProjectAllowed() {
+      return isAllowed(this.projectState, "revertProject");
     },
-    cleanProjectAllowed(){
-      return isAllowed(this.projectState, "cleanProject")
+    stopProjectAllowed() {
+      return isAllowed(this.projectState, "stopProject");
     },
+    cleanProjectAllowed() {
+      return isAllowed(this.projectState, "cleanProject");
+    }
   },
   mounted: function () {
-    let projectRootDir = sessionStorage.getItem("projectRootDir")
-    if(projectRootDir === "not-set"){
+    let projectRootDir = sessionStorage.getItem("projectRootDir");
+    if (projectRootDir === "not-set") {
       projectRootDir = readCookie("rootDir");
       sessionStorage.setItem("projectRootDir", projectRootDir);
     }
     this.commitProjectRootDir(projectRootDir);
 
-    const socketIOPath=readCookie("socketIOPath");
+    const socketIOPath = readCookie("socketIOPath");
     debug(`beseURL=${socketIOPath}`);
-    this.baseURL=this.$router.options.history.base || ".";
-    SIO.init({projectRootDir}, socketIOPath);
+    this.baseURL = this.$router.options.history.base || ".";
+    SIO.init({ projectRootDir }, socketIOPath);
 
     const ID = readCookie("root");
     this.commitRootComponentID(ID);
@@ -424,28 +491,27 @@ export default {
       this.pwDialogTitle = `input password or passphrase for ${hostname}`;
       this.pwDialog = true;
     });
-    SIO.onGlobal("askSourceFilename", ( ID, name, description, candidates, cb)=>{
-      this.selectSourceFileDialogTitle=`select source file for ${name}`;
-      this.sourceFileCandidates=candidates.map((filename)=>{
-        return {filename};
+    SIO.onGlobal("askSourceFilename", (ID, name, description, candidates, cb)=>{
+      this.selectSourceFileDialogTitle = `select source file for ${name}`;
+      this.sourceFileCandidates = candidates.map((filename)=>{
+        return { filename };
       });
-
-      this.selectSourceFileDialogCallback=(result)=>{
+      this.selectSourceFileDialogCallback = (result)=>{
         cb(result ? this.selectedSourceFilename : null);
-        this.selectedSourceFilenames=[];
-        this.sourceFileCandidates=[];
-        this.selectSourceFileDialog=false;
+        this.selectedSourceFilenames = [];
+        this.sourceFileCandidates = [];
+        this.selectSourceFileDialog = false;
       };
-      this.selectSourceFileDialog=true;
+      this.selectSourceFileDialog = true;
     });
     SIO.onGlobal("componentTree", (componentTree)=>{
       this.commitComponentTree(componentTree);
     });
     SIO.onGlobal("showMessage", this.showSnackbar);
     SIO.onGlobal("logERR", (message)=>{
-      const rt=/^\[.*ERROR\].*- *(.*?)$/m.exec(message)
-      const output= rt ? rt[1] || rt[0] : message;
-      this.showSnackbar(output)
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      this.showSnackbar(output);
     });
     SIO.onGlobal("hostList", this.commitRemoteHost);
     SIO.onGlobal("projectState", (state)=>{
@@ -454,20 +520,20 @@ export default {
     SIO.onGlobal("projectJson", (projectJson)=>{
       this.projectJson = projectJson;
       this.commitProjectState(projectJson.state.toLowerCase());
+      this.commitProjectReadOnly(projectJson.readOnly);
       this.commitComponentPath(projectJson.componentPath);
       this.commitWaitingProjectJson(false);
     });
     SIO.onGlobal("workflow", (wf)=>{
-      if(this.currentComponent!==null && wf.ID !== this.currentComponent.ID){
+      if (this.currentComponent !== null && wf.ID !== this.currentComponent.ID) {
         this.commitSelectedComponent(null);
       }
       this.commitCurrentComponent(wf);
-
-      if(this.selectedComponent){
+      if (this.selectedComponent) {
         const update = wf.descendants.find((e)=>{
           return e.ID === this.selectedComponent.ID;
         });
-        if(update){
+        if (update) {
           this.commitSelectedComponent(update);
         }
       }
@@ -475,18 +541,20 @@ export default {
     });
     SIO.onGlobal("unsavedFiles", (unsavedFiles, cb)=>{
       if (unsavedFiles.length === 0) {
+        this.showUnsavedFilesDialog = false;
+        this.unsavedFiles.splice(0, this.unsavedFiles.length);
+        cb();
         return;
       }
       this.cb = cb;
       this.unsavedFiles.splice(0, this.unsavedFiles.length, ...unsavedFiles);
-      this.showUnsavedFilesDialog= true;
+      this.showUnsavedFilesDialog = true;
     });
     SIO.onGlobal("resultFilesReady", (dir)=>{
-      this.viewerDataDir=dir;
-
-      if(! this.firstViewDataAlived){
-        this.viewerScreenDialog=true;
-        this.firstViewDataAlived=true;
+      this.viewerDataDir = dir;
+      if (!this.firstViewDataAlived) {
+        this.viewerScreenDialog = true;
+        this.firstViewDataAlived = true;
       }
       return;
     });
@@ -497,6 +565,11 @@ export default {
         this.$refs.logscreen.logRecieved(event, data);
       });
     }
+    SIO.onGlobal("requestOIDCAuth", (remotehostID, ack)=>{
+      const param = new URLSearchParams({ remotehostID });
+      window.location.replace(`${this.baseURL}/webAPIauth?${param.toString()}`);
+      ack(true);
+    });
 
     SIO.emitGlobal("getHostList", (hostList)=>{
       this.commitRemoteHost(hostList);
@@ -523,7 +596,39 @@ export default {
       });
   },
   methods: {
-    openViewerScreen(){
+    checkComponents() {
+      SIO.emitGlobal("checkComponents", this.projectRootDir, this.currentComponent.ID, (validationErrors)=>{
+        if (!Array.isArray(validationErrors)) {
+          debug("checkComponents failed!", validationErrors);
+        }
+        if (validationErrors.length === 0) {
+          this.showSnackbar(`all components under ${this.currentComponent.name} are valid`);
+          debug(`no invalid components found under ${this.currentComponent.name} (${this.currentComponent.ID})`);
+          return;
+        }
+        debug("invalid components", validationErrors);
+        this.validationErrors = validationErrors;
+        const errorIDs = validationErrors.map((err)=>{
+          return err.ID;
+        });
+        this.currentComponent.descendants.forEach((child)=>{
+          child.isInvalid = errorIDs.includes(child.ID);
+          if (!child.isInvalid) {
+            const childName = this.componentPath[child.ID].replace(/^./, "");
+            child.isInvalid = this.validationErrors.some((err)=>{
+              return err.name.startsWith(childName);
+            });
+          }
+        });
+        this.validationErrorDialog = true;
+      });
+    },
+    makeWritable() {
+      SIO.emitGlobal("updateProjectROStatus", this.projectRootDir, false, (rt)=>{
+        debug("updateProjectROStatus done", rt);
+      });
+    },
+    openViewerScreen() {
       const form = document.createElement("form");
       form.setAttribute("target", `${this.baseURL}/viewer`);
       form.setAttribute("action", `${this.baseURL}/viewer`);
@@ -542,19 +647,25 @@ export default {
       form.appendChild(input2);
       form.submit();
     },
-    unsavedFilesDialogClosed(...args){
-      this.unsavedFiles.splice(0);
+    unsavedFilesDialogClosed(...args) {
       this.cb(args);
-      this.showUnsavedFilesDialog=false;
+      this.unsavedFiles.splice(0);
+      this.showUnsavedFilesDialog = false;
+    },
+    commitFiles(files) {
+      SIO.emitGlobal("commitFiles", this.projectRootDir, files, ()=>{
+        this.cb("update");
+      });
     },
     ...mapActions({
-      showSnackbar:"showSnackbar",
-      closeSnackbar:"closeSnackbar",
+      showSnackbar: "showSnackbar",
+      closeSnackbar: "closeSnackbar",
       commitSelectedComponent: "selectedComponent"
     }),
     ...mapMutations({
       commitComponentTree: "componentTree",
       commitProjectState: "projectState",
+      commitProjectReadOnly: "readOnly",
       commitComponentPath: "componentPath",
       commitCurrentComponent: "currentComponent",
       commitProjectRootDir: "projectRootDir",
@@ -562,46 +673,45 @@ export default {
       commitRemoteHost: "remoteHost",
       commitJobScheduler: "jobScheduler",
       commitWaitingProjectJson: "waitingProjectJson",
-      commitWaitingWorkflow: "waitingWorkflow",
+      commitWaitingWorkflow: "waitingWorkflow"
     }),
-    emitProjectOperation (operation) {
-      if(operation === "runProject"){
+    emitProjectOperation(operation) {
+      if (operation === "runProject") {
         this.commitSelectedComponent(null);
       }
-      if(operation === "cleanProject"){
-        this.firstViewDataAlived=false;
+      if (operation === "cleanProject") {
+        this.firstViewDataAlived = false;
       }
-      if(operation === "stopProject" || operation === "cleanProject"){
+      if (operation === "stopProject" || operation === "cleanProject") {
         this.commitWaitingWorkflow(true);
       }
-      SIO.emitGlobal(operation, this.projectRootDir, (rt)=>{
-        debug(operation, "done", rt);
-
-        if(operation === "stopProject" || operation === "cleanProject"){
+      SIO.emitGlobal("projectOperation", this.projectRootDir, operation, (rt)=>{
+        debug(`${operation} ${rt ? "finished" : `failed with ${rt}`}`);
+        if (operation === "stopProject" || operation === "cleanProject") {
           this.commitWaitingWorkflow(false);
         }
-        if(operation === "cleanProject"){
-          this.viewerDataDir=null;
+        if (operation === "cleanProject") {
+          this.viewerDataDir = null;
         }
       });
     },
-    openProjectOperationComfirmationDialog(operation){
-      if(["stopProject","cleanProject","pauseProject","revertProject"].includes(operation)){
-        this.dialogTitle=operation
-        this.dialogMessage=`are you sure you want to ${operation.replace("P", " p")} ?`
-        this.confirmed=this.emitProjectOperation.bind(this, operation);
-        this.dialog=true
+    openProjectOperationComfirmationDialog(operation) {
+      if (["stopProject", "cleanProject", "pauseProject", "revertProject"].includes(operation)) {
+        this.dialogTitle = operation;
+        this.dialogMessage = `are you sure you want to ${operation.replace("P", " p")} ?`;
+        this.confirmed = this.emitProjectOperation.bind(this, operation);
+        this.dialog = true;
       }
     },
-    updateDescription(){
-      SIO.emitGlobal("updateProjectDescription", this.projectRootDir,  this.projectDescription,(rt)=>{
-        if(rt){
-          this.projectJson.description=this.projectDescription;
-          this.projectDescription="";
+    updateDescription() {
+      SIO.emitGlobal("updateProjectDescription", this.projectRootDir, this.projectDescription, (rt)=>{
+        if (rt) {
+          this.projectJson.description = this.projectDescription;
+          this.projectDescription = "";
         }
       });
-      this.descriptionDialog=false;
+      this.descriptionDialog = false;
     }
-  },
+  }
 };
 </script>

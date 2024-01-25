@@ -5,9 +5,8 @@
  */
 "use strict";
 const path = require("path");
-const { projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { getComponent } = require("../core/workflowUtil");
-const { importProject } = require("../core/projectFilesOperator");
+const { projectJsonFilename } = require("../db/db");
+const { importProject, readComponentJson } = require("../core/projectFilesOperator");
 
 module.exports = {
   get: async (req, res)=>{
@@ -25,7 +24,7 @@ module.exports = {
     if (!newProjectRootDir) {
       return;
     }
-    const { ID } = await getComponent(newProjectRootDir, path.resolve(newProjectRootDir, componentJsonFilename));
+    const { ID } = await readComponentJson(newProjectRootDir);
     res.cookie("root", ID);
     res.cookie("rootDir", newProjectRootDir);
     res.cookie("project", path.resolve(newProjectRootDir, projectJsonFilename));

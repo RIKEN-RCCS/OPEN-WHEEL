@@ -108,26 +108,26 @@
 </template>
 <script>
 "use strict";
-import SIO from "@/lib/socketIOWrapper.js";
-import hpcCenters from "@/lib/hpcCenter.json";
-import createJobScript from "@/lib/jobScripts.js";
-import versatileDialog from "@/components/versatileDialog.vue";
-import listForm from "@/components/common/listForm.vue";
+import SIO from "../../lib/socketIOWrapper.js";
+import hpcCenters from "../../lib/hpcCenter.json";
+import createJobScript from "../../lib/jobScripts.js";
+import versatileDialog from "../..//components/versatileDialog.vue";
+import listForm from "../../components/common/listForm.vue";
 
 export default {
   name: "JobScriptEditor",
-  components:{
+  components: {
     versatileDialog,
     listForm
   },
   props: {
     readOnly: {
       type: Boolean,
-      required: true,
+      required: true
     },
-    isJobScript:{
+    isJobScript: {
       type: Boolean,
-      required: true,
+      required: true
     }
   },
   data: function () {
@@ -137,82 +137,84 @@ export default {
           return e.id.startsWith("builtin");
         })
         .map((e)=>{
-          return e.name
-        }) ,
+          return e.name;
+        }),
       builtinTemplates: structuredClone(hpcCenters),
       jobScriptList: [],
       loadedCenterInfo: null,
       center: null,
-      loadDialog:false,
-      saveDialog:false,
+      loadDialog: false,
+      saveDialog: false,
       newTemplateName: "",
-      buttons:[
-        {label: "load", icon: "mdi-check"},
-        {label: "remove", icon: "mdi-trash"},
-        {label: "cancel", icon: "mdi-close"}
+      buttons: [
+        { label: "load", icon: "mdi-check" },
+        { label: "remove", icon: "mdi-trash" },
+        { label: "cancel", icon: "mdi-close" }
       ],
-      selected:[]
+      selected: []
     };
   },
   computed: {
-    template(){
-      const  index = this.centerNames.findIndex((e)=>{return e===this.center});
+    template() {
+      const index = this.centerNames.findIndex((e)=>{
+        return e === this.center;
+      });
       return this.loadedCenterInfo || this.builtinTemplates[index] || null;
     }
   },
-  watch:{
-    center(newVal, oldVal){
-      if(newVal===oldVal){
+  watch: {
+    center(newVal, oldVal) {
+      if (newVal === oldVal) {
         return;
       }
-      this.loadedCenterInfo=null;
+      this.loadedCenterInfo = null;
     }
   },
-  mounted(){
-    this.center=this.centerNames[0];
+  mounted() {
+    this.center = this.centerNames[0];
     SIO.onGlobal("jobScriptTemplateList", (data)=>{
-      this.jobScriptList=data;
+      this.jobScriptList = data;
     });
     SIO.emitGlobal("getJobscriptTemplates", SIO.generalCallback);
   },
   methods: {
-    cancelSaveDialog(){
-      this.newTemplateName="";
-      this.saveDialog=false;
+    cancelSaveDialog() {
+      this.newTemplateName = "";
+      this.saveDialog = false;
     },
-    clear(){
-      this.builtinTemplates=structuredClone(hpcCenters);
-      this.loadedCenterInfo=null;
+    clear() {
+      this.builtinTemplates = structuredClone(hpcCenters);
+      this.loadedCenterInfo = null;
     },
-    removeTemplate(item){
+    removeTemplate(item) {
       SIO.emitGlobal("removeJobScriptTemplate", item.id, SIO.generalCallback);
     },
-    loadTemplate(){
-      if(this.selected.length > 0){
-        this.loadedCenterInfo=this.selected[0];
+    loadTemplate() {
+      if (this.selected.length > 0) {
+        this.loadedCenterInfo = this.selected[0];
         this.selected.splice(0);
       }
-      this.loadDialog=false;
+      this.loadDialog = false;
     },
-    saveTemplate(){
+    saveTemplate() {
       const eventName = this.template.name === this.newTemplateName && typeof this.template.id === "string" ? "updateJobScriptTemplate" : "addJobScriptTemplate";
-      const payload={...this.template};
-      payload.name = this.newTemplateName
+      const payload = { ...this.template };
+      payload.name = this.newTemplateName;
       SIO.emitGlobal(eventName, payload, SIO.generalCallback);
       this.cancelSaveDialog();
     },
-    insertJobScript(){
-      const values=this.template.optionValues.reduce((a,c)=>{
-        a[c.prop]=c.value;
+    insertJobScript() {
+      const values = this.template.optionValues.reduce((a, c)=>{
+        a[c.prop] = c.value;
         return a;
-      },{});
-      const snipet=createJobScript(this.template.centerName, values);
+      }, {});
+      const snipet = createJobScript(this.template.centerName, values);
       this.$emit("insert", snipet);
     },
-    removeJobScript(){
+    removeJobScript() {
       this.$emit("remove");
     }
 
-  },
+  }
 };
 </script>
