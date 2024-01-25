@@ -26,8 +26,6 @@ const projectRootDir = path.resolve("hoge");
 //testee
 const LOG = rewire("../app/logSettings.js");
 const getLogger = LOG.__get__("getLogger");
-const setLoglevel = LOG.__get__("setLoglevel");
-const reset = LOG.__get__("reset");
 
 //stubs
 const emitAll = sinon.stub();
@@ -36,13 +34,17 @@ LOG.__set__("emitAll", emitAll);
 
 describe("Unit test for log4js's helper functions", ()=>{
   let logger;
+  const log4js = LOG.__get__("log4js");
+  const settings = LOG.__get__("logSettings");
   before(async()=>{
-    await setLoglevel("log2client", "debug");
-    await setLoglevel("filterdFile", "trace");
+    settings.appenders.log2client.level="debug"
+    settings.appenders.filterdFile.level="trace"
+    log4js.configure(settings);
   });
   after(async()=>{
-    await setLoglevel("log2client", process.env.WHEEL_LOGLEVEL);
-    await setLoglevel("filterdFile", process.env.WHEEL_LOGLEVEL);
+    settings.appenders.log2client.level=process.env.WHEEL_LOGLEVEL
+    settings.appenders.filterdFile.level=process.env.WHEEL_LOGLEVEL
+    log4js.configure(settings);
   });
   describe("#getLogger", ()=>{
     it("return log4js instance with default projectRootDir", ()=>{
@@ -65,7 +67,7 @@ describe("Unit test for log4js's helper functions", ()=>{
         await fs.remove(path.resolve(__dirname, logFilename));
         await fs.remove(projectRootDir);
       }
-      reset();
+      log4js.configure(settings);
     });
     it("should send info, warn and error log to client", ()=>{
       logger = getLogger(projectRootDir);

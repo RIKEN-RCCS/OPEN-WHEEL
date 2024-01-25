@@ -260,20 +260,6 @@ async function setProjectState(projectRootDir, state, force) {
   return false;
 }
 
-/**
- * return relative path from one component to another
- * @param {string} projectRootDir -
- * @param {string} from - starting point component's ID
- * @param {string} to - endpoint component's ID
- * @returns {string} - relativepath from "from" to "to"
- */
-async function getRelativeComponentPath(projectRootDir, from, to) {
-  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  const fromPath = projectJson.componentPath[from];
-  const toPath = projectJson.componentPath[to];
-  return path.relative(fromPath, toPath);
-}
-
 async function getComponentDir(projectRootDir, ID, isAbsolute) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   const relativePath = projectJson.componentPath[ID];
@@ -600,14 +586,18 @@ async function importProject(projectRootDir) {
  * @param {string} projectRootDir - git repo's root directory
  * @param {string} dir - root component directory
  * @param {string} state  - state to be set
- * @param {Boolean} doNotAdd- - call gitAdd if false
+ * @param {Boolean} doNotAdd - call gitAdd if false
+ * @param {string[]} ignoreStates - do not change state if one of this state
  */
-async function setComponentStateR(projectRootDir, dir, state, doNotAdd=false) {
+async function setComponentStateR(projectRootDir, dir, state, doNotAdd=false, ignoreStates=[]) {
   const filenames = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
   filenames.push(path.join(dir, componentJsonFilename));
   const p = filenames.map((filename)=>{
     return readJsonGreedy(filename)
       .then((component)=>{
+        if(ignoreStates.includes(component.state)){
+          return true;
+        }
         component.state = state;
         const componentDir=path.dirname(filename);
         return writeComponentJson(projectRootDir, componentDir, component, doNotAdd )
@@ -616,6 +606,12 @@ async function setComponentStateR(projectRootDir, dir, state, doNotAdd=false) {
   return Promise.all(p);
 }
 
+async function updateProjectROStatus(projectRootDir, isRO){
+  const filename = path.resolve(projectRootDir, projectJsonFilename);
+  const projectJson = await readJsonGreedy(filename);
+  projectJson.readOnly = isRO;
+  await writeJsonWrapper(filename, projectJson)
+}
 
 async function updateProjectDescription(projectRootDir, description) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
@@ -1939,18 +1935,6 @@ async function removeAllFileLink(projectRootDir, componentID, inputFilename, fro
   return Promise.all(p);
 }
 
-
-async function cleanComponent(projectRootDir, ID) {
-  const targetDir = await getComponentDir(projectRootDir, ID, true);
-
-  const pathSpec = `${replacePathsep(path.relative(projectRootDir, targetDir))}/*`;
-  await gitResetHEAD(projectRootDir, pathSpec);
-  await gitClean(projectRootDir, pathSpec);
-
-  const descendantsDirs = await getDescendantsIDs(projectRootDir, ID);
-  return removeComponentPath(projectRootDir, descendantsDirs);
-}
-
 async function removeComponent(projectRootDir, ID) {
   const targetDir = await getComponentDir(projectRootDir, ID, true);
   const descendantsIDs = await getDescendantsIDs(projectRootDir, ID);
@@ -2039,15 +2023,12 @@ async function getComponentTree(projectRootDir, rootDir) {
 module.exports = {
   createNewProject,
   updateComponentPath,
-  removeComponentPath,
-  getRelativeComponentPath,
   getComponentDir,
-  getDescendantsIDs,
-  getAllComponentIDs,
   setProjectState,
   getProjectState,
   checkRunningJobs,
   importProject,
+  updateProjectROStatus,
   updateProjectDescription,
   getProjectJson,
   addProject,
@@ -2058,11 +2039,8 @@ module.exports = {
   getChildren,
   readComponentJsonByID,
   validateComponents,
-  componentJsonReplacer,
   createNewComponent,
-  renameComponentDir,
   updateComponent,
-  updateStepNumber,
   addInputFile,
   addOutputFile,
   removeInputFile,
@@ -2077,7 +2055,6 @@ module.exports = {
   removeAllFileLink,
   getEnv,
   replaceEnv,
-  cleanComponent,
   removeComponent,
   isComponentDir,
   getComponentTree,
@@ -2085,4 +2062,5 @@ module.exports = {
   writeComponentJson,
   isLocal,
   isSameRemoteHost,
+  writeComponentJsonByID
 };

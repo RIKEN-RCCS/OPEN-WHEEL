@@ -17,7 +17,6 @@ import { mapState } from "vuex";
 import Freciever from "@/components/componentGraph/freciever.vue"
 import TextBox from "@/components/componentGraph/textBox.vue"
 import {calcFreceiverPos} from "@/lib/utils.js"
-import SIO from "@/lib/socketIOWrapper.js";
 
 export default{
   name: "inputFileBox",
