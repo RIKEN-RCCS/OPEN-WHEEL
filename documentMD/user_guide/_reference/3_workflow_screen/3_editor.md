@@ -4,7 +4,6 @@ lang: ja
 permalink: /reference/3_workflow_screen/3_editor.html
 ---
 本章では、テキストエディタ画面の機能について説明します。
-<!-- start -->
 テキストエディタ画面は、__text editor__ ボタンをクリックすることで表示されます。
 
 ![img](./img/open_text_editor.png "open text editor")
@@ -13,7 +12,6 @@ __テキストエディタ画面への遷移について__
 テキストエディタ画面への遷移は、ファイルの選択状態やプロジェクトの選択状態によって制限されています。  
 遷移できないときは、text editor ボタンがクリックできない状態で表示されます。
 {: .notice--info}
-<!-- end -->
 
 テキストエディタ画面には、次の3つのモードが存在します。
 - normalモード

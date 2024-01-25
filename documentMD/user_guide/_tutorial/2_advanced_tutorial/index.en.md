@@ -191,7 +191,6 @@ The __parameters__ text box on the right side of the screen displays __number__.
 ![img](./img/select_parameter_field.png "Parameter substitution field selection state")
 
 In this state, you can click the __+ add new parameter__ button to set the parameter for __number__.
-<!--For now, change the drop-down list to __list__ and enter three values: __foo__ __bar__ __baz__.-->
 For now, change the drop-down list to __list__.
 
 ![img](./img/list_parameter_dialog.png "list parameter dialog")

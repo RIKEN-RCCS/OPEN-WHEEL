@@ -57,23 +57,19 @@ Therefore, scripts in the successor component can access the files of the predec
 
 Depending on how you specify input files and output files, the following behavior is shown:
 
-<!-- #### if input files is blank and output files has a normal path -->
 #### When output files is a normal path and input files is blank
 If the symbolic link to the file or directory specified in output files is
 It is created in the top-level directory of the successor component.
 
-<!-- #### if input files is a string that does not end with '/' and output files has a normal path -->
 #### when output files is a normal path and input files is a non-'/'terminated string
 In the following component directory:
 Creates a symbolic link to the file or directory specified in output files.
 The symbolic link name is the name specified in input files.
 
-<!--#### if inputFile is a non-'/'string and the path specified in outputFile contains glob (\* or\? etc.) -->
 #### if output files is a path containing glob (\* or\? etc.) and input files is a non-'/'terminated string
 A directory with the string specified in input files is created in the subsequent component's directory.
 It creates symbolic links to files and directories that match the globs specified in output files.
 
-<!--### inputFile contains a string ending in '/' -->
 #### if input files is a string ending in '/'
 A directory with the string specified in input files is created in the subsequent component's directory.
 In it, a symbolic link to the file or directory specified in output files is created.

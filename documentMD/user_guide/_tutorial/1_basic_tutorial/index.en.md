@@ -19,14 +19,6 @@ The following three steps will guide you through the process.
 In this example, we will create a minimally configured workflow with standard output of "Hello WHEEL."
 Through this step, you learn how to create a workflow with one component and how to run it on the local host.
 
-<!-- The following is a summary of what you learned in this step.
-
-|| Item | Description |
-|-----|-----|-----|
-|1| Prepare to Create Workflow (#1-1- Prepare to Create Workflow) | Creates a new project and prepares to create a workflow |
-|2| Create Workflow (#1-2- Create Workflow) | Adds a component to the project and creates a workflow |
-|3| Run Workflow (#1-3- Run Workflow) | Run the created workflow |-->
-
 ### Preparing to Create a Workflow
 Before you begin, you will learn how to create and open a new project in preparation for creating a workflow.
 
@@ -147,8 +139,6 @@ Display the properties screen and select a script file from the __script__ drop-
 ![img](./img/property_screen4.png "Script Specification")
 
 Finally, let's save the project we created by clicking the __save project__ button (1) in the upper right corner of the screen.
-<!--__ You can rewind to the last save state by clicking the revert project__ button (2).
-Note that you cannot redo (undo). -->
 
 ![img](./img/workflow4.png "save and revert")
 
@@ -322,7 +312,6 @@ The execution result of the echo command is output to a file.
 This completes the task execution via the batch system.  
 Click the __cleanup project__ button to initialize the project for the next tutorial.
 
-<!--### 9. I/O File Transfer -->
 ## 3. Creating and Running a Multi-Component Workflow
 Up until the previous section, the component has executed a single workflow.
 However, in a real workflow, the output of a preceding program is often passed to another program for processing.
@@ -384,7 +373,6 @@ This concludes the tutorial on how to pass files between components.
 Click the __cleanup project__ button to initialize the project for the next tutorial.
 
 
-<!--### 10. Controlling Task Execution Order -->
 ### Controlling the order in which components are executed
 In [Passing I/O Files Between Components](#passing-io-files-between-components), the preceding component received the output file and then executed the subsequent component.
 

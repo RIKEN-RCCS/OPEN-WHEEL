@@ -55,7 +55,6 @@ use job schedulerを有効にしたときのみ、次のqueue, submit optionプ�
 ### submit command
 [リモートホスト設定]({{ site.baseurl }}/for_admins/how_to_boot/#リモートホスト設定)
 で指定されたバッチシステムにジョブを投入するときのコマンド名が表示されます。
-<!--この欄は実際にはTaskコンポーネントのプロパティではありません。-->  
 そのため、ここでは変更することはできません。
 
 ### submit option

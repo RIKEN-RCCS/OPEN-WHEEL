@@ -4,7 +4,6 @@ lang: en
 permalink: /reference/3_workflow_screen/3_editor.html
 ---
 This chapter describes the functions of the text editor screen.
-<!-- start -->
 The text editor screen is displayed by clicking the __text editor__ button.
 
 ![img](./img/open_text_editor.png "open text editor")
@@ -13,7 +12,6 @@ __About Transitions to Text Editor Screens__
 Transitions to the text editor screen are limited by the selected state of the file or the selected state of the project.  
 If the transition cannot be made, the text editor button is displayed in a state that cannot be clicked.
 {: .notice--info}
-<!-- end -->
 
 The text editor screen has three modes:
 - ormal mode

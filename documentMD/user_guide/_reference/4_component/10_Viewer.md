@@ -37,7 +37,7 @@ __ok__ ボタンをクリックすると別のタブでビューワー画面が�
 
 ![img](./img/viewer_dialog.png "viewer_dialog")
 
-また、画面上部の __open viewer screen__ <!--ビューワー画面表示-->ボタンが有効になり
+また、画面上部の __open viewer screen__ ボタンが有効になり
 以降はこのボタンをクリックすることでビューワー画面を表示することができます。
 
 ![img](./img/open_viewer_screen.png "open viewer screen button")

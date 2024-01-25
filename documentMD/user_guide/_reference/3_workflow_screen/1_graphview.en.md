@@ -151,22 +151,6 @@ Switches to display the subcomponents of that component.
 
 To switch to a higher component, use the hierarchical display or component tree described above.
 
-<!--
-When you single-click a displayed component,
-Displays an area where you can edit the settings (properties) for the component.
-
-![img](./img/component_property.png "component_property")
-
-|| Component | Description |
-|----------|----------|---------------------------------|
-|1|close button   | Closes the property display |
-|2|clean button   | Rewind the state of the component (and any subcomponents) to the most recent saved state |
-|3|delete button  | Remove component |
-|4| Details button | Shows or hides property settings for each group |
-
-The contents of this area differ for each type of component.
-For information about setting properties, see the ({{site.baseurl}}/reference/4_component /) chapter.
--->
 
 ### Log display button
 Displays the log that is output when a workflow is created or executed.

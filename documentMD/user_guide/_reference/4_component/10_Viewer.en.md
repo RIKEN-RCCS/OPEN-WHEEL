@@ -37,7 +37,7 @@ Click the __ok__ button to display the viewer screen in a separate tab.
 
 ![img](./img/viewer_dialog.png "viewer_dialog")
 
-Also, the __open viewer screen__ <!-- Viewer Screen Display --> button at the top of the screen is enabled.
+Also, the __open viewer screen__ button at the top of the screen is enabled.
 After that, you can click this button to display the viewer screen.
 
 ![img](./img/open_viewer_screen.png "open viewer screen button")

@@ -54,7 +54,6 @@ If not specified, the job is submitted to the batch system default queue.
 
 ### submit command
 Displays the name of the command used to submit the job to the batch system specified by [Remote host settings]({{site.baseurl}}/for_admins/how_to_boot/#remote-host-settings).
-<!-- This column is not actually a property of the Task component. -->  
 Therefore, it cannot be changed here.
 
 ### submit option

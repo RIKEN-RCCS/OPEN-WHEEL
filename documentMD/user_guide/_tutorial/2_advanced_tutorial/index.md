@@ -191,7 +191,6 @@ PSコンポーネントのプロパティ画面を開いてFilesエリアを表�
 ![img](./img/select_parameter_field.png "パラメータ置換フィールド選択状態")
 
 この状態で、 __+ add new parameter__ ボタンをクリックすると、 __number__ の部分に対するパラメータ設定を行うことができます。
-<!--ここでは、ドロップダウンリストを __list__ に変更し、 __foo__ __bar__ __baz__ の3つの値を入力してください。-->
 ここでは、ドロップダウンリストを __list__ に変更します。
 
 ![img](./img/list_parameter_dialog.png "listパラメータダイアログ")
