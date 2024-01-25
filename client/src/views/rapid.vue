@@ -35,9 +35,9 @@
         />
         <v-switch
           class='mt-n1'
-          v-model="readOnly"
+          v-model="readOnlyEditor"
           label="read only"
-          :disabled="! isEdittable"
+          v-if="! readOnly"
           color="primary"
         />
         <v-btn @click="saveAllFiles"
@@ -87,14 +87,14 @@
 </template>
 <script>
 "use strict";
-import { mapState, mapGetters,mapActions } from "vuex";
+import { mapState, mapActions } from "vuex";
 import getNodeAndPath from "@/lib/getNodeAndPath.js";
 import unsavedFilesDialog from "@/components/rapid/unsavedFilesDialog.vue";
 import componentButton from "@/components/common/componentButton.vue";
 import filterEditor from "@/components/rapid/filterEditor.vue";
 import tabEditor from "@/components/rapid/tabEditor.vue";
 import parameterEditor from "@/components/rapid/parameterEditor.vue";
-import jobScriptEditor  from "@/components/rapid/jobScriptEditor.vue";
+import jobScriptEditor from "@/components/rapid/jobScriptEditor.vue";
 import SIO from "@/lib/socketIOWrapper.js";
 
 export default {
@@ -105,34 +105,34 @@ export default {
     filterEditor,
     tabEditor,
     parameterEditor,
-    jobScriptEditor,
+    jobScriptEditor
   },
-  beforeRouteLeave (to, from, next) {
+  beforeRouteLeave(to, from, next) {
     if (!this.hasChange()) {
       next();
       return;
     }
-    const changedFilenames=[]
-    if(this.$refs.param.hasChange()){
-      changedFilenames.push({name: `${this.projectRootDir}${this.componentPath[this.selectedComponent.ID].slice(1)}/${this.$refs.param.filename}`})
+    const changedFilenames = [];
+    if (this.$refs.param.hasChange()) {
+      changedFilenames.push({ name: `${this.projectRootDir}${this.componentPath[this.selectedComponent.ID].slice(1)}/${this.$refs.param.filename}` });
     }
-    if(this.$refs.text.hasChange() ){
-      changedFilenames.push(...this.$refs.text.getChangedFiles())
+    if (this.$refs.text.hasChange()) {
+      changedFilenames.push(...this.$refs.text.getChangedFiles());
     }
-    this.unsavedFiles.splice(0,this.unsavedFiles.length, ...changedFilenames);
-    this.showUnsavedFilesDialog= true;
-    this.leave=next
+    this.unsavedFiles.splice(0, this.unsavedFiles.length, ...changedFilenames);
+    this.showUnsavedFilesDialog = true;
+    this.leave = next;
   },
   data: ()=>{
     return {
       mode: "normal",
-      readOnly_: false,
       isJobScript: false,
       showUnsavedFilesDialog: false,
-      unsavedFiles:[],
-      leave:null,
-      filterDialog:false,
-      placeholders:[]
+      unsavedFiles: [],
+      leave: null,
+      filterDialog: false,
+      placeholders: [],
+      readOnlyEditor: false
     };
   },
   computed: {
@@ -141,16 +141,8 @@ export default {
       "componentPath",
       "selectedComponent",
       "currentComponent",
-      "componentTree"]),
-    ...mapGetters([ "isEdittable"]),
-    readOnly:{
-      get(){
-        return this.isEdittable ? this.readOnly_: true;
-      },
-      set(v){
-        this.readOnly_=v;
-      }
-    },
+      "componentTree",
+      "readOnly"]),
     pathToCurrentComponent: function () {
       const rt = [];
       if (this.currentComponent !== null) {
@@ -158,86 +150,89 @@ export default {
       }
       return rt;
     },
-    selectedComponentRelativePath(){
-      if(this.selectedComponent === null){
+    selectedComponentRelativePath() {
+      if (this.selectedComponent === null) {
         return null;
       }
-      const relativePath=this.componentPath[this.selectedComponent.ID];
+      const relativePath = this.componentPath[this.selectedComponent.ID];
       return relativePath.startsWith("./") ? relativePath.slice(2) : relativePath;
     },
-    modes(){
-      const rt=[ "normal"]
-      if(!this.disablePS){
-        rt.push("PS-config")
+    modes() {
+      const rt = ["normal"];
+      if (!this.disablePS) {
+        rt.push("PS-config");
       }
-      const disableJobScriptEditor=this.selectedComponent !== null ? this.selectedComponent.type !== "task" : false;
-      if(!disableJobScriptEditor){
-        rt.push("jobScriptEditor")
+      const disableJobScriptEditor = this.selectedComponent !== null ? this.selectedComponent.type !== "task" : false;
+      if (!disableJobScriptEditor) {
+        rt.push("jobScriptEditor");
       }
       return rt;
     },
-    disablePS(){
-      if (this.selectedComponent === null){
+    disablePS() {
+      if (this.selectedComponent === null) {
         return true;
       }
-      if(this.selectedComponent.type === "parameterStudy" || this.selectedComponent.type === "bulkjobTask"){
+      if (this.selectedComponent.type === "parameterStudy" || this.selectedComponent.type === "bulkjobTask") {
         return false;
       }
       return true;
     }
   },
-  mounted () {
+  mounted() {
     SIO.onGlobal("parameterSettingFile", (file)=>{
-      if(file.isParameterSettingFile){
-        this.mode="PS-config";
+      if (file.isParameterSettingFile) {
+        this.mode = "PS-config";
       }
     });
   },
   methods: {
     ...mapActions(["showDialog"]),
-    setIsJobScript(v){
-      this.isJobScript=v;
+    setIsJobScript(v) {
+      this.isJobScript = v;
     },
-    openNewTab (...args) {
+    openNewTab(...args) {
       this.$refs.text.openNewTab(...args);
     },
-    insertBraces () {
+    insertBraces() {
       this.$refs.text.insertBraces();
     },
-    insertSnipet(snipet){
+    insertSnipet(snipet) {
       this.$refs.text.insertSnipet(snipet);
     },
-    removeSnipet(){
+    removeSnipet() {
       this.$refs.text.removeSnipet();
     },
-    hasChange () {
+    hasChange() {
       return this.$refs.text.hasChange() || this.$refs.param.hasChange(); //||this.$refs.jse.hasChange();
     },
-    saveAllFiles () {
+    saveAllFiles() {
       this.$refs.text.saveAll();
       this.$refs.param.save();
     },
-    unsavedFilesDialogClosed(mode){
-      if(mode === "cancel"){
+    unsavedFilesDialogClosed(mode) {
+      if (mode === "cancel") {
         this.unsavedFiles.splice(0);
-        this.showUnsavedFilesDialog=false;
-        return
+        this.showUnsavedFilesDialog = false;
+        return;
+      }
+      if (mode === "save") {
+        this.saveAllFiles();
       }
       this.unsavedFiles.splice(0);
-      this.showUnsavedFilesDialog=false;
+      this.showUnsavedFilesDialog = false;
       this.leave();
     },
-    getAllPlaceholders(){
-      return this.$refs.text.getAllPlaceholders()
+    getAllPlaceholders() {
+      return this.$refs.text.getAllPlaceholders();
     },
-    openFilterEditor(){
-      const rt=this.$refs.text.getAllPlaceholders()
-      this.placeholders.splice(0,this.placeholders.length,...rt);
+    openFilterEditor() {
+      const rt = this.$refs.text.getAllPlaceholders();
+      this.placeholders.splice(0, this.placeholders.length, ...rt);
       this.$nextTick(()=>{
-        this.filterDialog=true;
+        this.filterDialog = true;
       });
     }
-  },
+  }
 };
 </script>
 <style>

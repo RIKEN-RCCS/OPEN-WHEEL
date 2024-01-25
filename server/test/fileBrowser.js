@@ -41,7 +41,7 @@ describe("file Browser UT", ()=>{
   ].map((e)=>{
     return { path: testDirRoot, name: e, type: "file", islink: false, isComponentDir: false };
   });
-  beforeEach(async()=>{
+  beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await Promise.all([
       fs.ensureDir(path.join(testDirRoot, "foo")),
@@ -67,11 +67,11 @@ describe("file Browser UT", ()=>{
       fs.ensureSymlink(path.join(testDirRoot, "foo_3"), path.join(testDirRoot, "linkpoyo"))
     ]);
   });
-  after(async()=>{
+  after(async ()=>{
     await fs.remove(testDirRoot);
   });
   describe("#getContents", ()=>{
-    it("should get all files and directories", async()=>{
+    it("should get all files and directories", async ()=>{
       const rt = await getContents(testDirRoot);
       expect(rt).to.eql([
         { path: path.resolve(testDirRoot), name: "bar", type: "dir", islink: false, isComponentDir: false },
@@ -95,7 +95,7 @@ describe("file Browser UT", ()=>{
         { path: path.resolve(testDirRoot), name: "linkpuyo", type: "file", islink: true }
       ]);
     });
-    it("should get directories", async()=>{
+    it("should get directories", async ()=>{
       const rt = await getContents(testDirRoot, { sendFilename: false });
       expect(rt).to.eql([
         { path: path.resolve(testDirRoot), name: "bar", type: "dir", islink: false, isComponentDir: false },
@@ -106,7 +106,7 @@ describe("file Browser UT", ()=>{
         { path: path.resolve(testDirRoot), name: "linkfoo", type: "dir", islink: true, isComponentDir: false }
       ]);
     });
-    it("should get files", async()=>{
+    it("should get files", async ()=>{
       const rt = await getContents(testDirRoot, { sendDirname: false });
       expect(rt).to.eql([
         { path: path.resolve(testDirRoot), name: "foo_1", type: "file", islink: false },
@@ -124,7 +124,7 @@ describe("file Browser UT", ()=>{
         { path: path.resolve(testDirRoot), name: "linkpuyo", type: "file", islink: true }
       ]);
     });
-    it("should get files, directories and SND files", async()=>{
+    it("should get files, directories and SND files", async ()=>{
       const rt = await getContents(testDirRoot, { SND: true });
       expect(rt).to.eql([
         { path: path.resolve(testDirRoot), name: "bar", type: "dir", islink: false, isComponentDir: false },
@@ -144,7 +144,7 @@ describe("file Browser UT", ()=>{
         { path: path.resolve(testDirRoot), name: "linkpuyo", type: "file", islink: true }
       ]);
     });
-    it("should get matched files and directories", async()=>{
+    it("should get matched files and directories", async ()=>{
       const rt = await getContents(testDirRoot, { filter: { all: /^[bh].*/ } });
       expect(rt).to.eql([
         { path: path.resolve(testDirRoot), name: "bar", type: "dir", islink: false, isComponentDir: false },
@@ -158,7 +158,7 @@ describe("file Browser UT", ()=>{
         { path: path.resolve(testDirRoot), name: "huga_3_100", type: "file", islink: false }
       ]);
     });
-    it("should get matched files", async()=>{
+    it("should get matched files", async ()=>{
       const rt = await getContents(testDirRoot, { filter: { file: /[fl].*/ } });
       expect(rt).to.eql([
         { path: path.resolve(testDirRoot), name: "bar", type: "dir", islink: false, isComponentDir: false },
@@ -175,7 +175,7 @@ describe("file Browser UT", ()=>{
         { path: path.resolve(testDirRoot), name: "linkpuyo", type: "file", islink: true }
       ]);
     });
-    it("should get matched directories", async()=>{
+    it("should get matched directories", async ()=>{
       const rt = await getContents(testDirRoot, { filter: { dir: /[fl].*/ } });
       expect(rt).to.eql([
         { path: path.resolve(testDirRoot), name: "foo", type: "dir", islink: false, isComponentDir: false },

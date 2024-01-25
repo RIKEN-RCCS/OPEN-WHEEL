@@ -21,6 +21,8 @@ class BaseWorkflowComponent {
     this.type = null;
     this.name = null;
     this.description = null;
+    this.env = {};
+    this.disable = false;
 
     /**
      * component state
@@ -274,7 +276,7 @@ class BulkjobTask extends Task {
   constructor(pos, parent, stepnum, ...args) {
     super(pos, parent, stepnum, ...args);
     this.type = "bulkjobTask";
-    this.useJobScheduler = true;
+    this.useJobScheduler = true; //memo should be ignored
 
     /*bulkjob parameter */
     this.usePSSettingFile = true;
@@ -287,13 +289,34 @@ class BulkjobTask extends Task {
 }
 
 /**
+ * representation of if and break block in loop
+ */
+class Break extends GeneralComponent {
+  constructor(...args) {
+    super(...args);
+    this.type = "break";
+    this.condition = null;
+  }
+}
+
+/**
+ * representation of if and continue block in loop
+ */
+class Continue extends GeneralComponent {
+  constructor(...args) {
+    super(...args);
+    this.type = "continue";
+    this.condition = null;
+  }
+}
+
+/**
  * factory method for workflow component class
  * @param {string} type -  component type
  * @returns {*} - component object
  */
 function componentFactory(type, ...args) {
   let component;
-
   switch (type) {
     case "task":
       component = new Task(...args);
@@ -334,16 +357,20 @@ function componentFactory(type, ...args) {
     case "bulkjobTask":
       component = new BulkjobTask(...args);
       break;
+    case "break":
+      component = new Break(...args);
+      break;
+    case "continue":
+      component = new Continue(...args);
+      break;
     default:
       component = null;
   }
   return component;
 }
-
 function hasChild(component) {
   return component.type === "workflow" || component.type === "parameterStudy" || component.type === "for" || component.type === "while" || component.type === "foreach" || component.type === "stepjob";
 }
-
 function isInitialComponent(component) {
   if (component.type === "storage") {
     return component.outputFiles.some((outputFile)=>{
@@ -364,7 +391,6 @@ function isInitialComponent(component) {
 
   return true;
 }
-
 function isComponent(componentJson) {
   return componentJson instanceof BaseWorkflowComponent;
 }
@@ -391,22 +417,31 @@ function removeDuplicatedComponent(components) {
  * @param {string} type - component type
  * @returns {string} - component's basename
  */
-function getComponentDefaultName(type){
-  if (type === "stepjobTask"){
-    return "sjTask"
+function getComponentDefaultName(type) {
+  if (type === "stepjobTask") {
+    return "sjTask";
   }
-  if(type === "bulkjobTask"){
-    return "bjTask"
+  if (type === "bulkjobTask") {
+    return "bjTask";
   }
-  return type
+  return type;
 }
 
+/**
+ * return this component run on localhost or not
+ * @param {Object} component - component object
+ * @return {Boolean} - local component or not
+ */
+function isLocalComponent(component) {
+  return typeof component.host === "undefined" || component.host === "localhost";
+}
 
 module.exports = {
   componentFactory,
   hasChild,
   isInitialComponent,
   isComponent,
+  isLocalComponent,
   removeDuplicatedComponent,
   getComponentDefaultName
 };

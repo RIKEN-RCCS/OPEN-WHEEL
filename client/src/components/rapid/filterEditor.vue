@@ -55,22 +55,22 @@ import { tableFooterProps } from "@/lib/rapid2Util.js";
 
 export default {
   name: "FilterEditor",
-  props:{
+  props: {
     modelValue: {
-      type:Boolean,
+      type: Boolean,
       required: true
     },
-    placeholders:{
+    placeholders: {
       type: Array,
       required: true
     }
   },
   computed: {
-    filterEditor:{
-      get(){
-        return this.modelValue
+    filterEditor: {
+      get() {
+        return this.modelValue;
       },
-      set(v){
+      set(v) {
         this.$emit("update:modelValue", v);
       }
     }
@@ -80,15 +80,15 @@ export default {
       newFilter: "",
       search: "",
       selected: [],
-      tableFooterProps,
+      tableFooterProps
     };
   },
   methods: {
-    applyFilter () {
+    applyFilter() {
       const placeholdersToApply = Array.from(this.selected);
       placeholdersToApply.sort((a, b)=>{
         if (a.filename === b.filename) {
-          return a.end.row - b.end.row !== 0 ? b.end.row- a.end.row: b.end.column - a.end.column;
+          return a.end.row - b.end.row !== 0 ? b.end.row - a.end.row : b.end.column - a.end.column;
         }
         return a.filename > b.filename ? 1 : -1;
       });
@@ -100,11 +100,11 @@ export default {
       this.$emit("updatePlaceholders");
     },
 
-    closeFilterEditor () {
+    closeFilterEditor() {
       this.filterEditor = false;
       this.params = null;
-    },
+    }
 
-  },
+  }
 };
 </script>

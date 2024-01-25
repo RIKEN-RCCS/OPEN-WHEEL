@@ -8,13 +8,17 @@
     @dragover.prevent
     @dragenter.prevent
   >
-    <component-graph />
+    <component-graph
+      @componentRightClick=onComponentRightClick
+      @connectorRightClick=onConnectorRightClick
+      @vconnectorRightClick=onVconnectorRightClick
+    />
   </div>
 </template>
 
 <script>
-import { mapMutations} from "vuex";
-import ComponentGraph from "@/components/componentGraph/componentGraph.vue"
+import { mapMutations } from "vuex";
+import ComponentGraph from "@/components/componentGraph/componentGraph.vue";
 import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "@/lib/componentSizes.json";
 
 export default {
@@ -33,20 +37,19 @@ export default {
     ...mapMutations(
       {
         commitCanvasWidth: "canvasWidth",
-        commitCanvasHeight: "canvasHeight",
+        commitCanvasHeight: "canvasHeight"
       }),
     fit: function () {
-      const magicNumberH = 17 +25;
+      const magicNumberH = 17 + 25;
       const magicNumberW = 24;
       const baseWidth = window.innerWidth < this.$parent.$parent.$el.clientWidth ? window.innerWidth : this.$parent.$parent.$el.clientWidth;
       const width = baseWidth - widthComponentLibrary - magicNumberW;
       const height = window.innerHeight - heightToolbar - heightDenseToolbar * 2 - heightFooter - magicNumberH;
-
       if (width > 0 && height > 0) {
         this.commitCanvasWidth(width);
         this.commitCanvasHeight(height);
       }
-    },
-  },
+    }
+  }
 };
 </script>

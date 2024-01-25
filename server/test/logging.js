@@ -14,7 +14,7 @@ chai.use(require("chai-fs"));
 const sinon = require("sinon");
 chai.use(require("sinon-chai"));
 chai.use((_chai, _)=>{
-  _chai.Assertion.addMethod("withMessage", function(msg) {
+  _chai.Assertion.addMethod("withMessage", function (msg) {
     _.flag(this, "message", msg);
   });
 });
@@ -26,23 +26,24 @@ const projectRootDir = path.resolve("hoge");
 //testee
 const LOG = rewire("../app/logSettings.js");
 const getLogger = LOG.__get__("getLogger");
-const setLoglevel = LOG.__get__("setLoglevel");
-const reset = LOG.__get__("reset");
 
 //stubs
 const emitAll = sinon.stub();
 LOG.__set__("emitAll", emitAll);
 
-
 describe("Unit test for log4js's helper functions", ()=>{
   let logger;
-  before(async()=>{
-    await setLoglevel("log2client", "debug");
-    await setLoglevel("filterdFile", "trace");
+  const log4js = LOG.__get__("log4js");
+  const settings = LOG.__get__("logSettings");
+  before(async ()=>{
+    settings.appenders.log2client.level = "debug";
+    settings.appenders.filterdFile.level = "trace";
+    log4js.configure(settings);
   });
-  after(async()=>{
-    await setLoglevel("log2client", process.env.WHEEL_LOGLEVEL);
-    await setLoglevel("filterdFile", process.env.WHEEL_LOGLEVEL);
+  after(async ()=>{
+    settings.appenders.log2client.level = process.env.WHEEL_LOGLEVEL;
+    settings.appenders.filterdFile.level = process.env.WHEEL_LOGLEVEL;
+    log4js.configure(settings);
   });
   describe("#getLogger", ()=>{
     it("return log4js instance with default projectRootDir", ()=>{
@@ -55,17 +56,17 @@ describe("Unit test for log4js's helper functions", ()=>{
     });
   });
   describe("#log", ()=>{
-    beforeEach(async()=>{
+    beforeEach(async ()=>{
       await fs.remove(projectRootDir);
       await fs.mkdir(projectRootDir);
       emitAll.resetHistory();
     });
-    afterEach(async()=>{
+    afterEach(async ()=>{
       if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
         await fs.remove(path.resolve(__dirname, logFilename));
         await fs.remove(projectRootDir);
       }
-      reset();
+      log4js.configure(settings);
     });
     it("should send info, warn and error log to client", ()=>{
       logger = getLogger(projectRootDir);
@@ -82,7 +83,7 @@ describe("Unit test for log4js's helper functions", ()=>{
       expect(calls[1].args[1]).to.eql("logERR");
       expect(calls[1].args[2]).to.match(/error$/);
     });
-    it("should write all logs except trace to file", async()=>{
+    it("should write all logs except trace to file", async ()=>{
       logger = getLogger(projectRootDir);
       logger.trace("trace");
       logger.debug("debug");

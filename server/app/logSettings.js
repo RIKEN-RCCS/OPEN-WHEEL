@@ -10,7 +10,6 @@ const log4js = require("log4js");
 const logger = log4js.getLogger();
 const { logFilename, numLogFiles, maxLogSize, compressLogFile } = require("./db/db");
 const { emitAll } = require("./handlers/commUtils.js");
-
 function getLoglevel(ignoreEnv = false) {
   const wheelLoglevel = process.env.WHEEL_LOGLEVEL;
   const defaultLevel = "debug";
@@ -31,12 +30,10 @@ const eventNameTable = {
   SSHOUT: "logSSHout",
   SSHERR: "logSSHerr"
 };
-
 function socketIOAppender(layout, timezoneOffset, argEventName) {
   return (loggingEvent)=>{
     const eventName = argEventName || eventNameTable[loggingEvent.level.levelStr];
     const projectRootDir = loggingEvent.context.projectRootDir;
-
     if (eventName) {
       //emitAll is async function but we did not wait here
       emitAll(projectRootDir, eventName, layout(loggingEvent, timezoneOffset));
@@ -47,7 +44,6 @@ function socketIOAppender(layout, timezoneOffset, argEventName) {
 const socketIO = {
   configure: (config, layouts)=>{
     let layout = layouts.basicLayout;
-
     if (config.layout) {
       layout = layouts.layout(config.layout.type, config.layout);
     }
@@ -120,30 +116,18 @@ const logSettings = {
 //configure with default setting
 log4js.configure(logSettings);
 
-async function setLoglevel(appender, loglevel) {
-  if (!["filterdConsole", "filterdFile", "log2client"].includes(appender)) {
-    return;
-  }
-  logSettings.appenders[appender].level = loglevel || getLoglevel();
-  await promisify(log4js.shutdown)();
-  log4js.configure(logSettings);
-}
-
-function reset() {
-  log4js.configure(logSettings);
-}
-
-
 function getLogger(projectRootDir) {
+  const contextProjectRootDir = typeof projectRootDir === "string" ? projectRootDir : path.dirname(logFilename);
+  if (logger.context.projectRootDir === contextProjectRootDir) {
+    return logger;
+  }
+
   //please note projectRootDir context will remain after logging
-  logger.addContext("projectRootDir", projectRootDir || path.dirname(logFilename));
-  logger.shutdown = promisify(log4js.shutdown); //only use in test code
-  //logger.reset = log4js.configure.bind(log4js, logSettings);
+  logger.addContext("projectRootDir", contextProjectRootDir);
+  logger.shutdown = promisify(log4js.shutdown);
   return logger;
 }
 
 module.exports = {
-  setLoglevel,
-  getLogger,
-  reset
+  getLogger
 };

@@ -9,8 +9,10 @@ const fs = require("fs-extra");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
 const { removeSsh } = require("./sshManager");
+const { removeAll: removeExecuters } = require("./executerManager.js");
+const { removeAll: removeTransferrers } = require("./executerManager.js");
 const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { writeComponentJson, readComponentJson , setProjectState } = require("../core/projectFilesOperator");
+const { writeComponentJson, readComponentJson, setProjectState } = require("../core/projectFilesOperator");
 const Dispatcher = require("./dispatcher");
 const { getDateString } = require("../lib/utility");
 const { getLogger } = require("../logSettings.js");
@@ -35,7 +37,6 @@ const rootDispatchers = new Map();
  *
  */
 
-
 async function updateProjectState(projectRootDir, state) {
   const projectJson = await setProjectState(projectRootDir, state);
   if (projectJson) {
@@ -45,8 +46,6 @@ async function updateProjectState(projectRootDir, state) {
     }
   }
 }
-
-
 const cleanProject = async (projectRootDir)=>{
   const { ID } = await readComponentJson(projectRootDir);
   const viewerURLRoot = path.resolve(path.dirname(__dirname), "viewer");
@@ -59,25 +58,17 @@ const cleanProject = async (projectRootDir)=>{
   await gitClean(projectRootDir);
   //project state must be updated by onCleanProject()
 };
-
-async function pauseProject(projectRootDir) {
-  const rootDispatcher = rootDispatchers.get(projectRootDir);
-  if (rootDispatcher) {
-    await rootDispatcher.pause();
-  }
-  //project state must be updated by onPauseProject()
-}
-
 async function stopProject(projectRootDir) {
   const rootDispatcher = rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
     await rootDispatcher.remove();
     rootDispatchers.delete(projectRootDir);
   }
+  removeExecuters(projectRootDir);
+  removeTransferrers(projectRootDir);
   removeSsh(projectRootDir);
   //project state must be updated by onStopProject()
 }
-
 async function runProject(projectRootDir) {
   if (rootDispatchers.has(projectRootDir)) {
     return new Error(`project is already running ${projectRootDir}`);
@@ -92,7 +83,6 @@ async function runProject(projectRootDir) {
     getDateString(),
     projectJson.componentPath,
     rootWF.env);
-
   if (rootWF.cleanupFlag === "2") {
     rootDispatcher.doCleanup = defaultCleanupRemoteRoot;
   }
@@ -101,17 +91,18 @@ async function runProject(projectRootDir) {
   await updateProjectState(projectRootDir, "running", projectJson);
   getLogger(projectRootDir).info("project start");
   rootWF.state = await rootDispatcher.start();
-  getLogger(projectRootDir).info("project finished");
+  getLogger(projectRootDir).info(`project ${rootWF.state}`);
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
   await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
   rootDispatchers.delete(projectRootDir);
+  removeExecuters(projectRootDir);
+  removeTransferrers(projectRootDir);
+  removeSsh(projectRootDir);
   return rootWF.state;
 }
-
 
 module.exports = {
   cleanProject,
   runProject,
-  pauseProject,
   stopProject
 };

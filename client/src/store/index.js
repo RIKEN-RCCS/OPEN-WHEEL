@@ -3,10 +3,12 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
+import { toRaw } from "vue";
 import Vuex from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:vuex");
-
+import { diff } from "just-diff";
+import SIO from "@/lib/socketIOWrapper.js";
 const logger = (store)=>{
   store.subscribe((mutation)=>{
     const { type, payload } = mutation;
@@ -16,7 +18,6 @@ const logger = (store)=>{
 const simpleMutation = (type, state, payload)=>{
   state[type] = payload;
 };
-
 const mutationFactory = (types)=>{
   return types.reduce((a, c)=>{
     a[c] = simpleMutation.bind(null, c);
@@ -51,6 +52,7 @@ const mutationFactory = (types)=>{
  * @property { string } snackbarMessage - message on snackbar
  * @property { Boolean } openDialog - flag to show global dialog
  * @property { Object } dialogContent - dialog's content
+ * @property { Boolean } readOnly - project wide read-only flag
  *
  */
 const state = {
@@ -77,10 +79,12 @@ const state = {
   scriptCandidates: [],
   openSnackbar: false,
   snackbarMessage: "",
+  snackbarTimeout: -1,
   snackbarQueue: [],
   openDialog: false,
   dialogContent: null,
   dialogQueue: [],
+  readOnly: false
 };
 
 const mutations = mutationFactory(Object.keys(state));
@@ -90,36 +94,60 @@ export default new Vuex.Store({
   mutations,
   actions: {
     selectedComponent: (context, payload)=>{
-      if(payload === null){
+      const { selectedComponent: selected,
+        copySelectedComponent: copied,
+        projectRootDir,
+        currentComponent } = context.state;
+      if (copied !== null) {
+        const difference = diff(selected, copied);
+        const changedProps = difference.filter((e)=>{
+          return e.path[0] !== "pos";
+        });
+        if (changedProps.length > 0) {
+          SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID, (rt)=>{
+            console.log("compoent update done", rt);
+          });
+        }
+      }
+      if (payload === null) {
         context.commit("selectedComponent", null);
         context.commit("copySelectedComponent", null);
-        return
+        return;
       }
 
-      //これのせいで、選択中のコンポーネントがアップデートされても更新されていなかった
-      //一旦コメントアウトして様子見
-      //if (context.state.selectedComponent !== null && payload.ID === context.state.selectedComponent.ID) {
-      //return;
-      //}
       context.commit("selectedComponent", payload);
-      const dup = Object.assign({}, payload);
+      const dup = structuredClone(toRaw(payload));
       context.commit("copySelectedComponent", dup);
     },
     showSnackbar: (context, payload)=>{
       if (typeof payload === "string") {
+        context.state.snackbarQueue.push({ message: payload, timeout: -1 });
+      } else {
         context.state.snackbarQueue.push(payload);
       }
       if (context.state.snackbarQueue.length === 0) {
         return;
       }
-      const message = context.state.snackbarQueue.shift();
+      const { message, timeout } = context.state.snackbarQueue.shift();
+      //v-snackbar's timeout is not working at this moment
+      //so we add folloing workaround
+      if (timeout > 0) {
+        setTimeout(()=>{
+          context.commit("snackbarMessage", "");
+          context.commit("openSnackbar", false);
+          if (context.state.snackbarQueue.length > 0) {
+            context.dispatch("showSnackbar");
+          }
+        }
+        , timeout);
+      }
       context.commit("snackbarMessage", message);
+      context.commit("snackbarTimeout", timeout);
       context.commit("openSnackbar", true);
     },
     closeSnackbar: (context)=>{
       context.commit("snackbarMessage", "");
       context.commit("openSnackbar", false);
-
       if (context.state.snackbarQueue.length > 0) {
         context.dispatch("showSnackbar");
       }
@@ -133,10 +161,10 @@ export default new Vuex.Store({
       context.commit("dialogContent", payload);
       context.commit("openDialog", true);
     },
-    closeDialog: (context )=>{
+    closeDialog: (context)=>{
       context.commit("dialogContent", null);
       context.commit("openDialog", false);
-    },
+    }
   },
   getters: {
     //get selected component's absolute path on server
@@ -145,12 +173,12 @@ export default new Vuex.Store({
         return state.projectRootDir;
       }
       const relativePath = state.componentPath[state.selectedComponent.ID];
-      //remove "./" or "/" at the begining of line 
-      let numRemove=0;
-      if( /^\.\//.test(relativePath)){
-        numRemove=2;
-      }else if(relativePath.startsWith("/")){
-        numRemove=1;
+      //remove "./" or "/" at the begining of line
+      let numRemove = 0;
+      if (/^\.\//.test(relativePath)) {
+        numRemove = 2;
+      } else if (relativePath.startsWith("/")) {
+        numRemove = 1;
       }
       return `${state.projectRootDir}${getters.pathSep}${relativePath.slice(numRemove)}`;
     },
@@ -169,17 +197,14 @@ export default new Vuex.Store({
     pathSep: (state)=>{
       return typeof state.projectRootDir === "string" && state.projectRootDir[0] !== "/" ? "\\" : "/";
     },
-    isEdittable: (state)=>{
-      return state.projectState === "not-started";
-    },
     canRun: (state)=>{
       return ["not-started", "paused"].includes(state.projectState);
     },
-    running:(state)=>{
+    running: (state)=>{
       return state.projectState === "running";
-    },
+    }
   },
   modules: {
   },
-  plugins: [logger],
+  plugins: [logger]
 });

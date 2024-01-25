@@ -10,12 +10,9 @@ const { getLogger } = require("../logSettings");
 const { projectList, projectJsonFilename } = require("../db/db.js");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { addProject, renameProject } = require("../core/projectFilesOperator.js");
-
-
 const getAllProject = async ()=>{
   const pj = await Promise.all(projectList.getAll().map(async (v)=>{
     let rt;
-
     try {
       const projectJson = await readJsonGreedy(path.join(v.path, projectJsonFilename));
       rt = Object.assign(projectJson, v);
@@ -31,11 +28,9 @@ const getAllProject = async ()=>{
     return e !== null;
   });
 };
-
 const sendProjectListIfExists = async (socket, cb)=>{
   try {
     const pjList = await getAllProject();
-
     if (pjList) {
       socket.emit("projectList", pjList);
     }
@@ -45,7 +40,6 @@ const sendProjectListIfExists = async (socket, cb)=>{
   }
   cb(true);
 };
-
 const projectListAdaptor = async (socket, cb, asyncFunc)=>{
   try {
     await asyncFunc();
@@ -55,7 +49,6 @@ const projectListAdaptor = async (socket, cb, asyncFunc)=>{
   }
   await sendProjectListIfExists(socket, cb);
 };
-
 //return projectlist via call back routine
 const onGetProjectList = async (socket, cb)=>{
   const pjList = await getAllProject();
@@ -64,15 +57,12 @@ const onGetProjectList = async (socket, cb)=>{
   }
   return cb(pjList);
 };
-
 const onReorderProjectList = async (socket, orderList, cb)=>{
   await projectListAdaptor(socket, cb, projectList.reorder.bind(projectList, orderList));
 };
-
 const onRemoveProjectsFromList = async (socket, ids, cb)=>{
   await projectListAdaptor(socket, cb, projectList.removeMany.bind(projectList, ids));
 };
-
 const onRemoveProjects = async (socket, ids, cb)=>{
   await projectListAdaptor(socket, cb, async ()=>{
     await Promise.all(
@@ -84,7 +74,6 @@ const onRemoveProjects = async (socket, ids, cb)=>{
     await projectList.removeMany(ids);
   });
 };
-
 const onAddProject = async (socket, projectDir, description, cb)=>{
   await projectListAdaptor(socket, cb, addProject.bind(null, projectDir, description));
 };

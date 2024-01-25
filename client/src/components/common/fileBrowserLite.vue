@@ -16,15 +16,14 @@
 </template>
 <script>
 import SIO from "@/lib/socketIOWrapper.js";
-import myTreeview from "@/components/common/myTreeview.vue"
-import {icons, openIcons, fileListModifier } from "@/components/common/fileTreeUtils.js"
+import myTreeview from "@/components/common/myTreeview.vue";
+import { icons, openIcons, fileListModifier } from "@/components/common/fileTreeUtils.js";
 
-function getActiveItem (items, key, path) {
+function getActiveItem(items, key, path) {
   for (const item of items) {
     if (Array.isArray(item.children) && item.children.length > 0) {
       path.push(item.name);
       const rt = getActiveItem(item.children, key, path);
-
       if (rt) {
         return rt;
       }
@@ -42,37 +41,37 @@ function getActiveItem (items, key, path) {
 
 export default {
   name: "FileBrowserLite",
-  components:{
+  components: {
     myTreeview
   },
   props: {
     requestRoot: { type: String, default: undefined },
-    mode: { type: String, default: "dirWithProjectJson" },
+    mode: { type: String, default: "dirWithProjectJson" }
   },
   data: function () {
     return {
-      root:null,
-      items: [],
+      root: null,
+      items: []
     };
   },
-  mounted () {
-    SIO.emitGlobal("getFileList", null, { mode: this.mode, path: this.requestRoot}, (fileList)=>{
-      this.root=this.requestRoot || fileList[0].path || "/";
+  mounted() {
+    SIO.emitGlobal("getFileList", null, { mode: this.mode, path: this.requestRoot }, (fileList)=>{
+      this.root = this.requestRoot || fileList[0].path || "/";
       const pathSep = this.root[0] === "/" ? "/" : "\\";
-      this.items.splice(0,this.items.length, ...fileList.map(fileListModifier.bind(null, pathSep)));
+      this.items.splice(0, this.items.length, ...fileList.map(fileListModifier.bind(null, pathSep)));
     });
   },
   methods: {
-    onUpdateActive (active) {
+    onUpdateActive(active) {
       this.$emit("update", active.id);
     },
-    getNodeIcon(isOpen, item){
-      return isOpen ? openIcons[item.type] : icons[item.type]
+    getNodeIcon(isOpen, item) {
+      return isOpen ? openIcons[item.type] : icons[item.type];
     },
-    getLeafIcon(item){
-      return icons[item.type]
+    getLeafIcon(item) {
+      return icons[item.type];
     },
-    getChildren (item) {
+    getChildren(item) {
       return new Promise((resolve, reject)=>{
         const path = [this.root];
         const pathSep = this.root[0] === "/" ? "/" : "\\";
@@ -86,7 +85,7 @@ export default {
           resolve();
         });
       });
-    },
-  },
+    }
+  }
 };
 </script>

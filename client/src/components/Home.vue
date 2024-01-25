@@ -71,8 +71,8 @@
                 v-bind="menuProps"
                 block
                 class="justify-start"
-                :text=props.item.columns.name
-                @click="openInlineEditDialog(props.item.columns.name, props.index, 'name')"
+                :text=props.item.name
+                @click="openInlineEditDialog(props.item.name, props.index, 'name')"
               />
             </template>
             <v-sheet
@@ -102,8 +102,8 @@
                 class="justify-start text-truncate trancated-row"
                 v-bind="menuProps"
                 block
-                @click="openInlineEditDialog(props.item.columns.description, props.index, 'description')"
-                :text=props.item.columns.description
+                @click="openInlineEditDialog(props.item.description, props.index, 'description')"
+                :text=props.item.description
               />
             </template>
             <v-sheet
@@ -113,7 +113,7 @@
               <v-textarea
                 v-model="newVal"
                 clearable
-                @keyup.enter="changeDescripton(props.item.columns, props.index)"
+                @keyup.enter="changeDescripton(props.item, props.index)"
               />
             </v-sheet>
           </v-menu>
@@ -121,7 +121,7 @@
         <template #item.path="{item}">
           <span
             class="d-inline-block text-truncate trancated-row"
-          >{{ item.columns.path }} </span>
+          >{{ item.path }} </span>
         </template>
       </v-data-table>
       <v-dialog
@@ -161,7 +161,6 @@
           </v-card-text>
         </v-card>
       </v-dialog>
-    </v-main>
     <remove-confirm-dialog
       v-model="rmDialog"
       title="remove project"
@@ -169,10 +168,29 @@
       :remove-candidates="removeCandidates"
       @remove="commitRemoveProjects"
     />
+    <v-snackbar
+      v-model="openSnackbar"
+      multi-line
+      :timeout=snackbarTimeout
+      centered
+      variant="outlined"
+    >
+      {{ snackbarMessage }}
+      <template #actions>
+        <v-btn
+          class="justify-end"
+          variant="outlined"
+          @click="closeSnackbar"
+          text="Close"
+        />
+      </template>
+    </v-snackbar>
+    </v-main>
   </v-app>
 </template>
 <script>
 "use strict";
+import { mapState, mapActions } from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:home");
 import navDrawer from "@/components/common/NavigationDrawer.vue";
@@ -195,7 +213,7 @@ export default {
     applicationToolBar,
     fileBrowser,
     buttons,
-    removeConfirmDialog,
+    removeConfirmDialog
   },
   data: ()=>{
     return {
@@ -214,7 +232,7 @@ export default {
         { title: "Path", key: "path", width: "20vw" },
         { title: "Create time", key: "ctime" },
         { title: "Last modified time", key: "mtime" },
-        { title: "State", key: "state" },
+        { title: "State", key: "state" }
       ],
       dialogTitle: "",
       newProjectName: "",
@@ -222,27 +240,32 @@ export default {
       removeCandidates: [],
       pathSep: "/",
       home: "/",
-      renameDialog:[],
-      editDescriptionDialog:[],
-      newVal:null,
-      edittingIndex:null
+      renameDialog: [],
+      editDescriptionDialog: [],
+      newVal: null,
+      edittingIndex: null
     };
   },
-  watch:{
-    batchMode(newMode){
-      if(!newMode){
-        this.selectedInTable.splice(0,this.selectedInTable.length);
+  watch: {
+    batchMode(newMode) {
+      if (!newMode) {
+        this.selectedInTable.splice(0, this.selectedInTable.length);
       }
     }
   },
   computed: {
-    selected () {
+    ...mapState([
+      "openSnackbar",
+      "snackbarMessage",
+      "snackbarTimeout"
+    ]),
+    selected() {
       if (this.selectedInTree) {
         return this.selectedInTree.replace(reProjectJsonFilename, "");
       }
       return this.selectedInTable.length > 0 ? this.selectedInTable[0].path : this.home;
     },
-    buttons () {
+    buttons() {
       const open = { icon: "mdi-check", label: "open" };
       const create = { icon: "mdi-plus", label: "create" };
       const cancel = { icon: "mdi-close", label: "cancel" };
@@ -257,35 +280,43 @@ export default {
       }
       return rt;
     },
-    removeProjectMessage () {
+    removeProjectMessage() {
       return this.removeFromList ? "remove following projects from list" : "remove following project files";
-    },
+    }
   },
   mounted: function () {
     this.pathSep = readCookie("pathSep");
     this.home = readCookie("home");
-    const baseURL=readCookie("socketIOPath");
+    const baseURL = readCookie("socketIOPath");
     debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
     SIO.onGlobal("projectList", (data)=>{
       this.projectList.splice(0, this.projectList.length, ...data);
     });
     this.forceUpdateProjectList();
+    SIO.onGlobal("logERR", (message)=>{
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      this.showSnackbar(output);
+    });
   },
   methods: {
+    ...mapActions({
+      showSnackbar: "showSnackbar",
+      closeSnackbar: "closeSnackbar"
+    }),
     required,
-    openInlineEditDialog(name, index, prop){
-      this.newVal=name
-      this.oldVal=name
-      this.edittingIndex=index
-
-      if(prop === "name"){
-        this.renameDialog[index]=true
-      }else if(prop === "description"){
-        this.editDescriptionDialog[index]=true
+    openInlineEditDialog(name, index, prop) {
+      this.newVal = name;
+      this.oldVal = name;
+      this.edittingIndex = index;
+      if (prop === "name") {
+        this.renameDialog[index] = true;
+      } else if (prop === "description") {
+        this.editDescriptionDialog[index] = true;
       }
     },
-    forceUpdateProjectList(){
+    forceUpdateProjectList() {
       SIO.emitGlobal("getProjectList", (data)=>{
         if (!Array.isArray(data)) {
           console.log("unexpected projectlist recieved", data);
@@ -294,7 +325,7 @@ export default {
         this.projectList.splice(0, this.projectList.length, ...data);
       });
     },
-    closeDialog () {
+    closeDialog() {
       this.dialog = false;
       this.dialogMode = "default";
       this.selectedInTree = null;
@@ -302,17 +333,17 @@ export default {
       this.newProjectDescription = "";
       this.dialogTitle = "";
     },
-    createProject () {
+    createProject() {
       const path = `${this.selected || "."}/${this.newProjectName}`;
       SIO.emitGlobal("addProject", path, this.newProjectDescription, (rt)=>{
-        if(!rt){
+        if (!rt) {
           console.log("create project failed", this.selected, this.newProjectName, this.newProjectDescription, path);
           this.forceUpdateProjectList();
         }
       });
       this.closeDialog();
     },
-    openProject () {
+    openProject() {
       if (this.selected === this.home) {
         this.dialogTitle = "select project path";
         this.dialogMode = "default";
@@ -332,52 +363,54 @@ export default {
       form.appendChild(input);
       form.submit();
     },
-    changeDescripton(item, index){
-      if(this.newVal === item.description){
+    changeDescripton(item, index) {
+      if (this.newVal === item.description) {
         console.log("project name not changed");
-      }else{
-        SIO.emitGlobal("updateProjectDescription", item.path,  this.newVal,(rt)=>{
-          if(!rt){
+      } else {
+        SIO.emitGlobal("updateProjectDescription", item.path, this.newVal, (rt)=>{
+          if (!rt) {
             console.log("update description failed", item.path, this.newVal);
             this.forceUpdateProjectList();
           }
         });
       }
-      this.editDescriptionDialog[index]=false
+      this.editDescriptionDialog[index] = false;
     },
-    renameProject (item, index) {
-      if(this.newVal === item.name){
+    renameProject(item, index) {
+      if (this.newVal === item.name) {
         console.log("project name not changed");
-      }else{
+      } else {
         SIO.emitGlobal("renameProject", item.id, this.newVal, item.path, (rt)=>{
-          if(!rt){
+          if (!rt) {
             console.log("rename failed", item.id, this.newVal, item.path);
             this.forceUpdateProjectList();
           }
         });
       }
-      this.renameDialog[index]=false
+      this.renameDialog[index] = false;
     },
-    openDeleteProjectDialog (fromListOnly) {
+    openDeleteProjectDialog(fromListOnly) {
       this.removeFromList = fromListOnly;
-      this.removeCandidates = this.selectedInTable.map((e)=>{ return e.name; });
+      this.removeCandidates = this.selectedInTable.map((e)=>{
+        return e.name;
+      });
       this.rmDialog = true;
     },
-    commitRemoveProjects () {
+    commitRemoveProjects() {
       const removeIDs = this.selectedInTable
         .map((e)=>{
           return e.id;
         });
       const eventName = this.removeFromList ? "removeProjectsFromList" : "removeProjects";
       SIO.emitGlobal(eventName, removeIDs, (rt)=>{
-        if(!rt){
+        if (!rt) {
           console.log("remove failed", eventName, removeIDs);
           this.forceUpdateProjectList();
         }
         this.selectedInTable = [];
       });
-    },
-  },
+    }
+  }
 };
 </script>
 <style>

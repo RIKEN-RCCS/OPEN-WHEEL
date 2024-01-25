@@ -4,13 +4,8 @@
  * See License in the project root for the license information.
  */
 <template>
-  <v-btn
-    :disabled="! isEdittable"
-    @click.stop="openEnvironmentVariableSetting"
-    icon="mdi-cog"
-  />
   <v-dialog
-    v-model="envSetting"
+    :model-value="modelValue"
     persistent
     scrollable
     width="80vw"
@@ -38,7 +33,7 @@
                 v-bind="menuProps"
                 block
                 class="justify-start"
-                :text=props.item.columns.name
+                :text=props.item.name
               />
             </template>
             <v-sheet
@@ -49,6 +44,7 @@
                 v-model="props.item.raw.name"
                 :rules="[required]"
                 clearable
+                :readonly="readOnly"
                 @keyup.enter="editKeyDialog[props.index]=false"
               />
             </v-sheet>
@@ -59,6 +55,7 @@
             location="bottom"
             v-model="editValueDialog[props.index]"
             :close-on-content-click="false"
+            :readonly="readOnly"
             min-width="auto"
             max-width="50vw"
           >
@@ -68,7 +65,7 @@
                 v-bind="menuProps"
                 block
                 class="justify-start"
-                :text=props.item.columns.value
+                :text=props.item.value
               />
             </template>
             <v-sheet
@@ -78,6 +75,7 @@
               <v-text-field
                 v-model="props.item.raw.value"
                 :rules="[required]"
+                :readonly="readOnly"
                 clearable
                 @keyup.enter="editValueDialog[props.index]=false"
               />
@@ -88,6 +86,7 @@
             <action-row
               :item="item"
               :can-edit="false"
+              :readonly="readOnly"
               @delete="deleteEnv"
             />
           </template>
@@ -135,92 +134,91 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
-
 </template>
 <script>
-import { mapState, mapMutations, mapGetters } from "vuex";
+import { toRaw } from "vue";
+import { mapState, mapMutations } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
 import actionRow from "@/components/common/actionRow.vue";
 import buttons from "@/components/common/buttons.vue";
 import { removeFromArray } from "@/lib/clientUtility.js";
 import { required } from "@/lib/validationRules.js";
 
-export default{
+export default {
   name: "envSettingDialog",
-  components:{
+  components: {
     actionRow,
-    buttons,
+    buttons
   },
+  props: ["modelValue"],
+  emits: ["update:modelValue"],
   computed: {
-    ...mapState(["projectState", "currentComponent", "projectRootDir","rootComponentID"]),
-    ...mapGetters(["currentComponentAbsPath", "isEdittable"]),
+    ...mapState(["projectState", "currentComponent", "projectRootDir", "rootComponentID", "readOnly"])
   },
-  data: function(){
+  data: function () {
     return {
-      envSetting: false,
       env: [],
       editKeyDialog: [],
       editValueDialog: [],
       newKey: null,
-      newValue:null,
-      headers:[
-        {title: "name", key: "name"},
-        {title: "value", key: "value" },
-        {title: "" ,key: "actions"}
+      newValue: null,
+      headers: [
+        { title: "name", key: "name" },
+        { title: "value", key: "value" },
+        { title: "", key: "actions" }
       ]
-    }
+    };
   },
-  methods:{
+  mounted() {
+    this.commitWaitingEnv(true);
+    SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID, (data)=>{
+      //this determination does not work
+      if (data instanceof Error) {
+        console.log("getEnv API return error", data);
+        this.commitWaitingEnv(false);
+        return;
+      }
+      const env = Object.entries(data).map(([k, v])=>{
+        return { name: k, value: v };
+      });
+      this.env.splice(0, this.env.length, ...env);
+      this.commitWaitingEnv(false);
+    });
+  },
+  methods: {
+    required,
     ...mapMutations(
       {
         commitComponentTree: "componentTree",
         commitWaitingEnv: "waitingEnv"
       }),
-    noDuplicatedName(newName){
+    noDuplicatedName(newName) {
       const hasDup = this.env.some((e)=>{
-        return e.name === newName
+        return e.name === newName;
       });
-      return hasDup ? "duplicated name is not allowed": true;
+      return hasDup ? "duplicated name is not allowed" : true;
     },
-    openEnvironmentVariableSetting(){
-      this.commitWaitingEnv(true);
-      SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID,  (data)=>{
-        //FIXME this determination does not work
-        if(data instanceof Error){
-          console.log("getEnv API return error", data);
-          this.commitWaitingEnv(false);
-          return;
-        }
-        const env=Object.entries(data).map(([k,v])=>{
-          return {name: k, value:v};
-        });
-        this.env.splice(0, this.env.length, ...env);
-        this.commitWaitingEnv(false);
-        this.envSetting=true;
-      });
+    closeEnvironmentVariableSetting() {
+      this.newKey = null;
+      this.newValue = null;
+      this.$emit("update:model-value", false);
     },
-    closeEnvironmentVariableSetting(){
-      this.newKey=null;
-      this.newValue=null;
-      this.envSetting=false;
+    addEnv() {
+      this.env.push({ name: this.newKey, value: this.newValue });
+      this.newKey = null;
+      this.newValue = null;
     },
-    addEnv(){
-      this.env.push({name: this.newKey, value: this.newValue});
-      this.newKey=null;
-      this.newValue=null;
+    deleteEnv(e) {
+      removeFromArray(this.env, toRaw(e), "name");
     },
-    deleteEnv(e){
-      console.log("DEBUG DELETE", e);
-      removeFromArray(this.env, e.raw);
-    },
-    saveEnv(){
-      const env=this.env.reduce((a, e)=>{
-        a[e.name]=e.value;
+    saveEnv() {
+      const env = this.env.reduce((a, e)=>{
+        a[e.name] = e.value;
         return a;
       }, {});
-      SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID,  SIO.generalCallback);
-      this.closeEnvironmentVariableSetting()
-    },
+      SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID, SIO.generalCallback);
+      this.closeEnvironmentVariableSetting();
+    }
   }
-}
+};
 </script>

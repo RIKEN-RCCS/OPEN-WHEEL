@@ -22,7 +22,6 @@ export default {
   },
   on: (event, callback)=>{
     debug(" add event listener to ", event);
-
     if (event === "projectJson") {
       callback(projectJson);
     } else if (event === "workflow") {
@@ -49,11 +48,10 @@ export default {
   },
   emit: (event, ...args)=>{
     debug("emit", event, "with", args);
-
     if (event === "getComponentTree") {
       args[args.length - 1](componentTree);
     } else if (event.startsWith("log")) {
       logCallbacks[event](...args);
     }
-  },
+  }
 };

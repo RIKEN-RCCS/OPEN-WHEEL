@@ -5,8 +5,7 @@
  */
 "use strict";
 import { v4 as uuidv4 } from "uuid";
-
-export function path2Array (pathString) {
+export function path2Array(pathString) {
   if (typeof pathString !== "string" || pathString === "") {
     return null;
   }
@@ -28,7 +27,7 @@ export function path2Array (pathString) {
  * @param {Object} tree - tree object which will be updated
  * @return {null | boolean} - null if any error occurred, true means some update, false means no update
  */
-export function taskStateList2Tree (taskStatelist, tree) {
+export function taskStateList2Tree(taskStatelist, tree) {
   if (!(Object.prototype.hasOwnProperty.call(tree, "children") && Array.isArray(tree.children))) {
     return null;
   }
@@ -41,16 +40,18 @@ export function taskStateList2Tree (taskStatelist, tree) {
     //as work around, we assign empty array to ancestorsDispatchedTimes in this case.
     //const ancestorsDispatchedTimes=path2Array(task.ancestorsDispatchedTime) ||[];
     let poi = tree.children; //candidate nodes
-    if(ancestorsNames === null){
+    if (ancestorsNames === null) {
       const tmp = Object.assign({}, task);
       delete tmp.ancestorsName;
       delete tmp.ancestorsType;
-      delete tmp.ancestorsDispatchedTime
+      delete tmp.ancestorsDispatchedTime;
       tmp.type = "task";
-      const existingNode=poi.find((e)=>{return e.ID=== task.ID;});
-      if(existingNode){
+      const existingNode = poi.find((e)=>{
+        return e.ID === task.ID;
+      });
+      if (existingNode) {
         Object.assign(existingNode, task);
-      }else{
+      } else {
         poi.push(tmp);
       }
       treeIsChanged = true;
@@ -61,12 +62,11 @@ export function taskStateList2Tree (taskStatelist, tree) {
       entry = poi.find((e)=>{
         return e.name === name;
       });
-
       if (typeof entry === "undefined") {
         const type = ancestorsTypes[index];
         //ancestorsDispatchedTimes is not set in Disptcher for now
         //const dispatchedTime = ancestorsDispatchedTimes[index];
-        const ID=uuidv4();
+        const ID = uuidv4();
         entry = { name, type, children: [], ID };
         poi.push(entry);
         treeIsChanged = true;
@@ -80,7 +80,6 @@ export function taskStateList2Tree (taskStatelist, tree) {
     const leaf = entry.children.find((e)=>{
       return e.name === task.name;
     });
-
     if (typeof leaf === "undefined") {
       const tmp = Object.assign({}, task);
       delete tmp.ancestorsName;
