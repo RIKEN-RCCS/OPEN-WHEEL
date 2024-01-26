@@ -64,8 +64,7 @@ You then add components to the project and actually create the workflow.
 The workflow you create here is a simple workflow with standard output of "Hello WHEEL."
 
 #### Adding Components
-On the graph view screen, you can use the palette on the left side of the screen to view the __Components__ workflow parts.
-Add workflow components by dragging and dropping.
+In the Graph View screen, you add workflow components by dragging and dropping __components__ from the palette on the left side of the screen.
 
 Let's add a __Task component__ to the project that runs the configured program.
 
@@ -81,9 +80,8 @@ You have now added one component to the workflow.
 You then define what you want to do in this Task component.
 
 #### Configuring Component Behavior
-All components, including the Task component, become part of the workflow only when you set the __properties__ that govern their behavior.
-The Task component does not directly specify the program you want to run.
-You must create a shell script that calls the program and specify the script you want to run.
+All components, including the Task component, become part of the workflow only when you set the __properties__ that determine their behavior.
+Instead of directly specifying the program you want to run, the Task component must create a shell script that calls the program and specify the script you want to run.
 
 As an example, we will create a simple shell script that simply calls the echo command.
 Then set the properties as the component behavior to run the shell script you created.
@@ -105,8 +103,7 @@ Click the __new file__ button (1) to create an empty file that will be a shell s
 ![img](./img/property_screen3.png "FileArea-open")
 
 
-Enter the name of the shell script you want to create (1).
-Click the __ok__ button (2).
+A dialog for entering a file name appears.Enter a name (1) for the shell script you want to create and click the __ok__ button (2).
 
 ![img](./img/newfile_dialog.png "Enter New File Name")
 
@@ -182,8 +179,7 @@ The __stdout__ tab (1) is green when there is unread output in the standard outp
 
 #### Initializing a Project
 Depending on the program, files may be output after execution or existing files may be rewritten.
-WHEEL also manages the execution state of individual components in a project.
-When you modify or re-run a project, you must return it to its original state.
+WHEEL also manages the execution state of individual components in a project, so you must restore the project to the state it was in before it started running when you modify or re-run the project.
 
 In this tutorial, the project will be rerun several times with modifications, so that the project can be initialized to its original state.
 
@@ -209,8 +205,7 @@ Let's run the workflow tasks in the previous section on a remote host.
 The execution environment for the task is specified in the property settings.
 
 Click the task0 component to display the Properties window.
-Click the __host__ drop-down list to display the list of remote hosts configured in [Remote Host Settings]({{site.baseurl}}/for_admins/how_to_boot/#remote-host-settings).
-Select the label of the remote host you want to use.
+Click the __host__ drop-down list to display the list of remote hosts configured in [Remote Host Settings]({{site.baseurl}}/for_admins/how_to_boot/#remote-host-settings), and select the label of the remote host you want to use.
 
 ![img](./img/select_host.png "Remote Host Configuration")
 
@@ -220,8 +215,7 @@ Click the __run project__ button (2) to start running the project, just as you w
 ![img](./img/save_run_project.png "Run Project")
 
 Since the remote host is specified in this case, a dialog box for entering the password to connect to the remote host is displayed.
-Password for password-authenticated connections, or Public Key for public-key connections
-Enter the passphrase set for the private key and click the __ok__ button.
+Enter the password for connection using password authentication, or the passphrase set for the private key for connection using public key authentication, and click the __ok__ button.
 
 ![img](./img/password_dialog.png "Password Entry Dialog")
 
@@ -288,20 +282,17 @@ Click the up arrow to the right of __basic__ at the top of the properties screen
 
 ![img](./img/property_screen5.png "property folding")
 
-The settings in the top row will be collapsed to show all categories, so set __remote file setting__ to
-Click to open.
+The settings in the upper row are collapsed to show all categories, so click __remote file setting__ to open it.
 
 ![img](./img/property_screen6.png "remote file setting")
 
-Type __stdout.txt__ in the include field (1) and press Enter.
-Click the __+__ button (2) on the right.
+Type __stdout.txt__ in the include field (1) and press Enter, or click the __+__ button (2) to the right.
 
 ![img](./img/property_screen7.png "include configuration")
 
 Once set, save and run the project.
 
-After execution, select __stdout.txt__ from the properties of the task0 component.
-Open a text editor.
+After execution, select __stdout.txt__ from the properties of the task0 component to launch a text editor.
 
 ![img](./img/job_result.png "Checking job execution results")
 
@@ -365,8 +356,7 @@ In practice, there are several possible uses:
 
 
 At this time, WHEEL will automatically download and transfer the data even if the previous and next components run on different hosts.
-Therefore, if you run each process on a separate system for licensing or computer architecture reasons,
-You can run it in a similar workflow.
+Therefore, you can run each process on a different system for licensing or computer architecture reasons, and still run the same workflow.
 
 
 This concludes the tutorial on how to pass files between components.  
@@ -376,16 +366,12 @@ Click the __cleanup project__ button to initialize the project for the next tuto
 ### Controlling the order in which components are executed
 In [Passing I/O Files Between Components](#passing-io-files-between-components), the preceding component received the output file and then executed the subsequent component.
 
-In a real workflow, file passing does not occur.
-After one program is finished, the next program must be run
-situation.
+In a real workflow, there is a situation where file passing does not occur, but you need to run one program after the other.
 
-WHEEL has the function of waiting for the preceding component to finish before executing.
-Let's use this feature to control the execution order of the two tasks.
+WHEEL has a function to wait for the preceding component to finish before executing, so let's use this function to control the execution order of the two tasks.
 
 #### Changing the contents of a task
-Since it is difficult to tell which was executed first in the contents of task0 and task1.
-Modify each script as follows:
+The contents of task0 and task1 above make it difficult to know which was executed first, so change the scripts as follows.
 
 task0
 ```
@@ -398,13 +384,11 @@ task1
 echo task1
 ```
 
-To avoid waiting for execution on the remote host, set __host__ to
-Change to __localhost__ to run on the localhost.
+To avoid waiting for execution on a remote host, change __host__ to __localhost__ to run on the localhost.
 
 Next, I'll remove the output files setting, because I won't be using stdout.txt this time.
 
-First, open the properties screen of __task0__ and select the __input/output files__
-Display the configuration field and click the trash can icon to the right of __stdout.txt__.
+First, open the __task0__ properties window, display the __input/output files__ settings field, and click the trash can icon to the right of __stdout.txt__.
 
 ![img](./img/output_files3.png "Delete outputFile")
 
@@ -413,13 +397,11 @@ __stdout.txt__ is removed from __output files__, and the line connected to __std
 ![img](./img/output_files4.png "outputFile Workflow After Removal")
 
 The input files for task1 still contain the __stdout.txt__ specification, which can be removed by a similar operation.  
-Note that specifying input/output files that are not connected by a line does not affect workflow behavior.
-If you want to change it temporarily, you can leave the settings you don't want to use.
+Note that specifying input/output files that are not connected by a line does not affect workflow behavior, so if you want to temporarily change the settings, you can leave them unused.
 
 Now let's save and run the workflow.
 Since we are not controlling the order of execution now, task0 and task1 are executed in random order.
-If you look at the __stdout__ tab on the log screen, task1 appears just after execution starts.
-For task0, sleep10 is included, so it should appear after 10 seconds.
+If you look at the __stdout__ tab on the log screen, task1 should appear immediately after the start of execution, and task0 should appear 10 seconds later because sleep10 is included.
 
 ![img](./img/log_screen3.png "Log when execution order is not specified")
 
@@ -446,8 +428,8 @@ If you look at the log output, you should now see task0 and then task1.
 
 This concludes the basic tutorial.
 
-If you want to know about advanced features of WHEEL that were not covered in this tutorial,
-Go to [Application Tutorials]({{site.baseurl}}/tutorial/2_advanced_tutorial/) .
+If you want to learn about advanced features of WHEEL that were not covered in this tutorial, go to [Application Tutorials]({{site.baseurl}}/tutorial/2_advanced_tutorial/).
+
 For detailed information about each function, refer to the [Reference Manual]({{site.baseurl}}/reference/).
 
 
