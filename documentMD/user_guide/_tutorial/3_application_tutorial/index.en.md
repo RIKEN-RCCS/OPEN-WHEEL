@@ -15,7 +15,7 @@ For information about how to create remote host settings, see [Remote Host Setti
 
  * [Analyzing cavity cases using OpenFOAM Workflow](1_OpenFOAM_cavity/)
 
- * [Parametric Study Analysis Workflow Using OpenFOAM](2_OpenFOAM_PS/)
+ * [Parameter Study Analysis Workflow Using OpenFOAM](2_OpenFOAM_PS/)
 
  * [MNIST Data Analysis Workflow Using TensorFlow](3_TensorFlow_mnist/)
 

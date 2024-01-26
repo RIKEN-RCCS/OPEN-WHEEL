@@ -6,8 +6,7 @@ permalink: /reference/4_component/03_For.html
 
 ![img](./img/for.png "for")
 
-The For component depends on the index value specified, like a Fortran Do loop.
-Repeats the subordinate component.
+The For component iterates through the subcomponents depending on the index value specified, like a Fortran Do loop.
 
 You can set the following properties for the For component:
 
@@ -31,10 +30,8 @@ If unspecified, all directories are saved.
 For details, see [For Component Run-time Behavior](#for-component-run-time-behavior) below.
 
 ### For Component Run-time Behavior
-The first time the For component is executed, the component directory is named with the index value at the end.
-copied.
-When all the subordinate components in the copied directory have finished executing, the new index value is calculated.
-More directories are copied based on that value.
+When the For component runs for the first time, the component directory is copied with the index value appended.
+When all the subcomponents in the copied directory have finished executing, a new index value is calculated and further directories are copied based on that value.
 
 This process is repeated sequentially until the index value exceeds the closing price.
 When the closing price is exceeded, the directory is copied to the original directory, and processing of the For component ends.
@@ -42,8 +39,7 @@ Note that even if you set a negative value for step, if the opening price is > c
 In this case, execution ends when the index falls below the closing price.
 
 
-For example, a component called `for` with start=1, end=3, step=2
-The process is as follows:
+For example, a `for` component with start=1, end=3, step=2 is processed as follows:
 
 1. Copy `for` directory as `for_1` directory
 2. Sequentially execute components in the `for_1` directory
@@ -53,8 +49,7 @@ The process is as follows:
 6. index Calculation 3 +2 = 5  => Since the closing price has exceeded 3, the closing process is performed.
 7. Copy `for_3` directory as `for` directory
 
-If the number of instance to keep value is set to a nonzero value, after processing 4, 7
-Removes more old directories (for example, `for_1` or `for_3`) than the configured number.
+If the number of instance to keep value is set to nonzero, delete the old directories (such as `for_1` and `for_3`) that exceed the number set after the 4, 7 operation.
 
 --------
 [Return to Component Details]({{site.baseurl}}/reference/4_component/)

@@ -21,7 +21,7 @@ user-docs:
         url: /tutorial/3_application_tutorial/
       - title: Analyzing cavity cases using OpenFOAM Workflow
         url: /tutorial/3_application_tutorial/1_OpenFOAM_cavity/
-      - title: Parametric Study Analysis Workflow Using OpenFOAM
+      - title: Parameter Study Analysis Workflow Using OpenFOAM
         url: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
       - title: MNIST Data Analysis Workflow Using TensorFlow
         url: /tutorial/3_application_tutorial/3_TensorFlow_mnist/

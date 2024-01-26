@@ -72,8 +72,7 @@ The value can be a string or an array of strings.
 
 If a string is specified as a value, it is executed once, followed by a jobID.
 
-Given an array of strings, a jobID is given for each element of the array.
-Execute the commands in order until they terminate normally.  
+Given an array of strings, each element of the array is given a jobID, and the commands are executed sequentially until successful completion. 
 For example, if the setting value is ["stat -a," "stat -b"]
 
 `stat -a ${jobID} || stat -b ${jobID}`
@@ -87,11 +86,13 @@ The determination of normal or abnormal termination is based on the capture retu
 
 #### reReturnCode
 Specifies, as a string, the regular expression for retrieving the return value (exit code) of the job script from the output of the stat command.
+Treats the only captured value in this regular expression as the return value.
 However, if the specified string does not qualify as a regular expression or contains no captures, treat it as "Return value =-2". (This fact is also output to the log.)
 
 #### reJobStatus
 A string is a regular expression used to obtain the status code returned by the job scheduler from the output of the stat command.
-Treats the only captured value in this regular expression as a status code. However, if the specified string does not qualify as a regular expression or contains no captures, treat it as "status code =-2". (This fact is also output to the log.)
+Treats the only captured value in this regular expression as a status code. 
+However, if the specified string does not qualify as a regular expression or contains no captures, treat it as "status code =-2". (This fact is also output to the log.)
 
 #### del
 A string specifying the command used to delete the job, including options.

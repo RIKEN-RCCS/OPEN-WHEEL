@@ -53,16 +53,18 @@ HTTP communication should be used only in environments where there are no securi
 
     In the above command:
 
-    - The project is created in ${HOME}.
+    - Mapping the project location (/root) in the container to ${HOME} on the host.
     Projects created on WHEEL are stored in ${HOME}.
-    - Specifies `CONFIG_DIR` as the location for the WHEEL configuration file. Refer to and edit the following files as necessary.
-      - wheel.log : WHEEL log file. Not editable.
+    Therefore, ${HOME} needs write permission because it writes files from WHEEL.   
+    - The location of the configuration file in the container (/usr/src/server/app/config) is mapped to `CONFIG_DIR` on the host.
+    `CONFIG_DIR` must have write permission because it is also written from WHEEL.  
+    Also, refer to and edit the following files as necessary.
+      - wheel.log : WHEEL log file. 
       - jobScheduler.json : Batch system settings. For more information, see [Configuring the Batch System](../job_scheduler/).
       - server.crt/server.key : Server certificate/key file
     - WHHEL port number is specified as 8089.
 
-2. When the WHEEL server starts, open a web browser on the host machine and click
-    Go to `http(s)://localhost:8089`.
+1. When the WHEEL server starts, open a web browser on the host machine and access `http(s)://localhost:8089`.
 
 <div class="notice--info">{{ notice-http | markdownify }}</div>
 
@@ -99,9 +101,9 @@ label
 Hostname
 : Host name or IP address to connect to
 
-<!-- Port number
+Port number
 : Port number to connect to
--->
+
 User ID
 : User ID on the destination host
 
