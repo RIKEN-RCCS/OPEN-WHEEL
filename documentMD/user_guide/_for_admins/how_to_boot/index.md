@@ -62,8 +62,7 @@ HTTPS通信の代わりにHTTP通信を使う場合は、 手順3. にて`docker
         - server.crt/server.key : サーバ証明書/鍵ファイル
     - WHHELのポート番号を8089に指定しています。
         
-1. WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、
-    `http(s)://localhost:8089`にアクセスします。
+1. WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、 `http(s)://localhost:8089` にアクセスします。
 
 <div class="notice--info">{{ notice-http | markdownify }}</div>
 

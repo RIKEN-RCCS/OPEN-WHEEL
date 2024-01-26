@@ -64,8 +64,7 @@ HTTP communication should be used only in environments where there are no securi
       - server.crt/server.key : Server certificate/key file
     - WHHEL port number is specified as 8089.
 
-2. When the WHEEL server starts, open a web browser on the host machine and click
-    Go to `http(s)://localhost:8089`.
+1. When the WHEEL server starts, open a web browser on the host machine and access `http(s)://localhost:8089`.
 
 <div class="notice--info">{{ notice-http | markdownify }}</div>
 
