@@ -66,16 +66,14 @@ Edit the project name and press the __Enter__ key to rename the project.
 
 __About Project Names__  
 The project name is used as part of the directory name.  
-Therefore, if the directory name after the project name change overlaps with an existing directory name, the project name will end with .1
-(When .1 is also used, the value of .2.3 ・・・ is successively larger.) is automatically granted.
+Therefore, if the directory name after the project name change overlaps with the existing directory name, .1 (When .1 is also used, the value of .2 .3 ・・・ is successively larger.) is automatically appended to the end of the project name.
 {: .notice--info}
 
 ## Delete Project
 To delete a project:
 1. In the Project List area, click to select the check box to the left of the project name that you want to delete.
 1. Click the __REMOVE__ button to delete the selected project.  
-   Click the __REMOVE FROM LIST__ button instead.
-   It is removed from the project list area, but the files that constitute the project can remain on the server side.
+   If you click the __REMOVE FROM LIST__ button instead, the project will be removed from the project list area, but the actual file of the project can remain on the server side.
 
 ## Mass Delete Multiple Projects
 Enabling the __BATCH MODE__ switch allows you to select multiple projects.

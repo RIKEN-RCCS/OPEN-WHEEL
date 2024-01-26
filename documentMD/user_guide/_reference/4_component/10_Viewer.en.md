@@ -6,8 +6,7 @@ permalink: /reference/4_component/10_Viewer.html
 
 ![img](./img/viewer.png "viewer")
 
-The Viewer component can be used to generate image files, etc., during project execution.
-A component for viewing from the browser.
+The Viewer component is used to view image files generated during project execution from the browser.
 You can view the following files:
 
 - apng (Animated Portable Network Graphics)
@@ -24,21 +23,18 @@ There are no unique properties that you can specify for the Viewer component.
 Also, you cannot set the output files property for the Viewer component.
 
 ### Viewer Component Behavior
-After the Viewer component has finished executing its predecessor,
-Receive connected files from input files.
+The Viewer component receives the connected files from input files after the preceding component has finished executing.
 
 __When "./" is set for input files__  
 Setting input files to __./__ places all files passed as input files (For extensions visible in the Viewer component) directly under the viewer component directory.
 {: .notice--info}
 
-If these files contain image files that can be viewed in a browser
-The dialog appears in the browser only the first time.
+If these files contain image files that can be viewed in the browser, a dialog appears in the browser only the first time.
 Click the __ok__ button to display the viewer screen in a separate tab.
 
 ![img](./img/viewer_dialog.png "viewer_dialog")
 
-Also, the __open viewer screen__ button at the top of the screen is enabled.
-After that, you can click this button to display the viewer screen.
+Also, the __open viewer screen__ button at the top of the screen is enabled, and you can click this button to display the viewer screen.
 
 ![img](./img/open_viewer_screen.png "open viewer screen button")
 

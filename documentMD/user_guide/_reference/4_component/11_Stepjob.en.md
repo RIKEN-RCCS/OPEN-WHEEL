@@ -11,8 +11,7 @@ It can be used only when a remote host that can use step jobs is set.
 
 This feature combines the StepJob component with the StepjobTask component, which is available only within the StepJob component.
 
-The Stepjob component acts as a special workflow component.
-Only the StepjobTask component can be placed inside.
+The StepJob component acts as a special workflow component, and only the StepjobTask component can be placed inside.
 
 The StepjobTask component can specify execution order and dependency expressions.
 Based on these settings, it is submitted as a subjob using the step job function of TCS.
@@ -26,8 +25,7 @@ You can set the following properties for the Stepjob/StepjobTask component:
 Like the Task component, but you must select a remote host that can take advantage of the StepJob functionality.
 
 ### use job scheduler
-Enabled by default and disabled
-The project will not run properly.
+It is enabled by default, and if disabled, the project will not run properly.
 
 ### queue
 Like the Task component, it sets the queue to which the job is submitted.
@@ -45,16 +43,12 @@ This value is automatically calculated and set by WHEEL based on the connectivit
 It cannot be changed.
 
 ### use dependency
-When enabled, the following dependencyForm can be set:
-The step job runs according to the dependency expression set there.
+When enabled, the following dependencyForm can be set and the step job will run according to the dependency expression set there.
 
 ### dependencyForm
 You can set dependency expressions for job execution.
 
-The dependency expression is the function of the executed StepjobTask component.
-Job script end status (ec)
-or based on the job exit code (pc)
-An expression used to determine whether execution is permitted.
+A dependency expression is an expression that determines whether execution can be performed based on the exit status (ec) of the job script of the executed StepjobTask component or the exit code (pc) of the job.
 
 Dependency expressions are defined as follows:
 

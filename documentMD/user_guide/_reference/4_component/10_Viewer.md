@@ -6,8 +6,7 @@ permalink: /reference/4_component/10_Viewer.html
 
 ![img](./img/viewer.png "viewer")
 
-Viewerコンポーネントはプロジェクト実行中に生成される画像ファイルなどを
-ブラウザから確認するためのコンポーネントです。
+Viewerコンポーネントは、プロジェクト実行中に生成される画像ファイルなどをブラウザから確認するためのコンポーネントです。
 表示可能なファイルは次のとおりです。
 
 - apng (Animated Portable Network Graphics)
@@ -24,21 +23,18 @@ Viewerコンポーネントに指定できる固有のプロパティはあり�
 また、Viewerコンポーネントにはoutput filesプロパティを設定することはできません。
 
 ### Viewerコンポーネントの挙動
-Viewerコンポーネントは先行するコンポーネントの実行終了後に
-input filesから接続されたファイルを受け取ります。
+Viewerコンポーネントは先行するコンポーネントの実行終了後にinput filesから接続されたファイルを受け取ります。
 
 __input filesに "./" と設定した場合について__  
 input filesに __./__ と設定することで、input filesとして渡されるファイル（Viewerコンポーネントで表示可能な拡張子が対象）はすべてViewerコンポーネントディレクトリ直下に置かれます。
 {: .notice--info}
 
-これらのファイルに、ブラウザで表示可能な画像ファイルが含まれているときは
-初回のみブラウザ上にダイアログが表示されます。
+これらのファイルに、ブラウザで表示可能な画像ファイルが含まれているときは、初回のみブラウザ上にダイアログが表示されます。
 __ok__ ボタンをクリックすると別のタブでビューワー画面が表示されます。
 
 ![img](./img/viewer_dialog.png "viewer_dialog")
 
-また、画面上部の __open viewer screen__ ボタンが有効になり
-以降はこのボタンをクリックすることでビューワー画面を表示することができます。
+また、画面上部の __open viewer screen__ ボタンが有効になり、以降はこのボタンをクリックすることでビューワー画面を表示することができます。
 
 ![img](./img/open_viewer_screen.png "open viewer screen button")
 

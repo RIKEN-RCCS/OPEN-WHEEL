@@ -6,8 +6,7 @@ permalink: /reference/4_component/00_common.html
 This section describes the specifications common to all components.
 
 ## Viewing Properties
-When you single-click a component displayed in the workflow creation area,
-Displays an area where you can edit the settings (properties) for the component.
+When you single-click a component displayed in the workflow creation area, an area for editing the settings (properties) of that component appears.
 
 The contents of this area differ for each type of component.
 
@@ -36,21 +35,18 @@ The only characters allowed for name are alphanumeric characters, `-` (hyphen), 
 
 ### description
 The description has no restrictions like name and can be written freely.
-distinguishes components that are difficult to identify by name alone,
-It can be used like a comment (in a script or source code) describing what a component does.
+You can distinguish components that are difficult to identify by name alone, or you can use comments (in scripts or source code) to describe what the component does.
 
 
 ## input files, output files
-WHEEL specifies that the files in the component 
- There is a function to transfer it for use by another component.
+WHEEL provides the ability to transfer files within a component for use by another component.
 This feature uses the input files and output files properties.
 
 ![img](./img/input_output_files.png "inputFiles_outputFiles")
 
 ### How to transfer files
 Connect the file specified in the output files of one component to the file specified in the input files of another component on the screen.
-Then, the succeeding component first creates a symbolic link to the required file in the preceding component's directory 
-with the file name specified by input files and executes the script.
+Then, the succeeding component first creates a symbolic link to the required file in the preceding component's directory with the file name specified in input files and executes the script.
 Therefore, scripts in the successor component can access the files of the predecessor component.
 
 ![img](./img/input_output_connect.png "connected input and output file")
@@ -58,12 +54,10 @@ Therefore, scripts in the successor component can access the files of the predec
 Depending on how you specify input files and output files, the following behavior is shown:
 
 #### When output files is a normal path and input files is blank
-If the symbolic link to the file or directory specified in output files is
-It is created in the top-level directory of the successor component.
+A symbolic link to the file or directory specified in output files is created in the top-level directory of the succeeding component.
 
 #### when output files is a normal path and input files is a non-'/'terminated string
-In the following component directory:
-Creates a symbolic link to the file or directory specified in output files.
+A symbolic link to the file or directory specified in output files is created in the subsequent component's directory.
 The symbolic link name is the name specified in input files.
 
 #### if output files is a path containing glob (\* or\? etc.) and input files is a non-'/'terminated string
@@ -106,10 +100,8 @@ The file display area displays the files and directories under the currently sel
 By clicking the ▶ icon displayed to the left of the directory and the symbolic link to the directory, you can further view the files and other information in that directory.
 
 __About Viewing Files and Directories with Sequential Numbers__  
-If files and directories that consist of sequential numbers (For example, file1, file2, file3) are included in the display,
-They are displayed in a single line, such as `seq_dir* `and `seq_file*` in the figure. <br/><br/>
-However, if you use the new file and directory creation function described below to create a file or directory that is a serial number,
-Files and directories are displayed individually, not sequentially, until you close or reload the property screen once.
+If files and directories that consist of sequential numbers (For example, file1, file2, file3) are included in the display, they are displayed together on a single line, such as `seq_dir*` and `seq_file*` in the figure.<br/><br/>
+However, if you use the new file and directory creation function described below to create a sequentially numbered file or directory, the files and directories will be displayed individually instead of sequentially until you close or reload the property screen once.
 This also applies to files that are already sequentially numbered, files with the same name as the directory, and new directories that have been created. <br/><br/>
 Click the ▶ icon to the left of these lines to view the original sequential files and directories individually, similar to the directories.
 {: .notice--info}
@@ -140,10 +132,10 @@ Clicking the Share button displays a dialog similar to the following:
 
 ![img](./img/share_file.png "share file dialogue")
 
-Click the icon to the right of the displayed path to copy it to the clipboard.
-Use this to pass files to another application.
+If you click the icon to the right of the displayed path, it will be copied to the clipboard, so you can use it to pass files to another application.
 
-For example, jupyterlab can open an ipynb file of the form `http(s)://<server:port>/<lab-location>/lab/tree/path/to/notebook.ipynb`. However, while the file copied from WHEEL is an absolute path, the path specified here (`path/to/notebook.ipynb`) must be relative to the root of the workspace.
+For example, jupyterlab can open an ipynb file of the form `http(s)://<server:port>/<lab-location>/lab/tree/path/to/notebook.ipynb`. 
+However, while the file copied from WHEEL is an absolute path, the path specified here (`path/to/notebook.ipynb`) must be relative to the root of the workspace.
 For more information, see the jupyterlab documentation.
 
 [File Navigation with tree](https://jupyterlab.readthedocs.io/en/stable/user/urls.html)
