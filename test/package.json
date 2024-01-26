@@ -1,0 +1,21 @@
+{
+    "name": "test",
+    "version": "1.0.0",
+    "main": "cypress.config.js",
+    "scripts": {
+        "test": "npx cypress open"
+    },
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "@cypress/webpack-preprocessor": "^6.0.1",
+        "chrome": "^0.1.0",
+        "cypress": "^13.6.3",
+        "cypress-delete-downloads-folder": "^0.0.4",
+        "simple-ssh": "^1.1.1"
+    },
+    "devDependencies": {
+        "husky": "^8.0.3"
+    }
+}

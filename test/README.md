@@ -7,7 +7,7 @@
 
 ## テストコードのローカル実行について
 
-ローカルで実行する場合、リポジトリの'Cypress'ディレクトリをクローンし、以下の手順で実行していください。
+ローカルで実行する場合、リポジトリの'test'ディレクトリをクローンし、以下の手順で実行していください。
 
 1. 必要なモジュールをインストールする。
 
@@ -23,7 +23,7 @@
 
 3. テストコードをローカル実行用に修正する。
 
-   - support/commands.js の 422 行目の remotehost 設定をローカル環境用に修正する。
+   - support/commands.js の 423 行目の remotehost 設定をローカル環境用に修正する。
 
    ```javascript
    const configObj = { host: 'localhost', port: 4000, user: 'testuser', pass: 'your password' };
@@ -40,7 +40,7 @@
 
    - 実行したいテストケースを決定する。（対象ケースのテストコード'it'の後ろに'.only'をつける。）
 
-4. cypressAPI が起動したら E2E テスト ⇒chrome⇒spec.cy.js の順にクリックする。
+4. cypressAPI が起動したら E2E テスト ⇒「対象ブラウザ」⇒spec.cy.js の順にクリックする。
 
 ## テスト対象外ケースについて
 
