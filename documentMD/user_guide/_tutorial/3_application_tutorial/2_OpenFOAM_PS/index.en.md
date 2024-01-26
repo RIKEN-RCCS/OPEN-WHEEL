@@ -1,5 +1,5 @@
 ---
-title: Parametric Study Analysis Workflow Using OpenFOAM
+title: Parameter Study Analysis Workflow Using OpenFOAM
 lang: en
 permalink: /tutorial/3_application_tutorial/2_OpenFOAM_PS/
 ---

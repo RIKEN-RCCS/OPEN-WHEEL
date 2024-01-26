@@ -9,8 +9,7 @@ permalink: /reference/4_component/12_BulkjobTask.html
 The BulkjobTask component is based on the Bulk Jobs feature of the HPC Middleware "FUJITSU Software Technical Computing Suite (TCS)."
 It can be used only when remote hosts that can use bulk jobs are set up.
 
-You can specify a bulk number and an input file for the BuildjobTask component.
-Multiple jobs are submitted as subjobs based on these settings.
+You can specify bulk numbers and input files for the BuildjobTask component, and multiple jobs will be submitted as subjobs based on these settings.
 
 For more information about bulk job functionality, see the HPC Middleware "FUJITSU Software Technical Computing Suite (TCS)" documentation.
 
@@ -30,22 +29,18 @@ When enabled, you can set additional criteria for determining the end status of 
 ![img](./img/manual_finish_condition.png)
 
 #### use javascript expression for condition check
-To determine the success or failure of a component
-Specifies whether to use a javascript expression or a shell script.
+Specifies whether to use a javascript expression or a shell script to determine whether the component succeeds or fails.
 
  - When invalid  
  ![img](./img/task_retry_expression_disable.png "task_retry_expression_disable")<br/>
 When disabled, a drop-down list appears to select a shell script.  
-The shell script specified here is executed after component execution has finished.
-A return value of 0 indicates success, and a non-zero value indicates failure. <br/><br/>
+The shell script specified here is executed after the component has finished executing, with a return value of 0 indicating success and a non-zero value indicating failure.<br/><br/>
 If none is specified, the return code of the script specified in __script__ performs the same judgment.
 
  - When enabled  
 ![img](./img/task_retry_expression_enable.png "task_retry_expression_enable")<br/>
 When enabled, you can write javascript expressions.  
-The expression entered here is evaluated after the component has finished executing.
-If it returns a Truthy value, it succeeds.
-A falsy value is considered a failure.
+The expression entered here is evaluated after the component has finished executing, and is considered successful if it returns a Truthy value or failed if it returns a Falsy value.
 
 
 --------

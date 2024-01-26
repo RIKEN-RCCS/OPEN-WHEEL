@@ -49,12 +49,12 @@ The status display area shows the following statuses depending on the execution 
 ![img](./img/unknown.png "unknown")
 
 __About holding__  
-After checking the execution status of submitted jobs was interrupted during project execution due to a restart of the WHEEL process, the execution status of jobs is checked when the project is opened.
+After checking the execution status of submitted jobs was interrupted during project execution due to a restart of the WHEEL process, the execution status of jobs is checked when the project is opened.  
 In this state, no project operations are accepted, but as soon as the job status check is completed, other states such as stopped/finished/failed/unknonw are transitioned.
 {: .notice--info}
 
 __About unknown__  
-The status changes to unknown when an error occurs more than the specified number of times when checking the execution status of a job submitted by WHEEL.
+The status changes to unknown when an error occurs more than the specified number of times when checking the execution status of a job submitted by WHEEL.  
 Move from the root workflow to the lower components to find the task components that are in the unknown state and check whether the execution status of the job has any effect on the success or failure of the entire workflow.
 {: .notice--info}
 
@@ -81,10 +81,8 @@ This area contains buttons for saving edited projects.
 
 __About save project button/revert project button behavior__  
 WHEEL uses git for file history management.  
-Edits on the graph view screen are immediately reflected in the server-side file.
-It is not registered in the git repository until you click the save project button.
-Click the revert project button to discard all changes made since the last commit.
-Restores the repository to the state it was in when it was last committed. <br/><br/>
+Your edits on the graph view screen are immediately reflected in the server-side file, but are not registered in the git repository until you click the save project button.
+Click the revert project button to discard all changes made since the last commit and return the repository to the state it was in when it was last committed.<br/><br/>
 For more information about git operations, see the developer documentation [detailed design document](https://github.com/{{site.repository}}/blob/master/documentMD/design/design.md).
 {: .notice--info}
 
@@ -106,25 +104,20 @@ If the transition cannot be made, the text editor button is displayed in a state
 
 
 ### Hierarchy display/transition buttons
-A workflow has a hierarchical structure of components.
-Only components in the same hierarchy can be displayed simultaneously on the graph view screen.
+A workflow has a hierarchical structure of components, but you can only view components in the same hierarchy at the same time on the graph view screen.
 
-The hierarchy displays the currently displayed component from the root component of the project.
-Displays the position from which it is descended.
+The hierarchy display area shows the position of the currently displayed component down the hierarchy from the root component of the project.
 
 ![img](./img/breadcrumbs.png "breadcrumbs")
 
-You can also click the tree view button at the left end of the hierarchy display.
-Displays the hierarchical structure of the entire project.
+In addition, click the tree view button at the left end of the hierarchy display area to display the hierarchy of the entire project.
 
 ![img](./img/component_tree.png "component_tree")
 
 In both views, clicking a component switches the view to the displayed component.
 
 ### Environment Variable Editor Display Button
-When you click this button,
-environment variables that can be used, for example, in shell scripts that run in a project
-The setting screen is displayed.
+Click this button to display a screen for setting environment variables that can be used, for example, in shell scripts that run in the project.
 
 ![img](./img/environment_variables_editor.png "environment_variables_editor")
 
@@ -146,27 +139,10 @@ Initially, the child components directly under the root component of the project
 
 In this area, drag and drop components from the component library to add them to your project.
 
-Double-click the displayed component to display the
-Switches to display the subcomponents of that component.
+Double-click a visible component to switch to display its subcomponents.
 
 To switch to a higher component, use the hierarchical display or component tree described above.
 
-<!--
-When you single-click a displayed component,
-Displays an area where you can edit the settings (properties) for the component.
-
-![img](./img/component_property.png "component_property")
-
-|| Component | Description |
-|----------|----------|---------------------------------|
-|1|close button   | Closes the property display |
-|2|clean button   | Rewind the state of the component (and any subcomponents) to the most recent saved state |
-|3|delete button  | Remove component |
-|4| Details button | Shows or hides property settings for each group |
-
-The contents of this area differ for each type of component.
-For information about setting properties, see the ({{site.baseurl}}/reference/4_component /) chapter.
--->
 
 ### Log display button
 Displays the log that is output when a workflow is created or executed.

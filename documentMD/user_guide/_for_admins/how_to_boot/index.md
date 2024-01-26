@@ -51,16 +51,18 @@ HTTPS通信の代わりにHTTP通信を使う場合は、 手順3. にて`docker
 
     上記コマンドでは、
 
-    - プロジェクトの作成先を${HOME}に指定しています。
+    - コンテナ内でのプロジェクトの作成先（/root）を、ホストの${HOME}にマッピングしています。
     WHEEL上で作成されたプロジェクトは${HOME}に格納されます。
-    - WHEELの設定ファイルの置き場所として、`CONFIG_DIR`を指定しています。以下のファイルは必要に応じて参照・編集してください。
-        - wheel.log : WHEELのログファイル。編集不可。
+    したがって、${HOME}にはWHEELからファイルの書き出しが行われるので、書き込み権限が必要です。   
+    - コンテナ内での設定ファイルの置き場所（/usr/src/server/app/config）を、ホストの`CONFIG_DIR`にマッピングしています。
+    `CONFIG_DIR`にはWHEELからも書き込みが行われるので、書き込み権限が必要です。  
+    また、以下のファイルは必要に応じて参照・編集してください。
+        - wheel.log : WHEELのログファイル。
         - jobScheduler.json : バッチシステムの設定。詳細は [バッチシステムの設定](../job_scheduler/)を参照。
         - server.crt/server.key : サーバ証明書/鍵ファイル
     - WHHELのポート番号を8089に指定しています。
         
-1. WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、
-    `http(s)://localhost:8089`にアクセスします。
+1. WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、 `http(s)://localhost:8089` にアクセスします。
 
 <div class="notice--info">{{ notice-http | markdownify }}</div>
 
@@ -97,9 +99,9 @@ label
 Hostname
 : 接続先のホスト名またはIPアドレス
 
-<!-- Port number
+Port number
 : 接続先のポート番号
--->
+
 User ID
 : 接続先ホストでのユーザID
 

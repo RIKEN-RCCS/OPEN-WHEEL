@@ -11,8 +11,7 @@ Describes the specification limitations of WHEEL.
 
 
 ## If the remote task is terminated by a signal
-If a process running on a remote host is terminated by a signal,
-Because the WHEEL specification does not allow the remote signal number to be supplemented, the operation is judged to have terminated normally.
+If a process running on a remote host terminates due to a signal, it is considered to have terminated normally because the WHEEL specification does not allow the remote signal number to be supplemented.
 
 {% capture notice-words %}
 __About Task Types__  
@@ -37,14 +36,12 @@ If the Stop Project button stops the project, the script set to WHEEL is stopped
 ## Handling Large Files
 WHEEL uses git to manage data handled by projects.
 Therefore, placing large files in the project directory can cause various problems due to poor performance of repository operations.  
-To avoid this problem, configure files larger than a certain size uploaded from the WHEEL graph view to be managed by [git LFS](https://git-lfs.github.com/).
+To avoid this problem, configure [git LFS](https://git-lfs.github.com/) to manage files larger than a certain size uploaded from the WHEEL graph view.
 Be aware that if you add files to your project's git repository by means other than WHEEL, you may not be able to work with them properly depending on their size.
 
 ***
 ## Changing the connector name with the input/output connector connected
-With multiple output connectors connected to one input connector,
-When renaming the input connector, multiple renaming operations are performed simultaneously.
-Components may become inconsistent.
+If you rename an input connector while multiple output connectors are connected to one input connector, multiple renaming operations are performed at the same time, and the components may not be consistent.
 Before editing the input/output connector, disconnect it.
 
 ***
@@ -63,13 +60,13 @@ The unknown state means that the state of the project cannot be determined.
 If you are transitioning from the holding state described above, check the state of the individual components to make sure that all tasks have been completed.
 If there are tasks that have not finished, rerunning the project will rerun only those components that are not running and failed.
 
-If the status check processing after the job is submitted fails (e. g. (For example, if a connection to the batch system cannot be established due to a temporary failure), the status is unknown.
-In this case, check whether the task in the unknown status has finished normally by directly logging in to the job destination server.
-If you need any files, please copy them.
+In addition, if the status check processing after a job is submitted fails (e.g. When the batch system cannot be connected due to a temporary failure, etc.), the status is unknown.
+In this case, log in to the job destination server directly to check whether the task in unknown status has finished normally, and then copy any necessary files.
 
 ***
 ## About Importing Existing Projects
-When WHEEL reads an existing project that is not in the project list, it commits all changes to the git repository. Therefore, if the imported project or components in the project are not "not-started," you will not be able to clean the project again.
+When WHEEL reads an existing project that is not in the project list, it commits all changes to the git repository.
+Therefore, if the imported project or components in the project are not "not-started," you will not be able to clean the project again.
 Therefore, check the state of the project and components before loading.
 
 

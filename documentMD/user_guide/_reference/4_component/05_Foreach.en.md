@@ -6,9 +6,7 @@ permalink: /reference/4_component/05_Foreach.html
 
 ![img](./img/foreach.png "foreach")
 
-The Foreach component, like the for loop in a shell script,
-Based on the list of indexes set
-Repeats the subordinate component.
+A Foreach component iterates through its subcomponents based on a list of configured indexes, like a for loop in a shell script.
 
 You can set the following properties for Foreach components:
 
@@ -30,9 +28,7 @@ For details, see [Foreach Component Run-time Behavior](#foreach-component-run-ti
 
 
 ### Foreach Component Run-time Behavior
-The Foreach component behaves like the For component,
-The index value is not calculated;
-The values set in indexList are used from the beginning of the list.
+The Foreach component behaves the same way as the For component, but the index value is not calculated; instead, the values set in indexList are used starting from the beginning of the list.
 Terminates execution of the entire component when it reaches the end of the list.
 
 --------

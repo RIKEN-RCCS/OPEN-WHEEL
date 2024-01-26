@@ -6,8 +6,7 @@ permalink: /reference/4_component/09_Source.html
 
 ![img](./img/source.png "source")
 
-Sourceコンポーネントは、プロジェクト実行に関する
-入力ファイルに相当するファイルを扱うためのコンポーネントです。
+Sourceコンポーネントは、プロジェクト実行に関する入力ファイルに相当するファイルを扱うためのコンポーネントです。
 
 Sourceコンポーネントに設定できるプロパティは以下のとおりです。
 なお、Sourceコンポーネントにはinput filesプロパティは指定することができません。
@@ -18,13 +17,9 @@ Sourceコンポーネントに設定できるプロパティは以下のとお�
 
 
 ### Sourceコンポーネントの挙動
-プロジェクト実行時にSourceコンポーネントのoutputFileに指定されたファイルが
-ディレクトリ内に存在する場合、Sourceコンポーネントは特に何も処理せず
-正常終了します。
+プロジェクト実行時にSourceコンポーネントのoutputFileに指定されたファイルがディレクトリ内に存在する場合、Sourceコンポーネントは特に何も処理せず正常終了します。
 
-ファイルが存在せずupload on demandが有効なときは、
-ブラウザ上にファイルアップロードダイアログが表示され
-ユーザがアップロードしたファイルがoutputFileとして扱われます。
+ファイルが存在せずupload on demandが有効なときは、ブラウザ上にファイルアップロードダイアログが表示され、ユーザがアップロードしたファイルがoutput filesとして扱われます。
 
 ![img](./img/upload_source_file_dialog.png "upload source file dialog")
 

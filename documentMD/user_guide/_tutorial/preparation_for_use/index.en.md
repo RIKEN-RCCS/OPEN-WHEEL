@@ -6,6 +6,11 @@ lang: en
 
 Before you start using WHEEL, make sure that the initial remote host settings are correct.
 
+__About starting WHEEL__  
+The WHEEL server must be started before you can verify the remote host configuration. 
+For details on how to start the WHEEL server, refer to [How to start]({{ site.baseurl }}/for_admins/how_to_boot/#how-to-start).
+{: .notice--info}
+
 ### Verifying the remote host configuration
 Go to WHEEL and click the hamburger menu at the top right of the screen.
 
