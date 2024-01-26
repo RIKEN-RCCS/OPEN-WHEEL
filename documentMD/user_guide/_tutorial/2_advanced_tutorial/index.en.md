@@ -10,15 +10,13 @@ Unlike the basic section, all items are independent.
 Create a new project individually and then follow the tutorial.
 
 ### 1. Conditional Branch
-In a workflow, depending on the result of a process
-It may change subsequent actions.
+In a workflow, subsequent actions may change depending on the results of one action.
 
 WHEEL provides an if component to achieve such conditional branching.
 
 ![img](./img/component_library_if.png "if component")
 
-Here, we use the if component to determine whether the execution of the script succeeds or fails.
-Let's run different scripts.
+Let's use the if component to run different scripts depending on the success or failure of the script.
 
 First, create a new project.
 Then add two task components and an if component to the workflow.
@@ -46,8 +44,7 @@ echo task1
 Output __task0__ or __task1__ to the standard output, respectively.
 
 Then specify the conditional branch for the if component.
-Open the properties screen and create a new file named `check.sh`
-Open this file with a text editor.
+Open the properties screen, create a new file named `check.sh`, and open it in a text editor.
 
 If the return value of check.sh is 0, it branches to a green ▼ (if clause), and if it is not 0, it branches to a purple ▼ (else clause).
 First,
@@ -56,20 +53,17 @@ exit 0
 ```
 and make sure to pass the green ▼ (if clause).
 
-Return to the component properties screen, click the __condition setting__ line,
-Specify `check.sh` from the __script name for condition check__ drop-down list.
+Return to the component properties screen, click the __condition setting__ line, and specify `check.sh` from the __script name for condition check__ drop-down list.
 
 ![img](./img/property_if.png "if Component Properties")
 
 Finally, connect the purple ▼ (else clause) displayed under if0 to task0 and the green ▼ (if clause) to task1.
 
-The green connector (if clause) returns 0 when check.sh returns 0.
-The purple connector (else clause) indicates the component that advances when the return value is non-zero.
+The green connector (if clause) indicates components that advance when check.sh returns 0 and the purple connector (else clause) indicates components that advance when the return value is non-zero.
 
 ![img](./img/workflow_if2.png "Workflow at connection completion")
 
-When you run this workflow, check.sh returns 0, so only task1 is run.
-stdout displays only `task1`.
+When you run this workflow, check.sh returns 0, so only task1 is run and stdout shows only `task1`.
 
 ![img](./img/workflow_if_result.png "Workflow Execution Results")
 
@@ -79,13 +73,11 @@ This time, only task0 is executed, and stdout displays only `task0`.
 ### 2. Loop
 The same process may be repeated in a workflow.
 
-WHEEL can use for (1), while (2), and foreach (3)
-There are three types of loop components:
+WHEEL has three loop components for (1), while (2), and foreach (3).
 
 ![img](./img/component_library_loop.png "loop component")
 
-Within each component, you can define a nested workflow.
-Runs the subordinate workflow repeatedly until the conditions specified for these components are met.
+Within each component, you can define a nested workflow that iterates through subordinate workflows until the conditions specified for those components are met.
 
 You can specify conditions for each component in the following ways:
 
@@ -109,8 +101,7 @@ Specify 1, 5, and 2, respectively.
 
 
 Then double-click the for component.
-The components in the for component are now visible.
-It is not displayed because there are no components now.
+The components in the for component are now visible, but there are no components now, so they are not visible.
 
 ![img](./img/graphview_for.png "Inside the for component")
 
@@ -133,8 +124,7 @@ When you run the project, the standard output shows 1,3,5.
 
 ![img](./img/result_for.png "Execution Results")
 
-If the end property of the for component and the index variable ($WHEEL_CURRENT_INDEX) are equal, as shown in this example,
-The internal components are executed.
+As shown in this example, internal components are executed when the value of the end property of the for component and the index variable ($WHEEL_CURRENT_INDEX) are equal.
 
 
 ### 3. Parameter Study
@@ -147,8 +137,7 @@ WHEEL has a parameterStudy component (The following PS components) that supports
 You can define nested workflows within PS components.
 By rewriting and executing any file in a subordinate workflow with a specified parameter value, you can perform the same operation multiple times with different parameters.
 
-In this case, you can rewrite and execute the parameter values in the shell script.
-Let's pass various arguments to the echo command.
+Let's pass various arguments to the echo command by rewriting and executing the parameter values in the shell script.
 
 
 First, add one PS component to the project.
@@ -173,8 +162,8 @@ Click the project name (In the following example, __tutorial_PS__) at the top of
 
 ![img](./img/component_tree_ps.png "Scripts to Run in PS")
 
-Open the PS component properties screen to display the Files area. With parameterSetting.json selected by clicking on it
-Go to the text editor screen.
+Open the PS component properties screen to display the Files area.
+Click parameterSetting.json to go to the text editor screen with your selection.
 
 The left side of the screen is the same text editor as before, but the right side of the screen provides a screen for setting up parameter studies.
 
@@ -235,16 +224,13 @@ See here for available filters.
 
 
 ### 4. Input File
-Depending on the nature of the simulation, you may want preprocessing to be done interactively before the workflow is run, 
-but you may want the workflow to automatically perform subsequent operations after the solver.
+Depending on the nature of the simulation, you may want preprocessing to be done interactively before the workflow is run, but you may want the workflow to automatically perform subsequent operations after the solver.
 
-WHEEL uploads a file at run time as __input data__ for the workflow.
-Provides the source component to handle.
+WHEEL provides a source component that uploads files at runtime and treats them as __input data__ for the workflow.
 
 ![img](./img/component_library_source.png "source component")
 
-In this section, any text file created on your client PC
-Learn about the source component by creating a workflow to display with the cat command.
+Let's learn about the source component by creating a workflow that uses the cat command to display any text file created on the client PC.
 
 First, add a task component and a source component to your project.
 
@@ -272,25 +258,21 @@ When the upload is complete, the part that says __drop file here__ changes to th
 ![img](./img/upload_dialog.png "Upload source component dialog")
 
 
-Clicking the __ok__ button resumes project execution 
-and prints the contents of the file uploaded by the cat command to stdout.
+Clicking the __ok__ button resumes project execution and prints the contents of the file uploaded by the cat command to stdout.
 
 You can upload the file again and again until you click the __ok__ button.
 If you specify the wrong file, upload it again and the specified file will be used later.
 
 
 ### 5. Result Display
-For workflows that are automated to post-process,
-Image files are often output as the result of calculations.
+Workflows that are automated to post-process often output image files as the result of calculations.
 
 WHEEL provides a viewer component that displays image files in typical formats in the browser.
-You can use this component without downloading the resulting file to your client PC.
-You can easily see the results.
+This component makes it easy to see the results without downloading the resulting file to the client PC.
 
 ![img](./img/component_library_viewer.png "viewer component")
 
-In this section, you will create a workflow that passes a pre-prepared image file to the viewer component.
-Learn about the viewer component.
+Let's learn about the viewer component by creating a workflow that passes a pre-prepared image file to the viewer component.
 
 To get started, add a task component and a viewer component to your project.
 
@@ -335,18 +317,15 @@ In this state, you can zoom in and out of the image.
 ![img](./img/slideshow_display.png "slideshow display")
 
 ### 6. File Save
-When you run a workflow in WHEEL, the output files that are created, for example,
-It is deleted every time you initialize a project.
+When you run a workflow with WHEEL, the resulting output files are deleted every time you initialize the project.
 
-If you run the same workflow over and over with a human intervention, checking results and adjusting settings, 
-you may want to save the results from each run.
+If you run the same workflow over and over with a human intervention, checking results and adjusting settings, you may want to save the results from each run.
 
 In these cases, you can use the storage component to leave it undeleted during project initialization.
 
 ![img](./img/component_library_storage.png "storage component")
 
-Here, we use the storage component to store files while
-Run and initialize the project multiple times to make sure all files are saved.
+Let's use the storage component to ensure that all files are saved by running and initializing the project multiple times while saving the files.
 
 To get started, add one task component and one storage component to your project.
 
@@ -358,11 +337,10 @@ echo foo >foo.txt
 ```
 
 Also, add __\*.txt__ to the output files of the task component.
-This component only prints __foo.txt__, but I'm going to rename the output file
-The file name is __\*__ to run the project several times.
+This component only prints __foo.txt__, but the file name is specified as __\*__ because the project will now run several times while the output file name is rewritten.
 
-Next, open the storage component properties screen and enter __directory path__
-Write __/tmp__ . Also, specify __./__ for input files.
+Next, open the storage component properties window and write __/tmp__ in the __directory path__ field.
+Also, specify __./__ for input files.
 
 __About setting directory path__  
 If/tmp does not exist or/tmp does not have write permission, specify any other directory.  
@@ -378,17 +356,14 @@ When you run the project, foo.txt appears in the Files area for each task0, stor
 
 When you initialize the project, foo.txt for task0 is deleted, but foo.txt for storage0 remains.
 
-If you edit run.sh in task0, rename the output file to bar.txt, and then rerun it, you will see a file in the storage0 component.
-foo.txt, bar.txt is displayed.
+If you edit run.sh in task0, rename the output file to bar.txt, and run it again, you will see foo.txt, bar.txt in the storage0 component.
 
-Thus, when you initialize a project, the files you save in the storage component
-It is retained and can be used to save files for restart calculations.
+In this way, when you initialize a project, the files stored in the storage component are retained, and can be used to store files for restart calculations.
 
 
 
 ### 7. Bulk Job
-Fugaku and other Fujitsu Limited HPC middleware "FUJITSU Software Technical Computing Suite"
-The bulk job feature is available on the adopted system.
+The bulk job function can be used in systems such as Fugaku that use Fujitsu's HPC middleware "UJITSU Software Technical Computing Suite".
 
 WHEEL provides a bulkjobTask component to facilitate this functionality from the GUI.
 
@@ -398,59 +373,49 @@ Let's use bulk jobs to create a workflow that is the same as the parameter study
 
 Before you begin, create a new project and add a builkjobTask component.
 
-The default is to run on localhost, so you can change the host property to
-Specify a remote host on which the bulkjob function is available.
+The default is to run on localhost, so change the property host to specify a remote host where bulkjob functionality is available.
 
 __Remote host settings when using the bulk job function__  
-Even if the batch system running on the actual host supports the bulk job function,
-Note that the bulkjob function is not available unless __use bulkjob__ is enabled in the remotehost configuration.  
+Note that even if the batch system running on the actual host supports the bulkjob function, the bulkjob function cannot be used unless __use bulkjob__ is enabled in the remotehost setting.  
 ![img](./img/remotehost.png "Configure use bulkjob")
 {: .notice--info}
 
-Open the properties screen and create an empty file named `run.sh`
-Open a text editor and write `echo ${PJM_BULKNUM}`.
+Open the properties screen, create an empty file named `run.sh`, open a text editor, and write `echo ${PJM_BULKNUM}`.
 When the job is executed, the `${PJM_BULKNUM}` part is replaced with the set parameters.
 
 Return to the properties screen and set script to `run.sh`.
 
 Finally, click in the __bulkjob setting__ row to specify the parameters.
-In this section, uncheck the __use parameter setting file for bulk number__
-Specify __5__ for __0__ end for start.
+In this case, uncheck the __use parameter setting file for bulk number__ and specify __0__ for start and __5__ for end.
 
 ![img](./img/property_bulkjob.png "bulknum configuration")
 
 
-Finally, to collect the standard output for each subjob, click the __remote file setting__ line
-Specify `run.sh*` for __include__.
+Finally, to collect the standard output for each subjob, click the __remote file setting__ line and specify `run.sh*` for __include__.
 
-![img](./img/property_bulkjob2.png "Configure include")
+![img](./img/property_bulkjob2.png "Configure include") 
 
 When the project has finished running, standard output is output with a file name of the form run.sh.xxxxx[`${PJM_BULKNUM}`].out .
 Make sure that each `PJM_BULKNUM` matches the output of the echo command output to the file.
 
 
 ### 8. Step Job
-Fugaku and other Fujitsu Limited HPC middleware "FUJITSU Software Technical Computing Suite"
-You can use the Step Job feature on your system.
+The Step Job function can be used on systems using Fujitsu's HPC middleware "FUJITSU Software Technical Computing Suite" such as Fugaku.
 
-WHEEL includes the stepJob and stepJobTask components to facilitate this functionality from the GUI.
-It's ready.
+WHEEL provides the stepJob and stepJobTask components to facilitate this functionality from the GUI.
 
 ![img](./img/component_library_stepjob.png "stepjob Component")
 
-The WHEEL step job function defines multiple stepJobTask components within the stepJob component.
-A defined dependency is executed using the stepjob function of the batch system.
+The stepjob function of WHEEL is to define multiple stepJobTask components within the stepJob component and define dependencies, and then execute them using the stepjob function of the batch system.
 
 First, create a new project and add a stepJob component.
 
-The default is to run on localhost, so you can change the host property to
-Specify a remote host on which the stepjob function is available.
+The default is to run on localhost, so change the property host to point to a remote host where stepjob functionality is available.
 
 ![img](./img/workflow_stepjob.png "Configuring the stepjob Component")
 
 __Remote host settings when using the step job function__  
-Even if the batch system running on the actual host supports the step job function,
-Note that the stepjob function cannot be used unless __use stepjob__ is enabled in the remotehost setting.  
+Even if the batch system running on the actual host supports the step job function, the stepjob function cannot be used unless __use stepjob__ is enabled in the remotehost setting.  
 ![img](./img/remotehost2.png "Configure use stepjob")
 {: .notice--info}
 
@@ -463,9 +428,7 @@ This switches the component library portion on the left side of the screen to sh
 
 Add two stepjobTask components here.
 
-You have two components, sjTask0 and sjTask1.
-Create an empty file named __run.sh__ for each component.
-Must be specified in the __script__ property.
+Because you have two components, sjTask0 and sjTask1, create an empty file named __run.sh__ for each component and specify it in the __script__ property.
 
 ![img](./img/property_stepjobTask.png "stepjobtask Properties")
 
@@ -491,32 +454,25 @@ The lines connect, and the icon on the left shoulder of sjTask1 changes to 1.
 ![img](./img/workflow_stepjobTask.png "Workflow after dependency specification")
 
 In addition, specify a run condition for sjTask1.
-Click to open the __stepjobtask setting__ area of the Properties window.
-Enable __use dependency__ to __dependencyForm__  Enter `sd=ec==1`.  
+Click to open the __stepjobtask setting__ area of the Properties window, enable __use dependency__, and enter `sd=ec==1` for __dependencyForm__.  
 Now, sjTask1 is executed only when sjTask0 returns 1.  
-For information about how to write __dependencyForm__, see the TCS documentation or the
-See the User Guide.
+For more information about writing the __dependencyForm__, see the TCS documentation or the user guide for your computer system.
 
 ![img](./img/property_stepjobTask2.png "Dependency Expression")
 
-Finally, in order to retrieve the file output by sjTask1,
-Click to open the __remote file setting__ area and type `stdout.txt` in the include text box.
+Finally, to retrieve the file output by sjTask1, click to open the __remote file setting__ area and type `stdout.txt` in the include text box.
 
 ![img](./img/property_stepjobTask3.png "include specification")
 
-When you run the project, sjTask0 fails.
-sjTask1 is executed and output as `stepjobTask1` in stdout.txt.
+When I run the project, sjTask0 fails, but sjTask1 runs and prints `stepjobTask1` in stdout.txt.
 
-Once the project is initialized, the __dependencyForm__ of sjTask1
-Change `sd=ec==0` and execute the command.
+Once you have initialized the project, change the __dependencyForm__ of sjTask1 to `sd=ec==0` and run it.
 
-Now, after sjTask0 fails, sjTask1 is not executed and remains
-The entire workflow ends.
+This time, after sjTask0 fails, sjTask1 does not run and the entire workflow exits.
 
 This concludes the application tutorial.
 
-If you want to know about workflows that actually run applications,
-Go to [Practical Tutorial]({{site.baseurl}}/tutorial/3_application_tutorial/).
+If you want to learn about the workflow that actually makes an application work, go to [Practical Tutorial]({{site.baseurl}}/tutorial/3_application_tutorial/).
 
 For detailed information about each function, refer to the [Reference Manual]({{site.baseurl}}/reference/).
 
