@@ -14,8 +14,7 @@ const reOnlyWhilteSpace = /^\s*$/;
 //OK
 const alphanumeric = "a-zA-Z0-9";
 //due to escapeRegExp's spec, bars must be added separately any other regexp strings
-//eslint-disable-next-line no-useless-escape
-const bars = "_\-";
+const bars = "_\\-";
 const pathseps = "/\\";
 const metaCharactors = "*?[]{}()!?+@.";
 
