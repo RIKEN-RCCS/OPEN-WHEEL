@@ -1,0 +1,70 @@
+name: Cypress Tests
+on: 
+  push:
+    branches: 
+      - master
+jobs:
+  cypress-run:
+    services:
+      testbed:
+        image: naoso5/openpbs
+        ports:
+          - 4000:22
+    env:
+      WHEEL_USE_HTTP: 1
+      WHEEL_TEST_REMOTEHOST: testServer
+      WHEEL_TEST_REMOTE_PASSWORD: passw0rd
+      TZ: JST-9
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      WHEEL_TEST_HOSTNAME: ${{ secrets.WHEEL_TEST_HOSTNAME }}
+      WHEEL_TEST_PORT: ${{ secrets.WHEEL_TEST_PORT }}
+      WHEEL_TEST_USER: ${{ secrets.WHEEL_TEST_USER }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - run: mkdir -p ~/.wheel
+
+      - run: >
+          echo '[{
+            "name": "testServer",
+            "host": ${{ secrets.WHEEL_TEST_HOSTNAME }},
+            "path": "/home/testuser",
+            "keyFile": null,
+            "username": ${{ secrets.WHEEL_TEST_USER }},
+            "numJob": 5,
+            "port": ${{ secrets.WHEEL_TEST_PORT }},
+            "id": "dummy-id",
+            "jobScheduler": "PBSPro",
+            "queue": "workq",
+            "renewInterval": 0,
+            "renewDelay": 0,
+            "statusCheckInterval": 10,
+            "maxStatusCheckError": 10,
+            "readyTimeout": 5000
+          }]' > ~/.wheel/remotehost.json
+
+      - run: cat ~/.wheel/remotehost.json
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm install cypress
+      - run: npm install simple-ssh
+      - run: npm install @cypress/webpack-preprocessor
+      - run: npm install cypress-delete-downloads-folder
+        
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: test
+          browser: chrome
+          install: false
+          build: npm run build
+          start: npm start

@@ -4,7 +4,7 @@ name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 on:
 # Runs on pushes targeting the default branch
   push:
-    branches: ["master"]
+    branches: ["docs", "multilingual"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -31,12 +31,12 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: documentMD/user_guide/
-          destination: ./_site
+        working-directory: ./documentMD/user_guide
+        run: docker compose -f docker-compose.build.yml up
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./documentMD/user_guide/_site/
 
   # Deployment job
   deploy:

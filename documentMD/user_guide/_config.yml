@@ -1,5 +1,78 @@
-repository: RIKEN-RCCS/OPEN-WHEEL
-remote_theme: pages-themes/slate@v0.2.0
+repository: taki-036/OPEN-WHEEL
+url: "https://taki-036.github.io"
+remote_theme: "mmistakes/minimal-mistakes"
 plugins:
-- jekyll-remote-theme
-title: WHEEL user guide
+  - jekyll-include-cache
+  - jekyll-remote-theme
+  - jekyll-polyglot
+title: "WHEEL user guide"
+subtitle: "Workflow in Hierarchical distributEd parallEL"
+strict_front_matter: true
+
+
+baseurl: "/OPEN-WHEEL"
+
+locate: "ja-JP"
+# For Minimal Mistakes
+search: true
+search_full_content: true
+search_provider: "lunr"
+lunr:
+  search_within_pages: true
+
+
+include:
+  - _pages
+exclude:
+  - list.txt
+  - readme.md
+  - docker-compose.yml
+  - docker-compose.build.yml
+
+atom_feed:
+  hide: true
+
+collections:
+  reference:
+    output: true
+  tutorial:
+    output: true
+  for_admins:
+    output: true
+
+defaults:
+  - scope:
+      path: ""
+      type: reference
+    values:
+      layout: single
+      toc: true
+      toc_sticky: true
+      sidebar:
+        nav: "refs"
+  - scope:
+      path: ""
+      type: tutorial
+    values:
+      layout: single
+      toc: true
+      toc_sticky: true
+      sidebar:
+        nav: "user-docs"
+  - scope:
+      path: ""
+      type: for_admins
+    values:
+      layout: single
+      toc: true
+      toc_sticky: true
+      sidebar:
+        nav: "admin-docs"
+
+# For jekyll-polyglot
+languages: ["ja", "en"]
+default_lang: "ja"
+exclude_from_localization: ["javascript", "images", "css"]
+parallel_localization: true
+lang_from_path: true
+langsep: "/"
