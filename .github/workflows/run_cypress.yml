@@ -3,7 +3,7 @@ on:
   push:
     branches: 
       - master
-  workflow_dispatch:
+      - develop.fj
 jobs:
   cypress-run:
     services:
