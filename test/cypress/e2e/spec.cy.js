@@ -605,7 +605,7 @@ describe('wheel test', () => {
       //   cy.softAssert($el.text(), remotehost, "host is exist in select box")
       // })
 
-      // cy.projectReload(k, testProject, 'task0')
+      cy.projectReload(k, testProject, 'task0')
     })
 
     // cy.execProject()
