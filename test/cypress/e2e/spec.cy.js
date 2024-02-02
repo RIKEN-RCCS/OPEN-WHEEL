@@ -596,35 +596,33 @@ describe('wheel test', () => {
         cy.softAssert($el.length > 0, true, "host is exist in listbox")
       })
 
-      cy.log(remotehost).then($el => {
-        cy.softAssert($el == 'testServer', true, "test")
+      const test = 'testServer'
+
+      cy.selectHost(test)
+      cy.contains('label', 'host').siblings().then($el => {
+        cy.softAssert($el.text(), test, "host is exist in select box")
       })
-  
-      // cy.selectHost(remotehost)
-      // cy.contains('label', 'host').siblings().then($el => {
-      //   cy.softAssert($el.text(), remotehost, "host is exist in select box")
-      // })
 
       cy.projectReload(k, testProject, 'task0')
     })
 
-    // cy.execProject()
-    // cy.passwordType(password)
-    // cy.outputSshOpen(2000)
+    cy.execProject()
+    cy.passwordType(password)
+    cy.outputSshOpen(2000)
     
-    // cy.viewport('macbook-16')
-    // if (screenShotFlg) {
-    //   cy.screenshot('test27: script exec result is displaied at Console(Stdout)', {overwrite: true, capture: 'runner'})
-    // }
+    cy.viewport('macbook-16')
+    if (screenShotFlg) {
+      cy.screenshot('test27: script exec result is displaied at Console(Stdout)', {overwrite: true, capture: 'runner'})
+    }
 
-    // cy.get('.v-window-item.v-window-item--active').find('.xterm-rows').then($el => {
-    //   cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
-    // })
+    cy.get('.v-window-item.v-window-item--active').find('.xterm-rows').then($el => {
+      cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
+    })
 
-    // cy.clickConsole()
-    // cy.resetProject()
-    // cy.clickTask('task0')
-    // cy.removeTask('task0')
+    cy.clickConsole()
+    cy.resetProject()
+    cy.clickTask('task0')
+    cy.removeTask('task0')
   })
   
   it('test28', () => {
