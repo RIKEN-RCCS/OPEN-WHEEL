@@ -584,7 +584,7 @@ describe('wheel test', () => {
     cy.removeTask('task0')
   })
 
-  it('test27', () => {
+  it.only('test27', () => {
     cy.taskMake('task0')
     cy.scriptMake('run.sh', 'echo test')
     cy.openScriptSelectBox()
@@ -595,6 +595,8 @@ describe('wheel test', () => {
       cy.get('[role="listbox"]').find('.v-list-item-title').then($el => {
         cy.softAssert($el.length > 0, true, "host is exist in listbox")
       })
+
+      cy.log(remotehost)
   
       cy.selectHost(remotehost)
       cy.contains('label', 'host').siblings().then($el => {
