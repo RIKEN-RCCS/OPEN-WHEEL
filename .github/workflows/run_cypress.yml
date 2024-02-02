@@ -13,8 +13,10 @@ jobs:
           - 4000:22
     env:
       WHEEL_USE_HTTP: 1
-      WHEEL_TEST_REMOTEHOST: "${{ secrets.WHEEL_TEST_REMOTEHOST }}"
-      WHEEL_TEST_REMOTE_PASSWORD: "${{ secrets.WHEEL_TEST_REMOTE_PASSWORD }}"
+      # WHEEL_TEST_REMOTEHOST: "${{ secrets.WHEEL_TEST_REMOTEHOST }}"
+      # WHEEL_TEST_REMOTE_PASSWORD: "${{ secrets.WHEEL_TEST_REMOTE_PASSWORD }}"
+      WHEEL_TEST_REMOTEHOST: "testServer"
+      WHEEL_TEST_REMOTE_PASSWORD: "passw0rd"
       TZ: JST-9
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       WHEEL_TEST_HOSTNAME: "${{ secrets.WHEEL_TEST_HOSTNAME }}"
