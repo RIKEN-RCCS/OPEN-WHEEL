@@ -18,9 +18,14 @@ module.exports = defineConfig({
     env: {
       browserPermissions: {
         clipboard: "allow"
-      }
+      },
+      "WHEEL_TEST_REMOTEHOST": "testServer",
+      "WHEEL_TEST_REMOTE_PASSWORD": "passw0rd",
+      "WHEEL_TEST_HOSTNAME": "localhost",
+      "WHEEL_TEST_PORT": 4000,
+      "WHEEL_TEST_USER": "testuser"
     },
-    numTestsKeptInMemory: 1,
+    numTestsKeptInMemory: 50,
     baseUrl: `http://localhost:8089`,
     setupNodeEvents(on, config) {
       on('task', {
