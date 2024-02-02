@@ -596,7 +596,9 @@ describe('wheel test', () => {
         cy.softAssert($el.length > 0, true, "host is exist in listbox")
       })
 
-      cy.log(remotehost)
+      cy.log(remotehost).then($el => {
+        cy.softAssert($el == 'testServer', true, "test")
+      })
   
       cy.selectHost(remotehost)
       cy.contains('label', 'host').siblings().then($el => {
