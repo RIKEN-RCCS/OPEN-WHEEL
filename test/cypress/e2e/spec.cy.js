@@ -1,15 +1,15 @@
 describe('wheel test', () => {
   const testProject = 'test'
-  const remotehost = process.env.WHEEL_TEST_REMOTEHOST
-  const password = process.env.WHEEL_TEST_REMOTE_PASSWORD
-  const hostname = process.env.WHEEL_TEST_HOSTNAME
-  const test_port = process.env.WHEEL_TEST_PORT
-  const test_user = process.env.WHEEL_TEST_USER
-  // const remotehost = Cypress.env("WHEEL_TEST_REMOTEHOST")
-  // const password = Cypress.env("WHEEL_TEST_REMOTE_PASSWORD")
-  // const hostname = Cypress.env("WHEEL_TEST_HOSTNAME")
-  // const test_port = Cypress.env("WHEEL_TEST_PORT")
-  // const test_user = Cypress.env("WHEEL_TEST_USER")
+  // const remotehost = process.env.WHEEL_TEST_REMOTEHOST
+  // const password = process.env.WHEEL_TEST_REMOTE_PASSWORD
+  // const hostname = process.env.WHEEL_TEST_HOSTNAME
+  // const test_port = process.env.WHEEL_TEST_PORT
+  // const test_user = process.env.WHEEL_TEST_USER
+  const remotehost = Cypress.env("WHEEL_TEST_REMOTEHOST")
+  const password = Cypress.env("WHEEL_TEST_REMOTE_PASSWORD")
+  const hostname = Cypress.env("WHEEL_TEST_HOSTNAME")
+  const test_port = Cypress.env("WHEEL_TEST_PORT")
+  const test_user = Cypress.env("WHEEL_TEST_USER")
   const screenShotFlg = false
   before(() => {
     cy.visit('/')

@@ -13,15 +13,13 @@ jobs:
           - 4000:22
     env:
       WHEEL_USE_HTTP: 1
-      WHEEL_TEST_REMOTEHOST: '${{ secrets.WHEEL_TEST_REMOTEHOST }}'
-      WHEEL_TEST_REMOTE_PASSWORD: '${{ secrets.WHEEL_TEST_REMOTE_PASSWORD }}'
-      # WHEEL_TEST_REMOTEHOST: "testServer"
-      # WHEEL_TEST_REMOTE_PASSWORD: "passw0rd"
+      CYPRESS_WHEEL_TEST_REMOTEHOST: ${{ secrets.WHEEL_TEST_REMOTEHOST }}
+      CYPRESS_WHEEL_TEST_REMOTE_PASSWORD: ${{ secrets.WHEEL_TEST_REMOTE_PASSWORD }}
       TZ: JST-9
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      WHEEL_TEST_HOSTNAME: "${{ secrets.WHEEL_TEST_HOSTNAME }}"
-      WHEEL_TEST_PORT: ${{ secrets.WHEEL_TEST_PORT }}
-      WHEEL_TEST_USER: "${{ secrets.WHEEL_TEST_USER }}"
+      CYPRESS_WHEEL_TEST_HOSTNAME: ${{ secrets.WHEEL_TEST_HOSTNAME }}
+      CYPRESS_WHEEL_TEST_PORT: ${{ secrets.WHEEL_TEST_PORT }}
+      CYPRESS_WHEEL_TEST_USER: ${{ secrets.WHEEL_TEST_USER }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
