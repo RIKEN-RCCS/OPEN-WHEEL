@@ -591,11 +591,9 @@ describe('wheel test', () => {
         cy.softAssert($el.length > 0, true, "host is exist in listbox")
       })
 
-      const test = 'testServer'
-
-      cy.selectHost(test)
+      cy.selectHost(remotehost)
       cy.contains('label', 'host').siblings().then($el => {
-        cy.softAssert($el.text(), test, "host is exist in select box")
+        cy.softAssert($el.text(), remotehost, "host is exist in select box")
       })
 
       cy.projectReload(k, testProject, 'task0')
@@ -603,7 +601,7 @@ describe('wheel test', () => {
 
     cy.execProject()
     cy.passwordType(password)
-    cy.outputSshOpen(2000)
+    cy.outputSshOpen(3000)
     
     cy.viewport('macbook-16')
     if (screenShotFlg) {
