@@ -3,7 +3,6 @@ on:
   push:
     branches: 
       - master
-      - develop.fj
 jobs:
   cypress-run:
     services:
@@ -26,8 +25,6 @@ jobs:
         node-version: [20.x]
     steps:
       - run: mkdir -p ~/.wheel
-      - run: echo ${{ secrets.WHEEL_TEST_REMOTEHOST }}
-      - run: echo ${{ secrets.WHEEL_TEST_REMOTE_PASSWORD }}
 
       - run: >
           echo '[{
