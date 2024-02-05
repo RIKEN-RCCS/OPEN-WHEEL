@@ -1,10 +1,5 @@
 describe('wheel test', () => {
   const testProject = 'test'
-  // const remotehost = process.env.WHEEL_TEST_REMOTEHOST
-  // const password = process.env.WHEEL_TEST_REMOTE_PASSWORD
-  // const hostname = process.env.WHEEL_TEST_HOSTNAME
-  // const test_port = process.env.WHEEL_TEST_PORT
-  // const test_user = process.env.WHEEL_TEST_USER
   const remotehost = Cypress.env("WHEEL_TEST_REMOTEHOST")
   const password = Cypress.env("WHEEL_TEST_REMOTE_PASSWORD")
   const hostname = Cypress.env("WHEEL_TEST_HOSTNAME")
@@ -584,7 +579,7 @@ describe('wheel test', () => {
     cy.removeTask('task0')
   })
 
-  it.only('test27', () => {
+  it('test27', () => {
     cy.taskMake('task0')
     cy.scriptMake('run.sh', 'echo test')
     cy.openScriptSelectBox()

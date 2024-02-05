@@ -13,10 +13,10 @@ jobs:
           - 4000:22
     env:
       WHEEL_USE_HTTP: 1
-      CYPRESS_WHEEL_TEST_REMOTEHOST: ${{ secrets.WHEEL_TEST_REMOTEHOST }}
-      CYPRESS_WHEEL_TEST_REMOTE_PASSWORD: ${{ secrets.WHEEL_TEST_REMOTE_PASSWORD }}
       TZ: JST-9
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CYPRESS_WHEEL_TEST_REMOTEHOST: ${{ secrets.WHEEL_TEST_REMOTEHOST }}
+      CYPRESS_WHEEL_TEST_REMOTE_PASSWORD: ${{ secrets.WHEEL_TEST_REMOTE_PASSWORD }}
       CYPRESS_WHEEL_TEST_HOSTNAME: ${{ secrets.WHEEL_TEST_HOSTNAME }}
       CYPRESS_WHEEL_TEST_PORT: ${{ secrets.WHEEL_TEST_PORT }}
       CYPRESS_WHEEL_TEST_USER: ${{ secrets.WHEEL_TEST_USER }}
@@ -71,3 +71,5 @@ jobs:
           install: false
           build: npm run build
           start: npm start
+          wait-on: "http://localhost:8089"
+          wait-on-timeout: 300
