@@ -48,6 +48,7 @@ const schema = {
     execInterval: { type: "number", minimum: 0 },
     readyTimeout: { type: "number", minimum: 0 }
   },
+  additionalProperties: false,
   required: ["name", "host", "username"]
 };
 //username is not required parameter for ssh-client-wrapper
@@ -57,6 +58,11 @@ const schema = {
 const validate = ajv.compile(schema);
 
 async function onAddHost(socket, newHost, cb) {
+  Object.keys(newHost).forEach((prop)=>{
+    if(newHost[prop] === null){
+      delete newHost[prop]
+    }
+  });
   validate(newHost);
 
   if(validate !== null && Array.isArray(validate.errors)){
@@ -84,6 +90,11 @@ async function onGetHostList(cb) {
 }
 
 async function onUpdateHost(socket, updatedHost, cb) {
+  Object.keys(updatedHost).forEach((prop)=>{
+    if(updatedHost[prop] === null){
+      delete updatedHost[prop]
+    }
+  });
   validate(updatedHost);
 
   if(Array.isArray(validate.errors)){

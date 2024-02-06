@@ -74,20 +74,22 @@ async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
     conditionExpression += `var WHEEL_CURRENT_INDEX=${currentIndex};`;
   }
   conditionExpression += condition;
-   
   return eval(conditionExpression);
 }
-function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component) {
+function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, isSharedHost) {
   const remotehostID = remoteHost.getID("name", component.host);
   if (typeof remotehostID === "undefined") {
     return null;
   }
   const hostinfo = getSshHostinfo(projectRootDir, remotehostID);
-  const remoteRoot = typeof hostinfo.path === "string" ? hostinfo.path : "";
+  let remoteRoot = isSharedHost ? hostinfo.sharedPath : hostinfo.path;
+  if (typeof remoteRoot !== "string"){
+    remoteRoot = ""
+  }
   return replacePathsep(path.posix.join(remoteRoot, projectStartTime));
 }
-function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, component) {
-  const remoteRootWorkingDir = getRemoteRootWorkingDir(projectRootDir, projectStartTime, component);
+function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, component, isSharedHost) {
+  const remoteRootWorkingDir = getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, isSharedHost);
   if (remoteRootWorkingDir === null) {
     return null;
   }

@@ -1018,9 +1018,11 @@ class Dispatcher extends EventEmitter {
           );
         } else if (await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID)) {
           const srcComponent = await this._getComponent(src.srcNode);
-          const srcRoot = srcComponent.type !== "storage" ? getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), srcComponent) : srcComponent.storagePath;
-          const dstRoot = getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
+          const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
           const remotehostID = remoteHost.getID("name", component.host);
+
+          const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID)
+          const dstRoot = component.type === "storage" ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const srcName= nunjucks.renderString( src.srcName, this.env);
           const forceCopy = srcComponent.type === "storage"
           deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy});
