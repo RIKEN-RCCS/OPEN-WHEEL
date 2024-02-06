@@ -3,7 +3,9 @@
     "version": "1.0.0",
     "main": "cypress.config.js",
     "scripts": {
-        "test": "npx cypress open"
+        "test": "npx cypress open",
+        "start": "cd ../; npm start",
+        "build": "cd ../; npm run build"
     },
     "author": "",
     "license": "ISC",
