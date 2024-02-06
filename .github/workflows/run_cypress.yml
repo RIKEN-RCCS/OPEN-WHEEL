@@ -3,7 +3,7 @@ on:
   push:
     branches: 
       - master
-      - devlop.fj
+      - develop.fj
 jobs:
   cypress-run:
     services:
