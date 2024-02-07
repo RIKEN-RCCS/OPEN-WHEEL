@@ -64,7 +64,7 @@ Cypress.Commands.add("projectMake", (projectName) => {
 })
 
 Cypress.Commands.add("projectOpen", (projectName) => {
-  cy.wait(1000).visit('/').then(() => {
+  cy.wait(3000).visit('/').then(() => {
     cy.contains('tr', projectName)
   })
   
