@@ -27,11 +27,11 @@
 
    ```javascript
    env: {
-      "CYPRESS_WHEEL_TEST_REMOTEHOST": "remotehost",
-      "CYPRESS_WHEEL_TEST_REMOTE_PASSWORD": "password",
-      "CYPRESS_WHEEL_TEST_HOSTNAME": "hostname",
-      "CYPRESS_WHEEL_TEST_PORT": 8000,
-      "CYPRESS_WHEEL_TEST_USER": "user"
+      WHEEL_TEST_REMOTEHOST: "remotehost",
+      WHEEL_TEST_REMOTE_PASSWORD: "password",
+      WHEEL_TEST_HOSTNAME: "hostname",
+      WHEEL_TEST_PORT: 8000,
+      WHEEL_TEST_USER: "user"
     }
    ```
 
