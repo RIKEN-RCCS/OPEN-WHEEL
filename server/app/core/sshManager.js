@@ -181,6 +181,9 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   if (process.env.WHEEL_VERBOSE_SSH) {
     hostinfo.sshOpt = ["-vvv"];
   }
+  if(hostinfo.username && !hostinfo.user){
+    hostinfo.user = hostinfo.username
+  }
 
   const ssh = new SshClientWrapper(hostinfo);
   const timeout = hostinfo.ConnectTimeout > 120 ? hostinfo.ConnectTimeout : 120;
