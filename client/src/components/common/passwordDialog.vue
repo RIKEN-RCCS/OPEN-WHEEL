@@ -6,6 +6,7 @@
 <template>
   <v-dialog
     v-model="openDialog"
+    persistent
     :max-width="maxWidth"
   >
     <v-card
