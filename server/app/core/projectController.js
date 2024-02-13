@@ -93,7 +93,7 @@ async function runProject(projectRootDir) {
   await updateProjectState(projectRootDir, "running", projectJson);
   getLogger(projectRootDir).info("project start");
   rootWF.state = await rootDispatcher.start();
-  getLogger(projectRootDir).info("project finished");
+  getLogger(projectRootDir).info(`project ${rootWF.state}`);
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
   await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
   rootDispatchers.delete(projectRootDir);
