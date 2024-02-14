@@ -7,6 +7,7 @@
 const { EventEmitter } = require("events");
 const path = require("path");
 const fs = require("fs-extra");
+const {addRequest, getRequest} = require("rwatchd");
 const SBS = require("simple-batch-system");
 const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
@@ -281,7 +282,7 @@ class JobManager extends EventEmitter {
 /**
  * register job status check and resolve when the job is finished
  */
-async function registerJob(hostinfo, task) {
+async function registerJobOld(hostinfo, task) {
   if (!jobManagers.has(hostinfo.id)) {
     const JM = new JobManager(task.projectRootDir, hostinfo);
     jobManagers.set(hostinfo.id, JM);
@@ -289,7 +290,50 @@ async function registerJob(hostinfo, task) {
   const JM = jobManagers.get(hostinfo.id);
   return JM.register(task);
 }
+function registerJob(hostinfo, task) {
+  return new Promise((resolve, reject)=>{
+    const JS = jobScheduler[hostinfo.jobScheduler];
+    if(!JS){
+      const err = new Error("jobscheduler setting not found!")
+      err.hostinfo=hostinfo
+      reject(err);
+    }
+    const request={
+      cmd: task.type !== "bulkjobTask" ? JS.stat : JS.bulkstat,
+      finishedHook:{
+        cmd: task.type !== "bulkjobTask" ? JS.statAfter:JS.bulkstatAfter,
+        withArgument: true
+      },
+      delimiter:JS.statDelimiter,
+      re: JS.reRunning,
+      interval: hostinfo.statusCheckInterval *1000,
+      argument: task.jobID,
+      hostInfo: hostinfo
+    }
+
+    const id = addRequest(request)
+    const result=getRequest(id);
+    result.event.on("checked", (request)=>{
+      console.log("checked !", request.checkCount);
+    });
+    result.event.on("finished", (request)=>{
+      console.log("finished!", request.lastOutput, request.finishedHook);
+      resolve(request.rt)
+    });
+    //faild event does not mean job failure
+    result.event.on("failed", (request, hookErr)=>{
+      const err = new Error("fatal error occurred during job status check")
+      err.request=request
+
+      if(typeof hookErr !== "undefined"){
+        err.hookErr=hookErr
+      }
+      reject(err);
+    });
+  });
+}
 
 module.exports = {
-  registerJob
+  registerJob,
+  registerJobOld
 };

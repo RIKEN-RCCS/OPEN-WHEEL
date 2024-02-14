@@ -4,82 +4,39 @@
     "queueOpt": "-q",
     "stat": "qstat -xf",
     "del": "qdel",
+    "grpName": "",
     "reJobID": "^(\\d+).*",
-    "reFinishedState": "substate \\= (91|92|93)$",
+    "reRunning": "substate \\= (91|92|93)$",
     "reReturnCode": "Exit_status \\= (\\d+)$",
-    "reJobStatusCode": "substate \\= (\\d+)$",
-    "grpName": ""
-  },
-  "PBSProWithoutHistory": {
-    "submit": "qsub",
-    "queueOpt": "-q",
-    "stat": "qstat -xf",
-    "del": "qdel",
-    "reJobID": "^(\\d+).*",
-    "reFinishedState": "(?:Unknown Job Id|PBS is not configured to maintain job history)",
-    "reReturnCode": "",
-    "reJobStatusCode": "",
-    "acceptableRt": 153,
-    "grpName": ""
+    "reJobStatusCode": "substate \\= (\\d+)$"
   },
   "SLURM": {
     "submit": "sbatch",
     "queueOpt": "-p",
     "stat": "sacct -P --delimiter=, -o JobID,State,ExitCode -n -j ",
     "del": "scancel",
+    "grpName": "",
     "reJobID": "Submitted batch job (\\d+)",
-    "reFinishedState": "^\\d+,(?:COMPLETED|FAILED|CANCELLED|DEADLINE|NODE_FAIL|TIMEOUT),\\d+:\\d+",
+    "reRunning": "^\\d+,(?:CONFIGURING|COMPLETING|PENDING|REVOKED|RUNNING|SPECIAL_EXIT|SUSPENDED),\\d+:\\d+",
     "reReturnCode": "^\\d+,\\S+,(\\d+):\\d+$",
-    "reJobStatusCode": "^\\d+,(\\S+),\\d+:\\d+$",
-    "grpName": ""
+    "reJobStatusCode": "^\\d+,(\\S+),\\d+:\\d+$"
   },
   "Fugaku": {
     "submit": "pjsub -X",
     "queueOpt": "-L rscgrp=",
-    "stat": [
-      "pjstat -v --choose jid,st,ec,pc",
-      "pjstat -v -H day=3 --choose jid,st,ec,pc"
-    ],
-    "bulkstat": [
-      "pjstat -E -v --choose jid,st,ec,pc",
-      "pjstat -E -v -H day=3 --choose jid,st,ec,pc"
-    ],
+    "stat": "pjstat -v --choose jid,st,ec,pc",
+    "statAfter": "pjstat -v -H day=3 --choose jid,st,ec,pc",
     "del": "pjdel",
     "reJobID": "pjsub Job (\\d+_*\\d*) submitted.",
-    "reFinishedState": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:CCL|ERR|EXT|RJT) *(?:\\d+|\\S+) *(?:\\d+|\\S+)",
+    "grpName": "",
+    "bulkjob": true,
+    "stepjob": true,
+    "bulkstat": "pjstat -E -v --choose jid,st,ec,pc",
+    "bulkstatAfter": "pjstat -E -v -H day=3 --choose jid,st,ec,pc",
+    "reRunning": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:CCL|ERR|EXT|RJT) *(?:\\d+|\\S+) *(?:\\d+|\\S+)",
     "reReturnCode": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+|\\d+\\[\\d+\\]) *(?:EXT|CCL) *(\\d+) *(?:\\d+)",
     "reJobStatusCode": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+|\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
     "reSubReturnCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *(\\d+) *\\d+",
-    "reSubJobStatusCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
-    "grpName": "",
-    "bulkjob": true,
-    "stepjob": true
-  },
-  "TCS": {
-    "submit": "pjsub -X",
-    "queueOpt": "-L rscgrp=",
-    "stat": "pjstat -v -H day=3 --choose jid,st,ec,pc",
-    "del": "pjdel",
-    "reJobID": "pjsub Job (\\d+_*\\d*) submitted.",
-    "reFinishedState": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:CCL|ERR|EXT|RJT) *\\d+ *\\d+",
-    "reReturnCode": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:EXT|CCL) *(\\d+) *\\d+",
-    "reJobStatusCode": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
-    "grpName": "",
-    "stepjob": true
-  },
-  "UGE": {
-    "submit": "qsub",
-    "queueOpt": "-l ",
-    "stat": [
-      "qstat -j",
-      "qacct -j"
-    ],
-    "del": "qdel",
-    "reJobID": "(\\d+).*",
-    "reFinishedState": "failed *0",
-    "reFailedState": "failed *(\\d+)",
-    "reReturnCode": "exit_status *(\\d+)",
-    "reJobStatusCode": "exit_status *(\\d+)",
-    "grpName": "-g"
+    "reSubJobStatusCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)"
   }
 }
