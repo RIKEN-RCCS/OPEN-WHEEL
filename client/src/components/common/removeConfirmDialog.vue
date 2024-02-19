@@ -7,6 +7,7 @@
   <v-dialog
     v-model="openDialog"
     :max-width="maxWidth"
+    persistent
   >
     <v-card
       :title=title

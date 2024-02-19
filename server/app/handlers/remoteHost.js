@@ -27,7 +27,7 @@ const schema = {
     id: { type: "string" },
     name: { type: "string" },
     host: { type: "string" },
-    username: { type: "string" },
+    user: { type: "string" },
     port: {
       type: "number",
       minimum: 0,
@@ -48,15 +48,21 @@ const schema = {
     execInterval: { type: "number", minimum: 0 },
     readyTimeout: { type: "number", minimum: 0 }
   },
-  required: ["name", "host", "username"]
+  additionalProperties: false,
+  required: ["name", "host", "user"]
 };
-//username is not required parameter for ssh-client-wrapper
+//user is not required parameter for ssh-client-wrapper
 //but its default value is owner of WHEEL process on localhost
 //so, it is practically required value
 
 const validate = ajv.compile(schema);
 
 async function onAddHost(socket, newHost, cb) {
+  Object.keys(newHost).forEach((prop)=>{
+    if(newHost[prop] === null){
+      delete newHost[prop]
+    }
+  });
   validate(newHost);
 
   if(validate !== null && Array.isArray(validate.errors)){
@@ -80,10 +86,32 @@ async function onCopyHost(socket, id, cb) {
 }
 
 async function onGetHostList(cb) {
+  const hostList = remoteHost.getAll()
+  hostList.forEach((hostInfo)=>{
+    if(hostInfo.username){
+      if( !hostInfo.user){
+        hostInfo.user = hostInfo.username
+      }
+      delete hostInfo.username
+    }
+  });
   cb(remoteHost.getAll());
 }
 
 async function onUpdateHost(socket, updatedHost, cb) {
+  Object.keys(updatedHost).forEach((prop)=>{
+    if(updatedHost[prop] === null){
+      delete updatedHost[prop]
+    }
+  });
+
+  if(updatedHost.username){
+    if( !updatedHost.user){
+      updatedHost.user = updatedHost.username
+    }
+    delete updatedHost.username
+  }
+
   validate(updatedHost);
 
   if(Array.isArray(validate.errors)){

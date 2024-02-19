@@ -1,6 +1,10 @@
 describe('wheel test', () => {
   const testProject = 'test'
-  const password = 'passw0rd'
+  const remotehost = Cypress.env("WHEEL_TEST_REMOTEHOST")
+  const password = Cypress.env("WHEEL_TEST_REMOTE_PASSWORD")
+  const hostname = Cypress.env("WHEEL_TEST_HOSTNAME")
+  const test_port = Cypress.env("WHEEL_TEST_PORT")
+  const test_user = Cypress.env("WHEEL_TEST_USER")
   const screenShotFlg = false
   before(() => {
     cy.visit('/')
@@ -586,10 +590,10 @@ describe('wheel test', () => {
       cy.get('[role="listbox"]').find('.v-list-item-title').then($el => {
         cy.softAssert($el.length > 0, true, "host is exist in listbox")
       })
-  
-      cy.selectHost('testServer')
+
+      cy.selectHost(remotehost)
       cy.contains('label', 'host').siblings().then($el => {
-        cy.softAssert($el.text(), 'testServer', "host is exist in select box")
+        cy.softAssert($el.text(), remotehost, "host is exist in select box")
       })
 
       cy.projectReload(k, testProject, 'task0')
@@ -597,7 +601,7 @@ describe('wheel test', () => {
 
     cy.execProject()
     cy.passwordType(password)
-    cy.outputSshOpen(2000)
+    cy.outputSshOpen(3000)
     
     cy.viewport('macbook-16')
     if (screenShotFlg) {
@@ -640,8 +644,8 @@ describe('wheel test', () => {
 
   it('test29', () => {
     cy.taskMake('task0')
-    cy.openHostListBox('testServer')
-    cy.selectHost('testServer')
+    cy.openHostListBox(remotehost)
+    cy.selectHost(remotehost)
     cy.scriptMake('run.sh', 'cd ${{}PBS_O_WORKDIR-"."} \necho test > stdout.txt')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
@@ -692,7 +696,7 @@ describe('wheel test', () => {
     cy.switchUseJobScheduler('on')
     cy.scriptMake('run.sh', 'echo test')
     cy.scriptSelect('run.sh')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     
     cy.viewport('macbook-16')
     if (screenShotFlg) {
@@ -712,7 +716,7 @@ describe('wheel test', () => {
   it('test31', () => {
     cy.taskMake('task0')
     cy.switchUseJobScheduler('on')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'cd ${{}PBS_O_WORKDIR-"."} \necho test > stdout.txt')
     cy.scriptSelect('run.sh')
     cy.typeSubmitOption('-N myjob')
@@ -749,7 +753,7 @@ describe('wheel test', () => {
   
   it('test32', () => {
     cy.taskMake('task0')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'echo test \nexit 1')
     cy.scriptSelect('run.sh')
     cy.retryNumberType('2')
@@ -906,7 +910,7 @@ describe('wheel test', () => {
   
   it('test37', () => {
     cy.taskMake('task0')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
@@ -945,7 +949,7 @@ describe('wheel test', () => {
   
   it('test38', () => {
     cy.taskMake('task0')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
@@ -986,7 +990,7 @@ describe('wheel test', () => {
   
   it('test39', () => {
     cy.taskMake('task0')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
@@ -1029,7 +1033,7 @@ describe('wheel test', () => {
   
   it('test40', () => {
     cy.taskMake('task0')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
@@ -1073,7 +1077,7 @@ describe('wheel test', () => {
   
   it('test41', () => {
     cy.taskMake('task0')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'echo test')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
@@ -1097,7 +1101,7 @@ describe('wheel test', () => {
       cy.screenshot('test41: remove files', {overwrite: true, capture: 'runner'})
     }
 
-    cy.sendCommand().then(stdout => {
+    cy.sendCommand(hostname, test_port, test_user, password).then(stdout => {
       cy.softAssert(stdout, '0\n')
     })
     
@@ -1109,7 +1113,7 @@ describe('wheel test', () => {
   
   it('test42', () => {
     cy.taskMake('task0')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'echo test')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
@@ -1126,14 +1130,14 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.passwordType(password).wait(1000)
+    cy.passwordType(password).wait(3000)
 
     cy.viewport('macbook-16')
     if (screenShotFlg) {
       cy.screenshot('test42: keep files', {overwrite: true, capture: 'runner'})
     }
 
-    cy.sendCommand().then(stdout => {
+    cy.sendCommand(hostname, test_port, test_user, password).then(stdout => {
       cy.softAssert(stdout, '1\n')
     })
     
@@ -1145,7 +1149,7 @@ describe('wheel test', () => {
   
   it('test43', () => {
     cy.taskMake('task0')
-    cy.hostSelect('testServer')
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'echo test')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
@@ -1169,7 +1173,7 @@ describe('wheel test', () => {
       cy.screenshot('test43: same as parent', {overwrite: true, capture: 'runner'})
     }
 
-    cy.sendCommand().then(stdout => {
+    cy.sendCommand(hostname, test_port, test_user, password).then(stdout => {
       cy.softAssert(stdout, '1\n')
     })
     

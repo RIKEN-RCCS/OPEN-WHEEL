@@ -380,6 +380,7 @@ export default {
           const re=new RegExp(oldName+"$")
           this.activeItem.id = this.activeItem.id.replace(re,newName);
           this.updateSelected(this.activeItem);
+          this.updateScriptCandidate()
         })
       } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
         const name = this.dialog.inputField
@@ -405,6 +406,7 @@ export default {
           if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
             this.openItems.push(this.activeItem.id)
           }
+          this.updateScriptCandidate()
         })
       } else {
         console.log("unsupported event", this.dialog.submitEvent)

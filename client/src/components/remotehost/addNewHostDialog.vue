@@ -8,7 +8,7 @@
     <v-dialog
       v-model="openDialog"
       :max-width="maxWidth"
-      :persistent="true"
+      persistent
     >
       <v-card>
         <v-card-title>
@@ -55,7 +55,7 @@
                       </v-col>
                       <v-col cols="6">
                         <v-text-field
-                          v-model="host.username"
+                          v-model="host.user"
                           label="User ID"
                           :rules="[required]"
                           placeholder="required"
@@ -163,7 +163,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.execInterval"
-                          label="interval time between each executions"
+                          label="execution interval (sec.) [default: job 5, task 1]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
                         />
@@ -171,7 +171,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.readyTimeout"
-                          label="timeout during handshake phase (msec.)"
+                          label="timeout during handshake phase (msec.) [default: 0]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
                         />
@@ -263,10 +263,8 @@ export default {
       return this.hostNames.includes(this.host.name)
           || this.required(this.host.name) !== true
           || this.required(this.host.host) !== true
-          || this.required(this.host.port) !== true
           || this.validPortNumber(this.host.port) !== true
-          || this.required(this.host.username) !== true
-          || this.required(this.host.path) !== true;
+          || this.required(this.host.user) !== true
     },
     openDialog: {
       get () {

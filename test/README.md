@@ -23,19 +23,16 @@
 
 3. テストコードをローカル実行用に修正する。
 
-   - support/commands.js の 423 行目の remotehost 設定をローカル環境用に修正する。
+   - [support/commands.js](cypress.config.cjs) の 22-26 行目の remotehost 設定をローカル環境用に修正する。
 
    ```javascript
-   const configObj = { host: 'localhost', port: 4000, user: 'testuser', pass: 'your password' };
-   ```
-
-   - remotehost のパスワードを e2e/spec.cy.js の 3 行目に設定する。
-
-   ```javascript
-   describe('wheel test', () => {
-      const testProject = 'test'
-      const password = 'your password'
-      const screenShotFlg = false
+   env: {
+      WHEEL_TEST_REMOTEHOST: "remotehost",
+      WHEEL_TEST_REMOTE_PASSWORD: "password",
+      WHEEL_TEST_HOSTNAME: "hostname",
+      WHEEL_TEST_PORT: 8000,
+      WHEEL_TEST_USER: "user"
+    }
    ```
 
    - 実行したいテストケースを決定する。（対象ケースのテストコード'it'の後ろに'.only'をつける。）

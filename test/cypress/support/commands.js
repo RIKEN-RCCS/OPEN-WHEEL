@@ -64,9 +64,10 @@ Cypress.Commands.add("projectMake", (projectName) => {
 })
 
 Cypress.Commands.add("projectOpen", (projectName) => {
-  cy.visit('/').then(() => {
-    cy.get('main').find('table')
+  cy.wait(3000).visit('/').then(() => {
+    cy.contains('tr', projectName)
   })
+  
   cy.contains('tr', projectName).find('[type="checkbox"]').click({force: true})
   cy.contains('button', 'OPEN').click({force: true})
 })
@@ -419,8 +420,8 @@ Cypress.Commands.add("fileFolderDelete", (name) => {
 })
 
 // send command
-Cypress.Commands.add("sendCommand", () => {
-  const configObj = {host:'localhost', port:4000, user:'testuser', pass:'passw0rd'}
+Cypress.Commands.add("sendCommand", (hostname, test_port, test_user, password) => {
+  const configObj = {host:hostname, port:test_port, user:test_user, pass:password}
   cy.task("sshExecuteCmd",{
     sshconn: configObj,
     command:'dirs=`ls -tF | grep / | head -1`; ls -t ${dirs} | grep -v / | wc -l;'

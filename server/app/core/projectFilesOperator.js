@@ -676,38 +676,45 @@ function isLocal(component) {
   return typeof component.host === "undefined" || component.host === "localhost";
 }
 
+function isDefaultPort(port){
+  return typeof port === "undefined" || port === 22 || port === "22" || port === ""
+}
+
 /**
  * check if specified components are executed on same remote host
  * @param {string} projectRootDir - root directory path of project
- * @param {string} left -  first componentID
- * @param {string} right - second componentID
+ * @param {string} src - src componentID
+ * @param {string} dst - dst componentID
  * @returns {boolean} - on same remote or not
  */
-async function isSameRemoteHost(projectRootDir, left, right) {
-  if (left === right) {
+async function isSameRemoteHost(projectRootDir, src, dst) {
+  if (src === dst) {
     return null;
   }
-  const leftComponent = await readComponentJsonByID(projectRootDir, left);
-  const rightComponent = await readComponentJsonByID(projectRootDir, right);
+  const srcComponent = await readComponentJsonByID(projectRootDir, src);
+  const dstComponent = await readComponentJsonByID(projectRootDir, dst);
 
-  if (isLocal(leftComponent) || isLocal(rightComponent)) {
+  if (isLocal(srcComponent) || isLocal(dstComponent)) {
     return false;
   }
 
-  if (leftComponent.host === rightComponent.host) {
+  if (srcComponent.host === dstComponent.host) {
     return true;
   }
-  const leftHost = remoteHost.query("name", leftComponent.host);
-  const rightHost = remoteHost.query("name", rightComponent.host);
-  const leftSharedHost = remoteHost.query("sharedHost", leftHost.sharedHost);
-  const rightSharedHost = remoteHost.query("sharedHost", rightHost.sharedHost);
-
-  if (leftHost === rightSharedHost || rightHost === leftSharedHost || leftSharedHost === rightSharedHost) {
-    return true;
+  const srcHostInfo = remoteHost.query("name", srcComponent.host);
+  const dstHostInfo = remoteHost.query("name", dstComponent.host);
+  if(srcHostInfo.host === dstHostInfo.host){
+    if (isDefaultPort(srcHostInfo.port)){
+      return isDefaultPort(dstHostInfo.port)
+    }else{
+      return srcHostInfo.port === dstHostInfo.port
+    }
+  }
+  if(dstHostInfo.sharedHost === srcHostInfo.name ){
+    return true
   }
   return false;
 }
-
 
 /**
  * write component JSON file and git add
