@@ -25,7 +25,7 @@ module.exports = defineConfig({
       WHEEL_TEST_PORT: 4000,
       WHEEL_TEST_USER: "testuser"
     },
-    numTestsKeptInMemory: 50,
+    numTestsKeptInMemory: 1,
     baseUrl: `http://localhost:8089`,
     setupNodeEvents(on, config) {
       on('task', {

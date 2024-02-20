@@ -58,24 +58,26 @@ Cypress.Commands.add("setClipboardPermission", () => {
 })
 
 Cypress.Commands.add("projectMake", (projectName) => { 
-  cy.contains('button', 'NEW').click({force: true})
+  cy.visit('/').wait(300).then(() => {
+    cy.contains('button', 'NEW').click({force: true})
+  })
   cy.contains('label', 'project name').siblings().children('input').type(projectName, {force: true})
   cy.contains('button', 'create').click({force: true})
 })
 
 Cypress.Commands.add("projectOpen", (projectName) => {
-  cy.wait(3000).visit('/').then(() => {
-    cy.contains('tr', projectName)
+  cy.visit('/').wait(300).then(() => {
+    cy.contains('tr', projectName).find('[type="checkbox"]').click({force: true})
   })
-  
-  cy.contains('tr', projectName).find('[type="checkbox"]').click({force: true})
   cy.contains('button', 'OPEN').click({force: true})
 })
 
 Cypress.Commands.add("projectRemove", (projectName) => { 
-  cy.contains('tr', projectName).find('[type="checkbox"]').click({force: true})
-  cy.contains('button', 'REMOVE').click()
-  cy.contains('button', 'remove').click()
+  cy.visit('/').wait(300).then(() => {
+    cy.contains('tr', projectName).find('[type="checkbox"]').click({force: true})
+  })
+  cy.get('header').find('button').eq(4).click({force: true})
+  cy.contains('button', 'remove').click({force: true})
 })
 
 // make Task
@@ -341,22 +343,19 @@ Cypress.Commands.add("scriptMake", (scriptName, script) => {
 })
 
 // open stdout
-Cypress.Commands.add("stdoutOpen", (time) => {
-  cy.wait(time)
+Cypress.Commands.add("stdoutOpen", () => {
   cy.clickConsole()
   cy.clickStdoutTab()
 })
 
 // open output ssh
-Cypress.Commands.add("outputSshOpen", (time) => {
-  cy.wait(time)
+Cypress.Commands.add("outputSshOpen", () => {
   cy.clickConsole()
   cy.clickOutputSshTab()
 })
 
 // open info
-Cypress.Commands.add("infoOpen", (time) => {
-  cy.wait(time)
+Cypress.Commands.add("infoOpen", () => {
   cy.clickConsole()
   cy.clickInfoTab()
 })
@@ -365,6 +364,13 @@ Cypress.Commands.add("infoOpen", (time) => {
 Cypress.Commands.add("execProject", () => {
   cy.closeTask()
   cy.get('header').find('.v-card__loader').siblings().eq(0).click().wait(100)
+})
+
+// Project status check
+Cypress.Commands.add("checkProjectStatus", (status) => {
+  cy.get('header').contains('button', 'status:').then(() => {
+    cy.get('header').contains(status)
+  })
 })
 
 // Project Reset

@@ -8,20 +8,19 @@ describe('wheel test', () => {
   const screenShotFlg = false
   before(() => {
     cy.visit('/')
-    cy.projectMake(testProject)
   })
 
   beforeEach(() => {
+    cy.projectMake(testProject)
     cy.projectOpen(testProject)
     cy.viewport('macbook-16')
   })
 
   afterEach(() => {
-    cy.get('[href="./home"]').click()
+    cy.projectRemove(testProject)
   })
 
   after(() => {
-    cy.projectRemove(testProject)
     cy.assertAll()
   })
 
@@ -562,7 +561,8 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.stdoutOpen(7000)
+    cy.checkProjectStatus('finished')
+    cy.stdoutOpen()
     
     cy.viewport('macbook-16')
     if (screenShotFlg) {
@@ -601,7 +601,8 @@ describe('wheel test', () => {
 
     cy.execProject()
     cy.passwordType(password)
-    cy.outputSshOpen(3000)
+    cy.checkProjectStatus('finished')
+    cy.outputSshOpen()
     
     cy.viewport('macbook-16')
     if (screenShotFlg) {
@@ -668,7 +669,8 @@ describe('wheel test', () => {
 
     cy.execProject()
     cy.passwordType(password)
-    cy.outputSshOpen(5000)
+    cy.checkProjectStatus('finished')
+    cy.outputSshOpen()
     
     cy.viewport('macbook-16')
     if (screenShotFlg) {
@@ -734,7 +736,8 @@ describe('wheel test', () => {
 
     cy.execProject()
     cy.passwordType(password)
-    cy.infoOpen(6000)
+    cy.checkProjectStatus('finished')
+    cy.infoOpen()
     
     cy.viewport('macbook-16')
     if (screenShotFlg) {

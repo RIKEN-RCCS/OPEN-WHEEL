@@ -9,6 +9,28 @@
 
 ローカルで実行する場合、リポジトリの'test'ディレクトリをクローンし、以下の手順で実行していください。
 
+0. 前提条件
+
+```
+   WHEELは下記ページに従って起動済のものとする。
+   (https://github.com/RIKEN-RCCS/OPEN-WHEEL)
+   ※httpsで接続する場合は(cypress.config.cjs)29行目のbaseurlを修正すること。
+
+   リモートホストについては[cypress.config.cjs](cypress.config.cjs)の 22-26 行目に設定する。
+   リモートホストエディタにてリモートホスト設定を追加する。
+   ※デフォルトではnaoso5/openpbsを起動済のものとする。
+```
+
+```javascript
+env: {
+   WHEEL_TEST_REMOTEHOST: "remotehost",
+   WHEEL_TEST_REMOTE_PASSWORD: "password",
+   WHEEL_TEST_HOSTNAME: "hostname",
+   WHEEL_TEST_PORT: 8000,
+   WHEEL_TEST_USER: "user"
+   }
+```
+
 1. 必要なモジュールをインストールする。
 
 ```
@@ -21,21 +43,7 @@
 > npm run test
 ```
 
-3. テストコードをローカル実行用に修正する。
-
-   - [support/commands.js](cypress.config.cjs) の 22-26 行目の remotehost 設定をローカル環境用に修正する。
-
-   ```javascript
-   env: {
-      WHEEL_TEST_REMOTEHOST: "remotehost",
-      WHEEL_TEST_REMOTE_PASSWORD: "password",
-      WHEEL_TEST_HOSTNAME: "hostname",
-      WHEEL_TEST_PORT: 8000,
-      WHEEL_TEST_USER: "user"
-    }
-   ```
-
-   - 実行したいテストケースを決定する。（対象ケースのテストコード'it'の後ろに'.only'をつける。）
+3. 実行したいテストケースを決定する。（対象ケースのテストコード'it'の後ろに'.only'をつける。）
 
 4. cypressAPI が起動したら E2E テスト ⇒「対象ブラウザ」⇒spec.cy.js の順にクリックする。
 
