@@ -119,7 +119,7 @@ export default {
         { title: "name", key: "name" },
         { title: "connection test", key: "connectionTest" },
         { title: "hostname", key: "host" },
-        { title: "usrename", key: "username" },
+        { title: "user", key: "user" },
         { title: "port", key: "port" },
         { title: "private key", key: "keyFile" },
         { title: "action", key: "action", sortable: false },
