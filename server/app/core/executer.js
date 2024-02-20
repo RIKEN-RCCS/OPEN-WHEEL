@@ -120,6 +120,10 @@ function makeBulkOpt(task) {
 }
 
 async function needsRetry(task) {
+  //special case
+  if(task.forceRetry === true){
+    return true
+  }
   let rt = false;
   if (typeof task.retryCondition === "undefined" || task.retryCondition === null) {
     return task.retry > 0;
@@ -276,6 +280,10 @@ class RemoteJobExecuter extends Executer {
       err.cmd = submitCmd;
       err.rt = rt;
       err.outputText = outputText;
+
+      if([255].includes(rt)){
+        err.forceRetry=true
+      }
       return Promise.reject(err);
     }
     const re = new RegExp(this.JS.reJobID, "m");
