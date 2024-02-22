@@ -20,11 +20,13 @@
     "start": "cd server; npm start",
     "build": "cd server; npm install; cd ../client; npm install; npm run build",
     "lint": "eslint --fix --report-unused-disable-directives ./",
-    "licenseReport": "run-s licenseReport-doc licenseReport-server licenseReport-client",
+    "licenseReport": "run-s licenseReport-doc licenseReport-server licenseReport-client licenseReport-test",
     "licenseReport-doc": "license-report --output=csv --csvHeaders --config license-report-config.json",
     "licenseReport-server": "license-report --package=server/package.json --output=csv --csvHeaders --config license-report-config.json",
+    "licenseReport-test": "license-report --package=test/package.json --output=csv --csvHeaders --config license-report-config.json",
     "licenseReport-client": "license-report --package=client/package.json --output=csv --csvHeaders --config license-report-config.json",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "md-to-pdf": "npx md-to-pdf --stylesheet https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css --body-class markdown-body"
   },
   "devDependencies": {
     "@eslint/js": "^8.50.0",
@@ -44,5 +46,8 @@
   "lint-staged": {
     "*.js": "eslint --fix",
     "*.vue": "eslint --fix"
+  },
+  "dependencies": {
+    "md-to-pdf": "^5.2.4"
   }
 }
