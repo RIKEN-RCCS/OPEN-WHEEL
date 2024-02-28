@@ -8,6 +8,8 @@ const {addRequest, getRequest} = require("rwatchd");
 const { getLogger } = require("../logSettings");
 const { jobScheduler } = require("../db/db");
 const { createBulkStatusFile } = require("./execUtils");
+const { getSsh } = require("./sshManager.js");
+const pRetry = require("p-retry");
 
 /**
  * parse output text from batch server and get return code or jobstatus code from it
@@ -15,7 +17,8 @@ const { createBulkStatusFile } = require("./execUtils");
 function getFirstCapture(outputText, reCode) {
   const re = new RegExp(reCode, "m");
   const result = re.exec(outputText);
-  return result === null || typeof (result[1]) === "undefined" ? null : result[1];
+  const rt = result === null || typeof (result[1]) === "undefined" ? null : result[1];
+  return rt
 }
 
 function getBulkFirstCapture(outputText, reSubCode) {
@@ -107,7 +110,8 @@ async function getStatusCode(JS, task, statCmdRt, outputText){
   if (task.type === "bulkjobTask") {
     await createBulkStatusFile(task, rtCodeList, jobStatusList);
   }
-  return parseInt(strRt, 10);
+  task.rt = parseInt(strRt, 10);
+  return task.rt;
 }
 
 function registerJob(hostinfo, task) {
@@ -155,11 +159,37 @@ function registerJob(hostinfo, task) {
       getLogger(task.projectRootDir).debug(`${requestName} done`);
       getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${request.finishedHook.output}`)
 
+      const rt = await getStatusCode(JS, task, request.finishedHook.rt, request.finishedHook.output)
+      if(/^\s*$/.test(request.finishedHook.output)){
+        getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`)
+
+        await pRetry(async ()=>{
+          let outputText = "";
+          const ssh = getSsh(task.projectRootDir, task.remotehostID);
+          await ssh.exec(request.finishedHook.cmd, 60, (data)=>{
+            outputText += data;
+          });
+
+          if(/^\s*$/.test(outputText)){
+            throw new Error("got empty output from status check command");
+          }
+          request.finishedHook.output = outputText
+          return true
+        },{
+          onFailedAttempt: (error)=>{
+            getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring ${error.attemptNumber}}`)
+          },
+          minTimeout: 1000,
+          maxTimeout: 60000,
+          retries: 12,
+          factor: 2
+        })
+      }
+
       if(isJobFailed(JS, task.jobStatus)){
         reject(task.jobStatus)
       }
       const rt = await getStatusCode(JS, task, request.finishedHook.rt, request.finishedHook.output)
-
       if(rt === 0){
         resolve(rt)
       }else{
