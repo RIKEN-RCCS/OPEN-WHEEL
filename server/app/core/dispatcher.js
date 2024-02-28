@@ -491,8 +491,9 @@ class Dispatcher extends EventEmitter {
     component.env = Object.assign(this.env, component.env);
     component.parentType = this.cwfJson.type;
 
-    exec(component); //exec is async function but dispatcher never wait end of task execution
-
+    exec(component);
+    //exec is async function but dispatcher never wait end of task execution
+    //it cause error if cancel taskJobs which is waiting for job submittion limit
     this.runningTasks.push(component);
     this.dispatchedTasks.add(component);
     const ee = eventEmitters.get(this.projectRootDir);
