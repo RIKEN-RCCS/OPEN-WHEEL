@@ -37,6 +37,17 @@ async function replaceCRLF(filename) {
   return fs.writeFile(filename, contents);
 }
 
+function isExceededLimit(JS, rt, outputText){
+  if(Array.isArray(JS.exceededRtList) && JS.exceededRtList.includes(rt)){
+    return true
+  }
+  if(JS.reExceededLimitError){
+    const re = new RegExp(JS.reExceededLimitError, "m");
+    return re.test(outputText);
+  }
+  return false
+}
+
 
 async function prepareRemoteExecDir(task) {
   await setTaskState(task, "stage-in");
@@ -120,10 +131,6 @@ function makeBulkOpt(task) {
 }
 
 async function needsRetry(task) {
-  //special case
-  if(task.forceRetry === true){
-    return true
-  }
   let rt = false;
   if (typeof task.retryCondition === "undefined" || task.retryCondition === null) {
     return task.retry > 0;
@@ -220,7 +227,7 @@ class Executer {
       await this.batch.qwait(task.sbsID);
     } catch (e) {
       getLogger(task.projectRootDir).warn(`${task.name} failed. rt=${task.rt}`);
-      getLogger(task.projectRootDir).trace(task.name, "failed due to", e);
+      getLogger(task.projectRootDir).trace(task.workingDir, "failed due to", e);
     } finally {
       await createStatusFile(task);
       getLogger(task.projectRootDir).trace(`${task.name} is ${task.state}`);
@@ -275,16 +282,33 @@ class RemoteJobExecuter extends Executer {
       outputText += data;
     });
 
+    if(isExceededLimit(this.JS, rt, outputText)){
+      this.batch.originalMaxConcurrent = this.batch.maxConcurrent;
+      this.batch.maxConcurrent  = this.batch.maxConcurrent  - 1;
+      getLogger(task.projectRootDir).debug(`max numJob is reduced to ${this.batch.maxConcurrent}`);
+      getLogger(task.projectRootDir).trace(`exceed job submit limit ${outputText}`);
+      task.forceRetry=true
+      return Promise.reject(task);
+    }
+    if([255].includes(rt)){
+      getLogger(task.projectRootDir).debug(`recoverable error occurred (${rt})`);
+      task.forceRetry=true
+      return Promise.reject(task);
+    }
+
     if (rt !== 0) {
       const err = new Error("submit command failed");
       err.cmd = submitCmd;
       err.rt = rt;
       err.outputText = outputText;
 
-      if([255].includes(rt)){
-        err.forceRetry=true
-      }
       return Promise.reject(err);
+    }
+    if( this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent> this.batch.maxConcurrent ){
+      this.batch.maxConcurrent  = this.batch.maxConcurrent +1
+    }
+    if( this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent === this.batch.maxConcurrent ){
+      delete this.batch.originalMaxConcurrent
     }
     const re = new RegExp(this.JS.reJobID, "m");
     const result = re.exec(outputText);

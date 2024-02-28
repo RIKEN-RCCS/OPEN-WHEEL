@@ -47,6 +47,7 @@
     "log4js": "^6.7.1",
     "minimatch": "^6.1.6",
     "nunjucks": "^3.2.3",
+    "p-retry": "^4.6.1",
     "promise-retry": "^2.0.1",
     "rwatchd": "^0.5.0",
     "simple-batch-system": "^1.18.0",
