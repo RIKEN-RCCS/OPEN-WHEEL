@@ -24,7 +24,8 @@
     "reJobID": "Submitted batch job (\\d+)",
     "reRunning": "^{{ JOBID }},(?:CONFIGURING|COMPLETING|PENDING|REVOKED|RUNNING|SPECIAL_EXIT|SUSPENDED)",
     "reReturnCode": "{{ JOBID }},\\S+,(\\d+):\\d+$",
-    "reJobStatusCode": "{{ JOBID }},(\\S+),\\d+:\\d+$"
+    "reJobStatusCode": "{{ JOBID }},(\\S+),\\d+:\\d+$",
+    "reExceededLimitError": "job submit limit"
   },
   "Fugaku": {
     "submit": "pjsub -X",
@@ -42,6 +43,7 @@
     "reReturnCode": "{{ JOBID }} *(?:EXT|CCL) *(\\d+) *\\d+",
     "reJobStatusCode": "{{ JOBID }} *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
     "reSubReturnCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *(\\d+) *\\d+",
-    "reSubJobStatusCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)"
+    "reSubJobStatusCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
+    "reExceededLimitError": "PJM 0072 pjsub Job exceeded the accept limit"
   }
 }
