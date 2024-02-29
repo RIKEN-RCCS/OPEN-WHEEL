@@ -1664,8 +1664,7 @@ async function setUploadOndemandOutputFile(projectRootDir, ID) {
     componentJson.outputFiles.splice(1, componentJson.outputFiles.length - 1);
   }
 
-  componentJson.outputFiles[0].name = "UPLOAD_ONDEMAND";
-  return writeComponentJson(projectRootDir, componentDir, componentJson);
+  return renameOutputFile(projectRootDir, ID, 0, "UPLOAD_ONDEMAND");
 }
 async function removeInputFile(projectRootDir, ID, name) {
   const counterparts = new Set();
