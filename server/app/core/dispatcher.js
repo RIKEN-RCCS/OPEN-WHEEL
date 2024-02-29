@@ -177,7 +177,7 @@ class Dispatcher extends EventEmitter {
         this.currentSearchList = childComponents.filter((component)=>{
           return isInitialComponent(component);
         });
-        this.logger.debug("initial tasks : ", this.currentSearchList.map((e)=>{
+        this.logger.debug("initial components: ", this.currentSearchList.map((e)=>{
           return e.name;
         }));
         this.firstCall = false;
@@ -188,24 +188,19 @@ class Dispatcher extends EventEmitter {
       }));
 
       const promises = [];
-      while (this.currentSearchList.length > 0) {
-        const target = this.currentSearchList.shift();
-
+      for(const target of this.currentSearchList){
         if (target.disable) {
           this.logger.info(`disabled component: ${target.name}(${target.ID})`);
           continue;
         }
-
         if (!await this._isReady(target)) {
           this.pendingComponents.push(target);
           continue;
         }
-
         await this._getInputFiles(target);
         await this._setComponentState(target, "running");
         promises.push(this._dispatchOneComponent(target));
-      }//end of while loop
-
+      }
       if (promises.length > 0) {
         await Promise.all(promises);
       }
@@ -403,6 +398,12 @@ class Dispatcher extends EventEmitter {
         Array.prototype.push.apply(nextComponentIDs, tmp);
       });
     }
+    nextComponentIDs = Array.from(new Set(nextComponentIDs ))
+      .filter((id)=>{
+        return ! this.currentSearchList.some((e)=>{
+          return e.ID === id
+        });
+      });
     const nextComponents = await Promise.all(nextComponentIDs.map((id)=>{
       return this._getComponent(id);
     }));
