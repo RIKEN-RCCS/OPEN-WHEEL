@@ -274,6 +274,9 @@ export default {
       return  _getActiveItem(this.items,key);
     },
     getComponentDirRootFiles(){
+      if(! this.selectedComponent){
+        return
+      }
       const cb= (fileList)=>{
         if(fileList === null){
           return;
