@@ -44,8 +44,5 @@
   "lint-staged": {
     "*.js": "eslint --fix",
     "*.vue": "eslint --fix"
-  },
-  "dependencies": {
-    "express-ipfilter": "^1.3.2"
   }
 }
