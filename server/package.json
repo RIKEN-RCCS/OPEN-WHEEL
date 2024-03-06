@@ -56,7 +56,7 @@
     "simple-batch-system": "^1.15.0",
     "socket.io": "^4.6.0",
     "socketio-file-upload": "^0.7.3",
-    "ssh-client-wrapper": "^2.2.7",
+    "ssh-client-wrapper": "^2.4.1",
     "stat-mode": "^1.0.0",
     "through2": "^4.0.2",
     "uuid": "^9.0.0",
