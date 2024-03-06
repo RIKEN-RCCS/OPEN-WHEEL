@@ -13,9 +13,9 @@
     @ok="uploadSourceFileDialogCallback(true)"
     @cancel="uploadSourceFileDialogCallback(false)"
   >
-    <template slot="message">
+    <template #message>
       <p class="text-h2 text-center pa-4" ref="uploadarea">
-        {{ uploadedFilename ||'drop file here' }}
+        {{ uploadedFilename !== null ?  uploadedFilename : 'drop file here' }}
       </p>
     </template>
   </versatile-dialog>
