@@ -99,6 +99,8 @@ export default {
     },
     onChoose(event){
       const componentDir=this.componentPath[this.ID];
+      console.log("onChoose in uploadSourceFileDialog", componentDir);
+
       for (const file of event.files){
         file.meta.currentDir=componentDir;
         file.meta.orgName="UPLOAD_ONDEMAND"
