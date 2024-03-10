@@ -84,8 +84,8 @@ function isJobFailed(JS, code){
     statusList.push("0", 0);
   }else if (Array.isArray(JS.acceptableJobStatus)) {
     statusList.push(...JS.acceptableJobStatus)
-  }else if(typeof JS.acceptableJobStatus === "string" || Number.isNumber(JS.acceptableJobStatus)){
-    statusList.push(JS.acceptableJobStatus)
+  }else if(typeof JS.acceptableJobStatus.toString === "function"){
+    statusList.push(JS.acceptableJobStatus.toString())
   }else{
     return false
   }
