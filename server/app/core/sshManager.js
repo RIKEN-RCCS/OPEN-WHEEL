@@ -190,11 +190,19 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
 
   const ssh = new SshClientWrapper(hostinfo);
   const timeout = hostinfo.ConnectTimeout > 120 ? hostinfo.ConnectTimeout : 120;
-  const success = await ssh.canConnect(timeout);
+  try{
+    const success = await ssh.canConnect(timeout);
 
-  if (success) {
-    addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
-  } else {
+    if (success) {
+      addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
+    }
+  }catch(e){
+    if(e.message === "Control socket creation failed"){
+      e.message +="you can avoid this error by using SSH_CONTROL_PERSIST_DIR environment variable\n"
+      e.message +="please refer to https://riken-rccs.github.io/OPEN-WHEEL/attention"
+
+      throw e
+    }
     throw new Error("ssh connection failed due to unknown reason");
   }
   return ssh;
