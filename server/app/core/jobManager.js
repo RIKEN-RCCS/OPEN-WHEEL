@@ -159,8 +159,7 @@ function registerJob(hostinfo, task) {
       getLogger(task.projectRootDir).debug(`${requestName} done`);
       getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${request.finishedHook.output}`)
 
-      const rt = await getStatusCode(JS, task, request.finishedHook.rt, request.finishedHook.output)
-      if(/^\s*$/.test(request.finishedHook.output)){
+      if(/^\s*$/.test(request.finishedHook.output)) {
         getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`)
 
         await pRetry(async ()=>{
