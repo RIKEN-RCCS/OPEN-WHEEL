@@ -1134,11 +1134,11 @@ async function validateStepjob(projectRootDir, component) {
       return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
     }
     const setJobScheduler = jobScheduler[hostinfo.jobScheduler];
-    if (!(Object.prototype.hasOwnProperty.call(setJobScheduler, "stepjob") && setJobScheduler.stepjob === true)) {
+    if (!setJobScheduler.supportStepjob) {
       return Promise.reject(new Error(`${hostinfo.jobScheduler} jobSheduler does not support stepjob`));
     }
-    if (!(Object.prototype.hasOwnProperty.call(hostinfo, "useStepjob") && hostinfo.useStepjob === true)) {
-      return Promise.reject(new Error(`${hostinfo.name} does not support stepjob`));
+    if (!hostinfo.useStepjob) {
+      return Promise.reject(new Error(`${hostinfo.name} does not set to use stepjob`));
     }
   }
   return true;
@@ -1172,11 +1172,11 @@ async function validateBulkjobTask(projectRootDir, component) {
       return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
     }
     const setJobScheduler = jobScheduler[hostinfo.jobScheduler];
-    if (!(Object.prototype.hasOwnProperty.call(setJobScheduler, "bulkjob") && setJobScheduler.bulkjob === true)) {
+    if (!setJobScheduler.supportBulkjob) {
       return Promise.reject(new Error(`${hostinfo.jobScheduler} jobSheduler does not support bulkjob`));
     }
-    if (!(Object.prototype.hasOwnProperty.call(hostinfo, "useBulkjob") && hostinfo.useBulkjob === true)) {
-      return Promise.reject(new Error(`${hostinfo.name} does not support bulkjob`));
+    if (!hostinfo.useBulkjob) {
+      return Promise.reject(new Error(`${hostinfo.name} does not set to use bulkjob`));
     }
   }
 
@@ -1576,7 +1576,7 @@ async function arrangeComponent(stepjobGroupArray) {
       }
 
       let nextComponent = [];
-       
+
       nextComponent = stepjobTaskComponents.filter((stepjobTask)=>{
         return stepjobTask.ID === arrangeArraytemp[i - 1].next[0];
       });
