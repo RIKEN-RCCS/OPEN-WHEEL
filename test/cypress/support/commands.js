@@ -1,4 +1,4 @@
-const projectListWaitTime = 10000
+const projectListWaitTime = 1000
 const animationWaitTime = 300
 
 Cypress.on('uncaught:exception', (err, runnable) => {

@@ -405,7 +405,7 @@ describe('wheel test', () => {
 
     cy.getCosoleElement().then($el => {
       // cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
-      cy.softAssert($el.text().include('test'), true, "script exec result is displaied at Console(Stdout)")
+      cy.softAssert($el.text().includes('test'), true, "script exec result is displaied at Console(Stdout)")
     })
   })
 
@@ -436,7 +436,7 @@ describe('wheel test', () => {
 
     cy.getCosoleElement().then($el => {
       // cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
-      cy.softAssert($el.text().include('test'), true, "script exec result is displaied at Console(Stdout)")
+      cy.softAssert($el.text().includes('test'), true, "script exec result is displaied at Console(Stdout)")
     })
   })
   
@@ -492,7 +492,7 @@ describe('wheel test', () => {
     cy.clickFileEditer()
     cy.get('#editor').then($el => {
       // cy.softAssert($el.text().match(/test/).length > 0, true, 'stdout.txt is writed "test"')
-      cy.softAssert($el.text().include('test'), true, 'stdout.txt is writed "test"')
+      cy.softAssert($el.text().includes('test'), true, 'stdout.txt is writed "test"')
     })
   })
 
@@ -568,7 +568,7 @@ describe('wheel test', () => {
     Cypress._.times(3, (i) => {
       cy.getCosoleElement().children().eq(i).then($el => {
         // cy.softAssert($el.text().match(/test/).length > 0, true, 'script repeat 3 times at Console(Stdout)')
-        cy.softAssert($el.text().include('test'), true, 'script repeat 3 times at Console(Stdout)')
+        cy.softAssert($el.text().includes('test'), true, 'script repeat 3 times at Console(Stdout)')
       })
     })
   })
