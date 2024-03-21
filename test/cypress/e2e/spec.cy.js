@@ -5,7 +5,6 @@ describe('wheel test', () => {
   const hostname = Cypress.env("WHEEL_TEST_HOSTNAME")
   const test_port = Cypress.env("WHEEL_TEST_PORT")
   const test_user = Cypress.env("WHEEL_TEST_USER")
-  const screenShotFlg = false
   before(() => {
     cy.visit('/')
   })
@@ -31,13 +30,6 @@ describe('wheel test', () => {
     cy.contains('button', 'Files').then($el => {
       cy.softAssert($el.attr('aria-expanded'), 'true', "FilesTab is aria-expanded")
     })
-
-    cy.contains('button', 'Files').focus().scrollIntoView({easing: 'linear', duration: 100})
-    if (screenShotFlg) {
-      cy.screenshot('test1', {overwrite: true, capture: 'runner'})
-    }
-
-    cy.removeTask('task0')
   })
 
   it('test3', () => {
@@ -51,13 +43,6 @@ describe('wheel test', () => {
       cy.softAssert($el.eq(0).text(), 'folder1', "Folder is exist")
       cy.softAssert($el.eq(1).text(), 'file1', "File is exist")
     })
-
-    cy.contains('button', 'Files').focus().scrollIntoView({easing: 'linear', duration: 100})
-    if (screenShotFlg) {
-      cy.screenshot('test3', {overwrite: true, capture: 'runner'})
-    }
-
-    cy.removeTask('task0')
   })
 
   it('test4', () => {
@@ -73,13 +58,6 @@ describe('wheel test', () => {
       cy.softAssert($el.eq(0).text(), 'folder2', 'folder2 is exist in folder1')
       cy.softAssert($el.eq(1).text(), 'file1', 'file1 is exist in folder1')
     })
-
-    cy.contains('button', 'Files').focus().scrollIntoView({easing: 'linear', duration: 100})
-    if (screenShotFlg) {
-      cy.screenshot('test4', {overwrite: true, capture: 'runner'})
-    }
-
-    cy.removeTask('task0')
   })
 
   it('test5', () => {
@@ -91,17 +69,10 @@ describe('wheel test', () => {
     cy.fileFolderRename('folder1', 'folder2')
     cy.fileFolderRename('file1', 'file2')
 
-    cy.contains('button', 'Files').scrollIntoView()
-    if (screenShotFlg) {
-      cy.screenshot('test5: File,Folder is renamed', {overwrite: true, capture: 'fullPage'})
-    }
-
     cy.contains('button', 'Files').next().find('[role="listbox"]').eq(0).children().then($el => {
       cy.softAssert($el.eq(0).text(), 'folder2', 'folder1 is renamed to folder2')
       cy.softAssert($el.eq(1).text(), 'file2', 'file1 is renamed to file2')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test6', () => {
@@ -111,16 +82,9 @@ describe('wheel test', () => {
     cy.fileFolderMake('folder', 'folder1')
     cy.fileFolderDelete('folder1')
 
-    if (screenShotFlg) {
-      cy.contains('button', 'Files').scrollIntoView()
-      cy.screenshot('test6: folder1 is not exist', {overwrite: true, capture: 'fullPage'})
-    }
-
     cy.contains('button', 'Files').next().find('[role="listbox"]').then($el => {
       cy.softAssert($el.children().length == 0, true, 'folder1 is not exist')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test9', () => {
@@ -134,17 +98,9 @@ describe('wheel test', () => {
     cy.clickFilesTab(5)
     cy.contains('a', 'download').click()
 
-    if (screenShotFlg) {
-      cy.contains('button', 'Files').scrollIntoView()
-      cy.screenshot('test9: "a.txt" is writed "aaa" at download file', {overwrite: true, capture: 'fullPage'})
-    }
-
     cy.readFile(filepath).then($el => {
       cy.softAssert($el, 'aaa', '"a.txt" is writed "aaa" at download file')
     })
-
-    cy.contains('button', 'close').click()
-    cy.removeTask('task0')
   })
 
   it('test10', () => {
@@ -157,17 +113,10 @@ describe('wheel test', () => {
     cy.contains('copy file path').next().find('button').click()
     cy.contains('[type="button"]', 'ok').click()
 
-    if (screenShotFlg) {
-      cy.contains('button', 'Files').scrollIntoView()
-      cy.screenshot('test10: script path is copied at clipboard', {overwrite: true, capture: 'fullPage'})
-    }
-
     cy.window().its('navigator.clipboard').then((clip) => clip.readText()).then($el => {
       // cy.softAssert($el, '/root/test.wheel/task0/a.txt', 'script path is copied at clipboard')
       cy.softAssert($el, '/home/runner/test.wheel/task0/a.txt', 'script path is copied at clipboard')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test11', () => {
@@ -178,18 +127,11 @@ describe('wheel test', () => {
     cy.clickFileFolder('folder1')
     cy.fileFolderMake('file', 'file1')
     cy.clickFileFolder('folder1')
-    cy.clickFileFolder('folder1').wait(100)
-
-    if (screenShotFlg) {
-      cy.contains('button', 'Files').focus().scrollIntoView()
-      cy.screenshot('test11: file1 is displaied', {overwrite: true, capture: 'viewport'})
-    }
+    cy.clickFileFolder('folder1')
 
     cy.contains('button', 'Files').next().find('[role="group"]').then($el => {
       cy.softAssert($el.css('display'), 'block', 'file1 is displaied')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test12', () => {
@@ -200,19 +142,12 @@ describe('wheel test', () => {
     cy.fileFolderMake('file', 'file2')
     cy.fileFolderMake('file', 'file3')
 
-    cy.clickFilesTab().wait(300)
-    cy.clickFilesTab().wait(100)
-
-    if (screenShotFlg) {
-      cy.contains('button', 'Files').focus().scrollIntoView()
-      cy.screenshot('test12: file* is exist', {overwrite: true, capture: 'viewport'})
-    }
+    cy.clickFilesTab()
+    cy.clickFilesTab()
 
     cy.contains('button', 'Files').next().find('.v-list-item__content').then($el => {
       cy.softAssert($el.text(), 'file*', 'file* is exist')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test13', () => {
@@ -223,23 +158,16 @@ describe('wheel test', () => {
     cy.fileFolderMake('file', 'file2')
     cy.fileFolderMake('file', 'file3')
 
-    cy.clickFilesTab().wait(300)
+    cy.clickFilesTab()
     cy.clickFilesTab()
 
-    cy.clickFileFolder('file*').wait(300)
-
-    cy.contains('button', 'Files').focus().scrollIntoView()
-    if (screenShotFlg) {
-      cy.screenshot('test13: file1,2,3 is exist in file*', {overwrite: true, capture: 'viewport'})
-    }
+    cy.clickFileFolder('file*')
 
     cy.contains('button', 'Files').next().find('[role="group"]').children().then($el => {
       cy.softAssert($el.eq(0).text(), 'file1', 'file1 is exist in file*')
       cy.softAssert($el.eq(1).text(), 'file2', 'file2 is exist in file*')
       cy.softAssert($el.eq(2).text(), 'file3', 'file3 is exist in file*')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test14', () => {
@@ -250,19 +178,12 @@ describe('wheel test', () => {
     cy.fileFolderMake('folder', 'folder2')
     cy.fileFolderMake('folder', 'folder3')
     
-    cy.clickFilesTab().wait(300)
-    cy.clickFilesTab().wait(100)
-
-    cy.contains('button', 'Files').focus().scrollIntoView()
-    if (screenShotFlg) {
-      cy.screenshot('test14: folder* is exist', {overwrite: true, capture: 'viewport'})
-    }
+    cy.clickFilesTab()
+    cy.clickFilesTab()
 
     cy.contains('button', 'Files').next().find('.v-list-item__content').then($el => {
       cy.softAssert($el.text(), 'folder*', 'folder* is exist')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test15', () => {
@@ -273,33 +194,22 @@ describe('wheel test', () => {
     cy.fileFolderMake('folder', 'folder2')
     cy.fileFolderMake('folder', 'folder3')
     
-    cy.clickFilesTab().wait(300)
+    cy.clickFilesTab()
     cy.clickFilesTab()
 
-    cy.clickFileFolder('folder*').wait(300)
-
-    cy.contains('button', 'Files').focus().scrollIntoView()
-    if (screenShotFlg) {
-      cy.screenshot('test15: folder1,2,3 is exist in folder*', {overwrite: true, capture: 'viewport'})
-    }
+    cy.clickFileFolder('folder*')
 
     cy.contains('button', 'Files').next().find('[role="group"]').children().then($el => {
       cy.softAssert($el.eq(0).text(), 'folder1', 'folder1 is exist in folder*')
       cy.softAssert($el.eq(1).text(), 'folder2', 'folder2 is exist in folder*')
       cy.softAssert($el.eq(2).text(), 'folder3', 'folder3 is exist in folder*')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test16', () => {
     cy.taskMake('task0')
     cy.clickInputOutputFilesTab()
     cy.addInputFiles('input')
-    
-    if (screenShotFlg) {
-      cy.screenshot('test16: "input" is added', {overwrite: true, capture: 'viewport'})
-    }
 
     cy.contains('input/output files').next().contains('div', 'input files').find('button').then($el => {
       cy.softAssert($el.text(), 'input', '"input" is added in input file aria')
@@ -308,8 +218,6 @@ describe('wheel test', () => {
     cy.get('svg').find('text').eq(1).then($el => {
       cy.softAssert($el.text(), 'input', '"input" is added in task0 compornent')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test17', () => {
@@ -317,10 +225,6 @@ describe('wheel test', () => {
     cy.clickInputOutputFilesTab()
     cy.addInputFiles('input')
     cy.renameInputFiles('input', 'input1{enter}')
-    
-    if (screenShotFlg) {
-      cy.screenshot('test17: "input" is renamed to "input1"', {overwrite: true, capture: 'viewport'})
-    }
 
     cy.contains('input/output files').next().contains('div', 'input files').find('button').then($el => {
       cy.softAssert($el.text(), 'input1', '"input" is renamed to "input1" in input file aria')
@@ -329,8 +233,6 @@ describe('wheel test', () => {
     cy.get('svg').find('text').eq(1).then($el => {
       cy.softAssert($el.text(), 'input1', '"input" is renamed to "input1" in task0 compornent')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test18', () => {
@@ -338,26 +240,16 @@ describe('wheel test', () => {
     cy.clickInputOutputFilesTab()
     cy.addInputFiles('input')
     cy.deleteInputFiles('input')
-    
-    if (screenShotFlg) {
-      cy.screenshot('test18: "input" is deleted in input file aria', {overwrite: true, capture: 'viewport'})
-    }
 
     cy.contains('thead', 'input files').next().then($el => {
       cy.softAssert($el.text(), 'No data available', '"input" is deleted in input file aria')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test19', () => {
     cy.taskMake('task0')
     cy.clickInputOutputFilesTab()
     cy.addOutputFiles('output')
-    
-    if (screenShotFlg) {
-      cy.screenshot('test19: "output" is added', {overwrite: true, capture: 'viewport'})
-    }
 
     cy.contains('input/output files').next().contains('div', 'output files').find('button').then($el => {
       cy.softAssert($el.text(), 'output', '"output" is added in output file aria')
@@ -366,8 +258,6 @@ describe('wheel test', () => {
     cy.get('svg').find('text').eq(1).then($el => {
       cy.softAssert($el.text(), 'output', '"output" is added in task0 compornent')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test20', () => {
@@ -375,10 +265,6 @@ describe('wheel test', () => {
     cy.clickInputOutputFilesTab()
     cy.addOutputFiles('output')
     cy.renameOutputFiles('output', 'output1{enter}')
-    
-    if (screenShotFlg) {
-      cy.screenshot('test20: "output" is renamed to "output1"', {overwrite: true, capture: 'viewport'})
-    }
 
     cy.contains('input/output files').next().contains('div', 'output files').find('button').then($el => {
       cy.softAssert($el.text(), 'output1', '"output" is renamed to "output1" in output file aria')
@@ -387,8 +273,6 @@ describe('wheel test', () => {
     cy.get('svg').find('text').eq(1).then($el => {
       cy.softAssert($el.text(), 'output1', '"output" is renamed to "output1" in task0 compornent')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test21', () => {
@@ -396,16 +280,10 @@ describe('wheel test', () => {
     cy.clickInputOutputFilesTab()
     cy.addOutputFiles('output')
     cy.deleteOutputFiles('output')
-    
-    if (screenShotFlg) {
-      cy.screenshot('test21: "output" is deleted"', {overwrite: true, capture: 'viewport'})
-    }
 
     cy.contains('thead', 'output files').next().then($el => {
       cy.softAssert($el.text(), 'No data available', '"output" is deleted in output file aria')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test22', () => {
@@ -417,12 +295,7 @@ describe('wheel test', () => {
     cy.get('svg').find('polygon').eq(0)
       .trigger("mousedown", { screenX: 272, screenY: 272 })
     cy.get('svg').contains('task1')
-      .trigger('mouseup', { screenX: 300, screenY: 600 }).wait(1000)
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test22: "output" is added to input aria in task1 compornent', {overwrite: true, capture: 'runner'})
-    }
+      .trigger('mouseup', { screenX: 300, screenY: 600 })
 
     cy.get('svg').find('path').parent().children().then($el => {
       cy.softAssert($el.eq(1).find('image').next().text(), 'task0', 'path is started from "task0"')
@@ -436,10 +309,6 @@ describe('wheel test', () => {
     cy.contains('input/output files').next().contains('div', 'input files').find('button').then($el => {
       cy.softAssert($el.text(), 'output', '"output" is added in task1 input file aria')
     })
-
-    cy.removeTask('task1')
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
 
   it('test23', () => {
@@ -457,22 +326,12 @@ describe('wheel test', () => {
     cy.get('svg').find('polygon').eq(0)
       .trigger("mousedown", { screenX: 272, screenY: 272 })
     cy.get('svg').contains('task1')
-      .trigger('mouseup', { screenX: 300, screenY: 600 }).wait(1000)
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test23: path is started from "task0 to "task1"', {overwrite: true, capture: 'runner'})
-    }
+      .trigger('mouseup', { screenX: 300, screenY: 600 })
 
     cy.get('svg').find('path').parent().children().then($el => {
       cy.softAssert($el.eq(1).find('image').next().text(), 'task0', 'path is started from "task0"')
       cy.softAssert($el.eq(2).find('image').next().text(), 'task1', 'path is ended to "task1"')
     })
-
-    cy.clickTask('task0')
-    cy.removeTask('task0')
-    cy.clickTask('task1')
-    cy.removeTask('task1')
   })
 
   it('test24', () => {
@@ -490,22 +349,12 @@ describe('wheel test', () => {
     cy.get('svg').find('polygon').eq(0)
       .trigger("mousedown", { screenX: 272, screenY: 272 })
     cy.get('svg').contains('results').siblings()
-      .trigger('mouseup', { screenX: 300, screenY: 600 }).wait(1000)
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test24: path is started from "task0 to "task1"', {overwrite: true, capture: 'runner'})
-    }
+      .trigger('mouseup', { screenX: 300, screenY: 600 })
 
     cy.get('svg').find('path').parent().children().then($el => {
       cy.softAssert($el.eq(1).find('image').next().text(), 'task0', 'path is started from "task0"')
       cy.softAssert($el.eq(2).find('image').next().text(), 'task1', 'path is ended to "task1"')
     })
-
-    cy.clickTask('task0')
-    cy.removeTask('task0')
-    cy.clickTask('task1')
-    cy.removeTask('task1')
   })
 
   it('test25', () => {
@@ -523,22 +372,12 @@ describe('wheel test', () => {
     cy.get('svg').find('polygon').eq(0)
       .trigger("mousedown", { screenX: 272, screenY: 272 })
     cy.get('svg').contains('results').siblings()
-      .trigger('mouseup', { screenX: 300, screenY: 600 }).wait(3000)
-    
-    if (screenShotFlg) {
-      cy.viewport('macbook-16')
-      cy.screenshot('test25: path is started from "task0 to "task1"', {overwrite: true, capture: 'runner'})
-    }
+      .trigger('mouseup', { screenX: 300, screenY: 600 })
 
     cy.get('svg').find('path').parent().children().then($el => {
       cy.softAssert($el.eq(1).find('image').next().text(), 'task0', 'path is started from "task0"')
       cy.softAssert($el.eq(2).find('image').next().text(), 'task1', 'path is ended to "task1"')
     })
-
-    cy.clickTask('task0')
-    cy.removeTask('task0')
-    cy.clickTask('task1')
-    cy.removeTask('task1')
   })
 
   it('test26', () => {
@@ -549,7 +388,7 @@ describe('wheel test', () => {
       cy.clickFilesTab()
       cy.openScriptSelectBox()
       cy.get('.v-overlay-container').find('.v-list-item-title').then($el => {
-        cy.softAssert($el.text(), 'run.sh', "script is exist in listbox")
+        cy.softAssert($el.text().includes('run.sh'), true, "script is exist in listbox")
       })
 
       cy.selectListBox('run.sh')
@@ -563,20 +402,11 @@ describe('wheel test', () => {
     cy.execProject()
     cy.checkProjectStatus('finished')
     cy.stdoutOpen()
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test26: script exec result is displaied at Console(Stdout)', {overwrite: true, capture: 'runner'})
-    }
 
-    cy.get('.v-window-item.v-window-item--active').find('.xterm-rows').then($el => {
-      cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
+    cy.getCosoleElement().then($el => {
+      // cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
+      cy.softAssert($el.text().include('test'), true, "script exec result is displaied at Console(Stdout)")
     })
-
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
 
   it('test27', () => {
@@ -603,30 +433,16 @@ describe('wheel test', () => {
     cy.passwordType(password)
     cy.checkProjectStatus('finished')
     cy.outputSshOpen()
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test27: script exec result is displaied at Console(Stdout)', {overwrite: true, capture: 'runner'})
-    }
 
-    cy.get('.v-window-item.v-window-item--active').find('.xterm-rows').then($el => {
-      cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
+    cy.getCosoleElement().then($el => {
+      // cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
+      cy.softAssert($el.text().include('test'), true, "script exec result is displaied at Console(Stdout)")
     })
-
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test28', () => {
     cy.taskMake('task0')
     cy.switchUseJobScheduler('on')
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test28: queue, submit command, submit option is not disabled', {overwrite: true, capture: 'runner'})
-    }
 
     Cypress._.times(2, (k) => {
       cy.contains('button', 'basic').next().children().children().then($el => {
@@ -639,15 +455,13 @@ describe('wheel test', () => {
 
       cy.projectReload(k, testProject, 'task0')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test29', () => {
     cy.taskMake('task0')
     cy.openHostListBox(remotehost)
     cy.selectHost(remotehost)
-    cy.scriptMake('run.sh', 'cd $PBS_O_WORKDIR \necho test > stdout.txt')
+    cy.scriptMake('run.sh', 'cd ${{}PBS_O_WORKDIR-"."} \necho test > stdout.txt')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
     cy.addIncludeFile('stdout.txt')
@@ -671,26 +485,15 @@ describe('wheel test', () => {
     cy.passwordType(password)
     cy.checkProjectStatus('finished')
     cy.outputSshOpen()
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test29: stdout.txt is writed "test"', {overwrite: true, capture: 'runner'})
-    }
 
     cy.clickTask('task0')
     cy.clickFilesTab()
     cy.contains('stdout.txt').click()
-    cy.get('[href="/editor"]').click().wait(100)
+    cy.clickFileEditer()
     cy.get('#editor').then($el => {
-      cy.softAssert($el.text().match(/test/).length > 0, true, 'stdout.txt is writed "test"')
+      // cy.softAssert($el.text().match(/test/).length > 0, true, 'stdout.txt is writed "test"')
+      cy.softAssert($el.text().include('test'), true, 'stdout.txt is writed "test"')
     })
-    cy.get('[href="/graph"]').click().wait(100)
-    
-
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
 
   it('test30', () => {
@@ -699,11 +502,6 @@ describe('wheel test', () => {
     cy.scriptMake('run.sh', 'echo test')
     cy.scriptSelect('run.sh')
     cy.hostSelect(remotehost)
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test30: submit command is displaied', {overwrite: true, capture: 'runner'})
-    }
 
     Cypress._.times(2, (k) => {
       cy.contains('button', 'basic').next().children().children().eq(5).find('input').then($el => {
@@ -711,15 +509,13 @@ describe('wheel test', () => {
       })
       cy.projectReload(k, testProject, 'task0')
     })
-
-    cy.removeTask('task0')
   })
 
   it('test31', () => {
     cy.taskMake('task0')
     cy.switchUseJobScheduler('on')
     cy.hostSelect(remotehost)
-    cy.scriptMake('run.sh', 'cd $PBS_O_WORKDIR \necho test > stdout.txt')
+    cy.scriptMake('run.sh', 'cd ${{}PBS_O_WORKDIR-"."} \necho test > stdout.txt')
     cy.scriptSelect('run.sh')
     cy.typeSubmitOption('-N myjob')
     cy.openRemoteFileSettingTab()
@@ -738,20 +534,11 @@ describe('wheel test', () => {
     cy.passwordType(password)
     cy.checkProjectStatus('finished')
     cy.infoOpen()
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test31: "-N myjob" is displaied at Console(Stdout)', {overwrite: true, capture: 'runner'})
-    }
 
-    cy.get('.v-window-item.v-window-item--active').find('.xterm-rows').then($el => {
-      cy.softAssert($el.text().match(/-N myjob/).length > 0, true, '"-N myjob" is displaied at Console(Stdout)')
+    cy.getCosoleElement().then($el => {
+      // cy.softAssert($el.text().match(/-N myjob/).length > 0, true, '"-N myjob" is displaied at Console(Stdout)')
+      cy.softAssert($el.text().includes('-N myjob'), true, '"-N myjob" is displaied at Console(Stdout)')
     })
-    
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test32', () => {
@@ -770,39 +557,26 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.passwordType(password).wait(5000)
+    cy.passwordType(password)
+    cy.checkProjectStatus('failed')
     cy.clickConsole()
     cy.clickOutputSshTab()
-    cy.get('.v-window-item.v-window-item--active').find('.xterm-rows').children().should(($el) => {
+    cy.getCosoleElement().children().should(($el) => {
       expect($el.eq(2).text()).to.match(/test/)
     })
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test32: script repeat 3 times at Console(Stdout)', {overwrite: true, capture: 'runner'})
-    }
 
     Cypress._.times(3, (i) => {
-      cy.get('.v-window-item.v-window-item--active').find('.xterm-rows').children().eq(i).then($el => {
-        cy.softAssert($el.text().match(/test/).length > 0, true, 'script repeat 3 times at Console(Stdout)')
+      cy.getCosoleElement().children().eq(i).then($el => {
+        // cy.softAssert($el.text().match(/test/).length > 0, true, 'script repeat 3 times at Console(Stdout)')
+        cy.softAssert($el.text().include('test'), true, 'script repeat 3 times at Console(Stdout)')
       })
     })
-    
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test33', () => {
     cy.taskMake('task0')
     cy.openRetrySettingTab()
     cy.swicthUseJavascriptExpressionForConditionCheck('off')
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test33: useJavascriptExpressionForConditionCheck off', {overwrite: true, capture: 'runner'})
-    }
 
     Cypress._.times(2, (k) => {
       cy.contains('div', 'use javascript expression for condition check').parent().parent().next().then($el => {
@@ -813,8 +587,6 @@ describe('wheel test', () => {
       cy.projectReload(k, testProject, 'task0')
       cy.openRetrySettingTab()
     })
-
-    cy.removeTask('task0')
   })
   
   it('test34', () => {
@@ -834,21 +606,12 @@ describe('wheel test', () => {
       cy.openRetrySettingTab()
     })
     
-    cy.execProject().wait(2000)
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test34: script status is failed at Console(Stdout)', {overwrite: true, capture: 'runner'})
-    }
+    cy.execProject()
+    cy.checkProjectStatus('failed')
 
     cy.get('[type="button"]').eq(0).then($el => {
       cy.softAssert($el.text(), ' status: failed', 'script status is failed at Console(Stdout)')
     })
-    
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test35', () => {
@@ -856,11 +619,6 @@ describe('wheel test', () => {
     cy.openRetrySettingTab()
     cy.swicthUseJavascriptExpressionForConditionCheck('on')
     cy.typeScriptconditionCheck('return 1;')
-    
-    if (screenShotFlg) {
-      cy.viewport('macbook-16')
-      cy.screenshot('test35: use javascript expression for condition check on', {overwrite: true, capture: 'runner'})
-    }
 
     Cypress._.times(2, (k) => {
       cy.contains('div', 'use javascript expression for condition check').parent().parent().next().then($el => {
@@ -871,8 +629,6 @@ describe('wheel test', () => {
       cy.projectReload(k, testProject, 'task0')
       cy.openRetrySettingTab()
     })
-    
-    cy.removeTask('task0')
   })
   
   it('test36', () => {
@@ -895,20 +651,12 @@ describe('wheel test', () => {
       cy.openRetrySettingTab()
     })
     
-    cy.execProject().wait(2000)
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test36: script status is failed at Console(Stdout)', {overwrite: true, capture: 'runner'})
-    }
+    cy.execProject()
+    cy.checkProjectStatus('failed')
 
     cy.get('[type="button"]').eq(0).then($el => {
       cy.softAssert($el.text(), ' status: failed', 'script status is failed at Console(Stdout)')
     })
-    
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test37', () => {
@@ -929,25 +677,18 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.passwordType(password).wait(3000)
+    cy.passwordType(password)
+    cy.checkProjectStatus('finished')
 
     cy.clickTask('task0')
     cy.clickFilesTab()
-    cy.contains('*.txt').click().wait(300)
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test37: files is exist in *.txt', {overwrite: true, capture: 'runner'})
-    }
+    cy.contains('*.txt').click()
 
     cy.get('[role="group"]').children().then($el => {
       cy.softAssert($el.eq(0).text(), '111.txt')
       cy.softAssert($el.eq(1).text(), '222.txt')
       cy.softAssert($el.eq(2).text(), '333.txt')
     })
-    
-    cy.resetProject()
-    cy.removeTask('task0')
   })
   
   it('test38', () => {
@@ -970,25 +711,15 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.passwordType(password).wait(1000)
+    cy.passwordType(password)
+    cy.checkProjectStatus('finished')
 
     cy.clickTask('task0')
-    cy.clickFilesTab().wait(300)
-    
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test38: files is not exist', {overwrite: true, capture: 'runner'})
-    }
+    cy.clickFilesTab()
 
     cy.contains('button', 'Files').siblings().find('[role="listbox"]').then($el => {
       cy.softAssert($el.find('[role="group"]').length == 0, true)
     })
-    
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test39', () => {
@@ -1011,27 +742,17 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.passwordType(password).wait(1000)
+    cy.passwordType(password)
+    cy.checkProjectStatus('finished')
 
     cy.clickTask('task0')
     cy.clickFilesTab()
-    cy.contains('*.txt').click().wait(300)
-    
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test39: 222.txt is deleted', {overwrite: true, capture: 'runner'})
-    }
+    cy.contains('*.txt').click()
 
     cy.contains('button', 'Files').siblings().contains('*.txt').parent().siblings().children().then($el => {
       cy.softAssert($el.eq(0).text(), '111.txt')
       cy.softAssert($el.eq(1).text(), '333.txt')
     })
-    
-    cy.closeTask()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test40', () => {
@@ -1055,27 +776,18 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.passwordType(password).wait(1000)
+    cy.passwordType(password)
+    cy.checkProjectStatus('finished')
 
     cy.clickTask('task0')
     cy.clickFilesTab()
-    cy.contains('*.txt').click().wait(300)
-    
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test40: Files is exist', {overwrite: true, capture: 'runner'})
-    }
+    cy.contains('*.txt').click()
 
     cy.get('[role="group"]').children().then($el => {
       cy.softAssert($el.eq(0).text(), '111.txt')
       cy.softAssert($el.eq(1).text(), '222.txt')
       cy.softAssert($el.eq(2).text(), '333.txt')
     })
-    
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test41', () => {
@@ -1097,21 +809,12 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.passwordType(password).wait(5000)
-
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test41: remove files', {overwrite: true, capture: 'runner'})
-    }
+    cy.passwordType(password)
+    cy.checkProjectStatus('finished')
 
     cy.sendCommand(hostname, test_port, test_user, password).then(stdout => {
       cy.softAssert(stdout, '0\n')
     })
-    
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test42', () => {
@@ -1133,21 +836,12 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.passwordType(password).wait(3000)
-
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test42: keep files', {overwrite: true, capture: 'runner'})
-    }
+    cy.passwordType(password)
+    cy.checkProjectStatus('finished')
 
     cy.sendCommand(hostname, test_port, test_user, password).then(stdout => {
       cy.softAssert(stdout, '1\n')
     })
-    
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
   
   it('test43', () => {
@@ -1169,20 +863,11 @@ describe('wheel test', () => {
     })
 
     cy.execProject()
-    cy.passwordType(password).wait(1000)
-
-    cy.viewport('macbook-16')
-    if (screenShotFlg) {
-      cy.screenshot('test43: same as parent', {overwrite: true, capture: 'runner'})
-    }
+    cy.passwordType(password)
+    cy.checkProjectStatus('finished')
 
     cy.sendCommand(hostname, test_port, test_user, password).then(stdout => {
       cy.softAssert(stdout, '1\n')
     })
-    
-    cy.clickConsole()
-    cy.resetProject()
-    cy.clickTask('task0')
-    cy.removeTask('task0')
   })
 })

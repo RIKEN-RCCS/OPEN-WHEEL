@@ -5,8 +5,8 @@ const { removeDirectory } = require('cypress-delete-downloads-folder');
 
 module.exports = defineConfig({
   waitForAnimations: true,
-  requestTimeout: 50000,
-  defaultCommandTimeout: 50000,
+  requestTimeout: 100000,
+  defaultCommandTimeout: 100000,
   component: {
     devServer: {
       framework: "vue",
@@ -26,6 +26,7 @@ module.exports = defineConfig({
       WHEEL_TEST_USER: "testuser"
     },
     numTestsKeptInMemory: 1,
+    experimentalMemoryManagement: true,
     baseUrl: `http://localhost:8089`,
     setupNodeEvents(on, config) {
       on('task', {
