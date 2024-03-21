@@ -1,4 +1,5 @@
-const animationWaitTime = 3000
+const projectListWaitTime = 5000
+const animationWaitTime = 300
 
 Cypress.on('uncaught:exception', (err, runnable) => {
   return false
@@ -68,7 +69,7 @@ Cypress.Commands.add("projectMake", (projectName) => {
 })
 
 Cypress.Commands.add("projectOpen", (projectName) => {
-  cy.visit('/').wait(animationWaitTime).then(() => {
+  cy.visit('/').wait(projectListWaitTime).then(() => {
     cy.contains(projectName, { timeout: 50000 })
   })
   cy.contains('tr', projectName, { timeout: 50000 }).find('[type="checkbox"]').click({force: true})
