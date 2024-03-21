@@ -1,4 +1,4 @@
-const animationWaitTime = 300
+const animationWaitTime = 1000
 
 Cypress.on('uncaught:exception', (err, runnable) => {
   return false
