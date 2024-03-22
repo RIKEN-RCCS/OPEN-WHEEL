@@ -562,7 +562,8 @@ describe('wheel test', () => {
     cy.clickConsole()
     cy.clickOutputSshTab()
     cy.getCosoleElement().children().should(($el) => {
-      expect($el.eq(2).text()).to.match(/test/)
+      // expect($el.eq(2).text()).to.match(/test/)
+      expect($el.eq(2).text()).includes('test')
     })
 
     Cypress._.times(3, (i) => {
