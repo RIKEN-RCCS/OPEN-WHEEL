@@ -444,7 +444,7 @@ Cypress.Commands.add("fileFolderRename", (name, name2) => {
   cy.contains('label', 'new name').next().type(name2)
   cy.contains('button', 'ok').click()
   cy.contains('button', 'Files').next().then(($el) => {
-    $el.contains('name2')
+    $el.includes('name2')
   })
 })
 
