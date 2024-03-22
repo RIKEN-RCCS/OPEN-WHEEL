@@ -442,10 +442,7 @@ Cypress.Commands.add("fileFolderRename", (name, name2) => {
   cy.clickFileFolder(name)
   cy.contains('button', 'Files').next().find('button').eq(2).click()
   cy.contains('label', 'new name').next().type(name2)
-  cy.contains('button', 'ok').click()
-  cy.contains('button', 'Files').next().then(($el) => {
-    $el.includes('name2')
-  })
+  cy.contains('button', 'ok').click().wait(animationWaitTime)
 })
 
 // delete file/folder
