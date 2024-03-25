@@ -404,7 +404,6 @@ describe('wheel test', () => {
     cy.stdoutOpen()
 
     cy.getCosoleElement().then($el => {
-      // cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
       cy.softAssert($el.text().includes('test'), true, "script exec result is displaied at Console(Stdout)")
     })
   })
@@ -435,7 +434,6 @@ describe('wheel test', () => {
     cy.outputSshOpen()
 
     cy.getCosoleElement().then($el => {
-      // cy.softAssert($el.text().match(/test/).length > 0, true, "script exec result is displaied at Console(Stdout)")
       cy.softAssert($el.text().includes('test'), true, "script exec result is displaied at Console(Stdout)")
     })
   })
@@ -491,7 +489,6 @@ describe('wheel test', () => {
     cy.contains('stdout.txt').click()
     cy.clickFileEditer()
     cy.get('#editor').then($el => {
-      // cy.softAssert($el.text().match(/test/).length > 0, true, 'stdout.txt is writed "test"')
       cy.softAssert($el.text().includes('test'), true, 'stdout.txt is writed "test"')
     })
   })
@@ -513,10 +510,10 @@ describe('wheel test', () => {
 
   it('test31', () => {
     cy.taskMake('task0')
-    cy.switchUseJobScheduler('on')
     cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'cd ${{}PBS_O_WORKDIR-"."} \necho test > stdout.txt')
     cy.scriptSelect('run.sh')
+    cy.switchUseJobScheduler('on')
     cy.typeSubmitOption('-N myjob')
     cy.openRemoteFileSettingTab()
     cy.addIncludeFile('stdout.txt')
@@ -536,7 +533,6 @@ describe('wheel test', () => {
     cy.infoOpen()
 
     cy.getCosoleElement().then($el => {
-      // cy.softAssert($el.text().match(/-N myjob/).length > 0, true, '"-N myjob" is displaied at Console(Stdout)')
       cy.softAssert($el.text().includes('-N myjob'), true, '"-N myjob" is displaied at Console(Stdout)')
     })
   })
@@ -561,14 +557,12 @@ describe('wheel test', () => {
     cy.checkProjectStatus('failed')
     cy.clickConsole()
     cy.clickOutputSshTab()
-    cy.getCosoleElement().children().should(($el) => {
-      // expect($el.eq(2).text()).to.match(/test/)
-      expect($el.eq(2).text()).includes('test')
+    cy.getCosoleElement().children().then(($el) => {
+      $el.eq(2).text().includes('test')
     })
 
     Cypress._.times(3, (i) => {
       cy.getCosoleElement().children().eq(i).then($el => {
-        // cy.softAssert($el.text().match(/test/).length > 0, true, 'script repeat 3 times at Console(Stdout)')
         cy.softAssert($el.text().includes('test'), true, 'script repeat 3 times at Console(Stdout)')
       })
     })

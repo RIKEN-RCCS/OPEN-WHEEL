@@ -289,13 +289,13 @@ Cypress.Commands.add("switchUseJobScheduler", (flg) => {
   if (flg == 'on') {
     cy.contains('label', 'use job scheduler').siblings().find('input').invoke('is', ':checked').then(($el) => {
       if (!$el) {
-        cy.contains('label', 'use job scheduler').click().wait(animationWaitTime)
+        cy.contains('label', 'use job scheduler').click({force: true}).wait(animationWaitTime)
       }
     })
   } else if (flg == 'off') {
     cy.contains('use job scheduler').siblings().find('input').invoke('is', ':checked').then(($el) => {
       if ($el) {
-        cy.contains('use job scheduler').click().wait(animationWaitTime)
+        cy.contains('use job scheduler').click({force: true}).wait(animationWaitTime)
       }
     })
   }
