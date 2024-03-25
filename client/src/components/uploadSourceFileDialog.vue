@@ -13,9 +13,9 @@
     @ok="uploadSourceFileDialogCallback(true)"
     @cancel="uploadSourceFileDialogCallback(false)"
   >
-    <template slot="message">
-      <p class="text-h2 text-center pa-4" ref="uploadarea">
-        {{ uploadedFilename ||'drop file here' }}
+    <template #message >
+      <p class="text-h2 text-center pa-4" id="droparea">
+        {{ uploadedFilename !== null ?  uploadedFilename : 'drop file here' }}
       </p>
     </template>
   </versatile-dialog>
@@ -56,18 +56,24 @@ export default {
         return this.value;
       },
       set(v){
+        if(v){
+          SIO.onUploaderEvent("choose", this.onChoose)
+          SIO.onUploaderEvent("complete", this.onUploadComplete)
+          SIO.onUploaderEvent("progress", this.updateProgressBar)
+
+          this.$nextTick().then(()=>{
+            const el = document.getElementById("droparea")
+            if(el){
+              SIO.listenOnDrop(el)
+            }
+          })
+        }else{
+          SIO.removeUploaderEvent("choose", this.onChoose)
+          SIO.removeUploaderEvent("complete", this.onUploadComplete)
+          SIO.removeUploaderEvent("progress", this.updateProgressBar)
+        }
         this.$emit("update:modelValue", v);
       }
-    }
-  },
-  watch:{
-    uploadSourceFileDialog(v){
-      if(!v){
-        return
-      }
-      this.$nextTick().then(()=>{
-        SIO.listenOnDrop(this.$refs.uploadarea)
-      });
     }
   },
   mounted:function(){
@@ -75,6 +81,7 @@ export default {
       SIO.onGlobal("askUploadSourceFile", (ID, name, description, cb)=>{
         this.uploadSourceFileDialogTitle=`upload source file for ${name}`;
         this.ID=ID;
+        this.uploadedFilename= null;
 
         this.uploadSourceFileDialogCallback=(result)=>{
           cb(result && this.uploadedFilename !== null? "UPLOAD_ONDEMAND" : null);
@@ -83,15 +90,10 @@ export default {
         };
         this.uploadSourceFileDialog=true;
       });
-      SIO.onUploaderEvent("choose", this.onChoose)
-      SIO.onUploaderEvent("complete", this.onUploadComplete)
-      SIO.onUploaderEvent("progress", this.updateProgressBar)
-    });
+    }
+    );
   },
   beforeDestroy(){
-    SIO.removeUploaderEvent("choose", this.onChoose)
-    SIO.removeUploaderEvent("complete", this.onUploadComplete)
-    SIO.removeUploaderEvent("progress", this.updateProgressBar)
   },
   methods:{
     openFileSelectDialog(){
@@ -99,6 +101,7 @@ export default {
     },
     onChoose(event){
       const componentDir=this.componentPath[this.ID];
+
       for (const file of event.files){
         file.meta.currentDir=componentDir;
         file.meta.orgName="UPLOAD_ONDEMAND"
