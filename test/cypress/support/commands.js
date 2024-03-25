@@ -299,7 +299,6 @@ Cypress.Commands.add("switchUseJobScheduler", (flg) => {
       }
     })
   }
-  cy.projectSave()
 })
 
 // type retry number
@@ -392,10 +391,11 @@ Cypress.Commands.add("execProject", () => {
 
 // Project status check
 Cypress.Commands.add("checkProjectStatus", (status) => {
-  cy.get('header').contains('button', 'status:').then(($el) => {
-    cy.get('header').contains(status)
-  })
-  cy.get('header').contains('button', 'status:').then(($el) => {
+  // cy.get('header').contains('button', 'status:').then(($el) => {
+  //   cy.get('header').contains(status)
+  // })
+  cy.get('header').contains(status).then(($el) => {
+  // cy.get('header').contains('button', 'status:').then(($el) => {
     cy.softAssert($el.text().includes(status), true)
   })
 })

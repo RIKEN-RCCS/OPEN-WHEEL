@@ -457,13 +457,14 @@ describe('wheel test', () => {
 
   it('test29', () => {
     cy.taskMake('task0')
-    cy.openHostListBox(remotehost)
-    cy.selectHost(remotehost)
+    cy.switchUseJobScheduler('on')
+    // cy.openHostListBox(remotehost)
+    // cy.selectHost(remotehost)
+    cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'cd ${{}PBS_O_WORKDIR-"."} \necho test > stdout.txt')
     cy.scriptSelect('run.sh')
     cy.openRemoteFileSettingTab()
     cy.addIncludeFile('stdout.txt')
-    cy.switchUseJobScheduler('on')
     
     Cypress._.times(2, (k) => {
       cy.contains('label', 'queue').parent().click()
@@ -476,7 +477,7 @@ describe('wheel test', () => {
       })
       cy.projectReload(k, testProject, 'task0')
       // useJobScheduler reset
-      cy.switchUseJobScheduler('on')
+      // cy.switchUseJobScheduler('on')
     })
 
     cy.execProject()
@@ -510,11 +511,13 @@ describe('wheel test', () => {
 
   it('test31', () => {
     cy.taskMake('task0')
+    cy.switchUseJobScheduler('on')
+    cy.typeSubmitOption('-N myjob')
+    // cy.openHostListBox(remotehost)
+    // cy.selectHost(remotehost)
     cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'cd ${{}PBS_O_WORKDIR-"."} \necho test > stdout.txt')
     cy.scriptSelect('run.sh')
-    cy.switchUseJobScheduler('on')
-    cy.typeSubmitOption('-N myjob')
     cy.openRemoteFileSettingTab()
     cy.addIncludeFile('stdout.txt')
     
@@ -524,7 +527,7 @@ describe('wheel test', () => {
       })
       cy.projectReload(k, testProject, 'task0')
       // useJobScheduler reset
-      cy.switchUseJobScheduler('on')
+      // cy.switchUseJobScheduler('on')
     })
 
     cy.execProject()
