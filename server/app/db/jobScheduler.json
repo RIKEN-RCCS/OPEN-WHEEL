@@ -8,6 +8,7 @@
     "reFinishedState": "substate \\= (91|92|93)$",
     "reReturnCode": "Exit_status \\= (\\d+)$",
     "reJobStatusCode": "substate \\= (\\d+)$",
+    "acceptableJobStatus": 92,
     "grpName": ""
   },
   "PBSProWithoutHistory": {
@@ -31,6 +32,7 @@
     "reFinishedState": "^\\d+,(?:COMPLETED|FAILED|CANCELLED|DEADLINE|NODE_FAIL|TIMEOUT),\\d+:\\d+",
     "reReturnCode": "^\\d+,\\S+,(\\d+):\\d+$",
     "reJobStatusCode": "^\\d+,(\\S+),\\d+:\\d+$",
+    "acceptableJobStatus": "COMPLETED",
     "grpName": ""
   },
   "Fugaku": {

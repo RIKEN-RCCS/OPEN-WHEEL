@@ -195,7 +195,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
+    ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent", "projectState"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
     storagePath(){
       return this.copySelectedComponent.storagePath || "/"
@@ -227,7 +227,7 @@ export default {
   mounted () {
     this.getComponentDirRootFiles();
 
-    if(! this.readonly){
+    if(!this.readonly ){
       const recaptchaScript = document.createElement("script");
       recaptchaScript.setAttribute(
         "src",
@@ -274,6 +274,9 @@ export default {
       return  _getActiveItem(this.items,key);
     },
     getComponentDirRootFiles(){
+      if(! this.selectedComponent){
+        return
+      }
       const cb= (fileList)=>{
         if(fileList === null){
           return;
@@ -301,6 +304,10 @@ export default {
       this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
     },
     onChoose(event){
+      if(["running", "preparing"].includes(this.projectState)){
+        return
+      }
+
       for (const file of event.files){
         file.meta.currentDir=this.currentDir
         file.meta.orgName=file.name
@@ -313,10 +320,16 @@ export default {
       this.uploading=true;
     },
     onUploadComplete(){
+      if(["running", "preparing"].includes(this.projectState)){
+        return
+      }
       this.uploading=false;
       this.getComponentDirRootFiles();
     },
     updateProgressBar(event){
+      if(["running", "preparing"].includes(this.projectState)){
+        return
+      }
       this.percentUploaded=(event.bytesLoaded / event.file.size)*100
     },
     ...mapMutations({

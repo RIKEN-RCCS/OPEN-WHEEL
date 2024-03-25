@@ -565,6 +565,9 @@ export default {
       commitWaitingWorkflow: "waitingWorkflow",
     }),
     emitProjectOperation (operation) {
+      if(operation === "runProject"){
+        this.commitSelectedComponent(null);
+      }
       if(operation === "cleanProject"){
         this.firstViewDataAlived=false;
       }
