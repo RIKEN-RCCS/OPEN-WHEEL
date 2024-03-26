@@ -458,8 +458,6 @@ describe('wheel test', () => {
   it('test29', () => {
     cy.taskMake('task0')
     cy.switchUseJobScheduler('on')
-    // cy.openHostListBox(remotehost)
-    // cy.selectHost(remotehost)
     cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'cd ${{}PBS_O_WORKDIR-"."} \necho test > stdout.txt')
     cy.scriptSelect('run.sh')
@@ -476,8 +474,6 @@ describe('wheel test', () => {
         cy.softAssert($el.text(), 'workq', 'remotehost queue is displaied in select box')
       })
       cy.projectReload(k, testProject, 'task0')
-      // useJobScheduler reset
-      // cy.switchUseJobScheduler('on')
     })
 
     cy.execProject()
@@ -513,8 +509,6 @@ describe('wheel test', () => {
     cy.taskMake('task0')
     cy.switchUseJobScheduler('on')
     cy.typeSubmitOption('-N myjob')
-    // cy.openHostListBox(remotehost)
-    // cy.selectHost(remotehost)
     cy.hostSelect(remotehost)
     cy.scriptMake('run.sh', 'cd ${{}PBS_O_WORKDIR-"."} \necho test > stdout.txt')
     cy.scriptSelect('run.sh')
@@ -526,8 +520,6 @@ describe('wheel test', () => {
         cy.softAssert($el.val(), '-N myjob', 'submit option is setting "-N myjob"')
       })
       cy.projectReload(k, testProject, 'task0')
-      // useJobScheduler reset
-      // cy.switchUseJobScheduler('on')
     })
 
     cy.execProject()
