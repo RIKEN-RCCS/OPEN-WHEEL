@@ -5,6 +5,7 @@ describe('wheel test', () => {
   const hostname = Cypress.env("WHEEL_TEST_HOSTNAME")
   const test_port = Cypress.env("WHEEL_TEST_PORT")
   const test_user = Cypress.env("WHEEL_TEST_USER")
+  const wheel_path = Cypress.env("WHEEL_PATH")
   before(() => {
     cy.visit('/')
   })
@@ -115,7 +116,8 @@ describe('wheel test', () => {
 
     cy.window().its('navigator.clipboard').then((clip) => clip.readText()).then($el => {
       // cy.softAssert($el, '/root/test.wheel/task0/a.txt', 'script path is copied at clipboard')
-      cy.softAssert($el, '/home/runner/test.wheel/task0/a.txt', 'script path is copied at clipboard')
+      // cy.softAssert($el, '/home/runner/test.wheel/task0/a.txt', 'script path is copied at clipboard')
+      cy.softAssert($el, wheel_path + '/test.wheel/task0/a.txt', 'script path is copied at clipboard')
     })
   })
 
