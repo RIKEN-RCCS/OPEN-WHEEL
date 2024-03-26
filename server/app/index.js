@@ -9,6 +9,7 @@ const path = require("path");
 const fs = require("fs-extra");
 const cors = require("cors");
 const express = require("express");
+const ipfilter = require("express-ipfilter").IpFilter
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const Siofu = require("socketio-file-upload");
@@ -28,8 +29,9 @@ process.on("uncaughtException", logger.debug.bind(logger));
  * setup express, socketIO
  */
 
-const baseURL = process.env.WHEEL_BASE_URL || "/";
 const app = express();
+const baseURL = process.env.WHEEL_BASE_URL || "/";
+const address = process.env.WHEEL_ACCEPT_ADDRESS
 
 function createHTTPSServer(argApp) {
   const { keyFilename, certFilename } = require("./db/db");
@@ -56,6 +58,7 @@ logger.info(`WHEEL_TEMPD = ${process.env.WHEEL_TEMPD}`);
 logger.info(`WHEEL_CONFIG_DIR = ${process.env.WHEEL_CONFIG_DIR}`);
 logger.info(`WHEEL_USE_HTTP = ${process.env.WHEEL_USE_HTTP}`);
 logger.info(`WHEEL_PORT = ${process.env.WHEEL_PORT}`);
+logger.info(`WHEEL_ACCEPT_ADDRESS= ${process.env.WHEEL_ACCEPT_ADDRESS}`);
 logger.info(`WHEEL_LOGLEVEL = ${process.env.WHEEL_LOGLEVEL}`);
 logger.info(`WHEEL_VERBOSE_SSH = ${process.env.WHEEL_VERBOSE_SSH}`);
 logger.info(`WHEEL_INTERVAL= ${process.env.WHEEL_INTERVAL}`);
@@ -67,6 +70,10 @@ let portNumber = port || defaultPort;
 portNumber = portNumber > 0 ? portNumber : defaultPort;
 
 //middlewares
+if(address){
+  const ips = [address];
+  app.use(ipfilter(ips, { mode: "allow", logF: logger.debug.bind(logger) }));
+}
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

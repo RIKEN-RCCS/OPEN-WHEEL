@@ -1664,8 +1664,7 @@ async function setUploadOndemandOutputFile(projectRootDir, ID) {
     componentJson.outputFiles.splice(1, componentJson.outputFiles.length - 1);
   }
 
-  componentJson.outputFiles[0].name = "UPLOAD_ONDEMAND";
-  return writeComponentJson(projectRootDir, componentDir, componentJson);
+  return renameOutputFile(projectRootDir, ID, 0, "UPLOAD_ONDEMAND");
 }
 async function removeInputFile(projectRootDir, ID, name) {
   const counterparts = new Set();
@@ -1725,8 +1724,9 @@ async function renameInputFile(projectRootDir, ID, index, newName) {
   componentJson.inputFiles[index].src.forEach((e)=>{
     counterparts.add(e.srcNode);
   });
-  const p = [writeComponentJson(projectRootDir, componentDir, componentJson)];
+  await writeComponentJson(projectRootDir, componentDir, componentJson);
 
+  const p = [];
   for (const counterPartID of counterparts) {
     const counterpartDir = await getComponentDir(projectRootDir, counterPartID, true);
     const counterpartJson = await readComponentJson(counterpartDir);
@@ -1737,11 +1737,13 @@ async function renameInputFile(projectRootDir, ID, index, newName) {
         }
       }
     }
-    for (const inputFile of counterpartJson.inputFiles) {
-      if (!Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
-        for (const dst of inputFile.forwardTo) {
-          if (dst.dstNode === ID && dst.dstName === oldName) {
-            dst.dstName = newName;
+    if(counterpartJson.type !== "source"){
+      for (const inputFile of counterpartJson.inputFiles) {
+        if (!Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
+          for (const dst of inputFile.forwardTo) {
+            if (dst.dstNode === ID && dst.dstName === oldName) {
+              dst.dstName = newName;
+            }
           }
         }
       }

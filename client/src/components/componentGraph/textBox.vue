@@ -3,7 +3,7 @@
 </template>
 <script>
 "use strict";
-import { textHeight,boxWidth, textLengthLimit, textOffset, maxTextChar} from "@/lib/constants.json"
+import { textLengthLimit, textOffset, maxTextChar} from "@/lib/constants.json"
 
 export default {
   name: "TextBox",
@@ -29,15 +29,32 @@ export default {
     return {
       width: textLengthLimit,
       xoffset: textOffset,
-      yoffset: null
+      yoffset: 0
     }
   },
   mounted(){
-    const bbox=this.$el.getBBox()
-    this.yoffset=this.center.y - (bbox.y + bbox.height/2)
+    this.calcYOffset()
+  },
+  methods:{
+    calcYOffset(){
+      //never re-calcuate y offset
+      if(this.yoffset >0){
+        return
+      }
+      if(! this.$el){
+        return;
+      }
+      const {y, height}  = this.$el.getBBox()
+      if(typeof y !== "number" || typeof height !== "number" || y <= 0 || height <= 0){
+        return
+      }
+      this.yoffset = this.center.y - (y + height/2)
+    }
   },
   computed:{
     trancatedText(){
+      this.calcYOffset();
+
       if(this.text.length <= maxTextChar){
         return this.text
       }
@@ -53,6 +70,7 @@ export default {
       return this.center.x
     },
     y(){
+      this.calcYOffset();
       return this.center.y + this.yoffset
     }
   },

@@ -128,7 +128,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
 
     //interactive phase
     try {
-      await updateProjectState(projectRootDir, "prepareing");
+      await updateProjectState(projectRootDir, "preparing");
 
       //resolve source files
       const sourceComponents = await getSourceComponents(projectRootDir);
@@ -175,7 +175,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
       if (err.reason === "CANCELED") {
         getLogger(projectRootDir).debug(err.message);
       } else {
-        getLogger(projectRootDir).error("fatal error occurred while prepareing phase:", err);
+        getLogger(projectRootDir).error("fatal error occurred while preparing phase:", err);
       }
       removeSsh(projectRootDir);
       ack(err);

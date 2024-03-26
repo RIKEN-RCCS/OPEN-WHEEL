@@ -1,3 +1,6 @@
+const projectListWaitTime = 1000
+const animationWaitTime = 300
+
 Cypress.on('uncaught:exception', (err, runnable) => {
   return false
 })
@@ -58,36 +61,41 @@ Cypress.Commands.add("setClipboardPermission", () => {
 })
 
 Cypress.Commands.add("projectMake", (projectName) => { 
-  cy.contains('button', 'NEW').click({force: true})
+  cy.visit('/').wait(animationWaitTime).then(() => {
+    cy.contains('button', 'NEW').click({force: true})
+  })
   cy.contains('label', 'project name').siblings().children('input').type(projectName, {force: true})
   cy.contains('button', 'create').click({force: true})
 })
 
 Cypress.Commands.add("projectOpen", (projectName) => {
-  cy.wait(3000).visit('/').then(() => {
-    cy.contains('tr', projectName)
+  cy.get('header').wait(projectListWaitTime)
+  // cy.visit('/').wait(projectListWaitTime).then(() => {
+  cy.get('main').wait(projectListWaitTime).then(() => {
+    cy.contains(projectName, { timeout: 500000 })
   })
-  
-  cy.contains('tr', projectName).find('[type="checkbox"]').click({force: true})
+  cy.contains('tr', projectName, { timeout: 50000 }).find('[type="checkbox"]').click({force: true})
   cy.contains('button', 'OPEN').click({force: true})
 })
 
 Cypress.Commands.add("projectRemove", (projectName) => { 
-  cy.contains('tr', projectName).find('[type="checkbox"]').click({force: true})
-  cy.contains('button', 'REMOVE').click()
-  cy.contains('button', 'remove').click()
+  cy.visit('/').wait(animationWaitTime).then(() => {
+    cy.contains('tr', projectName).find('[type="checkbox"]').click({force: true})
+  })
+  cy.get('header').find('button').eq(4).click({force: true})
+  cy.contains('button', 'remove').click({force: true})
 })
 
 // make Task
 Cypress.Commands.add("taskMake", (taskName) => {
   cy.dragAndDropTask(300, 500, taskName).then(() => {
-    cy.clickTask(taskName)
+    cy.clickTask(taskName).wait(animationWaitTime)
   })
 })
 
 // drag&drop task
 Cypress.Commands.add("dragAndDropTask", (x, y, taskName) => {
-  cy.wait(500).then(() => {
+  cy.wait(animationWaitTime).then(() => {
     cy.get('#task')
   })
   cy.get('#task')
@@ -116,7 +124,7 @@ Cypress.Commands.add("closeTask", () => {
 
 // click input/output files tab
 Cypress.Commands.add("clickInputOutputFilesTab", () => {
-  cy.contains('input/output files').click().wait(100)
+  cy.contains('input/output files').click().wait(animationWaitTime)
 })
 
 // add input file
@@ -158,13 +166,13 @@ Cypress.Commands.add("clickFilesTab", (i) => {
   if (i > 0) {
     cy.contains('button', 'Files').next().find('button').eq(i).click()
   } else {
-    cy.contains('Files').click()
+    cy.contains('Files').click().wait(animationWaitTime)
   }
 })
 
 // open Host select box
 Cypress.Commands.add("openHostListBox", (hostName) => {
-  cy.contains('label', 'host').parent().click().wait(100)
+  cy.contains('label', 'host').parent().click().wait(animationWaitTime)
 })
 
 // select Host
@@ -179,7 +187,7 @@ Cypress.Commands.add("typeSubmitOption", (submitOption) => {
 
 // open retry setting
 Cypress.Commands.add("openRetrySettingTab", () => {
-  cy.contains('retry setting').click().wait(100)
+  cy.contains('retry setting').click().wait(animationWaitTime)
 })
 
 // input use javascript expression for condition check
@@ -247,7 +255,7 @@ Cypress.Commands.add("clickStdoutTab", () => {
 
 // click output(SSH) tab
 Cypress.Commands.add("clickOutputSshTab", () => {
-  cy.contains('span', 'output(SSH)').click()
+  cy.contains('span', 'output(SSH)').click().wait(animationWaitTime)
 })
 
 // click file/folder
@@ -255,9 +263,15 @@ Cypress.Commands.add("clickFileFolder", (name) => {
   cy.contains('button', 'Files').siblings().contains(name).click()
 })
 
+// save project
+Cypress.Commands.add("projectSave", () => {
+  cy.get('header').eq(0).find('[type="button"]').eq(7).click().wait(animationWaitTime)
+})
+
 // reload project
 Cypress.Commands.add("projectReload", (k, projectName, taskName) => {
   if (k == 0) {
+    cy.projectSave()
     cy.get('[href="./home"]').click()
     cy.projectOpen(projectName)
     cy.clickTask(taskName)
@@ -275,13 +289,13 @@ Cypress.Commands.add("switchUseJobScheduler", (flg) => {
   if (flg == 'on') {
     cy.contains('label', 'use job scheduler').siblings().find('input').invoke('is', ':checked').then(($el) => {
       if (!$el) {
-        cy.contains('label', 'use job scheduler').click().wait(1000)
+        cy.contains('label', 'use job scheduler').click({force: true}).wait(animationWaitTime)
       }
     })
   } else if (flg == 'off') {
     cy.contains('use job scheduler').siblings().find('input').invoke('is', ':checked').then(($el) => {
       if ($el) {
-        cy.contains('use job scheduler').click().wait(1000)
+        cy.contains('use job scheduler').click({force: true}).wait(animationWaitTime)
       }
     })
   }
@@ -298,25 +312,36 @@ Cypress.Commands.add("swicthUseJavascriptExpressionForConditionCheck", (flg) => 
   if (flg == 'on') {
     cy.contains('use javascript expression for condition check').siblings().find('input').invoke('is', ':checked').then(($el) => {
       if (!$el) {
-        cy.contains('use javascript expression for condition check').siblings().find('input').click().wait(100)
+        cy.contains('use javascript expression for condition check').siblings().find('input').click().wait(animationWaitTime)
       }
     })
   } else if (flg == 'off') {
     cy.contains('use javascript expression for condition check').siblings().find('input').invoke('is', ':checked').then(($el) => {
       if ($el) {
-        cy.contains('use javascript expression for condition check').siblings().find('input').click().wait(100)
+        cy.contains('use javascript expression for condition check').siblings().find('input').click().wait(animationWaitTime)
       }
     })
   }
 })
 
+// open file editer
+Cypress.Commands.add("clickFileEditer", () => {
+  cy.get('[href="/editor"]').click().wait(animationWaitTime)
+})
+
+// select script
+Cypress.Commands.add("getCosoleElement", () => {
+  cy.get('.v-window-item.v-window-item--active').find('.xterm-rows')
+})
+
+
 // edit script
 Cypress.Commands.add("scriptEdit", (scriptName, script) => {
   cy.contains(scriptName).click()
-  cy.get('[href="/editor"]').click().wait(100)
+  cy.clickFileEditer()
   cy.get('#editor').find('textarea').type(script, {force: true})
-  cy.get('[href="/graph"]').click().wait(100)
-  cy.get('.v-overlay__content').contains('button', 'Save All').click().wait(100)
+  cy.get('[href="/graph"]').click().wait(animationWaitTime)
+  cy.get('.v-overlay__content').contains('button', 'Save All').click().wait(animationWaitTime)
 })
 
 // select script
@@ -341,22 +366,19 @@ Cypress.Commands.add("scriptMake", (scriptName, script) => {
 })
 
 // open stdout
-Cypress.Commands.add("stdoutOpen", (time) => {
-  cy.wait(time)
+Cypress.Commands.add("stdoutOpen", () => {
   cy.clickConsole()
-  cy.clickStdoutTab()
+  cy.clickStdoutTab().wait(animationWaitTime)
 })
 
 // open output ssh
-Cypress.Commands.add("outputSshOpen", (time) => {
-  cy.wait(time)
+Cypress.Commands.add("outputSshOpen", () => {
   cy.clickConsole()
   cy.clickOutputSshTab()
 })
 
 // open info
-Cypress.Commands.add("infoOpen", (time) => {
-  cy.wait(time)
+Cypress.Commands.add("infoOpen", () => {
   cy.clickConsole()
   cy.clickInfoTab()
 })
@@ -364,12 +386,23 @@ Cypress.Commands.add("infoOpen", (time) => {
 // Project　exec
 Cypress.Commands.add("execProject", () => {
   cy.closeTask()
-  cy.get('header').find('.v-card__loader').siblings().eq(0).click().wait(100)
+  cy.get('header').find('.v-card__loader').siblings().eq(0).click().wait(animationWaitTime)
+})
+
+// Project status check
+Cypress.Commands.add("checkProjectStatus", (status) => {
+  // cy.get('header').contains('button', 'status:').then(($el) => {
+  //   cy.get('header').contains(status)
+  // })
+  cy.get('header').contains(status).then(($el) => {
+  // cy.get('header').contains('button', 'status:').then(($el) => {
+    cy.softAssert($el.text().includes(status), true)
+  })
 })
 
 // Project Reset
 Cypress.Commands.add("resetProject", () => {
-  cy.get('header').find('.v-card__loader').siblings().eq(2).click().wait(100)
+  cy.get('header').find('.v-card__loader').siblings().eq(2).click().wait(animationWaitTime)
   cy.contains('[type="button"]', 'ok').click()
 })
 
@@ -382,7 +415,7 @@ Cypress.Commands.add("passwordType", (password) => {
 // select host
 Cypress.Commands.add("hostSelect", (hostName) => {
   cy.openHostListBox(hostName)
-  cy.selectHost(hostName).wait(200)
+  cy.selectHost(hostName).wait(animationWaitTime)
 })
 
 // make file/folder
@@ -409,7 +442,7 @@ Cypress.Commands.add("fileFolderRename", (name, name2) => {
   cy.clickFileFolder(name)
   cy.contains('button', 'Files').next().find('button').eq(2).click()
   cy.contains('label', 'new name').next().type(name2)
-  cy.contains('button', 'ok').click()
+  cy.contains('button', 'ok').click().wait(animationWaitTime)
 })
 
 // delete file/folder

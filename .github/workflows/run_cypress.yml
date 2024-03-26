@@ -3,6 +3,7 @@ on:
   push:
     branches: 
       - master
+      - develop.fj
 jobs:
   cypress-run:
     services:
@@ -40,7 +41,7 @@ jobs:
             "queue": "workq",
             "renewInterval": 0,
             "renewDelay": 0,
-            "statusCheckInterval": 10,
+            "statusCheckInterval": 5,
             "maxStatusCheckError": 10,
             "readyTimeout": 5000
           }]' > ~/.wheel/remotehost.json

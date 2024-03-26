@@ -73,6 +73,26 @@ function getBulkFirstCapture(outputText, reSubCode) {
 }
 
 /**
+ * check if Job status code means failed or not
+ * @param {Object} JS - jobScheduler.json info
+ * @param {String} code - job status code get from status check command
+ * @returns {Boolean} -
+ */
+function isJobFailed(JS, code){
+  const statusList = []
+  if(typeof JS.acceptableJobStatus === "undefined"){
+    statusList.push("0", 0);
+  }else if (Array.isArray(JS.acceptableJobStatus)) {
+    statusList.push(...JS.acceptableJobStatus)
+  }else if(typeof JS.acceptableJobStatus.toString === "function"){
+    statusList.push(JS.acceptableJobStatus.toString())
+  }else{
+    return false
+  }
+  return !statusList.includes(code) 
+}
+
+/**
  * check if job is finished or not on remote server
  * @param {Object} JS - jobScheduler.json info
  * @param {Task} task - task instance
@@ -206,7 +226,8 @@ class JobManager extends EventEmitter {
             await gatherFiles(task);
           }
           await createStatusFile(task);
-          return task.jobStatus !== 0 ? task.jobStatus : task.rt;
+
+          return isJobFailed(JS, task.jobStatus) ? task.jobStatus : task.rt
         } catch (err) {
           ++statusCheckFailedCount;
           err.jobID = task.jobID;
