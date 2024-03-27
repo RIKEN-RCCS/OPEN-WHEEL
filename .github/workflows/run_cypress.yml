@@ -19,6 +19,7 @@ jobs:
       CYPRESS_WHEEL_TEST_HOSTNAME: ${{ secrets.WHEEL_TEST_HOSTNAME }}
       CYPRESS_WHEEL_TEST_PORT: ${{ secrets.WHEEL_TEST_PORT }}
       CYPRESS_WHEEL_TEST_USER: ${{ secrets.WHEEL_TEST_USER }}
+      CYPRESS_WHEEL_PATH: '/home/runner'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -40,7 +41,7 @@ jobs:
             "queue": "workq",
             "renewInterval": 0,
             "renewDelay": 0,
-            "statusCheckInterval": 10,
+            "statusCheckInterval": 5,
             "maxStatusCheckError": 10,
             "readyTimeout": 5000
           }]' > ~/.wheel/remotehost.json
