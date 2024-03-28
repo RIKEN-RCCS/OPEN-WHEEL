@@ -324,7 +324,7 @@ async function projectOperator(clientID, projectRootDir, ack, operation){
       ]);
     }
   }
-  getLogger(projectRootDir).debug(`${operation} done`);
+  getLogger(projectRootDir).debug(`${operation} handler finished`);
   return ack(true);
 }
 
@@ -354,8 +354,7 @@ function getProjectOperationQueue(clientID, projectRootDir, ack){
 
 async function onProjectOperation(clientID, projectRootDir, operation, ack){
   const queue=getProjectOperationQueue(clientID, projectRootDir, ack);
-  const rt=await queue.qsub(operation);
-  getLogger(projectRootDir).info(`${operation} done with ${rt}`);
+  const rt = await queue.qsub(operation);
   return rt;
 }
 
