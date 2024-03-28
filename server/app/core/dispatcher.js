@@ -174,7 +174,7 @@ class Dispatcher extends EventEmitter {
     } catch (err) {
       await this._setComponentState(target, "failed");
       this.hasFailedComponent = true;
-      return Promise.reject(err);
+      throw err
     } finally {
       this.setStateFlag(target.state);
 
@@ -491,7 +491,11 @@ class Dispatcher extends EventEmitter {
     component.env = Object.assign(this.env, component.env);
     component.parentType = this.cwfJson.type;
 
-    exec(component);
+    exec(component).catch((e)=>{
+      getLogger(this.projectRootDir).warn(`${component.name} failed. rt=${component.rt}`);
+      getLogger(this.projectRootDir).trace(component.workingDir, "failed due to", e);
+      throw e;
+    });
     //exec is async function but dispatcher never wait end of task execution
     //it cause error if cancel taskJobs which is waiting for job submittion limit
     this.runningTasks.push(component);
@@ -668,7 +672,7 @@ class Dispatcher extends EventEmitter {
         e.index = component.currentIndex;
       }
       getLogger(this.projectRootDir).warn("fatal error occurred during loop child dispatching.", e);
-      return Promise.reject(e);
+      throw e
     }
 
     if (component.childLoopRunning) {

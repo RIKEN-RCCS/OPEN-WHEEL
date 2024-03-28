@@ -225,9 +225,6 @@ class Executer {
     }
     try {
       await this.batch.qwait(task.sbsID);
-    } catch (e) {
-      getLogger(task.projectRootDir).warn(`${task.name} failed. rt=${task.rt}`);
-      getLogger(task.projectRootDir).trace(task.workingDir, "failed due to", e);
     } finally {
       await createStatusFile(task);
       getLogger(task.projectRootDir).trace(`${task.name} is ${task.state}`);
