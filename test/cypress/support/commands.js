@@ -69,12 +69,7 @@ Cypress.Commands.add("projectMake", (projectName) => {
 })
 
 Cypress.Commands.add("projectOpen", (projectName) => {
-  cy.get('header').wait(projectListWaitTime)
-  // cy.visit('/').wait(projectListWaitTime).then(() => {
-  cy.get('main').wait(projectListWaitTime).then(() => {
-    cy.contains(projectName, { timeout: 500000 })
-  })
-  cy.contains('tr', projectName, { timeout: 50000 }).find('[type="checkbox"]').click({force: true})
+  cy.contains('tr', projectName, { timeout: 1000000 }).find('[type="checkbox"]').click({force: true})
   cy.contains('button', 'OPEN').click({force: true})
 })
 
@@ -391,11 +386,7 @@ Cypress.Commands.add("execProject", () => {
 
 // Project status check
 Cypress.Commands.add("checkProjectStatus", (status) => {
-  // cy.get('header').contains('button', 'status:').then(($el) => {
-  //   cy.get('header').contains(status)
-  // })
   cy.get('header').contains(status).then(($el) => {
-  // cy.get('header').contains('button', 'status:').then(($el) => {
     cy.softAssert($el.text().includes(status), true)
   })
 })

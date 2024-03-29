@@ -3,7 +3,6 @@ on:
   push:
     branches: 
       - master
-      - develop.fj
 jobs:
   cypress-run:
     services:
@@ -20,6 +19,7 @@ jobs:
       CYPRESS_WHEEL_TEST_HOSTNAME: ${{ secrets.WHEEL_TEST_HOSTNAME }}
       CYPRESS_WHEEL_TEST_PORT: ${{ secrets.WHEEL_TEST_PORT }}
       CYPRESS_WHEEL_TEST_USER: ${{ secrets.WHEEL_TEST_USER }}
+      CYPRESS_WHEEL_PATH: '/home/runner'
     runs-on: ubuntu-latest
     strategy:
       matrix:
