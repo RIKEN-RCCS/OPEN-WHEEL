@@ -58,7 +58,6 @@ GitHub Actions上でテストを実行する際に前提としている実行環
 また、以下の条件を満たすことを前提としています。
 * WHEEL、リモート計算サーバ共に起動済みであること。
 * WHEELからリモート計算サーバに対して計算ジョブを投入できること。
-* ホストOS上にCypress 13.6.3がインストール済みであること。
 * ホストOS上でGUIおよびChromeが実行できること(CypressがGUIを表示します)。
 
 #### テスト環境のセットアップ
@@ -67,7 +66,7 @@ GitHub Actions上でテストを実行する際に前提としている実行環
 ```bash
 $ git clone https://github.com/RIKEN-RCCS/OPEN-WHEEL.git
 $ cd OPEN-WHEEL/test
-$ npm install
+$ npm install # Cypressを含めた必要なモジュールがインストールされます。
 ```
 
 ### 事前準備
@@ -114,7 +113,7 @@ $ export CYPRESS_WHEEL_TEST_REMOTEHOST=example
 4. Chromeが起動し、テストファイルの一覧が表示されるので"cypress/e2e/spec.cy.js"をクリック
 
    ![](img/2024-03-29-21-31-05.png)
-5. Chrome上でテスト開始される。
+5. Chrome上でテストが開始される。
 
    ![](img/2024-03-29-21-31-49.png)
 
