@@ -21,6 +21,7 @@
 
 ### 実行環境
 GitHub Actions上でテストを実行する際に前提としている実行環境は以下の通りです。
+
 ![](img/github.drawio.svg)
 
 ### 事前準備
@@ -33,7 +34,7 @@ GitHub Actions上でテストを実行する際に前提としている実行環
 |CYPRESS_WHEEL_TEST_HOSTNAME   |WHEELからリモート計算サーバにsshアクセスする際のアドレス。(test41, 42, 43でリモート計算サーバ上のファイル有無を確認する際も使用)|
 |CYPRESS_WHEEL_TEST_PORT   |WHEELからsshアクセスする際のREMOTE HOSTのポート番号。(test41, 42, 43でリモート計算サーバ上のファイル有無を確認する際も使用)   |
 |CYPRESS_WHEEL_TEST_USER   |WHEELからリモート計算サーバにアクセスするためのユーザID。(test41, 42, 43でリモート計算サーバ上のファイル有無を確認する際も使用)   |
-|CYPRESS_WHEEL_PATH   |WHEELプロジェクトが保存される場所。(test11で[share file]ボタンの表示内容をチェックするために使用)   |
+|CYPRESS_WHEEL_PATH   |WHEELプロジェクトが保存される場所。(test10で[share file]ボタンの表示内容をチェックするために使用)   |
 
 ### テストの実行
 **master**ブランチを push した際にテストが自動実行されます。  
@@ -51,6 +52,7 @@ GitHub Actions上でテストを実行する際に前提としている実行環
 
 #### 実行環境
 ローカル実行については、下記環境で検証しています。
+
 ![](img/local.drawio.svg)
 
 また、以下の条件を満たすことを前提としています。
@@ -63,7 +65,7 @@ GitHub Actions上でテストを実行する際に前提としている実行環
 リポジトリからコードを取得し、必要なモジュールをインストールします。
 ```bash
 $ git clone https://github.com/RIKEN-RCCS/OPEN-WHEEL.git
-$ cd OPEN-WHEE/test
+$ cd OPEN-WHEEL/test
 $ npm install
 ```
 
@@ -86,7 +88,7 @@ env: {
    WHEEL_TEST_USER: "user",
    // WHEELプロジェクトが保存される場所
    // (WHEELがコンテナ実行される場合は、コンテナ内のパス)
-   // (test11で[share file]ボタンの表示内容をチェックするために使用)
+   // (test10で[share file]ボタンの表示内容をチェックするために使用)
    WHEEL_PATH: "/root"
    }
 ```
@@ -103,12 +105,16 @@ $ export CYPRESS_WHEEL_TEST_REMOTEHOST=example
    $ npm run test
    ```
 2. cypressが起動すると以下の画面が表示されるので、"E2E Testing"をクリック。
+
    ![](img/2024-03-29-21-29-55.png)
 3. ブラウザ選択画面が表示されるので、"Chrome"を選択して"Start E2E Testing in Chrome"をクリック。(Cypress実行環境にインストールされているブラウザによって画面の内容は異なります。)
+
    ![](img/2024-03-29-21-30-33.png)
 4. Chromeが起動し、テストファイルの一覧が表示されるので"cypress/e2e/spec.cy.js"をクリック
+
    ![](img/2024-03-29-21-31-05.png)
 5. Chrome上でテスト開始される。
+
    ![](img/2024-03-29-21-31-49.png)
 
 #### 一部のテストのみを実行する場合
