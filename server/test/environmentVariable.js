@@ -62,13 +62,25 @@ describe("UT for environment variables", function() {
     await updateComponent(projectRootDir, forTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "for0", "task0", scriptName), scriptEcho);
 
-    const innerFor = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "for", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, innerFor.ID, "start", 5);
-    await updateComponent(projectRootDir, innerFor.ID, "end", 1);
-    await updateComponent(projectRootDir, innerFor.ID, "step", -2);
-    const innerForTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "for0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, innerForTask.ID, "script", scriptName);
+    const forUnderFor = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "for", { x: 10, y: 10 });
+    await updateComponent(projectRootDir, forUnderFor.ID, "start", 5);
+    await updateComponent(projectRootDir, forUnderFor.ID, "end", 1);
+    await updateComponent(projectRootDir, forUnderFor.ID, "step", -2);
+    const forUnderForTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "for0"), "task", { x: 10, y: 10 });
+    await updateComponent(projectRootDir, forUnderForTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "for0", "for0", "task0", scriptName), scriptEcho);
+
+    const whileUnderFor = await createNewComponent(projectRootDir, path.join(projectRootDir,"for0"), "while", { x: 11, y: 11 });
+    await updateComponent(projectRootDir, whileUnderFor.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
+    const whileUnderForTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "while0"), "task", { x: 10, y: 10 });
+    await updateComponent(projectRootDir, whileUnderForTask.ID, "script", scriptName);
+    await fs.outputFile(path.join(projectRootDir, "for0", "while0", "task0", scriptName), scriptEcho);
+
+    const foreachUnderFor = await createNewComponent(projectRootDir, path.join(projectRootDir,"for0"), "foreach", { x: 11, y: 11 });
+    await updateComponent(projectRootDir, foreachUnderFor.ID, "indexList", ["foo", "bar"]);
+    const foreachUnderForTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "foreach0"), "task", { x: 10, y: 10 });
+    await updateComponent(projectRootDir, foreachUnderForTask.ID, "script", scriptName);
+    await fs.outputFile(path.join(projectRootDir, "for0", "foreach0", "task0", scriptName), scriptEcho);
 
     const while0 = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 11, y: 11 });
     await updateComponent(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
@@ -108,6 +120,27 @@ describe("UT for environment variables", function() {
     await updateComponent(projectRootDir, task0.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "task0", scriptName), scriptEcho);
 
+    const forUnderPS = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name), "for", { x: 10, y: 10 });
+    await updateComponent(projectRootDir, forUnderPS.ID, "start", 5);
+    await updateComponent(projectRootDir, forUnderPS.ID, "end", 1);
+    await updateComponent(projectRootDir, forUnderPS.ID, "step", -2);
+    const forUnderPSTask = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name, "for0"), "task", { x: 10, y: 10 });
+    await updateComponent(projectRootDir, forUnderPSTask.ID, "script", scriptName);
+    await fs.outputFile(path.join(projectRootDir, ps0.name, "for0", "task0", scriptName), scriptEcho);
+
+    const whileUnderPS = await createNewComponent(projectRootDir, path.join(projectRootDir,ps0.name), "while", { x: 11, y: 11 });
+    await updateComponent(projectRootDir, whileUnderPS.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
+    const whileUnderPSTask = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name, "while0"), "task", { x: 10, y: 10 });
+    await updateComponent(projectRootDir, whileUnderPSTask.ID, "script", scriptName);
+    await fs.outputFile(path.join(projectRootDir, ps0.name, "while0", "task0", scriptName), scriptEcho);
+
+    const foreachUnderPS = await createNewComponent(projectRootDir, path.join(projectRootDir,ps0.name), "foreach", { x: 11, y: 11 });
+    await updateComponent(projectRootDir, foreachUnderPS.ID, "indexList", ["foo", "bar"]);
+    const foreachUnderPSTask = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name, "foreach0"), "task", { x: 10, y: 10 });
+    await updateComponent(projectRootDir, foreachUnderPSTask.ID, "script", scriptName);
+    await fs.outputFile(path.join(projectRootDir, ps0.name, "foreach0", "task0", scriptName), scriptEcho);
+
+
     state = await runProject(projectRootDir);
   });
   after(async()=>{
@@ -136,5 +169,53 @@ describe("UT for environment variables", function() {
     expect(path.join(projectRootDir, "for0_2", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_CURRENT_INDEX=2$/m);
     expect(path.join(projectRootDir, "for0_2", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_NEXT_INDEX=4$/m);
     expect(path.join(projectRootDir, "for0_2", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_PREV_INDEX=0$/m);
+  });
+  it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner for component", ()=>{
+    expect(path.join(projectRootDir, "for0_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_START=5$/m);
+    expect(path.join(projectRootDir, "for0_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_END=1$/m);
+    expect(path.join(projectRootDir, "for0_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_STEP=-2$/m);
+    expect(path.join(projectRootDir, "for0_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_CURRENT_INDEX=3$/m);
+    expect(path.join(projectRootDir, "for0_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_NEXT_INDEX=1$/m);
+    expect(path.join(projectRootDir, "for0_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_PREV_INDEX=5$/m);
+  });
+  it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner while component", ()=>{
+    expect(path.join(projectRootDir, "for0_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_START=0$/m);
+    expect(path.join(projectRootDir, "for0_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_END=3$/m);
+    expect(path.join(projectRootDir, "for0_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_STEP=2$/m);
+    expect(path.join(projectRootDir, "for0_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_CURRENT_INDEX=1$/m);
+    expect(path.join(projectRootDir, "for0_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_NEXT_INDEX=2$/m);
+    expect(path.join(projectRootDir, "for0_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_PREV_INDEX=0$/m);
+  });
+  it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner foreach component", ()=>{
+    expect(path.join(projectRootDir, "for0_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_START=0$/m);
+    expect(path.join(projectRootDir, "for0_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_END=3$/m);
+    expect(path.join(projectRootDir, "for0_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_STEP=2$/m);
+    expect(path.join(projectRootDir, "for0_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_CURRENT_INDEX=bar$/m);
+    expect(path.join(projectRootDir, "for0_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_NEXT_INDEX=$/m);
+    expect(path.join(projectRootDir, "for0_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_PREV_INDEX=foo$/m);
+  });
+  it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner for component", ()=>{
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_START=5$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_END=1$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_STEP=-2$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_CURRENT_INDEX=3$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_NEXT_INDEX=1$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","for0_3", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_PREV_INDEX=5$/m);
+  });
+  it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner while component", ()=>{
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_START=$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_END=$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_STEP=$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_CURRENT_INDEX=1$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_NEXT_INDEX=2$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","while0_1", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_PREV_INDEX=0$/m);
+  });
+  it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner foreach component", ()=>{
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_START=$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_END=$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_FOR_STEP=$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_CURRENT_INDEX=bar$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_NEXT_INDEX=$/m);
+    expect(path.join(projectRootDir, "PS0_KEYWORD1_2","foreach0_bar", "task0", logfilename)).to.be.a.file().with.contents.that.match(/^WHEEL_PREV_INDEX=foo$/m);
   });
 });
