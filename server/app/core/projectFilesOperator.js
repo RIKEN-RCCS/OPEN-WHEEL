@@ -1043,8 +1043,15 @@ async function makeDir(basename, argSuffix) {
   return dirname;
 }
 
-async function getChildren(projectRootDir, parentID) {
-  const dir = parentID === null ? projectRootDir : await getComponentDir(projectRootDir, parentID, true);
+/**
+ * get array of child components
+ * @param {string} projectRootDir - project root directory path
+ * @param {string} parentID - parent component's ID or directory path
+ * @param {Boolean} isParentDir - if true, parentID is regard as path to parent directory, not ID string
+ * @returns {Component[]} - array of child components except for subComponent
+ */
+async function getChildren(projectRootDir, parentID, isParentDir) {
+  const dir = isParentDir ? parentID : parentID === null ? projectRootDir : await getComponentDir(projectRootDir, parentID, true);
 
   if (!dir) {
     return [];

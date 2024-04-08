@@ -69,7 +69,7 @@ function foreachGetNextIndex(component) {
       return e === component.currentIndex;
     });
 
-    if (i === -1 || i === component.indexList.length - 1) {
+    if (i === -1 || i === component.indexList.length - 1 ) {
       return null;
     }
     return component.indexList[i + 1];

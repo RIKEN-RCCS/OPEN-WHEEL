@@ -41,6 +41,17 @@ const {
   foreachKeepLoopInstance
 } = require("./loopUtils.js");
 const { makeCmd } = require("./psUtils.js");
+const wheelSystemEnv=[
+  "WHEEL_CURRENT_INDEX",
+  "WHEEL_NEXT_INDEX",
+  "WHEEL_PREV_INDEX",
+  "WHEEL_FOR_START",
+  "WHEEL_FOR_END",
+  "WHEEL_FOR_STEP",
+  "WHEEL_PS_PARAM",
+  "WHEEL_FOREACH_LEN",
+  "WHEEL_REMOTE_WORK"
+]
 
 const taskDB = new Map();
 
@@ -173,7 +184,7 @@ class Dispatcher extends EventEmitter {
 
       if (this.firstCall) {
         await this._asyncInit();
-        const childComponents = await getChildren(this.projectRootDir, this.cwfID);
+        const childComponents = await getChildren(this.projectRootDir, this.cwfDir, true);
         this.currentSearchList = childComponents.filter((component)=>{
           return isInitialComponent(component);
         });
@@ -182,7 +193,6 @@ class Dispatcher extends EventEmitter {
         }));
         this.firstCall = false;
       }
-
       this.logger.trace("currentList:", this.currentSearchList.map((e)=>{
         return e.name;
       }));
@@ -404,8 +414,9 @@ class Dispatcher extends EventEmitter {
           return e.ID === id
         });
       });
-    const nextComponents = await Promise.all(nextComponentIDs.map((id)=>{
-      return this._getComponent(id);
+    const nextComponents = await Promise.all(nextComponentIDs.map(async (id)=>{
+      const tmp = await this._getComponent(id);
+      return tmp
     }));
 
     Array.prototype.push.apply(this.pendingComponents, nextComponents);
@@ -433,7 +444,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _dispatchTask(task) {
-    //this.logger.debug("_dispatchTask called", task.name);
+    this.logger.trace("_dispatchTask called", task.name);
     task.dispatchedTime = getDateString(true, true);
     task.startTime = "not started"; //to be assigned in executer
     task.endTime = "not finished"; //to be assigned in executer
@@ -466,6 +477,9 @@ class Dispatcher extends EventEmitter {
     if (task.usePSSettingFile === true) {
       await this._bulkjobHandler(task);
     }
+    wheelSystemEnv.forEach((envname)=>{
+      delete task.env[envname]
+    });
     task.env = Object.assign(this.env, task.env);
     task.parentType = this.cwfJson.type;
 
@@ -569,7 +583,7 @@ class Dispatcher extends EventEmitter {
     //send back itself to searchList for next loop trip
     this.pendingComponents.push(component);
 
-    const newComponent = Object.assign({}, component);
+    const newComponent = structuredClone(component);
     newComponent.name = `${component.originalName}_${sanitizePath(component.currentIndex)}`;
     newComponent.subComponent = true;
 
@@ -588,7 +602,8 @@ class Dispatcher extends EventEmitter {
         newComponent.env.WHEEL_PREV_INDEX = component.currentIndex - step;
       }
     }
-    newComponent.env.WHEEL_NEXT_INDEX = getNextIndex(component);
+    const nextIndex = getNextIndex(component)
+    newComponent.env.WHEEL_NEXT_INDEX = nextIndex !== null ? nextIndex : "";
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
     try {
@@ -739,7 +754,7 @@ class Dispatcher extends EventEmitter {
       this.logger.debug("rewrite target files");
       await rewriteTargetFile(templateRoot, instanceRoot, targetFiles, params);
 
-      const newComponent = Object.assign({}, component);
+      const newComponent = structuredClone(component);
       newComponent.name = newName;
       newComponent.subComponent = true;
       const newComponentFilename = path.join(instanceRoot, componentJsonFilename);
