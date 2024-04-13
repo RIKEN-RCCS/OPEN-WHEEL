@@ -38,6 +38,7 @@ describe("restart UT", function(){
   it("can restart for component from second loop with updated files", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_for.tgz"),
+      preserveOwner:false,
       cwd: projectRootDir
     });
     await runProject(projectRootDir);
@@ -50,6 +51,7 @@ describe("restart UT", function(){
   it("can restart for component from first loop with updated files", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_for_stop_at_first_loop.tgz"),
+      preserveOwner:false,
       cwd: projectRootDir
     });
     await runProject(projectRootDir);
@@ -61,6 +63,7 @@ describe("restart UT", function(){
   it("can restart foreach component from second loop with updated files", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_foreach.tgz"),
+      preserveOwner:false,
       cwd: projectRootDir
     });
     await runProject(projectRootDir);
@@ -73,6 +76,7 @@ describe("restart UT", function(){
   it("can restart foreach component from first loop with updated files", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_foreach_stop_at_first_loop.tgz"),
+      preserveOwner:false,
       cwd: projectRootDir
     });
     await runProject(projectRootDir);
@@ -84,6 +88,7 @@ describe("restart UT", function(){
   it("can restart while component from second loop with updated files", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_while.tgz"),
+      preserveOwner:false,
       cwd: projectRootDir
     });
     await runProject(projectRootDir);
@@ -96,6 +101,7 @@ describe("restart UT", function(){
   it("can restart while component from first loop with updated files", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_while_stop_at_first_loop.tgz"),
+      preserveOwner:false,
       cwd: projectRootDir
     });
     await runProject(projectRootDir);
@@ -107,6 +113,7 @@ describe("restart UT", function(){
   it("can restart PS component and re-run only not finished instances", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_PS.tgz"),
+      preserveOwner:false,
       cwd: projectRootDir
     });
     await runProject(projectRootDir);
@@ -127,6 +134,7 @@ describe("restart UT", function(){
   it("can restart PS component and re-run only not finished instances", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_PS_stop_before_actual_run.tgz"),
+      preserveOwner:false,
       cwd: projectRootDir
     });
     await runProject(projectRootDir);

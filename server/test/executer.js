@@ -77,7 +77,12 @@ describe("UT for executer class", function() {
     });
     it("run shell script which returns 1 and status should be failed", async ()=>{
       await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-      await exec(task0);
+
+      try{
+        await exec(task0);
+      }catch(e){
+        expect(e.rt).to.equal(1);
+      }
       expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
       expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "failed");
     });
@@ -174,7 +179,12 @@ describe("UT for executer class", function() {
       });
       it("run shell script which returns 1 and status should be failed", async ()=>{
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-        await exec(task0);
+
+        try{
+          await exec(task0);
+        }catch(e){
+          expect(e.rt).to.equal(1);
+        }
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
       });
       it("do not cleanup remote directory after failed run", async ()=>{

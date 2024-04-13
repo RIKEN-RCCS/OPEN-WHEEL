@@ -116,6 +116,12 @@ async function getSourceFilename(projectRootDir, component, clientID) {
   return askSourceFilename(clientID, component.ID, component.name, component.description, filelist);
 }
 
+async function makeOIDCAuth(clientID, remotehostID){
+  return new Promise((resolve)=>{
+    emitAll(clientID, "requestOIDCAuth", remotehostID, resolve)
+  });
+}
+
 async function onGetProjectJson(projectRootDir, ack) {
   try {
     const projectJson = await getProjectJson(projectRootDir);
@@ -200,7 +206,13 @@ async function onRunProject(clientID, projectRootDir, ack) {
       if (hostInfo.type === "aws") {
         throw new Error(`aws type remotehost is no longer supported ${hostInfo.name}`);
       }
+      getLogger(projectRootDir).debug(`make ssh connection to ${hostInfo.name}`);
       await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage);
+
+      if(hostInfo.useWebAPI){
+        getLogger(projectRootDir).debug(`start OIDC authorization for ${hostInfo.name}`);
+        await makeOIDCAuth(clientID, id);
+      }
     }
   } catch (err) {
     await updateProjectState(projectRootDir, "not-started");

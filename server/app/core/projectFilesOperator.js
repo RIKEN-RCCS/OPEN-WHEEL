@@ -1338,6 +1338,9 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) 
 
 /**
  * read component Json recursively and pick up remote hosts used in task component
+ * @param {string} projectRootDir - projectRootDir's absolute path
+ * @param {String || null} rootID - ID of the component to start travarsal. start from project root if rootID is null
+ * @return {Object[]} - exclusive array of hosts
  */
 async function getHosts(projectRootDir, rootID) {
   const hosts = [];
@@ -1346,7 +1349,9 @@ async function getHosts(projectRootDir, rootID) {
   const storageHosts2 = Array.from(new Set(storageHosts));
   const hosts2 = Array.from(new Set(hosts))
     .filter((host)=>{
-      return !storageHosts2.includes(host.hostname);
+      return ! storageHosts.some((e)=>{
+        e.hostname === host.hostname
+      });
     });
   return [...storageHosts2, ...hosts2];
 }

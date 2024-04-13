@@ -479,7 +479,6 @@ class Dispatcher extends EventEmitter {
     exec(component).catch((e)=>{
       getLogger(this.projectRootDir).warn(`${component.name} failed. rt=${component.rt}`);
       getLogger(this.projectRootDir).trace(component.workingDir, "failed due to", e);
-      throw e;
     });
     //exec is async function but dispatcher never wait end of task execution
     //it cause error if cancel taskJobs which is waiting for job submittion limit
