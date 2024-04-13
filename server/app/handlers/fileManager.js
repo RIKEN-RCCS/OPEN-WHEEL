@@ -9,7 +9,7 @@ const fs = require("fs-extra");
 const glob = require("glob");
 const minimatch = require("minimatch");
 const klaw = require("klaw");
-const { zip } = require("zip-a-folder");
+
 const isPathInside = require("is-path-inside");
 const { gitAdd, gitRm, gitLFSTrack, gitLFSUntrack, isLFS } = require("../core/gitOperator2");
 const { convertPathSep } = require("../core/pathUtils");
@@ -240,6 +240,7 @@ const onUploadFileSaved = async (event)=>{
 const onDownload = async (projectRootDir, target, cb)=>{
   const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
   const tmpDir = await fs.mkdtemp(`${dir}/`);
+  const { zip } = await import("zip-a-folder");
 
   let downloadZip = false;
   let targetBasename = "";

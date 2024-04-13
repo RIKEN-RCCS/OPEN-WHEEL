@@ -36,7 +36,7 @@ const { gitInit } = require("../app/core/gitOperator2");
 //return { tarace: console.log, info: console.log, debug: console.log, error: console.log, warn: console.log };
 //});
 
-const testDirRoot = "WHEEL_TEST_TMP";
+const testDirRoot = path.resolve("./WHEEL_TEST_TMP");
 
 describe("fileManager UT", ()=>{
   beforeEach(async()=>{
