@@ -7,6 +7,11 @@ if [ $? -ne 0 ];then
   echo "ERROR: run test server failed $?"
   exit 2
 fi
+
+echo remove entry from known_hosts
+ssh-keygen -R '[localhost]:4000' 2>/dev/null
+
+
 IPAddress=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${TAG_TEST_SERVER})
 
 #create rmeotehost.json
