@@ -6,7 +6,6 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const { zip } = require("zip-a-folder");
 const { readComponentJsonByID, isLocal } = require("../core/projectFilesOperator.js");
 const { remoteHost } = require("../db/db");
 const { getLogger } = require("../logSettings");
@@ -94,6 +93,7 @@ async function onGetRemoteSNDContents(projectRootDir) {
 }
 
 async function onRemoteDownload(projectRootDir, target, host, cb) {
+  const { zip } = await import("zip-a-folder");
   try {
     const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
     const tmpDir = await fs.mkdtemp(`${dir}/`);

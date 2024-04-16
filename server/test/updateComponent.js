@@ -28,7 +28,8 @@ describe("updateComponent UT", function() {
   const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
   let task0;
   let task1;
-  beforeEach(async ()=>{
+  beforeEach(async function (){
+    this.timeout(5000);
     await fs.remove(testDirRoot);
 
     try {

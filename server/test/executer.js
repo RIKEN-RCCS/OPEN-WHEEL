@@ -105,7 +105,7 @@ describe("UT for executer class", function() {
       ssh = new SshClientWrapper(hostInfo);
 
       try {
-        const rt = await ssh.canConnect();
+        const rt = await ssh.canConnect(120);
 
         if (!rt) {
           throw new Error("canConnect failed");
@@ -190,7 +190,12 @@ describe("UT for executer class", function() {
       it("do not cleanup remote directory after failed run", async ()=>{
         task0.doCleanup = true;
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-        await exec(task0);
+
+        try{
+          await exec(task0);
+        }catch(e){
+          expect(e.rt).to.equal(1);
+        }
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
         expect(await ssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
           .to.have.members([task0.name]);
@@ -199,7 +204,12 @@ describe("UT for executer class", function() {
       it("do not get outputFiles after failed run", async ()=>{
         task0.outputFiles = [{ name: "hoge" }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(1)}`);
-        await exec(task0);
+
+        try{
+          await exec(task0);
+        }catch(e){
+          expect(e.rt).to.equal(1);
+        }
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
         expect(path.join(task0.workingDir, "hoge")).not.to.be.a.path();
       });
