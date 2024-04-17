@@ -1,7 +1,7 @@
 name: Cypress Tests
-on:
+on: 
   push:
-    branches:
+    branches: 
       - master
 jobs:
   cypress-run:
@@ -37,7 +37,7 @@ jobs:
             "numJob": 5,
             "port": ${{ secrets.WHEEL_TEST_PORT }},
             "id": "dummy-id",
-            "jobScheduler": "PBSProWithoutHistory",
+            "jobScheduler": "PBSPro",
             "queue": "workq",
             "renewInterval": 0,
             "renewDelay": 0,
@@ -60,7 +60,7 @@ jobs:
       - run: npm install simple-ssh
       - run: npm install @cypress/webpack-preprocessor
       - run: npm install cypress-delete-downloads-folder
-
+        
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
