@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const {addRequest, getRequest, delRequest} = require("rwatchd");
+const { addRequest, getRequest, delRequest } = require("rwatchd");
 const { getLogger } = require("../logSettings");
 const { jobScheduler } = require("../db/db");
 const { createBulkStatusFile } = require("./execUtils");

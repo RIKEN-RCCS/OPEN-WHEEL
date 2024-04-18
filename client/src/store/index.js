@@ -96,7 +96,10 @@ export default new Vuex.Store({
   mutations,
   actions: {
     selectedComponent: (context, payload)=>{
-      const {selectedComponent: selected, copySelectedComponent:copied, projectRootDir, currentComponent} = context.state
+      const { selectedComponent: selected,
+        copySelectedComponent:copied,
+        projectRootDir,
+        currentComponent} = context.state
 
       if( copied !== null && !deepEqual(copied, selected)){
         SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID,(rt)=>{
