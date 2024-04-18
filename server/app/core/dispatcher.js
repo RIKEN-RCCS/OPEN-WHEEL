@@ -43,6 +43,8 @@ const {
   foreachKeepLoopInstance
 } = require("./loopUtils.js");
 const { makeCmd } = require("./psUtils.js");
+const { overwriteByRsync } = require("./rsync.js");
+
 const wheelSystemEnv=[
   "WHEEL_CURRENT_INDEX",
   "WHEEL_NEXT_INDEX",
@@ -55,14 +57,9 @@ const wheelSystemEnv=[
   "WHEEL_REMOTE_WORK"
 ]
 
-const {overwriteByRsync} = require("./rsync.js");
-
-
 const taskDB = new Map();
 
-
 //private functions
-
 async function replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber) {
   return Promise.all(
     targetFiles.map(async (targetFile)=>{
@@ -115,7 +112,6 @@ class Dispatcher extends EventEmitter {
     this.componentPath = componentPath;
     this.ancestorsType = ancestorsType;
     this.env = Object.assign({}, env);
-
     this.currentSearchList = [];
     this.pendingComponents = [];
     this.children = new Set(); //child dispatcher instance
@@ -614,18 +610,7 @@ class Dispatcher extends EventEmitter {
       newComponent.env = {};
     }
     newComponent.env.WHEEL_CURRENT_INDEX = component.currentIndex;
-
-    if (typeof prevIndex !== "undefined") {
-      newComponent.env.WHEEL_PREV_INDEX = prevIndex;
-    }else{
-      if(component.type === "foreach"){
-        newComponent.env.WHEEL_PREV_INDEX = "";
-      }else{
-        const step = component.step || 1;
-        newComponent.env.WHEEL_PREV_INDEX = component.currentIndex - step;
-      }
-    }
-
+    newComponent.env.WHEEL_PREV_INDEX = getPrevIndex(component);
     const nextIndex = getNextIndex(component)
     newComponent.env.WHEEL_NEXT_INDEX = nextIndex !== null ? nextIndex : "";
 

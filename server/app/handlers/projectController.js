@@ -154,7 +154,6 @@ async function onUpdateProjectROStatus(projectRootDir, isRO, ack){
 }
 
 async function onRunProject(clientID, projectRootDir, ack) {
-  //const projectState = await getProjectState(projectRootDir);
   //validation check
   try {
     await validateComponents(projectRootDir);

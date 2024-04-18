@@ -138,7 +138,6 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
-
 </template>
 <script>
 import { mapState, mapMutations } from "vuex";

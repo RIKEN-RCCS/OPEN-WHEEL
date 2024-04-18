@@ -301,7 +301,6 @@ class RemoteJobExecuter extends Executer {
       err.cmd = submitCmd;
       err.rt = rt;
       err.outputText = outputText;
-
       return Promise.reject(err);
     }
     if( this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent> this.batch.maxConcurrent ){
