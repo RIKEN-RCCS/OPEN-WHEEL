@@ -296,6 +296,7 @@ describe("UT for Dispatcher class", function() {
     it("should delete all loop instance", async ()=>{
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
+      await wait();
       expect(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_1`)).not.to.be.a.path();
       expect(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_2`)).not.to.be.a.path();
       expect(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_3`)).not.to.be.a.path();

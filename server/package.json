@@ -52,6 +52,7 @@
     "minimatch": "^6.1.6",
     "nunjucks": "^3.2.3",
     "p-retry": "^4.6.1",
+    "perfect-debounce": "^1.0.0",
     "promise-retry": "^2.0.1",
     "rwatchd": "^0.6.0",
     "simple-batch-system": "^1.20.0",

@@ -9,6 +9,7 @@ const path = require("path");
 const { promisify } = require("util");
 const { EventEmitter } = require("events");
 const glob = require("glob");
+const { debounce } = require("perfect-debounce")
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
 const { remoteHost, componentJsonFilename, filesJsonFilename, projectJsonFilename } = require("../db/db");
@@ -518,8 +519,18 @@ class Dispatcher extends EventEmitter {
 
   async _delegate(component) {
     getLogger(this.projectRootDir).debug("_delegate called", component.name);
-    await this._setComponentState(component, "running");
     const childDir = path.resolve(this.cwfDir, component.name);
+
+    //PS instance component is called in template component's dispatcher.
+    //_setComponentState should not be called for PS because it write template component's component JSON file
+    if(component.type !== "parameterStudy"){
+      await this._setComponentState(component, "running");
+    }else{
+      component.state="running"
+      await fs.writeJson(path.resolve(childDir, componentJsonFilename), component);
+      const ee = eventEmitters.get(this.projectRootDir);
+      ee.emit("componentStateChanged");
+    }
     const ancestorsType = typeof this.ancestorsType === "string" ? `${this.ancestorsType}/${component.type}` : component.type;
     const child = new Dispatcher(this.projectRootDir, component.ID, childDir, this.projectStartTime,
       this.componentPath, Object.assign({}, this.env, component.env), ancestorsType);
@@ -705,10 +716,11 @@ class Dispatcher extends EventEmitter {
   async _PSHandler(component) {
     getLogger(this.projectRootDir).debug("_PSHandler called", component.name);
 
-    if(component.numTotal > 0&& component.state === "not-started"){
+    if(component.initialized && component.state === "not-started"){
       component.restarting=true;
     }
     await this._setComponentState(component, "running");
+    component.initialized =true;
     const { templateRoot, paramSettingsFilename, paramSettings, targetFiles } = await this._getTargetFile(component);
 
     const scatterRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "scatter") ? paramSettings.scatter
@@ -748,6 +760,11 @@ class Dispatcher extends EventEmitter {
 
     getLogger(this.projectRootDir).debug("start paramSpace loop");
 
+    const updateComponentJson= debounce(async ()=>{
+      const ee = eventEmitters.get(this.projectRootDir);
+      ee.emit("componentStateChanged");
+      return writeComponentJson(this.projectRootDir, templateRoot, component, true)
+    });
     for (const paramVec of paramVecGenerator(paramSpace)) {
       const params = paramVec.reduce((p, c)=>{
         p[c.key] = c.value;
@@ -814,12 +831,8 @@ class Dispatcher extends EventEmitter {
           } else {
             getLogger(this.projectRootDir).warn("child state is illegal", newComponent.state);
           }
-          writeComponentJson(this.projectRootDir, templateRoot, component,true)
-            .then(()=>{
-              const ee = eventEmitters.get(this.projectRootDir);
-              ee.emit("componentStateChanged");
-            });
-        });
+        })
+        .then(updateComponentJson);
       promises.push(p);
     }
     await Promise.all(promises);
@@ -844,6 +857,8 @@ class Dispatcher extends EventEmitter {
     await this._addNextComponent(component);
     getLogger(this.projectRootDir).trace("add next component done");
     const state = component.numFailed > 0 ? "failed" : "finished";
+    delete component.initialized;
+    delete component.restarting;
     await this._setComponentState(component, state);
     getLogger(this.projectRootDir).trace("set component state done");
 
