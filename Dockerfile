@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #build WHEEL client code
-FROM --platform=linux/amd64 node:hydrogen-slim as builder
+FROM --platform=linux/amd64 node:20-slim as builder
 WORKDIR /usr/src/
 # to install phantomjs
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
@@ -11,7 +11,7 @@ COPY client client
 RUN cd client; npm install; npm run build
 
 #build base image to run WHEEL
-FROM --platform=linux/amd64 node:hydrogen-slim as base
+FROM --platform=linux/amd64 node:20-slim as base
 WORKDIR /usr/src/
 RUN apt-get update && apt -y install curl git rsync openssh-server &&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
