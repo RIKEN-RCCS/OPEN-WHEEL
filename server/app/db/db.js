@@ -94,6 +94,7 @@ const remotehostFilename = getConfigFile(getStringVar(config.remotehostJsonFile,
 const jobScriptTemplateFilename = getConfigFile(getStringVar(config.jobScriptTemplateJsonFile, "jobScriptTemplate.json"));
 const projectListFilename = getConfigFile(getStringVar(config.projectListJsonFile, "projectList.json"));
 const logFilename = getConfigFile(getStringVar(config.logFilename, "wheel.log"));
+const credentialFilename = getConfigFile(getStringVar(config.credentialFilename, "credentials.json"));
 
 //export constants
 module.exports.suffix = ".wheel";
@@ -109,6 +110,7 @@ if (!process.env.WHEEL_USE_HTTP) {
   module.exports.certFilename = getConfigFile("server.crt", true);
 }
 module.exports.logFilename = logFilename;
+module.exports.credentialFilename = credentialFilename;
 
 //re-export server settings
 module.exports.interval = parseInt(process.env.WHEEL_INTERVAL,10) || getIntVar(config.interval, 1000);

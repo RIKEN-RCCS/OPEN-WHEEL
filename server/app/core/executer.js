@@ -6,7 +6,10 @@
 "use strict";
 const path = require("path");
 const childProcess = require("child_process");
+const https = require("https");
 const fs = require("fs-extra");
+const axios=require("axios");
+const {getAccessToken} = require("./webAPI.js");
 const SBS = require("simple-batch-system");
 const { remoteHost, jobScheduler, numJobOnLocal, defaultTaskRetryCount } = require("../db/db");
 const { addX } = require("./fileUtils");
@@ -324,6 +327,97 @@ class RemoteJobExecuter extends Executer {
   }
 }
 
+class RemoteJobWebAPIExecuter extends Executer {
+  constructor(hostinfo, isJob) {
+    super(hostinfo, isJob);
+    this.queues = hostinfo != null ? hostinfo.queue : null;
+    this.JS = hostinfo != null ? jobScheduler[hostinfo.jobScheduler] : null;
+    this.grpName = hostinfo != null ? hostinfo.grpName : null;
+  }
+
+  setJS(v) {
+    this.JS = v;
+  }
+
+  setQueues(v) {
+    this.queues = v;
+  }
+
+  setGrpName(v) {
+    this.grpName = v;
+  }
+
+  async exec(task) {
+    await prepareRemoteExecDir(task);
+    const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
+    const queueURL="https://api.fugaku.r-ccs.riken.jp/queue/computer/"
+    const accessToken = getAccessToken(task.remotehostID);
+
+    if(accessToken === null){
+      const err = new Error("accessToken not found")
+      return Promise.reject(err);
+    }
+
+    //const submitOpt = task.submitOption ? task.submitOption : "";
+    //const submitCmd = `. /etc/profile; cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
+    //
+    //accessTokenで認証する時は、httpsAgentのオプションを削除してAuthorization headerをつける
+    //headers:{
+    //Authorization: `Bearer ${accessToken}`,
+    //},
+    //tokenでの認証に変更した時は、tokenのrefresh機能も設定する必要あり
+    const request={
+      jobfile:`${task.remoteWorkingDir}/${task.script}`,
+    }
+    const passphrase=process.env.WHEEL_CERT_PASSPHRASE;
+    const pfx=await fs.readFile(process.env.WHEEL_CERT_FILENAME);
+    const option= {httpsAgent: new https.Agent({ passphrase, pfx })}
+    const response = await axios.post(queueURL,request, option)
+
+    const outputText=response.data.output
+    if(response.status !== 200){
+      const err = new Error("submit command failed");
+      err.jobfile = request.jobfile;
+      err.status = response.status;
+      err.outputText = outputText;
+      return Promise.reject(err);
+    }
+
+    getLogger(task.projectRootDir).debug("submitting job (by webAPI):");
+    await setTaskState(task, "running");
+
+    if(isExceededLimit(this.JS, null, outputText)){
+      this.batch.originalMaxConcurrent = this.batch.maxConcurrent;
+      this.batch.maxConcurrent  = this.batch.maxConcurrent  - 1;
+      getLogger(task.projectRootDir).debug(`max numJob is reduced to ${this.batch.maxConcurrent}`);
+      getLogger(task.projectRootDir).trace(`exceed job submit limit ${outputText}`);
+      task.forceRetry=true
+      return Promise.reject(task);
+    }
+
+    if( this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent> this.batch.maxConcurrent ){
+      this.batch.maxConcurrent  = this.batch.maxConcurrent +1
+    }
+    if( this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent === this.batch.maxConcurrent ){
+      delete this.batch.originalMaxConcurrent
+    }
+    const re = new RegExp(this.JS.reJobID, "m");
+    const result = re.exec(outputText);
+
+    if (result === null || result[1] === null) {
+      const err = new Error("get jobID failed");
+      err.jobfile = request.jobfile;
+      err.outputText = outputText;
+      return Promise.reject(err);
+    }
+    const jobID = result[1];
+    task.jobID = jobID;
+    getLogger(task.projectRootDir).info("submit success:", request.jobfile, jobID);
+    task.jobSubmittedTime = getDateString(true, true);
+    return registerJob(hostinfo, task);
+  }
+}
+
 class RemoteTaskExecuter extends Executer {
   constructor(hostinfo, isJob) {
     super(hostinfo, isJob);
@@ -413,11 +507,18 @@ function createExecuter(task) {
     throw err;
   }
   if (onRemote) {
+    if(hostinfo.useWebAPI){
+      getLogger(task.projectRootDir).debug(`create new executer for ${task.host} with web API`);
+      return new RemoteJobWebAPIExecuter(hostinfo, true)
+    }
     if (task.useJobScheduler) {
+      getLogger(task.projectRootDir).debug(`create new executer for ${task.host} with job scheduler`);
       return new RemoteJobExecuter(hostinfo, true);
     }
+    getLogger(task.projectRootDir).debug(`create new executer for ${task.host} without job scheduler`);
     return new RemoteTaskExecuter(hostinfo, false);
   }
+  getLogger(task.projectRootDir).debug("create new executer for localhost");
   return new LocalTaskExecuter(hostinfo, false);
 }
 
@@ -445,7 +546,6 @@ async function exec(task) {
       executer.setGrpName(grpName);
     }
   } else {
-    getLogger(task.projectRootDir).debug("create new executer for", task.host, " with job scheduler", task.useJobScheduler);
     executer = createExecuter(task);
     executers.set(getExecutersKey(task), executer);
   }

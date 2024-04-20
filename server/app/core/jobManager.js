@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const {addRequest, getRequest} = require("rwatchd");
+const {addRequest, getRequest, delRequest} = require("rwatchd");
 const { getLogger } = require("../logSettings");
 const { jobScheduler } = require("../db/db");
 const { createBulkStatusFile } = require("./execUtils");
@@ -114,6 +114,41 @@ async function getStatusCode(JS, task, statCmdRt, outputText){
   return task.rt;
 }
 
+function createRequestForWebAPI(hostinfo, task, JS){
+  const baseURL="https://api.fugaku.r-ccs.riken.jp/queue/computer"
+  return {
+    cmd: `curl --cert-type P12 -X POST  --cert ${process.env.WHEEL_CERT_FILENAME}:${process.env.WHEEL_CERT_PASSPHRASE} ${baseURL}/`,
+    withoutArgument: true,
+    finishedLocalHook:{
+      cmd: `curl --cert-type P12 -X POST --cert ${process.env.WHEEL_CERT_FILENAME}:${process.env.WHEEL_CERT_PASSPHRASE} ${baseURL}/${task.jobID}`,
+    },
+    delimiter:JS.statDelimiter,
+    re: JS.reRunning.replace("{{ JOBID }}", task.jobID),
+    interval: hostinfo.statusCheckInterval *1000,
+    argument: task.jobID,
+    hostInfo: { host: "localhost" },
+    numAllowFirstFewEmptyOutput: 3,
+    allowEmptyOutput: JS.allowEmptyOutput
+  }
+}
+
+function createRequest(hostinfo, task, JS){
+  return {
+    cmd: task.type !== "bulkjobTask" ? JS.stat : JS.bulkstat,
+    finishedHook:{
+      cmd: task.type !== "bulkjobTask" ? JS.statAfter:JS.bulkstatAfter,
+      withArgument: true
+    },
+    delimiter:JS.statDelimiter,
+    re: JS.reRunning.replace("{{ JOBID }}", task.jobID),
+    interval: hostinfo.statusCheckInterval *1000,
+    argument: task.jobID,
+    hostInfo: hostinfo,
+    numAllowFirstFewEmptyOutput: 3,
+    allowEmptyOutput: JS.allowEmptyOutput
+  }
+}
+
 function registerJob(hostinfo, task) {
   return new Promise((resolve, reject)=>{
     const JS = jobScheduler[hostinfo.jobScheduler];
@@ -122,21 +157,7 @@ function registerJob(hostinfo, task) {
       err.hostinfo=hostinfo
       reject(err);
     }
-    const request={
-      cmd: task.type !== "bulkjobTask" ? JS.stat : JS.bulkstat,
-      finishedHook:{
-        cmd: task.type !== "bulkjobTask" ? JS.statAfter:JS.bulkstatAfter,
-        withArgument: true
-      },
-      delimiter:JS.statDelimiter,
-      re: JS.reRunning.replace("{{ JOBID }}", task.jobID),
-      interval: hostinfo.statusCheckInterval *1000,
-      argument: task.jobID,
-      hostInfo: hostinfo,
-      numAllowFirstFewEmptyOutput: 3,
-      allowEmptyOutput: JS.allowEmptyOutput
-    }
-
+    const request = hostinfo.useWebAPI ? createRequestForWebAPI(hostinfo, task, JS) : createRequest(hostinfo, task, JS);
     const id = addRequest(request)
     const result=getRequest(id);
     const requestName = `${request.argument} on ${request.hostInfo.host}`
@@ -152,27 +173,29 @@ function registerJob(hostinfo, task) {
         const err=new Error("max status check error exceeded")
         err.numStatusCheckError =statusCheckErrorCount
         err.maxStatusCheckError =JS.maxStatusCheckError
+        delRequest(id);
         reject(err);
       }
     });
     result.event.on("finished", async (request)=>{
+      const hook=hostinfo.useWebAPI ? request.finishedLocalHook:request.finishedHook
       getLogger(task.projectRootDir).debug(`${requestName} done`);
-      getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${request.finishedHook.output}`)
+      getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${hook.output}`)
 
-      if(/^\s*$/.test(request.finishedHook.output)) {
+      if(/^\s*$/.test(hook.output)) {
         getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`)
 
         await pRetry(async ()=>{
           let outputText = "";
           const ssh = getSsh(task.projectRootDir, task.remotehostID);
-          await ssh.exec(request.finishedHook.cmd, 60, (data)=>{
+          await ssh.exec(hook.cmd, 60, (data)=>{
             outputText += data;
           });
 
           if(/^\s*$/.test(outputText)){
             throw new Error("got empty output from status check command");
           }
-          request.finishedHook.output = outputText
+          hook.output = outputText
           return true
         },{
           onFailedAttempt: (error)=>{
@@ -188,7 +211,7 @@ function registerJob(hostinfo, task) {
       if(isJobFailed(JS, task.jobStatus)){
         reject(task.jobStatus)
       }
-      const rt = await getStatusCode(JS, task, request.finishedHook.rt, request.finishedHook.output)
+      const rt = await getStatusCode(JS, task, hook.rt, hook.output)
       if(rt === 0){
         resolve(rt)
       }else{

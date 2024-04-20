@@ -515,6 +515,11 @@ export default {
         this.$refs.logscreen.logRecieved(event, data);
       });
     }
+    SIO.onGlobal("requestOIDCAuth", (remotehostID, ack)=>{
+      const param = new URLSearchParams({remotehostID})
+      window.location.replace(`${this.baseURL}/webAPIauth?${param.toString()}`)
+      ack(true);
+    });
 
     SIO.emitGlobal("getHostList", (hostList)=>{
       this.commitRemoteHost(hostList);
