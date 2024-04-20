@@ -514,8 +514,18 @@ class Dispatcher extends EventEmitter {
 
   async _delegate(component) {
     getLogger(this.projectRootDir).debug("_delegate called", component.name);
-    await this._setComponentState(component, "running");
     const childDir = path.resolve(this.cwfDir, component.name);
+
+    //PS instance component is called in template component's dispatcher.
+    //_setComponentState should not be called for PS because it write template component's component JSON file
+    if(component.type !== "parameterStudy"){
+      await this._setComponentState(component, "running");
+    }else{
+      component.state="running"
+      await fs.writeJson(path.resolve(childDir, componentJsonFilename), component);
+      const ee = eventEmitters.get(this.projectRootDir);
+      ee.emit("componentStateChanged");
+    }
     const ancestorsType = typeof this.ancestorsType === "string" ? `${this.ancestorsType}/${component.type}` : component.type;
     const child = new Dispatcher(this.projectRootDir, component.ID, childDir, this.projectStartTime,
       this.componentPath, Object.assign({}, this.env, component.env), ancestorsType);
@@ -699,12 +709,15 @@ class Dispatcher extends EventEmitter {
   }
 
   async _PSHandler(component) {
+    let tmp //for DEBUG
     getLogger(this.projectRootDir).debug("_PSHandler called", component.name);
+    console.log("DEBUG: PSHandler called", component.name, this.cwfDir);
 
-    if(component.numTotal > 0&& component.state === "not-started"){
+    if(component.initialized && component.state === "not-started"){
       component.restarting=true;
     }
     await this._setComponentState(component, "running");
+    component.initialized =true;
     const { templateRoot, paramSettingsFilename, paramSettings, targetFiles } = await this._getTargetFile(component);
 
     const scatterRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "scatter") ? paramSettings.scatter
@@ -810,6 +823,8 @@ class Dispatcher extends EventEmitter {
           } else {
             getLogger(this.projectRootDir).warn("child state is illegal", newComponent.state);
           }
+        })
+        .then(()=>{
           writeComponentJson(this.projectRootDir, templateRoot, component,true)
             .then(()=>{
               const ee = eventEmitters.get(this.projectRootDir);
@@ -840,7 +855,13 @@ class Dispatcher extends EventEmitter {
     await this._addNextComponent(component);
     getLogger(this.projectRootDir).trace("add next component done");
     const state = component.numFailed > 0 ? "failed" : "finished";
+    delete component.initialized;
+    delete component.restarting;
+    //tmp = await fs.readFile(path.resolve(this.cwfDir,component.name, componentJsonFilename));
+    //console.log("DEBUG 4:",tmp.toString());
     await this._setComponentState(component, state);
+    tmp = await fs.readFile(path.resolve(this.cwfDir,component.name, componentJsonFilename));
+    console.log("DEBUG 5:",tmp.toString());
     getLogger(this.projectRootDir).trace("set component state done");
 
     if (component.deleteLoopInstance) {
@@ -1037,6 +1058,7 @@ class Dispatcher extends EventEmitter {
   async _setComponentState(component, state) {
     component.state = state; //update in memory
     const componentDir = this._getComponentDir(component.ID);
+    console.log("DEBUG:",componentDir, state );
     await writeComponentJson(this.projectRootDir, componentDir, component, true);
     const ee = eventEmitters.get(this.projectRootDir);
     ee.emit("componentStateChanged");

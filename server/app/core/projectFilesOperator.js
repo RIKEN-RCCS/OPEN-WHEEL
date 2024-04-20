@@ -721,6 +721,9 @@ async function isSameRemoteHost(projectRootDir, src, dst) {
  */
 async function writeComponentJson(projectRootDir, componentDir, component, doNotAdd=false) {
   const filename = path.join(componentDir, componentJsonFilename);
+  if(componentDir.endsWith("PS0")){
+    console.trace()
+  }
   await fs.writeJson(filename, component, { spaces: 4, replacer: componentJsonReplacer });
 
   if(doNotAdd){
