@@ -33,7 +33,7 @@ ssh-keygen -R '[localhost]:4000' 2>/dev/null
 
 
 echo "start UT"
-WHEEL_LOGLEVEL=debug WHEEL_CONFIG_DIR=/tmp/WHEEL_CONFIG_DIR WHEEL_TEST_REMOTEHOST=testServer WHEEL_TEST_REMOTE_PASSWORD=passw0rd npm run test
+WHEEL_CONFIG_DIR=/tmp/WHEEL_CONFIG_DIR WHEEL_TEST_REMOTEHOST=testServer WHEEL_TEST_REMOTE_PASSWORD=passw0rd npm run test
 echo "UT finished"
 
 docker-compose down
