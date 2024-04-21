@@ -477,9 +477,13 @@ class Dispatcher extends EventEmitter {
     if (task.usePSSettingFile === true) {
       await this._bulkjobHandler(task);
     }
-    wheelSystemEnv.forEach((envname)=>{
-      delete task.env[envname]
-    });
+    if(task.env){
+      wheelSystemEnv.forEach((envname)=>{
+        if(Object.prototype.hasOwnProperty.call(task.env, envname)){
+          delete task.env[envname]
+        }
+      });
+    }
     task.env = Object.assign(this.env, task.env);
     task.parentType = this.cwfJson.type;
 
