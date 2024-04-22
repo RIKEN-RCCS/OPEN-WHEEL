@@ -32,6 +32,13 @@
             </span>
           </v-tab>
         </v-tabs>
+        <v-spacer>
+          <v-btn
+            variant=outlined
+            text="get version info"
+            @click="getVersionInfo"
+          />
+        </v-spacer>
       </template>
     </v-toolbar>
     <v-window
@@ -55,6 +62,9 @@
 
 <script>
 import xterm from "@/components/xterm.vue";
+import { mapState } from "vuex";
+import SIO from "@/lib/socketIOWrapper.js";
+
 export default {
   name: "LogScreen",
   components: {
@@ -73,6 +83,9 @@ export default {
         { label: "output(SSH)", id: "sshout", clear: 0, log: "", unread: false, eventNames: ["logSSHout","logSSHerr"] },
       ],
     };
+  },
+  computed: {
+    ...mapState(["projectRootDir"])
   },
   watch:{
     show(){
@@ -110,6 +123,11 @@ export default {
         item.clear = (item.clear+1)%2;
       }
     },
+    getVersionInfo(){
+      SIO.emitGlobal("getVersionInfo", this.projectRootDir, ()=>{
+        console.log("version info should be on INFO log");
+      });
+    }
   },
 };
 </script>

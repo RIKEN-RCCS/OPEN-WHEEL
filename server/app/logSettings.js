@@ -121,6 +121,9 @@ const logSettings = {
 log4js.configure(logSettings);
 
 function getLogger(projectRootDir) {
+  if(typeof projectRootDir !== "string"){
+    return logger
+  }
   //please note projectRootDir context will remain after logging
   logger.addContext("projectRootDir", projectRootDir || path.dirname(logFilename));
   logger.shutdown = promisify(log4js.shutdown); //only use in test code
