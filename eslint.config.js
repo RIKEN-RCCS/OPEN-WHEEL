@@ -11,7 +11,7 @@ import vueParser from "vue-eslint-parser"
 export default [
   js.configs.recommended,
   {
-    ignores : ["./**/node_modules/", "server/app/public/*"],
+    ignores : ["node_modules/", "server/app/public/", "test/", "documentMD/"],
   },
   {
     files:["server/**/*.js"],
