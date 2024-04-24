@@ -16,6 +16,11 @@
   "engines": {
     "node": ">=20"
   },
+  "workspaces": [
+    "server",
+    "client",
+    "test"
+  ],
   "scripts": {
     "start": "cd server; npm start",
     "build": "cd server; npm install; cd ../client; npm install; npm run build",
