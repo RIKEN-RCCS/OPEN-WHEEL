@@ -270,6 +270,17 @@ async function getUnusedPath(parent, name) {
   return path.resolve(parent, `${name}.${suffix}`);
 }
 
+/**
+ * replace CRLF to LF
+ * @param {string} filename - tareget file name
+ */
+async function replaceCRLF(filename) {
+  let contents = await fs.readFile(filename);
+  contents = contents.toString().replace(/\r\n/g, "\n");
+  return fs.writeFile(filename, contents);
+}
+
+
 module.exports = {
   readJsonGreedy,
   addX,
@@ -277,5 +288,6 @@ module.exports = {
   deliverFileOnRemote,
   openFile,
   saveFile,
-  getUnusedPath
+  getUnusedPath,
+  replaceCRLF
 };

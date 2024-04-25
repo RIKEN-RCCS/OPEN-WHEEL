@@ -141,6 +141,8 @@ async function createBulkStatusFile(task, rtList, jobStatusList) {
 module.exports = {
   setTaskState,
   gatherFiles,
+  needDownload,
+  makeDownloadRecipe,
   createStatusFile,
   createBulkStatusFile
 };
