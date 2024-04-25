@@ -547,13 +547,19 @@ function cancel(task) {
 
 /**
  * remove all executer class instance from DB
- * @param {string} projectRootDir - 
+ * @param {string} projectRootDir - project projectRootDir's absolute path
  */
-//function removeAll(projectRootDir){
-////TODO this function should be implmented and called from stopProject and/or runProject's tear down process
-//}
+function removeAll(projectRootDir){
+  const keysToRemove = Array.from(executers.keys()).filter((key)=>{
+    return key.startsWith(projectRootDir)
+  });
+  keysToRemove.forEach((key)=>{
+    executers.delete(key);
+  });
+}
 
 module.exports={
   register,
-  cancel
+  cancel,
+  removeAll
 }

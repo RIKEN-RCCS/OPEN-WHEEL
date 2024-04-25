@@ -9,6 +9,8 @@ const fs = require("fs-extra");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
 const { removeSsh } = require("./sshManager");
+const {removeAll:removeExecuters} = require("./executerManager.js")
+const {removeAll:removeTransferrers} = require("./executerManager.js")
 const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { writeComponentJson, readComponentJson , setProjectState } = require("../core/projectFilesOperator");
 const Dispatcher = require("./dispatcher");
@@ -66,6 +68,8 @@ async function stopProject(projectRootDir) {
     await rootDispatcher.remove();
     rootDispatchers.delete(projectRootDir);
   }
+  removeExecuters(projectRootDir)
+  removeTransferrers(projectRootDir)
   removeSsh(projectRootDir);
   //project state must be updated by onStopProject()
 }
@@ -97,6 +101,9 @@ async function runProject(projectRootDir) {
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
   await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
   rootDispatchers.delete(projectRootDir);
+  removeExecuters(projectRootDir)
+  removeTransferrers(projectRootDir)
+  removeSsh(projectRootDir);
   return rootWF.state;
 }
 
