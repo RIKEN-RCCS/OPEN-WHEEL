@@ -30,7 +30,7 @@ export default {
     GraphView,
     ComponentLibrary,
     ComponentProperty,
-    ComponentTree,
-  },
+    ComponentTree
+  }
 };
 </script>

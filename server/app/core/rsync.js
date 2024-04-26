@@ -7,18 +7,17 @@
 const util = require("node:util");
 const fs = require("fs-extra");
 const exec = util.promisify(require("node:child_process").exec);
-
-async function overwriteByRsync(src, dst, ignoreFiles=[]){
-  const exclude = ignoreFiles.reduce((a,c)=>{
-    if(typeof e !== "string"){
+async function overwriteByRsync(src, dst, ignoreFiles = []) {
+  const exclude = ignoreFiles.reduce((a, c)=>{
+    if (typeof e !== "string") {
       return a;
     }
     return `${a} --exclude=${c} `;
   }, "");
   const stats = await fs.stat(src);
 
-  return exec(`rsync -av ${exclude} ${src}${stats.isDirectory() ? "/":""} ${dst}`);
+  return exec(`rsync -av ${exclude} ${src}${stats.isDirectory() ? "/" : ""} ${dst}`);
 }
-module.exports={
+module.exports = {
   overwriteByRsync
 };

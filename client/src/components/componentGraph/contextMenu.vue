@@ -14,34 +14,34 @@
 <script>
 "use strict";
 
-import { boxWidth, textHeight } from "@/lib/constants.json"
-export default{
-  name:"context-menu",
-  props:{
-    x:{
-      required:true,
+import { boxWidth, textHeight } from "@/lib/constants.json";
+export default {
+  name: "context-menu",
+  props: {
+    x: {
+      required: true,
       type: Number
     },
-    y:{
-      required:true,
+    y: {
+      required: true,
       type: Number
     },
-    items:{
-      required:true,
+    items: {
+      required: true,
       type: Array
     }
   },
-  methods:{
-    onClick(e){
-      console.log("onClick",e);
-      this.$emit(e)
-    },
-  },
-  data(){
-    return {
-      width: boxWidth*0.5,
-      height: textHeight
+  methods: {
+    onClick(e) {
+      console.log("onClick", e);
+      this.$emit(e);
     }
   },
-}
+  data() {
+    return {
+      width: boxWidth * 0.5,
+      height: textHeight
+    };
+  }
+};
 </script>

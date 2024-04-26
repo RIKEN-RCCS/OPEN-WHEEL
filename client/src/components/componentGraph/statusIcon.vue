@@ -11,13 +11,13 @@
 </template>
 <script>
 "use strict";
-import { textHeight} from "@/lib/constants.json";
+import { textHeight } from "@/lib/constants.json";
 import imgNotStarted from "@/assets/img_stateQue.png";
 import imgRunning from "@/assets/img_statePlay.png";
 import imgFinished from "@/assets/img_stateDone.png";
 import imgError from "@/assets/img_error.png";
 
-const stateIcon={
+const stateIcon = {
   "not-started": imgNotStarted,
   "stage-in": imgRunning,
   "running": imgRunning,
@@ -25,78 +25,78 @@ const stateIcon={
   "finished": imgFinished,
   "failed": imgError,
   "unknown": imgError
-}
+};
 
-export default{
+export default {
   name: "status-icon",
-  props:{
-    x:{
+  props: {
+    x: {
       required: true,
       type: Number
     },
-    y:{
+    y: {
       required: true,
       type: Number
     },
-    state:{
+    state: {
       required: true,
       type: String
     },
-    numTotal:{
+    numTotal: {
       type: Number
     },
-    numFinished :{
+    numFinished: {
       type: Number
     },
-    numFailed :{
+    numFailed: {
       type: Number
     }
   },
-  computed:{
-    successRatio(){
-      return this.numFinished / this.numTotal * 100
+  computed: {
+    successRatio() {
+      return this.numFinished / this.numTotal * 100;
     },
-    failedRatio(){
-      return this.numFailed / this.numTotal * 100
+    failedRatio() {
+      return this.numFailed / this.numTotal * 100;
     },
-    showPiChart(){
-      return Number.isInteger(this.numTotal) && this.numTotal >0
-        && Number.isInteger(this.numFinished) && this.numFinished >=0
-        && Number.isInteger(this.numFailed) && this.numFailed >=0
+    showPiChart() {
+      return Number.isInteger(this.numTotal) && this.numTotal > 0
+        && Number.isInteger(this.numFinished) && this.numFinished >= 0
+        && Number.isInteger(this.numFailed) && this.numFailed >= 0;
     },
-    successChartEndCoord(){
-      return { x: this.x + this.radius*Math.sin(this.successRatio/100*Math.PI*2),
-        y: this.y - this.radius*Math.cos(this.successRatio/100*Math.PI*2)}
+    successChartEndCoord() {
+      return { x: this.x + this.radius * Math.sin(this.successRatio / 100 * Math.PI * 2),
+        y: this.y - this.radius * Math.cos(this.successRatio / 100 * Math.PI * 2) };
     },
-    failedChartEndCoord(){
-      return { x: this.x + this.radius*Math.sin((this.successRatio+this.failedRatio)/100*Math.PI*2),
-        y: this.y - this.radius*Math.cos((this.successRatio+this.failedRatio)/100*Math.PI*2)}
+    failedChartEndCoord() {
+      return { x: this.x + this.radius * Math.sin((this.successRatio + this.failedRatio) / 100 * Math.PI * 2),
+        y: this.y - this.radius * Math.cos((this.successRatio + this.failedRatio) / 100 * Math.PI * 2) };
     },
-    successCmd(){
+    successCmd() {
       return `M ${this.x} ${this.y}
                 v -${this.radius}
                 A ${this.radius}  ${this.radius} 0 ${this.successRatio > 50 ? 1 : 0} 1
                   ${this.successChartEndCoord.x} ${this.successChartEndCoord.y}
                 L ${this.x} ${this.y}
-                Z`
+                Z`;
     },
-    failedCmd(){
+    failedCmd() {
       return `M ${this.x} ${this.y}
                 L ${this.successChartEndCoord.x} ${this.successChartEndCoord.y}
                 A ${this.radius}  ${this.radius} 0 ${this.failedRatio > 50 ? 1 : 0} 1
                   ${this.failedChartEndCoord.x} ${this.failedChartEndCoord.y}
                 L ${this.x} ${this.y}
-                Z`
+                Z`;
     },
-    iconImg(){
-      return stateIcon[this.state]
-    },
-  },
-  data (){
-    return {
-      radius: textHeight*0.8/2
+    iconImg() {
+      return stateIcon[this.state];
     }
+  },
+  data() {
+    return {
+      radius: textHeight * 0.8 / 2
+    };
   }
-}
+};
 
 </script>

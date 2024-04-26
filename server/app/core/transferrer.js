@@ -4,29 +4,27 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const path=require("path");
-const { addX, replaceCRLF} = require("./fileUtils.js");
-const { setTaskState, needDownload, makeDownloadRecipe} = require("./execUtils");
+const path = require("path");
+const { addX, replaceCRLF } = require("./fileUtils.js");
+const { setTaskState, needDownload, makeDownloadRecipe } = require("./execUtils");
 const { getSshHostinfo, getSsh } = require("./sshManager.js");
 const { getLogger } = require("../logSettings.js");
-const {register} = require("./transferManager.js");
-
-async function stageIn(task){
+const { register } = require("./transferManager.js");
+async function stageIn(task) {
   await setTaskState(task, "stage-in");
-  const hostinfo=getSshHostinfo(task.projectRootDir, task.remotehostID);
+  const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
 
   //convert \r\n to \n
   const localScriptPath = path.resolve(task.workingDir, task.script);
   await replaceCRLF(localScriptPath);
 
   //add exec permission to script
-  await addX(localScriptPath)
+  await addX(localScriptPath);
 
   //register send request
-  return register(hostinfo, task, "send",[task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
+  return register(hostinfo, task, "send", [task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
 }
-
-async function stageOut(task){
+async function stageOut(task) {
   await setTaskState(task, "stage-out");
   const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
 
@@ -59,7 +57,6 @@ async function stageOut(task){
       return `--exclude=${e}`;
     });
   }
-
   //get files which match include filter
   if (Array.isArray(task.include) && task.include.length > 0) {
     const downloadRecipe2 = task.include.map((e)=>{
@@ -79,7 +76,6 @@ async function stageOut(task){
   }
 
   await Promise.all(promises);
-
   //clean up remote working directory
   if (task.doCleanup) {
     getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
@@ -94,7 +90,7 @@ async function stageOut(task){
   }
 }
 
-module.exports={
+module.exports = {
   stageIn,
   stageOut
-}
+};

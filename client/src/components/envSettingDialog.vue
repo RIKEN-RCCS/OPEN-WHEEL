@@ -147,82 +147,82 @@ import buttons from "@/components/common/buttons.vue";
 import { removeFromArray } from "@/lib/clientUtility.js";
 import { required } from "@/lib/validationRules.js";
 
-export default{
+export default {
   name: "envSettingDialog",
-  components:{
+  components: {
     actionRow,
-    buttons,
+    buttons
   },
   computed: {
-    ...mapState(["projectState", "currentComponent", "projectRootDir","rootComponentID", "readOnly"]),
+    ...mapState(["projectState", "currentComponent", "projectRootDir", "rootComponentID", "readOnly"])
   },
-  data: function(){
+  data: function () {
     return {
       envSetting: false,
       env: [],
       editKeyDialog: [],
       editValueDialog: [],
       newKey: null,
-      newValue:null,
-      headers:[
-        {title: "name", key: "name"},
-        {title: "value", key: "value" },
-        {title: "" ,key: "actions"}
+      newValue: null,
+      headers: [
+        { title: "name", key: "name" },
+        { title: "value", key: "value" },
+        { title: "", key: "actions" }
       ]
-    }
+    };
   },
-  methods:{
+  methods: {
     required,
     ...mapMutations(
       {
         commitComponentTree: "componentTree",
         commitWaitingEnv: "waitingEnv"
       }),
-    noDuplicatedName(newName){
+    noDuplicatedName(newName) {
       const hasDup = this.env.some((e)=>{
-        return e.name === newName
+        return e.name === newName;
       });
-      return hasDup ? "duplicated name is not allowed": true;
+      return hasDup ? "duplicated name is not allowed" : true;
     },
-    openEnvironmentVariableSetting(){
+    openEnvironmentVariableSetting() {
       this.commitWaitingEnv(true);
-      SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID,  (data)=>{
+      SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID, (data)=>{
         //this determination does not work
-        if(data instanceof Error){
+        if (data instanceof Error) {
           console.log("getEnv API return error", data);
           this.commitWaitingEnv(false);
           return;
         }
-        const env=Object.entries(data).map(([k,v])=>{
-          return {name: k, value:v};
+        const env = Object.entries(data).map(([k, v])=>{
+          return { name: k, value: v };
         });
         this.env.splice(0, this.env.length, ...env);
         this.commitWaitingEnv(false);
-        this.envSetting=true;
+        this.envSetting = true;
       });
     },
-    closeEnvironmentVariableSetting(){
-      this.newKey=null;
-      this.newValue=null;
-      this.envSetting=false;
+    closeEnvironmentVariableSetting() {
+      this.newKey = null;
+      this.newValue = null;
+      this.envSetting = false;
     },
-    addEnv(){
-      this.env.push({name: this.newKey, value: this.newValue});
-      this.newKey=null;
-      this.newValue=null;
+    addEnv() {
+      this.env.push({ name: this.newKey, value: this.newValue });
+      this.newKey = null;
+      this.newValue = null;
     },
-    deleteEnv(e){
+    deleteEnv(e) {
       console.log("DEBUG DELETE", e);
       removeFromArray(this.env, e.raw);
     },
-    saveEnv(){
-      const env=this.env.reduce((a, e)=>{
-        a[e.name]=e.value;
+    saveEnv() {
+      const env = this.env.reduce((a, e)=>{
+        a[e.name] = e.value;
         return a;
       }, {});
-      SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID,  SIO.generalCallback);
-      this.closeEnvironmentVariableSetting()
-    },
+      SIO.emitGlobal("updateEnv", this.projectRootDir, this.rootComponentID, env, this.currentComponent.ID, SIO.generalCallback);
+      this.closeEnvironmentVariableSetting();
+    }
   }
-}
+};
 </script>

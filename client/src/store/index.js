@@ -9,8 +9,6 @@ import Debug from "debug";
 const debug = Debug("wheel:vuex");
 import deepEqual from "deep-eql";
 import SIO from "@/lib/socketIOWrapper.js";
-
-
 const logger = (store)=>{
   store.subscribe((mutation)=>{
     const { type, payload } = mutation;
@@ -20,7 +18,6 @@ const logger = (store)=>{
 const simpleMutation = (type, state, payload)=>{
   state[type] = payload;
 };
-
 const mutationFactory = (types)=>{
   return types.reduce((a, c)=>{
     a[c] = simpleMutation.bind(null, c);
@@ -97,19 +94,18 @@ export default new Vuex.Store({
   actions: {
     selectedComponent: (context, payload)=>{
       const { selectedComponent: selected,
-        copySelectedComponent:copied,
+        copySelectedComponent: copied,
         projectRootDir,
-        currentComponent} = context.state
-
-      if( copied !== null && !deepEqual(copied, selected)){
-        SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID,(rt)=>{
+        currentComponent } = context.state;
+      if (copied !== null && !deepEqual(copied, selected)) {
+        SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID, (rt)=>{
           console.log("compoent update done", rt);
         });
       }
-      if(payload === null){
+      if (payload === null) {
         context.commit("selectedComponent", null);
         context.commit("copySelectedComponent", null);
-        return
+        return;
       }
 
       context.commit("selectedComponent", payload);
@@ -130,7 +126,6 @@ export default new Vuex.Store({
     closeSnackbar: (context)=>{
       context.commit("snackbarMessage", "");
       context.commit("openSnackbar", false);
-
       if (context.state.snackbarQueue.length > 0) {
         context.dispatch("showSnackbar");
       }
@@ -144,10 +139,10 @@ export default new Vuex.Store({
       context.commit("dialogContent", payload);
       context.commit("openDialog", true);
     },
-    closeDialog: (context )=>{
+    closeDialog: (context)=>{
       context.commit("dialogContent", null);
       context.commit("openDialog", false);
-    },
+    }
   },
   getters: {
     //get selected component's absolute path on server
@@ -156,12 +151,12 @@ export default new Vuex.Store({
         return state.projectRootDir;
       }
       const relativePath = state.componentPath[state.selectedComponent.ID];
-      //remove "./" or "/" at the begining of line 
-      let numRemove=0;
-      if( /^\.\//.test(relativePath)){
-        numRemove=2;
-      }else if(relativePath.startsWith("/")){
-        numRemove=1;
+      //remove "./" or "/" at the begining of line
+      let numRemove = 0;
+      if (/^\.\//.test(relativePath)) {
+        numRemove = 2;
+      } else if (relativePath.startsWith("/")) {
+        numRemove = 1;
       }
       return `${state.projectRootDir}${getters.pathSep}${relativePath.slice(numRemove)}`;
     },
@@ -183,11 +178,11 @@ export default new Vuex.Store({
     canRun: (state)=>{
       return ["not-started", "paused"].includes(state.projectState);
     },
-    running:(state)=>{
+    running: (state)=>{
       return state.projectState === "running";
-    },
+    }
   },
   modules: {
   },
-  plugins: [logger],
+  plugins: [logger]
 });

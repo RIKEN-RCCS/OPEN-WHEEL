@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const fs=require("fs-extra");
+const fs = require("fs-extra");
 
 //DO NOT require any other WHEEL modules in this file
 
@@ -18,7 +18,7 @@ const bars = "_\\-";
 const pathseps = "/\\";
 const metaCharactors = "*?[]{}()!?+@.";
 
-const reMustBeEscapedChars=/([.*+?^=!:${}()|[\]/\\])/g
+const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]/\\])/g;
 
 /**
  * escape meta character of regex (from MDN)
@@ -29,7 +29,6 @@ const reMustBeEscapedChars=/([.*+?^=!:${}()|[\]/\\])/g
 function escapeRegExp(target) {
   return target.replace(reMustBeEscapedChars, "\\$1");
 }
-
 function isSane(name) {
   if (typeof name !== "string") {
     return false;
@@ -73,7 +72,7 @@ function isValidInputFilename(name) {
   const forbidonChars = new RegExp(`[^${escapeRegExp(`${alphanumeric + pathseps}.`) + bars + "{}"}]`);
 
   //ignore white space between {{ and }}
-  const modifiedName = name.replace(/\{\{.*?\}\}/g,"")
+  const modifiedName = name.replace(/\{\{.*?\}\}/g, "");
   if (forbidonChars.test(modifiedName)) {
     return false;
   }
@@ -92,7 +91,7 @@ function isValidOutputFilename(name) {
   const forbidonChars = new RegExp(`[^${escapeRegExp(alphanumeric + pathseps + metaCharactors) + bars + "{}"}]`);
 
   //ignore white space between {{ and }}
-  const modifiedName = name.replace(/\{\{.*?\}\}/g,"")
+  const modifiedName = name.replace(/\{\{.*?\}\}/g, "");
   if (forbidonChars.test(modifiedName)) {
     return false;
   }
@@ -120,7 +119,6 @@ function getDateString(humanReadable = false, withMilliseconds = false) {
   }
   return withMilliseconds ? `${yyyy}${mm}${dd}-${HH}${MM}${ss}${ms}` : `${yyyy}${mm}${dd}-${HH}${MM}${ss}`;
 }
-
 function formatSshOutput(outputArray) {
   const rt = [];
   for (const e of outputArray) {
@@ -130,8 +128,7 @@ function formatSshOutput(outputArray) {
     return e !== "";
   });
 }
-
-function writeJsonWrapper(filename, data){
+function writeJsonWrapper(filename, data) {
   return fs.writeJson(filename, data, { spaces: 4 });
 }
 

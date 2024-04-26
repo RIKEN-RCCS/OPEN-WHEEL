@@ -14,7 +14,7 @@ const { getLogger } = require("../logSettings");
 const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
-const { getHosts, validateComponents, getSourceComponents,getComponentDir, getProjectJson, getProjectState, setComponentStateR,setProjectState, updateProjectDescription,  updateProjectROStatus} = require("../core/projectFilesOperator");
+const { getHosts, validateComponents, getSourceComponents, getComponentDir, getProjectJson, getProjectState, setComponentStateR, setProjectState, updateProjectDescription, updateProjectROStatus } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh } = require("../core/sshManager");
 const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
 const { isValidOutputFilename } = require("../lib/utility");
@@ -24,15 +24,13 @@ const { emitAll, emitWithPromise } = require("./commUtils.js");
 const { removeTempd, getTempd } = require("../core/tempd.js");
 const allowedOperations = require("../../../common/allowedOperations.cjs");
 
-const projectOperationQueues=new Map()
-
+const projectOperationQueues = new Map();
 async function updateProjectState(projectRootDir, state) {
   const projectJson = await setProjectState(projectRootDir, state);
   if (projectJson) {
     await emitAll(projectRootDir, "projectState", projectJson.state);
   }
 }
-
 async function askUnsavedFiles(clientID, projectRootDir) {
   const logger = getLogger(projectRootDir);
   const unsavedFiles = await getUnsavedFiles(projectRootDir);
@@ -57,12 +55,10 @@ async function askUnsavedFiles(clientID, projectRootDir) {
     }
   }
 }
-
 async function getSourceCandidates(projectRootDir, ID) {
   const componentDir = await getComponentDir(projectRootDir, ID);
   return promisify(glob)("*", { cwd: path.join(projectRootDir, componentDir), ignore: componentJsonFilename });
 }
-
 async function askSourceFilename(clientID, ID, name, description, candidates) {
   return new Promise((resolve, reject)=>{
     emitAll(clientID, "askSourceFilename", ID, name, description, candidates, (filename)=>{
@@ -76,7 +72,6 @@ async function askSourceFilename(clientID, ID, name, description, candidates) {
     });
   });
 }
-
 async function askUploadSourceFile(clientID, ID, name, description) {
   return new Promise((resolve, reject)=>{
     emitAll(clientID, "askUploadSourceFile", ID, name, description, (filename)=>{
@@ -98,7 +93,6 @@ async function getSourceFilename(projectRootDir, component, clientID) {
   }
   const filelist = await getSourceCandidates(projectRootDir, component.ID);
   getLogger(projectRootDir).trace("sourceFile: candidates=", filelist);
-
   if (component.outputFiles && component.outputFiles[0] && component.outputFiles[0].name) {
     const rt = filelist.find((e)=>{
       return e === component.outputFiles[0].name;
@@ -115,20 +109,17 @@ async function getSourceFilename(projectRootDir, component, clientID) {
   }
   return askSourceFilename(clientID, component.ID, component.name, component.description, filelist);
 }
-
-async function makeOIDCAuth(clientID, remotehostID){
+async function makeOIDCAuth(clientID, remotehostID) {
   return new Promise((resolve)=>{
-    emitAll(clientID, "requestOIDCAuth", remotehostID, resolve)
+    emitAll(clientID, "requestOIDCAuth", remotehostID, resolve);
   });
 }
-
 async function onGetProjectJson(projectRootDir, ack) {
   try {
     const projectJson = await getProjectJson(projectRootDir);
     emitAll(projectRootDir, "projectJson", projectJson);
     const resultDir = await getTempd(projectRootDir, "viewer");
     const filename = path.resolve(resultDir, filesJsonFilename);
-
     if (await fs.pathExists(filename)) {
       sendResultsFileDir(projectRootDir, resultDir);
     }
@@ -138,21 +129,18 @@ async function onGetProjectJson(projectRootDir, ack) {
   }
   return ack(true);
 }
-
 async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
   const requestedComponentDir = await getComponentDir(projectRootDir, componentID);
   return sendWorkflow(ack, projectRootDir, requestedComponentDir, clientID);
 }
-
 async function onUpdateProjectDescription(projectRootDir, description, ack) {
   await updateProjectDescription(projectRootDir, description);
   onGetProjectJson(projectRootDir, ack);
 }
-async function onUpdateProjectROStatus(projectRootDir, isRO, ack){
+async function onUpdateProjectROStatus(projectRootDir, isRO, ack) {
   await updateProjectROStatus(projectRootDir, isRO);
   onGetProjectJson(projectRootDir, ack);
 }
-
 async function onRunProject(clientID, projectRootDir, ack) {
   //validation check
   try {
@@ -163,14 +151,12 @@ async function onRunProject(clientID, projectRootDir, ack) {
     ack(err);
     return false;
   }
-
   //interactive phase
   try {
     await updateProjectState(projectRootDir, "preparing");
 
     //resolve source files
     const sourceComponents = await getSourceComponents(projectRootDir);
-
     for (const component of sourceComponents) {
       if (component.disable) {
         getLogger(projectRootDir).debug(`disabled component: ${component.name}(${component.ID})`);
@@ -207,15 +193,13 @@ async function onRunProject(clientID, projectRootDir, ack) {
       }
       getLogger(projectRootDir).debug(`make ssh connection to ${hostInfo.name}`);
       await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage);
-
-      if(hostInfo.useWebAPI){
+      if (hostInfo.useWebAPI) {
         getLogger(projectRootDir).debug(`start OIDC authorization for ${hostInfo.name}`);
         await makeOIDCAuth(clientID, id);
       }
     }
   } catch (err) {
     await updateProjectState(projectRootDir, "not-started");
-
     if (err.reason === "CANCELED") {
       getLogger(projectRootDir).debug(err.message);
     } else {
@@ -225,7 +209,6 @@ async function onRunProject(clientID, projectRootDir, ack) {
     ack(err);
     return false;
   }
-
   //actual run
   try {
     const ee = new EventEmitter();
@@ -255,12 +238,10 @@ async function onRunProject(clientID, projectRootDir, ack) {
   }
   return;
 }
-
 async function onStopProject(projectRootDir) {
   await stopProject(projectRootDir);
   await updateProjectState(projectRootDir, "stopped");
 }
-
 async function onCleanProject(clientID, projectRootDir) {
   await askUnsavedFiles(clientID, projectRootDir);
   await Promise.all([
@@ -269,8 +250,7 @@ async function onCleanProject(clientID, projectRootDir) {
     removeTempd(projectRootDir, "download")
   ]);
 }
-
-async function onRevertProject(clientID, projectRootDir ) {
+async function onRevertProject(clientID, projectRootDir) {
   await askUnsavedFiles(clientID, projectRootDir);
   await Promise.all([
     gitResetHEAD(projectRootDir),
@@ -278,15 +258,14 @@ async function onRevertProject(clientID, projectRootDir ) {
     removeTempd(projectRootDir, "download")
   ]);
 }
-
 async function onSaveProject(projectRootDir, ack) {
-  const { readOnly} = await getProjectJson(projectRootDir);
-  if(readOnly){
+  const { readOnly } = await getProjectJson(projectRootDir);
+  if (readOnly) {
     getLogger(projectRootDir).error("readOnly project can not be saved", projectRootDir);
     return ack(new Error("project is read-only"));
   }
   const projectState = await getProjectState(projectRootDir);
-  if(! allowedOperations[projectState].includes("saveProject")){
+  if (!allowedOperations[projectState].includes("saveProject")) {
     getLogger(projectRootDir).error(projectState, "project can not be saved", projectRootDir);
     return ack(new Error(`${projectState} project is not allowed to save`));
   }
@@ -295,22 +274,21 @@ async function onSaveProject(projectRootDir, ack) {
   await setComponentStateR(projectRootDir, projectRootDir, "not-started", false, ["finished"]);
   await gitCommit(projectRootDir);
 }
-
-async function projectOperator(clientID, projectRootDir, ack, operation){
+async function projectOperator(clientID, projectRootDir, ack, operation) {
   const projectState = await getProjectState(projectRootDir);
   //ignore disallowd operation for this state
-  if(!allowedOperations[projectState].includes(operation)){
+  if (!allowedOperations[projectState].includes(operation)) {
     getLogger(projectRootDir).debug(`${operation} is not allowed at ${projectState} state`);
     return false;
   }
-  try{
-    switch(operation){
+  try {
+    switch (operation) {
       case "runProject":
         //do not wait onRunProject
         onRunProject(clientID, projectRootDir, ack);
         break;
       case "stopProject":
-        await onStopProject(projectRootDir, ack)
+        await onStopProject(projectRootDir, ack);
         break;
       case "cleanProject":
         await onCleanProject(clientID, projectRootDir, ack);
@@ -319,14 +297,14 @@ async function projectOperator(clientID, projectRootDir, ack, operation){
         await onRevertProject(clientID, projectRootDir, ack);
         break;
       case "saveProject":
-        await onSaveProject(projectRootDir, ack)
+        await onSaveProject(projectRootDir, ack);
         break;
     }
-  } catch(e){
+  } catch (e) {
     getLogger(projectRootDir).error(`${operation} failed`, e);
     ack(e);
   } finally {
-    if(operation !== "runProject"){
+    if (operation !== "runProject") {
       await Promise.all([
         sendWorkflow(null, projectRootDir),
         sendTaskStateList(projectRootDir),
@@ -338,33 +316,30 @@ async function projectOperator(clientID, projectRootDir, ack, operation){
   getLogger(projectRootDir).debug(`${operation} handler finished`);
   return ack(true);
 }
-
-function getProjectOperationQueue(clientID, projectRootDir, ack){
-  if(!projectOperationQueues.has(projectRootDir)){
+function getProjectOperationQueue(clientID, projectRootDir, ack) {
+  if (!projectOperationQueues.has(projectRootDir)) {
     const tmp = new SBS({
       name: "projectOperator",
       exec: projectOperator.bind(null, clientID, projectRootDir, ack),
       submitHook: async (queue, operation)=>{
-        const last=queue.getLastEntry();
-
-        if( last !== null && last.args === operation){
+        const last = queue.getLastEntry();
+        if (last !== null && last.args === operation) {
           getLogger(projectRootDir).debug("duplicated operation is ignored", operation);
-          return false
+          return false;
         }
         //flush operation queue if cleanProject is called
-        if(operation === "cleanProject"){
-          queue.clear()
+        if (operation === "cleanProject") {
+          queue.clear();
         }
         return true;
       }
     });
-    projectOperationQueues.set(projectRootDir, tmp)
+    projectOperationQueues.set(projectRootDir, tmp);
   }
   return projectOperationQueues.get(projectRootDir);
 }
-
-async function onProjectOperation(clientID, projectRootDir, operation, ack){
-  const queue=getProjectOperationQueue(clientID, projectRootDir, ack);
+async function onProjectOperation(clientID, projectRootDir, operation, ack) {
+  const queue = getProjectOperationQueue(clientID, projectRootDir, ack);
   const rt = await queue.qsub(operation);
   return rt;
 }

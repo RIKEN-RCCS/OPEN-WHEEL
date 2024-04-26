@@ -9,7 +9,7 @@ const path = require("path");
 const fs = require("fs-extra");
 const cors = require("cors");
 const express = require("express");
-const ipfilter = require("express-ipfilter").IpFilter
+const ipfilter = require("express-ipfilter").IpFilter;
 const asyncHandler = require("express-async-handler");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
@@ -22,7 +22,6 @@ const { setSio } = require("./core/global.js");
 const { tempdRoot } = require("./core/tempd.js");
 const { hasEntry, hasCode, hasRefreshToken, storeCode, acquireAccessToken, getURLtoAcquireCode, getRemotehostIDFromState } = require("./core/webAPI.js");
 
-
 //setup logger
 const logger = getLogger();
 process.on("unhandledRejection", logger.debug.bind(logger));
@@ -34,8 +33,7 @@ process.on("uncaughtException", logger.debug.bind(logger));
 
 const app = express();
 const baseURL = process.env.WHEEL_BASE_URL || "/";
-const address = process.env.WHEEL_ACCEPT_ADDRESS
-
+const address = process.env.WHEEL_ACCEPT_ADDRESS;
 function createHTTPSServer(argApp) {
   const { keyFilename, certFilename } = require("./db/db");
   //read SSL related files
@@ -72,9 +70,8 @@ logger.info(`WHEEL_ENABLE_WEB_API = ${process.env.WHEEL_ENABLE_WEB_API}`);
 const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;
 let portNumber = port || defaultPort;
 portNumber = portNumber > 0 ? portNumber : defaultPort;
-
 //middlewares
-if(address){
+if (address) {
   const ips = [address];
   app.use(ipfilter(ips, { mode: "allow", logF: logger.debug.bind(logger) }));
 }
@@ -99,7 +96,6 @@ sio.on("connection", (socket)=>{
 
     //this must go to trace level(file only, never go to console)
     logger.debug(`[socketIO API] ${eventName} recieved.`, args);
-
     //sanity check for ack
     if (typeof cb !== "function") {
       throw new Error("socketIO API must be called with call back function");
@@ -114,40 +110,39 @@ router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
 logger.info(`${tempdRoot} is used as static content directory`);
 router.use(express.static(path.resolve(tempdRoot, "viewer"), { index: false }));
 router.use(express.static(path.resolve(tempdRoot, "download"), { index: false }));
-
-if(process.env.WHEEL_ENABLE_WEB_API){
+if (process.env.WHEEL_ENABLE_WEB_API) {
   router.use(asyncHandler(async (req, res, next)=>{
-    if(!req.query.code){
-      if(req.query.error){
+    if (!req.query.code) {
+      if (req.query.error) {
         logger.debug("failed to get authorization code", req.query);
       }
       logger.trace("not with code");
-      next()
-      return
+      next();
+      return;
     }
-    const state = req.query.state
-    if(!req.query.state){
+    const state = req.query.state;
+    if (!req.query.state) {
       logger.debug("state is not set");
     }
     const remotehostID = getRemotehostIDFromState(state);
-    if(!hasEntry(remotehostID)){
+    if (!hasEntry(remotehostID)) {
       logger.debug(`we have not started authorization process for ${remotehostID}`);
-      next()
-      return
+      next();
+      return;
     }
-    if(hasRefreshToken(remotehostID)){
+    if (hasRefreshToken(remotehostID)) {
       logger.debug(`we already have refresh token for ${remotehostID}`);
-      next()
-      return
+      next();
+      return;
     }
     //state, session-stateなどのクエリパラメータがauthに保存していたものと一致するかチェックする必要あり
     const rt = storeCode(remotehostID, req.query.code);
-    if(!rt){
+    if (!rt) {
       logger.trace(`request does not include authorization code: ${remotehostID}`);
     }
     await acquireAccessToken(remotehostID);
     next();
-  }))
+  }));
 }
 
 const routes = {
@@ -170,34 +165,30 @@ router.route("/editor").get(routes.workflow.get)
   .post(routes.workflow.post);
 router.route("/viewer").get(routes.viewer.get)
   .post(routes.viewer.post);
-
-if(process.env.WHEEL_ENABLE_WEB_API){
+if (process.env.WHEEL_ENABLE_WEB_API) {
   router.get("/webAPIauth", asyncHandler(async (req, res)=>{
     const projectRootDir = req.cookies.rootDir;
-    if(!projectRootDir){
+    if (!projectRootDir) {
       logger.warn("web authentication required without projectRootDir");
-      return
+      return;
     }
-    const remotehostID=req.query.remotehostID
-
-    if(hasEntry(remotehostID)){
+    const remotehostID = req.query.remotehostID;
+    if (hasEntry(remotehostID)) {
       logger.debug(`${remotehostID} found in authDB`);
-
-      if(hasCode(remotehostID)){
+      if (hasCode(remotehostID)) {
         logger.debug(`${remotehostID} already has code`);
-
-        if(hasRefreshToken(remotehostID)){
+        if (hasRefreshToken(remotehostID)) {
           logger.debug(`try to get access token for ${remotehostID}`);
         }
-        res.redirect("/workflow")
-        return
+        res.redirect("/workflow");
+        return;
       }
     }
 
-    const referer=new URL(req.get("Referer"))
-    const redirectURI=`${referer.origin}${referer.pathname}`
-    const url = await getURLtoAcquireCode(remotehostID, redirectURI)
-    res.redirect(url)
+    const referer = new URL(req.get("Referer"));
+    const redirectURI = `${referer.origin}${referer.pathname}`;
+    const url = await getURLtoAcquireCode(remotehostID, redirectURI);
+    res.redirect(url);
   }));
 }
 
@@ -212,7 +203,7 @@ app.use((req, res, next)=>{
 //error handler
 app.use((err, req, res, next)=>{
   //render the error page
-  logger.debug("server error",err);
+  logger.debug("server error", err);
   res.status(err.status || 500);
   res.send("something broken!");
   next();
@@ -241,7 +232,6 @@ Promise.all(projectList.getAll()
     });
   });
 
-
 /**
  * Event listener for HTTP server "error" event.
  * @param {Error} error - exception raised from http(s) server
@@ -251,7 +241,6 @@ function onError(error) {
     throw error;
   }
   const bind = typeof port === "string" ? `Pipe ${port}` : `Port ${port}`;
-
   //handle specific listen errors with friendly messages
   switch (error.code) {
     case "EACCES":

@@ -31,7 +31,6 @@ async function checkLFSenabled(repoDir) {
   expect(path.resolve(repoDir, ".git", "hooks", "pre-push")).to.be.a.file();
 }
 
-
 //testee
 const {
   gitInit,
@@ -51,33 +50,33 @@ const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
 const initialCommitResponse = /\[(master|main) \(root-commit\) .*\] initial commit\n/;
 
 describe("git operator UT", ()=>{
-  after(async()=>{
+  after(async ()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
       await fs.remove(testDirRoot);
     }
   });
   describe("#gitInit", ()=>{
-    beforeEach(async()=>{
+    beforeEach(async ()=>{
       await fs.remove(testDirRoot);
       await asyncExecFile("git", ["init", testDirRoot]);
     });
-    it("should re-initialize repo and return undefined when attempting to init again", async()=>{
+    it("should re-initialize repo and return undefined when attempting to init again", async ()=>{
       expect(await gitInit(testDirRoot, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
       await checkLFSenabled(testDirRoot);
     });
-    it("should initialize git repo on nonExisting directory", async()=>{
+    it("should initialize git repo on nonExisting directory", async ()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge");
       expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
       expect(newRepoDir).to.be.a.directory().with.contents([".git", ".gitignore"]);
       await checkLFSenabled(newRepoDir);
     });
-    it("should initialize git repo on nonExisting directory in nonExisting directory", async()=>{
+    it("should initialize git repo on nonExisting directory in nonExisting directory", async ()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge", "huga");
       expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
       expect(newRepoDir).to.be.a.directory().with.contents([".git", ".gitignore"]);
       await checkLFSenabled(newRepoDir);
     });
-    it("should initialize git repo on existing directory", async()=>{
+    it("should initialize git repo on existing directory", async ()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge");
       await fs.mkdir(newRepoDir);
       expect(newRepoDir).to.be.a.directory().and.empty;
@@ -85,7 +84,7 @@ describe("git operator UT", ()=>{
       expect(newRepoDir).to.be.a.directory().with.contents([".git", ".gitignore"]);
       await checkLFSenabled(newRepoDir);
     });
-    it("should reject while attempting to initialize on existing file", async()=>{
+    it("should reject while attempting to initialize on existing file", async ()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge");
       await fs.ensureFile(newRepoDir);
       expect(newRepoDir).to.be.a.file().and.empty;
@@ -93,12 +92,12 @@ describe("git operator UT", ()=>{
     });
   });
   describe("tests depends on gitInit", ()=>{
-    beforeEach(async()=>{
+    beforeEach(async ()=>{
       await fs.remove(testDirRoot);
       await gitInit(testDirRoot, "testUser", "testUser@example.com");
     });
     describe("#gitAdd", ()=>{
-      beforeEach(async()=>{
+      beforeEach(async ()=>{
         await Promise.all([
           fs.outputFile(path.resolve(testDirRoot, "hoge", "huga", "hige"), "hige"),
           fs.outputFile(path.resolve(testDirRoot, "foo"), "foo"),
@@ -106,7 +105,7 @@ describe("git operator UT", ()=>{
           fs.outputFile(path.resolve(testDirRoot, "baz"), "baz")
         ]);
       });
-      it("should add one file to index", async()=>{
+      it("should add one file to index", async ()=>{
         await gitAdd(testDirRoot, "foo");
         const { stdout } = await asyncExecFile("git", ["status", "--short"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
@@ -116,7 +115,7 @@ describe("git operator UT", ()=>{
         expect(stdout).to.match(/^\?\? baz$/m);
         expect(stdout).to.match(/^\?\? hoge\/$/m);
       });
-      it("should add directory and its component to index", async()=>{
+      it("should add directory and its component to index", async ()=>{
         await gitAdd(testDirRoot, "hoge");
         const { stdout } = await asyncExecFile("git", ["status", "--short"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
@@ -126,7 +125,7 @@ describe("git operator UT", ()=>{
         expect(stdout).to.match(/^\?\? baz$/m);
         expect(stdout).to.match(/^A {2}hoge\/huga\/hige$/m);
       });
-      it("should add one file to index even called multi times", async()=>{
+      it("should add one file to index even called multi times", async ()=>{
         await gitAdd(testDirRoot, "foo");
         await gitAdd(testDirRoot, "foo");
         await gitAdd(testDirRoot, "foo");
@@ -138,12 +137,12 @@ describe("git operator UT", ()=>{
         expect(stdout).to.match(/^\?\? baz$/m);
         expect(stdout).to.match(/^\?\? hoge\/$/m);
       });
-      it("should be rejected while attempting to add nonExisting file", async()=>{
+      it("should be rejected while attempting to add nonExisting file", async ()=>{
         const target = path.resolve(testDirRoot, "hoge");
         await fs.remove(target);
         return expect(gitAdd(testDirRoot, target)).to.be.rejected;
       });
-      it("should add already commited file if modified", async()=>{
+      it("should add already commited file if modified", async ()=>{
         await asyncExecFile("git", ["add", "foo"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
@@ -160,7 +159,7 @@ describe("git operator UT", ()=>{
         expect(stdout).to.match(/^\?\? baz$/m);
         expect(stdout).to.match(/^\?\? hoge\/$/m);
       });
-      it("should not add already commited file if not modified", async()=>{
+      it("should not add already commited file if not modified", async ()=>{
         await asyncExecFile("git", ["add", "foo"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
@@ -176,7 +175,7 @@ describe("git operator UT", ()=>{
         expect(stdout).to.match(/^\?\? hoge\/$/m);
         expect(stdout).not.to.match(/foo/);
       });
-      it("should add and rm directory contents at the same time", async()=>{
+      it("should add and rm directory contents at the same time", async ()=>{
         await asyncExecFile("git", ["add", "foo", "bar", "baz"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
@@ -195,7 +194,7 @@ describe("git operator UT", ()=>{
         expect(stdout).to.match(/^A {2}hoge\/huga\/hige$/m);
         expect(stdout).not.to.match(/baz/);
       });
-      it("should do nothing if directory contents is not changed", async()=>{
+      it("should do nothing if directory contents is not changed", async ()=>{
         await asyncExecFile("git", ["add", "."], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
@@ -211,7 +210,7 @@ describe("git operator UT", ()=>{
       });
     });
     describe("#gitRm", ()=>{
-      beforeEach(async()=>{
+      beforeEach(async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo"), "foo");
         await asyncExecFile("git", ["add", "foo"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
@@ -225,7 +224,7 @@ describe("git operator UT", ()=>{
         });
         await fs.outputFile(path.resolve(testDirRoot, "baz"), "baz");
       });
-      it("should remove file from repo but the file is not removed", async()=>{
+      it("should remove file from repo but the file is not removed", async ()=>{
         await gitRm(testDirRoot, "foo");
         const { stdout } = await asyncExecFile("git", ["status", "--short"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
@@ -234,7 +233,7 @@ describe("git operator UT", ()=>{
         expect(stdout).to.match(/^A {2}bar$/m);
         expect(stdout).to.match(/^\?{2} baz$/m);
       });
-      it("should remove file from repo if indexed but not commited file is specified", async()=>{
+      it("should remove file from repo if indexed but not commited file is specified", async ()=>{
         await gitRm(testDirRoot, "bar");
         const { stdout } = await asyncExecFile("git", ["status", "--short"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
@@ -243,7 +242,7 @@ describe("git operator UT", ()=>{
         expect(stdout).to.match(/^\?{2} bar$/m);
         expect(stdout).to.match(/^\?{2} baz$/m);
       });
-      it("should remove file from repo if indexed and already commited file is specified", async()=>{
+      it("should remove file from repo if indexed and already commited file is specified", async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo"), "foo2");
         await asyncExecFile("git", ["add", "foo"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
@@ -262,7 +261,7 @@ describe("git operator UT", ()=>{
       });
     });
     describe("#gitStatus", ()=>{
-      beforeEach(async()=>{
+      beforeEach(async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo"), "foo");
         await fs.outputFile(path.resolve(testDirRoot, "bar"), "bar");
         await fs.outputFile(path.resolve(testDirRoot, "baz"), "baz");
@@ -298,7 +297,7 @@ describe("git operator UT", ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "poyo"), "poyo");
         await fs.outputFile(path.resolve(testDirRoot, "punyu"), "punyu");
       });
-      it("should return git status results", async()=>{
+      it("should return git status results", async ()=>{
         const { added, modified, deleted, renamed, untracked } = await gitStatus(testDirRoot);
         expect(added).to.have.members(["new1", "new2"]);
         expect(modified).to.have.members(["bar", "foo"]);
@@ -319,17 +318,17 @@ describe("git operator UT", ()=>{
       });
     });
     describe("#gitCommit", ()=>{
-      beforeEach(async()=>{
+      beforeEach(async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo"), "foo");
       });
-      it("should do nothing if no files are indexed", async()=>{
+      it("should do nothing if no files are indexed", async ()=>{
         await gitCommit(testDirRoot);
         const { stdout } = await asyncExecFile("git", ["ls-files"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
         expect(stdout).to.be.equal(".gitignore\n");
       });
-      it("should do nothing if no files are indexed", async()=>{
+      it("should do nothing if no files are indexed", async ()=>{
         await asyncExecFile("git", ["add", "."], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
@@ -340,7 +339,7 @@ describe("git operator UT", ()=>{
         });
         expect(stdout).to.be.equal(".gitignore\nfoo\n");
       });
-      it("should commit indexed files", async()=>{
+      it("should commit indexed files", async ()=>{
         await asyncExecFile("git", ["add", "foo"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
@@ -352,7 +351,7 @@ describe("git operator UT", ()=>{
       });
     });
     describe("#gitClean", ()=>{
-      beforeEach(async()=>{
+      beforeEach(async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo"), "foo");
         await fs.outputFile(path.resolve(testDirRoot, "dir", "bar"), "bar");
         await asyncExecFile("git", ["add", "."], { cwd: testDirRoot }).catch((e)=>{
@@ -362,7 +361,7 @@ describe("git operator UT", ()=>{
           console.log("ERROR:\n", e);
         });
       });
-      it("should do nothing if untracked files does not exist", async()=>{
+      it("should do nothing if untracked files does not exist", async ()=>{
         await gitClean(testDirRoot);
         const { stdout } = await asyncExecFile("git", ["ls-files"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
@@ -372,7 +371,7 @@ describe("git operator UT", ()=>{
         expect(path.resolve(testDirRoot, "foo")).to.be.a.file().with.content("foo");
         expect(path.resolve(testDirRoot, "dir", "bar")).to.be.a.file().with.content("bar");
       });
-      it("should remove untracked files and directories", async()=>{
+      it("should remove untracked files and directories", async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo2"), "foo2");
         await fs.outputFile(path.resolve(testDirRoot, "dir2", "bar2"), "bar2");
         await fs.mkdir(path.resolve(testDirRoot, "dir3"));
@@ -392,7 +391,7 @@ describe("git operator UT", ()=>{
         expect(path.resolve(testDirRoot, "dir3")).not.to.be.a.path();
         expect(path.resolve(testDirRoot, "dir2", "bar2")).not.to.be.a.path();
       });
-      it("should remove specified file", async()=>{
+      it("should remove specified file", async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo2"), "foo2");
         await fs.outputFile(path.resolve(testDirRoot, "dir2", "bar2"), "bar2");
         await fs.mkdir(path.resolve(testDirRoot, "dir3"));
@@ -413,7 +412,7 @@ describe("git operator UT", ()=>{
         expect(path.resolve(testDirRoot, "dir2", "bar2")).to.be.a.file().with.content("bar2");
         expect(path.resolve(testDirRoot, "dir3")).to.be.a.directory().and.empty;
       });
-      it("should remove untracked file under specified directoriy", async()=>{
+      it("should remove untracked file under specified directoriy", async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo2"), "foo2");
         await fs.outputFile(path.resolve(testDirRoot, "dir2", "bar2"), "bar2");
         await fs.outputFile(path.resolve(testDirRoot, "dir2", "baz2"), "baz2");
@@ -444,7 +443,7 @@ describe("git operator UT", ()=>{
       });
     });
     describe("#gitResetHEAD", ()=>{
-      beforeEach(async()=>{
+      beforeEach(async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo"), "foo");
         await fs.outputFile(path.resolve(testDirRoot, "bar"), "bar");
         await fs.outputFile(path.resolve(testDirRoot, "baz"), "baz");
@@ -477,7 +476,7 @@ describe("git operator UT", ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "poyo"), "poyo");
         await fs.outputFile(path.resolve(testDirRoot, "punyu"), "punyu");
       });
-      it("should perform reset HEAD --hard", async()=>{
+      it("should perform reset HEAD --hard", async ()=>{
         await gitResetHEAD(testDirRoot);
 
         //check commited files
@@ -523,7 +522,7 @@ describe("git operator UT", ()=>{
         expect(path.resolve(testDirRoot, "huga2")).not.to.be.a.path();
         expect(path.resolve(testDirRoot, "hige2")).not.to.be.a.path();
       });
-      it("should perform reset HEAD --mixed and checkout", async()=>{
+      it("should perform reset HEAD --mixed and checkout", async ()=>{
         await gitResetHEAD(testDirRoot, ".");
 
         //check commited files
@@ -574,15 +573,15 @@ describe("git operator UT", ()=>{
     });
     describe("#gitLFSTrack", ()=>{
       const attributeFile = path.resolve(testDirRoot, ".gitattributes");
-      it("should add entry to .gitattribute with relative path ", async()=>{
+      it("should add entry to .gitattribute with relative path ", async ()=>{
         await gitLFSTrack(testDirRoot, "foo");
         expect(attributeFile).to.be.a.file().with.contents.that.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
-      it("should add entry to .gitattribute with absolute path ", async()=>{
+      it("should add entry to .gitattribute with absolute path ", async ()=>{
         await gitLFSTrack(testDirRoot, path.resolve(testDirRoot, "foo"));
         expect(attributeFile).to.be.a.file().with.contents.that.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
-      it("should do nothing if target is already in .gitattribute", async()=>{
+      it("should do nothing if target is already in .gitattribute", async ()=>{
         await gitLFSTrack(testDirRoot, "foo");
         expect(attributeFile).to.be.a.file().with.contents.that.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
         const attributes = (await fs.readFile(attributeFile)).toString();
@@ -592,34 +591,34 @@ describe("git operator UT", ()=>{
     });
     describe("#gitLFSUntrack", ()=>{
       const attributeFile = path.resolve(testDirRoot, ".gitattributes");
-      beforeEach(async()=>{
+      beforeEach(async ()=>{
         await gitLFSTrack(testDirRoot, "foo");
         expect(attributeFile).to.be.a.file().with.contents.that.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
-      it("should remove entry from .gitattribute with relative path", async()=>{
+      it("should remove entry from .gitattribute with relative path", async ()=>{
         await gitLFSUntrack(testDirRoot, "foo");
         expect(attributeFile).to.be.a.file().with.contents.that.not.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
-      it("should remove entry from .gitattribute with absolute path", async()=>{
+      it("should remove entry from .gitattribute with absolute path", async ()=>{
         await gitLFSUntrack(testDirRoot, path.resolve(testDirRoot, "foo"));
         expect(attributeFile).to.be.a.file().with.contents.that.not.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
-      it("should do nothing if target is not in .gitattribute", async()=>{
+      it("should do nothing if target is not in .gitattribute", async ()=>{
         const attributes = (await fs.readFile(attributeFile)).toString().replace("\r\n", "\n");
         await gitLFSUntrack(testDirRoot, "hoge");
         expect(attributeFile).to.be.a.file().with.content(attributes);
       });
-      it("should do nothing if .gitattribute does not exist", async()=>{
+      it("should do nothing if .gitattribute does not exist", async ()=>{
         await fs.remove(attributeFile);
         return expect(gitLFSUntrack(testDirRoot, "hoge")).to.be.fulfilled;
       });
     });
-    describe("#isLFS", async()=>{
-      it("should return true if specified file is large file", async()=>{
+    describe("#isLFS", async ()=>{
+      it("should return true if specified file is large file", async ()=>{
         await gitLFSTrack(testDirRoot, "foo");
         expect(await isLFS(testDirRoot, "foo")).to.be.true;
       });
-      it("should return false if specified file is not large file", async()=>{
+      it("should return false if specified file is not large file", async ()=>{
         await gitLFSUntrack(testDirRoot, "foo");
         expect(await isLFS(testDirRoot, "foo")).to.be.false;
       });

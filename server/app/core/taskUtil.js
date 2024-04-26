@@ -8,11 +8,10 @@ const { getSsh, getSshHostinfo } = require("./sshManager");
 const { cancel } = require("./executer");
 const { jobScheduler } = require("../db/db");
 const { getLogger } = require("../logSettings.js");
-
 async function cancelRemoteJob(task) {
-  if(!task.jobID){
+  if (!task.jobID) {
     getLogger(task.projectRootDir).debug(`try to cancel ${task.name} but it have not been submitted.`);
-    return
+    return;
   }
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
   const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
@@ -25,17 +24,14 @@ async function cancelRemoteJob(task) {
   });
   getLogger(task.projectRootDir).debug("cacnel done", output.join());
 }
-
 async function cancelLocalJob() {
   console.log("not implimented yet!!");
 }
-
 async function killLocalProcess(task) {
   if (task.handler && task.handler.killed === false) {
     task.handler.kill();
   }
 }
-
 async function killTask(task) {
   if (task.remotehostID !== "localhost") {
     if (task.useJobScheduler) {
@@ -52,7 +48,6 @@ async function killTask(task) {
     }
   }
 }
-
 async function cancelDispatchedTasks(tasks) {
   const p = [];
   for (const task of tasks) {
@@ -60,7 +55,6 @@ async function cancelDispatchedTasks(tasks) {
       continue;
     }
     const canceled = cancel(task);
-
     if (!canceled) {
       p.push(killTask(task));
     }
@@ -68,7 +62,6 @@ async function cancelDispatchedTasks(tasks) {
   }
   return Promise.all(p);
 }
-
 function taskStateFilter(task) {
   return {
     name: task.name,

@@ -97,11 +97,11 @@
 
 <script>
 "use strict";
-import {mergeProps } from "vue"
+import { mergeProps } from "vue";
 import { mapState, mapGetters, mapMutations } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
 import { isValidInputFilename } from "@/lib/utility.js";
-import { editorHeight } from "@/lib/constants.json"
+import { editorHeight } from "@/lib/constants.json";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/theme-idle_fingers.js";
 
@@ -110,8 +110,8 @@ export default {
   props: {
     readOnly: {
       type: Boolean,
-      required: true,
-    },
+      required: true
+    }
   },
   data: function () {
     return {
@@ -129,17 +129,17 @@ export default {
       "selectedText",
       "projectRootDir",
       "componentPath",
-      "selectedComponent",
+      "selectedComponent"
     ]),
-    ...mapGetters(["pathSep", "selectedComponentAbsPath"]),
+    ...mapGetters(["pathSep", "selectedComponentAbsPath"])
   },
   watch: {
-    readOnly () {
+    readOnly() {
       this.editor.setReadOnly(this.readOnly);
     },
-    activeTab (nv, ov){
+    activeTab(nv, ov) {
       if (nv >= this.files.length) {
-        this.activeTab=ov
+        this.activeTab = ov;
       }
     }
   },
@@ -150,11 +150,11 @@ export default {
       autoScrollEditorIntoView: true,
       highlightSelectedWord: true,
       highlightActiveLine: true,
-      readOnly: this.readOnly,
+      readOnly: this.readOnly
     });
     this.editor.on("changeSession", this.editor.resize.bind(this.editor));
     this.editor.on("changeSession", ()=>{
-      const isJobScript = typeof this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}})!== "undefined";
+      const isJobScript = typeof this.editor.find("#### WHEEL inserted lines ####", { start: { row: 0, column: 0 } }) !== "undefined";
       this.$emit("jobscript", isJobScript);
     });
 
@@ -175,19 +175,18 @@ export default {
 
       //select last tab after DOM is updated
       this.$nextTick(function () {
-        this.activeTab = this.files.length -1 ;
+        this.activeTab = this.files.length - 1;
         const session = this.files[this.activeTab].editorSession;
         this.editor.setSession(session);
-        this.editor.resize()
+        this.editor.resize();
         session.selection.on("changeSelection", ()=>{
           this.commitSelectedText(this.editor.getSelectedText());
         });
       });
     });
-
     if (typeof this.selectedFile === "string") {
       SIO.emitGlobal("openFile", this.projectRootDir, this.selectedFile, false, (rt)=>{
-        if(rt instanceof Error){
+        if (rt instanceof Error) {
           console.log(rt);
         }
       });
@@ -198,13 +197,12 @@ export default {
     ...mapMutations({ commitSelectedFile: "selectedFile",
       commitSelectedText: "selectedText" }
     ),
-    isValidName (v) {
+    isValidName(v) {
       //allow . / - and alphanumeric chars
       return isValidInputFilename(v) || "invalid filename";
     },
-    async openNewTab (filename, argDirname) {
+    async openNewTab(filename, argDirname) {
       const dirname = argDirname || this.selectedComponentAbsPath;
-
       if (!isValidInputFilename(filename)) {
         return this.closeNewFileDialog();
       }
@@ -223,34 +221,34 @@ export default {
         this.changeTab(existingTab);
       }
     },
-    closeNewFileDialog () {
+    closeNewFileDialog() {
       //clear temporaly variables and close prompt
       this.newFilename = null;
       this.newFilePrompt = false;
     },
-    insertSnipet(argSnipet){
+    insertSnipet(argSnipet) {
       //this function will be called from parent component
       const session = this.editor.getSession();
-      const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}}) || new ace.Range(0,0,0,0);
-      range.start.row=0;
-      range.start.column=0;
+      const range = this.editor.find("#### WHEEL inserted lines ####", { start: { row: 0, column: 0 } }) || new ace.Range(0, 0, 0, 0);
+      range.start.row = 0;
+      range.start.column = 0;
       const snipet = range.end.row === 0 && range.end.column === 0 ? argSnipet : argSnipet.trimEnd();
       session.replace(range, snipet);
       this.$emit("jobscript", true);
     },
-    removeSnipet(){
+    removeSnipet() {
       //this function will be called from parent component
       const session = this.editor.getSession();
-      const range = this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}});
-      if(!range){
-        return
+      const range = this.editor.find("#### WHEEL inserted lines ####", { start: { row: 0, column: 0 } });
+      if (!range) {
+        return;
       }
-      range.start.row=0;
-      range.start.column=0;
-      session.replace(range,"");
+      range.start.row = 0;
+      range.start.column = 0;
+      session.replace(range, "");
       this.$emit("jobscript", false);
     },
-    insertBraces () {
+    insertBraces() {
       //this function will be called from parent component
       const selectedRange = this.editor.getSelection().getRange();
       const session = this.editor.getSession();
@@ -258,7 +256,7 @@ export default {
       session.insert(selectedRange.start, "{{ ");
       this.editor.getSelection().clearSelection();
     },
-    save (index) {
+    save(index) {
       return new Promise((resolve, reject)=>{
         const file = this.files[index];
         const document = file.editorSession.getDocument();
@@ -266,7 +264,7 @@ export default {
         if (file.content === content) {
           console.log("do not call 'saveFile' API because file is not changed. index=", index);
         }
-        SIO.emitGlobal("saveFile", this.projectRootDir,  file.filename, file.dirname, content, (rt)=>{
+        SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, content, (rt)=>{
           if (!rt) {
             console.log("ERROR: file save failed:", rt);
             reject(rt);
@@ -276,12 +274,12 @@ export default {
         });
       });
     },
-    getChangedFiles(){
+    getChangedFiles() {
       return this.files.map((file)=>{
         const document = file.editorSession.getDocument();
         const content = document.getValue();
         if (file.content !== content) {
-          return {name: `${file.dirname}/${file.filename}`}
+          return { name: `${file.dirname}/${file.filename}` };
         }
         return null;
       })
@@ -289,11 +287,11 @@ export default {
           return e !== null;
         });
     },
-    hasChange () {
-      const changedFiles=this.getChangedFiles();
+    hasChange() {
+      const changedFiles = this.getChangedFiles();
       return changedFiles.length > 0;
     },
-    saveAll () {
+    saveAll() {
       let changed = false;
       for (const file of this.files) {
         const document = file.editorSession.getDocument();
@@ -312,39 +310,38 @@ export default {
       }
       return changed;
     },
-    getAllPlaceholders(){
-      const placeholders=[]
+    getAllPlaceholders() {
+      const placeholders = [];
       this.editor.$search.setOptions({
         needle: /{{.*?}}/,
         wholeWord: true,
-        regExp: true,
-      })
+        regExp: true
+      });
 
-      for(const file of this.files){
+      for (const file of this.files) {
         const rt = this.editor.$search.findAll(file.editorSession);
         placeholders.push(...rt.map((e)=>{
           const text = file.editorSession.getDocument()
             .getTextRange(e)
-            .replace(/{{ */,"")
-            .replace(/ *}}/,"");
-          return {text, end:e.end, row: e.start.row, column: e.start.column, filename:file.filename, absPath: file.absPath, editorSession:file.editorSession}
+            .replace(/{{ */, "")
+            .replace(/ *}}/, "");
+          return { text, end: e.end, row: e.start.row, column: e.start.column, filename: file.filename, absPath: file.absPath, editorSession: file.editorSession };
         }));
       }
       return placeholders;
     },
-    closeTab (index) {
+    closeTab(index) {
       const file = this.files[index];
       if (index === 0) {
         const document = file.editorSession.getDocument();
         document.setValue("");
       }
       this.files.splice(index, 1);
-
-      if(file.absPath === this.selectedFile){
+      if (file.absPath === this.selectedFile) {
         this.commitSelectedFile(null);
       }
     },
-    changeTab (argIndex) {
+    changeTab(argIndex) {
       if (argIndex >= this.files.length) {
         //just ignored
         return;
@@ -356,7 +353,7 @@ export default {
       session.selection.on("changeSelection", ()=>{
         this.commitSelectedText(this.editor.getSelectedText());
       });
-    },
-  },
+    }
+  }
 };
 </script>

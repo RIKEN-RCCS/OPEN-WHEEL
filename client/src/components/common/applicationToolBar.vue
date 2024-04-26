@@ -29,25 +29,24 @@
 
 <script>
 import imgLogo from "@/assets/wheel_logomark.png";
-export default{
-  data:()=>{
+export default {
+  data: ()=>{
     return {
-      imgLogo,
-    }
+      imgLogo
+    };
   },
-  props:{
-    title:{
+  props: {
+    title: {
       type: String,
       required: true
     },
     baseUrl: String
   },
-  computed:{
-    homeURL(){
-      return `${this.baseUrl || "."}/home`
+  computed: {
+    homeURL() {
+      return `${this.baseUrl || "."}/home`;
     }
   },
   emits: ["navIconClick"]
-}
+};
 </script>
-

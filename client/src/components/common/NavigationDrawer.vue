@@ -36,24 +36,24 @@ export default {
   name: "NavDrawer",
   props: {
     value: Boolean,
-    baseUrl: String,
+    baseUrl: String
   },
   computed: {
     ...mapState(["readOnly"]),
-    readOnlyColor(){
-      return state2color(`${this.readOnly? "paused":""}`);
+    readOnlyColor() {
+      return state2color(`${this.readOnly ? "paused" : ""}`);
     },
-    remotehostURL(){
-      return `${this.baseUrl || "."}/remotehost`
+    remotehostURL() {
+      return `${this.baseUrl || "."}/remotehost`;
     },
     drawer: {
-      get () {
+      get() {
         return this.value;
       },
-      set (value) {
+      set(value) {
         this.$emit("update:modelValue", value);
-      },
-    },
+      }
+    }
   }
 };
 </script>

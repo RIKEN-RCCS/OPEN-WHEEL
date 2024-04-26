@@ -8,16 +8,14 @@ const fs = require("fs-extra");
 const path = require("path");
 const { sanitizePath } = require("./pathUtils");
 const { evalCondition } = require("./dispatchUtils");
-
-
 function getPrevIndex(component) {
-  if(typeof component.prevIndex !== "undefined"){
-    return component.prevIndex 
+  if (typeof component.prevIndex !== "undefined") {
+    return component.prevIndex;
   }
   const step = component.step || 1;
   const start = component.start || 0;
   const candidate = component.currentIndex - step;
-  return  (candidate - start) * step  >= 0 ? candidate : null;
+  return (candidate - start) * step >= 0 ? candidate : null;
 }
 function forGetNextIndex(component) {
   return component.currentIndex !== null ? component.currentIndex + component.step : component.start;
@@ -38,7 +36,6 @@ function forKeepLoopInstance(component, cwfDir) {
     }
   }
 }
-
 function whileGetNextIndex(component) {
   return component.currentIndex !== null ? component.currentIndex + 1 : 0;
 }
@@ -55,14 +52,12 @@ function whileKeepLoopInstance(component, cwfDir) {
     }
   }
 }
-
 function foreachGetNextIndex(component) {
   if (component.currentIndex !== null) {
     const i = component.indexList.findIndex((e)=>{
       return e === component.currentIndex;
     });
-
-    if (i === -1 || i === component.indexList.length - 1 ) {
+    if (i === -1 || i === component.indexList.length - 1) {
       return null;
     }
     return component.indexList[i + 1];
@@ -70,15 +65,14 @@ function foreachGetNextIndex(component) {
   return component.indexList[0];
 }
 function foreachGetPrevIndex(component) {
-  if(typeof component.prevIndex !== "undefined"){
-    return  component.prevIndex
+  if (typeof component.prevIndex !== "undefined") {
+    return component.prevIndex;
   }
 
   const i = component.indexList.findIndex((e)=>{
     return e === component.currentIndex;
   }) - 1;
-
-  if (i  < 0 ) {
+  if (i < 0) {
     return null;
   }
   return component.indexList[i];
@@ -99,17 +93,15 @@ function foreachKeepLoopInstance(component, cwfDir) {
     }
   }
 }
-
 function loopInitialize(component, getTripCount, getPrevIndex) {
-  if(component.restarting){
-    component.currentIndex = getPrevIndex(component)
-  }else{
+  if (component.restarting) {
+    component.currentIndex = getPrevIndex(component);
+  } else {
     component.numFinished = 0;
     component.numFailed = 0;
     component.currentIndex = null;
   }
   component.originalName = component.name;
-
   if (typeof getTripCount === "function") {
     component.numTotal = getTripCount(component);
   }

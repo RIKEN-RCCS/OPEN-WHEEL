@@ -18,9 +18,8 @@ function getFirstCapture(outputText, reCode) {
   const re = new RegExp(reCode, "m");
   const result = re.exec(outputText);
   const rt = result === null || typeof (result[1]) === "undefined" ? null : result[1];
-  return rt
+  return rt;
 }
-
 function getBulkFirstCapture(outputText, reSubCode) {
   const outputs = outputText.split("\n");
   const codeRegex = new RegExp(reSubCode, "m");
@@ -46,25 +45,23 @@ function getBulkFirstCapture(outputText, reSubCode) {
  * @param {String} code - job status code get from status check command
  * @returns {Boolean} -
  */
-function isJobFailed(JS, code){
-  const statusList = []
-  if(typeof JS.acceptableJobStatus === "undefined"){
+function isJobFailed(JS, code) {
+  const statusList = [];
+  if (typeof JS.acceptableJobStatus === "undefined") {
     statusList.push("0", 0);
-  }else if (Array.isArray(JS.acceptableJobStatus)) {
-    statusList.push(...JS.acceptableJobStatus)
-  }else if(typeof JS.acceptableJobStatus.toString === "function"){
-    statusList.push(JS.acceptableJobStatus.toString())
-  }else{
-    return false
+  } else if (Array.isArray(JS.acceptableJobStatus)) {
+    statusList.push(...JS.acceptableJobStatus);
+  } else if (typeof JS.acceptableJobStatus.toString === "function") {
+    statusList.push(JS.acceptableJobStatus.toString());
+  } else {
+    return false;
   }
-  return !statusList.includes(code) 
+  return !statusList.includes(code);
 }
-
-async function getStatusCode(JS, task, statCmdRt, outputText){
+async function getStatusCode(JS, task, statCmdRt, outputText) {
   //for backward compatibility use reJobStatus if JS does not have reJobStatusCode
   const reJobStatusCode = JS.reJobStatusCode || JS.reJobStatus;
   let [jobStatus, jobStatusList] = [0, []];
-
   if (task.type !== "bulkjobTask") {
     task.jobStatus = getFirstCapture(outputText, reJobStatusCode.replace("{{ JOBID }}", task.jobID));
   } else {
@@ -72,15 +69,14 @@ async function getStatusCode(JS, task, statCmdRt, outputText){
     getLogger(task.projectRootDir).debug(`JobStatus: ${jobStatus} ,jobStatusList: ${jobStatusList}`);
     task.jobStatus = jobStatus;
   }
-
   if (task.jobStatus === null) {
     getLogger(task.projectRootDir).warn("get job status code failed, code is overwrited by -2");
     task.jobStatus = -2;
   }
   if (statCmdRt !== 0) {
-    if(!JS.acceptableRt.includes(statCmdRt)){
+    if (!JS.acceptableRt.includes(statCmdRt)) {
       getLogger(task.projectRootDir).warn(`status check command failed (${statCmdRt})`);
-      return -2
+      return -2;
     }
     getLogger(task.projectRootDir).warn(`status check command returns ${statCmdRt} and it is in acceptableRt: ${JS.acceptableRt}`);
     getLogger(task.projectRootDir).warn("it may fail to get job script's return code. so it is overwirted by 0");
@@ -89,7 +85,6 @@ async function getStatusCode(JS, task, statCmdRt, outputText){
 
   let strRt = 0;
   let [rt, rtCodeList] = [0, []];
-
   if (task.type !== "bulkjobTask") {
     strRt = getFirstCapture(outputText, JS.reReturnCode.replace("{{ JOBID }}", task.jobID));
   } else {
@@ -97,7 +92,6 @@ async function getStatusCode(JS, task, statCmdRt, outputText){
     getLogger(task.projectRootDir).debug(`rt: ${rt} ,rtCodeList: ${rtCodeList}`);
     strRt = rt;
   }
-
   if (strRt === null) {
     getLogger(task.projectRootDir).warn("get return code failed, code is overwrited by -2");
     return -2;
@@ -106,84 +100,78 @@ async function getStatusCode(JS, task, statCmdRt, outputText){
     getLogger(task.projectRootDir).warn("get return code 6, this job was canceled by stepjob dependency");
     return 0;
   }
-
   if (task.type === "bulkjobTask") {
     await createBulkStatusFile(task, rtCodeList, jobStatusList);
   }
   task.rt = parseInt(strRt, 10);
   return task.rt;
 }
-
-function createRequestForWebAPI(hostinfo, task, JS){
-  const baseURL="https://api.fugaku.r-ccs.riken.jp/queue/computer"
+function createRequestForWebAPI(hostinfo, task, JS) {
+  const baseURL = "https://api.fugaku.r-ccs.riken.jp/queue/computer";
   return {
     cmd: `curl --cert-type P12 -X POST  --cert ${process.env.WHEEL_CERT_FILENAME}:${process.env.WHEEL_CERT_PASSPHRASE} ${baseURL}/`,
     withoutArgument: true,
-    finishedLocalHook:{
-      cmd: `curl --cert-type P12 -X POST --cert ${process.env.WHEEL_CERT_FILENAME}:${process.env.WHEEL_CERT_PASSPHRASE} ${baseURL}/${task.jobID}`,
+    finishedLocalHook: {
+      cmd: `curl --cert-type P12 -X POST --cert ${process.env.WHEEL_CERT_FILENAME}:${process.env.WHEEL_CERT_PASSPHRASE} ${baseURL}/${task.jobID}`
     },
-    delimiter:JS.statDelimiter,
+    delimiter: JS.statDelimiter,
     re: JS.reRunning.replace("{{ JOBID }}", task.jobID),
-    interval: hostinfo.statusCheckInterval *1000,
+    interval: hostinfo.statusCheckInterval * 1000,
     argument: task.jobID,
     hostInfo: { host: "localhost" },
     numAllowFirstFewEmptyOutput: 3,
     allowEmptyOutput: JS.allowEmptyOutput
-  }
+  };
 }
-
-function createRequest(hostinfo, task, JS){
+function createRequest(hostinfo, task, JS) {
   return {
     cmd: task.type !== "bulkjobTask" ? JS.stat : JS.bulkstat,
-    finishedHook:{
-      cmd: task.type !== "bulkjobTask" ? JS.statAfter:JS.bulkstatAfter,
+    finishedHook: {
+      cmd: task.type !== "bulkjobTask" ? JS.statAfter : JS.bulkstatAfter,
       withArgument: true
     },
-    delimiter:JS.statDelimiter,
+    delimiter: JS.statDelimiter,
     re: JS.reRunning.replace("{{ JOBID }}", task.jobID),
-    interval: hostinfo.statusCheckInterval *1000,
+    interval: hostinfo.statusCheckInterval * 1000,
     argument: task.jobID,
     hostInfo: hostinfo,
     numAllowFirstFewEmptyOutput: 3,
     allowEmptyOutput: JS.allowEmptyOutput
-  }
+  };
 }
-
 function registerJob(hostinfo, task) {
   return new Promise((resolve, reject)=>{
     const JS = jobScheduler[hostinfo.jobScheduler];
-    if(!JS){
-      const err = new Error("jobscheduler setting not found!")
-      err.hostinfo=hostinfo
+    if (!JS) {
+      const err = new Error("jobscheduler setting not found!");
+      err.hostinfo = hostinfo;
       reject(err);
     }
     const request = hostinfo.useWebAPI ? createRequestForWebAPI(hostinfo, task, JS) : createRequest(hostinfo, task, JS);
-    const id = addRequest(request)
-    const result=getRequest(id);
-    const requestName = `${request.argument} on ${request.hostInfo.host}`
-    let statusCheckErrorCount=0
+    const id = addRequest(request);
+    const result = getRequest(id);
+    const requestName = `${request.argument} on ${request.hostInfo.host}`;
+    let statusCheckErrorCount = 0;
     result.event.on("checked", (request)=>{
       getLogger(task.projectRootDir).debug(`${requestName} status checked ${request.checkCount}`);
       getLogger(task.projectRootDir).trace(`${requestName} status checked output:\n ${request.lastOutput}`);
-
-      if(request.rt !== 0){
-        statusCheckErrorCount++
+      if (request.rt !== 0) {
+        statusCheckErrorCount++;
       }
-      if(JS.maxStatusCheckError < statusCheckErrorCount){
-        const err=new Error("max status check error exceeded")
-        err.numStatusCheckError =statusCheckErrorCount
-        err.maxStatusCheckError =JS.maxStatusCheckError
+      if (JS.maxStatusCheckError < statusCheckErrorCount) {
+        const err = new Error("max status check error exceeded");
+        err.numStatusCheckError = statusCheckErrorCount;
+        err.maxStatusCheckError = JS.maxStatusCheckError;
         delRequest(id);
         reject(err);
       }
     });
     result.event.on("finished", async (request)=>{
-      const hook=hostinfo.useWebAPI ? request.finishedLocalHook:request.finishedHook
+      const hook = hostinfo.useWebAPI ? request.finishedLocalHook : request.finishedHook;
       getLogger(task.projectRootDir).debug(`${requestName} done`);
-      getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${hook.output}`)
-
-      if(/^\s*$/.test(hook.output)) {
-        getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`)
+      getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${hook.output}`);
+      if (/^\s*$/.test(hook.output)) {
+        getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`);
 
         await pRetry(async ()=>{
           let outputText = "";
@@ -191,40 +179,37 @@ function registerJob(hostinfo, task) {
           await ssh.exec(hook.cmd, 60, (data)=>{
             outputText += data;
           });
-
-          if(/^\s*$/.test(outputText)){
+          if (/^\s*$/.test(outputText)) {
             throw new Error("got empty output from status check command");
           }
-          hook.output = outputText
-          return true
-        },{
+          hook.output = outputText;
+          return true;
+        }, {
           onFailedAttempt: (error)=>{
-            getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring ${error.attemptNumber}}`)
+            getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring ${error.attemptNumber}}`);
           },
           minTimeout: 1000,
           maxTimeout: 60000,
           retries: 12,
           factor: 2
-        })
+        });
       }
-
-      if(isJobFailed(JS, task.jobStatus)){
-        reject(task.jobStatus)
+      if (isJobFailed(JS, task.jobStatus)) {
+        reject(task.jobStatus);
       }
-      const rt = await getStatusCode(JS, task, hook.rt, hook.output)
-      if(rt === 0){
-        resolve(rt)
-      }else{
-        reject(rt)
+      const rt = await getStatusCode(JS, task, hook.rt, hook.output);
+      if (rt === 0) {
+        resolve(rt);
+      } else {
+        reject(rt);
       }
     });
     //faild event does not mean job failure
     result.event.on("failed", (request, hookErr)=>{
-      const err = new Error("fatal error occurred during job status check")
-      err.request=request
-
-      if(typeof hookErr !== "undefined"){
-        err.hookErr=hookErr
+      const err = new Error("fatal error occurred during job status check");
+      err.request = request;
+      if (typeof hookErr !== "undefined") {
+        err.hookErr = hookErr;
       }
       reject(err);
     });
@@ -232,5 +217,5 @@ function registerJob(hostinfo, task) {
 }
 
 module.exports = {
-  registerJob,
+  registerJob
 };

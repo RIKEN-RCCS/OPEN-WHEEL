@@ -25,7 +25,6 @@ function escapeRegExp(target) {
   //eslint-disable-next-line no-useless-escape
   return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
 }
-
 function isSane(name) {
   if (typeof name !== "string") {
     return false;
@@ -52,7 +51,7 @@ export function isValidInputFilename(name) {
   const forbidonChars = new RegExp(`[^${escapeRegExp(`${alphanumeric + pathseps}.`) + bars + "{}"}]`);
 
   //ignore white space between {{ and }}
-  const modifiedName = name.replace(/\{\{.*?\}\}/g,"")
+  const modifiedName = name.replace(/\{\{.*?\}\}/g, "");
   if (forbidonChars.test(modifiedName)) {
     return false;
   }
@@ -70,7 +69,7 @@ export function isValidOutputFilename(name) {
   }
   const forbidonChars = new RegExp(`[^${escapeRegExp(alphanumeric + pathseps + metaCharactors) + bars + "{}"}]`);
   //ignore white space between {{ and }}
-  const modifiedName = name.replace(/\{\{.*?\}\}/g,"")
+  const modifiedName = name.replace(/\{\{.*?\}\}/g, "");
   if (forbidonChars.test(modifiedName)) {
     return false;
   }
@@ -84,7 +83,7 @@ export function isValidOutputFilename(name) {
  * @param {string} [prop]- - element's property which to be used at compare
  * @return {number} - removed element's index
  */
-export function removeFromArray (array, target, prop) {
+export function removeFromArray(array, target, prop) {
   const targetIndex = array.findIndex((e)=>{
     if (typeof prop === "string") {
       return e[prop] === target[prop];
@@ -102,7 +101,7 @@ export function removeFromArray (array, target, prop) {
  * @param {string} token - string to be checked
  * @return {boolean}
  */
-export function isSurrounded (token) {
+export function isSurrounded(token) {
   return token.startsWith("{") && token.endsWith("}");
 }
 
@@ -111,7 +110,7 @@ export function isSurrounded (token) {
  * @param {string} token - string to be checked
  * @return {string} - trimed token
  */
-export function trimSurrounded (token) {
+export function trimSurrounded(token) {
   if (!isSurrounded(token)) {
     return token;
   }
@@ -123,7 +122,7 @@ export function trimSurrounded (token) {
  * transform grob string to array
  * @param {string} - - grob pattern
  */
-export function glob2Array (token) {
+export function glob2Array(token) {
   return trimSurrounded(token).split(",");
 }
 
@@ -132,7 +131,7 @@ export function glob2Array (token) {
  * @param {string []} tokens - array of grlob patterns
  * @return {string} - glob pattern
  */
-export function array2Glob (tokens) {
+export function array2Glob(tokens) {
   const concatenatedString = tokens.reduce((a, c)=>{
     return `${a},${c}`;
   });
@@ -145,12 +144,11 @@ export function array2Glob (tokens) {
  * @param {string} add - new glob pattern to be added
  * @return {string} - combined glob pattern
  */
-export function addGlobPattern (old, added) {
+export function addGlobPattern(old, added) {
   //for the first time
   if (typeof old !== "string" || old === "") {
     return added;
   }
-
   //only one entry in include
   if (!isSurrounded(old)) {
     return `{${old},${added}}`;
@@ -169,7 +167,7 @@ export function addGlobPattern (old, added) {
  * @param {number} index - position of glob pattern to be removed
  * @return {string} - new glob pattern
  */
-export function removeGlobPattern (glob, token, index) {
+export function removeGlobPattern(glob, token, index) {
   const globArray = glob2Array(glob);
   if (globArray.length <= 1) {
     return null;
@@ -185,7 +183,7 @@ export function removeGlobPattern (glob, token, index) {
  * @param {number} index - position of glob pattern to be replaced
  * @return {string} - new glob pattern
  */
-export function updateGlobPattern (glob, token, index) {
+export function updateGlobPattern(glob, token, index) {
   const globArray = glob2Array(glob);
   if (globArray.length <= 1) {
     return null;

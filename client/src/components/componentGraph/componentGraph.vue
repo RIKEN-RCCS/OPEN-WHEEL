@@ -81,21 +81,21 @@
 "use strict";
 import { mapState, mapActions } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
-import WheelComponent from "@/components/componentGraph/component.vue"
-import InputFileBox from "@/components/componentGraph/inputFileBox.vue"
-import OutputFileBox from "@/components/componentGraph/outputFileBox.vue"
-import Vconnector from "@/components/componentGraph/vconnector.vue"
-import Connector from "@/components/componentGraph/connector.vue"
-import ContextMenu from "@/components/componentGraph/contextMenu.vue"
-import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor } from "@/lib/constants.json"
-import { calcBoxHeight, calcRecieverPos, calcSenderPos, calcElseSenderPos, calcFsenderPos, calcFreceiverPos } from "@/lib/utils.js"
-import {isContainer} from "@/lib/utility.js";
+import WheelComponent from "@/components/componentGraph/component.vue";
+import InputFileBox from "@/components/componentGraph/inputFileBox.vue";
+import OutputFileBox from "@/components/componentGraph/outputFileBox.vue";
+import Vconnector from "@/components/componentGraph/vconnector.vue";
+import Connector from "@/components/componentGraph/connector.vue";
+import ContextMenu from "@/components/componentGraph/contextMenu.vue";
+import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor } from "@/lib/constants.json";
+import { calcBoxHeight, calcRecieverPos, calcSenderPos, calcElseSenderPos, calcFsenderPos, calcFreceiverPos } from "@/lib/utils.js";
+import { isContainer } from "@/lib/utility.js";
 import Debug from "debug";
 const debug = Debug("wheel:workflow:componentGraph");
 
 export default {
   name: "componentGraph",
-  components:{
+  components: {
     WheelComponent,
     InputFileBox,
     OutputFileBox,
@@ -103,32 +103,32 @@ export default {
     Connector,
     ContextMenu
   },
-  data(){
+  data() {
     return {
-      menuX:0,
-      menuY:0,
+      menuX: 0,
+      menuY: 0,
       openComponentContextMenu: false,
       openConnectorContextMenu: false,
       openVconnectorContextMenu: false,
-      targetComponent:null,
+      targetComponent: null,
       targetConnector: null,
       targetVconnector: null,
       componentContextMenuItems: [
-        {label: "delete", event:"delete"}
+        { label: "delete", event: "delete" }
       ],
-      connectorContextMenuItems:[
-        {label: "delete", event:"delete"}
+      connectorContextMenuItems: [
+        { label: "delete", event: "delete" }
       ],
-      vconnectorContextMenuItems:[
-        {label: "delete", event:"delete"}
-      ],
-    }
+      vconnectorContextMenuItems: [
+        { label: "delete", event: "delete" }
+      ]
+    };
   },
-  methods:{
-    deleteComponent(){
-      if(this.readOnly){
+  methods: {
+    deleteComponent() {
+      if (this.readOnly) {
         debug("delete component called but this project is not read-only for now");
-        return
+        return;
       }
       SIO.emitGlobal("removeNode", this.projectRootDir, this.targetComponent.ID, this.currentComponent.ID, (rt)=>{
         if (!rt) {
@@ -140,12 +140,11 @@ export default {
       });
       this.closeContextMenus();
     },
-    deleteConnector(){
+    deleteConnector() {
       console.log("deleteConnector called", this.targetConnector);
-
-      if(!this.readOnly){
+      if (!this.readOnly) {
         debug("delete link called but this project is read-only for now");
-        return
+        return;
       }
       SIO.emitGlobal("removeFileLink",
         this.projectRootDir,
@@ -155,18 +154,17 @@ export default {
         this.targetConnector.dstName,
         this.currentComponent.ID,
         (rt)=>{
-          if(!rt){
+          if (!rt) {
             debug("removeFileLink failed", rt);
           }
         });
       this.closeContextMenus();
     },
-    deleteVconnector(){
+    deleteVconnector() {
       console.log("deleteVconnector called", this.targetVconnector);
-
-      if(!this.readOnly){
+      if (!this.readOnly) {
         debug("delete file link called but this project is read-only for now");
-        return
+        return;
       }
 
       SIO.emitGlobal("removeLink",
@@ -176,116 +174,115 @@ export default {
         this.targetVconnector.isElse,
         this.currentComponent.ID,
         (rt)=>{
-          if(!rt){
+          if (!rt) {
             debug("removeLink failed", rt);
           }
         });
       this.closeContextMenus();
     },
-    openContextMenu(event, label){
-      this.menuX=event.offsetX;
-      this.menuY=event.offsetY;
-
-      if(label === "component"){
-        this.openComponentContextMenu=true;
-      }else if(label === "connector"){
-        this.openConnectorContextMenu=true;
-      }else if (label === "vconnector"){
-        this.openVconnectorContextMenu=true;
+    openContextMenu(event, label) {
+      this.menuX = event.offsetX;
+      this.menuY = event.offsetY;
+      if (label === "component") {
+        this.openComponentContextMenu = true;
+      } else if (label === "connector") {
+        this.openConnectorContextMenu = true;
+      } else if (label === "vconnector") {
+        this.openVconnectorContextMenu = true;
       }
     },
-    closeContextMenus(){
-      this.openComponentContextMenu=false;
-      this.openConnectorContextMenu=false;
-      this.openVconnectorContextMenu=false;
+    closeContextMenus() {
+      this.openComponentContextMenu = false;
+      this.openConnectorContextMenu = false;
+      this.openVconnectorContextMenu = false;
     },
-    onComponentRightClick(event, component){
-      this.targetComponent=component;
+    onComponentRightClick(event, component) {
+      this.targetComponent = component;
       this.openContextMenu(event, "component");
     },
-    onConnectorRightClick(event, item){
-      this.targetConnector=item
+    onConnectorRightClick(event, item) {
+      this.targetConnector = item;
       this.openContextMenu(event, "connector");
     },
-    onVconnectorRightClick(event, item){
-      this.targetVconnector=item
+    onVconnectorRightClick(event, item) {
+      this.targetVconnector = item;
       this.openContextMenu(event, "vconnector");
     },
-    ...mapActions({commitSelectedComponent: "selectedComponent"}),
-    updatePosition(index, event){
-      this.currentComponent.descendants[index].pos.x=event.newX
-      this.currentComponent.descendants[index].pos.y=event.newY
+    ...mapActions({ commitSelectedComponent: "selectedComponent" }),
+    updatePosition(index, event) {
+      this.currentComponent.descendants[index].pos.x = event.newX;
+      this.currentComponent.descendants[index].pos.y = event.newY;
     },
-    commitNewPosition(index ){
-      const ID=this.currentComponent.descendants[index].ID
-      const pos=this.currentComponent.descendants[index].pos
-      if(this.readOnly){
+    commitNewPosition(index) {
+      const ID = this.currentComponent.descendants[index].ID;
+      const pos = this.currentComponent.descendants[index].pos;
+      if (this.readOnly) {
         debug("component is moved but this project is read-only for now");
-        return
+        return;
       }
-      SIO.emitGlobal("updateComponentPos", this.projectRootDir, ID,  pos, this.currentComponent.parent, SIO.generalCallback)
+      SIO.emitGlobal("updateComponentPos", this.projectRootDir, ID, pos, this.currentComponent.parent, SIO.generalCallback);
     },
-    onChdir(componentID, componentType){
-      if(!isContainer(componentType)){
-        return
+    onChdir(componentID, componentType) {
+      if (!isContainer(componentType)) {
+        return;
       }
-      SIO.emitGlobal("getWorkflow", this.projectRootDir, componentID, SIO.generalCallback)
+      SIO.emitGlobal("getWorkflow", this.projectRootDir, componentID, SIO.generalCallback);
     },
-    onAddFileLinkToParent(srcNode, srcName, inputFilename){
-      this.onAddFileLink(srcNode, srcName, this.currentComponent.ID, inputFilename)
+    onAddFileLinkToParent(srcNode, srcName, inputFilename) {
+      this.onAddFileLink(srcNode, srcName, this.currentComponent.ID, inputFilename);
     },
-    onRemoveFileLinkToParent(inputFilename){
+    onRemoveFileLinkToParent(inputFilename) {
       this.onRemoveFileLink(this.currentComponent.ID, inputFilename, this.currentComponent.parent, true);
     },
-    onAddFileLink( srcNode, srcName, dstNode, dstName){
-      if(this.readOnly){
+    onAddFileLink(srcNode, srcName, dstNode, dstName) {
+      if (this.readOnly) {
         debug("file link is added but this project is read-only for now");
-        return
+        return;
       }
       SIO.emitGlobal("addFileLink", this.projectRootDir,
         srcNode, srcName, dstNode, dstName,
-        this.currentComponent.ID, SIO.generalCallback)
+        this.currentComponent.ID, SIO.generalCallback);
     },
-    onRemoveFileLink(componentId, inputFilename, fromChildren){
-      if(this.readOnly){
+    onRemoveFileLink(componentId, inputFilename, fromChildren) {
+      if (this.readOnly) {
         debug("file link is removed but this project is read-only for now");
-        return
+        return;
       }
       SIO.emitGlobal("removeAllFileLink", this.projectRootDir,
         componentId, inputFilename, fromChildren,
-        this.currentComponent.ID, SIO.generalCallback)
+        this.currentComponent.ID, SIO.generalCallback);
     },
-    onAddLink(src, dst, isElse ){
-      if(this.readOnly){
+    onAddLink(src, dst, isElse) {
+      if (this.readOnly) {
         debug("link is added but this project is read-only for now");
-        return
+        return;
       }
       SIO.emitGlobal("addLink", this.projectRootDir, src, dst, isElse,
-        this.currentComponent.ID, SIO.generalCallback)
+        this.currentComponent.ID, SIO.generalCallback);
     },
-    onRemoveLink(componentId){
-      if(this.readOnly){
+    onRemoveLink(componentId) {
+      if (this.readOnly) {
         debug("link is removed but this project is read-only for now");
-        return
+        return;
       }
       SIO.emitGlobal("removeAllLink", this.projectRootDir,
-        componentId, this.currentComponent.ID, SIO.generalCallback)
+        componentId, this.currentComponent.ID, SIO.generalCallback);
     }
   },
-  computed:{
+  computed: {
     ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly"]),
-    linkGraph(){
-      const rt=[]
-      if(this.currentComponent === null){
-        return rt
+    linkGraph() {
+      const rt = [];
+      if (this.currentComponent === null) {
+        return rt;
       }
-      for (const component of this.currentComponent.descendants){
-        if(Array.isArray(component.next)){
-          for(const next of component.next){
+      for (const component of this.currentComponent.descendants) {
+        if (Array.isArray(component.next)) {
+          for (const next of component.next) {
             const nextComponent = this.currentComponent.descendants.find((e)=>{
               return e.ID === next;
             });
-            if(nextComponent){
+            if (nextComponent) {
               rt.push({
                 src: component.ID,
                 srcPos: calcSenderPos(component),
@@ -294,16 +291,16 @@ export default {
                 color: plugColor,
                 isElse: false,
                 key: `${component.ID}${next}`
-              })
+              });
             }
           }
         }
-        if(Array.isArray(component.else)){
-          for (const next of component.else){
+        if (Array.isArray(component.else)) {
+          for (const next of component.else) {
             const nextComponent = this.currentComponent.descendants.find((e)=>{
               return e.ID === next;
             });
-            if(nextComponent){
+            if (nextComponent) {
               rt.push({
                 src: component.ID,
                 srcPos: calcElseSenderPos(component),
@@ -312,34 +309,34 @@ export default {
                 color: elsePlugColor,
                 isElse: true,
                 key: `else${component.ID}${next}`
-              })
+              });
             }
           }
         }
       }
-      return rt
+      return rt;
     },
-    fileLinkGraph(){
-      const rt=[]
-      if(this.currentComponent === null){
-        return rt
+    fileLinkGraph() {
+      const rt = [];
+      if (this.currentComponent === null) {
+        return rt;
       }
-      for (const component of this.currentComponent.descendants){
-        const boxHeight=calcBoxHeight(component);
-        if(Array.isArray(component.outputFiles)){
-          for(let srcIndex=0; srcIndex < component.outputFiles.length; srcIndex++){
-            const outputFile=component.outputFiles[srcIndex];
-            for (const dst of outputFile.dst){
-              const dstComponent=this.currentComponent.descendants.find((e)=>{
-                return e.ID === dst.dstNode
+      for (const component of this.currentComponent.descendants) {
+        const boxHeight = calcBoxHeight(component);
+        if (Array.isArray(component.outputFiles)) {
+          for (let srcIndex = 0; srcIndex < component.outputFiles.length; srcIndex++) {
+            const outputFile = component.outputFiles[srcIndex];
+            for (const dst of outputFile.dst) {
+              const dstComponent = this.currentComponent.descendants.find((e)=>{
+                return e.ID === dst.dstNode;
               });
-              if(dstComponent){
+              if (dstComponent) {
                 const dstIndex = dstComponent.inputFiles.findIndex((inputFile)=>{
                   return dst.dstName === inputFile.name && inputFile.src.some((e)=>{
-                    return e.srcNode === component.ID
-                  })
+                    return e.srcNode === component.ID;
+                  });
                 });
-                if(dstIndex !== -1){
+                if (dstIndex !== -1) {
                   rt.push({
                     src: component.ID,
                     srcName: outputFile.name,
@@ -350,19 +347,19 @@ export default {
                     color: filePlugColor,
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
                     boxHeight
-                  })
+                  });
                 }
-              }else if(dst.dstNode === "parent" || dst.dstNode === this.currentComponent.ID){
+              } else if (dst.dstNode === "parent" || dst.dstNode === this.currentComponent.ID) {
                 //file link to parent level components
-                const dstIndex=this.currentComponent.outputFiles.findIndex((parentOutputFile)=>{
-                  if(! Array.isArray(parentOutputFile.origin)){
-                    return true
+                const dstIndex = this.currentComponent.outputFiles.findIndex((parentOutputFile)=>{
+                  if (!Array.isArray(parentOutputFile.origin)) {
+                    return true;
                   }
                   return dst.dstName === parentOutputFile.name && parentOutputFile.origin.some((e)=>{
-                    return e.srcNode === component.ID
+                    return e.srcNode === component.ID;
                   });
                 });
-                if(dstIndex !== -1){
+                if (dstIndex !== -1) {
                   rt.push({
                     src: component.ID,
                     srcName: outputFile.name,
@@ -373,7 +370,7 @@ export default {
                     color: filePlugColor,
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
                     boxHeight
-                  })
+                  });
                 }
               }
             }
@@ -381,23 +378,23 @@ export default {
         }
       }
       //file link from parent level components
-      if(Array.isArray(this.currentComponent.inputFiles)){
-        for(let srcIndex=0; srcIndex < this.currentComponent.inputFiles.length; srcIndex++){
-          if(Array.isArray(this.currentComponent.inputFiles[srcIndex].forwardTo)){
-            for(const dst of this.currentComponent.inputFiles[srcIndex].forwardTo){
-              const dstComponent=this.currentComponent.descendants.find((e)=>{
-                return e.ID === dst.dstNode
+      if (Array.isArray(this.currentComponent.inputFiles)) {
+        for (let srcIndex = 0; srcIndex < this.currentComponent.inputFiles.length; srcIndex++) {
+          if (Array.isArray(this.currentComponent.inputFiles[srcIndex].forwardTo)) {
+            for (const dst of this.currentComponent.inputFiles[srcIndex].forwardTo) {
+              const dstComponent = this.currentComponent.descendants.find((e)=>{
+                return e.ID === dst.dstNode;
               });
-              if(dstComponent){
+              if (dstComponent) {
                 const dstIndex = dstComponent.inputFiles.findIndex((inputFile)=>{
                   return dst.dstName === inputFile.name && inputFile.src.some((e)=>{
-                    return e.srcNode === this.currentComponent.ID
-                  })
+                    return e.srcNode === this.currentComponent.ID;
+                  });
                 });
-                if(dstIndex !== -1){
+                if (dstIndex !== -1) {
                   rt.push({
                     src: this.currentComponent.ID,
-                    srcName:this.currentComponent.inputFiles[srcIndex].name,
+                    srcName: this.currentComponent.inputFiles[srcIndex].name,
                     srcPos: calcFsenderPos(this.parentInputFilePos, srcIndex),
                     dst: dst.dstNode,
                     dstName: dst.dstName,
@@ -405,7 +402,7 @@ export default {
                     color: filePlugColor,
                     key: `${this.currentComponent.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
                     boxHeight: 0
-                  })
+                  });
                 }
               }
             }
@@ -414,14 +411,14 @@ export default {
       }
       return rt;
     },
-    parentOutputFilePos(){
-      const rt = {x: this.canvasWidth- boxWidth/2,
-        y: this.canvasHeight- ( this.currentComponent.outputFiles.length + 2) * textHeight }
-      return rt
+    parentOutputFilePos() {
+      const rt = { x: this.canvasWidth - boxWidth / 2,
+        y: this.canvasHeight - (this.currentComponent.outputFiles.length + 2) * textHeight };
+      return rt;
     },
-    parentInputFilePos(){
-      return {x: 56, y: textHeight }
+    parentInputFilePos() {
+      return { x: 56, y: textHeight };
     }
   }
-}
+};
 </script>

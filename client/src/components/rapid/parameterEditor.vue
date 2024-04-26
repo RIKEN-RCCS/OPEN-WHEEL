@@ -45,7 +45,7 @@
 <script>
 "use strict";
 import { mapState, mapGetters } from "vuex";
-import deepEqual from "deep-eql"
+import deepEqual from "deep-eql";
 import SIO from "@/lib/socketIOWrapper.js";
 import targetFiles from "@/components/rapid/targetFiles.vue";
 import gatherScatter from "@/components/rapid/gatherScatter.vue";
@@ -58,13 +58,13 @@ export default {
   components: {
     targetFiles,
     gatherScatter,
-    parameter,
+    parameter
   },
   props: {
     readOnly: {
       type: Boolean,
-      required: true,
-    },
+      required: true
+    }
   },
   data: function () {
     return {
@@ -73,23 +73,23 @@ export default {
         targetFiles: [],
         params: [],
         scatter: [],
-        gather: [],
+        gather: []
       },
       initialParameterSetting: {
         version: 2,
         targetFiles: [],
         params: [],
         scatter: [],
-        gather: [],
+        gather: []
       },
-      filename: "parameterSetting.json",
+      filename: "parameterSetting.json"
     };
   },
   computed: {
     ...mapState(["selectedFile", "projectRootDir", "componentPath"]),
-    ...mapGetters(["selectedComponentAbsPath"]),
+    ...mapGetters(["selectedComponentAbsPath"])
   },
-  mounted () {
+  mounted() {
     SIO.onGlobal("parameterSettingFile", (file)=>{
       if (!file.isParameterSettingFile) {
         debug("ERROR: illegal parameter setting file data", file);
@@ -109,58 +109,57 @@ export default {
     });
   },
   methods: {
-    onAddNewItem(mode, newItem){
-      this.parameterSetting[mode].push(newItem)
+    onAddNewItem(mode, newItem) {
+      this.parameterSetting[mode].push(newItem);
     },
-    onUpdateItem(mode, target, newItem){
+    onUpdateItem(mode, target, newItem) {
       target.srcName = newItem.srcName;
       target.dstName = newItem.dstName;
-
       if (newItem.dstNode) {
         target.dstNode = newItem.dstNode;
       }
     },
-    onDeleteItem(mode, target){
-      this.parameterSetting[mode]=this.parameterSetting[mode].filter((e)=>{
-        if(e.srcName !== target.srcName || e.dstName !== target.dstName){
-          return true
+    onDeleteItem(mode, target) {
+      this.parameterSetting[mode] = this.parameterSetting[mode].filter((e)=>{
+        if (e.srcName !== target.srcName || e.dstName !== target.dstName) {
+          return true;
         }
-        if(e.dstNode && e.dstNode !== target.dstNode){
-          return true
+        if (e.dstNode && e.dstNode !== target.dstNode) {
+          return true;
         }
-        if(e.srcNode && e.srcNode !== target.srcNode){
-          return true
+        if (e.srcNode && e.srcNode !== target.srcNode) {
+          return true;
         }
-        return false
+        return false;
       });
     },
-    openNewTab (...args) {
+    openNewTab(...args) {
       this.$emit("openNewTab", ...args);
     },
-    newParamAdded (param) {
+    newParamAdded(param) {
       this.parameterSetting.params.push(param);
       this.$emit("insertBraces");
     },
-    hasChange () {
+    hasChange() {
       return !deepEqual(this.initialParameterSetting, this.parameterSetting);
     },
-    save () {
+    save() {
       if (deepEqual(this.initialParameterSetting, this.parameterSetting)) {
         debug("paramter setting is not changed!");
         return false;
       }
-      const payload=JSON.stringify(this.parameterSetting)
+      const payload = JSON.stringify(this.parameterSetting);
       SIO.emitGlobal("saveFile", this.projectRootDir, this.filename, this.dirname || this.selectedComponentAbsPath,
         payload, (rt)=>{
           if (!rt) {
             debug("ERROR: parameter setting file save failed");
             return;
           }
-          this.initialParameterSetting = JSON.parse(payload)
-          debug("new initial PS-setting=",this.initialParameterSetting )
+          this.initialParameterSetting = JSON.parse(payload);
+          debug("new initial PS-setting=", this.initialParameterSetting);
         });
       return true;
-    },
-  },
+    }
+  }
 };
 </script>

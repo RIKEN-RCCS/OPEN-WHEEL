@@ -13,7 +13,7 @@
           v-bind="props"
           @click="onActiveted(item);onClickNodeIcon(item)"
           :class="{'text-primary': activatable && active.includes(item[itemKey])}"
-          :key=item[itemKey] 
+          :key=item[itemKey]
         >
           <template #prepend>
             <v-icon
@@ -57,7 +57,7 @@
     <v-list-item
       @click="onActiveted(item)"
       :class="{'text-primary': activatable && active.includes(item[itemKey])}"
-      :key=item[itemKey] 
+      :key=item[itemKey]
     >
       <template #prepend>
         <v-icon
@@ -77,58 +77,58 @@
 
 export default {
   name: "innerTreeview",
-  props:{
-    item:{
+  props: {
+    item: {
       type: Object,
       required: true
     },
-    loadChildren:{
-      type: Function,
+    loadChildren: {
+      type: Function
     },
-    activatable:{
+    activatable: {
       type: Boolean,
       default: false
     },
-    openAll:{
+    openAll: {
       type: Boolean,
       default: false
     },
-    active:{
+    active: {
       type: Array,
       required: this.activatable
     },
-    itemKey:{
+    itemKey: {
       type: String,
       default: "id"
     },
-    getNodeIcon:{
+    getNodeIcon: {
       type: Function,
-      default:()=>{return ""}
+      default: ()=>{ return ""; }
     },
-    getLeafIcon:{
+    getLeafIcon: {
       type: Function,
-      default:()=>{return ""}
+      default: ()=>{ return ""; }
     }
   },
-  methods:{
-    async onClickNodeIcon(item){
-      if(!this.loadChildren){
-        return false
+  methods: {
+    async onClickNodeIcon(item) {
+      if (!this.loadChildren) {
+        return false;
       }
       await this.loadChildren(item);
     },
-    onActiveted(item){
-      if(! this.activatable){
+    onActiveted(item) {
+      if (!this.activatable) {
         return null;
       }
-      if(!this.multipleActive){
-        this.active.splice(0,this.active.length);
+      if (!this.multipleActive) {
+        this.active.splice(0, this.active.length);
       }
-      if (!this.active.includes(item[this.itemKey])){
+      if (!this.active.includes(item[this.itemKey])) {
         this.active.push(item[this.itemKey]);
       }
       this.$emit("update:active", item);
-    },
-  },
-}
+    }
+  }
+};
 </script>

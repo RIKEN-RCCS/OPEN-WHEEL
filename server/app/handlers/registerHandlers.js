@@ -24,23 +24,20 @@ const {
   onRemoveFileLink,
   onRemoveAllFileLink,
   onGetEnv,
-  onUpdateEnv,
+  onUpdateEnv
 } = require("./workflowEditor.js");
 const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } = require("./jobScript.js");
 const { onGetResultFiles } = require("./resultFiles.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
-const { onCreateNewRemoteFile, onCreateNewRemoteDir, onRequestRemoteConnection, onGetRemoteFileList, onGetRemoteSNDContents, onRemoteDownload,  onRenameRemoteFile, onRemoveRemoteFile, } = require("./remoteFileBrowser.js");
-const {getVersionInfo} = require("./versionInfo.js");
-
-
+const { onCreateNewRemoteFile, onCreateNewRemoteDir, onRequestRemoteConnection, onGetRemoteFileList, onGetRemoteSNDContents, onRemoteDownload, onRenameRemoteFile, onRemoveRemoteFile } = require("./remoteFileBrowser.js");
+const { getVersionInfo } = require("./versionInfo.js");
 const registerHandlers = (socket, Siofu)=>{
   //
   //read information
   //
   socket.on("getComponentTree", sendComponentTree);
   socket.on("getTaskStateList", sendTaskStateList);
-
 
   //
   //projectController
@@ -101,7 +98,6 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("saveFile", onSaveFile);
   socket.on("openFile", onOpenFile.bind(null, socket.id));
 
-
   //
   //remote file browser
   //
@@ -116,7 +112,6 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("renameRemoteFile", onRenameRemoteFile);
   //delete
   socket.on("removeRemoteFile", onRemoveRemoteFile);
-
 
   //
   //projectList

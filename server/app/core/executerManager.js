@@ -8,8 +8,8 @@ const path = require("path");
 const childProcess = require("child_process");
 const https = require("https");
 const fs = require("fs-extra");
-const axios=require("axios");
-const {getAccessToken} = require("./webAPI.js");
+const axios = require("axios");
+const { getAccessToken } = require("./webAPI.js");
 const SBS = require("simple-batch-system");
 const { remoteHost, jobScheduler, numJobOnLocal, defaultTaskRetryCount } = require("../db/db");
 const { addX } = require("./fileUtils");
@@ -21,19 +21,16 @@ const { registerJob } = require("./jobManager");
 const { getLogger } = require("../logSettings.js");
 
 const executers = new Map();
-
-function isExceededLimit(JS, rt, outputText){
-  if(Array.isArray(JS.exceededRtList) && JS.exceededRtList.includes(rt)){
-    return true
+function isExceededLimit(JS, rt, outputText) {
+  if (Array.isArray(JS.exceededRtList) && JS.exceededRtList.includes(rt)) {
+    return true;
   }
-  if(JS.reExceededLimitError){
+  if (JS.reExceededLimitError) {
     const re = new RegExp(JS.reExceededLimitError, "m");
     return re.test(outputText);
   }
-  return false
+  return false;
 }
-
-
 function makeEnv(task) {
   if (typeof task.env === "undefined" || Object.keys(task.env).length === 0) {
     return "";
@@ -54,7 +51,8 @@ function makeQueueOpt(task, JS, queues) {
   if (typeof queues !== "string") {
     return "";
   }
-  const queueList = queues.split(",").map((e)=>{return e.trim()});
+  const queueList = queues.split(",")
+    .map((e)=>{ return e.trim(); });
   if (queueList.length === 0) {
     return "";
   }
@@ -110,7 +108,6 @@ async function decideFinishState(task) {
   }
   return rt;
 }
-
 async function needsRetry(task) {
   let rt = false;
   if (typeof task.retryCondition === "undefined" || task.retryCondition === null) {
@@ -127,7 +124,6 @@ async function needsRetry(task) {
   }
   return rt;
 }
-
 
 class Executer {
   constructor(hostinfo, isJob) {
@@ -165,7 +161,6 @@ class Executer {
           state = task.rt === 0 ? "finished" : "failed";
         }
         await setTaskState(task, state);
-
         //to use task in retry function, exec() will be rejected with task object if failed
         if (state === "failed") {
           return Promise.reject(task);
@@ -190,11 +185,9 @@ class Executer {
 
     job.retry = needsRetry.bind(null, task);
     task.sbsID = this.batch.qsub(job);
-
     if (task.sbsID !== null) {
       await setTaskState(task, "waiting");
     }
-
     const tmp = async ()=>{
       try {
         await this.batch.qwait(task.sbsID);
@@ -203,7 +196,7 @@ class Executer {
         getLogger(task.projectRootDir).trace(`${task.name} is ${task.state}`);
         task.emitForDispatcher("taskCompleted", task.state);
       }
-    }
+    };
     return tmp();
   }
 
@@ -252,21 +245,19 @@ class RemoteJobExecuter extends Executer {
     const rt = await ssh.exec(submitCmd, 60, (data)=>{
       outputText += data;
     });
-
-    if(isExceededLimit(this.JS, rt, outputText)){
+    if (isExceededLimit(this.JS, rt, outputText)) {
       this.batch.originalMaxConcurrent = this.batch.maxConcurrent;
-      this.batch.maxConcurrent  = this.batch.maxConcurrent  - 1;
+      this.batch.maxConcurrent = this.batch.maxConcurrent - 1;
       getLogger(task.projectRootDir).debug(`max numJob is reduced to ${this.batch.maxConcurrent}`);
       getLogger(task.projectRootDir).trace(`exceed job submit limit ${outputText}`);
-      task.forceRetry=true
+      task.forceRetry = true;
       return Promise.reject(task);
     }
-    if([255].includes(rt)){
+    if ([255].includes(rt)) {
       getLogger(task.projectRootDir).debug(`recoverable error occurred (${rt})`);
-      task.forceRetry=true
+      task.forceRetry = true;
       return Promise.reject(task);
     }
-
     if (rt !== 0) {
       const err = new Error("submit command failed");
       err.cmd = submitCmd;
@@ -274,15 +265,14 @@ class RemoteJobExecuter extends Executer {
       err.outputText = outputText;
       return Promise.reject(err);
     }
-    if( this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent> this.batch.maxConcurrent ){
-      this.batch.maxConcurrent  = this.batch.maxConcurrent +1
+    if (this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent > this.batch.maxConcurrent) {
+      this.batch.maxConcurrent = this.batch.maxConcurrent + 1;
     }
-    if( this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent === this.batch.maxConcurrent ){
-      delete this.batch.originalMaxConcurrent
+    if (this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent === this.batch.maxConcurrent) {
+      delete this.batch.originalMaxConcurrent;
     }
     const re = new RegExp(this.JS.reJobID, "m");
     const result = re.exec(outputText);
-
     if (result === null || result[1] === null) {
       const err = new Error("get jobID failed");
       err.cmd = submitCmd;
@@ -319,11 +309,10 @@ class RemoteJobWebAPIExecuter extends Executer {
 
   async exec(task) {
     const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
-    const queueURL="https://api.fugaku.r-ccs.riken.jp/queue/computer/"
+    const queueURL = "https://api.fugaku.r-ccs.riken.jp/queue/computer/";
     const accessToken = getAccessToken(task.remotehostID);
-
-    if(accessToken === null){
-      const err = new Error("accessToken not found")
+    if (accessToken === null) {
+      const err = new Error("accessToken not found");
       return Promise.reject(err);
     }
 
@@ -335,16 +324,16 @@ class RemoteJobWebAPIExecuter extends Executer {
     //Authorization: `Bearer ${accessToken}`,
     //},
     //tokenでの認証に変更した時は、tokenのrefresh機能も設定する必要あり
-    const request={
-      jobfile:`${task.remoteWorkingDir}/${task.script}`,
-    }
-    const passphrase=process.env.WHEEL_CERT_PASSPHRASE;
-    const pfx=await fs.readFile(process.env.WHEEL_CERT_FILENAME);
-    const option= {httpsAgent: new https.Agent({ passphrase, pfx })}
-    const response = await axios.post(queueURL,request, option)
+    const request = {
+      jobfile: `${task.remoteWorkingDir}/${task.script}`
+    };
+    const passphrase = process.env.WHEEL_CERT_PASSPHRASE;
+    const pfx = await fs.readFile(process.env.WHEEL_CERT_FILENAME);
+    const option = { httpsAgent: new https.Agent({ passphrase, pfx }) };
+    const response = await axios.post(queueURL, request, option);
 
-    const outputText=response.data.output
-    if(response.status !== 200){
+    const outputText = response.data.output;
+    if (response.status !== 200) {
       const err = new Error("submit command failed");
       err.jobfile = request.jobfile;
       err.status = response.status;
@@ -354,25 +343,22 @@ class RemoteJobWebAPIExecuter extends Executer {
 
     getLogger(task.projectRootDir).debug("submitting job (by webAPI):");
     await setTaskState(task, "running");
-
-    if(isExceededLimit(this.JS, null, outputText)){
+    if (isExceededLimit(this.JS, null, outputText)) {
       this.batch.originalMaxConcurrent = this.batch.maxConcurrent;
-      this.batch.maxConcurrent  = this.batch.maxConcurrent  - 1;
+      this.batch.maxConcurrent = this.batch.maxConcurrent - 1;
       getLogger(task.projectRootDir).debug(`max numJob is reduced to ${this.batch.maxConcurrent}`);
       getLogger(task.projectRootDir).trace(`exceed job submit limit ${outputText}`);
-      task.forceRetry=true
+      task.forceRetry = true;
       return Promise.reject(task);
     }
-
-    if( this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent> this.batch.maxConcurrent ){
-      this.batch.maxConcurrent  = this.batch.maxConcurrent +1
+    if (this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent > this.batch.maxConcurrent) {
+      this.batch.maxConcurrent = this.batch.maxConcurrent + 1;
     }
-    if( this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent === this.batch.maxConcurrent ){
-      delete this.batch.originalMaxConcurrent
+    if (this.batch.originalMaxConcurrent && this.batch.originalMaxConcurrent === this.batch.maxConcurrent) {
+      delete this.batch.originalMaxConcurrent;
     }
     const re = new RegExp(this.JS.reJobID, "m");
     const result = re.exec(outputText);
-
     if (result === null || result[1] === null) {
       const err = new Error("get jobID failed");
       err.jobfile = request.jobfile;
@@ -455,7 +441,6 @@ class LocalTaskExecuter extends Executer {
 function getExecutersKey(task) {
   return `${task.projectRootDir}-${task.remotehostID}-${task.useJobScheduler}`;
 }
-
 function getMaxNumJob(hostinfo) {
   if (hostinfo === null) {
     return numJobOnLocal;
@@ -465,11 +450,9 @@ function getMaxNumJob(hostinfo) {
   }
   return 1;
 }
-
 function createExecuter(task, hostinfo) {
   getLogger(task.projectRootDir).debug("createExecuter called");
   const onRemote = task.remotehostID !== "localhost";
-
   if (task.useJobScheduler && typeof jobScheduler[hostinfo.jobScheduler] === "undefined") {
     const err = new Error("illegal job Scheduler specifies");
     err.task = task.name;
@@ -479,9 +462,9 @@ function createExecuter(task, hostinfo) {
     throw err;
   }
   if (onRemote) {
-    if(hostinfo.useWebAPI){
+    if (hostinfo.useWebAPI) {
       getLogger(task.projectRootDir).debug(`create new executer for ${task.host} with web API`);
-      return new RemoteJobWebAPIExecuter(hostinfo, true)
+      return new RemoteJobWebAPIExecuter(hostinfo, true);
     }
     if (task.useJobScheduler) {
       getLogger(task.projectRootDir).debug(`create new executer for ${task.host} with job scheduler`);
@@ -493,9 +476,7 @@ function createExecuter(task, hostinfo) {
   getLogger(task.projectRootDir).debug("create new executer for localhost");
   return new LocalTaskExecuter(hostinfo, false);
 }
-
-
-async function register(task){
+async function register(task) {
   const onRemote = task.remotehostID !== "localhost";
   const hostinfo = onRemote ? getSshHostinfo(task.projectRootDir, task.remotehostID) : null;
 
@@ -505,14 +486,13 @@ async function register(task){
     executer = executers.get(getExecutersKey(task));
     const maxNumJob = getMaxNumJob(hostinfo);
     executer.setMaxNumJob(maxNumJob);
-
     if (task.useJobScheduler) {
       const JS = Object.keys(jobScheduler).includes(hostinfo.jobScheduler) ? jobScheduler[hostinfo.jobScheduler] : null;
-      if(JS === null){
-        const err = new Error("illegal job scheduler")
-        err.task=task
-        err.JS = hostinfo.jobScheduler
-        throw err
+      if (JS === null) {
+        const err = new Error("illegal job scheduler");
+        err.task = task;
+        err.JS = hostinfo.jobScheduler;
+        throw err;
       }
       executer.setJS(JS);
       const queues = hostinfo != null ? hostinfo.queue : null;
@@ -549,17 +529,17 @@ function cancel(task) {
  * remove all executer class instance from DB
  * @param {string} projectRootDir - project projectRootDir's absolute path
  */
-function removeAll(projectRootDir){
+function removeAll(projectRootDir) {
   const keysToRemove = Array.from(executers.keys()).filter((key)=>{
-    return key.startsWith(projectRootDir)
+    return key.startsWith(projectRootDir);
   });
   keysToRemove.forEach((key)=>{
     executers.delete(key);
   });
 }
 
-module.exports={
+module.exports = {
   register,
   cancel,
   removeAll
-}
+};

@@ -13,7 +13,6 @@ const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
 const { eventEmitters } = require("./global.js");
 
-
 /**
  * set task component's status and notice it's changed
  */
@@ -25,7 +24,6 @@ async function setTaskState(task, state) {
   ee.emit("taskStateChanged", task);
   ee.emit("componentStateChanged", task);
 }
-
 async function needDownload(projectRootDir, componentID, outputFile) {
   const rt = await Promise.all(outputFile.dst.map(({ dstNode })=>{
     return isSameRemoteHost(projectRootDir, componentID, dstNode);
@@ -34,7 +32,6 @@ async function needDownload(projectRootDir, componentID, outputFile) {
     return !isSame;
   });
 }
-
 function formatSrcFilename(remoteWorkingDir, filename) {
   if (filename.endsWith("/") || filename.endsWith("\\")) {
     const dirname = replacePathsep(filename);
@@ -42,7 +39,6 @@ function formatSrcFilename(remoteWorkingDir, filename) {
   }
   return path.posix.join(remoteWorkingDir, filename);
 }
-
 function makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingDir) {
   const reRemoteWorkingDir = new RegExp(remoteWorkingDir);
   const src = formatSrcFilename(remoteWorkingDir, filename);
@@ -54,7 +50,6 @@ function makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingD
   getLogger(projectRootDir).trace(`${filename} will be downloaded to component root directory`);
   return { src, dst: workingDir };
 }
-
 async function gatherFiles(task) {
   await setTaskState(task, "stage-out");
   getLogger(task.projectRootDir).debug("start to get files from remote server if specified");
@@ -89,7 +84,6 @@ async function gatherFiles(task) {
       return `--exclude=${e}`;
     });
   }
-
   //get files which match include filter
   if (Array.isArray(task.include) && task.include.length > 0) {
     const downloadRecipe2 = task.include.map((e)=>{
@@ -109,7 +103,6 @@ async function gatherFiles(task) {
   }
 
   await Promise.all(promises);
-
   //clean up remote working directory
   if (task.doCleanup) {
     getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
@@ -122,13 +115,11 @@ async function gatherFiles(task) {
     }
   }
 }
-
 async function createStatusFile(task) {
   const filename = path.resolve(task.workingDir, statusFilename);
   const statusFile = `${task.state}\n${task.rt}\n${task.jobStatus}`;
   return fs.writeFile(filename, statusFile);
 }
-
 async function createBulkStatusFile(task, rtList, jobStatusList) {
   const filename = path.resolve(task.workingDir, `subjob_${statusFilename}`);
   let statusFile = "";

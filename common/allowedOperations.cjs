@@ -5,15 +5,15 @@
  */
 "use strict";
 
-const allowedOperations={
-  "not-started":["runProject", "revertProject", "saveProject"],
-  preparing:[],
-  running:["stopProject"],
-  stopped:["cleanProject", "saveProject"],
-  finished:["cleanProject", "saveProject"],
-  failed:["cleanProject",  "saveProject"],
-  holding:[],
-  unknown:["cleanProject",  "saveProject"]
-}
+const allowedOperations = {
+  "not-started": ["runProject", "revertProject", "saveProject"],
+  "preparing": [],
+  "running": ["stopProject"],
+  "stopped": ["cleanProject", "saveProject"],
+  "finished": ["cleanProject", "saveProject"],
+  "failed": ["cleanProject", "saveProject"],
+  "holding": [],
+  "unknown": ["cleanProject", "saveProject"],
+};
 
-module.exports=allowedOperations
+module.exports = allowedOperations;

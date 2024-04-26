@@ -26,7 +26,7 @@ const remoteHome = "/home/testuser";
 
 //helper functions
 const { componentJsonFilename, statusFilename, jobManagerJsonFilename } = require("../app/db/db");
-const { createNewProject, updateComponent, createNewComponent  } = require("../app/core/projectFilesOperator");
+const { createNewProject, updateComponent, createNewComponent } = require("../app/core/projectFilesOperator");
 const { replacePathsep } = require("../app/core/pathUtils");
 
 const { scriptName, pwdCmd, scriptHeader, exit } = require("./testScript");
@@ -35,8 +35,7 @@ const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 const { remoteHost } = require("../app/db/db");
 const { addSsh } = require("../app/core/sshManager");
 
-
-describe("UT for executer class", function() {
+describe("UT for executer class", function () {
   this.timeout(0);
   let task0;
   beforeEach(async ()=>{
@@ -75,9 +74,9 @@ describe("UT for executer class", function() {
     it("run shell script which returns 1 and status should be failed", async ()=>{
       await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
 
-      try{
+      try {
         await exec(task0);
-      }catch(e){
+      } catch (e) {
         expect(e.rt).to.equal(1);
       }
       expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
@@ -88,12 +87,11 @@ describe("UT for executer class", function() {
     let ssh;
     const remotehostName = process.env.WHEEL_TEST_REMOTEHOST;
     const password = process.env.WHEEL_TEST_REMOTE_PASSWORD;
-    before(async function() {
+    before(async function () {
       if (!remotehostName) {
         console.log("remote exec test will be skipped because WHEEL_TEST_REMOTEHOST is not set");
         this.skip();
       }
-
       if (!password) {
         console.log("remote exec test will be done without password because WHEEL_TEST_REMOTE_PASSWORD is not set");
       }
@@ -103,7 +101,6 @@ describe("UT for executer class", function() {
 
       try {
         const rt = await ssh.canConnect(120);
-
         if (!rt) {
           throw new Error("canConnect failed");
         }
@@ -177,9 +174,9 @@ describe("UT for executer class", function() {
       it("run shell script which returns 1 and status should be failed", async ()=>{
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
 
-        try{
+        try {
           await exec(task0);
-        }catch(e){
+        } catch (e) {
           expect(e.rt).to.equal(1);
         }
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
@@ -188,9 +185,9 @@ describe("UT for executer class", function() {
         task0.doCleanup = true;
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
 
-        try{
+        try {
           await exec(task0);
-        }catch(e){
+        } catch (e) {
           expect(e.rt).to.equal(1);
         }
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
@@ -202,9 +199,9 @@ describe("UT for executer class", function() {
         task0.outputFiles = [{ name: "hoge" }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(1)}`);
 
-        try{
+        try {
           await exec(task0);
-        }catch(e){
+        } catch (e) {
           expect(e.rt).to.equal(1);
         }
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");

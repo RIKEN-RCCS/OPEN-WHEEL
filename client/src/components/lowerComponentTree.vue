@@ -25,7 +25,7 @@
 import { mapState } from "vuex";
 import getNodeAndPath from "@/lib/getNodeAndPath.js";
 import componentButton from "@/components/common/componentButton.vue";
-import myTreeview from "@/components/common/myTreeview.vue"
+import myTreeview from "@/components/common/myTreeview.vue";
 
 export default {
   name: "LowerComponentTree",
@@ -33,25 +33,25 @@ export default {
     componentButton,
     myTreeview
   },
-  data () {
+  data() {
     return {
       active: [],
-      lowerLevelComponents: null,
+      lowerLevelComponents: null
     };
   },
   computed: {
-    ...mapState(["selectedComponent", "componentPath", "componentTree"]),
+    ...mapState(["selectedComponent", "componentPath", "componentTree"])
   },
-  mounted () {
+  mounted() {
     const targetID = this.selectedComponent.ID;
     this.lowerLevelComponents = getNodeAndPath(targetID, this.componentTree);
   },
   methods: {
-    onUpdateActive (item) {
+    onUpdateActive(item) {
       const activeComponentID = item.ID;
       const activeComponent = getNodeAndPath(activeComponentID, this.componentTree);
       this.$emit("selected", activeComponent);
-    },
-  },
+    }
+  }
 };
 </script>

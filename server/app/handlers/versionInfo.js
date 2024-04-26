@@ -5,13 +5,12 @@
  */
 "use strict";
 const { getLogger } = require("../logSettings");
-const {version} = require("../db/version.json");
-
-function getVersionInfo(projectRootDir){
+const { version } = require("../db/version.json");
+function getVersionInfo(projectRootDir) {
   const logger = getLogger(projectRootDir);
   logger.info(`WHEEL version ${version}`);
 }
 
-module.exports={
+module.exports = {
   getVersionInfo
-}
+};

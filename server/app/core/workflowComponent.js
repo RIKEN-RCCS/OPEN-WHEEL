@@ -21,7 +21,7 @@ class BaseWorkflowComponent {
     this.type = null;
     this.name = null;
     this.description = null;
-    this.env={}
+    this.env = {};
 
     /**
      * component state
@@ -294,7 +294,6 @@ class BulkjobTask extends Task {
  */
 function componentFactory(type, ...args) {
   let component;
-
   switch (type) {
     case "task":
       component = new Task(...args);
@@ -340,11 +339,9 @@ function componentFactory(type, ...args) {
   }
   return component;
 }
-
 function hasChild(component) {
   return component.type === "workflow" || component.type === "parameterStudy" || component.type === "for" || component.type === "while" || component.type === "foreach" || component.type === "stepjob";
 }
-
 function isInitialComponent(component) {
   if (component.type === "storage") {
     return component.outputFiles.some((outputFile)=>{
@@ -365,7 +362,6 @@ function isInitialComponent(component) {
 
   return true;
 }
-
 function isComponent(componentJson) {
   return componentJson instanceof BaseWorkflowComponent;
 }
@@ -392,16 +388,15 @@ function removeDuplicatedComponent(components) {
  * @param {string} type - component type
  * @returns {string} - component's basename
  */
-function getComponentDefaultName(type){
-  if (type === "stepjobTask"){
-    return "sjTask"
+function getComponentDefaultName(type) {
+  if (type === "stepjobTask") {
+    return "sjTask";
   }
-  if(type === "bulkjobTask"){
-    return "bjTask"
+  if (type === "bulkjobTask") {
+    return "bjTask";
   }
-  return type
+  return type;
 }
-
 
 module.exports = {
   componentFactory,

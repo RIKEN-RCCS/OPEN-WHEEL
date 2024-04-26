@@ -68,50 +68,50 @@ import SIO from "@/lib/socketIOWrapper.js";
 export default {
   name: "LogScreen",
   components: {
-    xterm,
+    xterm
   },
-  props:{
+  props: {
     show: Boolean
   },
   data: ()=>{
     return {
       currentTab: 0,
       items: [
-        { label: "info", id: "info",          clear: 0, log: "", unread: false, eventNames: ["logINFO", "logWARN", "logERR"] },
-        { label: "stdout", id: "stdout",      clear: 0, log: "", unread: false, eventNames: ["logStdout"] },
-        { label: "stderr", id: "stderr",      clear: 0, log: "", unread: false, eventNames: ["logStderr"] },
-        { label: "output(SSH)", id: "sshout", clear: 0, log: "", unread: false, eventNames: ["logSSHout","logSSHerr"] },
-      ],
+        { label: "info", id: "info", clear: 0, log: "", unread: false, eventNames: ["logINFO", "logWARN", "logERR"] },
+        { label: "stdout", id: "stdout", clear: 0, log: "", unread: false, eventNames: ["logStdout"] },
+        { label: "stderr", id: "stderr", clear: 0, log: "", unread: false, eventNames: ["logStderr"] },
+        { label: "output(SSH)", id: "sshout", clear: 0, log: "", unread: false, eventNames: ["logSSHout", "logSSHerr"] }
+      ]
     };
   },
   computed: {
     ...mapState(["projectRootDir"])
   },
-  watch:{
-    show(){
-      if(!this.show){
+  watch: {
+    show() {
+      if (!this.show) {
         return;
       }
       this.onChange(this.currentTab);
     }
   },
   methods: {
-    getItemByEventName(eventName){
+    getItemByEventName(eventName) {
       return this.items.find((item)=>{
         return item.eventNames.some((e)=>{
           return e === eventName;
         });
       });
     },
-    logRecieved(eventName, data){
-      const item=this.getItemByEventName(eventName);
+    logRecieved(eventName, data) {
+      const item = this.getItemByEventName(eventName);
       this.newlog(item);
-      item.log=data;
+      item.log = data;
     },
-    newlog: function(item){
+    newlog: function (item) {
       item.unread = item.id !== this.items[this.currentTab].id;
     },
-    onChange: function(n){
+    onChange: function (n) {
       this.items[n].unread = false;
     },
     clearAllLog: function () {
@@ -119,15 +119,15 @@ export default {
       //Vue2 -> Vue3の移行時に作業量が増えるため、workaroundとしてclear propに変更があったら
       //xtermコンポーネントでclearを実行するようにしている。
       for (const item of this.items) {
-        item.unread=false;
-        item.clear = (item.clear+1)%2;
+        item.unread = false;
+        item.clear = (item.clear + 1) % 2;
       }
     },
-    getVersionInfo(){
+    getVersionInfo() {
       SIO.emitGlobal("getVersionInfo", this.projectRootDir, ()=>{
         console.log("version info should be on INFO log");
       });
     }
-  },
+  }
 };
 </script>

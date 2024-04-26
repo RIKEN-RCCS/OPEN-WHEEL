@@ -8,14 +8,14 @@ const path = require("path");
 const fs = require("fs-extra");
 
 module.exports = {
-  get: async(req, res)=>{
+  get: async (req, res)=>{
     //accept GET method only for reload case
     if (!req.dir) {
       return;
     }
     res.sendFile(path.resolve(__dirname, "../public/viewer.html"));
   },
-  post: async(req, res)=>{
+  post: async (req, res)=>{
     const projectRootDir = req.body.rootDir;
     const dir = req.body.dir;
     if (!await fs.pathExists(dir)) {

@@ -57,7 +57,7 @@ import { mapState } from "vuex";
 import getNodeAndPath from "@/lib/getNodeAndPath.js";
 import { isContainer } from "@/lib/utility.js";
 import componentButton from "@/components/common/componentButton.vue";
-import myTreeview from "@/components/common/myTreeview.vue"
+import myTreeview from "@/components/common/myTreeview.vue";
 import SIO from "@/lib/socketIOWrapper.js";
 
 export default {
@@ -68,7 +68,7 @@ export default {
   },
   data: ()=>{
     return {
-      showComponentTree: false,
+      showComponentTree: false
     };
   },
   computed: {
@@ -86,15 +86,15 @@ export default {
     },
     componentTree: function () {
       return [this.tree];
-    },
+    }
   },
   methods: {
     goto: function (item) {
       const requestID = isContainer(item) ? item.ID : item.parent;
       SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);
       this.showComponentTree = false;
-    },
-  },
+    }
+  }
 };
 </script>
 <style>

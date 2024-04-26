@@ -12,62 +12,62 @@ const emptyArraySchema = {
   uniqueItems: true
 };
 
-const stringArraySchema={
+const stringArraySchema = {
   type: "array",
   items: {
     type: "string"
   }
-}
+};
 
-const srcSchema={
+const srcSchema = {
   type: "object",
-  required:["srcNode", "srcName"],
+  required: ["srcNode", "srcName"],
   properties: {
     srcNode: { type: "string" },
     srcName: { type: "string" }
   }
-}
-const dstSchema={
+};
+const dstSchema = {
   type: "object",
-  required : ["dstNode", "dstName"],
-  properties : {
+  required: ["dstNode", "dstName"],
+  properties: {
     dstNode: { type: "string" },
     dstName: { type: "string" }
   }
-}
+};
 
-const inputFileSchema={
+const inputFileSchema = {
   type: "object",
-  required : ["name", "src"],
-  properties : {
+  required: ["name", "src"],
+  properties: {
     name: { type: "string" },
-    src: { type: "array",  items: srcSchema },
-    forwardTo: { type: "array",  items: dstSchema }
+    src: { type: "array", items: srcSchema },
+    forwardTo: { type: "array", items: dstSchema }
   }
-}
-const outputFileSchema={
+};
+const outputFileSchema = {
   type: "object",
-  required : ["name", "dst"],
-  properties : {
+  required: ["name", "dst"],
+  properties: {
     name: { type: "string" },
-    dst: { type: "array", items: dstSchema},
-    origin: { type: "array",  items: srcSchema}
+    dst: { type: "array", items: dstSchema },
+    origin: { type: "array", items: srcSchema }
   }
-}
+};
 
-const posSchema={
+const posSchema = {
   type: "object",
-  required : ["x", "y"],
-  properties : {
+  required: ["x", "y"],
+  properties: {
     x: { type: "number" },
     y: { type: "number" }
   },
-  maxProperties : 2
-}
+  maxProperties: 2
+};
 
 class BaseWorkflowComponentSchema {
   constructor() {
-    this.type="object";
+    this.type = "object";
     this.required = ["parent", "pos", "ID", "type", "name"];
     this.properties = {
       parent: { type: "string" },
@@ -75,15 +75,14 @@ class BaseWorkflowComponentSchema {
       ID: { type: "string" },
       type: { enum: ["task", "workflow", "parameterStudy", "if",
         "for", "while", "foreach", "storage", "source", "viewer",
-        "stepjob", "stepjobTask", "bulkjobTask" ]},
+        "stepjob", "stepjobTask", "bulkjobTask"] },
       name: { type: "string" },
       description: { type: ["string", "null"], default: null },
-      env: { type: "object", default: {}},
+      env: { type: "object", default: {} },
       state: { enum: ["not-started", "running", "finished", "failed", "unknown"], default: "not-started" }
     };
   }
 }
-
 
 class GeneralWorkflowComponentSchema extends BaseWorkflowComponentSchema {
   constructor(...args) {
@@ -92,8 +91,8 @@ class GeneralWorkflowComponentSchema extends BaseWorkflowComponentSchema {
     this.properties = Object.assign(this.properties, {
       previous: stringArraySchema,
       next: stringArraySchema,
-      inputFiles: {type: "array", items: inputFileSchema},
-      outputFiles: {type: "array", items: outputFileSchema},
+      inputFiles: { type: "array", items: inputFileSchema },
+      outputFiles: { type: "array", items: outputFileSchema },
       cleanupFlag: { enum: [0, 1, 2] }
     });
   }
@@ -105,9 +104,9 @@ class TaskSchema extends GeneralWorkflowComponentSchema {
     this.properties.type = { enum: ["task"] };
     this.properties.script = { type: ["string", "null"], default: null };
     this.properties.host = { type: "string", default: "localhost" };
-    this.properties.useJobScheduler = { type: "boolean", default:false };
-    this.properties.queue = { type:  ["string", "null"], default: null };
-    this.properties.submitOption= { type:  ["string", "null"], default: null };
+    this.properties.useJobScheduler = { type: "boolean", default: false };
+    this.properties.queue = { type: ["string", "null"], default: null };
+    this.properties.submitOption = { type: ["string", "null"], default: null };
     this.properties.include = stringArraySchema;
     this.properties.exclude = stringArraySchema;
     this.properties.state.enum.push(...["stage-in", "waiting", "queued", "stage-out"]);
@@ -125,13 +124,13 @@ class ParameterStudySchema extends GeneralWorkflowComponentSchema {
   constructor(...args) {
     super(...args);
     this.properties.type = { enum: ["parameterStudy"] };
-    this.required.push("parameterFile", "numTotal", "numFinished", "numFailed", "forceOverwrite", "deleteLoopInstance")
-    this.properties.parameterFile = {type: "string", default:defaultPSconfigFilename }
-    this.properties.numTotal= {type: ["number", "null"], default: null}
-    this.properties.numFinished= {type: ["number", "null"], default: null}
-    this.properties.numFailed= {type: ["number", "null"], default: null}
-    this.properties.forceOverwrite= {type:"boolean", default: false}
-    this.properties.deleteLoopInstance= {type:"boolean", default: false}
+    this.required.push("parameterFile", "numTotal", "numFinished", "numFailed", "forceOverwrite", "deleteLoopInstance");
+    this.properties.parameterFile = { type: "string", default: defaultPSconfigFilename };
+    this.properties.numTotal = { type: ["number", "null"], default: null };
+    this.properties.numFinished = { type: ["number", "null"], default: null };
+    this.properties.numFailed = { type: ["number", "null"], default: null };
+    this.properties.forceOverwrite = { type: "boolean", default: false };
+    this.properties.deleteLoopInstance = { type: "boolean", default: false };
   }
 }
 
@@ -140,8 +139,8 @@ class IfSchema extends GeneralWorkflowComponentSchema {
     super(...args);
     this.properties.type = { enum: ["if"] };
     this.required.push("condition", "else");
-    this.properties.condition= {type: ["string", "null"] , default: null}
-    this.properties.else = { type: "array", items: {type: "string"} };
+    this.properties.condition = { type: ["string", "null"], default: null };
+    this.properties.else = { type: "array", items: { type: "string" } };
   }
 }
 
@@ -150,10 +149,10 @@ class ForSchema extends GeneralWorkflowComponentSchema {
     super(...args);
     this.properties.type = { enum: ["for"] };
     this.required.push("start", "end", "step", "keep");
-    this.properties.start={type: ["number", "null"]}
-    this.properties.end={type: ["number", "null"]}
-    this.properties.step={type: ["number", "null"]}
-    this.properties.keep={type: ["number", "null"]}
+    this.properties.start = { type: ["number", "null"] };
+    this.properties.end = { type: ["number", "null"] };
+    this.properties.step = { type: ["number", "null"] };
+    this.properties.keep = { type: ["number", "null"] };
   }
 }
 
@@ -162,8 +161,8 @@ class WhileSchema extends GeneralWorkflowComponentSchema {
     super(...args);
     this.properties.type = { enum: ["while"] };
     this.required.push("condition", "keep");
-    this.properties.condition= {type: ["string", "null"] , default: null}
-    this.properties.keep={type: ["number", "null"]}
+    this.properties.condition = { type: ["string", "null"], default: null };
+    this.properties.keep = { type: ["number", "null"] };
   }
 }
 
@@ -172,17 +171,17 @@ class ForeachSchema extends GeneralWorkflowComponentSchema {
     super(...args);
     this.properties.type = { enum: ["foreach"] };
     this.required.push("indexList");
-    this.properties.indexList = { type: "array", items: {type: "string"} };
-    this.properties.keep={type: ["number", "null"]}
+    this.properties.indexList = { type: "array", items: { type: "string" } };
+    this.properties.keep = { type: ["number", "null"] };
   }
 }
 
-class StorageSchema extends  BaseWorkflowComponentSchema {
+class StorageSchema extends BaseWorkflowComponentSchema {
   constructor(...args) {
     super(...args);
     this.properties.type = { enum: ["storage"] };
     this.required.push("inputFiles", "outputFiles", "host", "storagePath");
-    this.properties.inputFiles= { type: "array", items: inputFileSchema, default: [] };
+    this.properties.inputFiles = { type: "array", items: inputFileSchema, default: [] };
     this.properties.outputFiles = { type: "array", items: outputFileSchema, default: [] };
     this.properties.host = { type: "string", default: "localhost" };
     this.properties.storagePath = { type: ["string", "null"], default: null };
@@ -203,8 +202,8 @@ class ViewerSchema extends BaseWorkflowComponentSchema {
   constructor(...args) {
     super(...args);
     this.properties.type = { enum: ["viewer"] };
-    this.required.push("inputFiles" );
-    this.properties.inputFiles= { type: "array", items: inputFileSchema, default: [] };
+    this.required.push("inputFiles");
+    this.properties.inputFiles = { type: "array", items: inputFileSchema, default: [] };
   }
 }
 
@@ -212,28 +211,28 @@ class StepjobSchema extends GeneralWorkflowComponentSchema {
   constructor(...args) {
     super(...args);
     this.properties.type = { enum: ["stepjob"] };
-    this.required.push("host", "useJobScheduler", "queue" );
+    this.required.push("host", "useJobScheduler", "queue");
     this.properties.host = { type: "string", default: "localhost" };
-    this.properties.useJobScheduler = { type: "boolean", default:false };
-    this.properties.queue = { type:  ["string", "null"], default: null };
+    this.properties.useJobScheduler = { type: "boolean", default: false };
+    this.properties.queue = { type: ["string", "null"], default: null };
   }
 }
 
-class StepjobTaskSchema extends TaskSchema{
+class StepjobTaskSchema extends TaskSchema {
   constructor(...args) {
     super(...args);
     this.properties.type = { enum: ["stepjobTask"] };
-    this.required.push("stepnum", "useJobScheduler", "useDependency", "dependencyForm" );
+    this.required.push("stepnum", "useJobScheduler", "useDependency", "dependencyForm");
     //at this time we set this value is default true but in fact it must be true
     //so, this prop should be removed and treat as true always
-    this.properties.useJobScheduler = { type: "boolean", default: true};
-    this.properties.stepnum= {type: "number", default: 0};
-    this.properties.useDependency= { type: "boolean", default: false};
-    this.properties.dependencyForm= {type: ["string", "null"], default: null};
+    this.properties.useJobScheduler = { type: "boolean", default: true };
+    this.properties.stepnum = { type: "number", default: 0 };
+    this.properties.useDependency = { type: "boolean", default: false };
+    this.properties.dependencyForm = { type: ["string", "null"], default: null };
   }
 }
 
-class BulkjobTaskSchema extends TaskSchema{
+class BulkjobTaskSchema extends TaskSchema {
   constructor(...args) {
     super(...args);
     this.properties.type = { enum: ["bulkjobTask"] };
@@ -241,14 +240,14 @@ class BulkjobTaskSchema extends TaskSchema{
       "parameterFile", "startBulkNumber", "endBulkNumber",
       "manualFinishCondition", "condition");
     //see comment in StepjobTaskSchema
-    this.properties.useJobScheduler = { type: "boolean", default: true};
+    this.properties.useJobScheduler = { type: "boolean", default: true };
 
-    this.properties.usePSSettingFile = { type: "boolean", default: true};
-    this.properties.parameterFile = {type: ["string", "null"], default: null};
-    this.properties.startBulkNumber = {type: ["number", "null"], default: null};
-    this.properties.endBulkNumber = {type: ["number", "null"], default: null};
-    this.properties.manualFinishCondition = { type: "boolean", default: false};
-    this.properties.condition= {type: ["string", "null"] , default: null}
+    this.properties.usePSSettingFile = { type: "boolean", default: true };
+    this.properties.parameterFile = { type: ["string", "null"], default: null };
+    this.properties.startBulkNumber = { type: ["number", "null"], default: null };
+    this.properties.endBulkNumber = { type: ["number", "null"], default: null };
+    this.properties.manualFinishCondition = { type: "boolean", default: false };
+    this.properties.condition = { type: ["string", "null"], default: null };
   }
 }
 
@@ -275,7 +274,7 @@ function getSchema(type) {
     case "source":
       return new SourceSchema();
     case "viewer":
-      return  new ViewerSchema();
+      return new ViewerSchema();
     case "stepjob":
       return new StepjobSchema();
     case "stepjobTask":

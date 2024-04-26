@@ -8,7 +8,6 @@ const os = require("os");
 const path = require("path");
 const fs = require("fs-extra");
 const JsonArrayManager = require("./jsonArrayManager");
-
 function isExists(target, file) {
   try {
     const stats = fs.statSync(target);
@@ -26,7 +25,8 @@ function isExists(target, file) {
  */
 function getConfigFile(filename, failIfNotFound) {
   const envFile = typeof process.env.WHEEL_CONFIG_DIR === "string"
-    ? path.resolve(process.env.WHEEL_CONFIG_DIR, filename) : null;
+    ? path.resolve(process.env.WHEEL_CONFIG_DIR, filename)
+    : null;
   if (envFile !== null && isExists(envFile, true)) {
     return envFile;
   }
@@ -44,7 +44,8 @@ function getConfigFile(filename, failIfNotFound) {
     throw err;
   }
   const envFileDir = typeof process.env.WHEEL_CONFIG_DIR === "string"
-    ? path.resolve(process.env.WHEEL_CONFIG_DIR) : null;
+    ? path.resolve(process.env.WHEEL_CONFIG_DIR)
+    : null;
   if (envFileDir !== null && isExists(envFileDir, false)) {
     return path.resolve(envFileDir, filename);
   }
@@ -60,7 +61,6 @@ function getConfigFile(filename, failIfNotFound) {
   err.filename = filename;
   throw err;
 }
-
 function getVar(target, alt) {
   return typeof target !== "undefined" ? target : alt;
 }
@@ -70,7 +70,6 @@ function getIntVar(target, alt) {
 function getStringVar(target, alt) {
   return typeof target === "string" ? target : alt;
 }
-
 function readAndMergeConfigFile(filename) {
   let userConfigFilename;
   try {
@@ -104,7 +103,6 @@ module.exports.statusFilename = "status.wheel.txt";
 module.exports.jobManagerJsonFilename = "jm.wheel.json";
 module.exports.filesJsonFilename = "files.wheel.json";
 module.exports.defaultPSconfigFilename = "parameterSetting.json";
-
 if (!process.env.WHEEL_USE_HTTP) {
   module.exports.keyFilename = getConfigFile("server.key", true);
   module.exports.certFilename = getConfigFile("server.crt", true);
@@ -113,7 +111,7 @@ module.exports.logFilename = logFilename;
 module.exports.credentialFilename = credentialFilename;
 
 //re-export server settings
-module.exports.interval = parseInt(process.env.WHEEL_INTERVAL,10) || getIntVar(config.interval, 1000);
+module.exports.interval = parseInt(process.env.WHEEL_INTERVAL, 10) || getIntVar(config.interval, 1000);
 module.exports.port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
 module.exports.rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
 module.exports.defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);

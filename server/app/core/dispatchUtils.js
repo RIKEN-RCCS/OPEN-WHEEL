@@ -12,7 +12,6 @@ const { getLogger } = require("../logSettings.js");
 const { replacePathsep } = require("./pathUtils");
 const { remoteHost, componentJsonFilename } = require("../db/db");
 const { getSshHostinfo } = require("./sshManager.js");
-
 async function pspawn(projectRootDir, script, options) {
   return new Promise((resolve, reject)=>{
     const cp = childProcess.spawn(script, options, (err)=>{
@@ -61,7 +60,6 @@ async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
       cwd: dir,
       shell: "bash"
     };
-
     if (typeof currentIndex === "number") {
       options.env.WHEEL_CURRENT_INDEX = currentIndex.toString();
     }
@@ -69,7 +67,6 @@ async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
   }
   getLogger(projectRootDir).debug("evalute ", condition);
   let conditionExpression = "";
-
   if (typeof currentIndex === "number") {
     conditionExpression += `var WHEEL_CURRENT_INDEX=${currentIndex};`;
   }
@@ -83,8 +80,8 @@ function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, is
   }
   const hostinfo = getSshHostinfo(projectRootDir, remotehostID);
   let remoteRoot = isSharedHost ? hostinfo.sharedPath : hostinfo.path;
-  if (typeof remoteRoot !== "string"){
-    remoteRoot = ""
+  if (typeof remoteRoot !== "string") {
+    remoteRoot = "";
   }
   return replacePathsep(path.posix.join(remoteRoot, projectStartTime));
 }
@@ -112,32 +109,31 @@ function isFinishedState(state) {
  * @returns {Promise} true if give path is subComponent dir
  */
 async function isSubComponent(target) {
-  try{
+  try {
     const stats = await fs.stat(target);
     if (!stats.isDirectory()) {
       return false;
     }
-  }catch(err){
+  } catch (err) {
     //just in case, for race condition of reading and removing
-    if(err.code === "ENOENT"){
-      return false
+    if (err.code === "ENOENT") {
+      return false;
     }
-    throw err
+    throw err;
   }
 
-  let rt=false
-  try{
+  let rt = false;
+  try {
     const componentJson = await readJsonGreedy(path.resolve(target, componentJsonFilename));
     rt = componentJson.subComponent === true;
-  }catch(e){
-    if(e.code === "ENOENT"){
-      return false
+  } catch (e) {
+    if (e.code === "ENOENT") {
+      return false;
     }
-    throw e
+    throw e;
   }
-  return rt
+  return rt;
 }
-
 
 module.exports = {
   evalCondition,

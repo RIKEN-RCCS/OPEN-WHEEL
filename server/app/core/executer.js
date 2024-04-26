@@ -6,8 +6,8 @@
 "use strict";
 const { remoteHost } = require("../db/db");
 const { getRemoteRootWorkingDir, getRemoteWorkingDir } = require("./dispatchUtils");
-const {stageIn, stageOut} = require("./transferrer.js");
-const {register} = require("./executerManager.js");
+const { stageIn, stageOut } = require("./transferrer.js");
+const { register } = require("./executerManager.js");
 
 /**
  * enqueue task
@@ -23,18 +23,15 @@ async function exec(task) {
     task.remoteWorkingDir = getRemoteWorkingDir(task.projectRootDir, task.projectStartTime, task.workingDir, task);
     task.remoteRootWorkingDir = getRemoteRootWorkingDir(task.projectRootDir, task.projectStartTime, task);
   }
-
-  if(onRemote){
+  if (onRemote) {
     await stageIn(task);
   }
-  await register(task)
-
-  if(onRemote){
+  await register(task);
+  if (onRemote) {
     await stageOut(task);
   }
 }
 
-
 module.exports = {
   exec
-}
+};

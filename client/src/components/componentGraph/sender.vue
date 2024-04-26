@@ -29,58 +29,57 @@
 import EquilateralTriangle from "@/components/componentGraph/triangle.vue";
 import Vconnector from "@/components/componentGraph/vconnector.vue";
 
-import {plugColor, elsePlugColor, plugSize} from "@/lib/constants.json"
+import { plugColor, elsePlugColor, plugSize } from "@/lib/constants.json";
 
 export default {
   name: "Sender",
-  components:{
+  components: {
     EquilateralTriangle,
     Vconnector
   },
-  props:{
-    start:{
+  props: {
+    start: {
       required: true,
       type: Object
     },
-    elsePlug:{
-      type:Boolean,
+    elsePlug: {
+      type: Boolean,
       default: false
     },
-    componentId:{
+    componentId: {
       required: true,
-      type:String,
+      type: String
     }
   },
-  data(){
+  data() {
     return {
       color: this.elsePlug ? elsePlugColor : plugColor,
-      end: {x: this.start.x ,y: this.start.y},
+      end: { x: this.start.x, y: this.start.y },
       size: plugSize,
       dragging: false
-    }
+    };
   },
-  methods:{
-    onDragStart(){
-      this.dragging=true
+  methods: {
+    onDragStart() {
+      this.dragging = true;
     },
-    onDragEnd(event){
-      this.dragging=false
-      this.end.x=this.start.x
-      this.end.y=this.start.y
-      const dropEvent=new CustomEvent("drop", {detail:{
+    onDragEnd(event) {
+      this.dragging = false;
+      this.end.x = this.start.x;
+      this.end.y = this.start.y;
+      const dropEvent = new CustomEvent("drop", { detail: {
         type: "sender",
-        isElse : this.elsePlug,
+        isElse: this.elsePlug,
         componentID: this.componentId
-      }})
-      const elements = document.elementsFromPoint(event.clientX, event.clientY)
+      } });
+      const elements = document.elementsFromPoint(event.clientX, event.clientY);
       elements.forEach((element)=>{
-        if(element.dataset.droparea){
-          element.dispatchEvent(dropEvent)
+        if (element.dataset.droparea) {
+          element.dispatchEvent(dropEvent);
         }
       });
     }
   }
-}
+};
 
 </script>
-
