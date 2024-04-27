@@ -73,6 +73,7 @@ class BaseWorkflowComponentSchema {
       parent: { type: "string" },
       pos: posSchema,
       ID: { type: "string" },
+      disable: { type: "boolean", default: null },
       type: { enum: ["task", "workflow", "parameterStudy", "if",
         "for", "while", "foreach", "storage", "source", "viewer",
         "stepjob", "stepjobTask", "bulkjobTask"] },

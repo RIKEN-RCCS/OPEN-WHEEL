@@ -22,6 +22,7 @@ class BaseWorkflowComponent {
     this.name = null;
     this.description = null;
     this.env = {};
+    this.disable = false;
 
     /**
      * component state
