@@ -23,12 +23,16 @@ async function exec(task) {
     task.remoteWorkingDir = getRemoteWorkingDir(task.projectRootDir, task.projectStartTime, task.workingDir, task);
     task.remoteRootWorkingDir = getRemoteRootWorkingDir(task.projectRootDir, task.projectStartTime, task);
   }
-  if (onRemote) {
-    await stageIn(task);
-  }
-  await register(task);
-  if (onRemote) {
-    await stageOut(task);
+  try {
+    if (onRemote) {
+      await stageIn(task);
+    }
+    await register(task);
+    if (onRemote) {
+      await stageOut(task);
+    }
+  } finally {
+    task.emitForDispatcher("taskCompleted", task.state);
   }
 }
 

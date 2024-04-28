@@ -25,10 +25,12 @@ async function stageIn(task) {
   return register(hostinfo, task, "send", [task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
 }
 async function stageOut(task) {
+  const taskState = task.state;
   await setTaskState(task, "stage-out");
   const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
 
   getLogger(task.projectRootDir).debug("start to get files from remote server if specified");
+
   const downloadRecipe = [];
   for (const outputFile of task.outputFiles) {
     if (!await needDownload(task.projectRootDir, task.ID, outputFile)) {
@@ -43,6 +45,7 @@ async function stageOut(task) {
   const dsts = Array.from(new Set(downloadRecipe.map((e)=>{
     return e.dst;
   })));
+
   for (const dst of dsts) {
     const srces = downloadRecipe.filter((e)=>{
       return e.dst === dst;
@@ -88,6 +91,7 @@ async function stageOut(task) {
       getLogger(task.projectRootDir).warn("remote cleanup failed but ignored", e);
     }
   }
+  await setTaskState(task, taskState);
 }
 
 module.exports = {

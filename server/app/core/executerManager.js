@@ -194,7 +194,6 @@ class Executer {
       } finally {
         await createStatusFile(task);
         getLogger(task.projectRootDir).trace(`${task.name} is ${task.state}`);
-        task.emitForDispatcher("taskCompleted", task.state);
       }
     };
     return tmp();
