@@ -6,8 +6,6 @@
 "use strict";
 const path = require("path");
 const childProcess = require("child_process");
-const https = require("https");
-const fs = require("fs-extra");
 const axios = require("axios");
 const { getAccessToken } = require("./webAPI.js");
 const SBS = require("simple-batch-system");
@@ -318,18 +316,13 @@ class RemoteJobWebAPIExecuter extends Executer {
     //const submitOpt = task.submitOption ? task.submitOption : "";
     //const submitCmd = `. /etc/profile; cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
     //
-    //accessTokenで認証する時は、httpsAgentのオプションを削除してAuthorization headerをつける
-    //headers:{
-    //Authorization: `Bearer ${accessToken}`,
-    //},
-    //tokenでの認証に変更した時は、tokenのrefresh機能も設定する必要あり
     const request = {
-      jobfile: `${task.remoteWorkingDir}/${task.script}`
+      jobfile: `${task.remoteWorkingDir}/${task.script}`,
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
     };
-    const passphrase = process.env.WHEEL_CERT_PASSPHRASE;
-    const pfx = await fs.readFile(process.env.WHEEL_CERT_FILENAME);
-    const option = { httpsAgent: new https.Agent({ passphrase, pfx }) };
-    const response = await axios.post(queueURL, request, option);
+    const response = await axios.post(queueURL, request);
 
     const outputText = response.data.output;
     if (response.status !== 200) {

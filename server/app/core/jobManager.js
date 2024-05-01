@@ -8,8 +8,6 @@ const { addRequest, getRequest, delRequest } = require("rwatchd");
 const { getLogger } = require("../logSettings");
 const { jobScheduler } = require("../db/db");
 const { createBulkStatusFile } = require("./execUtils");
-const { getSsh } = require("./sshManager.js");
-const pRetry = require("p-retry");
 
 /**
  * parse output text from batch server and get return code or jobstatus code from it
@@ -108,6 +106,7 @@ async function getStatusCode(JS, task, statCmdRt, outputText) {
 }
 function createRequestForWebAPI(hostinfo, task, JS) {
   const baseURL = "https://api.fugaku.r-ccs.riken.jp/queue/computer";
+  //TODO curlのオプションをaccessTokenを使うものに変更
   return {
     cmd: `curl --cert-type P12 -X POST  --cert ${process.env.WHEEL_CERT_FILENAME}:${process.env.WHEEL_CERT_PASSPHRASE} ${baseURL}/`,
     withoutArgument: true,
@@ -155,6 +154,7 @@ function registerJob(hostinfo, task) {
     result.event.on("checked", (request)=>{
       getLogger(task.projectRootDir).debug(`${requestName} status checked ${request.checkCount}`);
       getLogger(task.projectRootDir).trace(`${requestName} status checked output:\n ${request.lastOutput}`);
+      //TODO accessTokenの更新が必要ならここに入れる(はず)ひょっとしたらfaile
       if (request.rt !== 0) {
         statusCheckErrorCount++;
       }
@@ -170,38 +170,38 @@ function registerJob(hostinfo, task) {
       const hook = hostinfo.useWebAPI ? request.finishedLocalHook : request.finishedHook;
       getLogger(task.projectRootDir).debug(`${requestName} done`);
       getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${hook.output}`);
-      if (/^\s*$/.test(hook.output)) {
+      const reEmpty = /^\s*$/;
+      if (reEmpty.test(hook.output)) {
         getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`);
 
-        await pRetry(async ()=>{
-          let outputText = "";
-          const ssh = getSsh(task.projectRootDir, task.remotehostID);
-          await ssh.exec(hook.cmd, 60, (data)=>{
-            outputText += data;
+        const request2 = structuredClone(request);
+        request2.cmd = hook.cmd;
+        request2.re = reEmpty.toString();
+        delete request2.finishedHook;
+        delete request2.finishedLocalHook;
+
+        const id2 = addRequest(request2);
+        const result2 = getRequest(id2);
+        await new Promise((resolve, reject)=>{
+          result2.event.on("finished", ()=>{
+            hook.rt = result2.rt;
+            hook.output = result2.lastOutput;
+            resolve();
           });
-          if (/^\s*$/.test(outputText)) {
-            throw new Error("got empty output from status check command");
-          }
-          hook.output = outputText;
-          return true;
-        }, {
-          onFailedAttempt: (error)=>{
-            getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring ${error.attemptNumber}}`);
-          },
-          minTimeout: 1000,
-          maxTimeout: 60000,
-          retries: 12,
-          factor: 2
+          result2.event.on("failed", (args)=>{
+            console.log(args);
+            reject();
+          });
         });
       }
-      if (isJobFailed(JS, task.jobStatus)) {
-        reject(task.jobStatus);
-      }
       const rt = await getStatusCode(JS, task, hook.rt, hook.output);
+      if (isJobFailed(JS, task.jobStatus)) {
+        return reject(task.jobStatus);
+      }
       if (rt === 0) {
-        resolve(rt);
+        return resolve(rt);
       } else {
-        reject(rt);
+        return reject(rt);
       }
     });
     //faild event does not mean job failure

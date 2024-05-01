@@ -61,6 +61,8 @@ function getRemotehostIDFromState(state) {
 async function acquireAccessToken(remotehostID) {
   const auth = authDB.get(remotehostID);
   const { client_id: clientID, client_secret: clientSecret } = credentials.data[remotehostID];
+  console.log("DEBUG: client_id", clientID);
+  console.log("DEBUG: client_secret", clientSecret);
   const response = await axios.post(tokenURL, {
     grant_type: "authorization_code",
     code: auth.code,
@@ -76,6 +78,7 @@ async function acquireAccessToken(remotehostID) {
   }
   auth.access_token = response.data.access_token;
   auth.refresh_token = response.data.refresh_token;
+  console.log("DEBUG:", auth);
 }
 
 /*富岳web APIを access tokenで叩くとエラーが返ってくるのでこの関数は未テスト
@@ -110,6 +113,7 @@ async function getURLtoAcquireCode(remotehostID, redirectURI) {
     state,
     redirect_uri: redirectURI
   };
+  console.log("DEBUG:", params);
   const url = `${authURL}?${querystring.stringify(params)}`;
   authDB.set(remotehostID, {
     state,

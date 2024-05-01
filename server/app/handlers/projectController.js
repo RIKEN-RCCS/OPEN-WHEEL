@@ -111,7 +111,12 @@ async function getSourceFilename(projectRootDir, component, clientID) {
 }
 async function makeOIDCAuth(clientID, remotehostID) {
   return new Promise((resolve)=>{
-    emitAll(clientID, "requestOIDCAuth", remotehostID, resolve);
+    emitAll(clientID, "requestOIDCAuth", remotehostID, ()=>{
+      //TODO 一回目はここで証明書の確認とかをユーザがやっている間にresolveされてしまって
+      //access tokenを取得する前にrunProjectが呼ばれてfailする
+      console.log("DEBUG: requestOIDCAuth done");
+      resolve();
+    });
   });
 }
 async function onGetProjectJson(projectRootDir, ack) {
