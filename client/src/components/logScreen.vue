@@ -32,13 +32,6 @@
             </span>
           </v-tab>
         </v-tabs>
-        <v-spacer>
-          <v-btn
-            variant=outlined
-            text="get version info"
-            @click="getVersionInfo"
-          />
-        </v-spacer>
       </template>
     </v-toolbar>
     <v-window
@@ -122,9 +115,7 @@ export default {
         item.unread = false;
         item.clear = (item.clear + 1) % 2;
       }
-    },
-    getVersionInfo() {
-      SIO.emitGlobal("getVersionInfo", this.projectRootDir, ()=>{
+      SIO.emitGlobal("aboutWheel", this.projectRootDir, ()=>{
         console.log("version info should be on INFO log");
       });
     }

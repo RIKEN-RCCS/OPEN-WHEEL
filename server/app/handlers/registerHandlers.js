@@ -31,7 +31,7 @@ const { onGetResultFiles } = require("./resultFiles.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
 const { onCreateNewRemoteFile, onCreateNewRemoteDir, onRequestRemoteConnection, onGetRemoteFileList, onGetRemoteSNDContents, onRemoteDownload, onRenameRemoteFile, onRemoveRemoteFile } = require("./remoteFileBrowser.js");
-const { getVersionInfo } = require("./versionInfo.js");
+const { aboutWheel } = require("../core/versionInfo.js");
 const registerHandlers = (socket, Siofu)=>{
   //
   //read information
@@ -177,7 +177,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("tryToConnect", onTryToConnect.bind(null, socket.id));
   socket.on("tryToConnectById", onTryToConnectById.bind(null, socket.id));
   socket.on("requestRemoteConnection", onRequestRemoteConnection.bind(null, socket));
-  socket.on("getVersionInfo", getVersionInfo);
+  socket.on("aboutWheel", aboutWheel);
 
   //
   //deprecated APIs which are left for DEBUG

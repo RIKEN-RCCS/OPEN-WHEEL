@@ -4,7 +4,6 @@
  * See Licensethe project root for the license information.
  */
 "use strict";
-const { version } = require("./db/version.json");
 const path = require("path");
 const fs = require("fs-extra");
 const cors = require("cors");
@@ -18,6 +17,7 @@ const { port, projectList } = require("./db/db.js");
 const { setProjectState, checkRunningJobs } = require("./core/projectFilesOperator");
 const { getLogger } = require("./logSettings");
 const { registerHandlers } = require("./handlers/registerHandlers");
+const { aboutWheel } = require("./core/versionInfo.js");
 const { setSio } = require("./core/global.js");
 const { tempdRoot } = require("./core/tempd.js");
 const { hasEntry, hasCode, hasRefreshToken, storeCode, acquireAccessToken, getURLtoAcquireCode, getRemotehostIDFromState } = require("./core/webAPI.js");
@@ -49,22 +49,11 @@ function createHTTPServer(argApp) {
 const server = process.env.WHEEL_USE_HTTP ? createHTTPServer(app) : createHTTPSServer(app);
 const sio = require("socket.io")(server, { path: path.normalize(`${baseURL}/socket.io/`) });
 setSio(sio);
+
 //
 //do not call log functions above this line !!
 //
-logger.info(`starting WHEEL server (version ${version})`);
-logger.info("base URL = ", baseURL);
-logger.info("environment variables");
-logger.info(`WHEEL_TEMPD = ${process.env.WHEEL_TEMPD}`);
-logger.info(`WHEEL_CONFIG_DIR = ${process.env.WHEEL_CONFIG_DIR}`);
-logger.info(`WHEEL_USE_HTTP = ${process.env.WHEEL_USE_HTTP}`);
-logger.info(`WHEEL_PORT = ${process.env.WHEEL_PORT}`);
-logger.info(`WHEEL_ACCEPT_ADDRESS = ${process.env.WHEEL_ACCEPT_ADDRESS}`);
-logger.info(`WHEEL_LOGLEVEL = ${process.env.WHEEL_LOGLEVEL}`);
-logger.info(`WHEEL_VERBOSE_SSH = ${process.env.WHEEL_VERBOSE_SSH}`);
-logger.info(`WHEEL_INTERVAL = ${process.env.WHEEL_INTERVAL}`);
-logger.info(`WHEEL_NUM_LOCAL_JOB = ${process.env.WHEEL_NUM_LOCAL_JOB}`);
-logger.info(`WHEEL_ENABLE_WEB_API = ${process.env.WHEEL_ENABLE_WEB_API}`);
+aboutWheel();
 
 //port number
 const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;
