@@ -60,6 +60,16 @@ GitHub Actions上でテストを実行する際に前提としている実行環
 * WHEELからリモート計算サーバに対して計算ジョブを投入できること。
 * ホストOS上でGUIおよびChromeが実行できること(CypressがGUIを表示します)。
 
+以降の説明では、WHEELの`Remotehost editor`上で以下の通り設定されており、`リモート計算サーバ`にジョブを投入できることを前提として説明しています。
+![](img/2024-04-24-18-44-57.png)
+|設定項目|設定値|備考|
+|-|-|-|
+|label|remotehost| WHEEL内での設定名 |
+|Host name|172.17.0.1|本書ではDockerコンテナ上の`リモート計算サーバ`にアクセスすることを想定。|
+|Port number|8000|本書ではDockerコンテナ上の`リモート計算サーバ`にアクセスすることを想定。|
+|User ID|testuser|`リモート計算サーバ`へsshログインする際のログインID。なお、パスワードは`passw0rd`を想定。|
+|job scheduler|PBS Pro|一部のテストで利用するため、バッチシステムは必須。|
+
 #### テスト環境のセットアップ
 以下はテスト環境のセットアップ手順です。
 リポジトリからコードを取得し、必要なモジュールをインストールします。
@@ -70,22 +80,23 @@ $ npm install # Cypressを含めた必要なモジュールがインストール
 ```
 
 ### 事前準備
-WHEELの実行環境に合わせて、**cypress.config.cjs**内の以下の変数を編集してください。
+WHEELの実行環境に合わせて、**cypress.config.cjs**を修正します。
+以下のサンプルは上述の[Remotehost editor設定内容](#前提条件)に合わせた内容になっているため、実行環境に合わせて適宜編集してください。
 ```javascript
 env: {
    // WHEELのREMOTE HOSTに設定されている label
    WHEEL_TEST_REMOTEHOST: "remotehost",
    // WHEEL/Cypressからリモート計算サーバにアクセスするためのパスワード
-   WHEEL_TEST_REMOTE_PASSWORD: "password",
+   WHEEL_TEST_REMOTE_PASSWORD: "passw0rd",
    // Cypressからリモート計算サーバにsshアクセスする際のアドレス
    // (test41, 42, 43でリモート計算サーバ上のファイル有無を確認するために使用)
-   WHEEL_TEST_HOSTNAME: "hostname",
+   WHEEL_TEST_HOSTNAME: "172.17.0.1",
    // Cypressからsshアクセスする際のREMOTE HOSTのポート番号
    // (test41, 42, 43でリモート計算サーバ上のファイル有無を確認するために使用)
    WHEEL_TEST_PORT: 8000,
    // REMOTE HOST にアクセスするためのユーザID
    // (test41, 42, 43でリモート計算サーバ上のファイル有無を確認するために使用)
-   WHEEL_TEST_USER: "user",
+   WHEEL_TEST_USER: "testuser",
    // WHEELプロジェクトが保存される場所
    // (WHEELがコンテナ実行される場合は、コンテナ内のパス)
    // (test10で[share file]ボタンの表示内容をチェックするために使用)
