@@ -103,6 +103,9 @@ module.exports.statusFilename = "status.wheel.txt";
 module.exports.jobManagerJsonFilename = "jm.wheel.json";
 module.exports.filesJsonFilename = "files.wheel.json";
 module.exports.defaultPSconfigFilename = "parameterSetting.json";
+module.exports.userDBFilename="user.db";
+module.exports.userDBDir=__dirname
+
 
 if (!process.env.WHEEL_USE_HTTP) {
   module.exports.keyFilename = getConfigFile("server.key", true);

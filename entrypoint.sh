@@ -8,4 +8,10 @@ if [ "xYES" == "x${WHEEL_GENERATE_KEYPAIR}" ];then
   echo   private key: /tmp_identify
   echo   public key : ${HOME}/.wheel/wheel_tmp_pubkey
 fi
+echo generate anonymous login user = ${WHEEL_ANONYMOUS_LOGIN:-NO}
+if [ "xYES" == "x${WHEEL_ANONYMOUS_LOGIN}" ]; then
+  node bin/passwordDBTool.js -A -c
+  export WHEEL_ENABLE_AUTH=YES
+fi
+
 npm start
