@@ -10,6 +10,10 @@ const fs = require("fs-extra");
 const cors = require("cors");
 const express = require("express");
 const ipfilter = require("express-ipfilter").IpFilter
+const passport = require("passport");
+const session = require("express-session");
+const SQLiteStore = require("connect-sqlite3")(session);
+const { ensureLoggedIn } = require("connect-ensure-login");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const Siofu = require("socketio-file-upload");
@@ -19,11 +23,22 @@ const { getLogger } = require("./logSettings");
 const { registerHandlers } = require("./handlers/registerHandlers");
 const { setSio } = require("./core/global.js");
 const { tempdRoot } = require("./core/tempd.js");
+const secret = "wheel"
+const sessionDBFilename = "session.db"
+const sessionDBDir = path.resolve(__dirname, "db");
 
 //setup logger
 const logger = getLogger();
 process.on("unhandledRejection", logger.debug.bind(logger));
 process.on("uncaughtException", logger.debug.bind(logger));
+
+if (process.env.WHEEL_CLEAR_SESSION_DB){
+  try{
+    fs.removeSync(path.resolve(sessionDBDir, sessionDBFilename));
+  }catch(e){
+    logger.debug("remove session DB failed", e);
+  }
+}
 
 /*
  * setup express, socketIO
@@ -63,6 +78,8 @@ logger.info(`WHEEL_LOGLEVEL = ${process.env.WHEEL_LOGLEVEL}`);
 logger.info(`WHEEL_VERBOSE_SSH = ${process.env.WHEEL_VERBOSE_SSH}`);
 logger.info(`WHEEL_INTERVAL= ${process.env.WHEEL_INTERVAL}`);
 logger.info(`WHEEL_NUM_LOCAL_JOB= ${process.env.WHEEL_NUM_LOCAL_JOB}`);
+logger.info(`WHEEL_CLEAR_SESSION_DB=${process.env.WHEEL_CLEAR_SESSION_DB}`);
+logger.info(`WHEEL_ENABLE_AUTH=${process.env.WHEEL_ENABLE_AUTH}`);
 
 //port number
 const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;
@@ -74,11 +91,25 @@ if(address){
   const ips = [address];
   app.use(ipfilter(ips, { mode: "allow", logF: logger.debug.bind(logger) }));
 }
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(Siofu.router);
+app.use(session({
+  secret,
+  resave: false,
+  saveUninitialized: false,
+  store: new SQLiteStore({ db: sessionDBFilename , dir: sessionDBDir })
+}));
+
+if(process.env.WHEEL_ENABLE_AUTH){
+  app.use(passport.initialize());
+  app.use(passport.session());
+  app.use(passport.authenticate("session"));
+}
+
 
 //global socket IO handler
 sio.on("connection", (socket)=>{
@@ -105,7 +136,7 @@ sio.on("connection", (socket)=>{
 });
 
 //routing
-const router = express.Router();  
+const router = express.Router();
 router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
 logger.info(`${tempdRoot} is used as static content directory`);
 router.use(express.static(path.resolve(tempdRoot, "viewer"), { index: false }));
@@ -115,22 +146,30 @@ const routes = {
   home: require(path.resolve(__dirname, "routes/home")),
   workflow: require(path.resolve(__dirname, "routes/workflow")),
   remotehost: require(path.resolve(__dirname, "routes/remotehost")),
+  login: require(path.resolve(__dirname, "routes/login")),
   viewer: require(path.resolve(__dirname, "routes/viewer"))
 };
 
-router.get("/", routes.home);
-router.get("/home", routes.home);
-router.get("/remotehost", routes.remotehost);
-router.route("/workflow").get(routes.workflow.get)
+let checkLoggedIn = (req, res, next)=>{next()}
+
+if(process.env.WHEEL_ENABLE_AUTH){
+  checkLoggedIn = ensureLoggedIn ("/login");
+  router.route("/login").get(routes.login.get)
+    .post(routes.login.post);
+}
+router.get("/", checkLoggedIn, routes.home);
+router.get("/home", checkLoggedIn,  routes.home);
+router.get("/remotehost", checkLoggedIn,  routes.remotehost);
+router.route("/workflow").get(checkLoggedIn, routes.workflow.get)
+  .post(checkLoggedIn, routes.workflow.post);
+router.route("/graph").get(checkLoggedIn, routes.workflow.get)
+  .post(checkLoggedIn, routes.workflow.post);
+router.route("/list").get(checkLoggedIn, routes.workflow.get)
   .post(routes.workflow.post);
-router.route("/graph").get(routes.workflow.get)
-  .post(routes.workflow.post);
-router.route("/list").get(routes.workflow.get)
-  .post(routes.workflow.post);
-router.route("/editor").get(routes.workflow.get)
-  .post(routes.workflow.post);
-router.route("/viewer").get(routes.viewer.get)
-  .post(routes.viewer.post);
+router.route("/editor").get(checkLoggedIn, routes.workflow.get)
+  .post(checkLoggedIn, routes.workflow.post);
+router.route("/viewer").get(checkLoggedIn, routes.viewer.get)
+  .post(checkLoggedIn, routes.viewer.post);
 
 app.use(baseURL, router);
 
@@ -142,6 +181,7 @@ app.use((req, res, next)=>{
 });
 //error handler
 app.use((err, req, res, next)=>{
+  logger.trace("http(s) handler err", err);
   //render the error page
   res.status(err.status || 500);
   res.send("something broken!");

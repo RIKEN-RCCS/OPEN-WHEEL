@@ -3,9 +3,6 @@
   "version": "2.0.1",
   "description": "Scientific Workflow system",
   "main": "app/index.js",
-  "bin": {
-    "wheel": "app/cmd.js"
-  },
   "author": {
     "name": "Kenji Ono"
   },
@@ -31,15 +28,19 @@
     "package.json"
   ],
   "dependencies": {
+    "@eyalsh/docopt": "^1.0.7",
     "abc4": "^0.11.5",
     "ajv": "^8.12.0",
     "body-parser": "^1.20.1",
+    "connect-ensure-login": "^0.1.1",
+    "connect-sqlite3": "^0.9.15",
     "cookie": "^0.5.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "debug": "^4.3.4",
     "express": "^4.18.2",
     "express-ipfilter": "^1.3.2",
+    "express-session": "^1.18.0",
     "file-type": "=16.5.3",
     "fs-extra": "=11.1.0",
     "glob": "^8.1.0",
@@ -51,11 +52,15 @@
     "log4js": "^6.7.1",
     "minimatch": "^6.1.6",
     "nunjucks": "^3.2.3",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
     "promise-retry": "^2.0.1",
     "read-chunk": "^4.0.3",
     "simple-batch-system": "^1.15.0",
     "socket.io": "^4.6.0",
     "socketio-file-upload": "^0.7.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
     "ssh-client-wrapper": "^2.6.2",
     "stat-mode": "^1.0.0",
     "through2": "^4.0.2",

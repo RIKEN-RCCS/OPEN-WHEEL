@@ -19,3 +19,5 @@ server/app/viewer
 **/_site
 tmp.*
 tmp_config.*
+session.db
+user.db

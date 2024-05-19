@@ -2,7 +2,6 @@ docs
 documentMD
 */node_modules
 bin
-server/bin
 server/coverage
 client/bin
 client/dist

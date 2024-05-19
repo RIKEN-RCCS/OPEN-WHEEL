@@ -36,6 +36,7 @@ export default defineConfig({
         viewer: resolve(root, 'viewer.html'),
         home: resolve(root, 'home.html'),
         remotehost: resolve(root, 'remotehost.html'),
+        login: resolve(root, 'login.html'),
       },
     },
   },
