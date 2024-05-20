@@ -10,7 +10,7 @@ const fs = require("fs-extra");
 module.exports = {
   get: async(req, res)=>{
     //accept GET method only for reload case
-    if (!req.dir) {
+    if (!req.cookies || !req.cookies.rootDir || !req.cookies.dir) {
       return;
     }
     res.sendFile(path.resolve(__dirname, "../public/viewer.html"));
