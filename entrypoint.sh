@@ -10,7 +10,7 @@ if [ "xYES" == "x${WHEEL_GENERATE_KEYPAIR}" ];then
 fi
 echo generate anonymous login user = ${WHEEL_ANONYMOUS_LOGIN:-NO}
 if [ "xYES" == "x${WHEEL_ANONYMOUS_LOGIN}" ]; then
-  node bin/passwordDBTool.js -A -c
+  node bin/passwordDBTool.js -A -c >${WHEEL_ANONYMOUS_PASSWORD}
   export WHEEL_ENABLE_AUTH=YES
 fi
 

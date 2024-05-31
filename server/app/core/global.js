@@ -5,6 +5,7 @@
  */
 "use strict";
 const debug = require("debug")("wheel");
+const baseURL = process.env.WHEEL_BASE_URL || "/";
 const parentDirs = new Map();
 const eventEmitters = new Map();
 const watchers = new Map();
@@ -26,5 +27,6 @@ module.exports = {
   eventEmitters,
   watchers,
   setSio,
-  getSio
+  getSio,
+  baseURL
 };

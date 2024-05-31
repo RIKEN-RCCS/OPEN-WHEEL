@@ -21,11 +21,11 @@ const { port, projectList } = require("./db/db");
 const { setProjectState, checkRunningJobs } = require("./core/projectFilesOperator");
 const { getLogger } = require("./logSettings");
 const { registerHandlers } = require("./handlers/registerHandlers");
-const { setSio } = require("./core/global.js");
+const { baseURL, setSio } = require("./core/global.js");
 const { tempdRoot } = require("./core/tempd.js");
 const secret = "wheel"
 const sessionDBFilename = "session.db"
-const sessionDBDir = path.resolve(__dirname, "db");
+const sessionDBDir = process.env.WHEEL_SESSION_DB_DIR|| path.resolve(__dirname, "db");
 
 //setup logger
 const logger = getLogger();
@@ -45,7 +45,6 @@ if (process.env.WHEEL_CLEAR_SESSION_DB){
  */
 
 const app = express();
-const baseURL = process.env.WHEEL_BASE_URL || "/";
 const address = process.env.WHEEL_ACCEPT_ADDRESS
 
 function createHTTPSServer(argApp) {
@@ -70,6 +69,8 @@ logger.info(`starting WHEEL server (version ${version})`);
 logger.info("base URL = ", baseURL);
 logger.info("environment variables");
 logger.info(`WHEEL_TEMPD = ${process.env.WHEEL_TEMPD}`);
+logger.info(`WHEEL_SESSION_DB_DIR = ${process.env.WHEEL_SESSION_DB_DIR}`);
+logger.info(`WHEEL_USER_DB_DIR = ${process.env.WHEEL_USER_DB_DIR}`);
 logger.info(`WHEEL_CONFIG_DIR = ${process.env.WHEEL_CONFIG_DIR}`);
 logger.info(`WHEEL_USE_HTTP = ${process.env.WHEEL_USE_HTTP}`);
 logger.info(`WHEEL_PORT = ${process.env.WHEEL_PORT}`);
