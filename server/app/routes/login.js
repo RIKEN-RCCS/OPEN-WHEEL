@@ -8,6 +8,7 @@ const path = require("path");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const {isValidUser} = require("../core/auth.js");
+const { baseURL } = require("../core/global.js");
 
 passport.use(new LocalStrategy(
   async function verify(username, password, cb){
@@ -36,8 +37,8 @@ module.exports = {
     return res.sendFile(path.resolve(__dirname, "../public/login.html"));
   },
   post: passport.authenticate("local", {
-    successReturnToOrRedirect: "/",
-    failureRedirect: "/login",
+    successReturnToOrRedirect: baseURL,
+    failureRedirect: `${baseURL}/login`,
     keepSessionInfo: true
   })
 }

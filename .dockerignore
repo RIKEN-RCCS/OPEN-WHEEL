@@ -5,3 +5,5 @@ bin
 server/coverage
 client/bin
 client/dist
+server/app/db/session.db
+server/app/db/user.db

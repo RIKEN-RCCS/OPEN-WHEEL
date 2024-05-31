@@ -104,7 +104,7 @@ module.exports.jobManagerJsonFilename = "jm.wheel.json";
 module.exports.filesJsonFilename = "files.wheel.json";
 module.exports.defaultPSconfigFilename = "parameterSetting.json";
 module.exports.userDBFilename="user.db";
-module.exports.userDBDir=__dirname
+module.exports.userDBDir= process.env.WHEEL_USER_DB_DIR|| __dirname;
 
 
 if (!process.env.WHEEL_USE_HTTP) {
