@@ -38,7 +38,7 @@ module.exports = {
   },
   post: passport.authenticate("local", {
     successReturnToOrRedirect: baseURL,
-    failureRedirect: `${baseURL}/login`,
+    failureRedirect: `${baseURL}login`,
     keepSessionInfo: true
   })
 }
