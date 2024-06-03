@@ -5,11 +5,24 @@
  */
 
 <template>
-    <v-card class="mx-auto px-6 py-8" max-width="344">
+  <v-app>
+    <v-app-bar>
+      <template #prepend>
+        <v-img height=72px width=180px :src="imgLogo" alt="wheel title logo"/>
+      </template>
+      <v-app-bar-title
+        class="text-lowercase text-decoration-none text-h5 white--text"
+      >
+        Login
+      </v-app-bar-title>
+    </v-app-bar>
+    <v-main>
+    <v-card class="mx-auto px-6 py-8" max-width=344>
       <v-form
         v-model="form"
         @submit.prevent="onSubmit"
       >
+        <div data-cy="username">
         <v-text-field
           v-model="username"
           :readonly="loading"
@@ -18,7 +31,9 @@
           label="username"
           clearable
         ></v-text-field>
+      </div>
 
+        <div data-cy="password">
         <v-text-field
           v-model="password"
           :readonly="loading"
@@ -30,9 +45,9 @@
           @click:append="showPassword = !showPassword"
           clearable
         ></v-text-field>
-
+      </div>
         <br>
-
+        <div data-cy="submit">
         <v-btn
           :disabled="!form"
           :loading="loading"
@@ -44,21 +59,27 @@
         >
           login
         </v-btn>
+      </div>
       </v-form>
     </v-card>
+    </v-main>
+  </v-app>
 </template>
 <script>
 import { required } from "@/lib/validationRules.js";
+import imgLogo from "@/assets/wheel_logomark.png";
 
 export default {
   name: "Login",
-  data: ()=>{return {
-    form: false,
-    username: null,
-    password: null,
-    loading: false,
-    showPassword: false
-  }},
+  data: ()=>{
+    return {
+      imgLogo,
+      form: false,
+      username: null,
+      password: null,
+      loading: false,
+      showPassword: false
+    }},
 
   methods: {
     async onSubmit () {
