@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 echo generate keypair = ${WHEEL_GENERATE_KEYPAIR:-NO}
 if [ "xYES" == "x${WHEEL_GENERATE_KEYPAIR}" ];then
   rm  /tmp_identify /tmp_identify.pub 2>/dev/null
@@ -10,7 +10,11 @@ if [ "xYES" == "x${WHEEL_GENERATE_KEYPAIR}" ];then
 fi
 echo generate anonymous login user = ${WHEEL_ANONYMOUS_LOGIN:-NO}
 if [ "xYES" == "x${WHEEL_ANONYMOUS_LOGIN}" ]; then
-  node bin/passwordDBTool.js -A -c >${WHEEL_ANONYMOUS_PASSWORD}
+  if [ -z ${WHEEL_ANONYMOUS_PASSWORD} ];then
+    node bin/passwordDBTool.js -A -c
+  else
+    node bin/passwordDBTool.js -A -c >${WHEEL_ANONYMOUS_PASSWORD}
+  fi
   export WHEEL_ENABLE_AUTH=YES
 fi
 
