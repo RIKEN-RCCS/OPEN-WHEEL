@@ -7,7 +7,7 @@
     <v-app-bar >
       <template #prepend>
         <a :href="homeURL">
-        <v-img height=72px width=180px :src="imgLogo" />
+        <v-img height=72px width=180px :src="imgLogo" alt="wheel title logo"/>
       </a>
       </template>
       <v-app-bar-title
