@@ -25,7 +25,7 @@ The method for starting the WHEEL is as follows.
 This section assumes that the [Configuration Pattern 1](#configuration-pattern-1-building-a-wheel-environment-for-each-user) is followed.
 
 {% capture notice-http %}
-__How to Use HTTP Communication__  
+__How to Use HTTP Communication__
 If you want to use HTTP instead of HTTPS communication, add the following options when you run `docker run` in step 3.
 ```
 -e WHEEL_USE_HTTP=1
@@ -55,11 +55,11 @@ HTTP communication should be used only in environments where there are no securi
 
     - Mapping the project location (/root) in the container to ${HOME} on the host.
     Projects created on WHEEL are stored in ${HOME}.
-    Therefore, ${HOME} needs write permission because it writes files from WHEEL.   
+    Therefore, ${HOME} needs write permission because it writes files from WHEEL.
     - The location of the configuration file in the container (/usr/src/server/app/config) is mapped to `CONFIG_DIR` on the host.
-    `CONFIG_DIR` must have write permission because it is also written from WHEEL.  
+    `CONFIG_DIR` must have write permission because it is also written from WHEEL.
     Also, refer to and edit the following files as necessary.
-      - wheel.log : WHEEL log file. 
+      - wheel.log : WHEEL log file.
       - jobScheduler.json : Batch system settings. For more information, see [Configuring the Batch System](../job_scheduler/).
       - server.crt/server.key : Server certificate/key file
     - WHHEL port number is specified as 8089.
@@ -68,15 +68,74 @@ HTTP communication should be used only in environments where there are no securi
 
 <div class="notice--info">{{ notice-http | markdownify }}</div>
 
+### Enable authentication
+WHEEL can be used with authentication mechanism by setting environment variable `WHEEL_ENABLE_AUTH` when booting up.
+
+If the authentication mechanism is enabled, all access from non-logged-in users are redirected to login page and will not be access to any of the WHEEL screens until user log in.
+
+You can register and delete user by following command
+
+```
+node bin/passwordDBTool.js
+```
+
+If you run without options, this command prints registerd user names.
+Other usage is as follows
+
+#### add user
+After executing this command, user for (with password bar) is registerd in user DB
+```
+node bin/passwordDBTool.js -u foo -p bar
+```
+
+#### delete user
+Following command deletes user foo
+```
+node bin/passwordDBTool.js -d -u foo
+```
+
+#### make anonymous user
+You can create anonymous user by following command
+
+```
+node bin/passwordDBTool.js -A
+```
+
+If anonymous user already exists in user DB, it's password is updated.
+
+After anonymous user creation, password will be shown as follows
+
+```
+Anonymous user created with password =  XXXXXXXXXXXX
+```
+
+To log in as anonymous user, type `anonymous` as user and `XXXXXXXXXXXX` as password.
+
+#### clear user DB
+Following command will clear all user in DB
+
+```
+node bin/passwordDBTool.js -c
+```
+
+`-c` option can be used combined with `-A` or `-u and -p`.
+In this case, all users are deleted and create just one user which is specified by option.
+
+### create anonymous user while booting up docker version
+If environment variable `WHEEL_ANONYMOUS_LOGIN` is set to `YES` with `docker run`,
+WHEEL is boot up with authentication mechanism and anonymous user is created.
+
+By default, anonymous user's password is shown on console.
+If environment variable `WHEEL_ANONYMOUS_PASSWORD` is set, it will go to the file named `${WHEEL_ANONYMOUS_PASSOWRD}`
 
 ## Remote Host Settings
 WHEEL can perform tasks on the compute server where you logged in via ssh.
 In this section, you configure the remote host settings for connecting to the compute server from the WHEEL.
 
 There are two patterns of remote host configuration. Specify settings according to the calculation server to be used.
-- [Without a batch system](#without-a-batch-system)  
+- [Without a batch system](#without-a-batch-system)
 Perform this procedure if the compute server does not have a batch system, or if the compute server has a batch system but you do not want to use it.
-- [Additional settings if you have a batch system](#additional-settings-if-you-have-a-batch-system)  
+- [Additional settings if you have a batch system](#additional-settings-if-you-have-a-batch-system)
 If you are using a batch system on a compute server, perform this step in addition to the steps in [Without a batch system](#without-a-batch-system).
 
 ### Without a batch system
@@ -127,7 +186,7 @@ Normally you would specify the home directory of the host you are connecting to,
 Select an appropriate directory by referring to the connection destination system usage guide, etc.
 
 {% capture notice-https %}
-__Using public key authentication to connect to a remote host__  
+__Using public key authentication to connect to a remote host__
 Enable the __use public key authentication__ switch when you use public key authentication to connect to remote hosts.
 At the bottom, a field for specifying the private key appears, enter the path of the private key or click the __BROWSE__ button to select the file.
 {% endcapture %}
@@ -158,17 +217,17 @@ The following six values are currently available.
 - TCS (Technical Computing Suite)
 - UGE (Univa Grid Engine)
 
-__About PBSProWithoutHistory__  
+__About PBSProWithoutHistory__
 Some PBSPros do not store information about jobs that have finished running in the batch system settings.
 In this case, use __PBSProWithoutHistory__ instead of __PBSPro__.
 {: .notice--info}
 
-__About Fugaku__  
+__About Fugaku__
 At Fugaku, TCS is used, but some of the behavior is different from other sites, so we have a special setting (Fugaku) for Fugaku.
 If you use Fugaku, choose __Fugaku__ instead of __TCS (Technical Computing Suite)__.
 {: .notice--info}
 
-__About Setting Up a Batch System__  
+__About Setting Up a Batch System__
 To add or remove batch system types or change settings, refer to [Configuring the batch system](../job_scheduler/).
 {: .notice--info}
 

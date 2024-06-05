@@ -10,16 +10,17 @@ This document is a reference manual that comprehensively explains the screen str
 
 [2. Remote host settings screen](2_remotehost_screen/)
 
-__3. Workflow Screen__  
+__3. Workflow Screen__
 
- * [Graph View](3_workflow_screen/1_graphview.html)  
+ * [Graph View](3_workflow_screen/1_graphview.html)
 
- * [List View](3_workflow_screen/2_listview.html)  
+ * [List View](3_workflow_screen/2_listview.html)
 
- * [Text Editor](3_workflow_screen/3_editor.html)  
+ * [Text Editor](3_workflow_screen/3_editor.html)
 
 [4. Component Details](4_component/)
 
+[5. login screen](5_login/)
 
 
 For more information about how to create and run specific projects, see [User Tutorials]({{site.baseurl}}/tutorial/).

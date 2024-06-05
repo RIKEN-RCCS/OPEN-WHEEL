@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 echo generate keypair = ${WHEEL_GENERATE_KEYPAIR:-NO}
 if [ "xYES" == "x${WHEEL_GENERATE_KEYPAIR}" ];then
   rm  /tmp_identify /tmp_identify.pub 2>/dev/null
