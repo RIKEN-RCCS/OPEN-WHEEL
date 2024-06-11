@@ -6,7 +6,7 @@
 "use strict";
 
 const allowedOperations = {
-  "not-started": ["runProject", "revertProject", "saveProject"],
+  "not-started": ["runProject", "revertProject", "saveProject", "checkProject"],
   "preparing": [],
   "running": ["stopProject"],
   "stopped": ["cleanProject", "saveProject"],

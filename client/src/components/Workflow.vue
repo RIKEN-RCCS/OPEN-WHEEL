@@ -145,6 +145,18 @@
               />
             </template>
           </v-tooltip>
+          <v-tooltip text="validation check" location="bottom">
+            <template #activator="{ props }">
+              <v-btn
+                variant=outlined
+                rounded=0
+                :disabled="! checkProjectAllowed"
+                v-bind="props"
+                @click="checkComponents"
+                icon="mdi-check-outline"
+              />
+            </template>
+          </v-tooltip>
           <v-tooltip text="save project" location="bottom">
             <template #activator="{ props }">
               <v-btn
@@ -404,6 +416,9 @@ export default {
     pauseProjectAllowed() {
       return isAllowed(this.projectState, "pauseProject");
     },
+    checkProjectAllowed() {
+      return isAllowed(this.projectState, "checkProject");
+    },
     saveProjectAllowed() {
       return isAllowed(this.projectState, "saveProject");
     },
@@ -542,6 +557,18 @@ export default {
       });
   },
   methods: {
+    checkComponents() {
+      SIO.emitGlobal("checkComponents", this.projectRootDir, this.currentComponent.ID, (rt)=>{
+        if (!Array.isArray(rt)) {
+          debug("checkComponents failed!", rt);
+        }
+        if (rt.length === 0) {
+          debug(`there are not invalid components under ${this.currentComponent.ID}`);
+          return;
+        }
+        console.log("invalid components", rt);
+      });
+    },
     makeWritable() {
       SIO.emitGlobal("updateProjectROStatus", this.projectRootDir, false, (rt)=>{
         debug("updateProjectROStatus done", rt);
