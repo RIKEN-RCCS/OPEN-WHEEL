@@ -5,6 +5,7 @@ WORKDIR /usr/src/
 # to install phantomjs
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
 # build WHEEL
+COPY package.json package.json
 COPY common common
 COPY server server
 RUN cd server && npm install --omit=dev
