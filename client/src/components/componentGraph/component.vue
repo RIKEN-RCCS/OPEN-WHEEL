@@ -10,9 +10,9 @@
       :width="boxWidth + borderWidth*2"
       :height="boxHeight + borderWidth*2"
       fill="transparent"
-      stroke="yellow"
+      :stroke=highlightColor
       :stroke-width=borderWidth
-      v-if=isSelected
+      v-if="isSelected || isInvalid"
     />
     <component-header
       :center=componentPos
@@ -93,6 +93,10 @@ export default {
       required: true,
       type: Object
     },
+    isInvalid: {
+      type: Boolean,
+      default: false
+    },
     isSelected: {
       type: Boolean,
       default: false
@@ -126,6 +130,9 @@ export default {
     };
   },
   computed: {
+    highlightColor() {
+      return this.isSelected ? "yellow" : "red";
+    },
     canHaveLink() {
       return this.componentData.type !== "source" && this.componentData.type !== "storage";
     },

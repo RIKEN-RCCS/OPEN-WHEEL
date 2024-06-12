@@ -26,6 +26,7 @@
         v-for="(componentData, index) in currentComponent.descendants"
         :component-data=componentData
         :is-selected="selectedComponent !==null && componentData.ID === selectedComponent.ID"
+        :is-invalid="componentData.isInvalid || false"
         @drag="updatePosition(index, $event)"
         @dragend="commitNewPosition(index, $event)"
         @chdir=onChdir

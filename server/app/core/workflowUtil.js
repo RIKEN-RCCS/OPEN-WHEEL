@@ -12,6 +12,7 @@ const { getLogger } = require("../logSettings.js");
 const { readJsonGreedy } = require("./fileUtils.js");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db.js");
 const { hasChild, isComponent } = require("./workflowComponent.js");
+const { getProjectJson } = require("./projectFilesOperator.js");
 
 /**
  * get absolute path of component directory
@@ -243,6 +244,12 @@ async function checkComponentDependency(projectRootDir, parentComponentID) {
   const children = await getChildren(projectRootDir, parentComponentID);
   const rt = getCycleGraph(projectRootDir, children);
   getLogger(projectRootDir).debug("cycle graph found !", rt);
+
+  const { componentPath } = await getProjectJson(projectRootDir);
+  const cycleComponents = rt.map((id)=>{
+    return componentPath[id].replace(/^./, "");
+  });
+  getLogger(projectRootDir).info("cycle graph found \n", cycleComponents);
   return rt;
 }
 

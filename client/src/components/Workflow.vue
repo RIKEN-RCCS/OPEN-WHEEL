@@ -388,6 +388,7 @@ export default {
   computed: {
     ...mapState([
       "projectState",
+      "componentPath",
       "rootComponentID",
       "openSnackbar",
       "currentComponent",
@@ -566,7 +567,20 @@ export default {
           debug(`there are not invalid components under ${this.currentComponent.ID}`);
           return;
         }
-        console.log("invalid components", rt);
+        debug("invalid components", rt);
+        this.currentComponent.descendants.forEach((child)=>{
+          child.isInvalid = rt.includes(child.ID);
+          debug(child.ID, child.isInvalid);
+        });
+
+        const cycleComponents = rt.map((id)=>{
+          return this.componentPath[id].replace(/^./, "");
+        });
+
+        this.dialogTitle = "cycle graph detected";
+        this.dialogMessage = `${cycleComponents.join("\n")}`;
+        this.confirmed = ()=>{};
+        this.dialog = true;
       });
     },
     makeWritable() {
