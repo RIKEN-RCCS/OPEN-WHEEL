@@ -252,6 +252,14 @@ async function setProjectState(projectRootDir, state, force) {
   }
   return false;
 }
+
+/**
+ * get absolute path of component directory
+ * @param {string} projectRootDir - projectRootDir's absolute path
+ * @param {string} targetID - target component's ID
+ * @param {Boolean} isAbsolute - return absolute path or relative path
+ * @returns {string} - path of target component's template dir
+ */
 async function getComponentDir(projectRootDir, ID, isAbsolute) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   const relativePath = projectJson.componentPath[ID];
@@ -260,6 +268,39 @@ async function getComponentDir(projectRootDir, ID, isAbsolute) {
   }
   return null;
 }
+
+/**
+ * get '/' separated component's hierarchial name
+ * @param {string} projectRootDir - projectRootDir's absolute path
+ * @param {string} targetID - target component's ID
+ * @param {Boolean} isAbsolute - return absolute path or relative path
+ * @returns {string} - absolute path of target component's template dir
+ */
+async function getComponentFullName(projectRootDir, ID) {
+  const relativePath = await getComponentDir(projectRootDir, ID);
+  if (relativePath === null) {
+    return relativePath;
+  }
+  return relativePath.replace(/^\./, "");
+}
+
+/**
+ * get relative path from src component to target component
+ * @param {string} projectRootDir - projectRootDir's absolute path
+ * @param {string} targetID - target component's ID
+ * @param {string} srcID - src component's ID
+ * @return {string} - relative path from src component to target component
+ */
+async function getComponentRelativePath(projectRootDir, targetID, srcID) {
+  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+  const srcPath = srcID ? projectJson.componentPath[srcID] : projectRootDir;
+  const targetPath = projectJson.componentPath[targetID];
+  if (typeof targetPath === "undefined") {
+    return targetPath;
+  }
+  return path.relative(srcPath, targetPath);
+}
+
 async function getProjectState(projectRootDir) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   return projectJson.state;
@@ -1920,6 +1961,8 @@ module.exports = {
   createNewProject,
   updateComponentPath,
   getComponentDir,
+  getComponentFullName,
+  getComponentRelativePath,
   setProjectState,
   getProjectState,
   checkRunningJobs,

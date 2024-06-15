@@ -13,7 +13,6 @@ const Ajv = require("ajv");
 const { gitRm } = require("./gitOperator2");
 const { isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
 const { getComponentDir, readComponentJson, writeComponentJson, writeComponentJsonByID, updateComponentPath } = require("./projectFilesOperator.js");
-const { getComponent } = require("./workflowUtil.js");
 const getSchema = require("../db/jsonSchemas.js");
 const { getLogger } = require("../logSettings.js");
 
@@ -267,7 +266,8 @@ const updateComponent = async (projectRootDir, ID, updated)=>{
     throw err;
   }
 
-  const targetComponent = await getComponent(projectRootDir, ID);
+  const targetComponentDir = await getComponentDir(projectRootDir, ID, true);
+  const targetComponent = await readComponentJson(targetComponentDir);
   if (updated.type !== targetComponent.type) {
     throw new Error("updateComponent can not change component's type");
   }
