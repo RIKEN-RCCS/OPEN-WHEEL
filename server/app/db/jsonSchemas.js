@@ -252,6 +252,65 @@ class BulkjobTaskSchema extends TaskSchema {
   }
 }
 
+const psSettingFileSchema = {
+  type: "object",
+  required: [
+    "version", "targetFiles", "params"
+  ],
+  properties: {
+    version: { type: "number", enum: [1, 2] },
+    targetFiles: {
+      type: "object",
+      required: ["targetName"],
+      properties: {
+        targetName: { type: "string" },
+        targetNode: { type: "string" }
+      }
+    },
+    params: {
+      type: "array",
+      items: {
+        oneOf: [
+          {
+            type: "object",
+            required: ["min", "max", "step"],
+            properties: {
+              min: { type: "number" },
+              max: { type: "number" },
+              step: { type: "number" }
+            }
+          },
+          { type: "array", items: { type: "string" } }
+        ]
+      }
+    },
+    scatter: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["srcName", "dstNode", "dstName"],
+        properties: {
+          srcName: { type: "string" },
+          dstNode: { type: "string" },
+          dstName: { type: "string" }
+        }
+      }
+    },
+    gather: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["srcName", "srcNode", "dstName"],
+        properties: {
+          srcName: { type: "string" },
+          srcNode: { type: "string" },
+          dstName: { type: "string" }
+        }
+      }
+    }
+  }
+};
+
 function getSchema(type) {
   switch (type) {
     case "pos":
@@ -284,6 +343,8 @@ function getSchema(type) {
       return new BulkjobTaskSchema();
     case "emptyArray":
       return JSON.parse(JSON.stringify(emptyArraySchema));
+    case "psSettingFile":
+      return psSettingFileSchema;
     default:
       return null;
   }

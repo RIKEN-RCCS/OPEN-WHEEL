@@ -19,8 +19,8 @@ const { getDateString, writeJsonWrapper } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
-const { writeComponentJson, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
-const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent.js");
+const { writeComponentJson, readComponentJsonByID, getChildren, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
+const { isInitialComponent, removeDuplicatedComponent, isLocalComponent } = require("./workflowComponent.js");
 const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
@@ -945,7 +945,7 @@ class Dispatcher extends EventEmitter {
     await this._setComponentState(component, "running");
     const storagePath = component.storagePath;
     const currentDir = this._getComponentDir(component.ID);
-    if (isLocal(component)) {
+    if (isLocalComponent(component)) {
       if (currentDir !== storagePath) {
         await fs.copy(currentDir, storagePath, {
           dereference: true,

@@ -399,11 +399,21 @@ function getComponentDefaultName(type) {
   return type;
 }
 
+/**
+ * return this component run on localhost or not
+ * @param {Object} component - component object
+ * @return {Boolean} - local component or not
+ */
+function isLocalComponent(component) {
+  return typeof component.host === "undefined" || component.host === "localhost";
+}
+
 module.exports = {
   componentFactory,
   hasChild,
   isInitialComponent,
   isComponent,
+  isLocalComponent,
   removeDuplicatedComponent,
   getComponentDefaultName
 };

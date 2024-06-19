@@ -14,7 +14,7 @@ const { getLogger } = require("../logSettings");
 const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
 const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
-const { getHosts, validateComponents, getSourceComponents, getComponentDir, getProjectJson, getProjectState, setComponentStateR, setProjectState, updateProjectDescription, updateProjectROStatus } = require("../core/projectFilesOperator");
+const { getHosts, getSourceComponents, getComponentDir, getProjectJson, getProjectState, setComponentStateR, setProjectState, updateProjectDescription, updateProjectROStatus } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh } = require("../core/sshManager");
 const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
 const { isValidOutputFilename } = require("../lib/utility");
@@ -22,6 +22,7 @@ const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, se
 const { parentDirs, eventEmitters } = require("../core/global.js");
 const { emitAll, emitWithPromise } = require("./commUtils.js");
 const { removeTempd, getTempd } = require("../core/tempd.js");
+const { validateComponents } = require("../core/validateComponents.js");
 const allowedOperations = require("../../../common/allowedOperations.cjs");
 
 const projectOperationQueues = new Map();
@@ -112,7 +113,7 @@ async function getSourceFilename(projectRootDir, component, clientID) {
 async function makeOIDCAuth(clientID, remotehostID) {
   return new Promise((resolve)=>{
     emitAll(clientID, "requestOIDCAuth", remotehostID, ()=>{
-      //TODO 一回目はここで証明書の確認とかをユーザがやっている間にresolveされてしまって
+      //一回目はここで証明書の確認とかをユーザがやっている間にresolveされてしまって
       //access tokenを取得する前にrunProjectが呼ばれてfailする
       console.log("DEBUG: requestOIDCAuth done");
       resolve();
@@ -149,7 +150,13 @@ async function onUpdateProjectROStatus(projectRootDir, isRO, ack) {
 async function onRunProject(clientID, projectRootDir, ack) {
   //validation check
   try {
-    await validateComponents(projectRootDir);
+    const report = await validateComponents(projectRootDir);
+    if (report.length > 0) {
+      getLogger(projectRootDir).error("invalid component found:");
+      ack(report);
+      return false;
+    }
+
     await gitCommit(projectRootDir, "auto saved: project starting");
   } catch (err) {
     getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);

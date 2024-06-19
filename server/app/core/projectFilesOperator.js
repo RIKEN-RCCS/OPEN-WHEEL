@@ -11,12 +11,12 @@ const isPathInside = require("is-path-inside");
 const uuid = require("uuid");
 const glob = require("glob");
 const { componentFactory, getComponentDefaultName } = require("./workflowComponent");
-const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, jobScheduler, defaultPSconfigFilename } = require("../db/db");
+const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, defaultPSconfigFilename } = require("../db/db");
 const { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
 const { replacePathsep, convertPathSep } = require("./pathUtils");
 const { readJsonGreedy } = require("./fileUtils");
 const { gitInit, gitAdd, gitCommit, gitResetHEAD, gitClean, gitRm } = require("./gitOperator2");
-const { hasChild, isInitialComponent } = require("./workflowComponent");
+const { hasChild, isLocalComponent } = require("./workflowComponent");
 const { getLogger } = require("../logSettings");
 
 const { diff } = require("just-diff");
@@ -678,9 +678,6 @@ async function renameProject(id, newName, oldDir) {
   target.path = newDir;
   await projectList.update(target);
 }
-function isLocal(component) {
-  return typeof component.host === "undefined" || component.host === "localhost";
-}
 function isDefaultPort(port) {
   return typeof port === "undefined" || port === 22 || port === "22" || port === "";
 }
@@ -698,7 +695,7 @@ async function isSameRemoteHost(projectRootDir, src, dst) {
   }
   const srcComponent = await readComponentJsonByID(projectRootDir, src);
   const dstComponent = await readComponentJsonByID(projectRootDir, dst);
-  if (isLocal(srcComponent) || isLocal(dstComponent)) {
+  if (isLocalComponent(srcComponent) || isLocalComponent(dstComponent)) {
     return false;
   }
   if (srcComponent.host === dstComponent.host) {
@@ -1051,232 +1048,7 @@ async function getChildren(projectRootDir, parentID, isParentDir) {
     return !e.subComponent;
   });
 }
-async function validateTask(projectRootDir, component) {
-  if (component.name === null) {
-    return Promise.reject(new Error(`illegal path ${component.name}`));
-  }
-  if (component.useJobScheduler) {
-    const hostinfo = remoteHost.query("name", component.host);
-    if (typeof hostinfo === "undefined") {
-      //local job is not implemented
-      return Promise.reject(new Error(`remote host setting for ${component.host} not found`));
-    }
-    if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
-      return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
-    }
-    if (component.submitOption) {
-      const optList = String(jobScheduler[hostinfo.jobScheduler].queueOpt).split(" ");
-      if (optList.map((opt)=>{
-        return component.submitOption.indexOf(opt);
-      }).every((i)=>{
-        return i >= 0;
-      })) {
-        return Promise.reject(new Error(`submit option duplicate queue option : ${jobScheduler[hostinfo.jobScheduler].queueOpt}`));
-      }
-    }
-  }
-  if (!(Object.prototype.hasOwnProperty.call(component, "script") && typeof component.script === "string")) {
-    return Promise.reject(new Error(`script is not specified ${component.name}`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, component.ID, true);
-  const filename = path.resolve(componentDir, component.script);
-  if (!(await fs.stat(filename)).isFile()) {
-    return Promise.reject(new Error(`script is not existing file ${filename}`));
-  }
-  return true;
-}
-async function validateStepjobTask(projectRootDir, component) {
-  const isInitial = isInitialComponent(component);
-  if (component.name === null) {
-    return Promise.reject(new Error(`illegal path ${component.name}`));
-  }
-  if (component.useDependency && isInitial) {
-    return Promise.reject(new Error("initial stepjobTask cannot specified the Dependency form"));
-  }
-  if (!(Object.prototype.hasOwnProperty.call(component, "script") && typeof component.script === "string")) {
-    return Promise.reject(new Error(`script is not specified ${component.name}`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, component.ID, true);
-  const filename = path.resolve(componentDir, component.script);
-  if (!(await fs.stat(filename)).isFile()) {
-    return Promise.reject(new Error(`script is not existing file ${filename}`));
-  }
-  return true;
-}
-async function validateStepjob(projectRootDir, component) {
-  if (component.useJobScheduler) {
-    const hostinfo = remoteHost.query("name", component.host);
-    if (typeof hostinfo === "undefined") {
-      //assume local job
-    } else if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
-      return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
-    }
-    const setJobScheduler = jobScheduler[hostinfo.jobScheduler];
-    if (!setJobScheduler.supportStepjob) {
-      return Promise.reject(new Error(`${hostinfo.jobScheduler} jobSheduler does not support stepjob`));
-    }
-    if (!hostinfo.useStepjob) {
-      return Promise.reject(new Error(`${hostinfo.name} does not set to use stepjob`));
-    }
-  }
-  return true;
-}
-async function validateBulkjobTask(projectRootDir, component) {
-  if (component.name === null) {
-    return Promise.reject(new Error(`illegal path ${component.name}`));
-  }
-  if (!(Object.prototype.hasOwnProperty.call(component, "script") && typeof component.script === "string")) {
-    return Promise.reject(new Error(`script is not specified ${component.name}`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, component.ID, true);
-  const filename = path.resolve(componentDir, component.script);
-  if (!(await fs.stat(filename)).isFile()) {
-    return Promise.reject(new Error(`script is not existing file ${filename}`));
-  }
-  if (component.host === "localhost") {
-    return Promise.reject(new Error("localhost does not support bulkjob`"));
-  }
-  if (component.useJobScheduler) {
-    const hostinfo = remoteHost.query("name", component.host);
-    if (typeof hostinfo === "undefined") {
-      //local job is not supported for now
-      return Promise.reject(new Error(`remote host setting for ${component.host} not found`));
-    }
-    if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
-      return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
-    }
-    const setJobScheduler = jobScheduler[hostinfo.jobScheduler];
-    if (!setJobScheduler.supportBulkjob) {
-      return Promise.reject(new Error(`${hostinfo.jobScheduler} jobSheduler does not support bulkjob`));
-    }
-    if (!hostinfo.useBulkjob) {
-      return Promise.reject(new Error(`${hostinfo.name} does not set to use bulkjob`));
-    }
-  }
-  if (component.usePSSettingFile === false) {
-    if (!(Object.prototype.hasOwnProperty.call(component, "startBulkNumber") && typeof component.startBulkNumber === "number")) {
-      return Promise.reject(new Error(`startBulkNumber is not specified ${component.name}`));
-    }
-    if (!(component.startBulkNumber >= 0)) {
-      return Promise.reject(new Error(`${component.name} startBulkNumber is integer of 0 or more`));
-    }
-    if (!(Object.prototype.hasOwnProperty.call(component, "endBulkNumber") && typeof component.endBulkNumber === "number" && component.startBulkNumber >= 0)) {
-      return Promise.reject(new Error(`endBulkNumber is not specified ${component.name}`));
-    }
-    if (!(component.endBulkNumber > component.startBulkNumber)) {
-      return Promise.reject(new Error(`${component.name} endBulkNumber is greater than startBulkNumber`));
-    }
-  } else {
-    if (!(Object.prototype.hasOwnProperty.call(component, "parameterFile") && typeof component.parameterFile === "string")) {
-      return Promise.reject(new Error(`parameter setting file is not specified ${component.name}`));
-    }
-  }
-  if (component.manualFinishCondition) {
-    if (!(Object.prototype.hasOwnProperty.call(component, "condition") && typeof component.condition === "string")) {
-      return Promise.reject(new Error(`condition is not specified ${component.name}`));
-    }
-  }
-  return true;
-}
-async function validateConditionalCheck(component) {
-  if (!(Object.prototype.hasOwnProperty.call(component, "condition") && typeof component.condition === "string")) {
-    return Promise.reject(new Error(`condition is not specified ${component.name}`));
-  }
-  return Promise.resolve();
-}
-async function validateKeepProp(component) {
-  if (Object.prototype.hasOwnProperty.call(component, "keep")) {
-    if (component.keep === null || component.keep === "") {
-      return Promise.resolve();
-    }
-    if (!(Number.isInteger(component.keep) && component.keep >= 0)) {
-      return Promise.reject(new Error(`keep must be positive integer ${component.name}`));
-    }
-  }
-  return Promise.resolve();
-}
-async function validateForLoop(component) {
-  if (!(Object.prototype.hasOwnProperty.call(component, "start") && typeof component.start === "number")) {
-    return Promise.reject(new Error(`start is not specified ${component.name}`));
-  }
-  if (!(Object.prototype.hasOwnProperty.call(component, "step") && typeof component.step === "number")) {
-    return Promise.reject(new Error(`step is not specified ${component.name}`));
-  }
-  if (!(Object.prototype.hasOwnProperty.call(component, "end") && typeof component.end === "number")) {
-    return Promise.reject(new Error(`end is not specified ${component.name}`));
-  }
-  if (component.step === 0 || (component.end - component.start) * component.step < 0) {
-    return Promise.reject(new Error(`inifinite loop ${component.name}`));
-  }
-  return Promise.resolve();
-}
-async function validateParameterStudy(projectRootDir, component) {
-  if (!(Object.prototype.hasOwnProperty.call(component, "parameterFile") && typeof component.parameterFile === "string")) {
-    return Promise.reject(new Error(`parameter setting file is not specified ${component.name}`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, component.ID, true);
-  const filename = path.resolve(componentDir, component.parameterFile);
-  await fs.access(filename);
 
-  try {
-    await readJsonGreedy(filename);
-  } catch (err) {
-    err.orgMessage = err.message;
-    err.message = "parameter file parse error";
-    err.parameterFile = component.parameterFile;
-    throw err;
-  }
-  //validation check by JSON-schema will be done
-  return true;
-}
-async function validateForeach(component) {
-  if (!Array.isArray(component.indexList)) {
-    return Promise.reject(new Error(`index list is broken ${component.name}`));
-  }
-  if (component.indexList.length <= 0) {
-    return Promise.reject(new Error(`index list is empty ${component.name}`));
-  }
-  return Promise.resolve();
-}
-async function validateStorage(component) {
-  if (typeof component.storagePath !== "string") {
-    return Promise.reject(new Error("storagePath is not set"));
-  }
-  if (isLocal(component) && !fs.pathExists(component.storagePath)) {
-    return Promise.reject(new Error("specified path is not exist on localhost"));
-  }
-  return Promise.resolve();
-}
-
-/**
- * validate inputFiles
- * @param {Object} component - any component object which has inputFiles prop
- * @returns {true|Error} - inputFile is valid or not
- */
-async function validateInputFiles(component) {
-  for (const inputFile of component.inputFiles) {
-    const filename = inputFile.name;
-    if (inputFile.src.length > 1 && !(filename[filename.length - 1] === "/" || filename[filename.length - 1] === "\\")) {
-      return Promise.reject(new Error(`${component.name} inputFile '${inputFile.name}' data type is 'file' but it has two or more outputFiles.`));
-    }
-  }
-  return true;
-}
-
-/**
- * validate outputFiles
- * @param {Object} component - any component object which has putFiles prop
- * @returns {true|Error} - outputFile is valid or not
- */
-async function validateOutputFiles(component) {
-  for (const outputFile of component.outputFiles) {
-    const filename = outputFile.name;
-    if (!isValidOutputFilename(filename)) {
-      return Promise.reject(new Error(`${component.name} '${outputFile.name}' is not allowed.`));
-    }
-  }
-  return true;
-}
 async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) {
   const promises = [];
   const children = await getChildren(projectRootDir, parentID);
@@ -1323,68 +1095,6 @@ async function getHosts(projectRootDir, rootID) {
   return [...storageHosts2, ...hosts2];
 }
 
-/**
- * validate all components in workflow
- */
-async function validateComponents(projectRootDir, argParentID) {
-  let parentID;
-  if (typeof argParentID !== "string") {
-    const rootWF = await readComponentJson(projectRootDir);
-    parentID = rootWF.ID;
-  } else {
-    parentID = argParentID;
-  }
-
-  const children = await getChildren(projectRootDir, parentID);
-  const promises = [];
-  for (const component of children) {
-    if (component.disable) {
-      continue;
-    }
-    if (component.type === "task") {
-      promises.push(validateTask(projectRootDir, component));
-    } else if (component.type === "stepjobTask") {
-      promises.push(validateStepjobTask(projectRootDir, component));
-    } else if (component.type === "stepjob") {
-      promises.push(validateStepjob(projectRootDir, component));
-    } else if (component.type === "bulkjobTask") {
-      promises.push(validateBulkjobTask(projectRootDir, component));
-    } else if (component.type === "if") {
-      promises.push(validateConditionalCheck(component));
-    } else if (component.type === "while") {
-      promises.push(validateConditionalCheck(component));
-      promises.push(validateKeepProp(component));
-    } else if (component.type === "for") {
-      promises.push(validateForLoop(component));
-      promises.push(validateKeepProp(component));
-    } else if (component.type === "parameterStudy") {
-      promises.push(validateParameterStudy(projectRootDir, component));
-    } else if (component.type === "foreach") {
-      promises.push(validateForeach(component));
-      promises.push(validateKeepProp(component));
-    } else if (component.type === "storage") {
-      promises.push(validateStorage(component));
-    }
-    if (Object.prototype.hasOwnProperty.call(component, "inputFiles")) {
-      promises.push(validateInputFiles(component));
-    }
-    if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
-      promises.push(validateOutputFiles(component));
-    }
-    if (hasChild(component)) {
-      promises.push(validateComponents(projectRootDir, component.ID));
-    }
-  }
-
-  const hasInitialNode = children.some((component)=>{
-    return isInitialComponent(component);
-  });
-  if (!hasInitialNode) {
-    promises.push(Promise.reject(new Error("no component can be run")));
-  }
-
-  return Promise.all(promises);
-}
 function componentJsonReplacer(key, value) {
   if (["handler", "doCleanup", "sbsID", "childLoopRunning"].includes(key)) {
     return undefined;
@@ -1977,7 +1687,6 @@ module.exports = {
   getSourceComponents,
   getChildren,
   readComponentJsonByID,
-  validateComponents,
   createNewComponent,
   updateComponent,
   addInputFile,
@@ -1999,7 +1708,6 @@ module.exports = {
   getComponentTree,
   readComponentJson,
   writeComponentJson,
-  isLocal,
   isSameRemoteHost,
   writeComponentJsonByID
 };

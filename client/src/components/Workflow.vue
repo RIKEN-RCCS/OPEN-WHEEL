@@ -318,6 +318,31 @@
         </div>
       </template>
     </versatile-dialog>
+    <versatile-dialog
+      v-model="validationErrorDialog"
+      title="validation error detected!"
+      max-width="50vw"
+      :buttons="[ { icon: 'mdi-check', label: 'close' }]"
+      @close="validationErrorDialog=false;validationErrors=[];validationErrorFilter=''"
+    >
+      <template #message>
+        <v-text-field
+          v-model="validationErrorFilter"
+          label="filter"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          hide-details
+          single-line
+        ></v-text-field>
+        <v-data-table
+          v-model:sort-by="validationErrorsSortBy"
+          :items="validationErrors"
+          :headers="validationErrorTableHeader"
+          :search="validationErrorFilter"
+          density="compact"
+        />
+      </template>
+    </versatile-dialog>
   </v-app>
 </template>
 
@@ -382,7 +407,15 @@ export default {
       dialogTitle: "",
       dialogMessage: "",
       confirmed: null,
-      baseURL: "."
+      baseURL: ".",
+      validationErrorDialog: false,
+      validationErrors: [],
+      validationErrorsSortBy: [{ key: "component", order: "asc" }],
+      validationErrorFilter: "",
+      validationErrorTableHeader: [
+        { title: "component", value: "name", key: "component" },
+        { title: "error", value: "error", key: "error" }
+      ]
     };
   },
   computed: {
@@ -559,28 +592,30 @@ export default {
   },
   methods: {
     checkComponents() {
-      SIO.emitGlobal("checkComponents", this.projectRootDir, this.currentComponent.ID, (rt)=>{
-        if (!Array.isArray(rt)) {
-          debug("checkComponents failed!", rt);
+      SIO.emitGlobal("checkComponents", this.projectRootDir, this.currentComponent.ID, (validationErrors)=>{
+        if (!Array.isArray(validationErrors)) {
+          debug("checkComponents failed!", validationErrors);
         }
-        if (rt.length === 0) {
-          debug(`there are not invalid components under ${this.currentComponent.ID}`);
+        if (validationErrors.length === 0) {
+          this.showSnackbar(`all components under ${this.currentComponent.name} are valid`);
+          debug(`no invalid components found under ${this.currentComponent.name} (${this.currentComponent.ID})`);
           return;
         }
-        debug("invalid components", rt);
+        debug("invalid components", validationErrors);
+        this.validationErrors = validationErrors;
+        const errorIDs = validationErrors.map((err)=>{
+          return err.ID;
+        });
         this.currentComponent.descendants.forEach((child)=>{
-          child.isInvalid = rt.includes(child.ID);
-          debug(child.ID, child.isInvalid);
+          child.isInvalid = errorIDs.includes(child.ID);
+          if (!child.isInvalid) {
+            const childName = this.componentPath[child.ID].replace(/^./, "");
+            child.isInvalid = this.validationErrors.some((err)=>{
+              return err.name.startsWith(childName);
+            });
+          }
         });
-
-        const cycleComponents = rt.map((id)=>{
-          return this.componentPath[id].replace(/^./, "");
-        });
-
-        this.dialogTitle = "cycle graph detected";
-        this.dialogMessage = `${cycleComponents.join("\n")}`;
-        this.confirmed = ()=>{};
-        this.dialog = true;
+        this.validationErrorDialog = true;
       });
     },
     makeWritable() {

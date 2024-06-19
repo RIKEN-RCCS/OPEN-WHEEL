@@ -12,7 +12,7 @@ const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDesc
 const { onSaveFile, onOpenFile } = require("./rapid.js");
 const { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } = require("./remoteHost.js");
 const { onGetJobSchedulerList, onGetJobSchedulerLabelList } = require("./jobScheduler.js");
-const { checkComponentDependency } = require("../core/workflowUtil.js");
+const { validateComponents } = require("../core/validateComponents.js");
 const {
   onCreateNode,
   onUpdateComponent,
@@ -180,7 +180,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("requestRemoteConnection", onRequestRemoteConnection.bind(null, socket));
   socket.on("aboutWheel", aboutWheel);
   socket.on("checkComponents", async (projectRootDir, parentComponentID, ack)=>{
-    const rt = await checkComponentDependency(projectRootDir, parentComponentID);
+    const rt = await validateComponents(projectRootDir, parentComponentID);
     ack(rt);
   });
 
