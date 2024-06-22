@@ -70,10 +70,18 @@ async function checkPSSettingFile(projectRootDir, component) {
   if (!stat.isFile()) {
     return Promise.reject(new Error(`parameter setting file is not file ${filename}`));
   }
-  const PSSetting = await readJsonGreedy(filename);
-  validate(PSSetting);
+  try {
+    const retry = typeof process.env.WHEEL_RUNNING_TEST !== "undefined" ? 0 : undefined;
+    const PSSetting = await readJsonGreedy(filename, retry);
+    validate(PSSetting);
+  } catch (e) {
+    if (e.message.startsWith("Unexpected token")) {
+      throw new Error(`parameter setting file is not JSON file ${filename}`);
+    }
+  }
   if (validate !== null && Array.isArray(validate.errors)) {
     const err = new Error("parameter setting file does not have valid JSON data");
+    logger.trace(`validation error for ${component.name} (${component.ID}) :\n`, validate.errors);
     err.errors = validate.errors;
     throw err;
   }
@@ -111,7 +119,8 @@ async function validateTask(projectRootDir, component) {
   if (component.name === null) {
     return Promise.reject(new Error(`illegal path`));
   }
-  if (typeof component.host === "string" && component.host !== "localhost") {
+  //if (typeof component.host === "string" && component.host !== "localhost") {
+  if (!isLocalComponent(component)) {
     const hostinfo = remoteHost.query("name", component.host);
     if (typeof hostinfo === "undefined") {
       //local job is not implemented
@@ -151,7 +160,7 @@ async function validateStepjob(projectRootDir, component) {
   if (!component.useJobScheduler) {
     return Promise.reject(new Error(`useJobScheduler must be set`));
   }
-  if (typeof component.host !== "string" || component.host === "localhost") {
+  if (isLocalComponent(component)) {
     return Promise.reject(new Error("stepjob is only supported on remotehost"));
   }
 
@@ -180,7 +189,7 @@ async function validateBulkjobTask(projectRootDir, component) {
   if (!component.useJobScheduler) {
     return Promise.reject(new Error(`useJobScheduler must be set`));
   }
-  if (typeof component.host !== "string" || component.host === "localhost") {
+  if (isLocalComponent(component)) {
     return Promise.reject(new Error("bulkjobTask is only supported on remotehost"));
   }
   const hostinfo = remoteHost.query("name", component.host);
@@ -265,8 +274,23 @@ async function validateStorage(component) {
   if (typeof component.storagePath !== "string") {
     return Promise.reject(new Error("storagePath is not set"));
   }
-  if (isLocalComponent(component) && !fs.pathExists(component.storagePath)) {
-    return Promise.reject(new Error("specified path is not exist on localhost"));
+  if (isLocalComponent(component)) {
+    try {
+      const stats = await fs.stat(component.storagePath);
+      if (!stats.isDirectory()) {
+        return Promise.reject(new Error("specified path is not directory"));
+      }
+    } catch (e) {
+      if (e.code === "ENOENT") {
+        return Promise.reject(new Error("specified path does not exist on localhost"));
+      }
+    }
+  } else {
+    const hostinfo = remoteHost.query("name", component.host);
+    if (typeof hostinfo === "undefined") {
+      //local job is not implemented
+      return Promise.reject(new Error(`remote host setting for ${component.host} not found`));
+    }
   }
   return true;
 }
@@ -449,8 +473,8 @@ function isCycleGraph(projectRootDir, components, startComponent, results, cycle
     if (found) {
       return true;
     }
-    results[startComponent.ID] = "black";
   }
+  results[startComponent.ID] = "black";
   cyclePath.pop();
   return false;
 }

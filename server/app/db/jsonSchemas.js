@@ -260,11 +260,14 @@ const psSettingFileSchema = {
   properties: {
     version: { type: "number", enum: [1, 2] },
     targetFiles: {
-      type: "object",
-      required: ["targetName"],
-      properties: {
-        targetName: { type: "string" },
-        targetNode: { type: "string" }
+      type: "array",
+      items: {
+        type: "object",
+        required: ["targetName"],
+        properties: {
+          targetName: { type: "string" },
+          targetNode: { type: "string" }
+        }
       }
     },
     params: {
