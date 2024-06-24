@@ -579,6 +579,7 @@ class Dispatcher extends EventEmitter {
         srcDirName = `${component.originalName}_${sanitizePath(component.prevIndex)}`;
       }
     } else {
+      console.log("DEBUG: restarting", this.cwfDir);
       component.prevIndex = component.currentIndex;
       srcDirName = `${component.originalName}_${sanitizePath(component.prevIndex)}`;
     }
