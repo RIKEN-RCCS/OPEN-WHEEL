@@ -38,10 +38,10 @@ async function pspawn(projectRootDir, script, options) {
  * @param {string} projectRootDir - root directory path of project
  * @param {string} condition - command name or javascript expression
  * @param {string} cwd - task component's directory
- * @param {number} currentIndex - innermost loop index (WHEEL_CURRENT_INDEX)
+ * @param {Object} env - environment variables
  * @returns {Promise} *
  */
-async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
+async function evalCondition(projectRootDir, condition, cwd, env) {
   //condition is always string for now. but keep following just in case
   if (typeof condition === "boolean") {
     return condition;
@@ -56,19 +56,21 @@ async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
     await addX(script);
     const dir = path.dirname(script);
     const options = {
-      env: process.env,
+      env: Object.assign({}, process.env, env),
       cwd: dir,
       shell: "bash"
     };
-    if (typeof currentIndex === "number") {
-      options.env.WHEEL_CURRENT_INDEX = currentIndex.toString();
-    }
     return pspawn(projectRootDir, script, options);
   }
   getLogger(projectRootDir).debug("evalute ", condition);
   let conditionExpression = "";
-  if (typeof currentIndex === "number") {
-    conditionExpression += `var WHEEL_CURRENT_INDEX=${currentIndex};`;
+  if (Object.keys(env).length > 0) {
+    conditionExpression += Object.entries(env)
+      .map(([k, v])=>{
+        return `var ${k}="${v}"`;
+      })
+      .join("\n");
+    conditionExpression += "\n";
   }
   conditionExpression += condition;
   return eval(conditionExpression);

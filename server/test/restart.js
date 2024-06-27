@@ -85,6 +85,22 @@ describe("restart UT", function () {
     expect(path.resolve(projectRootDir, "foreach0_2/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_2\/task0/);
     expect(path.resolve(projectRootDir, "foreach0_3/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_3\/task0/);
   });
+  it("can restart foreach component from second loop with updated files even if indexList is updated", async ()=>{
+    await tar.x({
+      file: path.resolve(testFileDir, "restart_foreach_with_modified_indexList.tgz"),
+      preserveOwner: false,
+      cwd: projectRootDir
+    });
+    await runProject(projectRootDir);
+
+    expect(path.resolve(projectRootDir, "foreach0_1/task0/output.txt")).to.be.a.file().with.contents.that.match(/foreach0_1\/task0/);
+    expect(path.resolve(projectRootDir, "foreach0_1/task0/hoge.txt")).not.to.be.a.path();
+    expect(path.resolve(projectRootDir, "foreach0_2/task0/hoge.txt")).not.to.be.a.path();
+    expect(path.resolve(projectRootDir, "foreach0_3/task0/hoge.txt")).not.to.be.a.path();
+    expect(path.resolve(projectRootDir, "foreach0_foo/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_foo\/task0/);
+    expect(path.resolve(projectRootDir, "foreach0_bar/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_bar\/task0/);
+    expect(path.resolve(projectRootDir, "foreach0_baz/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_baz\/task0/);
+  });
   it("can restart while component from second loop with updated files", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_while.tgz"),

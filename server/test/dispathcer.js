@@ -266,6 +266,87 @@ describe("UT for Dispatcher class", function () {
         }
       });
     });
+    it("should copy 3 times and delete all", async ()=>{
+      await updateComponent(projectRootDir, for0.ID, "start", 0);
+      await updateComponent(projectRootDir, for0.ID, "end", 2);
+      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponent(projectRootDir, for0.ID, "keep", 0);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      expect(path.resolve(projectRootDir, `${for0.name}_0`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${for0.name}_1`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${for0.name}_2`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        properties: {
+          numFinishd: {
+            type: "integer",
+            minimum: 3,
+            maximum: 3
+
+          },
+          numTotal: {
+            type: "integer",
+            minimum: 3,
+            maximum: 3
+          }
+        }
+      });
+    });
+    it("should copy 3 times and keep last", async ()=>{
+      await updateComponent(projectRootDir, for0.ID, "start", 0);
+      await updateComponent(projectRootDir, for0.ID, "end", 2);
+      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponent(projectRootDir, for0.ID, "keep", 1);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      expect(path.resolve(projectRootDir, `${for0.name}_0`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${for0.name}_1`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${for0.name}_2`)).to.be.a.directory();
+      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        properties: {
+          numFinishd: {
+            type: "integer",
+            minimum: 3,
+            maximum: 3
+
+          },
+          numTotal: {
+            type: "integer",
+            minimum: 3,
+            maximum: 3
+          }
+        }
+      });
+    });
+    it("should copy 3 times and keep last 2", async ()=>{
+      await updateComponent(projectRootDir, for0.ID, "start", 0);
+      await updateComponent(projectRootDir, for0.ID, "end", 2);
+      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponent(projectRootDir, for0.ID, "keep", 2);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      expect(path.resolve(projectRootDir, `${for0.name}_0`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
+      expect(path.resolve(projectRootDir, `${for0.name}_2`)).to.be.a.directory();
+      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        properties: {
+          numFinishd: {
+            type: "integer",
+            minimum: 3,
+            maximum: 3
+
+          },
+          numTotal: {
+            type: "integer",
+            minimum: 3,
+            maximum: 3
+          }
+        }
+      });
+    });
   });
 
   describe("#Parameter Study", ()=>{
@@ -316,16 +397,15 @@ describe("UT for Dispatcher class", function () {
       });
     });
   });
-
   describe("#Foreach component", ()=>{
     let foreach0;
     beforeEach(async ()=>{
       foreach0 = await createNewComponent(projectRootDir, projectRootDir, "foreach", { x: 10, y: 10 });
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
       await updateComponent(projectRootDir, foreach0.ID, "indexList", ["foo", "bar", "baz", "fizz"]);
-      await updateComponent(projectRootDir, foreach0.ID, "keep", 0);
     });
     it("should copy 3 times and delete all component", async ()=>{
+      await updateComponent(projectRootDir, foreach0.ID, "keep", 0);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
@@ -334,6 +414,26 @@ describe("UT for Dispatcher class", function () {
       expect(path.resolve(projectRootDir, `${foreach0.name}_baz`)).not.to.be.a.path();
       expect(path.resolve(projectRootDir, `${foreach0.name}_fizz`)).not.to.be.a.path();
     });
+    it("should copy 3 times and keep last component", async ()=>{
+      await updateComponent(projectRootDir, foreach0.ID, "keep", 1);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+      expect(path.resolve(projectRootDir, `${foreach0.name}_foo`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${foreach0.name}_bar`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${foreach0.name}_baz`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${foreach0.name}_fizz`)).to.be.a.directory();
+    });
+    it("should copy 3 times and keep last 2 component", async ()=>{
+      await updateComponent(projectRootDir, foreach0.ID, "keep", 2);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+      expect(path.resolve(projectRootDir, `${foreach0.name}_foo`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${foreach0.name}_bar`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${foreach0.name}_baz`)).to.be.a.directory();
+      expect(path.resolve(projectRootDir, `${foreach0.name}_fizz`)).to.be.a.directory();
+    });
   });
 
   describe("#While component", ()=>{
@@ -341,16 +441,37 @@ describe("UT for Dispatcher class", function () {
     beforeEach(async ()=>{
       while0 = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 10, y: 10 });
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
-      await updateComponent(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
-      await updateComponent(projectRootDir, while0.ID, "keep", 0);
+      await updateComponent(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 3");
     });
     it("should copy 3 times and delete all component", async ()=>{
+      await updateComponent(projectRootDir, while0.ID, "keep", 0);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
       expect(path.resolve(projectRootDir, `${while0.name}_0`)).not.to.be.a.path();
       expect(path.resolve(projectRootDir, `${while0.name}_1`)).not.to.be.a.path();
       expect(path.resolve(projectRootDir, `${while0.name}_2`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${while0.name}_3`)).not.to.be.a.path();
+    });
+    it("should copy 3 times and keep last component", async ()=>{
+      await updateComponent(projectRootDir, while0.ID, "keep", 1);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+      expect(path.resolve(projectRootDir, `${while0.name}_0`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${while0.name}_1`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${while0.name}_2`)).to.be.a.directory();
+      expect(path.resolve(projectRootDir, `${while0.name}_3`)).not.to.be.a.path();
+    });
+    it("should copy 3 times and keep last 2 component", async ()=>{
+      await updateComponent(projectRootDir, while0.ID, "keep", 2);
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+      expect(path.resolve(projectRootDir, `${while0.name}_0`)).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, `${while0.name}_1`)).to.be.a.directory();
+      expect(path.resolve(projectRootDir, `${while0.name}_2`)).to.be.a.directory();
+      expect(path.resolve(projectRootDir, `${while0.name}_3`)).not.to.be.a.path();
     });
   });
   describe("[reproduction test] root workflow has only source and connected for loop", ()=>{
