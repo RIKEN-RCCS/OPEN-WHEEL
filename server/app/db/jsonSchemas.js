@@ -252,6 +252,24 @@ class BulkjobTaskSchema extends TaskSchema {
   }
 }
 
+class BreakSchema extends GeneralWorkflowComponentSchema {
+  constructor(...args) {
+    super(...args);
+    this.properties.type = { enum: ["break"] };
+    this.required.push("condition");
+    this.properties.condition = { type: ["string", "null"], default: null };
+  }
+}
+
+class ContinueSchema extends GeneralWorkflowComponentSchema {
+  constructor(...args) {
+    super(...args);
+    this.properties.type = { enum: ["continue"] };
+    this.required.push("condition");
+    this.properties.condition = { type: ["string", "null"], default: null };
+  }
+}
+
 const psSettingFileSchema = {
   type: "object",
   required: [
@@ -344,6 +362,10 @@ function getSchema(type) {
       return new StepjobTaskSchema();
     case "bulkjobTask":
       return new BulkjobTaskSchema();
+    case "break":
+      return new BreakSchema();
+    case "continue":
+      return new ContinueSchema();
     case "emptyArray":
       return JSON.parse(JSON.stringify(emptyArraySchema));
     case "psSettingFile":

@@ -289,6 +289,28 @@ class BulkjobTask extends Task {
 }
 
 /**
+ * representation of if and break block in loop
+ */
+class Break extends GeneralComponent {
+  constructor(...args) {
+    super(...args);
+    this.type = "break";
+    this.condition = null;
+  }
+}
+
+/**
+ * representation of if and continue block in loop
+ */
+class Continue extends GeneralComponent {
+  constructor(...args) {
+    super(...args);
+    this.type = "continue";
+    this.condition = null;
+  }
+}
+
+/**
  * factory method for workflow component class
  * @param {string} type -  component type
  * @returns {*} - component object
@@ -334,6 +356,12 @@ function componentFactory(type, ...args) {
       break;
     case "bulkjobTask":
       component = new BulkjobTask(...args);
+      break;
+    case "break":
+      component = new Break(...args);
+      break;
+    case "continue":
+      component = new Continue(...args);
       break;
     default:
       component = null;

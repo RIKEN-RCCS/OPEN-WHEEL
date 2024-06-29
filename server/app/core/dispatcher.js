@@ -113,6 +113,7 @@ class Dispatcher extends EventEmitter {
     this.env = Object.assign({}, env);
     this.currentSearchList = [];
     this.pendingComponents = [];
+    this.forceFinishedLoops = [];
     this.children = new Set(); //child dispatcher instance
     this.runningTasks = []; //store currently running tasks from this dispatcher object
     this.needToRerun = false;
@@ -326,11 +327,12 @@ class Dispatcher extends EventEmitter {
         this.removeListener("dispatch", this._dispatch);
         /*eslint-disable no-use-before-define */
         this.removeListener("error", onError);
-        this.removeListener("done", onDone);
+        this.removeListener("done", this.onDone);
         /*eslint-enable no-use-before-define */
         this.removeListener("stop", onStop);
       };
-      const onDone = (state)=>{
+      //never call this.onDone directly except for _jumpHandler
+      this.onDone = (state)=>{
         getLogger(this.projectRootDir).trace(`dispatcher finished ${this.cwfDir} with ${state}`);
         onStop();
         resolve(state);
@@ -339,7 +341,7 @@ class Dispatcher extends EventEmitter {
         onStop();
         reject(err);
       };
-      this.once("done", onDone);
+      this.once("done", this.onDone);
       this.once("error", onError);
       this.once("stop", onStop);
 
@@ -504,7 +506,7 @@ class Dispatcher extends EventEmitter {
     await this._setComponentState(component, "finished");
   }
 
-  async _delegate(component) {
+  async _delegate(component, needEventHandler, templateComponent) {
     getLogger(this.projectRootDir).debug("_delegate called", component.name);
     const childDir = path.resolve(this.cwfDir, component.name);
     //PS instance component is called in template component's dispatcher.
@@ -521,6 +523,12 @@ class Dispatcher extends EventEmitter {
     const childEnv = Object.assign({}, this.env, component.env);
     const child = new Dispatcher(this.projectRootDir, component.ID, childDir, this.projectStartTime,
       this.componentPath, childEnv, ancestorsType);
+    if (needEventHandler) {
+      child.on("break", async ()=>{
+        getLogger(this.projectRootDir).debug("break event recieved from", child.cwfDir);
+        this.forceFinishedLoops.push(templateComponent.ID);
+      });
+    }
     this.children.add(child);
 
     //exception should be catched in caller
@@ -623,7 +631,7 @@ class Dispatcher extends EventEmitter {
     const srcDir = path.resolve(this.cwfDir, srcDirName);
 
     //end determination
-    if (await isFinished(component)) {
+    if (this.forceFinishedLoops.includes(component.ID) || await isFinished(component)) {
       await this._loopFinalize(component, srcDir);
       return Promise.resolve();
     }
@@ -664,7 +672,7 @@ class Dispatcher extends EventEmitter {
       }
       await setComponentStateR(this.projectRootDir, dstDir, "not-started", true);
       await writeComponentJson(this.projectRootDir, dstDir, newComponent, true);
-      await this._delegate(newComponent);
+      await this._delegate(newComponent, true, component);
 
       if (component.keep === 0) {
         await fs.remove(srcDir);
@@ -1018,6 +1026,30 @@ class Dispatcher extends EventEmitter {
     await this._setComponentState(component, "finished");
   }
 
+  async _jumpHandler(label, component) {
+    getLogger(this.projectRootDir).debug("_jumpHandler called with", label, component.name);
+    await this._setComponentState(component, "running");
+    const childDir = path.resolve(this.cwfDir, component.name);
+    this.setEnv(component);
+    const condition = await evalCondition(this.projectRootDir, component.condition, childDir, component.env);
+    getLogger(this.projectRootDir).debug("condition check result=", condition);
+    await this._setComponentState(component, "finished");
+    if (!condition) {
+      await this._addNextComponent(component);
+      return;
+    }
+
+    this.pendingComponents = [];
+    this.currentSearchList = [];
+    if (label === "break") {
+      await this.pause();
+      const state = this._getState();
+      this.onDone(state);
+      this.emit("break");
+    }
+    return;
+  }
+
   async _isReady(component) {
     if (component.type === "source") {
       return true;
@@ -1224,6 +1256,12 @@ class Dispatcher extends EventEmitter {
         break;
       case "source":
         cmd = this._sourceHandler;
+        break;
+      case "break":
+        cmd = this._jumpHandler.bind(this, "break");
+        break;
+      case "continue":
+        cmd = this._jumpHandler.bind(this, "continue");
         break;
       default:
         getLogger(this.projectRootDir).error("illegal type specified", type);
