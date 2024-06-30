@@ -77,14 +77,22 @@ export default {
       if (this.currentComponent === null) return false;
       return this.currentComponent.type === "stepjob";
     },
+    isLoop: function () {
+      if (this.currentComponent === null) return false;
+      return ["for", "while", "foreach"].includes(this.currentComponent.type);
+    },
     librarys: function () {
       if (this.isStepJob) {
         return this.componentDefinitions.filter((e)=>{
           return e.type === "stepjobTask";
         });
       }
+
+      const componentTypes = this.isLoop
+        ? ["task", "if", "for", "while", "foreach", "break", "continue", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"]
+        : ["task", "if", "for", "while", "foreach", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"];
       return this.componentDefinitions.filter((e)=>{
-        return ["task", "if", "for", "while", "foreach", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"].includes(e.type);
+        return componentTypes.includes(e.type);
       });
     }
   },

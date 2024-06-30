@@ -19,6 +19,8 @@ import imgSource from "@/assets/img_source.png";
 import imgViewer from "@/assets/img_viewer.png";
 import imgStepJob from "@/assets/img_stepjob.png";
 import imgStepJobTask from "@/assets/img_stepjobTask.png";
+import imgBreak from "@/assets/img_break.png";
+import imgContinue from "@/assets/img_continue.png";
 export default function () {
   return {
     task: { color: "#3B55B3", img: imgTask },
@@ -29,6 +31,8 @@ export default function () {
     for: { color: "#247780", img: imgFor },
     while: { color: "#247780", img: imgWhile },
     foreach: { color: "#247780", img: imgForeach },
+    break: { color: "#247780", img: imgBreak },
+    continue: { color: "#247780", img: imgContinue },
     parameterStudy: { color: "#666622", img: imgPS },
     workflow: { color: "#803DB3", img: imgWorkflow },
     storage: { color: "#00b8a0", img: imgStorage },
