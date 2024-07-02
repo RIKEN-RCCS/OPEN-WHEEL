@@ -239,6 +239,7 @@
       :unsaved-files="unsavedFiles"
       :dialog="showUnsavedFilesDialog"
       @closed="unsavedFilesDialogClosed"
+      @commit="commitFiles"
     />
     <password-dialog
       v-model="pwDialog"
@@ -539,6 +540,8 @@ export default {
     });
     SIO.onGlobal("unsavedFiles", (unsavedFiles, cb)=>{
       if (unsavedFiles.length === 0) {
+        this.showUnsavedFilesDialog = false;
+        this.unsavedFiles.splice(0, this.unsavedFiles.length);
         return;
       }
       this.cb = cb;
@@ -643,9 +646,14 @@ export default {
       form.submit();
     },
     unsavedFilesDialogClosed(...args) {
-      this.unsavedFiles.splice(0);
       this.cb(args);
+      this.unsavedFiles.splice(0);
       this.showUnsavedFilesDialog = false;
+    },
+    commitFiles(files) {
+      SIO.emitGlobal("commitFiles", this.projectRootDir, files, ()=>{
+        this.cb("update");
+      });
     },
     ...mapActions({
       showSnackbar: "showSnackbar",

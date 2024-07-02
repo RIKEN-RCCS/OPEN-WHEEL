@@ -13,7 +13,7 @@ const SBS = require("simple-batch-system");
 const { getLogger } = require("../logSettings");
 const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
-const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
+const { gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getHosts, getSourceComponents, getComponentDir, getProjectJson, getProjectState, setComponentStateR, setProjectState, updateProjectDescription, updateProjectROStatus } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh } = require("../core/sshManager");
 const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
@@ -38,22 +38,19 @@ async function askUnsavedFiles(clientID, projectRootDir) {
   const filterdUnsavedFiles = unsavedFiles.filter((e)=>{
     return !(e.name === componentJsonFilename || e.name === projectJsonFilename);
   });
-  if (filterdUnsavedFiles.length > 0) {
-    const [mode, toBeSaved] = await emitWithPromise(emitAll.bind(null, clientID), "unsavedFiles", filterdUnsavedFiles);
-    if (mode === "cancel") {
-      throw (new Error("canceled by user"));
-    } else if (mode === "discard") {
-      logger.info("discard unsaved files");
-      logger.debug("discard unsaved files", filterdUnsavedFiles.map((unsaved)=>{
-        return unsaved.name;
-      }));
-    } else if (mode === "save") {
-      logger.info("save files and clean project", toBeSaved);
-      await Promise.all(filterdUnsavedFiles.map((unsaved)=>{
-        return unsaved.status === "deleted" ? gitRm(projectRootDir, unsaved.name) : gitAdd(projectRootDir, unsaved.name);
-      }));
-      await gitCommit(projectRootDir);
-    }
+  if (filterdUnsavedFiles.length === 0) {
+    return emitWithPromise(emitAll.bind(null, clientID), "unsavedFiles", []);
+  }
+  const mode = await emitWithPromise(emitAll.bind(null, clientID), "unsavedFiles", filterdUnsavedFiles);
+  if (mode === "cancel") {
+    throw (new Error("canceled by user"));
+  } else if (mode === "discard") {
+    logger.info("discard unsaved files");
+    logger.debug("discard unsaved files", filterdUnsavedFiles.map((unsaved)=>{
+      return unsaved.name;
+    }));
+  } else if (mode === "update") {
+    return askUnsavedFiles(clientID, projectRootDir);
   }
 }
 async function getSourceCandidates(projectRootDir, ID) {
