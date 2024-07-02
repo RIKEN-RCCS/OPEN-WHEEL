@@ -320,6 +320,8 @@ describe("git operator UT", ()=>{
     describe("#gitCommit", ()=>{
       beforeEach(async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo"), "foo");
+        await fs.outputFile(path.resolve(testDirRoot, "bar"), "bar");
+        await fs.outputFile(path.resolve(testDirRoot, "baz"), "baz");
       });
       it("should do nothing if no files are indexed", async ()=>{
         await gitCommit(testDirRoot);
@@ -348,6 +350,24 @@ describe("git operator UT", ()=>{
           console.log("ERROR:\n", e);
         });
         expect(stdout).to.match(/^foo$/m);
+      });
+      it("should commit specified indexed files", async ()=>{
+        await asyncExecFile("git", ["add", "foo", "bar", "baz"], { cwd: testDirRoot }).catch((e)=>{
+          console.log("ERROR:\n", e);
+        });
+        await gitCommit(testDirRoot, undefined, ["foo", "bar"]);
+        const { stdout } = await asyncExecFile("git", ["ls-files"], { cwd: testDirRoot }).catch((e)=>{
+          console.log("ERROR:\n", e);
+        });
+        expect(stdout).to.match(/^foo$/m);
+        expect(stdout).to.match(/^bar$/m);
+        expect(stdout).to.match(/^baz$/m);
+        const { stdout: stdout2 } = await asyncExecFile("git", ["status", "--short"], { cwd: testDirRoot }).catch((e)=>{
+          console.log("ERROR:\n", e);
+        });
+        expect(stdout2).not.to.match(/foo/);
+        expect(stdout2).not.to.match(/bar/);
+        expect(stdout2).to.match(/^A {2}baz$/m);
       });
     });
     describe("#gitClean", ()=>{
