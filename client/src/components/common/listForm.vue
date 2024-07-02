@@ -31,8 +31,8 @@
         v-bind="menuProps"
         block
         class="justify-start"
-        :text=props.item.columns.name
-        @click="openDialog(props.item.columns.name, props.index)"
+        :text=props.item.name
+        @click="openDialog(props.item.name, props.index)"
       />
     </template>
             <v-sheet
