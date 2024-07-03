@@ -330,7 +330,7 @@ describe("git operator UT", ()=>{
         });
         expect(stdout).to.be.equal(".gitignore\n");
       });
-      it("should do nothing if no files are indexed", async ()=>{
+      it("should commit all files if directory is indexed", async ()=>{
         await asyncExecFile("git", ["add", "."], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
@@ -339,7 +339,10 @@ describe("git operator UT", ()=>{
         const { stdout } = await asyncExecFile("git", ["ls-files"], { cwd: testDirRoot }).catch((e)=>{
           console.log("ERROR:\n", e);
         });
-        expect(stdout).to.be.equal(".gitignore\nfoo\n");
+        expect(stdout).to.match(/^.gitignore$/m);
+        expect(stdout).to.match(/^foo$/m);
+        expect(stdout).to.match(/^bar$/m);
+        expect(stdout).to.match(/^baz$/m);
       });
       it("should commit indexed files", async ()=>{
         await asyncExecFile("git", ["add", "foo"], { cwd: testDirRoot }).catch((e)=>{
