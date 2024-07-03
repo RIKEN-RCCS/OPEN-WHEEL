@@ -153,7 +153,7 @@ export default {
       readOnly: this.readOnly,
     });
     this.editor.on("changeSession", this.editor.resize.bind(this.editor));
-    this.editor.on("changeSession", ({session})=>{
+    this.editor.on("changeSession", ()=>{
       const isJobScript = typeof this.editor.find("#### WHEEL inserted lines ####", {start: {row:0,column:0}})!== "undefined";
       this.$emit("jobscript", isJobScript);
     });
@@ -265,6 +265,7 @@ export default {
         const content = document.getValue();
         if (file.content === content) {
           console.log("do not call 'saveFile' API because file is not changed. index=", index);
+          return
         }
         SIO.emitGlobal("saveFile", this.projectRootDir,  file.filename, file.dirname, content, (rt)=>{
           if (!rt) {
@@ -344,18 +345,18 @@ export default {
         this.commitSelectedFile(null);
       }
     },
-    changeTab (argIndex, old) {
+    changeTab (argIndex) {
       if (argIndex >= this.files.length) {
         //just ignored
         return;
       }
       const index = argIndex;
-        const session = this.files[index].editorSession;
-        this.editor.setSession(session);
-        this.commitSelectedText("");
-        session.selection.on("changeSelection", ()=>{
-          this.commitSelectedText(this.editor.getSelectedText());
-        });
+      const session = this.files[index].editorSession;
+      this.editor.setSession(session);
+      this.commitSelectedText("");
+      session.selection.on("changeSelection", ()=>{
+        this.commitSelectedText(this.editor.getSelectedText());
+      });
     },
   },
 };
