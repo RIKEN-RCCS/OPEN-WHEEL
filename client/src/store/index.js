@@ -7,7 +7,7 @@ import { toRaw } from "vue";
 import Vuex from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:vuex");
-import deepEqual from "deep-eql";
+import { diff } from "just-diff";
 import SIO from "@/lib/socketIOWrapper.js";
 const logger = (store)=>{
   store.subscribe((mutation)=>{
@@ -97,10 +97,16 @@ export default new Vuex.Store({
         copySelectedComponent: copied,
         projectRootDir,
         currentComponent } = context.state;
-      if (copied !== null && !deepEqual(copied, selected)) {
-        SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID, (rt)=>{
-          console.log("compoent update done", rt);
+      if (copied !== null) {
+        const difference = diff(selected, copied);
+        const changedProps = difference.filter((e)=>{
+          return !e.path.startsWith("/pos");
         });
+        if (changedProps.length > 0) {
+          SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID, (rt)=>{
+            console.log("compoent update done", rt);
+          });
+        }
       }
       if (payload === null) {
         context.commit("selectedComponent", null);

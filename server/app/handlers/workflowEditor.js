@@ -40,7 +40,6 @@ async function onUpdateComponent(projectRootDir, ID, updated, parentID, cb) {
   return generalHandler(updateComponent.bind(null, projectRootDir, ID, updated), "updateComponent", projectRootDir, parentID, false, cb);
 }
 async function onUpdateComponentPos(projectRootDir, ID, pos, parentID, cb) {
-  console.log("DEBUG: ", projectRootDir, parentID);
   return generalHandler(updateComponentPos.bind(null, projectRootDir, ID, pos), "updateComponentPos", projectRootDir, parentID, false, cb);
 }
 async function onCreateNode(projectRootDir, request, parentID, cb) {
