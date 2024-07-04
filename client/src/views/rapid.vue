@@ -81,7 +81,6 @@
     <unsaved-files-dialog
       :unsaved-files="unsavedFiles"
       :dialog="showUnsavedFilesDialog"
-      without-status
       @closed="unsavedFilesDialogClosed"
     />
   </v-container>
@@ -90,7 +89,7 @@
 "use strict";
 import { mapState, mapGetters,mapActions } from "vuex";
 import getNodeAndPath from "@/lib/getNodeAndPath.js";
-import unsavedFilesDialog from "@/components/unsavedFilesDialog.vue";
+import unsavedFilesDialog from "@/components/rapid/unsavedFilesDialog.vue";
 import componentButton from "@/components/common/componentButton.vue";
 import filterEditor from "@/components/rapid/filterEditor.vue";
 import tabEditor from "@/components/rapid/tabEditor.vue";
@@ -223,9 +222,6 @@ export default {
         this.unsavedFiles.splice(0);
         this.showUnsavedFilesDialog=false;
         return
-      }
-      if (mode === "save"){
-        this.saveAllFiles()
       }
       this.unsavedFiles.splice(0);
       this.showUnsavedFilesDialog=false;
