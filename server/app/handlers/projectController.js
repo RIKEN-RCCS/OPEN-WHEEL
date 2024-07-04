@@ -41,7 +41,7 @@ async function askUnsavedFiles(clientID, projectRootDir) {
   if (filterdUnsavedFiles.length === 0) {
     return emitWithPromise(emitAll.bind(null, clientID), "unsavedFiles", []);
   }
-  const mode = await emitWithPromise(emitAll.bind(null, clientID), "unsavedFiles", filterdUnsavedFiles);
+  const [mode] = await emitWithPromise(emitAll.bind(null, clientID), "unsavedFiles", filterdUnsavedFiles);
   if (mode === "cancel") {
     throw (new Error("canceled by user"));
   } else if (mode === "discard") {
@@ -252,7 +252,14 @@ async function onStopProject(projectRootDir) {
   await updateProjectState(projectRootDir, "stopped");
 }
 async function onCleanProject(clientID, projectRootDir) {
-  await askUnsavedFiles(clientID, projectRootDir);
+  try {
+    await askUnsavedFiles(clientID, projectRootDir);
+  } catch (err) {
+    if (err.message === "canceled by user") {
+      return;
+    }
+    throw err;
+  }
   await Promise.all([
     cleanProject(projectRootDir),
     removeTempd(projectRootDir, "viewer"),
@@ -260,7 +267,14 @@ async function onCleanProject(clientID, projectRootDir) {
   ]);
 }
 async function onRevertProject(clientID, projectRootDir) {
-  await askUnsavedFiles(clientID, projectRootDir);
+  try {
+    await askUnsavedFiles(clientID, projectRootDir);
+  } catch (err) {
+    if (err.message === "canceled by user") {
+      return;
+    }
+    throw err;
+  }
   await Promise.all([
     gitResetHEAD(projectRootDir),
     removeTempd(projectRootDir, "viewer"),
