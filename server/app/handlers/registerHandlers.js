@@ -16,7 +16,7 @@ const { validateComponents } = require("../core/validateComponents.js");
 const {
   onCreateNode,
   onUpdateComponent,
-  onUpdatePos,
+  onUpdateComponentPos,
   onRemoveNode,
   onAddLink,
   onAddFileLink,
@@ -56,7 +56,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getEnv", onGetEnv);
   //update
   socket.on("updateComponent", onUpdateComponent);
-  socket.on("updatePos", onUpdatePos);
+  socket.on("updateComponentPos", onUpdateComponentPos);
   socket.on("updateEnv", onUpdateEnv);
   //delete
   socket.on("removeNode", onRemoveNode);

@@ -221,7 +221,7 @@ export default {
         debug("component is moved but this project is read-only for now");
         return;
       }
-      SIO.emitGlobal("updateComponentPos", this.projectRootDir, ID, pos, this.currentComponent.parent, SIO.generalCallback);
+      SIO.emitGlobal("updateComponentPos", this.projectRootDir, ID, pos, this.currentComponent.ID, SIO.generalCallback);
     },
     onChdir(componentID, componentType) {
       if (!isContainer(componentType)) {

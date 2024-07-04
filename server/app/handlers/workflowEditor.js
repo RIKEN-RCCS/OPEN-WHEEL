@@ -39,8 +39,9 @@ async function generalHandler(func, funcname, projectRootDir, parentID, needSend
 async function onUpdateComponent(projectRootDir, ID, updated, parentID, cb) {
   return generalHandler(updateComponent.bind(null, projectRootDir, ID, updated), "updateComponent", projectRootDir, parentID, false, cb);
 }
-async function onUpdatePos(projectRootDir, ID, pos, parentID, cb) {
-  return generalHandler(updateComponentPos.bind(null, projectRootDir, ID, pos), "updateComponent", projectRootDir, parentID, false, cb);
+async function onUpdateComponentPos(projectRootDir, ID, pos, parentID, cb) {
+  console.log("DEBUG: ", projectRootDir, parentID);
+  return generalHandler(updateComponentPos.bind(null, projectRootDir, ID, pos), "updateComponentPos", projectRootDir, parentID, false, cb);
 }
 async function onCreateNode(projectRootDir, request, parentID, cb) {
   return generalHandler(createNewComponent.bind(null, projectRootDir, convertPathSep(request.path), request.type, request.pos), "createNewComponent", projectRootDir, parentID, true, cb);
@@ -81,7 +82,7 @@ async function onGetEnv(projectRootDir, ID, cb) {
 
 module.exports = {
   onUpdateComponent,
-  onUpdatePos,
+  onUpdateComponentPos,
   onCreateNode,
   onRemoveNode,
   onAddLink,
