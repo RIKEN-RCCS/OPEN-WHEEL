@@ -98,7 +98,7 @@
 <script>
 "use strict";
 import { mergeProps } from "vue";
-import { mapState, mapGetters, mapMutations } from "vuex";
+import { mapActions, mapState, mapGetters, mapMutations } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
 import { isValidInputFilename } from "@/lib/utility.js";
 import { editorHeight } from "@/lib/constants.json";
@@ -197,6 +197,9 @@ export default {
     ...mapMutations({ commitSelectedFile: "selectedFile",
       commitSelectedText: "selectedText" }
     ),
+    ...mapActions({
+      showSnackbar: "showSnackbar"
+    }),
     isValidName(v) {
       //allow . / - and alphanumeric chars
       return isValidInputFilename(v) || "invalid filename";
@@ -267,8 +270,10 @@ export default {
         SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, content, (rt)=>{
           if (!rt) {
             console.log("ERROR: file save failed:", rt);
+            this.showSnackbar(`${file.filename} save failed`);
             reject(rt);
           }
+          this.showSnackbar(`${file.filename} saved`);
           file.content = content;
           resolve(rt);
         });
@@ -303,7 +308,9 @@ export default {
           SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, content, (rt)=>{
             if (!rt) {
               console.log("ERROR: file save failed:", rt);
+              this.showSnackbar(`${file.filename} save failed`);
             }
+            this.showSnackbar(`${file.filename} saved`);
             file.content = content;
           });
         }
