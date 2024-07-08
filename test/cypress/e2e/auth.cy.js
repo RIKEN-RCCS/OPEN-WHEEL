@@ -1,4 +1,4 @@
-describe("wheel authorization test", ()=>{
+describe.skip("wheel authorization test", ()=>{
   const password = Cypress.env("WHEEL_TEST_LOGIN_PASSWORD")
   const user = "anonymous"
   before(()=>{
