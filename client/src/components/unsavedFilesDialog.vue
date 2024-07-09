@@ -15,6 +15,7 @@
       </v-card-title>
       <v-card-text>
         <v-data-table
+          id="table-header-with-underline"
           :headers="headers"
           :items="items"
           density="compact"
@@ -23,6 +24,7 @@
         </v-data-table>
       </v-card-text>
       <v-card-actions>
+        <v-spacer />
         <v-btn
           class="text-capitalize"
           @click="saveAll"
@@ -96,3 +98,8 @@ export default {
 
 };
 </script>
+<style scoped>
+#table-header-with-underline :deep(.v-data-table-header__content) {
+  border-bottom: 1px solid #07F1F8;
+}
+</style>

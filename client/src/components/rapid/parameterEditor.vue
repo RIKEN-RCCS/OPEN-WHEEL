@@ -7,13 +7,14 @@
   <div>
     <v-toolbar
       density = compact
-      title="Parameter Study setting"
+      title="PS config"
       color="background"
     >
+      {{ filename }}
       <v-spacer />
       <v-btn
         @click="save"
-        prepend-icon=mdi-content-save-all
+        prepend-icon=mdi-content-save
         text="save PS config"
       />
     </v-toolbar>
