@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #build WHEEL client code
-FROM --platform=linux/amd64 node:20-slim as builder
+FROM --platform=linux/amd64 node:20-slim AS builder
 WORKDIR /usr/src/
 # to install phantomjs
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
@@ -11,7 +11,7 @@ COPY client client
 RUN cd client; npm install; npm run build
 
 #build base image to run WHEEL
-FROM --platform=linux/amd64 node:20-slim as base
+FROM --platform=linux/amd64 node:20-slim AS base
 WORKDIR /usr/src/
 RUN apt-get update && apt -y install curl git rsync openssh-server &&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
@@ -22,7 +22,7 @@ COPY --from=builder /usr/src/server /usr/src/server
 RUN rm -fr server/app/config/*
 
 # run UT
-FROM base as UT
+FROM base AS ut
 WORKDIR /usr/src/server
 RUN npm install cross-env\
     chai chai-as-promised chai-fs chai-iterator chai-json-schema deep-equal-in-any-order\
@@ -30,7 +30,7 @@ RUN npm install cross-env\
 CMD ["npm", "run", "coverage"]
 
 # run WHEEL
-FROM base as exec
+FROM base AS exec
 WORKDIR /usr/src/server
 
 COPY --from=builder /usr/src/server/app/public /usr/src/server/app/public
