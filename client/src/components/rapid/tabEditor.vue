@@ -273,7 +273,7 @@ export default {
             this.showSnackbar(`${file.filename} save failed`);
             reject(rt);
           }
-          this.showSnackbar(`${file.filename} saved`);
+          this.showSnackbar({ message: `${file.filename} saved`, timeout: 2000 });
           file.content = content;
           resolve(rt);
         });
@@ -310,7 +310,7 @@ export default {
               console.log("ERROR: file save failed:", rt);
               this.showSnackbar(`${file.filename} save failed`);
             }
-            this.showSnackbar(`${file.filename} saved`);
+            this.showSnackbar({ message: `${file.filename} saved`, timeout: 2000 });
             file.content = content;
           });
         }

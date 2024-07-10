@@ -208,23 +208,23 @@
           />
         </v-col>
       </v-row>
-    <v-snackbar
-      v-model="openSnackbar"
-      multi-line
-      :timeout="-1"
-      centered
-      variant="outlined"
-    >
-      {{ snackbarMessage }}
-      <template #actions>
-        <v-btn
-          class="justify-end"
-          variant="outlined"
-          @click="closeSnackbar"
-          text="Close"
-        />
-      </template>
-    </v-snackbar>
+      <v-snackbar
+        v-model="openSnackbar"
+        multi-line
+        :timeout=snackbarTimeout
+        centered
+        variant="outlined"
+      >
+        {{ snackbarMessage }}
+        <template #actions>
+          <v-btn
+            class="justify-end"
+            variant="outlined"
+            @click="closeSnackbar"
+            text="Close"
+          />
+        </template>
+      </v-snackbar>
     </v-footer>
     <v-overlay
       :model-value="waiting"
@@ -424,9 +424,10 @@ export default {
       "projectState",
       "componentPath",
       "rootComponentID",
-      "openSnackbar",
       "currentComponent",
+      "openSnackbar",
       "snackbarMessage",
+      "snackbarTimeout",
       "projectRootDir",
       "selectedComponent",
       "selectedFile",

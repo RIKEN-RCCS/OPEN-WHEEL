@@ -47,7 +47,7 @@
     <v-snackbar
       v-model="openSnackbar"
       multi-line
-      :timeout="-1"
+      :timeout=snackbarTimeout
       centered
       variant="outlined"
     >
@@ -56,7 +56,7 @@
         <v-btn
           class="justify-end"
           variant="outlined"
-          @click="snackbarMessage='';openSnackbar=false"
+          @click="closeSnackbar"
           text="Close"
         />
       </template>
@@ -86,6 +86,7 @@
 </template>
 <script>
 "use strict";
+import { mapState, mapActions } from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:remotehost");
 import SIO from "@/lib/socketIOWrapper.js";
@@ -128,12 +129,15 @@ export default {
       jobSchedulerNames: [],
       removeConfirmMessage: "",
       currentSetting: {},
-      testing: null,
-      openSnackbar: false,
-      snackbarMessage: ""
+      testing: null
     };
   },
   computed: {
+    ...mapState([
+      "openSnackbar",
+      "snackbarMessage",
+      "snackbarTimeout"
+    ]),
     hostList() {
       return this.hosts.map((host)=>{
         return host.name;
@@ -161,8 +165,17 @@ export default {
       this.pwDialogTitle = `input password or passphrase for ${hostname}`;
       this.pwDialog = true;
     });
+    SIO.onGlobal("logERR", (message)=>{
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      this.showSnackbar(output);
+    });
   },
   methods: {
+    ...mapActions({
+      showSnackbar: "showSnackbar",
+      closeSnackbar: "closeSnackbar"
+    }),
     openEditDialog(item) {
       this.currentSetting = item || {};
       this.newHostDialog = true;
@@ -222,9 +235,7 @@ export default {
         return;
       }
       if (this.testing !== null) {
-        this.snackbarMessage = "another ssh test is running";
-        debug(this.snackbarMessage);
-        this.openSnackbar = true;
+        this.showSnackbar({ message: "another ssh test is running", timeout: 1000 });
         return;
       }
       this.testing = index;

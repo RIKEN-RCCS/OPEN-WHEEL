@@ -161,7 +161,6 @@
           </v-card-text>
         </v-card>
       </v-dialog>
-    </v-main>
     <remove-confirm-dialog
       v-model="rmDialog"
       title="remove project"
@@ -169,10 +168,29 @@
       :remove-candidates="removeCandidates"
       @remove="commitRemoveProjects"
     />
+    <v-snackbar
+      v-model="openSnackbar"
+      multi-line
+      :timeout=snackbarTimeout
+      centered
+      variant="outlined"
+    >
+      {{ snackbarMessage }}
+      <template #actions>
+        <v-btn
+          class="justify-end"
+          variant="outlined"
+          @click="closeSnackbar"
+          text="Close"
+        />
+      </template>
+    </v-snackbar>
+    </v-main>
   </v-app>
 </template>
 <script>
 "use strict";
+import { mapState, mapActions } from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:home");
 import navDrawer from "@/components/common/NavigationDrawer.vue";
@@ -236,6 +254,11 @@ export default {
     }
   },
   computed: {
+    ...mapState([
+      "openSnackbar",
+      "snackbarMessage",
+      "snackbarTimeout"
+    ]),
     selected() {
       if (this.selectedInTree) {
         return this.selectedInTree.replace(reProjectJsonFilename, "");
@@ -271,8 +294,17 @@ export default {
       this.projectList.splice(0, this.projectList.length, ...data);
     });
     this.forceUpdateProjectList();
+    SIO.onGlobal("logERR", (message)=>{
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      this.showSnackbar(output);
+    });
   },
   methods: {
+    ...mapActions({
+      showSnackbar: "showSnackbar",
+      closeSnackbar: "closeSnackbar"
+    }),
     required,
     openInlineEditDialog(name, index, prop) {
       this.newVal = name;

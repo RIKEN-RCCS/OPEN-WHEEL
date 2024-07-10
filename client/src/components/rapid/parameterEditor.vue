@@ -159,7 +159,7 @@ export default {
             this.showSnackbar(`parameter setting file save failed`);
             return;
           }
-          this.showSnackbar(`parameter setting file saved`);
+          this.showSnackbar({ message: `parameter setting file saved`, timeout: 2000 });
           this.initialParameterSetting = JSON.parse(payload);
           debug("new initial PS-setting=", this.initialParameterSetting);
         });

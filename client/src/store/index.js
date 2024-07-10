@@ -79,6 +79,7 @@ const state = {
   scriptCandidates: [],
   openSnackbar: false,
   snackbarMessage: "",
+  snackbarTimeout: -1,
   snackbarQueue: [],
   openDialog: false,
   dialogContent: null,
@@ -120,13 +121,28 @@ export default new Vuex.Store({
     },
     showSnackbar: (context, payload)=>{
       if (typeof payload === "string") {
+        context.state.snackbarQueue.push({ message: payload, timeout: -1 });
+      } else {
         context.state.snackbarQueue.push(payload);
       }
       if (context.state.snackbarQueue.length === 0) {
         return;
       }
-      const message = context.state.snackbarQueue.shift();
+      const { message, timeout } = context.state.snackbarQueue.shift();
+      //v-snackbar's timeout is not working at this moment
+      //so we add folloing workaround
+      if (timeout > 0) {
+        setTimeout(()=>{
+          context.commit("snackbarMessage", "");
+          context.commit("openSnackbar", false);
+          if (context.state.snackbarQueue.length > 0) {
+            context.dispatch("showSnackbar");
+          }
+        }
+        , timeout);
+      }
       context.commit("snackbarMessage", message);
+      context.commit("snackbarTimeout", timeout);
       context.commit("openSnackbar", true);
     },
     closeSnackbar: (context)=>{
