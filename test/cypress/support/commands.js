@@ -1,7 +1,6 @@
-const projectListWaitTime = 1000
 const animationWaitTime = 300
 
-Cypress.on("uncaught:exception", (err, runnable)=>{
+Cypress.on("uncaught:exception", ()=>{
   return false
 })
 
@@ -255,7 +254,7 @@ Cypress.Commands.add("clickFilesTab", (i)=>{
 })
 
 //open Host select box
-Cypress.Commands.add("openHostListBox", (hostName)=>{
+Cypress.Commands.add("openHostListBox", ()=>{
   cy.contains("label", "host").parent()
     .click()
     .wait(animationWaitTime)
@@ -308,7 +307,7 @@ Cypress.Commands.add("addIncludeFile", (fileName)=>{
 })
 
 //delete include file
-Cypress.Commands.add("deleteIncludeFile", (fileName)=>{
+Cypress.Commands.add("deleteIncludeFile", ()=>{
   cy.get("[role=\"button\"]").eq(2)
     .click()
 })
@@ -322,7 +321,7 @@ Cypress.Commands.add("addExcludeFile", (fileName)=>{
 })
 
 //delete exclude file
-Cypress.Commands.add("deleteExcludeFile", (fileName)=>{
+Cypress.Commands.add("deleteExcludeFile", ()=>{
   cy.get("[role=\"button\"]").eq(5)
     .click()
 })
@@ -386,7 +385,7 @@ Cypress.Commands.add("projectSave", ()=>{
 
 //reload project
 Cypress.Commands.add("projectReload", (k, projectName, taskName)=>{
-  if (k == 0) {
+  if (k === 0) {
     cy.projectSave()
     cy.get("[href=\"./home\"]").click()
     cy.projectOpen(projectName)
@@ -402,7 +401,7 @@ Cypress.Commands.add("taskReload", (taskName)=>{
 
 //swicth use job scheduler
 Cypress.Commands.add("switchUseJobScheduler", (flg)=>{
-  if (flg == "on") {
+  if (flg === "on") {
     cy.contains("label", "use job scheduler").siblings()
       .find("input")
       .invoke("is", ":checked")
@@ -412,7 +411,7 @@ Cypress.Commands.add("switchUseJobScheduler", (flg)=>{
             .wait(animationWaitTime)
         }
       })
-  } else if (flg == "off") {
+  } else if (flg === "off") {
     cy.contains("use job scheduler").siblings()
       .find("input")
       .invoke("is", ":checked")
@@ -434,7 +433,7 @@ Cypress.Commands.add("retryNumberType", (retryNum)=>{
 
 //swicth use javascript expression for condition check
 Cypress.Commands.add("swicthUseJavascriptExpressionForConditionCheck", (flg)=>{
-  if (flg == "on") {
+  if (flg === "on") {
     cy.contains("use javascript expression for condition check").siblings()
       .find("input")
       .invoke("is", ":checked")
@@ -446,7 +445,7 @@ Cypress.Commands.add("swicthUseJavascriptExpressionForConditionCheck", (flg)=>{
             .wait(animationWaitTime)
         }
       })
-  } else if (flg == "off") {
+  } else if (flg === "off") {
     cy.contains("use javascript expression for condition check").siblings()
       .find("input")
       .invoke("is", ":checked")
@@ -525,7 +524,7 @@ Cypress.Commands.add("infoOpen", ()=>{
   cy.clickInfoTab()
 })
 
-//Project　exec
+//Project exec
 Cypress.Commands.add("execProject", ()=>{
   cy.closeTask()
   cy.get("header").find(".v-card__loader")
@@ -571,7 +570,7 @@ Cypress.Commands.add("hostSelect", (hostName)=>{
 
 //make file/folder
 Cypress.Commands.add("fileFolderMake", (type, name)=>{
-  if(type == "file") {
+  if(type === "file") {
     cy.contains("button", "Files").next()
       .find("button")
       .eq(1)
@@ -579,7 +578,7 @@ Cypress.Commands.add("fileFolderMake", (type, name)=>{
     cy.contains("label", "new file name").siblings()
       .find("input")
       .type(name)
-  } else if(type == "folder") {
+  } else if(type === "folder") {
     cy.contains("button", "Files").next()
       .find("button")
       .eq(0)
@@ -627,8 +626,8 @@ Cypress.Commands.add("fileFolderDelete", (name)=>{
 })
 
 //send command
-Cypress.Commands.add("sendCommand", (hostname, test_port, test_user, password)=>{
-  const configObj = {host:hostname, port:test_port, user:test_user, pass:password}
+Cypress.Commands.add("sendCommand", (hostname, port, user, password)=>{
+  const configObj = {host:hostname, port, user, pass:password}
   cy.task("sshExecuteCmd",{
     sshconn: configObj,
     command:"dirs=`ls -tF | grep / | head -1`; ls -t ${dirs} | grep -v / | wc -l;"

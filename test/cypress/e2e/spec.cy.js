@@ -3,9 +3,9 @@ describe("wheel test", ()=>{
   const remotehost = Cypress.env("WHEEL_TEST_REMOTEHOST")
   const password = Cypress.env("WHEEL_TEST_REMOTE_PASSWORD")
   const hostname = Cypress.env("WHEEL_TEST_HOSTNAME")
-  const test_port = Cypress.env("WHEEL_TEST_PORT")
-  const test_user = Cypress.env("WHEEL_TEST_USER")
-  const wheel_path = Cypress.env("WHEEL_PATH")
+  const testPort = Cypress.env("WHEEL_TEST_PORT")
+  const testUser = Cypress.env("WHEEL_TEST_USER")
+  const wheelPath = Cypress.env("WHEEL_PATH")
   before(()=>{
     cy.visit("/")
   })
@@ -95,7 +95,7 @@ describe("wheel test", ()=>{
     cy.contains("button", "Files").next()
       .find("[role=\"listbox\"]")
       .then(($el)=>{
-        cy.softAssert($el.children().length == 0, true, "folder1 is not exist")
+        cy.softAssert($el.children().length === 0, true, "folder1 is not exist")
       })
   })
 
@@ -130,7 +130,7 @@ describe("wheel test", ()=>{
     cy.window().its("navigator.clipboard")
       .then((clip)=>{return clip.readText()})
       .then(($el)=>{
-        cy.softAssert($el, wheel_path + "/test.wheel/task0/a.txt", "script path is copied at clipboard")
+        cy.softAssert($el, wheelPath + "/test.wheel/task0/a.txt", "script path is copied at clipboard")
       })
   })
 
@@ -535,7 +535,7 @@ describe("wheel test", ()=>{
         .next()
         .then(($el)=>{
           cy.softAssert($el.find("input").length > 0, true, "javascript is not disabled")
-          cy.softAssert($el.find("textarea").length == 0, true, "javascript is disabled")
+          cy.softAssert($el.find("textarea").length === 0, true, "javascript is disabled")
         })
 
       cy.projectReload(k, testProject, "task0")
@@ -584,7 +584,7 @@ describe("wheel test", ()=>{
         .parent()
         .next()
         .then(($el)=>{
-          cy.softAssert($el.find("input").length == 0, true, "javascript is not disabled")
+          cy.softAssert($el.find("input").length === 0, true, "javascript is not disabled")
           cy.softAssert($el.find("textarea").length > 0, true, "javascript is disabled")
         })
 
@@ -624,388 +624,387 @@ describe("wheel test", ()=>{
   })
   
   describe("test with remotehost", ()=>{
-
-  it("test27", ()=>{
-    cy.taskMake("task0")
-    cy.scriptMake("run.sh", "echo test")
-    cy.openScriptSelectBox()
-    cy.selectListBox("run.sh")
+    it("test27", ()=>{
+      cy.taskMake("task0")
+      cy.scriptMake("run.sh", "echo test")
+      cy.openScriptSelectBox()
+      cy.selectListBox("run.sh")
     
-    Cypress._.times(2, (k)=>{
-      cy.openHostListBox()
-      cy.get("[role=\"listbox\"]").find(".v-list-item-title")
-        .then(($el)=>{
-          cy.softAssert($el.length > 0, true, "host is exist in listbox")
-        })
+      Cypress._.times(2, (k)=>{
+        cy.openHostListBox()
+        cy.get("[role=\"listbox\"]").find(".v-list-item-title")
+          .then(($el)=>{
+            cy.softAssert($el.length > 0, true, "host is exist in listbox")
+          })
 
-      cy.selectHost(remotehost)
-      cy.contains("label", "host").siblings()
-        .then(($el)=>{
-          cy.softAssert($el.text(), remotehost, "host is exist in select box")
-        })
+        cy.selectHost(remotehost)
+        cy.contains("label", "host").siblings()
+          .then(($el)=>{
+            cy.softAssert($el.text(), remotehost, "host is exist in select box")
+          })
 
-      cy.projectReload(k, testProject, "task0")
-    })
-
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
-    cy.outputSshOpen()
-
-    cy.getCosoleElement().then(($el)=>{
-      cy.softAssert($el.text().includes("test"), true, "script exec result is displaied at Console(Stdout)")
-    })
-  })
-  it("test29", ()=>{
-    cy.taskMake("task0")
-    cy.switchUseJobScheduler("on")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "cd ${{}PBS_O_WORKDIR-\".\"} \necho test > stdout.txt")
-    cy.scriptSelect("run.sh")
-    cy.openRemoteFileSettingTab()
-    cy.addIncludeFile("stdout.txt")
-    
-    Cypress._.times(2, (k)=>{
-      cy.contains("label", "queue").parent()
-        .click()
-      cy.get(".v-list-item-title").then(($el)=>{
-        cy.softAssert($el.text(), "workq", "remotehost queue is displaied in listbox")
+        cy.projectReload(k, testProject, "task0")
       })
-      cy.get(".v-list-item-title").click()
-      cy.contains("label", "queue").siblings()
-        .then(($el)=>{
-          cy.softAssert($el.text(), "workq", "remotehost queue is displaied in select box")
-        })
-      cy.projectReload(k, testProject, "task0")
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+      cy.outputSshOpen()
+
+      cy.getCosoleElement().then(($el)=>{
+        cy.softAssert($el.text().includes("test"), true, "script exec result is displaied at Console(Stdout)")
+      })
     })
-
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
-    cy.outputSshOpen()
-
-    cy.clickTask("task0")
-    cy.clickFilesTab()
-    cy.contains("stdout.txt").click()
-    cy.clickFileEditer()
-    cy.get("#editor").then(($el)=>{
-      cy.softAssert($el.text().includes("test"), true, "stdout.txt is writed \"test\"")
-    })
-  })
-
-  it("test30", ()=>{
-    cy.taskMake("task0")
-    cy.switchUseJobScheduler("on")
-    cy.scriptMake("run.sh", "echo test")
-    cy.scriptSelect("run.sh")
-    cy.hostSelect(remotehost)
-
-    Cypress._.times(2, (k)=>{
-      cy.contains("button", "basic").next()
-        .children()
-        .children()
-        .eq(5)
-        .find("input")
-        .then(($el)=>{
-          cy.softAssert($el.val(), "qsub", "\"qsub\" is displaied in submit command display aria")
-        })
-      cy.projectReload(k, testProject, "task0")
-    })
-  })
-
-  it("test31", ()=>{
-    cy.taskMake("task0")
-    cy.switchUseJobScheduler("on")
-    cy.typeSubmitOption("-N myjob")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "cd ${{}PBS_O_WORKDIR-\".\"} \necho test > stdout.txt")
-    cy.scriptSelect("run.sh")
-    cy.openRemoteFileSettingTab()
-    cy.addIncludeFile("stdout.txt")
+    it("test29", ()=>{
+      cy.taskMake("task0")
+      cy.switchUseJobScheduler("on")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "cd ${{}PBS_O_WORKDIR-\".\"} \necho test > stdout.txt")
+      cy.scriptSelect("run.sh")
+      cy.openRemoteFileSettingTab()
+      cy.addIncludeFile("stdout.txt")
     
-    Cypress._.times(2, (k)=>{
-      cy.contains("label", "submit option").siblings()
-        .find("input")
-        .then(($el)=>{
-          cy.softAssert($el.val(), "-N myjob", "submit option is setting \"-N myjob\"")
+      Cypress._.times(2, (k)=>{
+        cy.contains("label", "queue").parent()
+          .click()
+        cy.get(".v-list-item-title").then(($el)=>{
+          cy.softAssert($el.text(), "workq", "remotehost queue is displaied in listbox")
         })
-      cy.projectReload(k, testProject, "task0")
+        cy.get(".v-list-item-title").click()
+        cy.contains("label", "queue").siblings()
+          .then(($el)=>{
+            cy.softAssert($el.text(), "workq", "remotehost queue is displaied in select box")
+          })
+        cy.projectReload(k, testProject, "task0")
+      })
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+      cy.outputSshOpen()
+
+      cy.clickTask("task0")
+      cy.clickFilesTab()
+      cy.contains("stdout.txt").click()
+      cy.clickFileEditer()
+      cy.get("#editor").then(($el)=>{
+        cy.softAssert($el.text().includes("test"), true, "stdout.txt is writed \"test\"")
+      })
     })
 
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
-    cy.infoOpen()
+    it("test30", ()=>{
+      cy.taskMake("task0")
+      cy.switchUseJobScheduler("on")
+      cy.scriptMake("run.sh", "echo test")
+      cy.scriptSelect("run.sh")
+      cy.hostSelect(remotehost)
 
-    cy.getCosoleElement().then(($el)=>{
-      cy.softAssert($el.text().includes("-N myjob"), true, "\"-N myjob\" is displaied at Console(Stdout)")
+      Cypress._.times(2, (k)=>{
+        cy.contains("button", "basic").next()
+          .children()
+          .children()
+          .eq(5)
+          .find("input")
+          .then(($el)=>{
+            cy.softAssert($el.val(), "qsub", "\"qsub\" is displaied in submit command display aria")
+          })
+        cy.projectReload(k, testProject, "task0")
+      })
     })
-  })
+
+    it("test31", ()=>{
+      cy.taskMake("task0")
+      cy.switchUseJobScheduler("on")
+      cy.typeSubmitOption("-N myjob")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "cd ${{}PBS_O_WORKDIR-\".\"} \necho test > stdout.txt")
+      cy.scriptSelect("run.sh")
+      cy.openRemoteFileSettingTab()
+      cy.addIncludeFile("stdout.txt")
+    
+      Cypress._.times(2, (k)=>{
+        cy.contains("label", "submit option").siblings()
+          .find("input")
+          .then(($el)=>{
+            cy.softAssert($el.val(), "-N myjob", "submit option is setting \"-N myjob\"")
+          })
+        cy.projectReload(k, testProject, "task0")
+      })
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+      cy.infoOpen()
+
+      cy.getCosoleElement().then(($el)=>{
+        cy.softAssert($el.text().includes("-N myjob"), true, "\"-N myjob\" is displaied at Console(Stdout)")
+      })
+    })
   
-  it("test32", ()=>{
-    cy.taskMake("task0")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "echo test \nexit 1")
-    cy.scriptSelect("run.sh")
-    cy.retryNumberType("2")
+    it("test32", ()=>{
+      cy.taskMake("task0")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "echo test \nexit 1")
+      cy.scriptSelect("run.sh")
+      cy.retryNumberType("2")
     
-    Cypress._.times(2, (k)=>{
-      cy.get("input").eq(8)
-        .then(($el)=>{
-          cy.softAssert($el.val(), "2", "retryNumber is setting 2")
-        })
-      cy.projectReload(k, testProject, "task0")
-      cy.openRetrySettingTab()
-    })
-
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("failed")
-    cy.clickConsole()
-    cy.clickOutputSshTab()
-    cy.getCosoleElement().children()
-      .then(($el)=>{
-        $el.eq(2).text()
-          .includes("test")
+      Cypress._.times(2, (k)=>{
+        cy.get("input").eq(8)
+          .then(($el)=>{
+            cy.softAssert($el.val(), "2", "retryNumber is setting 2")
+          })
+        cy.projectReload(k, testProject, "task0")
+        cy.openRetrySettingTab()
       })
 
-    Cypress._.times(3, (i)=>{
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("failed")
+      cy.clickConsole()
+      cy.clickOutputSshTab()
       cy.getCosoleElement().children()
-        .eq(i)
         .then(($el)=>{
-          cy.softAssert($el.text().includes("test"), true, "script repeat 3 times at Console(Stdout)")
-        })
-    })
-  })
-  it("test37", ()=>{
-    cy.taskMake("task0")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt")
-    cy.scriptSelect("run.sh")
-    cy.openRemoteFileSettingTab()
-    cy.addIncludeFile("*.txt")
-    
-    Cypress._.times(2, (k)=>{
-      cy.contains("thead", "include").next()
-        .then(($el)=>{
-          cy.softAssert($el.text(), "*.txt")
+          $el.eq(2).text()
+            .includes("test")
         })
 
-      cy.projectReload(k, testProject, "task0")
-      cy.openRemoteFileSettingTab()
-    })
-
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
-
-    cy.clickTask("task0")
-    cy.clickFilesTab()
-    cy.contains("*.txt").click()
-
-    cy.get("[role=\"group\"]").children()
-      .then(($el)=>{
-        cy.softAssert($el.eq(0).text(), "111.txt")
-        cy.softAssert($el.eq(1).text(), "222.txt")
-        cy.softAssert($el.eq(2).text(), "333.txt")
+      Cypress._.times(3, (i)=>{
+        cy.getCosoleElement().children()
+          .eq(i)
+          .then(($el)=>{
+            cy.softAssert($el.text().includes("test"), true, "script repeat 3 times at Console(Stdout)")
+          })
       })
-  })
-  
-  it("test38", ()=>{
-    cy.taskMake("task0")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt")
-    cy.scriptSelect("run.sh")
-    cy.openRemoteFileSettingTab()
-    cy.addIncludeFile("*.txt")
-    cy.deleteIncludeFile("*.txt")
-
-    
-    Cypress._.times(2, (k)=>{
-      cy.contains("thead", "include").next()
-        .then(($el)=>{
-          cy.softAssert($el.text(), "No data available")
-        })
-
-      cy.projectReload(k, testProject, "task0")
-      cy.openRemoteFileSettingTab()
     })
+    it("test37", ()=>{
+      cy.taskMake("task0")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt")
+      cy.scriptSelect("run.sh")
+      cy.openRemoteFileSettingTab()
+      cy.addIncludeFile("*.txt")
+    
+      Cypress._.times(2, (k)=>{
+        cy.contains("thead", "include").next()
+          .then(($el)=>{
+            cy.softAssert($el.text(), "*.txt")
+          })
 
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
-
-    cy.clickTask("task0")
-    cy.clickFilesTab()
-
-    cy.contains("button", "Files").siblings()
-      .find("[role=\"listbox\"]")
-      .then(($el)=>{
-        cy.softAssert($el.find("[role=\"group\"]").length == 0, true)
+        cy.projectReload(k, testProject, "task0")
+        cy.openRemoteFileSettingTab()
       })
-  })
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+
+      cy.clickTask("task0")
+      cy.clickFilesTab()
+      cy.contains("*.txt").click()
+
+      cy.get("[role=\"group\"]").children()
+        .then(($el)=>{
+          cy.softAssert($el.eq(0).text(), "111.txt")
+          cy.softAssert($el.eq(1).text(), "222.txt")
+          cy.softAssert($el.eq(2).text(), "333.txt")
+        })
+    })
   
-  it("test39", ()=>{
-    cy.taskMake("task0")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt")
-    cy.scriptSelect("run.sh")
-    cy.openRemoteFileSettingTab()
-    cy.addIncludeFile("*.txt")
-    cy.addExcludeFile("222.txt")
+    it("test38", ()=>{
+      cy.taskMake("task0")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt")
+      cy.scriptSelect("run.sh")
+      cy.openRemoteFileSettingTab()
+      cy.addIncludeFile("*.txt")
+      cy.deleteIncludeFile("*.txt")
 
     
-    Cypress._.times(2, (k)=>{
-      cy.contains("thead", "exclude").next()
-        .then(($el)=>{
-          cy.softAssert($el.text(), "222.txt")
-        })
+      Cypress._.times(2, (k)=>{
+        cy.contains("thead", "include").next()
+          .then(($el)=>{
+            cy.softAssert($el.text(), "No data available")
+          })
 
-      cy.projectReload(k, testProject, "task0")
-      cy.openRemoteFileSettingTab()
-    })
-
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
-
-    cy.clickTask("task0")
-    cy.clickFilesTab()
-    cy.contains("*.txt").click()
-
-    cy.contains("button", "Files").siblings()
-      .contains("*.txt")
-      .parent()
-      .siblings()
-      .children()
-      .then(($el)=>{
-        cy.softAssert($el.eq(0).text(), "111.txt")
-        cy.softAssert($el.eq(1).text(), "333.txt")
+        cy.projectReload(k, testProject, "task0")
+        cy.openRemoteFileSettingTab()
       })
-  })
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+
+      cy.clickTask("task0")
+      cy.clickFilesTab()
+
+      cy.contains("button", "Files").siblings()
+        .find("[role=\"listbox\"]")
+        .then(($el)=>{
+          cy.softAssert($el.find("[role=\"group\"]").length === 0, true)
+        })
+    })
   
-  it("test40", ()=>{
-    cy.taskMake("task0")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt")
-    cy.scriptSelect("run.sh")
-    cy.openRemoteFileSettingTab()
-    cy.addIncludeFile("*.txt")
-    cy.addExcludeFile("222.txt")
-    cy.deleteExcludeFile("222.txt")
+    it("test39", ()=>{
+      cy.taskMake("task0")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt")
+      cy.scriptSelect("run.sh")
+      cy.openRemoteFileSettingTab()
+      cy.addIncludeFile("*.txt")
+      cy.addExcludeFile("222.txt")
 
     
-    Cypress._.times(2, (k)=>{
-      cy.contains("thead", "exclude").next()
-        .then(($el)=>{
-          cy.softAssert($el.text(), "No data available")
-        })
+      Cypress._.times(2, (k)=>{
+        cy.contains("thead", "exclude").next()
+          .then(($el)=>{
+            cy.softAssert($el.text(), "222.txt")
+          })
 
-      cy.projectReload(k, testProject, "task0")
-      cy.openRemoteFileSettingTab()
-    })
-
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
-
-    cy.clickTask("task0")
-    cy.clickFilesTab()
-    cy.contains("*.txt").click()
-
-    cy.get("[role=\"group\"]").children()
-      .then(($el)=>{
-        cy.softAssert($el.eq(0).text(), "111.txt")
-        cy.softAssert($el.eq(1).text(), "222.txt")
-        cy.softAssert($el.eq(2).text(), "333.txt")
+        cy.projectReload(k, testProject, "task0")
+        cy.openRemoteFileSettingTab()
       })
-  })
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+
+      cy.clickTask("task0")
+      cy.clickFilesTab()
+      cy.contains("*.txt").click()
+
+      cy.contains("button", "Files").siblings()
+        .contains("*.txt")
+        .parent()
+        .siblings()
+        .children()
+        .then(($el)=>{
+          cy.softAssert($el.eq(0).text(), "111.txt")
+          cy.softAssert($el.eq(1).text(), "333.txt")
+        })
+    })
   
-  it("test41", ()=>{
-    cy.taskMake("task0")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "echo test")
-    cy.scriptSelect("run.sh")
-    cy.openRemoteFileSettingTab()
-    cy.setCleanUpFlg("remove files")
+    it("test40", ()=>{
+      cy.taskMake("task0")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "echo test1 > 111.txt\necho test2 > 222.txt\necho test3 > 333.txt")
+      cy.scriptSelect("run.sh")
+      cy.openRemoteFileSettingTab()
+      cy.addIncludeFile("*.txt")
+      cy.addExcludeFile("222.txt")
+      cy.deleteExcludeFile("222.txt")
 
     
-    Cypress._.times(2, (k)=>{
-      cy.contains("label", "remove files").siblings()
-        .find("input")
+      Cypress._.times(2, (k)=>{
+        cy.contains("thead", "exclude").next()
+          .then(($el)=>{
+            cy.softAssert($el.text(), "No data available")
+          })
+
+        cy.projectReload(k, testProject, "task0")
+        cy.openRemoteFileSettingTab()
+      })
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+
+      cy.clickTask("task0")
+      cy.clickFilesTab()
+      cy.contains("*.txt").click()
+
+      cy.get("[role=\"group\"]").children()
         .then(($el)=>{
-          cy.softAssert($el.prop("checked"), true)
+          cy.softAssert($el.eq(0).text(), "111.txt")
+          cy.softAssert($el.eq(1).text(), "222.txt")
+          cy.softAssert($el.eq(2).text(), "333.txt")
         })
-
-      cy.projectReload(k, testProject, "task0")
-      cy.openRemoteFileSettingTab()
     })
-
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
-
-    cy.sendCommand(hostname, test_port, test_user, password).then((stdout)=>{
-      cy.softAssert(stdout, "0\n")
-    })
-  })
   
-  it("test42", ()=>{
-    cy.taskMake("task0")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "echo test")
-    cy.scriptSelect("run.sh")
-    cy.openRemoteFileSettingTab()
-    cy.setCleanUpFlg("keep files")
+    it("test41", ()=>{
+      cy.taskMake("task0")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "echo test")
+      cy.scriptSelect("run.sh")
+      cy.openRemoteFileSettingTab()
+      cy.setCleanUpFlg("remove files")
 
     
-    Cypress._.times(2, (k)=>{
-      cy.contains("label", "keep files").siblings()
-        .find("input")
-        .then(($el)=>{
-          cy.softAssert($el.prop("checked"), true)
-        })
+      Cypress._.times(2, (k)=>{
+        cy.contains("label", "remove files").siblings()
+          .find("input")
+          .then(($el)=>{
+            cy.softAssert($el.prop("checked"), true)
+          })
 
-      cy.projectReload(k, testProject, "task0")
-      cy.openRemoteFileSettingTab()
+        cy.projectReload(k, testProject, "task0")
+        cy.openRemoteFileSettingTab()
+      })
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+
+      cy.sendCommand(hostname, testPort, testUser, password).then((stdout)=>{
+        cy.softAssert(stdout, "0\n")
+      })
     })
-
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
-
-    cy.sendCommand(hostname, test_port, test_user, password).then((stdout)=>{
-      cy.softAssert(stdout, "1\n")
-    })
-  })
   
-  it("test43", ()=>{
-    cy.taskMake("task0")
-    cy.hostSelect(remotehost)
-    cy.scriptMake("run.sh", "echo test")
-    cy.scriptSelect("run.sh")
-    cy.openRemoteFileSettingTab()
-    cy.setCleanUpFlg("same as parent")
+    it("test42", ()=>{
+      cy.taskMake("task0")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "echo test")
+      cy.scriptSelect("run.sh")
+      cy.openRemoteFileSettingTab()
+      cy.setCleanUpFlg("keep files")
 
     
-    Cypress._.times(2, (k)=>{
-      cy.contains("label", "same as parent").siblings()
-        .find("input")
-        .then(($el)=>{
-          cy.softAssert($el.prop("checked"), true)
-        })
+      Cypress._.times(2, (k)=>{
+        cy.contains("label", "keep files").siblings()
+          .find("input")
+          .then(($el)=>{
+            cy.softAssert($el.prop("checked"), true)
+          })
 
-      cy.projectReload(k, testProject, "task0")
+        cy.projectReload(k, testProject, "task0")
+        cy.openRemoteFileSettingTab()
+      })
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+
+      cy.sendCommand(hostname, testPort, testUser, password).then((stdout)=>{
+        cy.softAssert(stdout, "1\n")
+      })
+    })
+  
+    it("test43", ()=>{
+      cy.taskMake("task0")
+      cy.hostSelect(remotehost)
+      cy.scriptMake("run.sh", "echo test")
+      cy.scriptSelect("run.sh")
       cy.openRemoteFileSettingTab()
-    })
+      cy.setCleanUpFlg("same as parent")
 
-    cy.execProject()
-    cy.passwordType(password)
-    cy.checkProjectStatus("finished")
+    
+      Cypress._.times(2, (k)=>{
+        cy.contains("label", "same as parent").siblings()
+          .find("input")
+          .then(($el)=>{
+            cy.softAssert($el.prop("checked"), true)
+          })
 
-    cy.sendCommand(hostname, test_port, test_user, password).then((stdout)=>{
-      cy.softAssert(stdout, "1\n")
+        cy.projectReload(k, testProject, "task0")
+        cy.openRemoteFileSettingTab()
+      })
+
+      cy.execProject()
+      cy.passwordType(password)
+      cy.checkProjectStatus("finished")
+
+      cy.sendCommand(hostname, testPort, testUser, password).then((stdout)=>{
+        cy.softAssert(stdout, "1\n")
+      })
     })
-  })
   });
 })
