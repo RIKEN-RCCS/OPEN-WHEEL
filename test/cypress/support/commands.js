@@ -109,13 +109,16 @@ Cypress.Commands.add("projectOpen", (projectName)=>{
 Cypress.Commands.add("projectRemove", (projectName)=>{ 
   cy.visit("/").wait(animationWaitTime)
     .then(()=>{
-      cy.contains("tr", projectName).find("[type=\"checkbox\"]")
-        .click({force: true})
+      const projectNameRow = cy.contains("tr", projectName, {timeout: 1000})
+
+      if(projectNameRow){
+        projectNameRow.find("[type=\"checkbox\"]").click({force: true})
+        cy.get(".v-main>header").get(".v-btn__content")
+          .contains(/^REMOVE$/)
+          .click({force: true})
+        cy.contains("button", "remove").click({force: true})
+      }
     })
-  cy.get("header").find("button")
-    .eq(4)
-    .click({force: true})
-  cy.contains("button", "remove").click({force: true})
 })
 
 //make Task
@@ -476,10 +479,9 @@ Cypress.Commands.add("scriptEdit", (scriptName, script)=>{
   cy.clickFileEditer()
   cy.get("#editor").find("textarea")
     .type(script, {force: true})
-  cy.get("[href=\"/graph\"]").click()
-    .wait(animationWaitTime)
-  cy.get(".v-overlay__content").contains("button", "Save All")
+  cy.get("button").contains("button", "save all files")
     .click()
+  cy.get("[href=\"/graph\"]").click()
     .wait(animationWaitTime)
 })
 
