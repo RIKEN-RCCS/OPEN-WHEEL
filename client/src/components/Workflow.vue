@@ -543,6 +543,7 @@ export default {
       if (unsavedFiles.length === 0) {
         this.showUnsavedFilesDialog = false;
         this.unsavedFiles.splice(0, this.unsavedFiles.length);
+        cb();
         return;
       }
       this.cb = cb;

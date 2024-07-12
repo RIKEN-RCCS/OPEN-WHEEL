@@ -101,7 +101,7 @@ export default new Vuex.Store({
       if (copied !== null) {
         const difference = diff(selected, copied);
         const changedProps = difference.filter((e)=>{
-          return !e.path.startsWith("/pos");
+          return e.path[0] !== "pos";
         });
         if (changedProps.length > 0) {
           SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID, (rt)=>{
