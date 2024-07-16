@@ -4,12 +4,8 @@
  * See License in the project root for the license information.
  */
 <template>
-  <v-btn
-    @click.stop="openEnvironmentVariableSetting"
-    icon="mdi-cog"
-  />
   <v-dialog
-    v-model="envSetting"
+    :model-value="modelValue"
     persistent
     scrollable
     width="80vw"
@@ -140,6 +136,7 @@
   </v-dialog>
 </template>
 <script>
+import { toRaw } from "vue";
 import { mapState, mapMutations } from "vuex";
 import SIO from "@/lib/socketIOWrapper.js";
 import actionRow from "@/components/common/actionRow.vue";
@@ -153,12 +150,13 @@ export default {
     actionRow,
     buttons
   },
+  props: ["modelValue"],
+  emits: ["update:modelValue"],
   computed: {
     ...mapState(["projectState", "currentComponent", "projectRootDir", "rootComponentID", "readOnly"])
   },
   data: function () {
     return {
-      envSetting: false,
       env: [],
       editKeyDialog: [],
       editValueDialog: [],
@@ -170,6 +168,22 @@ export default {
         { title: "", key: "actions" }
       ]
     };
+  },
+  mounted() {
+    this.commitWaitingEnv(true);
+    SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID, (data)=>{
+      //this determination does not work
+      if (data instanceof Error) {
+        console.log("getEnv API return error", data);
+        this.commitWaitingEnv(false);
+        return;
+      }
+      const env = Object.entries(data).map(([k, v])=>{
+        return { name: k, value: v };
+      });
+      this.env.splice(0, this.env.length, ...env);
+      this.commitWaitingEnv(false);
+    });
   },
   methods: {
     required,
@@ -184,27 +198,10 @@ export default {
       });
       return hasDup ? "duplicated name is not allowed" : true;
     },
-    openEnvironmentVariableSetting() {
-      this.commitWaitingEnv(true);
-      SIO.emitGlobal("getEnv", this.projectRootDir, this.rootComponentID, (data)=>{
-        //this determination does not work
-        if (data instanceof Error) {
-          console.log("getEnv API return error", data);
-          this.commitWaitingEnv(false);
-          return;
-        }
-        const env = Object.entries(data).map(([k, v])=>{
-          return { name: k, value: v };
-        });
-        this.env.splice(0, this.env.length, ...env);
-        this.commitWaitingEnv(false);
-        this.envSetting = true;
-      });
-    },
     closeEnvironmentVariableSetting() {
       this.newKey = null;
       this.newValue = null;
-      this.envSetting = false;
+      this.$emit("update:model-value", false);
     },
     addEnv() {
       this.env.push({ name: this.newKey, value: this.newValue });
@@ -212,8 +209,7 @@ export default {
       this.newValue = null;
     },
     deleteEnv(e) {
-      console.log("DEBUG DELETE", e);
-      removeFromArray(this.env, e.raw);
+      removeFromArray(this.env, toRaw(e), "name");
     },
     saveEnv() {
       const env = this.env.reduce((a, e)=>{

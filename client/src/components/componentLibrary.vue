@@ -14,7 +14,29 @@
       nav
     >
       <v-list-item>
-        <env-setting-dialog class='mb-16'/>
+        <v-menu location="end">
+          <template v-slot:activator="{ props: menu }">
+            <v-tooltip location="top">
+              <template v-slot:activator="{ props: tooltip }">
+                <v-btn
+                  icon="mdi-cog"
+                  v-bind="mergeProps(menu, tooltip)"
+                />
+              </template>
+              <span>project settings</span>
+            </v-tooltip>
+          </template>
+          <v-list>
+            <v-list-item
+              title="environment variables"
+              @click="envDialog=true"
+            />
+            <v-list-item
+              title="webhook"
+              @click=openWebhookEditor
+            />
+          </v-list>
+        </v-menu>
       </v-list-item>
       <v-list-item
         v-for="item in librarys"
@@ -41,9 +63,11 @@
       </v-list-item>
     </v-list>
   </v-navigation-drawer>
+  <env-setting-dialog v-model="envDialog" class='mb-16'/>
 </template>
 <script>
 import Debug from "debug";
+import { mergeProps } from "vue";
 import envSettingDialog from "@/components/envSettingDialog.vue";
 import { mapState, mapMutations, mapGetters } from "vuex";
 import { widthComponentLibrary, heightToolbar, heightDenseToolbar } from "@/lib/componentSizes.json";
@@ -67,7 +91,9 @@ export default {
       }),
       offsetX: null,
       offsetY: null,
-      widthComponentLibrary
+      widthComponentLibrary,
+      envDialog: false,
+      webhookDialog: false
     };
   },
   computed: {
@@ -97,6 +123,7 @@ export default {
     }
   },
   methods: {
+    mergeProps,
     ...mapMutations({ commitComponentTree: "componentTree" }),
     onDragstart(event, item) {
       this.offsetX = event.offsetX;

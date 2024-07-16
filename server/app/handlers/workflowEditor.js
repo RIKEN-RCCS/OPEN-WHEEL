@@ -67,7 +67,7 @@ async function onRemoveAllFileLink(projectRootDir, componentID, inputFileName, f
   return generalHandler(removeAllFileLink.bind(null, projectRootDir, componentID, inputFileName, fromChildren), "removeFileLink", projectRootDir, parentID, false, cb);
 }
 async function onUpdateEnv(projectRootDir, ID, newEnv, parentID, cb) {
-  return generalHandler(replaceEnv.bind(null, projectRootDir, ID, newEnv), "updateEnv", projectRootDir, true, cb);
+  return generalHandler(replaceEnv.bind(null, projectRootDir, ID, newEnv), "updateEnv", projectRootDir, parentID, true, cb);
 }
 async function onGetEnv(projectRootDir, ID, cb) {
   try {

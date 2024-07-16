@@ -7,6 +7,7 @@
 const path = require("path");
 const { promisify } = require("util");
 const EventEmitter = require("events");
+const axios = require("axios");
 const glob = require("glob");
 const fs = require("fs-extra");
 const SBS = require("simple-batch-system");
@@ -145,6 +146,7 @@ async function onUpdateProjectROStatus(projectRootDir, isRO, ack) {
   onGetProjectJson(projectRootDir, ack);
 }
 async function onRunProject(clientID, projectRootDir, ack) {
+  const logger = getLogger(projectRootDir);
   //validation check
   try {
     const report = await validateComponents(projectRootDir);
@@ -231,6 +233,25 @@ async function onRunProject(clientID, projectRootDir, ack) {
     ee.on("taskCompleted", sendTaskStateList.bind(null, projectRootDir));
     ee.on("taskStateChanged", sendTaskStateList.bind(null, projectRootDir));
     ee.on("resultFilesReady", sendResultsFileDir.bind(null, projectRootDir));
+
+    const { webhook } = await getProjectJson(projectRootDir);
+    logger.trace(`webhook setting for ${projectRootDir} \n`, webhook);
+    if (typeof webhook !== "undefined" && typeof webhook.URL === "string") {
+      if (webhook.project) {
+        ee.on("projectStateChanged", async (projectJson)=>{
+          const response = await axios.post(webhook.URL, projectJson);
+          logger.debug("webhook called on projectStateChanged:", response.status, response.statusText);
+          logger.trace(response);
+        });
+      }
+      if (webhook.component) {
+        ee.on("componentStateChanged", async (component)=>{
+          const response = await axios.post(webhook.URL, component);
+          logger.debug("webhook called componentStateChanged:", response.status, response.statusText);
+          logger.trace(response);
+        });
+      }
+    }
 
     await updateProjectROStatus(projectRootDir, true);
     await runProject(projectRootDir);
