@@ -5,6 +5,19 @@
  */
 <template>
   <div>
+    <v-toolbar
+      density = compact
+      title="PS config"
+      color="background"
+    >
+      {{ filename }}
+      <v-spacer />
+      <v-btn
+        @click="save"
+        prepend-icon=mdi-content-save
+        text="save PS config"
+      />
+    </v-toolbar>
     <target-files
       :target-files="parameterSetting.targetFiles"
       :read-only="readOnly"
@@ -44,7 +57,6 @@
 </template>
 <script>
 "use strict";
-import { toRaw } from 'vue'
 import { mapState, mapGetters } from "vuex";
 import deepEqual from "deep-eql"
 import SIO from "@/lib/socketIOWrapper.js";

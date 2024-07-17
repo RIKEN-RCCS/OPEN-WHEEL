@@ -31,6 +31,24 @@ export default [
     }
   },
   {
+    files:["test/**/*.js"],
+    plugins:{
+      node,
+      chaiFriendly
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.commonjs,
+        ...globals.chai,
+        ...globals.mocha,
+        cy: false,
+        Cypress:false,
+        expect:false
+      }
+    }
+  },
+  {
     files:["**/*.js", "**/*.vue"],
     plugins:{
       jsdoc,
@@ -210,12 +228,7 @@ export default [
     languageOptions:{
       sourceType: "commonjs",
       globals:{
-        it: "readonly",
-        describe: "readonly",
-        before: "readonly",
-        after: "readonly",
-        beforeEach: "readonly",
-        afterEach: "readonly",
+        ...globals.mocha,
       },
     },
   },

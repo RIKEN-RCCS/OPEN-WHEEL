@@ -11,7 +11,7 @@
   >
     <v-card>
       <v-card-title class="text-h5">
-        unsaved files
+        Discard following changes and exit text editor?
       </v-card-title>
       <v-card-text>
         <v-data-table
@@ -25,12 +25,6 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn
-          class="text-capitalize"
-          @click="saveAll"
-          prepend-icon="mdi-content-save-all-outline"
-          text="Save All"
-        />
         <v-btn
           class="text-capitalize"
           @click="discardChanges"
@@ -58,23 +52,13 @@ export default {
       type: Boolean,
       required: true
     },
-    withoutStatus:{
-      type: Boolean,
-      default: false
-    }
   },
   data () {
     return {
       headers: [
-        { title: "status", key: "status" },
         { title: "filename", key: "name" },
       ],
     };
-  },
-  mounted(){
-    if(this.withoutStatus){
-      this.headers.splice(0,1);
-    }
   },
   computed:{
     show(){
@@ -91,11 +75,7 @@ export default {
     discardChanges () {
       this.$emit("closed","discard");
     },
-    saveAll () {
-      this.$emit("closed","save");
-    },
   },
-
 };
 </script>
 <style scoped>
