@@ -15,12 +15,15 @@ const {
   removeComponent,
   createNewComponent,
   getEnv,
-  replaceEnv
+  replaceEnv,
+  replaceWebhook,
+  getComponentDir,
+  getProjectJson
 } = require("../core/projectFilesOperator.js");
-const { getComponentDir } = require("../core/projectFilesOperator.js");
 const { sendWorkflow, sendProjectJson, sendComponentTree } = require("./senders.js");
 const { convertPathSep } = require("../core/pathUtils");
 const { updateComponent, updateComponentPos } = require("../core/updateComponent.js");
+
 async function generalHandler(func, funcname, projectRootDir, parentID, needSendProjectJson, cb) {
   try {
     const rt = await func();
@@ -36,6 +39,7 @@ async function generalHandler(func, funcname, projectRootDir, parentID, needSend
     return;
   }
 }
+
 async function onUpdateComponent(projectRootDir, ID, updated, parentID, cb) {
   return generalHandler(updateComponent.bind(null, projectRootDir, ID, updated), "updateComponent", projectRootDir, parentID, false, cb);
 }
@@ -79,6 +83,19 @@ async function onGetEnv(projectRootDir, ID, cb) {
   }
 }
 
+async function onUpdateWebhook(projectRootDir, webhook, parentID, cb) {
+  return generalHandler(replaceWebhook.bind(null, projectRootDir, webhook), "updateWebhook", projectRootDir, parentID, true, cb);
+}
+async function onGetWebhook(projectRootDir, ID, cb) {
+  try {
+    const { webhook } = await getProjectJson(projectRootDir);
+    return cb(webhook);
+  } catch (e) {
+    getLogger(projectRootDir).error("get webhook failed", e);
+    return cb(e);
+  }
+}
+
 module.exports = {
   onUpdateComponent,
   onUpdateComponentPos,
@@ -91,5 +108,7 @@ module.exports = {
   onRemoveFileLink,
   onRemoveAllFileLink,
   onUpdateEnv,
-  onGetEnv
+  onGetEnv,
+  onUpdateWebhook,
+  onGetWebhook
 };

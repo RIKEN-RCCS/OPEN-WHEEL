@@ -1157,6 +1157,18 @@ async function replaceEnv(projectRootDir, ID, newEnv) {
   await writeComponentJsonByID(projectRootDir, ID, componentJson);
   return componentJson;
 }
+async function replaceWebhook(projectRootDir, newWebhook) {
+  const projectJson = await getProjectJson(projectRootDir);
+  const { webhook } = projectJson;
+  if (typeof webhook === "undefined") {
+    projectJson.webhook = newWebhook;
+  } else {
+    const patch = diff(webhook, newWebhook);
+    diffApply(webhook, patch);
+  }
+  await writeProjectJson(projectRootDir, projectJson);
+  return webhook;
+}
 async function getEnv(projectRootDir, ID) {
   const componentJson = await readComponentJsonByID(projectRootDir, ID);
   const env = componentJson.env || {};
@@ -1703,6 +1715,7 @@ module.exports = {
   removeAllFileLink,
   getEnv,
   replaceEnv,
+  replaceWebhook,
   removeComponent,
   isComponentDir,
   getComponentTree,

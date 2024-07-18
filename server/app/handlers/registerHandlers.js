@@ -25,7 +25,9 @@ const {
   onRemoveFileLink,
   onRemoveAllFileLink,
   onGetEnv,
-  onUpdateEnv
+  onUpdateEnv,
+  onGetWebhook,
+  onUpdateWebhook
 } = require("./workflowEditor.js");
 const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } = require("./jobScript.js");
 const { onGetResultFiles } = require("./resultFiles.js");
@@ -54,10 +56,12 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("addFileLink", onAddFileLink);
   //read
   socket.on("getEnv", onGetEnv);
+  socket.on("getWebhook", onGetWebhook);
   //update
   socket.on("updateComponent", onUpdateComponent);
   socket.on("updateComponentPos", onUpdateComponentPos);
   socket.on("updateEnv", onUpdateEnv);
+  socket.on("updateWebhook", onUpdateWebhook);
   //delete
   socket.on("removeNode", onRemoveNode);
   socket.on("removeLink", onRemoveLink);

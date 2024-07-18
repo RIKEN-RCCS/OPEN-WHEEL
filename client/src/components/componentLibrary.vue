@@ -33,7 +33,7 @@
             />
             <v-list-item
               title="webhook"
-              @click=openWebhookEditor
+              @click="webhookDialog=true"
             />
           </v-list>
         </v-menu>
@@ -64,11 +64,13 @@
     </v-list>
   </v-navigation-drawer>
   <env-setting-dialog v-model="envDialog" class='mb-16'/>
+  <webhook-setting-dialog v-model="webhookDialog" class='mb-16'/>
 </template>
 <script>
 import Debug from "debug";
 import { mergeProps } from "vue";
 import envSettingDialog from "@/components/envSettingDialog.vue";
+import webhookSettingDialog from "@/components/webhookSettingDialog.vue";
 import { mapState, mapMutations, mapGetters } from "vuex";
 import { widthComponentLibrary, heightToolbar, heightDenseToolbar } from "@/lib/componentSizes.json";
 import SIO from "@/lib/socketIOWrapper.js";
@@ -79,7 +81,8 @@ const debug = Debug("wheel:workflow:componentLibrary");
 export default {
   name: "ComponentLibrary",
   components: {
-    envSettingDialog
+    envSettingDialog,
+    webhookSettingDialog
   },
   data: ()=>{
     return {
