@@ -8,7 +8,7 @@ import Vuex from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:vuex");
 import { diff } from "just-diff";
-import SIO from "@/lib/socketIOWrapper.js";
+import SIO from "../lib/socketIOWrapper.js";
 const logger = (store)=>{
   store.subscribe((mutation)=>{
     const { type, payload } = mutation;

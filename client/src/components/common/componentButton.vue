@@ -19,7 +19,7 @@
 </template>
 <script>
 "use strict";
-import loadComponentDefinition from "@/lib/componentDefinision.js";
+import loadComponentDefinition from "../../lib/componentDefinision.js";
 export default {
   name: "ComponentButton",
   props: { item: Object },

@@ -163,10 +163,10 @@
 import Debug from "debug";
 const debug = Debug("wheel:remoteFileBrowser");
 import { mapState, mapGetters, mapMutations } from "vuex";
-import SIO from "@/lib/socketIOWrapper.js";
-import versatileDialog from "@/components/versatileDialog.vue";
-import myTreeview from "@/components/common/myTreeview.vue";
-import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "@/components/common/fileTreeUtils.js";
+import SIO from "../lib/socketIOWrapper.js";
+import versatileDialog from "../components/versatileDialog.vue";
+import myTreeview from "../components/common/myTreeview.vue";
+import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "../components/common/fileTreeUtils.js";
 
 export default {
   name: "RemoteFileBrowser",

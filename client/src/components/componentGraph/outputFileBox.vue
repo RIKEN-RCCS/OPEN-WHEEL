@@ -7,9 +7,9 @@
 </template>
 <script>
 "use strict";
-import Fsender from "@/components/componentGraph/fsender.vue";
-import TextBox from "@/components/componentGraph/textBox.vue";
-import { calcFsenderPos } from "@/lib/utils.js";
+import Fsender from "../../components/componentGraph/fsender.vue";
+import TextBox from "../../components/componentGraph/textBox.vue";
+import { calcFsenderPos } from "../../lib/utils.js";
 
 export default {
   name: "outputFileBox",

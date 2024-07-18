@@ -92,9 +92,9 @@
 <script>
 "use strict";
 import { mapState } from "vuex";
-import actionRow from "@/components/common/actionRow.vue";
-import lowerComponentTree from "@/components/lowerComponentTree.vue";
-import { required } from "@/lib/validationRules.js";
+import actionRow from "../../components/common/actionRow.vue";
+import lowerComponentTree from "../../components/lowerComponentTree.vue";
+import { required } from "../../lib/validationRules.js";
 
 export default {
   name: "GatherScatter",

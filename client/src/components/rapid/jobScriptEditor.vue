@@ -108,11 +108,11 @@
 </template>
 <script>
 "use strict";
-import SIO from "@/lib/socketIOWrapper.js";
-import hpcCenters from "@/lib/hpcCenter.json";
-import createJobScript from "@/lib/jobScripts.js";
-import versatileDialog from "@/components/versatileDialog.vue";
-import listForm from "@/components/common/listForm.vue";
+import SIO from "../../lib/socketIOWrapper.js";
+import hpcCenters from "../../lib/hpcCenter.json";
+import createJobScript from "../../lib/jobScripts.js";
+import versatileDialog from "../..//components/versatileDialog.vue";
+import listForm from "../../components/common/listForm.vue";
 
 export default {
   name: "JobScriptEditor",

@@ -42,9 +42,9 @@
 </template>
 <script>
 import { mapState, mapMutations } from "vuex";
-import SIO from "@/lib/socketIOWrapper.js";
-import versatileDialog from "@/components/versatileDialog.vue";
-import { required, isValidURL } from "@/lib/validationRules.js";
+import SIO from "../lib/socketIOWrapper.js";
+import versatileDialog from "../components/versatileDialog.vue";
+import { required, isValidURL } from "../lib/validationRules.js";
 
 export default {
   name: "webhookSettingDialog",

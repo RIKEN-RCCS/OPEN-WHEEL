@@ -54,9 +54,9 @@
 </template>
 
 <script>
-import xterm from "@/components/xterm.vue";
+import xterm from "../components/xterm.vue";
 import { mapState } from "vuex";
-import SIO from "@/lib/socketIOWrapper.js";
+import SIO from "../lib/socketIOWrapper.js";
 
 export default {
   name: "LogScreen",

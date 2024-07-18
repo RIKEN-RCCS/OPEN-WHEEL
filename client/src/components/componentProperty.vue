@@ -522,14 +522,15 @@
 </template>
 
 <script>
-import listForm from "@/components/common/listForm.vue";
-import fileBrowser from "@/components/fileBrowser.vue";
-import remoteFileBrowser from "@/components/remoteFileBrowser.vue";
-import { isValidName } from "@/lib/utility.js";
-import { isValidInputFilename, isValidOutputFilename } from "@/lib/clientUtility.js";
+import listForm from "../components/common/listForm.vue";
+import fileBrowser from "../components/fileBrowser.vue";
+import remoteFileBrowser from "../components/remoteFileBrowser.vue";
+import { isValidName } from "../lib/utility.js";
+import { isValidInputFilename, isValidOutputFilename } from "../lib/clientUtility.js";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-import SIO from "@/lib/socketIOWrapper.js";
-import { propWidth } from "@/lib/componentSizes.json";
+import SIO from "../lib/socketIOWrapper.js";
+import { propWidth } from "../lib/componentSizes.json";
+
 const isZeroOrMore = (v)=>{
   return v >= 0 ? true : "0 or more value required";
 };

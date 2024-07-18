@@ -22,8 +22,9 @@
 </template>
 <script>
 import { mapState } from "vuex";
-import versatileDialog from "@/components/versatileDialog.vue";
-import SIO from "@/lib/socketIOWrapper.js";
+import versatileDialog from "../components/versatileDialog.vue";
+import SIO from "../lib/socketIOWrapper.js";
+
 export default {
   name: "SourceFileUploadDialog",
   components: {

@@ -43,10 +43,10 @@
 </template>
 <script>
 import { mapState } from "vuex";
-import SIO from "@/lib/socketIOWrapper.js";
-import { taskStateList2Tree } from "@/lib/taskStateList2Tree.js";
-import componentButton from "@/components/common/componentButton.vue";
-import myTreeview from "@/components/common/myTreeview.vue";
+import SIO from "../lib/socketIOWrapper.js";
+import { taskStateList2Tree } from "../lib/taskStateList2Tree.js";
+import componentButton from "../components/common/componentButton.vue";
+import myTreeview from "../components/common/myTreeview.vue";
 
 const headers = { state: "state", startTime: "startTime", endTime: "endTime" };
 

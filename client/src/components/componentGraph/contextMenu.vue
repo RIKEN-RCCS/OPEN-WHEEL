@@ -14,7 +14,7 @@
 <script>
 "use strict";
 
-import { boxWidth, textHeight } from "@/lib/constants.json";
+import { boxWidth, textHeight } from "../../lib/constants.json";
 export default {
   name: "context-menu",
   props: {

@@ -31,7 +31,7 @@
   </v-list>
 </template>
 <script>
-import innerTreeview from "@/components/common/innerTreeview.vue";
+import innerTreeview from "../../components/common/innerTreeview.vue";
 
 const nodeOpenIcon = "mdi-menu-down";
 const nodeCloseIcon = "mdi-menu-right";

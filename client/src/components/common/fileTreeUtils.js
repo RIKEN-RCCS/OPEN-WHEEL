@@ -3,7 +3,7 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-import { removeFromArray } from "@/lib/clientUtility.js";
+import { removeFromArray } from "../../lib/clientUtility.js";
 
 export const icons = {
   "file": "mdi-file-outline",

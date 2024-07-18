@@ -193,14 +193,14 @@
 import { mapState, mapActions } from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:home");
-import navDrawer from "@/components/common/NavigationDrawer.vue";
-import applicationToolBar from "@/components/common/applicationToolBar.vue";
-import fileBrowser from "@/components/common/fileBrowserLite.vue";
-import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
-import buttons from "@/components/common/buttons.vue";
-import { readCookie } from "@/lib/utility.js";
-import SIO from "@/lib/socketIOWrapper.js";
-import { required } from "@/lib/validationRules.js";
+import navDrawer from "../components/common/NavigationDrawer.vue";
+import applicationToolBar from "../components/common/applicationToolBar.vue";
+import fileBrowser from "../components/common/fileBrowserLite.vue";
+import removeConfirmDialog from "../components/common/removeConfirmDialog.vue";
+import buttons from "../components/common/buttons.vue";
+import { readCookie } from "../lib/utility.js";
+import SIO from "../lib/socketIOWrapper.js";
+import { required } from "../lib/validationRules.js";
 
 //it should be get from server
 const projectJsonFilename = "prj.wheel.json";

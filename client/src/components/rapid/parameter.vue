@@ -134,9 +134,9 @@
 <script>
 "use strict";
 import { mapState } from "vuex";
-import { removeFromArray } from "@/lib/clientUtility.js";
-import actionRow from "@/components/common/actionRow.vue";
-import listForm from "@/components/common/listForm.vue";
+import { removeFromArray } from "../../lib/clientUtility.js";
+import actionRow from "../../components/common/actionRow.vue";
+import listForm from "../../components/common/listForm.vue";
 
 export default {
   name: "Parameter",

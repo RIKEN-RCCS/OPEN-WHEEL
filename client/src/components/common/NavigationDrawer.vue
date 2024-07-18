@@ -31,7 +31,7 @@
 </template>
 <script>
 import { mapState } from "vuex";
-import { state2color } from "@/lib/utility.js";
+import { state2color } from "../../lib/utility.js";
 export default {
   name: "NavDrawer",
   props: {

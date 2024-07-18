@@ -89,14 +89,14 @@
 import { mapState, mapActions } from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:remotehost");
-import SIO from "@/lib/socketIOWrapper.js";
-import { readCookie } from "@/lib/utility.js";
-import actionRow from "@/components/common/actionRow.vue";
-import navDrawer from "@/components/common/NavigationDrawer.vue";
-import removeConfirmDialog from "@/components/common/removeConfirmDialog.vue";
-import passwordDialog from "@/components/common/passwordDialog.vue";
-import addNewHostDialog from "@/components/remotehost/addNewHostDialog.vue";
-import applicationToolBar from "@/components/common/applicationToolBar.vue";
+import SIO from "../lib/socketIOWrapper.js";
+import { readCookie } from "../lib/utility.js";
+import actionRow from "../components/common/actionRow.vue";
+import navDrawer from "../components/common/NavigationDrawer.vue";
+import removeConfirmDialog from "../components/common/removeConfirmDialog.vue";
+import passwordDialog from "../components/common/passwordDialog.vue";
+import addNewHostDialog from "../components/remotehost/addNewHostDialog.vue";
+import applicationToolBar from "../components/common/applicationToolBar.vue";
 
 export default {
   name: "Remotehost",

@@ -138,11 +138,11 @@
 <script>
 import { toRaw } from "vue";
 import { mapState, mapMutations } from "vuex";
-import SIO from "@/lib/socketIOWrapper.js";
-import actionRow from "@/components/common/actionRow.vue";
-import buttons from "@/components/common/buttons.vue";
-import { removeFromArray } from "@/lib/clientUtility.js";
-import { required } from "@/lib/validationRules.js";
+import SIO from "../lib/socketIOWrapper.js";
+import actionRow from "../components/common/actionRow.vue";
+import buttons from "../components/common/buttons.vue";
+import { removeFromArray } from "../lib/clientUtility.js";
+import { required } from "../lib/validationRules.js";
 
 export default {
   name: "envSettingDialog",
