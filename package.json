@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "start": "cd server; npm start",
-    "build": "cd server; npm install; cd ../client; npm install; npm run build",
+    "build": "cd client; npm run build",
     "lint": "eslint --fix --report-unused-disable-directives ./",
     "licenseReport": "run-s licenseReport-doc licenseReport-server licenseReport-client licenseReport-test",
     "licenseReport-doc": "license-report --output=csv --csvHeaders --config license-report-config.json",
