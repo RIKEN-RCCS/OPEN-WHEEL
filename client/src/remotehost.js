@@ -5,7 +5,9 @@
  */
 import { createApp } from "vue";
 import Remotehost from "./components/Remotehost.vue";
+import store from "./store";
 import vuetify from "./plugins/vuetify";
 
 createApp(Remotehost).use(vuetify)
+  .use(store)
   .mount("#app");

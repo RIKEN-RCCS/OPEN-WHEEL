@@ -29,11 +29,11 @@
         <template #item.connectionTest="{ item, index }">
           <v-btn
             :disable="testing !== null && testing !== index"
-            :color="item.raw.testResult"
-            :loading="item.raw.loading"
+            :color="item.testResult"
+            :loading="item.loading"
             @click="testConnection(index)"
-            :text=item.raw.connectionStatus
-            :prepend-icon=item.raw.icon
+            :text=item.connectionStatus
+            :prepend-icon=item.con
           />
         </template>
         <template #item.action="{ item}">
@@ -157,6 +157,7 @@ export default {
       data.forEach((e)=>{
         e.icon = "mdi-lan-pending";
         e.connectionStatus = "test";
+        e.testResult = "background";
       });
       this.hosts.splice(0, this.hosts.length, ...data);
     });
@@ -185,6 +186,7 @@ export default {
       delete (item.testResult);
       item.icon = "mdi-lan-pending";
       item.connectionStatus = "test";
+      item.testResult = "background";
     },
     addNewSetting(updated) {
       this.currentSetting = {};
