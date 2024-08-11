@@ -141,6 +141,16 @@ export default [
     }
   },
   {
+    files: ["client/src/**/*.vue"],
+    languageOptions: {
+      parser: vueParser
+    },
+    plugins: {
+      vue,
+      vuetify
+    }
+  },
+  {
     files: ["server/app/**/*.js"],
     plugins: {
       node
@@ -167,14 +177,6 @@ export default [
       chaiFriendly
     },
     languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.commonjs,
-        ...globals.chai,
-        ...globals.mocha,
-        cy: false,
-        Cypress:false,
-        expect:false
       sourceType: "commonjs",
       globals: {
         ...globals.nodeBuiltin,
@@ -185,23 +187,7 @@ export default [
         after: "readonly",
         beforeEach: "readonly",
         afterEach: "readonly"
->>>>>>> 9e977beb (this commit is integrated commit from 7336b143 to 70a5ffa)
       }
-    }
-  },
-  {
-<<<<<<< HEAD
-    files:["**/*.js", "**/*.vue"],
-    plugins:{
-      jsdoc,
-=======
-    files: ["client/src/**/*.vue"],
-    languageOptions: {
-      parser: vueParser
-    },
-    plugins: {
-      vue,
-      vuetify
     }
   },
   {
@@ -209,7 +195,6 @@ export default [
     plugins: {
       "@stylistic": stylistic,
       jsdoc
->>>>>>> 9e977beb (this commit is integrated commit from 7336b143 to 70a5ffa)
     },
     linterOptions: {
       reportUnusedDisableDirectives: true
@@ -246,117 +231,7 @@ export default [
         }
       ],
       "no-warning-comments": "warn",
-<<<<<<< HEAD
-      "padded-blocks": [
-        "error",
-        "never"
-      ],
-      "padding-line-between-statements": [
-        "error",
-        {
-          "blankLine": "any",
-          "prev": [
-            "const",
-            "let",
-            "var"
-          ],
-          "next": "*"
-        },
-        {
-          "blankLine": "always",
-          "prev": "*",
-          "next": [
-            "block-like",
-            "class",
-            "do",
-            "for",
-            "function",
-            "multiline-block-like",
-            "switch",
-            "try",
-            "while"
-          ]
-        },
-        {
-          "blankLine": "any",
-          "prev": [
-            "const",
-            "let",
-            "var",
-            "for",
-            "while",
-            "do",
-            "block-like",
-            "multiline-block-like"
-          ],
-          "next": [
-            "block-like",
-            "do",
-            "for",
-            "multiline-block-like",
-            "switch",
-            "try",
-            "while"
-          ]
-        }
-      ],
-      "spaced-comment": [
-        "error",
-        "never"
-      ],
-      "require-unicode-regexp": "off",
-      quotes: ["error", "double"]
-    },
-  },
-  {
-    files:["server/app/**/*.js"],
-    plugins:{
-      node
-    },
-    rules:{
-      "jsdoc/require-hyphen-before-param-description": [
-        "warn",
-        "always"
-      ],
-      "jsdoc/require-param-description": "warn",
-      "jsdoc/require-param-name": "warn",
-      "jsdoc/require-param-type": "warn",
-      "jsdoc/require-jsdoc": "off",
-      "jsdoc/require-param": "off",
-      "jsdoc/require-returns": "off",
-      "node/exports-style": [
-        "error",
-        "module.exports"
-      ],
-    },
-    languageOptions:{
-      sourceType: "commonjs"
-    },
-  },
-  {
-    files:["server/test/**/*.js"],
-    plugins:{
-      node,
-      chaiFriendly
-    },
-    languageOptions:{
-      sourceType: "commonjs",
-      globals:{
-        ...globals.mocha,
-      },
-    },
-  },
-  {
-    files:["client/src/**/*.vue"],
-    languageOptions:{
-      parser: vueParser
-    },
-    plugins:{
-      vue,
-      vuetify
-=======
       "require-unicode-regexp": "off"
->>>>>>> 9e977beb (this commit is integrated commit from 7336b143 to 70a5ffa)
     }
   }
 ];
