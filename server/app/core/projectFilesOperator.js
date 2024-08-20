@@ -10,6 +10,9 @@ const path = require("path");
 const isPathInside = require("is-path-inside");
 const uuid = require("uuid");
 const glob = require("glob");
+const { diff } = require("just-diff");
+const { diffApply } = require("just-diff-apply");
+
 const { componentFactory, getComponentDefaultName } = require("./workflowComponent");
 const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, jobScheduler, defaultPSconfigFilename  } = require("../db/db");
 const { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
@@ -18,9 +21,8 @@ const { readJsonGreedy } = require("./fileUtils");
 const { gitInit, gitAdd, gitCommit, gitResetHEAD, gitClean, gitRm} = require("./gitOperator2");
 const { hasChild, isInitialComponent } = require("./workflowComponent");
 const { getLogger } = require("../logSettings");
-
-const { diff } = require("just-diff");
-const { diffApply } = require("just-diff-apply");
+const { getSsh } = require("./sshManager.js");
+const {checkWritePermissions} = require("./global.js");
 
 
 /**
@@ -1279,12 +1281,41 @@ async function validateForeach(component) {
   return Promise.resolve();
 }
 
-async function validateStorage(component) {
+async function checkRemoteStoragePathWritePermission(projectRootDir, {host, storagePath}){
+  const remotehostID = remoteHost.getID("name", host);
+  const ssh = getSsh(projectRootDir, remotehostID);
+  const rt = ssh.exec(`test -w ${storagePath}`);
+  if(rt !== 0){
+    const err = new Error("bad permission")
+    err.host=host
+    err.storagePath = storagePath
+    err.reason="invalidRemoteStorage"
+    throw err
+  }
+  return Promise.resolve();
+}
+
+async function validateStorage(projectRootDir, component) {
   if (typeof component.storagePath !== "string") {
     return Promise.reject(new Error("storagePath is not set"));
   }
+
   if (isLocal(component) && !fs.pathExists(component.storagePath)) {
     return Promise.reject(new Error("specified path is not exist on localhost"));
+  }
+  //check if user has write permission to storagePath
+  const checkWritePermission = checkWritePermissions.get(projectRootDir);
+  if(component.inputFiles.length > 0){
+    const componentDir = await getComponentDir(projectRootDir, component.ID, true);
+    if (isLocal(component)) {
+      if( componentDir!== component.storagePath ){
+        const tmpDir = await fs.mkdtemp(`${component.storagePath}/`)
+        await fs.rmdir(tmpDir);
+        return Promise.resolve();
+      }
+    }else{
+      checkWritePermission.push({host:component.host, storagePath:component.storagePath});
+    }
   }
   return Promise.resolve();
 }
@@ -1403,7 +1434,7 @@ async function validateComponents(projectRootDir, argParentID) {
       promises.push(validateForeach(component));
       promises.push(validateKeepProp(component));
     } else if (component.type === "storage") {
-      promises.push(validateStorage(component));
+      promises.push(validateStorage(projectRootDir, component));
     }
     if (Object.prototype.hasOwnProperty.call(component, "inputFiles")) {
       promises.push(validateInputFiles(component));
@@ -2061,6 +2092,7 @@ module.exports = {
   renameProject,
   setComponentStateR,
   getHosts,
+  checkRemoteStoragePathWritePermission,
   getSourceComponents,
   getChildren,
   readComponentJsonByID,

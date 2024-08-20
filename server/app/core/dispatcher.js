@@ -11,7 +11,7 @@ const { EventEmitter } = require("events");
 const glob = require("glob");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { remoteHost, componentJsonFilename, filesJsonFilename, projectJsonFilename } = require("../db/db");
+const { remoteHost, componentJsonFilename, filesJsonFilename } = require("../db/db");
 const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString, writeJsonWrapper } = require("../lib/utility");
@@ -914,20 +914,33 @@ class Dispatcher extends EventEmitter {
     const storagePath = component.storagePath;
     const currentDir = this._getComponentDir(component.ID);
 
-    if (isLocal(component)) {
-      if (currentDir !== storagePath) {
-        await fs.copy(currentDir, storagePath, {
-          dereference: true,
-          filter(name){
-            return !name.endsWith(componentJsonFilename);
-          }
+    //copy inputFiles from currentDir to storagePath as regular file
+    if(component.inputFiles.length > 0){
+      if (isLocal(component)) {
+        if( currentDir !== storagePath ){
+          await fs.mkdir(storagePath);
+          await Promise.all(
+            component.inputFiles
+              .filter((e)=>{
+                return !e.name.endsWith(componentJsonFilename);
+              }).map((e)=>{
+                return fs.copy(path.join(currentDir, e.name), path.join(storagePath, e.name), {
+                  dereference: true,
+                })
+              })
+          )
+        }
+      } else {
+        const targetsToCopy = component.inputFiles.map((e)=>{
+          return path.join(currentDir, e.name)
         });
+        const remotehostID = remoteHost.getID("name", component.host);
+        const ssh = getSsh(this.projectRootDir, remotehostID);
+        await ssh.send(targetsToCopy, `${storagePath}/`);
       }
-    } else {
-      const remotehostID = remoteHost.getID("name", component.host);
-      const ssh = getSsh(this.projectRootDir, remotehostID);
-      await ssh.send([`${currentDir}/`], `${storagePath}/`, [`--exclude=${componentJsonFilename}`, `--exclude=${projectJsonFilename}`]);
     }
+
+    //clean up curentDir
     const contents=await fs.readdir(currentDir);
     const removeTargets = contents.filter((name)=>{
       return ! name.endsWith(componentJsonFilename)
