@@ -7,14 +7,14 @@ layout: single
 lang: en
 ---
 
-Describes the specification limitations of WHEEL.  
+Describes the specification limitations of WHEEL.
 
 
 ## If the remote task is terminated by a signal
 If a process running on a remote host terminates due to a signal, it is considered to have terminated normally because the WHEEL specification does not allow the remote signal number to be supplemented.
 
 {% capture notice-words %}
-__About Task Types__  
+__About Task Types__
 The terms used to describe the various tasks have the following meanings:
 
 | Term               | Meaning                                                                |
@@ -35,7 +35,7 @@ If the Stop Project button stops the project, the script set to WHEEL is stopped
 ***
 ## Handling Large Files
 WHEEL uses git to manage data handled by projects.
-Therefore, placing large files in the project directory can cause various problems due to poor performance of repository operations.  
+Therefore, placing large files in the project directory can cause various problems due to poor performance of repository operations.
 To avoid this problem, configure [git LFS](https://git-lfs.github.com/) to manage files larger than a certain size uploaded from the WHEEL graph view.
 Be aware that if you add files to your project's git repository by means other than WHEEL, you may not be able to work with them properly depending on their size.
 
@@ -69,6 +69,38 @@ When WHEEL reads an existing project that is not in the project list, it commits
 Therefore, if the imported project or components in the project are not "not-started," you will not be able to clean the project again.
 Therefore, check the state of the project and components before loading.
 
+***
+## If you get the "Control socket creation failed" error while connecting via ssh
+If you share ${HOME}/.ssh between the host and WHEEL container in the docker environment, sometimes you get this error.
+In this case, you may avoid this error by adding the following environment variable via the docker run argument
+
+```
+-e SSH_CONTROL_PERSIST_DIR=/tmp
+```
+
+This error occurs if the directory which is used to store the socket file for ssh multiplex connection
+is shared between the docker container and the host OS.
+With this option, the socket file will go to the `SSH_CONTROL_PERSIST_DIR` directory, so that you can avoid this error
+
+***
+## If you get "remote host identification of XXX is different from the one on line YYY of ~/.ssh/known_hosts" error while connecting via ssh
+This error means the server sent a different host key than the last time you accessed it.
+Someone could be eavesdropping on you right now, but it may cause that the host key has just been changed in ordinal operations.
+
+For example:
+    - Server OS is updated and the host key is initialized
+    - The server is behind a load balancer and you access the server with the same hostname but connect to a different server
+    - The server is a container or virtual machine, so sometimes re-initialize OS and ssh server
+    - You access to server via port-forwarding and you make the tunnel to another server on the same port as the last server connected to
+
+If you are certain that these changes have been made on the server with the intent to, because of an announcement from the server administrator or you are the administrator yourself, you can remove the previous entry by following the command.
+Please try to connect the server from WHEEL after executing the command.
+
+```
+ssh-keygen -R 'XXX'
+```
+
+Or, you can delete the previous entry at line number YYYY on `~/.ssh/known_hosts`  by using a text editor or something
 
 --------
 [Return to home page]({{site.baseurl}}/)
