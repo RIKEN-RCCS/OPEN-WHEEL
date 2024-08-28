@@ -244,7 +244,7 @@ export default {
     },
     buttons () {
       const open = { icon: "mdi-check", label: "open" };
-      const create = { icon: "mdi-plus", label: "create" };
+      const create = { icon: "mdi-plus", label: "create", disabled: this.hasError };
       const cancel = { icon: "mdi-close", label: "cancel" };
       const rt = [cancel];
       switch (this.dialogMode) {
@@ -260,6 +260,9 @@ export default {
     removeProjectMessage () {
       return this.removeFromList ? "remove following projects from list" : "remove following project files";
     },
+    hasError(){
+      return this.required(this.newProjectName) !== true;
+    }
   },
   mounted: function () {
     this.pathSep = readCookie("pathSep");
