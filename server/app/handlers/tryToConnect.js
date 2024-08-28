@@ -34,7 +34,7 @@ async function tryToConnect(clientID, hostInfo, cb) {
       return cb("canceled")
     }
     logger.error("tryToConnect failed with", err);
-    return cb("error");
+    return cb(err);
   }
   ssh.disconnect();
   return cb("success");

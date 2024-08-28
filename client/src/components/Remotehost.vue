@@ -232,9 +232,31 @@ export default {
       SIO.emitGlobal("tryToConnect", this.hosts[index], (rt)=>{
         debug("connection test result:",rt);
         target.loading= false
-        target.connectionStatus = rt === "canceled" ? "test":rt === "success" ? "OK" : "failed"
-        target.icon = rt === "canceled" ? "mdi-lan-pending":rt === "success" ? "mdi-lan-connect" : "mdi-lan-disconnect";
-        target.testResult=rt === "canceled" ? "background" :rt
+
+        if(rt === "canceled"){
+          target.connectionStatus = "test";
+          target.icon = "mdi-lan-pending";
+          target.testResult="background";
+        }else if (rt === "success"){
+          target.connectionStatus = "OK";
+          target.icon = "mdi-lan-connect";
+          target.testResult="success";
+        }else{
+          target.connectionStatus = "failed";
+          target.icon = "mdi-lan-disconnect";
+          target.testResult="error";
+
+          if(rt.code === "HostKeyError"){
+            if(rt.lineNumber && rt.host){
+              this.snackbarMessage=`remote host identification of ${rt.host} is different from the one on line ${rt.lineNumber} of ~/.ssh/known_hosts`
+            }else{
+              this.snackbarMessage="remote host identification is different from the one stored in ~/.ssh/known_hosts"
+            }
+            this.openSnackbar=true;
+          }
+        }
+
+
         this.pwDialog=false
         this.testing=null;
       });
