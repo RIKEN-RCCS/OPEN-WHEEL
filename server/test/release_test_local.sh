@@ -26,7 +26,7 @@ echo '}]'
 } > ${CONFIG_DIR}/remotehost.json
 
 echo boot up test server
-docker-compose up ${TAG_TEST_SERVER} -d
+docker compose up ${TAG_TEST_SERVER} -d
 
 echo remove entry from known_hosts
 ssh-keygen -R '[localhost]:4000' 2>/dev/null
@@ -36,4 +36,4 @@ echo "start UT"
 WHEEL_CONFIG_DIR=/tmp/WHEEL_CONFIG_DIR WHEEL_TEST_REMOTEHOST=testServer WHEEL_TEST_REMOTE_PASSWORD=passw0rd npm run test
 echo "UT finished"
 
-docker-compose down
+docker compose down

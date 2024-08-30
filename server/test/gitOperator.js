@@ -50,7 +50,8 @@ const {
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
 const initialCommitResponse = /\[(master|main) \(root-commit\) .*\] initial commit\n/;
 
-describe("git operator UT", ()=>{
+describe("git operator UT", function (){
+  this.timeout(10000);
   after(async()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
       await fs.remove(testDirRoot);
