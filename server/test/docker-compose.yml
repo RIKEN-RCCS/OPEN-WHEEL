@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   wheel_release_test_server:
     image: naoso5/openpbs

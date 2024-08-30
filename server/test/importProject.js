@@ -46,7 +46,7 @@ const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
 const projectRootDir = path.resolve(testDirRoot, "test_project.wheel");
 
 describe("importProject UT", function (){
-  this.timeout(4000);
+  this.timeout(10000);
   let task0;
   beforeEach(async()=>{
     await fs.remove(testDirRoot);

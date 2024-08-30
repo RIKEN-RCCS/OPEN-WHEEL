@@ -36,15 +36,15 @@ echo '}]'
 
 
 echo boot up test server
-docker-compose up ${TAG_TEST_SERVER} -d
+docker compose up ${TAG_TEST_SERVER} -d
 
 echo remove entry from known_hosts
 ssh-keygen -R 'wheel_release_test_server'
 
-docker-compose run --build --rm ${TAG}
+docker compose run --build --rm ${TAG}
 rt=$?
 
-docker-compose down
+docker compose down
 
 #get log files from container
 if [ x$1 == x-c ];then
