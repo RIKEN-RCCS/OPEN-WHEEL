@@ -627,16 +627,26 @@ async function updateProjectDescription(projectRootDir, description) {
   await gitAdd(projectRootDir, filename);
 }
 
-async function addProject(projectDir, description) {
-  let projectRootDir = path.normalize(removeTrailingPathSep(convertPathSep(projectDir)));
+async function addProject(projectDir, description){
+  if(await fs.pathExists(projectDir)){
+    const err = new Error("specified project dir is already exists")
+    err.projectDir=projectDir
+    throw err
+  }
 
+  let projectRootDir = path.resolve(removeTrailingPathSep(convertPathSep(projectDir)));
   if (!projectRootDir.endsWith(suffix)) {
     projectRootDir += suffix;
   }
   projectRootDir = path.resolve(projectRootDir);
 
-  const projectName = path.basename(projectRootDir.slice(0, -suffix.length));
+  if(await fs.pathExists(projectRootDir)){
+    const err = new Error("specified project dir is already used")
+    err.projectRootDir=projectRootDir
+    throw err
+  }
 
+  const projectName = path.basename(projectRootDir.slice(0, -suffix.length));
   if (!isValidName(projectName)) {
     getLogger().error(projectName, "is not allowed for project name");
     throw (new Error("illegal project name"));
