@@ -18,7 +18,8 @@ const { getDateString, writeJsonWrapper } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
-const { writeComponentJson, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
+const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
+const { writeComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent.js");
 const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
@@ -185,9 +186,21 @@ class Dispatcher extends EventEmitter {
       if (this.firstCall) {
         await this._asyncInit();
         const childComponents = await getChildren(this.projectRootDir, this.cwfDir, true);
-        this.currentSearchList = childComponents.filter((component)=>{
-          return isInitialComponent(component);
-        });
+
+        const initialComponents = await Promise.all(
+          childComponents.map(async (component)=>{
+            if(await isInitialComponent(this.projectRootDir, component)){
+              return component
+            }
+            return null
+          })
+        )
+
+        this.currentSearchList = initialComponents.filter((e)=>{
+          return e!== null
+        })
+
+
         this.logger.debug("initial components: ", this.currentSearchList.map((e)=>{
           return e.name;
         }));
@@ -422,6 +435,7 @@ class Dispatcher extends EventEmitter {
     Array.prototype.push.apply(this.pendingComponents, nextComponents);
   }
 
+  //pick up components which is in downstream of file-flow and behind if component
   async _getBehindIfComponentList(component) {
     const behindIfComponetList = [];
     for (const outputFile of component.outputFiles) {
