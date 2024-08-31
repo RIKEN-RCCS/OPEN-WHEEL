@@ -9,10 +9,11 @@ const path = require("path");
 const Ajv = require("ajv");
 const { getLogger } = require("../logSettings.js");
 const { hasChild, isInitialComponent, isLocalComponent } = require("./workflowComponent.js");
-const { readComponentJson, getComponentFullName, remoteHost, jobScheduler, getComponentDir } = require("./projectFilesOperator.js");
+const { readComponentJson, getComponentFullName, jobScheduler, getComponentDir } = require("./projectFilesOperator.js");
 const { readJsonGreedy } = require("./fileUtils");
 const { getChildren } = require("./workflowUtil.js");
 const { isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
+const { remoteHost } = require("../db/db.js");
 const getSchema = require("../db/jsonSchemas.js");
 
 const logger = getLogger();
