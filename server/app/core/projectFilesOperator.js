@@ -12,7 +12,7 @@ const uuid = require("uuid");
 const glob = require("glob");
 const { diff } = require("just-diff");
 const { diffApply } = require("just-diff-apply");
-
+const { getComponentDir, writeComponentJson, writeComponentJsonByID, readComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
 const { componentFactory, getComponentDefaultName } = require("./workflowComponent");
 const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, jobScheduler, defaultPSconfigFilename  } = require("../db/db");
 const { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
@@ -274,15 +274,6 @@ async function getRelativeComponentPath(projectRootDir, from, to) {
   const fromPath = projectJson.componentPath[from];
   const toPath = projectJson.componentPath[to];
   return path.relative(fromPath, toPath);
-}
-
-async function getComponentDir(projectRootDir, ID, isAbsolute) {
-  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  const relativePath = projectJson.componentPath[ID];
-  if (relativePath) {
-    return isAbsolute ? path.resolve(projectRootDir, relativePath) : relativePath;
-  }
-  return null;
 }
 
 async function getProjectState(projectRootDir) {
@@ -729,56 +720,6 @@ async function isSameRemoteHost(projectRootDir, src, dst) {
 }
 
 /**
- * write component JSON file and git add
- * @param {string} projectRootDir - project projectRootDir's absolute path
- * @param {string} componentDir - absolute or relative path to component directory
- * @param {Object} component - component JSON data
- * @param {Boolean} doNotAdd- - call gitAdd if false
- */
-async function writeComponentJson(projectRootDir, componentDir, component, doNotAdd=false) {
-  const filename = path.join(componentDir, componentJsonFilename);
-  await fs.writeJson(filename, component, { spaces: 4, replacer: componentJsonReplacer });
-
-  if(doNotAdd){
-    return
-  }
-  return gitAdd(projectRootDir, filename);
-}
-
-/**
- * read component Json by directory
- * @param {string} componentDir - absolute or relative path to component directory
- * @return {Object} - component JSON data
- */
-async function readComponentJson(componentDir) {
-  const filename = path.join(componentDir, componentJsonFilename);
-  const componentJson = await readJsonGreedy(filename);
-  return componentJson;
-}
-
-/**
- * write componentJson by ID
- * @param {string} projectRootDir - project projectRootDir's absolute path
- * @param {string} ID - component's ID string
- * @param {Object} component - component JSON data
- */
-async function writeComponentJsonByID(projectRootDir, ID, component) {
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  return writeComponentJson(projectRootDir, componentDir, component);
-}
-
-/**
- * read componentJson by ID
- * @param {string} projectRootDir - project projectRootDir's absolute path
- * @param {string} ID - component's ID string
- * @return {Object} - component JSON data
- */
-async function readComponentJsonByID(projectRootDir, ID) {
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  return readComponentJson(componentDir);
-}
-
-/**
  * check if given 2 id's has parent-child relationship
  */
 async function isParent(projectRootDir, parentID, childID) {
@@ -1121,7 +1062,7 @@ async function validateTask(projectRootDir, component) {
 }
 
 async function validateStepjobTask(projectRootDir, component) {
-  const isInitial = isInitialComponent(component);
+  const isInitial = await isInitialComponent(projectRootDir, component);
   if (component.name === null) {
     return Promise.reject(new Error(`illegal path ${component.name}`));
   }
@@ -1457,9 +1398,14 @@ async function validateComponents(projectRootDir, argParentID) {
     }
   }
 
-  const hasInitialNode = children.some((component)=>{
-    return isInitialComponent(component);
-  });
+  let hasInitialNode = false
+  for(const component of children){
+    const rt = await isInitialComponent(projectRootDir, component);
+    if(rt){
+      hasInitialNode  = true;
+      break
+    }
+  }
 
   if (!hasInitialNode) {
     promises.push(Promise.reject(new Error("no component can be run")));
@@ -1468,13 +1414,6 @@ async function validateComponents(projectRootDir, argParentID) {
   return Promise.all(promises);
 }
 
-
-function componentJsonReplacer(key, value) {
-  if (["handler", "doCleanup", "sbsID", "childLoopRunning"].includes(key)) {
-    return undefined;
-  }
-  return value;
-}
 
 
 /**
@@ -2089,7 +2028,6 @@ module.exports = {
   updateComponentPath,
   removeComponentPath,
   getRelativeComponentPath,
-  getComponentDir,
   getDescendantsIDs,
   getAllComponentIDs,
   setProjectState,
@@ -2105,9 +2043,7 @@ module.exports = {
   checkRemoteStoragePathWritePermission,
   getSourceComponents,
   getChildren,
-  readComponentJsonByID,
   validateComponents,
-  componentJsonReplacer,
   createNewComponent,
   renameComponentDir,
   updateComponent,
@@ -2130,8 +2066,6 @@ module.exports = {
   removeComponent,
   isComponentDir,
   getComponentTree,
-  readComponentJson,
-  writeComponentJson,
   isLocal,
   isSameRemoteHost,
 };

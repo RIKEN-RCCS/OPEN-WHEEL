@@ -25,7 +25,8 @@ const { eventEmitters } = require("../app/core/global.js");
 eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 //helper functions
-const { readComponentJson, replaceEnv, updateComponent, createNewComponent , createNewProject } = require("../app/core/projectFilesOperator");
+const { readComponentJson} = require("../app/core/componentJsonIO.js");
+const { replaceEnv, updateComponent, createNewComponent , createNewProject } = require("../app/core/projectFilesOperator");
 
 const { scriptName, scriptHeader } = require("./testScript");
 const logfilename = "env.log";

@@ -25,7 +25,7 @@ const {
   getEnv,
   replaceEnv
 } = require("../core/projectFilesOperator.js");
-const { getComponentDir } = require("../core/projectFilesOperator.js");
+const { getComponentDir }  = require("../core/componentJsonIO.js");
 const { sendWorkflow, sendProjectJson, sendComponentTree } = require("./senders.js");
 const { projectJsonFilename } = require("../db/db");
 const { readJsonGreedy } = require("../core/fileUtils");
