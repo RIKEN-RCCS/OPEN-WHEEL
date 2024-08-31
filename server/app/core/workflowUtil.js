@@ -10,7 +10,7 @@ const { promisify } = require("util");
 const glob = require("glob");
 const { readJsonGreedy } = require("./fileUtils");
 const { projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { writeComponentJson } = require("./projectFilesOperator");
+const { writeComponentJson } = require("./componentJsonIO.js");
 const { hasChild, isComponent } = require("./workflowComponent");
 
 async function getComponentDir(projectRootDir, targetID) {

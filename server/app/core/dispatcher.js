@@ -11,14 +11,15 @@ const { EventEmitter } = require("events");
 const glob = require("glob");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { remoteHost, componentJsonFilename, filesJsonFilename, projectJsonFilename } = require("../db/db");
+const { remoteHost, componentJsonFilename, filesJsonFilename } = require("../db/db");
 const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString, writeJsonWrapper } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
-const { writeComponentJson, readComponentJsonByID, getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
+const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
+const { writeComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent.js");
 const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
@@ -185,9 +186,21 @@ class Dispatcher extends EventEmitter {
       if (this.firstCall) {
         await this._asyncInit();
         const childComponents = await getChildren(this.projectRootDir, this.cwfDir, true);
-        this.currentSearchList = childComponents.filter((component)=>{
-          return isInitialComponent(component);
-        });
+
+        const initialComponents = await Promise.all(
+          childComponents.map(async (component)=>{
+            if(await isInitialComponent(this.projectRootDir, component)){
+              return component
+            }
+            return null
+          })
+        )
+
+        this.currentSearchList = initialComponents.filter((e)=>{
+          return e!== null
+        })
+
+
         this.logger.debug("initial components: ", this.currentSearchList.map((e)=>{
           return e.name;
         }));
@@ -422,6 +435,7 @@ class Dispatcher extends EventEmitter {
     Array.prototype.push.apply(this.pendingComponents, nextComponents);
   }
 
+  //pick up components which is in downstream of file-flow and behind if component
   async _getBehindIfComponentList(component) {
     const behindIfComponetList = [];
     for (const outputFile of component.outputFiles) {
@@ -914,20 +928,33 @@ class Dispatcher extends EventEmitter {
     const storagePath = component.storagePath;
     const currentDir = this._getComponentDir(component.ID);
 
-    if (isLocal(component)) {
-      if (currentDir !== storagePath) {
-        await fs.copy(currentDir, storagePath, {
-          dereference: true,
-          filter(name){
-            return !name.endsWith(componentJsonFilename);
-          }
+    //copy inputFiles from currentDir to storagePath as regular file
+    if(component.inputFiles.length > 0){
+      if (isLocal(component)) {
+        if( currentDir !== storagePath ){
+          await fs.mkdir(storagePath);
+          await Promise.all(
+            component.inputFiles
+              .filter((e)=>{
+                return !e.name.endsWith(componentJsonFilename);
+              }).map((e)=>{
+                return fs.copy(path.join(currentDir, e.name), path.join(storagePath, e.name), {
+                  dereference: true,
+                })
+              })
+          )
+        }
+      } else {
+        const targetsToCopy = component.inputFiles.map((e)=>{
+          return path.join(currentDir, e.name)
         });
+        const remotehostID = remoteHost.getID("name", component.host);
+        const ssh = getSsh(this.projectRootDir, remotehostID);
+        await ssh.send(targetsToCopy, `${storagePath}/`);
       }
-    } else {
-      const remotehostID = remoteHost.getID("name", component.host);
-      const ssh = getSsh(this.projectRootDir, remotehostID);
-      await ssh.send([`${currentDir}/`], `${storagePath}/`, [`--exclude=${componentJsonFilename}`, `--exclude=${projectJsonFilename}`]);
     }
+
+    //clean up curentDir
     const contents=await fs.readdir(currentDir);
     const removeTargets = contents.filter((name)=>{
       return ! name.endsWith(componentJsonFilename)
