@@ -269,23 +269,6 @@ async function getComponentFullName(projectRootDir, ID) {
   return relativePath.replace(/^\./, "");
 }
 
-/**
- * get relative path from src component to target component
- * @param {string} projectRootDir - projectRootDir's absolute path
- * @param {string} targetID - target component's ID
- * @param {string} srcID - src component's ID
- * @return {string} - relative path from src component to target component
- */
-async function getComponentRelativePath(projectRootDir, targetID, srcID) {
-  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  const srcPath = srcID ? projectJson.componentPath[srcID] : projectRootDir;
-  const targetPath = projectJson.componentPath[targetID];
-  if (typeof targetPath === "undefined") {
-    return targetPath;
-  }
-  return path.relative(srcPath, targetPath);
-}
-
 async function getProjectState(projectRootDir) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
   return projectJson.state;
@@ -1301,91 +1284,7 @@ async function setUploadOndemandOutputFile(projectRootDir, ID) {
 
   return renameOutputFile(projectRootDir, ID, 0, "UPLOAD_ONDEMAND");
 }
-async function removeInputFile(projectRootDir, ID, name) {
-  const counterparts = new Set();
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  const componentJson = await readComponentJson(componentDir);
-  componentJson.inputFiles.forEach((inputFile)=>{
-    if (name === inputFile.name) {
-      for (const src of inputFile.src) {
-        counterparts.add(src);
-      }
-    }
-  });
 
-  for (const counterPart of counterparts) {
-    await removeFileLink(projectRootDir, counterPart.srcNode, counterPart.srcName, ID, name);
-  }
-
-  componentJson.inputFiles = componentJson.inputFiles.filter((inputFile)=>{
-    return name !== inputFile.name;
-  });
-  return writeComponentJson(projectRootDir, componentDir, componentJson);
-}
-async function removeOutputFile(projectRootDir, ID, name) {
-  const counterparts = new Set();
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  const componentJson = await readComponentJson(componentDir);
-
-  componentJson.outputFiles = componentJson.outputFiles.filter((outputFile)=>{
-    if (name !== outputFile.name) {
-      return true;
-    }
-    for (const dst of outputFile.dst) {
-      counterparts.add(dst);
-    }
-    return false;
-  });
-
-  for (const counterPart of counterparts) {
-    await removeFileLink(projectRootDir, ID, name, counterPart.dstNode, counterPart.dstName);
-  }
-  return writeComponentJson(projectRootDir, componentDir, componentJson);
-}
-async function renameInputFile(projectRootDir, ID, index, newName) {
-  if (!isValidInputFilename(newName)) {
-    return Promise.reject(new Error(`${newName} is not valid inputFile name`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  const componentJson = await readComponentJson(componentDir);
-  if (index < 0 || componentJson.inputFiles.length - 1 < index) {
-    return Promise.reject(new Error(`invalid index ${index}`));
-  }
-
-  const counterparts = new Set();
-  const oldName = componentJson.inputFiles[index].name;
-  componentJson.inputFiles[index].name = newName;
-  componentJson.inputFiles[index].src.forEach((e)=>{
-    counterparts.add(e.srcNode);
-  });
-  await writeComponentJson(projectRootDir, componentDir, componentJson);
-
-  const p = [];
-  for (const counterPartID of counterparts) {
-    const counterpartDir = await getComponentDir(projectRootDir, counterPartID, true);
-    const counterpartJson = await readComponentJson(counterpartDir);
-    for (const outputFile of counterpartJson.outputFiles) {
-      for (const dst of outputFile.dst) {
-        if (dst.dstNode === ID && dst.dstName === oldName) {
-          dst.dstName = newName;
-        }
-      }
-    }
-    if (counterpartJson.type !== "source") {
-      for (const inputFile of counterpartJson.inputFiles) {
-        if (!Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
-          for (const dst of inputFile.forwardTo) {
-            if (dst.dstNode === ID && dst.dstName === oldName) {
-              dst.dstName = newName;
-            }
-          }
-        }
-      }
-    }
-    p.push(writeComponentJson(projectRootDir, counterpartDir, counterpartJson));
-  }
-  return Promise.all(p);
-}
 async function renameOutputFile(projectRootDir, ID, index, newName) {
   if (!isValidOutputFilename(newName)) {
     return Promise.reject(new Error(`${newName} is not valid outputFile name`));
@@ -1646,12 +1545,8 @@ async function getComponentTree(projectRootDir, rootDir) {
 module.exports = {
   createNewProject,
   updateComponentPath,
-  removeComponentPath,
-  getDescendantsIDs,
-  getAllComponentIDs,
   getComponentDir,
   getComponentFullName,
-  getComponentRelativePath,
   setProjectState,
   getProjectState,
   checkRunningJobs,
@@ -1670,9 +1565,6 @@ module.exports = {
   updateComponent,
   addInputFile,
   addOutputFile,
-  removeInputFile,
-  removeOutputFile,
-  renameInputFile,
   renameOutputFile,
   addLink,
   addFileLink,
@@ -1687,6 +1579,5 @@ module.exports = {
   isComponentDir,
   getComponentTree,
   isLocal,
-  isSameRemoteHost,
-  writeComponentJsonByID
+  isSameRemoteHost
 };
