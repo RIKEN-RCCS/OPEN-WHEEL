@@ -27,11 +27,6 @@ function aboutWheel(projectRootDir) {
   logger.info(`WHEEL_ENABLE_WEB_API = ${process.env.WHEEL_ENABLE_WEB_API}`);
 }
 
-function getVersion() {
-  return version;
-}
-
 module.exports = {
-  aboutWheel,
-  getVersion
+  aboutWheel
 };
