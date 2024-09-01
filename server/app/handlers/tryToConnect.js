@@ -16,7 +16,7 @@ const { askPassword } = require("../core/sshManager.js");
  * @param {Hostinfo} hostInfo - target host
  * @param {Function} cb - call back function called with string "success" or "error"
  */
-async function tryToConnect(clientID, hostInfo, cb) {
+async function onTryToConnect(clientID, hostInfo, cb) {
   hostInfo.password = askPassword.bind(null, clientID, `${hostInfo.name} - password`);
   hostInfo.passphrase = askPassword.bind(null, clientID, `${hostInfo.name} - passpharse`);
   if (process.env.WHEEL_VERBOSE_SSH) {
@@ -40,10 +40,10 @@ async function tryToConnect(clientID, hostInfo, cb) {
 }
 async function onTryToConnectById(clientID, id, cb) {
   const hostInfo = remoteHost.get(id);
-  await tryToConnect(clientID, hostInfo, cb);
+  await onTryToConnect(clientID, hostInfo, cb);
 }
 
 module.exports = {
   onTryToConnectById,
-  onTryToConnect: tryToConnect
+  onTryToConnect
 };
