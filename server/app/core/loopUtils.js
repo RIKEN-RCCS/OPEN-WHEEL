@@ -64,15 +64,6 @@ function forTripCount(component) {
   const step = Math.abs(component.step);
   return Math.floor(length / step) + 1;
 }
-async function forKeepLoopInstance(component, cwfDir) {
-  if (!Number.isInteger(component.keep) || component.keep <= 0) {
-    return;
-  }
-  const deleteComponentInstance = component.currentIndex - (component.keep * component.step);
-  if (deleteComponentInstance >= 0) {
-    return fs.remove(path.resolve(cwfDir, getInstanceDirectoryName(component, deleteComponentInstance)));
-  }
-}
 function whileGetNextIndex(component) {
   return component.currentIndex !== null ? component.currentIndex + 1 : 0;
 }
@@ -87,15 +78,6 @@ async function whileIsFinished(cwfDir, projectRootDir, component, env) {
   env.WHEEL_CURRENT_INDEX = component.currentIndex || 0;
   const condition = await evalCondition(projectRootDir, component.condition, cwd, env);
   return !condition;
-}
-async function whileKeepLoopInstance(component, cwfDir) {
-  if (!Number.isInteger(component.keep) || component.keep <= 0) {
-    return;
-  }
-  const deleteComponentInstance = component.currentIndex - component.keep;
-  if (deleteComponentInstance >= 0) {
-    return fs.remove(path.resolve(cwfDir, getInstanceDirectoryName(component, deleteComponentInstance)));
-  }
 }
 function foreachGetNextIndex(component) {
   if (component.currentIndex === null) {
@@ -207,10 +189,8 @@ module.exports = {
   forGetNextIndex,
   forIsFinished,
   forTripCount,
-  forKeepLoopInstance,
   whileGetNextIndex,
   whileIsFinished,
-  whileKeepLoopInstance,
   foreachGetNextIndex,
   foreachGetPrevIndex,
   foreachIsFinished,
