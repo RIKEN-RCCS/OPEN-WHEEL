@@ -440,9 +440,6 @@ async function isInitialComponent(projectRootDir, component) {
 
   return true;
 }
-function isComponent(componentJson) {
-  return componentJson instanceof BaseWorkflowComponent;
-}
 
 /**
  * remove duplicated component from array
@@ -489,7 +486,6 @@ module.exports = {
   componentFactory,
   hasChild,
   isInitialComponent,
-  isComponent,
   isLocalComponent,
   removeDuplicatedComponent,
   getComponentDefaultName
