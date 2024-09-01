@@ -521,7 +521,7 @@ function cancel(task) {
  * remove all executer class instance from DB
  * @param {string} projectRootDir - project projectRootDir's absolute path
  */
-function removeAll(projectRootDir) {
+function removeExecuters(projectRootDir) {
   const keysToRemove = Array.from(executers.keys()).filter((key)=>{
     return key.startsWith(projectRootDir);
   });
@@ -533,5 +533,5 @@ function removeAll(projectRootDir) {
 module.exports = {
   register,
   cancel,
-  removeAll
+  removeExecuters
 };

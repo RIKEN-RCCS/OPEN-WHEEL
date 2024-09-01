@@ -53,7 +53,7 @@ async function register(hostinfo, task, direction, src, dst, opt) {
  * remove all transfer class instance from DB
  * @param {string} projectRootDir - project projectRootDir's absolute path
  */
-function removeAll(projectRootDir) {
+function removeTransferrers(projectRootDir) {
   const keysToRemove = Array.from(transferrers.keys()).filter((key)=>{
     return key.startsWith(projectRootDir);
   });
@@ -64,5 +64,5 @@ function removeAll(projectRootDir) {
 
 module.exports = {
   register,
-  removeAll
+  removeTransferrers
 };
