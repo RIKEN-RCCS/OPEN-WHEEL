@@ -28,6 +28,7 @@ RUN rm -fr server/app/config/*
 # run UT
 FROM base AS ut
 WORKDIR /usr/src/server
+RUN apt-get update && apt -y install python3 g++ build-essential
 RUN npm install cross-env\
     chai chai-as-promised chai-fs chai-iterator chai-json-schema deep-equal-in-any-order\
     mocha nyc rewire sinon sinon-chai
