@@ -6,7 +6,8 @@
 "use strict";
 const path = require("path");
 const { projectJsonFilename } = require("../db/db");
-const { importProject, readComponentJson } = require("../core/projectFilesOperator");
+const { importProject } = require("../core/projectFilesOperator");
+const { readComponentJson } = require("../core/componentJsonIO.js");
 
 module.exports = {
   get: async (req, res)=>{
