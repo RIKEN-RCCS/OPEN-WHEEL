@@ -531,6 +531,11 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import { propWidth } from "../lib/componentSizes.json";
 
+const isNormalObject = (target)=>{
+  const type = typeof target;
+  return type !== "undefined" && type !== "null";
+};
+
 const isZeroOrMore = (v)=>{
   return v >= 0 ? true : "0 or more value required";
 };
@@ -599,49 +604,49 @@ export default {
       return this.copySelectedComponent.host === "localhost";
     },
     hasHost() {
-      return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask", "storage"].includes(this.selectedComponent.type);
+      return isNormalObject(this.selectedComponent) && ["task", "stepjob", "bulkjobTask", "storage"].includes(this.selectedComponent.type);
     },
     hasJobScheduler() {
-      return typeof this.selectedComponent !== "undefined" && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
+      return isNormalObject(this.selectedComponent) && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
     },
     hasScript() {
-      return typeof this.selectedComponent !== "undefined" && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
+      return isNormalObject(this.selectedComponent) && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
     },
     hasCondition() {
-      return typeof this.selectedComponent !== "undefined" && ["if", "while"].includes(this.selectedComponent.type);
+      return isNormalObject(this.selectedComponent) && ["if", "while"].includes(this.selectedComponent.type);
     },
     hasRemote() {
-      return typeof this.selectedComponent !== "undefined" && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
+      return isNormalObject(this.selectedComponent) && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
     },
     isTask() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "task";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "task";
     },
     isFor() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "for";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "for";
     },
     isForeach() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "foreach";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "foreach";
     },
     isWhile() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "while";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "while";
     },
     isSource() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "source";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "source";
     },
     isViewer() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "viewer";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "viewer";
     },
     isPS() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "parameterStudy";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "parameterStudy";
     },
     isStepjobTask() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "stepjobTask";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "stepjobTask";
     },
     isBulkjobTask() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "bulkjobTask";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "bulkjobTask";
     },
     isStorage() {
-      return typeof this.selectedComponent !== "undefined" && this.selectedComponent.type === "storage";
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "storage";
     },
     excludeList() {
       if (!Array.isArray(this.copySelectedComponent.exclude)) {
