@@ -294,14 +294,30 @@ const psSettingFileSchema = {
         oneOf: [
           {
             type: "object",
-            required: ["min", "max", "step"],
+            required: ["keyword", "type", "min", "max", "step"],
             properties: {
+              type: { enum: ["min-max-step"] },
               min: { type: "number" },
               max: { type: "number" },
               step: { type: "number" }
             }
           },
-          { type: "array", items: { type: "string" } }
+          {
+            type: "object",
+            required: ["keyword", "type", "list"],
+            properties: {
+              type: { enum: ["list"] },
+              list: { type: "array", items: { type: "string" } }
+            }
+          },
+          {
+            type: "object",
+            required: ["keyword", "type", "files"],
+            properties: {
+              type: { enum: ["files"] },
+              files: { type: "array", items: { type: "string" } }
+            }
+          }
         ]
       }
     },

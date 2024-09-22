@@ -83,7 +83,7 @@ async function checkPSSettingFile(projectRootDir, component) {
   }
   if (validate !== null && Array.isArray(validate.errors)) {
     const err = new Error("parameter setting file does not have valid JSON data");
-    logger.trace(`validation error for ${component.name} (${component.ID}) :\n`, validate.errors);
+    logger.debug(`validation error for ${component.name} (${component.ID}) :\n`, validate.errors);
     err.errors = validate.errors;
     throw err;
   }
@@ -468,7 +468,7 @@ function isCycleGraph(projectRootDir, components, startComponent, results, cycle
     }
     if (results[component.ID] === "gray") {
       cyclePath.push(component.ID);
-      getLogger(projectRootDir).trace("cycle graph found!!", component.name, cyclePath);
+      getLogger(projectRootDir).debug("cycle graph found!!", component.name, cyclePath);
       return true;
     }
     const found = isCycleGraph(projectRootDir, components, component, results, cyclePath);
@@ -516,7 +516,7 @@ async function checkComponentDependency(projectRootDir, parentComponentID) {
   const rt = getCycleGraph(projectRootDir, children);
   if (rt.length > 0) {
     const cycleComponents = await Promise.all(rt.map(getComponentFullName.bind(null, projectRootDir)));
-    getLogger(projectRootDir).trace("cycle graph found \n", cycleComponents);
+    getLogger(projectRootDir).debug("cycle graph found \n", cycleComponents);
   }
   return rt;
 }
