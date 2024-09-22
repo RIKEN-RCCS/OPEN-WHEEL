@@ -57,9 +57,15 @@ function whileGetNextIndex(component) {
   return component.currentIndex !== null ? component.currentIndex + 1 : 0;
 }
 
-async function whileIsFinished(cwfDir, projectRootDir, component) {
+async function whileIsFinished(cwfDir, projectRootDir, component, env) {
   const cwd = path.resolve(cwfDir, component.name);
-  const condition = await evalCondition(projectRootDir, component.condition, cwd, component.currentIndex);
+  //work around
+  //when WHEEL_CURRENT_INDEX is not defined, some code regards as special case
+  //but whileIsFinished needs this value while evaluting condition definition script
+  //for first loop trip. so we add this prop here. this only used in evalCondition
+  //and never affect component.env and Dispatcher.env
+  env.WHEEL_CURRENT_INDEX=component.currentIndex || 0;
+  const condition = await evalCondition(projectRootDir, component.condition, cwd, env);
   return !condition;
 }
 
@@ -101,7 +107,7 @@ function loopInitialize(component, getTripCount) {
     component.env.WHEEL_FOR_START = component.start;
     component.env.WHEEL_FOR_END = component.end;
     component.env.WHEEL_FOR_STEP = component.step;
-  } else if (component.type.toLowerCase() === "while") {
+  } else if (component.type.toLowerCase() === "foreach") {
     component.env.WHEEL_FOREACH_LEN = component.numTotal;
   }
 }

@@ -11,7 +11,7 @@ const { EventEmitter } = require("events");
 const glob = require("glob");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { remoteHost, componentJsonFilename, filesJsonFilename } = require("../db/db");
+const { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename } = require("../db/db");
 const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString, writeJsonWrapper } = require("../lib/utility");
@@ -498,7 +498,7 @@ class Dispatcher extends EventEmitter {
         }
       });
     }
-    task.env = Object.assign(this.env, task.env);
+    task.env = Object.assign({}, this.env, task.env);
     task.parentType = this.cwfJson.type;
 
     exec(task); //exec is async function but dispatcher never wait end of task execution
@@ -514,8 +514,7 @@ class Dispatcher extends EventEmitter {
   async _checkIf(component) {
     this.logger.debug("_checkIf called", component.name);
     const childDir = path.resolve(this.cwfDir, component.name);
-    const currentIndex = Object.prototype.hasOwnProperty.call(this.cwfJson, "currentIndex") ? this.cwfJson.currentIndex : null;
-    const condition = await evalCondition(this.projectRootDir, component.condition, childDir, currentIndex);
+    const condition = await evalCondition(this.projectRootDir, component.condition, childDir, this.env);
     this.logger.debug("condition check result=", condition);
     await this._addNextComponent(component, !condition);
     await this._setComponentState(component, "finished");
@@ -593,7 +592,9 @@ class Dispatcher extends EventEmitter {
     component.currentIndex = getNextIndex(component);
 
     //end determination
-    if (await isFinished(component)) {
+
+    const envForWhileIsFinished =  Object.assign({},this.env,component.env);
+    if (await isFinished(component, envForWhileIsFinished )) {
       await this._loopFinalize(component, srcDir, keepLoopInstance);
       return Promise.resolve();
     }
@@ -604,6 +605,7 @@ class Dispatcher extends EventEmitter {
     const newComponent = structuredClone(component);
     newComponent.name = `${component.originalName}_${sanitizePath(component.currentIndex)}`;
     newComponent.subComponent = true;
+    newComponent.env = Object.assign({},this.env,component.env);
 
     if (!newComponent.env) {
       newComponent.env = {};
@@ -633,6 +635,9 @@ class Dispatcher extends EventEmitter {
 
           if (srcDir === target) {
             return true;
+          }
+          if( path.basename(target) === statusFilename ){
+            return false
           }
           const subComponent = await isSubComponent(target);
           return !subComponent;
@@ -778,6 +783,14 @@ class Dispatcher extends EventEmitter {
       const newComponentFilename = path.join(instanceRoot, componentJsonFilename);
       if (!await fs.pathExists(newComponentFilename)) {
         await writeComponentJson(this.projectRootDir, instanceRoot, newComponent,true);
+      }
+      if(!newComponent.env){
+        newComponent.env={}
+      }
+
+      for(const key in params){
+        const value=params[key]
+        newComponent.env[`WHEEL_PS_PARAM_${key}`]=value
       }
       const p = this._delegate(newComponent)
         .then(()=>{
