@@ -42,7 +42,7 @@ async function pspawn(projectRootDir, script, options) {
  * @param {number} currentIndex - innermost loop index (WHEEL_CURRENT_INDEX)
  * @returns {Promise} *
  */
-async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
+async function evalCondition(projectRootDir, condition, cwd, env) {
   //condition is always string for now. but keep following just in case
   if (typeof condition === "boolean") {
     return condition;
@@ -57,21 +57,18 @@ async function evalCondition(projectRootDir, condition, cwd, currentIndex) {
     await addX(script);
     const dir = path.dirname(script);
     const options = {
-      env: process.env,
+      env: Object.assign({},process.env, env),
       cwd: dir,
       shell: "bash"
     };
 
-    if (typeof currentIndex === "number") {
-      options.env.WHEEL_CURRENT_INDEX = currentIndex.toString();
-    }
     return pspawn(projectRootDir, script, options);
   }
   getLogger(projectRootDir).debug("evalute ", condition);
   let conditionExpression = "";
 
-  if (typeof currentIndex === "number") {
-    conditionExpression += `var WHEEL_CURRENT_INDEX=${currentIndex};`;
+  for(const [key,value] of Object.entries(env)){
+    conditionExpression += `let ${key}="${value}";\n`;
   }
   conditionExpression += condition;
   return eval(conditionExpression);
