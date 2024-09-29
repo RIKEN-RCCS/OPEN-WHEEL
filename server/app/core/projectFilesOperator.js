@@ -1437,7 +1437,9 @@ async function createNewComponent(projectRootDir, parentDir, type, pos) {
   await updateComponentPath(projectRootDir, newComponent.ID, absDirName);
 
   if (type === "PS") {
-    await writeJsonWrapper(path.resolve(absDirName, defaultPSconfigFilename), { version: 2, targetFiles: [], params: [], scatter: [], gather: [] });
+    const PSConfigFilename=path.resolve(absDirName, defaultPSconfigFilename)
+    await writeJsonWrapper(PSConfigFilename, { version: 2, targetFiles: [], params: [], scatter: [], gather: [] });
+    await gitAdd(projectRootDir, PSConfigFilename);
   }
   return newComponent;
 }

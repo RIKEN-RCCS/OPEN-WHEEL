@@ -122,7 +122,7 @@ async function deliverFile(src, dst, forceCopy = false) {
 async function deliverFileOnRemote(recipe) {
   const logger = getLogger(recipe.projectRootDir);
   if (!recipe.onRemote) {
-    logger.warn("deliverFileOnremote must be called with onRemote flag");
+    logger.warn("deliverFileOnRemote must be called with onRemote flag");
     return null;
   }
   const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
@@ -132,6 +132,20 @@ async function deliverFileOnRemote(recipe) {
   const rt = await ssh.exec(sshCmd, 0, logger.debug.bind(logger));
   if (rt !== 0) {
     logger.warn("deliver file on remote failed", rt);
+  }
+  return rt;
+}
+
+async function deliverFileFromRemote(recipe){
+  const logger = getLogger(recipe.projectRootDir);
+  if (!recipe.remoteToLocal) {
+    logger.warn("deliverFileFromRemote must be called with remoteToLocal flag");
+    return null;
+  }
+  const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
+  const rt = await ssh.recv([`${recipe.srcRoot}/${recipe.srcName}`], `${recipe.dstRoot}/${recipe.dstName}`)
+  if (rt !== 0) {
+    logger.warn("deliver file from remote failed", rt);
   }
   return rt;
 }
@@ -275,6 +289,7 @@ module.exports = {
   addX,
   deliverFile,
   deliverFileOnRemote,
+  deliverFileFromRemote,
   openFile,
   saveFile,
   getUnusedPath

@@ -16,7 +16,7 @@ const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString, writeJsonWrapper } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
-const { readJsonGreedy, deliverFile, deliverFileOnRemote } = require("./fileUtils");
+const { readJsonGreedy, deliverFile, deliverFileOnRemote,deliverFileFromRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
 const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
 const { writeComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
@@ -1052,32 +1052,28 @@ class Dispatcher extends EventEmitter {
 
       //resolve real src
       for (const src of inputFile.src) {
+        const srcComponent = await this._getComponent(src.srcNode);
         //get files from upper level
         if (src.srcNode === component.parent) {
-          promises.push(
-            this._getComponent(src.srcNode)
-              .then((srcComponent)=>{
-                const srcEntry = srcComponent.inputFiles.find((i)=>{
-                  if (!(i.name === src.srcName && Object.prototype.hasOwnProperty.call(i, "forwardTo"))) {
-                    return false;
-                  }
-                  const result = i.forwardTo.findIndex((e)=>{
-                    return e.dstNode === component.ID && e.dstName === inputFile.name;
-                  });
-                  return result !== -1;
-                });
-                if (typeof srcEntry === "undefined") {
-                  return;
-                }
-                for (const e of srcEntry.src) {
-                  const originalSrcRoot = this._getComponentDir(e.srcNode);
-                  const srcName= nunjucks.renderString( e.srcName, this.env);
-                  deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false });
-                }
-              })
-          );
+          const dstRoot = this._getComponentDir(component.ID);
+          const srcEntry = srcComponent.inputFiles.find((i)=>{
+            if (!(i.name === src.srcName && Object.prototype.hasOwnProperty.call(i, "forwardTo"))) {
+              return false;
+            }
+            const result = i.forwardTo.findIndex((e)=>{
+              return e.dstNode === component.ID && e.dstName === inputFile.name;
+            });
+            return result !== -1;
+          });
+          if (typeof srcEntry === "undefined") {
+            continue;
+          }
+          for (const e of srcEntry.src) {
+            const originalSrcRoot = this._getComponentDir(e.srcNode);
+            const srcName= nunjucks.renderString( e.srcName, this.env);
+            deliverRecipes.add({dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false });
+          }
         } else if (await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID)) {
-          const srcComponent = await this._getComponent(src.srcNode);
           const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
           const remotehostID = remoteHost.getID("name", component.host);
 
@@ -1086,7 +1082,21 @@ class Dispatcher extends EventEmitter {
           const srcName= nunjucks.renderString( src.srcName, this.env);
           const forceCopy = srcComponent.type === "storage"
           deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy});
+        } else if(Object.prototype.hasOwnProperty.call(srcComponent, "host") && srcComponent.host !== "localhost" && srcComponent.type !== "task"){
+          //memo taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼れば良い
+          //将来的には、taskコンポーネントのファイルもrsyncで直接後続コンポーネントから取得するように変更し
+          //outputFileのダウンロードは無くしたい
+          //memo2: ここの判定ルーチンはworkdlowComponent内で関数として定義されているべき(というかあったはず)
+          const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
+
+          const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component)
+          const dstRoot = component.type === "storage" ? component.storagePath : this._getComponentDir(component.ID);
+          const srcName= nunjucks.renderString( src.srcName, this.env);
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, remoteToLocal: true, projectRootDir: this.projectRootDir, remotehostID:srcRemotehostID});
         } else {
+          //deliver files under component directory even if destination component is storage
+          //in storageHandler, files under component directory will be copied to storagePath (avoid to store symlink in storagePath)
+          const dstRoot = this._getComponentDir(component.ID);
           promises.push(
             this._getComponent(src.srcNode)
               .then((srcComponent)=>{
@@ -1101,13 +1111,13 @@ class Dispatcher extends EventEmitter {
                   for (const e of srcEntry.origin) {
                     const srcName= nunjucks.renderString( e.srcName, this.env);
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false});
+                    deliverRecipes.add({dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false});
                   }
                 } else {
                   const srcName= nunjucks.renderString( src.srcName, this.env);
                   const forceCopy = srcComponent.type === "storage"
                   const srcRoot=srcComponent.type!== "storage"? this._getComponentDir(src.srcNode):srcComponent.storagePath
-                  deliverRecipes.add({ dstName, srcRoot, srcName, forceCopy});
+                  deliverRecipes.add({dstRoot, dstName, srcRoot, srcName, forceCopy});
                 }
               })
           );
@@ -1117,11 +1127,12 @@ class Dispatcher extends EventEmitter {
     await Promise.all(promises);
 
     //actual deliver file process
-    const dstRoot = this._getComponentDir(component.ID);
     const p2 = [];
     for (const recipe of deliverRecipes) {
       if (recipe.onRemote) {
         p2.push(deliverFileOnRemote(recipe));
+      }else if(recipe.remoteToLocal){
+        p2.push(deliverFileFromRemote(recipe));
       } else {
         const srces = await promisify(glob)(recipe.srcName, { cwd: recipe.srcRoot });
         const hasGlob = glob.hasMagic(recipe.srcName);
@@ -1131,7 +1142,7 @@ class Dispatcher extends EventEmitter {
             continue;
           }
           const oldPath = path.resolve(recipe.srcRoot, srcFile);
-          let newPath = path.resolve(dstRoot, recipe.dstName);
+          let newPath = path.resolve(recipe.dstRoot, recipe.dstName);
 
           //dst is regard as directory if srcName has glob pattern or dstName ends with path separator
           //if newPath is existing Directory, src will also be copied under newPath directory
