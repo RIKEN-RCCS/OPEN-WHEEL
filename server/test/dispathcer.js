@@ -6,6 +6,7 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
+const SshClientWrapper = require("ssh-client-wrapper");
 
 //setup test framework
 const chai = require("chai");
@@ -34,6 +35,9 @@ const wait = ()=>{
     setTimeout(resolve, 10);
   });
 };
+
+const { remoteHost } = require("../app/db/db");
+const { addSsh } = require("../app/core/sshManager");
 
 describe("UT for Dispatcher class", function() {
   this.timeout(0);
@@ -125,6 +129,55 @@ describe("UT for Dispatcher class", function() {
       expect(path.resolve(projectRootDir, storage.name, "a")).not.to.be.a.path();
       expect(path.resolve(projectRootDir, storage.name, "b")).not.to.be.a.path();
       expect(path.resolve(storageArea, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
+    });
+    describe("run on remote host", ()=>{
+      let ssh;
+      const remotehostName = process.env.WHEEL_TEST_REMOTEHOST;
+      const password = process.env.WHEEL_TEST_REMOTE_PASSWORD;
+      before(async function() {
+        if (!remotehostName) {
+          console.log("remote exec test will be skipped because WHEEL_TEST_REMOTEHOST is not set");
+          this.skip();
+        }
+
+        if (!password) {
+          console.log("remote exec test will be done without password because WHEEL_TEST_REMOTE_PASSWORD is not set");
+        }
+        const hostInfo = remoteHost.query("name", remotehostName);
+        hostInfo.password = password;
+        ssh = new SshClientWrapper(hostInfo);
+
+        try {
+          const rt = await ssh.canConnect();
+
+          if (!rt) {
+            throw new Error("canConnect failed");
+          }
+          addSsh(projectRootDir, hostInfo, ssh);
+        } catch (e) {
+          console.log(`ssh connection failed to ${remotehostName} due to "${e}" so remote exec test is skipped`);
+          this.skip();
+        } finally {
+          await ssh.disconnect();
+        }
+      });
+      describe("[reproduction test] subsequent component can get inputFile from remote storage component", ()=>{
+        before(async ()=>{
+          await updateComponent(projectRootDir, storage.ID, "host", remotehostName);
+          await addOutputFile(projectRootDir, storage.ID, "a");
+          await addInputFile(projectRootDir, next.ID, "b");
+          await addFileLink(projectRootDir, storage.ID, "a", next.ID, "b");
+          await fs.outputFile(path.join(storageArea, "a"), "hoge");
+        });
+        it("should deliver file as real file", async()=>{
+          const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+          expect(await DP.start()).to.be.equal("finished");
+          expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
+          expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(storageArea, "a"));
+          const stats=await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
+          expect(stats.isSymbolicLink()).to.be.false;
+        });
+      });
     });
   });
   describe("#For component", ()=>{
@@ -353,6 +406,7 @@ describe("UT for Dispatcher class", function() {
       expect(path.resolve(projectRootDir, `${while0.name}_2`)).not.to.be.a.path();
     });
   });
+
   describe("[reproduction test] root workflow has only source and connected for loop", ()=>{
     let task0;
     let for0;
