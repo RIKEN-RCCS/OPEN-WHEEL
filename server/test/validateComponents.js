@@ -455,7 +455,7 @@ describe("validation component UT", function () {
           { targetName: "foo" }
         ],
         params: [
-          { min: 0, max: 4, step: 1 }
+          { keyword: "foo", type: "min-max-step", min: 0, max: 4, step: 1 }
         ]
       };
 

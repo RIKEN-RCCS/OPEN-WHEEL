@@ -78,14 +78,14 @@ async function checkPSSettingFile(projectRootDir, component) {
     validate(PSSetting);
   } catch (e) {
     if (e.message.startsWith("Unexpected token")) {
-      throw new Error(`parameter setting file is not JSON file ${filename}`);
+      return Promise.reject(new Error(`parameter setting file is not JSON file ${filename}`));
     }
   }
   if (validate !== null && Array.isArray(validate.errors)) {
     const err = new Error("parameter setting file does not have valid JSON data");
     logger.debug(`validation error for ${component.name} (${component.ID}) :\n`, validate.errors);
     err.errors = validate.errors;
-    throw err;
+    return Promise.reject(err);
   }
   return true;
 }
@@ -335,6 +335,9 @@ async function validateOutputFiles(component) {
  * @param {string} projectRootDir - project root directory path
  * @param {Object } component - target component
  * @return {string} - error message
+ *
+ * please note, all functions which is called from validateComponent, must return Promise.reject
+ * if validation error detected. Do NOT throw exception if error is not unexpected one.
  */
 async function validateComponent(projectRootDir, component) {
   const errorMessages = [];
