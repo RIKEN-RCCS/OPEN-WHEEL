@@ -144,6 +144,7 @@ describe("UT for Dispatcher class", function () {
         }
         const hostInfo = remoteHost.query("name", remotehostName);
         hostInfo.password = password;
+        hostInfo.noStrictHostKeyChecking = true;
         ssh = new SshClientWrapper(hostInfo);
 
         try {
@@ -160,19 +161,26 @@ describe("UT for Dispatcher class", function () {
           await ssh.disconnect();
         }
       });
+      after(async ()=>{
+        if (ssh) {
+          await ssh.disconnect();
+        }
+      });
       describe("[reproduction test] subsequent component can get inputFile from remote storage component", ()=>{
-        before(async ()=>{
+        const remoteStorageArea = `/tmp/${storageArea}`;
+        beforeEach(async ()=>{
           await updateComponent(projectRootDir, storage.ID, "host", remotehostName);
+          await updateComponent(projectRootDir, storage.ID, "storagePath", remoteStorageArea);
           await addOutputFile(projectRootDir, storage.ID, "a");
           await addInputFile(projectRootDir, next.ID, "b");
           await addFileLink(projectRootDir, storage.ID, "a", next.ID, "b");
-          await fs.outputFile(path.join(storageArea, "a"), "hoge");
+          await ssh.exec(`mkdir -p ${remoteStorageArea} && echo hoge > ${remoteStorageArea}/a`);
         });
         it("should deliver file as real file", async ()=>{
           const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
           expect(await DP.start()).to.be.equal("finished");
           expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
-          expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(storageArea, "a"));
+          expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file();
           const stats = await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
           expect(stats.isSymbolicLink()).to.be.false;
         });

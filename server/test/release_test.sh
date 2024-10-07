@@ -2,14 +2,10 @@
 TEST_DIR=$(cd $(dirname $0);pwd)
 pushd ${TEST_DIR}
 
-TAG=wheel_release_test
+TAG=wheel_release_test #set this image name in compose.yml
 TAG_TEST_SERVER=wheel_release_test_server
 
-#clean up containers just in case
-docker stop ${TAG} 2>/dev/null
-docker stop ${TAG_TEST_SERVER} 2>/dev/null
-docker rm ${TAG} 2>/dev/null
-
+#
 # crate config files
 #
 CONFIG_DIR=$(mktemp -d tmp.XXXXXXXXXX)
@@ -41,18 +37,18 @@ docker compose up ${TAG_TEST_SERVER} -d
 echo remove entry from known_hosts
 ssh-keygen -R 'wheel_release_test_server'
 
-docker compose run --build --rm ${TAG}
+docker compose run --rm --build ${TAG}
 rt=$?
 
-docker compose down
+CONTAINER_NAME=$(docker ps -a --filter "ancestor=${TAG}" --format "{{.Names}}")
 
 #get log files from container
 if [ x$1 == x-c ];then
   LOG_DIR=$(dirname ${TEST_DIR})/$(date "+%Y%m%d-%H%M")
   mkdir $LOG_DIR
-  docker cp ${TAG}:/usr/src/server/coverage $LOG_DIR
+  docker cp ${CONTAINER_NAME}:/usr/src/server/coverage $LOG_DIR
 fi
 
+docker compose down
 rm -fr ${CONFIG_DIR}
-
 exit ${rt}
