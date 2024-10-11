@@ -30,6 +30,7 @@
     "vue-router": "^4.0.0",
     "vuetify": "^3.3.7",
     "vuex": "^4.0.0",
-    "xterm": "^5.1.0"
+    "xterm": "^5.1.0",
+    "xterm-addon-fit": "^0.7.0"
   }
 }

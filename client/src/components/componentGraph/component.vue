@@ -55,14 +55,14 @@
       :start=senderPos
       :elsePlug=false
       :component-id=componentData.ID
-      :key=senderKey
+      :key="`sender-${componentData.ID}`"
       v-if=canHaveLink
     />
     <sender
       :start=elseSenderPos
       :elsePlug=true
       :component-id=componentData.ID
-      :key=elseSenderKey
+      :key="`elseSender-${componentData.ID}`"
       v-if='componentData.type === "if"'
     />
   </g>
@@ -71,11 +71,11 @@
 <script>
 "use strict";
 import { mapActions } from "vuex";
-import ComponentHeader from "../../components/componentGraph/componentHeader.vue";
-import InputOutputFileBox from "../../components/componentGraph/inputOutputFileBox.vue";
-import SubGraph from "../../components/componentGraph/subgraph.vue";
-import Sender from "../../components/componentGraph/sender.vue";
-import Reciever from "../../components/componentGraph/reciever.vue";
+import ComponentHeader from "./componentHeader.vue";
+import InputOutputFileBox from "./inputOutputFileBox.vue";
+import SubGraph from "./subgraph.vue";
+import Sender from "./sender.vue";
+import Reciever from "./reciever.vue";
 import { boxWidth, textHeight, borderWidth } from "../../lib/constants.json";
 import { calcRecieverPos, calcNumIOFiles, calcBoxHeight, calcSenderPos, calcElseSenderPos } from "../../lib/utils.js";
 
@@ -118,8 +118,6 @@ export default {
   },
   data() {
     return {
-      senderKey: -1,
-      elseSenderKey: -2,
       startX: null,
       startY: null,
       oldcenter: { x: null, y: null },
@@ -156,11 +154,10 @@ export default {
       return rt;
     },
     senderPos() {
-      this.senderKey -= 2;
+      //caclSenderPosは呼ばれているが、それに対してsenderのstart,endともに変更されていないっぽ
       return calcSenderPos(this.componentData);
     },
     elseSenderPos() {
-      this.elseSenderKey -= 2;
       return calcElseSenderPos(this.componentData);
     },
     recieverPos() {
