@@ -1081,7 +1081,16 @@ class Dispatcher extends EventEmitter {
           const dstRoot = component.type === "storage" ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const srcName= nunjucks.renderString( src.srcName, this.env);
           const forceCopy = srcComponent.type === "storage"
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy});
+
+          if( !srcRoot.startsWith("/") ){
+            //if srcRoot does not start with '/' it means the host does not have path setting
+            //we asume dst component also does not have path setting but in case of useing share host
+            //it coulud be a wrong assumption
+            const relativePathFromDstToSrc=path.relative(`/${dstRoot}`, `/${srcRoot}`);
+            deliverRecipes.add({ dstRoot, dstName, srcRoot:relativePathFromDstToSrc, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy});
+          }else{
+            deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy});
+          }
         } else if(Object.prototype.hasOwnProperty.call(srcComponent, "host") && srcComponent.host !== "localhost" && srcComponent.type !== "task"){
           //memo taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼れば良い
           //将来的には、taskコンポーネントのファイルもrsyncで直接後続コンポーネントから取得するように変更し

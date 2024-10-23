@@ -1,4 +1,5 @@
-version: "3"
+volumes:
+  work_around:
 services:
   service_jekyll:
     image: "jekyll/jekyll:latest"
@@ -7,6 +8,7 @@ services:
       - JEKYLL_GID=${GID}
     volumes:
       - .:/srv/jekyll/
+      - work_around:/srv/jekyll/_tutorial/3_application_tutorial/4_OpenFOAM_jupyter/sample/OpenFOAM_jupyter.wheel
     command: >
       bash -c "gem install webrick &&
       gem install jekyll-remote-theme &&
