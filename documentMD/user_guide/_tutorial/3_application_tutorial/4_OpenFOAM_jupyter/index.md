@@ -176,8 +176,9 @@ df.plot(x="y")
 
 
 
-## 富岳で本チュートリアルを実行する
-本チュートリアルで使用したプロジェクトは、多少の修正を行なうことでスパコンサイト等別の環境で計算を行なうこともできます。
+## 富岳でOpenFOAMの計算を実行する
+本チュートリアルで使用したプロジェクトは、多少の修正を行なうことでスパコンサイトなど、別の環境で計算を行なうこともできます。
+本項では、富岳にインストールされているOpenFOAMを用いて計算するための修正方法を説明します。
 
 はじめに、remotehost 設定画面に移り新しく富岳へアクセスするためのリモートホスト設定を作成します。
 
@@ -196,17 +197,54 @@ labelは任意の値を指定し、Hostname, Port number, UserIDはそれぞれs
 - post
 
 
-次に、storage0コンポーネントのdirectory pathを次の値に変更してください
+次に、富岳上でのOpenFOAMのインストールパスを調べるため、sshでフロントエンドへログインするか
+OpenOnDemandのFugaku shell accessを開いてください。
+
+ターミナル上で次の2つのコマンドを続けて実行しspack環境にインストールされているopenfoamを探します。
 
 ```
-/vol0004/apps/oss/spack-v0.21/opt/spack/linux-rhel8-cascadelake/gcc-13.2.0/openfoam-2312-h2ulkjyq62zrp3afoyeitj6ko4ovs77g/tutorials/incompressible/icoFoam/cavity/
+> . /vol0004/apps/oss/spack/share/spack/setup-env.sh
+> spack find openfoam
+```
+2024年10月の時点では、次のような結果が得られます。
+
+```
+-- linux-rhel8-a64fx / fj@4.10.0 --------------------------------
+openfoam@2012  openfoam@2106  openfoam@2112  openfoam@2206  openfoam@2212  openfoam@2306  openfoam@2312
+-- linux-rhel8-cascadelake / gcc@13.2.0 -------------------------
+openfoam@2306  openfoam@2312
+-- linux-rhel8-skylake_avx512 / gcc@8.5.0 -----------------------
+openfoam@2012  openfoam@2106  openfoam@2112  openfoam@2206  openfoam@2212
+==> 14 installed packages
 ```
 
-最後に、環境変数エディタを開いて `OPENFOAM_BASHRC` を次の値に変更してください。
+まずstorage0コンポーネントのdirectory pathの値を フロントエンドにインストールされたOpenFOAMのチュートリアルデータの
+パスに置換える必要があるので、cascadelake用のopenfoamをロードして、環境変数 `${WH_PROJECT_DIR}` を調べます。
+次のコマンドを続けて実行してください。
 
 ```
-/vol0004/apps/oss/spack-v0.21/opt/spack/linux-rhel8-a64fx/fj-4.10.0/openfoam-2312-cyarempgd42uk3ll7m5ygjq4c4o7oows/etc/bashrc
+> spack load openfoam@2312%gcc@13.2.0
+> echo $WM_PROJECT_DIR
+/vol0004/apps/oss/spack-v0.21/opt/spack/linux-rhel8-cascadelake/gcc-13.2.0/openfoam-2312-h2ulkjyq62zrp3afoyeitj6ko4ovs77g
 ```
+
+echoコマンドの後で出力されたファイルパスに、 `tutorials/incompressible/icoFoam/cavity/` をつなげてstorage0コンポーネントの directory path
+に設定してください。
+
+また、WHEELのプロジェクト内で環境変数 `OPENFOAM_BASHRC` にOpenFOAM実行時に読み込む設定ファイルのパスを指定しています。
+これを、計算ノード上でのパスに変更する必要があるので同じターミナル上で今度はa64fx用のOpenFOAMをロードして環境変数 `${WH_PROJECT_DIR}` を調べます。
+次のコマンドを続けて実行してください。
+
+
+```
+> spack unload openfoam@2312%gcc@13.2.0
+> spack load openfoam@2312%fj@4.10.0
+> echo $WM_PROJECT_DIR
+/vol0004/apps/oss/spack-v0.21/opt/spack/linux-rhel8-a64fx/fj-4.10.0/openfoam-2312-cyarempgd42uk3ll7m5ygjq4c4o7oows
+```
+
+環境変数エディタを開いて `OPENFOAM_BASHRC` を
+echoコマンドの後で出力されたファイルパスに `etc/bashrc` をつなげてものに変更してください。
 
 
 ## 本チュートリアルで利用したjupyterlabコンテナについて
