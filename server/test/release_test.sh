@@ -8,8 +8,8 @@ TAG_TEST_SERVER=wheel_release_test_server
 #
 # crate config files
 #
-CONFIG_DIR=$(mktemp -d tmp.XXXXXXXXXX)
-export CONFIG_DIR
+WHEEL_CONFIG_DIR=$(mktemp -d tmp.XXXXXXXXXX)
+export WHEEL_CONFIG_DIR
 
 {
 echo '[{'
@@ -28,7 +28,7 @@ echo '  "statusCheckInterval": 10,'
 echo '  "maxStatusCheckError": 10,'
 echo '  "readyTimeout": 5000'
 echo '}]'
-} > ${CONFIG_DIR}/remotehost.json
+} > ${WHEEL_CONFIG_DIR}/remotehost.json
 
 
 echo boot up test server
@@ -37,7 +37,11 @@ docker compose up ${TAG_TEST_SERVER} -d
 echo remove entry from known_hosts
 ssh-keygen -R 'wheel_release_test_server'
 
-docker compose run --rm --build ${TAG}
+if [ x$1 == x-d ];then
+  export WHEEL_KEEP_FILES_AFTER_LAST_TEST=1
+fi
+
+docker compose run -e WHEEL_KEEP_FILES_AFTER_LAST_TEST --build ${TAG}
 rt=$?
 
 CONTAINER_NAME=$(docker ps -a --filter "ancestor=${TAG}" --format "{{.Names}}")
@@ -49,6 +53,11 @@ if [ x$1 == x-c ];then
   docker cp ${CONTAINER_NAME}:/usr/src/server/coverage $LOG_DIR
 fi
 
+if [ -n ${WHEEL_KEEP_FILES_AFTER_LAST_TEST} ];then
+  echo copy files after last test to ${TEST_DIR}
+  docker cp ${CONTAINER_NAME}:/usr/src/server/WHEEL_TEST_TMP ${TEST_DIR}/
+fi
+
 docker compose down
-rm -fr ${CONFIG_DIR}
+rm -fr ${WHEEL_CONFIG_DIR}
 exit ${rt}
