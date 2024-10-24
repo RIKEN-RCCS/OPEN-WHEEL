@@ -61,7 +61,7 @@
     "socketio-file-upload": "^0.7.3",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "ssh-client-wrapper": "^2.10.0",
+    "ssh-client-wrapper": "^2.10.2",
     "stat-mode": "^1.0.0",
     "through2": "^4.0.2",
     "uuid": "^9.0.0",
