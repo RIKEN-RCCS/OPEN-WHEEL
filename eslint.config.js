@@ -1,29 +1,139 @@
 "use strict";
 import js from "@eslint/js";
 import globals from "globals";
+import stylistic from "@stylistic/eslint-plugin";
 import jsdoc from "eslint-plugin-jsdoc";
 import node from "eslint-plugin-node";
-import chaiFriendly from "eslint-plugin-chai-friendly"
-import vue from "eslint-plugin-vue"
-import vuetify from "eslint-plugin-vuetify"
-import vueParser from "vue-eslint-parser"
+import chaiFriendly from "eslint-plugin-chai-friendly";
+import vue from "eslint-plugin-vue";
+import vuetify from "eslint-plugin-vuetify";
+import vueParser from "vue-eslint-parser";
+
+const jsdocRules = {
+  "jsdoc/require-hyphen-before-param-description": [
+    "warn",
+    "always"
+  ],
+  "jsdoc/require-param-description": "warn",
+  "jsdoc/require-param-name": "warn",
+  "jsdoc/require-param-type": "warn",
+  "jsdoc/require-jsdoc": "off",
+  "jsdoc/require-param": "off",
+  "jsdoc/require-returns": "off"
+};
+
+const styleRules = {
+  "@stylistic/arrow-spacing": [
+    "error",
+    {
+      after: false,
+      before: false
+    }],
+  "@stylistic/comma-dangle": [
+    "error",
+    "never"
+  ],
+  "@stylistic/spaced-comment": [
+    "error",
+    "never"
+  ],
+  "@stylistic/lines-around-comment": [
+    "error",
+    {
+      beforeBlockComment: true,
+      afterBlockComment: false,
+      beforeLineComment: false,
+      afterLineComment: false,
+      allowBlockStart: true
+    }
+  ],
+  "@stylistic/lines-between-class-members": [
+    "error",
+    "always",
+    {
+      exceptAfterSingleLine: true
+    }
+  ],
+  "@stylistic/newline-per-chained-call": [
+    "error",
+    {
+      ignoreChainWithDepth: 2
+    }
+  ],
+  "@stylistic/padded-blocks": [
+    "error",
+    "never"
+  ],
+  "@stylistic/brace-style": [
+    "error",
+    "1tbs",
+    {
+      allowSingleLine: true
+    }
+  ],
+  "@stylistic/padding-line-between-statements": [
+    "error",
+    {
+      blankLine: "any",
+      prev: [
+        "const",
+        "let",
+        "var"
+      ],
+      next: "*"
+    },
+    {
+      blankLine: "always",
+      prev: "*",
+      next: [
+        "class",
+        "do",
+        "for",
+        "function",
+        "switch",
+        "try",
+        "while"
+      ]
+    },
+    {
+      blankLine: "any",
+      prev: [
+        "const",
+        "let",
+        "var",
+        "for",
+        "while",
+        "do",
+        "block-like",
+        "multiline-block-like"
+      ],
+      next: [
+        "block-like",
+        "do",
+        "for",
+        "multiline-block-like",
+        "switch",
+        "try",
+        "while"
+      ]
+    }
+  ]
+};
 
 export default [
   js.configs.recommended,
+  stylistic.configs["disable-legacy"],
+  stylistic.configs.customize({
+    indent: 2,
+    quotes: "double",
+    semi: true,
+    arrowParens: true
+  }),
   {
-    ignores : ["./**/node_modules/", "server/app/public/*"],
+    ignores: ["node_modules/", "server/app/public/", "test/", "documentMD/"]
   },
   {
-    files:["server/**/*.js"],
-    languageOptions: {
-      globals: {
-        ...globals.nodeBuiltin,
-        ...globals.node
-      }
-    }
-  },
-  {
-    files:["client/**/*.js", "client/**/*.vue"],
+    files: ["client/**/*.js", "client/**/*.vue"],
     languageOptions: {
       globals: {
         ...globals.browser
@@ -31,215 +141,97 @@ export default [
     }
   },
   {
-    files:["test/**/*.js"],
-    plugins:{
+    files: ["client/src/**/*.vue"],
+    languageOptions: {
+      parser: vueParser
+    },
+    plugins: {
+      vue,
+      vuetify
+    }
+  },
+  {
+    files: ["server/app/**/*.js", "server/bin/*.js"],
+    plugins: {
+      node
+    },
+    languageOptions: {
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node
+      },
+      sourceType: "commonjs"
+    },
+    rules: {
+      ...jsdocRules,
+      "node/exports-style": [
+        "error",
+        "module.exports"
+      ]
+    }
+  },
+  {
+    files: ["server/test/**/*.js"],
+    plugins: {
       node,
       chaiFriendly
     },
     languageOptions: {
+      sourceType: "commonjs",
       globals: {
-        ...globals.browser,
-        ...globals.commonjs,
-        ...globals.chai,
-        ...globals.mocha,
-        cy: false,
-        Cypress:false,
-        expect:false
+        ...globals.nodeBuiltin,
+        ...globals.node,
+        it: "readonly",
+        describe: "readonly",
+        before: "readonly",
+        after: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly"
       }
     }
   },
   {
-    files:["**/*.js", "**/*.vue"],
-    plugins:{
-      jsdoc,
+    files: ["*.js", "**/*.js", "**/*.vue"],
+    plugins: {
+      "@stylistic": stylistic,
+      jsdoc
     },
     linterOptions: {
       reportUnusedDisableDirectives: true
     },
     rules: {
-      "jsdoc/require-hyphen-before-param-description": [
-        "warn",
-        "always"
-      ],
-      "jsdoc/require-param-description": "warn",
-      "jsdoc/require-param-name": "warn",
-      "jsdoc/require-param-type": "warn",
-      "jsdoc/require-jsdoc": "off",
-      "jsdoc/require-param": "off",
-      "jsdoc/require-returns": "off",
+      ...jsdocRules,
+      ...styleRules,
       "no-nested-ternary": "off",
       "no-param-reassign": "warn",
-      "arrow-parens": [
-        "error",
-        "always"
-      ],
-      "arrow-body-style": [
-        "error",
-        "always"
-      ],
-      "arrow-spacing": [
-        "error",
-        {
-          "before": false,
-          "after": false
-        }
-      ],
       "camelcase": [
         "error",
         {
-          "properties": "never"
+          properties: "never"
         }
       ],
       "eqeqeq": [
         "error",
         "always",
         {
-          "null": "ignore"
+          null: "ignore"
         }
       ],
       "func-style": [
         "error",
         "declaration",
         {
-          "allowArrowFunctions": true
+          allowArrowFunctions: true
         }
       ],
-      "indent": [
-        "error",
-        2,
-        {
-          "SwitchCase": 1
-        }
-      ],
-      "lines-around-comment": [
-        "error",
-        {
-          "beforeBlockComment": true,
-          "beforeLineComment": false
-        }
-      ],
-      "lines-between-class-members": [
-        "error",
-        "always",
-        {
-          "exceptAfterSingleLine": true
-        }
-      ],
-      "newline-per-chained-call": "error",
       "no-use-before-define": [
         "error",
         {
-          "functions": false
+          functions: false
         }
       ],
       "no-warning-comments": "warn",
-      "padded-blocks": [
-        "error",
-        "never"
-      ],
-      "padding-line-between-statements": [
-        "error",
-        {
-          "blankLine": "any",
-          "prev": [
-            "const",
-            "let",
-            "var"
-          ],
-          "next": "*"
-        },
-        {
-          "blankLine": "always",
-          "prev": "*",
-          "next": [
-            "block-like",
-            "class",
-            "do",
-            "for",
-            "function",
-            "multiline-block-like",
-            "switch",
-            "try",
-            "while"
-          ]
-        },
-        {
-          "blankLine": "any",
-          "prev": [
-            "const",
-            "let",
-            "var",
-            "for",
-            "while",
-            "do",
-            "block-like",
-            "multiline-block-like"
-          ],
-          "next": [
-            "block-like",
-            "do",
-            "for",
-            "multiline-block-like",
-            "switch",
-            "try",
-            "while"
-          ]
-        }
-      ],
-      "spaced-comment": [
-        "error",
-        "never"
-      ],
-      "require-unicode-regexp": "off",
-      quotes: ["error", "double"]
-    },
-  },
-  {
-    files:["server/app/**/*.js"],
-    plugins:{
-      node
-    },
-    rules:{
-      "jsdoc/require-hyphen-before-param-description": [
-        "warn",
-        "always"
-      ],
-      "jsdoc/require-param-description": "warn",
-      "jsdoc/require-param-name": "warn",
-      "jsdoc/require-param-type": "warn",
-      "jsdoc/require-jsdoc": "off",
-      "jsdoc/require-param": "off",
-      "jsdoc/require-returns": "off",
-      "node/exports-style": [
-        "error",
-        "module.exports"
-      ],
-    },
-    languageOptions:{
-      sourceType: "commonjs"
-    },
-  },
-  {
-    files:["server/test/**/*.js"],
-    plugins:{
-      node,
-      chaiFriendly
-    },
-    languageOptions:{
-      sourceType: "commonjs",
-      globals:{
-        ...globals.mocha,
-      },
-    },
-  },
-  {
-    files:["client/src/**/*.vue"],
-    languageOptions:{
-      parser: vueParser
-    },
-    plugins:{
-      vue,
-      vuetify
+      "require-unicode-regexp": "off"
     }
   }
-]
+];
