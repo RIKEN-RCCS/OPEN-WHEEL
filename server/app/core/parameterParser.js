@@ -176,9 +176,9 @@ function removeInvalidv1(paramSpace) {
 
 function removeInvalidv2(paramSpace) {
   return paramSpace.filter((e)=>{
-    if (Object.prototype.hasOwnProperty.call(e, "min") &&
-      Object.prototype.hasOwnProperty.call(e, "max") &&
-      Object.prototype.hasOwnProperty.call(e, "step")) {
+    if (Object.prototype.hasOwnProperty.call(e, "min")
+      && Object.prototype.hasOwnProperty.call(e, "max")
+      && Object.prototype.hasOwnProperty.call(e, "step")) {
       return isValidParamAxis(e.min, e.max, e.step);
     }
     if (Array.isArray(e.list)) {
@@ -201,7 +201,6 @@ async function getParamSpacev2(paramSpace, cwd) {
   }
   return cleanParamSpace;
 }
-
 
 //workAroundForVersion1 is used in UT
 module.exports = {

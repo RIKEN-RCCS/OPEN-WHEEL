@@ -181,33 +181,32 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   if (process.env.WHEEL_VERBOSE_SSH) {
     hostinfo.sshOpt = ["-vvv"];
   }
-  if(hostinfo.username){
-    if( !hostinfo.user){
-      hostinfo.user = hostinfo.username
+  if (hostinfo.username) {
+    if (!hostinfo.user) {
+      hostinfo.user = hostinfo.username;
     }
-    delete hostinfo.username
+    delete hostinfo.username;
   }
 
   const ssh = new SshClientWrapper(hostinfo);
   const timeout = hostinfo.ConnectTimeout > 120 ? hostinfo.ConnectTimeout : 120;
-  try{
+  try {
     const success = await ssh.canConnect(timeout);
 
     if (success) {
       addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
     }
-  }catch(e){
-    if(e.message === "Control socket creation failed"){
-      e.message +="you can avoid this error by using SSH_CONTROL_PERSIST_DIR environment variable\n"
-      e.message +="please refer to https://riken-rccs.github.io/OPEN-WHEEL/attention"
+  } catch (e) {
+    if (e.message === "Control socket creation failed") {
+      e.message += "you can avoid this error by using SSH_CONTROL_PERSIST_DIR environment variable\n";
+      e.message += "please refer to https://riken-rccs.github.io/OPEN-WHEEL/attention";
 
-      throw e
+      throw e;
     }
     throw new Error("ssh connection failed due to unknown reason");
   }
   return ssh;
 }
-
 
 module.exports = {
   addSsh,

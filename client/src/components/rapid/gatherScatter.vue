@@ -91,7 +91,7 @@
 </template>
 <script>
 "use strict";
-import { mapState } from "vuex"
+import { mapState } from "vuex";
 import actionRow from "@/components/common/actionRow.vue";
 import lowerComponentTree from "@/components/lowerComponentTree.vue";
 import { required } from "@/lib/validationRules.js";
@@ -100,70 +100,70 @@ export default {
   name: "GatherScatter",
   components: {
     actionRow,
-    lowerComponentTree,
+    lowerComponentTree
   },
   props: {
     container: {
       type: Array,
-      required: true,
+      required: true
     },
     headers: {
       type: Array,
-      required: true,
+      required: true
     },
     label: {
       type: String,
-      required: true,
+      required: true
     },
     readOnly: {
       type: Boolean,
-      required: true,
-    },
+      required: true
+    }
   },
-  data () {
+  data() {
     return {
       dialog: false,
       newItem: {
         srcName: "",
-        dstName: "",
+        dstName: ""
       },
-      selectedItem: null,
+      selectedItem: null
     };
   },
   computed: {
     ...mapState(["componentPath", "selectedComponent"]),
-    modifiedContainer(){
+    modifiedContainer() {
       return this.container.map((e)=>{
-        const parent= this.componentPath[this.selectedComponent.ID];
-        if(e.dstNode){
+        const parent = this.componentPath[this.selectedComponent.ID];
+        if (e.dstNode) {
           const child = this.componentPath[e.dstNode];
-          if(typeof child === "string"){
-            e.dstNodeName=child.replace(parent,".");
+          if (typeof child === "string") {
+            e.dstNodeName = child.replace(parent, ".");
           }
         }
-        if(e.srcNode){
+        if (e.srcNode) {
           const child = this.componentPath[e.srcNode];
-          if(typeof child === "string"){
-            e.srcNodeName=child.replace(parent,".");
+          if (typeof child === "string") {
+            e.srcNodeName = child.replace(parent, ".");
           }
         }
-        return e
+        return e;
       });
     },
-    label2 () {
+    label2() {
       return this.label === "scatter" ? "destination node" : "source node";
     },
-    hasError(){
-      return this.required(this.newItem.srcName) !== true ||
-              this.required(this.newItem.dstName)!== true ||
-              this.notDupulicated(null) !== true 
-    },
+    hasError() {
+      return this.required(this.newItem.srcName) !== true
+        || this.required(this.newItem.dstName) !== true
+        || this.notDupulicated(null) !== true;
+    }
   },
   methods: {
     required,
     notDupulicated() {
-      if(this.container.length === 0){
-        return true
+      if (this.container.length === 0) {
+        return true;
       }
       //check duplication or not changed
       const keys = ["srcName", "dstName", "srcNode", "dstNode"]
@@ -172,20 +172,20 @@ export default {
         });
 
       const hasSameEntry = !this.container.some((e)=>{
-        return  keys.every((key)=>{
+        return keys.every((key)=>{
           return this.newItem[key] === e[key];
         });
       });
-      return hasSameEntry || "duplicated entry is not allowed"
+      return hasSameEntry || "duplicated entry is not allowed";
     },
-    onDstNodeSelected(item){
-      if(this.label === "scatter"){
-        this.newItem.dstNode=item.ID
-      }else{
-        this.newItem.srcNode=item.ID
+    onDstNodeSelected(item) {
+      if (this.label === "scatter") {
+        this.newItem.dstNode = item.ID;
+      } else {
+        this.newItem.srcNode = item.ID;
       }
     },
-    openDialog (item) {
+    openDialog(item) {
       this.selectedItem = item;
       this.newItem.srcName = this.selectedItem.srcName;
       this.newItem.dstName = this.selectedItem.dstName;
@@ -198,7 +198,7 @@ export default {
       }
       this.dialog = true;
     },
-    closeAndResetDialog () {
+    closeAndResetDialog() {
       this.dialog = false;
       this.newItem.srcName = "";
       this.newItem.dstName = "";
@@ -206,20 +206,20 @@ export default {
       delete this.newItem.srcNode;
       this.selectedItem = null;
     },
-    commitChange () {
+    commitChange() {
       if (this.selectedItem === null) {
         //3rd argument means copy of this.newItem
         //this.newItem will be initialized in closeAndRestDialog()
-        this.$emit("addNewItem", this.label,{ ...this.newItem } );
+        this.$emit("addNewItem", this.label, { ...this.newItem });
       } else {
-        this.$emit("updateItem", this.label, this.selectedItem, { ...this.newItem } );
+        this.$emit("updateItem", this.label, this.selectedItem, { ...this.newItem });
       }
       this.closeAndResetDialog();
     },
-    deleteItem (item) {
+    deleteItem(item) {
       this.$emit("deleteItem", this.label, item);
-    },
-  },
+    }
+  }
 };
 
 </script>

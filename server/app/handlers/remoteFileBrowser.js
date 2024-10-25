@@ -32,13 +32,12 @@ async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb
   cb(true);
 }
 
-
 async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
   try {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
     const stdout = [];
-    const rt = await ssh.exec(`ls -F ${target}`, 120,(output)=>{
+    const rt = await ssh.exec(`ls -F ${target}`, 120, (output)=>{
       stdout.push(output);
     });
     if (rt !== 0) {
@@ -124,47 +123,47 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
  * @param {string} host - label of hostInof
  * @param {Function} cb - call back function should be called on client
  */
-async function  onCreateNewRemoteFile(projectRootDir, argFilename, host, cb){
-  try{
+async function onCreateNewRemoteFile(projectRootDir, argFilename, host, cb) {
+  try {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    const rt = await ssh.exec(`touch ${argFilename}`)
+    const rt = await ssh.exec(`touch ${argFilename}`);
     getLogger(projectRootDir).debug(`create ${argFilename} on ${host}`);
     return cb(rt === 0 ? true : rt);
-  }catch(e){
-    return cb(e)
+  } catch (e) {
+    return cb(e);
   }
 }
-async function  onCreateNewRemoteDir(projectRootDir, argDirname, host, cb){
-  try{
+async function onCreateNewRemoteDir(projectRootDir, argDirname, host, cb) {
+  try {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    const rt =  await ssh.exec(`mkdir ${argDirname}`)
+    const rt = await ssh.exec(`mkdir ${argDirname}`);
     return cb(rt === 0 ? true : rt);
-  }catch(e){
-    return cb(e)
+  } catch (e) {
+    return cb(e);
   }
 }
-async function  onRemoveRemoteFile(projectRootDir, target, host, cb){
-  try{
+async function onRemoveRemoteFile(projectRootDir, target, host, cb) {
+  try {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    const rt =  await ssh.exec(`rm -fr ${target}`)
+    const rt = await ssh.exec(`rm -fr ${target}`);
     return cb(rt === 0 ? true : rt);
-  }catch(e){
-    return cb(e)
+  } catch (e) {
+    return cb(e);
   }
 }
-async function  onRenameRemoteFile(projectRootDir, parentDir, argOldName, argNewName, host, cb){
-  try{
-    const oldName=path.join(parentDir, argOldName)
-    const newName=path.join(parentDir, argNewName)
+async function onRenameRemoteFile(projectRootDir, parentDir, argOldName, argNewName, host, cb) {
+  try {
+    const oldName = path.join(parentDir, argOldName);
+    const newName = path.join(parentDir, argNewName);
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    const rt = await ssh.exec(`mv ${oldName} ${newName}`)
+    const rt = await ssh.exec(`mv ${oldName} ${newName}`);
     return cb(rt === 0 ? true : rt);
-  }catch(e){
-    return cb(e)
+  } catch (e) {
+    return cb(e);
   }
 }
 

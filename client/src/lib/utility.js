@@ -22,12 +22,12 @@ export const metaCharactors = "*?[]{}()!?+@.";
  * @param {string} target - target string which will be escaped
  * @returns {string} escaped regex string
  */
-export function escapeRegExp (target) {
+export function escapeRegExp(target) {
   //eslint-disable-next-line no-useless-escape
   return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
 }
 
-function isSane (name) {
+function isSane(name) {
   if (typeof name !== "string") {
     return false;
   }
@@ -45,7 +45,7 @@ function isSane (name) {
  * @param {strint} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
-export function isValidName (name) {
+export function isValidName(name) {
   if (!isSane(name)) {
     return false;
   }
@@ -62,7 +62,7 @@ export function isValidName (name) {
  * @param {strint} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
-export function isValidInputFilename (name) {
+export function isValidInputFilename(name) {
   if (!isSane(name)) {
     return false;
   }
@@ -79,7 +79,7 @@ export function isValidInputFilename (name) {
  * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
-export function isValidOutputFilename (name) {
+export function isValidOutputFilename(name) {
   if (!isSane(name)) {
     return false;
   }
@@ -97,7 +97,7 @@ export function isValidOutputFilename (name) {
  * @param {boolean} withMiliseconds - option flag for time resolution
  * return {string}
  */
-export function getDateString (humanReadable = false, withMilliseconds = false) {
+export function getDateString(humanReadable = false, withMilliseconds = false) {
   const now = new Date();
   const yyyy = `0000${now.getFullYear()}`.slice(-4);
   const month = now.getMonth() + 1;
@@ -118,7 +118,7 @@ export function getDateString (humanReadable = false, withMilliseconds = false) 
  * @param {componeyt || string} target - component type of component itself
  * @return {boolean} - if true, specified component can have children
  */
-export function isContainer (target) {
+export function isContainer(target) {
   const type = typeof target === "string" ? target : target.type;
   return ["workflow", "parameterStudy", "for", "while", "foreach", "stepjob"].includes(type);
 }
@@ -128,7 +128,7 @@ export function isContainer (target) {
  * @param { string } key - target cookie's property
  * @return { string } - value
  */
-export function readCookie (key) {
+export function readCookie(key) {
   const encodedValue = document.cookie
     .split(";")
     .map((kv)=>{
@@ -145,14 +145,13 @@ export function readCookie (key) {
  * @param {string} state - project or component status
  * @return {string} - corresponding color
  */
-export function state2color(state){
-  const table={
-    "running": "#88BB00",
-    "failed": "#E60000",
-    "unknown": "#E60000",
-    "paused":"#444480",
-    "holding": "#444480"
+export function state2color(state) {
+  const table = {
+    running: "#88BB00",
+    failed: "#E60000",
+    unknown: "#E60000",
+    paused: "#444480",
+    holding: "#444480"
   };
   return typeof table[state] === "undefined" ? "#1E1E1E" : table[state];
 }
-

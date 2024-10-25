@@ -94,73 +94,73 @@ export default {
   name: "TargetFiles",
   components: {
     actionRow,
-    lowerComponentTree,
+    lowerComponentTree
   },
   props: {
     targetFiles: {
       type: Array,
-      required: true,
+      required: true
     },
     readOnly: {
       type: Boolean,
-      required: true,
-    },
+      required: true
+    }
   },
-  data () {
+  data() {
     return {
       targetFileDialog: false,
       newTargetFilename: "",
       newTargetNode: null,
       currentItem: null,
-      tableFooterProps,
+      tableFooterProps
     };
   },
   computed: {
     ...mapState(["selectedText",
       "projectRootDir",
       "componentPath",
-      "selectedComponent",
+      "selectedComponent"
     ]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
-    hasError(){
-      return this.required(this.newTargetFilename) !== true ||
-              this.notDupulicated(this.newTargetFilename) !== true
+    hasError() {
+      return this.required(this.newTargetFilename) !== true
+        || this.notDupulicated(this.newTargetFilename) !== true;
     }
   },
   methods: {
     required,
-    notDupulicated(v){
-      for(const targetFile of this.targetFiles){
-        if(typeof targetFile === "string" && targetFile === v){
-          return "dupricated targert file is not allowd"
-        }else if(targetFile.targetName === v &&(!targetFile.targetNode || targetFile.targetNode === this.newTargetNode) ){
-          return "dupricated targert file is not allowd"
+    notDupulicated(v) {
+      for (const targetFile of this.targetFiles) {
+        if (typeof targetFile === "string" && targetFile === v) {
+          return "dupricated targert file is not allowd";
+        } else if (targetFile.targetName === v && (!targetFile.targetNode || targetFile.targetNode === this.newTargetNode)) {
+          return "dupricated targert file is not allowd";
         }
       }
-      return true
+      return true;
     },
-    getComponentName (id) {
+    getComponentName(id) {
       const name = this.componentPath[id];
       const tmp = name.split("/");
       return tmp[tmp.length - 1];
     },
-    openDialog (item) {
+    openDialog(item) {
       if (item !== null) {
         this.newTargetFilename = item.targetName;
       }
       this.currentItem = item || null;
       this.targetFileDialog = true;
     },
-    deleteItem (item) {
+    deleteItem(item) {
       removeFromArray(this.targetFiles, item, "targetName");
     },
-    closeAndResetDialog () {
+    closeAndResetDialog() {
       this.currentItem = null;
       this.targetFileDialog = false;
       this.newTargetFilename = "";
       this.newTargetNode = null;
     },
-    commitTargetFileChange () {
+    commitTargetFileChange() {
       if (this.newTargetFilename === "") {
         //regard as canceled
         return this.closeAndResetDialog();
@@ -172,7 +172,7 @@ export default {
       }
       this.closeAndResetDialog();
     },
-    compareTargetFile (l, r) {
+    compareTargetFile(l, r) {
       if (l.targetNode || r.targetNode) {
         if (l.targetNode !== r.targetNode) {
           return false;
@@ -180,7 +180,7 @@ export default {
       }
       return l.targetName === r.targetName;
     },
-    renameTargetFile (oldEntry) {
+    renameTargetFile(oldEntry) {
       //check duplicated entry
       const targetFileToBeModified = this.targetFiles.find((e)=>{
         return this.compareTargetFile(oldEntry, e);
@@ -197,7 +197,7 @@ export default {
       }
       this.closeAndResetDialog();
     },
-    addNewTargetFile () {
+    addNewTargetFile() {
       const newTarget = { targetName: this.newTargetFilename };
       if (this.newTargetNode) {
         newTarget.targetNode = this.newTargetNode.ID;
@@ -214,9 +214,9 @@ export default {
       }
       this.closeAndResetDialog();
     },
-    targetNodeSelected (targetNode) {
+    targetNodeSelected(targetNode) {
       this.newTargetNode = targetNode;
-    },
-  },
+    }
+  }
 };
 </script>

@@ -9,7 +9,6 @@ const path = require("path");
 const { sanitizePath } = require("./pathUtils");
 const { evalCondition } = require("./dispatchUtils");
 
-
 function forGetNextIndex(component) {
   return component.currentIndex !== null ? component.currentIndex + component.step : component.start;
 }
@@ -64,7 +63,7 @@ async function whileIsFinished(cwfDir, projectRootDir, component, env) {
   //but whileIsFinished needs this value while evaluting condition definition script
   //for first loop trip. so we add this prop here. this only used in evalCondition
   //and never affect component.env and Dispatcher.env
-  env.WHEEL_CURRENT_INDEX=component.currentIndex || 0;
+  env.WHEEL_CURRENT_INDEX = component.currentIndex || 0;
   const condition = await evalCondition(projectRootDir, component.condition, cwd, env);
   return !condition;
 }
@@ -75,7 +74,7 @@ function foreachGetNextIndex(component) {
       return e === component.currentIndex;
     });
 
-    if (i === -1 || i === component.indexList.length - 1 ) {
+    if (i === -1 || i === component.indexList.length - 1) {
       return null;
     }
     return component.indexList[i + 1];

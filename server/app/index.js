@@ -9,7 +9,7 @@ const path = require("path");
 const fs = require("fs-extra");
 const cors = require("cors");
 const express = require("express");
-const ipfilter = require("express-ipfilter").IpFilter
+const ipfilter = require("express-ipfilter").IpFilter;
 const passport = require("passport");
 const session = require("express-session");
 const SQLiteStore = require("connect-sqlite3")(session);
@@ -23,19 +23,19 @@ const { getLogger } = require("./logSettings");
 const { registerHandlers } = require("./handlers/registerHandlers");
 const { baseURL, setSio } = require("./core/global.js");
 const { tempdRoot } = require("./core/tempd.js");
-const secret = "wheel"
-const sessionDBFilename = "session.db"
-const sessionDBDir = process.env.WHEEL_SESSION_DB_DIR|| path.resolve(__dirname, "db");
+const secret = "wheel";
+const sessionDBFilename = "session.db";
+const sessionDBDir = process.env.WHEEL_SESSION_DB_DIR || path.resolve(__dirname, "db");
 
 //setup logger
 const logger = getLogger();
 process.on("unhandledRejection", logger.debug.bind(logger));
 process.on("uncaughtException", logger.debug.bind(logger));
 
-if (process.env.WHEEL_CLEAR_SESSION_DB){
-  try{
+if (process.env.WHEEL_CLEAR_SESSION_DB) {
+  try {
     fs.removeSync(path.resolve(sessionDBDir, sessionDBFilename));
-  }catch(e){
+  } catch (e) {
     logger.debug("remove session DB failed", e);
   }
 }
@@ -45,7 +45,7 @@ if (process.env.WHEEL_CLEAR_SESSION_DB){
  */
 
 const app = express();
-const address = process.env.WHEEL_ACCEPT_ADDRESS
+const address = process.env.WHEEL_ACCEPT_ADDRESS;
 
 function createHTTPSServer(argApp) {
   const { keyFilename, certFilename } = require("./db/db");
@@ -88,7 +88,7 @@ let portNumber = port || defaultPort;
 portNumber = portNumber > 0 ? portNumber : defaultPort;
 
 //middlewares
-if(address){
+if (address) {
   const ips = [address];
   app.use(ipfilter(ips, { mode: "allow", logF: logger.debug.bind(logger) }));
 }
@@ -102,15 +102,14 @@ app.use(session({
   secret,
   resave: false,
   saveUninitialized: false,
-  store: new SQLiteStore({ db: sessionDBFilename , dir: sessionDBDir })
+  store: new SQLiteStore({ db: sessionDBFilename, dir: sessionDBDir })
 }));
 
-if(process.env.WHEEL_ENABLE_AUTH){
+if (process.env.WHEEL_ENABLE_AUTH) {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(passport.authenticate("session"));
 }
-
 
 //global socket IO handler
 sio.on("connection", (socket)=>{
@@ -151,16 +150,18 @@ const routes = {
   viewer: require(path.resolve(__dirname, "routes/viewer"))
 };
 
-let checkLoggedIn = (req, res, next)=>{next()}
+let checkLoggedIn = (req, res, next)=>{
+  next();
+};
 
-if(process.env.WHEEL_ENABLE_AUTH){
+if (process.env.WHEEL_ENABLE_AUTH) {
   checkLoggedIn = ensureLoggedIn ("/login");
   router.route("/login").get(routes.login.get)
     .post(routes.login.post);
 }
 router.get("/", checkLoggedIn, routes.home);
-router.get("/home", checkLoggedIn,  routes.home);
-router.get("/remotehost", checkLoggedIn,  routes.remotehost);
+router.get("/home", checkLoggedIn, routes.home);
+router.get("/remotehost", checkLoggedIn, routes.remotehost);
 router.route("/workflow").get(checkLoggedIn, routes.workflow.get)
   .post(checkLoggedIn, routes.workflow.post);
 router.route("/graph").get(checkLoggedIn, routes.workflow.get)
@@ -173,7 +174,6 @@ router.route("/viewer").get(checkLoggedIn, routes.viewer.get)
   .post(checkLoggedIn, routes.viewer.post);
 
 app.use(baseURL, router);
-
 
 //handle 404 not found
 app.use((req, res, next)=>{
@@ -208,10 +208,9 @@ Promise.all(projectList.getAll()
       } else {
         console.log("WHEEL will shut down because Control-C pressed");
       }
-      process.exit();  
+      process.exit();
     });
   });
-
 
 /**
  * Event listener for HTTP server "error" event.
@@ -227,12 +226,12 @@ function onError(error) {
   switch (error.code) {
     case "EACCES":
       logger.error(`${bind} requires elevated privileges`);
-       
+
       process.exit(1);
       break;
     case "EADDRINUSE":
       logger.error(`${bind} is already in use`);
-       
+
       process.exit(1);
       break;
     default:

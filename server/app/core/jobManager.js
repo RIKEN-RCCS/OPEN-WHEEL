@@ -78,18 +78,18 @@ function getBulkFirstCapture(outputText, reSubCode) {
  * @param {String} code - job status code get from status check command
  * @returns {Boolean} -
  */
-function isJobFailed(JS, code){
-  const statusList = []
-  if(typeof JS.acceptableJobStatus === "undefined"){
+function isJobFailed(JS, code) {
+  const statusList = [];
+  if (typeof JS.acceptableJobStatus === "undefined") {
     statusList.push("0", 0);
-  }else if (Array.isArray(JS.acceptableJobStatus)) {
-    statusList.push(...JS.acceptableJobStatus)
-  }else if(typeof JS.acceptableJobStatus.toString === "function"){
-    statusList.push(JS.acceptableJobStatus.toString())
-  }else{
-    return false
+  } else if (Array.isArray(JS.acceptableJobStatus)) {
+    statusList.push(...JS.acceptableJobStatus);
+  } else if (typeof JS.acceptableJobStatus.toString === "function") {
+    statusList.push(JS.acceptableJobStatus.toString());
+  } else {
+    return false;
   }
-  return !statusList.includes(code) 
+  return !statusList.includes(code);
 }
 
 /**
@@ -227,7 +227,7 @@ class JobManager extends EventEmitter {
           }
           await createStatusFile(task);
 
-          return isJobFailed(JS, task.jobStatus) ? task.jobStatus : task.rt
+          return isJobFailed(JS, task.jobStatus) ? task.jobStatus : task.rt;
         } catch (err) {
           ++statusCheckFailedCount;
           err.jobID = task.jobID;

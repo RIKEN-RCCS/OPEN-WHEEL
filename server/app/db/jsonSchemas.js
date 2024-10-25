@@ -82,7 +82,6 @@ const emptyArraySchema = {
   uniqueItems: true
 };
 
-
 class PosSchema {
   constructor() {
     this.required = ["x", "y"];
@@ -125,7 +124,6 @@ class BaseWorkflowComponentSchema {
     this.properties[prop].maxItems = size;
   }
 }
-
 
 class GeneralWorkflowComponentSchema extends BaseWorkflowComponentSchema {
   constructor(...args) {
@@ -282,7 +280,6 @@ class ViewerSchema extends BaseWorkflowComponentSchema {
     this.properties.inputFiles.items[index].properties.src.maxItems = size;
   }
 }
-
 
 function getSchema(type, name, ID) {
   let rt;

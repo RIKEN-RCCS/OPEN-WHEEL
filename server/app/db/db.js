@@ -26,7 +26,8 @@ function isExists(target, file) {
  */
 function getConfigFile(filename, failIfNotFound) {
   const envFile = typeof process.env.WHEEL_CONFIG_DIR === "string"
-    ? path.resolve(process.env.WHEEL_CONFIG_DIR, filename) : null;
+    ? path.resolve(process.env.WHEEL_CONFIG_DIR, filename)
+    : null;
   if (envFile !== null && isExists(envFile, true)) {
     return envFile;
   }
@@ -44,7 +45,8 @@ function getConfigFile(filename, failIfNotFound) {
     throw err;
   }
   const envFileDir = typeof process.env.WHEEL_CONFIG_DIR === "string"
-    ? path.resolve(process.env.WHEEL_CONFIG_DIR) : null;
+    ? path.resolve(process.env.WHEEL_CONFIG_DIR)
+    : null;
   if (envFileDir !== null && isExists(envFileDir, false)) {
     return path.resolve(envFileDir, filename);
   }
@@ -103,9 +105,8 @@ module.exports.statusFilename = "status.wheel.txt";
 module.exports.jobManagerJsonFilename = "jm.wheel.json";
 module.exports.filesJsonFilename = "files.wheel.json";
 module.exports.defaultPSconfigFilename = "parameterSetting.json";
-module.exports.userDBFilename="user.db";
-module.exports.userDBDir= process.env.WHEEL_USER_DB_DIR|| __dirname;
-
+module.exports.userDBFilename = "user.db";
+module.exports.userDBDir = process.env.WHEEL_USER_DB_DIR || __dirname;
 
 if (!process.env.WHEEL_USE_HTTP) {
   module.exports.keyFilename = getConfigFile("server.key", true);
@@ -114,7 +115,7 @@ if (!process.env.WHEEL_USE_HTTP) {
 module.exports.logFilename = logFilename;
 
 //re-export server settings
-module.exports.interval = parseInt(process.env.WHEEL_INTERVAL,10) || getIntVar(config.interval, 1000);
+module.exports.interval = parseInt(process.env.WHEEL_INTERVAL, 10) || getIntVar(config.interval, 1000);
 module.exports.port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
 module.exports.rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
 module.exports.defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);

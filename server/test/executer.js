@@ -29,7 +29,7 @@ const remoteHome = "/home/testuser";
 
 //helper functions
 const { componentJsonFilename, statusFilename, jobManagerJsonFilename } = require("../app/db/db");
-const { createNewProject, updateComponent, createNewComponent  } = require("../app/core/projectFilesOperator");
+const { createNewProject, updateComponent, createNewComponent } = require("../app/core/projectFilesOperator");
 const { replacePathsep } = require("../app/core/pathUtils");
 
 const { scriptName, pwdCmd, scriptHeader, exit } = require("./testScript");
@@ -38,8 +38,7 @@ const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 const { remoteHost } = require("../app/db/db");
 const { addSsh } = require("../app/core/sshManager");
 
-
-describe("UT for executer class", function() {
+describe("UT for executer class", function () {
   this.timeout(0);
   let task0;
   beforeEach(async ()=>{
@@ -86,7 +85,7 @@ describe("UT for executer class", function() {
     let ssh;
     const remotehostName = process.env.WHEEL_TEST_REMOTEHOST;
     const password = process.env.WHEEL_TEST_REMOTE_PASSWORD;
-    before(async function() {
+    before(async function () {
       if (!remotehostName) {
         console.log("remote exec test will be skipped because WHEEL_TEST_REMOTEHOST is not set");
         this.skip();

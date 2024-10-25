@@ -16,7 +16,7 @@ const { getSsh } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString, writeJsonWrapper } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
-const { readJsonGreedy, deliverFile, deliverFileOnRemote,deliverFileFromRemote } = require("./fileUtils");
+const { readJsonGreedy, deliverFile, deliverFileOnRemote, deliverFileFromRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
 const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
 const { writeComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
@@ -42,7 +42,7 @@ const {
   foreachKeepLoopInstance
 } = require("./loopUtils.js");
 const { makeCmd } = require("./psUtils.js");
-const wheelSystemEnv=[
+const wheelSystemEnv = [
   "WHEEL_CURRENT_INDEX",
   "WHEEL_NEXT_INDEX",
   "WHEEL_PREV_INDEX",
@@ -52,10 +52,9 @@ const wheelSystemEnv=[
   "WHEEL_PS_PARAM",
   "WHEEL_FOREACH_LEN",
   "WHEEL_REMOTE_WORK"
-]
+];
 
 const taskDB = new Map();
-
 
 //private functions
 
@@ -89,7 +88,6 @@ async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumb
     })
   );
 }
-
 
 /**
  * parse workflow graph and dispatch ready tasks to executer
@@ -180,7 +178,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _dispatch() {
-    try{
+    try {
       this.logger.trace("_dispatch called", this.cwfDir);
 
       if (this.firstCall) {
@@ -189,17 +187,16 @@ class Dispatcher extends EventEmitter {
 
         const initialComponents = await Promise.all(
           childComponents.map(async (component)=>{
-            if(await isInitialComponent(this.projectRootDir, component)){
-              return component
+            if (await isInitialComponent(this.projectRootDir, component)) {
+              return component;
             }
-            return null
+            return null;
           })
-        )
+        );
 
         this.currentSearchList = initialComponents.filter((e)=>{
-          return e!== null
-        })
-
+          return e !== null;
+        });
 
         this.logger.debug("initial components: ", this.currentSearchList.map((e)=>{
           return e.name;
@@ -211,7 +208,7 @@ class Dispatcher extends EventEmitter {
       }));
 
       const promises = [];
-      for(const target of this.currentSearchList){
+      for (const target of this.currentSearchList) {
         if (target.disable) {
           this.logger.info(`disabled component: ${target.name}(${target.ID})`);
           continue;
@@ -251,12 +248,12 @@ class Dispatcher extends EventEmitter {
       if (this.needToRerun) {
         this.needToRerun = false;
         this.logger.debug("revoke _dispatch()");
-        return this._reserveDispatch()
+        return this._reserveDispatch();
       }
       return true;
     } catch (e) {
       this.emit("error", e);
-      return false
+      return false;
     }
   }
 
@@ -308,7 +305,6 @@ class Dispatcher extends EventEmitter {
     });
   }
 
-
   _getState() {
     let state = "finished";
     if (this.hasUnknownComponent) {
@@ -333,12 +329,12 @@ class Dispatcher extends EventEmitter {
         child.start()
           .then(()=>{
             this.children.forEach((e)=>{
-              if(e.done){
-                this.children.delete(e)
+              if (e.done) {
+                this.children.delete(e);
               }
             });
           })
-          .catch((e)=>{this.onError(e)});
+          .catch((e)=>{ this.onError(e); });
       }
       const onStop = ()=>{
         this.removeListener("dispatch", this._dispatch);
@@ -396,8 +392,8 @@ class Dispatcher extends EventEmitter {
 
   async _addNextComponent(component, useElse = false) {
     let nextComponentIDs = [];
-    const componentsWithoutNextProp=["source", "viewer", "storage"]
-    if(! componentsWithoutNextProp.includes(component.type)){
+    const componentsWithoutNextProp = ["source", "viewer", "storage"];
+    if (!componentsWithoutNextProp.includes(component.type)) {
       nextComponentIDs = useElse ? Array.from(component.else) : Array.from(component.next);
     }
 
@@ -421,15 +417,15 @@ class Dispatcher extends EventEmitter {
         Array.prototype.push.apply(nextComponentIDs, tmp);
       });
     }
-    nextComponentIDs = Array.from(new Set(nextComponentIDs ))
+    nextComponentIDs = Array.from(new Set(nextComponentIDs))
       .filter((id)=>{
-        return ! this.currentSearchList.some((e)=>{
-          return e.ID === id
+        return !this.currentSearchList.some((e)=>{
+          return e.ID === id;
         });
       });
     const nextComponents = await Promise.all(nextComponentIDs.map(async (id)=>{
       const tmp = await this._getComponent(id);
-      return tmp
+      return tmp;
     }));
 
     Array.prototype.push.apply(this.pendingComponents, nextComponents);
@@ -478,7 +474,6 @@ class Dispatcher extends EventEmitter {
       task.parentName = parentComponent.name;
     }
 
-
     task.ancestorsName = replacePathsep(path.relative(task.projectRootDir, path.dirname(task.workingDir)));
     task.ancestorsType = this.ancestorsType;
 
@@ -491,10 +486,10 @@ class Dispatcher extends EventEmitter {
     if (task.usePSSettingFile === true) {
       await this._bulkjobHandler(task);
     }
-    if(task.env){
+    if (task.env) {
       wheelSystemEnv.forEach((envname)=>{
-        if(Object.prototype.hasOwnProperty.call(task.env, envname)){
-          delete task.env[envname]
+        if (Object.prototype.hasOwnProperty.call(task.env, envname)) {
+          delete task.env[envname];
         }
       });
     }
@@ -531,7 +526,7 @@ class Dispatcher extends EventEmitter {
     //exception should be catched in caller
     try {
       component.state = await child.start();
-      await writeComponentJson(this.projectRootDir,childDir, component,true);
+      await writeComponentJson(this.projectRootDir, childDir, component, true);
 
       //if component type is not workflow, it must be copied component of PS, for, while or foreach
       //so, it is no need to emit "componentStateChanged" here.
@@ -581,7 +576,6 @@ class Dispatcher extends EventEmitter {
     let prevIndex;
     let srcDir;
 
-
     if (!component.initialized) {
       loopInitialize(component, getTripCount);
       srcDir = path.resolve(this.cwfDir, component.name);
@@ -593,8 +587,8 @@ class Dispatcher extends EventEmitter {
 
     //end determination
 
-    const envForWhileIsFinished =  Object.assign({},this.env,component.env);
-    if (await isFinished(component, envForWhileIsFinished )) {
+    const envForWhileIsFinished = Object.assign({}, this.env, component.env);
+    if (await isFinished(component, envForWhileIsFinished)) {
       await this._loopFinalize(component, srcDir, keepLoopInstance);
       return Promise.resolve();
     }
@@ -605,7 +599,7 @@ class Dispatcher extends EventEmitter {
     const newComponent = structuredClone(component);
     newComponent.name = `${component.originalName}_${sanitizePath(component.currentIndex)}`;
     newComponent.subComponent = true;
-    newComponent.env = Object.assign({},this.env,component.env);
+    newComponent.env = Object.assign({}, this.env, component.env);
 
     if (!newComponent.env) {
       newComponent.env = {};
@@ -614,15 +608,15 @@ class Dispatcher extends EventEmitter {
 
     if (typeof prevIndex !== "undefined") {
       newComponent.env.WHEEL_PREV_INDEX = prevIndex;
-    }else{
-      if(component.type === "foreach"){
+    } else {
+      if (component.type === "foreach") {
         newComponent.env.WHEEL_PREV_INDEX = "";
-      }else{
+      } else {
         const step = component.step || 1;
         newComponent.env.WHEEL_PREV_INDEX = component.currentIndex - step;
       }
     }
-    const nextIndex = getNextIndex(component)
+    const nextIndex = getNextIndex(component);
     newComponent.env.WHEEL_NEXT_INDEX = nextIndex !== null ? nextIndex : "";
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
@@ -631,13 +625,13 @@ class Dispatcher extends EventEmitter {
       await fs.copy(srcDir, dstDir, {
         dereference: true,
         filter: async (target)=>{
-          this.logger.trace("[loopHandler] copy filter on :",target);
+          this.logger.trace("[loopHandler] copy filter on :", target);
 
           if (srcDir === target) {
             return true;
           }
-          if( path.basename(target) === statusFilename ){
-            return false
+          if (path.basename(target) === statusFilename) {
+            return false;
           }
           const subComponent = await isSubComponent(target);
           return !subComponent;
@@ -656,7 +650,7 @@ class Dispatcher extends EventEmitter {
         ++component.numFinished;
       }
     } catch (e) {
-      if(typeof e !== "string"){
+      if (typeof e !== "string") {
         e.index = component.currentIndex;
       }
       this.logger.warn("fatal error occurred during loop child dispatching.", e);
@@ -691,13 +685,15 @@ class Dispatcher extends EventEmitter {
     }
 
     //convert id to relative path from PS component
-    const targetFiles = Object.prototype.hasOwnProperty.call(paramSettings, "targetFiles") ? paramSettings.targetFiles.map((e)=>{
-      if (Object.prototype.hasOwnProperty.call(e, "targetName")) {
-        const targetDir = Object.prototype.hasOwnProperty.call(e, "targetNode") ? path.relative(templateRoot, this._getComponentDir(e.targetNode)) : "";
-        return path.join(targetDir, e.targetName);
-      }
-      return e;
-    }) : [];
+    const targetFiles = Object.prototype.hasOwnProperty.call(paramSettings, "targetFiles")
+      ? paramSettings.targetFiles.map((e)=>{
+        if (Object.prototype.hasOwnProperty.call(e, "targetName")) {
+          const targetDir = Object.prototype.hasOwnProperty.call(e, "targetNode") ? path.relative(templateRoot, this._getComponentDir(e.targetNode)) : "";
+          return path.join(targetDir, e.targetName);
+        }
+        return e;
+      })
+      : [];
 
     return { templateRoot, paramSettingsFilename, paramSettings, targetFiles };
   }
@@ -706,20 +702,24 @@ class Dispatcher extends EventEmitter {
     this.logger.debug("_PSHandler called", component.name);
     const { templateRoot, paramSettingsFilename, paramSettings, targetFiles } = await this._getTargetFile(component);
 
-    const scatterRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "scatter") ? paramSettings.scatter.map((e)=>{
-      return {
-        srcName: e.srcName,
-        dstNode: path.relative(templateRoot, this._getComponentDir(e.dstNode)),
-        dstName: e.dstName
-      };
-    }) : [];
-    const gatherRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "gather") ? paramSettings.gather.map((e)=>{
-      return {
-        srcName: e.srcName,
-        srcNode: path.relative(templateRoot, this._getComponentDir(e.srcNode)),
-        dstName: e.dstName
-      };
-    }) : [];
+    const scatterRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "scatter")
+      ? paramSettings.scatter.map((e)=>{
+        return {
+          srcName: e.srcName,
+          dstNode: path.relative(templateRoot, this._getComponentDir(e.dstNode)),
+          dstName: e.dstName
+        };
+      })
+      : [];
+    const gatherRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "gather")
+      ? paramSettings.gather.map((e)=>{
+        return {
+          srcName: e.srcName,
+          srcNode: path.relative(templateRoot, this._getComponentDir(e.srcNode)),
+          dstName: e.dstName
+        };
+      })
+      : [];
 
     const [getParamSpace, getScatterFiles, scatterFiles, gatherFiles, rewriteTargetFile] = makeCmd(paramSettings);
     const paramSpace = await getParamSpace(templateRoot);
@@ -753,7 +753,7 @@ class Dispatcher extends EventEmitter {
       const instanceRoot = path.resolve(this.cwfDir, newName);
 
       const options = { overwrite: component.forceOverwrite };
-      options.filter = function(filename) {
+      options.filter = function (filename) {
         return !ignoreFiles.includes(filename);
       };
       this.logger.debug("copy from", templateRoot, "to ", instanceRoot);
@@ -782,15 +782,15 @@ class Dispatcher extends EventEmitter {
       newComponent.subComponent = true;
       const newComponentFilename = path.join(instanceRoot, componentJsonFilename);
       if (!await fs.pathExists(newComponentFilename)) {
-        await writeComponentJson(this.projectRootDir, instanceRoot, newComponent,true);
+        await writeComponentJson(this.projectRootDir, instanceRoot, newComponent, true);
       }
-      if(!newComponent.env){
-        newComponent.env={}
+      if (!newComponent.env) {
+        newComponent.env = {};
       }
 
-      for(const key in params){
-        const value=params[key]
-        newComponent.env[`WHEEL_PS_PARAM_${key}`]=value
+      for (const key in params) {
+        const value = params[key];
+        newComponent.env[`WHEEL_PS_PARAM_${key}`] = value;
       }
       const p = this._delegate(newComponent)
         .then(()=>{
@@ -801,18 +801,18 @@ class Dispatcher extends EventEmitter {
           } else {
             this.logger.warn("child state is illegal", newComponent.state);
           }
-          writeComponentJson(this.projectRootDir, templateRoot, component,true)
+          writeComponentJson(this.projectRootDir, templateRoot, component, true)
             .then(()=>{
               const ee = eventEmitters.get(this.projectRootDir);
               ee.emit("componentStateChanged");
             });
-        })
+        });
       promises.push(p);
     }
     await Promise.all(promises);
     this.logger.debug("gather files");
 
-    const promiseGather=[]
+    const promiseGather = [];
     for (const paramVec of paramVecGenerator(paramSpace)) {
       const params = paramVec.reduce((p, c)=>{
         p[c.key] = c.value;
@@ -934,7 +934,7 @@ class Dispatcher extends EventEmitter {
       await writeParameterSetFile(templateRoot, targetFiles, params, countBulkNum);
       countBulkNum++;
     }
-    return writeComponentJson(this.projectRootDir, templateRoot, component,true);
+    return writeComponentJson(this.projectRootDir, templateRoot, component, true);
   }
 
   async _storageHandler(component) {
@@ -942,9 +942,9 @@ class Dispatcher extends EventEmitter {
     const currentDir = this._getComponentDir(component.ID);
 
     //copy inputFiles from currentDir to storagePath as regular file
-    if(component.inputFiles.length > 0){
+    if (component.inputFiles.length > 0) {
       if (isLocal(component)) {
-        if( currentDir !== storagePath ){
+        if (currentDir !== storagePath) {
           await fs.mkdir(storagePath);
           await Promise.all(
             component.inputFiles
@@ -952,14 +952,14 @@ class Dispatcher extends EventEmitter {
                 return !e.name.endsWith(componentJsonFilename);
               }).map((e)=>{
                 return fs.copy(path.join(currentDir, e.name), path.join(storagePath, e.name), {
-                  dereference: true,
-                })
+                  dereference: true
+                });
               })
-          )
+          );
         }
       } else {
         const targetsToCopy = component.inputFiles.map((e)=>{
-          return path.join(currentDir, e.name)
+          return path.join(currentDir, e.name);
         });
         const remotehostID = remoteHost.getID("name", component.host);
         const ssh = getSsh(this.projectRootDir, remotehostID);
@@ -968,18 +968,18 @@ class Dispatcher extends EventEmitter {
     }
 
     //clean up curentDir
-    const contents=await fs.readdir(currentDir);
+    const contents = await fs.readdir(currentDir);
     const removeTargets = contents.filter((name)=>{
-      return ! name.endsWith(componentJsonFilename)
+      return !name.endsWith(componentJsonFilename);
     });
     await Promise.all(removeTargets.map((name)=>{
-      return fs.remove(path.resolve(currentDir,name))
+      return fs.remove(path.resolve(currentDir, name));
     }));
     await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
   }
 
-  async _sourceHandler(source){
+  async _sourceHandler(source) {
     this._addNextComponent(source);
     await this._setComponentState(source, "finished");
   }
@@ -1040,15 +1040,15 @@ class Dispatcher extends EventEmitter {
   }
 
   async _getInputFiles(component) {
-    if(component.type === "source"){
-      return
+    if (component.type === "source") {
+      return;
     }
     this.logger.debug(`getInputFiles for ${component.name}`);
     const promises = [];
     const deliverRecipes = new Set();
 
     for (const inputFile of component.inputFiles) {
-      const dstName = nunjucks.renderString( inputFile.name, this.env);
+      const dstName = nunjucks.renderString(inputFile.name, this.env);
 
       //resolve real src
       for (const src of inputFile.src) {
@@ -1070,38 +1070,38 @@ class Dispatcher extends EventEmitter {
           }
           for (const e of srcEntry.src) {
             const originalSrcRoot = this._getComponentDir(e.srcNode);
-            const srcName= nunjucks.renderString( e.srcName, this.env);
-            deliverRecipes.add({dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false });
+            const srcName = nunjucks.renderString(e.srcName, this.env);
+            deliverRecipes.add({ dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy: false });
           }
         } else if (await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID)) {
           const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
           const remotehostID = remoteHost.getID("name", component.host);
 
-          const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID)
+          const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
           const dstRoot = component.type === "storage" ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
-          const srcName= nunjucks.renderString( src.srcName, this.env);
-          const forceCopy = srcComponent.type === "storage"
+          const srcName = nunjucks.renderString(src.srcName, this.env);
+          const forceCopy = srcComponent.type === "storage";
 
-          if( !srcRoot.startsWith("/") ){
+          if (!srcRoot.startsWith("/")) {
             //if srcRoot does not start with '/' it means the host does not have path setting
             //we asume dst component also does not have path setting but in case of useing share host
             //it coulud be a wrong assumption
-            const relativePathFromDstToSrc=path.relative(`/${dstRoot}`, `/${srcRoot}`);
-            deliverRecipes.add({ dstRoot, dstName, srcRoot:relativePathFromDstToSrc, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy});
-          }else{
-            deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy});
+            const relativePathFromDstToSrc = path.relative(`/${dstRoot}`, `/${srcRoot}`);
+            deliverRecipes.add({ dstRoot, dstName, srcRoot: relativePathFromDstToSrc, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
+          } else {
+            deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
           }
-        } else if(Object.prototype.hasOwnProperty.call(srcComponent, "host") && srcComponent.host !== "localhost" && srcComponent.type !== "task"){
+        } else if (Object.prototype.hasOwnProperty.call(srcComponent, "host") && srcComponent.host !== "localhost" && srcComponent.type !== "task") {
           //memo taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼れば良い
           //将来的には、taskコンポーネントのファイルもrsyncで直接後続コンポーネントから取得するように変更し
           //outputFileのダウンロードは無くしたい
           //memo2: ここの判定ルーチンはworkdlowComponent内で関数として定義されているべき(というかあったはず)
           const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
 
-          const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component)
+          const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component);
           const dstRoot = component.type === "storage" ? component.storagePath : this._getComponentDir(component.ID);
-          const srcName= nunjucks.renderString( src.srcName, this.env);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, remoteToLocal: true, projectRootDir: this.projectRootDir, remotehostID:srcRemotehostID});
+          const srcName = nunjucks.renderString(src.srcName, this.env);
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, remoteToLocal: true, projectRootDir: this.projectRootDir, remotehostID: srcRemotehostID });
         } else {
           //deliver files under component directory even if destination component is storage
           //in storageHandler, files under component directory will be copied to storagePath (avoid to store symlink in storagePath)
@@ -1118,15 +1118,15 @@ class Dispatcher extends EventEmitter {
                 //get files from lower level component
                 if (Object.prototype.hasOwnProperty.call(srcEntry, "origin")) {
                   for (const e of srcEntry.origin) {
-                    const srcName= nunjucks.renderString( e.srcName, this.env);
+                    const srcName = nunjucks.renderString(e.srcName, this.env);
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy:false});
+                    deliverRecipes.add({ dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy: false });
                   }
                 } else {
-                  const srcName= nunjucks.renderString( src.srcName, this.env);
-                  const forceCopy = srcComponent.type === "storage"
-                  const srcRoot=srcComponent.type!== "storage"? this._getComponentDir(src.srcNode):srcComponent.storagePath
-                  deliverRecipes.add({dstRoot, dstName, srcRoot, srcName, forceCopy});
+                  const srcName = nunjucks.renderString(src.srcName, this.env);
+                  const forceCopy = srcComponent.type === "storage";
+                  const srcRoot = srcComponent.type !== "storage" ? this._getComponentDir(src.srcNode) : srcComponent.storagePath;
+                  deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, forceCopy });
                 }
               })
           );
@@ -1140,7 +1140,7 @@ class Dispatcher extends EventEmitter {
     for (const recipe of deliverRecipes) {
       if (recipe.onRemote) {
         p2.push(deliverFileOnRemote(recipe));
-      }else if(recipe.remoteToLocal){
+      } else if (recipe.remoteToLocal) {
         p2.push(deliverFileFromRemote(recipe));
       } else {
         const srces = await promisify(glob)(recipe.srcName, { cwd: recipe.srcRoot });
@@ -1215,7 +1215,7 @@ class Dispatcher extends EventEmitter {
         cmd = this._storageHandler;
         break;
       case "source":
-        cmd=this._sourceHandler;
+        cmd = this._sourceHandler;
         break;
       default:
         this.logger.error("illegal type specified", type);

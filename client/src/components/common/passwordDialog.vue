@@ -40,12 +40,12 @@ import buttons from "@/components/common/buttons.vue";
 export default {
   name: "PasswordDialog",
   components: {
-    buttons,
+    buttons
   },
   props: {
     value: Boolean,
     title: { type: String, default: "input password" },
-    maxWidth: { type: String, default: "50%" },
+    maxWidth: { type: String, default: "50%" }
   },
   data: function () {
     return {
@@ -53,33 +53,33 @@ export default {
       password: "",
       buttons: [
         { icon: "mdi-check", label: "ok" },
-        { icon: "mdi-close", label: "cancel" },
-      ],
+        { icon: "mdi-close", label: "cancel" }
+      ]
     };
   },
   computed: {
     openDialog: {
-      get () {
+      get() {
         return this.value;
       },
-      set (value) {
+      set(value) {
         this.$emit("update:modelValue", value);
-      },
-    },
+      }
+    }
   },
   methods: {
-    submitPassword () {
+    submitPassword() {
       this.$emit("password", this.password);
       this.closeDialog();
     },
-    cancel () {
+    cancel() {
       this.$emit("cancel");
       this.closeDialog();
     },
-    closeDialog () {
+    closeDialog() {
       this.password = "";
       this.openDialog = false;
-    },
-  },
+    }
+  }
 };
 </script>

@@ -20,7 +20,7 @@ const { getLogger } = require("../logSettings");
 const { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir, remoteHost } = require("../db/db");
 const { emitAll } = require("./commUtils.js");
 const { getTempd, createTempd } = require("../core/tempd.js");
-const {getSsh} = require("../core/sshManager.js");
+const { getSsh } = require("../core/sshManager.js");
 
 const oldProjectJsonFilename = "swf.prj.json";
 const noDotFiles = /^[^.].*$/;
@@ -98,7 +98,7 @@ async function onCreateNewFile(projectRootDir, argFilename, cb) {
   try {
     await fs.writeFile(filename, "");
 
-    if(isPathInside(filename, projectRootDir)){
+    if (isPathInside(filename, projectRootDir)) {
       await gitAdd(projectRootDir, filename);
     }
   } catch (e) {
@@ -106,7 +106,7 @@ async function onCreateNewFile(projectRootDir, argFilename, cb) {
     cb(null);
     return;
   }
-  cb({filename, parent:path.dirname(filename)});
+  cb({ filename, parent: path.dirname(filename) });
 }
 
 async function onCreateNewDir(projectRootDir, argDirname, cb) {
@@ -115,7 +115,7 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
   try {
     await fs.mkdir(dirname);
 
-    if(isPathInside(dirname, projectRootDir)){
+    if (isPathInside(dirname, projectRootDir)) {
       await fs.writeFile(path.resolve(dirname, ".gitkeep"), "");
       await gitAdd(projectRootDir, path.resolve(dirname, ".gitkeep"));
     }
@@ -124,12 +124,12 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
     cb(null);
     return;
   }
-  cb({dirname, parent: path.dirname(dirname)});
+  cb({ dirname, parent: path.dirname(dirname) });
 }
 
 async function onRemoveFile(projectRootDir, target, cb) {
   try {
-    if(isPathInside(target, projectRootDir)){
+    if (isPathInside(target, projectRootDir)) {
       await gitRm(projectRootDir, target);
     }
     await fs.remove(target);
@@ -156,9 +156,8 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
     return;
   }
 
-
   try {
-    if(isPathInside(oldName, projectRootDir)){
+    if (isPathInside(oldName, projectRootDir)) {
       await gitRm(projectRootDir, oldName);
       const stats = await fs.stat(oldName);
 
@@ -177,7 +176,7 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
     }
     await fs.move(oldName, newName);
 
-    if(isPathInside(newName, projectRootDir)){
+    if (isPathInside(newName, projectRootDir)) {
       await gitAdd(projectRootDir, newName);
     }
   } catch (e) {
@@ -200,7 +199,8 @@ const onUploadFileSaved = async (event)=>{
   }
   const uploadDir = path.resolve(projectRootDir, event.file.meta.currentDir);
   const uploadClient = event.file.meta.clientID;
-  const absFilename = event.file.meta.overwrite ? path.resolve(uploadDir, event.file.meta.orgName)
+  const absFilename = event.file.meta.overwrite
+    ? path.resolve(uploadDir, event.file.meta.orgName)
     : await getUnusedPath(uploadDir, event.file.meta.orgName);
   if (event.file.meta.overwrite) {
     await fs.remove(absFilename);
@@ -217,11 +217,11 @@ const onUploadFileSaved = async (event)=>{
     }
     await gitAdd(projectRootDir, absFilename);
   }
-  if(event.file.meta.remotehost &&event.file.meta.remoteUploadPath){
+  if (event.file.meta.remotehost && event.file.meta.remoteUploadPath) {
     getLogger(projectRootDir).debug(`upload ${absFilename} to ${event.file.meta.remotehost}`);
-    const id = remoteHost.getID("name", event.file.meta.remotehost );
+    const id = remoteHost.getID("name", event.file.meta.remotehost);
     const ssh = await getSsh(projectRootDir, id);
-    await ssh.send([absFilename], event.file.meta.remoteUploadPath, ["--remove-source-files"])
+    await ssh.send([absFilename], event.file.meta.remoteUploadPath, ["--remove-source-files"]);
   }
   const result = await fileBrowser(path.dirname(absFilename), {
     request: path.dirname(absFilename),
@@ -273,7 +273,6 @@ const onRemoveDownloadFile = async (projectRootDir, URL, cb)=>{
   await fs.remove(target);
   cb(true);
 };
-
 
 module.exports = {
   onGetFileList,

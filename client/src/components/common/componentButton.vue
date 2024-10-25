@@ -25,9 +25,9 @@ export default {
   props: { item: Object },
   data: ()=>{
     return {
-      componentDefinition: loadComponentDefinition(),
+      componentDefinition: loadComponentDefinition()
     };
-  },
+  }
 
 };
 </script>

@@ -55,5 +55,5 @@ export default {
     } else if (event.startsWith("log")) {
       logCallbacks[event](...args);
     }
-  },
+  }
 };

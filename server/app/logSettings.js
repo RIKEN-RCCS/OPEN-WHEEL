@@ -133,7 +133,6 @@ function reset() {
   log4js.configure(logSettings);
 }
 
-
 function getLogger(projectRootDir) {
   //please note projectRootDir context will remain after logging
   logger.addContext("projectRootDir", projectRootDir || path.dirname(logFilename));

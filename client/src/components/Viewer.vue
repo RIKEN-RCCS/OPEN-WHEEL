@@ -42,61 +42,61 @@ const debug = Debug("wheel:viewer");
 import "viewerjs/dist/viewer.css";
 import applicationToolBar from "@/components/common/applicationToolBar.vue";
 import NavDrawer from "@/components/common/NavigationDrawer.vue";
-import { component as vueViewer}  from "v-viewer";
+import { component as vueViewer } from "v-viewer";
 import SIO from "@/lib/socketIOWrapper.js";
 import { readCookie } from "@/lib/utility.js";
 
-export default{
+export default {
   name: "Viewer",
-  components:{
+  components: {
     applicationToolBar,
     NavDrawer,
     vueViewer
   },
-  data(){
+  data() {
     return {
-      drawer:false,
-      items:[],
+      drawer: false,
+      items: [],
       options:
           {
             navbar: false,
-            "url":"data-src"
+            url: "data-src"
           }
     };
   },
   computed: {
-    images(){
+    images() {
       return this.items;
     }
   },
-  mounted(){
+  mounted() {
     //get viewer directory name from cookie
-    const dir=readCookie("dir");
+    const dir = readCookie("dir");
     //projectRootDir is not set in sessionStorage useually,
     //because viewer window opens in another window.
     //But while reloading page, projectRootDir in Cookie can be changed.
     //So, we read it from sessionStorage here
-    let projectRootDir = sessionStorage.getItem("projectRootDir")
-    if(! projectRootDir){
+    let projectRootDir = sessionStorage.getItem("projectRootDir");
+    if (!projectRootDir) {
       projectRootDir = readCookie("rootDir");
       sessionStorage.setItem("projectRootDir", projectRootDir);
     }
-    if(typeof dir !== "string" || typeof projectRootDir !== "string"){
+    if (typeof dir !== "string" || typeof projectRootDir !== "string") {
       return;
     }
-    const baseURL=readCookie("socketIOPath");
+    const baseURL = readCookie("socketIOPath");
     debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
     SIO.onGlobal("resultFiles", (results)=>{
-      this.items=results;
+      this.items = results;
     });
     SIO.emitGlobal("getResultFiles", projectRootDir, dir, SIO.generalCallback);
   },
-  methods:{
-    inited (viewer) {
+  methods: {
+    inited(viewer) {
       this.$viewer = viewer;
     },
-    show () {
+    show() {
       this.$viewer.show();
     }
   }

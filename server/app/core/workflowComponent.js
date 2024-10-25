@@ -345,53 +345,53 @@ function hasChild(component) {
   return component.type === "workflow" || component.type === "parameterStudy" || component.type === "for" || component.type === "while" || component.type === "foreach" || component.type === "stepjob";
 }
 
-async function isBehindIfComponent(projectRootDir, component){
-  const hasPrevious = Array.isArray(component.previous) &&component.previous.length > 0
-  const hasConnectedInputFiles =Array.isArray(component.inputFiles) && component.inputFiles.some((inputFile)=>{
-    return inputFile.src.length > 0
+async function isBehindIfComponent(projectRootDir, component) {
+  const hasPrevious = Array.isArray(component.previous) && component.previous.length > 0;
+  const hasConnectedInputFiles = Array.isArray(component.inputFiles) && component.inputFiles.some((inputFile)=>{
+    return inputFile.src.length > 0;
   });
 
-  if(!(hasPrevious || hasConnectedInputFiles)){
-    return false
+  if (!(hasPrevious || hasConnectedInputFiles)) {
+    return false;
   }
 
-  if(hasPrevious){
-    for(const previous of component.previous){
-      const previousComponent=await readComponentJsonByID(projectRootDir, previous);
+  if (hasPrevious) {
+    for (const previous of component.previous) {
+      const previousComponent = await readComponentJsonByID(projectRootDir, previous);
 
-      if(previousComponent.type === "if"){
-        return true
+      if (previousComponent.type === "if") {
+        return true;
       }
       const rt = await isBehindIfComponent(projectRootDir, previousComponent);
 
-      if(rt){
-        return true
+      if (rt) {
+        return true;
       }
     }
   }
 
-  if(hasConnectedInputFiles){
-    for(const inputFile of component.inputFiles){
-      for(const src of inputFile.src){
-        const srcComponent = await readComponentJsonByID(projectRootDir, src.srcNode)
+  if (hasConnectedInputFiles) {
+    for (const inputFile of component.inputFiles) {
+      for (const src of inputFile.src) {
+        const srcComponent = await readComponentJsonByID(projectRootDir, src.srcNode);
 
-        if(srcComponent.type === "if"){
-          return true
+        if (srcComponent.type === "if") {
+          return true;
         }
         const rt = await isBehindIfComponent(projectRootDir, srcComponent);
 
-        if(rt){
-          return true
+        if (rt) {
+          return true;
         }
       }
     }
   }
-  return false
+  return false;
 }
 
 async function isInitialComponent(projectRootDir, component) {
-  if (await isBehindIfComponent(projectRootDir, component)){
-    return false
+  if (await isBehindIfComponent(projectRootDir, component)) {
+    return false;
   }
   if (component.type === "storage") {
     return component.outputFiles.some((outputFile)=>{
@@ -439,16 +439,15 @@ function removeDuplicatedComponent(components) {
  * @param {string} type - component type
  * @returns {string} - component's basename
  */
-function getComponentDefaultName(type){
-  if (type === "stepjobTask"){
-    return "sjTask"
+function getComponentDefaultName(type) {
+  if (type === "stepjobTask") {
+    return "sjTask";
   }
-  if(type === "bulkjobTask"){
-    return "bjTask"
+  if (type === "bulkjobTask") {
+    return "bjTask";
   }
-  return type
+  return type;
 }
-
 
 module.exports = {
   componentFactory,

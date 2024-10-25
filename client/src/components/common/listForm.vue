@@ -84,23 +84,23 @@ import versatileDialog from "@/components/versatileDialog.vue";
 
 const emptyStringIsNotAllowed = (v)=>{
   return v !== "";
-}
+};
 const isString = (v)=>{
   return typeof v === "string";
-}
+};
 
 export default {
   name: "ListForm",
   components: {
     actionRow,
-    versatileDialog,
+    versatileDialog
   },
   props: {
-    editDialogMinWidth:{
+    editDialogMinWidth: {
       type: [String, Number],
       default: "auto"
     },
-    editDialogMaxWidth:{
+    editDialogMaxWidth: {
       type: [String, Number],
       default: "auto"
     },
@@ -108,59 +108,63 @@ export default {
       type: String,
       default: ""
     },
-    additionalRules:{
+    additionalRules: {
       type: Array
     },
     allowEditButton: {
       type: Boolean,
-      default: false,
+      default: false
     },
-    allowRenameInline:{
+    allowRenameInline: {
       type: Boolean,
-      default: true,
+      default: true
     },
     inputColumn: {
       type: Boolean,
       default: true
     },
-    selectable:{
+    selectable: {
       type: Boolean,
       default: false
     },
-    value:{
+    value: {
       type: Array,
-      default: ()=>{return [];}
+      default: ()=>{ return []; }
     },
     stringItems: {
       type: Boolean,
-      default: false,
+      default: false
     },
     items: { type: Array, required: true },
     headers: {
       type: Array,
       default: function () {
         return [{ key: "name", sortable: false }];
-      },
+      }
     },
     newItemTemplate: {
       type: Object,
       default: function () {
         return { name: "" };
-      },
+      }
     },
     disabled: Boolean
   },
-  mounted(){
-    if(this.additionalRules){
+  mounted() {
+    if (this.additionalRules) {
       this.updateItemValidator.push(...this.additionalRules);
       this.newItemValidator.push(...this.additionalRules);
     }
     //store array of false with the same length as this.items
-    this.editDialog.push(...this.items.map(()=>{return false}))
+    this.editDialog.push(...this.items.map(()=>{
+      return false;
+    }));
   },
-  watch:{
-    items(){
-      this.editDialog.push(...this.items.map(()=>{return false}))
+  watch: {
+    items() {
+      this.editDialog.push(...this.items.map(()=>{
+        return false;
+      }));
     }
   },
   data: function () {
@@ -170,16 +174,16 @@ export default {
       newVal: null,
       oldVal: null,
       targetIndex: null,
-      updateItemValidator:[this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, isString],
+      updateItemValidator: [this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, isString],
       newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, isString]
     };
   },
   computed: {
-    selectedItems:{
-      get(){
+    selectedItems: {
+      get() {
         return this.value;
       },
-      set(v){
+      set(v) {
         this.$emit("update:modelValue", v);
       }
     },
@@ -200,17 +204,17 @@ export default {
           return e.value;
         });
     },
-    tableData () {
+    tableData() {
       if (!this.stringItems) {
         return this.items;
       }
       return this.items.map((e)=>{
         return { name: e };
       });
-    },
+    }
   },
   methods: {
-    isDuplicate (newItem, except=[]) {
+    isDuplicate(newItem, except = []) {
       if (typeof newItem !== "string") {
         return false;
       }
@@ -224,32 +228,32 @@ export default {
     editingItemIsNotDuplicate: function (newItem) {
       return this.isDuplicate(newItem, [this.oldVal]) ? "duplicated name is not allowed" : true;
     },
-    openDialog(name,index){
-      this.targetIndex=index
-      this.newVal=name;
-      this.oldVal=name
-      this.editDialog[index]=true
+    openDialog(name, index) {
+      this.targetIndex = index;
+      this.newVal = name;
+      this.oldVal = name;
+      this.editDialog[index] = true;
     },
-    closeDialog(index){
-      this.targetIndex=null
-      this.newVal=null;
-      this.oldVal=null
-      this.editDialog[index]=false;
+    closeDialog(index) {
+      this.targetIndex = null;
+      this.newVal = null;
+      this.oldVal = null;
+      this.editDialog[index] = false;
     },
     saveEditDialog: function () {
-      const index=this.targetIndex
+      const index = this.targetIndex;
       const isValid = this.updateItemValidator.every((func)=>{
-        return func(this.newVal) === true
+        return func(this.newVal) === true;
       });
-      if(!isValid){
-        console.log("new value is not valid", this.newVal)
+      if (!isValid) {
+        console.log("new value is not valid", this.newVal);
         this.closeDialog(index);
-        return 
+        return;
       }
-      if( this.newVal === this.oldVal){
-        console.log("new value is not changed", this.newVal)
+      if (this.newVal === this.oldVal) {
+        console.log("new value is not changed", this.newVal);
         this.closeDialog(index);
-        return 
+        return;
       }
       if (this.stringItems) {
         this.$emit("update", this.newVal, index);
@@ -261,26 +265,26 @@ export default {
     },
     addItem: function () {
       const isInvalid = this.newItemValidator.some((func)=>{
-        return func(this.inputField) !== true
+        return func(this.inputField) !== true;
       });
 
-      if(isInvalid){
-        return
+      if (isInvalid) {
+        return;
       }
       const newItem = this.stringItems ? this.inputField : Object.assign({}, this.newItemTemplate || {}, { name: this.inputField });
       this.$emit("add", newItem);
       this.inputField = null;
     },
     deleteItem: function (v) {
-      const  index = this.items.findIndex((e)=>{
+      const index = this.items.findIndex((e)=>{
         return this.stringItems ? e === v.name : e.name === v.name;
       });
 
       if (index !== -1) {
         this.$emit("remove", v, index);
       }
-    },
-  },
+    }
+  }
 };
 </script>
 <style>

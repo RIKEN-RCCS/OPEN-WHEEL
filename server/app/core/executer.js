@@ -37,7 +37,6 @@ async function replaceCRLF(filename) {
   return fs.writeFile(filename, contents);
 }
 
-
 async function prepareRemoteExecDir(task) {
   await setTaskState(task, "stage-in");
   getLogger(task.projectRootDir).debug(task.remoteWorkingDir, task.script);
@@ -72,7 +71,10 @@ function makeQueueOpt(task, JS, queues) {
   if (typeof queues !== "string") {
     return "";
   }
-  const queueList = queues.split(",").map((e)=>{return e.trim()});
+  const queueList = queues.split(",")
+    .map((e)=>{
+      return e.trim();
+    });
   if (queueList.length === 0) {
     return "";
   }
@@ -368,7 +370,6 @@ function getExecutersKey(task) {
   return `${task.remotehostID}-${task.useJobScheduler}`;
 }
 
-
 function createExecuter(task) {
   getLogger(task.projectRootDir).debug("createExecuter called");
   const onRemote = task.remotehostID !== "localhost";
@@ -424,7 +425,6 @@ async function exec(task) {
     task.remoteWorkingDir = getRemoteWorkingDir(task.projectRootDir, task.projectStartTime, task.workingDir, task);
     task.remoteRootWorkingDir = getRemoteRootWorkingDir(task.projectRootDir, task.projectStartTime, task);
   }
-
 
   //executer.submit is async function but we do NOT wait it at dispatcher._dispatchTask()
   //task state will be written to component json file and read it from each functions which need task status

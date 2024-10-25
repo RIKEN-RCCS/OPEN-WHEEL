@@ -44,35 +44,35 @@
 </template>
 <script>
 import Debug from "debug";
-import envSettingDialog from "@/components/envSettingDialog.vue"
+import envSettingDialog from "@/components/envSettingDialog.vue";
 import { mapState, mapMutations, mapGetters } from "vuex";
-import { widthComponentLibrary, heightToolbar, heightDenseToolbar} from "@/lib/componentSizes.json";
+import { widthComponentLibrary, heightToolbar, heightDenseToolbar } from "@/lib/componentSizes.json";
 import SIO from "@/lib/socketIOWrapper.js";
 import loadComponentDefinition from "@/lib/componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
-const debug=Debug("wheel:workflow:componentLibrary");
+const debug = Debug("wheel:workflow:componentLibrary");
 
 export default {
   name: "ComponentLibrary",
-  components:{
-    envSettingDialog,
+  components: {
+    envSettingDialog
   },
   data: ()=>{
     return {
       componentDefinitions: Object.keys(componentDefinitionObj).map((e)=>{
         return {
           type: e,
-          ...componentDefinitionObj[e],
+          ...componentDefinitionObj[e]
         };
       }),
-      offsetX:null,
-      offsetY:null,
-      widthComponentLibrary 
+      offsetX: null,
+      offsetY: null,
+      widthComponentLibrary
     };
   },
   computed: {
     ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir"]),
-    ...mapGetters(["currentComponentAbsPath", "isEdittable" ]),
+    ...mapGetters(["currentComponentAbsPath", "isEdittable"]),
     isStepJob: function () {
       if (this.currentComponent === null) return false;
       return this.currentComponent.type === "stepjob";
@@ -86,43 +86,43 @@ export default {
       return this.componentDefinitions.filter((e)=>{
         return ["task", "if", "for", "while", "foreach", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"].includes(e.type);
       });
-    },
+    }
   },
   methods: {
     ...mapMutations({ commitComponentTree: "componentTree" }),
-    onDragstart (event, item) {
-      this.offsetX=event.offsetX
-      this.offsetY=event.offsetY
+    onDragstart(event, item) {
+      this.offsetX = event.offsetX;
+      this.offsetY = event.offsetY;
 
       //set icon during drag
-      const target=this.$refs[item.type][0]._.subTree.el
+      const target = this.$refs[item.type][0]._.subTree.el;
       event.dataTransfer.setDragImage(target, event.offsetX, event.offsetY);
       event.dataTransfer.effectAllowed = "move";
     },
-    onDragend(event, item){
-      if( !this.isEdittable ){
-        debug("new component can not be added current project status")
-        return
+    onDragend(event, item) {
+      if (!this.isEdittable) {
+        debug("new component can not be added current project status");
+        return;
       }
       const x = event.clientX - widthComponentLibrary - this.offsetX;
       const y = event.clientY - heightToolbar - heightDenseToolbar * 2 - this.offsetY;
 
-      if ( x < 0 || x > this.canvasWidth || y < 0 || y > this.canvasHeight){
-        debug("out of range ",x,y)
-        return
+      if (x < 0 || x > this.canvasWidth || y < 0 || y > this.canvasHeight) {
+        debug("out of range ", x, y);
+        return;
       }
 
       const payload = {
         type: item.type,
         pos: { x, y },
-        path: this.currentComponentAbsPath,
+        path: this.currentComponentAbsPath
       };
       if (payload.type === "parameterStudy") {
         payload.type = "PS";
       }
       SIO.emitGlobal("createNode", this.projectRootDir, payload, this.currentComponent.ID, SIO.generalCallback);
     }
-  },
+  }
 };
 </script>
 <style scoped>

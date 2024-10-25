@@ -79,12 +79,13 @@ export default {
       password: null,
       loading: false,
       showPassword: false
-    }},
+    };
+  },
 
   methods: {
-    async onSubmit () {
-      if (!this.form) return
-      this.loading = true
+    async onSubmit() {
+      if (!this.form) return;
+      this.loading = true;
       const form = document.createElement("form");
       form.setAttribute("action", "./login");
       form.setAttribute("method", "post");
@@ -103,7 +104,6 @@ export default {
       form.submit();
     },
     required
-  },
-}
+  }
+};
 </script>
-
