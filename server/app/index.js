@@ -8,7 +8,7 @@ const path = require("path");
 const fs = require("fs-extra");
 const cors = require("cors");
 const express = require("express");
-const ipfilter = require("express-ipfilter").IpFilter
+const ipfilter = require("express-ipfilter").IpFilter;
 const passport = require("passport");
 const session = require("express-session");
 const SQLiteStore = require("connect-sqlite3")(session);
@@ -25,19 +25,19 @@ const { baseURL, setSio } = require("./core/global.js");
 const { tempdRoot } = require("./core/tempd.js");
 const { aboutWheel } = require("./core/versionInfo.js");
 const { hasEntry, hasCode, hasRefreshToken, storeCode, acquireAccessToken, getURLtoAcquireCode, getRemotehostIDFromState } = require("./core/webAPI.js");
-const secret = "wheel"
-const sessionDBFilename = "session.db"
-const sessionDBDir = process.env.WHEEL_SESSION_DB_DIR|| path.resolve(__dirname, "db");
+const secret = "wheel";
+const sessionDBFilename = "session.db";
+const sessionDBDir = process.env.WHEEL_SESSION_DB_DIR || path.resolve(__dirname, "db");
 
 //setup logger
 const logger = getLogger();
 process.on("unhandledRejection", logger.debug.bind(logger));
 process.on("uncaughtException", logger.debug.bind(logger));
 
-if (process.env.WHEEL_CLEAR_SESSION_DB){
-  try{
+if (process.env.WHEEL_CLEAR_SESSION_DB) {
+  try {
     fs.removeSync(path.resolve(sessionDBDir, sessionDBFilename));
-  }catch(e){
+  } catch (e) {
     logger.debug("remove session DB failed", e);
   }
 }
@@ -47,7 +47,7 @@ if (process.env.WHEEL_CLEAR_SESSION_DB){
  */
 
 const app = express();
-const address = process.env.WHEEL_ACCEPT_ADDRESS
+const address = process.env.WHEEL_ACCEPT_ADDRESS;
 
 function createHTTPSServer(argApp) {
   const { keyFilename, certFilename } = require("./db/db");
@@ -89,15 +89,14 @@ app.use(session({
   secret,
   resave: false,
   saveUninitialized: false,
-  store: new SQLiteStore({ db: sessionDBFilename , dir: sessionDBDir })
+  store: new SQLiteStore({ db: sessionDBFilename, dir: sessionDBDir })
 }));
 
-if(process.env.WHEEL_ENABLE_AUTH){
+if (process.env.WHEEL_ENABLE_AUTH) {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(passport.authenticate("session"));
 }
-
 
 //global socket IO handler
 sio.on("connection", (socket)=>{
@@ -171,19 +170,22 @@ const routes = {
   viewer: require("./routes/viewer")
 };
 
-let checkLoggedIn = (req, res, next)=>{next()}
+let checkLoggedIn = (req, res, next)=>{
+  next();
+};
 
-if(process.env.WHEEL_ENABLE_AUTH){
+if (process.env.WHEEL_ENABLE_AUTH) {
   checkLoggedIn = ensureLoggedIn ("/login");
   router.route("/login").get(routes.login.get)
     .post(routes.login.post);
 }
 router.get("/", checkLoggedIn, routes.home);
-router.get("/home", checkLoggedIn,  routes.home);
-router.get("/remotehost", checkLoggedIn,  routes.remotehost);
+router.get("/home", checkLoggedIn, routes.home);
+router.get("/remotehost", checkLoggedIn, routes.remotehost);
 router.route("/workflow").get(checkLoggedIn, routes.workflow.get)
   .post(checkLoggedIn, routes.workflow.post);
-router.route("/graph").get(checkLoggedIn, routes.workflow.get).post(checkLoggedIn, routes.workflow.post);
+router.route("/graph").get(checkLoggedIn, routes.workflow.get)
+  .post(checkLoggedIn, routes.workflow.post);
 router.route("/list").get(checkLoggedIn, routes.workflow.get)
   .post(routes.workflow.post);
 router.route("/editor").get(checkLoggedIn, routes.workflow.get)

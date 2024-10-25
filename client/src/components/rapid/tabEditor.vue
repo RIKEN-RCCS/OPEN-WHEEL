@@ -266,7 +266,7 @@ export default {
         const content = document.getValue();
         if (file.content === content) {
           console.log("do not call 'saveFile' API because file is not changed. index=", index);
-          return
+          return;
         }
         SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, content, (rt)=>{
           if (!rt) {
@@ -349,7 +349,7 @@ export default {
         this.commitSelectedFile(null);
       }
     },
-    changeTab (argIndex) {
+    changeTab(argIndex) {
       if (argIndex >= this.files.length) {
         //just ignored
         return;

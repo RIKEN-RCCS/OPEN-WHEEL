@@ -4,8 +4,8 @@
  * See License in the project root for the license information.
  */
 import { createRouter, createMemoryHistory } from "vue-router";
-import Graph from  "../views/graph.vue";
-import List from   "../views/taskList.vue";
+import Graph from "../views/graph.vue";
+import List from "../views/taskList.vue";
 import Editor from "../views/rapid.vue";
 
 const routes = [

@@ -283,7 +283,7 @@ export default {
     removeProjectMessage() {
       return this.removeFromList ? "remove following projects from list" : "remove following project files";
     },
-    hasError(){
+    hasError() {
       return this.required(this.newProjectName) !== true;
     }
   },

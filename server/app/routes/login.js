@@ -7,27 +7,27 @@
 const path = require("path");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
-const {isValidUser} = require("../core/auth.js");
+const { isValidUser } = require("../core/auth.js");
 const { baseURL } = require("../core/global.js");
 
 passport.use(new LocalStrategy(
-  async function verify(username, password, cb){
-    const userData=await isValidUser(username, password);
-    if(userData){
+  async function verify(username, password, cb) {
+    const userData = await isValidUser(username, password);
+    if (userData) {
       return cb(null, userData);
     }
-    return cb(null, false, {message: "Incorrect username or password"})
+    return cb(null, false, { message: "Incorrect username or password" });
   })
 );
 
-passport.serializeUser(function(user, cb) {
-  process.nextTick(function() {
+passport.serializeUser(function (user, cb) {
+  process.nextTick(function () {
     cb(null, { id: user.id, username: user.username });
   });
 });
 
-passport.deserializeUser(function(user, cb) {
-  process.nextTick(function() {
+passport.deserializeUser(function (user, cb) {
+  process.nextTick(function () {
     return cb(null, user);
   });
 });
@@ -41,4 +41,4 @@ module.exports = {
     failureRedirect: `${baseURL}login`,
     keepSessionInfo: true
   })
-}
+};

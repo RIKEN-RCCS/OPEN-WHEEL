@@ -19,7 +19,7 @@ const {
   replaceWebhook,
   getProjectJson
 } = require("../core/projectFilesOperator.js");
-const { getComponentDir }  = require("../core/componentJsonIO.js");
+const { getComponentDir } = require("../core/componentJsonIO.js");
 const { sendWorkflow, sendProjectJson, sendComponentTree } = require("./senders.js");
 const { convertPathSep } = require("../core/pathUtils");
 const { updateComponent, updateComponentPos } = require("../core/updateComponent.js");

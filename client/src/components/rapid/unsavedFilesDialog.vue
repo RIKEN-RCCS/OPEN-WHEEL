@@ -43,7 +43,7 @@
 </template>
 <script>
 export default {
-  props:{
+  props: {
     unsavedFiles: {
       type: Array,
       required: true
@@ -51,31 +51,31 @@ export default {
     dialog: {
       type: Boolean,
       required: true
-    },
+    }
   },
-  data () {
+  data() {
     return {
       headers: [
-        { title: "filename", key: "name" },
-      ],
+        { title: "filename", key: "name" }
+      ]
     };
   },
-  computed:{
-    show(){
+  computed: {
+    show() {
       return this.dialog;
     },
-    items(){
+    items() {
       return this.unsavedFiles;
     }
   },
   methods: {
-    closeDialog () {
-      this.$emit("closed","cancel");
+    closeDialog() {
+      this.$emit("closed", "cancel");
     },
-    discardChanges () {
-      this.$emit("closed","discard");
-    },
-  },
+    discardChanges() {
+      this.$emit("closed", "discard");
+    }
+  }
 };
 </script>
 <style scoped>

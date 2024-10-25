@@ -244,35 +244,34 @@ export default {
       const target = this.hosts[index];
       target.loading = true;
       SIO.emitGlobal("tryToConnect", this.hosts[index], (rt)=>{
-        debug("connection test result:",rt);
-        target.loading= false
+        debug("connection test result:", rt);
+        target.loading = false;
 
-        if(rt === "canceled"){
+        if (rt === "canceled") {
           target.connectionStatus = "test";
           target.icon = "mdi-lan-pending";
-          target.testResult="background";
-        }else if (rt === "success"){
+          target.testResult = "background";
+        } else if (rt === "success") {
           target.connectionStatus = "OK";
           target.icon = "mdi-lan-connect";
-          target.testResult="success";
-        }else{
+          target.testResult = "success";
+        } else {
           target.connectionStatus = "failed";
           target.icon = "mdi-lan-disconnect";
-          target.testResult="error";
+          target.testResult = "error";
 
-          if(rt.code === "HostKeyError"){
-            if(rt.lineNumber && rt.host){
-              this.snackbarMessage=`remote host identification of ${rt.host} is different from the one on line ${rt.lineNumber} of ~/.ssh/known_hosts`
-            }else{
-              this.snackbarMessage="remote host identification is different from the one stored in ~/.ssh/known_hosts"
+          if (rt.code === "HostKeyError") {
+            if (rt.lineNumber && rt.host) {
+              this.snackbarMessage = `remote host identification of ${rt.host} is different from the one on line ${rt.lineNumber} of ~/.ssh/known_hosts`;
+            } else {
+              this.snackbarMessage = "remote host identification is different from the one stored in ~/.ssh/known_hosts";
             }
-            this.openSnackbar=true;
+            this.openSnackbar = true;
           }
         }
 
-
-        this.pwDialog=false
-        this.testing=null;
+        this.pwDialog = false;
+        this.testing = null;
       });
     }
   }

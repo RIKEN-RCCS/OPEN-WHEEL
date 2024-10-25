@@ -151,7 +151,7 @@ export default [
     }
   },
   {
-    files: ["server/app/**/*.js"],
+    files: ["server/app/**/*.js", "server/bin/*.js"],
     plugins: {
       node
     },

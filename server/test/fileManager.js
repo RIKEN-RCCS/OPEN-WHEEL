@@ -39,7 +39,7 @@ const { gitInit } = require("../app/core/gitOperator2");
 const testDirRoot = path.resolve("./WHEEL_TEST_TMP");
 
 describe("fileManager UT", ()=>{
-  beforeEach(async function (){
+  beforeEach(async function () {
     this.timeout(10000);
     await fs.remove(testDirRoot);
     cb.reset();
