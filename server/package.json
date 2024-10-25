@@ -62,7 +62,7 @@
     "socketio-file-upload": "^0.7.3",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "ssh-client-wrapper": "^2.9.1",
+    "ssh-client-wrapper": "^2.10.2",
     "stat-mode": "^1.0.0",
     "tar": "^6.2.0",
     "uuid": "^9.0.0",
