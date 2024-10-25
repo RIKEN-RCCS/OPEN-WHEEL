@@ -132,22 +132,28 @@ async function deliverFileOnRemote(recipe) {
   const rt = await ssh.exec(sshCmd, 0, logger.debug.bind(logger));
   if (rt !== 0) {
     logger.warn("deliver file on remote failed", rt);
+    const err = new Error("deliver file on remote failed");
+    err.rt = rt;
+    return Promise.reject(err);
   }
-  return rt;
+  return { type: "copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
 }
 
-async function deliverFileFromRemote(recipe){
+async function deliverFileFromRemote(recipe) {
   const logger = getLogger(recipe.projectRootDir);
   if (!recipe.remoteToLocal) {
     logger.warn("deliverFileFromRemote must be called with remoteToLocal flag");
     return null;
   }
   const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
-  const rt = await ssh.recv([`${recipe.srcRoot}/${recipe.srcName}`], `${recipe.dstRoot}/${recipe.dstName}`)
-  if (rt !== 0) {
-    logger.warn("deliver file from remote failed", rt);
+
+  try {
+    await ssh.recv([`${recipe.srcRoot}/${recipe.srcName}`], `${recipe.dstRoot}/${recipe.dstName}`, ["-vv"]);
+  } catch (e) {
+    console.log(e);
+    return Promise.reject(e);
   }
-  return rt;
+  return { type: "copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
 }
 
 /**
