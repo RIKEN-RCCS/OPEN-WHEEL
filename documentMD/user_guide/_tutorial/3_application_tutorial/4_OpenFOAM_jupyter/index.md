@@ -145,30 +145,30 @@ pip install pandas matplotlib
 次のセルに次のコードを入力してenterキーを押下してください。
 y=0.05の時のUyを壁面の流速毎にプロットします。
 
-```
+{% highlight python %}
 import pandas as pd
 
-df1=pd.read_csv("nu_0.001/sample/sample/1/lineX1_U.csv",usecols=[0,2])
-df2=pd.read_csv("nu_0.005/sample/sample/1/lineX1_U.csv",usecols=[2])
-df3=pd.read_csv("nu_0.01/sample/sample/1/lineX1_U.csv",usecols=[2])
+df1=pd.read_csv("nu_0.001/sample/1/lineX1_U.csv",usecols=[0,2])
+df2=pd.read_csv("nu_0.005/sample/1/lineX1_U.csv",usecols=[2])
+df3=pd.read_csv("nu_0.01/sample/1/lineX1_U.csv",usecols=[2])
 
 df=pd.concat([df1, df2, df3], axis=1).set_axis(["x", "nu0.001_Uy", "nu0.005_Uy","nu_0.01_Uy"], axis=1)
 df.plot(x="x")
-```
+{% endhighlight %}
 
 ![img](./img/graph1.png "Uy on x=0.05")
 
 さらに次のセルに次のコードを入力してenterキーを押下してください。
 こちらでは、x=0.05の時のUxを壁面の流速毎にプロットします。
 
-```
-df1=pd.read_csv("nu_0.001/sample/sample/1/lineY1_U.csv",usecols=[0,1])
-df2=pd.read_csv("nu_0.005/sample/sample/1/lineY1_U.csv",usecols=[1])
-df3=pd.read_csv("nu_0.01/sample/sample/1/lineY1_U.csv",usecols=[1])
+{% highlight python %}
+df1=pd.read_csv("nu_0.001/sample/1/lineY1_U.csv",usecols=[0,1])
+df2=pd.read_csv("nu_0.005/sample/1/lineY1_U.csv",usecols=[1])
+df3=pd.read_csv("nu_0.01/sample/1/lineY1_U.csv",usecols=[1])
 
 df=pd.concat([df1, df2, df3], axis=1).set_axis(["y", "nu0.001_Ux","nu0.005_Ux","nu0.01_Ux"], axis=1)
 df.plot(x="y")
-```
+{% endhighlight %}
 
 ![img](./img/graph1.png "Ux on y=0.05")
 
