@@ -59,6 +59,7 @@ jobs:
           working-directory: test
           browser: chrome
           install: false
+          build: npm run build
           start: npm start
           wait-on: "http://localhost:8089"
           wait-on-timeout: 300
