@@ -67,7 +67,7 @@ jobs:
         with:
           working-directory: test
           browser: chrome
-          install: false
+          install: true
           build: npm run build
           start: npm start
           wait-on: "http://localhost:8089"
