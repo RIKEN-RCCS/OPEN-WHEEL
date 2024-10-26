@@ -9,7 +9,7 @@
 <script>
 import { mapState } from "vuex";
 import { Terminal } from "xterm";
-import "@/../node_modules/xterm/css/xterm.css";
+import "@/../../node_modules/xterm/css/xterm.css";
 import Debug from "debug";
 const debug = Debug("wheel:workflow:xterm");
 
