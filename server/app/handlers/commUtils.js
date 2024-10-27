@@ -6,7 +6,6 @@
 "use strict";
 const { getSio } = require("../core/global.js");
 
-
 /**
  * promised version of socketIO.emit()
  * @param {Function} emit - socketIO's emit()

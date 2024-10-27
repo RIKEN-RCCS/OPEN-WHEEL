@@ -49,7 +49,7 @@
 </template>
 <script>
 export default {
-  props:{
+  props: {
     unsavedFiles: {
       type: Array,
       required: true
@@ -58,43 +58,43 @@ export default {
       type: Boolean,
       required: true
     },
-    withoutStatus:{
+    withoutStatus: {
       type: Boolean,
       default: false
     }
   },
-  data () {
+  data() {
     return {
       headers: [
         { title: "status", key: "status" },
-        { title: "filename", key: "name" },
-      ],
+        { title: "filename", key: "name" }
+      ]
     };
   },
-  mounted(){
-    if(this.withoutStatus){
-      this.headers.splice(0,1);
+  mounted() {
+    if (this.withoutStatus) {
+      this.headers.splice(0, 1);
     }
   },
-  computed:{
-    show(){
+  computed: {
+    show() {
       return this.dialog;
     },
-    items(){
+    items() {
       return this.unsavedFiles;
     }
   },
   methods: {
-    closeDialog () {
-      this.$emit("closed","cancel");
+    closeDialog() {
+      this.$emit("closed", "cancel");
     },
-    discardChanges () {
-      this.$emit("closed","discard");
+    discardChanges() {
+      this.$emit("closed", "discard");
     },
-    saveAll () {
-      this.$emit("closed","save");
-    },
-  },
+    saveAll() {
+      this.$emit("closed", "save");
+    }
+  }
 
 };
 </script>

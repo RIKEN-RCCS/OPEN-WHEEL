@@ -26,7 +26,7 @@ eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 //helper functions
 const { projectJsonFilename, componentJsonFilename } = require("../app/db/db");
-const { createNewProject,  updateComponent, createNewComponent, addInputFile, addOutputFile, addFileLink, renameOutputFile  } = require("../app/core/projectFilesOperator");
+const { createNewProject, updateComponent, createNewComponent, addInputFile, addOutputFile, addFileLink, renameOutputFile } = require("../app/core/projectFilesOperator");
 const { scriptName, pwdCmd, scriptHeader } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
@@ -39,7 +39,7 @@ const wait = ()=>{
 const { remoteHost } = require("../app/db/db");
 const { addSsh } = require("../app/core/sshManager");
 
-describe("UT for Dispatcher class", function() {
+describe("UT for Dispatcher class", function () {
   this.timeout(0);
   let rootWF;
   let projectJson;
@@ -57,8 +57,8 @@ describe("UT for Dispatcher class", function() {
   describe("#outputFile delivery functionality", async ()=>{
     let previous;
     let next;
-    let storage
-    const storageArea=path.resolve(testDirRoot,"storageArea")
+    let storage;
+    const storageArea = path.resolve(testDirRoot, "storageArea");
     beforeEach(async ()=>{
       previous = await createNewComponent(projectRootDir, projectRootDir, "workflow", { x: 10, y: 10 });
       next = await createNewComponent(projectRootDir, projectRootDir, "workflow", { x: 10, y: 10 });
@@ -90,7 +90,7 @@ describe("UT for Dispatcher class", function() {
       await addInputFile(projectRootDir, next.ID, "b");
       await addFileLink(projectRootDir, previous.ID, "{{ WHEEL_CURRENT_INDEX }}a", next.ID, "b");
       await fs.outputFile(path.resolve(projectRootDir, previous.name, "3a"), "hoge");
-      projectJson.env={WHEEL_CURRENT_INDEX: 3}
+      projectJson.env = { WHEEL_CURRENT_INDEX: 3 };
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, projectJson.env, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, next.name, "3a")).not.to.be.a.path();
@@ -101,7 +101,7 @@ describe("UT for Dispatcher class", function() {
       await addInputFile(projectRootDir, next.ID, "b{{ WHEEL_CURRENT_INDEX }}");
       await addFileLink(projectRootDir, previous.ID, "a", next.ID, "b{{ WHEEL_CURRENT_INDEX }}");
       await fs.outputFile(path.resolve(projectRootDir, previous.name, "a"), "hoge");
-      projectJson.env={WHEEL_CURRENT_INDEX: "hoge"}
+      projectJson.env = { WHEEL_CURRENT_INDEX: "hoge" };
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, projectJson.env, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
@@ -116,7 +116,7 @@ describe("UT for Dispatcher class", function() {
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
       expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(storageArea, "a"));
-      const stats=await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
+      const stats = await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
       expect(stats.isSymbolicLink()).to.be.false;
     });
     it("should move storage component's inputFile to storagePath", async ()=>{
@@ -134,7 +134,7 @@ describe("UT for Dispatcher class", function() {
       let ssh;
       const remotehostName = process.env.WHEEL_TEST_REMOTEHOST;
       const password = process.env.WHEEL_TEST_REMOTE_PASSWORD;
-      before(async function() {
+      before(async function () {
         if (!remotehostName) {
           console.log("remote exec test will be skipped because WHEEL_TEST_REMOTEHOST is not set");
           this.skip();
@@ -178,12 +178,12 @@ describe("UT for Dispatcher class", function() {
           await addFileLink(projectRootDir, storage.ID, "a", next.ID, "b");
           await ssh.exec(`mkdir -p ${remoteStorageArea} && echo hoge > ${remoteStorageArea}/a`);
         });
-        it("should deliver file as real file", async()=>{
+        it("should deliver file as real file", async ()=>{
           const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
           expect(await DP.start()).to.be.equal("finished");
           expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
           expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file();
-          const stats=await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
+          const stats = await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
           expect(stats.isSymbolicLink()).to.be.false;
         });
       });
@@ -431,7 +431,7 @@ describe("UT for Dispatcher class", function() {
       await addInputFile(projectRootDir, for0.ID, "foo");
 
       task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "task", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, task0.ID, "script" , scriptName);
+      await updateComponent(projectRootDir, task0.ID, "script", scriptName);
       await addInputFile(projectRootDir, task0.ID, "foo");
       await fs.outputFile(path.join(projectRootDir, for0.name, task0.name, scriptName), "echo hoge ${WHEEL_CURRENT_INDEX} > hoge");
 
@@ -451,7 +451,7 @@ describe("UT for Dispatcher class", function() {
     });
   });
   describe("[reproduction test] task with sub directory in a for loop", ()=>{
-    beforeEach(async()=>{
+    beforeEach(async ()=>{
       const for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
       await updateComponent(projectRootDir, for0.ID, "start", 0);
       await updateComponent(projectRootDir, for0.ID, "end", 2);
@@ -462,7 +462,7 @@ describe("UT for Dispatcher class", function() {
       await fs.mkdir(path.join(projectRootDir, "for0", "task0", "empty_dir"));
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     });
-    it("should run and successfully finished", async()=>{
+    it("should run and successfully finished", async ()=>{
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
@@ -508,7 +508,7 @@ describe("UT for Dispatcher class", function() {
       await updateComponent(projectRootDir, for0.ID, "end", 3);
       await updateComponent(projectRootDir, for0.ID, "step", 1);
 
-      PS0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir,for0.name), "PS", { x: 10, y: 10 });
+      PS0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, for0.name), "PS", { x: 10, y: 10 });
       await updateComponent(projectRootDir, PS0.ID, "parameterFile", "input.txt.json");
       await fs.outputFile(path.join(projectRootDir, for0.name, PS0.name, "input.txt"), "%%KEYWORD1%%");
       const parameterSetting = {
@@ -533,7 +533,7 @@ describe("UT for Dispatcher class", function() {
 
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     });
-    it("should run project and successfully finish", async()=>{
+    it("should run project and successfully finish", async ()=>{
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
@@ -566,7 +566,7 @@ describe("UT for Dispatcher class", function() {
       });
       expect(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_1", task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
         properties: {
-          state:{
+          state: {
             type: "string",
             pattern: "^finished$"
           }
@@ -574,7 +574,7 @@ describe("UT for Dispatcher class", function() {
       });
       expect(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_2", task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
         properties: {
-          state:{
+          state: {
             type: "string",
             pattern: "^finished$"
           }
@@ -582,24 +582,24 @@ describe("UT for Dispatcher class", function() {
       });
       expect(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_3", task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
         properties: {
-          state:{
+          state: {
             type: "string",
             pattern: "^finished$"
           }
         }
       });
-      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_1", task0.name,"hoge")).to.be.a.file().with.content("hoge 0\n");
-      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_2", task0.name,"hoge")).to.be.a.file().with.content("hoge 0\n");
-      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_3", task0.name,"hoge")).to.be.a.file().with.content("hoge 0\n");
-      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_1", task0.name,"hoge")).not.to.be.a.path()
-      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_2", task0.name,"hoge")).not.to.be.a.path()
-      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_3", task0.name,"hoge")).not.to.be.a.path()
-      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_1", task0.name,"hoge")).not.to.be.a.path()
-      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_2", task0.name,"hoge")).not.to.be.a.path()
-      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_3", task0.name,"hoge")).not.to.be.a.path()
-      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_1", task0.name,"hoge")).not.to.be.a.path()
-      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_2", task0.name,"hoge")).not.to.be.a.path()
-      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_3", task0.name,"hoge")).not.to.be.a.path()
+      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_1", task0.name, "hoge")).to.be.a.file().with.content("hoge 0\n");
+      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_2", task0.name, "hoge")).to.be.a.file().with.content("hoge 0\n");
+      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_3", task0.name, "hoge")).to.be.a.file().with.content("hoge 0\n");
+      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_1", task0.name, "hoge")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_2", task0.name, "hoge")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_3", task0.name, "hoge")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_1", task0.name, "hoge")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_2", task0.name, "hoge")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_3", task0.name, "hoge")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_1", task0.name, "hoge")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_2", task0.name, "hoge")).not.to.be.a.path();
+      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_3", task0.name, "hoge")).not.to.be.a.path();
     });
   });
 });

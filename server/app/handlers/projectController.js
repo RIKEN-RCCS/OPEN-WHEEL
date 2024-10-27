@@ -14,15 +14,14 @@ const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilenam
 const { deliverFile } = require("../core/fileUtils");
 const { gitRm, gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getComponentDir } = require("../core/componentJsonIO.js");
-const { getHosts, validateComponents, checkRemoteStoragePathWritePermission,getSourceComponents,getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
+const { getHosts, validateComponents, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh } = require("../core/sshManager");
 const { runProject, cleanProject, pauseProject, stopProject } = require("../core/projectController.js");
 const { isValidOutputFilename } = require("../lib/utility");
 const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir } = require("./senders.js");
-const { checkWritePermissions,parentDirs, eventEmitters } = require("../core/global.js");
+const { checkWritePermissions, parentDirs, eventEmitters } = require("../core/global.js");
 const { emitAll, emitWithPromise } = require("./commUtils.js");
 const { removeTempd, getTempd } = require("../core/tempd.js");
-
 
 async function updateProjectState(projectRootDir, state) {
   const projectJson = await setProjectState(projectRootDir, state);
@@ -170,12 +169,12 @@ async function onRunProject(clientID, projectRootDir, ack) {
         }
         await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage);
       }
-      if(!checkWritePermissions.has(projectRootDir)){
+      if (!checkWritePermissions.has(projectRootDir)) {
         checkWritePermissions.set(projectRootDir, []);
       }
       const checkWritePermission = checkWritePermissions.get(projectRootDir);
 
-      if(checkWritePermission.length >0){
+      if (checkWritePermission.length > 0) {
         await Promise.all(checkWritePermission.map((e)=>{
           return checkRemoteStoragePathWritePermission(projectRootDir, e);
         }));
@@ -186,7 +185,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
 
       if (err.reason === "CANCELED") {
         getLogger(projectRootDir).debug(err.message);
-      }  else if ( err.reason==="invalidRemoteStorage"){
+      } else if (err.reason === "invalidRemoteStorage") {
         getLogger(projectRootDir).error(`you do not have write permission to ${err.storagePath} on ${err.host}`);
       } else {
         getLogger(projectRootDir).error("fatal error occurred while preparing phase:", err);
@@ -346,7 +345,6 @@ async function onUpdateProjectDescription(projectRootDir, description, ack) {
   await updateProjectDescription(projectRootDir, description);
   onGetProjectJson(projectRootDir, ack);
 }
-
 
 module.exports = {
   onRunProject,

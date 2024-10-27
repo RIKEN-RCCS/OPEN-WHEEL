@@ -11,12 +11,12 @@ const { readJsonGreedy } = require("../core/fileUtils");
 const { watchers } = require("../core/global.js");
 const { emitAll } = require("./commUtils.js");
 
-const onGetResultFiles = async(clientID, projectRootDir, dir, cb)=>{
+const onGetResultFiles = async (clientID, projectRootDir, dir, cb)=>{
   try {
     const filename = path.resolve(dir, filesJsonFilename);
     const fileJson = await readJsonGreedy(filename);
     emitAll(clientID, "resultFiles", fileJson);
-    const watcher = fs.watch(filename, { persistent: false, signal: "TERM" }, async(event)=>{
+    const watcher = fs.watch(filename, { persistent: false, signal: "TERM" }, async (event)=>{
       if (event !== "change") {
         return;
       }

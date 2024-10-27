@@ -25,12 +25,11 @@ const {
   getEnv,
   replaceEnv
 } = require("../core/projectFilesOperator.js");
-const { getComponentDir }  = require("../core/componentJsonIO.js");
+const { getComponentDir } = require("../core/componentJsonIO.js");
 const { sendWorkflow, sendProjectJson, sendComponentTree } = require("./senders.js");
 const { projectJsonFilename } = require("../db/db");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { convertPathSep } = require("../core/pathUtils");
-
 
 async function generalHandler(func, funcname, projectRootDir, parentID, cb) {
   try {
@@ -43,7 +42,6 @@ async function generalHandler(func, funcname, projectRootDir, parentID, cb) {
   const parentDir = await getComponentDir(projectRootDir, parentID, true);
   await sendWorkflow(cb, projectRootDir, parentDir);
 }
-
 
 async function onAddInputFile(projectRootDir, ID, name, parentID, cb) {
   return generalHandler(addInputFile.bind(null, projectRootDir, ID, name), "addInputFile", projectRootDir, parentID, cb);
@@ -104,7 +102,6 @@ async function onRemoveNode(projectRootDir, ID, parentID, cb) {
   await sendProjectJson(projectRootDir);
   return sendComponentTree(projectRootDir, projectRootDir);
 }
-
 
 async function onAddLink(projectRootDir, msg, parentID, cb) {
   return generalHandler(addLink.bind(null, projectRootDir, msg.src, msg.dst, msg.isElse), "addLink", projectRootDir, parentID, cb);

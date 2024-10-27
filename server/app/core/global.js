@@ -22,7 +22,6 @@ function getSio() {
   return sio;
 }
 
-
 module.exports = {
   parentDirs,
   eventEmitters,

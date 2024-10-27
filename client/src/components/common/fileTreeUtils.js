@@ -5,27 +5,27 @@
  */
 import { removeFromArray } from "@/lib/clientUtility.js";
 
-export const  icons = {
-  file: "mdi-file-outline",
+export const icons = {
+  "file": "mdi-file-outline",
   "file-link": "mdi-file-link-outline",
-  dir: "mdi-folder",
+  "dir": "mdi-folder",
   "dir-link": "mdi-link-box-outline",
   "deadlink-link": "mdi-file-link",
-  sndd: "mdi-folder-multiple-outline",
-  snd: "mdi-file-multiple-outline",
+  "sndd": "mdi-folder-multiple-outline",
+  "snd": "mdi-file-multiple-outline"
 };
-export const  openIcons = {
+export const openIcons = {
   dir: "mdi-folder-open",
   sndd: "mdi-folder-multiple-outline",
-  snd: "mdi-file-multiple-outline",
-}
+  snd: "mdi-file-multiple-outline"
+};
 
-export  function fileListModifier (pathsep, e) {
+export function fileListModifier(pathsep, e) {
   const rt = {
     id: `${e.path}${pathsep}${e.name}`,
     path: e.path,
     name: e.name,
-    type: `${e.type}${e.islink ? "-link" : ""}`,
+    type: `${e.type}${e.islink ? "-link" : ""}`
   };
   if (["dir", "dir-link", "snd", "snd-link", "sndd", "sndd-link"].includes(e.type)) {
     rt.children = [];
@@ -33,52 +33,52 @@ export  function fileListModifier (pathsep, e) {
   return rt;
 }
 
-export function removeItem (items, key) {
+export function removeItem(items, key) {
   for (const item of items) {
     if (item.id === key) {
-      removeFromArray(items, { id: key }, "id")
-      return true
+      removeFromArray(items, { id: key }, "id");
+      return true;
     }
     if (Array.isArray(item.children) && item.children.length > 0) {
-      const found = removeItem(item.children, key)
+      const found = removeItem(item.children, key);
       if (found) {
-        return true
+        return true;
       }
     }
   }
 }
 
-export  function getTitle (event, itemName) {
+export function getTitle(event, itemName) {
   const titles = {
     createNewDir: "create new directory",
     createNewFile: "create new File",
     removeFile: `are you sure you want to delete ${itemName} ?`,
     renameFile: `rename ${itemName}`,
-    shareFile:  `copy file path ${itemName}`,
-  }
-  return titles[event]
+    shareFile: `copy file path ${itemName}`
+  };
+  return titles[event];
 }
-export  function getLabel (event) {
+export function getLabel(event) {
   const labels = {
     createNewDir: "new directory name",
     createNewFile: "new file name",
     renameFile: "new name",
-    shareFile: "file path",
-  }
-  return labels[event]
+    shareFile: "file path"
+  };
+  return labels[event];
 }
 
-export  function _getActiveItem (items, key ) {
+export function _getActiveItem(items, key) {
   for (const item of items) {
     if (Array.isArray(item.children) && item.children.length > 0) {
-      const rt = _getActiveItem(item.children, key)
+      const rt = _getActiveItem(item.children, key);
       if (rt) {
-        return rt
+        return rt;
       }
     }
     if (item.id === key) {
-      return item
+      return item;
     }
   }
-  return null
+  return null;
 }

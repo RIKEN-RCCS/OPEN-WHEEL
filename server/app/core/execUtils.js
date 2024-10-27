@@ -9,11 +9,10 @@ const fs = require("fs-extra");
 const { statusFilename } = require("../db/db");
 const { replacePathsep } = require("./pathUtils");
 const { isSameRemoteHost } = require("./projectFilesOperator.js");
-const { writeComponentJson} = require("./componentJsonIO.js");
+const { writeComponentJson } = require("./componentJsonIO.js");
 const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
 const { eventEmitters } = require("./global.js");
-
 
 /**
  * set task component's status and notice it's changed

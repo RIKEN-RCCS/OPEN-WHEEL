@@ -11,7 +11,7 @@ const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
 const { removeSsh } = require("./sshManager");
 const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { setProjectState } = require("../core/projectFilesOperator");
-const { writeComponentJson, readComponentJson} = require("./componentJsonIO.js");
+const { writeComponentJson, readComponentJson } = require("./componentJsonIO.js");
 const Dispatcher = require("./dispatcher");
 const { getDateString } = require("../lib/utility");
 const { getLogger } = require("../logSettings.js");
@@ -36,7 +36,6 @@ const rootDispatchers = new Map();
  *
  */
 
-
 async function updateProjectState(projectRootDir, state) {
   const projectJson = await setProjectState(projectRootDir, state);
   if (projectJson) {
@@ -46,7 +45,6 @@ async function updateProjectState(projectRootDir, state) {
     }
   }
 }
-
 
 const cleanProject = async (projectRootDir)=>{
   const { ID } = await readComponentJson(projectRootDir);
@@ -108,7 +106,6 @@ async function runProject(projectRootDir) {
   rootDispatchers.delete(projectRootDir);
   return rootWF.state;
 }
-
 
 module.exports = {
   cleanProject,

@@ -3,16 +3,16 @@
 </template>
 <script>
 "use strict";
-import { textLengthLimit, textOffset, maxTextChar} from "@/lib/constants.json"
+import { textLengthLimit, textOffset, maxTextChar } from "@/lib/constants.json";
 
 export default {
   name: "TextBox",
-  props:{
+  props: {
     text: {
       required: true,
       type: String
     },
-    center:{
+    center: {
       required: true,
       type: Object
     },
@@ -20,61 +20,61 @@ export default {
       default: "white",
       type: String
     },
-    textAnchor:{
+    textAnchor: {
       default: "start",
       type: String
     }
   },
-  data(){
+  data() {
     return {
       width: textLengthLimit,
       xoffset: textOffset,
       yoffset: 0
-    }
+    };
   },
-  mounted(){
-    this.calcYOffset()
+  mounted() {
+    this.calcYOffset();
   },
-  methods:{
-    calcYOffset(){
+  methods: {
+    calcYOffset() {
       //never re-calcuate y offset
-      if(this.yoffset >0){
-        return
-      }
-      if(! this.$el){
+      if (this.yoffset > 0) {
         return;
       }
-      const {y, height}  = this.$el.getBBox()
-      if(typeof y !== "number" || typeof height !== "number" || y <= 0 || height <= 0){
-        return
+      if (!this.$el) {
+        return;
       }
-      this.yoffset = this.center.y - (y + height/2)
+      const { y, height } = this.$el.getBBox();
+      if (typeof y !== "number" || typeof height !== "number" || y <= 0 || height <= 0) {
+        return;
+      }
+      this.yoffset = this.center.y - (y + height / 2);
     }
   },
-  computed:{
-    trancatedText(){
+  computed: {
+    trancatedText() {
       this.calcYOffset();
 
-      if(this.text.length <= maxTextChar){
-        return this.text
+      if (this.text.length <= maxTextChar) {
+        return this.text;
       }
-      return `${this.text.slice(0,maxTextChar)}\u{22EF}` //22EF = MIDLINE HORIZONTAL ELLIPSIS
+      return `${this.text.slice(0, maxTextChar)}\u{22EF}`; //22EF = MIDLINE HORIZONTAL ELLIPSIS
     },
-    x(){
-      if(this.textAnchor === "start"){
-        return this.center.x + textOffset
+    x() {
+      if (this.textAnchor === "start") {
+        return this.center.x + textOffset;
       }
-      if(this.textAnchor === "end"){
-        return this.center.x - textOffset
+      if (this.textAnchor === "end") {
+        return this.center.x - textOffset;
       }
-      return this.center.x
+      return this.center.x;
     },
-    y(){
+    y() {
       this.calcYOffset();
-      return this.center.y + this.yoffset
+      return this.center.y + this.yoffset;
     }
-  },
-}
+  }
+};
 </script>
 <style>
   text{
@@ -83,4 +83,3 @@ export default {
     user-select: none;
   }
 </style>
-

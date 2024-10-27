@@ -63,11 +63,12 @@ RIKEN R-CCS forks it and continues the development
 
 ## For developpers
 ### Directory structure
-we have 3 main directories at top level
+we have 4 main directories at top level
 
 - documentMD
 - client
 - server
+- test
 
 "documentMD" contains documents written in markdown.
 Only files under `documentMD/user_guide` will be converted to html and be publishd at github.io pages
@@ -75,17 +76,16 @@ when pull request will be merged to master branch
 Any other markdown files under documentMD is detailed informatin for developpers
 
 "client" and "server" has client and server code respectively.
+"test" contains E2E test code based on cypress, you can find server-side unit test code under server/test
 
-### How to run without docker
-1. install and build
-```
-> npm build
-```
-2. start server
-```
-> cd server
-> npm start
-```
+### preparation
+run following commands
+1. npm install
+2. npm run build (install dependent modules for server and client code)
+3. cd test; npm install (install e2e test modules)
+
+please read test/README.md for E2E test preparation
+
 
 ### CI/CD process
 when you push new commit to github, server/app/db/version.json will be updated during CI/CD process.

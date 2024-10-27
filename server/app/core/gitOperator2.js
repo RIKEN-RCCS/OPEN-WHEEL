@@ -38,7 +38,7 @@ async function gitPromise(cwd, args, rootDir) {
     });
     cp.on("exit", (rt)=>{
       if (rt !== 0) {
-        const err = new Error(output)
+        const err = new Error(output);
         err.cwd = cwd;
         err.abs_cwd = path.resolve(cwd);
         err.args = args;
@@ -48,7 +48,6 @@ async function gitPromise(cwd, args, rootDir) {
     });
   });
 }
-
 
 /**
  * initialize repository with git-lfs support
@@ -75,8 +74,8 @@ async function gitInit(rootDir, user, mail) {
   await gitPromise(rootDir, ["config", "user.name", user], rootDir);
   await gitPromise(rootDir, ["config", "user.email", mail], rootDir);
   await gitPromise(rootDir, ["lfs", "install"], rootDir);
-  await fs.outputFile(path.join(rootDir,".gitignore"), "wheel.log");
-  await gitAdd(rootDir, ".gitignore")
+  await fs.outputFile(path.join(rootDir, ".gitignore"), "wheel.log");
+  await gitAdd(rootDir, ".gitignore");
   return gitCommit(rootDir, "initial commit");
 }
 
@@ -85,7 +84,7 @@ async function gitInit(rootDir, user, mail) {
  * @param {string} rootDir - repo's root dir
  * @param {string} message - commmit message
  */
-async function gitCommit(rootDir, message = "save project", additionalOption=[]) {
+async function gitCommit(rootDir, message = "save project", additionalOption = []) {
   return gitPromise(rootDir, ["commit", "-m", `"${message}"`, ...additionalOption], rootDir)
     .catch((err)=>{
       if (!/(no changes|nothing)( added | )to commit/m.test(err)) {
@@ -259,7 +258,6 @@ async function getUnsavedFiles(rootDir) {
   }
   return unsavedFiles;
 }
-
 
 module.exports = {
   gitInit,

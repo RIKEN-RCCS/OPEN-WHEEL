@@ -38,9 +38,9 @@
 <script>
 export default {
   name: "VersatileDialog",
-  props:{
-    activator:{
-      required:false
+  props: {
+    activator: {
+      required: false
     },
     value: {
       type: Boolean,
@@ -52,36 +52,36 @@ export default {
     },
     buttons: {
       type: Array,
-      default: function(){
+      default: function () {
         return [
           { icon: "mdi-check", label: "ok" },
-          { icon: "mdi-close", label: "cancel" },
+          { icon: "mdi-close", label: "cancel" }
         ];
       }
     },
-    title:{
+    title: {
       type: String,
       default: ""
     },
-    message:{
+    message: {
       type: String,
       default: ""
     },
-    maxWidth:{
+    maxWidth: {
       type: [String, Number],
       default: undefined
     }
   },
-  computed:{
-    dialog:{
-      get(){
+  computed: {
+    dialog: {
+      get() {
         return this.value;
       },
-      set(v){
+      set(v) {
         this.$emit("update:modelValue", v);
       }
     }
-  },
+  }
 
 };
 </script>

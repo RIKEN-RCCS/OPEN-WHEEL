@@ -6,7 +6,6 @@
 "use strict";
 const { jobScriptTemplate } = require("../db/db");
 
-
 async function onAddJobScriptTemplate(socket, template) {
   await jobScriptTemplate.add(template);
   onGetJobScriptTemplates(socket);

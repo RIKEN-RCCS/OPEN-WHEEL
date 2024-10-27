@@ -80,7 +80,6 @@ function compare(a, b) {
   return 0;
 }
 
-
 /**
  * send directory contents via socket.io
  * @param {string} targetDir - directory path to read

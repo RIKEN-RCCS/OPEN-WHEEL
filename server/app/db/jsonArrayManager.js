@@ -78,7 +78,6 @@ class JsonArrayManager {
     return this.write();
   }
 
-
   /**
    * remove existing entries
    * @param {string[]} ids - array of id to be removed

@@ -7,7 +7,6 @@
 const path = require("path");
 const { rootDir } = require("../db/db");
 
-
 module.exports = (req, res)=>{
   res.cookie("home", rootDir);
   res.cookie("pathSep", path.sep);

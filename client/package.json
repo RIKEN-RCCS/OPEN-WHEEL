@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "lint": "eslint --fix src/**/*.{js,vue}"
+    "preview": "vite preview"
   },
   "devDependencies": {
     "sass": "1.32",
@@ -16,7 +15,7 @@
   },
   "dependencies": {
     "@mdi/font": "^7.2.96",
-    "@vitejs/plugin-vue": "^4.2.3",
+    "@vitejs/plugin-vue": "=4.2.3",
     "ace-builds": "^1.15.2",
     "axios": "^1.6.8",
     "debug": "^4.3.4",
@@ -26,11 +25,11 @@
     "uuid": "^9.0.0",
     "v-viewer": "^3.0.11",
     "viewerjs": "^1.11.2",
-    "vite-plugin-vuetify": "^1.0.2",
-    "vue": "^3.1.0",
-    "vue-router": "^4.0.0",
-    "vuetify": "^3.3.7",
-    "vuex": "^4.0.0",
+    "vite-plugin-vuetify": "=1.0.2",
+    "vue": "=3.3.4",
+    "vue-router": "=4.2.4",
+    "vuetify": "=3.3.7",
+    "vuex": "=4.1.0",
     "xterm": "^5.1.0",
     "xterm-addon-fit": "^0.7.0"
   }

@@ -11,7 +11,6 @@ const { projectList, projectJsonFilename } = require("../db/db.js");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { addProject, renameProject } = require("../core/projectFilesOperator.js");
 
-
 const getAllProject = async ()=>{
   const pj = await Promise.all(projectList.getAll().map(async (v)=>{
     let rt;

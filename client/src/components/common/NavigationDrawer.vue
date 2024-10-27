@@ -34,20 +34,20 @@ export default {
   name: "NavDrawer",
   props: {
     value: Boolean,
-    baseUrl: String,
+    baseUrl: String
   },
   computed: {
-    remotehostURL(){
-      return `${this.baseUrl || "."}/remotehost`
+    remotehostURL() {
+      return `${this.baseUrl || "."}/remotehost`;
     },
     drawer: {
-      get () {
+      get() {
         return this.value;
       },
-      set (value) {
+      set(value) {
         this.$emit("update:modelValue", value);
-      },
-    },
-  },
+      }
+    }
+  }
 };
 </script>

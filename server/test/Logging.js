@@ -14,7 +14,7 @@ chai.use(require("chai-fs"));
 const sinon = require("sinon");
 chai.use(require("sinon-chai"));
 chai.use((_chai, _)=>{
-  _chai.Assertion.addMethod("withMessage", function(msg) {
+  _chai.Assertion.addMethod("withMessage", function (msg) {
     _.flag(this, "message", msg);
   });
 });
@@ -33,14 +33,13 @@ const reset = LOG.__get__("reset");
 const emitAll = sinon.stub();
 LOG.__set__("emitAll", emitAll);
 
-
 describe("Unit test for log4js's helper functions", ()=>{
   let logger;
-  before(async()=>{
+  before(async ()=>{
     await setLoglevel("log2client", "debug");
     await setLoglevel("filterdFile", "trace");
   });
-  after(async()=>{
+  after(async ()=>{
     await setLoglevel("log2client", process.env.WHEEL_LOGLEVEL);
     await setLoglevel("filterdFile", process.env.WHEEL_LOGLEVEL);
   });
@@ -55,12 +54,12 @@ describe("Unit test for log4js's helper functions", ()=>{
     });
   });
   describe("#log", ()=>{
-    beforeEach(async()=>{
+    beforeEach(async ()=>{
       await fs.remove(projectRootDir);
       await fs.mkdir(projectRootDir);
       emitAll.resetHistory();
     });
-    afterEach(async()=>{
+    afterEach(async ()=>{
       if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
         await fs.remove(path.resolve(__dirname, logFilename));
         await fs.remove(projectRootDir);
@@ -82,7 +81,7 @@ describe("Unit test for log4js's helper functions", ()=>{
       expect(calls[1].args[1]).to.eql("logERR");
       expect(calls[1].args[2]).to.match(/error$/);
     });
-    it("should write all logs except trace to file", async()=>{
+    it("should write all logs except trace to file", async ()=>{
       logger = getLogger(projectRootDir);
       logger.trace("trace");
       logger.debug("debug");

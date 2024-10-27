@@ -9,7 +9,7 @@
 const chai = require("chai");
 const expect = chai.expect;
 chai.use(require("sinon-chai"));
-const rewire = require("rewire");  
+const rewire = require("rewire");
 
 //testee
 const jobManager = rewire("../app/core/jobManager");

@@ -14,48 +14,47 @@
 <script>
 "use strict";
 import { mapState } from "vuex";
-import Freciever from "@/components/componentGraph/freciever.vue"
-import TextBox from "@/components/componentGraph/textBox.vue"
-import {calcFreceiverPos} from "@/lib/utils.js"
-import SIO from "@/lib/socketIOWrapper.js";
+import Freciever from "@/components/componentGraph/freciever.vue";
+import TextBox from "@/components/componentGraph/textBox.vue";
+import { calcFreceiverPos } from "@/lib/utils.js";
 
-export default{
+export default {
   name: "inputFileBox",
-  components:{
+  components: {
     Freciever,
     TextBox
   },
-  props:{
-    center:{
+  props: {
+    center: {
       required: true,
       type: Object
     },
-    index:{
+    index: {
       required: true,
       type: Number
     },
-    componentId:{
+    componentId: {
       required: true,
-      type:String,
+      type: String
     },
-    inputFilename:{
-      type:String,
+    inputFilename: {
+      type: String,
       default: ""
     }
   },
-  computed:{
+  computed: {
     ...mapState(["projectRootDir", "currentComponent"]),
-    frecieverPos(){
+    frecieverPos() {
       return calcFreceiverPos(this.center, this.index);
-    },
+    }
   },
-  methods:{
-    onDrop(e){
+  methods: {
+    onDrop(e) {
       this.$emit("addFileLink", e.detail.componentID, e.detail.srcName, this.inputFilename);
     },
-    onClick(){
+    onClick() {
       this.$emit("removeFileLink", this.inputFilename);
     }
   }
-}
+};
 </script>

@@ -105,14 +105,14 @@ export default {
     actionRow,
     passwordDialog,
     removeConfirmDialog,
-    addNewHostDialog,
+    addNewHostDialog
   },
   data: ()=>{
     return {
       drawer: false,
       pwDialog: false,
-      pwCallback:null,
-      pwDialogTitle:"",
+      pwCallback: null,
+      pwDialogTitle: "",
       rmDialog: false,
       newHostDialog: false,
       headers: [
@@ -122,19 +122,19 @@ export default {
         { title: "user", key: "user" },
         { title: "port", key: "port" },
         { title: "private key", key: "keyFile" },
-        { title: "action", key: "action", sortable: false },
+        { title: "action", key: "action", sortable: false }
       ],
       hosts: [],
       jobSchedulerNames: [],
       removeConfirmMessage: "",
       currentSetting: {},
-      testing:null,
+      testing: null,
       openSnackbar: false,
-      snackbarMessage:"",
+      snackbarMessage: ""
     };
   },
-  computed:{
-    hostList(){
+  computed: {
+    hostList() {
       return this.hosts.map((host)=>{
         return host.name;
       }).filter((hostname)=>{
@@ -142,12 +142,12 @@ export default {
       });
     }
   },
-  mounted () {
-    const baseURL=readCookie("socketIOPath");
+  mounted() {
+    const baseURL = readCookie("socketIOPath");
     debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
     SIO.emitGlobal("getJobSchedulerLabelList", (data)=>{
-      this.jobSchedulerNames.splice(0,this.jobSchedulerNames.length, ...data);
+      this.jobSchedulerNames.splice(0, this.jobSchedulerNames.length, ...data);
     });
     SIO.emitGlobal("getHostList", (data)=>{
       data.forEach((e)=>{
@@ -157,34 +157,36 @@ export default {
       this.hosts.splice(0, this.hosts.length, ...data);
     });
     SIO.onGlobal("askPassword", (hostname, cb)=>{
-      this.pwCallback = cb
+      this.pwCallback = cb;
       this.pwDialogTitle = `input password or passphrase for ${hostname}`;
       this.pwDialog = true;
     });
   },
   methods: {
-    openEditDialog (item) {
+    openEditDialog(item) {
       this.currentSetting = item || {};
       this.newHostDialog = true;
     },
-    initializeConnectionTestIcon(item){
+    initializeConnectionTestIcon(item) {
       item.loading = false;
       delete (item.testResult);
       item.icon = "mdi-lan-pending";
       item.connectionStatus = "test";
     },
-    addNewSetting (updated) {
-      this.currentSetting={};
+    addNewSetting(updated) {
+      this.currentSetting = {};
       delete (updated.icon);
       delete (updated.connectionStatus);
       delete (updated.testResult);
       delete (updated.loading);
 
       const eventName = updated.id ? "updateHost" : "addHost";
-      const index = updated.id ?this.hosts.findIndex((e)=>{
-        return updated.id === e.id;
-      }):0;
-      const numDelete = updated.id? 1:0;
+      const index = updated.id
+        ? this.hosts.findIndex((e)=>{
+          return updated.id === e.id;
+        })
+        : 0;
+      const numDelete = updated.id ? 1 : 0;
       SIO.emitGlobal(eventName, updated, (id)=>{
         if (!id) {
           console.log(`${eventName} API failed`, id);
@@ -195,12 +197,12 @@ export default {
         this.hosts.splice(index, numDelete, updated);
       });
     },
-    openRemoveConfirmDialog (item) {
+    openRemoveConfirmDialog(item) {
       this.rmTarget = item;
       this.removeConfirmMessage = `Are you shure you want to remove ${item.name} ?`;
       this.rmDialog = true;
     },
-    removeRemotehost () {
+    removeRemotehost() {
       SIO.emitGlobal("removeHost", this.rmTarget.id, (rt)=>{
         if (!rt) {
           console.log("removeHost API failed", this.rmTarget.id);
@@ -215,52 +217,51 @@ export default {
         }
       });
     },
-    testConnection (index) {
-      if(this.testing === index){
-        debug(`ssh test for ${this.hosts[index].name} is already running`)
-        return
+    testConnection(index) {
+      if (this.testing === index) {
+        debug(`ssh test for ${this.hosts[index].name} is already running`);
+        return;
       }
-      if(this.testing !== null ){
-        this.snackbarMessage="another ssh test is running"
+      if (this.testing !== null) {
+        this.snackbarMessage = "another ssh test is running";
         debug(this.snackbarMessage);
-        this.openSnackbar=true;
-        return
+        this.openSnackbar = true;
+        return;
       }
-      this.testing=index;
-      const target=this.hosts[index];
-      target.loading=true;
+      this.testing = index;
+      const target = this.hosts[index];
+      target.loading = true;
       SIO.emitGlobal("tryToConnect", this.hosts[index], (rt)=>{
-        debug("connection test result:",rt);
-        target.loading= false
+        debug("connection test result:", rt);
+        target.loading = false;
 
-        if(rt === "canceled"){
+        if (rt === "canceled") {
           target.connectionStatus = "test";
           target.icon = "mdi-lan-pending";
-          target.testResult="background";
-        }else if (rt === "success"){
+          target.testResult = "background";
+        } else if (rt === "success") {
           target.connectionStatus = "OK";
           target.icon = "mdi-lan-connect";
-          target.testResult="success";
-        }else{
+          target.testResult = "success";
+        } else {
           target.connectionStatus = "failed";
           target.icon = "mdi-lan-disconnect";
-          target.testResult="error";
+          target.testResult = "error";
 
-          if(rt.code === "HostKeyError"){
-            if(rt.lineNumber && rt.host){
-              this.snackbarMessage=`remote host identification of ${rt.host} is different from the one on line ${rt.lineNumber} of ~/.ssh/known_hosts`
-            }else{
-              this.snackbarMessage="remote host identification is different from the one stored in ~/.ssh/known_hosts"
+          if (rt.code === "HostKeyError") {
+            if (rt.lineNumber && rt.host) {
+              this.snackbarMessage = `remote host identification of ${rt.host} is different from the one on line ${rt.lineNumber} of ~/.ssh/known_hosts`;
+            } else {
+              this.snackbarMessage = "remote host identification is different from the one stored in ~/.ssh/known_hosts";
             }
-            this.openSnackbar=true;
+            this.openSnackbar = true;
           }
         }
 
-
-        this.pwDialog=false
-        this.testing=null;
+        this.pwDialog = false;
+        this.testing = null;
       });
-    },
-  },
+    }
+  }
 };
 </script>

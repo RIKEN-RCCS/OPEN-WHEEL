@@ -44,7 +44,7 @@ async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params,
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(dstDir, dstName.slice(0, -1), src) : path.join(dstDir, dstName);
       logger.trace(`scatter copy ${path.join(templateRoot, src)} to ${dst}`);
-      p.push(fs.copy(path.join(templateRoot, src), dst, {overwrite: true, dereference: true}));
+      p.push(fs.copy(path.join(templateRoot, src), dst, { overwrite: true, dereference: true }));
     }
   }
   return Promise.all(p).catch((err)=>{
@@ -67,7 +67,7 @@ async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, l
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(templateRoot, dstName.slice(0, -1), src) : path.join(templateRoot, dstName);
       logger.trace(`gather copy ${path.join(srcDir, src)} to ${dst}`);
-      p.push( fs.copy(path.join(srcDir, src), dst, {overwrite: true, dereference: true }));
+      p.push(fs.copy(path.join(srcDir, src), dst, { overwrite: true, dereference: true }));
     }
   }
   return Promise.all(p).catch((err)=>{

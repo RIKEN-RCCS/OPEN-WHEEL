@@ -36,7 +36,6 @@ const { createNewProject,
   getComponentTree
 } = require("../app/core/projectFilesOperator");
 
-
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 
@@ -46,7 +45,7 @@ const testDirRoot = "WHEEL_TEST_TMP";
 //console.log(tmp);
 //}
 
-describe("workflow editor UT", function() {
+describe("workflow editor UT", function () {
   this.timeout(0);
   let components;
   let wf1Schema;
@@ -169,7 +168,6 @@ describe("workflow editor UT", function() {
     await addFileLink(projectRootDir, wf1.ID, "hoge", foreach0.ID, "hoge");
     wf1.outputFiles[0].dst.push({ dstName: "hoge", dstNode: foreach0.ID });
     foreach0.inputFiles[0].src.push({ srcName: "hoge", srcNode: wf1.ID });
-
 
     components = {
       root: rootWf,

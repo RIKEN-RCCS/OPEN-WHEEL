@@ -22,7 +22,7 @@ const getNodeAndPath = (targetID, root, path)=>{
         name: root.name,
         type: root.type,
         parent: root.parent,
-        ID: root.ID,
+        ID: root.ID
       });
     }
     return root;
@@ -39,7 +39,7 @@ const getNodeAndPath = (targetID, root, path)=>{
           name: root.name,
           type: root.type,
           parent: root.parent,
-          ID: root.ID,
+          ID: root.ID
         });
       }
       return found;

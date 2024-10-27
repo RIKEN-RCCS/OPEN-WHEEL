@@ -9,12 +9,12 @@ const fs = require("fs-extra");
 const crypto = require("crypto");
 const docopt = require("@eyalsh/docopt").default;
 
-const {userDBFilename, userDBDir} = require("../app/db/db.js");
-const {initialize, addUser, delUser, listUser} = require("../app/core/auth.js");
+const { userDBFilename, userDBDir } = require("../app/db/db.js");
+const { initialize, addUser, delUser, listUser } = require("../app/core/auth.js");
 
-const toolVersion="1.0"
+const toolVersion = "1.0";
 
-const doc=`
+const doc = `
 manupirate WHEEL's user DB
 
 Usage:
@@ -30,86 +30,87 @@ Options:
   --version: show version info of this tool (not WHEEL)
 
 
-`
-function generatePassword(){
-  const pool="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+{}[]<>:?."
-  let password=""
-  for(let i=0;i<12;i++){
-    const index= crypto.randomInt(0, pool.length)
-    password += pool[index]
+`;
+function generatePassword() {
+  const pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+{}[]<>:?.";
+  let password = "";
+  for (let i = 0; i < 12; i++) {
+    const index = crypto.randomInt(0, pool.length);
+    password += pool[index];
   }
-  return password
+  return password;
 }
 
-function parseOptions(options){
-  if (options["--version"] === true){
-    return "version"
+function parseOptions(options) {
+  if (options["--version"] === true) {
+    return "version";
   }
 
-  const clear=options["-c"] || options["--clear"];
-  const makeAnonymous=options["-A"] || options["--anonymous"]
-  const deleteUser=options["-d"] || options["--delete"]
-  const username=options["-u"]
-  const password=options["-p"]
+  const clear = options["-c"] || options["--clear"];
+  const makeAnonymous = options["-A"] || options["--anonymous"];
+  const deleteUser = options["-d"] || options["--delete"];
+  const username = options["-u"];
+  const password = options["-p"];
 
-  let mode="add";
-  if(makeAnonymous){
+  let mode = "add";
+  if (makeAnonymous) {
     mode = "anon";
-  } else if(deleteUser){
-    mode = "del"
-  }else if( username === null && password === null){
-    mode = "list"
+  } else if (deleteUser) {
+    mode = "del";
+  } else if (username === null && password === null) {
+    mode = "list";
   }
 
-  if(mode === "add" && (username === null || password === null)){
+  if (mode === "add" && (username === null || password === null)) {
     console.log("username and password are requilred");
     process.exit(1);
   }
-  if(mode === "del" && (username === null)){
+  if (mode === "del" && (username === null)) {
     console.log("username is requilred");
     process.exit(2);
   }
-  return {mode, clear, username, password}
+  return { mode, clear, username, password };
 }
 
-async function createAnonymousUser(){
-  const password = generatePassword()
+async function createAnonymousUser() {
+  const password = generatePassword();
   await delUser("anonymous");
   await addUser("anonymous", password);
   console.log("Anonymous user created with password = ", password);
 }
 
-async function printAllUsers(){
-  const users=    await listUser();
+async function printAllUsers() {
+  const users = await listUser();
   console.log(`${users.length} user exists`);
-  users.forEach((e)=>{console.log(` ${e}`)});
-  return users
+  users.forEach((e)=>{
+    console.log(` ${e}`);
+  });
+  return users;
 }
 
 let options;
-try{
-  options = docopt(doc)
-}catch(e){
+try {
+  options = docopt(doc);
+} catch (e) {
   console.error(e.message);
   process.exit(10);
 }
 
-const {mode, clear, username, password}=parseOptions(options);
+const { mode, clear, username, password } = parseOptions(options);
 
-if(mode === "version"){
-  console.log(toolVersion)
+if (mode === "version") {
+  console.log(toolVersion);
   process.exit(0);
 }
 
-
-(async()=>{
-  if(clear && mode !== "list"){
+(async ()=>{
+  if (clear && mode !== "list") {
     await fs.remove(path.resolve(userDBDir, userDBFilename));
   }
 
   await initialize();
 
-  switch (mode){
+  switch (mode) {
     case "list":
       await printAllUsers();
       break;
@@ -120,9 +121,7 @@ if(mode === "version"){
       await addUser(username, password);
       break;
     case "anon":
-      await createAnonymousUser()
+      await createAnonymousUser();
       break;
   }
-})()
-
-
+})();
