@@ -29,11 +29,11 @@
         <template #item.connectionTest="{ item, index }">
           <v-btn
             :disable="testing !== null && testing !== index"
-            :color="item.testResult"
-            :loading="item.loading"
+            :color="item.raw.testResult"
+            :loading="item.raw.loading"
             @click="testConnection(index)"
-            :text=item.connectionStatus
-            :prepend-icon=item.con
+            :text=item.raw.connectionStatus
+            :prepend-icon=item.raw.icon
           />
         </template>
         <template #item.action="{ item}">

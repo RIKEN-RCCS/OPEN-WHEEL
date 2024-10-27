@@ -33,7 +33,7 @@
                 v-bind="menuProps"
                 block
                 class="justify-start"
-                :text=props.item.name
+                :text=props.item.columns.name
               />
             </template>
             <v-sheet
@@ -65,7 +65,7 @@
                 v-bind="menuProps"
                 block
                 class="justify-start"
-                :text=props.item.value
+                :text=props.item.columns.value
               />
             </template>
             <v-sheet
