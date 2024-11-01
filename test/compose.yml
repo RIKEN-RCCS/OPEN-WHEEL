@@ -20,4 +20,4 @@ services:
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
     volumes:
-      - "./${WHEEL_CONFIG_DIR}:/usr/src/server/app/config"
+      - "./wheel_config:/root/.wheel"
