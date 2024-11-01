@@ -788,21 +788,33 @@ export default {
     },
     addToInputFiles(v) {
       this.copySelectedComponent.inputFiles.push(v);
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("addInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID, SIO.generalCallback);
     },
     updateInputFiles(v, index) {
       this.copySelectedComponent.inputFiles.splice(index, 1, v);
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("renameInputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID, SIO.generalCallback);
     },
     removeFromInputFiles(v, index) {
       this.copySelectedComponent.inputFiles.splice(index, 1);
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("removeInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID, SIO.generalCallback);
     },
     addToOutputFiles(v) {
       this.copySelectedComponent.outputFiles.push(v);
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("addOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID, SIO.generalCallback);
     },
     updateOutputFiles(v, index) {
       this.copySelectedComponent.outputFiles.splice(index, 1, v);
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("renameOutputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID, SIO.generalCallback);
     },
     removeFromOutputFiles(v, index) {
       this.copySelectedComponent.outputFiles.splice(index, 1);
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("removeOutputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID, SIO.generalCallback);
     },
     addToIndexList(v) {
       this.copySelectedComponent.indexList.push(v.name);

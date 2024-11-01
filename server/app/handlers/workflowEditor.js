@@ -6,6 +6,12 @@
 "use strict";
 const { getLogger } = require("../logSettings");
 const {
+  addInputFile,
+  addOutputFile,
+  removeInputFile,
+  removeOutputFile,
+  renameInputFile,
+  renameOutputFile,
   addLink,
   addFileLink,
   removeLink,
@@ -39,7 +45,29 @@ async function generalHandler(func, funcname, projectRootDir, parentID, needSend
     return;
   }
 }
+async function onAddInputFile(projectRootDir, ID, name, parentID, cb) {
+  return generalHandler(addInputFile.bind(null, projectRootDir, ID, name), "addInputFile", projectRootDir, parentID, cb);
+}
 
+async function onAddOutputFile(projectRootDir, ID, name, parentID, cb) {
+  return generalHandler(addOutputFile.bind(null, projectRootDir, ID, name), "addOutputFile", projectRootDir, parentID, cb);
+}
+
+async function onRemoveInputFile(projectRootDir, ID, name, parentID, cb) {
+  return generalHandler(removeInputFile.bind(null, projectRootDir, ID, name), "removeInputFile", projectRootDir, parentID, cb);
+}
+
+async function onRemoveOutputFile(projectRootDir, ID, name, parentID, cb) {
+  return generalHandler(removeOutputFile.bind(null, projectRootDir, ID, name), "removeOutputFile", projectRootDir, parentID, cb);
+}
+
+async function onRenameInputFile(projectRootDir, ID, index, newName, parentID, cb) {
+  return generalHandler(renameInputFile.bind(null, projectRootDir, ID, index, newName), "renameInputFile", projectRootDir, parentID, cb);
+}
+
+async function onRenameOutputFile(projectRootDir, ID, index, newName, parentID, cb) {
+  return generalHandler(renameOutputFile.bind(null, projectRootDir, ID, index, newName), "renameOutputFile", projectRootDir, parentID, cb);
+}
 async function onUpdateComponent(projectRootDir, ID, updated, parentID, cb) {
   return generalHandler(updateComponent.bind(null, projectRootDir, ID, updated), "updateComponent", projectRootDir, parentID, false, cb);
 }
@@ -97,6 +125,12 @@ async function onGetWebhook(projectRootDir, ID, cb) {
 }
 
 module.exports = {
+  onAddInputFile,
+  onAddOutputFile,
+  onRenameInputFile,
+  onRenameOutputFile,
+  onRemoveInputFile,
+  onRemoveOutputFile,
   onUpdateComponent,
   onUpdateComponentPos,
   onCreateNode,

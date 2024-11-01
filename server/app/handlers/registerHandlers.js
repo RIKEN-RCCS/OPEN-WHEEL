@@ -18,8 +18,14 @@ const {
   onUpdateComponent,
   onUpdateComponentPos,
   onRemoveNode,
+  onAddInputFile,
+  onAddOutputFile,
+  onRenameInputFile,
+  onRenameOutputFile,
   onAddLink,
   onAddFileLink,
+  onRemoveInputFile,
+  onRemoveOutputFile,
   onRemoveLink,
   onRemoveAllLink,
   onRemoveFileLink,
@@ -52,18 +58,24 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //create
   socket.on("createNode", onCreateNode);
+  socket.on("addInputFile", onAddInputFile);
+  socket.on("addOutputFile", onAddOutputFile);
   socket.on("addLink", onAddLink);
   socket.on("addFileLink", onAddFileLink);
   //read
   socket.on("getEnv", onGetEnv);
   socket.on("getWebhook", onGetWebhook);
   //update
+  socket.on("renameInputFile", onRenameInputFile);
+  socket.on("renameOutputFile", onRenameOutputFile);
   socket.on("updateComponent", onUpdateComponent);
   socket.on("updateComponentPos", onUpdateComponentPos);
   socket.on("updateEnv", onUpdateEnv);
   socket.on("updateWebhook", onUpdateWebhook);
   //delete
   socket.on("removeNode", onRemoveNode);
+  socket.on("removeInputFile", onRemoveInputFile);
+  socket.on("removeOutputFile", onRemoveOutputFile);
   socket.on("removeLink", onRemoveLink);
   socket.on("removeAllLink", onRemoveAllLink);
   socket.on("removeFileLink", onRemoveFileLink);
@@ -212,24 +224,6 @@ const registerHandlers = (socket, Siofu)=>{
   });
   socket.on("updateNode", (projectRootDir)=>{
     getLogger(projectRootDir).error("[deprecated] updateNode API is no longer available");
-  });
-  socket.on("addInputFile", (projectRootDir)=>{
-    getLogger(projectRootDir).error("[deprecated] addInputFile API is no longer available");
-  });
-  socket.on("addOutputFile", (projectRootDir)=>{
-    getLogger(projectRootDir).error("[deprecated] addOutputFile API is no longer available");
-  });
-  socket.on("renameInputFile", (projectRootDir)=>{
-    getLogger(projectRootDir).error("[deprecated] renameIntputFile API is no longer available");
-  });
-  socket.on("renameOutputFile", (projectRootDir)=>{
-    getLogger(projectRootDir).error("[deprecated] renameOutputFile API is no longer available");
-  });
-  socket.on("removeInputFile", (projectRootDir)=>{
-    getLogger(projectRootDir).error("[deprecated] removeIntputFile API is no longer available");
-  });
-  socket.on("removeOutputFile", (projectRootDir)=>{
-    getLogger(projectRootDir).error("[deprecated] removeOuttputFile API is no longer available");
   });
 };
 
