@@ -71,8 +71,8 @@
                 v-bind="menuProps"
                 block
                 class="justify-start"
-                :text=props.item.columns.name
-                @click="openInlineEditDialog(props.item.columns.name, props.index, 'name')"
+                :text=props.item.name
+                @click="openInlineEditDialog(props.item.name, props.index, 'name')"
               />
             </template>
             <v-sheet
@@ -102,8 +102,8 @@
                 class="justify-start text-truncate trancated-row"
                 v-bind="menuProps"
                 block
-                @click="openInlineEditDialog(props.item.columns.description, props.index, 'description')"
-                :text=props.item.columns.description
+                @click="openInlineEditDialog(props.item.description, props.index, 'description')"
+                :text=props.item.description
               />
             </template>
             <v-sheet
@@ -113,7 +113,7 @@
               <v-textarea
                 v-model="newVal"
                 clearable
-                @keyup.enter="changeDescripton(props.item.columns, props.index)"
+                @keyup.enter="changeDescripton(props.item. props.index)"
               />
             </v-sheet>
           </v-menu>
@@ -121,7 +121,7 @@
         <template #item.path="{item}">
           <span
             class="d-inline-block text-truncate trancated-row"
-          >{{ item.columns.path }} </span>
+          >{{ item.path }} </span>
         </template>
       </v-data-table>
       <v-dialog

@@ -38,6 +38,9 @@ export default {
       type: String
     }
   },
+  emits: [
+    "openContextMenu"
+  ],
   computed: {
     control() {
       const offset = this.boxHeight * offsetRatio;

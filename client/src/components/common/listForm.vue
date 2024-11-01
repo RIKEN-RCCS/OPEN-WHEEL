@@ -96,6 +96,11 @@ export default {
     actionRow,
     versatileDialog
   },
+  emits: [
+    "add",
+    "remove",
+    "update"
+  ],
   props: {
     editDialogMinWidth: {
       type: [String, Number],

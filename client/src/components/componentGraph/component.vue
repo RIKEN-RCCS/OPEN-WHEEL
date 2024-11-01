@@ -154,7 +154,6 @@ export default {
       return rt;
     },
     senderPos() {
-      //caclSenderPosは呼ばれているが、それに対してsenderのstart,endともに変更されていないっぽ
       return calcSenderPos(this.componentData);
     },
     elseSenderPos() {
@@ -164,6 +163,16 @@ export default {
       return calcRecieverPos(this.componentPos);
     }
   },
+  emits: [
+    "drag",
+    "dragend",
+    "addFileLink",
+    "removeFileLink",
+    "addLink",
+    "removeLink",
+    "chdir",
+    "openContextMenu"
+  ],
   methods: {
     ...mapActions({ commitSelectedComponent: "selectedComponent" }),
     mouseDown(e) {

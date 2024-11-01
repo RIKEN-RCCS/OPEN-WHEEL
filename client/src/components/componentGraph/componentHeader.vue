@@ -63,6 +63,9 @@ export default {
       default: null
     }
   },
+  emits: [
+    "drop"
+  ],
   data() {
     return {
       width: boxWidth,

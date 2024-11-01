@@ -125,12 +125,14 @@ describe("wheel test", ()=>{
     cy.contains("copy file path").next()
       .find("button")
       .click()
+      .wait(300)
+    cy.contains("copied!");
     cy.contains("[type=\"button\"]", "ok").click()
 
     cy.window().its("navigator.clipboard")
       .then((clip)=>{return clip.readText()})
       .then(($el)=>{
-        cy.softAssert($el, wheelPath + "/test.wheel/task0/a.txt", "script path is copied at clipboard")
+        cy.softAssert($el, `${wheelPath}/${testProject}.wheel/task0/a.txt`, "script path is copied at clipboard")
       })
   })
 
@@ -244,7 +246,6 @@ describe("wheel test", ()=>{
       .then(($el)=>{
         cy.softAssert($el.text(), "input", "\"input\" is added in input file aria")
       })
-
     cy.get("svg").find("text")
       .eq(1)
       .then(($el)=>{
@@ -485,6 +486,7 @@ describe("wheel test", ()=>{
         .then(($el)=>{
           cy.softAssert($el.text(), "run.sh", "script is exist in select box")
         })
+      //TODO 一度componentProperty画面を閉じてAPIを発行したい
 
       cy.projectReload(k, testProject, "task0")
     })
@@ -550,6 +552,7 @@ describe("wheel test", ()=>{
     cy.openRetrySettingTab()
     cy.swicthUseJavascriptExpressionForConditionCheck("on")
     cy.typeScriptconditionCheck("return 1;")
+    cy.clickTask("task0");
     
     Cypress._.times(2, (k)=>{
       cy.contains("button", "retry setting").siblings()
@@ -557,7 +560,7 @@ describe("wheel test", ()=>{
         .children()
         .last()
         .then(($el)=>{
-          cy.softAssert($el.find("textarea").val(), "return 1;", "script aria  is displaied \"return 1;\"")
+          cy.softAssert($el.find("textarea").val(), "return 1;", "script area is displaied \"return 1;\"")
         })
 
       cy.projectReload(k, testProject, "task0")
@@ -578,6 +581,7 @@ describe("wheel test", ()=>{
     cy.openRetrySettingTab()
     cy.swicthUseJavascriptExpressionForConditionCheck("on")
     cy.typeScriptconditionCheck("return 1;")
+    cy.clickTask("task0");
 
     Cypress._.times(2, (k)=>{
       cy.contains("div", "use javascript expression for condition check").parent()
@@ -603,6 +607,7 @@ describe("wheel test", ()=>{
     cy.scriptMake("return1.sh", "exit 1")
     cy.openRetrySettingTab()
     cy.scriptNameForConditionCheckSelect("return1.sh")
+    cy.clickTask("task0");
     
     Cypress._.times(2, (k)=>{
       cy.contains("label", "script name for condition check").siblings()

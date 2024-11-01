@@ -4,7 +4,7 @@
     :color=color
     :center=end
     :size=size
-    @update:center="end=$event"
+    @drag="end=$event"
     :draggable=true
     @dragstart.stop=onDragStart
     @dragend.stop=onDragEnd

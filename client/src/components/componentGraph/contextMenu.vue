@@ -33,7 +33,7 @@ export default {
   },
   methods: {
     onClick(e) {
-      console.log("onClick", e);
+      console.log("DEBUG: contextmenu onClick handler called", e);
       this.$emit(e);
     }
   },

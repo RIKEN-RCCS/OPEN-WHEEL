@@ -20,6 +20,9 @@ export default {
   components: {
     CubicBezierCurve
   },
+  emits: [
+    "openContextMenu"
+  ],
   props: {
     start: {
       required: true,

@@ -32,6 +32,11 @@ export default {
       default: false
     }
   },
+  emits: [
+    "dragstart",
+    "drag",
+    "dragend"
+  ],
   mounted() {
     if (!this.draggable) {
       return;
@@ -68,11 +73,9 @@ export default {
       if (!this.dragging) {
         return;
       }
-      const dx = e.screenX - this.startX;
-      const dy = e.screenY - this.startY;
-      this.center.x = this.oldcenter.x + dx;
-      this.center.y = this.oldcenter.y + dy;
-      this.$emit("drag", dx, dy, e);
+      const x = this.oldcenter.x + e.screenX - this.startX;
+      const y = this.oldcenter.y + e.screenY - this.startY;
+      this.$emit("drag", { x, y });
     },
     mouseUp(e) {
       if (this.startX === null || this.startY === null || !this.dragging) {
