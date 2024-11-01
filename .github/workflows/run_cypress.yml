@@ -13,6 +13,7 @@ jobs:
           - 4000:22
     env:
       WHEEL_USE_HTTP: 1
+      WHEEL_LOGLEVEL: "FATAL"
       TZ: JST-9
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CYPRESS_WHEEL_TEST_REMOTEHOST: ${{ secrets.WHEEL_TEST_REMOTEHOST }}
