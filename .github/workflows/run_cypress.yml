@@ -10,7 +10,7 @@ jobs:
       testbed:
         image: naoso5/openpbs
         ports:
-          - 4000:22
+          - ${{ secrets.WHEEL_TEST_PORT }}:22
     env:
       WHEEL_USE_HTTP: 1
       TZ: JST-9
