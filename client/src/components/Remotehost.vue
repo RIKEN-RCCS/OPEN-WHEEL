@@ -29,18 +29,18 @@
         <template #item.connectionTest="{ item, index }">
           <v-btn
             :disable="testing !== null && testing !== index"
-            :color="item.raw.testResult"
-            :loading="item.raw.loading"
+            :color="item.testResult"
+            :loading="item.loading"
             @click="testConnection(index)"
-            :text=item.raw.connectionStatus
-            :prepend-icon=item.raw.icon
+            :text=item.connectionStatus
+            :prepend-icon=item.icon
           />
         </template>
         <template #item.action="{ item}">
           <action-row
-            :item="item.raw"
-            @delete="openRemoveConfirmDialog(item.raw)"
-            @edit="openEditDialog(item.raw)"
+            :item="item"
+            @delete="openRemoveConfirmDialog(item)"
+            @edit="openEditDialog(item)"
           />
         </template>
       </v-data-table>
