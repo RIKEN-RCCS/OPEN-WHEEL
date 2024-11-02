@@ -9,8 +9,6 @@ import SocketIOFileUpload from "socketio-file-upload/client.min.js";
 import Debug from "debug";
 const debug = Debug("wheel:socketIO");
 
-//const SocketIOFileUpload = require("socketio-file-upload");
-
 let initialized = false;
 let socket = null;
 let uploader = null;
