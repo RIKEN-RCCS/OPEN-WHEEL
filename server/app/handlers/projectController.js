@@ -339,7 +339,7 @@ async function onSaveProject(projectRootDir, ack) {
   await setComponentStateR(projectRootDir, projectRootDir, "not-started", false, ["finished"]);
   await gitCommit(projectRootDir);
 }
-async function projectOperator(clientID, projectRootDir, ack, operation) {
+async function projectOperator({ clientID, projectRootDir, ack, operation }) {
   const projectState = await getProjectState(projectRootDir);
   //ignore disallowd operation for this state
   if (!allowedOperations[projectState].includes(operation)) {
@@ -381,12 +381,12 @@ async function projectOperator(clientID, projectRootDir, ack, operation) {
   getLogger(projectRootDir).debug(`${operation} handler finished`);
   return ack(true);
 }
-function getProjectOperationQueue(clientID, projectRootDir, ack) {
+function getProjectOperationQueue(projectRootDir) {
   if (!projectOperationQueues.has(projectRootDir)) {
     const tmp = new SBS({
       name: "projectOperator",
-      exec: projectOperator.bind(null, clientID, projectRootDir, ack),
-      submitHook: async (queue, operation)=>{
+      exec: projectOperator,
+      submitHook: async (queue, { operation })=>{
         const last = queue.getLastEntry();
         if (last !== null && last.args === operation) {
           getLogger(projectRootDir).debug("duplicated operation is ignored", operation);
@@ -404,8 +404,8 @@ function getProjectOperationQueue(clientID, projectRootDir, ack) {
   return projectOperationQueues.get(projectRootDir);
 }
 async function onProjectOperation(clientID, projectRootDir, operation, ack) {
-  const queue = getProjectOperationQueue(clientID, projectRootDir, ack);
-  const rt = await queue.qsub(operation);
+  const queue = getProjectOperationQueue(projectRootDir);
+  const rt = await queue.qsub({ operation, clientID, projectRootDir, ack });
   return rt;
 }
 
