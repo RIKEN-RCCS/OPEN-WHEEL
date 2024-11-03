@@ -395,10 +395,10 @@ Cypress.Commands.add("projectSave", ()=>{
 Cypress.Commands.add("projectReload", (k, projectName, taskName)=>{
   if (k === 0) {
     cy.projectSave()
+  }
     cy.get("[href=\"./home\"]").click()
     cy.projectOpen(projectName)
     cy.clickTask(taskName)
-  }
 })
 
 //reload Task

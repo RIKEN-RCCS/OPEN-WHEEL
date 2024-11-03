@@ -19,5 +19,6 @@ services:
       WHEEL_USE_PORT: 8089
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
+      WHEEL_LOGLEVEL: info
     volumes:
       - "./wheel_config:/root/.wheel"
