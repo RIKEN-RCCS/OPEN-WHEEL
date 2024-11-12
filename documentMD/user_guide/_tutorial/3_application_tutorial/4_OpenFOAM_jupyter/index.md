@@ -98,7 +98,7 @@ jupyterlabがPSコンポーネント以下のresultsディレクトリを表示�
 
 ### jupyternotebookでの可視化
 初めに各流速での実行結果を読み込んで流速ベクトルを可視化します。
-1つ目のセルに次のコードを入力してenterキーを押下してください。
+1つ目のセルに次のコードを入力してshift+enterキーを押下してください。
 各動粘性係数での流速ベクトルが表示されます。
 
 {% highlight python %}
@@ -136,13 +136,13 @@ plotter.show()
 
 続いて、OpenFOAMのサンプリング機能で取得した、x=0.05およびy=0.05の時のUyおよびUxのグラフを表示します。
 初めにこれ以降の処理に用いるpandasおよびmatplotlibライブラリをインストールします。
-セルに次のコードを入力してenterキーを押下してください
+セルに次のコードを入力してshift+enterキーを押下してください
 
 ```
 pip install pandas matplotlib
 ```
 
-次のセルに次のコードを入力してenterキーを押下してください。
+次のセルに次のコードを入力してshift+enterキーを押下してください。
 y=0.05の時のUyを壁面の流速毎にプロットします。
 
 {% highlight python %}
@@ -158,7 +158,7 @@ df.plot(x="x")
 
 ![img](./img/graph1.png "Uy on x=0.05")
 
-さらに次のセルに次のコードを入力してenterキーを押下してください。
+さらに次のセルに次のコードを入力してshift+enterキーを押下してください。
 こちらでは、x=0.05の時のUxを壁面の流速毎にプロットします。
 
 {% highlight python %}
@@ -170,7 +170,7 @@ df=pd.concat([df1, df2, df3], axis=1).set_axis(["y", "nu0.001_Ux","nu0.005_Ux","
 df.plot(x="y")
 {% endhighlight %}
 
-![img](./img/graph1.png "Ux on y=0.05")
+![img](./img/graph2.png "Ux on y=0.05")
 
 以上でチュートリアル本編は終了です。
 
