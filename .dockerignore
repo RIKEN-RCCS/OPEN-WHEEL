@@ -7,3 +7,6 @@ client/bin
 client/dist
 server/app/db/session.db
 server/app/db/user.db
+server/app/public
+server/app/viewer
+server/app/download
