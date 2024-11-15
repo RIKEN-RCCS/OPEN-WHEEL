@@ -15,9 +15,11 @@ server.crt
 server.key
 _user_guide
 *.swp
-server/app/viewer
 **/_site
 tmp.*
 tmp_config.*
 session.db
 user.db
+server/app/public
+server/app/viewer
+server/app/download
