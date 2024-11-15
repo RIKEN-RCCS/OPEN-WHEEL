@@ -6,10 +6,10 @@ WORKDIR /usr/src/
 RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
 # build WHEEL
 COPY package.json package.json
+COPY package-lock.json package-lock.json
 COPY server server
 COPY client client
 RUN npm install
-RUN npm install -w server -w client
 WORKDIR /usr/src/client
 RUN npm run build
 
