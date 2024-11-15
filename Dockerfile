@@ -10,6 +10,8 @@ COPY server server
 COPY client client
 RUN npm install
 RUN npm install -w server -w client
+WORKDIR /usr/src/client
+RUN npm run build
 
 #build base image to run WHEEL
 FROM --platform=linux/amd64 node:20-slim AS base
