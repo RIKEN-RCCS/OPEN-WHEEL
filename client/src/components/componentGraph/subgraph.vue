@@ -23,8 +23,8 @@
 
 <script>
 "use strict";
-import { boxWidth, textHeight, iconSize, componentBackgroundColor } from "@/lib/constants.json";
-import { getComponentIcon, getColor, calcSubgraphHeight } from "@/lib/utils.js";
+import { boxWidth, textHeight, iconSize, componentBackgroundColor } from "../../lib/constants.json";
+import { getComponentIcon, getColor, calcSubgraphHeight } from "../../lib/utils.js";
 export default {
   name: "sub-graph",
   props: {

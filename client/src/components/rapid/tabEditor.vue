@@ -99,9 +99,9 @@
 "use strict";
 import { mergeProps } from "vue";
 import { mapState, mapGetters, mapMutations } from "vuex";
-import SIO from "@/lib/socketIOWrapper.js";
-import { isValidInputFilename } from "@/lib/utility.js";
-import { editorHeight } from "@/lib/constants.json";
+import SIO from "../..//lib/socketIOWrapper.js";
+import { isValidInputFilename } from "../..//lib/utility.js";
+import { editorHeight } from "../..//lib/constants.json";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/theme-idle_fingers.js";
 

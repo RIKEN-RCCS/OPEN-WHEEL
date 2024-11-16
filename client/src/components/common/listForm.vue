@@ -79,8 +79,8 @@
   </v-data-table>
 </template>
 <script>
-import actionRow from "@/components/common/actionRow.vue";
-import versatileDialog from "@/components/versatileDialog.vue";
+import actionRow from "../../components/common/actionRow.vue";
+import versatileDialog from "../../components/versatileDialog.vue";
 
 const emptyStringIsNotAllowed = (v)=>{
   return v !== "";

@@ -25,9 +25,9 @@
 </template>
 <script>
 "use strict";
-import EquilateralTriangle from "@/components/componentGraph/triangle.vue";
-import Connector from "@/components/componentGraph/connector.vue";
-import { filePlugColor, plugSize } from "@/lib/constants.json";
+import EquilateralTriangle from "../../components/componentGraph/triangle.vue";
+import Connector from "../../components/componentGraph/connector.vue";
+import { filePlugColor, plugSize } from "../../lib/constants.json";
 
 export default {
   name: "Fsender",

@@ -7,7 +7,7 @@ import { createApp } from "vue";
 import Workflow from "./components/Workflow.vue";
 import router from "./router";
 import store from "./store";
-import vuetify from "@/plugins/vuetify";
+import vuetify from "./plugins/vuetify";
 
 createApp(Workflow).use(vuetify)
   .use(store)

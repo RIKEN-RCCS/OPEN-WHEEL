@@ -28,7 +28,7 @@
 </template>
 
 <script>
-import imgLogo from "@/assets/wheel_logomark.png";
+import imgLogo from "../../assets/wheel_logomark.png";
 export default {
   data: ()=>{
     return {

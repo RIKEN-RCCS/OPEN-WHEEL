@@ -1,7 +1,7 @@
 "use strict";
 
-import { textHeight, boxWidth, iconSize } from "@/lib/constants.json";
-import loadComponentDefinition from "@/lib/componentDefinision.js";
+import { textHeight, boxWidth, iconSize } from "./constants.json";
+import loadComponentDefinition from "./componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
 
 export function getComponentIcon(type, host, useJobScheduler) {

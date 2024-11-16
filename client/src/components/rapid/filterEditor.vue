@@ -51,7 +51,7 @@
 </template>
 <script>
 "use strict";
-import { tableFooterProps } from "@/lib/rapid2Util.js";
+import { tableFooterProps } from "../../lib/rapid2Util.js";
 
 export default {
   name: "FilterEditor",

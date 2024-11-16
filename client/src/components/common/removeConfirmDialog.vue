@@ -38,7 +38,7 @@
   </v-dialog>
 </template>
 <script>
-import buttons from "@/components/common/buttons.vue";
+import buttons from "../../components/common/buttons.vue";
 export default {
   name: "RemoveConfirmDialog",
   components: {

@@ -14,8 +14,8 @@
 
 <script>
 import { mapMutations } from "vuex";
-import ComponentGraph from "@/components/componentGraph/componentGraph.vue";
-import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "@/lib/componentSizes.json";
+import ComponentGraph from "../components/componentGraph/componentGraph.vue";
+import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "../lib/componentSizes.json";
 
 export default {
   name: "GraphView",

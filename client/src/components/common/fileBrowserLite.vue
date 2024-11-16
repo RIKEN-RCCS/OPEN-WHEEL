@@ -15,9 +15,9 @@
   />
 </template>
 <script>
-import SIO from "@/lib/socketIOWrapper.js";
-import myTreeview from "@/components/common/myTreeview.vue";
-import { icons, openIcons, fileListModifier } from "@/components/common/fileTreeUtils.js";
+import SIO from "../../lib/socketIOWrapper.js";
+import myTreeview from "../../components/common/myTreeview.vue";
+import { icons, openIcons, fileListModifier } from "../../components/common/fileTreeUtils.js";
 
 function getActiveItem(items, key, path) {
   for (const item of items) {

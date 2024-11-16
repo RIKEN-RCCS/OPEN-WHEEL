@@ -23,9 +23,9 @@
 <script>
 "use strict";
 import { mapState } from "vuex";
-import getNodeAndPath from "@/lib/getNodeAndPath.js";
-import componentButton from "@/components/common/componentButton.vue";
-import myTreeview from "@/components/common/myTreeview.vue";
+import getNodeAndPath from "../lib/getNodeAndPath.js";
+import componentButton from "../components/common/componentButton.vue";
+import myTreeview from "../components/common/myTreeview.vue";
 
 export default {
   name: "LowerComponentTree",

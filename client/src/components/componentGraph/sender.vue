@@ -26,10 +26,10 @@
 </template>
 <script>
 "use strict";
-import EquilateralTriangle from "@/components/componentGraph/triangle.vue";
-import Vconnector from "@/components/componentGraph/vconnector.vue";
+import EquilateralTriangle from "../../components/componentGraph/triangle.vue";
+import Vconnector from "../../components/componentGraph/vconnector.vue";
 
-import { plugColor, elsePlugColor, plugSize } from "@/lib/constants.json";
+import { plugColor, elsePlugColor, plugSize } from "../../lib/constants.json";
 
 export default {
   name: "Sender",

@@ -71,13 +71,13 @@
 <script>
 "use strict";
 import { mapActions } from "vuex";
-import ComponentHeader from "@/components/componentGraph/componentHeader.vue";
-import InputOutputFileBox from "@/components/componentGraph/inputOutputFileBox.vue";
-import SubGraph from "@/components/componentGraph/subgraph.vue";
-import Sender from "@/components/componentGraph/sender.vue";
-import Reciever from "@/components/componentGraph/reciever.vue";
-import { boxWidth, textHeight, borderWidth } from "@/lib/constants.json";
-import { calcRecieverPos, calcNumIOFiles, calcBoxHeight, calcSenderPos, calcElseSenderPos } from "@/lib/utils.js";
+import ComponentHeader from "./componentHeader.vue";
+import InputOutputFileBox from "./inputOutputFileBox.vue";
+import SubGraph from "./subgraph.vue";
+import Sender from "./sender.vue";
+import Reciever from "./reciever.vue";
+import { boxWidth, textHeight, borderWidth } from "../../lib/constants.json";
+import { calcRecieverPos, calcNumIOFiles, calcBoxHeight, calcSenderPos, calcElseSenderPos } from "../../lib/utils.js";
 
 export default {
   name: "wheel-component",

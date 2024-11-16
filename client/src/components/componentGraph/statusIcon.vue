@@ -11,11 +11,11 @@
 </template>
 <script>
 "use strict";
-import { textHeight } from "@/lib/constants.json";
-import imgNotStarted from "@/assets/img_stateQue.png";
-import imgRunning from "@/assets/img_statePlay.png";
-import imgFinished from "@/assets/img_stateDone.png";
-import imgError from "@/assets/img_error.png";
+import { textHeight } from "../../lib/constants.json";
+import imgNotStarted from "../../assets/img_stateQue.png";
+import imgRunning from "../../assets/img_statePlay.png";
+import imgFinished from "../../assets/img_stateDone.png";
+import imgError from "../../assets/img_error.png";
 
 const stateIcon = {
   "not-started": imgNotStarted,
