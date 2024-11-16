@@ -62,6 +62,7 @@ function createHTTPServer(argApp) {
 const server = process.env.WHEEL_USE_HTTP ? createHTTPServer(app) : createHTTPSServer(app);
 const sio = require("socket.io")(server, { path: path.normalize(`${baseURL}/socket.io/`) });
 setSio(sio);
+
 //
 //do not call log functions above this line !!
 //
@@ -86,7 +87,6 @@ logger.info(`WHEEL_ENABLE_AUTH=${process.env.WHEEL_ENABLE_AUTH}`);
 const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;
 let portNumber = port || defaultPort;
 portNumber = portNumber > 0 ? portNumber : defaultPort;
-
 //middlewares
 if (address) {
   const ips = [address];
@@ -126,7 +126,6 @@ sio.on("connection", (socket)=>{
 
     //this must go to trace level(file only, never go to console)
     logger.debug(`[socketIO API] ${eventName} recieved.`, args);
-
     //sanity check for ack
     if (typeof cb !== "function") {
       throw new Error("socketIO API must be called with call back function");
@@ -221,17 +220,14 @@ function onError(error) {
     throw error;
   }
   const bind = typeof port === "string" ? `Pipe ${port}` : `Port ${port}`;
-
   //handle specific listen errors with friendly messages
   switch (error.code) {
     case "EACCES":
       logger.error(`${bind} requires elevated privileges`);
-
       process.exit(1);
       break;
     case "EADDRINUSE":
       logger.error(`${bind} is already in use`);
-
       process.exit(1);
       break;
     default:

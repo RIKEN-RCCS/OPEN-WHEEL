@@ -56,15 +56,15 @@
 <script>
 "use strict";
 import { mapState, mapMutations, mapGetters } from "vuex";
-import SIO from "@/lib/socketIOWrapper.js";
-import WheelComponent from "@/components/componentGraph/component.vue";
-import InputFileBox from "@/components/componentGraph/inputFileBox.vue";
-import OutputFileBox from "@/components/componentGraph/outputFileBox.vue";
-import Vconnector from "@/components/componentGraph/vconnector.vue";
-import Connector from "@/components/componentGraph/connector.vue";
-import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor } from "@/lib/constants.json";
-import { calcBoxHeight, calcRecieverPos, calcSenderPos, calcElseSenderPos, calcFsenderPos, calcFreceiverPos } from "@/lib/utils.js";
-import { isContainer } from "@/lib/utility.js";
+import SIO from "../../lib/socketIOWrapper.js";
+import WheelComponent from "../../components/componentGraph/component.vue";
+import InputFileBox from "../../components/componentGraph/inputFileBox.vue";
+import OutputFileBox from "../../components/componentGraph/outputFileBox.vue";
+import Vconnector from "../../components/componentGraph/vconnector.vue";
+import Connector from "../../components/componentGraph/connector.vue";
+import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor } from "../../lib/constants.json";
+import { calcBoxHeight, calcRecieverPos, calcSenderPos, calcElseSenderPos, calcFsenderPos, calcFreceiverPos } from "../../lib/utils.js";
+import { isContainer } from "../../lib/utility.js";
 import Debug from "debug";
 const debug = Debug("wheel:workflow:componentGraph");
 

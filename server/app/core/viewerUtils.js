@@ -9,7 +9,6 @@ const FileType = require("file-type");
 const isSvg = require("is-svg");
 
 const viewerSupportedTypes = ["apng", "avif", "gif", "jpg", "png", "webp", "tif", "bmp", "svg"];
-
 async function getFiletype(filename) {
   let rt;
   const buffer = await fs.readFile(filename);

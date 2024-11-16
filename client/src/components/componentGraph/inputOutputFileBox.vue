@@ -20,9 +20,9 @@
 </template>
 <script>
 "use strict";
-import InputFileBox from "@/components/componentGraph/inputFileBox.vue";
-import OutputFileBox from "@/components/componentGraph/outputFileBox.vue";
-import { boxWidth, textHeight, componentBackgroundColor } from "@/lib/constants.json";
+import InputFileBox from "../../components/componentGraph/inputFileBox.vue";
+import OutputFileBox from "../../components/componentGraph/outputFileBox.vue";
+import { boxWidth, textHeight, componentBackgroundColor } from "../../lib/constants.json";
 
 export default {
   name: "inputOutputFileBox",

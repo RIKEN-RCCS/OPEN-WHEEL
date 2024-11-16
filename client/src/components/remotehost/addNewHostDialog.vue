@@ -233,8 +233,8 @@
 </template>
 <script>
 "use strict";
-import fileBrowser from "@/components/common/fileBrowserLite.vue";
-import { required, validPortNumber, positiveNumber } from "@/lib/validationRules.js";
+import fileBrowser from "../../components/common/fileBrowserLite.vue";
+import { required, validPortNumber, positiveNumber } from "../../lib/validationRules.js";
 export default {
   Name: "newHostDialog",
   components: {

@@ -19,10 +19,10 @@
 </template>
 
 <script>
-import GraphView from "@/components/graphView.vue";
-import ComponentLibrary from "@/components/componentLibrary.vue";
-import ComponentProperty from "@/components/componentProperty.vue";
-import ComponentTree from "@/components/componentTree.vue";
+import GraphView from "../components/graphView.vue";
+import ComponentLibrary from "../components/componentLibrary.vue";
+import ComponentProperty from "../components/componentProperty.vue";
+import ComponentTree from "../components/componentTree.vue";
 
 export default {
   name: "Graph",

@@ -99,9 +99,9 @@
 "use strict";
 import { mergeProps } from "vue";
 import { mapState, mapGetters, mapMutations } from "vuex";
-import SIO from "@/lib/socketIOWrapper.js";
-import { isValidInputFilename } from "@/lib/utility.js";
-import { editorHeight } from "@/lib/constants.json";
+import SIO from "../..//lib/socketIOWrapper.js";
+import { isValidInputFilename } from "../..//lib/utility.js";
+import { editorHeight } from "../..//lib/constants.json";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/theme-idle_fingers.js";
 
@@ -184,7 +184,6 @@ export default {
         });
       });
     });
-
     if (typeof this.selectedFile === "string") {
       SIO.emitGlobal("openFile", this.projectRootDir, this.selectedFile, false, (rt)=>{
         if (rt instanceof Error) {
@@ -204,7 +203,6 @@ export default {
     },
     async openNewTab(filename, argDirname) {
       const dirname = argDirname || this.selectedComponentAbsPath;
-
       if (!isValidInputFilename(filename)) {
         return this.closeNewFileDialog();
       }
@@ -340,7 +338,6 @@ export default {
         document.setValue("");
       }
       this.files.splice(index, 1);
-
       if (file.absPath === this.selectedFile) {
         this.commitSelectedFile(null);
       }

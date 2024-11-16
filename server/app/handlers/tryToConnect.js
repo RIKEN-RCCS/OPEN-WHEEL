@@ -19,7 +19,6 @@ const { askPassword } = require("../core/sshManager.js");
 async function tryToConnect(clientID, hostInfo, cb) {
   hostInfo.password = askPassword.bind(null, clientID, `${hostInfo.name} - password`);
   hostInfo.passphrase = askPassword.bind(null, clientID, `${hostInfo.name} - passpharse`);
-
   if (process.env.WHEEL_VERBOSE_SSH) {
     hostInfo.sshOpt = ["-vvv"];
   }
@@ -39,7 +38,6 @@ async function tryToConnect(clientID, hostInfo, cb) {
   ssh.disconnect();
   return cb("success");
 }
-
 async function onTryToConnectById(clientID, id, cb) {
   const hostInfo = remoteHost.get(id);
   await tryToConnect(clientID, hostInfo, cb);

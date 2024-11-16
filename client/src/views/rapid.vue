@@ -88,14 +88,14 @@
 <script>
 "use strict";
 import { mapState, mapGetters, mapActions } from "vuex";
-import getNodeAndPath from "@/lib/getNodeAndPath.js";
-import unsavedFilesDialog from "@/components/rapid/unsavedFilesDialog.vue";
-import componentButton from "@/components/common/componentButton.vue";
-import filterEditor from "@/components/rapid/filterEditor.vue";
-import tabEditor from "@/components/rapid/tabEditor.vue";
-import parameterEditor from "@/components/rapid/parameterEditor.vue";
-import jobScriptEditor from "@/components/rapid/jobScriptEditor.vue";
-import SIO from "@/lib/socketIOWrapper.js";
+import getNodeAndPath from "../lib/getNodeAndPath.js";
+import unsavedFilesDialog from "../components/rapid/unsavedFilesDialog.vue";
+import componentButton from "../components/common/componentButton.vue";
+import filterEditor from "../components/rapid/filterEditor.vue";
+import tabEditor from "../components/rapid/tabEditor.vue";
+import parameterEditor from "../components/rapid/parameterEditor.vue";
+import jobScriptEditor from "../components/rapid/jobScriptEditor.vue";
+import SIO from "../lib/socketIOWrapper.js";
 
 export default {
   name: "Editor",

@@ -21,17 +21,14 @@ async function cancelRemoteJob(task) {
   });
   getLogger(task.projectRootDir).debug("cacnel done", output.join());
 }
-
 async function cancelLocalJob() {
   console.log("not implimented yet!!");
 }
-
 async function killLocalProcess(task) {
   if (task.handler && task.handler.killed === false) {
     task.handler.kill();
   }
 }
-
 async function killTask(task) {
   if (task.remotehostID !== "localhost") {
     if (task.useJobScheduler) {
@@ -48,7 +45,6 @@ async function killTask(task) {
     }
   }
 }
-
 async function cancelDispatchedTasks(tasks) {
   const p = [];
   for (const task of tasks) {
@@ -56,7 +52,6 @@ async function cancelDispatchedTasks(tasks) {
       continue;
     }
     const canceled = cancel(task);
-
     if (!canceled) {
       p.push(killTask(task));
     }
@@ -64,7 +59,6 @@ async function cancelDispatchedTasks(tasks) {
   }
   return Promise.all(p);
 }
-
 function taskStateFilter(task) {
   return {
     name: task.name,

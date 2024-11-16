@@ -29,7 +29,6 @@ async function updateProjectState(projectRootDir, state) {
     await emitAll(projectRootDir, "projectState", projectJson.state);
   }
 }
-
 async function askUnsavedFiles(clientID, projectRootDir) {
   const logger = getLogger(projectRootDir);
   const unsavedFiles = await getUnsavedFiles(projectRootDir);
@@ -54,12 +53,10 @@ async function askUnsavedFiles(clientID, projectRootDir) {
     }
   }
 }
-
 async function getSourceCandidates(projectRootDir, ID) {
   const componentDir = await getComponentDir(projectRootDir, ID);
   return promisify(glob)("*", { cwd: path.join(projectRootDir, componentDir), ignore: componentJsonFilename });
 }
-
 async function askSourceFilename(clientID, ID, name, description, candidates) {
   return new Promise((resolve, reject)=>{
     emitAll(clientID, "askSourceFilename", ID, name, description, candidates, (filename)=>{
@@ -73,7 +70,6 @@ async function askSourceFilename(clientID, ID, name, description, candidates) {
     });
   });
 }
-
 async function askUploadSourceFile(clientID, ID, name, description) {
   return new Promise((resolve, reject)=>{
     emitAll(clientID, "askUploadSourceFile", ID, name, description, (filename)=>{
@@ -95,7 +91,6 @@ async function getSourceFilename(projectRootDir, component, clientID) {
   }
   const filelist = await getSourceCandidates(projectRootDir, component.ID);
   getLogger(projectRootDir).trace("sourceFile: candidates=", filelist);
-
   if (component.outputFiles && component.outputFiles[0] && component.outputFiles[0].name) {
     const rt = filelist.find((e)=>{
       return e === component.outputFiles[0].name;
@@ -125,7 +120,6 @@ async function onRunProject(clientID, projectRootDir, ack) {
       ack(err);
       return false;
     }
-
     //interactive phase
     try {
       await updateProjectState(projectRootDir, "preparing");
@@ -182,7 +176,6 @@ async function onRunProject(clientID, projectRootDir, ack) {
       }
     } catch (err) {
       await updateProjectState(projectRootDir, "not-started");
-
       if (err.reason === "CANCELED") {
         getLogger(projectRootDir).debug(err.message);
       } else if (err.reason === "invalidRemoteStorage") {
@@ -223,7 +216,6 @@ async function onRunProject(clientID, projectRootDir, ack) {
   }
   return ack(true);
 }
-
 async function onPauseProject(projectRootDir, ack) {
   try {
     await pauseProject(projectRootDir);
@@ -237,7 +229,6 @@ async function onPauseProject(projectRootDir, ack) {
   getLogger(projectRootDir).debug("pause project done");
   ack(true);
 }
-
 async function onStopProject(projectRootDir, ack) {
   try {
     await stopProject(projectRootDir);
@@ -251,7 +242,6 @@ async function onStopProject(projectRootDir, ack) {
   getLogger(projectRootDir).debug("stop project done");
   ack(true);
 }
-
 async function onCleanProject(clientID, projectRootDir, ack) {
   try {
     await askUnsavedFiles(clientID, projectRootDir);
@@ -261,7 +251,6 @@ async function onCleanProject(clientID, projectRootDir, ack) {
     ack(e);
     return;
   }
-
   try {
     await Promise.all([
       cleanProject(projectRootDir),
@@ -281,7 +270,6 @@ async function onCleanProject(clientID, projectRootDir, ack) {
   }
   getLogger(projectRootDir).debug("clean project done");
 }
-
 async function onSaveProject(projectRootDir, ack) {
   const projectState = await getProjectState(projectRootDir);
   if (projectState === "not-started") {
@@ -295,7 +283,6 @@ async function onSaveProject(projectRootDir, ack) {
   const projectJson = await getProjectJson(projectRootDir);
   return ack(projectJson);
 }
-
 async function onRevertProject(clientID, projectRootDir, ack) {
   await askUnsavedFiles(clientID, projectRootDir);
 
@@ -319,7 +306,6 @@ async function onRevertProject(clientID, projectRootDir, ack) {
   const projectJson = await getProjectJson(projectRootDir);
   ack(projectJson);
 }
-
 async function onGetProjectJson(projectRootDir, ack) {
   try {
     const projectJson = await getProjectJson(projectRootDir);
@@ -340,7 +326,6 @@ async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
   const requestedComponentDir = await getComponentDir(projectRootDir, componentID);
   return sendWorkflow(ack, projectRootDir, requestedComponentDir, clientID);
 }
-
 async function onUpdateProjectDescription(projectRootDir, description, ack) {
   await updateProjectDescription(projectRootDir, description);
   onGetProjectJson(projectRootDir, ack);

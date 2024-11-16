@@ -84,11 +84,11 @@
 </template>
 <script>
 import { mapState, mapGetters } from "vuex";
-import { tableFooterProps } from "@/lib/rapid2Util.js";
-import { removeFromArray } from "@/lib/clientUtility.js";
-import actionRow from "@/components/common/actionRow.vue";
-import lowerComponentTree from "@/components/lowerComponentTree.vue";
-import { required } from "@/lib/validationRules.js";
+import { tableFooterProps } from "../../lib/rapid2Util.js";
+import { removeFromArray } from "../../lib/clientUtility.js";
+import actionRow from "../../components/common/actionRow.vue";
+import lowerComponentTree from "../../components/lowerComponentTree.vue";
+import { required } from "../../lib/validationRules.js";
 
 export default {
   name: "TargetFiles",
@@ -187,7 +187,6 @@ export default {
       });
       if (targetFileToBeModified) {
         targetFileToBeModified.targetName = this.newTargetFilename;
-
         if (this.newTargetNode) {
           targetFileToBeModified.targetNode = this.newTargetNode.ID;
         } else if (targetFileToBeModified.targetNode) {

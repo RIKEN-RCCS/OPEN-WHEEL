@@ -59,10 +59,10 @@
 "use strict";
 import { mapState, mapGetters } from "vuex";
 import deepEqual from "deep-eql";
-import SIO from "@/lib/socketIOWrapper.js";
-import targetFiles from "@/components/rapid/targetFiles.vue";
-import gatherScatter from "@/components/rapid/gatherScatter.vue";
-import parameter from "@/components/rapid/parameter.vue";
+import SIO from "../..//lib/socketIOWrapper.js";
+import targetFiles from "../../components/rapid/targetFiles.vue";
+import gatherScatter from "../../components/rapid/gatherScatter.vue";
+import parameter from "../../components/rapid/parameter.vue";
 import Debug from "debug";
 const debug = Debug("wheel:workflow:textEditor:paramEditor");
 
@@ -128,7 +128,6 @@ export default {
     onUpdateItem(mode, target, newItem) {
       target.srcName = newItem.srcName;
       target.dstName = newItem.dstName;
-
       if (newItem.dstNode) {
         target.dstNode = newItem.dstNode;
       }

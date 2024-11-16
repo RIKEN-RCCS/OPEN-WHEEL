@@ -32,7 +32,6 @@ const getNodeAndPath = (targetID, root, path)=>{
   }
   for (const node of root.children) {
     const found = getNodeAndPath(targetID, node, path);
-
     if (found) {
       if (Array.isArray(path)) {
         path.unshift({

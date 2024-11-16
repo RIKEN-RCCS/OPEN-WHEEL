@@ -4,7 +4,6 @@
  * See License in the project root for the license information.
  */
 "use strict";
-
 export function targetFile2absPath(targetFile, componentPath, pathSep, prefix, PSID) {
   const PSDir = componentPath[PSID];
   let dirname = Object.prototype.hasOwnProperty.call(targetFile, "targetNode") ? componentPath[targetFile.targetNode] : PSDir;
@@ -15,11 +14,9 @@ export function targetFile2absPath(targetFile, componentPath, pathSep, prefix, P
   }
   return absPath;
 }
-
 export function file2absPath(file, pathSep) {
   return file.dirname + pathSep + file.filename;
 }
-
 export function isTargetFile(file, rootDir, pathSep, targetFiles, componentPath, ID) {
   const dirnamePrefix = rootDir + pathSep;
   return targetFiles.findIndex(

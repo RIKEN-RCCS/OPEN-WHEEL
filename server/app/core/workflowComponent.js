@@ -294,7 +294,6 @@ class BulkjobTask extends Task {
  */
 function componentFactory(type, ...args) {
   let component;
-
   switch (type) {
     case "task":
       component = new Task(...args);

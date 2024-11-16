@@ -44,11 +44,11 @@
 </template>
 <script>
 import Debug from "debug";
-import envSettingDialog from "@/components/envSettingDialog.vue";
+import envSettingDialog from "../components/envSettingDialog.vue";
 import { mapState, mapMutations, mapGetters } from "vuex";
-import { widthComponentLibrary, heightToolbar, heightDenseToolbar } from "@/lib/componentSizes.json";
-import SIO from "@/lib/socketIOWrapper.js";
-import loadComponentDefinition from "@/lib/componentDefinision.js";
+import { widthComponentLibrary, heightToolbar, heightDenseToolbar } from "../lib/componentSizes.json";
+import SIO from "../lib/socketIOWrapper.js";
+import loadComponentDefinition from "../lib/componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
 const debug = Debug("wheel:workflow:componentLibrary");
 

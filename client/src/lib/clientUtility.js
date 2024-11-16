@@ -25,7 +25,6 @@ function escapeRegExp(target) {
   //eslint-disable-next-line no-useless-escape
   return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
 }
-
 function isSane(name) {
   if (typeof name !== "string") {
     return false;
@@ -150,7 +149,6 @@ export function addGlobPattern(old, added) {
   if (typeof old !== "string" || old === "") {
     return added;
   }
-
   //only one entry in include
   if (!isSurrounded(old)) {
     return `{${old},${added}}`;

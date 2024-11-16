@@ -40,11 +40,11 @@
 import Debug from "debug";
 const debug = Debug("wheel:viewer");
 import "viewerjs/dist/viewer.css";
-import applicationToolBar from "@/components/common/applicationToolBar.vue";
-import NavDrawer from "@/components/common/NavigationDrawer.vue";
+import applicationToolBar from "../components/common/applicationToolBar.vue";
+import NavDrawer from "../components/common/NavigationDrawer.vue";
 import { component as vueViewer } from "v-viewer";
-import SIO from "@/lib/socketIOWrapper.js";
-import { readCookie } from "@/lib/utility.js";
+import SIO from "../lib/socketIOWrapper.js";
+import { readCookie } from "../lib/utility.js";
 
 export default {
   name: "Viewer",

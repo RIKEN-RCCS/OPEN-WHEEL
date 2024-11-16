@@ -4,22 +4,21 @@
  * See License in the project root for the license information.
  */
 "use strict";
-import imgTask from "@/assets/img_task.png";
-import imgJob from "@/assets/img_task_job.png";
-import imgRemoteTask from "@/assets/img_remotetask.png";
-import imgRemoteJob from "@/assets/img_remotetask_job.png";
-import imgIf from "@/assets/img_if.png";
-import imgFor from "@/assets/img_for.png";
-import imgWhile from "@/assets/img_while.png";
-import imgForeach from "@/assets/img_foreach.png";
-import imgPS from "@/assets/img_parameterStudy.png";
-import imgWorkflow from "@/assets/img_workflow.png";
-import imgStorage from "@/assets/img_storage.png";
-import imgSource from "@/assets/img_source.png";
-import imgViewer from "@/assets/img_viewer.png";
-import imgStepJob from "@/assets/img_stepjob.png";
-import imgStepJobTask from "@/assets/img_stepjobTask.png";
-
+import imgTask from "../assets/img_task.png";
+import imgJob from "../assets/img_task_job.png";
+import imgRemoteTask from "../assets/img_remotetask.png";
+import imgRemoteJob from "../assets/img_remotetask_job.png";
+import imgIf from "../assets/img_if.png";
+import imgFor from "../assets/img_for.png";
+import imgWhile from "../assets/img_while.png";
+import imgForeach from "../assets/img_foreach.png";
+import imgPS from "../assets/img_parameterStudy.png";
+import imgWorkflow from "../assets/img_workflow.png";
+import imgStorage from "../assets/img_storage.png";
+import imgSource from "../assets/img_source.png";
+import imgViewer from "../assets/img_viewer.png";
+import imgStepJob from "../assets/img_stepjob.png";
+import imgStepJobTask from "../assets/img_stepjobTask.png";
 export default function () {
   return {
     task: { color: "#3B55B3", img: imgTask },

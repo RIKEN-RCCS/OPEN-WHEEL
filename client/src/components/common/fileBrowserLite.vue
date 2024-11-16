@@ -15,16 +15,15 @@
   />
 </template>
 <script>
-import SIO from "@/lib/socketIOWrapper.js";
-import myTreeview from "@/components/common/myTreeview.vue";
-import { icons, openIcons, fileListModifier } from "@/components/common/fileTreeUtils.js";
+import SIO from "../../lib/socketIOWrapper.js";
+import myTreeview from "../../components/common/myTreeview.vue";
+import { icons, openIcons, fileListModifier } from "../../components/common/fileTreeUtils.js";
 
 function getActiveItem(items, key, path) {
   for (const item of items) {
     if (Array.isArray(item.children) && item.children.length > 0) {
       path.push(item.name);
       const rt = getActiveItem(item.children, key, path);
-
       if (rt) {
         return rt;
       }

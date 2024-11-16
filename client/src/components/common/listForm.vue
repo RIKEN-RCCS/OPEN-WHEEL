@@ -79,9 +79,8 @@
   </v-data-table>
 </template>
 <script>
-import actionRow from "@/components/common/actionRow.vue";
-import versatileDialog from "@/components/versatileDialog.vue";
-
+import actionRow from "../../components/common/actionRow.vue";
+import versatileDialog from "../../components/versatileDialog.vue";
 const emptyStringIsNotAllowed = (v)=>{
   return v !== "";
 };
@@ -267,7 +266,6 @@ export default {
       const isInvalid = this.newItemValidator.some((func)=>{
         return func(this.inputField) !== true;
       });
-
       if (isInvalid) {
         return;
       }
@@ -279,7 +277,6 @@ export default {
       const index = this.items.findIndex((e)=>{
         return this.stringItems ? e === v.name : e.name === v.name;
       });
-
       if (index !== -1) {
         this.$emit("remove", v, index);
       }

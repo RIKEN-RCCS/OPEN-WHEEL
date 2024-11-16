@@ -26,7 +26,6 @@ export function escapeRegExp(target) {
   //eslint-disable-next-line no-useless-escape
   return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
 }
-
 function isSane(name) {
   if (typeof name !== "string") {
     return false;

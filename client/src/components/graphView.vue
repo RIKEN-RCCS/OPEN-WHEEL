@@ -14,8 +14,8 @@
 
 <script>
 import { mapMutations } from "vuex";
-import ComponentGraph from "@/components/componentGraph/componentGraph.vue";
-import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "@/lib/componentSizes.json";
+import ComponentGraph from "../components/componentGraph/componentGraph.vue";
+import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "../lib/componentSizes.json";
 
 export default {
   name: "GraphView",
@@ -41,7 +41,6 @@ export default {
       const baseWidth = window.innerWidth < this.$parent.$parent.$el.clientWidth ? window.innerWidth : this.$parent.$parent.$el.clientWidth;
       const width = baseWidth - widthComponentLibrary - magicNumberW;
       const height = window.innerHeight - heightToolbar - heightDenseToolbar * 2 - heightFooter - magicNumberH;
-
       if (width > 0 && height > 0) {
         this.commitCanvasWidth(width);
         this.commitCanvasHeight(height);

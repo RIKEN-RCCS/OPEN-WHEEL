@@ -29,7 +29,6 @@ const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]/\\])/g;
 function escapeRegExp(target) {
   return target.replace(reMustBeEscapedChars, "\\$1");
 }
-
 function isSane(name) {
   if (typeof name !== "string") {
     return false;
@@ -120,7 +119,6 @@ function getDateString(humanReadable = false, withMilliseconds = false) {
   }
   return withMilliseconds ? `${yyyy}${mm}${dd}-${HH}${MM}${ss}${ms}` : `${yyyy}${mm}${dd}-${HH}${MM}${ss}`;
 }
-
 function formatSshOutput(outputArray) {
   const rt = [];
   for (const e of outputArray) {
@@ -130,7 +128,6 @@ function formatSshOutput(outputArray) {
     return e !== "";
   });
 }
-
 function writeJsonWrapper(filename, data) {
   return fs.writeJson(filename, data, { spaces: 4 });
 }

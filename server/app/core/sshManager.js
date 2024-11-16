@@ -8,7 +8,6 @@ const SshClientWrapper = require("ssh-client-wrapper");
 const { emitAll } = require("../handlers/commUtils.js");
 
 const db = new Map();
-
 function hasEntry(projectRootDir, id) {
   if (db.has(projectRootDir)) {
     return db.get(projectRootDir).has(id);
@@ -149,7 +148,6 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   hostinfo.password = async ()=>{
     if (hasEntry(projectRootDir, hostinfo.id)) {
       pw = getSshPW(projectRootDir, hostinfo.id);
-
       if (typeof pw === "string") {
         return pw;
       }
@@ -163,7 +161,6 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   hostinfo.passphrase = async ()=>{
     if (hasEntry(projectRootDir, hostinfo.id)) {
       ph = getSshPH(projectRootDir, hostinfo.id);
-
       if (typeof ph === "string") {
         return ph;
       }
@@ -171,7 +168,6 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
     ph = await askPassword(clientID, `${remoteHostName} - passpharse`);
     return ph;
   };
-
   if (hostinfo.renewInterval) {
     hostinfo.ControlPersist = hostinfo.renewInterval * 60;
   }
@@ -192,7 +188,6 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   const timeout = hostinfo.ConnectTimeout > 120 ? hostinfo.ConnectTimeout : 120;
   try {
     const success = await ssh.canConnect(timeout);
-
     if (success) {
       addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
     }

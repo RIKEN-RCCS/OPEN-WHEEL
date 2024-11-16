@@ -4,11 +4,9 @@
  * See License in the project root for the license information.
  */
 "use strict";
-
 export function required(v) {
   return v === 0 || !!v || "Required.";
 }
-
 export function validPortNumber(v) {
   if (v === "" || typeof v === "undefined" || v === null) {
     return true;

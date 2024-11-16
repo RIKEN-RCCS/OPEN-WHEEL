@@ -54,7 +54,7 @@
 </template>
 
 <script>
-import xterm from "@/components/xterm.vue";
+import xterm from "../components/xterm.vue";
 export default {
   name: "LogScreen",
   components: {

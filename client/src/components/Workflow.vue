@@ -94,18 +94,6 @@
               />
             </template>
           </v-tooltip>
-
-          <!-- <v-tooltip text="pause project" location="bottom"> -->
-          <!--   <template #activator="{ props }"> -->
-          <!--     <v-btn -->
-          <!--       variant=outlined -->
-          <!--       icon="mdi-pause" -->
-          <!--       :disabled="! pauseProjectAllowed" -->
-          <!--       v-bind="props" -->
-          <!--       @click="openProjectOperationComfirmationDialog('pauseProject')" -->
-          <!--     /> -->
-          <!--   </template> -->
-          <!-- </v-tooltip> -->
           <v-tooltip text="stop project" location="bottom">
             <template #activator="{ props }">
               <v-btn
@@ -294,15 +282,15 @@
 <script>
 "use strict";
 import { mapState, mapMutations, mapActions, mapGetters } from "vuex";
-import applicationToolBar from "@/components/common/applicationToolBar.vue";
-import logScreen from "@/components/logScreen.vue";
-import NavDrawer from "@/components/common/NavigationDrawer.vue";
-import passwordDialog from "@/components/common/passwordDialog.vue";
-import unsavedFilesDialog from "@/components/unsavedFilesDialog.vue";
-import sourceFileUploadDialog from "@/components/uploadSourceFileDialog.vue";
-import versatileDialog from "@/components/versatileDialog.vue";
-import SIO from "@/lib/socketIOWrapper.js";
-import { readCookie, state2color } from "@/lib/utility.js";
+import applicationToolBar from "../components/common/applicationToolBar.vue";
+import logScreen from "../components/logScreen.vue";
+import NavDrawer from "../components/common/NavigationDrawer.vue";
+import passwordDialog from "../components/common/passwordDialog.vue";
+import unsavedFilesDialog from "../components/unsavedFilesDialog.vue";
+import sourceFileUploadDialog from "../components/uploadSourceFileDialog.vue";
+import versatileDialog from "../components/versatileDialog.vue";
+import SIO from "../lib/socketIOWrapper.js";
+import { readCookie, state2color } from "../lib/utility.js";
 import Debug from "debug";
 const debug = Debug("wheel:workflow:main");
 
