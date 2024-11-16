@@ -226,7 +226,6 @@ export default {
   },
   mounted() {
     this.getComponentDirRootFiles();
-
     if (!this.readonly) {
       const recaptchaScript = document.createElement("script");
       recaptchaScript.setAttribute(
@@ -297,7 +296,6 @@ export default {
     },
     updateSelected(activeItem) {
       this.activeItem = activeItem;
-
       if (this.activeItem === null) {
         console.log("failed to get current selected Item");
         return;
@@ -309,7 +307,6 @@ export default {
       if (["running", "preparing"].includes(this.projectState)) {
         return;
       }
-
       for (const file of event.files) {
         file.meta.currentDir = this.currentDir;
         file.meta.orgName = file.name;
@@ -355,7 +352,6 @@ export default {
           console.log("failed to get current selected Item");
           return;
         }
-
         if (item.type === "dir" || item.type === "dir-link") {
           SIO.emitGlobal("getFileList", this.projectRootDir, { path: item.id, mode: "underComponent" }, cb);
         } else {
@@ -417,7 +413,6 @@ export default {
           }
           const container = this.activeItem ? this.activeItem.children : this.items;
           container.push(newItem);
-
           if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
             this.openItems.push(this.activeItem.id);
           }
@@ -439,7 +434,6 @@ export default {
       debug(`download request: ${this.activeItem.id}`);
       SIO.emitGlobal("download", this.projectRootDir, this.activeItem.id, (url)=>{
         this.commitWaitingDownload(false);
-
         if (url === null) {
           console.log("download failed.");
           return;

@@ -3,7 +3,6 @@
 import { textHeight, boxWidth, iconSize } from "./constants.json";
 import loadComponentDefinition from "./componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
-
 export function getComponentIcon(type, host, useJobScheduler) {
   if (type === "task") {
     if (host === "localhost") {
@@ -23,7 +22,6 @@ export function getComponentIcon(type, host, useJobScheduler) {
 export function getColor(type) {
   return componentDefinitionObj[type].color;
 }
-
 export function calcFreceiverPos(componentCenter, index) {
   return { x: componentCenter.x - boxWidth / 2,
     y: componentCenter.y + textHeight * (index + 1) };
@@ -32,12 +30,10 @@ export function calcFsenderPos(componentCenter, index) {
   return { x: componentCenter.x + boxWidth / 2,
     y: componentCenter.y + textHeight * (index + 1) };
 }
-
 export function calcRecieverPos(componentCenter) {
   const { x, y } = componentCenter;
   return { x, y: y - textHeight / 2 };
 }
-
 export function calcSubgraphHeight(descendants) {
   if (!Array.isArray(descendants)) {
     return 0;
@@ -58,13 +54,11 @@ export function calcNumIOFiles(componentData) {
   }
   return longerLength;
 }
-
 export function calcBoxHeight(componentData) {
   const subGraphHeight = calcSubgraphHeight(componentData.descendants);
   const numIOFiles = calcNumIOFiles(componentData);
   return textHeight + numIOFiles * textHeight + subGraphHeight;
 }
-
 export function calcSenderPos(componentData) {
   const { x, y } = componentData.pos;
   const xOffset = componentData.type === "if" ? -boxWidth / 6 : 0;
@@ -72,7 +66,6 @@ export function calcSenderPos(componentData) {
   const yOffset = boxHeight - textHeight / 2;
   return { x: x + xOffset, y: y + yOffset };
 }
-
 export function calcElseSenderPos(componentData) {
   const { x, y } = componentData.pos;
   const boxHeight = calcBoxHeight(componentData);

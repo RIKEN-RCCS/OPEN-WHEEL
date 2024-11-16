@@ -24,7 +24,6 @@ function getActiveItem(items, key, path) {
     if (Array.isArray(item.children) && item.children.length > 0) {
       path.push(item.name);
       const rt = getActiveItem(item.children, key, path);
-
       if (rt) {
         return rt;
       }

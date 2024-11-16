@@ -10,7 +10,6 @@ const { filesJsonFilename } = require("../db/db");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { watchers } = require("../core/global.js");
 const { emitAll } = require("./commUtils.js");
-
 const onGetResultFiles = async (clientID, projectRootDir, dir, cb)=>{
   try {
     const filename = path.resolve(dir, filesJsonFilename);

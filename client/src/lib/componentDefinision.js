@@ -19,7 +19,6 @@ import imgSource from "../assets/img_source.png";
 import imgViewer from "../assets/img_viewer.png";
 import imgStepJob from "../assets/img_stepjob.png";
 import imgStepJobTask from "../assets/img_stepjobTask.png";
-
 export default function () {
   return {
     task: { color: "#3B55B3", img: imgTask },

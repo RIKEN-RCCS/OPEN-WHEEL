@@ -8,7 +8,6 @@ const os = require("os");
 const path = require("path");
 const fs = require("fs-extra");
 const JsonArrayManager = require("./jsonArrayManager");
-
 function isExists(target, file) {
   try {
     const stats = fs.statSync(target);
@@ -62,7 +61,6 @@ function getConfigFile(filename, failIfNotFound) {
   err.filename = filename;
   throw err;
 }
-
 function getVar(target, alt) {
   return typeof target !== "undefined" ? target : alt;
 }
@@ -72,7 +70,6 @@ function getIntVar(target, alt) {
 function getStringVar(target, alt) {
   return typeof target === "string" ? target : alt;
 }
-
 function readAndMergeConfigFile(filename) {
   let userConfigFilename;
   try {

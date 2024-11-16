@@ -24,6 +24,7 @@
 import { mapState } from "vuex";
 import versatileDialog from "../components/versatileDialog.vue";
 import SIO from "../lib/socketIOWrapper.js";
+
 export default {
   name: "SourceFileUploadDialog",
   components: {
@@ -82,7 +83,6 @@ export default {
         this.uploadSourceFileDialogTitle = `upload source file for ${name}`;
         this.ID = ID;
         this.uploadedFilename = null;
-
         this.uploadSourceFileDialogCallback = (result)=>{
           cb(result && this.uploadedFilename !== null ? "UPLOAD_ONDEMAND" : null);
           this.uploadedFilename = null;
@@ -101,7 +101,6 @@ export default {
     },
     onChoose(event) {
       const componentDir = this.componentPath[this.ID];
-
       for (const file of event.files) {
         file.meta.currentDir = componentDir;
         file.meta.orgName = "UPLOAD_ONDEMAND";

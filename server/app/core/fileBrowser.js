@@ -7,21 +7,17 @@
 const fs = require("fs-extra");
 const path = require("path");
 const { isComponentDir } = require("./projectFilesOperator");
-
 function getSNDs(fileList, isDir) {
   const reNumber = /\d+/g;
   const snds = [];
   const candidates = new Set();
   const globs = new Set();
-
   for (const e of fileList) {
     const filename = e.name;
     let result;
-
     while ((result = reNumber.exec(filename)) !== null) {
       const glob = `${filename.slice(0, result.index)}*${filename.slice(reNumber.lastIndex)}`;
       const pattern = String.raw`${filename.slice(0, result.index)}\d+${filename.slice(reNumber.lastIndex)}`;
-
       if (candidates.has(glob) && !globs.has(glob)) {
         const type = isDir ? "sndd" : "snd";
         snds.push({
@@ -68,12 +64,10 @@ function bundleSNDFiles(fileList, isDir) {
 
   return files.concat(globs);
 }
-
 function compare(a, b) {
   if (a.name < b.name) {
     return -1;
   }
-
   if (a.name > b.name) {
     return 1;
   }
@@ -121,7 +115,6 @@ async function ls(targetDir, options = {}) {
       //just ignore error
       return;
     }
-
     if (stats.isDirectory() && sendDirname) {
       if (dirFilter && !dirFilter.test(name)) {
         return;
@@ -133,18 +126,15 @@ async function ls(targetDir, options = {}) {
       }
       fileList.push({ path: request, name, type: "file", islink: false });
     }
-
     if (stats.isSymbolicLink()) {
       try {
         const stats2 = await fs.stat(absoluteFilename);
-
         if (stats2.isDirectory() && sendDirname) {
           if (dirFilter && !dirFilter.test(name)) {
             return;
           }
           dirList.push({ path: request, name, type: "dir", islink: true, isComponentDir: await isComponentDir(path.resolve(request, name)) });
         }
-
         if (stats2.isFile() && sendFilename) {
           if (fileFilter && !fileFilter.test(name)) {
             return;
@@ -160,11 +150,9 @@ async function ls(targetDir, options = {}) {
       }
     }
   }));
-
   if (withParentDir) {
     dirList.push({ path: request, name: "../", type: "dir", islink: false });
   }
-
   if (bundleSerialNumberData) {
     const dirs = bundleSNDFiles(dirList, true);
     const files = bundleSNDFiles(fileList);

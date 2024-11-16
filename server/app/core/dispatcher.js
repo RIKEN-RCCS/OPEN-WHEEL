@@ -42,6 +42,7 @@ const {
   foreachKeepLoopInstance
 } = require("./loopUtils.js");
 const { makeCmd } = require("./psUtils.js");
+
 const wheelSystemEnv = [
   "WHEEL_CURRENT_INDEX",
   "WHEEL_NEXT_INDEX",
@@ -55,9 +56,7 @@ const wheelSystemEnv = [
 ];
 
 const taskDB = new Map();
-
 //private functions
-
 async function replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber) {
   return Promise.all(
     targetFiles.map(async (targetFile)=>{
@@ -72,7 +71,6 @@ async function replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bu
     })
   );
 }
-
 async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber) {
   const paramsKeys = Object.keys(params);
   let targetNum = 0;
@@ -109,13 +107,11 @@ class Dispatcher extends EventEmitter {
     this.componentPath = componentPath;
     this.ancestorsType = ancestorsType;
     this.env = Object.assign({}, env);
-
     this.currentSearchList = [];
     this.pendingComponents = [];
     this.children = new Set(); //child dispatcher instance
     this.runningTasks = []; //store currently running tasks from this dispatcher object
     this.needToRerun = false;
-
     if (!taskDB.has(this.projectRootDir)) {
       taskDB.set(this.projectRootDir, new Set());
     }
@@ -142,7 +138,6 @@ class Dispatcher extends EventEmitter {
 
   async _asyncInit() {
     this.cwfJson = await readJsonGreedy(path.resolve(this.cwfDir, componentJsonFilename));
-
     //overwrite doCleanup if parent's cleanupFlag is not "2"
     if (this.cwfJson.cleanupFlag !== "2") {
       this.doCleanup = this.cwfJson.cleanupFlag === "0";
@@ -168,7 +163,6 @@ class Dispatcher extends EventEmitter {
       return Promise.reject(err);
     } finally {
       this.setStateFlag(target.state);
-
       if (isFinishedState(target.state)) {
         this.logger.info(`finished component: ${target.name}(${target.ID})`);
       }
@@ -180,11 +174,9 @@ class Dispatcher extends EventEmitter {
   async _dispatch() {
     try {
       this.logger.trace("_dispatch called", this.cwfDir);
-
       if (this.firstCall) {
         await this._asyncInit();
         const childComponents = await getChildren(this.projectRootDir, this.cwfDir, true);
-
         const initialComponents = await Promise.all(
           childComponents.map(async (component)=>{
             if (await isInitialComponent(this.projectRootDir, component)) {
@@ -197,7 +189,6 @@ class Dispatcher extends EventEmitter {
         this.currentSearchList = initialComponents.filter((e)=>{
           return e !== null;
         });
-
         this.logger.debug("initial components: ", this.currentSearchList.map((e)=>{
           return e.name;
         }));
@@ -233,7 +224,6 @@ class Dispatcher extends EventEmitter {
       this.runningTasks = this.runningTasks.filter((task)=>{
         return !isFinishedState(task.state);
       });
-
       if (this._isFinished()) {
         const state = this._getState();
         this.emit("done", state);
@@ -244,7 +234,6 @@ class Dispatcher extends EventEmitter {
 
         this.once("dispatch", this._dispatch);
       }
-
       if (this.needToRerun) {
         this.needToRerun = false;
         this.logger.debug("revoke _dispatch()");
@@ -350,7 +339,6 @@ class Dispatcher extends EventEmitter {
         onStop();
         resolve(state);
       };
-
       const onError = (err)=>{
         onStop();
         reject(err);
@@ -380,7 +368,6 @@ class Dispatcher extends EventEmitter {
   async remove() {
     await this.pause();
     const p = [];
-
     for (const child of this.children) {
       p.push(child.remove());
     }
@@ -396,7 +383,6 @@ class Dispatcher extends EventEmitter {
     if (!componentsWithoutNextProp.includes(component.type)) {
       nextComponentIDs = useElse ? Array.from(component.else) : Array.from(component.next);
     }
-
     if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
       const behindIfComponentList = await this._getBehindIfComponentList(component);
       component.outputFiles.forEach((outputFile)=>{
@@ -476,13 +462,11 @@ class Dispatcher extends EventEmitter {
 
     task.ancestorsName = replacePathsep(path.relative(task.projectRootDir, path.dirname(task.workingDir)));
     task.ancestorsType = this.ancestorsType;
-
     if (task.cleanupFlag === 2) {
       task.doCleanup = this.doCleanup;
     } else {
       task.doCleanup = task.cleanupFlag === 0;
     }
-
     if (task.usePSSettingFile === true) {
       await this._bulkjobHandler(task);
     }
@@ -527,7 +511,6 @@ class Dispatcher extends EventEmitter {
     try {
       component.state = await child.start();
       await writeComponentJson(this.projectRootDir, childDir, component, true);
-
       //if component type is not workflow, it must be copied component of PS, for, while or foreach
       //so, it is no need to emit "componentStateChanged" here.
       if (component.type === "workflow" || component.type === "stepjob") {
@@ -548,7 +531,6 @@ class Dispatcher extends EventEmitter {
       this.logger.debug("copy ", lastDir, "to", dstDir);
       await fs.copy(lastDir, dstDir, { overwrite: true, dereference: true }); //dst will be overwrite always
     }
-
     if (component.keep === 0) {
       keepLoopInstance(component, this.cwfDir);
     }
@@ -586,7 +568,6 @@ class Dispatcher extends EventEmitter {
     component.currentIndex = getNextIndex(component);
 
     //end determination
-
     const envForWhileIsFinished = Object.assign({}, this.env, component.env);
     if (await isFinished(component, envForWhileIsFinished)) {
       await this._loopFinalize(component, srcDir, keepLoopInstance);
@@ -600,7 +581,6 @@ class Dispatcher extends EventEmitter {
     newComponent.name = `${component.originalName}_${sanitizePath(component.currentIndex)}`;
     newComponent.subComponent = true;
     newComponent.env = Object.assign({}, this.env, component.env);
-
     if (!newComponent.env) {
       newComponent.env = {};
     }
@@ -626,7 +606,6 @@ class Dispatcher extends EventEmitter {
         dereference: true,
         filter: async (target)=>{
           this.logger.trace("[loopHandler] copy filter on :", target);
-
           if (srcDir === target) {
             return true;
           }
@@ -656,7 +635,6 @@ class Dispatcher extends EventEmitter {
       this.logger.warn("fatal error occurred during loop child dispatching.", e);
       return Promise.reject(e);
     }
-
     if (component.childLoopRunning) {
       this.logger.debug("finished for index =", component.currentIndex);
       component.childLoopRunning = false;
@@ -672,7 +650,6 @@ class Dispatcher extends EventEmitter {
       throw err;
     });
     this.logger.debug(`read prameter setting done. version = ${paramSettings.version}`);
-
     //treat single value as array contains single element
     if (Object.prototype.hasOwnProperty.call(paramSettings, "targetFiles") && typeof paramSettings.targetFiles === "string") {
       paramSettings.targetFiles = [paramSettings.targetFiles];
@@ -831,7 +808,6 @@ class Dispatcher extends EventEmitter {
     const state = component.numFailed > 0 ? "failed" : "finished";
     await this._setComponentState(component, state);
     this.logger.trace("set component state done");
-
     if (component.deleteLoopInstance) {
       this.logger.debug("remove instance directories");
       const promiseDelete = [];
@@ -940,7 +916,6 @@ class Dispatcher extends EventEmitter {
   async _storageHandler(component) {
     const storagePath = component.storagePath;
     const currentDir = this._getComponentDir(component.ID);
-
     //copy inputFiles from currentDir to storagePath as regular file
     if (component.inputFiles.length > 0) {
       if (isLocal(component)) {
@@ -966,7 +941,6 @@ class Dispatcher extends EventEmitter {
         await ssh.send(targetsToCopy, `${storagePath}/`);
       }
     }
-
     //clean up curentDir
     const contents = await fs.readdir(currentDir);
     const removeTargets = contents.filter((name)=>{
@@ -992,7 +966,6 @@ class Dispatcher extends EventEmitter {
       for (const ID of component.previous) {
         const previous = await this._getComponent(ID);
         this.logger.trace(`previous component name = ${previous.type}(state:${previous.state})`);
-
         if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
           this.logger.trace(`${component.name}(${component.ID}) is not ready because ${previous.name}(${previous.ID}) is not finished`);
           return false;
@@ -1006,7 +979,6 @@ class Dispatcher extends EventEmitter {
             continue;
           }
           const previous = await this._getComponent(src.srcNode);
-
           if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
             this.logger.trace(`${component.name}(${component.ID}) is not ready because ${inputFile} from ${previous.name}(${previous.ID}) is not arrived`);
             return false;
@@ -1046,10 +1018,8 @@ class Dispatcher extends EventEmitter {
     this.logger.debug(`getInputFiles for ${component.name}`);
     const promises = [];
     const deliverRecipes = new Set();
-
     for (const inputFile of component.inputFiles) {
       const dstName = nunjucks.renderString(inputFile.name, this.env);
-
       //resolve real src
       for (const src of inputFile.src) {
         const srcComponent = await this._getComponent(src.srcNode);
@@ -1081,7 +1051,6 @@ class Dispatcher extends EventEmitter {
           const dstRoot = component.type === "storage" ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const srcName = nunjucks.renderString(src.srcName, this.env);
           const forceCopy = srcComponent.type === "storage";
-
           if (!srcRoot.startsWith("/")) {
             //if srcRoot does not start with '/' it means the host does not have path setting
             //we asume dst component also does not have path setting but in case of useing share host
@@ -1145,14 +1114,12 @@ class Dispatcher extends EventEmitter {
       } else {
         const srces = await promisify(glob)(recipe.srcName, { cwd: recipe.srcRoot });
         const hasGlob = glob.hasMagic(recipe.srcName);
-
         for (const srcFile of srces) {
           if (srcFile === "cmp.wheel.json") {
             continue;
           }
           const oldPath = path.resolve(recipe.srcRoot, srcFile);
           let newPath = path.resolve(recipe.dstRoot, recipe.dstName);
-
           //dst is regard as directory if srcName has glob pattern or dstName ends with path separator
           //if newPath is existing Directory, src will also be copied under newPath directory
           if (hasGlob || recipe.dstName.endsWith(path.posix.sep) || recipe.dstName.endsWith(path.win32.sep)) {
@@ -1163,11 +1130,9 @@ class Dispatcher extends EventEmitter {
       }
     }
     const results = await Promise.all(p2);
-
     for (const result of results) {
       this.logger.trace(`make ${result.type} from  ${result.src} to ${result.dst}`);
     }
-
     if (component.type === "viewer") {
       component.files = results;
     }
@@ -1176,7 +1141,6 @@ class Dispatcher extends EventEmitter {
 
   _cmdFactory(type) {
     let cmd = ()=>{};
-
     switch (type.toLowerCase()) {
       case "task":
         cmd = this._dispatchTask;

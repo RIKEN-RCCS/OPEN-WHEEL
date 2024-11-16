@@ -29,7 +29,6 @@ const { projectJsonFilename, componentJsonFilename } = require("../app/db/db");
 const { createNewProject, updateComponent, createNewComponent, addInputFile, addOutputFile, addFileLink, renameOutputFile } = require("../app/core/projectFilesOperator");
 const { scriptName, pwdCmd, scriptHeader } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
-
 const wait = ()=>{
   return new Promise((resolve)=>{
     setTimeout(resolve, 10);
@@ -172,7 +171,6 @@ describe("UT for Dispatcher class", function () {
         beforeEach(async ()=>{
           await updateComponent(projectRootDir, storage.ID, "host", remotehostName);
           await updateComponent(projectRootDir, storage.ID, "storagePath", remoteStorageArea);
-
           await addOutputFile(projectRootDir, storage.ID, "a");
           await addInputFile(projectRootDir, next.ID, "b");
           await addFileLink(projectRootDir, storage.ID, "a", next.ID, "b");
@@ -378,7 +376,6 @@ describe("UT for Dispatcher class", function () {
       });
     });
   });
-
   describe("#Foreach component", ()=>{
     let foreach0;
     beforeEach(async ()=>{

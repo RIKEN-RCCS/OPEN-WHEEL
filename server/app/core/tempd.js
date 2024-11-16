@@ -9,7 +9,6 @@ const fs = require("fs-extra");
 const { createHash } = require("crypto");
 const tempdRoot = process.env.WHEEL_TEMPD || path.dirname(__dirname);
 const { getLogger } = require("../logSettings.js");
-
 async function createTempd(projectRootDir, prefix) {
   const root = path.resolve(tempdRoot, prefix);
   const hash = createHash("sha256");
@@ -19,7 +18,6 @@ async function createTempd(projectRootDir, prefix) {
   getLogger(projectRootDir).debug(`create temporary directory ${dir}`);
   return { dir, root };
 }
-
 async function removeTempd(projectRootDir, prefix) {
   const hash = createHash("sha256");
   const ID = hash.update(projectRootDir).digest("hex");
@@ -27,7 +25,6 @@ async function removeTempd(projectRootDir, prefix) {
   getLogger(projectRootDir).debug(`remove temporary directory ${dir}`);
   return fs.remove(dir);
 }
-
 async function getTempd(projectRootDir, prefix) {
   const hash = createHash("sha256");
   const ID = hash.update(projectRootDir).digest("hex");

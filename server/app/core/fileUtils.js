@@ -59,27 +59,21 @@ async function addX(file) {
   let u = 4;
   let g = 4;
   let o = 4;
-
   if (mode.owner.read) {
     u += 1;
   }
-
   if (mode.owner.write) {
     u += 2;
   }
-
   if (mode.group.read) {
     g += 1;
   }
-
   if (mode.group.write) {
     g += 2;
   }
-
   if (mode.others.read) {
     o += 1;
   }
-
   if (mode.others.write) {
     o += 2;
   }
@@ -97,7 +91,6 @@ async function addX(file) {
 async function deliverFile(src, dst, forceCopy = false) {
   const stats = await fs.lstat(src);
   const type = stats.isDirectory() ? "dir" : "file";
-
   try {
     if (forceCopy) {
       await fs.copy(src, dst, { overwrite: true });
@@ -184,7 +177,6 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
     }
     throw err;
   }
-
   if (forceNormal) {
     return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
   }
@@ -197,7 +189,6 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
     //read file is not parameter setting file
     return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
   }
-
   if (!Object.prototype.hasOwnProperty.call(contentJson, "targetFiles") || !Array.isArray(contentJson.targetFiles)) {
     return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
   }
@@ -258,7 +249,6 @@ async function saveFile(argFilename, content) {
 
   const { root } = path.parse(absFilename);
   let repoDir = path.dirname(absFilename);
-
   while (!await fs.pathExists(path.join(repoDir, ".git"))) {
     if (repoDir === root) {
       const err = new Error("git repository not found");

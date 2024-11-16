@@ -179,7 +179,6 @@ class JsonArrayManager {
       return Promise.resolve();
     }
     const tmp = Array.from(this.data);
-
     for (let i = 0; i < tmp.length; i++) {
       this.data[i] = tmp[newOrder[i]];
     }

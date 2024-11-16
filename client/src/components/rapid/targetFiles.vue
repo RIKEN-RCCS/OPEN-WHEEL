@@ -187,7 +187,6 @@ export default {
       });
       if (targetFileToBeModified) {
         targetFileToBeModified.targetName = this.newTargetFilename;
-
         if (this.newTargetNode) {
           targetFileToBeModified.targetNode = this.newTargetNode.ID;
         } else if (targetFileToBeModified.targetNode) {

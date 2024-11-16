@@ -68,7 +68,6 @@ const onGetFileList = async (projectRootDir, msg, cb)=>{
     return cb(null);
   }
 };
-
 const onGetSNDContents = async (projectRootDir, requestDir, pattern, isDir, cb)=>{
   const modifiedRequestDir = path.normalize(convertPathSep(requestDir));
   getLogger(projectRootDir).debug(projectRootDir, "getSNDContents in", modifiedRequestDir);
@@ -91,13 +90,10 @@ const onGetSNDContents = async (projectRootDir, requestDir, pattern, isDir, cb)=
     return cb(null);
   }
 };
-
 async function onCreateNewFile(projectRootDir, argFilename, cb) {
   const filename = convertPathSep(argFilename);
-
   try {
     await fs.writeFile(filename, "");
-
     if (isPathInside(filename, projectRootDir)) {
       await gitAdd(projectRootDir, filename);
     }
@@ -108,13 +104,10 @@ async function onCreateNewFile(projectRootDir, argFilename, cb) {
   }
   cb({ filename, parent: path.dirname(filename) });
 }
-
 async function onCreateNewDir(projectRootDir, argDirname, cb) {
   const dirname = convertPathSep(argDirname);
-
   try {
     await fs.mkdir(dirname);
-
     if (isPathInside(dirname, projectRootDir)) {
       await fs.writeFile(path.resolve(dirname, ".gitkeep"), "");
       await gitAdd(projectRootDir, path.resolve(dirname, ".gitkeep"));
@@ -126,7 +119,6 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
   }
   cb({ dirname, parent: path.dirname(dirname) });
 }
-
 async function onRemoveFile(projectRootDir, target, cb) {
   try {
     if (isPathInside(target, projectRootDir)) {
@@ -143,24 +135,20 @@ async function onRemoveFile(projectRootDir, target, cb) {
 async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, cb) {
   const oldName = path.resolve(parentDir, argOldName);
   const newName = path.resolve(parentDir, argNewName);
-
   if (oldName === newName) {
     getLogger(projectRootDir).warn("rename to same file or directory name requested");
     cb(false);
     return;
   }
-
   if (await fs.pathExists(newName)) {
     getLogger(projectRootDir).error(newName, "is already exists");
     cb(false);
     return;
   }
-
   try {
     if (isPathInside(oldName, projectRootDir)) {
       await gitRm(projectRootDir, oldName);
       const stats = await fs.stat(oldName);
-
       if (stats.isFile() && await isLFS(projectRootDir, oldName)) {
         await gitLFSUntrack(projectRootDir, oldName);
         await gitLFSTrack(projectRootDir, newName);
@@ -175,7 +163,6 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
       }
     }
     await fs.move(oldName, newName);
-
     if (isPathInside(newName, projectRootDir)) {
       await gitAdd(projectRootDir, newName);
     }
@@ -208,7 +195,6 @@ const onUploadFileSaved = async (event)=>{
   await fs.move(event.file.pathName, absFilename);
   const fileSizeMB = parseInt(event.file.size / 1024 / 1024, 10);
   getLogger(projectRootDir).info(`upload completed ${absFilename} [${fileSizeMB > 1 ? `${fileSizeMB} MB` : `${event.file.size} Byte`}]`);
-
   if (event.file.meta.skipGit || !isPathInside(absFilename, projectRootDir)) {
     getLogger(projectRootDir).debug("git add skipped", event.file.name);
   } else {
@@ -236,7 +222,6 @@ const onUploadFileSaved = async (event)=>{
   });
   emitAll(uploadClient, "fileList", result);
 };
-
 const onDownload = async (projectRootDir, target, cb)=>{
   const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
   const tmpDir = await fs.mkdtemp(`${dir}/`);
@@ -250,7 +235,6 @@ const onDownload = async (projectRootDir, target, cb)=>{
   } else {
     const stats = await fs.stat(target);
     targetBasename = path.basename(target);
-
     if (stats.isDirectory()) {
       await zip(target, `${path.join(tmpDir, targetBasename)}.zip`);
       downloadZip = true;
@@ -265,7 +249,6 @@ const onDownload = async (projectRootDir, target, cb)=>{
   getLogger(projectRootDir).debug("Download url is ready", url);
   cb(url);
 };
-
 const onRemoveDownloadFile = async (projectRootDir, URL, cb)=>{
   const dir = await getTempd(projectRootDir, "download");
   const target = path.join(dir, path.basename(path.dirname(URL)));

@@ -296,7 +296,6 @@ export default {
     },
     updateSelected(activeItem) {
       this.activeItem = activeItem;
-
       if (this.activeItem === null) {
         console.log("failed to get current selected Item");
         return;
@@ -346,7 +345,6 @@ export default {
           console.log("failed to get current selected Item");
           return;
         }
-
         if (item.type === "dir" || item.type === "dir-link") {
           SIO.emitGlobal("getRemoteFileList", this.projectRootDir, this.selectedComponent.host, { path: item.id, mode: "underComponent" }, cb);
         } else {
@@ -408,7 +406,6 @@ export default {
           }
           const container = this.activeItem ? this.activeItem.children : this.items;
           container.push(newItem);
-
           if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
             this.openItems.push(this.activeItem.id);
           }
@@ -429,7 +426,6 @@ export default {
 
       SIO.emitGlobal("downloadRemote", this.projectRootDir, this.activeItem.id, this.selectedComponent.host, (url)=>{
         this.commitWaitingDownload(false);
-
         if (url === null) {
           console.log("download failed.");
           return;

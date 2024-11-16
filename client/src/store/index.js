@@ -6,7 +6,6 @@
 import Vuex from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:vuex");
-
 const logger = (store)=>{
   store.subscribe((mutation)=>{
     const { type, payload } = mutation;
@@ -16,7 +15,6 @@ const logger = (store)=>{
 const simpleMutation = (type, state, payload)=>{
   state[type] = payload;
 };
-
 const mutationFactory = (types)=>{
   return types.reduce((a, c)=>{
     a[c] = simpleMutation.bind(null, c);

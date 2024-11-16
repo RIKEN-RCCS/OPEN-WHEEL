@@ -15,7 +15,6 @@ ${v.other ? `${v.other}` : ""}
 #### WHEEL inserted lines ####
 `.replaceAll(/^\n/mg, "");
 }
-
 function createITOScript(unit, v) {
   return `#!/bin/bash
 ${unit ? "#PJM -L \"rscunit=ito-a\"" : ""}
@@ -30,7 +29,6 @@ ${v.other ? `${v.other}` : ""}
 #### WHEEL inserted lines ####
 `.replaceAll(/^\n/mg, "");
 }
-
 function createOtherScript(v) {
   return `"#!/bin/bash";
 ${v.rsctype && v.rscnum ? `#$ -l ${v.rsctype}=${v.rscnum}\n` : ""}
@@ -53,7 +51,6 @@ const funcTable = {
   "KYUSHU UNIVERSITY ITO-B": createITOScript.bind(null, "ito-b"),
   "other": createOtherScript
 };
-
 function createJobScript(center, v) {
   const func = funcTable[center];
   if (typeof func === "undefined") {

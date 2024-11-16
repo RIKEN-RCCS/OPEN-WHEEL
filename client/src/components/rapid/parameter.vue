@@ -179,12 +179,10 @@ export default {
   },
   mounted: function () {
     this.reset();
-
     if (this.currentItem === null || typeof this.currentItem === "undefined") {
       return;
     }
     this.newItem.type = this.currentItem.type;
-
     if (this.currentItem.type === "min-max-step") {
       this.newItem.min = this.currentItem.min;
       this.newItem.max = this.currentItem.max;
@@ -237,7 +235,6 @@ export default {
     },
     storeParam(target) {
       target.type = this.newItem.type;
-
       if (this.newItem.type === "min-max-step") {
         const min = Number(this.newItem.min);
         const max = Number(this.newItem.max);

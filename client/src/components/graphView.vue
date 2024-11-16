@@ -41,7 +41,6 @@ export default {
       const baseWidth = window.innerWidth < this.$parent.$parent.$el.clientWidth ? window.innerWidth : this.$parent.$parent.$el.clientWidth;
       const width = baseWidth - widthComponentLibrary - magicNumberW;
       const height = window.innerHeight - heightToolbar - heightDenseToolbar * 2 - heightFooter - magicNumberH;
-
       if (width > 0 && height > 0) {
         this.commitCanvasWidth(width);
         this.commitCanvasHeight(height);

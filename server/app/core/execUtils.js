@@ -25,7 +25,6 @@ async function setTaskState(task, state) {
   ee.emit("taskStateChanged", task);
   ee.emit("componentStateChanged", task);
 }
-
 async function needDownload(projectRootDir, componentID, outputFile) {
   const rt = await Promise.all(outputFile.dst.map(({ dstNode })=>{
     return isSameRemoteHost(projectRootDir, componentID, dstNode);
@@ -34,7 +33,6 @@ async function needDownload(projectRootDir, componentID, outputFile) {
     return !isSame;
   });
 }
-
 function formatSrcFilename(remoteWorkingDir, filename) {
   if (filename.endsWith("/") || filename.endsWith("\\")) {
     const dirname = replacePathsep(filename);
@@ -42,7 +40,6 @@ function formatSrcFilename(remoteWorkingDir, filename) {
   }
   return path.posix.join(remoteWorkingDir, filename);
 }
-
 function makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingDir) {
   const reRemoteWorkingDir = new RegExp(remoteWorkingDir);
   const src = formatSrcFilename(remoteWorkingDir, filename);
@@ -122,13 +119,11 @@ async function gatherFiles(task) {
     }
   }
 }
-
 async function createStatusFile(task) {
   const filename = path.resolve(task.workingDir, statusFilename);
   const statusFile = `${task.state}\n${task.rt}\n${task.jobStatus}`;
   return fs.writeFile(filename, statusFile);
 }
-
 async function createBulkStatusFile(task, rtList, jobStatusList) {
   const filename = path.resolve(task.workingDir, `subjob_${statusFilename}`);
   let statusFile = "";

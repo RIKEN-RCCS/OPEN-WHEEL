@@ -128,7 +128,6 @@ export default {
     onUpdateItem(mode, target, newItem) {
       target.srcName = newItem.srcName;
       target.dstName = newItem.dstName;
-
       if (newItem.dstNode) {
         target.dstNode = newItem.dstNode;
       }

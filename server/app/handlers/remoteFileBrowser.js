@@ -14,13 +14,11 @@ const { getLogger } = require("../logSettings");
 const { createSsh, getSsh } = require("../core/sshManager");
 const { createTempd } = require("../core/tempd.js");
 const { formatSshOutput } = require("../lib/utility.js");
-
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
   if (component.type !== "storage" || isLocal(component)) {
     return;
   }
-
   try {
     const id = remoteHost.getID("name", component.host);
     const hostInfo = remoteHost.get(id);
@@ -31,7 +29,6 @@ async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb
   }
   cb(true);
 }
-
 async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
   try {
     const id = remoteHost.getID("name", host);
@@ -92,7 +89,6 @@ async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
 async function onGetRemoteSNDContents(projectRootDir) {
   getLogger(projectRootDir).error(projectRootDir, "onGetRemoteSNDContents should not be called any more");
 }
-
 async function onRemoteDownload(projectRootDir, target, host, cb) {
   try {
     const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
@@ -103,7 +99,6 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
     const ssh = await getSsh(projectRootDir, id);
     await ssh.recv([target], `${tmpDir}/`);
     const stats = await fs.stat(path.resolve(tmpDir, downloadContentName));
-
     if (stats.isDirectory()) {
       zip(path.resolve(tmpDir, downloadContentName), `${path.resolve(tmpDir, downloadContentName)}.zip`);
     }

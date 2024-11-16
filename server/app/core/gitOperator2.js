@@ -150,7 +150,6 @@ async function gitResetHEAD(rootDir, filePatterns = "") {
 async function gitStatus(rootDir) {
   const output = await gitPromise(rootDir, ["status", "--short"], rootDir);
   const rt = { added: [], modified: [], deleted: [], renamed: [], untracked: [] };
-
   //parse output from git
   for (const token of output.split(/\n/)) {
     const splitedToken = token.split(" ");
@@ -189,7 +188,6 @@ async function gitStatus(rootDir) {
 async function gitClean(rootDir, filePatterns = "") {
   return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", "--", filePatterns], rootDir);
 }
-
 function getRelativeFilename(rootDir, filename) {
   const absFilename = path.resolve(rootDir, filename);
   return path.relative(rootDir, absFilename);
@@ -197,7 +195,6 @@ function getRelativeFilename(rootDir, filename) {
 function makeLFSPattern(rootDir, filename) {
   return `/${getRelativeFilename(rootDir, filename)}`;
 }
-
 async function isLFS(rootDir, filename) {
   const lfsPattern = getRelativeFilename(rootDir, filename);
   const lfsTrackResult = await gitPromise(rootDir, ["lfs", "track"], rootDir);
@@ -224,7 +221,6 @@ async function gitLFSTrack(rootDir, filename) {
 async function gitLFSUntrack(rootDir, filename) {
   await gitPromise(rootDir, ["lfs", "untrack", "--", makeLFSPattern(rootDir, filename)], rootDir);
   getLogger(rootDir).trace(`${filename} never treated as large file`);
-
   if (await fs.pathExists(path.resolve(rootDir, ".gitattributes"))) {
     await gitAdd(rootDir, ".gitattributes");
   }

@@ -111,7 +111,6 @@ async function getThreeGenerationFamily(projectRootDir, rootComponentDir) {
     if (child.handler) {
       delete child.handler;
     }
-
     if (hasChild(child)) {
       const grandson = await getChildren(projectRootDir, child.ID);
       child.descendants = grandson.map((e)=>{

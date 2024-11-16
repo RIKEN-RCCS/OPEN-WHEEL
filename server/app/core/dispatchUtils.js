@@ -12,7 +12,6 @@ const { getLogger } = require("../logSettings.js");
 const { replacePathsep } = require("./pathUtils");
 const { remoteHost, componentJsonFilename } = require("../db/db");
 const { getSshHostinfo } = require("./sshManager.js");
-
 async function pspawn(projectRootDir, script, options) {
   return new Promise((resolve, reject)=>{
     const cp = childProcess.spawn(script, options, (err)=>{
@@ -85,6 +84,7 @@ function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, is
   }
   return replacePathsep(path.posix.join(remoteRoot, projectStartTime));
 }
+
 function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, component, isSharedHost) {
   const remoteRootWorkingDir = getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, isSharedHost);
   if (remoteRootWorkingDir === null) {

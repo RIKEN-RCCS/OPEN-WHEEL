@@ -19,7 +19,6 @@ export const openIcons = {
   sndd: "mdi-folder-multiple-outline",
   snd: "mdi-file-multiple-outline"
 };
-
 export function fileListModifier(pathsep, e) {
   const rt = {
     id: `${e.path}${pathsep}${e.name}`,
@@ -32,7 +31,6 @@ export function fileListModifier(pathsep, e) {
   }
   return rt;
 }
-
 export function removeItem(items, key) {
   for (const item of items) {
     if (item.id === key) {
@@ -47,7 +45,6 @@ export function removeItem(items, key) {
     }
   }
 }
-
 export function getTitle(event, itemName) {
   const titles = {
     createNewDir: "create new directory",
@@ -67,7 +64,6 @@ export function getLabel(event) {
   };
   return labels[event];
 }
-
 export function _getActiveItem(items, key) {
   for (const item of items) {
     if (Array.isArray(item.children) && item.children.length > 0) {

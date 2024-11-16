@@ -184,7 +184,6 @@ export default {
         });
       });
     });
-
     if (typeof this.selectedFile === "string") {
       SIO.emitGlobal("openFile", this.projectRootDir, this.selectedFile, false, (rt)=>{
         if (rt instanceof Error) {
@@ -204,7 +203,6 @@ export default {
     },
     async openNewTab(filename, argDirname) {
       const dirname = argDirname || this.selectedComponentAbsPath;
-
       if (!isValidInputFilename(filename)) {
         return this.closeNewFileDialog();
       }
@@ -340,7 +338,6 @@ export default {
         document.setValue("");
       }
       this.files.splice(index, 1);
-
       if (file.absPath === this.selectedFile) {
         this.commitSelectedFile(null);
       }

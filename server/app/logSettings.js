@@ -10,7 +10,6 @@ const log4js = require("log4js");
 const logger = log4js.getLogger();
 const { logFilename, numLogFiles, maxLogSize, compressLogFile } = require("./db/db");
 const { emitAll } = require("./handlers/commUtils.js");
-
 function getLoglevel(ignoreEnv = false) {
   const wheelLoglevel = process.env.WHEEL_LOGLEVEL;
   const defaultLevel = "debug";
@@ -31,12 +30,10 @@ const eventNameTable = {
   SSHOUT: "logSSHout",
   SSHERR: "logSSHerr"
 };
-
 function socketIOAppender(layout, timezoneOffset, argEventName) {
   return (loggingEvent)=>{
     const eventName = argEventName || eventNameTable[loggingEvent.level.levelStr];
     const projectRootDir = loggingEvent.context.projectRootDir;
-
     if (eventName) {
       //emitAll is async function but we did not wait here
       emitAll(projectRootDir, eventName, layout(loggingEvent, timezoneOffset));
@@ -47,7 +44,6 @@ function socketIOAppender(layout, timezoneOffset, argEventName) {
 const socketIO = {
   configure: (config, layouts)=>{
     let layout = layouts.basicLayout;
-
     if (config.layout) {
       layout = layouts.layout(config.layout.type, config.layout);
     }
