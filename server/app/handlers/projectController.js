@@ -388,7 +388,7 @@ function getProjectOperationQueue(projectRootDir) {
       exec: projectOperator,
       submitHook: async (queue, { operation })=>{
         const last = queue.getLastEntry();
-        if (last !== null && last.args === operation) {
+        if (last !== null && last.args.operation === operation) {
           getLogger(projectRootDir).debug("duplicated operation is ignored", operation);
           return false;
         }
