@@ -26,6 +26,10 @@ export default {
       type: Object
     }
   },
+  emits: [
+    "drop",
+    "click"
+  ],
   computed: {
     x() {
       return this.center.x - this.width / 2;

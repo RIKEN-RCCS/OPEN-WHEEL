@@ -14,15 +14,14 @@ const { diff } = require("just-diff");
 const { diffApply } = require("just-diff-apply");
 const { getComponentDir, writeComponentJson, writeComponentJsonByID, readComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
 const { componentFactory, getComponentDefaultName } = require("./workflowComponent");
-const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, jobScheduler, defaultPSconfigFilename } = require("../db/db");
+const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, defaultPSconfigFilename } = require("../db/db");
 const { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
 const { replacePathsep, convertPathSep } = require("./pathUtils");
 const { readJsonGreedy } = require("./fileUtils");
 const { gitInit, gitAdd, gitCommit, gitResetHEAD, gitClean, gitRm } = require("./gitOperator2");
-const { hasChild, isInitialComponent } = require("./workflowComponent");
+const { hasChild, isLocalComponent } = require("./workflowComponent");
 const { getLogger } = require("../logSettings");
 const { getSsh } = require("./sshManager.js");
-const { checkWritePermissions } = require("./global.js");
 
 /**
  * check feather given token is surrounded by { and }
@@ -256,17 +255,18 @@ async function setProjectState(projectRootDir, state, force) {
 }
 
 /**
- * return relative path from one component to another
- * @param {string} projectRootDir -
- * @param {string} from - starting point component's ID
- * @param {string} to - endpoint component's ID
- * @returns {string} - relativepath from "from" to "to"
+ * get '/' separated component's hierarchial name
+ * @param {string} projectRootDir - projectRootDir's absolute path
+ * @param {string} targetID - target component's ID
+ * @param {Boolean} isAbsolute - return absolute path or relative path
+ * @returns {string} - absolute path of target component's template dir
  */
-async function getRelativeComponentPath(projectRootDir, from, to) {
-  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
-  const fromPath = projectJson.componentPath[from];
-  const toPath = projectJson.componentPath[to];
-  return path.relative(fromPath, toPath);
+async function getComponentFullName(projectRootDir, ID) {
+  const relativePath = await getComponentDir(projectRootDir, ID);
+  if (relativePath === null) {
+    return relativePath;
+  }
+  return relativePath.replace(/^\./, "");
 }
 
 async function getProjectState(projectRootDir) {
@@ -571,14 +571,18 @@ async function importProject(projectRootDir) {
  * @param {string} projectRootDir - git repo's root directory
  * @param {string} dir - root component directory
  * @param {string} state  - state to be set
- * @param {Boolean} doNotAdd- - call gitAdd if false
+ * @param {Boolean} doNotAdd - call gitAdd if false
+ * @param {string[]} ignoreStates - do not change state if one of this state
  */
-async function setComponentStateR(projectRootDir, dir, state, doNotAdd = false) {
+async function setComponentStateR(projectRootDir, dir, state, doNotAdd = false, ignoreStates = []) {
   const filenames = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
   filenames.push(path.join(dir, componentJsonFilename));
   const p = filenames.map((filename)=>{
     return readJsonGreedy(filename)
       .then((component)=>{
+        if (ignoreStates.includes(component.state)) {
+          return true;
+        }
         component.state = state;
         const componentDir = path.dirname(filename);
         return writeComponentJson(projectRootDir, componentDir, component, doNotAdd);
@@ -586,7 +590,12 @@ async function setComponentStateR(projectRootDir, dir, state, doNotAdd = false) 
   });
   return Promise.all(p);
 }
-
+async function updateProjectROStatus(projectRootDir, isRO) {
+  const filename = path.resolve(projectRootDir, projectJsonFilename);
+  const projectJson = await readJsonGreedy(filename);
+  projectJson.readOnly = isRO;
+  await writeJsonWrapper(filename, projectJson);
+}
 async function updateProjectDescription(projectRootDir, description) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
   const projectJson = await readJsonGreedy(filename);
@@ -650,13 +659,12 @@ async function renameProject(id, newName, oldDir) {
   target.path = newDir;
   await projectList.update(target);
 }
+function isDefaultPort(port) {
+  return typeof port === "undefined" || port === 22 || port === "22" || port === "";
+}
 
 function isLocal(component) {
   return typeof component.host === "undefined" || component.host === "localhost";
-}
-
-function isDefaultPort(port) {
-  return typeof port === "undefined" || port === 22 || port === "22" || port === "";
 }
 
 /**
@@ -672,7 +680,7 @@ async function isSameRemoteHost(projectRootDir, src, dst) {
   }
   const srcComponent = await readComponentJsonByID(projectRootDir, src);
   const dstComponent = await readComponentJsonByID(projectRootDir, dst);
-  if (isLocal(srcComponent) || isLocal(dstComponent)) {
+  if (isLocalComponent(srcComponent) || isLocalComponent(dstComponent)) {
     return false;
   }
   if (srcComponent.host === dstComponent.host) {
@@ -977,214 +985,6 @@ async function getChildren(projectRootDir, parentID, isParentDir) {
   });
 }
 
-async function validateTask(projectRootDir, component) {
-  if (component.name === null) {
-    return Promise.reject(new Error(`illegal path ${component.name}`));
-  }
-
-  if (component.useJobScheduler) {
-    const hostinfo = remoteHost.query("name", component.host);
-    if (typeof hostinfo === "undefined") {
-      //local job is not implemented
-      return Promise.reject(new Error(`remote host setting for ${component.host} not found`));
-    }
-    if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
-      return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
-    }
-    if (component.submitOption) {
-      const optList = String(jobScheduler[hostinfo.jobScheduler].queueOpt).split(" ");
-      if (optList.map((opt)=>{
-        return component.submitOption.indexOf(opt);
-      }).every((i)=>{
-        return i >= 0;
-      })) {
-        return Promise.reject(new Error(`submit option duplicate queue option : ${jobScheduler[hostinfo.jobScheduler].queueOpt}`));
-      }
-    }
-  }
-
-  if (!(Object.prototype.hasOwnProperty.call(component, "script") && typeof component.script === "string")) {
-    return Promise.reject(new Error(`script is not specified ${component.name}`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, component.ID, true);
-  const filename = path.resolve(componentDir, component.script);
-  if (!(await fs.stat(filename)).isFile()) {
-    return Promise.reject(new Error(`script is not existing file ${filename}`));
-  }
-  return true;
-}
-
-async function validateStepjobTask(projectRootDir, component) {
-  const isInitial = await isInitialComponent(projectRootDir, component);
-  if (component.name === null) {
-    return Promise.reject(new Error(`illegal path ${component.name}`));
-  }
-
-  if (component.useDependency && isInitial) {
-    return Promise.reject(new Error("initial stepjobTask cannot specified the Dependency form"));
-  }
-
-  if (!(Object.prototype.hasOwnProperty.call(component, "script") && typeof component.script === "string")) {
-    return Promise.reject(new Error(`script is not specified ${component.name}`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, component.ID, true);
-  const filename = path.resolve(componentDir, component.script);
-  if (!(await fs.stat(filename)).isFile()) {
-    return Promise.reject(new Error(`script is not existing file ${filename}`));
-  }
-  return true;
-}
-
-async function validateStepjob(projectRootDir, component) {
-  if (component.useJobScheduler) {
-    const hostinfo = remoteHost.query("name", component.host);
-    if (typeof hostinfo === "undefined") {
-      //assume local job
-    } else if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
-      return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
-    }
-    const setJobScheduler = jobScheduler[hostinfo.jobScheduler];
-    if (!(Object.prototype.hasOwnProperty.call(setJobScheduler, "stepjob") && setJobScheduler.stepjob === true)) {
-      return Promise.reject(new Error(`${hostinfo.jobScheduler} jobSheduler does not support stepjob`));
-    }
-    if (!(Object.prototype.hasOwnProperty.call(hostinfo, "useStepjob") && hostinfo.useStepjob === true)) {
-      return Promise.reject(new Error(`${hostinfo.name} does not support stepjob`));
-    }
-  }
-  return true;
-}
-
-async function validateBulkjobTask(projectRootDir, component) {
-  if (component.name === null) {
-    return Promise.reject(new Error(`illegal path ${component.name}`));
-  }
-
-  if (!(Object.prototype.hasOwnProperty.call(component, "script") && typeof component.script === "string")) {
-    return Promise.reject(new Error(`script is not specified ${component.name}`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, component.ID, true);
-  const filename = path.resolve(componentDir, component.script);
-  if (!(await fs.stat(filename)).isFile()) {
-    return Promise.reject(new Error(`script is not existing file ${filename}`));
-  }
-
-  if (component.host === "localhost") {
-    return Promise.reject(new Error("localhost does not support bulkjob`"));
-  }
-
-  if (component.useJobScheduler) {
-    const hostinfo = remoteHost.query("name", component.host);
-    if (typeof hostinfo === "undefined") {
-      //local job is not supported for now
-      return Promise.reject(new Error(`remote host setting for ${component.host} not found`));
-    }
-    if (!Object.keys(jobScheduler).includes(hostinfo.jobScheduler)) {
-      return Promise.reject(new Error(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
-    }
-    const setJobScheduler = jobScheduler[hostinfo.jobScheduler];
-    if (!(Object.prototype.hasOwnProperty.call(setJobScheduler, "bulkjob") && setJobScheduler.bulkjob === true)) {
-      return Promise.reject(new Error(`${hostinfo.jobScheduler} jobSheduler does not support bulkjob`));
-    }
-    if (!(Object.prototype.hasOwnProperty.call(hostinfo, "useBulkjob") && hostinfo.useBulkjob === true)) {
-      return Promise.reject(new Error(`${hostinfo.name} does not support bulkjob`));
-    }
-  }
-
-  if (component.usePSSettingFile === false) {
-    if (!(Object.prototype.hasOwnProperty.call(component, "startBulkNumber") && typeof component.startBulkNumber === "number")) {
-      return Promise.reject(new Error(`startBulkNumber is not specified ${component.name}`));
-    }
-    if (!(component.startBulkNumber >= 0)) {
-      return Promise.reject(new Error(`${component.name} startBulkNumber is integer of 0 or more`));
-    }
-    if (!(Object.prototype.hasOwnProperty.call(component, "endBulkNumber") && typeof component.endBulkNumber === "number" && component.startBulkNumber >= 0)) {
-      return Promise.reject(new Error(`endBulkNumber is not specified ${component.name}`));
-    }
-    if (!(component.endBulkNumber > component.startBulkNumber)) {
-      return Promise.reject(new Error(`${component.name} endBulkNumber is greater than startBulkNumber`));
-    }
-  } else {
-    if (!(Object.prototype.hasOwnProperty.call(component, "parameterFile") && typeof component.parameterFile === "string")) {
-      return Promise.reject(new Error(`parameter setting file is not specified ${component.name}`));
-    }
-  }
-
-  if (component.manualFinishCondition) {
-    if (!(Object.prototype.hasOwnProperty.call(component, "condition") && typeof component.condition === "string")) {
-      return Promise.reject(new Error(`condition is not specified ${component.name}`));
-    }
-  }
-  return true;
-}
-
-async function validateConditionalCheck(component) {
-  if (!(Object.prototype.hasOwnProperty.call(component, "condition") && typeof component.condition === "string")) {
-    return Promise.reject(new Error(`condition is not specified ${component.name}`));
-  }
-  return Promise.resolve();
-}
-
-async function validateKeepProp(component) {
-  if (Object.prototype.hasOwnProperty.call(component, "keep")) {
-    if (component.keep === null || component.keep === "") {
-      return Promise.resolve();
-    }
-    if (!(Number.isInteger(component.keep) && component.keep >= 0)) {
-      return Promise.reject(new Error(`keep must be positive integer ${component.name}`));
-    }
-  }
-  return Promise.resolve();
-}
-
-async function validateForLoop(component) {
-  if (!(Object.prototype.hasOwnProperty.call(component, "start") && typeof component.start === "number")) {
-    return Promise.reject(new Error(`start is not specified ${component.name}`));
-  }
-
-  if (!(Object.prototype.hasOwnProperty.call(component, "step") && typeof component.step === "number")) {
-    return Promise.reject(new Error(`step is not specified ${component.name}`));
-  }
-
-  if (!(Object.prototype.hasOwnProperty.call(component, "end") && typeof component.end === "number")) {
-    return Promise.reject(new Error(`end is not specified ${component.name}`));
-  }
-
-  if (component.step === 0 || (component.end - component.start) * component.step < 0) {
-    return Promise.reject(new Error(`inifinite loop ${component.name}`));
-  }
-  return Promise.resolve();
-}
-
-async function validateParameterStudy(projectRootDir, component) {
-  if (!(Object.prototype.hasOwnProperty.call(component, "parameterFile") && typeof component.parameterFile === "string")) {
-    return Promise.reject(new Error(`parameter setting file is not specified ${component.name}`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, component.ID, true);
-  const filename = path.resolve(componentDir, component.parameterFile);
-  await fs.access(filename);
-
-  try {
-    await readJsonGreedy(filename);
-  } catch (err) {
-    err.orgMessage = err.message;
-    err.message = "parameter file parse error";
-    err.parameterFile = component.parameterFile;
-    throw err;
-  }
-  //validation check by JSON-schema will be done
-  return true;
-}
-
-async function validateForeach(component) {
-  if (!Array.isArray(component.indexList)) {
-    return Promise.reject(new Error(`index list is broken ${component.name}`));
-  }
-  if (component.indexList.length <= 0) {
-    return Promise.reject(new Error(`index list is empty ${component.name}`));
-  }
-  return Promise.resolve();
-}
-
 async function checkRemoteStoragePathWritePermission(projectRootDir, { host, storagePath }) {
   const remotehostID = remoteHost.getID("name", host);
   const ssh = getSsh(projectRootDir, remotehostID);
@@ -1197,61 +997,6 @@ async function checkRemoteStoragePathWritePermission(projectRootDir, { host, sto
     throw err;
   }
   return Promise.resolve();
-}
-
-async function validateStorage(projectRootDir, component) {
-  if (typeof component.storagePath !== "string") {
-    return Promise.reject(new Error("storagePath is not set"));
-  }
-
-  if (isLocal(component) && !fs.pathExists(component.storagePath)) {
-    return Promise.reject(new Error("specified path is not exist on localhost"));
-  }
-  //check if user has write permission to storagePath
-  const checkWritePermission = checkWritePermissions.get(projectRootDir);
-  if (component.inputFiles.length > 0) {
-    const componentDir = await getComponentDir(projectRootDir, component.ID, true);
-    if (isLocal(component)) {
-      if (componentDir !== component.storagePath) {
-        const tmpDir = await fs.mkdtemp(`${component.storagePath}/`);
-        await fs.rmdir(tmpDir);
-        return Promise.resolve();
-      }
-    } else {
-      checkWritePermission.push({ host: component.host, storagePath: component.storagePath });
-    }
-  }
-  return Promise.resolve();
-}
-
-/**
- * validate inputFiles
- * @param {Object} component - any component object which has inputFiles prop
- * @returns {true|Error} - inputFile is valid or not
- */
-async function validateInputFiles(component) {
-  for (const inputFile of component.inputFiles) {
-    const filename = inputFile.name;
-    if (inputFile.src.length > 1 && !(filename[filename.length - 1] === "/" || filename[filename.length - 1] === "\\")) {
-      return Promise.reject(new Error(`${component.name} inputFile '${inputFile.name}' data type is 'file' but it has two or more outputFiles.`));
-    }
-  }
-  return true;
-}
-
-/**
- * validate outputFiles
- * @param {Object} component - any component object which has putFiles prop
- * @returns {true|Error} - outputFile is valid or not
- */
-async function validateOutputFiles(component) {
-  for (const outputFile of component.outputFiles) {
-    const filename = outputFile.name;
-    if (!isValidOutputFilename(filename)) {
-      return Promise.reject(new Error(`${component.name} '${outputFile.name}' is not allowed.`));
-    }
-  }
-  return true;
 }
 
 async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) {
@@ -1282,6 +1027,9 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) 
 
 /**
  * read component Json recursively and pick up remote hosts used in task component
+ * @param {string} projectRootDir - projectRootDir's absolute path
+ * @param {String || null} rootID - ID of the component to start travarsal. start from project root if rootID is null
+ * @return {Object[]} - exclusive array of hosts
  */
 async function getHosts(projectRootDir, rootID) {
   const hosts = [];
@@ -1290,79 +1038,11 @@ async function getHosts(projectRootDir, rootID) {
   const storageHosts2 = Array.from(new Set(storageHosts));
   const hosts2 = Array.from(new Set(hosts))
     .filter((host)=>{
-      return !storageHosts2.includes(host.hostname);
+      return !storageHosts.some((e)=>{
+        e.hostname === host.hostname;
+      });
     });
   return [...storageHosts2, ...hosts2];
-}
-
-/**
- * validate all components in workflow
- */
-async function validateComponents(projectRootDir, argParentID) {
-  let parentID;
-  if (typeof argParentID !== "string") {
-    const rootWF = await readComponentJson(projectRootDir);
-    parentID = rootWF.ID;
-  } else {
-    parentID = argParentID;
-  }
-
-  const children = await getChildren(projectRootDir, parentID);
-  const promises = [];
-
-  for (const component of children) {
-    if (component.disable) {
-      continue;
-    }
-    if (component.type === "task") {
-      promises.push(validateTask(projectRootDir, component));
-    } else if (component.type === "stepjobTask") {
-      promises.push(validateStepjobTask(projectRootDir, component));
-    } else if (component.type === "stepjob") {
-      promises.push(validateStepjob(projectRootDir, component));
-    } else if (component.type === "bulkjobTask") {
-      promises.push(validateBulkjobTask(projectRootDir, component));
-    } else if (component.type === "if") {
-      promises.push(validateConditionalCheck(component));
-    } else if (component.type === "while") {
-      promises.push(validateConditionalCheck(component));
-      promises.push(validateKeepProp(component));
-    } else if (component.type === "for") {
-      promises.push(validateForLoop(component));
-      promises.push(validateKeepProp(component));
-    } else if (component.type === "parameterStudy") {
-      promises.push(validateParameterStudy(projectRootDir, component));
-    } else if (component.type === "foreach") {
-      promises.push(validateForeach(component));
-      promises.push(validateKeepProp(component));
-    } else if (component.type === "storage") {
-      promises.push(validateStorage(projectRootDir, component));
-    }
-    if (Object.prototype.hasOwnProperty.call(component, "inputFiles")) {
-      promises.push(validateInputFiles(component));
-    }
-    if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
-      promises.push(validateOutputFiles(component));
-    }
-    if (hasChild(component)) {
-      promises.push(validateComponents(projectRootDir, component.ID));
-    }
-  }
-
-  let hasInitialNode = false;
-  for (const component of children) {
-    const rt = await isInitialComponent(projectRootDir, component);
-    if (rt) {
-      hasInitialNode = true;
-      break;
-    }
-  }
-
-  if (!hasInitialNode) {
-    promises.push(Promise.reject(new Error("no component can be run")));
-  }
-
-  return Promise.all(promises);
 }
 
 /**
@@ -1421,6 +1101,18 @@ async function replaceEnv(projectRootDir, ID, newEnv) {
   componentJson.env = env;
   await writeComponentJsonByID(projectRootDir, ID, componentJson);
   return componentJson;
+}
+async function replaceWebhook(projectRootDir, newWebhook) {
+  const projectJson = await getProjectJson(projectRootDir);
+  const { webhook } = projectJson;
+  if (typeof webhook === "undefined") {
+    projectJson.webhook = newWebhook;
+  } else {
+    const patch = diff(webhook, newWebhook);
+    diffApply(webhook, patch);
+  }
+  await writeProjectJson(projectRootDir, projectJson);
+  return webhook;
 }
 async function getEnv(projectRootDir, ID) {
   const componentJson = await readComponentJsonByID(projectRootDir, ID);
@@ -1590,92 +1282,7 @@ async function setUploadOndemandOutputFile(projectRootDir, ID) {
 
   return renameOutputFile(projectRootDir, ID, 0, "UPLOAD_ONDEMAND");
 }
-async function removeInputFile(projectRootDir, ID, name) {
-  const counterparts = new Set();
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  const componentJson = await readComponentJson(componentDir);
-  componentJson.inputFiles.forEach((inputFile)=>{
-    if (name === inputFile.name) {
-      for (const src of inputFile.src) {
-        counterparts.add(src);
-      }
-    }
-  });
 
-  for (const counterPart of counterparts) {
-    await removeFileLink(projectRootDir, counterPart.srcNode, counterPart.srcName, ID, name);
-  }
-
-  componentJson.inputFiles = componentJson.inputFiles.filter((inputFile)=>{
-    return name !== inputFile.name;
-  });
-  return writeComponentJson(projectRootDir, componentDir, componentJson);
-}
-async function removeOutputFile(projectRootDir, ID, name) {
-  const counterparts = new Set();
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  const componentJson = await readComponentJson(componentDir);
-
-  componentJson.outputFiles = componentJson.outputFiles.filter((outputFile)=>{
-    if (name !== outputFile.name) {
-      return true;
-    }
-    for (const dst of outputFile.dst) {
-      counterparts.add(dst);
-    }
-    return false;
-  });
-
-  for (const counterPart of counterparts) {
-    await removeFileLink(projectRootDir, ID, name, counterPart.dstNode, counterPart.dstName);
-  }
-  return writeComponentJson(projectRootDir, componentDir, componentJson);
-}
-
-async function renameInputFile(projectRootDir, ID, index, newName) {
-  if (!isValidInputFilename(newName)) {
-    return Promise.reject(new Error(`${newName} is not valid inputFile name`));
-  }
-  const componentDir = await getComponentDir(projectRootDir, ID, true);
-  const componentJson = await readComponentJson(componentDir);
-  if (index < 0 || componentJson.inputFiles.length - 1 < index) {
-    return Promise.reject(new Error(`invalid index ${index}`));
-  }
-
-  const counterparts = new Set();
-  const oldName = componentJson.inputFiles[index].name;
-  componentJson.inputFiles[index].name = newName;
-  componentJson.inputFiles[index].src.forEach((e)=>{
-    counterparts.add(e.srcNode);
-  });
-  await writeComponentJson(projectRootDir, componentDir, componentJson);
-
-  const p = [];
-  for (const counterPartID of counterparts) {
-    const counterpartDir = await getComponentDir(projectRootDir, counterPartID, true);
-    const counterpartJson = await readComponentJson(counterpartDir);
-    for (const outputFile of counterpartJson.outputFiles) {
-      for (const dst of outputFile.dst) {
-        if (dst.dstNode === ID && dst.dstName === oldName) {
-          dst.dstName = newName;
-        }
-      }
-    }
-    if (counterpartJson.type !== "source") {
-      for (const inputFile of counterpartJson.inputFiles) {
-        if (!Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
-          for (const dst of inputFile.forwardTo) {
-            if (dst.dstNode === ID && dst.dstName === oldName) {
-              dst.dstName = newName;
-            }
-          }
-        }
-      }
-    }
-    p.push(writeComponentJson(projectRootDir, counterpartDir, counterpartJson));
-  }
-  return Promise.all(p);
-}
 async function renameOutputFile(projectRootDir, ID, index, newName) {
   if (!isValidOutputFilename(newName)) {
     return Promise.reject(new Error(`${newName} is not valid outputFile name`));
@@ -1851,16 +1458,6 @@ async function removeAllFileLink(projectRootDir, componentID, inputFilename, fro
   }
   return Promise.all(p);
 }
-async function cleanComponent(projectRootDir, ID) {
-  const targetDir = await getComponentDir(projectRootDir, ID, true);
-
-  const pathSpec = `${replacePathsep(path.relative(projectRootDir, targetDir))}/*`;
-  await gitResetHEAD(projectRootDir, pathSpec);
-  await gitClean(projectRootDir, pathSpec);
-
-  const descendantsDirs = await getDescendantsIDs(projectRootDir, ID);
-  return removeComponentPath(projectRootDir, descendantsDirs);
-}
 async function removeComponent(projectRootDir, ID) {
   const targetDir = await getComponentDir(projectRootDir, ID, true);
   const descendantsIDs = await getDescendantsIDs(projectRootDir, ID);
@@ -1946,14 +1543,13 @@ async function getComponentTree(projectRootDir, rootDir) {
 module.exports = {
   createNewProject,
   updateComponentPath,
-  removeComponentPath,
-  getRelativeComponentPath,
-  getDescendantsIDs,
-  getAllComponentIDs,
+  getComponentDir,
+  getComponentFullName,
   setProjectState,
   getProjectState,
   checkRunningJobs,
   importProject,
+  updateProjectROStatus,
   updateProjectDescription,
   getProjectJson,
   addProject,
@@ -1963,16 +1559,10 @@ module.exports = {
   checkRemoteStoragePathWritePermission,
   getSourceComponents,
   getChildren,
-  validateComponents,
   createNewComponent,
-  renameComponentDir,
   updateComponent,
-  updateStepNumber,
   addInputFile,
   addOutputFile,
-  removeInputFile,
-  removeOutputFile,
-  renameInputFile,
   renameOutputFile,
   addLink,
   addFileLink,
@@ -1982,7 +1572,7 @@ module.exports = {
   removeAllFileLink,
   getEnv,
   replaceEnv,
-  cleanComponent,
+  replaceWebhook,
   removeComponent,
   isComponentDir,
   getComponentTree,

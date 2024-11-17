@@ -10,9 +10,9 @@
       :width="boxWidth + borderWidth*2"
       :height="boxHeight + borderWidth*2"
       fill="transparent"
-      stroke="yellow"
+      :stroke=highlightColor
       :stroke-width=borderWidth
-      v-if=isSelected
+      v-if="isSelected || isInvalid"
     />
     <component-header
       :center=componentPos
@@ -55,14 +55,14 @@
       :start=senderPos
       :elsePlug=false
       :component-id=componentData.ID
-      :key=senderKey
+      :key="`sender-${componentData.ID}`"
       v-if=canHaveLink
     />
     <sender
       :start=elseSenderPos
       :elsePlug=true
       :component-id=componentData.ID
-      :key=elseSenderKey
+      :key="`elseSender-${componentData.ID}`"
       v-if='componentData.type === "if"'
     />
   </g>
@@ -93,6 +93,10 @@ export default {
       required: true,
       type: Object
     },
+    isInvalid: {
+      type: Boolean,
+      default: false
+    },
     isSelected: {
       type: Boolean,
       default: false
@@ -114,8 +118,6 @@ export default {
   },
   data() {
     return {
-      senderKey: -1,
-      elseSenderKey: -2,
       startX: null,
       startY: null,
       oldcenter: { x: null, y: null },
@@ -126,6 +128,9 @@ export default {
     };
   },
   computed: {
+    highlightColor() {
+      return this.isSelected ? "yellow" : "red";
+    },
     canHaveLink() {
       return this.componentData.type !== "source" && this.componentData.type !== "storage";
     },
@@ -149,17 +154,25 @@ export default {
       return rt;
     },
     senderPos() {
-      this.senderKey -= 2;
       return calcSenderPos(this.componentData);
     },
     elseSenderPos() {
-      this.elseSenderKey -= 2;
       return calcElseSenderPos(this.componentData);
     },
     recieverPos() {
       return calcRecieverPos(this.componentPos);
     }
   },
+  emits: [
+    "drag",
+    "dragend",
+    "addFileLink",
+    "removeFileLink",
+    "addLink",
+    "removeLink",
+    "chdir",
+    "openContextMenu"
+  ],
   methods: {
     ...mapActions({ commitSelectedComponent: "selectedComponent" }),
     mouseDown(e) {
@@ -217,9 +230,8 @@ export default {
     onDblclick() {
       this.$emit("chdir", this.componentData.ID, this.componentData.type);
     },
-    onRightclick() {
-      //not implemented yet
-      console.log("right clicked");
+    onRightclick(e) {
+      this.$emit("openContextMenu", e);
     }
   }
 };

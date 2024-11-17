@@ -19,9 +19,8 @@ For information about how to create remote host settings, see [Remote Host Setti
 
  * [MNIST Data Analysis Workflow Using TensorFlow](3_TensorFlow_mnist/)
 
- * [Parameter Study Analysis Workflow with OpenFOAM and jupyternotebook](4_OpenFOAM_jupyter/)
 
-__About Verifying Application Operation__
+__About Verifying Application Operation__  
 In March 2023, we confirmed the operation of the application (OpenFOAM, TensorFlow) used in the practical tutorial.
 Note that the file path may have been changed due to subsequent updates.
 {: .notice--info}

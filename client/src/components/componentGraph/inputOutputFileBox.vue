@@ -54,6 +54,10 @@ export default {
       type: Number
     }
   },
+  emits: [
+    "addFileLink",
+    "removeFileLink"
+  ],
   data() {
     return {
       width: boxWidth,

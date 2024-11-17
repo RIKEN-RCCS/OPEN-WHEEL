@@ -125,12 +125,13 @@ describe("wheel test", ()=>{
     cy.contains("copy file path").next()
       .find("button")
       .click()
+    cy.contains("copied!");
     cy.contains("[type=\"button\"]", "ok").click()
 
     cy.window().its("navigator.clipboard")
       .then((clip)=>{return clip.readText()})
       .then(($el)=>{
-        cy.softAssert($el, wheelPath + "/test.wheel/task0/a.txt", "script path is copied at clipboard")
+        cy.softAssert($el, `${wheelPath}/${testProject}.wheel/task0/a.txt`, "script path is copied at clipboard")
       })
   })
 
@@ -244,7 +245,6 @@ describe("wheel test", ()=>{
       .then(($el)=>{
         cy.softAssert($el.text(), "input", "\"input\" is added in input file aria")
       })
-
     cy.get("svg").find("text")
       .eq(1)
       .then(($el)=>{
@@ -485,6 +485,7 @@ describe("wheel test", ()=>{
         .then(($el)=>{
           cy.softAssert($el.text(), "run.sh", "script is exist in select box")
         })
+      cy.clickTask("task0")
 
       cy.projectReload(k, testProject, "task0")
     })
@@ -550,6 +551,7 @@ describe("wheel test", ()=>{
     cy.openRetrySettingTab()
     cy.swicthUseJavascriptExpressionForConditionCheck("on")
     cy.typeScriptconditionCheck("return 1;")
+    cy.clickTask("task0");
     
     Cypress._.times(2, (k)=>{
       cy.contains("button", "retry setting").siblings()
@@ -557,7 +559,7 @@ describe("wheel test", ()=>{
         .children()
         .last()
         .then(($el)=>{
-          cy.softAssert($el.find("textarea").val(), "return 1;", "script aria  is displaied \"return 1;\"")
+          cy.softAssert($el.find("textarea").val(), "return 1;", "script area is displaied \"return 1;\"")
         })
 
       cy.projectReload(k, testProject, "task0")
@@ -578,6 +580,7 @@ describe("wheel test", ()=>{
     cy.openRetrySettingTab()
     cy.swicthUseJavascriptExpressionForConditionCheck("on")
     cy.typeScriptconditionCheck("return 1;")
+    cy.clickTask("task0");
 
     Cypress._.times(2, (k)=>{
       cy.contains("div", "use javascript expression for condition check").parent()
@@ -603,6 +606,7 @@ describe("wheel test", ()=>{
     cy.scriptMake("return1.sh", "exit 1")
     cy.openRetrySettingTab()
     cy.scriptNameForConditionCheckSelect("return1.sh")
+    cy.clickTask("task0");
     
     Cypress._.times(2, (k)=>{
       cy.contains("label", "script name for condition check").siblings()
@@ -636,21 +640,18 @@ describe("wheel test", ()=>{
           .then(($el)=>{
             cy.softAssert($el.length > 0, true, "host is exist in listbox")
           })
-
         cy.selectHost(remotehost)
         cy.contains("label", "host").siblings()
           .then(($el)=>{
             cy.softAssert($el.text(), remotehost, "host is exist in select box")
           })
-
+        cy.clickTask("task0");
         cy.projectReload(k, testProject, "task0")
       })
-
       cy.execProject()
       cy.passwordType(password)
       cy.checkProjectStatus("finished")
       cy.outputSshOpen()
-
       cy.getCosoleElement().then(($el)=>{
         cy.softAssert($el.text().includes("test"), true, "script exec result is displaied at Console(Stdout)")
       })
@@ -660,9 +661,11 @@ describe("wheel test", ()=>{
       cy.switchUseJobScheduler("on")
       cy.hostSelect(remotehost)
       cy.scriptMake("run.sh", "cd ${{}PBS_O_WORKDIR-\".\"} \necho test > stdout.txt")
+      cy.clickTask("task0");
       cy.scriptSelect("run.sh")
       cy.openRemoteFileSettingTab()
       cy.addIncludeFile("stdout.txt")
+      cy.clickTask("task0");
     
       Cypress._.times(2, (k)=>{
         cy.contains("label", "queue").parent()
@@ -675,6 +678,7 @@ describe("wheel test", ()=>{
           .then(($el)=>{
             cy.softAssert($el.text(), "workq", "remotehost queue is displaied in select box")
           })
+        cy.clickTask("task0")
         cy.projectReload(k, testProject, "task0")
       })
 
@@ -698,6 +702,7 @@ describe("wheel test", ()=>{
       cy.scriptMake("run.sh", "echo test")
       cy.scriptSelect("run.sh")
       cy.hostSelect(remotehost)
+      cy.clickTask("task0");
 
       Cypress._.times(2, (k)=>{
         cy.contains("button", "basic").next()
@@ -721,11 +726,14 @@ describe("wheel test", ()=>{
       cy.scriptSelect("run.sh")
       cy.openRemoteFileSettingTab()
       cy.addIncludeFile("stdout.txt")
+      cy.closeComponentProperty();
+      cy.clickTask("task0")
     
       Cypress._.times(2, (k)=>{
-        cy.contains("label", "submit option").siblings()
-          .find("input")
+        cy.contains("label", "submit option").parent()
+          .get("input")
           .then(($el)=>{
+            cy.log($el);
             cy.softAssert($el.val(), "-N myjob", "submit option is setting \"-N myjob\"")
           })
         cy.projectReload(k, testProject, "task0")
@@ -747,6 +755,7 @@ describe("wheel test", ()=>{
       cy.scriptMake("run.sh", "echo test \nexit 1")
       cy.scriptSelect("run.sh")
       cy.retryNumberType("2")
+      cy.clickTask("task0");
     
       Cypress._.times(2, (k)=>{
         cy.get("input").eq(8)
@@ -783,6 +792,7 @@ describe("wheel test", ()=>{
       cy.scriptSelect("run.sh")
       cy.openRemoteFileSettingTab()
       cy.addIncludeFile("*.txt")
+      cy.clickTask("task0");
     
       Cypress._.times(2, (k)=>{
         cy.contains("thead", "include").next()
@@ -818,6 +828,7 @@ describe("wheel test", ()=>{
       cy.openRemoteFileSettingTab()
       cy.addIncludeFile("*.txt")
       cy.deleteIncludeFile("*.txt")
+      cy.clickTask("task0");
 
     
       Cypress._.times(2, (k)=>{
@@ -852,6 +863,7 @@ describe("wheel test", ()=>{
       cy.openRemoteFileSettingTab()
       cy.addIncludeFile("*.txt")
       cy.addExcludeFile("222.txt")
+      cy.clickTask("task0");
 
     
       Cypress._.times(2, (k)=>{
@@ -892,6 +904,7 @@ describe("wheel test", ()=>{
       cy.addIncludeFile("*.txt")
       cy.addExcludeFile("222.txt")
       cy.deleteExcludeFile("222.txt")
+      cy.clickTask("task0");
 
     
       Cypress._.times(2, (k)=>{
@@ -927,7 +940,8 @@ describe("wheel test", ()=>{
       cy.scriptSelect("run.sh")
       cy.openRemoteFileSettingTab()
       cy.setCleanUpFlg("remove files")
-
+      cy.clickTask("task0");
+      cy.openRemoteFileSettingTab()
     
       Cypress._.times(2, (k)=>{
         cy.contains("label", "remove files").siblings()
@@ -956,6 +970,8 @@ describe("wheel test", ()=>{
       cy.scriptSelect("run.sh")
       cy.openRemoteFileSettingTab()
       cy.setCleanUpFlg("keep files")
+      cy.clickTask("task0");
+      cy.openRemoteFileSettingTab()
 
     
       Cypress._.times(2, (k)=>{
@@ -985,6 +1001,8 @@ describe("wheel test", ()=>{
       cy.scriptSelect("run.sh")
       cy.openRemoteFileSettingTab()
       cy.setCleanUpFlg("same as parent")
+      cy.clickTask("task0");
+      cy.openRemoteFileSettingTab()
 
     
       Cypress._.times(2, (k)=>{

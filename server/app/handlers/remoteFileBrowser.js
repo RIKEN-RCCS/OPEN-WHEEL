@@ -6,9 +6,8 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const { zip } = require("zip-a-folder");
 const { readComponentJsonByID } = require("../core/componentJsonIO.js");
-const { isLocal } = require("../core/projectFilesOperator.js");
+const { isLocalComponent } = require("../core/workflowComponent.js");
 const { remoteHost } = require("../db/db");
 const { getLogger } = require("../logSettings");
 const { createSsh, getSsh } = require("../core/sshManager");
@@ -16,7 +15,7 @@ const { createTempd } = require("../core/tempd.js");
 const { formatSshOutput } = require("../lib/utility.js");
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
-  if (component.type !== "storage" || isLocal(component)) {
+  if (component.type !== "storage" || isLocalComponent(component)) {
     return;
   }
   try {
@@ -90,6 +89,7 @@ async function onGetRemoteSNDContents(projectRootDir) {
   getLogger(projectRootDir).error(projectRootDir, "onGetRemoteSNDContents should not be called any more");
 }
 async function onRemoteDownload(projectRootDir, target, host, cb) {
+  const { zip } = await import("zip-a-folder");
   try {
     const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
     const tmpDir = await fs.mkdtemp(`${dir}/`);

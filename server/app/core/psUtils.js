@@ -10,7 +10,7 @@ const { promisify } = require("util");
 const glob = require("glob");
 const nunjucks = require("nunjucks");
 const { getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
-
+const { overwriteByRsync } = require("./rsync.js");
 async function getScatterFilesV2(templateRoot, paramSettings) {
   if (!(Object.prototype.hasOwnProperty.call(paramSettings, "scatter") && Array.isArray(paramSettings.scatter))) {
     return [];
@@ -32,7 +32,7 @@ async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params
     })
   );
 }
-async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, logger) {
+async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, logger, useRsync) {
   const p = [];
   for (const recipe of scatterRecipe) {
     const srcName = nunjucks.renderString(recipe.srcName, params);
@@ -42,12 +42,16 @@ async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params,
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(dstDir, dstName.slice(0, -1), src) : path.join(dstDir, dstName);
       logger.trace(`scatter copy ${path.join(templateRoot, src)} to ${dst}`);
-      p.push(fs.copy(path.join(templateRoot, src), dst, { overwrite: true, dereference: true }));
+      if (useRsync) {
+        p.push(overwriteByRsync(path.join(templateRoot, src), dst));
+      } else {
+        p.push(fs.copy(path.join(templateRoot, src), dst, { overwrite: true }));
+      }
     }
   }
   return Promise.all(p).catch((err)=>{
     logger.trace("error occurred at scatter", err);
-    if (err.code !== "ENOENT" && err.code !== "EEXIST") {
+    if (err.code !== "ENOENT" || err.code !== "EEXIST") {
       return Promise.reject(err);
     }
     return true;
@@ -63,12 +67,12 @@ async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, l
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(templateRoot, dstName.slice(0, -1), src) : path.join(templateRoot, dstName);
       logger.trace(`gather copy ${path.join(srcDir, src)} to ${dst}`);
-      p.push(fs.copy(path.join(srcDir, src), dst, { overwrite: true, dereference: true }));
+      p.push(fs.copy(path.join(srcDir, src), dst, { overwrite: true }));
     }
   }
   return Promise.all(p).catch((err)=>{
     logger.trace("error occurred at gather", err);
-    if (err.code !== "ENOENT" && err.code !== "EEXIST") {
+    if (err.code !== "ENOENT" || err.code === "EEXIST") {
       return Promise.reject(err);
     }
     return true;

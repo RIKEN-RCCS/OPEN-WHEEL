@@ -88,7 +88,6 @@ async function readComponentJsonByID(projectRootDir, ID) {
 }
 
 module.exports = {
-  componentJsonReplacer,
   getComponentDir,
   writeComponentJson,
   writeComponentJsonByID,

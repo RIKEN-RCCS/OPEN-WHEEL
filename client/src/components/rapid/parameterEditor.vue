@@ -57,7 +57,7 @@
 </template>
 <script>
 "use strict";
-import { mapState, mapGetters } from "vuex";
+import { mapState, mapGetters, mapActions } from "vuex";
 import deepEqual from "deep-eql";
 import SIO from "../..//lib/socketIOWrapper.js";
 import targetFiles from "../../components/rapid/targetFiles.vue";
@@ -122,6 +122,9 @@ export default {
     });
   },
   methods: {
+    ...mapActions({
+      showSnackbar: "showSnackbar"
+    }),
     onAddNewItem(mode, newItem) {
       this.parameterSetting[mode].push(newItem);
     },
@@ -166,8 +169,10 @@ export default {
         payload, (rt)=>{
           if (!rt) {
             debug("ERROR: parameter setting file save failed");
+            this.showSnackbar(`parameter setting file save failed`);
             return;
           }
+          this.showSnackbar({ message: `parameter setting file saved`, timeout: 2000 });
           this.initialParameterSetting = JSON.parse(payload);
           debug("new initial PS-setting=", this.initialParameterSetting);
         });

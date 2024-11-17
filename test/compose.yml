@@ -1,0 +1,24 @@
+services:
+  wheel_release_test_server:
+    image: naoso5/openpbs
+    ports:
+      - "8000:22"
+    container_name: wheel_release_test_server
+    healthcheck:
+      test: ["CMD","/etc/init.d/ssh", "status"]
+  wheel_release_test:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      target: exec
+    image: wheel_e2e_test
+    ports:
+      - "8089:8089"
+    environment:
+      WHEEL_USE_HTTP: 1
+      WHEEL_USE_PORT: 8089
+      WHEEL_TEST_REMOTEHOST: testServer
+      WHEEL_TEST_REMOTE_PASSWORD: passw0rd
+      WHEEL_LOGLEVEL: info
+    volumes:
+      - "./wheel_config:/root/.wheel"

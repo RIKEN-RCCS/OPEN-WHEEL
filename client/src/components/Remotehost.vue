@@ -29,25 +29,25 @@
         <template #item.connectionTest="{ item, index }">
           <v-btn
             :disable="testing !== null && testing !== index"
-            :color="item.raw.testResult"
-            :loading="item.raw.loading"
+            :color="item.testResult"
+            :loading="item.loading"
             @click="testConnection(index)"
-            :text=item.raw.connectionStatus
-            :prepend-icon=item.raw.icon
+            :text=item.connectionStatus
+            :prepend-icon=item.icon
           />
         </template>
         <template #item.action="{ item}">
           <action-row
-            :item="item.raw"
-            @delete="openRemoveConfirmDialog(item.raw)"
-            @edit="openEditDialog(item.raw)"
+            :item="item"
+            @delete="openRemoveConfirmDialog(item)"
+            @edit="openEditDialog(item)"
           />
         </template>
       </v-data-table>
     <v-snackbar
       v-model="openSnackbar"
       multi-line
-      :timeout="-1"
+      :timeout=snackbarTimeout
       centered
       variant="outlined"
     >
@@ -56,7 +56,7 @@
         <v-btn
           class="justify-end"
           variant="outlined"
-          @click="snackbarMessage='';openSnackbar=false"
+          @click="closeSnackbar"
           text="Close"
         />
       </template>
@@ -86,6 +86,7 @@
 </template>
 <script>
 "use strict";
+import { mapState, mapActions } from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:remotehost");
 import SIO from "../lib/socketIOWrapper.js";
@@ -128,12 +129,15 @@ export default {
       jobSchedulerNames: [],
       removeConfirmMessage: "",
       currentSetting: {},
-      testing: null,
-      openSnackbar: false,
-      snackbarMessage: ""
+      testing: null
     };
   },
   computed: {
+    ...mapState([
+      "openSnackbar",
+      "snackbarMessage",
+      "snackbarTimeout"
+    ]),
     hostList() {
       return this.hosts.map((host)=>{
         return host.name;
@@ -153,6 +157,7 @@ export default {
       data.forEach((e)=>{
         e.icon = "mdi-lan-pending";
         e.connectionStatus = "test";
+        e.testResult = "background";
       });
       this.hosts.splice(0, this.hosts.length, ...data);
     });
@@ -161,8 +166,17 @@ export default {
       this.pwDialogTitle = `input password or passphrase for ${hostname}`;
       this.pwDialog = true;
     });
+    SIO.onGlobal("logERR", (message)=>{
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      this.showSnackbar(output);
+    });
   },
   methods: {
+    ...mapActions({
+      showSnackbar: "showSnackbar",
+      closeSnackbar: "closeSnackbar"
+    }),
     openEditDialog(item) {
       this.currentSetting = item || {};
       this.newHostDialog = true;
@@ -172,6 +186,7 @@ export default {
       delete (item.testResult);
       item.icon = "mdi-lan-pending";
       item.connectionStatus = "test";
+      item.testResult = "background";
     },
     addNewSetting(updated) {
       this.currentSetting = {};
@@ -211,7 +226,6 @@ export default {
         const index = this.hosts.findIndex((e)=>{
           return e.id === this.rmTarget.id;
         });
-
         if (index >= 0) {
           this.hosts.splice(index, 1);
         }
@@ -223,9 +237,7 @@ export default {
         return;
       }
       if (this.testing !== null) {
-        this.snackbarMessage = "another ssh test is running";
-        debug(this.snackbarMessage);
-        this.openSnackbar = true;
+        this.showSnackbar({ message: "another ssh test is running", timeout: 1000 });
         return;
       }
       this.testing = index;

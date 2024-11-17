@@ -93,6 +93,7 @@ const remotehostFilename = getConfigFile(getStringVar(config.remotehostJsonFile,
 const jobScriptTemplateFilename = getConfigFile(getStringVar(config.jobScriptTemplateJsonFile, "jobScriptTemplate.json"));
 const projectListFilename = getConfigFile(getStringVar(config.projectListJsonFile, "projectList.json"));
 const logFilename = getConfigFile(getStringVar(config.logFilename, "wheel.log"));
+const credentialFilename = getConfigFile(getStringVar(config.credentialFilename, "credentials.json"));
 
 //export constants
 module.exports.suffix = ".wheel";
@@ -110,9 +111,9 @@ if (!process.env.WHEEL_USE_HTTP) {
   module.exports.certFilename = getConfigFile("server.crt", true);
 }
 module.exports.logFilename = logFilename;
+module.exports.credentialFilename = credentialFilename;
 
 //re-export server settings
-module.exports.interval = parseInt(process.env.WHEEL_INTERVAL, 10) || getIntVar(config.interval, 1000);
 module.exports.port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
 module.exports.rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
 module.exports.defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);
@@ -121,7 +122,6 @@ module.exports.maxLogSize = getIntVar(config.maxLogSize, 8388608);
 module.exports.compressLogFile = getVar(config.compressLogFile, true);
 module.exports.numJobOnLocal = parseInt(process.env.WHEEL_NUM_LOCAL_JOB, 10) || getIntVar(config.numJobOnLocal, 1);
 module.exports.defaultTaskRetryCount = getIntVar(config.defaultTaskRetryCount, 1);
-module.exports.shutdownDelay = getIntVar(config.shutdownDelay, 0);
 module.exports.gitLFSSize = getIntVar(config.gitLFSSize, 200);
 
 //export setting files

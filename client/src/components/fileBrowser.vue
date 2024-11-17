@@ -121,7 +121,7 @@
           :label="dialog.inputFieldLabel"
         >
           <template #append>
-            <v-tooltip text="copy file path" location="bottom" >
+            <v-tooltip :text=copyButtonTooltipText location="bottom" v-model=showCopyButtonTooltipText>
               <template #activator="{ props }">
                 <v-btn
                   icon="mdi-content-copy"
@@ -191,7 +191,9 @@ export default {
         { icon: "mdi-close", label: "close" }
       ],
       downloadURL: null,
-      downloadDialog: false
+      downloadDialog: false,
+      showCopyButtonTooltipText: false,
+      copyButtonTooltipText: "copy file path"
     };
   },
   computed: {
@@ -267,7 +269,9 @@ export default {
     },
     async copyToClipboard() {
       debug("copy file path", this.dialog.inputField);
-      navigator.clipboard.writeText(this.dialog.inputField);
+      await navigator.clipboard.writeText(this.dialog.inputField);
+      this.copyButtonTooltipText = "copied!";
+      this.showCopyButtonTooltipText = true;
     },
     getActiveItem(key) {
       return _getActiveItem(this.items, key);
@@ -364,6 +368,8 @@ export default {
       this.dialog.inputFieldLabel = "";
       this.dialog.inputField = "";
       this.dialog.open = false;
+      this.copyButtonTooltipText = "copy file path";
+      this.showCopyButtonTooltipText = false;
     },
     submitAndCloseDialog() {
       if (this.dialog.submitEvent === "removeFile") {

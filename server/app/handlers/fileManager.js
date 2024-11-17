@@ -9,9 +9,9 @@ const fs = require("fs-extra");
 const glob = require("glob");
 const minimatch = require("minimatch");
 const klaw = require("klaw");
-const { zip } = require("zip-a-folder");
+
 const isPathInside = require("is-path-inside");
-const { gitAdd, gitRm, gitLFSTrack, gitLFSUntrack, isLFS } = require("../core/gitOperator2");
+const { gitAdd, gitRm, gitCommit, gitLFSTrack, gitLFSUntrack, isLFS } = require("../core/gitOperator2");
 const { convertPathSep } = require("../core/pathUtils");
 const { getUnusedPath, deliverFile } = require("../core/fileUtils.js");
 const { escapeRegExp } = require("../lib/utility");
@@ -178,6 +178,32 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
   cb(true);
 }
 
+/**
+ * git add or remove and commit files
+ * @param {string} projectRootDir - project root dir path for logger
+ * @param {Object[]} files - array of files to commit
+ *
+ *each object in files array should have name and status property
+ * status prop should be one of "new", "modified", "deleted", or "renamed"
+ */
+async function onCommitFiles(projectRootDir, files, cb) {
+  getLogger(projectRootDir).trace("save files", files
+    .map((file)=>{ return file.name; })
+  );
+
+  try {
+    const filenames = files.map((file)=>{
+      return file.name;
+    });
+    await gitCommit(projectRootDir, undefined, filenames);
+  } catch (err) {
+    getLogger(projectRootDir).error("commit files failed", err);
+    cb(false);
+    return;
+  }
+  cb(true);
+}
+
 const onUploadFileSaved = async (event)=>{
   const projectRootDir = event.file.meta.projectRootDir;
   if (!event.file.success) {
@@ -225,6 +251,7 @@ const onUploadFileSaved = async (event)=>{
 const onDownload = async (projectRootDir, target, cb)=>{
   const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
   const tmpDir = await fs.mkdtemp(`${dir}/`);
+  const { zip } = await import("zip-a-folder");
 
   let downloadZip = false;
   let targetBasename = "";
@@ -264,6 +291,7 @@ module.exports = {
   onCreateNewDir,
   onRemoveFile,
   onRenameFile,
+  onCommitFiles,
   onUploadFileSaved,
   onDownload,
   onRemoveDownloadFile

@@ -8,7 +8,11 @@
     @dragover.prevent
     @dragenter.prevent
   >
-    <component-graph />
+    <component-graph
+      @componentRightClick=onComponentRightClick
+      @connectorRightClick=onConnectorRightClick
+      @vconnectorRightClick=onVconnectorRightClick
+    />
   </div>
 </template>
 

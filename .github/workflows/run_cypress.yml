@@ -21,6 +21,7 @@ jobs:
       CYPRESS_WHEEL_TEST_PORT: ${{ secrets.WHEEL_TEST_PORT }}
       CYPRESS_WHEEL_TEST_USER: ${{ secrets.WHEEL_TEST_USER }}
       CYPRESS_WHEEL_PATH: '/home/runner'
+      WHEEL_LOGLEVEL: "ERROR"
     runs-on: ubuntu-latest
     strategy:
       matrix:

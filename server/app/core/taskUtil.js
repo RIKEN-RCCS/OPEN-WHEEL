@@ -5,11 +5,14 @@
  */
 "use strict";
 const { getSsh, getSshHostinfo } = require("./sshManager");
-const { cancel } = require("./executer");
+const { cancel } = require("./executerManager.js");
 const { jobScheduler } = require("../db/db");
 const { getLogger } = require("../logSettings.js");
-
 async function cancelRemoteJob(task) {
+  if (!task.jobID) {
+    getLogger(task.projectRootDir).debug(`try to cancel ${task.name} but it have not been submitted.`);
+    return;
+  }
   const ssh = getSsh(task.projectRootDir, task.remotehostID);
   const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
   const JS = jobScheduler[hostinfo.jobScheduler];
@@ -81,7 +84,6 @@ function taskStateFilter(task) {
 }
 
 module.exports = {
-  killTask,
   cancelDispatchedTasks,
   taskStateFilter
 };

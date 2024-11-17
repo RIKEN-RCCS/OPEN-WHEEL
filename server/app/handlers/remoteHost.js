@@ -91,7 +91,7 @@ async function onGetHostList(cb) {
       delete hostInfo.username;
     }
   });
-  cb(remoteHost.getAll());
+  cb(hostList);
 }
 async function onUpdateHost(socket, updatedHost, cb) {
   Object.keys(updatedHost).forEach((prop)=>{

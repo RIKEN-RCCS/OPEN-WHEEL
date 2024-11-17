@@ -16,34 +16,35 @@ const { getSsh } = require("./sshManager.js");
 /**
  * read Json file until get some valid JSON data
  * @param {string} filename - filename to be read
+ * @param {number} retry - max number of retry
  */
-async function readJsonGreedy(filename) {
+async function readJsonGreedy(filename, retry) {
+  const retries = typeof retry === "number" ? retry : 10;
   return promiseRetry(async (retry)=>{
     const buf = await fs.readFile(filename)
       .catch((e)=>{
         if (e.code === "ENOENT") {
-          retry(e);
+          return retry(e);
         }
         throw e;
       });
     const strData = buf.toString("utf8").replace(/^\uFEFF/, "");
     if (strData.length === 0) {
-      retry(new Error("read failed"));
+      return retry(new Error("read failed"));
     }
     let jsonData;
     try {
       jsonData = JSON.parse(strData);
     } catch (e) {
       if (e instanceof SyntaxError) {
-        retry(e);
+        return retry(e);
       }
       throw e;
     }
-    //need check by jsonSchema but it may cause performance problem
     return jsonData;
   },
   {
-    retries: 10,
+    retries,
     minTimeout: 500,
     factor: 1
   });
@@ -280,6 +281,16 @@ async function getUnusedPath(parent, name) {
   return path.resolve(parent, `${name}.${suffix}`);
 }
 
+/**
+ * replace CRLF to LF
+ * @param {string} filename - tareget file name
+ */
+async function replaceCRLF(filename) {
+  let contents = await fs.readFile(filename);
+  contents = contents.toString().replace(/\r\n/g, "\n");
+  return fs.writeFile(filename, contents);
+}
+
 module.exports = {
   readJsonGreedy,
   addX,
@@ -288,5 +299,6 @@ module.exports = {
   deliverFileFromRemote,
   openFile,
   saveFile,
-  getUnusedPath
+  getUnusedPath,
+  replaceCRLF
 };

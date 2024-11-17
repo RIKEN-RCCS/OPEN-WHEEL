@@ -38,7 +38,7 @@ async function pspawn(projectRootDir, script, options) {
  * @param {string} projectRootDir - root directory path of project
  * @param {string} condition - command name or javascript expression
  * @param {string} cwd - task component's directory
- * @param {number} currentIndex - innermost loop index (WHEEL_CURRENT_INDEX)
+ * @param {Object} env - environment variables
  * @returns {Promise} *
  */
 async function evalCondition(projectRootDir, condition, cwd, env) {

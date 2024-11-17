@@ -33,13 +33,13 @@
           <template #item.action="{ item }">
             <action-row
               :item="item"
-              @edit="openDialog(item.raw)"
-              @delete="deleteItem(item.raw)"
+              @edit="openDialog(item)"
+              @delete="deleteItem(item)"
             />
           </template>
           <template #item.targetNode="{ item }">
-            <div v-if="item.raw.hasOwnProperty('targetNode')">
-              {{ getComponentName(item.raw.targetNode) }}
+            <div v-if="item.hasOwnProperty('targetNode')">
+              {{ getComponentName(item.targetNode) }}
             </div>
           </template>
         </v-data-table>

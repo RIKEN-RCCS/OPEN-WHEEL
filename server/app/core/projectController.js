@@ -9,6 +9,8 @@ const fs = require("fs-extra");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
 const { removeSsh } = require("./sshManager");
+const { removeExecuters } = require("./executerManager.js");
+const { removeTransferrers } = require("./transferManager.js");
 const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { setProjectState } = require("../core/projectFilesOperator");
 const { writeComponentJson, readComponentJson } = require("./componentJsonIO.js");
@@ -57,19 +59,14 @@ const cleanProject = async (projectRootDir)=>{
   await gitClean(projectRootDir);
   //project state must be updated by onCleanProject()
 };
-async function pauseProject(projectRootDir) {
-  const rootDispatcher = rootDispatchers.get(projectRootDir);
-  if (rootDispatcher) {
-    await rootDispatcher.pause();
-  }
-  //project state must be updated by onPauseProject()
-}
 async function stopProject(projectRootDir) {
   const rootDispatcher = rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
     await rootDispatcher.remove();
     rootDispatchers.delete(projectRootDir);
   }
+  removeExecuters(projectRootDir);
+  removeTransferrers(projectRootDir);
   removeSsh(projectRootDir);
   //project state must be updated by onStopProject()
 }
@@ -95,16 +92,18 @@ async function runProject(projectRootDir) {
   await updateProjectState(projectRootDir, "running", projectJson);
   getLogger(projectRootDir).info("project start");
   rootWF.state = await rootDispatcher.start();
-  getLogger(projectRootDir).info("project finished");
+  getLogger(projectRootDir).info(`project ${rootWF.state}`);
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
   await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
   rootDispatchers.delete(projectRootDir);
+  removeExecuters(projectRootDir);
+  removeTransferrers(projectRootDir);
+  removeSsh(projectRootDir);
   return rootWF.state;
 }
 
 module.exports = {
   cleanProject,
   runProject,
-  pauseProject,
   stopProject
 };

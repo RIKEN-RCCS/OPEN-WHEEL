@@ -54,7 +54,6 @@ export default {
   computed: {
     trancatedText() {
       this.calcYOffset();
-
       if (this.text.length <= maxTextChar) {
         return this.text;
       }

@@ -9,6 +9,7 @@ const path = require("path");
 const { promisify } = require("util");
 const { EventEmitter } = require("events");
 const glob = require("glob");
+const { debounce } = require("perfect-debounce");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
 const { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename } = require("../db/db");
@@ -19,7 +20,7 @@ const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
 const { readJsonGreedy, deliverFile, deliverFileOnRemote, deliverFileFromRemote } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
 const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
-const { writeComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
+const { writeComponentJson, readComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
 const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent.js");
 const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
@@ -30,18 +31,22 @@ const { viewerSupportedTypes, getFiletype } = require("./viewerUtils.js");
 const {
   loopInitialize,
   forGetNextIndex,
+  getPrevIndex,
+  getInstanceDirectoryName,
+  keepLoopInstance,
   forIsFinished,
   forTripCount,
-  forKeepLoopInstance,
   whileGetNextIndex,
   whileIsFinished,
-  whileKeepLoopInstance,
   foreachGetNextIndex,
+  foreachGetPrevIndex,
   foreachIsFinished,
   foreachTripCount,
-  foreachKeepLoopInstance
+  foreachKeepLoopInstance,
+  foreachSearchLatestFinishedIndex
 } = require("./loopUtils.js");
 const { makeCmd } = require("./psUtils.js");
+const { overwriteByRsync } = require("./rsync.js");
 
 const wheelSystemEnv = [
   "WHEEL_CURRENT_INDEX",
@@ -109,6 +114,7 @@ class Dispatcher extends EventEmitter {
     this.env = Object.assign({}, env);
     this.currentSearchList = [];
     this.pendingComponents = [];
+    this.forceFinishedLoops = [];
     this.children = new Set(); //child dispatcher instance
     this.runningTasks = []; //store currently running tasks from this dispatcher object
     this.needToRerun = false;
@@ -118,7 +124,6 @@ class Dispatcher extends EventEmitter {
     this.dispatchedTasks = taskDB.get(this.projectRootDir); //store all dipatched tasks in this project
     this.hasFailedComponent = false;
     this.hasUnknownComponent = false;
-    this.logger = getLogger(projectRootDir);
     this.firstCall = true;
     this.on("taskCompleted", (state)=>{
       this.setStateFlag(state);
@@ -156,15 +161,19 @@ class Dispatcher extends EventEmitter {
 
   async _dispatchOneComponent(target) {
     try {
-      await this._cmdFactory(target.type).call(this, target);
+      if (target.state === "finished") {
+        getLogger(this.projectRootDir).info(`finished component don't re-run at this time: ${target.name}(${target.ID})`);
+      } else {
+        await this._cmdFactory(target.type).call(this, target);
+      }
     } catch (err) {
       await this._setComponentState(target, "failed");
       this.hasFailedComponent = true;
-      return Promise.reject(err);
+      throw err;
     } finally {
       this.setStateFlag(target.state);
       if (isFinishedState(target.state)) {
-        this.logger.info(`finished component: ${target.name}(${target.ID})`);
+        getLogger(this.projectRootDir).info(`finished component: ${target.name}(${target.ID})`);
       }
       this._reserveDispatch();
     }
@@ -173,7 +182,7 @@ class Dispatcher extends EventEmitter {
 
   async _dispatch() {
     try {
-      this.logger.trace("_dispatch called", this.cwfDir);
+      getLogger(this.projectRootDir).trace("_dispatch called", this.cwfDir);
       if (this.firstCall) {
         await this._asyncInit();
         const childComponents = await getChildren(this.projectRootDir, this.cwfDir, true);
@@ -189,19 +198,19 @@ class Dispatcher extends EventEmitter {
         this.currentSearchList = initialComponents.filter((e)=>{
           return e !== null;
         });
-        this.logger.debug("initial components: ", this.currentSearchList.map((e)=>{
+        getLogger(this.projectRootDir).debug("initial components: ", this.currentSearchList.map((e)=>{
           return e.name;
         }));
         this.firstCall = false;
       }
-      this.logger.trace("currentList:", this.currentSearchList.map((e)=>{
+      getLogger(this.projectRootDir).trace("currentList:", this.currentSearchList.map((e)=>{
         return e.name;
       }));
 
       const promises = [];
       for (const target of this.currentSearchList) {
         if (target.disable) {
-          this.logger.info(`disabled component: ${target.name}(${target.ID})`);
+          getLogger(this.projectRootDir).info(`disabled component: ${target.name}(${target.ID})`);
           continue;
         }
         if (!await this._isReady(target)) {
@@ -209,13 +218,12 @@ class Dispatcher extends EventEmitter {
           continue;
         }
         await this._getInputFiles(target);
-        await this._setComponentState(target, "running");
         promises.push(this._dispatchOneComponent(target));
       }
       if (promises.length > 0) {
         await Promise.all(promises);
       }
-      this.logger.debug("search next components");
+      getLogger(this.projectRootDir).debug("search next components");
 
       //remove duplicated entry
       this.currentSearchList = removeDuplicatedComponent(this.pendingComponents);
@@ -228,7 +236,7 @@ class Dispatcher extends EventEmitter {
         const state = this._getState();
         this.emit("done", state);
       } else {
-        this.logger.trace("waiting component", this.currentSearchList.map((e)=>{
+        getLogger(this.projectRootDir).trace("waiting component", this.currentSearchList.map((e)=>{
           return e.name;
         }));
 
@@ -236,7 +244,7 @@ class Dispatcher extends EventEmitter {
       }
       if (this.needToRerun) {
         this.needToRerun = false;
-        this.logger.debug("revoke _dispatch()");
+        getLogger(this.projectRootDir).debug("revoke _dispatch()");
         return this._reserveDispatch();
       }
       return true;
@@ -305,7 +313,7 @@ class Dispatcher extends EventEmitter {
   }
 
   _isFinished() {
-    this.logger.trace(`${this.cwfDir} number of running task, waiting component = ${this.runningTasks.length}, ${this.currentSearchList.length}`);
+    getLogger(this.projectRootDir).trace(`${this.cwfDir} number of running task, waiting component = ${this.runningTasks.length}, ${this.currentSearchList.length}`);
     return this.runningTasks.length === 0 && this.currentSearchList.length === 0;
   }
 
@@ -329,13 +337,13 @@ class Dispatcher extends EventEmitter {
         this.removeListener("dispatch", this._dispatch);
         /*eslint-disable no-use-before-define */
         this.removeListener("error", onError);
-        this.removeListener("done", onDone);
+        this.removeListener("done", this.onDone);
         /*eslint-enable no-use-before-define */
         this.removeListener("stop", onStop);
       };
-
-      const onDone = (state)=>{
-        this.logger.trace(`dispatcher finished ${this.cwfDir} with ${state}`);
+      //never call this.onDone directly except for _jumpHandler
+      this.onDone = (state)=>{
+        getLogger(this.projectRootDir).trace(`dispatcher finished ${this.cwfDir} with ${state}`);
         onStop();
         resolve(state);
       };
@@ -343,7 +351,7 @@ class Dispatcher extends EventEmitter {
         onStop();
         reject(err);
       };
-      this.once("done", onDone);
+      this.once("done", this.onDone);
       this.once("error", onError);
       this.once("stop", onStop);
 
@@ -417,6 +425,18 @@ class Dispatcher extends EventEmitter {
     Array.prototype.push.apply(this.pendingComponents, nextComponents);
   }
 
+  //remove WHEEL system env and merge component native env and parent component env
+  setEnv(component) {
+    if (component.env) {
+      wheelSystemEnv.forEach((envname)=>{
+        if (Object.prototype.hasOwnProperty.call(component.env, envname)) {
+          delete component.env[envname];
+        }
+      });
+    }
+    component.env = Object.assign({}, this.env, component.env);
+  }
+
   //pick up components which is in downstream of file-flow and behind if component
   async _getBehindIfComponentList(component) {
     const behindIfComponetList = [];
@@ -439,72 +459,88 @@ class Dispatcher extends EventEmitter {
     return behindIfComponetList;
   }
 
-  async _dispatchTask(task) {
-    this.logger.trace("_dispatchTask called", task.name);
-    task.dispatchedTime = getDateString(true, true);
-    task.startTime = "not started"; //to be assigned in executer
-    task.endTime = "not finished"; //to be assigned in executer
-    task.preparedTime = null; //to be assigned in executer
-    task.jobSubmittedTime = null; //to be assigned in executer
-    task.jobStartTime = null; //to be assigned in executer
-    task.jobEndTime = null; //to be assigned in executer
-    task.projectStartTime = this.projectStartTime;
-    task.projectRootDir = this.projectRootDir;
-    task.workingDir = path.resolve(this.cwfDir, task.name);
-    task.emitForDispatcher = this.emit.bind(this);
-
-    if (task.type === "stepjobTask") {
-      const parentComponent = await readComponentJsonByID(this.projectRootDir, task.parent);
-      task.host = parentComponent.host;
-      task.queue = parentComponent.queue;
-      task.parentName = parentComponent.name;
+  async _dispatchTask(component) {
+    getLogger(this.projectRootDir).trace("_dispatchTask called", component.name);
+    await this._setComponentState(component, "running");
+    component.dispatchedTime = getDateString(true, true);
+    component.startTime = "not started"; //to be assigned in executer
+    component.endTime = "not finished"; //to be assigned in executer
+    component.preparedTime = null; //to be assigned in executer
+    component.jobSubmittedTime = null; //to be assigned in executer
+    component.jobStartTime = null; //to be assigned in executer
+    component.jobEndTime = null; //to be assigned in executer
+    component.projectStartTime = this.projectStartTime;
+    component.projectRootDir = this.projectRootDir;
+    component.workingDir = path.resolve(this.cwfDir, component.name);
+    component.emitForDispatcher = this.emit.bind(this);
+    if (component.type === "stepjobTask") {
+      const parentComponent = await readComponentJsonByID(this.projectRootDir, component.parent);
+      component.host = parentComponent.host;
+      component.queue = parentComponent.queue;
+      component.parentName = parentComponent.name;
     }
 
-    task.ancestorsName = replacePathsep(path.relative(task.projectRootDir, path.dirname(task.workingDir)));
-    task.ancestorsType = this.ancestorsType;
-    if (task.cleanupFlag === 2) {
-      task.doCleanup = this.doCleanup;
+    component.ancestorsName = replacePathsep(path.relative(component.projectRootDir, path.dirname(component.workingDir)));
+    component.ancestorsType = this.ancestorsType;
+    if (component.cleanupFlag === 2) {
+      component.doCleanup = this.doCleanup;
     } else {
-      task.doCleanup = task.cleanupFlag === 0;
+      component.doCleanup = component.cleanupFlag === 0;
     }
-    if (task.usePSSettingFile === true) {
-      await this._bulkjobHandler(task);
+    if (component.usePSSettingFile === true) {
+      await this._bulkjobHandler(component);
     }
-    if (task.env) {
-      wheelSystemEnv.forEach((envname)=>{
-        if (Object.prototype.hasOwnProperty.call(task.env, envname)) {
-          delete task.env[envname];
-        }
-      });
-    }
-    task.env = Object.assign({}, this.env, task.env);
-    task.parentType = this.cwfJson.type;
+    this.setEnv(component);
+    component.parentType = this.cwfJson.type;
 
-    exec(task); //exec is async function but dispatcher never wait end of task execution
-
-    this.runningTasks.push(task);
-    this.dispatchedTasks.add(task);
+    exec(component).catch((e)=>{
+      getLogger(this.projectRootDir).warn(`${component.name} failed. rt=${component.rt}`);
+      getLogger(this.projectRootDir).trace(component.workingDir, "failed due to", e);
+    });
+    //exec is async function but dispatcher never wait end of task execution
+    //it cause error if cancel taskJobs which is waiting for job submittion limit
+    this.runningTasks.push(component);
+    this.dispatchedTasks.add(component);
     const ee = eventEmitters.get(this.projectRootDir);
-    ee.emit("taskDispatched", task);
-    await writeComponentJson(this.projectRootDir, task.workingDir, task, true);
-    await this._addNextComponent(task);
+    ee.emit("taskDispatched", component);
+    await writeComponentJson(this.projectRootDir, component.workingDir, component, true);
+    await this._addNextComponent(component);
   }
 
   async _checkIf(component) {
-    this.logger.debug("_checkIf called", component.name);
+    getLogger(this.projectRootDir).debug("_checkIf called", component.name);
+    await this._setComponentState(component, "running");
     const childDir = path.resolve(this.cwfDir, component.name);
-    const condition = await evalCondition(this.projectRootDir, component.condition, childDir, this.env);
-    this.logger.debug("condition check result=", condition);
+    this.setEnv(component);
+    const condition = await evalCondition(this.projectRootDir, component.condition, childDir, component.env);
+    getLogger(this.projectRootDir).debug("condition check result=", condition);
     await this._addNextComponent(component, !condition);
     await this._setComponentState(component, "finished");
   }
 
-  async _delegate(component) {
-    this.logger.debug("_delegate called", component.name);
+  async _delegate(component, needEventHandler, templateComponent) {
+    getLogger(this.projectRootDir).debug("_delegate called", component.name);
     const childDir = path.resolve(this.cwfDir, component.name);
+    //PS instance component is called in template component's dispatcher.
+    //_setComponentState should not be called for PS because it write template component's component JSON file
+    if (component.type !== "parameterStudy") {
+      await this._setComponentState(component, "running");
+    } else {
+      component.state = "running";
+      await fs.writeJson(path.resolve(childDir, componentJsonFilename), component);
+      const ee = eventEmitters.get(this.projectRootDir);
+      ee.emit("componentStateChanged", component);
+    }
     const ancestorsType = typeof this.ancestorsType === "string" ? `${this.ancestorsType}/${component.type}` : component.type;
+    const childEnv = Object.assign({}, this.env, component.env);
     const child = new Dispatcher(this.projectRootDir, component.ID, childDir, this.projectStartTime,
-      this.componentPath, Object.assign({}, this.env, component.env), ancestorsType);
+      this.componentPath, childEnv, ancestorsType);
+    if (needEventHandler) {
+      child.on("break", async ()=>{
+        getLogger(this.projectRootDir).debug("break event recieved from", child.cwfDir);
+        this.forceFinishedLoops.push(templateComponent.ID);
+      });
+    }
     this.children.add(child);
 
     //exception should be catched in caller
@@ -515,7 +551,7 @@ class Dispatcher extends EventEmitter {
       //so, it is no need to emit "componentStateChanged" here.
       if (component.type === "workflow" || component.type === "stepjob") {
         const ee = eventEmitters.get(this.projectRootDir);
-        ee.emit("componentStateChanged");
+        ee.emit("componentStateChanged", component);
       }
     } finally {
       await this._addNextComponent(component);
@@ -525,19 +561,20 @@ class Dispatcher extends EventEmitter {
     }
   }
 
-  async _loopFinalize(component, lastDir, keepLoopInstance) {
+  async _loopFinalize(component, lastDir) {
     const dstDir = path.resolve(this.cwfDir, component.originalName);
     if (lastDir !== dstDir) {
-      this.logger.debug("copy ", lastDir, "to", dstDir);
+      getLogger(this.projectRootDir).debug("copy ", lastDir, "to", dstDir);
       await fs.copy(lastDir, dstDir, { overwrite: true, dereference: true }); //dst will be overwrite always
     }
     if (component.keep === 0) {
-      keepLoopInstance(component, this.cwfDir);
+      await fs.remove(lastDir);
     }
 
-    this.logger.debug("loop finished", component.name);
+    getLogger(this.projectRootDir).debug("loop finished", component.name);
     delete component.initialized;
     delete component.currentIndex;
+    delete component.prevIndex;
     delete component.subComponent;
     component.name = component.originalName;
     await this._addNextComponent(component);
@@ -546,31 +583,69 @@ class Dispatcher extends EventEmitter {
     await writeComponentJson(this.projectRootDir, componentDir, component, true);
   }
 
-  async _loopHandler(getNextIndex, isFinished, getTripCount, keepLoopInstance, component) {
-    if (component.childLoopRunning) {
+  async _loopHandler(getNextIndex, getPrevIndex, isFinished, getTripCount, keepLoopInstance, component) {
+    getLogger(this.projectRootDir).debug("_loopHandler called", component.name);
+
+    if (component.initialized && component.currentIndex !== null && component.state === "not-started") {
+      getLogger(this.projectRootDir).debug(`${component.name} is restarting from ${component.currentIndex}`);
+      component.restarting = true;
+    }
+    if (!component.restarting && component.childLoopRunning) {
       //send back itself to searchList for next loop trip
       this.pendingComponents.push(component);
       return Promise.resolve();
     }
-    this.logger.debug("_loopHandler called", component.name);
-    component.childLoopRunning = true;
 
-    let prevIndex;
-    let srcDir;
-
+    //set current loop index
     if (!component.initialized) {
       loopInitialize(component, getTripCount);
-      srcDir = path.resolve(this.cwfDir, component.name);
+    } else if (component.restarting) {
+      let done = false;
+      const currentInstanceDir = path.resolve(this.cwfDir, getInstanceDirectoryName(component, component.prevIndex, component.name));
+      if (await fs.pathExists(currentInstanceDir)) {
+        const { state } = await readComponentJson(currentInstanceDir);
+        if (state === "finished") {
+          component.prevIndex = component.currentIndex;
+          component.currentIndex = getNextIndex(component);
+          done = true;
+        }
+      }
+      if (!done) {
+        const prevIndex = getPrevIndex(component, true);
+        if (component.type === "foreach" && prevIndex === null) {
+          const index = await foreachSearchLatestFinishedIndex(component, this.cwfDir);
+          component.currentIndex = index;
+          component.currentIndex = getNextIndex(component);
+          component.prevIndex = index;
+        } else {
+          component.currentIndex = prevIndex;
+          component.currentIndex = getNextIndex(component);
+          component.prevIndex = prevIndex;
+        }
+      }
     } else {
-      prevIndex = component.currentIndex;
-      srcDir = path.resolve(this.cwfDir, `${component.originalName}_${sanitizePath(prevIndex)}`);
+      component.prevIndex = component.currentIndex;
+      component.currentIndex = getNextIndex(component);
     }
-    component.currentIndex = getNextIndex(component);
+    await this._setComponentState(component, "running");
+    component.childLoopRunning = true;
+
+    //update env
+    component.env.WHEEL_CURRENT_INDEX = component.currentIndex;
+    component.env.WHEEL_PREV_INDEX = getPrevIndex(component);
+    const nextIndex = getNextIndex(component);
+    component.env.WHEEL_NEXT_INDEX = nextIndex !== null ? nextIndex : "";
+
+    let srcDirName = component.name;
+    if (getPrevIndex(component) !== null) {
+      srcDirName = `${component.originalName}_${sanitizePath(component.prevIndex)}`;
+    }
+    const srcDir = path.resolve(this.cwfDir, srcDirName);
 
     //end determination
     const envForWhileIsFinished = Object.assign({}, this.env, component.env);
-    if (await isFinished(component, envForWhileIsFinished)) {
-      await this._loopFinalize(component, srcDir, keepLoopInstance);
+    if (this.forceFinishedLoops.includes(component.ID) || await isFinished(component, envForWhileIsFinished)) {
+      await this._loopFinalize(component, srcDir);
       return Promise.resolve();
     }
 
@@ -584,28 +659,15 @@ class Dispatcher extends EventEmitter {
     if (!newComponent.env) {
       newComponent.env = {};
     }
-    newComponent.env.WHEEL_CURRENT_INDEX = component.currentIndex;
 
-    if (typeof prevIndex !== "undefined") {
-      newComponent.env.WHEEL_PREV_INDEX = prevIndex;
-    } else {
-      if (component.type === "foreach") {
-        newComponent.env.WHEEL_PREV_INDEX = "";
-      } else {
-        const step = component.step || 1;
-        newComponent.env.WHEEL_PREV_INDEX = component.currentIndex - step;
-      }
-    }
-    const nextIndex = getNextIndex(component);
-    newComponent.env.WHEEL_NEXT_INDEX = nextIndex !== null ? nextIndex : "";
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
     try {
-      this.logger.debug(`copy from ${srcDir} to ${dstDir}`);
+      getLogger(this.projectRootDir).debug(`copy from ${srcDir} to ${dstDir}`);
       await fs.copy(srcDir, dstDir, {
         dereference: true,
         filter: async (target)=>{
-          this.logger.trace("[loopHandler] copy filter on :", target);
+          getLogger(this.projectRootDir).trace("[loopHandler] copy filter on :", target);
           if (srcDir === target) {
             return true;
           }
@@ -616,11 +678,24 @@ class Dispatcher extends EventEmitter {
           return !subComponent;
         }
       });
+      //overwrited only newer files in template component
+      if (component.restarting) {
+        getLogger(this.projectRootDir).trace("[loopHandler] overwrite by rsync");
+        const { stdout, stderr } = await overwriteByRsync(path.resolve(this.cwfDir, component.name), dstDir);
+        getLogger(this.projectRootDir).trace("output from rsync");
+        getLogger(this.projectRootDir).trace(stdout);
+        getLogger(this.projectRootDir).trace(stderr);
+        delete component.restarting;
+      }
       await setComponentStateR(this.projectRootDir, dstDir, "not-started", true);
       await writeComponentJson(this.projectRootDir, dstDir, newComponent, true);
-      await this._delegate(newComponent);
+      await this._delegate(newComponent, true, component);
 
-      keepLoopInstance(component, this.cwfDir);
+      if (component.keep === 0) {
+        await fs.remove(srcDir);
+      } else {
+        await keepLoopInstance(component, this.cwfDir);
+      }
 
       if (newComponent.state === "failed") {
         component.hasFaild = true;
@@ -632,11 +707,11 @@ class Dispatcher extends EventEmitter {
       if (typeof e !== "string") {
         e.index = component.currentIndex;
       }
-      this.logger.warn("fatal error occurred during loop child dispatching.", e);
-      return Promise.reject(e);
+      getLogger(this.projectRootDir).warn("fatal error occurred during loop child dispatching.", e);
+      throw e;
     }
     if (component.childLoopRunning) {
-      this.logger.debug("finished for index =", component.currentIndex);
+      getLogger(this.projectRootDir).debug("finished for index =", component.currentIndex);
       component.childLoopRunning = false;
     }
     return Promise.resolve();
@@ -646,10 +721,10 @@ class Dispatcher extends EventEmitter {
     const templateRoot = path.resolve(this.cwfDir, component.name);
     const paramSettingsFilename = path.resolve(templateRoot, component.parameterFile);
     const paramSettings = await readJsonGreedy(paramSettingsFilename).catch((err)=>{
-      this.logger.warn("parameter file read failed", err);
+      getLogger(this.projectRootDir).warn("parameter file read failed", err);
       throw err;
     });
-    this.logger.debug(`read prameter setting done. version = ${paramSettings.version}`);
+    getLogger(this.projectRootDir).debug(`read prameter setting done. version = ${paramSettings.version}`);
     //treat single value as array contains single element
     if (Object.prototype.hasOwnProperty.call(paramSettings, "targetFiles") && typeof paramSettings.targetFiles === "string") {
       paramSettings.targetFiles = [paramSettings.targetFiles];
@@ -676,17 +751,23 @@ class Dispatcher extends EventEmitter {
   }
 
   async _PSHandler(component) {
-    this.logger.debug("_PSHandler called", component.name);
+    getLogger(this.projectRootDir).debug("_PSHandler called", component.name);
+    if (component.initialized && component.state === "not-started") {
+      component.restarting = true;
+    }
+    await this._setComponentState(component, "running");
+    component.initialized = true;
     const { templateRoot, paramSettingsFilename, paramSettings, targetFiles } = await this._getTargetFile(component);
 
     const scatterRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "scatter")
-      ? paramSettings.scatter.map((e)=>{
-        return {
-          srcName: e.srcName,
-          dstNode: path.relative(templateRoot, this._getComponentDir(e.dstNode)),
-          dstName: e.dstName
-        };
-      })
+      ? paramSettings.scatter
+        .map((e)=>{
+          return {
+            srcName: e.srcName,
+            dstNode: path.relative(templateRoot, this._getComponentDir(e.dstNode)),
+            dstName: e.dstName
+          };
+        })
       : [];
     const gatherRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "gather")
       ? paramSettings.gather.map((e)=>{
@@ -717,8 +798,13 @@ class Dispatcher extends EventEmitter {
     component.numFailed = 0;
     component.numFinished = 0;
 
-    this.logger.debug("start paramSpace loop");
+    getLogger(this.projectRootDir).debug("start paramSpace loop");
 
+    const updateComponentJson = debounce(async ()=>{
+      const ee = eventEmitters.get(this.projectRootDir);
+      ee.emit("componentStateChanged", component);
+      return writeComponentJson(this.projectRootDir, templateRoot, component, true);
+    });
     for (const paramVec of paramVecGenerator(paramSpace)) {
       const params = paramVec.reduce((p, c)=>{
         p[c.key] = c.value;
@@ -728,15 +814,29 @@ class Dispatcher extends EventEmitter {
         return `${p}_${e.key}_${e.value}`;
       }, component.name));
       const instanceRoot = path.resolve(this.cwfDir, newName);
+      //skip finished component while restarting
+      if (component.restarting) {
+        const instanceComponentJson = await readJsonGreedy(path.resolve(instanceRoot, componentJsonFilename));
+        if (isFinishedState(instanceComponentJson.state)) {
+          continue;
+        }
+      }
 
       const options = { overwrite: component.forceOverwrite };
       options.filter = function (filename) {
         return !ignoreFiles.includes(filename);
       };
-      this.logger.debug("copy from", templateRoot, "to ", instanceRoot);
-      await fs.copy(templateRoot, instanceRoot, options);
+      getLogger(this.projectRootDir).debug("copy from", templateRoot, "to ", instanceRoot);
+      if (!component.restarting) {
+        await fs.copy(templateRoot, instanceRoot, options);
+      } else {
+        const { stdout, stderr } = await overwriteByRsync(templateRoot, instanceRoot, ignoreFiles);
+        getLogger(this.projectRootDir).trace("output from rsync");
+        getLogger(this.projectRootDir).trace(stdout);
+        getLogger(this.projectRootDir).trace(stderr);
+      }
 
-      this.logger.debug("copy files which is used as parameter");
+      getLogger(this.projectRootDir).debug("copy files which is used as parameter");
       await Promise.all(paramVec.filter((e)=>{
         return e.type === "file";
       }).map((e)=>{
@@ -745,13 +845,13 @@ class Dispatcher extends EventEmitter {
         .map((e)=>{
           const src = path.resolve(templateRoot, e);
           const dst = path.resolve(instanceRoot, e);
-          this.logger.debug("parameter: copy from", src, "to ", dst);
+          getLogger(this.projectRootDir).debug("parameter: copy from", src, "to ", dst);
           return fs.copy(src, dst, { overwrite: component.forceOverwrite });
         }));
 
-      this.logger.debug("scatter files");
-      await scatterFiles(templateRoot, instanceRoot, scatterRecipe, params, this.logger);
-      this.logger.debug("rewrite target files");
+      getLogger(this.projectRootDir).debug("scatter files");
+      await scatterFiles(templateRoot, instanceRoot, scatterRecipe, params, getLogger(this.projectRootDir), component.restarting);
+      getLogger(this.projectRootDir).debug("rewrite target files");
       await rewriteTargetFile(templateRoot, instanceRoot, targetFiles, params);
 
       const newComponent = structuredClone(component);
@@ -776,19 +876,17 @@ class Dispatcher extends EventEmitter {
           } else if (newComponent.state === "failed") {
             ++(component.numFailed);
           } else {
-            this.logger.warn("child state is illegal", newComponent.state);
+            getLogger(this.projectRootDir).warn("child state is illegal", newComponent.state);
           }
-          writeComponentJson(this.projectRootDir, templateRoot, component, true)
-            .then(()=>{
-              const ee = eventEmitters.get(this.projectRootDir);
-              ee.emit("componentStateChanged");
-            });
-        });
+        })
+        .then(updateComponentJson);
       promises.push(p);
     }
     await Promise.all(promises);
-    this.logger.debug("gather files");
+    getLogger(this.projectRootDir).debug("gather files");
 
+    //gather from all instance dirs even restarting.
+    //this process will be done for first time for all instance
     const promiseGather = [];
     for (const paramVec of paramVecGenerator(paramSpace)) {
       const params = paramVec.reduce((p, c)=>{
@@ -799,24 +897,26 @@ class Dispatcher extends EventEmitter {
         return `${p}_${e.key}_${e.value}`;
       }, component.name));
       const instanceRoot = path.resolve(this.cwfDir, newName);
-      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params, this.logger));
+      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params, getLogger(this.projectRootDir)));
     }
     await Promise.all(promiseGather);
-    this.logger.trace("gather files done");
+    getLogger(this.projectRootDir).trace("gather files done");
     await this._addNextComponent(component);
-    this.logger.trace("add next component done");
+    getLogger(this.projectRootDir).trace("add next component done");
     const state = component.numFailed > 0 ? "failed" : "finished";
+    delete component.initialized;
+    delete component.restarting;
     await this._setComponentState(component, state);
-    this.logger.trace("set component state done");
+    getLogger(this.projectRootDir).trace("set component state done");
     if (component.deleteLoopInstance) {
-      this.logger.debug("remove instance directories");
+      getLogger(this.projectRootDir).debug("remove instance directories");
       const promiseDelete = [];
       for (const paramVec of paramVecGenerator(paramSpace)) {
         const deleteComponentName = sanitizePath(paramVec.reduce((p, e)=>{
           return `${p}_${e.key}_${e.value}`;
         }, component.name));
         const deleteDir = path.resolve(this.cwfDir, deleteComponentName);
-        this.logger.trace(`remove ${deleteDir}`);
+        getLogger(this.projectRootDir).trace(`remove ${deleteDir}`);
         promiseDelete.push(fs.remove(deleteDir));
       }
       await Promise.all(promiseDelete);
@@ -824,7 +924,8 @@ class Dispatcher extends EventEmitter {
   }
 
   async _viewerHandler(component) {
-    this.logger.debug("_viewerHandler called", component.name);
+    getLogger(this.projectRootDir).debug("_viewerHandler called", component.name);
+    await this._setComponentState(component, "running");
     const { dir, root: viewerURLRoot } = await createTempd(this.projectRootDir, "viewer");
     const files = await Promise.all(component.files.map((e)=>{
       return getFiletype(e.dst);
@@ -839,7 +940,7 @@ class Dispatcher extends EventEmitter {
           if (viewerSupportedTypes.includes(e.ext)) {
             return e.name;
           }
-          this.logger.warn("unsupported type for viewer", path.basename(e.name));
+          getLogger(this.projectRootDir).warn("unsupported type for viewer", path.basename(e.name));
           return false;
         })
         .map((e)=>{
@@ -847,7 +948,7 @@ class Dispatcher extends EventEmitter {
         })
     );
 
-    this.logger.info("result files are ready in", dir);
+    getLogger(this.projectRootDir).info("result files are ready in", dir);
     const filename = path.join(dir, filesJsonFilename);
     let filesJson = [];
     try {
@@ -875,7 +976,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _bulkjobHandler(component) {
-    this.logger.debug("_bulkjobHandler called", component.name);
+    getLogger(this.projectRootDir).debug("_bulkjobHandler called", component.name);
     const { templateRoot, paramSettings, targetFiles } = await this._getTargetFile(component);
     const paramSpace = await getParamSpacev2(paramSettings.params, templateRoot);
 
@@ -884,7 +985,7 @@ class Dispatcher extends EventEmitter {
     component.startBulkNumber = 0;
     let countBulkNum = 0;
 
-    this.logger.debug("start paramSpace loop");
+    getLogger(this.projectRootDir).debug("start paramSpace loop");
 
     for (const paramVec of paramVecGenerator(paramSpace)) {
       const params = paramVec.reduce((p, c)=>{
@@ -901,11 +1002,11 @@ class Dispatcher extends EventEmitter {
           //I dont know it's OK or harmful to disable no-loop-func here
           const src = path.resolve(templateRoot, e);
           const dst = path.resolve(templateRoot, `${countBulkNum}.${e}`);
-          this.logger.debug("parameter: copy from", src, "to ", dst);
+          getLogger(this.projectRootDir).debug("parameter: copy from", src, "to ", dst);
           return fs.copy(src, dst);
         }));
 
-      this.logger.debug("rewrite target files");
+      getLogger(this.projectRootDir).debug("rewrite target files");
       await replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, countBulkNum);
       await writeParameterSetFile(templateRoot, targetFiles, params, countBulkNum);
       countBulkNum++;
@@ -914,6 +1015,8 @@ class Dispatcher extends EventEmitter {
   }
 
   async _storageHandler(component) {
+    getLogger(this.projectRootDir).debug("_storageHandler called", component.name);
+    await this._setComponentState(component, "running");
     const storagePath = component.storagePath;
     const currentDir = this._getComponentDir(component.ID);
     //copy inputFiles from currentDir to storagePath as regular file
@@ -953,9 +1056,35 @@ class Dispatcher extends EventEmitter {
     await this._setComponentState(component, "finished");
   }
 
-  async _sourceHandler(source) {
-    this._addNextComponent(source);
-    await this._setComponentState(source, "finished");
+  async _sourceHandler(component) {
+    getLogger(this.projectRootDir).debug("_sourceHandler called", component.name);
+    await this._setComponentState(component, "running");
+    this._addNextComponent(component);
+    await this._setComponentState(component, "finished");
+  }
+
+  async _jumpHandler(label, component) {
+    getLogger(this.projectRootDir).debug("_jumpHandler called with", label, component.name);
+    await this._setComponentState(component, "running");
+    const childDir = path.resolve(this.cwfDir, component.name);
+    this.setEnv(component);
+    const condition = await evalCondition(this.projectRootDir, component.condition, childDir, component.env);
+    getLogger(this.projectRootDir).debug("condition check result=", condition);
+    await this._setComponentState(component, "finished");
+    if (!condition) {
+      await this._addNextComponent(component);
+      return;
+    }
+
+    this.pendingComponents = [];
+    this.currentSearchList = [];
+    if (label === "break") {
+      await this.pause();
+      const state = this._getState();
+      this.onDone(state);
+      this.emit("break");
+    }
+    return;
   }
 
   async _isReady(component) {
@@ -965,9 +1094,9 @@ class Dispatcher extends EventEmitter {
     if (component.previous) {
       for (const ID of component.previous) {
         const previous = await this._getComponent(ID);
-        this.logger.trace(`previous component name = ${previous.type}(state:${previous.state})`);
+        getLogger(this.projectRootDir).trace(`previous component name = ${previous.type}(state:${previous.state})`);
         if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
-          this.logger.trace(`${component.name}(${component.ID}) is not ready because ${previous.name}(${previous.ID}) is not finished`);
+          getLogger(this.projectRootDir).trace(`${component.name}(${component.ID}) is not ready because ${previous.name}(${previous.ID}) is not finished`);
           return false;
         }
       }
@@ -980,7 +1109,7 @@ class Dispatcher extends EventEmitter {
           }
           const previous = await this._getComponent(src.srcNode);
           if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
-            this.logger.trace(`${component.name}(${component.ID}) is not ready because ${inputFile} from ${previous.name}(${previous.ID}) is not arrived`);
+            getLogger(this.projectRootDir).trace(`${component.name}(${component.ID}) is not ready because ${inputFile} from ${previous.name}(${previous.ID}) is not arrived`);
             return false;
           }
         }
@@ -1004,18 +1133,21 @@ class Dispatcher extends EventEmitter {
   }
 
   async _setComponentState(component, state) {
+    if (component.state === state) {
+      return;
+    }
     component.state = state; //update in memory
     const componentDir = this._getComponentDir(component.ID);
     await writeComponentJson(this.projectRootDir, componentDir, component, true);
     const ee = eventEmitters.get(this.projectRootDir);
-    ee.emit("componentStateChanged");
+    ee.emit("componentStateChanged", component);
   }
 
   async _getInputFiles(component) {
     if (component.type === "source") {
       return;
     }
-    this.logger.debug(`getInputFiles for ${component.name}`);
+    getLogger(this.projectRootDir).debug(`getInputFiles for ${component.name}`);
     const promises = [];
     const deliverRecipes = new Set();
     for (const inputFile of component.inputFiles) {
@@ -1051,20 +1183,10 @@ class Dispatcher extends EventEmitter {
           const dstRoot = component.type === "storage" ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const srcName = nunjucks.renderString(src.srcName, this.env);
           const forceCopy = srcComponent.type === "storage";
-          if (!srcRoot.startsWith("/")) {
-            //if srcRoot does not start with '/' it means the host does not have path setting
-            //we asume dst component also does not have path setting but in case of useing share host
-            //it coulud be a wrong assumption
-            const relativePathFromDstToSrc = path.relative(`/${dstRoot}`, `/${srcRoot}`);
-            deliverRecipes.add({ dstRoot, dstName, srcRoot: relativePathFromDstToSrc, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
-          } else {
-            deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
-          }
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
         } else if (Object.prototype.hasOwnProperty.call(srcComponent, "host") && srcComponent.host !== "localhost" && srcComponent.type !== "task") {
-          //memo taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼れば良い
-          //将来的には、taskコンポーネントのファイルもrsyncで直接後続コンポーネントから取得するように変更し
-          //outputFileのダウンロードは無くしたい
-          //memo2: ここの判定ルーチンはworkdlowComponent内で関数として定義されているべき(というかあったはず)
+          //memo1: taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼るだけでよいので除外している
+          //memo2: この方法だと、接続先が複数あるエントリは複数回rsyncを実行することになるため将来的には全てtaskコンポーネントと同じ方式にする必要がある
           const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
 
           const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component);
@@ -1131,7 +1253,7 @@ class Dispatcher extends EventEmitter {
     }
     const results = await Promise.all(p2);
     for (const result of results) {
-      this.logger.trace(`make ${result.type} from  ${result.src} to ${result.dst}`);
+      getLogger(this.projectRootDir).trace(`make ${result.type} from  ${result.src} to ${result.dst}`);
     }
     if (component.type === "viewer") {
       component.files = results;
@@ -1155,13 +1277,13 @@ class Dispatcher extends EventEmitter {
         cmd = this._checkIf;
         break;
       case "for":
-        cmd = this._loopHandler.bind(this, forGetNextIndex, forIsFinished, forTripCount, forKeepLoopInstance);
+        cmd = this._loopHandler.bind(this, forGetNextIndex, getPrevIndex, forIsFinished, forTripCount, keepLoopInstance);
         break;
       case "while":
-        cmd = this._loopHandler.bind(this, whileGetNextIndex, whileIsFinished.bind(null, this.cwfDir, this.projectRootDir), null, whileKeepLoopInstance);
+        cmd = this._loopHandler.bind(this, whileGetNextIndex, getPrevIndex, whileIsFinished.bind(null, this.cwfDir, this.projectRootDir), null, keepLoopInstance);
         break;
       case "foreach":
-        cmd = this._loopHandler.bind(this, foreachGetNextIndex, foreachIsFinished, foreachTripCount, foreachKeepLoopInstance);
+        cmd = this._loopHandler.bind(this, foreachGetNextIndex, foreachGetPrevIndex, foreachIsFinished, foreachTripCount, foreachKeepLoopInstance);
         break;
       case "workflow":
         cmd = this._delegate;
@@ -1181,8 +1303,14 @@ class Dispatcher extends EventEmitter {
       case "source":
         cmd = this._sourceHandler;
         break;
+      case "break":
+        cmd = this._jumpHandler.bind(this, "break");
+        break;
+      case "continue":
+        cmd = this._jumpHandler.bind(this, "continue");
+        break;
       default:
-        this.logger.error("illegal type specified", type);
+        getLogger(this.projectRootDir).error("illegal type specified", type);
     }
     return cmd;
   }

@@ -10,7 +10,6 @@ const { statusFilename } = require("../db/db");
 const { replacePathsep } = require("./pathUtils");
 const { isSameRemoteHost } = require("./projectFilesOperator.js");
 const { writeComponentJson } = require("./componentJsonIO.js");
-const { getSsh } = require("./sshManager");
 const { getLogger } = require("../logSettings");
 const { eventEmitters } = require("./global.js");
 
@@ -52,73 +51,6 @@ function makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingD
   return { src, dst: workingDir };
 }
 
-async function gatherFiles(task) {
-  await setTaskState(task, "stage-out");
-  getLogger(task.projectRootDir).debug("start to get files from remote server if specified");
-
-  const downloadRecipe = [];
-  for (const outputFile of task.outputFiles) {
-    if (!await needDownload(task.projectRootDir, task.ID, outputFile)) {
-      getLogger(task.projectRootDir).trace(`${outputFile.name} will NOT be downloaded`);
-      continue;
-    }
-    downloadRecipe.push(makeDownloadRecipe(task.projectRootDir, outputFile.name, task.remoteWorkingDir, task.workingDir));
-  }
-
-  const ssh = getSsh(task.projectRootDir, task.remotehostID);
-  const promises = [];
-
-  const dsts = Array.from(new Set(downloadRecipe.map((e)=>{
-    return e.dst;
-  })));
-  for (const dst of dsts) {
-    const srces = downloadRecipe.filter((e)=>{
-      return e.dst === dst;
-    }).map((e)=>{
-      return e.src;
-    });
-    promises.push(ssh.recv(srces, dst));
-  }
-
-  let opt;
-  if (Array.isArray(task.exclude)) {
-    opt = task.exclude.map((e)=>{
-      return `--exclude=${e}`;
-    });
-  }
-
-  //get files which match include filter
-  if (Array.isArray(task.include) && task.include.length > 0) {
-    const downloadRecipe2 = task.include.map((e)=>{
-      return makeDownloadRecipe(task.projectRootDir, e, task.remoteWorkingDir, task.workingDir);
-    });
-    const dsts2 = Array.from(new Set(downloadRecipe2.map((e)=>{
-      return e.dst;
-    })));
-    for (const dst of dsts2) {
-      const srces = downloadRecipe2.filter((e)=>{
-        return e.dst === dst;
-      }).map((e)=>{
-        return e.src;
-      });
-      promises.push(ssh.recv(srces, dst, opt));
-    }
-  }
-
-  await Promise.all(promises);
-
-  //clean up remote working directory
-  if (task.doCleanup) {
-    getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
-
-    try {
-      await ssh.exec(`rm -fr ${task.remoteWorkingDir}`);
-    } catch (e) {
-      //just log and ignore error
-      getLogger(task.projectRootDir).warn("remote cleanup failed but ignored", e);
-    }
-  }
-}
 async function createStatusFile(task) {
   const filename = path.resolve(task.workingDir, statusFilename);
   const statusFile = `${task.state}\n${task.rt}\n${task.jobStatus}`;
@@ -135,7 +67,8 @@ async function createBulkStatusFile(task, rtList, jobStatusList) {
 
 module.exports = {
   setTaskState,
-  gatherFiles,
+  needDownload,
+  makeDownloadRecipe,
   createStatusFile,
   createBulkStatusFile
 };

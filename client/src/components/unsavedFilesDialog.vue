@@ -16,9 +16,13 @@
       <v-card-text>
         <v-data-table
           id="table-header-with-underline"
+          v-model="selected"
           :headers="headers"
           :items="items"
           density="compact"
+          :return-object="true"
+          :show-select="true"
+          select-strategy="page"
         >
           <template #bottom />
         </v-data-table>
@@ -27,14 +31,20 @@
         <v-spacer />
         <v-btn
           class="text-capitalize"
-          @click="saveAll"
+          @click="commit"
+          prepend-icon="mdi-content-save-outline"
+          text="Save selected files"
+        />
+        <v-btn
+          class="text-capitalize"
+          @click="commitAll"
           prepend-icon="mdi-content-save-all-outline"
           text="Save All"
         />
         <v-btn
           class="text-capitalize"
           @click="discardChanges"
-          prepend-icon=mdi-alert-circle-outline
+          prepend-icon=mdi-close-box-multiple-outline
           text="discard all changes"
         />
         <v-btn
@@ -68,7 +78,8 @@ export default {
       headers: [
         { title: "status", key: "status" },
         { title: "filename", key: "name" }
-      ]
+      ],
+      selected: []
     };
   },
   mounted() {
@@ -88,11 +99,14 @@ export default {
     closeDialog() {
       this.$emit("closed", "cancel");
     },
+    commit() {
+      this.$emit("commit", this.selected);
+    },
     discardChanges() {
       this.$emit("closed", "discard");
     },
-    saveAll() {
-      this.$emit("closed", "save");
+    commitAll() {
+      this.$emit("closed", "commit");
     }
   }
 

@@ -19,9 +19,8 @@ permalink: /tutorial/3_application_tutorial/
 
  * [TensorFlowを利用したMNISTデータ解析ワークフロー](3_TensorFlow_mnist/)
 
- * [OpenFOAMのパラメータスタディ実行結果をJupyternotebook上で表示する解析ワークフロー](4_OpenFOAM_jupyter/)
 
-__アプリケーションの動作確認について__
+__アプリケーションの動作確認について__  
 実践編チュートリアルで用いるアプリケーション(OpenFOAM, TensorFlow)の動作確認は、2023年3月に実施しています。
 それ以降のアップデート等により、ファイルのパスなどが変更されている可能性もありますのでご注意ください。
 {: .notice--info}
