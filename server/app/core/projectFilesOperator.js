@@ -702,8 +702,6 @@ async function isSameRemoteHost(projectRootDir, src, dst) {
 }
 
 /**
-
-/**
  * check if given 2 id's has parent-child relationship
  */
 async function isParent(projectRootDir, parentID, childID) {
