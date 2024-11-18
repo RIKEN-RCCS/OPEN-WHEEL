@@ -1,4 +1,3 @@
-version: "3"
 services:
   service_jekyll:
     image: "jekyll/jekyll:latest"
