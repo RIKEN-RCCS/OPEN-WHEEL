@@ -1,0 +1,19 @@
+[
+  {
+    "name": "testServer",
+    "host": "wheel_release_test_server",
+    "port": 22,
+    "numJob": 5,
+    "queue": "workq",
+    "jobScheduler": "PBSPro",
+    "useBulkjob": false,
+    "useStepjob": false,
+    "sharedHost": "",
+    "sharedPath": "",
+    "renewInterval": 0,
+    "statusCheckInterval": 60,
+    "maxStatusCheckError": 10,
+    "id": "91041660-c8a4-11ee-8b76-87edc1fbf31a",
+    "user": "testuser"
+  }
+]
