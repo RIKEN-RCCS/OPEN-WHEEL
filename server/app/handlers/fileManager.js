@@ -36,7 +36,7 @@ const projectJsonFileOnly = new RegExp(`^.*(?:${escapeRegExp(projectJsonFilename
  * @param {string} msg.mode - mode flag. it must be one of dir, dirWithProjectJson, underComponent, SND
  * @param {Function} cb - call back function
  */
-const onGetFileList = async (projectRootDir, msg, cb)=>{
+async function onGetFileList(projectRootDir, msg, cb) {
   const target = msg.path ? path.normalize(convertPathSep(msg.path)) : rootDir;
   const request = target;
 
@@ -68,7 +68,8 @@ const onGetFileList = async (projectRootDir, msg, cb)=>{
     return cb(null);
   }
 };
-const onGetSNDContents = async (projectRootDir, requestDir, pattern, isDir, cb)=>{
+
+async function onGetSNDContents(projectRootDir, requestDir, pattern, isDir, cb) {
   const modifiedRequestDir = path.normalize(convertPathSep(requestDir));
   getLogger(projectRootDir).debug(projectRootDir, "getSNDContents in", modifiedRequestDir);
 
@@ -90,6 +91,7 @@ const onGetSNDContents = async (projectRootDir, requestDir, pattern, isDir, cb)=
     return cb(null);
   }
 };
+
 async function onCreateNewFile(projectRootDir, argFilename, cb) {
   const filename = convertPathSep(argFilename);
   try {
@@ -204,7 +206,7 @@ async function onCommitFiles(projectRootDir, files, cb) {
   cb(true);
 }
 
-const onUploadFileSaved = async (event)=>{
+async function onUploadFileSaved(event) {
   const projectRootDir = event.file.meta.projectRootDir;
   if (!event.file.success) {
     getLogger(projectRootDir).error("file upload failed", event.file.name);
@@ -248,7 +250,8 @@ const onUploadFileSaved = async (event)=>{
   });
   emitAll(uploadClient, "fileList", result);
 };
-const onDownload = async (projectRootDir, target, cb)=>{
+
+async function onDownload(projectRootDir, target, cb) {
   const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
   const tmpDir = await fs.mkdtemp(`${dir}/`);
   const { zip } = await import("zip-a-folder");
@@ -256,7 +259,7 @@ const onDownload = async (projectRootDir, target, cb)=>{
   let downloadZip = false;
   let targetBasename = "";
   if (glob.hasMagic(target)) {
-    targetBasename = path.basename("SND_CONTENT");
+    targetBasename = "multifile";
     await zip(target, `${path.join(tmpDir, targetBasename)}.zip`);
     downloadZip = true;
   } else {
@@ -276,7 +279,8 @@ const onDownload = async (projectRootDir, target, cb)=>{
   getLogger(projectRootDir).debug("Download url is ready", url);
   cb(url);
 };
-const onRemoveDownloadFile = async (projectRootDir, URL, cb)=>{
+
+async function onRemoveDownloadFile(projectRootDir, URL, cb) {
   const dir = await getTempd(projectRootDir, "download");
   const target = path.join(dir, path.basename(path.dirname(URL)));
   getLogger(projectRootDir).debug(`remove ${target}`);

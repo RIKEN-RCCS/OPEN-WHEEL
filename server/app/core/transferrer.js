@@ -26,6 +26,9 @@ async function stageIn(task) {
 }
 async function stageOut(task) {
   const taskState = task.state;
+  if (taskState !== "finished") {
+    return;
+  }
   await setTaskState(task, "stage-out");
   const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
 
@@ -80,7 +83,7 @@ async function stageOut(task) {
 
   await Promise.all(promises);
   //clean up remote working directory
-  if (task.doCleanup) {
+  if (task.doCleanup && taskState === "finished") {
     getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
 
     try {

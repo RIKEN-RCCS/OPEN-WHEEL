@@ -41,7 +41,7 @@ function getBulkFirstCapture(outputText, reSubCode) {
  * check if Job status code means failed or not
  * @param {Object} JS - jobScheduler.json info
  * @param {String} code - job status code get from status check command
- * @returns {Boolean} -
+ * @returns {Boolean} - true means job is failed.
  */
 function isJobFailed(JS, code) {
   const statusList = [];
@@ -54,7 +54,7 @@ function isJobFailed(JS, code) {
   } else {
     return false;
   }
-  return !statusList.includes(code);
+  return statusList.includes(code);
 }
 async function getStatusCode(JS, task, statCmdRt, outputText) {
   //for backward compatibility use reJobStatus if JS does not have reJobStatusCode
@@ -189,8 +189,7 @@ function registerJob(hostinfo, task) {
             resolve();
           });
           result2.event.on("failed", (args)=>{
-            console.log(args);
-            reject();
+            reject(args);
           });
         });
       }
@@ -198,11 +197,7 @@ function registerJob(hostinfo, task) {
       if (isJobFailed(JS, task.jobStatus)) {
         return reject(task.jobStatus);
       }
-      if (rt === 0) {
-        return resolve(rt);
-      } else {
-        return reject(rt);
-      }
+      return resolve(rt);
     });
     //faild event does not mean job failure
     result.event.on("failed", (request, hookErr)=>{

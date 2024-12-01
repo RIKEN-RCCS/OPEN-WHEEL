@@ -14,7 +14,6 @@ echo '[{'
 echo '  "name": "testServer",'
 echo '  "host": "'${REMOTE_HOSTNAME}'",'
 echo '  "path": "/home/testuser",'
-echo '  "keyFile": null,'
 echo '  "username": "testuser",'
 echo '  "numJob": 5,'
 echo '  "port": '${REMOTE_PORT}','
@@ -30,8 +29,9 @@ echo '}]'
 
 echo boot up test server
 docker compose up ${TAG_TEST_SERVER} -d --wait
+docker exec ${TAG_TEST_SERVER} /opt/pbs/bin/qmgr -c "set server job_history_enable=True"
 
-echo remove entry from known_hosts
+echo remove entry from known_hosts to avoid error if the entry already exists
 ssh-keygen -R '['${REMOTE_HOSTNAME}']:'${REMOTE_PORT} 2>/dev/null
 
 echo "start UT"
@@ -39,3 +39,7 @@ WHEEL_TEST_REMOTEHOST=testServer WHEEL_TEST_REMOTE_PASSWORD=passw0rd npm run tes
 echo "UT finished"
 
 docker compose down
+
+echo clean up known_hosts
+ssh-keygen -R '['${REMOTE_HOSTNAME}']:'${REMOTE_PORT} 2>/dev/null
+#

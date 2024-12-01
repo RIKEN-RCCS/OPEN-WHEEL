@@ -107,9 +107,13 @@ async function decideFinishState(task) {
   return rt;
 }
 async function needsRetry(task) {
+  if ((typeof task.retry === "undefined" || task.retryCondition === null)
+    && (typeof task.retryCondition === "undefined" || task.retryCondition === null)) {
+    return false;
+  }
   let rt = false;
   if (typeof task.retryCondition === "undefined" || task.retryCondition === null) {
-    return task.retry > 0;
+    return Number.isInteger(task.retry) && task.retry > 0;
   }
   try {
     rt = await evalCondition(task.projectRootDir, task.retryCondition, task.workingDir, task.currentIndex);
@@ -159,8 +163,9 @@ class Executer {
           state = task.rt === 0 ? "finished" : "failed";
         }
         await setTaskState(task, state);
+        //exec useualy returns task.state but to use it in retry function
         //to use task in retry function, exec() will be rejected with task object if failed
-        if (state === "failed") {
+        if (state === "failed" && await needsRetry(task)) {
           return Promise.reject(task);
         }
         return state;
@@ -233,7 +238,7 @@ class RemoteJobExecuter extends Executer {
   async exec(task) {
     const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
     const submitOpt = task.submitOption ? task.submitOption : "";
-    const submitCmd = `. /etc/profile; cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
+    const submitCmd = `cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
     getLogger(task.projectRootDir).debug("submitting job (remote):", submitCmd);
     await setTaskState(task, "running");
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
@@ -314,7 +319,7 @@ class RemoteJobWebAPIExecuter extends Executer {
     }
 
     //const submitOpt = task.submitOption ? task.submitOption : "";
-    //const submitCmd = `. /etc/profile; cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
+    //const submitCmd = `cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
     //
     const request = {
       jobfile: `${task.remoteWorkingDir}/${task.script}`,
@@ -373,7 +378,7 @@ class RemoteTaskExecuter extends Executer {
   async exec(task) {
     getLogger(task.projectRootDir).debug("prepare done");
     await setTaskState(task, "running");
-    const cmd = `. /etc/profile; cd ${task.remoteWorkingDir} && ${makeEnv(task)} ./${task.script}`;
+    const cmd = `cd ${task.remoteWorkingDir} && ${makeEnv(task)} ./${task.script}`;
     getLogger(task.projectRootDir).debug("exec (remote)", cmd);
 
     //if exception occurred in ssh.exec, it will be catched in caller

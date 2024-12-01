@@ -6,7 +6,6 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const SshClientWrapper = require("ssh-client-wrapper");
 
 //setup test framework
 const chai = require("chai");
@@ -17,7 +16,7 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
 
 //testee
-const { exec } = require("../app/core/executer");
+const { exec } = require("../app/core/executer.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -33,7 +32,7 @@ const { scriptName, pwdCmd, scriptHeader, exit } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
 const { remoteHost } = require("../app/db/db");
-const { addSsh } = require("../app/core/sshManager");
+const { createSsh } = require("../app/core/sshManager");
 
 describe("UT for executer class", function () {
   this.timeout(0);
@@ -97,14 +96,9 @@ describe("UT for executer class", function () {
       }
       const hostinfo = remoteHost.query("name", remotehostName);
       hostinfo.password = password;
-      ssh = new SshClientWrapper(hostinfo);
 
       try {
-        const rt = await ssh.canConnect(120);
-        if (!rt) {
-          throw new Error("canConnect failed");
-        }
-        addSsh(projectRootDir, hostinfo, ssh);
+        ssh = await createSsh(projectRootDir, remotehostName, hostinfo, "dummy-clientID");
       } catch (e) {
         console.log(`ssh connection failed to ${remotehostName} due to "${e}" so remote exec test is skipped`);
         this.skip();
@@ -208,7 +202,7 @@ describe("UT for executer class", function () {
         expect(path.join(task0.workingDir, "hoge")).not.to.be.a.path();
       });
     });
-    describe.skip("#remote job (test bed has some trouble never run jobs on it)", ()=>{
+    describe("#remote job", ()=>{
       beforeEach(()=>{
         task0.useJobScheduler = true;
       });

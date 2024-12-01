@@ -32,7 +32,8 @@ echo '}]'
 
 
 echo boot up test server
-docker compose up ${TAG_TEST_SERVER} -d
+docker compose up ${TAG_TEST_SERVER} -d --wait
+docker exec ${TAG_TEST_SERVER} /opt/pbs/bin/qmgr -c "set server job_history_enable=True"
 
 echo remove entry from known_hosts
 ssh-keygen -R 'wheel_release_test_server'

@@ -145,17 +145,21 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   }
 
   let pw;
-  hostinfo.password = async ()=>{
-    if (hasEntry(projectRootDir, hostinfo.id)) {
-      pw = getSshPW(projectRootDir, hostinfo.id);
-      if (typeof pw === "string") {
-        return pw;
+  if (typeof hostinfo.password !== "string") {
+    hostinfo.password = async ()=>{
+      if (hasEntry(projectRootDir, hostinfo.id)) {
+        pw = getSshPW(projectRootDir, hostinfo.id);
+        if (typeof pw === "string") {
+          return pw;
+        }
       }
-    }
-    //pw will be used after canConnect
-    pw = await askPassword(clientID, `${remoteHostName} - password`);
-    return pw;
-  };
+      //pw will be used after canConnect
+      pw = await askPassword(clientID, `${remoteHostName} - password`);
+      return pw;
+    };
+  } else {
+    pw = hostinfo.password;
+  }
 
   let ph;
   hostinfo.passphrase = async ()=>{
@@ -182,6 +186,9 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
       hostinfo.user = hostinfo.username;
     }
     delete hostinfo.username;
+  }
+  if (!hostinfo.rcfile) {
+    hostinfo.rcfile = "/etc/profile";
   }
 
   const ssh = new SshClientWrapper(hostinfo);

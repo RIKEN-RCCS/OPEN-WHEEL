@@ -3,15 +3,20 @@
     "submit": "qsub",
     "queueOpt": "-q",
     "stat": "qstat -xf",
-    "statAfter": "qstat -f",
+    "statAfter": "qstat -xf",
     "del": "qdel",
     "grpName": "",
     "reJobID": "^(\\d+).*",
     "reRunning": "<JOB_Id>{{ JOBID }}.*job_state\\=(R|H|Q|T|W)$",
     "reReturnCode": "Exit_status \\= (\\d+)$",
     "reJobStatusCode": "substate \\= (\\d+)$",
-    "acceptableJobStatus": 92,
-    "acceptableRt": 153
+    "acceptableJobStatus": [
+      92,
+      93
+    ],
+    "acceptableRt": [
+      153
+    ]
   },
   "SLURM": {
     "submit": "sbatch",
