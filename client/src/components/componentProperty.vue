@@ -613,7 +613,7 @@ export default {
       return isNormalObject(this.selectedComponent) && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
     },
     hasCondition() {
-      return isNormalObject(this.selectedComponent) && ["if", "while"].includes(this.selectedComponent.type);
+      return isNormalObject(this.selectedComponent) && ["if", "while", "break", "continue"].includes(this.selectedComponent.type);
     },
     hasRemote() {
       return isNormalObject(this.selectedComponent) && ["task", "stepjobTask", "bulkjobTask"].includes(this.selectedComponent.type);
