@@ -89,13 +89,21 @@ WHEELを起動して `Remotehost editor` 画面に遷移し次の内容でリモ
 1. 事前準備
 次のコマンドを実行して、dockerで仮想リモート計算サーバとwheelをdockerで起動してください。
 
-`docker compose up`
+`docker compose up -d`
+
+`docker ps` コマンドで `wheel_release_test_server` が起動し、healthy になっていることを確認したら
+続けて次のコマンドを実行して、OpebPBSのヒストリ機能を有効にしてください。
+
+```bash
+docker exec wheel_release_test_server /opt/pbs/bin/qmgr -c 'set server job_history_enable=True'
+```
 
 wheelコンテナはローカルのソースからビルドした上で起動されるので
 常にローカルのソースコードがテスト対象となります。
 
-インストール後の動作確認などで使う場合は、compose.yml の `wheel_release_test` のエントリにある
-build設定を全て削除し、image名にインストールしたwheelコンテナのイメージ名を指定してください。
+インストール後の動作確認などで使う場合は、 `docker compose up` の時に
+`docker compose up wheel_release_test_server -d` とすることでテスト時に仮想リモートホストのみを起動することができます。
+別途インストール済のWHEELを起動してからテストUIを起動してください。
 
 OpenPBSでのバッチジョブ実行が可能なホストが存在する場合はそちらを使うこともできます。
 本ドキュメント末尾に記載の [テスト環境のカスタマイズ](#テスト環境のカスタマイズ)

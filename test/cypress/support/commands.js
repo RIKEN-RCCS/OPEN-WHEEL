@@ -267,7 +267,7 @@ Cypress.Commands.add("selectHost", (hostName)=>{
 
 //input Submitoption
 Cypress.Commands.add("typeSubmitOption", (submitOption)=>{
-  cy.contains("label", "submit option").parent()
+  cy.contains("label", "submit option").siblings()
     .type(submitOption, {enter: true})
 })
 

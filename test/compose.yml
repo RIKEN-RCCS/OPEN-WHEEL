@@ -4,8 +4,8 @@ services:
     ports:
       - "8000:22"
     container_name: wheel_release_test_server
-    healthcheck:
-      test: ["CMD","/etc/init.d/ssh", "status"]
+    cap_add:
+      - SYS_RESOURCE
   wheel_release_test:
     build:
       context: ../
