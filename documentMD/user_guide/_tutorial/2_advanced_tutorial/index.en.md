@@ -205,8 +205,8 @@ When you run the project, stdout displays foo, bar, and baz, respectively, as ou
 
 ![img](./img/result_ps.png "PS Execution Results")
 
-__About the order in which parameter studies are run__  
-The PS component executes the subcomponents as parallel as possible for all combinations in the parameter space specified by parameterFile.  
+__About the order in which parameter studies are run__
+The PS component executes the subcomponents as parallel as possible for all combinations in the parameter space specified by parameterFile.
 Therefore, the execution order of the lower components is out of order, and the output order of the results is out of order.
 {: .notice--info}
 
@@ -288,9 +288,9 @@ Upload by dragging and dropping the image data to the Files area with the __uplo
 
 ![img](./img/upload_file.png "upload file button")
 
-Specify the file name of the uploaded image data in the output files property.  
-By writing __\*.extension__, you can specify all files with the same extension or omit the file name. (For example, for a JPEG file, write __\*.jpg__)  
-If you want to display only one file as image data, you can specify the file name as it is.  
+Specify the file name of the uploaded image data in the output files property.
+By writing __\*.extension__, you can specify all files with the same extension or omit the file name. (For example, for a JPEG file, write __\*.jpg__)
+If you want to display only one file as image data, you can specify the file name as it is.
 It is also acceptable to specify multiple file names in the output files property without combining them into one.
 
 
@@ -299,7 +299,7 @@ This completes the workflow creation process.
 
 ![img](./img/workflow_viewer.png "The complete workflow of the viewer component")
 
-__When "./" is set for input files__  
+__When "./" is set for input files__
 Setting input files to __./__ places all files passed as input files (In this case, \*.JPG and \*.web) directly under the viewer component directory.
 {: .notice--info}
 
@@ -342,12 +342,12 @@ This component only prints __foo.txt__, but the file name is specified as __\*__
 Next, open the storage component properties window and write __/tmp__ in the __directory path__ field.
 Also, specify __./__ for input files.
 
-__About setting directory path__  
-If/tmp does not exist or/tmp does not have write permission, specify any other directory.  
-However, you must specify a path that is outside the scope of the directory tree where the project files are stored.  
+__About setting directory path__
+If/tmp does not exist or/tmp does not have write permission, specify any other directory.
+However, you must specify a path that is outside the scope of the directory tree where the project files are stored.
 {: .notice--info}
 
-Finally, connect the output files of the task component and the intpuFile of the storage component.
+Finally, connect the output files of the task component and the inputFile of the storage component.
 This completes the workflow creation process.
 
 ![img](./img/workflow_storage.png "Complete storage component workflow")
@@ -375,8 +375,8 @@ Before you begin, create a new project and add a builkjobTask component.
 
 The default is to run on localhost, so change the property host to specify a remote host where bulkjob functionality is available.
 
-__Remote host settings when using the bulk job function__  
-Note that even if the batch system running on the actual host supports the bulkjob function, the bulkjob function cannot be used unless __use bulkjob__ is enabled in the remotehost setting.  
+__Remote host settings when using the bulk job function__
+Note that even if the batch system running on the actual host supports the bulkjob function, the bulkjob function cannot be used unless __use bulkjob__ is enabled in the remotehost setting.
 ![img](./img/remotehost.png "Configure use bulkjob")
 {: .notice--info}
 
@@ -393,7 +393,7 @@ In this case, uncheck the __use parameter setting file for bulk number__ and spe
 
 Finally, to collect the standard output for each subjob, click the __remote file setting__ line and specify `run.sh*` for __include__.
 
-![img](./img/property_bulkjob2.png "Configure include") 
+![img](./img/property_bulkjob2.png "Configure include")
 
 When the project has finished running, standard output is output with a file name of the form run.sh.xxxxx[`${PJM_BULKNUM}`].out .
 Make sure that each `PJM_BULKNUM` matches the output of the echo command output to the file.
@@ -414,8 +414,8 @@ The default is to run on localhost, so change the property host to point to a re
 
 ![img](./img/workflow_stepjob.png "Configuring the stepjob Component")
 
-__Remote host settings when using the step job function__  
-Even if the batch system running on the actual host supports the step job function, the stepjob function cannot be used unless __use stepjob__ is enabled in the remotehost setting.  
+__Remote host settings when using the step job function__
+Even if the batch system running on the actual host supports the step job function, the stepjob function cannot be used unless __use stepjob__ is enabled in the remotehost setting.
 ![img](./img/remotehost2.png "Configure use stepjob")
 {: .notice--info}
 
@@ -454,8 +454,8 @@ The lines connect, and the icon on the left shoulder of sjTask1 changes to 1.
 ![img](./img/workflow_stepjobTask.png "Workflow after dependency specification")
 
 In addition, specify a run condition for sjTask1.
-Click to open the __stepjobtask setting__ area of the Properties window, enable __use dependency__, and enter `sd=ec==1` for __dependencyForm__.  
-Now, sjTask1 is executed only when sjTask0 returns 1.  
+Click to open the __stepjobtask setting__ area of the Properties window, enable __use dependency__, and enter `sd=ec==1` for __dependencyForm__.
+Now, sjTask1 is executed only when sjTask0 returns 1.
 For more information about writing the __dependencyForm__, see the TCS documentation or the user guide for your computer system.
 
 ![img](./img/property_stepjobTask2.png "Dependency Expression")

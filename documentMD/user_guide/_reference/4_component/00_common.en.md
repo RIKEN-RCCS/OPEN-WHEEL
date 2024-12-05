@@ -16,8 +16,7 @@ The contents of this area differ for each type of component.
 |----------|----------|---------------------------------|
 |1|close button   | Closes the property display |
 |2|clean button   | Rewind the state of the component (and any subcomponents) to the most recent saved state |
-|3|delete button  | Remove component |
-|4| Details button | Shows or hides property settings for each group |
+|3| Details button | Shows or hides property settings for each group |
 
 
 ## name, description
@@ -26,10 +25,10 @@ All components have the __name__ and __description__ properties in common.
 ![img](./img/name_description.png "name_and_description")
 
 ### name
-For name, enter a name for the component.  
+For name, enter a name for the component.
 Because the name value is treated as the directory name that contains the files required by the component, you cannot create components with the same name in the same hierarchy.
 
-__About Available Characters__  
+__About Available Characters__
 The only characters allowed for name are alphanumeric characters, `-` (hyphen), and `_` (underscore).
 {: .notice--info}
 
@@ -99,7 +98,7 @@ The file display area displays the files and directories under the currently sel
 
 By clicking the ▶ icon displayed to the left of the directory and the symbolic link to the directory, you can further view the files and other information in that directory.
 
-__About Viewing Files and Directories with Sequential Numbers__  
+__About Viewing Files and Directories with Sequential Numbers__
 If files and directories that consist of sequential numbers (For example, file1, file2, file3) are included in the display, they are displayed together on a single line, such as `seq_dir*` and `seq_file*` in the figure.<br/><br/>
 However, if you use the new file and directory creation function described below to create a sequentially numbered file or directory, the files and directories will be displayed individually instead of sequentially until you close or reload the property screen once.
 This also applies to files that are already sequentially numbered, files with the same name as the directory, and new directories that have been created. <br/><br/>
@@ -123,8 +122,8 @@ At the top of the file operation area are buttons for file operations.
 |6| Download button | Downloads the selected file or directory |
 |7|share file button | Displays the path of the currently selected file or directory |
 
-__About buttons for working with files and directories during selection__  
-If the selected file or directory is not supported, the button is disabled.  
+__About buttons for working with files and directories during selection__
+If the selected file or directory is not supported, the button is disabled.
 Therefore, clicking does not work.
 {: .notice--info}
 
@@ -134,7 +133,7 @@ Clicking the Share button displays a dialog similar to the following:
 
 If you click the icon to the right of the displayed path, it will be copied to the clipboard, so you can use it to pass files to another application.
 
-For example, jupyterlab can open an ipynb file of the form `http(s)://<server:port>/<lab-location>/lab/tree/path/to/notebook.ipynb`. 
+For example, jupyterlab can open an ipynb file of the form `http(s)://<server:port>/<lab-location>/lab/tree/path/to/notebook.ipynb`.
 However, while the file copied from WHEEL is an absolute path, the path specified here (`path/to/notebook.ipynb`) must be relative to the root of the workspace.
 For more information, see the jupyterlab documentation.
 

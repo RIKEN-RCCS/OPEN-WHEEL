@@ -126,6 +126,48 @@ echo $WHEEL_CURRENT_INDEX
 
 この例で示したように、forコンポーネントのendプロパティとindex変数(`$WHEEL_CURRENT_INDEX`)の値が等しい時も内部のコンポーネントは実行されます。
 
+#### BreakおよびContinueコンポーネントによるループ制御
+ループ処理の実行中に、条件によっては処理を終了したり、ループ内の処理の一部を実行せずに次のループに進ませたいことがあります。
+
+WHEELには、このような処理を行なうBreakおよびContinueコンポーネントがあります。
+
+![img](./img/component_library_break_continue.png "BreakおよびContinueコンポーネント")
+
+なお、どちらのコンポーネントもfor, while, foreachコンポーネントを表示した時のみコンポーネントライブラリに表示されます。
+
+
+さきほどのプロジェクトにBreakおよびContinueコンポーネントを追加して挙動を確かめましょう。
+
+まず、プロジェクトをcleanし、for0コンポーネントの下にBreakコンポーネントを追加してください。
+また、break0の後にtask0が実行されるように依存関係を設定してください。
+
+![img](./img/workflow_break.png "Breakコンポーネント追加後のワークフロー")
+
+break0のプロパティを開き `condition setting` パネルの `use javascript expression for condition chek` を有効にし
+下のテキストエリアに `WHEEL_CURRENT_INDEX === "3"` と入力してください。
+
+プロジェクトを実行すると、indexが3の時はループ内のそれ以降の処理(taskコンポーネント)は実行されず
+forコンポーネントの処理も終了するため、1のみが出力されます。
+
+![img](./img/result_break.png "Breakコンポーネント追加後の実行結果")
+
+再度プロジェクトをcleanし、Breakコンポーネントを削除した後、Continueコンポーネントを追加して
+Breakコンポーネントの時と同じくcontinue0の後にtask0が実行されるように依存関係を設定してください。
+
+また、`condition setting` もBreakと同じく `WHEEL_CURRENT_INDEX === "3"` を設定してください。
+
+プロジェクトを実行すると、indexが3の時にはtaskコンポーネントが実行されないので1および5のみが出力されます。
+
+![img](./img/result_continue.png "Continueコンポーネント追加後の実行結果")
+
+もし、BreakまたはContinueコンポーネントとtaskコンポーネントの依存関係を設定していなかった場合、
+taskコンポーネントとBreakまたはContinueコンポーネントの実行順は制御されないため
+"3" が出力されるかどうかは不定です。
+
+このため、条件判定の結果によらず必ず実行するコンポーネントは、BreakまたはContinueコンポーネントより先に実行されるように、
+逆に条件判定の結果によっては実行しないようにしたいコンポーネントは後に実行されるように依存関係を設定してください。
+
+
 ### 3. パラメータスタディ
 計算機シミュレーションのワークフローでは、入力データのパラメータの一部を少しづつ変化させて、同じ計算を繰り返し実行することがあります。
 
@@ -347,7 +389,7 @@ __directory pathの設定について__
 ただし、プロジェクトファイルが保存されているディレクトリツリーの範囲外のパスを指定する必要があります。
 {: .notice--info}
 
-最後に、taskコンポーネントのoutput filesと、storageコンポーネントのintpuFileを接続してください。
+最後に、taskコンポーネントのoutput filesと、storageコンポーネントのinputFileを接続してください。
 以上でワークフローの作成は完了です。
 
 ![img](./img/workflow_storage.png "storageコンポーネントのワークフロー完成図")
