@@ -8,10 +8,17 @@ const os = require("os");
 const path = require("path");
 const fs = require("fs-extra");
 const JsonArrayManager = require("./jsonArrayManager");
-function isExists(target, file) {
+
+/**
+ * check if specified path is exist or not
+ * @param {string} target - path to be checked
+ * @param {boolean} isFile - if true, check target path is file
+ * @returns {boolean} -
+ */
+function isExists(target, isFile) {
   try {
     const stats = fs.statSync(target);
-    return file ? stats.isFile() : stats.isDirectory();
+    return isFile ? stats.isFile() : stats.isDirectory();
   } catch (e) {
     if (e.code === "ENOENT") {
       return false;
@@ -22,6 +29,9 @@ function isExists(target, file) {
 
 /**
  * search specified file in order of WHEEL_CONFIG_DIR, ${HOME}/.wheel, WHEEL_INSTALL_PATH/app/config
+ * @param {string} filename - target filename
+ * @param {boolean} failIfNotFound - if true, throw exception when file is not found. make newfile if false
+ * @returns {string} - config file's path
  */
 function getConfigFile(filename, failIfNotFound) {
   const envFile = typeof process.env.WHEEL_CONFIG_DIR === "string"
@@ -61,15 +71,42 @@ function getConfigFile(filename, failIfNotFound) {
   err.filename = filename;
   throw err;
 }
+
+/**
+ * return value or alternate value if it is nudefined
+ * @param {*} target - variable to be checked
+ * @param {*} alt - alternate value
+ * @returns {*} -
+ */
 function getVar(target, alt) {
   return typeof target !== "undefined" ? target : alt;
 }
+
+/**
+ * return integer value or alternate value if it is not integer
+ * @param {*} target - variable to be checked
+ * @param {number} alt - alternate value
+ * @returns {number} -
+ */
 function getIntVar(target, alt) {
   return Number.isInteger(target) ? target : alt;
 }
+
+/**
+ * return string value or alternate value if it is not string
+ * @param {*} target - variable to be checked
+ * @param {string} alt - alternate value
+ * @returns {string} -
+ */
 function getStringVar(target, alt) {
   return typeof target === "string" ? target : alt;
 }
+
+/**
+ * read default and userdefined config file and merge them
+ * @param {string} filename - config file's name
+ * @returns {object} -
+ */
 function readAndMergeConfigFile(filename) {
   let userConfigFilename;
   try {

@@ -7,6 +7,13 @@
 const fs = require("fs-extra");
 const path = require("path");
 const { isComponentDir } = require("./projectFilesOperator");
+
+/**
+ * make bundled name of seqential number file
+ * @param {object[]} fileList - list of files to be bundled
+ * @param {boolean} isDir - If true, fileList contains directory names
+ * @returns {object[]} -
+ */
 function getSNDs(fileList, isDir) {
   const reNumber = /\d+/g;
   const snds = [];
@@ -38,11 +45,12 @@ function getSNDs(fileList, isDir) {
 
 /**
  * bundle SND files
- * @param {Object[]} fileList - list of files to be bundled
+ * @param {object[]} fileList - list of files to be bundled
  * @param {string} fileList.path - parent directories'path
  * @param {string} fileList.name - filename,  directory name or glob
  * @param {string} fileList.type - file, dir(ectory) or snd(SerialNumberData)
  * @param {boolean} fileList.islink - file is symlink or not
+ * @param {boolean} isDir - If true, fileList contains directory names
  * @returns {string[]} files and bundled SND globs these are not sorted
  */
 function bundleSNDFiles(fileList, isDir) {
@@ -64,6 +72,14 @@ function bundleSNDFiles(fileList, isDir) {
 
   return files.concat(globs);
 }
+
+/**
+ * compare file object
+ * this function is subject to be called from sort function
+ * @param {object} a - first file object
+ * @param {object} b - the other file object to be compared with a
+ * @returns {number} -
+ */
 function compare(a, b) {
   if (a.name < b.name) {
     return -1;
@@ -77,16 +93,17 @@ function compare(a, b) {
 /**
  * send directory contents via socket.io
  * @param {string} targetDir - directory path to read
- * @param {Object} options -   dictionary contains following option value
+ * @param {object} options -   dictionary contains following option value
  * @param {string}  [options.request] -      requested directory path
- * @param {boolean} [options.sendDirname=true] -  flag for send directory name or not
- * @param {boolean} [options.sendFilename=true] - flag for send file name or not
- * @param {boolean} [options.withParentDir=false] - flag for send parent dir('../') or not
- * @param {boolean} [options.SND=false] -  flag for bundle serial number data or not
- * @param {Object} [options.filter] -  item name filter
- * @param {Object} [options.filter.all=.*] -  filter regex for both directories and files
- * @param {Object} [options.filter.dir=.*] -  filter regex only for directories
- * @param {Object} [options.filter.file=.*] - filter regex only for files
+ * @param {boolean} [options.sendDirname] -  flag for send directory name or not
+ * @param {boolean} [options.sendFilename] - flag for send file name or not
+ * @param {boolean} [options.withParentDir] - flag for send parent dir('../') or not
+ * @param {boolean} [options.SND] -  flag for bundle serial number data or not
+ * @param {object} [options.filter] -  item name filter
+ * @param {object} [options.filter.all] -  filter regex for both directories and files
+ * @param {object} [options.filter.dir] -  filter regex only for directories
+ * @param {object} [options.filter.file] - filter regex only for files
+ * @returns {object[]} - array of directory and files under targetDir
  * plese note, if both options.filter.all and options.filter.{dir|file} is specified,
  * both filter is used.
  * so the only {directory | file} which is matched filter.all and filter.{dir|file} will be sent.

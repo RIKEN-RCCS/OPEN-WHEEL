@@ -276,7 +276,7 @@ const psSettingFileSchema = {
     "version", "targetFiles", "params"
   ],
   properties: {
-    version: { type: "number", enum: [1, 2] },
+    version: { type: "number", enum: [2] },
     targetFiles: {
       type: "array",
       items: {
@@ -348,6 +348,11 @@ const psSettingFileSchema = {
   }
 };
 
+/**
+ * return JSON schema
+ * @param {string} type - keyword for schema
+ * @returns {object} - JSON schema
+ */
 function getSchema(type) {
   switch (type) {
     case "pos":

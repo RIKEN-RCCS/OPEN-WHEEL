@@ -83,6 +83,7 @@ async function gitInit(rootDir, user, mail) {
  * commit already staged(indexed) files
  * @param {string} rootDir - repo's root dir
  * @param {string} message - commmit message
+ * @param additionalOption
  */
 async function gitCommit(rootDir, message = "save project", additionalOption = []) {
   return gitPromise(rootDir, ["commit", "-m", `"${message}"`, ...additionalOption], rootDir)
@@ -188,13 +189,34 @@ async function gitStatus(rootDir) {
 async function gitClean(rootDir, filePatterns = "") {
   return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", "--", filePatterns], rootDir);
 }
+
+/**
+ * return relative filename from repository's root directry
+ * @param {string} rootDir - repo's root dir
+ * @param {string} filename - filename
+ */
 function getRelativeFilename(rootDir, filename) {
+  //TODO filename must be checked if already absolute path or not
   const absFilename = path.resolve(rootDir, filename);
   return path.relative(rootDir, absFilename);
 }
+
+/**
+ * make file pattern string for lfs track/untrack command
+ * @param {string} rootDir - repo's root dir
+ * @param {string} filename - filename
+ * @returns {string} -
+ */
 function makeLFSPattern(rootDir, filename) {
   return `/${getRelativeFilename(rootDir, filename)}`;
 }
+
+/**
+ * determine if specified filename is LFS target
+ * @param {string} rootDir - repo's root dir
+ * @param {string} filename - filename
+ * @returns {boolean} -
+ */
 async function isLFS(rootDir, filename) {
   const lfsPattern = getRelativeFilename(rootDir, filename);
   const lfsTrackResult = await gitPromise(rootDir, ["lfs", "track"], rootDir);
@@ -206,6 +228,7 @@ async function isLFS(rootDir, filename) {
  * performe git lfs track
  * @param {string} rootDir - repo's root dir
  * @param {string} filename - files to be track
+ * @returns {Promise} - resolved when LFS track setting is done
  */
 async function gitLFSTrack(rootDir, filename) {
   await gitPromise(rootDir, ["lfs", "track", "--", makeLFSPattern(rootDir, filename)], rootDir);
@@ -227,7 +250,7 @@ async function gitLFSUntrack(rootDir, filename) {
 }
 
 /**
- * @typedef {Object} unsavedFile
+ * @typedef {object} unsavedFile
  * @property {string} status - unsaved file's status which is one of ["new", "modified", "deleted',"renamed"]
  * @property {string} name - unsaved file's name
  */
@@ -235,7 +258,6 @@ async function gitLFSUntrack(rootDir, filename) {
  * get unsavedFiles
  * @param {string} rootDir - repo's root dir
  * @returns {unsavedFile[]} - unsaved files
- *
  */
 async function getUnsavedFiles(rootDir) {
   const { added, modified, deleted, renamed } = await gitStatus(rootDir);

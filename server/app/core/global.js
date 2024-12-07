@@ -14,7 +14,7 @@ let sio = null; //Singleton SocketIO instance
 
 /**
  * store SocketIO instance
- * @param {Object} io - SocketIO instance
+ * @param {object} io - SocketIO instance
  */
 function setSio(io) {
   if (sio !== null) {
@@ -25,7 +25,7 @@ function setSio(io) {
 
 /**
  * get SocketIO instance
- * @return {Object} - stored SocketIO instance or null if not yet stored
+ * @returns {object} - stored SocketIO instance or null if not yet stored
  */
 function getSio() {
   return sio;

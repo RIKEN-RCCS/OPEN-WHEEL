@@ -9,6 +9,8 @@ const { pathseps, reWin32ReservedNames, metaCharactors, escapeRegExp } = require
 
 /**
  * replace path separator by native path separator
+ * @param {string} pathString - kind of path string
+ * @returns {string} - path string which have native path separator
  */
 function convertPathSep(pathString) {
   if (path.sep === path.posix.sep) {
@@ -19,6 +21,8 @@ function convertPathSep(pathString) {
 
 /**
  * replace path.win32.sep by path.posix.sep
+ * @param {string} pathString - kind of path string
+ * @returns {string} - posix form path string
  */
 function replacePathsep(pathString) {
   return pathString.replace(new RegExp(`\\${path.win32.sep}`, "g"), path.posix.sep);
@@ -27,6 +31,7 @@ function replacePathsep(pathString) {
 /**
  * replace illegal chars as path string
  * @param {string} target - string which should be sanitized
+ * @param {string} replacer - replacer for meta charactors (ex. '/')
  * @returns {string} - sanitized path
  */
 function sanitizePath(target, replacer = "_") {

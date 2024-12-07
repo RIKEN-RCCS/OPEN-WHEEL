@@ -418,15 +418,16 @@ describe("UT for Dispatcher class", function () {
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
       await fs.outputFile(path.join(projectRootDir, "PS0", "input.txt"), "%%KEYWORD1%%");
       const parameterSetting = {
+        version: 2,
         target_file: "input.txt",
         target_param: [
           {
             target: "hoge",
             keyword: "KEYWORD1",
             type: "integer",
-            min: "1",
-            max: "3",
-            step: "1",
+            min: 1,
+            max: 3,
+            step: 1,
             list: ""
           }
         ]
@@ -782,15 +783,16 @@ describe("UT for Dispatcher class", function () {
       await updateComponent(projectRootDir, PS0.ID, "parameterFile", "input.txt.json");
       await fs.outputFile(path.join(projectRootDir, for0.name, PS0.name, "input.txt"), "%%KEYWORD1%%");
       const parameterSetting = {
+        version: 2,
         target_file: "input.txt",
         target_param: [
           {
             target: "hoge",
             keyword: "KEYWORD1",
             type: "integer",
-            min: "1",
-            max: "3",
-            step: "1",
+            min: 1,
+            max: 3,
+            step: 1,
             list: ""
           }
         ]

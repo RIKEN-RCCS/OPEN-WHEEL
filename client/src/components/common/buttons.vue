@@ -19,8 +19,8 @@
 
 /**
  * @type Button
- * @prop {string} icon
- * @prop {string} label
+ * @property {string} icon
+ * @property {string} label
  */
 export default {
   name: "Buttons",

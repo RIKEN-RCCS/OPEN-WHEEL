@@ -9,8 +9,15 @@ const path = require("path");
 const { promisify } = require("util");
 const glob = require("glob");
 const nunjucks = require("nunjucks");
-const { getParamSpacev2, removeInvalidv1 } = require("./parameterParser");
+const { getParamSpacev2 } = require("./parameterParser");
 const { overwriteByRsync } = require("./rsync.js");
+
+/**
+ * get filenames to be scatterd
+ * @param {string} templateRoot - path of PS component's "template" directory
+ * @param {object} paramSettings - parameter space definition
+ * @returns {string []} - array of scatterd filenames
+ */
 async function getScatterFilesV2(templateRoot, paramSettings) {
   if (!(Object.prototype.hasOwnProperty.call(paramSettings, "scatter") && Array.isArray(paramSettings.scatter))) {
     return [];
@@ -23,6 +30,15 @@ async function getScatterFilesV2(templateRoot, paramSettings) {
   );
   return Array.prototype.concat.apply([], srcNames);
 }
+
+/**
+ * rewrite target files by nunjucks
+ * @param {string} templateRoot - path of PS component's "template" directory
+ * @param {string} instanceRoot - path of PS component's "instance" directory
+ * @param {string[]} targetFiles - filenames to be rewritten
+ * @param {object} params - parameters for this instance directory
+ * @returns {Promise} - resolved when all target files are rewirted
+ */
 async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params) {
   return Promise.all(
     targetFiles.map(async (targetFile)=>{
@@ -32,6 +48,17 @@ async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params
     })
   );
 }
+
+/**
+ * scatter files from template directory to instance directory
+ * @param {string} templateRoot - path of PS component's "template" directory
+ * @param {string} instanceRoot - path of PS component's "instance" directory
+ * @param {object} scatterRecipe - "recipe" of scatter file
+ * @param {object} params - parameters for this instance directory
+ * @param {object} logger - log4js object
+ * @param {boolean} useRsync - use rsync or fs.copy
+ * @returns {Promise} - resolved when all scattering process is done
+ */
 async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, logger, useRsync) {
   const p = [];
   for (const recipe of scatterRecipe) {
@@ -57,6 +84,16 @@ async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params,
     return true;
   });
 }
+
+/**
+ * gather files from instance directory to template directory
+ * @param {string} templateRoot - path of PS component's "template" directory
+ * @param {string} instanceRoot - path of PS component's "instance" directory
+ * @param {object} gatherRecipe - "recipe" of gather file
+ * @param {object} params - parameters for this instance directory
+ * @param {object} logger - log4js object
+ * @returns {Promise} - resolved when all gathering process is done
+ */
 async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, logger) {
   const p = [];
   for (const recipe of gatherRecipe) {
@@ -78,33 +115,18 @@ async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, l
     return true;
   });
 }
-async function doNothing() {
-}
-async function replaceTargetFile(srcDir, dstDir, targetFiles, params) {
-  const promises = [];
-  for (const targetFile of targetFiles) {
-    const tmp = await fs.readFile(path.resolve(srcDir, targetFile));
-    let data = tmp.toString();
-    for (const key in params) {
-      if (typeof key === "string") {
-        data = data.replace(new RegExp(`%%${key}%%`, "g"), params[key].toString());
-      }
-    }
-    //fs.writeFile will overwrites existing file.
-    //so, targetFile is always overwrited!!
-    promises.push(fs.writeFile(path.resolve(dstDir, targetFile), data));
-  }
-  return Promise.all(promises);
-}
+
+/**
+ * return PS util functions for version 2.
+ * @param {object} paramSettings - parameter space definition
+ * @returns {Function[]} - functions for PS version 2
+ */
 function makeCmd(paramSettings) {
   const params = Object.prototype.hasOwnProperty.call(paramSettings, "params") ? paramSettings.params : paramSettings.target_param;
   if (paramSettings.version === 2) {
     return [getParamSpacev2.bind(null, params), getScatterFilesV2, scatterFilesV2, gatherFilesV2, replaceByNunjucks];
   }
-  //version 1 (=unversioned)
-  return [removeInvalidv1.bind(null, params), ()=>{
-    return [];
-  }, doNothing, doNothing, replaceTargetFile];
+  throw new Error ("PS version 1 is no longer supported");
 }
 
 module.exports = {

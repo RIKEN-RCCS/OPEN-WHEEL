@@ -113,7 +113,7 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
 
 /**
  * create new empty file by touch on remotehost
- * @param {string} projectRootDir -
+ * @param {string} projectRootDir - project's root path
  * @param {string} argFilename -
  * @param {string} host - label of hostInof
  * @param {Function} cb - call back function should be called on client

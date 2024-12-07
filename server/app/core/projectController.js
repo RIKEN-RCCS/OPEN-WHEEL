@@ -22,22 +22,23 @@ const rootDispatchers = new Map();
 
 /**
  * @event projectStateChanged
- * @type {Object} - updated projectJson
- *
+ * @type {object} - updated projectJson
  * @event taskStateChanged
- * @type {Object} - updated task object
- *
+ * @type {object} - updated task object
  * @event componentStateChanged
- * @type {Object} - updated component Json
- *
+ * @type {object} - updated component Json
  * @event resultFilesReady
- * @type {Object[]] - array of result file's url
+ * @type {object[]} - array of result file's url
  * @property {string} componentID - component.ID
  * @property {string} filename    - relative path from projectRoot
  * @property {string} url         - URL to view result file
- *
  */
 
+/**
+ * update project status
+ * @param {string} projectRootDir - project's root path
+ * @param {string} state - status
+ */
 async function updateProjectState(projectRootDir, state) {
   const projectJson = await setProjectState(projectRootDir, state);
   if (projectJson) {
@@ -47,7 +48,12 @@ async function updateProjectState(projectRootDir, state) {
     }
   }
 }
-const cleanProject = async (projectRootDir)=>{
+
+/**
+ * clean up project
+ * @param {string} projectRootDir - project's root path
+ */
+async function cleanProject(projectRootDir) {
   const { ID } = await readComponentJson(projectRootDir);
   const viewerURLRoot = path.resolve(path.dirname(__dirname), "viewer");
   const viewerDir = path.join(viewerURLRoot, ID);
@@ -59,6 +65,11 @@ const cleanProject = async (projectRootDir)=>{
   await gitClean(projectRootDir);
   //project state must be updated by onCleanProject()
 };
+
+/**
+ * stop project run
+ * @param {string} projectRootDir - project's root path
+ */
 async function stopProject(projectRootDir) {
   const rootDispatcher = rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
@@ -70,6 +81,12 @@ async function stopProject(projectRootDir) {
   removeSsh(projectRootDir);
   //project state must be updated by onStopProject()
 }
+
+/**
+ * run project
+ * @param {string} projectRootDir - project's root path
+ * @returns {string} - project status after run
+ */
 async function runProject(projectRootDir) {
   if (rootDispatchers.has(projectRootDir)) {
     return new Error(`project is already running ${projectRootDir}`);

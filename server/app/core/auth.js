@@ -39,7 +39,7 @@ async function initialize() {
  * create hashed password from plain password and salt
  * @param {string} password - plain text password
  * @param {string} salt - salt string
- * @return {string} - hashed password
+ * @returns {string} - hashed password
  */
 async function getHashedPassword(password, salt) {
   return promisify(crypto.pbkdf2)(password, salt, 210000, 32, "sha512");
@@ -68,7 +68,7 @@ async function addUser(username, password) {
 /**
  * get single user data from DB
  * @param {string} username - username to be queried
- * @return {Object} - userdata which inclueds id, username, hashed_passowrd, salt
+ * @returns {object} - userdata which inclueds id, username, hashed_passowrd, salt
  */
 async function getUserData(username) {
   const row = await db.get("SELECT * FROM users WHERE username = ?", username);
@@ -81,8 +81,8 @@ async function getUserData(username) {
 /**
  * check if specified user and password pair is valid
  * @param {string} username - user's name
- * @param {string} pasword - user's password in plain text
- * @return {Boolean|Object} - return user data if valid pair, or false if invalid
+ * @param {string} password - user's password in plain text
+ * @returns {boolean | object} - return user data if valid pair, or false if invalid
  */
 async function isValidUser(username, password) {
   if (!initialized) {
@@ -106,7 +106,7 @@ async function isValidUser(username, password) {
 
 /**
  * list all user in DB
- * @return {string[]} - array of usernames
+ * @returns {string[]} - array of usernames
  */
 async function listUser() {
   if (!initialized) {
@@ -121,7 +121,7 @@ async function listUser() {
 /**
  * delete user from DB
  * @param {string} username - user's name
- * @return {Boolean} - false if user does not exist in DB
+ * @returns {boolean} - false if user does not exist in DB
  */
 async function delUser(username) {
   if (!initialized) {

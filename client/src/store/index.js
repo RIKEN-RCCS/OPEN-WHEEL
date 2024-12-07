@@ -27,33 +27,32 @@ const mutationFactory = (types)=>{
 
 /**
  * @typedef state
- * @property { Object } currentComponent  - parent component of displayed boxes this is set by componentGraph or componentTree
- * @property { Object } selectedComponent - component which is editing in property window and text editor. this is set by clicking in componentGraph
- * @property { Object } copySelectedComponent - copy of selectedComponent at the slected moment
+ * @property {object} currentComponent  - parent component of displayed boxes this is set by componentGraph or componentTree
+ * @property {object} selectedComponent - component which is editing in property window and text editor. this is set by clicking in componentGraph
+ * @property {object} copySelectedComponent - copy of selectedComponent at the slected moment
  * @property { string } projectRootDir - absolute path of project's root directory
  * @property { string } rootComponentID - root workflow component's ID
  * @property { string } projectState - project's satate. this value is never changed from client-side
- * @property { Object } componentTree - component tree. this value is never changed from client-side
- * @property { Object } componentPath - ID-compoentPath reverse map in projectJSON this value is never changed from client-side
+ * @property {object} componentTree - component tree. this value is never changed from client-side
+ * @property {object} componentPath - ID-compoentPath reverse map in projectJSON this value is never changed from client-side
  * @property { string } selectedFile - selected file in fileBrowser component
  * @property { string } selectedText - selected text in editor component (pass to parameter editor from tab editor)
- * @property { Object} remoteHost - remoteHost JSON
- * @property { Object} jobScheduler - jobScheduler JSON
- * @property { Boolean } waitingProjectJson - flag for loading projectJson data
- * @property { Boolean } waitingWorkflow - flag for loading Worgflow data for graph component
- * @property { Boolean } waitingFile - flag for loading file data for rapid
- * @property { Boolean } waitingSave - flag for waiting save (=commit)
- * @property { Boolean } waitingEnv  - flag for loading environment variable data
- * @property { Boolean } waitingDownload  - flag for prepareing download file
+ * @property {object} remoteHost - remoteHost JSON
+ * @property {object} jobScheduler - jobScheduler JSON
+ * @property {boolean} waitingProjectJson - flag for loading projectJson data
+ * @property {boolean} waitingWorkflow - flag for loading Worgflow data for graph component
+ * @property {boolean} waitingFile - flag for loading file data for rapid
+ * @property {boolean} waitingSave - flag for waiting save (=commit)
+ * @property {boolean} waitingEnv  - flag for loading environment variable data
+ * @property {boolean} waitingDownload  - flag for prepareing download file
  * @property { number } canvasWidth - width of canvas in component graph
  * @property { number } canvasHeight - width of canvas in component graph
  * @property { string[] } scriptCandidates - filenames directly under selected component directory
- * @property { Boolean } openSnackbar - flag to show snackbar message
+ * @property {boolean} openSnackbar - flag to show snackbar message
  * @property { string } snackbarMessage - message on snackbar
- * @property { Boolean } openDialog - flag to show global dialog
- * @property { Object } dialogContent - dialog's content
- * @property { Boolean } readOnly - project wide read-only flag
- *
+ * @property {boolean} openDialog - flag to show global dialog
+ * @property {object} dialogContent - dialog's content
+ * @property {boolean} readOnly - project wide read-only flag
  */
 const state = {
   currentComponent: null,

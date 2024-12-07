@@ -62,6 +62,13 @@ const wheelSystemEnv = [
 
 const taskDB = new Map();
 //private functions
+/**
+ * replace target files in bulkjob by nunjucks
+ * @param {string} templateRoot - path of PS component's "template" directory
+ * @param {string[]} targetFiles - filenames to be rewritten
+ * @param {object} params - parameters for this instance directory
+ * @param {number} bulkNumber - bulkjob id number
+ */
 async function replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber) {
   return Promise.all(
     targetFiles.map(async (targetFile)=>{
@@ -76,6 +83,14 @@ async function replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bu
     })
   );
 }
+
+/**
+ * write used parameter to file
+ * @param {string} templateRoot - path of PS component's "template" directory
+ * @param {string[]} targetFiles - filenames to be rewritten
+ * @param {object} params - parameters for this instance directory
+ * @param {number} bulkNumber - bulkjob id number
+ */
 async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber) {
   const paramsKeys = Object.keys(params);
   let targetNum = 0;
@@ -94,12 +109,12 @@ async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumb
 
 /**
  * parse workflow graph and dispatch ready tasks to executer
- * @param {string} projectRootDir - root directory path of project
+ * @param {string} projectRootDir - project's root path
  * @param {string} cwfID -          current dispatching workflow ID
  * @param {string} cwfDir -         current dispatching workflow directory (absolute path);
  * @param {string} startTime -      project start time
- * @param {Object} componentPath -  componentPath in project Json
- * @param {Object} env -             environment variables
+ * @param {object} componentPath -  componentPath in project Json
+ * @param {object} env -             environment variables
  * @param {string } ancestorsType - comma separated ancestor components' type
  */
 class Dispatcher extends EventEmitter {
@@ -289,8 +304,8 @@ class Dispatcher extends EventEmitter {
 
   /**
    * search disabled component recursively in upward direction
-   * @param {Object[]} components - start point components for searching
-   * @returns {Object[]} - component list which do not have disabled dependency
+   * @param {object[]} components - start point components for searching
+   * @returns {object[]} - component list which do not have disabled dependency
    */
   async _removeComponentsWhichHasDisabledDependency(components) {
     const shouldBeRemoved = await Promise.all(components.map((component)=>{

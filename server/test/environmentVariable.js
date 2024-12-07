@@ -111,15 +111,16 @@ describe("UT for environment variables", function () {
     await updateComponent(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
     await fs.outputFile(path.join(projectRootDir, "PS0", "input.txt"), "%%KEYWORD1%%");
     const parameterSetting = {
+      version: 2,
       target_file: "input.txt",
       target_param: [
         {
           target: "hoge",
           keyword: "KEYWORD1",
           type: "integer",
-          min: "1",
-          max: "2",
-          step: "1",
+          min: 1,
+          max: 2,
+          step: 1,
           list: ""
         }
       ]

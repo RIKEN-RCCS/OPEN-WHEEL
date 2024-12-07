@@ -18,13 +18,11 @@ const getSchema = require("../db/jsonSchemas.js");
 const { getLogger } = require("../logSettings.js");
 
 /**
- * remove file link from parent
- *
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * remove input file link from parent
+ * @param {string} projectRootDir - project's root path
  * @param {string} srcName - outputFile name on parent
  * @param {string} dstNode - component ID which have link to be removed
  * @param {string} dstName - inputFile name on the child component
- *
  */
 async function removeInputFileLinkFromParent(projectRootDir, srcName, dstNode, dstName) {
   const dstDir = await getComponentDir(projectRootDir, dstNode, true);
@@ -43,8 +41,8 @@ async function removeInputFileLinkFromParent(projectRootDir, srcName, dstNode, d
 }
 
 /**
- * remove file link to parent
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * remove output file link to parent
+ * @param {string} projectRootDir - project's root path
  * @param {string} srcNode - component ID which have link to be removed
  * @param {string} srcName - outputFile name on the child component
  * @param {string} dstName - inputFile name on the parent
@@ -65,13 +63,12 @@ async function removeOutputFileLinkToParent(projectRootDir, srcNode, srcName, ds
 }
 
 /**
- * remove file link from siblings
- *
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * remove input file link from siblings
+ * @param {string} projectRootDir - project's root path
+ * @param {string} srcNode - src component ID which have link to be removed
  * @param {string} srcName - outputFile name on parent
- * @param {string} dstNode - component ID which have link to be removed
+ * @param {string} dstNode - dst component ID which have link to be removed
  * @param {string} dstName - inputFile name on the other side
- *
  */
 async function removeInputFileLinkFromSiblings(projectRootDir, srcNode, srcName, dstNode, dstName) {
   const srcDir = await getComponentDir(projectRootDir, srcNode, true);
@@ -84,6 +81,15 @@ async function removeInputFileLinkFromSiblings(projectRootDir, srcNode, srcName,
   });
   return writeComponentJson(projectRootDir, srcDir, srcJson);
 }
+
+/**
+ * remove output file link to siblings
+ * @param {string} projectRootDir - project's root path
+ * @param {string} srcNode - src component ID which have link to be removed
+ * @param {string} srcName - outputFile name on parent
+ * @param {string} dstNode - dst component ID which have link to be removed
+ * @param {string} dstName - inputFile name on the other side
+ */
 async function removeOutputFileLinkToSiblings(projectRootDir, srcNode, srcName, dstNode, dstName) {
   const dstDir = await getComponentDir(projectRootDir, dstNode, true);
   const dstJson = await readComponentJson(dstDir);
@@ -97,11 +103,11 @@ async function removeOutputFileLinkToSiblings(projectRootDir, srcNode, srcName, 
 }
 
 /**
- * remove file link from counter part to specified component
- *
- * @param {string} projectRootDir - project projectRootDir's absolute path
- * @param {Object} componentJson -  component JSON data about to be renamed
+ * remove input file link from counter part to specified component
+ * @param {string} projectRootDir - project's root path
+ * @param {object} componentJson -  component JSON data about to be renamed
  * @param {string} name - inputFile name to be removed
+ * @param index
  */
 async function removeInputFileCounterpart(projectRootDir, componentJson, index) {
   const name = componentJson.inputFiles[index].name;
@@ -115,6 +121,14 @@ async function removeInputFileCounterpart(projectRootDir, componentJson, index) 
   }
   return Promise.all(promises);
 }
+
+/**
+ * remove output file link from counter part to specified component
+ * @param {string} projectRootDir - project's root path
+ * @param {object} componentJson -  component JSON data about to be renamed
+ * @param {string} name - inputFile name to be removed
+ * @param index
+ */
 async function removeOutputFileCounterpart(projectRootDir, componentJson, index) {
   const promises = [];
   const name = componentJson.outputFiles[index].name;
@@ -130,9 +144,8 @@ async function removeOutputFileCounterpart(projectRootDir, componentJson, index)
 
 /**
  * rename inputFile name and its counterparts' dstName
- *
- * @param {string} projectRootDir - project projectRootDir's absolute path
- * @param {Object} componentJson -  component JSON data about to be renamed
+ * @param {string} projectRootDir - project's root path
+ * @param {object} componentJson -  component JSON data about to be renamed
  * @param {number} index - index number to be renamed
  * @param {string} oldName - old inputFile name
  * @param {string} newName - new inputFile name
@@ -173,10 +186,9 @@ async function renameInputFileCounterpart(projectRootDir, componentJson, index, 
 }
 
 /**
- * rename outputFile name and its counterparts' dstName
- *
- * @param {string} projectRootDir - project projectRootDir's absolute path
- * @param {Object} componentJson -  component JSON data about to be renamed
+ * rename outputFile name and its counterparts' srcName
+ * @param {string} projectRootDir - project's root path
+ * @param {object} componentJson -  component JSON data about to be renamed
  * @param {number} index - index number to be renamed
  * @param {string} oldName - old outputFile name
  * @param {string} newName - new outputFile name
@@ -218,8 +230,9 @@ async function renameOutputFileCounterpart(projectRootDir, componentJson, index,
 
 /**
  * rename component directory and update componentJsonPath
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} projectRootDir - project's root path
  * @param {string} ID - component ID
+ * @param newName
  */
 async function renameComponentDir(projectRootDir, ID, newName) {
   const oldDir = await getComponentDir(projectRootDir, ID, true);
@@ -236,12 +249,12 @@ async function renameComponentDir(projectRootDir, ID, newName) {
 
 /**
  * update component
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} projectRootDir - project's root path
  * @param {string} ID - component ID
- * @param {Object} updated - new component JSON data
- * @return {boolean} - component is renamed or not
+ * @param {object} updated - new component JSON data
+ * @returns {boolean} - component is renamed or not
  */
-const updateComponent = async (projectRootDir, ID, updated)=>{
+async function updateComponent(projectRootDir, ID, updated) {
   const logger = getLogger(projectRootDir);
 
   const ajv = new Ajv({
@@ -355,12 +368,12 @@ const updateComponent = async (projectRootDir, ID, updated)=>{
 };
 
 /**
- * update component
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * update component's position
+ * @param {string} projectRootDir - project's root path
  * @param {string} ID - component ID
- * @param {Object} pos - new position of component
+ * @param {object} pos - new position of component
  */
-const updateComponentPos = async (projectRootDir, ID, pos)=>{
+async function updateComponentPos(projectRootDir, ID, pos) {
   const logger = getLogger(projectRootDir);
   const ajv = new Ajv({
     allErrors: true,
@@ -387,6 +400,7 @@ const updateComponentPos = async (projectRootDir, ID, pos)=>{
   componentJson.pos.y = pos.y;
   await writeComponentJson(projectRootDir, componentDir, componentJson);
 };
+
 module.exports = {
   updateComponent,
   updateComponentPos

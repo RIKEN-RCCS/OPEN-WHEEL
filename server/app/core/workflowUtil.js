@@ -14,9 +14,9 @@ const { hasChild } = require("./workflowComponent");
 
 /**
  * get array of child components
- * @param {string} projectRootDir - projectRootDir's absolute path
+ * @param {string} projectRootDir - project's root path
  * @param {string} parentID - parent component's ID
- * @return {Object[]} - array of components
+ * @returns {object[]} - array of components
  */
 async function getChildren(projectRootDir, parentID) {
   const dir = await getComponentDir(projectRootDir, parentID, true);
@@ -42,7 +42,7 @@ async function getChildren(projectRootDir, parentID) {
  * return component,  its children, and grandsons
  * @param {string} projectRootDir - project's root path
  * @param {strint} rootComponentDir - path of component to be obrained
- * @returns {Object} - nested component JSON object
+ * @returns {object} - nested component JSON object
  */
 async function getThreeGenerationFamily(projectRootDir, rootComponentDir) {
   const wf = await readComponentJson(rootComponentDir);

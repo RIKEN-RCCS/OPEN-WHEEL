@@ -5,6 +5,12 @@
  */
 "use strict";
 import { v4 as uuidv4 } from "uuid";
+
+/**
+ * split path string
+ * @param {string} pathString - path string
+ * @returns {string[]} - array of string which has each level of directory hierarchy as element
+ */
 export function path2Array(pathString) {
   if (typeof pathString !== "string" || pathString === "") {
     return null;
@@ -18,14 +24,14 @@ export function path2Array(pathString) {
 
 /**
  * @typedef TaskState
- * @param {String} - - ancestorsName
+ * @param {string} - - ancestorsName
  */
 
 /**
  * add path entory to tree
  * @param {TaskState[]} taskStatelist - array of task state object
- * @param {Object} tree - tree object which will be updated
- * @return {null | boolean} - null if any error occurred, true means some update, false means no update
+ * @param {object} tree - tree object which will be updated
+ * @returns {null | boolean} - null if any error occurred, true means some update, false means no update
  */
 export function taskStateList2Tree(taskStatelist, tree) {
   if (!(Object.prototype.hasOwnProperty.call(tree, "children") && Array.isArray(tree.children))) {

@@ -28,6 +28,11 @@ function escapeRegExp(target) {
   return target.replace(reMustBeEscapedChars, "\\$1");
 }
 
+/**
+ * check if specified name is generally valid for filename
+ * @param {string} name - string to be checked
+ * @returns {boolean} -
+ */
 function isSane(name) {
   if (typeof name !== "string") {
     return false;
@@ -43,7 +48,7 @@ function isSane(name) {
 
 /**
  * determin specified name is valid file or directory name or not
- * @param {strint} name - name to be checked
+ * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
 function isValidName(name) {
@@ -60,7 +65,7 @@ function isValidName(name) {
 
 /**
  * determin specified name is valid for inputFilename
- * @param {strint} name - name to be checked
+ * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
 function isValidInputFilename(name) {

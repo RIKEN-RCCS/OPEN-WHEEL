@@ -7,6 +7,10 @@
 const { version } = require("../db/version.json");
 const { getLogger } = require("../logSettings");
 
+/**
+ * print version and environment variables
+ * @param {string} projectRootDir - project's root path
+ */
 function aboutWheel(projectRootDir) {
   const logger = getLogger(projectRootDir);
   const baseURL = process.env.WHEEL_BASE_URL || "/";

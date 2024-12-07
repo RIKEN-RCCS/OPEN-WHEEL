@@ -7,6 +7,14 @@
 const util = require("node:util");
 const fs = require("fs-extra");
 const exec = util.promisify(require("node:child_process").exec);
+
+/**
+ * copy directory by rsync and overwrite existing files
+ * @param {string} src - src directory
+ * @param {string} dst - dst directory
+ * @param {string[]} ignoreFiles - glob pattern which should not be coppied
+ * @returns {Promise} - resolved when copy is done
+ */
 async function overwriteByRsync(src, dst, ignoreFiles = []) {
   const exclude = ignoreFiles.reduce((a, c)=>{
     if (typeof e !== "string") {

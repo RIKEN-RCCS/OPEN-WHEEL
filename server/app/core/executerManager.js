@@ -19,6 +19,14 @@ const { registerJob } = require("./jobManager");
 const { getLogger } = require("../logSettings.js");
 
 const executers = new Map();
+
+/**
+ * determine if job submission failed due to limitation or not
+ * @param {object} JS - Jobscheduler.json's entry
+ * @param {number} rt - rt of submit command
+ * @param {string} outputText - output message from submit command
+ * @returns {boolean} -
+ */
 function isExceededLimit(JS, rt, outputText) {
   if (Array.isArray(JS.exceededRtList) && JS.exceededRtList.includes(rt)) {
     return true;
@@ -29,6 +37,12 @@ function isExceededLimit(JS, rt, outputText) {
   }
   return false;
 }
+
+/**
+ * convert env object to cmandline string
+ * @param {object} task - task component instance
+ * @returns {string} -
+ */
 function makeEnv(task) {
   if (typeof task.env === "undefined" || Object.keys(task.env).length === 0) {
     return "";
@@ -41,9 +55,10 @@ function makeEnv(task) {
 
 /**
  * make part of submit command line about queue argument
- * @param {Object} task - task component instance
- * @param {Object} JS - Jobscheduler.json's entry
+ * @param {object} task - task component instance
+ * @param {object} JS - Jobscheduler.json's entry
  * @param {string} queues - comma separated queue name list
+ * @returns {string} -
  */
 function makeQueueOpt(task, JS, queues) {
   if (typeof queues !== "string") {
@@ -68,7 +83,7 @@ function makeQueueOpt(task, JS, queues) {
 
 /**
  * make stepjob option
- * @param {Task} task - task instance
+ * @param {object} task - task component instance
  * @returns {*} - stepjob option
  */
 function makeStepOpt(task) {
@@ -84,7 +99,7 @@ function makeStepOpt(task) {
 
 /**
  * make bulkjob option
- * @param {Task} task - task instance
+ * @param {object} task - task component instance
  * @returns {*} - bulkjob option
  */
 function makeBulkOpt(task) {
@@ -96,6 +111,12 @@ function makeBulkOpt(task) {
   const endBulkNumber = task.endBulkNumber;
   return `${bulkjob} "${startBulkNumber}-${endBulkNumber}"`;
 }
+
+/**
+ * decide task state by condition check script
+ * @param {object} task - task component instance
+ * @returns {number | boolean} -
+ */
 async function decideFinishState(task) {
   let rt = false;
   try {
@@ -106,6 +127,12 @@ async function decideFinishState(task) {
   }
   return rt;
 }
+
+/**
+ * determine if task needs to be re-executed
+ * @param {object} task - task component instance
+ * @returns {boolean} -
+ */
 async function needsRetry(task) {
   if ((typeof task.retry === "undefined" || task.retryCondition === null)
     && (typeof task.retryCondition === "undefined" || task.retryCondition === null)) {
@@ -391,6 +418,13 @@ class RemoteTaskExecuter extends Executer {
   }
 }
 
+/**
+ * promise version of child_process.spawn for task component
+ * @param {object} task - task component instance
+ * @param {string} script - script filename to be spawned
+ * @param {object} options - option object for child_process.spawn
+ * @returns {Promise} - resolved when spawed script is done
+ */
 function promisifiedSpawn(task, script, options) {
   return new Promise((resolve, reject)=>{
     const cp = childProcess.spawn(script, options, (err)=>{
@@ -435,9 +469,19 @@ class LocalTaskExecuter extends Executer {
   }
 }
 
+/**
+ * get executers key from task property
+ * @param {object} task - task component instance
+ * @returns {string} - key string
+ */
 function getExecutersKey(task) {
   return `${task.projectRootDir}-${task.remotehostID}-${task.useJobScheduler}`;
 }
+
+/**
+ * @param {object} hostinfo - one of the ssh connection setting in remotehost json
+ * @returns {number} - max number of job allowed on this host
+ */
 function getMaxNumJob(hostinfo) {
   if (hostinfo === null) {
     return numJobOnLocal;
@@ -447,6 +491,13 @@ function getMaxNumJob(hostinfo) {
   }
   return 1;
 }
+
+/**
+ * create executer instance
+ * @param {object} task - task component instance
+ * @param {object} hostinfo - one of the ssh connection setting in remotehost json
+ * @returns {object} - executer object
+ */
 function createExecuter(task, hostinfo) {
   getLogger(task.projectRootDir).debug("createExecuter called");
   const onRemote = task.remotehostID !== "localhost";
@@ -473,6 +524,12 @@ function createExecuter(task, hostinfo) {
   getLogger(task.projectRootDir).debug("create new executer for localhost");
   return new LocalTaskExecuter(hostinfo, false);
 }
+
+/**
+ * submit task to executer
+ * @param {object} task - task component instance
+ * @returns {Promise} -
+ */
 async function register(task) {
   const onRemote = task.remotehostID !== "localhost";
   const hostinfo = onRemote ? getSshHostinfo(task.projectRootDir, task.remotehostID) : null;
@@ -506,7 +563,8 @@ async function register(task) {
 
 /**
  * cancel running or waiting tasks
- * @param {Task} task - task component object
+ * @param {object} task - task component instance
+ * @returns {Promise} - resolved when cancel task is done
  * task component is defined in workflowComponent.js
  */
 function cancel(task) {
@@ -524,7 +582,7 @@ function cancel(task) {
 
 /**
  * remove all executer class instance from DB
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} projectRootDir - project's root path
  */
 function removeExecuters(projectRootDir) {
   const keysToRemove = Array.from(executers.keys()).filter((key)=>{

@@ -10,6 +10,12 @@ const { setTaskState, needDownload, makeDownloadRecipe } = require("./execUtils"
 const { getSshHostinfo, getSsh } = require("./sshManager.js");
 const { getLogger } = require("../logSettings.js");
 const { register } = require("./transferManager.js");
+
+/**
+ * prepare task component on remotehost
+ * @param {object} task - component to be executed on remotehost
+ * @returns {Promise} - resolved after preparation done
+ */
 async function stageIn(task) {
   await setTaskState(task, "stage-in");
   const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
@@ -24,6 +30,12 @@ async function stageIn(task) {
   //register send request
   return register(hostinfo, task, "send", [task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
 }
+
+/**
+ * get needed files from remotehost
+ * @param {object} task - component which have been executed on remotehost
+ * @returns {Promise} - resolved after file transfer done
+ */
 async function stageOut(task) {
   const taskState = task.state;
   if (taskState !== "finished") {

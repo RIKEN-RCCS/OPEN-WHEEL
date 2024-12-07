@@ -233,8 +233,8 @@ class Foreach extends GeneralComponent {
 
 /**
  * Creates an instance of Stepjob.
- * @constructor StepJob
- * @extends {GeneralComponent}
+ * @class StepJob
+ * @augments {GeneralComponent}
  */
 class Stepjob extends GeneralComponent {
   constructor(...args) {
@@ -252,8 +252,8 @@ class Stepjob extends GeneralComponent {
 
 /**
  * Creates an instance of StepjobTask.
- * @constructor StepjobTask
- * @extends {Task}
+ * @class StepjobTask
+ * @augments {Task}
  */
 class StepjobTask extends Task {
   constructor(pos, parent, stepnum, ...args) {
@@ -270,8 +270,8 @@ class StepjobTask extends Task {
 
 /**
  * Creates an instance of BulkjobTask.
- * @constructor BulkjobTask
- * @extends {Task}
+ * @class BulkjobTask
+ * @augments {Task}
  */
 class BulkjobTask extends Task {
   constructor(pos, parent, stepnum, ...args) {
@@ -314,6 +314,7 @@ class Continue extends GeneralComponent {
 /**
  * factory method for workflow component class
  * @param {string} type -  component type
+ * @param {...any} args
  * @returns {*} - component object
  */
 function componentFactory(type, ...args) {
@@ -369,10 +370,22 @@ function componentFactory(type, ...args) {
   }
   return component;
 }
+
+/**
+ * determine specified component has child or not
+ * @param {object} component - Component object
+ * @returns  {boolean} -
+ */
 function hasChild(component) {
   return component.type === "workflow" || component.type === "parameterStudy" || component.type === "for" || component.type === "while" || component.type === "foreach" || component.type === "stepjob";
 }
 
+/**
+ * determine if specified component can be tracked back to If component
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - Component object
+ * @returns  {boolean} -
+ */
 async function isBehindIfComponent(projectRootDir, component) {
   const hasPrevious = Array.isArray(component.previous) && component.previous.length > 0;
   const hasConnectedInputFiles = Array.isArray(component.inputFiles) && component.inputFiles.some((inputFile)=>{
@@ -417,6 +430,12 @@ async function isBehindIfComponent(projectRootDir, component) {
   return false;
 }
 
+/**
+ * determine if specified component is initial component
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - Component object
+ * @returns  {boolean} -
+ */
 async function isInitialComponent(projectRootDir, component) {
   if (await isBehindIfComponent(projectRootDir, component)) {
     return false;
@@ -443,8 +462,8 @@ async function isInitialComponent(projectRootDir, component) {
 
 /**
  * remove duplicated component from array
- * @param {Object[]} components - array of component
- * @returns {Object[]} - unique components
+ * @param {object[]} components - array of component
+ * @returns {object[]} - unique components
  */
 function removeDuplicatedComponent(components) {
   const IDs = components.map((component)=>{
@@ -475,8 +494,8 @@ function getComponentDefaultName(type) {
 
 /**
  * return this component run on localhost or not
- * @param {Object} component - component object
- * @return {Boolean} - local component or not
+ * @param {object} component - component object
+ * @returns {boolean} - local component or not
  */
 function isLocalComponent(component) {
   return typeof component.host === "undefined" || component.host === "localhost";

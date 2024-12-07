@@ -12,10 +12,10 @@ const { readComponentJson } = require("./componentJsonIO.js");
 
 /**
  * return instance directory name
- * @param {Object} component - component object
+ * @param {object} component - component object
  * @param {string} index - index Value (default currentIndex);
  * @param {string} originalName - template component's name (default component.originalName);
- * @return {string} - instance directory's name
+ * @returns {string} - instance directory's name
  */
 function getInstanceDirectoryName(component, index, originalName) {
   const suffix = typeof index !== "undefined" ? index : component.currentIndex;
@@ -25,9 +25,9 @@ function getInstanceDirectoryName(component, index, originalName) {
 
 /**
  * return previous index
- * @param {Object} component - component object
- * @param {Boolean} forceCalc - ignore component.prevIndex or not
- * @return {number | null} - previous index
+ * @param {object} component - component object
+ * @param {boolean} forceCalc - ignore component.prevIndex or not
+ * @returns {number | null} - previous index
  *
  * if getPrevIndex is called in first loop, this function returns null
  */
@@ -41,6 +41,12 @@ function getPrevIndex(component, forceCalc) {
   return (candidate - start) * step >= 0 ? candidate : null;
 }
 
+/**
+ * remove unnecessary instance directories
+ * @param {object} component - component object
+ * @param {string} cwfDir - current workflow directory
+ * @returns {Promise} - resolved when unnecessary directories are removed
+ */
 async function keepLoopInstance(component, cwfDir) {
   if (!Number.isInteger(component.keep) || component.keep <= 0) {
     return;
@@ -53,21 +59,52 @@ async function keepLoopInstance(component, cwfDir) {
   }
 }
 
+/**
+ * get next index of for component
+ * @param {object} component - component object
+ * @returns {number} - next index
+ */
 function forGetNextIndex(component) {
   return component.currentIndex !== null ? component.currentIndex + component.step : component.start;
 }
+
+/**
+ * determine if for component is finished
+ * @param {object} component - component object
+ * @returns {boolean} -
+ */
 function forIsFinished(component) {
   return (component.currentIndex > component.end && component.step > 0) || (component.currentIndex < component.end && component.step < 0);
 }
+
+/**
+ * get total number of for component's loop trip
+ * @param {object} component - component object
+ * @returns {number} - size of for component
+ */
 function forTripCount(component) {
   const length = Math.abs(component.end - component.start);
   const step = Math.abs(component.step);
   return Math.floor(length / step) + 1;
 }
+
+/**
+ * get next index of while component
+ * @param {object} component - component object
+ * @returns {number} - next index
+ */
 function whileGetNextIndex(component) {
   return component.currentIndex !== null ? component.currentIndex + 1 : 0;
 }
 
+/**
+ * determine if while component is finished
+ * @param {string} cwfDir - current workflow directory
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component object
+ * @param {object} env - environment variable
+ * @returns {boolean} -
+ */
 async function whileIsFinished(cwfDir, projectRootDir, component, env) {
   const cwd = path.resolve(cwfDir, component.name);
   //work around
@@ -79,6 +116,12 @@ async function whileIsFinished(cwfDir, projectRootDir, component, env) {
   const condition = await evalCondition(projectRootDir, component.condition, cwd, env);
   return !condition;
 }
+
+/**
+ * get next index of foreach component
+ * @param {object} component - component object
+ * @returns {number} - next index
+ */
 function foreachGetNextIndex(component) {
   if (component.currentIndex === null) {
     return component.indexList[0];
@@ -92,6 +135,12 @@ function foreachGetNextIndex(component) {
   return component.indexList[i + 1];
 }
 
+/**
+ * get previous index of foreach component
+ * @param {object} component - component object
+ * @param {boolean} forceCalc - ignore component.prevIndex or not
+ * @returns {number | null} - previous index. null means out of range (current index is 0)
+ */
 function foreachGetPrevIndex(component, forceCalc) {
   if (!forceCalc && typeof component.prevIndex !== "undefined") {
     return component.prevIndex;
@@ -106,13 +155,30 @@ function foreachGetPrevIndex(component, forceCalc) {
   return component.indexList[i];
 }
 
+/**
+ * determine foreach component is finished
+ * @param {object} component - component object
+ * @returns {boolean} -
+ */
 function foreachIsFinished(component) {
   return !component.indexList.includes(component.currentIndex);
 }
+
+/**
+ * get total number of foreach component's loop trip
+ * @param {object} component - component object
+ * @returns {boolean} -
+ */
 function foreachTripCount(component) {
   return component.indexList.length;
 }
 
+/**
+ * remove unnecessary instance directories
+ * @param {object} component - component object
+ * @param {string} cwfDir - current workflow directory
+ * @returns {Promise} - resolved when unnecessary directories are removed
+ */
 async function foreachKeepLoopInstance(component, cwfDir) {
   if (!Number.isInteger(component.keep) || component.keep <= 0) {
     return;
@@ -126,6 +192,12 @@ async function foreachKeepLoopInstance(component, cwfDir) {
   }
 }
 
+/**
+ * get latest finished index of foreach component
+ * @param {object} component - component object
+ * @param {string} cwfDir - current workflow directory
+ * @returns {number |null}  - latest finished index. null means no instance is done
+ */
 async function foreachSearchLatestFinishedIndex(component, cwfDir) {
   let rt = null;
   for (const index of component.indexList) {
@@ -147,6 +219,11 @@ async function foreachSearchLatestFinishedIndex(component, cwfDir) {
   return rt;
 };
 
+/**
+ * initialize for/foreach/while component
+ * @param {object} component - component object
+ * @param {Function} getTripCount - getTripCount function for specified component
+ */
 function loopInitialize(component, getTripCount) {
   component.numFinished = 0;
   component.numFailed = 0;

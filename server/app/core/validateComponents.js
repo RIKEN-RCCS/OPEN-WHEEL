@@ -33,6 +33,11 @@ const ajv = new Ajv({
 const schema = getSchema("psSettingFile");
 const validate = ajv.compile(schema);
 
+/**
+ * check if script property has valid value
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
 async function checkScript(projectRootDir, component) {
   if (typeof component.script !== "string") {
     return Promise.reject(new Error("script is not specified"));
@@ -55,6 +60,11 @@ async function checkScript(projectRootDir, component) {
   return true;
 }
 
+/**
+ * check if parameterFile property has valid value
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
 async function checkPSSettingFile(projectRootDir, component) {
   if (typeof component.parameterFile !== "string") {
     return Promise.reject(new Error("parameter setting file is not specified"));
@@ -93,6 +103,11 @@ async function checkPSSettingFile(projectRootDir, component) {
 
 const validateParameterStudy = checkPSSettingFile;
 
+/**
+ * check if condition property has valid value
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
 async function validateConditionalCheck(projectRootDir, component) {
   if (typeof component.condition !== "string") {
     return Promise.reject(new Error(`condition is not specified`));
@@ -118,6 +133,11 @@ async function validateConditionalCheck(projectRootDir, component) {
   return true;
 }
 
+/**
+ * check if task component has valid values
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
 async function validateTask(projectRootDir, component) {
   if (component.name === null) {
     return Promise.reject(new Error(`illegal path`));
@@ -148,6 +168,11 @@ async function validateTask(projectRootDir, component) {
   return checkScript(projectRootDir, component);
 }
 
+/**
+ * check if stepjobTask component has valid values
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
 async function validateStepjobTask(projectRootDir, component) {
   const isInitial = await isInitialComponent(projectRootDir, component);
   if (component.name === null) {
@@ -159,6 +184,11 @@ async function validateStepjobTask(projectRootDir, component) {
   return checkScript(projectRootDir, component);
 }
 
+/**
+ * check if stepjob component has valid values
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
 async function validateStepjob(projectRootDir, component) {
   if (!component.useJobScheduler) {
     return Promise.reject(new Error(`useJobScheduler must be set`));
@@ -185,6 +215,11 @@ async function validateStepjob(projectRootDir, component) {
   return true;
 }
 
+/**
+ * check if bulkjobTask component has valid values
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
 async function validateBulkjobTask(projectRootDir, component) {
   if (component.name === null) {
     return Promise.reject(new Error(`illegal path`));
@@ -237,6 +272,10 @@ async function validateBulkjobTask(projectRootDir, component) {
   return checkScript(projectRootDir, component);
 }
 
+/**
+ * check if keep property has valid value
+ * @param {object} component - component which will be tested
+ */
 async function validateKeepProp(component) {
   if (Object.prototype.hasOwnProperty.call(component, "keep")) {
     if (component.keep === null || component.keep === "") {
@@ -248,6 +287,11 @@ async function validateKeepProp(component) {
   }
   return true;
 }
+
+/**
+ * check if for component has valid values
+ * @param {object} component - component which will be tested
+ */
 async function validateForLoop(component) {
   if (typeof component.start !== "number") {
     return Promise.reject(new Error(`start must be number`));
@@ -263,6 +307,11 @@ async function validateForLoop(component) {
   }
   return true;
 }
+
+/**
+ * check if foreach component has valid values
+ * @param {object} component - component which will be tested
+ */
 async function validateForeach(component) {
   if (!Array.isArray(component.indexList)) {
     return Promise.reject(new Error(`index list is broken`));
@@ -273,6 +322,10 @@ async function validateForeach(component) {
   return true;
 }
 
+/**
+ * check if storage component has valid values
+ * @param {object} component - component which will be tested
+ */
 async function validateStorage(component) {
   if (typeof component.storagePath !== "string") {
     return Promise.reject(new Error("storagePath is not set"));
@@ -300,7 +353,7 @@ async function validateStorage(component) {
 
 /**
  * validate inputFiles
- * @param {Object} component - any component object which has inputFiles prop
+ * @param {object} component - any component object which has inputFiles prop
  * @returns {true|Error} - inputFile is valid or not
  */
 async function validateInputFiles(component) {
@@ -318,7 +371,7 @@ async function validateInputFiles(component) {
 
 /**
  * validate outputFiles
- * @param {Object} component - any component object which has putFiles prop
+ * @param {object} component - any component object which has putFiles prop
  * @returns {true|Error} - outputFile is valid or not
  */
 async function validateOutputFiles(component) {
@@ -333,9 +386,9 @@ async function validateOutputFiles(component) {
 
 /**
  * validate component which can be run or not
- * @param {string} projectRootDir - project root directory path
- * @param {Object } component - target component
- * @return {string} - error message
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - target component
+ * @returns {null|string} - return null if component is valid, or error messages
  *
  * please note, all functions which is called from validateComponent, must return Promise.reject
  * if validation error detected. Do NOT throw exception if error is not unexpected one.
@@ -396,7 +449,7 @@ async function validateComponent(projectRootDir, component) {
 /**
  * extract node in cycle graph from search path aquired from getCycleGraph
  * @param {string[]} graphPath - array of component IDs in search path
- * @return {string[]} - component IDs in cycle graph
+ * @returns {string[]} - component IDs in cycle graph
  */
 function getComponentIDsInCycle(graphPath) {
   if (graphPath.length === 0) {
@@ -415,9 +468,9 @@ function getComponentIDsInCycle(graphPath) {
 
 /**
  * return dependent component
- * @param { Object []} components - sibling components
- * @param { Object } component - target component
- * @return {Object[]} - components which depends on specified component
+ * @param {object[]} components - sibling components
+ * @param {object} component - target component
+ * @returns {object[]} - components which depends on specified component
  */
 function getNextComponents(components, component) {
   const nextComponentIDs = [];
@@ -453,10 +506,11 @@ function getNextComponents(components, component) {
 /**
  * DFS to detect cycle
  * @param {string} projectRootDir - project's root path
- * @param {Object[]} components - array of components
- * @param {Object} startComponent - start point of traverse
- * @param {Object} cyclePath - graph traverse path
- * @return {Boolean} - found circuler path or not
+ * @param {object[]} components - array of components
+ * @param {object} startComponent - start point of traverse
+ * @param {object} results - cycle graph detection result
+ * @param {object} cyclePath - graph traverse path
+ * @returns {boolean} - found circuler path or not
  */
 function isCycleGraph(projectRootDir, components, startComponent, results, cyclePath) {
   const nextComponents = getNextComponents(components, startComponent);
@@ -488,8 +542,8 @@ function isCycleGraph(projectRootDir, components, startComponent, results, cycle
 /**
  * get components which are in circuler sub graph
  * @param {string} projectRootDir - project's root path
- * @param {Object[]} components - array of components
- * @return {Object[]} - components which are in cierculer sub graph
+ * @param {object[]} components - array of components
+ * @returns {object[]} - components which are in cierculer sub graph
  */
 function getCycleGraph(projectRootDir, components) {
   const results = {};
@@ -512,8 +566,8 @@ function getCycleGraph(projectRootDir, components) {
 /**
  * check specified component's children has circuler dependency or not
  * @param {string} projectRootDir - project's root path
- * @param {Object} parentComponentID - target component's ID
- * @return {Object[]} - array of components in cycle graph
+ * @param {object} parentComponentID - target component's ID
+ * @returns {object[]} - array of components in cycle graph
  */
 async function checkComponentDependency(projectRootDir, parentComponentID) {
   const children = await getChildren(projectRootDir, parentComponentID);
@@ -527,10 +581,10 @@ async function checkComponentDependency(projectRootDir, parentComponentID) {
 
 /**
  * validate components under specified component
- * @param {string} projectRootDir - project root directory path
+ * @param {string} projectRootDir - project's root path
  * @param {string} parentID - parent component's ID string
- * @param {Object[]} report - to be stored invalid component IDs
- * @return {string []} - array of invalid component's ID
+ * @param {object[]} report - to be stored invalid component IDs
+ * @returns {string []} - array of invalid component's ID
  */
 async function recursiveValidateComponents(projectRootDir, parentID, report) {
   const children = await getChildren(projectRootDir, parentID);
@@ -580,6 +634,12 @@ async function recursiveValidateComponents(projectRootDir, parentID, report) {
   return Promise.all(promises);
 }
 
+/**
+ * validate components under start component
+ * @param {string} projectRootDir - project's root path
+ * @param {string} startComponentID - ID of start component for recursive search point
+ * @returns {object[]} - invalid component's ID, name and error message
+ */
 async function validateComponents(projectRootDir, startComponentID) {
   let parentID;
   if (typeof startComponentID !== "string") {
@@ -596,6 +656,7 @@ async function validateComponents(projectRootDir, startComponentID) {
   }
   return report;
 }
+
 module.exports = {
   validateComponents
 };

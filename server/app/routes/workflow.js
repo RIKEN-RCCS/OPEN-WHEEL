@@ -6,7 +6,7 @@
 "use strict";
 const path = require("path");
 const { projectJsonFilename } = require("../db/db");
-const { importProject } = require("../core/projectFilesOperator");
+const { readProject } = require("../core/projectFilesOperator");
 const { readComponentJson } = require("../core/componentJsonIO.js");
 
 module.exports = {
@@ -21,7 +21,7 @@ module.exports = {
   },
   post: async (req, res)=>{
     const projectRootDir = req.body.project;
-    const newProjectRootDir = await importProject(projectRootDir);
+    const newProjectRootDir = await readProject(projectRootDir);
     if (!newProjectRootDir) {
       return;
     }

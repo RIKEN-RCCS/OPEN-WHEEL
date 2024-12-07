@@ -9,14 +9,20 @@ const { getLogger } = require("../logSettings.js");
 const { getDateString } = require("../lib/utility");
 const { getSsh } = require("./sshManager.js");
 const transferrers = new Map();
+
+/**
+ * create ID string from task's property
+ * @param {object} task - task component
+ * @returns {string} - ID string
+ */
 function getKey(task) {
   return `${task.projectRootDir}-${task.remotehostID}`;
 }
 
 /**
  * submit send or recv request to SBS and wait until transfer is done
- * @param {Object} hostinfo - target host information object
- * @param {Object} task - task component
+ * @param {object} hostinfo - target host information object
+ * @param {object} task - task component
  * @param {string} direction - transfer mode "send" and "recv" are acceptable
  * @param {string[]} src - file or directories to be transferd
  * @param {string} dst - destination path
@@ -51,7 +57,7 @@ async function register(hostinfo, task, direction, src, dst, opt) {
 
 /**
  * remove all transfer class instance from DB
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} projectRootDir - project's root path
  */
 function removeTransferrers(projectRootDir) {
   const keysToRemove = Array.from(transferrers.keys()).filter((key)=>{

@@ -8,6 +8,11 @@ const { getSsh, getSshHostinfo } = require("./sshManager");
 const { cancel } = require("./executerManager.js");
 const { jobScheduler } = require("../db/db");
 const { getLogger } = require("../logSettings.js");
+
+/**
+ * cancel job on remotehost
+ * @param {object} task - task component
+ */
 async function cancelRemoteJob(task) {
   if (!task.jobID) {
     getLogger(task.projectRootDir).debug(`try to cancel ${task.name} but it have not been submitted.`);
@@ -24,14 +29,28 @@ async function cancelRemoteJob(task) {
   });
   getLogger(task.projectRootDir).debug("cacnel done", output.join());
 }
+
+/**
+ * cancel job on localhost but not implemented
+ */
 async function cancelLocalJob() {
   console.log("not implimented yet!!");
 }
+
+/**
+ * kill process which was invoked from specified task
+ * @param {object} task - task component
+ */
 async function killLocalProcess(task) {
   if (task.handler && task.handler.killed === false) {
     task.handler.kill();
   }
 }
+
+/**
+ * cancel dispatched task
+ * @param {object} task - task component
+ */
 async function killTask(task) {
   if (task.remotehostID !== "localhost") {
     if (task.useJobScheduler) {
@@ -48,6 +67,12 @@ async function killTask(task) {
     }
   }
 }
+
+/**
+ * cancel dispatched tasks
+ * @param {object[]} tasks - array of task components
+ * @returns {Promise} - resolved when all tasks are canceled
+ */
 async function cancelDispatchedTasks(tasks) {
   const p = [];
   for (const task of tasks) {
@@ -62,6 +87,12 @@ async function cancelDispatchedTasks(tasks) {
   }
   return Promise.all(p);
 }
+
+/**
+ * filter function which keep only usefull properties on client side
+ * @param {object} task - task component
+ * @returns {object} - reduced task component
+ */
 function taskStateFilter(task) {
   return {
     name: task.name,

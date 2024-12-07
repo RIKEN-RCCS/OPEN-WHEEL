@@ -11,6 +11,8 @@ const { createBulkStatusFile } = require("./execUtils");
 
 /**
  * parse output text from batch server and get return code or jobstatus code from it
+ * @param {string} outputText - output from batch server
+ * @param {RegExp} reCode - regexp to extract value from outputText
  */
 function getFirstCapture(outputText, reCode) {
   const re = new RegExp(reCode, "m");
@@ -18,6 +20,12 @@ function getFirstCapture(outputText, reCode) {
   const rt = result === null || typeof (result[1]) === "undefined" ? null : result[1];
   return rt;
 }
+
+/**
+ * parse output text from batch server and get bulkjob's status code from it
+ * @param {string} outputText - output from batch server
+ * @param {RegExp} reSubCode - regexp to extract value from outputText
+ */
 function getBulkFirstCapture(outputText, reSubCode) {
   const outputs = outputText.split("\n");
   const codeRegex = new RegExp(reSubCode, "m");
@@ -39,9 +47,9 @@ function getBulkFirstCapture(outputText, reSubCode) {
 
 /**
  * check if Job status code means failed or not
- * @param {Object} JS - jobScheduler.json info
- * @param {String} code - job status code get from status check command
- * @returns {Boolean} - true means job is failed.
+ * @param {object} JS - jobScheduler.json info
+ * @param {string} code - job status code get from status check command
+ * @returns {boolean} - true means job is failed.
  */
 function isJobFailed(JS, code) {
   const statusList = [];
@@ -56,6 +64,15 @@ function isJobFailed(JS, code) {
   }
   return statusList.includes(code);
 }
+
+/**
+ * get status code from job status command's output
+ * @param {object} JS - jobScheduler.json info
+ * @param {object} task - task component instance
+ * @param {number} statCmdRt  - status check command's return code
+ * @param {string} outputText - output from status check command
+ * @returns {number} - return code of job
+ */
 async function getStatusCode(JS, task, statCmdRt, outputText) {
   //for backward compatibility use reJobStatus if JS does not have reJobStatusCode
   const reJobStatusCode = JS.reJobStatusCode || JS.reJobStatus;
@@ -104,6 +121,13 @@ async function getStatusCode(JS, task, statCmdRt, outputText) {
   task.rt = parseInt(strRt, 10);
   return task.rt;
 }
+
+/**
+ * create request object to check job status by webAPI on fugaku
+ * @param {object} hostinfo - target host information object
+ * @param {object} task - task component instance
+ * @param {object} JS - jobScheduler.json info
+ */
 function createRequestForWebAPI(hostinfo, task, JS) {
   const baseURL = "https://api.fugaku.r-ccs.riken.jp/queue/computer";
   //TODO curlのオプションをaccessTokenを使うものに変更
@@ -122,6 +146,13 @@ function createRequestForWebAPI(hostinfo, task, JS) {
     allowEmptyOutput: JS.allowEmptyOutput
   };
 }
+
+/**
+ * create request object to check job status
+ * @param {object} hostinfo - target host information object
+ * @param {object} task - task component instance
+ * @param {object} JS - jobScheduler.json info
+ */
 function createRequest(hostinfo, task, JS) {
   return {
     cmd: task.type !== "bulkjobTask" ? JS.stat : JS.bulkstat,
@@ -138,6 +169,12 @@ function createRequest(hostinfo, task, JS) {
     allowEmptyOutput: JS.allowEmptyOutput
   };
 }
+
+/**
+ * register job to job manager
+ * @param {object} hostinfo - target host information object
+ * @param {object} task - task component instance
+ */
 function registerJob(hostinfo, task) {
   return new Promise((resolve, reject)=>{
     const JS = jobScheduler[hostinfo.jobScheduler];
@@ -154,7 +191,7 @@ function registerJob(hostinfo, task) {
     result.event.on("checked", (request)=>{
       getLogger(task.projectRootDir).debug(`${requestName} status checked ${request.checkCount}`);
       getLogger(task.projectRootDir).trace(`${requestName} status checked output:\n ${request.lastOutput}`);
-      //TODO accessTokenの更新が必要ならここに入れる(はず)ひょっとしたらfaile
+      //TODO accessTokenの更新が必要ならここに入れる
       if (request.rt !== 0) {
         statusCheckErrorCount++;
       }

@@ -25,6 +25,12 @@ function escapeRegExp(target) {
   //eslint-disable-next-line no-useless-escape
   return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
 }
+
+/**
+ * check if specified name is generally valid for filename
+ * @param {string} name - string to be checked
+ * @returns {boolean} -
+ */
 function isSane(name) {
   if (typeof name !== "string") {
     return false;
@@ -78,10 +84,11 @@ export function isValidOutputFilename(name) {
 
 /**
  * remove one entry from array
- * @param {Object[] | string[]} array - target array
- * @param {Object | string} target - element to be removed
- * @param {string} [prop]- - element's property which to be used at compare
- * @return {number} - removed element's index
+ * @param {object[] | string[]} array - target array
+ * @param {object | string} target - element to be removed
+ * @param {string[]} prop- - element's property which to be used at compare
+ * @param prop
+ * @returns {number} - removed element's index
  */
 export function removeFromArray(array, target, prop) {
   const targetIndex = array.findIndex((e)=>{
@@ -99,7 +106,7 @@ export function removeFromArray(array, target, prop) {
 /**
  * check feather given token is surrounded by { and }
  * @param {string} token - string to be checked
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isSurrounded(token) {
   return token.startsWith("{") && token.endsWith("}");
@@ -108,7 +115,7 @@ export function isSurrounded(token) {
 /**
  * remove heading '{' and trailing '}'
  * @param {string} token - string to be checked
- * @return {string} - trimed token
+ * @returns {string} - trimed token
  */
 export function trimSurrounded(token) {
   if (!isSurrounded(token)) {
@@ -120,7 +127,7 @@ export function trimSurrounded(token) {
 
 /**
  * transform grob string to array
- * @param {string} - - grob pattern
+ * @param {string} token - grob pattern
  */
 export function glob2Array(token) {
   return trimSurrounded(token).split(",");
@@ -129,7 +136,7 @@ export function glob2Array(token) {
 /**
  * construct glob pattern from array of glob patterns
  * @param {string []} tokens - array of grlob patterns
- * @return {string} - glob pattern
+ * @returns {string} - glob pattern
  */
 export function array2Glob(tokens) {
   const concatenatedString = tokens.reduce((a, c)=>{
@@ -141,8 +148,8 @@ export function array2Glob(tokens) {
 /**
  * add glob pattern to existing glob
  * @param {string} old - glob pattern
- * @param {string} add - new glob pattern to be added
- * @return {string} - combined glob pattern
+ * @param {string} added - new glob pattern to be added
+ * @returns {string} - combined glob pattern
  */
 export function addGlobPattern(old, added) {
   //for the first time
@@ -165,7 +172,7 @@ export function addGlobPattern(old, added) {
  * @param {string} glob  - glob pattern to be modified
  * @param {string} token - part of glob pattern to be removed
  * @param {number} index - position of glob pattern to be removed
- * @return {string} - new glob pattern
+ * @returns {string} - new glob pattern
  */
 export function removeGlobPattern(glob, token, index) {
   const globArray = glob2Array(glob);
@@ -181,7 +188,7 @@ export function removeGlobPattern(glob, token, index) {
  * @param {string} glob  - glob pattern to be modified
  * @param {string} token - new part of glob
  * @param {number} index - position of glob pattern to be replaced
- * @return {string} - new glob pattern
+ * @returns {string} - new glob pattern
  */
 export function updateGlobPattern(glob, token, index) {
   const globArray = glob2Array(glob);

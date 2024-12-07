@@ -8,6 +8,13 @@ const SshClientWrapper = require("ssh-client-wrapper");
 const { emitAll } = require("../handlers/commUtils.js");
 
 const db = new Map();
+
+/**
+ * check if db contains ssh object for the project
+ * @param {string} projectRootDir - project's root path
+ * @param {string} id - key string
+ * @returns {boolean} -
+ */
 function hasEntry(projectRootDir, id) {
   if (db.has(projectRootDir)) {
     return db.get(projectRootDir).has(id);
@@ -17,9 +24,9 @@ function hasEntry(projectRootDir, id) {
 
 /**
  * keep ssh instance and its setting at the time the connection was wstablished
- * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
- * @param {Object} hostinfo - one of the ssh connection setting in remotehost json
- * @param {Object} ssh -  ssh connection instance
+ * @param {string} projectRootDir - project's root path
+ * @param {object} hostinfo - one of the ssh connection setting in remotehost json
+ * @param {object} ssh -  ssh connection instance
  * @param {string} pw - password
  * @param {string} ph - passphrase
  * @param {boolean} isStorage - whether this host is used for remote storage component or not
@@ -33,8 +40,9 @@ function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage) {
 
 /**
  * get ssh instance from pool
- * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} projectRootDir - project's root path
  * @param {string} id - id value of hostinfo
+ * @returns {object} - ssh instance
  */
 function getSsh(projectRootDir, id) {
   if (!hasEntry(projectRootDir, id)) {
@@ -48,8 +56,9 @@ function getSsh(projectRootDir, id) {
 
 /**
  * get ssh setting
- * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} projectRootDir - project's root path
  * @param {string} id - id value of hostinfo
+ * @returns {object} - hostinfo object for specified ssh connection
  */
 function getSshHostinfo(projectRootDir, id) {
   if (!hasEntry(projectRootDir, id)) {
@@ -63,8 +72,9 @@ function getSshHostinfo(projectRootDir, id) {
 
 /**
  * get password
- * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} projectRootDir - project's root path
  * @param {string} id - id value of hostinfo
+ * @returns {string | Function} - password or password handler
  */
 function getSshPW(projectRootDir, id) {
   if (!hasEntry(projectRootDir, id)) {
@@ -78,8 +88,9 @@ function getSshPW(projectRootDir, id) {
 
 /**
  * get passphrase
- * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} projectRootDir - project's root path
  * @param {string} id - id value of hostinfo
+ * @returns {string | Function} - passphrase or passphrase handler
  */
 function getSshPH(projectRootDir, id) {
   if (!hasEntry(projectRootDir, id)) {
@@ -93,7 +104,7 @@ function getSshPH(projectRootDir, id) {
 
 /**
  * disconnect ssh and remove existing entry
- * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} projectRootDir - project's root path
  */
 function removeSsh(projectRootDir) {
   const target = db.get(projectRootDir);
@@ -117,6 +128,7 @@ function removeSsh(projectRootDir) {
  * ask password to client
  * @param {string} clientID - socket's ID
  * @param {string} message - text to be shown on dialog screen at client side
+ * @returns {Promise} - resolve when get password from browser, rejected if user cancel password input
  */
 function askPassword(clientID, message) {
   return new Promise((resolve, reject)=>{
@@ -133,11 +145,12 @@ function askPassword(clientID, message) {
 
 /**
  * create necessary ssh instance
- * @param {string} projectRootDir -  full path of project root directory it is used as key index of each map
+ * @param {string} projectRootDir - project's root path
  * @param {string} remoteHostName - name property in hostInfo object
- * @param {Object} hostinfo - one of the ssh connection setting in remotehost json
+ * @param {object} hostinfo - one of the ssh connection setting in remotehost json
  * @param {string} clientID - socket's ID
  * @param {boolean} isStorage - whether this host is used for remote storage component or not
+ * @returns {object} - ssh instance
  */
 async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isStorage) {
   if (hasEntry(projectRootDir, hostinfo.id)) {
