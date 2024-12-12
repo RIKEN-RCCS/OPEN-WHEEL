@@ -17,7 +17,7 @@ let db;
 let initialized = false;
 
 /**
- * open database and create tabel if not exists
+ * open database and create table if not exists
  */
 async function initialize() {
   //open the database
