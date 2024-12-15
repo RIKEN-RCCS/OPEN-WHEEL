@@ -7,8 +7,33 @@
 const path = require("path");
 const fs = require("fs-extra");
 const { createHash } = require("crypto");
-const tempdRoot = process.env.WHEEL_TEMPD || path.dirname(__dirname);
 const { getLogger } = require("../logSettings.js");
+
+/**
+ * determine tmp directory root
+ * @returns {string} - absolute path of tmp directory root
+ */
+function getTempdRoot() {
+  if (typeof process.env.WHEEL_TEMPD === "string") {
+    try {
+      const rt = fs.ensureDirSync(process.env.WHEEL_TEMPD);
+      if (typeof rt === "undefined") {
+        return path.resolve(process.env.WHEEL_TEMPD);
+      }
+    } catch (e) {
+      if (e.code === "EEXIST") {
+        return path.resolve(process.env.WHEEL_TEMPD);
+      }
+    }
+  }
+  const stats = fs.statSync("/tmp");
+  if (stats.isDirectory()) {
+    return "/tmp";
+  }
+  return path.dirname(__dirname);
+}
+
+const tempdRoot = getTempdRoot(); //must be executed only when this file requred first time
 
 /**
  * create temporary directory
