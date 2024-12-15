@@ -15,6 +15,7 @@ const { escapeRegExp } = require("../lib/utility");
  * @param {string} cwd - working directory
  * @param {string[]} args - argument list including git's sub command eg. add,commit,init... etc.
  * @param {string} rootDir - repo's root dir
+ * @returns {Promise} - resolved if specified git command is successfully finished. rejected if any error occurred.
  */
 async function gitPromise(cwd, args, rootDir) {
   return new Promise((resolve, reject)=>{
@@ -185,19 +186,46 @@ async function gitStatus(rootDir) {
  * performe git clean -df
  * @param {string} rootDir - repo's root dir
  * @param {string} filePatterns - files to be reset
+ * @returns {Promise} - resolved when git clean done
  */
 async function gitClean(rootDir, filePatterns = "") {
   return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", "--", filePatterns], rootDir);
 }
 
 /**
+ * clone rootDir to cwd
+ * @param {string} cwd - working directory
+ * @param {number} depth - clone depth for shallow clone
+ * @param {string} rootDir - repo's root dir
+ * @returns {Promise} - resolved when git clone done
+ */
+async function gitClone(cwd, depth, rootDir) {
+  const opt = ["clone", rootDir];
+  if (Number.isInteger(depth)) {
+    opt.push(`--depth=${depth}`);
+  }
+  return gitPromise(cwd, opt);
+}
+
+/**
+ * make archive from git repo
+ * @param {string} rootDir - repo's root dir
+ * @param {string} filename - arcchive filename
+ * @returns {Promise} - resolved when git archive done
+ */
+async function gitArchive(rootDir, filename) {
+  const opt = ["archive", "-o", filename, "HEAD"];
+  return gitPromise(rootDir, opt);
+}
+
+/**
  * return relative filename from repository's root directry
  * @param {string} rootDir - repo's root dir
  * @param {string} filename - filename
+ * @returns {string} - relative path of file from repo's root directory
  */
 function getRelativeFilename(rootDir, filename) {
-  //TODO filename must be checked if already absolute path or not
-  const absFilename = path.resolve(rootDir, filename);
+  const absFilename = path.isAbsolute(filename) ? filename : path.resolve(rootDir, filename);
   return path.relative(rootDir, absFilename);
 }
 
@@ -285,6 +313,8 @@ module.exports = {
   gitResetHEAD,
   gitStatus,
   gitClean,
+  gitClone,
+  gitArchive,
   gitLFSTrack,
   gitLFSUntrack,
   isLFS,
