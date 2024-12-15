@@ -442,6 +442,9 @@ async function readProject(projectRootDir) {
 async function setComponentStateR(projectRootDir, dir, state, doNotAdd = false, ignoreStates = []) {
   const filenames = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
   filenames.push(path.join(dir, componentJsonFilename));
+  if (!ignoreStates.includes(state)) {
+    ignoreStates.push(state);
+  }
   const p = filenames.map((filename)=>{
     return readJsonGreedy(filename)
       .then((component)=>{
