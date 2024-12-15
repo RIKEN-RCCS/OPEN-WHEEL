@@ -5,7 +5,6 @@
  */
 "use strict";
 const path = require("path");
-const fs = require("fs-extra");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
 const { removeSsh } = require("./sshManager");
@@ -13,7 +12,7 @@ const { removeExecuters } = require("./executerManager.js");
 const { removeTransferrers } = require("./transferManager.js");
 const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { setProjectState } = require("../core/projectFilesOperator");
-const { writeComponentJson, readComponentJson } = require("./componentJsonIO.js");
+const { writeComponentJson } = require("./componentJsonIO.js");
 const Dispatcher = require("./dispatcher");
 const { getDateString } = require("../lib/utility");
 const { getLogger } = require("../logSettings.js");
@@ -54,16 +53,10 @@ async function updateProjectState(projectRootDir, state) {
  * @param {string} projectRootDir - project's root path
  */
 async function cleanProject(projectRootDir) {
-  const { ID } = await readComponentJson(projectRootDir);
-  const viewerURLRoot = path.resolve(path.dirname(__dirname), "viewer");
-  const viewerDir = path.join(viewerURLRoot, ID);
-  if (fs.pathExists(viewerDir)) {
-    fs.remove(viewerDir);
-  }
-
   await gitResetHEAD(projectRootDir);
   await gitClean(projectRootDir);
   //project state must be updated by onCleanProject()
+  //temp dirs also removed by onCleanProject()
 };
 
 /**
