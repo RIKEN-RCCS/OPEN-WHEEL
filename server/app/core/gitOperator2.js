@@ -236,6 +236,27 @@ async function gitArchive(rootDir, filename) {
 }
 
 /**
+ * add local config
+ * @param {string} rootDir - repo's root dir
+ * @param {string} key - config key name
+ * @param {string} value - config value
+ * @param {boolean} keep - keep value if already set
+ * @returns {Promise} - resolved when git archive done
+ */
+async function gitConfig(rootDir, key, value, keep = false) {
+  const opt = ["config", "--local", key, value];
+  if (keep) {
+    try {
+      await gitPromise(rootDir, ["config", "--get", key]);
+      return;
+    } catch (e) {
+      //do nothing
+    }
+  }
+  return gitPromise(rootDir, opt);
+}
+
+/**
  * return relative filename from repository's root directry
  * @param {string} rootDir - repo's root dir
  * @param {string} filename - filename
@@ -332,6 +353,7 @@ module.exports = {
   gitClean,
   gitClone,
   gitArchive,
+  gitConfig,
   gitLFSTrack,
   gitLFSUntrack,
   isLFS,

@@ -9,7 +9,7 @@ const fs = require("fs-extra");
 const { createTempd } = require("./tempd.js");
 const { readJsonGreedy } = require("./fileUtils.js");
 const { projectJsonFilename } = require("../db/db.js");
-const { gitAdd, gitClone, gitArchive, gitCommit } = require("./gitOperator2.js");
+const { gitAdd, gitClone, gitArchive, gitCommit, gitConfig } = require("./gitOperator2.js");
 const { setComponentStateR } = require("./projectFilesOperator.js");
 
 /**
@@ -35,9 +35,15 @@ async function exportProject(projectRootDir, name = null, mail = null, memo = nu
 
   if (typeof name === "string") {
     projectJson.exporter.name = name;
+    await gitConfig(tmpProjectRootDir, "user.name", name, true);
+  } else {
+    await gitConfig(tmpProjectRootDir, "user.name", "WHEEL", true);
   }
   if (typeof mail === "string") {
     projectJson.exporter.mail = mail;
+    await gitConfig(tmpProjectRootDir, "user.email", mail, true);
+  } else {
+    await gitConfig(tmpProjectRootDir, "user.email", "wheel@example.com", true);
   }
   if (typeof memo === "string") {
     projectJson.exporter.memo = memo;
