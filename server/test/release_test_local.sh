@@ -28,7 +28,7 @@ echo '}]'
 } > ${WHEEL_CONFIG_DIR}/remotehost.json
 
 echo boot up test server
-docker compose up ${TAG_TEST_SERVER} -d --wait
+docker compose up ${TAG_TEST_SERVER} -d --wait --remove-orphans
 docker exec ${TAG_TEST_SERVER} /opt/pbs/bin/qmgr -c "set server job_history_enable=True"
 
 echo remove entry from known_hosts to avoid error if the entry already exists
