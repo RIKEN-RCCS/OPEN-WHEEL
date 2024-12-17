@@ -37,14 +37,14 @@ const tempdRoot = getTempdRoot(); //must be executed only when this file requred
 
 /**
  * create temporary directory
- * @param {string} projectRootDir - project's root path
+ * @param {string | null} projectRootDir - project's root path or null for untied temporary directory
  * @param {string} prefix - purpose for the temp dir (ex. viewer, download)
  * @returns {object} - dir: absolute path of temp dir, root: parent dir path of temp dir
  */
 async function createTempd(projectRootDir, prefix) {
   const root = path.resolve(tempdRoot, prefix);
   const hash = createHash("sha256");
-  const ID = hash.update(projectRootDir).digest("hex");
+  const ID = hash.update(projectRootDir || "wheel_tmp").digest("hex");
   const dir = path.join(root, ID);
   await fs.emptyDir(dir);
   getLogger(projectRootDir).debug(`create temporary directory ${dir}`);
@@ -53,13 +53,13 @@ async function createTempd(projectRootDir, prefix) {
 
 /**
  * remote temporary directory
- * @param {string} projectRootDir - project's root path
+ * @param {string | null} projectRootDir - project's root path or null for untied temporary directory
  * @param {string} prefix - purpose for the temp dir (ex. viewer, download)
  * @returns {Promise} - resolved after directory is removed
  */
 async function removeTempd(projectRootDir, prefix) {
   const hash = createHash("sha256");
-  const ID = hash.update(projectRootDir).digest("hex");
+  const ID = hash.update(projectRootDir || "wheel_tmp").digest("hex");
   const dir = path.resolve(tempdRoot, prefix, ID);
   getLogger(projectRootDir).debug(`remove temporary directory ${dir}`);
   return fs.remove(dir);
@@ -67,13 +67,13 @@ async function removeTempd(projectRootDir, prefix) {
 
 /**
  * re-calcurate existing temporaly directory path
- * @param {string} projectRootDir - project's root path
+ * @param {string | null} projectRootDir - project's root path or null for untied temporary directory
  * @param {string} prefix - purpose for the temp dir (ex. viewer, download)
  * @returns {string} - absolute path of temporary directory
  */
 async function getTempd(projectRootDir, prefix) {
   const hash = createHash("sha256");
-  const ID = hash.update(projectRootDir).digest("hex");
+  const ID = hash.update(projectRootDir || "wheel_tmp").digest("hex");
   return path.resolve(tempdRoot, prefix, ID);
 }
 
