@@ -30,6 +30,12 @@
           text="NEW"
         />
         <v-btn
+          :disabled="batchMode"
+          @click="dialogMode='importProject';dialogTitle = 'select where to import project archive';dialog=true"
+          prepend-icon="mdi-import"
+          text="import"
+        />
+        <v-btn
           @click="openDeleteProjectDialog(true)"
           prepend-icon="mdi-text-box-remove-outline"
           text="REMOVE FROM LIST"
@@ -41,6 +47,13 @@
           text="REMOVE"
           :disabled="selectedInTable.length === 0"
         />
+        <v-btn
+          @click="openExportProjectDialog"
+          prepend-icon="mdi-export"
+          text="export"
+          :disabled="selectedInTable.length === 0 || batchMode"
+        />
+        <v-spacer />
         <v-switch
           v-model="batchMode"
           label="BATCH MODE"
@@ -137,6 +150,7 @@
               :buttons="buttons"
               @open="openProject"
               @create="createProject"
+              @importProject="importProject"
               @cancel="closeDialog"
             />
           </v-card-actions>
@@ -168,6 +182,10 @@
       :remove-candidates="removeCandidates"
       @remove="commitRemoveProjects"
     />
+    <export-dialog
+      v-model="exportDialog"
+      :project-json="exportProject"
+    />
     <v-snackbar
       v-model="openSnackbar"
       multi-line
@@ -195,8 +213,10 @@ import Debug from "debug";
 const debug = Debug("wheel:home");
 import navDrawer from "../components/common/NavigationDrawer.vue";
 import applicationToolBar from "../components/common/applicationToolBar.vue";
+import versatileDialog from "../components/versatileDialog.vue";
 import fileBrowser from "../components/common/fileBrowserLite.vue";
 import removeConfirmDialog from "../components/common/removeConfirmDialog.vue";
+import exportDialog from "../components/exportDialog.vue";
 import buttons from "../components/common/buttons.vue";
 import { readCookie } from "../lib/utility.js";
 import SIO from "../lib/socketIOWrapper.js";
@@ -213,7 +233,9 @@ export default {
     applicationToolBar,
     fileBrowser,
     buttons,
-    removeConfirmDialog
+    removeConfirmDialog,
+    versatileDialog,
+    exportDialog
   },
   data: ()=>{
     return {
@@ -221,6 +243,7 @@ export default {
       drawer: false,
       dialog: false,
       rmDialog: false,
+      exportDialog: false,
       removeFromList: false,
       dialogMode: "default",
       selectedInTree: null,
@@ -243,7 +266,12 @@ export default {
       renameDialog: [],
       editDescriptionDialog: [],
       newVal: null,
-      edittingIndex: null
+      edittingIndex: null,
+      exportDialogButtons: [
+        { icon: "mdi-close", label: "close" }
+      ],
+      downloadURL: null,
+      isProjectArchiveReady: false
     };
   },
   watch: {
@@ -268,11 +296,15 @@ export default {
     buttons() {
       const open = { icon: "mdi-check", label: "open" };
       const create = { icon: "mdi-plus", label: "create", disabled: this.hasError };
+      const importProject = { icon: "mdi-file-upload-outline", label: "importProject" };
       const cancel = { icon: "mdi-close", label: "cancel" };
       const rt = [cancel];
       switch (this.dialogMode) {
         case "newProject":
           rt.unshift(create);
+          break;
+        case "importProject":
+          rt.unshift(importProject);
           break;
         default:
           rt.unshift(open);
@@ -285,7 +317,11 @@ export default {
     },
     hasError() {
       return this.required(this.newProjectName) !== true;
+    },
+    exportProject() {
+      return this.selectedInTable[0] || null;
     }
+
   },
   mounted: function () {
     this.pathSep = readCookie("pathSep");
@@ -335,6 +371,10 @@ export default {
       this.newProjectName = "";
       this.newProjectDescription = "";
       this.dialogTitle = "";
+    },
+    importProject() {
+      const path = `${this.selected || "."}`;
+      console.log("DEBUG: ", path);
     },
     createProject() {
       const path = `${this.selected || "."}/${this.newProjectName}`;
@@ -391,6 +431,12 @@ export default {
         });
       }
       this.renameDialog[index] = false;
+    },
+    openExportProjectDialog() {
+      if (this.exportProject === null) {
+        return;
+      }
+      this.exportDialog = true;
     },
     openDeleteProjectDialog(fromListOnly) {
       this.removeFromList = fromListOnly;
