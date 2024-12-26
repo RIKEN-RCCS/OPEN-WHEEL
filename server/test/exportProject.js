@@ -24,7 +24,7 @@ const { projectJsonFilename, componentJsonFilename } = require("../app/db/db.js"
 const { exportProject } = require("../app/core/exportProject.js");
 
 //test data
-const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
+const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "test_project.wheel");
 
 describe("#export project", function () {
