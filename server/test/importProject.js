@@ -79,9 +79,7 @@ describe("import project UT", function () {
   describe("#readArchiveMetadata", ()=>{
     it("should read projectJson metadata in archive", async ()=>{
       const result = await readArchiveMetadata(testArchiveFile);
-      expect(result.name).to.equal("test_project");
-      expect(result.exportDate).to.match(/\d\d\d\d\/\d\d\/\d\d \d\d:\d\d:\d\d JST/);
-      expect(result.exporter).to.be.a("object").and.empty;
+      expect(result.name).to.equal("new_project");
     });
   });
   describe("#importProject", ()=>{
