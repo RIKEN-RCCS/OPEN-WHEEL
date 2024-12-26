@@ -41,6 +41,8 @@ const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
 const { onCreateNewRemoteFile, onCreateNewRemoteDir, onRequestRemoteConnection, onGetRemoteFileList, onGetRemoteSNDContents, onRemoteDownload, onRenameRemoteFile, onRemoveRemoteFile } = require("./remoteFileBrowser.js");
 const { aboutWheel } = require("../core/versionInfo.js");
+const { onImportProject, onExportProject } = require("./projectArchive.js");
+
 const registerHandlers = (socket, Siofu)=>{
   //
   //read information
@@ -136,9 +138,11 @@ const registerHandlers = (socket, Siofu)=>{
   //
   //create
   socket.on("addProject", onAddProject.bind(null, socket));
+  socket.on("importProject", onImportProject.bind(null, socket.id));
   //read
   socket.on("getProjectList", onGetProjectList.bind(null, socket));
   socket.on("renameProject", onRenameProject.bind(null, socket));
+  socket.on("exportProject", onExportProject);
   //update
   socket.on("reorderProjectList", onReorderProjectList.bind(null, socket));
   //delete
