@@ -29,31 +29,34 @@ async function exportProject(projectRootDir, name = null, mail = null, memo = nu
 
   const filename = path.resolve(tmpProjectRootDir, projectJsonFilename);
   const projectJson = await readJsonGreedy(filename);
-  if (!projectJson.exporter) {
-    projectJson.exporter = {};
+  if (!projectJson.exportInfo) {
+    projectJson.exportInfo = {};
+  }
+  if (!projectJson.exportInfo.exporter) {
+    projectJson.exportInfo.exporter = {};
   }
 
   if (typeof name === "string") {
-    projectJson.exporter.name = name;
+    projectJson.exportInfo.exporter.name = name;
     await gitConfig(tmpProjectRootDir, "user.name", name, true);
   } else {
     await gitConfig(tmpProjectRootDir, "user.name", "WHEEL", true);
   }
   if (typeof mail === "string") {
-    projectJson.exporter.mail = mail;
+    projectJson.exportInfo.exporter.mail = mail;
     await gitConfig(tmpProjectRootDir, "user.email", mail, true);
   } else {
     await gitConfig(tmpProjectRootDir, "user.email", "wheel@example.com", true);
   }
   if (typeof memo === "string") {
-    projectJson.exporter.memo = memo;
+    projectJson.exportInfo.exporter.memo = memo;
   }
 
   projectJson.state = "not-started";
 
   const locale = Intl.DateTimeFormat().resolvedOptions().locale;
   const exportDate = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "long" }).format();
-  projectJson.exportDate = exportDate;
+  projectJson.exportInfo.exportDate = exportDate;
 
   await fs.writeJson(filename, projectJson, { spaces: 4 });
 
