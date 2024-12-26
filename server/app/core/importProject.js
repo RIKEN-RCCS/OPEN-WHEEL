@@ -51,7 +51,7 @@ async function readArchiveMetadata(archiveFile, keep) {
   if (!keep) {
     await fs.remove(dir);
   }
-  return { name: projectJson.name, exporter: projectJson.exporter, exportDate: projectJson.exportDate, dir };
+  return { name: projectJson.name, dir };
 }
 
 /**
@@ -120,6 +120,7 @@ async function importProject(clientID, archiveFile, parentDir) {
       const hostMap = await askHostMap(clientID, hosts);
       await rewriteHosts(src, hostMap);
     }
+    await gitCommit(src, "import project");
   } catch (e) {
     await fs.remove(src);
     throw (e);
@@ -129,6 +130,5 @@ async function importProject(clientID, archiveFile, parentDir) {
 }
 
 module.exports = {
-  readArchiveMetadata,
   importProject
 };
