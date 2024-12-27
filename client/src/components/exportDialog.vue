@@ -76,7 +76,6 @@ export default {
   methods: {
     closeDialog() {
       this.mode = "inputMetaData",
-      this.title = "input export information";
       this.newName = "";
       this.newEmail = "";
       this.newMemo = "";
