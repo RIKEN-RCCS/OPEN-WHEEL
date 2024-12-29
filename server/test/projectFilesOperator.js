@@ -9,8 +9,13 @@ const { describe, it } = require("mocha");
 const rewire = require("rewire");
 
 describe("#isSurrounded", ()=>{
-  const projectFilesOperator = rewire("../app/core/projectFilesOperator");
-  const isSurrounded = projectFilesOperator.__get__("isSurrounded");
+  let projectFilesOperator;
+  let isSurrounded;
+
+  beforeEach(()=>{
+    projectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    isSurrounded = projectFilesOperator.__get__("isSurrounded");
+  });
 
   it("should return true if the string is surrounded by curly braces", ()=>{
     expect(isSurrounded("{example}")).to.be.true;
@@ -36,5 +41,58 @@ describe("#isSurrounded", ()=>{
     expect(isSurrounded("{{example}}")).to.be.true;
     expect(isSurrounded("{example}}")).to.be.true;
     expect(isSurrounded("{{example}")).to.be.true;
+  });
+});
+
+describe("#trimSurrounded", ()=>{
+  let projectFilesOperator;
+  let trimSurrounded;
+
+  beforeEach(()=>{
+    projectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    trimSurrounded = projectFilesOperator.__get__("trimSurrounded");
+  });
+
+  it("should return the string without curly braces if it is surrounded by them", ()=>{
+    const input = "{example}";
+    const result = trimSurrounded(input);
+    expect(result).to.equal("example");
+  });
+
+  it("should return the original string if it is not surrounded by curly braces", ()=>{
+    const input = "example";
+    const result = trimSurrounded(input);
+    expect(result).to.equal("example");
+  });
+
+  it("should return the original string if only one side has a curly brace", ()=>{
+    const inputLeft = "{example";
+    const inputRight = "example}";
+    expect(trimSurrounded(inputLeft)).to.equal(inputLeft);
+    expect(trimSurrounded(inputRight)).to.equal(inputRight);
+  });
+
+  it("should return the inner content if multiple curly braces surround the string", ()=>{
+    const input = "{{{example}}}";
+    const result = trimSurrounded(input);
+    expect(result).to.equal("example}}");
+  });
+
+  it("should return the original string if it contains no curly braces", ()=>{
+    const input = "noBracesHere";
+    const result = trimSurrounded(input);
+    expect(result).to.equal("noBracesHere");
+  });
+
+  it("should handle an empty string as input", ()=>{
+    const input = "";
+    const result = trimSurrounded(input);
+    expect(result).to.equal("");
+  });
+
+  it("should handle strings with spaces correctly", ()=>{
+    const input = "{  spaced example  }";
+    const result = trimSurrounded(input);
+    expect(result).to.equal("  spaced example  ");
   });
 });
