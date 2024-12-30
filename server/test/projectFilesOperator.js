@@ -96,3 +96,49 @@ describe("#trimSurrounded", ()=>{
     expect(result).to.equal("  spaced example  ");
   });
 });
+
+describe("#glob2Array", ()=>{
+  let projectFilesOperator;
+  let glob2Array;
+
+  beforeEach(()=>{
+    projectFilesOperator = rewire("../app/core/projectFilesOperator");
+    glob2Array = projectFilesOperator.__get__("glob2Array");
+  });
+
+  it("should convert a comma-separated string into an array", ()=>{
+    const input = "file1,file2,file3";
+    const expectedOutput = ["file1", "file2", "file3"];
+    expect(glob2Array(input)).to.deep.equal(expectedOutput);
+  });
+
+  it("should handle strings surrounded by curly braces", ()=>{
+    const input = "{file1,file2,file3}";
+    const expectedOutput = ["file1", "file2", "file3"];
+    expect(glob2Array(input)).to.deep.equal(expectedOutput);
+  });
+
+  it("should return an empty array for an empty string", ()=>{
+    const input = "";
+    const expectedOutput = [""];
+    expect(glob2Array(input)).to.deep.equal(expectedOutput);
+  });
+
+  it("should handle spaces in the comma-separated list", ()=>{
+    const input = " file1 , file2 , file3 ";
+    const expectedOutput = [" file1 ", " file2 ", " file3 "];
+    expect(glob2Array(input)).to.deep.equal(expectedOutput);
+  });
+
+  it("should return the original token if it is not comma-separated", ()=>{
+    const input = "file1";
+    const expectedOutput = ["file1"];
+    expect(glob2Array(input)).to.deep.equal(expectedOutput);
+  });
+
+  it("should handle nested curly braces gracefully", ()=>{
+    const input = "{{file1,file2},file3}";
+    const expectedOutput = ["file1", "file2}", "file3"];
+    expect(glob2Array(input)).to.deep.equal(expectedOutput);
+  });
+});
