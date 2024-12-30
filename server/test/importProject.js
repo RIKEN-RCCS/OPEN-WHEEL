@@ -19,7 +19,7 @@ const sinon = require("sinon");
 //testee
 const IP = rewire("../app/core/importProject.js");
 const isEmptyDir = IP.__get__("isEmptyDir");
-const readArchiveMetadata = IP.__get__("readArchiveMetadata");
+const extractAndReadArchiveMetadata = IP.__get__("extractAndReadArchiveMetadata");
 const importProject = IP.__get__("importProject");
 const moveAndRegisterProject = IP.__get__("moveAndRegisterProject");
 
@@ -76,9 +76,9 @@ describe("import project UT", function () {
       expect(dummyProjectList[0].path).to.equal(path.resolve(testDirRoot, "dst"));
     });
   });
-  describe("#readArchiveMetadata", ()=>{
+  describe("#extractAndReadArchiveMetadata", ()=>{
     it("should read projectJson metadata in archive", async ()=>{
-      const result = await readArchiveMetadata(testArchiveFile);
+      const result = await extractAndReadArchiveMetadata(testArchiveFile);
       expect(result.name).to.equal("new_project");
     });
   });
@@ -96,21 +96,23 @@ describe("import project UT", function () {
     });
     it("should import project and add it to projectList", async ()=>{
       getHosts.onCall(0).returns([]);
-      expect(await importProject("dummyClientID", testArchiveFile, testDirRoot)).to.be.undefined;
+      expect(await importProject("dummyClientID", testArchiveFile, testDirRoot)).to.be.a("string");
       expect(getHosts).to.be.calledOnce;
       expect(askHostMap).not.to.be.called;
       expect(rewriteHosts).not.to.be.called;
+      expect(dummyProjectList[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
     });
     it("should import project and add it to projectList with host modification", async ()=>{
       const hosts = ["hoge"];
       const hostMap = { hoge: "huga" };
       getHosts.onCall(0).returns(hosts);
       askHostMap.onCall(0).returns(hostMap);
-      expect(await importProject("dummyClientID", testArchiveFile, testDirRoot)).to.be.undefined;
+      expect(await importProject("dummyClientID", testArchiveFile, testDirRoot)).to.be.a("string");
       expect(getHosts).to.be.calledOnce;
       expect(askHostMap).to.be.calledWith("dummyClientID", hosts);
       expect(rewriteHosts).to.be.calledOnce;
       expect(rewriteHosts.getCall(0).args[1]).to.deep.equal(hostMap);
+      expect(dummyProjectList[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
     });
   });
 });

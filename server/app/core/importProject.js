@@ -44,9 +44,9 @@ async function moveAndRegisterProject(src, dst) {
  * @param {boolean} keep - keep extracted files
  * @returns {object} - project name, export date, exporter
  */
-async function readArchiveMetadata(archiveFile, keep) {
+async function extractAndReadArchiveMetadata(archiveFile, keep) {
   const { dir } = await createTempd(null, "importProject");
-  await extract({ file: archiveFile, cwd: dir }, [projectJsonFilename]);
+  await extract({ strict: true, file: archiveFile, cwd: dir, strip: 1 });
   const projectJson = await readJsonGreedy(path.join(dir, projectJsonFilename));
   if (!keep) {
     await fs.remove(dir);
@@ -90,7 +90,7 @@ async function checkProjectAndComponentStatus(dir) {
  * @returns {Promise} - resolved when project archive is imported
  */
 async function importProject(clientID, archiveFile, parentDir) {
-  const { name: projectName, dir: src } = await readArchiveMetadata(archiveFile, true);
+  const { name: projectName, dir: src } = await extractAndReadArchiveMetadata(archiveFile, true);
   const projectRootDir = path.resolve(parentDir, projectName + suffix);
   if (await fs.pathExists(projectRootDir)) {
     const stats = await fs.stat(projectRootDir);
@@ -103,11 +103,11 @@ async function importProject(clientID, archiveFile, parentDir) {
       throw err;
     }
   }
-  await extract({ file: archiveFile, cwd: src });
 
   try {
     //throw execption if user cancel importiong
     const toBeFixed = await checkProjectAndComponentStatus(src);
+
     if (toBeFixed.length > 0) {
       await askRewindState(clientID, toBeFixed);
       await setComponentStateR(src);
@@ -126,7 +126,8 @@ async function importProject(clientID, archiveFile, parentDir) {
     throw (e);
   }
 
-  return moveAndRegisterProject(src, projectRootDir);
+  await moveAndRegisterProject(src, projectRootDir);
+  return projectRootDir;
 }
 
 module.exports = {
