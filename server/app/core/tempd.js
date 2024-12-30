@@ -14,23 +14,26 @@ const { getLogger } = require("../logSettings.js");
  * @returns {string} - absolute path of tmp directory root
  */
 function getTempdRoot() {
+  const fallback = path.dirname(__dirname);
+  const candidates = [];
   if (typeof process.env.WHEEL_TEMPD === "string") {
+    candidates.push(path.resolve(process.env.WHEEL_TEMPD));
+  }
+  candidates.push("/tmp/wheel");
+
+  for (const candidate of candidates) {
     try {
-      const rt = fs.ensureDirSync(process.env.WHEEL_TEMPD);
+      const rt = fs.ensureDirSync(candidate);
       if (typeof rt === "undefined") {
-        return path.resolve(process.env.WHEEL_TEMPD);
+        return candidate;
       }
     } catch (e) {
       if (e.code === "EEXIST") {
-        return path.resolve(process.env.WHEEL_TEMPD);
+        return candidate;
       }
     }
   }
-  const stats = fs.statSync("/tmp");
-  if (stats.isDirectory()) {
-    return "/tmp";
-  }
-  return path.dirname(__dirname);
+  return fallback;
 }
 
 const tempdRoot = getTempdRoot(); //must be executed only when this file requred first time
@@ -81,5 +84,6 @@ module.exports = {
   tempdRoot,
   createTempd,
   removeTempd,
-  getTempd
+  getTempd,
+  getTempdRoot
 };
