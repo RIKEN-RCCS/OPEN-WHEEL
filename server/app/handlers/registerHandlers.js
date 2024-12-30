@@ -4,8 +4,8 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const os = require("os");
 const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onCommitFiles, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } = require("./fileManager.js");
+const { onUploadFileSaved2 } = require("./fileManager2.js");
 const { onTryToConnect, onTryToConnectById } = require("./tryToConnect.js");
 const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./projectList.js");
 const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription, onUpdateProjectROStatus } = require("./projectController.js");
@@ -42,6 +42,7 @@ const { getLogger } = require("../logSettings");
 const { onCreateNewRemoteFile, onCreateNewRemoteDir, onRequestRemoteConnection, onGetRemoteFileList, onGetRemoteSNDContents, onRemoteDownload, onRenameRemoteFile, onRemoveRemoteFile } = require("./remoteFileBrowser.js");
 const { aboutWheel } = require("../core/versionInfo.js");
 const { onImportProject, onExportProject } = require("./projectArchive.js");
+const { getTempdRoot } = require("../core/tempd.js");
 
 const registerHandlers = (socket, Siofu)=>{
   //
@@ -88,12 +89,17 @@ const registerHandlers = (socket, Siofu)=>{
   ///
   const uploader = new Siofu();
   uploader.listen(socket);
-  uploader.dir = os.homedir();
+  uploader.dir = getTempdRoot();
   uploader.on("start", (event)=>{
     const projectRootDir = event.file.meta.projectRootDir;
     getLogger(projectRootDir).debug("upload request recieved", event.file.name);
   });
-  uploader.on("saved", onUploadFileSaved);
+  uploader.on("saved", (event)=>{
+    if (typeof event.file.meta.projectRootDir !== "string") {
+      return onUploadFileSaved2(event);
+    }
+    return onUploadFileSaved(event);
+  });
   uploader.on("error", (event)=>{
     const projectRootDir = event.file.meta.projectRootDir;
     getLogger(projectRootDir).error("file upload failed", event.file, event.error);

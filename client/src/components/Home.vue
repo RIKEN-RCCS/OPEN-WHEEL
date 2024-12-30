@@ -31,7 +31,7 @@
         />
         <v-btn
           :disabled="batchMode"
-          @click="dialogMode='importProject';dialogTitle = 'select where to import project archive';dialog=true"
+          @click="importDialog=true"
           prepend-icon="mdi-import"
           text="import"
         />
@@ -150,7 +150,6 @@
               :buttons="buttons"
               @open="openProject"
               @create="createProject"
-              @importProject="importProject"
               @cancel="closeDialog"
             />
           </v-card-actions>
@@ -186,6 +185,10 @@
       v-model="exportDialog"
       :project-json="exportProject"
     />
+    <import-dialog
+      v-model="importDialog"
+      @imported="forceUpdateProjectList"
+    />
     <v-snackbar
       v-model="openSnackbar"
       multi-line
@@ -217,6 +220,7 @@ import versatileDialog from "../components/versatileDialog.vue";
 import fileBrowser from "../components/common/fileBrowserLite.vue";
 import removeConfirmDialog from "../components/common/removeConfirmDialog.vue";
 import exportDialog from "../components/exportDialog.vue";
+import importDialog from "../components/importDialog.vue";
 import buttons from "../components/common/buttons.vue";
 import { readCookie } from "../lib/utility.js";
 import SIO from "../lib/socketIOWrapper.js";
@@ -235,7 +239,8 @@ export default {
     buttons,
     removeConfirmDialog,
     versatileDialog,
-    exportDialog
+    exportDialog,
+    importDialog
   },
   data: ()=>{
     return {
@@ -244,6 +249,7 @@ export default {
       dialog: false,
       rmDialog: false,
       exportDialog: false,
+      importDialog: false,
       removeFromList: false,
       dialogMode: "default",
       selectedInTree: null,
@@ -296,15 +302,11 @@ export default {
     buttons() {
       const open = { icon: "mdi-check", label: "open" };
       const create = { icon: "mdi-plus", label: "create", disabled: this.hasError };
-      const importProject = { icon: "mdi-file-upload-outline", label: "importProject" };
       const cancel = { icon: "mdi-close", label: "cancel" };
       const rt = [cancel];
       switch (this.dialogMode) {
         case "newProject":
           rt.unshift(create);
-          break;
-        case "importProject":
-          rt.unshift(importProject);
           break;
         default:
           rt.unshift(open);
@@ -371,10 +373,6 @@ export default {
       this.newProjectName = "";
       this.newProjectDescription = "";
       this.dialogTitle = "";
-    },
-    importProject() {
-      const path = `${this.selected || "."}`;
-      console.log("DEBUG: ", path);
     },
     createProject() {
       const path = `${this.selected || "."}/${this.newProjectName}`;

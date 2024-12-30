@@ -7,12 +7,13 @@
 const { exportProject } = require("../core/exportProject.js");
 const { importProject } = require("../core/importProject.js");
 
-async function onImportProject(clientID, archiveFile, parentDir, isURL, cb) {
+async function onImportProject(clientID, target, parentDir, isURL, cb) {
   if (isURL) {
-    console.log("not implemented now");
+    console.log("not implemented now", target);
+    return cb("DEBUG 1");
   }
   try {
-    const projectRootDir = await importProject(clientID, archiveFile, parentDir);
+    const projectRootDir = await importProject(clientID, target, parentDir);
     cb(projectRootDir);
   } catch (e) {
     cb(e);

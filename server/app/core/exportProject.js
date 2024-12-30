@@ -6,10 +6,11 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
+const { create } = require("tar");
 const { createTempd } = require("./tempd.js");
 const { readJsonGreedy } = require("./fileUtils.js");
 const { projectJsonFilename } = require("../db/db.js");
-const { gitAdd, gitClone, gitArchive, gitCommit, gitConfig } = require("./gitOperator2.js");
+const { gitAdd, gitClone, gitCommit, gitConfig } = require("./gitOperator2.js");
 const { setComponentStateR } = require("./projectFilesOperator.js");
 
 /**
@@ -64,7 +65,13 @@ async function exportProject(projectRootDir, name = null, mail = null, memo = nu
   await gitCommit(tmpProjectRootDir, "export project");
 
   const archiveFilename = path.join(dir, `WHEEL_project_${projectJson.name}.tgz`);
-  await gitArchive(tmpProjectRootDir, archiveFilename, projectRootDir);
+  await create({
+    z: true,
+    f: archiveFilename,
+    C: path.dirname(tmpProjectRootDir)
+  },
+  [`${projectJson.name}.wheel`]
+  );
 
   const baseURL = process.env.WHEEL_BASE_URL || "";
   const url = `${baseURL}/${path.join(path.relative(path.dirname(dir), archiveFilename))}`;
