@@ -7,15 +7,16 @@
 const { expect } = require("chai");
 const { describe, it } = require("mocha");
 const rewire = require("rewire");
+const sinon = require("sinon");
 const path = require("path");
 
 describe("#isSurrounded", ()=>{
-  let projectFilesOperator;
+  let rewireProjectFilesOperator;
   let isSurrounded;
 
   beforeEach(()=>{
-    projectFilesOperator = rewire("../app/core/projectFilesOperator.js");
-    isSurrounded = projectFilesOperator.__get__("isSurrounded");
+    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    isSurrounded = rewireProjectFilesOperator.__get__("isSurrounded");
   });
 
   it("should return true if the string is surrounded by curly braces", ()=>{
@@ -46,12 +47,12 @@ describe("#isSurrounded", ()=>{
 });
 
 describe("#trimSurrounded", ()=>{
-  let projectFilesOperator;
+  let rewireProjectFilesOperator;
   let trimSurrounded;
 
   beforeEach(()=>{
-    projectFilesOperator = rewire("../app/core/projectFilesOperator.js");
-    trimSurrounded = projectFilesOperator.__get__("trimSurrounded");
+    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    trimSurrounded = rewireProjectFilesOperator.__get__("trimSurrounded");
   });
 
   it("should return the string without curly braces if it is surrounded by them", ()=>{
@@ -99,12 +100,12 @@ describe("#trimSurrounded", ()=>{
 });
 
 describe("#glob2Array", ()=>{
-  let projectFilesOperator;
+  let rewireProjectFilesOperator;
   let glob2Array;
 
   beforeEach(()=>{
-    projectFilesOperator = rewire("../app/core/projectFilesOperator");
-    glob2Array = projectFilesOperator.__get__("glob2Array");
+    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator");
+    glob2Array = rewireProjectFilesOperator.__get__("glob2Array");
   });
 
   it("should convert a comma-separated string into an array", ()=>{
@@ -145,12 +146,12 @@ describe("#glob2Array", ()=>{
 });
 
 describe("#removeTrailingPathSep", ()=>{
-  let projectFilesOperator;
+  let rewireProjectFilesOperator;
   let removeTrailingPathSep;
 
   beforeEach(()=>{
-    projectFilesOperator = rewire("../app/core/projectFilesOperator.js");
-    removeTrailingPathSep = projectFilesOperator.__get__("removeTrailingPathSep");
+    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    removeTrailingPathSep = rewireProjectFilesOperator.__get__("removeTrailingPathSep");
   });
 
   it("should remove trailing path separator for POSIX paths", ()=>{
@@ -187,5 +188,55 @@ describe("#removeTrailingPathSep", ()=>{
     const input = `/path/to/directory///`.replace(/\//g, path.sep); //セパレータを現在の実行環境に合わせる
     const expected = `/path/to/directory`.replace(/\//g, path.sep); //入力と同様に変換後の期待値
     expect(removeTrailingPathSep(input)).to.equal(expected);
+  });
+});
+
+describe("#getProjectJson", ()=>{
+  let rewireProjectFilesOperator;
+  let getProjectJson;
+  let readJsonGreedyMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    getProjectJson = rewireProjectFilesOperator.__get__("getProjectJson");
+
+    readJsonGreedyMock = sinon.stub();
+    rewireProjectFilesOperator.__set__("readJsonGreedy", readJsonGreedyMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return the project JSON data when readJsonGreedy resolves", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = { name: "test_project", version: 2 };
+
+    readJsonGreedyMock.resolves(mockProjectJson);
+
+    const result = await getProjectJson(mockProjectRootDir);
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(
+            `${mockProjectRootDir}/prj.wheel.json`
+    )).to.be.true;
+    expect(result).to.deep.equal(mockProjectJson);
+  });
+
+  it("should throw an error when readJsonGreedy rejects", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockError = new Error("File not found");
+
+    readJsonGreedyMock.rejects(mockError);
+
+    try {
+      await getProjectJson(mockProjectRootDir);
+      throw new Error("Expected getProjectJson to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(
+            `${mockProjectRootDir}/prj.wheel.json`
+    )).to.be.true;
   });
 });
