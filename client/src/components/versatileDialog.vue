@@ -38,11 +38,12 @@
 <script>
 export default {
   name: "VersatileDialog",
+  emits: ["update:modelValue"],
   props: {
     activator: {
       required: false
     },
-    value: {
+    modelValue: {
       type: Boolean,
       required: true
     },
@@ -75,7 +76,7 @@ export default {
   computed: {
     dialog: {
       get() {
-        return this.value;
+        return this.modelValue;
       },
       set(v) {
         this.$emit("update:modelValue", v);
