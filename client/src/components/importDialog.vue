@@ -20,7 +20,7 @@
             :prepend-icon="mdi-check"
             :disabled="isReady"
             text="ok"
-            @click="importProject"
+            @click="warnDialog=true"
           />
           <v-btn
             :prepend-icon="mdi-close"
@@ -63,9 +63,14 @@
       </v-card-text>
     </v-card>
   </v-dialog>
+  <import-warning-dialog
+    v-model=warnDialog
+    @ok="importProject"
+  />
 </template>
 <script>
 import fileBrowser from "../components/common/fileBrowserLite.vue";
+import importWarningDialog from "../components/importWarningDialog.vue";
 import SIO from "../lib/socketIOWrapper.js";
 
 async function waitOnUploadDoneEvent() {
@@ -84,9 +89,12 @@ async function waitOnUploadDoneEvent() {
 export default {
   name: "ImportDialog",
   components: {
+    importWarningDialog,
     fileBrowser
   },
+  props: ["modelValue"],
   emits: [
+    "update:modelValue",
     "imported"
   ],
   data: function () {
@@ -96,11 +104,13 @@ export default {
       selectedInTree: null,
       archiveFile: null,
       archiveURL: null,
-      tab: "file"
+      tab: "file",
+      warnDialog: false
     };
   },
   methods: {
     async importProject() {
+      this.openWarning;
       const parentDir = this.selectedInTree;
       const isURL = this.tab === "url";
       let filename;

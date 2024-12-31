@@ -36,6 +36,7 @@ async function exportProject(projectRootDir, name = null, mail = null, memo = nu
   if (!projectJson.exportInfo.exporter) {
     projectJson.exportInfo.exporter = {};
   }
+  projectJson.exportInfo.notChanged = true;
 
   if (typeof name === "string") {
     projectJson.exportInfo.exporter.name = name;

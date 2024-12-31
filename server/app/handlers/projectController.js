@@ -14,7 +14,7 @@ const SBS = require("simple-batch-system");
 const { getLogger } = require("../logSettings");
 const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
-const { gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
+const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getComponentDir } = require("../core/componentJsonIO.js");
 const { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh } = require("../core/sshManager");
@@ -25,6 +25,7 @@ const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, se
 const { emitAll, emitWithPromise } = require("./commUtils.js");
 const { removeTempd, getTempd } = require("../core/tempd.js");
 const { validateComponents } = require("../core/validateComponents.js");
+const { writeJsonWrapper } = require("../lib/utility");
 const allowedOperations = require("../../../common/allowedOperations.cjs");
 
 const projectOperationQueues = new Map();
@@ -324,21 +325,28 @@ async function onRevertProject(clientID, projectRootDir) {
   ]);
 }
 async function onSaveProject(projectRootDir, ack) {
-  const { readOnly } = await getProjectJson(projectRootDir);
+  const projectJson = await getProjectJson(projectRootDir);
+  const { readOnly, state: projectState } = projectJson;
   if (readOnly) {
     getLogger(projectRootDir).error("readOnly project can not be saved", projectRootDir);
     return ack(new Error("project is read-only"));
   }
-  const projectState = await getProjectState(projectRootDir);
   if (!allowedOperations[projectState].includes("saveProject")) {
     getLogger(projectRootDir).error(projectState, "project can not be saved", projectRootDir);
     return ack(new Error(`${projectState} project is not allowed to save`));
   }
+  if (projectJson.exportInfo && projectJson.exportInfo.notChanged) {
+    projectJson.exportInfo.notChanged = false;
+  }
 
-  await setProjectState(projectRootDir, "not-started", true);
+  projectJson.state = "not-started";
+  const filename = path.resolve(projectRootDir, projectJsonFilename);
+  await writeJsonWrapper(filename, projectJson);
+  await gitAdd(projectRootDir, filename);
   await setComponentStateR(projectRootDir, projectRootDir, "not-started", false, ["finished"]);
   await gitCommit(projectRootDir);
 }
+
 async function projectOperator({ clientID, projectRootDir, ack, operation }) {
   const projectState = await getProjectState(projectRootDir);
   //ignore disallowd operation for this state
