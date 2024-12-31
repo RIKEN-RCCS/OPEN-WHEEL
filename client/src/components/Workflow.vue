@@ -351,6 +351,9 @@
         />
       </template>
     </versatile-dialog>
+    <import-warning-dialog
+      v-model="warnDialog"
+    />
   </v-app>
 </template>
 
@@ -368,6 +371,7 @@ import SIO from "../lib/socketIOWrapper.js";
 import { readCookie, state2color } from "../lib/utility.js";
 import Debug from "debug";
 import allowedOperations from "../../../common/allowedOperations.cjs";
+import importWarningDialog from "../components/importWarningDialog.vue";
 
 const debug = Debug("wheel:workflow:main");
 const isAllowed = (state, operation)=>{
@@ -386,6 +390,7 @@ export default {
     unsavedFilesDialog,
     versatileDialog,
     sourceFileUploadDialog,
+    importWarningDialog,
     passwordDialog
   },
   data: ()=>{
@@ -423,7 +428,8 @@ export default {
       validationErrorTableHeader: [
         { title: "component", value: "name", key: "component" },
         { title: "error", value: "error", key: "error" }
-      ]
+      ],
+      warnDialog: null
     };
   },
   computed: {
@@ -530,6 +536,9 @@ export default {
       this.commitProjectReadOnly(projectJson.readOnly);
       this.commitComponentPath(projectJson.componentPath);
       this.commitWaitingProjectJson(false);
+      if (this.warnDialog === null && projectJson.exportInfo && projectJson.exportInfo.notChanged) {
+        this.warnDialog = true;
+      }
     });
     SIO.onGlobal("workflow", (wf)=>{
       if (this.currentComponent !== null && wf.ID !== this.currentComponent.ID) {

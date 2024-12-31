@@ -231,7 +231,6 @@ import Debug from "debug";
 const debug = Debug("wheel:home");
 import navDrawer from "../components/common/NavigationDrawer.vue";
 import applicationToolBar from "../components/common/applicationToolBar.vue";
-import versatileDialog from "../components/versatileDialog.vue";
 import fileBrowser from "../components/common/fileBrowserLite.vue";
 import removeConfirmDialog from "../components/common/removeConfirmDialog.vue";
 import exportDialog from "../components/exportDialog.vue";
@@ -253,7 +252,6 @@ export default {
     fileBrowser,
     buttons,
     removeConfirmDialog,
-    versatileDialog,
     exportDialog,
     importDialog
   },
