@@ -417,3 +417,62 @@ describe("#getDescendantsIDs", ()=>{
     expect(getComponentDirMock.calledOnceWithExactly(mockProjectRootDir, mockID, true)).to.be.true;
   });
 });
+
+describe("#getAllComponentIDs", ()=>{
+  let rewireProjectFilesOperator;
+  let getAllComponentIDs;
+  let readJsonGreedyMock;
+
+  const mockProjectRootDir = "/mock/project/root";
+  const mockProjectJson = {
+    componentPath: {
+      component1: "./path/to/component1",
+      component2: "./path/to/component2",
+      component3: "./path/to/component3"
+    }
+  };
+  const mockFileName = path.resolve(mockProjectRootDir, "prj.wheel.json");
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    readJsonGreedyMock = sinon.stub();
+
+    rewireProjectFilesOperator.__set__("readJsonGreedy", readJsonGreedyMock);
+
+    getAllComponentIDs = rewireProjectFilesOperator.__get__("getAllComponentIDs");
+  });
+
+  it("should return all component IDs from the project JSON", async ()=>{
+    readJsonGreedyMock.resolves(mockProjectJson);
+
+    const result = await getAllComponentIDs(mockProjectRootDir);
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(mockFileName)).to.be.true;
+    expect(result).to.deep.equal(Object.keys(mockProjectJson.componentPath));
+  });
+
+  it("should throw an error if readJsonGreedy fails", async ()=>{
+    const mockError = new Error("Failed to read JSON");
+    readJsonGreedyMock.rejects(mockError);
+
+    try {
+      await getAllComponentIDs(mockProjectRootDir);
+      throw new Error("Expected getAllComponentIDs to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(mockFileName)).to.be.true;
+  });
+
+  it("should return an empty array if componentPath is not present in the JSON", async ()=>{
+    readJsonGreedyMock.resolves({
+      componentPath: {}
+    });
+
+    const result = await getAllComponentIDs(mockProjectRootDir);
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(mockFileName)).to.be.true;
+    expect(result).to.deep.equal([]);
+  });
+});
