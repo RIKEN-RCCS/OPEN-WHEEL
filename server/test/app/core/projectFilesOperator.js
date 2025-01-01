@@ -15,7 +15,7 @@ describe("#isSurrounded", ()=>{
   let isSurrounded;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
     isSurrounded = rewireProjectFilesOperator.__get__("isSurrounded");
   });
 
@@ -51,7 +51,7 @@ describe("#trimSurrounded", ()=>{
   let trimSurrounded;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
     trimSurrounded = rewireProjectFilesOperator.__get__("trimSurrounded");
   });
 
@@ -104,7 +104,7 @@ describe("#glob2Array", ()=>{
   let glob2Array;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator");
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
     glob2Array = rewireProjectFilesOperator.__get__("glob2Array");
   });
 
@@ -150,7 +150,7 @@ describe("#removeTrailingPathSep", ()=>{
   let removeTrailingPathSep;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
     removeTrailingPathSep = rewireProjectFilesOperator.__get__("removeTrailingPathSep");
   });
 
@@ -197,7 +197,7 @@ describe("#getProjectJson", ()=>{
   let readJsonGreedyMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../app/core/projectFilesOperator.js");
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
     getProjectJson = rewireProjectFilesOperator.__get__("getProjectJson");
 
     readJsonGreedyMock = sinon.stub();
@@ -238,5 +238,71 @@ describe("#getProjectJson", ()=>{
     expect(readJsonGreedyMock.calledOnceWithExactly(
             `${mockProjectRootDir}/prj.wheel.json`
     )).to.be.true;
+  });
+});
+
+describe("#writeProjectJson", ()=>{
+  let rewireProjectFilesOperator;
+  let writeProjectJson;
+  let writeJsonWrapperMock;
+  let gitAddMock;
+
+  const mockProjectRootDir = "/mock/project/root";
+  const mockProjectJson = { name: "test_project", version: 2 };
+  const mockFileName = `${mockProjectRootDir}/prj.wheel.json`;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+
+    writeJsonWrapperMock = sinon.stub();
+    gitAddMock = sinon.stub();
+
+    rewireProjectFilesOperator.__set__({
+      writeJsonWrapper: writeJsonWrapperMock,
+      gitAdd: gitAddMock
+    });
+
+    writeProjectJson = rewireProjectFilesOperator.__get__("writeProjectJson");
+  });
+
+  it("should write the JSON file and add it to git", async ()=>{
+    writeJsonWrapperMock.resolves();
+    gitAddMock.resolves();
+
+    await writeProjectJson(mockProjectRootDir, mockProjectJson);
+
+    expect(writeJsonWrapperMock.calledOnceWithExactly(mockFileName, mockProjectJson)).to.be.true;
+    expect(gitAddMock.calledOnceWithExactly(mockProjectRootDir, mockFileName)).to.be.true;
+  });
+
+  it("should throw an error if writeJsonWrapper fails", async ()=>{
+    const mockError = new Error("Failed to write JSON");
+    writeJsonWrapperMock.rejects(mockError);
+
+    try {
+      await writeProjectJson(mockProjectRootDir, mockProjectJson);
+      throw new Error("Expected writeProjectJson to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(writeJsonWrapperMock.calledOnceWithExactly(mockFileName, mockProjectJson)).to.be.true;
+    expect(gitAddMock.notCalled).to.be.true;
+  });
+
+  it("should throw an error if gitAdd fails", async ()=>{
+    const mockError = new Error("Failed to add file to git");
+    writeJsonWrapperMock.resolves();
+    gitAddMock.rejects(mockError);
+
+    try {
+      await writeProjectJson(mockProjectRootDir, mockProjectJson);
+      throw new Error("Expected writeProjectJson to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(writeJsonWrapperMock.calledOnceWithExactly(mockFileName, mockProjectJson)).to.be.true;
+    expect(gitAddMock.calledOnceWithExactly(mockProjectRootDir, mockFileName)).to.be.true;
   });
 });
