@@ -6,7 +6,6 @@ import jsdoc from "eslint-plugin-jsdoc";
 import node from "eslint-plugin-node";
 import chaiFriendly from "eslint-plugin-chai-friendly";
 import vue from "eslint-plugin-vue";
-import vuetify from "eslint-plugin-vuetify";
 import vueParser from "vue-eslint-parser";
 
 const jsdocRules = {
@@ -125,6 +124,7 @@ export default [
   js.configs.recommended,
   jsdoc.configs["flat/recommended"],
   stylistic.configs["disable-legacy"],
+  ...vue.configs["flat/recommended"],
   stylistic.configs.customize({
     indent: 2,
     quotes: "double",
@@ -148,8 +148,7 @@ export default [
       parser: vueParser
     },
     plugins: {
-      vue,
-      vuetify
+      vue
     }
   },
   {
@@ -203,6 +202,7 @@ export default [
     rules: {
       ...styleRules,
       ...jsdocRules,
+      "vue/multi-word-component-names": "off",
       "no-nested-ternary": "off",
       "no-param-reassign": "warn",
       "camelcase": [
