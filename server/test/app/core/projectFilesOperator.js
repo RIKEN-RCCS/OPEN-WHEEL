@@ -476,3 +476,55 @@ describe("#getAllComponentIDs", ()=>{
     expect(result).to.deep.equal([]);
   });
 });
+
+describe("#getSuffixNumberFromProjectName", ()=>{
+  let rewireProjectFilesOperator;
+  let getSuffixNumberFromProjectName;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    getSuffixNumberFromProjectName = rewireProjectFilesOperator.__get__("getSuffixNumberFromProjectName");
+  });
+
+  it("should return the suffix number if the project name ends with numbers", ()=>{
+    const projectName = "Project123";
+    const result = getSuffixNumberFromProjectName(projectName);
+    expect(result).to.equal("3");
+  });
+
+  it("should return 0 if the project name does not end with numbers", ()=>{
+    const projectName = "Project";
+    const result = getSuffixNumberFromProjectName(projectName);
+    expect(result).to.equal(0);
+  });
+
+  it("should return the correct suffix when the project name contains numbers but does not end with them", ()=>{
+    const projectName = "Project123abc";
+    const result = getSuffixNumberFromProjectName(projectName);
+    expect(result).to.equal(0);
+  });
+
+  it("should return 0 for an empty project name", ()=>{
+    const projectName = "";
+    const result = getSuffixNumberFromProjectName(projectName);
+    expect(result).to.equal(0);
+  });
+
+  it("should return 0 if the project name consists only of non-numeric characters", ()=>{
+    const projectName = "abcdef";
+    const result = getSuffixNumberFromProjectName(projectName);
+    expect(result).to.equal(0);
+  });
+
+  it("should return 0 if the project name consists only of spaces", ()=>{
+    const projectName = "Project123   ";
+    const result = getSuffixNumberFromProjectName(projectName);
+    expect(result).to.equal(0);
+  });
+
+  it("should handle names with leading spaces correctly", ()=>{
+    const projectName = "   Project123";
+    const result = getSuffixNumberFromProjectName(projectName);
+    expect(result).to.equal("3");
+  });
+});
