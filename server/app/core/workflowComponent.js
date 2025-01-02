@@ -314,7 +314,7 @@ class Continue extends GeneralComponent {
 /**
  * factory method for workflow component class
  * @param {string} type -  component type
- * @param {...any} args
+ * @param {...any} args - argument for constructor
  * @returns {*} - component object
  */
 function componentFactory(type, ...args) {

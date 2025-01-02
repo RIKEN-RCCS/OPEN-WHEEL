@@ -20,14 +20,15 @@
 
       <my-treeview
         :items="componentTree"
-        itemKey="ID"
+        item-key="ID"
         :get-node-icon="getNodeIcon"
-        :open-all=true
+        :open-all="true"
       >
         <template #label="{item}">
           <component-button
-              :item="item"
-              @clicked="goto(item)"
+            :type="item.type"
+            :name="item.name"
+            @clicked="goto(item)"
           />
         </template>
       </my-treeview>
@@ -36,14 +37,15 @@
       :items="pathToCurrentComponent"
     >
       <template #divider>
-        <v-icon icon="mdi-forward"/>
+        <v-icon icon="mdi-forward" />
       </template>
       <template #title="{ item }">
         <v-breadcrumbs-item
-            :disabled="false"
+          :disabled="false"
         >
           <component-button
-            :item="item"
+            :type="item.type"
+            :name="item.name"
             @clicked="goto(item)"
           />
         </v-breadcrumbs-item>

@@ -4,27 +4,39 @@
  * See License in the project root for the license information.
  */
 <template>
-  <v-list v-model:opened="open" density="compact">
-    <template v-for="item in items" :key=item[itemKey] >
+  <v-list
+    v-model:opened="open"
+    density="compact"
+  >
+    <template
+      v-for="item in items"
+      :key="item[itemKey]"
+    >
       <inner-treeview
-        :item=item
-        :load-children=loadChildren
-        :activatable=activatable
-        :open-all=openAll
-        :item-key=itemKey
+        ref="tree"
+        :item="item"
+        :load-children="loadChildren"
+        :activatable="activatable"
+        :active="lastActive"
+        :open-all="openAll"
+        :item-key="itemKey"
         :get-node-icon="getNodeIcon"
         :get-leaf-icon="getLeafIcon"
-        :active=active
-        @update:active="(e)=>{$emit('update:active', e);}"
-        ref=tree
+        @update:active="onUpdateActive"
       >
-        <template #label={item}>
-          <slot name="label" :item="item">
-            {{item.name}}
+        <template #label="{item:item2}">
+          <slot
+            name="label"
+            :item="item2"
+          >
+            {{ item.name }}
           </slot>
         </template>
-        <template #append={item}>
-          <slot name="append" :item="item"/>
+        <template #append="{item:item2}">
+          <slot
+            name="append"
+            :item="item2"
+          />
         </template>
       </inner-treeview>
     </template>
@@ -37,7 +49,7 @@ const nodeOpenIcon = "mdi-menu-down";
 const nodeCloseIcon = "mdi-menu-right";
 
 export default {
-  name: "myTreeview",
+  name: "MyTreeview",
   components: {
     innerTreeview
   },
@@ -47,7 +59,8 @@ export default {
       required: true
     },
     loadChildren: {
-      type: Function
+      type: [Function, null],
+      default: null
     },
     activatable: {
       type: Boolean,
@@ -70,10 +83,11 @@ export default {
       default: ()=>{ return ""; }
     }
   },
+  emits: ["update:active"],
   data: ()=>{
     return {
-      open: [],
-      active: []
+      lastActive: null,
+      open: []
     };
   },
   mounted() {
@@ -84,6 +98,12 @@ export default {
         .map((e)=>{
           return e[this.itemKey];
         }));
+    }
+  },
+  methods: {
+    onUpdateActive(item) {
+      this.lastActive = item;
+      this.$emit("update:active", item);
     }
   }
 };

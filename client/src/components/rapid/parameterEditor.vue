@@ -6,28 +6,30 @@
 <template>
   <div>
     <v-toolbar
-      density = compact
+      density="compact"
       title="PS config"
       color="background"
     >
       {{ filename }}
       <v-spacer />
       <v-btn
-        @click="save"
-        prepend-icon=mdi-content-save
+        prepend-icon="mdi-content-save"
         text="save PS config"
+        @click="save"
       />
     </v-toolbar>
     <target-files
       :target-files="parameterSetting.targetFiles"
       :read-only="readOnly"
-      @openNewTab="openNewTab"
+      @open-new-tab="openNewTab"
+      @add="(e)=>{console.log('DEBUG add',e);parameterSetting.targetFiles.push(e)}"
+      @del="(e)=>{console.log('DEBUG del',e);removeFromArray(parameterSetting.targetFiles, e, 'targetName')}"
     />
     <parameter
       :params="parameterSetting.params"
       :read-only="readOnly"
-      @newParamAdded="newParamAdded"
-      @openFilterEditor="$emit('openFilterEditor')"
+      @new-param-added="newParamAdded"
+      @open-filter-editor="$emit('openFilterEditor')"
     />
     <gather-scatter
       :container="parameterSetting.scatter"
@@ -66,6 +68,7 @@ import targetFiles from "../../components/rapid/targetFiles.vue";
 import gatherScatter from "../../components/rapid/gatherScatter.vue";
 import parameter from "../../components/rapid/parameter.vue";
 import Debug from "debug";
+import { removeFromArray } from "../../lib/clientUtility.js";
 const debug = Debug("wheel:workflow:textEditor:paramEditor");
 
 export default {
@@ -81,6 +84,7 @@ export default {
       required: true
     }
   },
+  emits: ["openFilterEditor", "openNewTab", "insertBraces"],
   data: function () {
     return {
       parameterSetting: {
@@ -124,6 +128,7 @@ export default {
     });
   },
   methods: {
+    removeFromArray,
     ...mapActions({
       showSnackbar: "showSnackbar"
     }),

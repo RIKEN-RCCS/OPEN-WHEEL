@@ -14,20 +14,20 @@
     >
       <template #extension>
         <v-btn
-          variant=outlined
-          @click="clearAllLog"
+          variant="outlined"
           text="clear all log"
+          @click="clearAllLog"
         />
         <v-tabs
           v-model="currentTab"
-          @update:modelValue="onChange"
+          @update:model-value="onChange"
         >
           <v-tab
             v-for="item in items"
             :key="item.id"
             :slider-color="item.unread ? 'primary' :'white'"
           >
-            <span :class="{'text-success' : item.unread }" >
+            <span :class="{'text-success' : item.unread }">
               {{ item.label }}
             </span>
           </v-tab>

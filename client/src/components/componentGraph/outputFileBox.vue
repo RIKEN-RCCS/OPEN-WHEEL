@@ -1,9 +1,18 @@
 <template>
-  <g >
-    <text-box :center=fsenderPos :text=outputFilename text-anchor="end" />
-    <fsender  :start=fsenderPos :box-height=boxHeight :component-id=componentId :output-filename=outputFilename v-if=outputFilename />
-
- </g>
+  <g>
+    <text-box
+      :center="fsenderPos"
+      :text="outputFilename"
+      text-anchor="end"
+    />
+    <fsender
+      v-if="outputFilename"
+      :start="fsenderPos"
+      :box-height="boxHeight"
+      :component-id="componentId"
+      :output-filename="outputFilename"
+    />
+  </g>
 </template>
 <script>
 "use strict";
@@ -12,7 +21,7 @@ import TextBox from "../../components/componentGraph/textBox.vue";
 import { calcFsenderPos } from "../../lib/utils.js";
 
 export default {
-  name: "outputFileBox",
+  name: "OutputFileBox",
   components: {
     Fsender,
     TextBox

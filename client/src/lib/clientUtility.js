@@ -46,7 +46,7 @@ function isSane(name) {
 
 /**
  * determin specified name is valid for inputFilename
- * @param {strint} name - name to be checked
+ * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
 export function isValidInputFilename(name) {
@@ -86,8 +86,7 @@ export function isValidOutputFilename(name) {
  * remove one entry from array
  * @param {object[] | string[]} array - target array
  * @param {object | string} target - element to be removed
- * @param {string[]} prop- - element's property which to be used at compare
- * @param prop
+ * @param {string[]} prop - element's property which to be used at compare
  * @returns {number} - removed element's index
  */
 export function removeFromArray(array, target, prop) {
@@ -106,7 +105,7 @@ export function removeFromArray(array, target, prop) {
 /**
  * check feather given token is surrounded by { and }
  * @param {string} token - string to be checked
- * @returns {boolean}
+ * @returns {boolean} -
  */
 export function isSurrounded(token) {
   return token.startsWith("{") && token.endsWith("}");

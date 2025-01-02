@@ -13,9 +13,12 @@
     @ok="uploadSourceFileDialogCallback(true)"
     @cancel="uploadSourceFileDialogCallback(false)"
   >
-    <template #message >
-      <p class="text-h2 text-center pa-4" id="droparea">
-        {{ uploadedFilename !== null ?  uploadedFilename : 'drop file here' }}
+    <template #message>
+      <p
+        id="droparea"
+        class="text-h2 text-center pa-4"
+      >
+        {{ uploadedFilename !== null ? uploadedFilename : 'drop file here' }}
       </p>
     </template>
   </versatile-dialog>
@@ -33,6 +36,7 @@ export default {
   props: {
     value: Boolean
   },
+  emits: ["update:modelValue"],
   data: ()=>{
     return {
       uploadSourceFileDialogTitle: "",
@@ -93,7 +97,7 @@ export default {
     }
     );
   },
-  beforeDestroy() {
+  beforeUnmount() {
   },
   methods: {
     openFileSelectDialog() {

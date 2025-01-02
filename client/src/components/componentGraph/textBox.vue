@@ -1,5 +1,13 @@
 <template>
-    <text :x=x :y=y :fill=color :text-anchor="textAnchor" data-cy="text-title" > {{ trancatedText }} </text>
+  <text
+    :x="x"
+    :y="y"
+    :fill="color"
+    :text-anchor="textAnchor"
+    data-cy="text-title"
+  >
+    {{ trancatedText }}
+  </text>
 </template>
 <script>
 "use strict";
@@ -32,25 +40,6 @@ export default {
       yoffset: 0
     };
   },
-  mounted() {
-    this.calcYOffset();
-  },
-  methods: {
-    calcYOffset() {
-      //never re-calcuate y offset
-      if (this.yoffset > 0) {
-        return;
-      }
-      if (!this.$el) {
-        return;
-      }
-      const { y, height } = this.$el.getBBox();
-      if (typeof y !== "number" || typeof height !== "number" || y <= 0 || height <= 0) {
-        return;
-      }
-      this.yoffset = this.center.y - (y + height / 2);
-    }
-  },
   computed: {
     trancatedText() {
       this.calcYOffset();
@@ -71,6 +60,25 @@ export default {
     y() {
       this.calcYOffset();
       return this.center.y + this.yoffset;
+    }
+  },
+  mounted() {
+    this.calcYOffset();
+  },
+  methods: {
+    calcYOffset() {
+      //never re-calcuate y offset
+      if (this.yoffset > 0) {
+        return;
+      }
+      if (!this.$el) {
+        return;
+      }
+      const { y, height } = this.$el.getBBox();
+      if (typeof y !== "number" || typeof height !== "number" || y <= 0 || height <= 0) {
+        return;
+      }
+      this.yoffset = this.center.y - (y + height / 2);
     }
   }
 };

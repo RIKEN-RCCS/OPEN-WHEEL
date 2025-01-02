@@ -27,15 +27,15 @@
         <v-spacer />
         <v-btn
           class="text-capitalize"
-          @click="discardChanges"
-          prepend-icon=mdi-alert-circle-outline
+          prepend-icon="mdi-alert-circle-outline"
           text="discard all changes"
+          @click="discardChanges"
         />
         <v-btn
           class="text-capitalize"
+          prepend-icon="mdi-close"
+          text="cancel"
           @click="closeDialog"
-          prepend-icon=mdi-close
-          text=cancel
         />
       </v-card-actions>
     </v-card>
@@ -53,6 +53,7 @@ export default {
       required: true
     }
   },
+  emits: ["closed"],
   data() {
     return {
       headers: [

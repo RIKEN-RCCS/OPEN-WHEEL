@@ -7,7 +7,7 @@
   <div>
     <v-tabs
       v-model="activeTab"
-      @update:modelValue="changeTab"
+      @update:model-value="changeTab"
     >
       <v-tab
         v-for="(file,index) of files"
@@ -24,7 +24,7 @@
             <v-tooltip location="top">
               <template #activator="{props: tooltip}">
                 <v-btn
-                  variant=plain
+                  variant="plain"
                   :ripple="false"
                 />
                 <span
@@ -50,7 +50,7 @@
         </v-menu>
         <v-btn
           small
-          icon=mdi-close
+          icon="mdi-close"
           @click.stop="save(index).then(()=>closeTab(index))"
         />
       </v-tab>
@@ -59,7 +59,7 @@
           <template #activator="{ props }">
             <v-btn
               block
-              icon=mdi-plus
+              icon="mdi-plus"
               v-bind="props"
             />
           </template>
@@ -74,9 +74,9 @@
             </v-card-text>
             <v-card-actions>
               <v-btn
-                @click="openNewTab(newFilename);closeNewFileDialog()"
                 prepend-icon="mdi-pencil-outline"
                 text="open"
+                @click="openNewTab(newFilename);closeNewFileDialog()"
               />
               <v-btn
                 prepend-icon="mdi-close"
@@ -91,7 +91,7 @@
     <v-card
       id="editor"
       grow
-      :height=editorHeight
+      :height="editorHeight"
     />
   </div>
 </template>
@@ -114,6 +114,7 @@ export default {
       required: true
     }
   },
+  emits: ["jobscript"],
   data: function () {
     return {
       newFilePrompt: false,

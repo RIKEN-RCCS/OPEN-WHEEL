@@ -10,14 +10,15 @@
       :disabled="disabled"
       small
       class="mr-2"
-      @click="$emit('edit', item)"
       icon="mdi-pencil"
       data-cy="action_row-edit-btn"
+      @click="$emit('edit', item)"
     />
     <v-icon
       v-if="canDelete"
       :disabled="disabled"
       small
+      icon="mdi-delete"
       @click="$emit('delete',item)"
       icon=mdi-delete
       data-cy="action_row-delete-btn"
@@ -28,7 +29,10 @@
 export default {
   name: "ActionRow",
   props: {
-    item: [Object, String],
+    item: {
+      type: [Object, String],
+      required: true
+    },
     canEdit: {
       type: Boolean,
       default: true
@@ -41,6 +45,7 @@ export default {
       type: Boolean,
       default: false
     }
-  }
+  },
+  emits: ["edit", "delete"]
 };
 </script>

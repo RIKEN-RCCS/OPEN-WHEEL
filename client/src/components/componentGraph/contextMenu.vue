@@ -1,12 +1,25 @@
 <template>
-  <g v-for='(menu, index) in items'>
-    <rect :x=x :y=y+index*height
-      @click.stop=onClick(menu.event)
-      :width=width :height=height fill=white :stroke-width=12 stroke="transparent"
+  <g
+    v-for="(menu, index) in items"
+    :key="index"
+  >
+    <rect
+      :x="x"
+      :y="y+index*height"
+      :width="width"
+      :height="height"
+      fill="white"
+      :stroke-width="12"
+      stroke="transparent"
+      @click.stop="onClick(menu.event)"
     />
-    <text :x=x :y=y+index*height+height/2
-      @click.stop=onClick(menu.event)
-      fill=black :text-anchor="start" >
+    <text
+      :x="x"
+      :y="y+index*height+height/2"
+      fill="black"
+      :text-anchor="start"
+      @click.stop="onClick(menu.event)"
+    >
       {{ menu.label }}
     </text>
   </g>
@@ -16,7 +29,7 @@
 
 import { boxWidth, textHeight } from "../../lib/constants.json";
 export default {
-  name: "context-menu",
+  name: "ContextMenu",
   props: {
     x: {
       required: true,
@@ -31,17 +44,17 @@ export default {
       type: Array
     }
   },
-  methods: {
-    onClick(e) {
-      console.log("DEBUG: contextmenu onClick handler called", e);
-      this.$emit(e);
-    }
-  },
   data() {
     return {
       width: boxWidth * 0.5,
       height: textHeight
     };
+  },
+  methods: {
+    onClick(e) {
+      console.log("DEBUG: contextmenu onClick handler called", e);
+      this.$emit(e);
+    }
   }
 };
 </script>

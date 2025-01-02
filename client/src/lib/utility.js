@@ -47,7 +47,7 @@ function isSane(name) {
 
 /**
  * determine specified name is valid file or directory name or not
- * @param {strint} name - name to be checked
+ * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
 export function isValidName(name) {
@@ -64,7 +64,7 @@ export function isValidName(name) {
 
 /**
  * determin specified name is valid for inputFilename
- * @param {strint} name - name to be checked
+ * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
 export function isValidInputFilename(name) {
@@ -120,7 +120,7 @@ export function getDateString(humanReadable = false, withMilliseconds = false) {
 
 /**
  * determine component can have children or not
- * @param {componeyt || string} target - component type of component itself
+ * @param {object | string} target - component type of component or itself
  * @returns {boolean} - if true, specified component can have children
  */
 export function isContainer(target) {

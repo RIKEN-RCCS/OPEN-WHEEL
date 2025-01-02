@@ -8,16 +8,16 @@
     v-model="openDialog"
     max-width="60vw"
     title="IMPORTED PROJECT WARNING"
-    @ok=ok
-    @cancel=cancel
+    @ok="ok"
+    @cancel="cancel"
   >
-  <template #message>
-    <v-alert
-      type="warning"
-      :text=importWarningMessage
-      class="multi-line"
-    />
-  </template>
+    <template #message>
+      <v-alert
+        type="warning"
+        :text="importWarningMessage"
+        class="multi-line"
+      />
+    </template>
   </versatile-dialog>
 </template>
 <script>
@@ -28,7 +28,12 @@ export default {
   components: {
     versatileDialog
   },
-  props: ["modelValue"],
+  props: {
+    modelValue: {
+      type: Boolean,
+      required: true
+    }
+  },
   emits: [
     "update:modelValue",
     "ok"
@@ -41,15 +46,6 @@ export default {
   Before executing the project, please check the shell scripts set in all task, if, and while components and the values that can be rewritten in the parameter settings of the PS component.`
     };
   },
-  methods: {
-    ok() {
-      this.openDialog = false;
-      this.$emit("ok");
-    },
-    cancel() {
-      this.openDialog = false;
-    }
-  },
   computed: {
     openDialog: {
       get() {
@@ -58,6 +54,15 @@ export default {
       set(v) {
         this.$emit("update:modelValue", v);
       }
+    }
+  },
+  methods: {
+    ok() {
+      this.openDialog = false;
+      this.$emit("ok");
+    },
+    cancel() {
+      this.openDialog = false;
     }
   }
 };

@@ -11,8 +11,8 @@
     />
     <application-tool-bar
       title="workflow"
-      @navIconClick="drawer=!drawer"
       :base-url="baseURL"
+      @nav-icon-click="drawer=!drawer"
     >
       <template #append>
       <span
@@ -47,10 +47,13 @@
           v-model="mode"
           mandatory
         >
-          <v-tooltip text="graph view" location="bottom">
+          <v-tooltip
+            text="graph view"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 replace
                 :to="{name: 'graph' }"
                 icon="mdi-sitemap"
@@ -59,10 +62,13 @@
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="list view" location="bottom">
+          <v-tooltip
+            text="list view"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 replace
                 :to="{name: 'list' }"
                 v-bind="props"
@@ -70,10 +76,13 @@
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="text editor" location="bottom">
+          <v-tooltip
+            text="text editor"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 replace
                 :disabled="selectedComponent === null || selectedFile === null"
                 :to="{name: 'editor' }"
@@ -86,22 +95,28 @@
         </v-btn-toggle>
         <v-spacer />
         <v-card>
-          <v-tooltip text="run project" location=bottom>
+          <v-tooltip
+            text="run project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 :disabled="! runProjectAllowed"
                 v-bind="props"
-                @click="emitProjectOperation('runProject')"
                 icon="mdi-play"
                 data-cy="workflow-play-btn"
+                @click="emitProjectOperation('runProject')"
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="stop project" location="bottom">
+          <v-tooltip
+            text="stop project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 icon="mdi-stop"
                 :disabled="! stopProjectAllowed"
                 v-bind="props"
@@ -109,77 +124,94 @@
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="cleanup project" location=bottom>
+          <v-tooltip
+            text="cleanup project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 icon="mdi-restore"
                 :disabled="! cleanProjectAllowed"
                 v-bind="props"
                 @click="openProjectOperationComfirmationDialog('cleanProject')"
-              >
-              </v-btn>
+              />
             </template>
           </v-tooltip>
         </v-card>
 
         <v-spacer />
-        <v-tooltip text="open viewer screen" location=bottom>
+        <v-tooltip
+          text="open viewer screen"
+          location="bottom"
+        >
           <template #activator="{ props }">
             <v-btn
               v-bind="props"
               :disabled="viewerDataDir === null"
-              @click="openViewerScreen"
               icon="mdi-image-multiple-outline"
               data-cy="workflow-open_viewer_screen-btn"
+              @click="openViewerScreen"
             />
           </template>
         </v-tooltip>
         <v-spacer />
         <v-card>
-          <v-tooltip text="force edit" location="bottom">
+          <v-tooltip
+            text="force edit"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                icon=mdi-pencil-lock-outline
                 v-if="readOnly"
-                rounded=0
-                variant=outlined
+                icon="mdi-pencil-lock-outline"
+                rounded="0"
+                variant="outlined"
                 v-bind="props"
                 :style="{backgroundColor : readOnlyColor}"
                 @click="forceEditDialog=true"
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="validation check" location="bottom">
+          <v-tooltip
+            text="validation check"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
-                rounded=0
+                variant="outlined"
+                rounded="0"
                 :disabled="! checkProjectAllowed"
                 v-bind="props"
-                @click="checkComponents"
                 icon="mdi-check-outline"
+                @click="checkComponents"
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="save project" location="bottom">
+          <v-tooltip
+            text="save project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
-                rounded=0
+                variant="outlined"
+                rounded="0"
                 :disabled="! saveProjectAllowed"
                 v-bind="props"
-                @click="emitProjectOperation('saveProject')"
                 icon="mdi-content-save"
                 data-cy="workflow-save-text"
+                @click="emitProjectOperation('saveProject')"
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="revert project" location="bottom">
+          <v-tooltip
+            text="revert project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                rounded=0
-                variant=outlined
+                rounded="0"
+                variant="outlined"
                 :disabled="! revertProjectAllowed"
                 v-bind="props"
                 icon="mdi-folder-refresh-outline"
@@ -201,8 +233,8 @@
         no-gutters
       >
         <v-btn
-          @click="showLogScreen=!showLogScreen"
           :icon="`mdi-triangle-outline ${showLogScreen? '':'mdi-rotate-180'}`"
+          @click="showLogScreen=!showLogScreen"
         />
         <v-col
           cols="12"
@@ -217,7 +249,7 @@
       <v-snackbar
         v-model="openSnackbar"
         multi-line
-        :timeout=snackbarTimeout
+        :timeout="snackbarTimeout"
         centered
         variant="outlined"
       >
@@ -226,8 +258,8 @@
           <v-btn
             class="justify-end"
             variant="outlined"
-            @click="closeSnackbar"
             text="Close"
+            @click="closeSnackbar"
           />
         </template>
       </v-snackbar>
@@ -263,7 +295,7 @@
       <template #message>
         <v-textarea
           v-model="projectDescription"
-          variant=outlined
+          variant="outlined"
         />
       </template>
     </versatile-dialog>
@@ -278,8 +310,8 @@
     <versatile-dialog
       v-model="dialog"
       max-width="50vw"
-      :title=dialogTitle
-      :message=dialogMessage
+      :title="dialogTitle"
+      :message="dialogMessage"
       @ok="confirmed();dialog=false"
       @cancel="dialog=false"
     />
@@ -290,7 +322,7 @@
       @ok="selectSourceFileDialogCallback(true)"
       @cancel="selectSourceFileDialogCallback(false)"
     >
-      <template slot="message">
+      <template #message>
         <v-data-table
           v-model="selectedSourceFilenames"
           :items="sourceFileCandidates"
@@ -341,7 +373,7 @@
           variant="outlined"
           hide-details
           single-line
-        ></v-text-field>
+        />
         <v-data-table
           v-model:sort-by="validationErrorsSortBy"
           :items="validationErrors"

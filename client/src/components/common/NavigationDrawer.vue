@@ -11,19 +11,19 @@
   >
     <v-list>
       <v-btn
-        prepend-icon=mdi-cog-outline
+        prepend-icon="mdi-cog-outline"
         :href="remotehostURL"
         target="_blank"
-        variant=text
+        variant="text"
         class="text-capitalize"
         text="Remotehost editor"
         data-cy="navigation-remote_host_editor-btn"
       />
       <v-btn
-        prepend-icon=mdi-help-circle-outline
+        prepend-icon="mdi-help-circle-outline"
         href="https://riken-rccs.github.io/OPEN-WHEEL"
         target="_blank"
-        variant=text
+        variant="text"
         class="text-capitalize"
         text="User guide"
         data-cy="navigation-user_guide_editor-btn"
@@ -38,15 +38,21 @@ export default {
   name: "NavDrawer",
   props: {
     value: Boolean,
-    baseUrl: String
+    baseUrl: {
+      type: String,
+      default: "."
+    }
   },
+  emits: [
+    "update:modelValue"
+  ],
   computed: {
     ...mapState(["readOnly"]),
     readOnlyColor() {
       return state2color(`${this.readOnly ? "paused" : ""}`);
     },
     remotehostURL() {
-      return `${this.baseUrl || "."}/remotehost`;
+      return `${this.baseUrl}/remotehost`;
     },
     drawer: {
       get() {

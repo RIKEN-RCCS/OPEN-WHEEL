@@ -9,9 +9,9 @@
     :items="items"
     :load-children="getChildren"
     activatable
-    @update:active="onUpdateActive"
     :get-node-icon="getNodeIcon"
     :get-leaf-icon="getLeafIcon"
+    @update:active="onUpdateActive"
   />
 </template>
 <script>
@@ -48,6 +48,7 @@ export default {
     requestRoot: { type: String, default: undefined },
     mode: { type: String, default: "dirWithProjectJson" }
   },
+  emits: ["update"],
   data: function () {
     return {
       root: null,

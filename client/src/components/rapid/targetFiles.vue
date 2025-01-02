@@ -6,7 +6,7 @@
 
 <template>
   <div>
-    <v-card >
+    <v-card>
       <v-card-title>
         targetFiles
         <v-row
@@ -15,16 +15,16 @@
           <v-btn
             class="text-capitalize"
             :disabled="readOnly"
-            @click="openDialog(null)"
-            prepend-icon=mdi-plus
+            prepend-icon="mdi-plus"
             text="add new target file"
             data-cy="target_files-add_target_file-btn"
+            @click="openDialog(null)"
           />
         </v-row>
       </v-card-title>
       <v-card-text>
         <v-data-table
-          density=compact
+          density="compact"
           :headers="[{ key: 'targetName', title: 'filename', sortable: true },
                      { key: 'targetNode', title: 'component', sortable: true },
                      { key: 'action', title: 'Actions', sortable: false }]"
@@ -68,19 +68,19 @@
         <v-card-actions>
           <v-spacer />
           <v-btn
-            variant=text
-            @click="commitTargetFileChange"
+            variant="text"
             prepend-icon="mdi-check"
             :disabled="hasError"
             text="OK"
             data-cy="target_files-ok-btn"
+            @click="commitTargetFileChange"
           />
           <v-btn
-            variant=text
-            @click="closeAndResetDialog"
+            variant="text"
             prepend-icon="mdi-cancel"
             text="cancel"
             data-cy="target_files-cancel-btn"
+            @click="closeAndResetDialog"
           />
         </v-card-actions>
       </v-card>
@@ -90,7 +90,6 @@
 <script>
 import { mapState, mapGetters } from "vuex";
 import { tableFooterProps } from "../../lib/rapid2Util.js";
-import { removeFromArray } from "../../lib/clientUtility.js";
 import actionRow from "../../components/common/actionRow.vue";
 import lowerComponentTree from "../../components/lowerComponentTree.vue";
 import { required } from "../../lib/validationRules.js";
@@ -111,6 +110,7 @@ export default {
       required: true
     }
   },
+  emits: ["openNewTab", "add", "del"],
   data() {
     return {
       targetFileDialog: false,
@@ -157,7 +157,7 @@ export default {
       this.targetFileDialog = true;
     },
     deleteItem(item) {
-      removeFromArray(this.targetFiles, item, "targetName");
+      this.$emit("del", item);
     },
     closeAndResetDialog() {
       this.currentItem = null;
@@ -211,7 +211,7 @@ export default {
         return this.compareTargetFile(e, newTarget);
       });
       if (index === -1) {
-        this.targetFiles.push(newTarget);
+        this.$emit("add", newTarget);
         const targetComponentID = newTarget.targetNode || this.selectedComponent.ID;
         const targetComponentDir = `${this.projectRootDir}${this.pathSep}${this.componentPath[targetComponentID]}`;
         this.$emit("openNewTab", this.newTargetFilename, targetComponentDir);

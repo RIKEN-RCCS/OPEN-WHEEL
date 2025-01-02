@@ -152,7 +152,7 @@ export default [
     }
   },
   {
-    files: ["server/app/**/*.js", "server/bin/*.js"],
+    files: ["server/app/**/*.js", "server/bin/*.js", "common/*.cjs"],
     plugins: {
       node
     },
@@ -203,6 +203,10 @@ export default [
       ...styleRules,
       ...jsdocRules,
       "vue/multi-word-component-names": "off",
+      "vue/valid-v-slot": ["error", {
+        allowModifiers: true
+      }],
+      "vue/require-explicit-emits": "error",
       "no-nested-ternary": "off",
       "no-param-reassign": "warn",
       "camelcase": [

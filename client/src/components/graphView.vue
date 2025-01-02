@@ -9,9 +9,9 @@
     @dragenter.prevent
   >
     <component-graph
-      @componentRightClick=onComponentRightClick
-      @connectorRightClick=onConnectorRightClick
-      @vconnectorRightClick=onVconnectorRightClick
+      @component-right-click="onComponentRightClick"
+      @connector-right-click="onConnectorRightClick"
+      @vconnector-right-click="onVconnectorRightClick"
     />
   </div>
 </template>
@@ -30,7 +30,7 @@ export default {
     this.fit();
     window.addEventListener("resize", this.fit.bind(this));
   },
-  beforeDestroy: function () {
+  beforeUnmount: function () {
     window.removeEventListener("resize", this.fit.bind(this));
   },
   methods: {
