@@ -4,49 +4,57 @@
  * See License in the project root for the license information.
  */
 <template>
-    <v-app-bar >
-      <template #prepend>
-        <a :href="homeURL">
-        <v-img height=72px width=180px :src="imgLogo" alt="wheel title logo"/>
-      </a>
-      </template>
-      <v-app-bar-title
-        class="text-lowercase text-decoration-none text-h5 white--text"
-      >
-        {{ title }}
-      </v-app-bar-title>
-      <slot name="append" />
-      <template #append>
-        <v-app-bar-nav-icon
-          @click="$emit('navIconClick')"
+  <v-app-bar>
+    <template #prepend>
+      <a :href="homeURL">
+        <v-img
+          height="72px"
+          width="180px"
+          :src="imgLogo"
+          alt="wheel title logo"
         />
-      </template>
-      <template #extension>
-        <slot name=extension />
-      </template >
-    </v-app-bar>
+      </a>
+    </template>
+    <v-app-bar-title
+      class="text-lowercase text-decoration-none text-h5 white--text"
+    >
+      {{ title }}
+    </v-app-bar-title>
+    <slot name="append" />
+    <template #append>
+      <v-app-bar-nav-icon
+        @click="$emit('navIconClick')"
+      />
+    </template>
+    <template #extension>
+      <slot name="extension" />
+    </template>
+  </v-app-bar>
 </template>
 
 <script>
 import imgLogo from "../../assets/wheel_logomark.png";
 export default {
-  data: ()=>{
-    return {
-      imgLogo
-    };
-  },
   props: {
     title: {
       type: String,
       required: true
     },
-    baseUrl: String
+    baseUrl: {
+      type: String,
+      default: "."
+    }
+  },
+  emits: ["navIconClick"],
+  data: ()=>{
+    return {
+      imgLogo
+    };
   },
   computed: {
     homeURL() {
-      return `${this.baseUrl || "."}/home`;
+      return `${this.baseUrl}/home`;
     }
-  },
-  emits: ["navIconClick"]
+  }
 };
 </script>

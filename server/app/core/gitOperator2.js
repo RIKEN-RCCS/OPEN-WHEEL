@@ -84,7 +84,7 @@ async function gitInit(rootDir, user, mail) {
  * commit already staged(indexed) files
  * @param {string} rootDir - repo's root dir
  * @param {string} message - commmit message
- * @param additionalOption
+ * @param {string[]} additionalOption - additional option for git commit
  */
 async function gitCommit(rootDir, message = "save project", additionalOption = []) {
   return gitPromise(rootDir, ["commit", "-m", `"${message}"`, ...additionalOption], rootDir)

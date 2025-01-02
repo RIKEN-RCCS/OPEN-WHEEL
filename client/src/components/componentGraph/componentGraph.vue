@@ -1,78 +1,90 @@
 <template>
-  <svg :width=canvasWidth :height=canvasHeight xxmlns="http://www.w3.org/2000/svg" fill=black>
-    <rect x=0 y=0
-      :width=canvasWidth :height=canvasHeight fill="black"
+  <svg
+    :width="canvasWidth"
+    :height="canvasHeight"
+    xxmlns="http://www.w3.org/2000/svg"
+    fill="black"
+  >
+    <rect
+      x="0"
+      y="0"
+      :width="canvasWidth"
+      :height="canvasHeight"
+      fill="black"
       @click.stop="commitSelectedComponent(null);closeContextMenus();"
     />
-    <g v-if="currentComponent !== null" >
+    <g v-if="currentComponent !== null">
       <vconnector
         v-for="item in linkGraph"
-        :color=item.color
-        :start=item.srcPos
-        :end=item.dstPos
-        :key=item.key
-        @openContextMenu="(e)=>{onVconnectorRightClick(e, item)}"
+        :key="item.key"
+        :color="item.color"
+        :start="item.srcPos"
+        :end="item.dstPos"
+        @open-context-menu="(e)=>{onVconnectorRightClick(e, item)}"
       />
       <connector
         v-for="item in fileLinkGraph"
-        :color=item.color
-        :start=item.srcPos
-        :end=item.dstPos
         :key="item.key"
-        :box-height=item.boxHeight
-        @openContextMenu="(e)=>{onConnectorRightClick(e, item)}"
+        :color="item.color"
+        :start="item.srcPos"
+        :end="item.dstPos"
+        :box-height="item.boxHeight"
+        @open-context-menu="(e)=>{onConnectorRightClick(e, item)}"
       />
       <wheel-component
         v-for="(componentData, index) in currentComponent.descendants"
-        :component-data=componentData
+        :key="index"
+        :component-data="componentData"
         :is-selected="selectedComponent !==null && componentData.ID === selectedComponent.ID"
         :is-invalid="componentData.isInvalid || false"
         @drag="updatePosition(index, $event)"
         @dragend="commitNewPosition(index, $event)"
-        @chdir=onChdir
-        @addFileLink=onAddFileLink
-        @removeFileLink=onRemoveFileLink
-        @addLink=onAddLink
-        @removeLink=onRemoveLink
-        @openContextMenu="(e)=>{onComponentRightClick(e, componentData, index)}"
+        @chdir="onChdir"
+        @add-file-link="onAddFileLink"
+        @remove-file-link="onRemoveFileLink"
+        @add-link="onAddLink"
+        @remove-link="onRemoveLink"
+        @open-context-menu="(e)=>{onComponentRightClick(e, componentData, index)}"
       />
       <input-file-box
         v-for="(parentOutputFile ,index) in currentComponent.outputFiles"
-        :index=index
+        :key="index"
+        :index="index"
         :center="parentOutputFilePos"
-        :component-id=currentComponent.ID
-        :input-filename=parentOutputFile.name
-        @addFileLink=onAddFileLinkToParent
-        @removeFileLink=onRemoveFileLinkToParent
+        :component-id="currentComponent.ID"
+        :input-filename="parentOutputFile.name"
+        @add-file-link="onAddFileLinkToParent"
+        @remove-file-link="onRemoveFileLinkToParent"
       />
       <output-file-box
         v-for="(parentInputFile,index) in currentComponent.inputFiles"
+        :key="index"
         :center="parentInputFilePos"
-        :index=index
-        :component-id=currentComponent.ID
-        :output-filename=parentInputFile.name
-        :box-height=0
+        :index="index"
+        :component-id="currentComponent.ID"
+        :output-filename="parentInputFile.name"
+        :box-height="0"
       />
       <context-menu
         v-if="openComponentContextMenu"
         :x="menuX"
         :y="menuY"
-        :items=componentContextMenuItems
-        @delete=deleteComponent
+        :items="componentContextMenuItems"
+        @delete="deleteComponent"
       />
       <context-menu
         v-if="openConnectorContextMenu"
         :x="menuX"
         :y="menuY"
-        :items=connectorContextMenuItems
-        @delete=deleteConnector
+        :items="connectorContextMenuItems"
+        @delete="deleteConnector"
       />
       <context-menu
         v-if="openVconnectorContextMenu"
         :x="menuX"
         :y="menuY"
-        :items=vconnectorContextMenuItems
-        @delete=deleteVconnector
+        :items="vconnectorContextMenuItems"
+        @delete="deleteVconnector"
       />
     </g>
   </svg>
@@ -95,7 +107,7 @@ import Debug from "debug";
 const debug = Debug("wheel:workflow:componentGraph");
 
 export default {
-  name: "componentGraph",
+  name: "ComponentGraph",
   components: {
     WheelComponent,
     InputFileBox,
@@ -124,151 +136,6 @@ export default {
         { label: "delete", event: "delete" }
       ]
     };
-  },
-  methods: {
-    deleteComponent() {
-      if (this.readOnly) {
-        debug("delete component called but this project is not read-only for now");
-        return;
-      }
-      SIO.emitGlobal("removeNode", this.projectRootDir, this.targetComponent.ID, this.currentComponent.ID, (rt)=>{
-        if (!rt) {
-          return;
-        }
-        this.commitSelectedComponent(null);
-        //update componentTree
-        SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
-      });
-      this.closeContextMenus();
-    },
-    deleteConnector() {
-      console.log("deleteConnector called", this.targetConnector);
-      if (!this.readOnly) {
-        debug("delete link called but this project is read-only for now");
-        return;
-      }
-      SIO.emitGlobal("removeFileLink",
-        this.projectRootDir,
-        this.targetConnector.src,
-        this.targetConnector.srcName,
-        this.targetConnector.dst,
-        this.targetConnector.dstName,
-        this.currentComponent.ID,
-        (rt)=>{
-          if (!rt) {
-            debug("removeFileLink failed", rt);
-          }
-        });
-      this.closeContextMenus();
-    },
-    deleteVconnector() {
-      console.log("deleteVconnector called", this.targetVconnector);
-      if (!this.readOnly) {
-        debug("delete file link called but this project is read-only for now");
-        return;
-      }
-
-      SIO.emitGlobal("removeLink",
-        this.projectRootDir,
-        this.targetVconnector.src,
-        this.targetVconnector.dst,
-        this.targetVconnector.isElse,
-        this.currentComponent.ID,
-        (rt)=>{
-          if (!rt) {
-            debug("removeLink failed", rt);
-          }
-        });
-      this.closeContextMenus();
-    },
-    openContextMenu(event, label) {
-      this.menuX = event.offsetX;
-      this.menuY = event.offsetY;
-      if (label === "component") {
-        this.openComponentContextMenu = true;
-      } else if (label === "connector") {
-        this.openConnectorContextMenu = true;
-      } else if (label === "vconnector") {
-        this.openVconnectorContextMenu = true;
-      }
-    },
-    closeContextMenus() {
-      this.openComponentContextMenu = false;
-      this.openConnectorContextMenu = false;
-      this.openVconnectorContextMenu = false;
-    },
-    onComponentRightClick(event, component) {
-      this.targetComponent = component;
-      this.openContextMenu(event, "component");
-    },
-    onConnectorRightClick(event, item) {
-      this.targetConnector = item;
-      this.openContextMenu(event, "connector");
-    },
-    onVconnectorRightClick(event, item) {
-      this.targetVconnector = item;
-      this.openContextMenu(event, "vconnector");
-    },
-    ...mapActions({ commitSelectedComponent: "selectedComponent" }),
-    updatePosition(index, event) {
-      this.currentComponent.descendants[index].pos.x = event.newX;
-      this.currentComponent.descendants[index].pos.y = event.newY;
-    },
-    commitNewPosition(index) {
-      const ID = this.currentComponent.descendants[index].ID;
-      const pos = this.currentComponent.descendants[index].pos;
-      if (this.readOnly) {
-        debug("component is moved but this project is read-only for now");
-        return;
-      }
-      SIO.emitGlobal("updateComponentPos", this.projectRootDir, ID, pos, this.currentComponent.ID, SIO.generalCallback);
-    },
-    onChdir(componentID, componentType) {
-      if (!isContainer(componentType)) {
-        return;
-      }
-      SIO.emitGlobal("getWorkflow", this.projectRootDir, componentID, SIO.generalCallback);
-    },
-    onAddFileLinkToParent(srcNode, srcName, inputFilename) {
-      this.onAddFileLink(srcNode, srcName, this.currentComponent.ID, inputFilename);
-    },
-    onRemoveFileLinkToParent(inputFilename) {
-      this.onRemoveFileLink(this.currentComponent.ID, inputFilename, this.currentComponent.parent, true);
-    },
-    onAddFileLink(srcNode, srcName, dstNode, dstName) {
-      if (this.readOnly) {
-        debug("file link is added but this project is read-only for now");
-        return;
-      }
-      SIO.emitGlobal("addFileLink", this.projectRootDir,
-        srcNode, srcName, dstNode, dstName,
-        this.currentComponent.ID, SIO.generalCallback);
-    },
-    onRemoveFileLink(componentId, inputFilename, fromChildren) {
-      if (this.readOnly) {
-        debug("file link is removed but this project is read-only for now");
-        return;
-      }
-      SIO.emitGlobal("removeAllFileLink", this.projectRootDir,
-        componentId, inputFilename, fromChildren,
-        this.currentComponent.ID, SIO.generalCallback);
-    },
-    onAddLink(src, dst, isElse) {
-      if (this.readOnly) {
-        debug("link is added but this project is read-only for now");
-        return;
-      }
-      SIO.emitGlobal("addLink", this.projectRootDir, src, dst, isElse,
-        this.currentComponent.ID, SIO.generalCallback);
-    },
-    onRemoveLink(componentId) {
-      if (this.readOnly) {
-        debug("link is removed but this project is read-only for now");
-        return;
-      }
-      SIO.emitGlobal("removeAllLink", this.projectRootDir,
-        componentId, this.currentComponent.ID, SIO.generalCallback);
-    }
   },
   computed: {
     ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly"]),
@@ -419,6 +286,151 @@ export default {
     },
     parentInputFilePos() {
       return { x: 56, y: textHeight };
+    }
+  },
+  methods: {
+    deleteComponent() {
+      if (this.readOnly) {
+        debug("delete component called but this project is not read-only for now");
+        return;
+      }
+      SIO.emitGlobal("removeNode", this.projectRootDir, this.targetComponent.ID, this.currentComponent.ID, (rt)=>{
+        if (!rt) {
+          return;
+        }
+        this.commitSelectedComponent(null);
+        //update componentTree
+        SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
+      });
+      this.closeContextMenus();
+    },
+    deleteConnector() {
+      console.log("deleteConnector called", this.targetConnector);
+      if (!this.readOnly) {
+        debug("delete link called but this project is read-only for now");
+        return;
+      }
+      SIO.emitGlobal("removeFileLink",
+        this.projectRootDir,
+        this.targetConnector.src,
+        this.targetConnector.srcName,
+        this.targetConnector.dst,
+        this.targetConnector.dstName,
+        this.currentComponent.ID,
+        (rt)=>{
+          if (!rt) {
+            debug("removeFileLink failed", rt);
+          }
+        });
+      this.closeContextMenus();
+    },
+    deleteVconnector() {
+      console.log("deleteVconnector called", this.targetVconnector);
+      if (!this.readOnly) {
+        debug("delete file link called but this project is read-only for now");
+        return;
+      }
+
+      SIO.emitGlobal("removeLink",
+        this.projectRootDir,
+        this.targetVconnector.src,
+        this.targetVconnector.dst,
+        this.targetVconnector.isElse,
+        this.currentComponent.ID,
+        (rt)=>{
+          if (!rt) {
+            debug("removeLink failed", rt);
+          }
+        });
+      this.closeContextMenus();
+    },
+    openContextMenu(event, label) {
+      this.menuX = event.offsetX;
+      this.menuY = event.offsetY;
+      if (label === "component") {
+        this.openComponentContextMenu = true;
+      } else if (label === "connector") {
+        this.openConnectorContextMenu = true;
+      } else if (label === "vconnector") {
+        this.openVconnectorContextMenu = true;
+      }
+    },
+    closeContextMenus() {
+      this.openComponentContextMenu = false;
+      this.openConnectorContextMenu = false;
+      this.openVconnectorContextMenu = false;
+    },
+    onComponentRightClick(event, component) {
+      this.targetComponent = component;
+      this.openContextMenu(event, "component");
+    },
+    onConnectorRightClick(event, item) {
+      this.targetConnector = item;
+      this.openContextMenu(event, "connector");
+    },
+    onVconnectorRightClick(event, item) {
+      this.targetVconnector = item;
+      this.openContextMenu(event, "vconnector");
+    },
+    ...mapActions({ commitSelectedComponent: "selectedComponent" }),
+    updatePosition(index, event) {
+      this.currentComponent.descendants[index].pos.x = event.newX;
+      this.currentComponent.descendants[index].pos.y = event.newY;
+    },
+    commitNewPosition(index) {
+      const ID = this.currentComponent.descendants[index].ID;
+      const pos = this.currentComponent.descendants[index].pos;
+      if (this.readOnly) {
+        debug("component is moved but this project is read-only for now");
+        return;
+      }
+      SIO.emitGlobal("updateComponentPos", this.projectRootDir, ID, pos, this.currentComponent.ID, SIO.generalCallback);
+    },
+    onChdir(componentID, componentType) {
+      if (!isContainer(componentType)) {
+        return;
+      }
+      SIO.emitGlobal("getWorkflow", this.projectRootDir, componentID, SIO.generalCallback);
+    },
+    onAddFileLinkToParent(srcNode, srcName, inputFilename) {
+      this.onAddFileLink(srcNode, srcName, this.currentComponent.ID, inputFilename);
+    },
+    onRemoveFileLinkToParent(inputFilename) {
+      this.onRemoveFileLink(this.currentComponent.ID, inputFilename, this.currentComponent.parent, true);
+    },
+    onAddFileLink(srcNode, srcName, dstNode, dstName) {
+      if (this.readOnly) {
+        debug("file link is added but this project is read-only for now");
+        return;
+      }
+      SIO.emitGlobal("addFileLink", this.projectRootDir,
+        srcNode, srcName, dstNode, dstName,
+        this.currentComponent.ID, SIO.generalCallback);
+    },
+    onRemoveFileLink(componentId, inputFilename, fromChildren) {
+      if (this.readOnly) {
+        debug("file link is removed but this project is read-only for now");
+        return;
+      }
+      SIO.emitGlobal("removeAllFileLink", this.projectRootDir,
+        componentId, inputFilename, fromChildren,
+        this.currentComponent.ID, SIO.generalCallback);
+    },
+    onAddLink(src, dst, isElse) {
+      if (this.readOnly) {
+        debug("link is added but this project is read-only for now");
+        return;
+      }
+      SIO.emitGlobal("addLink", this.projectRootDir, src, dst, isElse,
+        this.currentComponent.ID, SIO.generalCallback);
+    },
+    onRemoveLink(componentId) {
+      if (this.readOnly) {
+        debug("link is removed but this project is read-only for now");
+        return;
+      }
+      SIO.emitGlobal("removeAllLink", this.projectRootDir,
+        componentId, this.currentComponent.ID, SIO.generalCallback);
     }
   }
 };

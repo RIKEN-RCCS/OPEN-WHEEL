@@ -12,25 +12,29 @@
     :width="propWidth"
   >
     <v-toolbar
-        color='background'
-      >
-        <v-toolbar-title>
-          <v-form v-model="validName"
-              @submit.prevent
-          >
-            <v-text-field
-              v-model="copySelectedComponent.name"
-              label="name"
-              :readonly="readOnly"
-              variant=outlined
-              class="pt-4"
-              density=compact
-              :rules="[rules.isValidName, isUniqueName]"
-            />
-          </v-form>
-        </v-toolbar-title>
-        <v-toolbar-items>
-        <v-tooltip location="bottom" text="disable">
+      color="background"
+    >
+      <v-toolbar-title>
+        <v-form
+          v-model="validName"
+          @submit.prevent
+        >
+          <v-text-field
+            v-model="copySelectedComponent.name"
+            label="name"
+            :readonly="readOnly"
+            variant="outlined"
+            class="pt-4"
+            density="compact"
+            :rules="[rules.isValidName, isUniqueName]"
+          />
+        </v-form>
+      </v-toolbar-title>
+      <v-toolbar-items>
+        <v-tooltip
+          location="bottom"
+          text="disable"
+        >
           <template #activator="{ props}">
             <v-switch
               v-model="copySelectedComponent.disable"
@@ -42,26 +46,32 @@
             />
           </template>
         </v-tooltip>
-          <v-tooltip location="bottom" text="close">
-            <template #activator="{ props }">
-              <v-btn
-                @click="closeProperty"
-                v-bind="props"
-                icon=mdi-close
-              />
-            </template>
-          </v-tooltip>
-          <v-tooltip location=bottom text="clean" >
-            <template #activator="{ props }">
-              <v-btn
-                :disabled="selectedComponent.state === 'not-started'"
-                v-bind="props"
-                icon="mdi-restore"
-              />
-            </template>
-          </v-tooltip>
-        </v-toolbar-items>
-      </v-toolbar>
+        <v-tooltip
+          location="bottom"
+          text="close"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-close"
+              @click="closeProperty"
+            />
+          </template>
+        </v-tooltip>
+        <v-tooltip
+          location="bottom"
+          text="clean"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              :disabled="selectedComponent.state === 'not-started'"
+              v-bind="props"
+              icon="mdi-restore"
+            />
+          </template>
+        </v-tooltip>
+      </v-toolbar-items>
+    </v-toolbar>
     <v-form
       v-model="valid"
       @submit.prevent
@@ -77,7 +87,7 @@
               v-model="copySelectedComponent.description"
               label="description"
               :readonly="readOnly"
-              variant=outlined
+              variant="outlined"
             />
             <v-autocomplete
               v-if="hasScript"
@@ -86,7 +96,7 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
             />
             <v-select
               v-if="hasHost"
@@ -94,7 +104,7 @@
               label="host"
               :readonly="readOnly"
               :items="hostCandidates"
-              variant=outlined
+              variant="outlined"
             />
             <v-switch
               v-if="hasJobScheduler"
@@ -110,7 +120,7 @@
               :readonly="readOnly"
               :items="queues"
               :disabled="! copySelectedComponent.useJobScheduler"
-              variant=outlined
+              variant="outlined"
             />
             <v-text-field
               v-if="hasJobScheduler"
@@ -118,7 +128,7 @@
               :readonly="readOnly"
               label="submit command"
               :disabled="! copySelectedComponent.useJobScheduler"
-              variant=outlined
+              variant="outlined"
             />
             <v-text-field
               v-if="hasJobScheduler"
@@ -126,14 +136,14 @@
               label="submit option"
               :readonly="readOnly"
               :disabled="! copySelectedComponent.useJobScheduler"
-              variant=outlined
+              variant="outlined"
             />
             <v-text-field
               v-if="isStorage"
               v-model="copySelectedComponent.storagePath"
               label="directory path"
               :readonly="readOnly"
-              variant=outlined
+              variant="outlined"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -147,7 +157,7 @@
               hide-details
               type="number"
               :rules="[rules.isInteger, rules.isZeroOrMore]"
-              variant=outlined
+              variant="outlined"
             />
             <v-switch
               v-model.lazy="retryByJS"
@@ -162,7 +172,7 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
             />
             <v-textarea
               v-if="retryByJS"
@@ -178,28 +188,28 @@
               <v-text-field
                 v-model.number="copySelectedComponent.start"
                 label="start"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.end"
                 label="end"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.step"
                 label="step"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.keep"
                 label="number of instances to keep"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 clearable
                 :rules="[rules.isValidKeepProp ]"
@@ -242,11 +252,11 @@
                   v-if="!copySelectedComponent.uploadOnDemand"
                   v-model="sourceOutputFile"
                   label="source file name"
-              :readonly="readOnly"
+                  :readonly="readOnly"
                   :items="scriptCandidates"
                   clearable
-                  variant=outlined
-                  @update:modelValue="updateSourceOutputFile"
+                  variant="outlined"
+                  @update:model-value="updateSourceOutputFile"
                 />
               </v-col>
               <v-col
@@ -256,8 +266,8 @@
               >
                 <v-btn
                   v-if="!copySelectedComponent.uploadOnDemand"
-                  icon=mdi-trash-can-outline
-              :readonly="readOnly"
+                  icon="mdi-trash-can-outline"
+                  :readonly="readOnly"
                 />
               </v-col>
             </v-row>
@@ -271,7 +281,7 @@
               :readonly="readOnly"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
-              :additionalRules="[isValidInputFilename]"
+              :additional-rules="[isValidInputFilename]"
               :edit-dialog-min-width="propWidth"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
@@ -288,17 +298,17 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
             />
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.forceOverwrite"
+              color="primary"
               label="force overwrite"
               :readonly="readOnly"
             />
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.deleteLoopInstance"
+              color="primary"
               label="delete all instances"
               :readonly="readOnly"
             />
@@ -308,8 +318,8 @@
           <v-expansion-panel-title>stepjobtask setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.useDependency"
+              color="primary"
               label="use dependency"
               :readonly="readOnly"
             />
@@ -332,8 +342,8 @@
           <v-expansion-panel-title>bulkjob setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.usePSSettingFile"
+              color="primary"
               label="use parameter setting file for bulk number"
               :readonly="readOnly"
             />
@@ -344,7 +354,7 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
             />
             <v-form
               v-if="! copySelectedComponent.usePSSettingFile"
@@ -353,42 +363,42 @@
               <v-text-field
                 v-model.number="copySelectedComponent.startBulkNumber"
                 label="start"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.endBulkNumber"
                 label="end"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
               />
             </v-form>
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.manualFinishCondition"
+              color="primary"
               label="manual finish condition"
               :readonly="readOnly"
             />
             <div v-if="copySelectedComponent.manualFinishCondition">
               <v-switch
-              color="primary"
                 v-model.lazy="conditionCheckByJS"
+                color="primary"
                 label="use javascript expression for condition check"
-              :readonly="readOnly"
+                :readonly="readOnly"
               />
               <v-autocomplete
                 v-if="!conditionCheckByJS"
                 v-model="copySelectedComponent.condition"
                 label="script name for condition check"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 :items="scriptCandidates"
                 clearable
-                variant=outlined
+                variant="outlined"
               />
               <v-textarea
                 v-if="conditionCheckByJS"
                 v-model="copySelectedComponent.condition"
-              :readonly="readOnly"
+                :readonly="readOnly"
               />
             </div>
           </v-expansion-panel-text>
@@ -397,8 +407,8 @@
           <v-expansion-panel-title>condition setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
-              color="primary"
               v-model.lazy="conditionCheckByJS"
+              color="primary"
               label="use javascript expression for condition check"
               :readonly="readOnly"
             />
@@ -409,7 +419,7 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
             />
             <v-textarea
               v-if="conditionCheckByJS"
@@ -510,9 +520,9 @@
             />
             <remote-file-browser
               v-if="isRemoteComponent"
+              ref="rfb"
               :readonly="false"
               :project-root-dir="projectRootDir"
-              ref=rfb
             />
           </v-expansion-panel-text>
         </v-expansion-panel>

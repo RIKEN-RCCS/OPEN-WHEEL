@@ -6,15 +6,15 @@
 <template>
   <v-btn
     variant="flat"
-    :color="componentDefinition[item.type].color"
+    :color="componentDefinition[type].color"
     class="custom-transform-class text-none"
     @click="$emit('clicked')"
   >
     <img
-      :src="componentDefinition[item.type].img"
-      :alt="componentDefinition[item.type].type"
+      :src="componentDefinition[type].img"
+      :alt="componentDefinition[type].type"
     >
-    {{ item.name }}
+    {{ name }}
   </v-btn>
 </template>
 <script>
@@ -22,7 +22,17 @@
 import loadComponentDefinition from "../../lib/componentDefinision.js";
 export default {
   name: "ComponentButton",
-  props: { item: Object },
+  props: {
+    type: {
+      type: String,
+      required: true
+    },
+    name: {
+      type: String,
+      required: true
+    }
+  },
+  emits: ["clicked"],
   data: ()=>{
     return {
       componentDefinition: loadComponentDefinition()

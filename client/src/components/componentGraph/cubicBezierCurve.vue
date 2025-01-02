@@ -1,5 +1,10 @@
 <template>
-  <path :d=cmd :stroke=strokeColor :stroke-width=width fill="transparent"/>
+  <path
+    :d="cmd"
+    :stroke="strokeColor"
+    :stroke-width="width"
+    fill="transparent"
+  />
 </template>
 <script>
 "use strict";
@@ -23,10 +28,12 @@ export default {
       type: Object
     },
     strokeColor: {
-      type: String
+      type: String,
+      default: "none"
     },
     width: {
-      type: Number
+      type: [Number, String],
+      default: "1px"
     }
   },
   computed: {

@@ -5,65 +5,67 @@
     @click.right.prevent.stop="onRightclick"
   >
     <rect
+      v-if="isSelected || isInvalid"
       :x="componentPos.x-boxWidth/2-borderWidth"
       :y="componentPos.y-textHeight/2-borderWidth"
       :width="boxWidth + borderWidth*2"
       :height="boxHeight + borderWidth*2"
       fill="transparent"
-      :stroke=highlightColor
-      :stroke-width=borderWidth
-      v-if="isSelected || isInvalid"
+      :stroke="highlightColor"
+      :stroke-width="borderWidth"
     />
     <component-header
-      :center=componentPos
-      :name=componentData.name
-      :disable=componentData.disable
-      :type=componentData.type
-      :host=componentData.host
-      :use-job-scheduler=componentData.useJobScheduler
-      :state=componentData.state
-      :num-total=componentData.numTotal
-      :num-finished=componentData.numFinished
-      :num-failed=componentData.numFailed
-      :stepnum=componentData.stepnum
-      @drop=onDropToHeader
+      :center="componentPos"
+      :name="componentData.name"
+      :disable="componentData.disable"
+      :type="componentData.type"
+      :host="componentData.host"
+      :use-job-scheduler="componentData.useJobScheduler"
+      :state="componentData.state"
+      :num-total="componentData.numTotal"
+      :num-finished="componentData.numFinished"
+      :num-failed="componentData.numFailed"
+      :stepnum="componentData.stepnum"
+      @drop="onDropToHeader"
     />
-    <input-output-file-box v-for="(item, i) in inputOutputFiles"
-      :key=item.key
-      :center=componentPos
-      :index=i
-      :box-height=boxHeight
-      :output-filename=item.outputFileName
-      :input-filename=item.inputFileName
-      :component-id=componentData.ID
-      @addFileLink=onAddFileLink
-      @removeFileLink=onRemoveFileLink
+    <input-output-file-box
+      v-for="(item, i) in inputOutputFiles"
+      :key="item.key"
+      :center="componentPos"
+      :index="i"
+      :box-height="boxHeight"
+      :output-filename="item.outputFileName"
+      :input-filename="item.inputFileName"
+      :component-id="componentData.ID"
+      @add-file-link="onAddFileLink"
+      @remove-file-link="onRemoveFileLink"
     />
-    <sub-graph :center=componentPos
-      :box-height=boxHeight
-      :descendants=componentData.descendants
-      v-if=Array.isArray(componentData.descendants)
+    <sub-graph
+      v-if="Array.isArray(componentData.descendants)"
+      :center="componentPos"
+      :box-height="boxHeight"
+      :descendants="componentData.descendants"
     />
     <reciever
-      :center=recieverPos
-      :component-id=componentData.ID
-      @click.stop=onRemoveLink
-      @drop.stop=onAddLink
-      v-if=canHaveLink
+      v-if="canHaveLink"
+      :center="recieverPos"
+      :component-id="componentData.ID"
+      @click.stop="onRemoveLink"
+      @drop.stop="onAddLink"
     />
     <sender
-      :start=senderPos
-      :elsePlug=false
-      :component-id=componentData.ID
+      v-if="canHaveLink"
       :key="`sender-${componentData.ID}`"
-      v-if=canHaveLink
+      :start="senderPos"
+      :else-plug="false"
+      :component-id="componentData.ID"
     />
     <sender
-      :start=elseSenderPos
-      :elsePlug=true
-      :component-id=componentData.ID
+      v-if="componentData.type === 'if'"
       :key="`elseSender-${componentData.ID}`"
-      v-if='componentData.type === "if"'
+      :start="elseSenderPos"
+      :else-plug="true"
+      :component-id="componentData.ID"
     />
   </g>
 </template>
@@ -80,7 +82,7 @@ import { boxWidth, textHeight, borderWidth } from "../../lib/constants.json";
 import { calcRecieverPos, calcNumIOFiles, calcBoxHeight, calcSenderPos, calcElseSenderPos } from "../../lib/utils.js";
 
 export default {
-  name: "wheel-component",
+  name: "WheelComponent",
   components: {
     ComponentHeader,
     InputOutputFileBox,
@@ -102,20 +104,16 @@ export default {
       default: false
     }
   },
-  mounted() {
-    this.$el.addEventListener("mousedown", this.mouseDown);
-    const svg = this.$el.closest("svg");
-    svg.addEventListener("mousemove", this.mouseMove);
-    svg.addEventListener("mouseup", this.mouseUp);
-  },
-  beforeDestroy() {
-    this.$el.removeEventListener("mousedown", this.mouseDown);
-    const svg = this.$el.closest("svg");
-    if (svg) {
-      svg.removeEventListener("mousemove", this.mouseMove);
-      svg.removeEventListener("mouseup", this.mouseUp);
-    }
-  },
+  emits: [
+    "drag",
+    "dragend",
+    "addFileLink",
+    "removeFileLink",
+    "addLink",
+    "removeLink",
+    "chdir",
+    "openContextMenu"
+  ],
   data() {
     return {
       startX: null,
@@ -163,16 +161,20 @@ export default {
       return calcRecieverPos(this.componentPos);
     }
   },
-  emits: [
-    "drag",
-    "dragend",
-    "addFileLink",
-    "removeFileLink",
-    "addLink",
-    "removeLink",
-    "chdir",
-    "openContextMenu"
-  ],
+  mounted() {
+    this.$el.addEventListener("mousedown", this.mouseDown);
+    const svg = this.$el.closest("svg");
+    svg.addEventListener("mousemove", this.mouseMove);
+    svg.addEventListener("mouseup", this.mouseUp);
+  },
+  beforeUnmount() {
+    this.$el.removeEventListener("mousedown", this.mouseDown);
+    const svg = this.$el.closest("svg");
+    if (svg) {
+      svg.removeEventListener("mousemove", this.mouseMove);
+      svg.removeEventListener("mouseup", this.mouseUp);
+    }
+  },
   methods: {
     ...mapActions({ commitSelectedComponent: "selectedComponent" }),
     mouseDown(e) {

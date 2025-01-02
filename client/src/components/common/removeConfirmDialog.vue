@@ -10,14 +10,14 @@
     persistent
   >
     <v-card
-      :title=title
-      :subtitle=message
+      :title="title"
+      :subtitle="message"
     >
-      <v-card-text >
+      <v-card-text>
         <v-list
-          density=compact
+          density="compact"
           disabled
-          variant=flat
+          variant="flat"
         >
           <v-list-item
             v-for="(item, i) in removeCandidates"
@@ -47,10 +47,11 @@ export default {
   props: {
     modelValue: Boolean,
     title: { type: String, default: "are you sure you want to remove?" },
-    message: String,
+    message: { type: String, default: "" },
     removeCandidates: { type: Array, default: ()=>{ return []; } },
     maxWidth: { type: String, default: "50%" }
   },
+  emits: ["update:modelValue", "remove"],
   data: function () {
     return {
       buttons: [

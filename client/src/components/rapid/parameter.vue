@@ -5,36 +5,36 @@
  */
 <template>
   <div>
-    <v-card >
+    <v-card>
       <v-card-title>
         parameters
       </v-card-title>
       <v-card-text>
         <v-toolbar
-          color='background'
+          color="background"
         >
-        <v-text-field
-          v-model="selectedText"
-          label="current selected text"
-          readonly
-        />
-          <v-btn
-            class="text-capitalize"
-            :disabled="readOnly"
-            @click="dialog=true"
-            prepend-icon="mdi-plus"
-            text="add new parameter"
+          <v-text-field
+            v-model="selectedText"
+            label="current selected text"
+            readonly
           />
           <v-btn
             class="text-capitalize"
             :disabled="readOnly"
-            @click="$emit('openFilterEditor')"
+            prepend-icon="mdi-plus"
+            text="add new parameter"
+            @click="dialog=true"
+          />
+          <v-btn
+            class="text-capitalize"
+            :disabled="readOnly"
             prepend-icon="mdi-pencil"
             text="add filter"
+            @click="$emit('openFilterEditor')"
           />
         </v-toolbar>
         <v-data-table
-          density=compact
+          density="compact"
           :headers="[{title: 'placeholder', key: 'keyword', sortable: true},
                      {title: 'type', key: 'type', sortable: true},
                      { title: 'Actions', key: 'action', sortable: false }]"
@@ -64,7 +64,7 @@
         <v-card-text>
           <v-select
             v-model="newItem.type"
-            variant=outlined
+            variant="outlined"
             :items="['min-max-step', 'list', 'files']"
           />
           <v-row v-if="newItem.type==='min-max-step'">
@@ -98,9 +98,9 @@
               :items="newItem.list"
               :headers="listHeaders"
               :string-items="true"
-              @add=addList
-              @update=updateList
-              @remove=removeList
+              @add="addList"
+              @update="updateList"
+              @remove="removeList"
             />
           </div>
           <div v-if="newItem.type==='files'">
@@ -108,23 +108,23 @@
               :items="newItem.files"
               :headers="filesHeaders"
               :string-items="true"
-              @add=addFiles
-              @update=updateFiles
-              @remove=removeFiles
+              @add="addFiles"
+              @update="updateFiles"
+              @remove="removeFiles"
             />
           </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn
-            @click="commitChange"
             prepend-icon="mdi-check"
             text="OK"
+            @click="commitChange"
           />
           <v-btn
-            @click="closeAndResetDialog"
             prepend-icon="mdi-cancel"
             text="cancel"
+            @click="closeAndResetDialog"
           />
         </v-card-actions>
       </v-card>
@@ -154,6 +154,7 @@ export default {
       required: true
     }
   },
+  emits: ["openFilterEditor", "newParamAdded"],
   data() {
     return {
       currentItem: null,

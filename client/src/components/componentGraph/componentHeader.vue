@@ -1,14 +1,46 @@
 <template>
   <g>
-    <rect :x=x :y=y :width=width :height=height :fill=color
+    <rect
+      :x="x"
+      :y="y"
+      :width="width"
+      :height="height"
+      :fill="color"
 
-    :data-droparea=true @drop=onDrop
-  />
-  <text :x=x+height/1.2 font-size="90%" :y=center.y fill="white" text-anchor="start" v-if="stepnum !== null"> {{ stepnum }} </text>
-    <image :href=iconImg :x=x :y=center.y-height/2 :width=height :height=height />
-    <text-box :center=nameCenter :text=name :color=nameColor />
-    <status-icon :x=statusIconX :y=center.y :state=state :num-total=numTotal :num-finished=numFinished :num-failed=numFailed />
- </g>
+      :data-droparea="true"
+      @drop="onDrop"
+    />
+    <text
+      v-if="stepnum !== null"
+      :x="x+height/1.2"
+      font-size="90%"
+      :y="center.y"
+      fill="white"
+      text-anchor="start"
+    >
+      {{ stepnum }}
+    </text>
+    <image
+      :href="iconImg"
+      :x="x"
+      :y="center.y-height/2"
+      :width="height"
+      :height="height"
+    />
+    <text-box
+      :center="nameCenter"
+      :text="name"
+      :color="nameColor"
+    />
+    <status-icon
+      :x="statusIconX"
+      :y="center.y"
+      :state="state"
+      :num-total="numTotal"
+      :num-finished="numFinished"
+      :num-failed="numFailed"
+    />
+  </g>
 </template>
 <script>
 "use strict";
@@ -18,7 +50,7 @@ import { boxWidth, textHeight } from "../../lib/constants.json";
 import { getComponentIcon, getColor } from "../../lib/utils.js";
 
 export default {
-  name: "component-header",
+  name: "ComponentHeader",
   components: {
     TextBox,
     StatusIcon
@@ -41,19 +73,23 @@ export default {
       type: String
     },
     host: {
-      type: String
+      type: String,
+      default: null
     },
     useJobScheduler: {
       type: Boolean
     },
     numTotal: {
-      type: Number
+      type: Number,
+      default: null
     },
     numFinished: {
-      type: Number
+      type: Number,
+      default: null
     },
     numFailed: {
-      type: Number
+      type: Number,
+      default: null
     },
     disable: {
       type: Boolean

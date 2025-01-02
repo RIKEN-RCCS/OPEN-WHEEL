@@ -46,6 +46,9 @@ export default {
       })
     };
   },
+  computed: {
+    ...mapState(["canvasWidth", "canvasHeight"])
+  },
   watch: {
     clear() {
       this.term.clear();
@@ -57,6 +60,18 @@ export default {
       }
       this.term.writeln(log);
     }
+  },
+  mounted() {
+    this.term.open(this.$el);
+    //following watch call back will fire immediately after canvasWidth and canvasHeight is set in graphView's mounted hook
+    const unwatch = this.$watch("canvasHeight", ()=>{
+      this.fit();
+      unwatch();
+    });
+    window.addEventListener("resize", this.fit.bind(this));
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.fit.bind(this));
   },
   methods: {
     fit() {
@@ -72,21 +87,6 @@ export default {
       this.term.resize(cols, rows);
       debug(`new size: cols=${this.term.cols}, rows=${this.term.rows}`);
     }
-  },
-  computed: {
-    ...mapState(["canvasWidth", "canvasHeight"])
-  },
-  mounted() {
-    this.term.open(this.$el);
-    //following watch call back will fire immediately after canvasWidth and canvasHeight is set in graphView's mounted hook
-    const unwatch = this.$watch("canvasHeight", ()=>{
-      this.fit();
-      unwatch();
-    });
-    window.addEventListener("resize", this.fit.bind(this));
-  },
-  beforeDestroy() {
-    window.removeEventListener("resize", this.fit.bind(this));
   }
 };
 </script>

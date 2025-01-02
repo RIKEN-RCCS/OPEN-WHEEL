@@ -145,6 +145,7 @@ function formatSshOutput(outputArray) {
  * write JSON data to file with 4 space indent
  * @param {filename} filename - filename
  * @param {object} data - JSON data to be written
+ * @returns {Promise} - resolved when writing is done
  */
 function writeJsonWrapper(filename, data) {
   return fs.writeJson(filename, data, { spaces: 4 });

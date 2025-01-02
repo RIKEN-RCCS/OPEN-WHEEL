@@ -7,26 +7,26 @@
   <v-card>
     <v-card-actions>
       <v-btn
-        @click="insertJobScript"
         :text="isJobScript ? 'update' : 'insert'"
+        @click="insertJobScript"
       />
       <v-btn
-        @click="removeJobScript"
         disable="!isJobSCript"
         text="remove"
+        @click="removeJobScript"
       />
       <v-btn
-        @click="clear"
         text="clear"
+        @click="clear"
       />
       <v-btn
-        class=ml-8
-        @click="loadDialog=true"
+        class="ml-8"
         text="load"
+        @click="loadDialog=true"
       />
       <v-btn
-        @click="saveDialog=true"
         text="register"
+        @click="saveDialog=true"
       />
     </v-card-actions>
     <v-card-text>
@@ -49,7 +49,7 @@
           <v-text-field
             v-else-if="v.type==='number'"
             v-model.lazy.trim="v.value"
-            variant=outlined
+            variant="outlined"
             :label="v.label"
             type="number"
             min="1"
@@ -57,14 +57,14 @@
           <v-text-field
             v-else-if="v.type==='jobScheduler'"
             v-model.lazy.trim="v.value"
-            variant=outlined
+            variant="outlined"
             :label="v.label"
             readonly
           />
           <v-text-field
             v-else-if="v.type==='text'"
             v-model.lazy.trim="v.value"
-            variant=outlined
+            variant="outlined"
             :label="v.label"
           />
         </div>
@@ -130,6 +130,7 @@ export default {
       required: true
     }
   },
+  emits: ["insert", "remove"],
   data: function () {
     return {
       centerNames: hpcCenters
@@ -214,7 +215,6 @@ export default {
     removeJobScript() {
       this.$emit("remove");
     }
-
   }
 };
 </script>

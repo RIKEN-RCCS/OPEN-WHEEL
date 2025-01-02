@@ -48,7 +48,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.port"
-                          :label=portNumberLabel
+                          :label="portNumberLabel"
                           :rules="[validPortNumber]"
                           validate-on="blur"
                         />
@@ -65,7 +65,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model="host.path"
-                          :label=workDirLabel
+                          :label="workDirLabel"
                           validate-on="blur"
                         />
                       </v-col>
@@ -78,8 +78,8 @@
                       </v-col>
                       <v-col cols="2">
                         <v-btn
+                          text="browse"
                           @click="openFileBrowser=!openFileBrowser"
-                          text=browse
                         />
                       </v-col>
                       <v-col cols="6">
@@ -186,14 +186,14 @@
         <v-card-actions>
           <v-btn
             :disabled="hasError"
-            @click="submitHost"
             :prepend-icon="mdi-check"
             text="OK"
+            @click="submitHost"
           />
           <v-btn
-            @click="cancelDialog"
             prepend-icon="mdi-close"
             text="cancel"
+            @click="cancelDialog"
           />
         </v-card-actions>
       </v-card>
@@ -211,14 +211,14 @@
           <v-spacer />
           <v-btn
             :disabled="!selectedFile"
-            @click="host.keyFile=selectedFile;closeFileBrowser()"
             prepend-icon="mdi-check"
             text="OK"
+            @click="host.keyFile=selectedFile;closeFileBrowser()"
           />
           <v-btn
-            @click="closeFileBrowser"
             prepend-icon="mdi-close"
             text="cancel"
+            @click="closeFileBrowser"
           />
         </v-card-actions>
         <v-card-text>
@@ -248,6 +248,7 @@ export default {
     initialValue: { type: Object, default: ()=>{ return {}; } },
     availableJobSchedulers: { type: Array, default: ()=>{ return []; } }
   },
+  emits: ["update:modelValue", "newHost", "cancel"],
   data: function () {
     return {
       host: {},

@@ -24,7 +24,10 @@ export function path2Array(pathString) {
 
 /**
  * @typedef TaskState
- * @param {string} - - ancestorsName
+ * @property {string} ancestorsName - all ancestors name conbind with '/'
+ * @property {string} ancestorsType -  all ancestors type name conbind with '/'
+ *
+ * TaskState also contains normal task component's property
  */
 
 /**

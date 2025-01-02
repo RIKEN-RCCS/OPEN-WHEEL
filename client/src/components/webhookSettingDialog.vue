@@ -7,7 +7,7 @@
 
 <template>
   <versatile-dialog
-    :model-value="modelValue"
+    v-model="openDialog"
     title="webhook setting"
     max-width="80vw"
     @ok="saveWebhook"
@@ -47,21 +47,28 @@ import versatileDialog from "../components/versatileDialog.vue";
 import { required, isValidURL } from "../lib/validationRules.js";
 
 export default {
-  name: "webhookSettingDialog",
+  name: "WebhookSettingDialog",
   components: {
     versatileDialog
   },
-  props: ["modelValue"],
   emits: ["update:modelValue"],
-  computed: {
-    ...mapState(["currentComponent", "projectRootDir", "rootComponentID", "readOnly"])
-  },
   data() {
     return {
       webhookURL: "",
       isProjectHook: false,
       isComponentHook: false
     };
+  },
+  computed: {
+    openDialog: {
+      get() {
+        return this.modelValue;
+      },
+      set(v) {
+        this.$emit("update:modelValue", v);
+      }
+    },
+    ...mapState(["currentComponent", "projectRootDir", "rootComponentID", "readOnly"])
   },
   watch: {
     modelValue(v) {
@@ -99,7 +106,8 @@ export default {
       this.webhookURL = "";
       this.isProjectHook = false;
       this.isComponentHook = false;
-      this.$emit("update:model-value", false);
+      this.openDialog = false;
+      this.$emit("update:modelValue", false);
     }
   }
 };

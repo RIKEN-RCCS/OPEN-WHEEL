@@ -18,42 +18,42 @@
       v-if="allowRenameInline"
       #item.name="props"
     >
-          <v-menu
-            location="start"
-            v-model="editDialog[props.index]"
-            :close-on-content-click="false"
-            :min-width="editDialogMinWidth"
-            :max-width="editDialogMaxWidth"
-          >
-            <template v-slot:activator="{ props: menuProps }">
-      <v-btn
-        variant="text"
-        v-bind="menuProps"
-        block
-        class="justify-start"
-        :text=props.item.name
-        @click="openDialog(props.item.name, props.index)"
-      />
-    </template>
-            <v-sheet
+      <v-menu
+        v-model="editDialog[props.index]"
+        location="start"
+        :close-on-content-click="false"
+        :min-width="editDialogMinWidth"
+        :max-width="editDialogMaxWidth"
+      >
+        <template #activator="{ props: menuProps }">
+          <v-btn
+            variant="text"
+            v-bind="menuProps"
+            block
+            class="justify-start"
+            :text="props.item.name"
+            @click="openDialog(props.item.name, props.index)"
+          />
+        </template>
+        <v-sheet
 
-            :min-width="editDialogMinWidth"
-            :max-width="editDialogMaxWidth"
-            >
-              <v-text-field
-                v-model="newVal"
-                :rules=updateItemValidator
-                clearable
-                @keyup.enter="saveEditDialog"
-              />
-          </v-sheet>
-        </v-menu>
+          :min-width="editDialogMinWidth"
+          :max-width="editDialogMaxWidth"
+        >
+          <v-text-field
+            v-model="newVal"
+            :rules="updateItemValidator"
+            clearable
+            @keyup.enter="saveEditDialog"
+          />
+        </v-sheet>
+      </v-menu>
     </template>
     <template #item.actions="{ item }">
       <action-row
         :can-edit="allowEditButton"
         :item="item.raw"
-        :disabled=readOnly
+        :disabled="readOnly"
         @delete="deleteItem"
       />
     </template>
@@ -63,11 +63,11 @@
     >
       <v-text-field
         v-model.lazy="inputField"
-        :rules=newItemValidator
+        :rules="newItemValidator"
         :disabled="disabled"
-        variant=outlined
-        density=compact
-        :readonly=readOnly
+        variant="outlined"
+        density="compact"
+        :readonly="readOnly"
         clearable
         append-icon="mdi-plus"
         @click:append="addItem"
@@ -82,7 +82,6 @@
 </template>
 <script>
 import actionRow from "../../components/common/actionRow.vue";
-import versatileDialog from "../../components/versatileDialog.vue";
 const emptyStringIsNotAllowed = (v)=>{
   return v !== "";
 };
@@ -93,14 +92,8 @@ const isString = (v)=>{
 export default {
   name: "ListForm",
   components: {
-    actionRow,
-    versatileDialog
+    actionRow
   },
-  emits: [
-    "add",
-    "remove",
-    "update"
-  ],
   props: {
     editDialogMinWidth: {
       type: [String, Number],
@@ -115,7 +108,8 @@ export default {
       default: ""
     },
     additionalRules: {
-      type: Array
+      type: Array,
+      default: ()=>{ return []; }
     },
     allowEditButton: {
       type: Boolean,
@@ -160,23 +154,12 @@ export default {
       default: false
     }
   },
-  mounted() {
-    if (this.additionalRules) {
-      this.updateItemValidator.push(...this.additionalRules);
-      this.newItemValidator.push(...this.additionalRules);
-    }
-    //store array of false with the same length as this.items
-    this.editDialog.push(...this.items.map(()=>{
-      return false;
-    }));
-  },
-  watch: {
-    items() {
-      this.editDialog.push(...this.items.map(()=>{
-        return false;
-      }));
-    }
-  },
+  emits: [
+    "update:modelValue",
+    "add",
+    "remove",
+    "update"
+  ],
   data: function () {
     return {
       inputField: null,
@@ -222,6 +205,23 @@ export default {
         return { name: e };
       });
     }
+  },
+  watch: {
+    items() {
+      this.editDialog.push(...this.items.map(()=>{
+        return false;
+      }));
+    }
+  },
+  mounted() {
+    if (this.additionalRules.length > 0) {
+      this.updateItemValidator.push(...this.additionalRules);
+      this.newItemValidator.push(...this.additionalRules);
+    }
+    //store array of false with the same length as this.items
+    this.editDialog.push(...this.items.map(()=>{
+      return false;
+    }));
   },
   methods: {
     isDuplicate(newItem, except = []) {

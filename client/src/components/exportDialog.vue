@@ -11,17 +11,18 @@
   >
     <v-card
       :title="`${title} [${projectJson.name ||''}]`"
-      :subtitle=message
+      :subtitle="message"
     >
-      <v-card-text >
+      <v-card-text>
         <v-row>
           <v-btn
             v-if="mode !== 'inputMetaData'"
             class="mx-auto mt-10 mb-6"
-            :loading=loading
+            :loading="loading"
           />
-          <v-form v-else
-              class="w-100"
+          <v-form
+            v-else
+            class="w-100"
           >
             <v-text-field
               v-model="newName"
@@ -37,8 +38,8 @@
               auto-grow
             />
           </v-form>
-      </v-row>
-      </v-card-text >
+        </v-row>
+      </v-card-text>
       <v-card-actions>
         <buttons
           :buttons="buttons"
@@ -58,6 +59,30 @@ export default {
   components: {
     buttons
   },
+  props: {
+    modelValue: Boolean,
+    projectJson: {
+      type: Object,
+      required: true
+    },
+    projectRootDir: {
+      type: String,
+      required: true
+    },
+    name: {
+      type: String,
+      default: ""
+    },
+    email: {
+      type: String,
+      default: ""
+    },
+    memo: {
+      type: String,
+      default: ""
+    }
+  },
+  emits: ["update:modelValue"],
   data: function () {
     return {
       mode: "inputMetaData",
@@ -72,6 +97,32 @@ export default {
       newMemo: "",
       btnText: ""
     };
+  },
+  computed: {
+    loading() {
+      return this.mode !== "inputMetaData";
+    },
+    openDialog: {
+      get() {
+        return this.modelValue;
+      },
+      set(v) {
+        this.$emit("update:modelValue", v);
+      }
+    }
+  },
+  watch: {
+    projectJson() {
+      if (this.projectJson.exporter && this.projectJson.exporter.name) {
+        this.newName = this.projectJson.exporter.name;
+      }
+      if (this.projectJson.exporter && this.projectJson.exporter.email) {
+        this.newEmail = this.projectJson.exporter.email;
+      }
+      if (this.projectJson.exporter && this.projectJson.exporter.memo) {
+        this.newMemo = this.projectJson.exporter.memo;
+      }
+    }
   },
   methods: {
     closeDialog() {
@@ -107,55 +158,6 @@ export default {
         a.click();
         this.closeDialog();
       });
-    }
-  },
-  watch: {
-    projectJson() {
-      if (this.projectJson.exporter && this.projectJson.exporter.name) {
-        this.newName = this.projectJson.exporter.name;
-      }
-      if (this.projectJson.exporter && this.projectJson.exporter.email) {
-        this.newEmail = this.projectJson.exporter.email;
-      }
-      if (this.projectJson.exporter && this.projectJson.exporter.memo) {
-        this.newMemo = this.projectJson.exporter.memo;
-      }
-    }
-  },
-  props: {
-    modelValue: Boolean,
-    projectJson: {
-      type: Object,
-      required: true
-    },
-    projectRootDir: {
-      type: String,
-      required: true
-    },
-    name: {
-      type: String,
-      default: ""
-    },
-    email: {
-      type: String,
-      default: ""
-    },
-    memo: {
-      type: String,
-      default: ""
-    }
-  },
-  computed: {
-    loading() {
-      return this.mode !== "inputMetaData";
-    },
-    openDialog: {
-      get() {
-        return this.modelValue;
-      },
-      set(v) {
-        this.$emit("update:modelValue", v);
-      }
     }
   }
 };

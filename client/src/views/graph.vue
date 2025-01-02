@@ -5,12 +5,12 @@
  */
 <template>
   <div>
-    <v-row no-gutters >
-      <v-col cols=12>
-        <component-tree/>
+    <v-row no-gutters>
+      <v-col cols="12">
+        <component-tree />
       </v-col>
     </v-row>
-    <v-row no-gutters >
+    <v-row no-gutters>
       <component-library />
       <graph-view />
       <component-property />

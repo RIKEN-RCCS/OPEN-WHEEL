@@ -1,12 +1,12 @@
 <template>
   <cubic-bezier-curve
-    :stroke-color=color
-    :width=2
-    :start=start
-    :end=end
-    :control1=control[0]
-    :control2=control[1]
     v-if="start.x !== end.x || start.y !== end.y"
+    :stroke-color="color"
+    :width="2"
+    :start="start"
+    :end="end"
+    :control1="control[0]"
+    :control2="control[1]"
     @click.right.prevent.stop="onRightclick"
   />
 </template>

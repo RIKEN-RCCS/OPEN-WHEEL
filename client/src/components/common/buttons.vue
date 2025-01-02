@@ -5,27 +5,25 @@
  */
 <template>
   <v-btn-group>
-      <v-btn
-        v-for="item in buttons"
-        :key="item.label"
-        @click="$emit(item.label)"
-        :prepend-icon=item.icon
-        :disabled="item.disabled"
-        :text=item.label
-      />
+    <v-btn
+      v-for="item in buttons"
+      :key="item.label"
+      :prepend-icon="item.icon"
+      :disabled="item.disabled"
+      :text="item.label"
+      @click="$emit(item.label)"
+    />
   </v-btn-group>
 </template>
 <script>
 
-/**
- * @type Button
- * @property {string} icon
- * @property {string} label
- */
 export default {
   name: "Buttons",
   props: {
-    buttons: Array
+    buttons: {
+      type: Array,
+      required: true
+    }
   }
 };
 </script>

@@ -1,22 +1,30 @@
 <template>
-  <g >
-    <rect :x=x :y=y :width=width :height=height :fill=componentBackgroundColor />
+  <g>
+    <rect
+      :x="x"
+      :y="y"
+      :width="width"
+      :height="height"
+      :fill="componentBackgroundColor"
+    />
     <input-file-box
-      :center=center
-      :index=index
-      :component-id=componentId
-      :input-filename=inputFilename
-      @addFileLink=onAddFileLink
-      @removeFileLink=onRemoveFileLink
-      v-if=hasInputFileBox />
+      v-if="hasInputFileBox"
+      :center="center"
+      :index="index"
+      :component-id="componentId"
+      :input-filename="inputFilename"
+      @add-file-link="onAddFileLink"
+      @remove-file-link="onRemoveFileLink"
+    />
     <output-file-box
-      :center=center
-      :index=index
-      :box-height=boxHeight
-      :component-id=componentId
-      :output-filename=outputFilename
-      v-if=hasOutputFileBox />
- </g>
+      v-if="hasOutputFileBox"
+      :center="center"
+      :index="index"
+      :box-height="boxHeight"
+      :component-id="componentId"
+      :output-filename="outputFilename"
+    />
+  </g>
 </template>
 <script>
 "use strict";
@@ -25,7 +33,7 @@ import OutputFileBox from "../../components/componentGraph/outputFileBox.vue";
 import { boxWidth, textHeight, componentBackgroundColor } from "../../lib/constants.json";
 
 export default {
-  name: "inputOutputFileBox",
+  name: "InputOutputFileBox",
   components: {
     InputFileBox,
     OutputFileBox
@@ -40,10 +48,12 @@ export default {
       type: Number
     },
     outputFilename: {
-      type: String
+      type: String,
+      default: null
     },
     inputFilename: {
-      type: String
+      type: String,
+      default: null
     },
     componentId: {
       required: true,
@@ -67,10 +77,10 @@ export default {
   },
   computed: {
     hasInputFileBox() {
-      return typeof this.inputFilename !== "undefined";
+      return this.inputFilename !== null;
     },
     hasOutputFileBox() {
-      return typeof this.outputFilename !== "undefined";
+      return this.outputFilename !== null;
     },
     x() {
       return this.center.x - boxWidth / 2;

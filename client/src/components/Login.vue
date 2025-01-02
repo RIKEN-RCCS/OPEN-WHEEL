@@ -8,7 +8,12 @@
   <v-app>
     <v-app-bar>
       <template #prepend>
-        <v-img height=72px width=180px :src="imgLogo" alt="wheel title logo"/>
+        <v-img
+          height="72px"
+          width="180px"
+          :src="imgLogo"
+          alt="wheel title logo"
+        />
       </template>
       <v-app-bar-title
         class="text-lowercase text-decoration-none text-h5 white--text"
@@ -17,51 +22,54 @@
       </v-app-bar-title>
     </v-app-bar>
     <v-main>
-    <v-card class="mx-auto px-6 py-8" max-width=344>
-      <v-form
-        v-model="form"
-        @submit.prevent="onSubmit"
+      <v-card
+        class="mx-auto px-6 py-8"
+        max-width="344"
       >
-        <div data-cy="username">
-        <v-text-field
-          v-model="username"
-          :readonly="loading"
-          :rules="[required]"
-          class="mb-2"
-          label="username"
-          clearable
-        ></v-text-field>
-      </div>
-
-        <div data-cy="password">
-        <v-text-field
-          v-model="password"
-          :readonly="loading"
-          :rules="[required]"
-          label="password"
-          placeholder="Enter your password"
-          :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-          :type="showPassword ? 'text' : 'password'"
-          @click:append="showPassword = !showPassword"
-          clearable
-        ></v-text-field>
-      </div>
-        <br>
-        <div data-cy="submit">
-        <v-btn
-          :disabled="!form"
-          :loading="loading"
-          color="success"
-          size="large"
-          type="submit"
-          variant="elevated"
-          block
+        <v-form
+          v-model="form"
+          @submit.prevent="onSubmit"
         >
-          login
-        </v-btn>
-      </div>
-      </v-form>
-    </v-card>
+          <div data-cy="username">
+            <v-text-field
+              v-model="username"
+              :readonly="loading"
+              :rules="[required]"
+              class="mb-2"
+              label="username"
+              clearable
+            />
+          </div>
+
+          <div data-cy="password">
+            <v-text-field
+              v-model="password"
+              :readonly="loading"
+              :rules="[required]"
+              label="password"
+              placeholder="Enter your password"
+              :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+              :type="showPassword ? 'text' : 'password'"
+              clearable
+              @click:append="showPassword = !showPassword"
+            />
+          </div>
+          <br>
+          <div data-cy="submit">
+            <v-btn
+              :disabled="!form"
+              :loading="loading"
+              color="success"
+              size="large"
+              type="submit"
+              variant="elevated"
+              block
+            >
+              login
+            </v-btn>
+          </div>
+        </v-form>
+      </v-card>
     </v-main>
   </v-app>
 </template>

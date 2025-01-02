@@ -1,9 +1,15 @@
 <template>
-  <rect :x=x :y=y :width=width :height=height :fill=color
-    :stroke-width=12 stroke="transparent"
-    :data-droparea=true
-    @drop=onDrop
-    @click.stop=onClick
+  <rect
+    :x="x"
+    :y="y"
+    :width="width"
+    :height="height"
+    :fill="color"
+    :stroke-width="12"
+    stroke="transparent"
+    :data-droparea="true"
+    @drop="onDrop"
+    @click.stop="onClick"
     @mousedown.stop
   />
 </template>
@@ -13,13 +19,6 @@ import { plugColor, socketLongSideLength, socketShortSideLength } from "../../li
 
 export default {
   name: "Reciever",
-  data: ()=>{
-    return {
-      color: plugColor,
-      width: socketLongSideLength,
-      height: socketShortSideLength
-    };
-  },
   props: {
     center: {
       required: true,
@@ -30,6 +29,13 @@ export default {
     "drop",
     "click"
   ],
+  data: ()=>{
+    return {
+      color: plugColor,
+      width: socketLongSideLength,
+      height: socketShortSideLength
+    };
+  },
   computed: {
     x() {
       return this.center.x - this.width / 2;

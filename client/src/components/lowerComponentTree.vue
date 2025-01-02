@@ -9,13 +9,13 @@
     open-all
     item-key="ID"
     :items="[ lowerLevelComponents ]"
-    :active.sync="active"
     activatable
     @update:active="onUpdateActive"
   >
     <template #label="{ item }">
       <component-button
-        :item="item"
+        :type="item.type"
+        :name="item.name"
       />
     </template>
   </my-treeview>
@@ -33,9 +33,9 @@ export default {
     componentButton,
     myTreeview
   },
+  emits: ["selected"],
   data() {
     return {
-      active: [],
       lowerLevelComponents: null
     };
   },

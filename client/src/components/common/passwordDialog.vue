@@ -10,8 +10,8 @@
     :max-width="maxWidth"
   >
     <v-card
-      :title=title
-      :subtitle=message
+      :title="title"
+      :subtitle="message"
     >
       <v-card-text>
         <v-form @submit.prevent>
@@ -47,6 +47,7 @@ export default {
     title: { type: String, default: "input password" },
     maxWidth: { type: String, default: "50%" }
   },
+  emits: ["update:modelValue", "password", "cancel"],
   data: function () {
     return {
       showPassword: false,

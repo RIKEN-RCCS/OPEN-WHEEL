@@ -6,7 +6,7 @@
 <template>
   <v-dialog
     v-model="dialog"
-    :activator=activator
+    :activator="activator"
     :max-width="maxWidth"
     persistent
   >
@@ -26,9 +26,9 @@
           :key="item.label"
         >
           <v-btn
+            :prepend-icon="item.icon"
+            :text="item.label"
             @click="$emit(item.label)"
-            :prepend-icon=item.icon
-            :text=item.label
           />
         </div>
       </v-card-actions>
@@ -38,10 +38,10 @@
 <script>
 export default {
   name: "VersatileDialog",
-  emits: ["update:modelValue"],
   props: {
     activator: {
-      required: false
+      type: [String, Object],
+      default: undefined
     },
     modelValue: {
       type: Boolean,
@@ -73,6 +73,7 @@ export default {
       default: undefined
     }
   },
+  emits: ["update:modelValue"],
   computed: {
     dialog: {
       get() {

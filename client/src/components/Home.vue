@@ -11,47 +11,47 @@
     <application-tool-bar
       title="home"
       density="comfortable"
-      @navIconClick="drawer=!drawer"
+      @nav-icon-click="drawer=!drawer"
     />
     <v-main>
       <v-toolbar
-        color='background'
+        color="background"
       >
         <v-btn
           :disabled="batchMode"
-          @click="openProject"
           prepend-icon="mdi-pencil"
           text="OPEN"
+          @click="openProject"
         />
         <v-btn
           :disabled="batchMode"
-          @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
           prepend-icon="mdi-plus"
           text="NEW"
+          @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
         />
         <v-btn
           :disabled="batchMode"
-          @click="importDialog=true"
           prepend-icon="mdi-import"
           text="import"
+          @click="importDialog=true"
         />
         <v-btn
-          @click="openDeleteProjectDialog(true)"
           prepend-icon="mdi-text-box-remove-outline"
           text="REMOVE FROM LIST"
           :disabled="selectedInTable.length === 0"
+          @click="openDeleteProjectDialog(true)"
         />
         <v-btn
-          @click="openDeleteProjectDialog(false)"
           prepend-icon="mdi-trash-can-outline"
           text="REMOVE"
           :disabled="selectedInTable.length === 0"
+          @click="openDeleteProjectDialog(false)"
         />
         <v-btn
-          @click="openExportProjectDialog"
           prepend-icon="mdi-export"
           text="export"
           :disabled="selectedInTable.length === 0 || batchMode"
+          @click="openExportProjectDialog"
         />
         <v-spacer />
         <v-switch
@@ -72,25 +72,25 @@
       >
         <template #item.name="props">
           <v-menu
-            location="bottom"
             v-model="renameDialog[props.index]"
+            location="bottom"
             :close-on-content-click="false"
             min-width="auto"
             max-width="50vw"
           >
-            <template v-slot:activator="{ props: menuProps }">
+            <template #activator="{ props: menuProps }">
               <v-btn
                 variant="text"
                 v-bind="menuProps"
                 block
                 class="justify-start"
-                :text=props.item.name
+                :text="props.item.name"
                 @click="openInlineEditDialog(props.item.name, props.index, 'name')"
               />
             </template>
             <v-sheet
-            min-width="auto"
-            max-width="50vw"
+              min-width="auto"
+              max-width="50vw"
             >
               <v-text-field
                 v-model="newVal"
@@ -103,25 +103,25 @@
         </template>
         <template #item.description="props">
           <v-menu
-            location="bottom"
             v-model="editDescriptionDialog[props.index]"
+            location="bottom"
             :close-on-content-click="false"
             min-width="auto"
             max-width="50vw"
           >
-            <template v-slot:activator="{ props: menuProps }">
+            <template #activator="{ props: menuProps }">
               <v-btn
                 variant="text"
                 class="justify-start text-truncate trancated-row"
                 v-bind="menuProps"
                 block
+                :text="props.item.description"
                 @click="openInlineEditDialog(props.item.description, props.index, 'description')"
-                :text=props.item.description
               />
             </template>
             <v-sheet
-            min-width="auto"
-            max-width="50vw"
+              min-width="auto"
+              max-width="50vw"
             >
               <v-textarea
                 v-model="newVal"
@@ -157,7 +157,7 @@
             <v-text-field
               v-model="newProjectName"
               label="project name"
-              variant=outlined
+              variant="outlined"
               :rules="[required]"
             />
             <v-textarea
@@ -174,38 +174,38 @@
           </v-card-text>
         </v-card>
       </v-dialog>
-    <remove-confirm-dialog
-      v-model="rmDialog"
-      title="remove project"
-      :message="removeProjectMessage"
-      :remove-candidates="removeCandidates"
-      @remove="commitRemoveProjects"
-    />
-    <export-dialog
-      v-model="exportDialog"
-      :project-json="exportProject"
-    />
-    <import-dialog
-      v-model="importDialog"
-      @imported="forceUpdateProjectList"
-    />
-    <v-snackbar
-      v-model="openSnackbar"
-      multi-line
-      :timeout=snackbarTimeout
-      centered
-      variant="outlined"
-    >
-      {{ snackbarMessage }}
-      <template #actions>
-        <v-btn
-          class="justify-end"
-          variant="outlined"
-          @click="closeSnackbar"
-          text="Close"
-        />
-      </template>
-    </v-snackbar>
+      <remove-confirm-dialog
+        v-model="rmDialog"
+        title="remove project"
+        :message="removeProjectMessage"
+        :remove-candidates="removeCandidates"
+        @remove="commitRemoveProjects"
+      />
+      <export-dialog
+        v-model="exportDialog"
+        :project-json="exportProject"
+      />
+      <import-dialog
+        v-model="importDialog"
+        @imported="forceUpdateProjectList"
+      />
+      <v-snackbar
+        v-model="openSnackbar"
+        multi-line
+        :timeout="snackbarTimeout"
+        centered
+        variant="outlined"
+      >
+        {{ snackbarMessage }}
+        <template #actions>
+          <v-btn
+            class="justify-end"
+            variant="outlined"
+            text="Close"
+            @click="closeSnackbar"
+          />
+        </template>
+      </v-snackbar>
     </v-main>
   </v-app>
 </template>
@@ -278,13 +278,6 @@ export default {
       isProjectArchiveReady: false
     };
   },
-  watch: {
-    batchMode(newMode) {
-      if (!newMode) {
-        this.selectedInTable.splice(0, this.selectedInTable.length);
-      }
-    }
-  },
   computed: {
     ...mapState([
       "openSnackbar",
@@ -322,6 +315,13 @@ export default {
       return this.selectedInTable[0] || null;
     }
 
+  },
+  watch: {
+    batchMode(newMode) {
+      if (!newMode) {
+        this.selectedInTable.splice(0, this.selectedInTable.length);
+      }
+    }
   },
   mounted: function () {
     this.pathSep = readCookie("pathSep");

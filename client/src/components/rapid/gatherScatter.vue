@@ -5,7 +5,7 @@
  */
 <template>
   <div>
-    <v-card >
+    <v-card>
       <v-card-title>
         {{ label }}
         <v-row
@@ -14,15 +14,15 @@
           <v-btn
             class="text-capitalize"
             :disabled="readOnly"
-            @click="dialog=true"
             prepend-icon="mdi-plus"
             :text="`add new ${label} setting`"
+            @click="dialog=true"
           />
         </v-row>
       </v-card-title>
       <v-card-text>
         <v-data-table
-          density=compact
+          density="compact"
           :headers="headers"
           :items="modifiedContainer"
         >
@@ -66,23 +66,23 @@
           </v-row>
           {{ label2 }}
           <lower-component-tree
-            @selected=onDstNodeSelected
+            @selected="onDstNodeSelected"
           />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn
-            variant=text
+            variant="text"
             :disabled="hasError"
+            prepend-icon="mdi-check"
+            text="OK"
             @click="commitChange"
-            prepend-icon=mdi-check
-            text=OK
           />
           <v-btn
-            variant=text
+            variant="text"
+            prepend-icon="mdi-cancel"
+            text="Cancel"
             @click="closeAndResetDialog"
-            prepend-icon=mdi-cancel
-            text=Cancel
           />
         </v-card-actions>
       </v-card>
@@ -120,6 +120,7 @@ export default {
       required: true
     }
   },
+  emits: ["addNewItem", "updateItem", "deleteItem"],
   data() {
     return {
       dialog: false,

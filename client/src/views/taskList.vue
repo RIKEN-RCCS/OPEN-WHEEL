@@ -13,7 +13,8 @@
     <template #label="{ item }">
       <div v-if=" ! item.root ">
         <component-button
-          :item="item"
+          :type="item.type"
+          :name="item.name"
         />
       </div>
       <div v-else>

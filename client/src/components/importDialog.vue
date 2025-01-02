@@ -10,8 +10,8 @@
     persistent
   >
     <v-card
-      :title=title
-      :subtitle=message
+      :title="title"
+      :subtitle="message"
       class="w-100"
     >
       <v-card-actions>
@@ -29,19 +29,23 @@
           />
         </v-btn-group>
       </v-card-actions>
-      <v-card-text >
+      <v-card-text>
         <v-tabs
           v-model="tab"
         >
-          <v-tab value=file>upload project archive</v-tab>
-          <v-tab value=url>import from repository</v-tab>
+          <v-tab value="file">
+            upload project archive
+          </v-tab>
+          <v-tab value="url">
+            import from repository
+          </v-tab>
         </v-tabs>
         <v-tabs-window v-model="tab">
           <v-tabs-window-item value="file">
             <v-file-input
+              v-model="archiveFile"
               class="mt-4"
               clearable
-              v-model="archiveFile"
               label="select or drop project archive file"
               variant="outlined"
               accept=".tgz"
@@ -49,22 +53,22 @@
           </v-tabs-window-item>
           <v-tabs-window-item value="url">
             <v-text-field
-              class="mt-4"
               v-model="archiveURL"
+              class="mt-4"
               label="project repository url"
             />
-        </v-tabs-window-item>
+          </v-tabs-window-item>
         </v-tabs-window>
       </v-card-text>
       <v-card-text>
-          <file-browser
-            @update="(a)=>{selectedInTree=a}"
-          />
+        <file-browser
+          @update="(a)=>{selectedInTree=a}"
+        />
       </v-card-text>
     </v-card>
   </v-dialog>
   <import-warning-dialog
-    v-model=warnDialog
+    v-model="warnDialog"
     @ok="importProject"
   />
 </template>
@@ -92,7 +96,12 @@ export default {
     importWarningDialog,
     fileBrowser
   },
-  props: ["modelValue"],
+  props: {
+    modelValue: {
+      type: Boolean,
+      required: true
+    }
+  },
   emits: [
     "update:modelValue",
     "imported"
@@ -107,6 +116,28 @@ export default {
       tab: "file",
       warnDialog: false
     };
+  },
+  computed: {
+    isReady() {
+      if (typeof this.selectedInTree !== "string") {
+        return true;
+      }
+      if (this.tab === "url" && typeof this.archiveURL === "string") {
+        return false;
+      }
+      if (this.tab === "file" && this.archiveFile instanceof File) {
+        return false;
+      }
+      return true;
+    },
+    openDialog: {
+      get() {
+        return this.modelValue;
+      },
+      set(v) {
+        this.$emit("update:modelValue", v);
+      }
+    }
   },
   methods: {
     async importProject() {
@@ -139,28 +170,6 @@ export default {
       this.selectedInTree = null;
       this.tab = "file";
       this.openDialog = false;
-    }
-  },
-  computed: {
-    isReady() {
-      if (typeof this.selectedInTree !== "string") {
-        return true;
-      }
-      if (this.tab === "url" && typeof this.archiveURL === "string") {
-        return false;
-      }
-      if (this.tab === "file" && this.archiveFile instanceof File) {
-        return false;
-      }
-      return true;
-    },
-    openDialog: {
-      get() {
-        return this.modelValue;
-      },
-      set(v) {
-        this.$emit("update:modelValue", v);
-      }
     }
   }
 };

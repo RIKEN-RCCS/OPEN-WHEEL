@@ -11,15 +11,15 @@
     <application-tool-bar
       title="remotehost"
       density="comfortable"
-      @navIconClick="drawer=!drawer"
+      @nav-icon-click="drawer=!drawer"
     />
     <v-main>
       <v-toolbar
-        color='background'
+        color="background"
       >
         <v-btn
-          @click.stop="openEditDialog()"
           text="new remote host setting"
+          @click.stop="openEditDialog()"
         />
       </v-toolbar>
       <v-data-table
@@ -31,9 +31,9 @@
             :disable="testing !== null && testing !== index"
             :color="item.testResult"
             :loading="item.loading"
+            :text="item.connectionStatus"
+            :prepend-icon="item.icon"
             @click="testConnection(index)"
-            :text=item.connectionStatus
-            :prepend-icon=item.icon
           />
         </template>
         <template #item.action="{ item}">
@@ -44,29 +44,29 @@
           />
         </template>
       </v-data-table>
-    <v-snackbar
-      v-model="openSnackbar"
-      multi-line
-      :timeout=snackbarTimeout
-      centered
-      variant="outlined"
-    >
-      {{ snackbarMessage }}
-      <template #actions>
-        <v-btn
-          class="justify-end"
-          variant="outlined"
-          @click="closeSnackbar"
-          text="Close"
-        />
-      </template>
-    </v-snackbar>
-    <password-dialog
-      v-model="pwDialog"
-      :title="pwDialogTitle"
-      @password="pwCallback"
-      @cancel="pwCallback(null)"
-    />
+      <v-snackbar
+        v-model="openSnackbar"
+        multi-line
+        :timeout="snackbarTimeout"
+        centered
+        variant="outlined"
+      >
+        {{ snackbarMessage }}
+        <template #actions>
+          <v-btn
+            class="justify-end"
+            variant="outlined"
+            text="Close"
+            @click="closeSnackbar"
+          />
+        </template>
+      </v-snackbar>
+      <password-dialog
+        v-model="pwDialog"
+        :title="pwDialogTitle"
+        @password="pwCallback"
+        @cancel="pwCallback(null)"
+      />
       <remove-confirm-dialog
         v-model="rmDialog"
         :title="removeConfirmMessage"
@@ -78,7 +78,7 @@
         :initial-value="currentSetting"
         :host-names="hostList"
         :available-job-schedulers="jobSchedulerNames"
-        @newHost="addNewSetting"
+        @new-host="addNewSetting"
         @cancel="currentSetting={}"
       />
     </v-main>

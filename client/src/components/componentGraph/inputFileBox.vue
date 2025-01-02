@@ -1,15 +1,18 @@
 <template>
-  <g >
+  <g>
     <freciever
-      :center=frecieverPos
-      :component-id=componentId
-      :input-filename=inputFilename
-      @drop=onDrop
-      @click=onClick
-      v-if=inputFilename />
-    <text-box :center=frecieverPos :text=inputFilename />
-
- </g>
+      v-if="inputFilename"
+      :center="frecieverPos"
+      :component-id="componentId"
+      :input-filename="inputFilename"
+      @drop="onDrop"
+      @click="onClick"
+    />
+    <text-box
+      :center="frecieverPos"
+      :text="inputFilename"
+    />
+  </g>
 </template>
 <script>
 "use strict";
@@ -19,7 +22,7 @@ import TextBox from "../../components/componentGraph/textBox.vue";
 import { calcFreceiverPos } from "../../lib/utils.js";
 
 export default {
-  name: "inputFileBox",
+  name: "InputFileBox",
   components: {
     Freciever,
     TextBox

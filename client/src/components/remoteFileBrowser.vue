@@ -7,23 +7,28 @@
   <div>
     <v-btn
       v-if="!connected"
-      @click="requestRemoteConnection"
       text="browse files on remotehost"
+      @click="requestRemoteConnection"
     />
     <div v-if="! readonly && connected">
       <v-spacer />
-      <v-tooltip location="top" text="new folder"
+      <v-tooltip
+        location="top"
+        text="new folder"
       >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
             v-bind="props"
+            icon="mdi-folder-plus-outline"
             @click="openDialog('createNewDir')"
-            icon=mdi-folder-plus-outline
           />
         </template>
       </v-tooltip>
-      <v-tooltip text="new file" location="top">
+      <v-tooltip
+        text="new file"
+        location="top"
+      >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
@@ -33,56 +38,71 @@
           />
         </template>
       </v-tooltip>
-      <v-tooltip text="rename" location="top" >
+      <v-tooltip
+        text="rename"
+        location="top"
+      >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
-            @click="openDialog('renameFile')"
             v-bind="props"
             icon="mdi-file-move-outline"
+            @click="openDialog('renameFile')"
           />
         </template>
       </v-tooltip>
-      <v-tooltip location="top" text="delete" >
+      <v-tooltip
+        location="top"
+        text="delete"
+      >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
             v-bind="props"
-            @click="openDialog('removeFile')"
             icon="mdi-file-remove-outline"
+            @click="openDialog('removeFile')"
           />
         </template>
       </v-tooltip>
-      <v-tooltip text="upload file" location="top">
+      <v-tooltip
+        text="upload file"
+        location="top"
+      >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
-              v-bind="props"
+            v-bind="props"
             icon="mdi-upload"
-              @click="showUploadDialog"
-            />
-        </template>
-      </v-tooltip>
-      <v-tooltip text="download" location="top" >
-        <template #activator="{ props }">
-        <v-btn
-          :disabled="isSND"
-              v-bind="props"
-            @click="download"
-            icon="mdi-download"
+            @click="showUploadDialog"
           />
         </template>
       </v-tooltip>
-          <v-tooltip location="top" text="share file" >
-            <template #activator="{ props }">
-        <v-btn
-          :disabled="isSND"
-            @click="openDialog('shareFile')"
+      <v-tooltip
+        text="download"
+        location="top"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+            v-bind="props"
+            icon="mdi-download"
+            @click="download"
+          />
+        </template>
+      </v-tooltip>
+      <v-tooltip
+        location="top"
+        text="share file"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
             icon="mdi-share-outline"
             v-bind="props"
+            @click="openDialog('shareFile')"
           />
-            </template>
-          </v-tooltip>
+        </template>
+      </v-tooltip>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"
@@ -95,9 +115,9 @@
       :load-children="getChildren"
       activatable
       :open="openItems"
-      @update:active="updateSelected"
       :get-node-icon="getNodeIcon"
       :get-leaf-icon="getLeafIcon"
+      @update:active="updateSelected"
     />
     <versatile-dialog
       v-model="dialog.open"
@@ -107,28 +127,28 @@
       @cancel="clearAndCloseDialog"
     >
       <template
+        v-if="['createNewDir','createNewFile','renameFile', 'shareFile'].includes(dialog.submitEvent)"
         #message
-        v-if="['createNewDir','createNewFile','renameFile'].includes(dialog.submitEvent)"
       >
         <v-text-field
+          v-if="['createNewDir','createNewFile','renameFile'].includes(dialog.submitEvent)"
           v-model="dialog.inputField"
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
           variant="outlined"
         />
-      </template>
-      <template
-        v-if="dialog.submitEvent === 'shareFile'"
-        #message
-      >
         <v-text-field
+          v-if="dialog.submitEvent === 'shareFile'"
           v-model="dialog.inputField"
           readonly
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
         >
           <template #append>
-            <v-tooltip text="copy file path" location="bottom" >
+            <v-tooltip
+              text="copy file path"
+              location="bottom"
+            >
               <template #activator="{ props }">
                 <v-btn
                   icon="mdi-content-copy"
@@ -148,11 +168,14 @@
       :buttons="downloadDialogButton"
       @close="closeDownloadDialog"
     >
-      <template #message >
+      <template #message>
         <v-row>
           <v-btn class="mx-auto mt-10 mb-6">
             <!-- Do NOT remove download attribute. some files may open in browser e.g. text, json -->
-            <a :href="downloadURL" download>download</a>
+            <a
+              :href="downloadURL"
+              download
+            >download</a>
           </v-btn>
         </v-row>
       </template>
@@ -253,7 +276,7 @@ export default {
     }
     this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
   },
-  beforeDestroy() {
+  beforeUnmount() {
     SIO.removeUploaderEvent("choose", this.onChoose);
     SIO.removeUploaderEvent("complete", this.onUploadComplete);
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
