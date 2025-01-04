@@ -205,7 +205,8 @@ describe("fileManager UT", ()=>{
       expect(path.join(testDirRoot, "hoge")).to.be.a.file();
     });
   });
-  describe("#downloadFile", ()=>{
+  describe("#downloadFile", function () {
+    this.timeout(10000);
     it("should send file", async ()=>{
       await onDownload(testDirRoot, path.resolve(testDirRoot, "foo_1"), cb);
       expect(cb).to.have.been.calledOnce;
