@@ -707,3 +707,173 @@ describe("#createNewProject", ()=>{
     expect(gitInitMock.called).to.be.false;
   });
 });
+
+describe("#removeComponentPath", ()=>{
+  let rewireProjectFilesOperator;
+  let removeComponentPath;
+  let readJsonGreedyStub;
+  let writeJsonWrapperStub;
+  let gitAddStub;
+  let pathExistsStub;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    removeComponentPath = rewireProjectFilesOperator.__get__("removeComponentPath");
+
+    readJsonGreedyStub = sinon.stub();
+    writeJsonWrapperStub = sinon.stub();
+    gitAddStub = sinon.stub();
+    pathExistsStub = sinon.stub();
+
+    rewireProjectFilesOperator.__set__({
+      readJsonGreedy: readJsonGreedyStub,
+      writeJsonWrapper: writeJsonWrapperStub,
+      gitAdd: gitAddStub,
+      fs: { pathExists: pathExistsStub }
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should remove specified component IDs from componentPath and update the project JSON", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = {
+      componentPath: {
+        comp1: "path/to/comp1",
+        comp2: "path/to/comp2",
+        comp3: "path/to/comp3"
+      }
+    };
+    const IDsToRemove = ["comp2"];
+
+    readJsonGreedyStub.resolves(mockProjectJson);
+    writeJsonWrapperStub.resolves();
+    gitAddStub.resolves();
+    pathExistsStub.resolves(false);
+
+    await removeComponentPath(mockProjectRootDir, IDsToRemove);
+
+    expect(readJsonGreedyStub.calledOnceWithExactly(path.resolve(mockProjectRootDir, "prj.wheel.json"))).to.be.true;
+    expect(writeJsonWrapperStub.calledOnceWithExactly(
+      path.resolve(mockProjectRootDir, "prj.wheel.json"),
+      {
+        componentPath: {
+          comp1: "path/to/comp1",
+          comp3: "path/to/comp3"
+        }
+      }
+    )).to.be.true;
+    expect(gitAddStub.calledOnceWithExactly(
+      mockProjectRootDir,
+      path.resolve(mockProjectRootDir, "prj.wheel.json")
+    )).to.be.true;
+  });
+
+  it("should not remove components if their directories exist and force is false", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = {
+      componentPath: {
+        comp1: "path/to/comp1",
+        comp2: "path/to/comp2"
+      }
+    };
+    const IDsToRemove = ["comp2"];
+
+    readJsonGreedyStub.resolves(mockProjectJson);
+    writeJsonWrapperStub.resolves();
+    gitAddStub.resolves();
+    pathExistsStub.resolves(true);
+
+    await removeComponentPath(mockProjectRootDir, IDsToRemove, false);
+
+    expect(readJsonGreedyStub.calledOnceWithExactly(path.resolve(mockProjectRootDir, "prj.wheel.json"))).to.be.true;
+    expect(writeJsonWrapperStub.calledOnceWithExactly(
+      path.resolve(mockProjectRootDir, "prj.wheel.json"),
+      {
+        componentPath: {
+          comp1: "path/to/comp1",
+          comp2: "path/to/comp2"
+        }
+      }
+    )).to.be.true;
+    expect(gitAddStub.calledOnceWithExactly(
+      mockProjectRootDir,
+      path.resolve(mockProjectRootDir, "prj.wheel.json")
+    )).to.be.true;
+  });
+
+  it("should forcefully remove components even if their directories exist when force is true", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = {
+      componentPath: {
+        comp1: "path/to/comp1",
+        comp2: "path/to/comp2"
+      }
+    };
+    const IDsToRemove = ["comp2"];
+
+    readJsonGreedyStub.resolves(mockProjectJson);
+    writeJsonWrapperStub.resolves();
+    gitAddStub.resolves();
+    pathExistsStub.resolves(true);
+
+    await removeComponentPath(mockProjectRootDir, IDsToRemove, true);
+
+    expect(readJsonGreedyStub.calledOnceWithExactly(path.resolve(mockProjectRootDir, "prj.wheel.json"))).to.be.true;
+    expect(writeJsonWrapperStub.calledOnceWithExactly(
+      path.resolve(mockProjectRootDir, "prj.wheel.json"),
+      {
+        componentPath: {
+          comp1: "path/to/comp1"
+        }
+      }
+    )).to.be.true;
+    expect(gitAddStub.calledOnceWithExactly(
+      mockProjectRootDir,
+      path.resolve(mockProjectRootDir, "prj.wheel.json")
+    )).to.be.true;
+  });
+
+  it("should handle an empty componentPath gracefully", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = { componentPath: {} };
+    const IDsToRemove = ["comp1"];
+
+    readJsonGreedyStub.resolves(mockProjectJson);
+    writeJsonWrapperStub.resolves();
+    gitAddStub.resolves();
+
+    await removeComponentPath(mockProjectRootDir, IDsToRemove);
+
+    expect(readJsonGreedyStub.calledOnceWithExactly(path.resolve(mockProjectRootDir, "prj.wheel.json"))).to.be.true;
+    expect(writeJsonWrapperStub.calledOnceWithExactly(
+      path.resolve(mockProjectRootDir, "prj.wheel.json"),
+      { componentPath: {} }
+    )).to.be.true;
+    expect(gitAddStub.calledOnceWithExactly(
+      mockProjectRootDir,
+      path.resolve(mockProjectRootDir, "prj.wheel.json")
+    )).to.be.true;
+  });
+
+  it("should throw an error if reading the project JSON fails", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const IDsToRemove = ["comp1"];
+
+    const mockError = new Error("Read error");
+    readJsonGreedyStub.rejects(mockError);
+
+    try {
+      await removeComponentPath(mockProjectRootDir, IDsToRemove);
+      throw new Error("Expected removeComponentPath to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(readJsonGreedyStub.calledOnceWithExactly(path.resolve(mockProjectRootDir, "prj.wheel.json"))).to.be.true;
+    expect(writeJsonWrapperStub.notCalled).to.be.true;
+    expect(gitAddStub.notCalled).to.be.true;
+  });
+});
