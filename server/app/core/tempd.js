@@ -24,13 +24,14 @@ function getTempdRoot() {
   for (const candidate of candidates) {
     try {
       const rt = fs.ensureDirSync(candidate);
-      if (typeof rt === "undefined") {
+      if (typeof rt === "undefined" || rt === candidate) {
         return candidate;
       }
     } catch (e) {
       if (e.code === "EEXIST") {
         return candidate;
       }
+      getLogger().debug(`create ${candidate} failed due to ${e}`);
     }
   }
   return fallback;
