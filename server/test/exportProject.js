@@ -19,6 +19,7 @@ chai.use(require("chai-as-promised"));
 const { createNewComponent, createNewProject } = require("../app/core/projectFilesOperator");
 const { gitCommit } = require("../app/core/gitOperator2.js");
 const { projectJsonFilename, componentJsonFilename } = require("../app/db/db.js");
+const { getTempdRoot } = require("../app/core/tempd.js");
 
 //testee
 const { exportProject } = require("../app/core/exportProject.js");
@@ -30,9 +31,12 @@ const projectRootDir = path.resolve(testDirRoot, "test_project.wheel");
 describe("#export project", function () {
   this.timeout(10000);
   const projectName = "test_project";
+  const tmpDir = getTempdRoot();
+
   const extractDir = path.resolve(testDirRoot, "tmp");
   let workflow0;
   beforeEach(async ()=>{
+    await fs.ensureDir(tmpDir);
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, projectName, null, "test", "test@example.com");
     await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
@@ -50,14 +54,18 @@ describe("#export project", function () {
     }
   });
   it("should export project as tar.gz", async ()=>{
-    expect(await exportProject(projectRootDir)).to.be.a("string").and.match(new RegExp(`WHEEL_project_${projectName}.tgz`));
+    const url = await exportProject(projectRootDir);
+    expect(url).to.be.a("string").and.match(new RegExp(`WHEEL_project_${projectName}.tgz`));
+    const archiveFilename = path.join(tmpDir, "exportProject", url);
+    expect(archiveFilename).to.be.a.file();
   });
   it("should export project even if not-committed files exist and exclude them", async ()=>{
     await fs.outputFile(path.resolve(projectRootDir, workflow0.name, "hoge"), "hoge");
     const url = await exportProject(projectRootDir);
-    expect(url).to.be.a("string").and.match(new RegExp(`WHEEL_project_${projectName}.tgz`));
+    expect(url).to.be.a("string").and.match(new RegExp(`/.*WHEEL_project_${projectName}.tgz$`));
     await fs.ensureDir(extractDir);
-    await exec(`tar xfz ${path.join("/tmp/exportProject", url)} -C ${extractDir}`);
+    const archiveFilename = path.join(tmpDir, "exportProject", url);
+    await exec(`tar xfz ${archiveFilename} -C ${extractDir} --strip 1`);
     expect(path.join(extractDir, workflow0.name, "hoge")).to.not.be.a.path();
     expect(path.join(extractDir, projectJsonFilename)).to.be.a.file();
   });
@@ -74,7 +82,8 @@ describe("#export project", function () {
     const url = await exportProject(projectRootDir);
     expect(url).to.be.a("string").and.match(new RegExp(`WHEEL_project_${projectName}.tgz`));
     await fs.ensureDir(extractDir);
-    await exec(`tar xfz ${path.join("/tmp/exportProject", url)} -C ${extractDir}`);
+    const archiveFilename = path.join(tmpDir, "exportProject", url);
+    await exec(`tar xfz ${archiveFilename} -C ${extractDir} --strip 1`);
 
     const workflowJsonAfter = await fs.readJson(path.join(extractDir, workflow0.name, componentJsonFilename));
     expect(workflowJsonAfter.state).to.be.a("string").and.equal("not-started");
