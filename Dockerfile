@@ -10,7 +10,6 @@ COPY package-lock.json package-lock.json
 COPY server server
 COPY common common
 COPY client client
-RUN ls -l
 RUN npm install
 WORKDIR /usr/src/client
 RUN npm run build
