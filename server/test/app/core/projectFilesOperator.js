@@ -1122,3 +1122,60 @@ describe("#setProjectState", ()=>{
     }
   });
 });
+
+describe("#getComponentFullName", ()=>{
+  let rewireProjectFilesOperator;
+  let getComponentFullName;
+  let getComponentDirMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    getComponentFullName = rewireProjectFilesOperator.__get__("getComponentFullName");
+
+    //Mocking getComponentDir
+    getComponentDirMock = sinon.stub();
+    rewireProjectFilesOperator.__set__("getComponentDir", getComponentDirMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return the path without a leading dot when getComponentDir returns a valid relative path", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockID = "component123";
+    const mockPath = "./relative/path/to/component";
+
+    getComponentDirMock.resolves(mockPath);
+
+    const result = await getComponentFullName(mockProjectRootDir, mockID);
+
+    expect(getComponentDirMock.calledOnceWithExactly(mockProjectRootDir, mockID)).to.be.true;
+    expect(result).to.equal("/relative/path/to/component");
+  });
+
+  it("should return null when getComponentDir returns null", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockID = "component123";
+
+    getComponentDirMock.resolves(null);
+
+    const result = await getComponentFullName(mockProjectRootDir, mockID);
+
+    expect(getComponentDirMock.calledOnceWithExactly(mockProjectRootDir, mockID)).to.be.true;
+    expect(result).to.be.null;
+  });
+
+  it("should return the original path when getComponentDir returns a path without a leading dot", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockID = "component123";
+    const mockPath = "absolute/path/to/component";
+
+    getComponentDirMock.resolves(mockPath);
+
+    const result = await getComponentFullName(mockProjectRootDir, mockID);
+
+    expect(getComponentDirMock.calledOnceWithExactly(mockProjectRootDir, mockID)).to.be.true;
+    expect(result).to.equal(mockPath);
+  });
+});
