@@ -24,18 +24,18 @@
         :get-leaf-icon="getLeafIcon"
         @update:active="onUpdateActive"
       >
-        <template #label="{item:item2}">
+        <template #label="{item}">
           <slot
             name="label"
-            :item="item2"
+            :item="item"
           >
             {{ item.name }}
           </slot>
         </template>
-        <template #append="{item:item2}">
+        <template #append="{item}">
           <slot
             name="append"
-            :item="item2"
+            :item="item"
           />
         </template>
       </inner-treeview>
