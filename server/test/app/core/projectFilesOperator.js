@@ -1337,3 +1337,101 @@ describe("#checkRunningJobs", ()=>{
     expect(getLoggerStub.warn.notCalled).to.be.true;
   });
 });
+
+describe("#rewriteIncludeExclude", ()=>{
+  let rewireProjectFilesOperator;
+  let rewriteIncludeExclude;
+  let readJsonGreedyMock, writeComponentJsonMock, glob2ArrayMock;
+  const mockProjectRootDir = "/mock/project/root";
+  const mockFilename = `${mockProjectRootDir}/component.json`;
+  let changedFiles;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    rewriteIncludeExclude = rewireProjectFilesOperator.__get__("rewriteIncludeExclude");
+
+    changedFiles = [];
+
+    readJsonGreedyMock = sinon.stub();
+    writeComponentJsonMock = sinon.stub().resolves();
+    glob2ArrayMock = sinon.stub();
+
+    rewireProjectFilesOperator.__set__({
+      readJsonGreedy: readJsonGreedyMock,
+      writeComponentJson: writeComponentJsonMock,
+      glob2Array: glob2ArrayMock
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should convert string 'include' property to array of objects", async ()=>{
+    const mockComponentJson = { include: "file1,file2", exclude: [] };
+    readJsonGreedyMock.resolves(mockComponentJson);
+    glob2ArrayMock.returns(["file1", "file2"]);
+
+    await rewriteIncludeExclude(mockProjectRootDir, mockFilename, changedFiles);
+
+    expect(glob2ArrayMock.calledOnceWithExactly("file1,file2")).to.be.true;
+    expect(mockComponentJson.include).to.deep.equal([
+      { name: "file1" },
+      { name: "file2" }
+    ]);
+    expect(writeComponentJsonMock.calledOnceWithExactly(
+      mockProjectRootDir,
+      path.dirname(mockFilename),
+      mockComponentJson
+    )).to.be.true;
+    expect(changedFiles).to.include(mockFilename);
+  });
+
+  it("should set 'include' to an empty array if it is null", async ()=>{
+    const mockComponentJson = { include: null, exclude: [] };
+    readJsonGreedyMock.resolves(mockComponentJson);
+
+    await rewriteIncludeExclude(mockProjectRootDir, mockFilename, changedFiles);
+
+    expect(mockComponentJson.include).to.deep.equal([]);
+    expect(writeComponentJsonMock.calledOnce).to.be.true;
+    expect(changedFiles).to.include(mockFilename);
+  });
+
+  it("should not write if no changes are made", async ()=>{
+    const mockComponentJson = { include: [], exclude: [] };
+    readJsonGreedyMock.resolves(mockComponentJson);
+
+    await rewriteIncludeExclude(mockProjectRootDir, mockFilename, changedFiles);
+
+    expect(writeComponentJsonMock.notCalled).to.be.true;
+    expect(changedFiles).to.be.empty;
+  });
+
+  it("should convert string 'exclude' property to array of objects", async ()=>{
+    const mockComponentJson = { include: [], exclude: "file3,file4" };
+    readJsonGreedyMock.resolves(mockComponentJson);
+    glob2ArrayMock.returns(["file3", "file4"]);
+
+    await rewriteIncludeExclude(mockProjectRootDir, mockFilename, changedFiles);
+
+    expect(glob2ArrayMock.calledOnceWithExactly("file3,file4")).to.be.true;
+    expect(mockComponentJson.exclude).to.deep.equal([
+      { name: "file3" },
+      { name: "file4" }
+    ]);
+    expect(writeComponentJsonMock.calledOnce).to.be.true;
+    expect(changedFiles).to.include(mockFilename);
+  });
+
+  it("should set 'exclude' to an empty array if it is null", async ()=>{
+    const mockComponentJson = { include: [], exclude: null };
+    readJsonGreedyMock.resolves(mockComponentJson);
+
+    await rewriteIncludeExclude(mockProjectRootDir, mockFilename, changedFiles);
+
+    expect(mockComponentJson.exclude).to.deep.equal([]);
+    expect(writeComponentJsonMock.calledOnce).to.be.true;
+    expect(changedFiles).to.include(mockFilename);
+  });
+});
