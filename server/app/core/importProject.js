@@ -12,7 +12,7 @@ const { extract } = require("tar");
 const { createTempd } = require("./tempd.js");
 const { readJsonGreedy } = require("./fileUtils.js");
 const { projectList, projectJsonFilename, componentJsonFilename, suffix } = require("../db/db.js");
-const { gitCommit } = require("./gitOperator2.js");
+const { gitCommit, gitConfig } = require("./gitOperator2.js");
 const { setComponentStateR, updateProjectROStatus, getHosts } = require("./projectFilesOperator.js");
 const { askHostMap } = require("./askHostMap.js");
 const { askRewindState } = require("./askRewindState.js");
@@ -46,7 +46,7 @@ async function moveAndRegisterProject(src, dst) {
  */
 async function extractAndReadArchiveMetadata(archiveFile, keep) {
   const { dir } = await createTempd(null, "importProject");
-  await extract({ strict: true, file: archiveFile, cwd: dir, strip: 1 });
+  await extract({ strict: true, file: archiveFile, cwd: dir, strip: 1, preserveOwner: false });
   const projectJson = await readJsonGreedy(path.join(dir, projectJsonFilename));
   if (!keep) {
     await fs.remove(dir);
@@ -120,6 +120,8 @@ async function importProject(clientID, archiveFile, parentDir) {
       const hostMap = await askHostMap(clientID, hosts);
       await rewriteHosts(src, hostMap);
     }
+    await gitConfig(src, "user.name", "wheel");
+    await gitConfig(src, "user.email", "wheel@example.com");
     await gitCommit(src, "import project");
   } catch (e) {
     await fs.remove(src);
