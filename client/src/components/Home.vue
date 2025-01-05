@@ -32,7 +32,7 @@
         <v-btn
           :disabled="batchMode"
           prepend-icon="mdi-import"
-          text="import"
+          text="IMPORT"
           @click="importDialog=true"
         />
         <v-btn
@@ -49,7 +49,7 @@
         />
         <v-btn
           prepend-icon="mdi-export"
-          text="export"
+          text="EXPORT"
           :disabled="selectedInTable.length === 0 || batchMode"
           @click="openExportProjectDialog"
         />
