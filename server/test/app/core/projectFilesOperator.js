@@ -9,6 +9,8 @@ const { describe, it } = require("mocha");
 const rewire = require("rewire");
 const sinon = require("sinon");
 const path = require("path");
+const { promisify } = require("util");
+const glob = require("glob");
 
 describe("#isSurrounded", ()=>{
   let rewireProjectFilesOperator;
@@ -1433,5 +1435,90 @@ describe("#rewriteIncludeExclude", ()=>{
     expect(mockComponentJson.exclude).to.deep.equal([]);
     expect(writeComponentJsonMock.calledOnce).to.be.true;
     expect(changedFiles).to.include(mockFilename);
+  });
+});
+
+describe("#rewriteAllIncludeExcludeProperty", ()=>{
+  let rewireProjectFilesOperator;
+  let rewriteAllIncludeExcludeProperty;
+  let rewriteIncludeExcludeMock;
+  let globMock;
+  let promisifyMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    rewriteAllIncludeExcludeProperty = rewireProjectFilesOperator.__get__("rewriteAllIncludeExcludeProperty");
+
+    rewriteIncludeExcludeMock = sinon.stub();
+    rewireProjectFilesOperator.__set__("rewriteIncludeExclude", rewriteIncludeExcludeMock);
+
+    globMock = sinon.stub();
+    promisifyMock = sinon.stub().callsFake((fn)=>fn === glob ? globMock : promisify(fn));
+    rewireProjectFilesOperator.__set__("promisify", promisifyMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should process all component JSON files and update 'changed' array", async ()=>{
+    const projectRootDir = "/mock/project/root";
+    const changed = [];
+    const mockFiles = [
+      `${projectRootDir}/comp1/cmp.wheel.json`,
+      `${projectRootDir}/comp2/cmp.wheel.json`
+    ];
+
+    globMock.resolves(mockFiles);
+    rewriteIncludeExcludeMock.resolves();
+
+    await rewriteAllIncludeExcludeProperty(projectRootDir, changed);
+
+    expect(globMock.calledOnceWithExactly(`./**/cmp.wheel.json`, { cwd: projectRootDir })).to.be.true;
+    expect(rewriteIncludeExcludeMock.callCount).to.equal(mockFiles.length);
+    mockFiles.forEach((file, index)=>{
+      expect(rewriteIncludeExcludeMock.getCall(index).args[0]).to.equal(projectRootDir);
+      expect(rewriteIncludeExcludeMock.getCall(index).args[1]).to.equal(path.resolve(projectRootDir, file));
+      expect(rewriteIncludeExcludeMock.getCall(index).args[2]).to.equal(changed);
+    });
+  });
+
+  it("should handle an empty project directory gracefully", async ()=>{
+    const projectRootDir = "/mock/project/root";
+    const changed = [];
+
+    globMock.resolves([]);
+
+    await rewriteAllIncludeExcludeProperty(projectRootDir, changed);
+
+    expect(globMock.calledOnceWithExactly(`./**/cmp.wheel.json`, { cwd: projectRootDir })).to.be.true;
+    expect(rewriteIncludeExcludeMock.notCalled).to.be.true;
+    expect(changed).to.deep.equal([]);
+  });
+
+  it("should propagate errors from rewriteIncludeExclude", async ()=>{
+    const projectRootDir = "/mock/project/root";
+    const changed = [];
+    const mockFiles = [
+      `${projectRootDir}/comp1/cmp.wheel.json`
+    ];
+    const mockError = new Error("Test error");
+
+    globMock.resolves(mockFiles);
+    rewriteIncludeExcludeMock.rejects(mockError);
+
+    try {
+      await rewriteAllIncludeExcludeProperty(projectRootDir, changed);
+      throw new Error("Expected rewriteAllIncludeExcludeProperty to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(globMock.calledOnceWithExactly(`./**/cmp.wheel.json`, { cwd: projectRootDir })).to.be.true;
+    expect(rewriteIncludeExcludeMock.calledOnceWithExactly(
+      projectRootDir,
+      path.resolve(projectRootDir, mockFiles[0]),
+      changed
+    )).to.be.true;
   });
 });
