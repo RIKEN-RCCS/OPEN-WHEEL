@@ -1179,3 +1179,68 @@ describe("#getComponentFullName", ()=>{
     expect(result).to.equal(mockPath);
   });
 });
+
+describe("#getProjectState", ()=>{
+  let rewireProjectFilesOperator;
+  let getProjectState;
+  let readJsonGreedyMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    getProjectState = rewireProjectFilesOperator.__get__("getProjectState");
+
+    readJsonGreedyMock = sinon.stub();
+    rewireProjectFilesOperator.__set__("readJsonGreedy", readJsonGreedyMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return the project state when the project JSON is valid", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = { state: "not-started" };
+
+    readJsonGreedyMock.resolves(mockProjectJson);
+
+    const result = await getProjectState(mockProjectRootDir);
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(
+      "/mock/project/root/prj.wheel.json"
+    )).to.be.true;
+    expect(result).to.equal("not-started");
+  });
+
+  it("should throw an error when the project JSON cannot be read", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockError = new Error("read failed");
+
+    readJsonGreedyMock.rejects(mockError);
+
+    try {
+      await getProjectState(mockProjectRootDir);
+      throw new Error("Expected getProjectState to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(
+      "/mock/project/root/prj.wheel.json"
+    )).to.be.true;
+  });
+
+  it("should return undefined when the state property is missing", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = { name: "test_project" };
+
+    readJsonGreedyMock.resolves(mockProjectJson);
+
+    const result = await getProjectState(mockProjectRootDir);
+
+    expect(result).to.be.undefined;
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(
+      "/mock/project/root/prj.wheel.json"
+    )).to.be.true;
+  });
+});
