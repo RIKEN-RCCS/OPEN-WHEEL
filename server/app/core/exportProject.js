@@ -10,7 +10,7 @@ const { create } = require("tar");
 const { createTempd } = require("./tempd.js");
 const { readJsonGreedy } = require("./fileUtils.js");
 const { projectJsonFilename } = require("../db/db.js");
-const { gitAdd, gitClone, gitCommit, gitConfig } = require("./gitOperator2.js");
+const { gitAdd, gitClone, gitCommit, gitConfig, gitRemoveOrigin } = require("./gitOperator2.js");
 const { setComponentStateR } = require("./projectFilesOperator.js");
 
 /**
@@ -26,6 +26,7 @@ async function exportProject(projectRootDir, name = null, mail = null, memo = nu
   const workDir = await fs.mkdtemp(`${dir}/`);
   await gitClone(workDir, 1, projectRootDir);
   const tmpProjectRootDir = path.join(workDir, path.basename(projectRootDir));
+  await gitRemoveOrigin(tmpProjectRootDir);
   await setComponentStateR(tmpProjectRootDir, tmpProjectRootDir, "not-started");
 
   const filename = path.resolve(tmpProjectRootDir, projectJsonFilename);
