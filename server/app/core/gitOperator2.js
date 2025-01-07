@@ -193,6 +193,17 @@ async function gitClean(rootDir, filePatterns = "") {
 }
 
 /**
+ * remove origin url
+ * @param {string} rootDir - repo's root dir
+ * @param {string} name - remote name
+ * @returns {Promise} - resolved when git clone done
+ */
+async function gitRemoveOrigin(rootDir, name = "origin") {
+  const opt = ["remote", "remove", name];
+  return gitPromise(rootDir, opt);
+}
+
+/**
  * clone rootDir to cwd
  * @param {string} cwd - working directory
  * @param {number} depth - clone depth for shallow clone
@@ -204,6 +215,7 @@ async function gitClone(cwd, depth, rootDir) {
   if (Number.isInteger(depth)) {
     opt.push(`--depth=${depth}`);
   }
+  opt.push("--single-branch");
   return gitPromise(cwd, opt);
 }
 
@@ -334,6 +346,7 @@ module.exports = {
   gitResetHEAD,
   gitStatus,
   gitClean,
+  gitRemoveOrigin,
   gitClone,
   gitArchive,
   gitConfig,
