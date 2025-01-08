@@ -46,7 +46,9 @@ export default {
   },
   props: {
     requestRoot: { type: String, default: undefined },
-    mode: { type: String, default: "dirWithProjectJson" }
+    mode: { type: String, default: "dirWithProjectJson" },
+    withParentDir: { type: Boolean, default: false },
+    withCurrentDir: { type: Boolean, default: false }
   },
   emits: ["update"],
   data: function () {
@@ -56,7 +58,13 @@ export default {
     };
   },
   mounted() {
-    SIO.emitGlobal("getFileList", null, { mode: this.mode, path: this.requestRoot }, (fileList)=>{
+    const msg = {
+      mode: this.mode,
+      path: this.requestRoot,
+      withParentDir: this.withParentDir,
+      withCurrentDir: this.withCurrentDir
+    };
+    SIO.emitGlobal("getFileList", null, msg, (fileList)=>{
       this.root = this.requestRoot || fileList[0].path || "/";
       const pathSep = this.root[0] === "/" ? "/" : "\\";
       this.items.splice(0, this.items.length, ...fileList.map(fileListModifier.bind(null, pathSep)));

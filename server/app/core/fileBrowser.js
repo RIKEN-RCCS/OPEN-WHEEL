@@ -98,6 +98,7 @@ function compare(a, b) {
  * @param {boolean} [options.sendDirname] -  flag for send directory name or not
  * @param {boolean} [options.sendFilename] - flag for send file name or not
  * @param {boolean} [options.withParentDir] - flag for send parent dir('../') or not
+ * @param {boolean} [options.withCurrentDir] - flag for send parent dir('./') or not
  * @param {boolean} [options.SND] -  flag for bundle serial number data or not
  * @param {object} [options.filter] -  item name filter
  * @param {object} [options.filter.all] -  filter regex for both directories and files
@@ -113,6 +114,7 @@ async function ls(targetDir, options = {}) {
   const sendDirname = options.sendDirname != null ? options.sendDirname : true;
   const sendFilename = options.sendFilename != null ? options.sendFilename : true;
   const withParentDir = options.withParentDir != null ? options.withParentDir : false;
+  const withCurrentDir = options.withCurrentDir != null ? options.withCurrentDir : false;
   const bundleSerialNumberData = options.SND != null ? options.SND : false;
   const allFilter = options.filter && options.filter.all;
   const dirFilter = options.filter && options.filter.dir;
@@ -169,6 +171,9 @@ async function ls(targetDir, options = {}) {
   }));
   if (withParentDir) {
     dirList.push({ path: request, name: "../", type: "dir", islink: false });
+  }
+  if (withCurrentDir) {
+    dirList.push({ path: request, name: "./", type: "dir", islink: false });
   }
   if (bundleSerialNumberData) {
     const dirs = bundleSNDFiles(dirList, true);

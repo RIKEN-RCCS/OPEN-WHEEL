@@ -43,6 +43,8 @@ async function onGetFileList(projectRootDir, msg, cb) {
   const sendFilename = msg.mode !== "dir";
   const SND = msg.mode === "underComponent"; //send serial numberd content as SND or not
   const allFilter = msg.mode === "dir" || msg.mode === "dirWithProjectJson" ? noDotFiles : allFiles;
+  const withParentDir = msg.withParentDir;
+  const withCurrentDir = msg.withCurrentDir;
   const filterTable = {
     dirWithProjectJson: projectJsonFileOnly,
     underComponent: exceptSystemFiles,
@@ -60,7 +62,8 @@ async function onGetFileList(projectRootDir, msg, cb) {
         file: fileFilter,
         dir: null
       },
-      withParentDir: false
+      withParentDir,
+      withCurrentDir
     });
     cb(result);
   } catch (e) {
