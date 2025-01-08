@@ -62,6 +62,7 @@
       </v-card-text>
       <v-card-text>
         <file-browser
+          :with-current-dir="true"
           @update="(a)=>{selectedInTree=a}"
         />
       </v-card-text>
