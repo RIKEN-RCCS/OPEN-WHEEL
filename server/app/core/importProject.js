@@ -61,21 +61,24 @@ async function extractAndReadArchiveMetadata(archiveFile, keep) {
  */
 async function checkProjectAndComponentStatus(dir) {
   const result = [];
-  const { readOnly } = await readJsonGreedy(path.resolve(dir, projectJsonFilename));
+  const { readOnly, state } = await readJsonGreedy(path.resolve(dir, projectJsonFilename));
   if (readOnly) {
-    result.push({ path: "project", reason: "read only" });
+    result.push({ path: "project", state: "read only", ID: "projectRO" });
+  }
+  if (state !== "not-started") {
+    result.push({ path: "project", state, ID: "projectState" });
   }
   const componentJsonFiles = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
-  const components = await Promise.all(componentJsonFiles
+  const componentsToBeFixed = await Promise.all(componentJsonFiles
     .map(async (componentJsonFile)=>{
-      const componentJson = await readJsonGreedy(componentJsonFile);
-      if (componentJson.state !== "not-started") {
-        return { path: path.dirname(componentJsonFile), reason: "illegal state", state: componentJson.state };
+      const { state, ID } = await readJsonGreedy(componentJsonFile);
+      if (state !== "not-started") {
+        return { path: path.relative(dir, path.dirname(componentJsonFile)), state, ID };
       }
       return null;
     }));
   result.push(
-    ...components.filter((e)=>{
+    ...componentsToBeFixed.filter((e)=>{
       return e !== null;
     })
   );
@@ -110,7 +113,7 @@ async function importProject(clientID, archiveFile, parentDir) {
 
     if (toBeFixed.length > 0) {
       await askRewindState(clientID, toBeFixed);
-      await setComponentStateR(src);
+      await setComponentStateR(src, src, "not-started");
       await updateProjectROStatus(src, false);
     }
 
