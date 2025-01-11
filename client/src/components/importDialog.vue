@@ -20,7 +20,7 @@
             :prepend-icon="mdi-check"
             :disabled="isReady"
             text="ok"
-            @click="warnDialog=true"
+            @click="openImportWarningDialog=true"
           />
           <v-btn
             :prepend-icon="mdi-close"
@@ -69,19 +69,33 @@
     </v-card>
   </v-dialog>
   <import-warning-dialog
-    v-model="warnDialog"
+    v-model="openImportWarningDialog"
     @ok="importProject"
+  />
+  <host-map-dialog
+    v-model="openHostMapDialog"
+    :hosts="hosts"
+    @ok="commitHostMap"
+    @cancel="commitHostMap(null)"
+  />
+  <versatile-dialog
+    v-model="openRewindDialog"
+    max-eidth="60vw"
+    title="change project/component status"
+    message=""
+    @ok="commitRewind"
+    @cancel="commitRewind(null)"
   />
 </template>
 <script>
 import fileBrowser from "../components/common/fileBrowserLite.vue";
 import importWarningDialog from "../components/importWarningDialog.vue";
+import hostMapDialog from "../components/hostMapDialog.vue";
 import SIO from "../lib/socketIOWrapper.js";
 
 async function waitOnUploadDoneEvent() {
   return new Promise((resolve, reject)=>{
     SIO.once("uploadDone", (event)=>{
-      console.log(event);
       if (event.success) {
         resolve(event);
       } else {
@@ -95,7 +109,8 @@ export default {
   name: "ImportDialog",
   components: {
     importWarningDialog,
-    fileBrowser
+    fileBrowser,
+    hostMapDialog
   },
   props: {
     modelValue: {
@@ -115,7 +130,10 @@ export default {
       archiveFile: null,
       archiveURL: null,
       tab: "file",
-      warnDialog: false
+      openImportWarningDialog: false,
+      hosts: [],
+      openHostMapDialog: false,
+      hostMapCB: null
     };
   },
   computed: {
@@ -162,8 +180,20 @@ export default {
       const archiveFile = isURL ? this.archiveURL : filename;
       SIO.emitGlobal("importProject", archiveFile, parentDir, isURL, ()=>{
         this.$emit("imported");
+        this.closeDialog();
       });
-      this.closeDialog();
+      SIO.onGlobal("askHostMap", (hosts, cb)=>{
+        this.hosts.push(...hosts);
+        this.hostMapCB = cb;
+        this.openHostMapDialog = true;
+      });
+    },
+    commitHostMap(hostMap) {
+      if (typeof this.hostMapCB !== "function") {
+        console.log("hostMapCB is not set");
+        return;
+      }
+      this.hostMapCB(hostMap);
     },
     closeDialog() {
       this.archiveURL = null;
@@ -171,6 +201,9 @@ export default {
       this.selectedInTree = null;
       this.tab = "file";
       this.openDialog = false;
+      this.hosts = [];
+      this.openHostMapDialog = false;
+      this.hostMapCB = null;
     }
   }
 };

@@ -988,6 +988,7 @@ async function checkRemoteStoragePathWritePermission(projectRootDir, { host, sto
 async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) {
   const promises = [];
   const children = await getChildren(projectRootDir, parentID);
+
   for (const component of children) {
     if (component.disable) {
       continue;

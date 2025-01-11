@@ -551,7 +551,6 @@ export default {
       const output = rt ? rt[1] || rt[0] : message;
       this.showSnackbar(output);
     });
-    SIO.onGlobal("hostList", this.commitRemoteHost);
     SIO.onGlobal("projectState", (state)=>{
       this.commitProjectState(state.toLowerCase());
     });
@@ -612,9 +611,6 @@ export default {
       ack(true);
     });
 
-    SIO.emitGlobal("getHostList", (hostList)=>{
-      this.commitRemoteHost(hostList);
-    });
     SIO.emitGlobal("getJobSchedulerList", (JSList)=>{
       this.commitJobScheduler(JSList);
     });
@@ -627,6 +623,10 @@ export default {
     this.commitWaitingWorkflow(true);
     SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
       debug("getWorkflow done", rt);
+    });
+    SIO.onGlobal("hostList", this.commitRemoteHost);
+    SIO.emitGlobal("getHostList", (hostList)=>{
+      this.commitRemoteHost(hostList);
     });
     this.$router.replace({ name: "graph" })
       .catch((err)=>{

@@ -14,17 +14,20 @@ const { remoteHost } = require("../db/db.js");
  * @returns {boolean} -
  */
 function isValidHostMap(hostMap, hosts) {
-  const remotehostLabels = remoteHost.map((host)=>{
+  const remotehostLabels = remoteHost.getAll().map((host)=>{
     return host.name;
   });
-  return Object.entries(hostMap).some(([key, value])=>{
-    if (typeof value !== "string") {
+  const oldRemotehostLabels = hosts.map((host)=>{
+    return host.hostname;
+  });
+  return Object.entries(hostMap).some(([oldHost, newHost])=>{
+    if (typeof newHost !== "string") {
       return false;
     }
-    if (!hosts.includes(key)) {
+    if (!oldRemotehostLabels.includes(oldHost)) {
       return false;
     }
-    if (!remotehostLabels.includes(value)) {
+    if (!remotehostLabels.includes(newHost)) {
       return false;
     }
     return true;
