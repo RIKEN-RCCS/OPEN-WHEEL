@@ -226,7 +226,7 @@
 </template>
 <script>
 "use strict";
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapMutations } from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:home");
 import navDrawer from "../components/common/NavigationDrawer.vue";
@@ -353,8 +353,15 @@ export default {
       const output = rt ? rt[1] || rt[0] : message;
       this.showSnackbar(output);
     });
+    SIO.onGlobal("hostList", this.commitRemoteHost);
+    SIO.emitGlobal("getHostList", (hostList)=>{
+      this.commitRemoteHost(hostList);
+    });
   },
   methods: {
+    ...mapMutations({
+      commitRemoteHost: "remoteHost"
+    }),
     ...mapActions({
       showSnackbar: "showSnackbar",
       closeSnackbar: "closeSnackbar"

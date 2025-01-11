@@ -114,7 +114,7 @@ async function importProject(clientID, archiveFile, parentDir) {
       await updateProjectROStatus(src, false);
     }
 
-    const hosts = await getHosts(src);
+    const hosts = await getHosts(src, null);
     if (hosts.length > 0) {
       //throw exception if user cancel or input invalid host map
       const hostMap = await askHostMap(clientID, hosts);

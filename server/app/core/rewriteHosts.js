@@ -5,6 +5,7 @@
  * @param {string | null} rootID - ID of the component to start travarsal. start from project root if rootID is null
  */
 "use strict";
+const path = require("path");
 const { promisify } = require("util");
 const glob = require("glob");
 const { readJsonGreedy } = require("./fileUtils.js");
@@ -22,7 +23,7 @@ async function rewriteHosts(projectRootDir, hostMap) {
   const oldRemotehostLabels = Object.keys(hostMap);
 
   return Promise.all(componentJsonFiles.map(async (filename)=>{
-    const componentJson = await readJsonGreedy(filename);
+    const componentJson = await readJsonGreedy(path.resolve(projectRootDir, filename));
     if (typeof componentJson.host !== "string") {
       return;
     }
