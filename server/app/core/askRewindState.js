@@ -14,7 +14,7 @@ const { emitAll } = require("../handlers/commUtils.js");
 async function askRewindState(clientID, targets) {
   return new Promise((resolve, reject)=>{
     emitAll(clientID, "askRewindState", targets, (answer)=>{
-      if (answer) {
+      if (answer === null) {
         const err = new Error("user canceled rewrite state");
         err.reason = "CANCELED";
         reject(err);

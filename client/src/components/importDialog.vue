@@ -78,12 +78,10 @@
     @ok="commitHostMap"
     @cancel="commitHostMap(null)"
   />
-  <versatile-dialog
+  <rewind-state-dialog
     v-model="openRewindDialog"
-    max-eidth="60vw"
-    title="change project/component status"
-    message=""
-    @ok="commitRewind"
+    :targets="rewindTargets"
+    @ok="commitRewind(true)"
     @cancel="commitRewind(null)"
   />
 </template>
@@ -91,6 +89,7 @@
 import fileBrowser from "../components/common/fileBrowserLite.vue";
 import importWarningDialog from "../components/importWarningDialog.vue";
 import hostMapDialog from "../components/hostMapDialog.vue";
+import rewindStateDialog from "../components/rewindStateDialog.vue";
 import SIO from "../lib/socketIOWrapper.js";
 
 async function waitOnUploadDoneEvent() {
@@ -110,7 +109,8 @@ export default {
   components: {
     importWarningDialog,
     fileBrowser,
-    hostMapDialog
+    hostMapDialog,
+    rewindStateDialog
   },
   props: {
     modelValue: {
@@ -133,7 +133,10 @@ export default {
       openImportWarningDialog: false,
       hosts: [],
       openHostMapDialog: false,
-      hostMapCB: null
+      hostMapCB: null,
+      openRewindDialog: false,
+      rewindTargets: [],
+      rewindStateCB: null
     };
   },
   computed: {
@@ -187,13 +190,29 @@ export default {
         this.hostMapCB = cb;
         this.openHostMapDialog = true;
       });
+      SIO.onGlobal("askRewindState", (targets, cb)=>{
+        this.rewindTargets.splice(0, targets.lengh, ...targets);
+        this.rewindStateCB = cb;
+        this.openRewindDialog = true;
+      });
     },
     commitHostMap(hostMap) {
       if (typeof this.hostMapCB !== "function") {
         console.log("hostMapCB is not set");
-        return;
+      } else {
+        this.hostMapCB(hostMap);
       }
-      this.hostMapCB(hostMap);
+      this.hosts.splice(0, this.hosts.length);
+      this.hostMapCB = null;
+    },
+    commitRewind(arg) {
+      if (typeof this.rewindStateCB !== "function") {
+        console.log("rewindStateCB is not set");
+      } else {
+        this.rewindStateCB(arg);
+      }
+      this.rewindTargets.splice(0, this.rewindTargets.length);
+      this.rewindStateCB = null;
     },
     closeDialog() {
       this.archiveURL = null;
@@ -201,9 +220,6 @@ export default {
       this.selectedInTree = null;
       this.tab = "file";
       this.openDialog = false;
-      this.hosts = [];
-      this.openHostMapDialog = false;
-      this.hostMapCB = null;
     }
   }
 };
