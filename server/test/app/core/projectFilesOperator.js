@@ -1785,3 +1785,90 @@ describe("#setComponentStateR", ()=>{
     expect(writeComponentJsonMock.firstCall.args[2].state).to.equal(mockState);
   });
 });
+
+describe("#updateProjectROStatus", ()=>{
+  let rewireProjectFilesOperator;
+  let updateProjectROStatus;
+  let readJsonGreedyMock;
+  let writeJsonWrapperMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    updateProjectROStatus = rewireProjectFilesOperator.__get__("updateProjectROStatus");
+
+    readJsonGreedyMock = sinon.stub();
+    writeJsonWrapperMock = sinon.stub();
+
+    rewireProjectFilesOperator.__set__("readJsonGreedy", readJsonGreedyMock);
+    rewireProjectFilesOperator.__set__("writeJsonWrapper", writeJsonWrapperMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should update the readOnly property in the project JSON file", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = { name: "test_project", readOnly: false };
+    const updatedProjectJson = { name: "test_project", readOnly: true };
+
+    readJsonGreedyMock.resolves(mockProjectJson);
+    writeJsonWrapperMock.resolves();
+
+    await updateProjectROStatus(mockProjectRootDir, true);
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(
+      `${mockProjectRootDir}/prj.wheel.json`
+    )).to.be.true;
+
+    expect(writeJsonWrapperMock.calledOnceWithExactly(
+      `${mockProjectRootDir}/prj.wheel.json`,
+      updatedProjectJson
+    )).to.be.true;
+  });
+
+  it("should throw an error if readJsonGreedy fails", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockError = new Error("File not found");
+
+    readJsonGreedyMock.rejects(mockError);
+
+    try {
+      await updateProjectROStatus(mockProjectRootDir, true);
+      throw new Error("Expected updateProjectROStatus to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(
+      `${mockProjectRootDir}/prj.wheel.json`
+    )).to.be.true;
+
+    expect(writeJsonWrapperMock.notCalled).to.be.true;
+  });
+
+  it("should throw an error if writeJsonWrapper fails", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = { name: "test_project", readOnly: false };
+    const mockError = new Error("Write failed");
+
+    readJsonGreedyMock.resolves(mockProjectJson);
+    writeJsonWrapperMock.rejects(mockError);
+
+    try {
+      await updateProjectROStatus(mockProjectRootDir, true);
+      throw new Error("Expected updateProjectROStatus to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(
+      `${mockProjectRootDir}/prj.wheel.json`
+    )).to.be.true;
+
+    expect(writeJsonWrapperMock.calledOnceWithExactly(
+      `${mockProjectRootDir}/prj.wheel.json`,
+      { name: "test_project", readOnly: true }
+    )).to.be.true;
+  });
+});
