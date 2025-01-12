@@ -1872,3 +1872,118 @@ describe("#updateProjectROStatus", ()=>{
     )).to.be.true;
   });
 });
+
+describe("#updateProjectDescription", ()=>{
+  let rewireProjectFilesOperator;
+  let updateProjectDescription;
+  let readJsonGreedyMock;
+  let writeJsonWrapperMock;
+  let gitAddMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    updateProjectDescription = rewireProjectFilesOperator.__get__("updateProjectDescription");
+
+    readJsonGreedyMock = sinon.stub();
+    writeJsonWrapperMock = sinon.stub();
+    gitAddMock = sinon.stub();
+
+    rewireProjectFilesOperator.__set__({
+      readJsonGreedy: readJsonGreedyMock,
+      writeJsonWrapper: writeJsonWrapperMock,
+      gitAdd: gitAddMock
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should update the description in the project JSON and stage the changes", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockDescription = "New project description";
+    const mockProjectJson = { name: "test_project", version: 2, description: "Old description" };
+
+    readJsonGreedyMock.resolves(mockProjectJson);
+    writeJsonWrapperMock.resolves();
+    gitAddMock.resolves();
+
+    await updateProjectDescription(mockProjectRootDir, mockDescription);
+
+    expect(readJsonGreedyMock.calledOnceWithExactly(
+      path.resolve(mockProjectRootDir, "prj.wheel.json")
+    )).to.be.true;
+
+    expect(writeJsonWrapperMock.calledOnceWithExactly(
+      path.resolve(mockProjectRootDir, "prj.wheel.json"),
+      { ...mockProjectJson, description: mockDescription }
+    )).to.be.true;
+
+    expect(gitAddMock.calledOnceWithExactly(
+      mockProjectRootDir,
+      path.resolve(mockProjectRootDir, "prj.wheel.json")
+    )).to.be.true;
+  });
+
+  it("should throw an error if reading the JSON fails", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockDescription = "New project description";
+    const mockError = new Error("Failed to read JSON");
+
+    readJsonGreedyMock.rejects(mockError);
+
+    try {
+      await updateProjectDescription(mockProjectRootDir, mockDescription);
+      throw new Error("Expected updateProjectDescription to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(readJsonGreedyMock.calledOnce).to.be.true;
+    expect(writeJsonWrapperMock.notCalled).to.be.true;
+    expect(gitAddMock.notCalled).to.be.true;
+  });
+
+  it("should throw an error if writing the JSON fails", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockDescription = "New project description";
+    const mockProjectJson = { name: "test_project", version: 2, description: "Old description" };
+    const mockError = new Error("Failed to write JSON");
+
+    readJsonGreedyMock.resolves(mockProjectJson);
+    writeJsonWrapperMock.rejects(mockError);
+
+    try {
+      await updateProjectDescription(mockProjectRootDir, mockDescription);
+      throw new Error("Expected updateProjectDescription to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(readJsonGreedyMock.calledOnce).to.be.true;
+    expect(writeJsonWrapperMock.calledOnce).to.be.true;
+    expect(gitAddMock.notCalled).to.be.true;
+  });
+
+  it("should throw an error if gitAdd fails", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockDescription = "New project description";
+    const mockProjectJson = { name: "test_project", version: 2, description: "Old description" };
+    const mockError = new Error("Failed to stage changes");
+
+    readJsonGreedyMock.resolves(mockProjectJson);
+    writeJsonWrapperMock.resolves();
+    gitAddMock.rejects(mockError);
+
+    try {
+      await updateProjectDescription(mockProjectRootDir, mockDescription);
+      throw new Error("Expected updateProjectDescription to throw");
+    } catch (err) {
+      expect(err).to.equal(mockError);
+    }
+
+    expect(readJsonGreedyMock.calledOnce).to.be.true;
+    expect(writeJsonWrapperMock.calledOnce).to.be.true;
+    expect(gitAddMock.calledOnce).to.be.true;
+  });
+});
