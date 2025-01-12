@@ -81,6 +81,9 @@ export default {
       return icons[item.type];
     },
     getChildren(item) {
+      if (item.name === "./") {
+        return null;
+      }
       return new Promise((resolve, reject)=>{
         const path = [this.root];
         const pathSep = this.root[0] === "/" ? "/" : "\\";
