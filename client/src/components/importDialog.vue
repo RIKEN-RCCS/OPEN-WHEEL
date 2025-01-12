@@ -186,12 +186,14 @@ export default {
         this.closeDialog();
       });
       SIO.onGlobal("askHostMap", (hosts, cb)=>{
+        this.hosts.splice(0, this.hosts.length);
         this.hosts.push(...hosts);
         this.hostMapCB = cb;
         this.openHostMapDialog = true;
       });
       SIO.onGlobal("askRewindState", (targets, cb)=>{
-        this.rewindTargets.splice(0, targets.lengh, ...targets);
+        this.rewindTargets.splice(0, this.rewindTargets.length);
+        this.rewindTargets.push(...targets);
         this.rewindStateCB = cb;
         this.openRewindDialog = true;
       });
