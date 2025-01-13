@@ -2200,3 +2200,53 @@ describe("#renameProject", ()=>{
     }
   });
 });
+
+describe("#isDefaultPort", ()=>{
+  let rewireProjectFilesOperator;
+  let isDefaultPort;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    isDefaultPort = rewireProjectFilesOperator.__get__("isDefaultPort");
+  });
+
+  it("should return true for undefined", ()=>{
+    expect(isDefaultPort(undefined)).to.be.true;
+  });
+
+  it("should return true for numeric 22", ()=>{
+    expect(isDefaultPort(22)).to.be.true;
+  });
+
+  it("should return true for string '22'", ()=>{
+    expect(isDefaultPort("22")).to.be.true;
+  });
+
+  it("should return true for an empty string", ()=>{
+    expect(isDefaultPort("")).to.be.true;
+  });
+
+  it("should return false for other numeric values", ()=>{
+    expect(isDefaultPort(23)).to.be.false;
+    expect(isDefaultPort(80)).to.be.false;
+  });
+
+  it("should return false for other string values", ()=>{
+    expect(isDefaultPort("23")).to.be.false;
+    expect(isDefaultPort("80")).to.be.false;
+  });
+
+  it("should return false for non-numeric strings", ()=>{
+    expect(isDefaultPort("random"))
+      .to.be.false;
+  });
+
+  it("should handle null input gracefully", ()=>{
+    expect(isDefaultPort(null)).to.be.false;
+  });
+
+  it("should handle boolean inputs", ()=>{
+    expect(isDefaultPort(true)).to.be.false;
+    expect(isDefaultPort(false)).to.be.false;
+  });
+});
