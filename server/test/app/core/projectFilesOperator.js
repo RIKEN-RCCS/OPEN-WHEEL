@@ -1987,3 +1987,84 @@ describe("#updateProjectDescription", ()=>{
     expect(gitAddMock.calledOnce).to.be.true;
   });
 });
+
+describe("#addProject", ()=>{
+  let rewireProjectFilesOperator;
+  let addProject;
+  let createNewProjectMock;
+  let fsMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    addProject = rewireProjectFilesOperator.__get__("addProject");
+    createNewProjectMock = sinon.stub();
+
+    fsMock = {
+      pathExists: sinon.stub()
+    };
+
+    rewireProjectFilesOperator.__set__({
+      createNewProject: createNewProjectMock,
+      fs: fsMock
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should throw an error if the project directory already exists", async ()=>{
+    const mockProjectDir = "/existing/project/dir";
+
+    fsMock.pathExists.resolves(true);
+
+    try {
+      await addProject(mockProjectDir, "Test description");
+      throw new Error("Expected addProject to throw an error");
+    } catch (err) {
+      expect(err.message).to.equal("specified project dir is already exists");
+      expect(err.projectRootDir).to.equal(`${mockProjectDir}.wheel`);
+    }
+
+    expect(fsMock.pathExists.calledOnceWithExactly(`${mockProjectDir}.wheel`)).to.be.true;
+  });
+
+  it("should throw an error if the project name is invalid", async ()=>{
+    const mockProjectDir = "/valid/dir";
+    const invalidProjectName = "Invalid/Name";
+
+    fsMock.pathExists.resolves(false);
+    sinon.stub(path, "basename").returns(invalidProjectName);
+
+    try {
+      await addProject(mockProjectDir, "Test description");
+      throw new Error("Expected addProject to throw an error");
+    } catch (err) {
+      expect(err.message).to.equal("illegal project name");
+    }
+  });
+
+  it("should create a new project and add it to the project list", async ()=>{
+    const mockProjectDir = "/new/project/dir";
+    const validProjectName = "validName";
+    const mockCreatedProjectDir = `${mockProjectDir}.wheel`;
+
+    fsMock.pathExists.resolves(false);
+    sinon.stub(path, "basename").returns(validProjectName);
+    createNewProjectMock.resolves(mockCreatedProjectDir);
+
+    const projectListUnshiftStub = sinon.stub();
+    rewireProjectFilesOperator.__set__("projectList", { unshift: projectListUnshiftStub });
+
+    await addProject(mockProjectDir, "Test description");
+
+    expect(createNewProjectMock.calledOnceWithExactly(
+      `${mockProjectDir}.wheel`,
+      validProjectName,
+      "Test description",
+      "wheel",
+      "wheel@example.com"
+    )).to.be.true;
+    expect(projectListUnshiftStub.calledOnceWithExactly({ path: mockCreatedProjectDir })).to.be.true;
+  });
+});
