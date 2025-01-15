@@ -2250,3 +2250,38 @@ describe("#isDefaultPort", ()=>{
     expect(isDefaultPort(false)).to.be.false;
   });
 });
+
+describe("#isLocal", ()=>{
+  let rewireProjectFilesOperator;
+  let isLocal;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    isLocal = rewireProjectFilesOperator.__get__("isLocal");
+  });
+
+  it("should return true if host is undefined", ()=>{
+    const component = {};
+    expect(isLocal(component)).to.be.true;
+  });
+
+  it("should return true if host is 'localhost'", ()=>{
+    const component = { host: "localhost" };
+    expect(isLocal(component)).to.be.true;
+  });
+
+  it("should return false if host is null", ()=>{
+    const component = { host: null };
+    expect(isLocal(component)).to.be.false;
+  });
+
+  it("should return false if host is a remote host", ()=>{
+    const component = { host: "remotehost" };
+    expect(isLocal(component)).to.be.false;
+  });
+
+  it("should return true for an empty object", ()=>{
+    const component = {};
+    expect(isLocal(component)).to.be.true;
+  });
+});
