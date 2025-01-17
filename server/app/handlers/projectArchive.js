@@ -4,6 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
+const { getLogger } = require("../logSettings");
 const { exportProject } = require("../core/exportProject.js");
 const { importProject } = require("../core/importProject.js");
 
@@ -16,6 +17,7 @@ async function onImportProject(clientID, target, parentDir, isURL, cb) {
     const projectRootDir = await importProject(clientID, target, parentDir);
     cb(projectRootDir);
   } catch (e) {
+    getLogger("default").error(`${e.message} : ${parentDir}`);
     cb(e);
   }
 }
