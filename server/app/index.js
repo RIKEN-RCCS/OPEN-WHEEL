@@ -103,6 +103,8 @@ sio.on("connection", (socket)=>{
   const projectRootDir = socket.handshake.auth.projectRootDir;
   if (typeof projectRootDir === "string") {
     socket.join(projectRootDir);
+  } else {
+    socket.join("default");
   }
   socket.prependAny((eventName, ...args)=>{
     if (eventName.startsWith("siofu")) {
