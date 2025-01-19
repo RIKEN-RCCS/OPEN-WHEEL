@@ -24,4 +24,20 @@ describe("#isFinishedState", ()=>{
   it("should return false if the status is not finished, failed or unkown", ()=>{
     expect(isFinishedState("processing")).to.be.false;
   });
+
+  it("judgement of the status should be case-sensitive", ()=>{
+    expect(isFinishedState("Finished")).to.be.false;
+  });
+
+  it("should return false if the status is empty", ()=>{
+    expect(isFinishedState("")).to.be.false;
+  });
+
+  it("should return false if the status is null", ()=>{
+    expect(isFinishedState(null)).to.be.false;
+  });
+
+  it("should return false if the status is undefined", ()=>{
+    expect(isFinishedState(undefined)).to.be.false;
+  });
 });
