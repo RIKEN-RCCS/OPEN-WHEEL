@@ -47,11 +47,13 @@ async function askHostMap(clientID, hosts) {
         const err = new Error("user canceled host map input");
         err.reason = "CANCELED";
         reject(err);
+        return;
       }
       if (!isValidHostMap(hostMap, hosts)) {
         const err = new Error("invalid host map");
         err.reason = "INVALID";
         reject(err);
+        return;
       }
       //hostMap is flat object. which keys are old host label, value is new host label
       resolve(hostMap);
