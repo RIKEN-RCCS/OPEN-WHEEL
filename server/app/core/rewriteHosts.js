@@ -23,7 +23,8 @@ async function rewriteHosts(projectRootDir, hostMap) {
   const oldRemotehostLabels = Object.keys(hostMap);
 
   return Promise.all(componentJsonFiles.map(async (filename)=>{
-    const componentJson = await readJsonGreedy(path.resolve(projectRootDir, filename));
+    const targetName = path.resolve(projectRootDir, filename);
+    const componentJson = await readJsonGreedy(targetName);
     if (typeof componentJson.host !== "string") {
       return;
     }
@@ -32,7 +33,7 @@ async function rewriteHosts(projectRootDir, hostMap) {
     }
     if (oldRemotehostLabels.includes(componentJson.host)) {
       componentJson.host = hostMap[componentJson.host];
-      writeComponentJson;
+      return writeComponentJson(projectRootDir, path.dirname(targetName), componentJson);
     }
   }));
 };
