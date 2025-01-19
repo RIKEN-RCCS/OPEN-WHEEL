@@ -12,7 +12,7 @@ const { extract } = require("tar");
 const { createTempd } = require("./tempd.js");
 const { readJsonGreedy } = require("./fileUtils.js");
 const { projectList, projectJsonFilename, componentJsonFilename, suffix } = require("../db/db.js");
-const { gitCommit, gitConfig } = require("./gitOperator2.js");
+const { gitClone, gitCommit, gitConfig } = require("./gitOperator2.js");
 const { setComponentStateR, updateProjectROStatus, getHosts } = require("./projectFilesOperator.js");
 const { askHostMap } = require("./askHostMap.js");
 const { askRewindState } = require("./askRewindState.js");
@@ -29,16 +29,6 @@ async function isEmptyDir(dir) {
 }
 
 /**
- * move project directory and register it to projectList.json
- * @param {string} src - projectRootDir which will be copied
- * @param {string} dst - new projectRootDir
- */
-async function moveAndRegisterProject(src, dst) {
-  await fs.move(src, dst);
-  projectList.unshift({ path: dst });
-}
-
-/**
  * read archive meta data
  * @param {string} archiveFile - path to archive file
  * @param {boolean} keep - keep extracted files
@@ -47,7 +37,7 @@ async function moveAndRegisterProject(src, dst) {
 async function extractAndReadArchiveMetadata(archiveFile, keep) {
   const { dir } = await createTempd(null, "importProject");
   const workDir = await fs.mkdtemp(`${dir}/`);
-  await extract({ strict: true, file: archiveFile, cwd: workDir, strip: 1, preserveOwner: false });
+  await extract({ strict: true, file: archiveFile, cwd: workDir, strip: 1, preserveOwner: false, unlink: true });
   const projectJson = await readJsonGreedy(path.join(workDir, projectJsonFilename));
   if (!keep) {
     await fs.remove(workDir);
@@ -109,6 +99,8 @@ async function importProject(clientID, archiveFile, parentDir) {
       err.reason = "PathExists";
       throw err;
     }
+  } else {
+    await fs.ensureDir(projectRootDir);
   }
 
   try {
@@ -136,8 +128,13 @@ async function importProject(clientID, archiveFile, parentDir) {
     throw (e);
   }
 
-  await moveAndRegisterProject(src, projectRootDir);
-  await fs.remove(archiveFile);
+  try {
+    await gitClone(projectRootDir, 1, src);
+    projectList.unshift({ path: projectRootDir });
+  } finally {
+    await fs.remove(src);
+    await fs.remove(archiveFile);
+  }
   return projectRootDir;
 }
 
