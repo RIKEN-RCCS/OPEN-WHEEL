@@ -46,12 +46,13 @@ async function moveAndRegisterProject(src, dst) {
  */
 async function extractAndReadArchiveMetadata(archiveFile, keep) {
   const { dir } = await createTempd(null, "importProject");
-  await extract({ strict: true, file: archiveFile, cwd: dir, strip: 1, preserveOwner: false });
-  const projectJson = await readJsonGreedy(path.join(dir, projectJsonFilename));
+  const workDir = await fs.mkdtemp(`${dir}/`);
+  await extract({ strict: true, file: archiveFile, cwd: workDir, strip: 1, preserveOwner: false });
+  const projectJson = await readJsonGreedy(path.join(workDir, projectJsonFilename));
   if (!keep) {
-    await fs.remove(dir);
+    await fs.remove(workDir);
   }
-  return { name: projectJson.name, dir };
+  return { name: projectJson.name, dir: workDir };
 }
 
 /**
@@ -98,11 +99,14 @@ async function importProject(clientID, archiveFile, parentDir) {
   if (await fs.pathExists(projectRootDir)) {
     const stats = await fs.stat(projectRootDir);
     if (!stats.isDirectory() || !await isEmptyDir(projectRootDir)) {
-      const err = new Error("specified path is in use");
+      await fs.remove(archiveFile);
+      await fs.remove(src);
+      const err = new Error(`specified path is in use: ${parentDir}`);
       err.parentDir = parentDir;
       err.archiveFile = archiveFile;
       err.projectName = projectName;
       err.projectRootDir = projectRootDir;
+      err.reason = "PathExists";
       throw err;
     }
   }
@@ -128,10 +132,12 @@ async function importProject(clientID, archiveFile, parentDir) {
     await gitCommit(src, "import project");
   } catch (e) {
     await fs.remove(src);
+    await fs.remove(archiveFile);
     throw (e);
   }
 
   await moveAndRegisterProject(src, projectRootDir);
+  await fs.remove(archiveFile);
   return projectRootDir;
 }
 
