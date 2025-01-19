@@ -211,11 +211,13 @@ async function gitRemoveOrigin(rootDir, name = "origin") {
  * @returns {Promise} - resolved when git clone done
  */
 async function gitClone(cwd, depth, rootDir) {
-  const opt = ["clone", rootDir];
+  const opt = ["clone"];
   if (Number.isInteger(depth)) {
     opt.push(`--depth=${depth}`);
   }
   opt.push("--single-branch");
+  opt.push(rootDir);
+  opt.push(".");
   return gitPromise(cwd, opt);
 }
 
