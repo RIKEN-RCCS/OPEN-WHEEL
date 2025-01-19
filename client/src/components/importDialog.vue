@@ -37,7 +37,7 @@
             upload project archive
           </v-tab>
           <v-tab value="url">
-            import from repository
+            import from git repository
           </v-tab>
         </v-tabs>
         <v-tabs-window v-model="tab">
