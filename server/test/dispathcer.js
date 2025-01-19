@@ -12,6 +12,7 @@ const SshClientWrapper = require("ssh-client-wrapper");
 const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
+const rewire = require("rewire");
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
@@ -51,6 +52,49 @@ describe("UT for Dispatcher class", function () {
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
       await fs.remove(testDirRoot);
     }
+  });
+
+  describe("#replaceByNunjucksForBulkjob test", async ()=>{
+    const templateRoot = path.resolve(testDirRoot, "templates");
+    const targetFiles = ["template1.txt", "template2.txt"];
+    const params = { key1: "value1", key2: "value2" };
+    const bulkNumber = 42;
+    const templates = {
+      "template1.txt": "Hello, {{ key1 }}!",
+      "template2.txt": "Goodbye, {{ key2 }}!"
+    };
+    const reWireDispatcher = rewire("../app/core/dispatcher.js");
+    const replaceByNunjucksForBulkjob = reWireDispatcher.__get__("replaceByNunjucksForBulkjob");
+
+    beforeEach(async function () {
+      await fs.ensureDir(templateRoot);
+
+      for (const [file, content] of Object.entries(templates)) {
+        await fs.outputFile(path.join(templateRoot, file), content);
+      }
+    });
+    afterEach(async function () {
+      await fs.remove(testDirRoot);
+    });
+    it("should replace target files and save with new filenames", async function () {
+      await replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber);
+      const newFile1 = path.resolve(templateRoot, `${bulkNumber}.template1.txt`);
+      const newFile2 = path.resolve(templateRoot, `${bulkNumber}.template2.txt`);
+      expect(newFile1).to.be.a.file().with.content("Hello, value1!");
+      expect(newFile2).to.be.a.file().with.content("Goodbye, value2!");
+    });
+    it("should throw an error if a target file does not exist", async function () {
+      const invalidFiles = ["template1.txt", "nonexistent.txt"];
+      await expect(
+        replaceByNunjucksForBulkjob(templateRoot, invalidFiles, params, bulkNumber)
+      ).to.be.rejectedWith(Error);
+    });
+    it("should handle empty targetFiles gracefully", async function () {
+      await replaceByNunjucksForBulkjob(templateRoot, [], params, bulkNumber);
+      //ファイルが作成されていないことを確認
+      const files = await fs.readdir(templateRoot);
+      expect(files).to.have.members(Object.keys(templates));
+    });
   });
 
   describe("#outputFile delivery functionality", async ()=>{
