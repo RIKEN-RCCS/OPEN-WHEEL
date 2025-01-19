@@ -12,6 +12,15 @@
     @cancel="cancel"
   >
     <template #message>
+      <v-row>
+        <v-col cols="6">
+          <p>hostname in project archive</p>
+        </v-col>
+        <v-col cols="6">
+          <p>newly assigned host</p>
+        </v-col>
+      </v-row>
+      <v-divider class="border-opacity-100 mb-6" />
       <v-row
         v-for="(item,index) in hosts"
         :key="item.hostname"
