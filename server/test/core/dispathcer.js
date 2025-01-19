@@ -97,6 +97,73 @@ describe("UT for Dispatcher class", function () {
     });
   });
 
+  describe("writeParameterSetFile test", function () {
+    const templateRoot = path.resolve(testDirRoot, "templates");
+    const targetFiles = ["file1.txt", "file2.txt"];
+    const params = { key1: "value1", key2: "value2" };
+    const bulkNumber = 42;
+    const reWireDispatcher = rewire("../../app/core/dispatcher.js");
+    const writeParameterSetFile = reWireDispatcher.__get__("writeParameterSetFile");
+    beforeEach(async function () {
+      await fs.ensureDir(templateRoot);
+
+      for (const file of targetFiles) {
+        await fs.outputFile(path.join(templateRoot, file), "content");
+      }
+    });
+    afterEach(async function () {
+      await fs.remove(testDirRoot);
+    });
+    it("should write parameters to parameterSet.wheel.txt", async function () {
+      const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
+      await writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
+      expect(parameterSetFilePath).to.be.a.file();
+      const expectedContent = [
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_KEY="key1"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_VALUE="value1"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_FILE="./file2.txt"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_KEY="key2"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_VALUE="value2"`
+      ].join("\n") + "\n";
+      const actualContent = await fs.readFile(parameterSetFilePath, "utf-8");
+      expect(actualContent).to.equal(expectedContent);
+    });
+    it("should handle empty targetFiles gracefully", async function () {
+      const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
+      await writeParameterSetFile(templateRoot, [], {}, bulkNumber);
+      expect(parameterSetFilePath).not.to.be.a.path();
+    });
+    it("should append parameters to an existing file", async function () {
+      const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
+      await fs.outputFile(parameterSetFilePath, "Initial content\n");
+      await writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
+      const expectedContent = [
+        "Initial content",
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_KEY="key1"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_VALUE="value1"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_FILE="./file2.txt"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_KEY="key2"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_VALUE="value2"`
+      ].join("\n") + "\n";
+      const actualContent = await fs.readFile(parameterSetFilePath, "utf-8");
+      expect(actualContent).to.equal(expectedContent);
+    });
+    it("should throw an error if a file cannot be written", async function () {
+      const nonWritableDir = path.resolve(testDirRoot, "nonWritable");
+      await fs.ensureDir(nonWritableDir);
+      await fs.chmod(nonWritableDir, 0o400); //読み取り専用に設定
+      const invalidTemplateRoot = path.join(nonWritableDir, "templates");
+      await expect(
+        writeParameterSetFile(invalidTemplateRoot, targetFiles, params, bulkNumber)
+      ).to.be.rejectedWith(Error);
+      //権限を元に戻してディレクトリを削除
+      await fs.chmod(nonWritableDir, 0o700);
+      await fs.remove(nonWritableDir);
+    });
+  });
+
   describe("#outputFile delivery functionality", async ()=>{
     let previous;
     let next;
