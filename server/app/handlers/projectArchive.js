@@ -17,7 +17,11 @@ async function onImportProject(clientID, target, parentDir, isURL, cb) {
     const projectRootDir = await importProject(clientID, target, parentDir);
     cb(projectRootDir);
   } catch (e) {
-    getLogger("default").error(`${e.message} : ${parentDir}`);
+    if (e.reason !== "CANCELED") {
+      getLogger("default").error(`${e.message}`);
+    } else {
+      getLogger("default").debug("user canceled importing project:", target);
+    }
     cb(e);
   }
 }
