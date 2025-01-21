@@ -12,7 +12,7 @@ const { extract } = require("tar");
 const { createTempd } = require("./tempd.js");
 const { readJsonGreedy } = require("./fileUtils.js");
 const { projectList, projectJsonFilename, componentJsonFilename, suffix } = require("../db/db.js");
-const { gitClone, gitCommit, gitConfig } = require("./gitOperator2.js");
+const { gitClone, gitCommit, gitConfig, gitRemoveOrigin } = require("./gitOperator2.js");
 const { setComponentStateR, updateProjectROStatus, getHosts } = require("./projectFilesOperator.js");
 const { askHostMap } = require("./askHostMap.js");
 const { askRewindState } = require("./askRewindState.js");
@@ -41,6 +41,11 @@ async function extractAndReadArchiveMetadata(archiveFile) {
   return { name: projectJson.name, dir: workDir };
 }
 
+/**
+ * copy project file from git repo and read meta data
+ * @param {string} URL - git repo url which has WHEEL project
+ * @returns {object} - project name, export date, exporter
+ */
 async function gitCloneAndReadArchiveMetadata(URL) {
   const { dir } = await createTempd(null, "importProject");
   const workDir = await fs.mkdtemp(`${dir}/`);
@@ -129,6 +134,7 @@ async function importProject(clientID, archiveFile, parentDir) {
     await ensureProjectRootDir(projectRootDir);
     await checkAndFixProject(src, clientID);
     await gitClone(projectRootDir, 1, src);
+    await gitRemoveOrigin(projectRootDir);
     projectList.unshift({ path: projectRootDir });
   } finally {
     await fs.remove(archiveFile);
