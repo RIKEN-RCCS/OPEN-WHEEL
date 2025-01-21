@@ -6,15 +6,12 @@
 "use strict";
 const { getLogger } = require("../logSettings");
 const { exportProject } = require("../core/exportProject.js");
-const { importProject } = require("../core/importProject.js");
+const { importProject, importProjectFromGitRepository } = require("../core/importProject.js");
 
 async function onImportProject(clientID, target, parentDir, isURL, cb) {
-  if (isURL) {
-    console.log("not implemented now", target);
-    return cb("DEBUG 1");
-  }
+  const importProjectFunc = isURL ? importProjectFromGitRepository : importProject;
   try {
-    const projectRootDir = await importProject(clientID, target, parentDir);
+    const projectRootDir = await importProjectFunc(clientID, target, parentDir);
     cb(projectRootDir);
   } catch (e) {
     if (e.reason !== "CANCELED") {
