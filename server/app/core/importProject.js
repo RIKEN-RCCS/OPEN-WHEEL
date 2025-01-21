@@ -31,17 +31,21 @@ async function isEmptyDir(dir) {
 /**
  * read archive meta data
  * @param {string} archiveFile - path to archive file
- * @param {boolean} keep - keep extracted files
  * @returns {object} - project name, export date, exporter
  */
-async function extractAndReadArchiveMetadata(archiveFile, keep) {
+async function extractAndReadArchiveMetadata(archiveFile) {
   const { dir } = await createTempd(null, "importProject");
   const workDir = await fs.mkdtemp(`${dir}/`);
   await extract({ strict: true, file: archiveFile, cwd: workDir, strip: 1, preserveOwner: false, unlink: true });
   const projectJson = await readJsonGreedy(path.join(workDir, projectJsonFilename));
-  if (!keep) {
-    await fs.remove(workDir);
-  }
+  return { name: projectJson.name, dir: workDir };
+}
+
+async function gitCloneAndReadArchiveMetadata(URL) {
+  const { dir } = await createTempd(null, "importProject");
+  const workDir = await fs.mkdtemp(`${dir}/`);
+  await gitClone(workDir, 1, URL);
+  const projectJson = await readJsonGreedy(path.join(workDir, projectJsonFilename));
   return { name: projectJson.name, dir: workDir };
 }
 
@@ -76,6 +80,41 @@ async function checkProjectAndComponentStatus(dir) {
   return result;
 }
 
+async function ensureProjectRootDir(projectRootDir) {
+  if (await fs.pathExists(projectRootDir)) {
+    const stats = await fs.stat(projectRootDir);
+    if (!stats.isDirectory() || !await isEmptyDir(projectRootDir)) {
+      const err = new Error(`specified path is in use: ${projectRootDir}`);
+      err.projectRootDir = projectRootDir;
+      err.reason = "PathExists";
+      throw err;
+    }
+  } else {
+    await fs.ensureDir(projectRootDir);
+  }
+}
+
+async function checkAndFixProject(src, clientID) {
+  //throw execption if user cancel importiong
+  const toBeFixed = await checkProjectAndComponentStatus(src);
+
+  if (toBeFixed.length > 0) {
+    await askRewindState(clientID, toBeFixed);
+    await setComponentStateR(src, src, "not-started");
+    await updateProjectROStatus(src, false);
+  }
+
+  const hosts = await getHosts(src, null);
+  if (hosts.length > 0) {
+    //throw exception if user cancel or input invalid host map
+    const hostMap = await askHostMap(clientID, hosts);
+    await rewriteHosts(src, hostMap);
+  }
+  await gitConfig(src, "user.name", "wheel");
+  await gitConfig(src, "user.email", "wheel@example.com");
+  await gitCommit(src, "import project");
+}
+
 /**
  * import project archive file
  * @param {string} clientID - socket's ID
@@ -84,60 +123,44 @@ async function checkProjectAndComponentStatus(dir) {
  * @returns {Promise} - resolved when project archive is imported
  */
 async function importProject(clientID, archiveFile, parentDir) {
-  const { name: projectName, dir: src } = await extractAndReadArchiveMetadata(archiveFile, true);
+  const { name: projectName, dir: src } = await extractAndReadArchiveMetadata(archiveFile);
   const projectRootDir = path.resolve(parentDir, projectName + suffix);
-  if (await fs.pathExists(projectRootDir)) {
-    const stats = await fs.stat(projectRootDir);
-    if (!stats.isDirectory() || !await isEmptyDir(projectRootDir)) {
-      await fs.remove(archiveFile);
-      await fs.remove(src);
-      const err = new Error(`specified path is in use: ${parentDir}`);
-      err.parentDir = parentDir;
-      err.archiveFile = archiveFile;
-      err.projectName = projectName;
-      err.projectRootDir = projectRootDir;
-      err.reason = "PathExists";
-      throw err;
-    }
-  } else {
-    await fs.ensureDir(projectRootDir);
-  }
-
   try {
-    //throw execption if user cancel importiong
-    const toBeFixed = await checkProjectAndComponentStatus(src);
-
-    if (toBeFixed.length > 0) {
-      await askRewindState(clientID, toBeFixed);
-      await setComponentStateR(src, src, "not-started");
-      await updateProjectROStatus(src, false);
-    }
-
-    const hosts = await getHosts(src, null);
-    if (hosts.length > 0) {
-      //throw exception if user cancel or input invalid host map
-      const hostMap = await askHostMap(clientID, hosts);
-      await rewriteHosts(src, hostMap);
-    }
-    await gitConfig(src, "user.name", "wheel");
-    await gitConfig(src, "user.email", "wheel@example.com");
-    await gitCommit(src, "import project");
-  } catch (e) {
-    await fs.remove(src);
+    await ensureProjectRootDir(projectRootDir);
+    await checkAndFixProject(src, clientID);
+    await gitClone(projectRootDir, 1, src);
+    projectList.unshift({ path: projectRootDir });
+  } finally {
     await fs.remove(archiveFile);
-    throw (e);
+    await fs.remove(src);
   }
 
+  return projectRootDir;
+}
+
+/**
+ * import project from git repository
+ * @param {string} clientID - socket's ID
+ * @param {string} URL - repository's URL
+ * @param {string} parentDir - path to be extracted archive file
+ * @returns {Promise} - resolved when project archive is imported
+ */
+async function importProjectFromGitRepository(clientID, URL, parentDir) {
+  const { name: projectName, dir: src } = await gitCloneAndReadArchiveMetadata(URL);
+  const projectRootDir = path.resolve(parentDir, projectName + suffix);
   try {
+    await ensureProjectRootDir(projectRootDir);
+    await checkAndFixProject(src, clientID);
     await gitClone(projectRootDir, 1, src);
     projectList.unshift({ path: projectRootDir });
   } finally {
     await fs.remove(src);
-    await fs.remove(archiveFile);
   }
   return projectRootDir;
 }
 
 module.exports = {
-  importProject
+  importProject,
+  importProjectFromGitRepository
+
 };
