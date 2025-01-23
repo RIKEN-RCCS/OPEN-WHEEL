@@ -12,6 +12,7 @@
       title="remotehost"
       density="comfortable"
       @navIconClick="drawer=!drawer"
+      data-cy="title_remotehost"
     />
     <v-main>
       <v-toolbar
@@ -20,6 +21,7 @@
         <v-btn
           @click.stop="openEditDialog()"
           text="new remote host setting"
+          data-cy="btn_newRemoteHostSetting"
         />
       </v-toolbar>
       <v-data-table

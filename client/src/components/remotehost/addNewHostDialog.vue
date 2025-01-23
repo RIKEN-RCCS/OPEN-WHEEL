@@ -11,7 +11,7 @@
       persistent
     >
       <v-card>
-        <v-card-title>
+        <v-card-title data-cy="title_addNewHost">
           add new host
         </v-card-title>
         <v-card-text>
@@ -34,6 +34,7 @@
                           :rules="[required, notDupulicatedLabel]"
                           placeholder="required"
                           validate-on="blur"
+                          data-cy="label"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -43,6 +44,7 @@
                           :rules="[required]"
                           placeholder="required"
                           validate-on="blur"
+                          data-cy="hostname"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -51,6 +53,7 @@
                           :label=portNumberLabel
                           :rules="[validPortNumber]"
                           validate-on="blur"
+                          data-cy="portNumberLabel"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -60,6 +63,7 @@
                           :rules="[required]"
                           placeholder="required"
                           validate-on="blur"
+                          data-cy="portNumberLabel"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -67,12 +71,14 @@
                           v-model="host.path"
                           :label=workDirLabel
                           validate-on="blur"
+                          data-cy="workDirLabel"
                         />
                       </v-col>
                       <v-col cols="4">
                         <v-text-field
                           v-model="host.keyFile"
                           label="private key path"
+                          data-cy="privateKeyPath"
                           clearable
                         />
                       </v-col>
@@ -87,30 +93,35 @@
                           v-model="host.jobScheduler"
                           :items="availableJobSchedulers"
                           label="job scheduler"
+                          data-cy="availableJobSchedulers"
                         />
                       </v-col>
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.numJob"
                           label="max number of jobs"
+                          data-cy="maxNumberOfJobs"
                         />
                       </v-col>
                       <v-col cols="6">
                         <v-text-field
                           v-model="host.queue"
                           label="available queues"
+                          data-cy="availableQueues"
                         />
                       </v-col>
                       <v-col cols="3">
                         <v-checkbox
                           v-model="host.useBulkjob"
                           label="use bulkjob"
+                          data-cy="useBulkjob"
                         />
                       </v-col>
                       <v-col cols="3">
                         <v-checkbox
                           v-model="host.useStepjob"
                           label="use stepjob"
+                          data-cy="useStepjob"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -118,6 +129,7 @@
                           v-model="host.sharedHost"
                           :items="hostNames"
                           label="shared host"
+                          data-cy="sharedHost"
                           clearable
                         />
                       </v-col>
@@ -125,6 +137,7 @@
                         <v-text-field
                           v-model="host.sharedPath"
                           label="shared path on shared host"
+                          data-cy="sharedPathOnSharedHost"
                         />
                       </v-col>
                     </v-row>
@@ -132,7 +145,7 @@
                 </v-expansion-panel-text>
               </v-expansion-panel>
               <v-expansion-panel>
-                <v-expansion-panel-title>Advanced settings</v-expansion-panel-title>
+                <v-expansion-panel-title data-cy="title_AdvancedSettings">Advanced settings</v-expansion-panel-title>
                 <v-expansion-panel-text>
                   <v-container>
                     <v-row>
@@ -142,6 +155,7 @@
                           label="connection renewal interval (min.) [default: 0]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="connectionRenewal"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -150,6 +164,7 @@
                           label="status check interval (sec.) [default: 60]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="statusCheck"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -158,6 +173,7 @@
                           label="max number of status check error allowed [default: 10]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="maxNumber"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -166,6 +182,7 @@
                           label="execution interval (sec.) [default: job 5, task 1]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="executionInterval"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -174,6 +191,7 @@
                           label="timeout during handshake phase (msec.) [default: 0]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="timeoutDuring"
                         />
                       </v-col>
                     </v-row>
