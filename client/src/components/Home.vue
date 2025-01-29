@@ -12,7 +12,7 @@
       title="home"
       density="comfortable"
       @navIconClick="drawer=!drawer"
-      data-cy="title_home"
+      data-cy="home-home-title"
     />
     <v-main>
       <v-toolbar
@@ -23,7 +23,7 @@
           @click="openProject"
           prepend-icon="mdi-pencil"
           text="OPEN"
-          data-cy="btn_open"
+          data-cy="home-open-btn"
         />
         <v-btn
           :disabled="batchMode"

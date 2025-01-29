@@ -640,3 +640,42 @@ Cypress.Commands.add("sendCommand", (hostname, port, user, password)=>{
     command:"dirs=`ls -tF | grep / | head -1`; ls -t ${dirs} | grep -v / | wc -l;"
   })
 })
+
+Cypress.Commands.add("remoteHostRemove", (remotohostName)=>{ 
+  cy.visit("/remotehost").wait(animationWaitTime)
+    .then(()=>{
+      const remotehostRow = cy.contains("tr", remotohostName, {timeout: 1000})
+      if(remotehostRow){
+        cy.get('.mdi-delete').click();
+        cy.get('[data-cy="buttons-ok_or_cancel-buttons"]').first().click();
+
+      }
+    })
+})
+
+Cypress.Commands.add("remoteHostEnterRequired", ()=>{ 
+  cy.get('[data-cy="add_new_host-label-textarea"]').type('TestLabel');
+  cy.get('[data-cy="add_new_host-hostname-textarea"]').type('TestHostName');
+  cy.get('[data-cy="add_new_host-port_number_label-textarea"]').type(20);
+  cy.get('[data-cy="add_new_host-user_id-textarea"]').type('TestUser');
+})
+
+Cypress.Commands.add("remoteHostEnter", ()=>{ 
+  cy.get('[data-cy="add_new_host-work_dir_label-textarea"]').type('$TESTHOME');
+  cy.get('[data-cy="add_new_host-private_key_path-textarea"]').type('TestPrivate.key');
+  cy.get('[data-cy="add_new_host-job_schedulers-textarea"]').type('PBSPro');
+  cy.get('[data-cy="add_new_host-max_number_of_jobs-textarea"]').type(100);
+  cy.get('[data-cy="add_new_host-available_queues-textarea"]').type('TestQueues');
+  cy.get('[data-cy="add_new_host-use_bulkjob-checkbox"]').find('[type="checkbox"]').check();
+  cy.get('[data-cy="add_new_host-use_stepjob-checkbox"]').find('[type="checkbox"]').check();
+  cy.get('[data-cy="add_new_host-shared_path_on_shared_host-textarea"]').type('TestSharedHost');
+})
+
+Cypress.Commands.add("remoteHostEnterAdvanced", ()=>{ 
+  cy.get('[data-cy="add_new_host-advanced_settings-title"]').click();
+  cy.get('[data-cy="add_new_host-connection_renewal-textarea"]').type(5);
+  cy.get('[data-cy="add_new_host-status_check-textarea"]').type(100);
+  cy.get('[data-cy="add_new_host-max_number-textarea"]').type(11);
+  cy.get('[data-cy="add_new_host-execution_interval-textarea"]').type(6);
+  cy.get('[data-cy="add_new_host-timeout_during-textarea"]').type(7);
+})

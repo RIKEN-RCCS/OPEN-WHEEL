@@ -17,7 +17,7 @@
         variant=text
         class="text-capitalize"
         text="Remotehost editor"
-        data-cy="remotehostEditor"
+        data-cy="navigation-remote_host_editor-btn"
       />
       <v-btn
         prepend-icon=mdi-help-circle-outline
