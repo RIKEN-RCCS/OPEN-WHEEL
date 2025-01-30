@@ -124,9 +124,10 @@ export default {
         });
       }
 
-      const componentTypes = this.isLoop
-        ? ["task", "if", "for", "while", "foreach", "break", "continue", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"]
-        : ["task", "if", "for", "while", "foreach", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"];
+      const componentTypes = ["task", "if", "for", "while", "foreach", "source", "storage", "hpciss", "hpcisstar", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"];
+      if (this.isLoop) {
+        componentTypes.push("break", "continue");
+      }
       return this.componentDefinitions.filter((e)=>{
         return componentTypes.includes(e.type);
       });

@@ -55,6 +55,22 @@ class Storage extends BaseWorkflowComponent {
   }
 }
 
+class Hpciss extends Storage {
+  constructor(pos, parent) {
+    super(pos, parent);
+    this.type = "hpciss";
+    this.host = null;
+  }
+}
+
+class Hpcisstar extends Storage {
+  constructor(pos, parent) {
+    super(pos, parent);
+    this.type = "hpcisstar";
+    this.host = null;
+  }
+}
+
 class Source extends BaseWorkflowComponent {
   constructor(pos, parent) {
     super(pos, parent);
@@ -344,6 +360,14 @@ function componentFactory(type, ...args) {
     case "storage":
       component = new Storage(...args);
       break;
+    case "hpciss":
+      component = new Hpciss(...args);
+      component.type = "hpciss";
+      break;
+    case "hpcisstar":
+      component = new Hpcisstar(...args);
+      component.type = "hpcisstar";
+      break;
     case "source":
       component = new Source(...args);
       break;
@@ -488,6 +512,12 @@ function getComponentDefaultName(type) {
   }
   if (type === "bulkjobTask") {
     return "bjTask";
+  }
+  if (type === "hpciss") {
+    return "HPCI-SS";
+  }
+  if (type === "hpcisstar") {
+    return "HPCI-SS-tar";
   }
   return type;
 }

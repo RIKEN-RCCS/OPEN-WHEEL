@@ -15,6 +15,8 @@ import imgForeach from "../assets/img_foreach.png";
 import imgPS from "../assets/img_parameterStudy.png";
 import imgWorkflow from "../assets/img_workflow.png";
 import imgStorage from "../assets/img_storage.png";
+import imgHPCISS from "../assets/img_hpciss.png";
+import imgHPCISStar from "../assets/img_hpcisstar.png";
 import imgSource from "../assets/img_source.png";
 import imgViewer from "../assets/img_viewer.png";
 import imgStepJob from "../assets/img_stepjob.png";
@@ -36,6 +38,8 @@ export default function () {
     parameterStudy: { color: "#666622", img: imgPS },
     workflow: { color: "#803DB3", img: imgWorkflow },
     storage: { color: "#00b8a0", img: imgStorage },
+    hpciss: { color: "#00b8a0", img: imgHPCISS },
+    hpcisstar: { color: "#00b8a0", img: imgHPCISStar },
     source: { color: "#00bff0", img: imgSource },
     viewer: { color: "#00b050", img: imgViewer },
     stepjob: { color: "#803DB3", img: imgStepJob },
