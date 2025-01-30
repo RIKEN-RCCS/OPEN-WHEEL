@@ -130,7 +130,7 @@ export default {
       return this.isSelected ? "yellow" : "red";
     },
     canHaveLink() {
-      return this.componentData.type !== "source" && this.componentData.type !== "storage";
+      return !["source", "storage", "hpciss", "hpcisstar"].includes(this.componentData.type);
     },
     componentPos() {
       return this.componentData.pos;
