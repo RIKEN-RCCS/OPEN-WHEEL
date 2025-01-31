@@ -18,6 +18,7 @@ const isExceededLimit = executerManager.__get__("isExceededLimit");
 const makeQueueOpt = executerManager.__get__("makeQueueOpt");
 const makeEnv = executerManager.__get__("makeEnv");
 const makeStepOpt = executerManager.__get__("makeStepOpt");
+const makeBulkOpt = executerManager.__get__("makeBulkOpt");
 const testDirRoot = "WHEEL_TEST_TMP";
 
 describe("UT for executerManager class", function () {
@@ -199,6 +200,48 @@ describe("UT for executerManager class", function () {
         dependencyForm: ""
       };
       expect(makeStepOpt(task)).to.equal("--step --sparam \"jnam=testJob,sn=1,\"");
+    });
+  });
+  describe("makeBulkOpt", function () {
+    it("should return an empty string if task.type is not 'bulkjobTask'", function () {
+      const task = { type: "regularTask" };
+      expect(makeBulkOpt(task)).to.equal("");
+    });
+    it("should return the correct bulkjob option if task.type is 'bulkjobTask'", function () {
+      const task = {
+        type: "bulkjobTask",
+        startBulkNumber: 1,
+        endBulkNumber: 10
+      };
+      expect(makeBulkOpt(task)).to.equal("--bulk --sparam \"1-10\"");
+    });
+    it("should return the range even if startBulkNumber and endBulkNumber are the same", function () {
+      const task = {
+        type: "bulkjobTask",
+        startBulkNumber: 5,
+        endBulkNumber: 5
+      };
+      expect(makeBulkOpt(task)).to.equal("--bulk --sparam \"5-5\"");
+    });
+    it("should handle missing startBulkNumber or endBulkNumber", function () {
+      const taskWithMissingStart = {
+        type: "bulkjobTask",
+        endBulkNumber: 10
+      };
+      expect(makeBulkOpt(taskWithMissingStart)).to.equal("--bulk --sparam \"undefined-10\"");
+      const taskWithMissingEnd = {
+        type: "bulkjobTask",
+        startBulkNumber: 1
+      };
+      expect(makeBulkOpt(taskWithMissingEnd)).to.equal("--bulk --sparam \"1-undefined\"");
+    });
+    it("should handle negative or special values", function () {
+      const task = {
+        type: "bulkjobTask",
+        startBulkNumber: -1,
+        endBulkNumber: 0
+      };
+      expect(makeBulkOpt(task)).to.equal("--bulk --sparam \"-1-0\"");
     });
   });
 });
