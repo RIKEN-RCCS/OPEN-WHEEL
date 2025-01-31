@@ -19,7 +19,11 @@ const makeQueueOpt = executerManager.__get__("makeQueueOpt");
 const makeEnv = executerManager.__get__("makeEnv");
 const makeStepOpt = executerManager.__get__("makeStepOpt");
 const makeBulkOpt = executerManager.__get__("makeBulkOpt");
+const decideFinishState = executerManager.__get__("decideFinishState");
+const needsRetry = executerManager.__get__("needsRetry");
 const testDirRoot = "WHEEL_TEST_TMP";
+let evalConditionMock;
+let loggerMock;
 
 describe("UT for executerManager class", function () {
   describe("removeExecuters", async ()=>{
@@ -242,6 +246,146 @@ describe("UT for executerManager class", function () {
         endBulkNumber: 0
       };
       expect(makeBulkOpt(task)).to.equal("--bulk --sparam \"-1-0\"");
+    });
+  });
+  describe("decideFinishState", function () {
+    const mockTask = {
+      projectRootDir: "/mock/project",
+      condition: "mock condition",
+      workingDir: "/mock/workingDir",
+      currentIndex: 0,
+      name: "mockTask",
+      ID: "mockID"
+    };
+    beforeEach(()=>{
+      //`evalCondition` モックを設定
+      evalConditionMock = async ()=>true;
+      executerManager.__set__("evalCondition", evalConditionMock);
+      //`getLogger` モックを設定
+      loggerMock = {
+        info: ()=>{}
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+    });
+    it("should return true if evalCondition returns true", async function () {
+      evalConditionMock = async ()=>true; //evalCondition が true を返す
+      executerManager.__set__("evalCondition", evalConditionMock);
+      const result = await decideFinishState(mockTask);
+      expect(result).to.be.true;
+    });
+    it("should return false if evalCondition returns false", async function () {
+      evalConditionMock = async ()=>false; //evalCondition が false を返す
+      executerManager.__set__("evalCondition", evalConditionMock);
+      const result = await decideFinishState(mockTask);
+      expect(result).to.be.false;
+    });
+    it("should return false if evalCondition throws an error", async function () {
+      let logCalled = false;
+      //evalCondition がエラーをスロー
+      evalConditionMock = async ()=>{
+        throw new Error("Mock error");
+      };
+      executerManager.__set__("evalCondition", evalConditionMock);
+      //loggerMock の info メソッドを監視
+      loggerMock.info = (message)=>{
+        logCalled = true;
+        expect(message).to.include(`manualFinishCondition of ${mockTask.name}(${mockTask.ID}) is set but exception occurred while evaluting it.`);
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+      const result = await decideFinishState(mockTask);
+      expect(result).to.be.false;
+      expect(logCalled).to.be.true;
+    });
+    it("should handle missing task properties gracefully", async function () {
+      const incompleteTask = { projectRootDir: "/mock/project" }; //必須プロパティ不足
+      evalConditionMock = async ()=>{
+        throw new Error("Mock error");
+      };
+      executerManager.__set__("evalCondition", evalConditionMock);
+      let logCalled = false;
+      loggerMock.info = ()=>{
+        logCalled = true;
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+      const result = await decideFinishState(incompleteTask);
+      expect(result).to.be.false;
+      expect(logCalled).to.be.true;
+    });
+  });
+  describe("needsRetry", function () {
+    const mockTask = {
+      projectRootDir: "/mock/project",
+      workingDir: "/mock/workingDir",
+      currentIndex: 0,
+      name: "mockTask",
+      ID: "mockID"
+    };
+    beforeEach(()=>{
+      //`evalCondition` と `getLogger` のモックを初期化
+      evalConditionMock = async ()=>false;
+      executerManager.__set__("evalCondition", evalConditionMock);
+      loggerMock = {
+        info: ()=>{}
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+    });
+    it("should return false if neither retry nor retryCondition is defined", async function () {
+      const result = await needsRetry(mockTask);
+      expect(result).to.be.false;
+    });
+    it("should return true if retry is a positive integer", async function () {
+      const taskWithRetry = { ...mockTask, retry: 2 };
+      const result = await needsRetry(taskWithRetry);
+      expect(result).to.be.true;
+    });
+    it("should return false if retry is not a positive integer", async function () {
+      const taskWithInvalidRetry = { ...mockTask, retry: -1 };
+      const result = await needsRetry(taskWithInvalidRetry);
+      expect(result).to.be.false;
+    });
+    it("should return true if retryCondition is defined and evalCondition returns true", async function () {
+      evalConditionMock = async ()=>true;
+      executerManager.__set__("evalCondition", evalConditionMock);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
+      const result = await needsRetry(taskWithCondition);
+      expect(result).to.be.true;
+    });
+    it("should return false if retryCondition is defined and evalCondition returns false", async function () {
+      evalConditionMock = async ()=>false;
+      executerManager.__set__("evalCondition", evalConditionMock);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
+      const result = await needsRetry(taskWithCondition);
+      expect(result).to.be.false;
+    });
+    it("should return false and log an error if evalCondition throws an error", async function () {
+      let logCalled = false;
+      evalConditionMock = async ()=>{
+        throw new Error("Mock error");
+      };
+      executerManager.__set__("evalCondition", evalConditionMock);
+      loggerMock.info = (message)=>{
+        logCalled = true;
+        expect(message).to.include(`retryCondition of ${mockTask.name}(${mockTask.ID}) is set but exception occurred while evaluting it. so give up retring`);
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
+      const result = await needsRetry(taskWithCondition);
+      expect(result).to.be.false;
+      expect(logCalled).to.be.true;
+    });
+    it("should log a message if evalCondition returns true and task is retried", async function () {
+      let logCalled = false;
+      evalConditionMock = async ()=>true;
+      executerManager.__set__("evalCondition", evalConditionMock);
+      loggerMock.info = (message)=>{
+        logCalled = true;
+        expect(message).to.include(`${mockTask.name}(${mockTask.ID}) failed but retring`);
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
+      const result = await needsRetry(taskWithCondition);
+      expect(result).to.be.true;
+      expect(logCalled).to.be.true;
     });
   });
 });
