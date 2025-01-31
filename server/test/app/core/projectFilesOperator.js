@@ -3520,3 +3520,61 @@ describe("#recursiveGetHosts", ()=>{
     expect(storageHosts).to.be.empty;
   });
 });
+
+describe("#getHosts", ()=>{
+  let rewireProjectFilesOperator;
+  let getHosts;
+  let recursiveGetHostsMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    getHosts = rewireProjectFilesOperator.__get__("getHosts");
+
+    recursiveGetHostsMock = sinon.stub();
+    rewireProjectFilesOperator.__set__("recursiveGetHosts", recursiveGetHostsMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should call recursiveGetHosts with correct arguments", async ()=>{
+    const projectRootDir = "/mock/project";
+    const rootID = "rootComponent";
+    recursiveGetHostsMock.resolves();
+
+    await getHosts(projectRootDir, rootID);
+
+    expect(recursiveGetHostsMock.calledOnceWithExactly(
+      projectRootDir, rootID, [], []
+    )).to.be.true;
+  });
+
+  it("should correctly classify task and storage hosts", async ()=>{
+    recursiveGetHostsMock.resolves();
+    const projectRootDir = "/mock/project";
+    const rootID = "rootComponent";
+
+    const taskHosts = [{ hostname: "task1", isStorage: false }, { hostname: "task2", isStorage: false }];
+    const storageHosts = [{ hostname: "storage1", isStorage: true }];
+
+    recursiveGetHostsMock.callsFake(async (_, __, hosts, storageHostsList)=>{
+      hosts.push(...taskHosts);
+      storageHostsList.push(...storageHosts);
+    });
+
+    const result = await getHosts(projectRootDir, rootID);
+
+    expect(result).to.deep.include.members([...storageHosts, ...taskHosts]);
+  });
+
+  it("should return an empty array if no hosts are found", async ()=>{
+    recursiveGetHostsMock.resolves();
+    const projectRootDir = "/mock/project";
+    const rootID = "rootComponent";
+
+    const result = await getHosts(projectRootDir, rootID);
+
+    expect(result).to.deep.equal([]);
+  });
+});
