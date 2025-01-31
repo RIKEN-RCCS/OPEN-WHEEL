@@ -27,6 +27,7 @@
       <v-data-table
         :items="hosts"
         :headers="headers"
+        data-cy="remotehost-items-data_table"
       >
         <template #item.connectionTest="{ item, index }">
           <v-btn
@@ -44,7 +45,6 @@
             :item="item"
             @delete="openRemoveConfirmDialog(item)"
             @edit="openEditDialog(item)"
-            data-cy="remotehost-delete-btn"
           />
         </template>
       </v-data-table>

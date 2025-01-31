@@ -641,41 +641,72 @@ Cypress.Commands.add("sendCommand", (hostname, port, user, password)=>{
   })
 })
 
-Cypress.Commands.add("remoteHostRemove", (remotohostName)=>{ 
+//remove remote host setting
+Cypress.Commands.add("RemoveRemoteHost", (remotohostName)=>{ 
   cy.visit("/remotehost").wait(animationWaitTime)
     .then(()=>{
       const remotehostRow = cy.contains("tr", remotohostName, {timeout: 1000})
       if(remotehostRow){
-        cy.get('.mdi-delete').click();
-        cy.get('[data-cy="buttons-ok_or_cancel-buttons"]').first().click();
-
+        cy.get('[data-cy="remotehost-delete-btn"]').click();
+        cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
       }
     })
 })
 
-Cypress.Commands.add("remoteHostEnterRequired", ()=>{ 
-  cy.get('[data-cy="add_new_host-label-textarea"]').type('TestLabel');
-  cy.get('[data-cy="add_new_host-hostname-textarea"]').type('TestHostName');
-  cy.get('[data-cy="add_new_host-port_number_label-textarea"]').type(20);
-  cy.get('[data-cy="add_new_host-user_id-textarea"]').type('TestUser');
+//enter required fields on the remote host screen
+Cypress.Commands.add("enterRequiredRemoteHost", (label, hostname, portNumber, testUser)=>{ 
+  cy.get('[data-cy="add_new_host-label-textfield"]').type(label);
+  cy.get('[data-cy="add_new_host-hostname-textfield"]').type(hostname);
+  cy.get('[data-cy="add_new_host-port_number_label-textfield"]').type(portNumber);
+  cy.get('[data-cy="add_new_host-user_id-textfield"]').type(testUser);
 })
 
-Cypress.Commands.add("remoteHostEnter", ()=>{ 
-  cy.get('[data-cy="add_new_host-work_dir_label-textarea"]').type('$TESTHOME');
-  cy.get('[data-cy="add_new_host-private_key_path-textarea"]').type('TestPrivate.key');
-  cy.get('[data-cy="add_new_host-job_schedulers-textarea"]').type('PBSPro');
-  cy.get('[data-cy="add_new_host-max_number_of_jobs-textarea"]').type(100);
-  cy.get('[data-cy="add_new_host-available_queues-textarea"]').type('TestQueues');
-  cy.get('[data-cy="add_new_host-use_bulkjob-checkbox"]').find('[type="checkbox"]').check();
-  cy.get('[data-cy="add_new_host-use_stepjob-checkbox"]').find('[type="checkbox"]').check();
-  cy.get('[data-cy="add_new_host-shared_path_on_shared_host-textarea"]').type('TestSharedHost');
+//enter any items on the remote host screen
+Cypress.Commands.add("enterRemoteHost", (hostWorkDir, privateKyeFile, jobSchedulers, maxNumber, availableQueues, bulkjobChk, stepjobChk, sharedHost)=>{ 
+  cy.get('[data-cy="add_new_host-work_dir_label-textfield"]').type(hostWorkDir);
+  cy.get('[data-cy="add_new_host-private_key_path-textfield"]').type(privateKyeFile);
+  cy.get('[data-cy="add_new_host-job_schedulers-select"]').type(jobSchedulers);
+  cy.get('[data-cy="add_new_host-max_number_of_jobs-textfield"]').type(maxNumber);
+  cy.get('[data-cy="add_new_host-available_queues-textfield"]').type(availableQueues);
+  if(bulkjobChk){
+    cy.get('[data-cy="add_new_host-use_bulkjob-checkbox"]').find('[type="checkbox"]').check();
+  }
+  else{
+    cy.get('[data-cy="add_new_host-use_bulkjob-checkbox"]').find('[type="checkbox"]').uncheck();
+  }
+  if(stepjobChk){
+    cy.get('[data-cy="add_new_host-use_stepjob-checkbox"]').find('[type="checkbox"]').check();
+  }
+  else{
+    cy.get('[data-cy="add_new_host-use_stepjob-checkbox"]').find('[type="checkbox"]').uncheck();
+  }
+  cy.get('[data-cy="add_new_host-shared_path_on_shared_host-textfield"]').type(sharedHost);
 })
 
-Cypress.Commands.add("remoteHostEnterAdvanced", ()=>{ 
+//enter advanced settings for the remote host screen
+Cypress.Commands.add("enterAdvancedRemoteHost", (intervalMin, statusCheckSec, hostMaxNumber, executionInterval, timeoutDuring)=>{ 
   cy.get('[data-cy="add_new_host-advanced_settings-title"]').click();
-  cy.get('[data-cy="add_new_host-connection_renewal-textarea"]').type(5);
-  cy.get('[data-cy="add_new_host-status_check-textarea"]').type(100);
-  cy.get('[data-cy="add_new_host-max_number-textarea"]').type(11);
-  cy.get('[data-cy="add_new_host-execution_interval-textarea"]').type(6);
-  cy.get('[data-cy="add_new_host-timeout_during-textarea"]').type(7);
+  cy.get('[data-cy="add_new_host-connection_renewal-textfield"]').type(intervalMin);
+  cy.get('[data-cy="add_new_host-status_check-textfield"]').type(statusCheckSec);
+  cy.get('[data-cy="add_new_host-max_number-textfield"]').type(hostMaxNumber);
+  cy.get('[data-cy="add_new_host-execution_interval-textfield"]').type(executionInterval);
+  cy.get('[data-cy="add_new_host-timeout_during-textfield"]').type(timeoutDuring);
+})
+
+//create a project
+Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
+  cy.visit("/");
+  cy.get('[data-cy="home-new-btn"]').click();
+  cy.get('[data-cy="home-project_name-textarea"]').type(projectName); 
+  cy.get('[data-cy="home-project_description-textarea"]').type(projectDescription);
+  cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
+})
+
+//remove a project
+Cypress.Commands.add("removeProject", (lineNo)=>{
+  cy.visit("/");
+  cy.get('[data-cy="home-batch_mode-btn"]').click();
+  cy.get('[type="checkbox"]').eq(lineNo).check();
+  cy.get('[data-cy="home-remove-btn"]').click();
+  cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
 })

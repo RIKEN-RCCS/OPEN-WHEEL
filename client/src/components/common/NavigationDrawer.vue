@@ -26,6 +26,7 @@
         variant=text
         class="text-capitalize"
         text="User guide"
+        data-cy="navigation-user_guide_editor-btn"
       />
     </v-list>
   </v-navigation-drawer>

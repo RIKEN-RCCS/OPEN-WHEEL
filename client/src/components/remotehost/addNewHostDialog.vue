@@ -11,7 +11,7 @@
       persistent
     >
       <v-card>
-        <v-card-title data-cy="add_new_host-add_new_host-title">
+        <v-card-title data-cy="add_new_host-add_new_host-cardtitle">
           add new host
         </v-card-title>
         <v-card-text>
@@ -34,7 +34,7 @@
                           :rules="[required, notDupulicatedLabel]"
                           placeholder="required"
                           validate-on="blur"
-                          data-cy="add_new_host-label-textarea"
+                          data-cy="add_new_host-label-textfield"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -44,7 +44,7 @@
                           :rules="[required]"
                           placeholder="required"
                           validate-on="blur"
-                          data-cy="add_new_host-hostname-textarea"
+                          data-cy="add_new_host-hostname-textfield"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -53,7 +53,7 @@
                           :label=portNumberLabel
                           :rules="[validPortNumber]"
                           validate-on="blur"
-                          data-cy="add_new_host-port_number_label-textarea"
+                          data-cy="add_new_host-port_number_label-textfield"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -63,7 +63,7 @@
                           :rules="[required]"
                           placeholder="required"
                           validate-on="blur"
-                          data-cy="add_new_host-user_id-textarea"
+                          data-cy="add_new_host-user_id-textfield"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -71,14 +71,14 @@
                           v-model="host.path"
                           :label=workDirLabel
                           validate-on="blur"
-                          data-cy="add_new_host-work_dir_label-textarea"
+                          data-cy="add_new_host-work_dir_label-textfield"
                         />
                       </v-col>
                       <v-col cols="4">
                         <v-text-field
                           v-model="host.keyFile"
                           label="private key path"
-                          data-cy="add_new_host-private_key_path-textarea"
+                          data-cy="add_new_host-private_key_path-textfield"
                           clearable
                         />
                       </v-col>
@@ -93,21 +93,21 @@
                           v-model="host.jobScheduler"
                           :items="availableJobSchedulers"
                           label="job scheduler"
-                          data-cy="add_new_host-job_schedulers-textarea"
+                          data-cy="add_new_host-job_schedulers-select"
                         />
                       </v-col>
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.numJob"
                           label="max number of jobs"
-                          data-cy="add_new_host-max_number_of_jobs-textarea"
+                          data-cy="add_new_host-max_number_of_jobs-textfield"
                         />
                       </v-col>
                       <v-col cols="6">
                         <v-text-field
                           v-model="host.queue"
                           label="available queues"
-                          data-cy="add_new_host-available_queues-textarea"
+                          data-cy="add_new_host-available_queues-textfield"
                         />
                       </v-col>
                       <v-col cols="3">
@@ -129,7 +129,7 @@
                           v-model="host.sharedHost"
                           :items="hostNames"
                           label="shared host"
-                          data-cy="add_new_host-shared_host-selectbox"
+                          data-cy="add_new_host-shared_host-select"
                           clearable
                         />
                       </v-col>
@@ -137,7 +137,7 @@
                         <v-text-field
                           v-model="host.sharedPath"
                           label="shared path on shared host"
-                          data-cy="add_new_host-shared_path_on_shared_host-textarea"
+                          data-cy="add_new_host-shared_path_on_shared_host-textfield"
                         />
                       </v-col>
                     </v-row>
@@ -155,7 +155,7 @@
                           label="connection renewal interval (min.) [default: 0]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
-                          data-cy="add_new_host-connection_renewal-textarea"
+                          data-cy="add_new_host-connection_renewal-textfield"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -164,7 +164,7 @@
                           label="status check interval (sec.) [default: 60]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
-                          data-cy="add_new_host-status_check-textarea"
+                          data-cy="add_new_host-status_check-textfield"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -173,7 +173,7 @@
                           label="max number of status check error allowed [default: 10]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
-                          data-cy="add_new_host-max_number-textarea"
+                          data-cy="add_new_host-max_number-textfield"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -182,7 +182,7 @@
                           label="execution interval (sec.) [default: job 5, task 1]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
-                          data-cy="add_new_host-execution_interval-textarea"
+                          data-cy="add_new_host-execution_interval-textfield"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -191,7 +191,7 @@
                           label="timeout during handshake phase (msec.) [default: 0]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
-                          data-cy="add_new_host-timeout_during-textarea"
+                          data-cy="add_new_host-timeout_during-textfield"
                         />
                       </v-col>
                     </v-row>

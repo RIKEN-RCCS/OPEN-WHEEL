@@ -30,17 +30,20 @@
           @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
           prepend-icon="mdi-plus"
           text="NEW"
+          data-cy="home-new-btn"
         />
         <v-btn
           @click="openDeleteProjectDialog(true)"
           prepend-icon="mdi-text-box-remove-outline"
           text="REMOVE FROM LIST"
+          data-cy="home-remove_from_list-btn"
           :disabled="selectedInTable.length === 0"
         />
         <v-btn
           @click="openDeleteProjectDialog(false)"
           prepend-icon="mdi-trash-can-outline"
           text="REMOVE"
+          data-cy="home-remove-btn"
           :disabled="selectedInTable.length === 0"
         />
         <v-switch
@@ -48,6 +51,7 @@
           label="BATCH MODE"
           color="primary"
           class="mt-6"
+          data-cy="home-batch_mode-btn"
         />
       </v-toolbar>
       <v-data-table
@@ -75,6 +79,7 @@
                 class="justify-start"
                 :text=props.item.name
                 @click="openInlineEditDialog(props.item.name, props.index, 'name')"
+                data-cy="home-project_name-text"
               />
             </template>
             <v-sheet
@@ -86,6 +91,7 @@
                 :rules="[required]"
                 clearable
                 @keyup.enter="renameProject(props.item.raw, props.index)"
+                data-cy="home-project_rename-textarea"
               />
             </v-sheet>
           </v-menu>
@@ -106,6 +112,7 @@
                 block
                 @click="openInlineEditDialog(props.item.description, props.index, 'description')"
                 :text=props.item.description
+                data-cy="home-project_description-text"
               />
             </template>
             <v-sheet
@@ -116,6 +123,7 @@
                 v-model="newVal"
                 clearable
                 @keyup.enter="changeDescripton(props.item. props.index)"
+                data-cy="home-description_change-textarea"
               />
             </v-sheet>
           </v-menu>
@@ -132,7 +140,7 @@
         scrollable
       >
         <v-card>
-          <v-card-title> {{ dialogTitle }}</v-card-title>
+          <v-card-title data-cy="home-create_new_project-title"> {{ dialogTitle }}</v-card-title>
           <v-card-actions>
             <v-spacer />
             <buttons
@@ -148,12 +156,14 @@
               label="project name"
               variant=outlined
               :rules="[required]"
+              data-cy="home-project_name-textarea"
             />
             <v-textarea
               v-model="newProjectDescription"
               label="project description"
               rows="2"
               auto-grow
+              data-cy="home-project_description-textarea"
             />
           </v-card-actions>
           <v-card-text>

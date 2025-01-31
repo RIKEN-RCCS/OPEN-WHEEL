@@ -12,7 +12,7 @@
         :prepend-icon=item.icon
         :disabled="item.disabled"
         :text=item.label
-        data-cy="buttons-ok_or_cancel-buttons"
+        data-cy="buttons-ok_or_cancel-btn"
       />
   </v-btn-group>
 </template>
