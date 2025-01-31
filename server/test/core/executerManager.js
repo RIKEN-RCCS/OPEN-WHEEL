@@ -17,6 +17,7 @@ const removeExecuters = executerManager.__get__("removeExecuters");
 const isExceededLimit = executerManager.__get__("isExceededLimit");
 const makeQueueOpt = executerManager.__get__("makeQueueOpt");
 const makeEnv = executerManager.__get__("makeEnv");
+const makeStepOpt = executerManager.__get__("makeStepOpt");
 const testDirRoot = "WHEEL_TEST_TMP";
 
 describe("UT for executerManager class", function () {
@@ -154,6 +155,50 @@ describe("UT for executerManager class", function () {
     it("should return an empty string if the selected queue is an empty string", function () {
       const task = { queue: "" };
       expect(makeQueueOpt(task, JS, " , , ,")).to.equal("");
+    });
+  });
+  describe("makeStepOpt", function () {
+    it("should return an empty string if task.type is not 'stepjobTask'", function () {
+      const task = { type: "regularTask" };
+      expect(makeStepOpt(task)).to.equal("");
+    });
+    it("should return stepjob option without dependency if useDependency is false", function () {
+      const task = {
+        type: "stepjobTask",
+        parentName: "testJob",
+        stepnum: 1,
+        useDependency: false
+      };
+      expect(makeStepOpt(task)).to.equal("--step --sparam \"jnam=testJob,sn=1\"");
+    });
+    it("should return stepjob option with dependency if useDependency is true", function () {
+      const task = {
+        type: "stepjobTask",
+        parentName: "testJob",
+        stepnum: 1,
+        dependencyForm: "afterok",
+        useDependency: true
+      };
+      expect(makeStepOpt(task)).to.equal("--step --sparam \"jnam=testJob,sn=1,afterok\"");
+    });
+    it("should handle missing or empty parentName and stepnum gracefully", function () {
+      const task = {
+        type: "stepjobTask",
+        parentName: "",
+        stepnum: "",
+        useDependency: false
+      };
+      expect(makeStepOpt(task)).to.equal("--step --sparam \"jnam=,sn=\"");
+    });
+    it("should exclude dependency form if it is not provided", function () {
+      const task = {
+        type: "stepjobTask",
+        parentName: "testJob",
+        stepnum: 1,
+        useDependency: true,
+        dependencyForm: ""
+      };
+      expect(makeStepOpt(task)).to.equal("--step --sparam \"jnam=testJob,sn=1,\"");
     });
   });
 });
