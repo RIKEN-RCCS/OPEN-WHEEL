@@ -3423,3 +3423,100 @@ describe("#checkRemoteStoragePathWritePermission", ()=>{
     await expect(checkRemoteStoragePathWritePermission(projectRootDir, params)).to.be.rejectedWith("ssh instance is not registerd for the project");
   });
 });
+
+describe("#recursiveGetHosts", ()=>{
+  let rewireProjectFilesOperator;
+  let recursiveGetHosts, getChildrenMock, hasChildMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    recursiveGetHosts = rewireProjectFilesOperator.__get__("recursiveGetHosts");
+
+    getChildrenMock = sinon.stub();
+    hasChildMock = sinon.stub();
+
+    rewireProjectFilesOperator.__set__({
+      getChildren: getChildrenMock,
+      hasChild: hasChildMock
+    });
+  });
+
+  it("should not add any hosts if there are no children", async ()=>{
+    getChildrenMock.resolves([]);
+    const hosts = [];
+    const storageHosts = [];
+
+    await recursiveGetHosts("mockProjectRoot", "rootID", hosts, storageHosts);
+
+    expect(hosts).to.be.empty;
+    expect(storageHosts).to.be.empty;
+  });
+
+  it("should add task component hosts correctly", async ()=>{
+    getChildrenMock.resolves([{ ID: "comp1", type: "task", host: "remote1" }]);
+    hasChildMock.returns(false);
+
+    const hosts = [];
+    const storageHosts = [];
+
+    await recursiveGetHosts("mockProjectRoot", "rootID", hosts, storageHosts);
+
+    expect(hosts).to.deep.equal([{ hostname: "remote1", isStorage: false }]);
+    expect(storageHosts).to.be.empty;
+  });
+
+  it("should add storage component hosts correctly", async ()=>{
+    getChildrenMock.resolves([{ ID: "comp2", type: "storage", host: "storage1" }]);
+    hasChildMock.returns(false);
+
+    const hosts = [];
+    const storageHosts = [];
+
+    await recursiveGetHosts("mockProjectRoot", "rootID", hosts, storageHosts);
+
+    expect(hosts).to.be.empty;
+    expect(storageHosts).to.deep.equal([{ hostname: "storage1", isStorage: true }]);
+  });
+
+  it("should skip disabled components", async ()=>{
+    getChildrenMock.resolves([{ ID: "comp3", type: "task", host: "remote2", disable: true }]);
+    hasChildMock.returns(false);
+
+    const hosts = [];
+    const storageHosts = [];
+
+    await recursiveGetHosts("mockProjectRoot", "rootID", hosts, storageHosts);
+
+    expect(hosts).to.be.empty;
+    expect(storageHosts).to.be.empty;
+  });
+
+  it("should skip localhost components", async ()=>{
+    getChildrenMock.resolves([{ ID: "comp4", type: "task", host: "localhost" }]);
+    hasChildMock.returns(false);
+
+    const hosts = [];
+    const storageHosts = [];
+
+    await recursiveGetHosts("mockProjectRoot", "rootID", hosts, storageHosts);
+
+    expect(hosts).to.be.empty;
+    expect(storageHosts).to.be.empty;
+  });
+
+  it("should recursively add child hosts", async ()=>{
+    getChildrenMock.onFirstCall().resolves([{ ID: "comp5", type: "for", host: "remote3" }]);
+    getChildrenMock.onSecondCall().resolves([{ ID: "comp6", type: "task", host: "remote4" }]);
+
+    hasChildMock.withArgs({ ID: "comp5", type: "for", host: "remote3" }).returns(true);
+    hasChildMock.withArgs({ ID: "comp6", type: "task", host: "remote4" }).returns(false);
+
+    const hosts = [];
+    const storageHosts = [];
+
+    await recursiveGetHosts("mockProjectRoot", "rootID", hosts, storageHosts);
+
+    expect(hosts).to.deep.equal([{ hostname: "remote4", isStorage: false }]);
+    expect(storageHosts).to.be.empty;
+  });
+});
