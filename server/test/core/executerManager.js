@@ -14,6 +14,7 @@ const rewire = require("rewire");
 const executerManager = rewire("../../app/core/executerManager");
 const executers = executerManager.__get__("executers");
 const removeExecuters = executerManager.__get__("removeExecuters");
+const isExceededLimit = executerManager.__get__("isExceededLimit");
 const testDirRoot = "WHEEL_TEST_TMP";
 
 describe("UT for executerManager class", function () {
@@ -56,6 +57,47 @@ describe("UT for executerManager class", function () {
 
       expect(()=>removeExecuters(mockProjectRootDir)).to.not.throw();
       expect(executers.size).to.equal(0);
+    });
+  });
+  describe("isExceededLimit", function () {
+    it("should return true if rt is in exceededRtList", function () {
+      const JS = { exceededRtList: [1, 2, 3] };
+      const rt = 2;
+      const outputText = "No errors";
+
+      expect(isExceededLimit(JS, rt, outputText)).to.be.true;
+    });
+
+    it("should return false if rt is not in exceededRtList", function () {
+      const JS = { exceededRtList: [1, 2, 3] };
+      const rt = 4;
+      const outputText = "No errors";
+
+      expect(isExceededLimit(JS, rt, outputText)).to.be.false;
+    });
+
+    it("should return true if reExceededLimitError matches outputText", function () {
+      const JS = { reExceededLimitError: "Limit exceeded" };
+      const rt = 0;
+      const outputText = "Error: Limit exceeded in queue";
+
+      expect(isExceededLimit(JS, rt, outputText)).to.be.true;
+    });
+
+    it("should return false if reExceededLimitError does not match outputText", function () {
+      const JS = { reExceededLimitError: "Limit exceeded" };
+      const rt = 0;
+      const outputText = "No errors";
+
+      expect(isExceededLimit(JS, rt, outputText)).to.be.false;
+    });
+
+    it("should return false if neither exceededRtList nor reExceededLimitError matches", function () {
+      const JS = { exceededRtList: [1, 2, 3], reExceededLimitError: "Limit exceeded" };
+      const rt = 4;
+      const outputText = "No errors";
+
+      expect(isExceededLimit(JS, rt, outputText)).to.be.false;
     });
   });
 });
