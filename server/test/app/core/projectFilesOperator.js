@@ -2911,3 +2911,131 @@ describe("#addFileLinkBetweenSiblings", ()=>{
     expect(writeComponentJsonMock.calledTwice).to.be.true;
   });
 });
+
+describe("#removeFileLinkToParent", ()=>{
+  let rewireProjectFilesOperator;
+  let removeFileLinkToParent;
+  let getComponentDirMock, readComponentJsonMock, writeComponentJsonMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    removeFileLinkToParent = rewireProjectFilesOperator.__get__("removeFileLinkToParent");
+
+    getComponentDirMock = sinon.stub();
+    readComponentJsonMock = sinon.stub();
+    writeComponentJsonMock = sinon.stub().resolves();
+
+    rewireProjectFilesOperator.__set__({
+      getComponentDir: getComponentDirMock,
+      readComponentJson: readComponentJsonMock,
+      writeComponentJson: writeComponentJsonMock
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should remove the file link from the parent's outputFiles and source's outputFiles", async ()=>{
+    const projectRootDir = "/mock/project";
+    const srcNode = "source123";
+    const srcName = "output.txt";
+    const dstName = "input.txt";
+    const parentID = "parent123";
+    const srcDir = "/mock/project/components/source123";
+    const parentDir = "/mock/project/components";
+
+    const srcJson = {
+      ID: srcNode,
+      outputFiles: [
+        { name: "output.txt", dst: [{ dstNode: parentID, dstName: "input.txt" }] }
+      ]
+    };
+
+    const parentJson = {
+      ID: parentID,
+      outputFiles: [
+        { name: "input.txt", origin: [{ srcNode: srcNode, srcName: "output.txt" }] }
+      ]
+    };
+
+    getComponentDirMock.withArgs(projectRootDir, srcNode, true).resolves(srcDir);
+    readComponentJsonMock.withArgs(srcDir).resolves(srcJson);
+    readComponentJsonMock.withArgs(parentDir).resolves(parentJson);
+
+    await removeFileLinkToParent(projectRootDir, srcNode, srcName, dstName);
+
+    expect(srcJson.outputFiles[0].dst).to.deep.equal([]);
+    expect(parentJson.outputFiles[0].origin).to.deep.equal([]);
+
+    expect(writeComponentJsonMock.calledWith(projectRootDir, srcDir, srcJson)).to.be.true;
+    expect(writeComponentJsonMock.calledWith(projectRootDir, parentDir, parentJson)).to.be.true;
+  });
+
+  it("should throw an error when no matching output file exists in the source component", async ()=>{
+    const projectRootDir = "/mock/project";
+    const srcNode = "source123";
+    const srcName = "nonexistent.txt"; //存在しない出力ファイル
+    const dstName = "input.txt";
+    const parentID = "parent123";
+    const srcDir = "/mock/project/components/source123";
+    const parentDir = "/mock/project/components";
+
+    const srcJson = {
+      ID: srcNode,
+      outputFiles: [ //ここには "nonexistent.txt" が存在しない
+        { name: "output.txt", dst: [{ dstNode: parentID, dstName: "input.txt" }] }
+      ]
+    };
+
+    const parentJson = {
+      ID: parentID,
+      outputFiles: [
+        { name: "input.txt", origin: [{ srcNode: srcNode, srcName: "output.txt" }] }
+      ]
+    };
+
+    getComponentDirMock.withArgs(projectRootDir, srcNode, true).resolves(srcDir);
+    readComponentJsonMock.withArgs(srcDir).resolves(srcJson);
+    readComponentJsonMock.withArgs(parentDir).resolves(parentJson);
+
+    await expect(removeFileLinkToParent(projectRootDir, srcNode, srcName, dstName))
+      .to.be.rejectedWith(TypeError, "Cannot read properties of undefined (reading 'dst')");
+  });
+
+  it("should handle the case when parent component does not have matching origin entry", async ()=>{
+    const projectRootDir = "/mock/project";
+    const srcNode = "source123";
+    const srcName = "output.txt";
+    const dstName = "input.txt";
+    const parentID = "parent123";
+    const srcDir = "/mock/project/components/source123";
+    const parentDir = "/mock/project/components";
+
+    const srcJson = {
+      ID: srcNode,
+      outputFiles: [
+        { name: "output.txt", dst: [{ dstNode: parentID, dstName: "input.txt" }] }
+      ]
+    };
+
+    const parentJson = {
+      ID: parentID,
+      outputFiles: [
+        { name: "input.txt" }
+      ]
+    };
+
+    getComponentDirMock.withArgs(projectRootDir, srcNode, true).resolves(srcDir);
+    readComponentJsonMock.withArgs(srcDir).resolves(srcJson);
+    readComponentJsonMock.withArgs(parentDir).resolves(parentJson);
+
+    await removeFileLinkToParent(projectRootDir, srcNode, srcName, dstName);
+
+    expect(srcJson.outputFiles[0].dst).to.deep.equal([]);
+    expect(parentJson.outputFiles[0]).to.not.have.property("origin");
+
+    expect(writeComponentJsonMock.calledWith(projectRootDir, srcDir, srcJson)).to.be.true;
+    expect(writeComponentJsonMock.calledWith(projectRootDir, parentDir, parentJson)).to.be.true;
+  });
+});
