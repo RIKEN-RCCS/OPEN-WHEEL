@@ -15,6 +15,7 @@ const executerManager = rewire("../../app/core/executerManager");
 const executers = executerManager.__get__("executers");
 const removeExecuters = executerManager.__get__("removeExecuters");
 const isExceededLimit = executerManager.__get__("isExceededLimit");
+const makeEnv = executerManager.__get__("makeEnv");
 const testDirRoot = "WHEEL_TEST_TMP";
 
 describe("UT for executerManager class", function () {
@@ -98,6 +99,31 @@ describe("UT for executerManager class", function () {
       const outputText = "No errors";
 
       expect(isExceededLimit(JS, rt, outputText)).to.be.false;
+    });
+  });
+  describe("makeEnv", function () {
+    it("should return an empty string if task.env is undefined", function () {
+      const task = {};
+      expect(makeEnv(task)).to.equal("");
+    });
+    it("should return an empty string if task.env is an empty object", function () {
+      const task = { env: {} };
+      expect(makeEnv(task)).to.equal("");
+    });
+    it("should return a string with a single environment variable", function () {
+      const task = { env: { KEY: "value" } };
+      expect(makeEnv(task)).to.equal("env KEY=value");
+    });
+    it("should return a string with multiple environment variables", function () {
+      const task = { env: { KEY1: "value1", KEY2: "value2" } };
+      const result = makeEnv(task);
+      //`result` 内の変数順序が一定でない可能性があるため、複数のパターンを考慮
+      expect(result).to.satisfy((str)=>str === "env KEY1=value1 KEY2=value2" || str === "env KEY2=value2 KEY1=value1"
+      );
+    });
+    it("should handle environment variables with special characters", function () {
+      const task = { env: { SPECIAL: "value with spaces" } };
+      expect(makeEnv(task)).to.equal("env SPECIAL=value with spaces");
     });
   });
 });
