@@ -10,6 +10,7 @@ const sinon = require("sinon");
 const fs = require("fs-extra");
 const { expect } = require("chai");
 const rewire = require("rewire");
+const { EventEmitter } = require("events");
 
 const executerManager = rewire("../../app/core/executerManager");
 const executers = executerManager.__get__("executers");
@@ -21,6 +22,7 @@ const makeStepOpt = executerManager.__get__("makeStepOpt");
 const makeBulkOpt = executerManager.__get__("makeBulkOpt");
 const decideFinishState = executerManager.__get__("decideFinishState");
 const needsRetry = executerManager.__get__("needsRetry");
+const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
 const testDirRoot = "WHEEL_TEST_TMP";
 let evalConditionMock;
 let loggerMock;
@@ -386,6 +388,77 @@ describe("UT for executerManager class", function () {
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.true;
       expect(logCalled).to.be.true;
+    });
+  });
+  describe("promisifiedSpawn", function () {
+    let spawnMock;
+    let loggerMock;
+    beforeEach(()=>{
+      spawnMock = new EventEmitter();
+      spawnMock.stdout = new EventEmitter();
+      spawnMock.stderr = new EventEmitter();
+
+      executerManager.__set__("childProcess", {
+        spawn: ()=>spawnMock
+      });
+      loggerMock = {
+        stdout: ()=>{},
+        stderr: ()=>{},
+        debug: ()=>{}
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+    });
+    it("should resolve with the exit code when the script finishes successfully", async function () {
+      const task = { projectRootDir: "/mock/project", name: "mockTask" };
+      setTimeout(()=>{
+        spawnMock.emit("exit", 0);
+      }, 100);
+      const result = await promisifiedSpawn(task, "mockScript.sh", {});
+      expect(result).to.equal(0);
+    });
+    it("should log stdout data", function (done) {
+      loggerMock.stdout = (data)=>{
+        expect(data).to.equal("mock stdout data\n");
+        done();
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+      promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+      spawnMock.stdout.emit("data", "mock stdout data\n");
+    });
+    it("should log stderr data", function (done) {
+      loggerMock.stderr = (data)=>{
+        expect(data).to.equal("mock stderr data\n");
+        done();
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+      promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+      spawnMock.stderr.emit("data", "mock stderr data\n");
+    });
+    it("should reject the promise if an error occurs", async function () {
+      const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
+      setTimeout(()=>{
+        spawnMock.emit("error", new Error("Mock error"));
+      }, 100);
+
+      try {
+        await promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+        throw new Error("Expected promise to be rejected");
+      } catch (err) {
+        expect(err.message).to.equal("Mock error");
+      }
+    });
+    it("should reject the promise if the process emits an error event", async function () {
+      const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
+      setTimeout(()=>{
+        spawnMock.emit("error", new Error("Mock error"));
+      }, 100);
+
+      try {
+        await promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+        throw new Error("Expected promise to be rejected");
+      } catch (err) {
+        expect(err.message).to.equal("Mock error");
+      }
     });
   });
 });
