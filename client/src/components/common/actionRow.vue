@@ -12,7 +12,7 @@
       class="mr-2"
       @click="$emit('edit', item)"
       icon="mdi-pencil"
-      data-cy="remotehost-edit-btn"
+      data-cy="action_row-edit-btn"
     />
     <v-icon
       v-if="canDelete"
@@ -20,7 +20,7 @@
       small
       @click="$emit('delete',item)"
       icon=mdi-delete
-      data-cy="remotehost-delete-btn"
+      data-cy="action_row-delete-btn"
     />
   </div>
 </template>

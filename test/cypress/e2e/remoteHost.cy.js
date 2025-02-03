@@ -70,14 +70,14 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get('[data-cy="add_new_host-port_number_label-textfield"]').type(portNumber);
       cy.get('[data-cy="add_new_host-user_id-textfield"]').type(testUser);
       cy.get('[data-cy="add_new_host-ok-btn"]').click();
-      cy.get('[data-cy="remotehost-edit-btn"]').click();
+      cy.get('[data-cy="action_row-edit-btn"]').click();
       cy.get('[data-cy="add_new_host-add_new_host-cardtitle"]').should('be.visible');
       // ダイアログ内のテキスト確認
       cy.get('[data-cy="add_new_host-label-textfield"]').find('input').should('have.value', 'TestLabel');
       // ダイアログ内のOKボタン
       cy.get('[data-cy="add_new_host-ok-btn"]').click();
       // 削除ボタン
-      cy.get('[data-cy="remotehost-delete-btn"]').click();
+      cy.get('[data-cy="action_row-delete-btn"]').click();
       // 削除確認ダイアログ内OKボタン
       cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
     });
@@ -96,7 +96,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get('[data-cy="add_new_host-user_id-textfield"]').type(testUser);
       cy.get('[data-cy="add_new_host-ok-btn"]').click();
       // 削除ボタン
-      cy.get('[data-cy="remotehost-delete-btn"]').click();
+      cy.get('[data-cy="action_row-delete-btn"]').click();
       // 削除確認ダイアログ内CANCELボタン
       cy.get('[data-cy="buttons-ok_or_cancel-btn"]').eq(1).click();
       cy.get('[data-cy="remotehost-items-data_table"]').contains(label);
@@ -117,7 +117,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get('[data-cy="add_new_host-user_id-textfield"]').type(testUser);
       cy.get('[data-cy="add_new_host-ok-btn"]').click();
       // 削除ボタン
-      cy.get('[data-cy="remotehost-delete-btn"]').click();
+      cy.get('[data-cy="action_row-delete-btn"]').click();
       // 削除確認ダイアログ内OKボタン
       cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
       cy.get('[data-cy="remotehost-items-data_table"]').contains('No data available');
@@ -397,7 +397,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.enterRequiredRemoteHost(label, hostname, portNumber, testUser);
       cy.enterRemoteHost(hostWorkDir, privateKyeFile, jobSchedulers, maxNumber, availableQueues, bulkjobChkYes, stepjobChkYes, sharedHost);
       cy.get('[data-cy="add_new_host-ok-btn"]').click();
-      cy.get('[data-cy="remotehost-edit-btn"]').click();
+      cy.get('[data-cy="action_row-edit-btn"]').click();
       cy.get('[data-cy="add_new_host-label-textfield"]').find('input').should('have.value', label);
       cy.get('[data-cy="add_new_host-hostname-textfield"]').find('input').should('have.value', hostname); 
       cy.get('[data-cy="add_new_host-port_number_label-textfield"]').find('input').should('have.value', portNumber); 
@@ -426,7 +426,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.enterRemoteHost(hostWorkDir, privateKyeFile, jobSchedulers, maxNumber, availableQueues, bulkjobChkYes, stepjobChkYes, sharedHost);
       cy.enterAdvancedRemoteHost(intervalMin, statusCheckSec, hostMaxNumber, executionInterval, timeoutDuring);
       cy.get('[data-cy="add_new_host-ok-btn"]').click();
-      cy.get('[data-cy="remotehost-edit-btn"]').click();
+      cy.get('[data-cy="action_row-edit-btn"]').click();
       cy.get('[data-cy="add_new_host-advanced_settings-title"]').click();
       cy.get('[data-cy="add_new_host-connection_renewal-textfield"]').find('input').should('have.value', intervalMin);
       cy.get('[data-cy="add_new_host-status_check-textfield"]').find('input').should('have.value', statusCheckSec);
