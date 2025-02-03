@@ -8,7 +8,7 @@
   <v-app>
     <v-app-bar>
       <template #prepend>
-        <v-img height=72px width=180px :src="imgLogo" alt="wheel title logo" />
+        <v-img height=72px width=180px :src="imgLogo" alt="wheel title logo"/>
       </template>
       <v-app-bar-title
         class="text-lowercase text-decoration-none text-h5 white--text"
