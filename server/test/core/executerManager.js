@@ -10,6 +10,7 @@ const sinon = require("sinon");
 const fs = require("fs-extra");
 const { expect } = require("chai");
 const rewire = require("rewire");
+const { EventEmitter } = require("events");
 
 const executerManager = rewire("../../app/core/executerManager");
 const executers = executerManager.__get__("executers");
@@ -21,6 +22,9 @@ const makeStepOpt = executerManager.__get__("makeStepOpt");
 const makeBulkOpt = executerManager.__get__("makeBulkOpt");
 const decideFinishState = executerManager.__get__("decideFinishState");
 const needsRetry = executerManager.__get__("needsRetry");
+const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
+const getExecutersKey = executerManager.__get__("getExecutersKey");
+const getMaxNumJob = executerManager.__get__("getMaxNumJob");
 const testDirRoot = "WHEEL_TEST_TMP";
 let evalConditionMock;
 let loggerMock;
@@ -386,6 +390,136 @@ describe("UT for executerManager class", function () {
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.true;
       expect(logCalled).to.be.true;
+    });
+  });
+  describe("promisifiedSpawn", function () {
+    let spawnMock;
+    let loggerMock;
+    beforeEach(()=>{
+      spawnMock = new EventEmitter();
+      spawnMock.stdout = new EventEmitter();
+      spawnMock.stderr = new EventEmitter();
+
+      executerManager.__set__("childProcess", {
+        spawn: ()=>spawnMock
+      });
+      loggerMock = {
+        stdout: ()=>{},
+        stderr: ()=>{},
+        debug: ()=>{}
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+    });
+    it("should resolve with the exit code when the script finishes successfully", async function () {
+      const task = { projectRootDir: "/mock/project", name: "mockTask" };
+      setTimeout(()=>{
+        spawnMock.emit("exit", 0);
+      }, 100);
+      const result = await promisifiedSpawn(task, "mockScript.sh", {});
+      expect(result).to.equal(0);
+    });
+    it("should log stdout data", function (done) {
+      loggerMock.stdout = (data)=>{
+        expect(data).to.equal("mock stdout data\n");
+        done();
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+      promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+      spawnMock.stdout.emit("data", "mock stdout data\n");
+    });
+    it("should log stderr data", function (done) {
+      loggerMock.stderr = (data)=>{
+        expect(data).to.equal("mock stderr data\n");
+        done();
+      };
+      executerManager.__set__("getLogger", ()=>loggerMock);
+      promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+      spawnMock.stderr.emit("data", "mock stderr data\n");
+    });
+    it("should reject the promise if an error occurs", async function () {
+      const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
+      setTimeout(()=>{
+        spawnMock.emit("error", new Error("Mock error"));
+      }, 100);
+
+      try {
+        await promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+        throw new Error("Expected promise to be rejected");
+      } catch (err) {
+        expect(err.message).to.equal("Mock error");
+      }
+    });
+    it("should reject the promise if the process emits an error event", async function () {
+      const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
+      setTimeout(()=>{
+        spawnMock.emit("error", new Error("Mock error"));
+      }, 100);
+
+      try {
+        await promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+        throw new Error("Expected promise to be rejected");
+      } catch (err) {
+        expect(err.message).to.equal("Mock error");
+      }
+    });
+  });
+  describe("getExecutersKey", function () {
+    it("full task properties", function () {
+      const task = {
+        projectRootDir: "/mock/project",
+        remotehostID: "remoteHost",
+        useJobScheduler: true
+      };
+      const result = getExecutersKey(task);
+      expect(result).to.equal("/mock/project-remoteHost-true");
+    });
+    it("missing remotehostID", function () {
+      const task = {
+        projectRootDir: "/mock/project",
+        useJobScheduler: false
+      };
+      const result = getExecutersKey(task);
+      expect(result).to.equal("/mock/project-undefined-false");
+    });
+    it("missing projectRootDir", function () {
+      const task = {
+        remotehostID: "remoteHost",
+        useJobScheduler: false
+      };
+      const result = getExecutersKey(task);
+      expect(result).to.equal("undefined-remoteHost-false");
+    });
+  });
+  describe("getMaxNumJob", function () {
+    let originalNumJobOnLocal;
+    beforeEach(()=>{
+      originalNumJobOnLocal = executerManager.__get__("numJobOnLocal");
+      executerManager.__set__("numJobOnLocal", 5);
+    });
+    afterEach(()=>{
+      executerManager.__set__("numJobOnLocal", originalNumJobOnLocal);
+    });
+    it("should return numJobOnLocal if hostinfo is null", function () {
+      const result = getMaxNumJob(null);
+      expect(result).to.equal(5);
+    });
+    it("should return the parsed numJob if it is a valid number", function () {
+      const hostinfo = { numJob: "10" };
+      const result = getMaxNumJob(hostinfo);
+      expect(result).to.equal(10);
+    });
+    it("should return 1 if numJob is not a valid number", function () {
+      const hostinfo = { numJob: "invalid" };
+      const result = getMaxNumJob(hostinfo);
+      expect(result).to.equal(1);
+    });
+    it("should return at least 1 even if numJob is 0 or negative", function () {
+      const hostinfo = { numJob: "0" };
+      const result = getMaxNumJob(hostinfo);
+      expect(result).to.equal(1);
+      const negativeHostinfo = { numJob: "-5" };
+      const negativeResult = getMaxNumJob(negativeHostinfo);
+      expect(negativeResult).to.equal(1);
     });
   });
 });
