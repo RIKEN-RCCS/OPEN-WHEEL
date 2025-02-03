@@ -23,6 +23,7 @@ const makeBulkOpt = executerManager.__get__("makeBulkOpt");
 const decideFinishState = executerManager.__get__("decideFinishState");
 const needsRetry = executerManager.__get__("needsRetry");
 const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
+const getExecutersKey = executerManager.__get__("getExecutersKey");
 const testDirRoot = "WHEEL_TEST_TMP";
 let evalConditionMock;
 let loggerMock;
@@ -459,6 +460,33 @@ describe("UT for executerManager class", function () {
       } catch (err) {
         expect(err.message).to.equal("Mock error");
       }
+    });
+  });
+  describe("getExecutersKey", function () {
+    it("full task properties", function () {
+      const task = {
+        projectRootDir: "/mock/project",
+        remotehostID: "remoteHost",
+        useJobScheduler: true
+      };
+      const result = getExecutersKey(task);
+      expect(result).to.equal("/mock/project-remoteHost-true");
+    });
+    it("missing remotehostID", function () {
+      const task = {
+        projectRootDir: "/mock/project",
+        useJobScheduler: false
+      };
+      const result = getExecutersKey(task);
+      expect(result).to.equal("/mock/project-undefined-false");
+    });
+    it("missing projectRootDir", function () {
+      const task = {
+        remotehostID: "remoteHost",
+        useJobScheduler: false
+      };
+      const result = getExecutersKey(task);
+      expect(result).to.equal("undefined-remoteHost-false");
     });
   });
 });
