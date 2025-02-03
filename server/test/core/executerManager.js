@@ -24,6 +24,7 @@ const decideFinishState = executerManager.__get__("decideFinishState");
 const needsRetry = executerManager.__get__("needsRetry");
 const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
 const getExecutersKey = executerManager.__get__("getExecutersKey");
+const getMaxNumJob = executerManager.__get__("getMaxNumJob");
 const testDirRoot = "WHEEL_TEST_TMP";
 let evalConditionMock;
 let loggerMock;
@@ -487,6 +488,38 @@ describe("UT for executerManager class", function () {
       };
       const result = getExecutersKey(task);
       expect(result).to.equal("undefined-remoteHost-false");
+    });
+  });
+  describe("getMaxNumJob", function () {
+    let originalNumJobOnLocal;
+    beforeEach(()=>{
+      originalNumJobOnLocal = executerManager.__get__("numJobOnLocal");
+      executerManager.__set__("numJobOnLocal", 5);
+    });
+    afterEach(()=>{
+      executerManager.__set__("numJobOnLocal", originalNumJobOnLocal);
+    });
+    it("should return numJobOnLocal if hostinfo is null", function () {
+      const result = getMaxNumJob(null);
+      expect(result).to.equal(5);
+    });
+    it("should return the parsed numJob if it is a valid number", function () {
+      const hostinfo = { numJob: "10" };
+      const result = getMaxNumJob(hostinfo);
+      expect(result).to.equal(10);
+    });
+    it("should return 1 if numJob is not a valid number", function () {
+      const hostinfo = { numJob: "invalid" };
+      const result = getMaxNumJob(hostinfo);
+      expect(result).to.equal(1);
+    });
+    it("should return at least 1 even if numJob is 0 or negative", function () {
+      const hostinfo = { numJob: "0" };
+      const result = getMaxNumJob(hostinfo);
+      expect(result).to.equal(1);
+      const negativeHostinfo = { numJob: "-5" };
+      const negativeResult = getMaxNumJob(negativeHostinfo);
+      expect(negativeResult).to.equal(1);
     });
   });
 });
