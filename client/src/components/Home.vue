@@ -12,7 +12,7 @@
       title="home"
       density="comfortable"
       @navIconClick="drawer=!drawer"
-      data-cy="home-home-title"
+      data-cy="home-home-application_tool_bar"
     />
     <v-main>
       <v-toolbar
@@ -62,6 +62,7 @@
         :select-strategy="batchMode?'page':'single'"
         :headers="headers"
         :items="projectList"
+        data-cy="home-project_list-data_table"
       >
         <template #item.name="props">
           <v-menu
@@ -79,7 +80,7 @@
                 class="justify-start"
                 :text=props.item.name
                 @click="openInlineEditDialog(props.item.name, props.index, 'name')"
-                data-cy="home-project_name-text"
+                data-cy="home-project_name-btn"
               />
             </template>
             <v-sheet
@@ -91,7 +92,7 @@
                 :rules="[required]"
                 clearable
                 @keyup.enter="renameProject(props.item.raw, props.index)"
-                data-cy="home-project_rename-textarea"
+                data-cy="home-project_rename-text_field"
               />
             </v-sheet>
           </v-menu>
@@ -112,7 +113,7 @@
                 block
                 @click="openInlineEditDialog(props.item.description, props.index, 'description')"
                 :text=props.item.description
-                data-cy="home-project_description-text"
+                data-cy="home-project_description-btn"
               />
             </template>
             <v-sheet
@@ -131,6 +132,7 @@
         <template #item.path="{item}">
           <span
             class="d-inline-block text-truncate trancated-row"
+            data-cy="home-path-span"
           >{{ item.path }} </span>
         </template>
       </v-data-table>
@@ -156,7 +158,7 @@
               label="project name"
               variant=outlined
               :rules="[required]"
-              data-cy="home-project_name-textarea"
+              data-cy="home-project_name-text_field"
             />
             <v-textarea
               v-model="newProjectDescription"
@@ -169,6 +171,7 @@
           <v-card-text>
             <file-browser
               @update="(a)=>{selectedInTree=a}"
+              data-cy="home-file_browser-file_browser"
             />
           </v-card-text>
         </v-card>
