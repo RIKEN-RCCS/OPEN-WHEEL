@@ -21,7 +21,6 @@ const IP = rewire("../app/core/importProject.js");
 const isEmptyDir = IP.__get__("isEmptyDir");
 const extractAndReadArchiveMetadata = IP.__get__("extractAndReadArchiveMetadata");
 const importProject = IP.__get__("importProject");
-const moveAndRegisterProject = IP.__get__("moveAndRegisterProject");
 
 const dummyProjectList = [];
 IP.__set__("projectList", dummyProjectList);
@@ -56,24 +55,6 @@ describe("import project UT", function () {
     });
     it("should be return false if directory contains dot file", async ()=>{
       expect(await isEmptyDir(path.resolve(testDirRoot, "withDot"))).to.be.false;
-    });
-  });
-  describe("#moveAndRegisterProject", ()=>{
-    beforeEach(async ()=>{
-      await fs.ensureDir(path.resolve(testDirRoot, "src", "foo", "bar"));
-      await fs.outputFile(path.resolve(testDirRoot, "src", "foo", "baz"), "baz");
-      await fs.remove(path.resolve(testDirRoot, "dst"));
-    });
-    it("should move dir and add entry to projectList", async ()=>{
-      await moveAndRegisterProject(path.resolve(testDirRoot, "src"), path.resolve(testDirRoot, "dst"));
-      expect(path.resolve(testDirRoot, "src")).not.to.be.a.path();
-      expect(path.resolve(testDirRoot, "dst")).to.be.a.directory().with.contents(["foo"]);
-      expect(path.resolve(testDirRoot, "dst", "foo")).to.be.a.directory().with.contents(["bar", "baz"]);
-      expect(path.resolve(testDirRoot, "dst", "foo", "bar")).to.be.a.directory().and.empty;
-      expect(path.resolve(testDirRoot, "dst", "foo", "baz")).to.be.a.file().with.content("baz");
-      expect(dummyProjectList).to.be.a("array").and.has.lengthOf(1);
-      expect(dummyProjectList[0]).to.be.a("object");
-      expect(dummyProjectList[0].path).to.equal(path.resolve(testDirRoot, "dst"));
     });
   });
   describe("#extractAndReadArchiveMetadata", ()=>{
