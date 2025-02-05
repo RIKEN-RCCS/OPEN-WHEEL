@@ -13,6 +13,7 @@
       title="workflow"
       @navIconClick="drawer=!drawer"
       :base-url="baseURL"
+      data-cy="workflow-workflow-title"
     >
       <template #append>
       <span
