@@ -199,6 +199,23 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
 
     /**
     構成要素の設定入力確認
+    ファイル選択
+    「private key path」テキストエリア
+    試験確認内容：選択したファイルのパスが正しく表示されていることを確認
+    */
+    it.only("01-01-015:構成要素の設定入力確認-ファイル選択-「private key path」テキストエリア-選択したファイルのパスが正しく表示されていることを確認", ()=>{
+      cy.createProject('testProject', 'testDescription');
+      cy.visit("/remotehost");
+      cy.get('[data-cy="remotehost-new_remote_host_setting-btn"]').click();
+      cy.get('[data-cy="add_new_host-browse_btn"]').click();
+      cy.get('[data-cy="add_new_host-select_private_key_file-card_text"]').contains('testProject.wheel').click();
+      cy.get('[data-cy="add_new_host-select_private_key_file_ok-btn"]').click();
+      cy.get('[data-cy="add_new_host-private_key_path-text_field"]').find('input').should('have.value', '/root/testProject.wheel');
+      cy.removeProject(1);
+    });
+
+    /**
+    構成要素の設定入力確認
     セレクトボックス選択
     「job scheduler」セレクトボックス
     試験確認内容：選択した値が正しく反映されていることを確認
