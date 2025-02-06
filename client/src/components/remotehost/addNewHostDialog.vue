@@ -86,6 +86,7 @@
                         <v-btn
                           @click="openFileBrowser=!openFileBrowser"
                           text=browse
+                          data-cy="add_new_host-browse_btn"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -233,14 +234,16 @@
             @click="host.keyFile=selectedFile;closeFileBrowser()"
             prepend-icon="mdi-check"
             text="OK"
+            data-cy="add_new_host-select_private_key_file_ok-btn"
           />
           <v-btn
             @click="closeFileBrowser"
             prepend-icon="mdi-close"
             text="cancel"
+            data-cy="add_new_host-select_private_key_file_cancel-btn"
           />
         </v-card-actions>
-        <v-card-text>
+        <v-card-text data-cy="add_new_host-select_private_key_file-card_text">
           <file-browser
             mode="all"
             @update="(a)=>{selectedFile=a}"
