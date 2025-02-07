@@ -20,11 +20,11 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     const timeoutDuring = 7
     
     before(()=>{
-      cy.visit("/remotehost")
+      cy.goToScreen('remotehost')
     })
   
     beforeEach(()=>{
-      cy.visit("/remotehost")
+      cy.goToScreen('remotehost')
     })
     
     /** 
@@ -32,7 +32,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     試験確認内容：リモートホスト設定画面に遷移することを確認
     */
     it("01-01-001:リモートホスト設定画面に遷移することを確認", ()=>{
-      cy.visit("/")
+      cy.goToScreen('home');
       cy.get('[data-cy="tool_bar-navi-icon"]').click();
       cy.get('[data-cy="navigation-remote_host_editor-btn"]').invoke('removeAttr', 'target').click(); 
       cy.get('[data-cy="remotehost-new_remote_host_setting-btn"]').should('be.visible')
@@ -203,9 +203,9 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     「private key path」テキストエリア
     試験確認内容：選択したファイルのパスが正しく表示されていることを確認
     */
-    it.only("01-01-015:構成要素の設定入力確認-ファイル選択-「private key path」テキストエリア-選択したファイルのパスが正しく表示されていることを確認", ()=>{
+    it("01-01-015:構成要素の設定入力確認-ファイル選択-「private key path」テキストエリア-選択したファイルのパスが正しく表示されていることを確認", ()=>{
       cy.createProject('testProject', 'testDescription');
-      cy.visit("/remotehost");
+      cy.goToScreen('remotehost');
       cy.get('[data-cy="remotehost-new_remote_host_setting-btn"]').click();
       cy.get('[data-cy="add_new_host-browse_btn"]').click();
       cy.get('[data-cy="add_new_host-select_private_key_file-card_text"]').contains('testProject.wheel').click();
@@ -298,7 +298,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get('[data-cy="add_new_host-shared_host-select"]').type(label);
       cy.get('[data-cy="add_new_host-shared_host-select"]').click();
       cy.get('[data-cy="add_new_host-shared_host-select"]').find('input').should('have.value', label);
-      cy.visit("/remotehost");
+      cy.goToScreen('remotehost');
       cy.removeRemoteHost(label);
     });
 
@@ -427,7 +427,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get('[data-cy="add_new_host-use_bulkjob-checkbox"]').find('[type="checkbox"]').should('be.checked');
       cy.get('[data-cy="add_new_host-use_stepjob-checkbox"]').find('[type="checkbox"]').should('be.checked');
       cy.get('[data-cy="add_new_host-shared_path_on_shared_host-text_field"]').find('input').should('have.value', sharedHost);
-      cy.visit("/remotehost")
+      cy.goToScreen('remotehost');
       cy.removeRemoteHost(label);
     });
 
@@ -437,7 +437,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     詳細設定確認
     試験確認内容：値が正しく反映されていることを確認
     */
-    it("01-01-029:設定入力後の反映確認-編集ダイアログから確認-詳細設定確認-値が正しく反映されていることを確認", ()=>{
+    it("01-01-030:設定入力後の反映確認-編集ダイアログから確認-詳細設定確認-値が正しく反映されていることを確認", ()=>{
       cy.get('[data-cy="remotehost-new_remote_host_setting-btn"]').click();
       cy.enterRequiredRemoteHost(label, hostname, portNumber, testUser);
       cy.enterRemoteHost(hostWorkDir, privateKyeFile, jobSchedulers, maxNumber, availableQueues, bulkjobChkYes, stepjobChkYes, sharedHost);
@@ -450,7 +450,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get('[data-cy="add_new_host-max_number-text_field"]').find('input').should('have.value', hostMaxNumber);
       cy.get('[data-cy="add_new_host-execution_interval-text_field"]').find('input').should('have.value', executionInterval);
       cy.get('[data-cy="add_new_host-timeout_during-text_field"]').find('input').should('have.value', timeoutDuring);
-      cy.visit("/remotehost")
+      cy.goToScreen('remotehost');
       cy.removeRemoteHost(label);
     });
   })
