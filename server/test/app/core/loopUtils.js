@@ -9,7 +9,7 @@ const chai = require("chai");
 const expect = chai.expect;
 
 //testee
-const { forTripCount, loopInitialize } = require("../app/core/loopUtils.js");
+const { forTripCount, loopInitialize } = require("../../../app/core/loopUtils.js");
 
 describe("UT for loopInitialize()", ()=>{
   let component;
