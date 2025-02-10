@@ -7,6 +7,7 @@
 
 const chai = require("chai");
 chai.use(require("sinon-chai"));
+chai.use(require("chai-as-promised"));
 const path = require("path");
 const sinon = require("sinon");
 const fs = require("fs-extra");
@@ -28,6 +29,7 @@ const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
 const getExecutersKey = executerManager.__get__("getExecutersKey");
 const getMaxNumJob = executerManager.__get__("getMaxNumJob");
 const createExecuter = executerManager.__get__("createExecuter");
+const register = executerManager.__get__("register");
 const testDirRoot = "WHEEL_TEST_TMP";
 let evalConditionMock;
 let loggerMock;
@@ -548,6 +550,11 @@ describe("UT for executerManager class", function () {
       RemoteJobWebAPIExecuter = executerManager.__get__("RemoteJobWebAPIExecuter");
       LocalTaskExecuter = executerManager.__get__("LocalTaskExecuter");
     });
+    after(()=>{
+      jobSchedulerMock = {
+      };
+      executerManager.__set__("jobScheduler", jobSchedulerMock);
+    });
     it("should create a LocalTaskExecuter for a local task", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "localhost", useJobScheduler: false };
       const hostinfo = null;
@@ -581,6 +588,70 @@ describe("UT for executerManager class", function () {
       const hostinfo = { host: "remoteHost", jobScheduler: "invalidScheduler" };
       expect(()=>createExecuter(task, hostinfo)).to.throw("illegal job Scheduler specifies");
       expect(mockLogger.error).to.have.been.calledOnce;
+    });
+  });
+  describe("register", function () {
+    let mockExecuter, mockTask, mockHostInfo, jobSchedulerMock, mockExecuters, mockLogger;
+    beforeEach(()=>{
+      mockExecuter = {
+        submit: sinon.stub().resolves("submitted"),
+        setMaxNumJob: sinon.stub(),
+        setJS: sinon.stub(),
+        setQueues: sinon.stub(),
+        setGrpName: sinon.stub()
+      };
+      mockTask = {
+        projectRootDir: "/test/project",
+        remotehostID: "remoteHost",
+        useJobScheduler: true,
+        host: "remoteHost",
+        queue: "default"
+      };
+      mockHostInfo = {
+        host: "remoteHost",
+        jobScheduler: "validScheduler",
+        queue: "default",
+        grpName: "testGroup"
+      };
+      mockLogger = {
+        debug: sinon.stub(),
+        error: sinon.stub()
+      };
+      jobSchedulerMock = {
+        validScheduler: {
+          submit: "mockSubmitCommand",
+          queueOpt: "--queue=",
+          reJobID: "mockJobIDPattern"
+        }
+      };
+      mockExecuters = new Map();
+      executerManager.__set__("executers", mockExecuters);
+      executerManager.__set__("jobScheduler", jobSchedulerMock);
+      executerManager.__set__("getSshHostinfo", sinon.stub().returns(mockHostInfo));
+      executerManager.__set__("getLogger", sinon.stub().returns(mockLogger));
+      executerManager.__set__("createExecuter", sinon.stub().returns(mockExecuter));
+    });
+    it("should create a new executer and submit the task", async function () {
+      const result = await register(mockTask);
+      expect(result).to.equal("submitted");
+      expect(mockExecuters.size).to.equal(1);
+      expect(mockExecuters.get(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`)).to.equal(mockExecuter);
+      expect(mockExecuter.submit).to.have.been.calledOnceWith(mockTask);
+    });
+    it("should reuse existing executer and submit the task", async function () {
+      mockExecuters.set(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`, mockExecuter);
+      const result = await register(mockTask);
+      expect(result).to.equal("submitted");
+      expect(mockExecuter.submit).to.have.been.calledOnceWith(mockTask);
+      expect(mockExecuter.setMaxNumJob).to.have.been.calledOnce;
+      expect(mockExecuter.setJS).to.have.been.calledOnce;
+      expect(mockExecuter.setQueues).to.have.been.calledOnceWith(mockHostInfo.queue);
+      expect(mockExecuter.setGrpName).to.have.been.calledOnceWith(mockHostInfo.grpName);
+    });
+    it("should throw an error if an invalid job scheduler is specified", async function () {
+      mockExecuters.set(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`, mockExecuter);
+      executerManager.__set__("getSshHostinfo", ()=>({ jobScheduler: "invalidScheduler" }));
+      await expect(register(mockTask)).to.be.rejectedWith(Error, "illegal job scheduler");
     });
   });
 });
