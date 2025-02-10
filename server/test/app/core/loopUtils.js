@@ -9,7 +9,7 @@ const chai = require("chai");
 const expect = chai.expect;
 
 //testee
-const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex, whileGetNextIndex, forIsFinished } = require("../../../app/core/loopUtils.js");
+const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex, whileGetNextIndex, forIsFinished, forGetNextIndex } = require("../../../app/core/loopUtils.js");
 
 describe("UT for loopInitialize()", ()=>{
   let component;
@@ -125,6 +125,22 @@ describe("UT for loopInitialize()", ()=>{
     };
     loopInitialize(component);
     expect(component.env.WHEEL_FOREACH_LEN).to.be.equal(1);
+  });
+});
+
+describe("UT for forGetNextIndex", ()=>{
+  it("should return next index when currentIndex is not null", ()=>{
+    expect(forGetNextIndex({
+      currentIndex: 1,
+      step: 2
+    })).to.be.equal(3);
+  });
+
+  it("should return start index when currentIndex is null", ()=>{
+    expect(forGetNextIndex({
+      currentIndex: null,
+      start: 3
+    })).to.be.equal(3);
   });
 });
 
