@@ -9,7 +9,7 @@ const chai = require("chai");
 const expect = chai.expect;
 
 //testee
-const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex, whileGetNextIndex } = require("../../../app/core/loopUtils.js");
+const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex, whileGetNextIndex, forIsFinished } = require("../../../app/core/loopUtils.js");
 
 describe("UT for loopInitialize()", ()=>{
   let component;
@@ -125,6 +125,40 @@ describe("UT for loopInitialize()", ()=>{
     };
     loopInitialize(component);
     expect(component.env.WHEEL_FOREACH_LEN).to.be.equal(1);
+  });
+});
+
+describe("UT for forIsFinished", ()=>{
+  it("should return true when positive step & current index is greater than last index", ()=>{
+    expect(forIsFinished({
+      currentIndex: 2,
+      end: 1,
+      step: 1
+    })).to.be.equal(true);
+  });
+
+  it("should return false when positive step & current index is last index or less than last index", ()=>{
+    expect(forIsFinished({
+      currentIndex: 2,
+      end: 2,
+      step: 1
+    })).to.be.equal(false);
+  });
+
+  it("should return true when negative step & current index is less than last index", ()=>{
+    expect(forIsFinished({
+      currentIndex: 1,
+      end: 2,
+      step: -1
+    })).to.be.equal(true);
+  });
+
+  it("should return false when positive step & current index is last index or greater than last index", ()=>{
+    expect(forIsFinished({
+      currentIndex: 2,
+      end: 2,
+      step: 1
+    })).to.be.equal(false);
   });
 });
 
