@@ -9,7 +9,124 @@ const chai = require("chai");
 const expect = chai.expect;
 
 //testee
-const { forTripCount } = require("../app/core/loopUtils.js");
+const { forTripCount, loopInitialize } = require("../app/core/loopUtils.js");
+
+describe("UT for loopInitialize()", ()=>{
+  let component;
+
+  beforeEach(()=>{
+    component = {
+      name: "dummy",
+      env: {},
+      type: "dummy"
+    };
+  });
+
+  it("should be initialized component", ()=>{
+    loopInitialize(component);
+    expect(component).to.deep.equal({
+      numFinished: 0,
+      numFailed: 0,
+      currentIndex: 0,
+      name: "dummy",
+      originalName: "dummy",
+      env: {},
+      type: "dummy",
+      initialized: true
+    });
+  });
+
+  it("currentIndex should be set when having indexList of array type", ()=>{
+    component = {
+      ...component,
+      indexList: [1, 2]
+    };
+    loopInitialize(component);
+    expect(component.currentIndex).to.be.equal(1);
+  });
+
+  it("currentIndex should be set when having start is not undefined", ()=>{
+    component = {
+      ...component,
+      start: 1
+    };
+    loopInitialize(component);
+    expect(component.currentIndex).to.be.equal(1);
+  });
+
+  it("indexList has priority over start when setting currentIndex", ()=>{
+    component = {
+      ...component,
+      indexList: [1],
+      start: 2
+    };
+    loopInitialize(component);
+    expect(component.currentIndex).to.be.equal(1);
+  });
+
+  it("numTotal should be set when getTripCount is available", ()=>{
+    component = {
+      ...component,
+      dummy: 1
+    };
+    loopInitialize(component, (component)=>{
+      return component.dummy + 1;
+    });
+    expect(component.numTotal).to.be.equal(2);
+  });
+
+  it("env should be set when env is undefined", ()=>{
+    delete component.env;
+    loopInitialize(component);
+    expect(component.env).to.deep.equal({});
+  });
+
+  it("WHEEL_FOR_START shoulde be set when start is not undefined", ()=>{
+    component = {
+      ...component,
+      start: 1
+    };
+    loopInitialize(component);
+    expect(component.env.WHEEL_FOR_START).to.be.equal(1);
+  });
+
+  it("WHEEL_FOR_END shoulde be set when end is not undefined", ()=>{
+    component = {
+      ...component,
+      end: 1
+    };
+    loopInitialize(component);
+    expect(component.env.WHEEL_FOR_END).to.be.equal(1);
+  });
+
+  it("WHEEL_FOR_STEP shoulde be set when step is not undefined", ()=>{
+    component = {
+      ...component,
+      step: 1
+    };
+    loopInitialize(component);
+    expect(component.env.WHEEL_FOR_STEP).to.be.equal(1);
+  });
+
+  it("WHEEL_LOOP_LEN shoulde be set when numTotal is not undefined", ()=>{
+    component = {
+      ...component,
+      numTotal: 1
+    };
+    loopInitialize(component);
+    expect(component.env.WHEEL_LOOP_LEN).to.be.equal(1);
+  });
+
+  it("WHEEL_FOREACH_LEN shoulde be set when type is foreach", ()=>{
+    component = {
+      ...component,
+      type: "foreach",
+      numTotal: 1
+    };
+    loopInitialize(component);
+    expect(component.env.WHEEL_FOREACH_LEN).to.be.equal(1);
+  });
+});
 
 describe("UT for forTripCount()", ()=>{
   it("should be work with positive length in 1 increments", ()=>{
