@@ -9,7 +9,7 @@ const chai = require("chai");
 const expect = chai.expect;
 
 //testee
-const { forTripCount, loopInitialize } = require("../../../app/core/loopUtils.js");
+const { forTripCount, loopInitialize, foreachTripCount } = require("../../../app/core/loopUtils.js");
 
 describe("UT for loopInitialize()", ()=>{
   let component;
@@ -125,6 +125,16 @@ describe("UT for loopInitialize()", ()=>{
     };
     loopInitialize(component);
     expect(component.env.WHEEL_FOREACH_LEN).to.be.equal(1);
+  });
+});
+
+describe("UT for foreachTripCount()", ()=>{
+  it("should return 0 when indexList is empty", ()=>{
+    expect(foreachTripCount({ indexList: [] })).to.be.equal(0);
+  });
+
+  it("should return indexList size when indexList contains elements", ()=>{
+    expect(foreachTripCount({ indexList: [1] })).to.be.equal(1);
   });
 });
 
