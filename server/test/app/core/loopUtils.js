@@ -9,7 +9,7 @@ const chai = require("chai");
 const expect = chai.expect;
 
 //testee
-const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished } = require("../../../app/core/loopUtils.js");
+const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex } = require("../../../app/core/loopUtils.js");
 
 describe("UT for loopInitialize()", ()=>{
   let component;
@@ -125,6 +125,48 @@ describe("UT for loopInitialize()", ()=>{
     };
     loopInitialize(component);
     expect(component.env.WHEEL_FOREACH_LEN).to.be.equal(1);
+  });
+});
+
+describe("UT foreachGetPrevIndex", ()=>{
+  it("should return prevIndex when forceCals is false and prevIndex is not undefined", ()=>{
+    expect(foreachGetPrevIndex({ prevIndex: 1 }, false)).to.be.equal(1);
+  });
+
+  it("should calc index when forceCalc is false and prevIndex is undefined", ()=>{
+    expect(foreachGetPrevIndex({
+      indexList: [2, 3],
+      currentIndex: 3
+    }, false)).to.be.equal(2);
+  });
+
+  it("should calc index when forceCalc is true and prevIndex is not undefined", ()=>{
+    expect(foreachGetPrevIndex({
+      prevIndex: 1,
+      indexList: [2, 3],
+      currentIndex: 3
+    }, true)).to.be.equal(2);
+  });
+
+  it("should return previous index", ()=>{
+    expect(foreachGetPrevIndex({
+      indexList: [2, 3],
+      currentIndex: 3
+    }, true)).to.be.equal(2);
+  });
+
+  it("should be return null when currentIndex is fast index", ()=>{
+    expect(foreachGetPrevIndex({
+      indexList: [2, 3],
+      currentIndex: 2
+    }, true)).to.be.equal(null);
+  });
+
+  it("should be return null when currentIndex is not in indexList", ()=>{
+    expect(foreachGetPrevIndex({
+      indexList: [2, 3],
+      currentIndex: 4
+    }, true)).to.be.equal(null);
   });
 });
 
