@@ -9,7 +9,7 @@ const chai = require("chai");
 const expect = chai.expect;
 
 //testee
-const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex } = require("../../../app/core/loopUtils.js");
+const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex } = require("../../../app/core/loopUtils.js");
 
 describe("UT for loopInitialize()", ()=>{
   let component;
@@ -125,6 +125,36 @@ describe("UT for loopInitialize()", ()=>{
     };
     loopInitialize(component);
     expect(component.env.WHEEL_FOREACH_LEN).to.be.equal(1);
+  });
+});
+
+describe("UT foreachGetNextIndex", ()=>{
+  it("should return first index when currentIndex null", ()=>{
+    expect(foreachGetNextIndex({
+      currentIndex: null,
+      indexList: [2, 3]
+    })).to.be.equal(2);
+  });
+
+  it("should return next index when currentIndex it not null", ()=>{
+    expect(foreachGetNextIndex({
+      currentIndex: 2,
+      indexList: [2, 3]
+    })).to.be.equal(3);
+  });
+
+  it("should return null when currentIndex is last index", ()=>{
+    expect(foreachGetNextIndex({
+      currentIndex: 3,
+      indexList: [2, 3]
+    })).to.be.equal(null);
+  });
+
+  it("should return null when currentIndex is not in indexList", ()=>{
+    expect(foreachGetNextIndex({
+      currentIndex: 1,
+      indexList: [2, 3]
+    })).to.be.equal(null);
   });
 });
 
