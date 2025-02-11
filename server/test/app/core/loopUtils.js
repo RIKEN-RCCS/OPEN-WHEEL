@@ -9,7 +9,29 @@ const chai = require("chai");
 const expect = chai.expect;
 
 //testee
-const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex, whileGetNextIndex, forIsFinished, forGetNextIndex, getPrevIndex } = require("../../../app/core/loopUtils.js");
+const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex, whileGetNextIndex, forIsFinished, forGetNextIndex, getPrevIndex, getInstanceDirectoryName } = require("../../../app/core/loopUtils.js");
+
+describe("UT for getInstanceDirectoryName", ()=>{
+  it("should build name using name & index", ()=>{
+    expect(getInstanceDirectoryName({}, 0, "dummy")).to.be.equal("dummy_0");
+  });
+
+  it("should use component.currentIndex instead when index is undefined", ()=>{
+    expect(getInstanceDirectoryName({ currentIndex: 0 }, undefined, "dummy")).to.be.equal("dummy_0");
+  });
+
+  it("should use component.originalName instead when originalName is undefined", ()=>{
+    expect(getInstanceDirectoryName({ originalName: "dummy" }, 0, undefined)).to.be.equal("dummy_0");
+  });
+
+  it("should sanitize index", ()=>{
+    expect(getInstanceDirectoryName({}, "0/0", "dummy")).to.be.equal("dummy_0_0");
+  });
+
+  it("should not sanitize name", ()=>{
+    expect(getInstanceDirectoryName({}, "0", "dummy/dummy")).to.be.equal("dummy/dummy_0");
+  });
+});
 
 describe("UT for getPrevIndex", ()=>{
   it("should return prevIndex when forceCalc is false & prevIndex is not undefined", ()=>{
