@@ -9,7 +9,60 @@ const chai = require("chai");
 const expect = chai.expect;
 
 //testee
-const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex, whileGetNextIndex, forIsFinished, forGetNextIndex } = require("../../../app/core/loopUtils.js");
+const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex, whileGetNextIndex, forIsFinished, forGetNextIndex, getPrevIndex } = require("../../../app/core/loopUtils.js");
+
+describe("UT for getPrevIndex", ()=>{
+  it("should return prevIndex when forceCalc is false & prevIndex is not undefined", ()=>{
+    expect(getPrevIndex({ prevIndex: 1 }, false)).to.be.equal(1);
+  });
+
+  it("should calc index when forceCalc is false & prevIndex is undefined", ()=>{
+    expect(getPrevIndex({
+      step: 1,
+      start: 0,
+      currentIndex: 1
+    }, false)).to.be.equal(0);
+  });
+
+  it("should calc index when forceCals is true & prevIndex is not undefined", ()=>{
+    expect(getPrevIndex({
+      prevIndex: 1,
+      step: 1,
+      start: 0,
+      currentIndex: 1
+    }, true)).to.be.equal(0);
+  });
+
+  it("should return previous index", ()=>{
+    expect(getPrevIndex({
+      step: 1,
+      start: 0,
+      currentIndex: 1
+    }, true)).to.be.equal(0);
+  });
+
+  it("should return null when previous index does not exist", ()=>{
+    expect(getPrevIndex({
+      step: 1,
+      start: 0,
+      currentIndex: 0
+    }, true)).to.be.null;
+  });
+
+  it("should calc index by considering step as 1 when step is falsy", ()=>{
+    expect(getPrevIndex({
+      start: 0,
+      currentIndex: 2
+    }, true)).to.be.equal(1);
+  });
+
+  it("should calc index by considering start as 0 when start is falsy", ()=>{
+    expect(getPrevIndex({
+      step: 1,
+      currentIndex: 0
+    }, true)).to.be.null;
+  });
+});
 
 describe("UT for loopInitialize()", ()=>{
   let component;
