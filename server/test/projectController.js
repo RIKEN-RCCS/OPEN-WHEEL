@@ -28,12 +28,8 @@ const { renameOutputFile, updateComponent, createNewComponent, addInputFile, add
 const { gitAdd, gitCommit } = require("../app/core/gitOperator2.js");
 
 const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("./testScript");
+const { sleep } = require("./testUtil.js");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
-async function sleep(time) {
-  return new Promise((resolve)=>{
-    setTimeout(resolve, time);
-  });
-}
 
 describe("project Controller UT", function () {
   this.timeout(0);
