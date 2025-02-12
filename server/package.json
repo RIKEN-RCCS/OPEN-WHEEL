@@ -19,7 +19,8 @@
   "scripts": {
     "start": "node app/index",
     "mocha": "mocha",
-    "test": "cross-env WHEEL_LOGLEVEL=OFF WHEEL_RUNNING_TEST=1 mocha --recursive --unhandled-rejections=strict",
+    "test": "cross-env WHEEL_LOGLEVEL=OFF WHEEL_RUNNING_TEST=1 mocha --recursive --unhandled-rejections=strict --ignore **/gfarmOperator.js",
+    "testGfarm": "cross-env WHEEL_LOGLEVEL=OFF WHEEL_RUNNING_TEST=1 mocha --unhandled-rejections=strict **/gfarmOperator.js",
     "coverage": "nyc --reporter=html --reporter=text npm run test"
   },
   "files": [

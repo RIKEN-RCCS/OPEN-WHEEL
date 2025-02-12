@@ -29,13 +29,14 @@ function hasEntry(projectRootDir, id) {
  * @param {object} ssh -  ssh connection instance
  * @param {string} pw - password
  * @param {string} ph - passphrase
- * @param {boolean} isStorage - whether this host is used for remote storage component or not
+ * @param {boolean} isStorage - whether this host is also used for remote storage component or not
+ * @param {string} JWTServerPassphrase - passphrase for JWT server
  */
-function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage) {
+function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage, JWTServerPassphrase) {
   if (!db.has(projectRootDir)) {
     db.set(projectRootDir, new Map());
   }
-  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph, isStorage });
+  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph, isStorage, JWTServerPassphrase });
 }
 
 /**
@@ -185,6 +186,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
     ph = await askPassword(clientID, `${remoteHostName} - passpharse`);
     return ph;
   };
+  //TODO ask passphrase for Gfarm JWT
   if (hostinfo.renewInterval) {
     hostinfo.ControlPersist = hostinfo.renewInterval * 60;
   }
