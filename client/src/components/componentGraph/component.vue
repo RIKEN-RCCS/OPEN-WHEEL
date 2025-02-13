@@ -14,6 +14,7 @@
       :stroke=highlightColor
       :stroke-width=borderWidth
       v-if="isSelected || isInvalid"
+      data-cy="component-rect-rect"
     />
     <component-header
       :center=componentPos
