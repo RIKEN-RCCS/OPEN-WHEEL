@@ -654,4 +654,51 @@ describe("UT for executerManager class", function () {
       await expect(register(mockTask)).to.be.rejectedWith(Error, "illegal job scheduler");
     });
   });
+  describe("cancel", function () {
+    let mockExecuters;
+    let mockLogger;
+    let remoteHostMock;
+    beforeEach(()=>{
+      mockExecuters = new Map();
+      executerManager.__set__("executers", mockExecuters);
+      mockLogger = {
+        warn: sinon.stub()
+      };
+      executerManager.__set__("getLogger", ()=>mockLogger);
+      remoteHostMock = {
+        getID: sinon.stub().returns("localhost")
+      };
+      executerManager.__set__("remoteHost", remoteHostMock);
+    });
+    afterEach(()=>{
+      mockExecuters.clear();
+    });
+    it("should return false if task does not have sbsID", function () {
+      const task = {
+        projectRootDir: "/test/project",
+        remotehostID: "localhost",
+        useJobScheduler: false
+      };
+      const result = executerManager.cancel(task);
+      expect(result).to.be.false;
+    });
+    it("should return false if executer is not found", function () {
+      const task = {
+        projectRootDir: "/test/project",
+        remotehostID: "remoteHost",
+        useJobScheduler: true,
+        sbsID: "12345",
+        host: "nonexistent"
+      };
+      const result = executerManager.cancel(task);
+      expect(result).to.be.false;
+      expect(mockLogger.warn).to.have.been.calledWith(
+        "executer for",
+        "localhost",
+        " with job scheduler",
+        true,
+        "is not found"
+      );
+    });
+  });
 });
