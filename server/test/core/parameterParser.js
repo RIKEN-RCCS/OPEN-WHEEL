@@ -13,6 +13,7 @@ const path = require("path");
 //testee
 const { paramVecGenerator } = require("../../app/core/parameterParser");
 const { getParamSpacev2 } = require("../../app/core/parameterParser");
+const { getFilenames } = require("../../app/core/parameterParser");
 
 //test data
 const floatCalc = [{
@@ -144,6 +145,38 @@ describe("UT for parameterParser", ()=>{
         { target: "valid2", list: ["a", "b", "c"] },
         { target: "valid3", files: ["*.log"], type: "file", list: ["file3.log"] }
       ]);
+    });
+  });
+  describe("#getFilenames", ()=>{
+    it("should return an array of filenames when file type parameters exist", ()=>{
+      const paramSpace = [
+        { type: "file", list: ["file1.txt", "file2.txt"] },
+        { type: "file", list: ["file3.txt"] },
+        { type: "integer", min: 1, max: 3, step: 1 } //無関係なデータ
+      ];
+      const result = getFilenames(paramSpace);
+      expect(result).to.deep.equal(["file1.txt", "file2.txt", "file3.txt"]);
+    });
+    it("should ignore non-file type parameters", ()=>{
+      const paramSpace = [
+        { type: "integer", min: 1, max: 3, step: 1 },
+        { type: "string", list: ["value1", "value2"] }
+      ];
+      const result = getFilenames(paramSpace);
+      expect(result).to.deep.equal([]); //ファイルパスがないため空
+    });
+    it("should return an empty array if there are no file type parameters", ()=>{
+      const paramSpace = [];
+      const result = getFilenames(paramSpace);
+      expect(result).to.deep.equal([]); //何もない場合も空
+    });
+    it("should ignore file type parameters with empty lists", ()=>{
+      const paramSpace = [
+        { type: "file", list: [] }, //空のリスト
+        { type: "file", list: ["validFile.txt"] }
+      ];
+      const result = getFilenames(paramSpace);
+      expect(result).to.deep.equal(["validFile.txt"]); //空のリストは無視
     });
   });
 });
