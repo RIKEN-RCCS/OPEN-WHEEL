@@ -23,6 +23,9 @@ const getDigitsAfterTheDecimalPoint = rewParameterParser.__get__("getDigitsAfter
 const getParamAxisSize = rewParameterParser.__get__("getParamAxisSize");
 const calcParamAxisSize = rewParameterParser.__get__("calcParamAxisSize");
 const isValidParamAxis = rewParameterParser.__get__("isValidParamAxis");
+const expandArrayOfGlob = rewParameterParser.__get__("expandArrayOfGlob");
+const testRoot = "WHEEL_TEST_TMP"; ;
+var testDir;
 
 //test data
 const floatCalc = [{
@@ -122,8 +125,7 @@ describe("UT for parameterParser", ()=>{
     });
   });
   describe("#getParamSpacev2", function () {
-    const testRoot = "WHEEL_TEST_TMP";
-    const testDir = path.resolve(testRoot, "paramParserDir");
+    testDir = path.resolve(testRoot, "paramParserDir");
     before(async function () {
       await fs.ensureDir(testDir);
       await Promise.all([
@@ -473,6 +475,44 @@ describe("UT for parameterParser", ()=>{
     });
     it("returns false when step is NaN", ()=>{
       expect(isValidParamAxis(1, 10, NaN)).to.equal(false);
+    });
+  });
+  describe("#expandArrayOfGlob", ()=>{
+    testDir = path.resolve(testRoot, "test_glob");
+    before(function () {
+      if (!fs.existsSync(testDir)) fs.mkdirSync(testDir);
+      fs.writeFileSync(path.join(testDir, "file1.js"), "");
+      fs.writeFileSync(path.join(testDir, "file2.js"), "");
+      fs.writeFileSync(path.join(testDir, "fileA.txt"), "");
+      fs.mkdirSync(path.join(testDir, "subdir"), { recursive: true });
+      fs.writeFileSync(path.join(testDir, "subdir", "nested.js"), "");
+    });
+    after(function () {
+      fs.rmSync(testDir, { recursive: true, force: true });
+    });
+    it("returns file paths for a single glob pattern", async function () {
+      const result = await expandArrayOfGlob(["*.js"], testDir);
+      expect(result).to.include.members(["file1.js", "file2.js"]);
+    });
+    it("returns merged file paths for multiple glob patterns", async function () {
+      const result = await expandArrayOfGlob(["*.js", "*.txt"], testDir);
+      expect(result).to.include.members(["file1.js", "file2.js", "fileA.txt"]);
+    });
+    it("returns files from subdirectories when using a recursive glob pattern", async function () {
+      const result = await expandArrayOfGlob(["**/*.js"], testDir);
+      expect(result).to.include.members(["file1.js", "file2.js", "subdir/nested.js"]);
+    });
+    it("returns an empty array when no files match", async function () {
+      const result = await expandArrayOfGlob(["*.md"], testDir);
+      expect(result).to.deep.equal([]);
+    });
+    it("includes directories if they match the glob pattern", async function () {
+      const result = await expandArrayOfGlob(["subdir"], testDir);
+      expect(result).to.include("subdir");
+    });
+    it("removes duplicate file paths", async function () {
+      const result = await expandArrayOfGlob(["*.js", "file1.js"], testDir);
+      expect([...new Set(result)]).to.include.members(["file1.js", "file2.js"]);
     });
   });
 });
