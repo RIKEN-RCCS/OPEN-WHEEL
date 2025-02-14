@@ -21,6 +21,7 @@ const getNthParamVec = rewParameterParser.__get__("getNthParamVec");
 const getNthValue = rewParameterParser.__get__("getNthValue");
 const getDigitsAfterTheDecimalPoint = rewParameterParser.__get__("getDigitsAfterTheDecimalPoint ");
 const getParamAxisSize = rewParameterParser.__get__("getParamAxisSize");
+const calcParamAxisSize = rewParameterParser.__get__("calcParamAxisSize");
 
 //test data
 const floatCalc = [{
@@ -393,6 +394,46 @@ describe("UT for parameterParser", ()=>{
       expect(()=>getParamAxisSize({})).to.throw();
       expect(()=>getParamAxisSize(null)).to.throw();
       expect(()=>getParamAxisSize(undefined)).to.throw();
+    });
+  });
+
+  describe("#calcParamAxisSize", ()=>{
+    it("returns the correct size for integer values", ()=>{
+      expect(calcParamAxisSize(1, 10, 1)).to.equal(10);
+      expect(calcParamAxisSize(2, 10, 2)).to.equal(5);
+      expect(calcParamAxisSize(-5, 5, 5)).to.equal(3);
+    });
+    it("returns the correct size for floating point values", ()=>{
+      expect(calcParamAxisSize(1.0, 2.0, 0.2)).to.equal(6);
+      expect(calcParamAxisSize(-1.0, 1.0, 0.5)).to.equal(5);
+      expect(calcParamAxisSize(0.1, 0.5, 0.1)).to.equal(5);
+    });
+    it("handles negative step values correctly", ()=>{
+      expect(calcParamAxisSize(10, 1, -1)).to.equal(-8);
+      expect(calcParamAxisSize(5, -5, -5)).to.equal(-1);
+    });
+    it("handles floating point precision correctly", ()=>{
+      expect(calcParamAxisSize(0.1, 0.3, 0.1)).to.equal(3);
+      expect(calcParamAxisSize(0.0001, 0.0005, 0.0001)).to.equal(5);
+    });
+    it("returns 1 when min and max are the same", ()=>{
+      expect(calcParamAxisSize(5, 5, 1)).to.equal(1);
+      expect(calcParamAxisSize(0.5, 0.5, 0.1)).to.equal(1);
+    });
+    it("when step is zero", ()=>{
+      expect(calcParamAxisSize(1, 10, 0)).to.equal(Infinity);
+    });
+    it("when step is Infinity", ()=>{
+      expect(calcParamAxisSize(1, 10, Infinity)).to.equal(1);
+    });
+    it("when min > max and step is positive", ()=>{
+      expect(calcParamAxisSize(10, 1, 1)).to.equal(-8);
+    });
+    it("when min < max and step is negative", ()=>{
+      expect(calcParamAxisSize(1, 10, -1)).to.equal(10);
+    });
+    it("when step is larger than the range", ()=>{
+      expect(calcParamAxisSize(1, 10, 20)).to.equal(1);
     });
   });
 });
