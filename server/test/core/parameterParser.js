@@ -18,6 +18,7 @@ const { getFilenames } = require("../../app/core/parameterParser");
 const { getParamSize } = require("../../app/core/parameterParser");
 const rewParameterParser = rewire("../../app/core/parameterParser");
 const getNthParamVec = rewParameterParser.__get__("getNthParamVec");
+const getNthValue = rewParameterParser.__get__("getNthValue");
 
 //test data
 const floatCalc = [{
@@ -294,6 +295,38 @@ describe("UT for parameterParser", ()=>{
         { key: "param1", value: "-1", type: "integer" },
         { key: "param2", value: "0", type: "integer" }
       ]);
+    });
+  });
+  describe("#getNthValue", ()=>{
+    it("returns the correct value from a list", ()=>{
+      const axis = { list: ["A", "B", "C", "D"] };
+      expect(getNthValue(0, axis)).to.equal("A");
+      expect(getNthValue(1, axis)).to.equal("B");
+      expect(getNthValue(2, axis)).to.equal("C");
+      expect(getNthValue(3, axis)).to.equal("D");
+    });
+    it("returns the correct nth integer value", ()=>{
+      const axis = { type: "integer", min: 1, max: 10, step: 2 };
+      expect(getNthValue(0, axis)).to.equal("1");
+      expect(getNthValue(1, axis)).to.equal("3");
+      expect(getNthValue(2, axis)).to.equal("5");
+      expect(getNthValue(3, axis)).to.equal("7");
+      expect(getNthValue(4, axis)).to.equal("9");
+    });
+    it("returns the correct nth floating-point value with proper precision", ()=>{
+      const axis = { type: "float", min: 1.0, max: 2.0, step: 0.2 };
+      expect(getNthValue(0, axis)).to.equal("1");
+      expect(getNthValue(1, axis)).to.equal("1.2");
+      expect(getNthValue(2, axis)).to.equal("1.4");
+      expect(getNthValue(3, axis)).to.equal("1.6");
+      expect(getNthValue(4, axis)).to.equal("1.8");
+      expect(getNthValue(5, axis)).to.equal("2");
+    });
+    it("handles negative values correctly", ()=>{
+      const axis = { type: "integer", min: -5, max: 5, step: 5 };
+      expect(getNthValue(0, axis)).to.equal("-5"); //(-5, 0, 5)
+      expect(getNthValue(1, axis)).to.equal("0");
+      expect(getNthValue(2, axis)).to.equal("5");
     });
   });
 });
