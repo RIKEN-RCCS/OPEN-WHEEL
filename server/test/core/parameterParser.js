@@ -107,6 +107,10 @@ describe("UT for parameterParser", ()=>{
         [{ key: "KEYWORD1", value: "bar", type: "string" }],
         [{ key: "KEYWORD1", value: "baz", type: "string" }]]);
     });
+    it("throws an error when ParamSpace is null", ()=>{
+      expect(()=>[...paramVecGenerator(null)]).to.throw();
+      expect(()=>[...paramVecGenerator({})]).to.throw();
+    });
   });
   describe("#getParamSpacev2", function () {
     const testRoot = "WHEEL_TEST_TMP";
