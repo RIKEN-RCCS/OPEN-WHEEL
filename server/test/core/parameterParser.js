@@ -19,6 +19,7 @@ const { getParamSize } = require("../../app/core/parameterParser");
 const rewParameterParser = rewire("../../app/core/parameterParser");
 const getNthParamVec = rewParameterParser.__get__("getNthParamVec");
 const getNthValue = rewParameterParser.__get__("getNthValue");
+const getDigitsAfterTheDecimalPoint = rewParameterParser.__get__("getDigitsAfterTheDecimalPoint ");
 
 //test data
 const floatCalc = [{
@@ -327,6 +328,33 @@ describe("UT for parameterParser", ()=>{
       expect(getNthValue(0, axis)).to.equal("-5"); //(-5, 0, 5)
       expect(getNthValue(1, axis)).to.equal("0");
       expect(getNthValue(2, axis)).to.equal("5");
+    });
+  });
+  describe("#getDigitsAfterTheDecimalPoint", ()=>{
+    it("returns 0 for integer values", ()=>{
+      expect(getDigitsAfterTheDecimalPoint(5)).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint(100)).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint(-42)).to.equal(0);
+    });
+    it("returns the correct number of decimal places for floating point numbers", ()=>{
+      expect(getDigitsAfterTheDecimalPoint(5.1)).to.equal(1);
+      expect(getDigitsAfterTheDecimalPoint(3.1415)).to.equal(4);
+      expect(getDigitsAfterTheDecimalPoint(0.000123)).to.equal(6);
+      expect(getDigitsAfterTheDecimalPoint(-2.75)).to.equal(2);
+    });
+    it("counts trailing zeros correctly", ()=>{
+      expect(getDigitsAfterTheDecimalPoint(2.50)).to.equal(1);
+      expect(getDigitsAfterTheDecimalPoint(1.000)).to.equal(0);
+    });
+    it("returns 0 for special values like NaN, Infinity", ()=>{
+      expect(getDigitsAfterTheDecimalPoint(NaN)).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint(Infinity)).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint(-Infinity)).to.equal(0);
+    });
+    it("returns the correct decimal places when a number is given as a string", ()=>{
+      expect(getDigitsAfterTheDecimalPoint("3.14")).to.equal(2);
+      expect(getDigitsAfterTheDecimalPoint("100")).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint("-2.75")).to.equal(2);
     });
   });
 });
