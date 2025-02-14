@@ -22,6 +22,7 @@ const getNthValue = rewParameterParser.__get__("getNthValue");
 const getDigitsAfterTheDecimalPoint = rewParameterParser.__get__("getDigitsAfterTheDecimalPoint ");
 const getParamAxisSize = rewParameterParser.__get__("getParamAxisSize");
 const calcParamAxisSize = rewParameterParser.__get__("calcParamAxisSize");
+const isValidParamAxis = rewParameterParser.__get__("isValidParamAxis");
 
 //test data
 const floatCalc = [{
@@ -434,6 +435,34 @@ describe("UT for parameterParser", ()=>{
     });
     it("when step is larger than the range", ()=>{
       expect(calcParamAxisSize(1, 10, 20)).to.equal(1);
+    });
+  });
+  describe("#isValidParamAxis", ()=>{
+    it("returns true for increasing range with positive step", ()=>{
+      expect(isValidParamAxis(1, 10, 1)).to.equal(true);
+      expect(isValidParamAxis(-5, 5, 2)).to.equal(true);
+      expect(isValidParamAxis(0, 100, 10)).to.equal(true);
+    });
+    it("returns true for decreasing range with negative step", ()=>{
+      expect(isValidParamAxis(10, 1, -1)).to.equal(true);
+      expect(isValidParamAxis(5, -5, -2)).to.equal(true);
+      expect(isValidParamAxis(100, 0, -10)).to.equal(true);
+    });
+    it("returns true when min and max are the same regardless of step", ()=>{
+      expect(isValidParamAxis(5, 5, 1)).to.equal(true);
+      expect(isValidParamAxis(0, 0, -1)).to.equal(true);
+      expect(isValidParamAxis(-3.5, -3.5, 2)).to.equal(true);
+    });
+    it("returns false for increasing range with non-positive step", ()=>{
+      expect(isValidParamAxis(1, 10, 0)).to.equal(false);
+      expect(isValidParamAxis(-5, 5, -1)).to.equal(false);
+    });
+    it("returns false for decreasing range with non-negative step", ()=>{
+      expect(isValidParamAxis(10, 1, 0)).to.equal(false);
+      expect(isValidParamAxis(5, -5, 1)).to.equal(false);
+    });
+    it("returns false when step is NaN", ()=>{
+      expect(isValidParamAxis(1, 10, NaN)).to.equal(false);
     });
   });
 });
