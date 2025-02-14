@@ -9,12 +9,15 @@ const chaiIterator = require("chai-iterator");
 chai.use(chaiIterator);
 const fs = require("fs-extra");
 const path = require("path");
+const rewire = require("rewire");
 
 //testee
 const { paramVecGenerator } = require("../../app/core/parameterParser");
 const { getParamSpacev2 } = require("../../app/core/parameterParser");
 const { getFilenames } = require("../../app/core/parameterParser");
 const { getParamSize } = require("../../app/core/parameterParser");
+const rewParameterParser = rewire("../../app/core/parameterParser");
+const getNthParamVec = rewParameterParser.__get__("getNthParamVec");
 
 //test data
 const floatCalc = [{
@@ -225,6 +228,72 @@ describe("UT for parameterParser", ()=>{
     it("throws an error when a parameter object is missing required properties", ()=>{
       const paramSpace = [{ foo: 3 }];
       expect(()=>getParamSize(paramSpace)).to.throw();
+    });
+  });
+  describe("#getNthParamVec", ()=>{
+    it("returns the correct parameter vector for simple integer values", ()=>{
+      const paramSpace = [
+        { keyword: "param1", type: "integer", min: 1, max: 3, step: 1 }, //(1,2,3) → 3個
+        { keyword: "param2", type: "integer", min: 10, max: 20, step: 5 } //(10,15,20) → 3個
+      ];
+      expect(getNthParamVec(0, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1", type: "integer" },
+        { key: "param2", value: "10", type: "integer" }
+      ]);
+      expect(getNthParamVec(1, paramSpace)).to.deep.equal([
+        { key: "param1", value: "2", type: "integer" },
+        { key: "param2", value: "10", type: "integer" }
+      ]);
+      expect(getNthParamVec(3, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1", type: "integer" },
+        { key: "param2", value: "15", type: "integer" }
+      ]);
+    });
+    it("returns correct vector for mixed integer and string values", ()=>{
+      const paramSpace = [
+        { keyword: "param1", type: "integer", min: 1, max: 2, step: 1 }, //(1,2) → 2個
+        { keyword: "param2", type: "string", list: ["A", "B", "C"] } //["A", "B", "C"] → 3個
+      ];
+      expect(getNthParamVec(0, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1", type: "integer" },
+        { key: "param2", value: "A", type: "string" }
+      ]);
+      expect(getNthParamVec(2, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1", type: "integer" },
+        { key: "param2", value: "B", type: "string" }
+      ]);
+      expect(getNthParamVec(3, paramSpace)).to.deep.equal([
+        { key: "param1", value: "2", type: "integer" },
+        { key: "param2", value: "B", type: "string" }
+      ]);
+    });
+    it("handles floating point values correctly", ()=>{
+      const paramSpace = [
+        { keyword: "param1", type: "float", min: 1.1, max: 1.5, step: 0.2 },
+        { keyword: "param2", type: "string", list: ["X", "Y"] }
+      ];
+      expect(getNthParamVec(0, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1.1", type: "float" },
+        { key: "param2", value: "X", type: "string" }
+      ]);
+      expect(getNthParamVec(3, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1.1", type: "float" },
+        { key: "param2", value: "Y", type: "string" }
+      ]);
+    });
+    it("handles negative values", ()=>{
+      const paramSpace = [
+        { keyword: "param1", type: "integer", min: -2, max: 0, step: 1 },
+        { keyword: "param2", type: "integer", min: -5, max: 5, step: 5 }
+      ];
+      expect(getNthParamVec(0, paramSpace)).to.deep.equal([
+        { key: "param1", value: "-2", type: "integer" },
+        { key: "param2", value: "-5", type: "integer" }
+      ]);
+      expect(getNthParamVec(4, paramSpace)).to.deep.equal([
+        { key: "param1", value: "-1", type: "integer" },
+        { key: "param2", value: "0", type: "integer" }
+      ]);
     });
   });
 });
