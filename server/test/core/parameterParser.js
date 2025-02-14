@@ -396,6 +396,16 @@ describe("UT for parameterParser", ()=>{
       expect(()=>getParamAxisSize(null)).to.throw();
       expect(()=>getParamAxisSize(undefined)).to.throw();
     });
+    it("string type with null", ()=>{
+      //Array.isArray(axis.list)を通過せずswitch - case "string" を通すためのnull
+      const axis = { type: "string", list: null };
+      expect(()=>getParamAxisSize(axis)).to.throw(TypeError);
+    });
+    it("file type with null", ()=>{
+      //Array.isArray(axis.list)を通過せずswitch - case "file" を通すためのnull
+      const axis = { type: "file", list: null };
+      expect(()=>getParamAxisSize(axis)).to.throw(TypeError);
+    });
   });
 
   describe("#calcParamAxisSize", ()=>{
