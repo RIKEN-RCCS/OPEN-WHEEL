@@ -20,6 +20,7 @@ const rewParameterParser = rewire("../../app/core/parameterParser");
 const getNthParamVec = rewParameterParser.__get__("getNthParamVec");
 const getNthValue = rewParameterParser.__get__("getNthValue");
 const getDigitsAfterTheDecimalPoint = rewParameterParser.__get__("getDigitsAfterTheDecimalPoint ");
+const getParamAxisSize = rewParameterParser.__get__("getParamAxisSize");
 
 //test data
 const floatCalc = [{
@@ -355,6 +356,43 @@ describe("UT for parameterParser", ()=>{
       expect(getDigitsAfterTheDecimalPoint("3.14")).to.equal(2);
       expect(getDigitsAfterTheDecimalPoint("100")).to.equal(0);
       expect(getDigitsAfterTheDecimalPoint("-2.75")).to.equal(2);
+    });
+  });
+  describe("#getParamAxisSize", ()=>{
+    it("returns the correct size for a list", ()=>{
+      expect(getParamAxisSize({ list: ["A", "B", "C"] })).to.equal(3);
+      expect(getParamAxisSize({ list: [] })).to.equal(0);
+      expect(getParamAxisSize({ list: ["X"] })).to.equal(1);
+    });
+    it("returns the correct size for string type with list", ()=>{
+      expect(getParamAxisSize({ type: "string", list: ["foo", "bar", "baz"] })).to.equal(3);
+      expect(getParamAxisSize({ type: "string", list: [] })).to.equal(0);
+    });
+    it("returns the correct size for file type with list", ()=>{
+      expect(getParamAxisSize({ type: "file", list: ["file1.txt", "file2.txt"] })).to.equal(2);
+      expect(getParamAxisSize({ type: "file", list: [] })).to.equal(0);
+    });
+    it("returns the correct size for integer type with min-max-step", ()=>{
+      expect(getParamAxisSize({ type: "integer", min: 1, max: 10, step: 2 })).to.equal(5); //(1,3,5,7,9)
+      expect(getParamAxisSize({ type: "integer", min: 0, max: 4, step: 1 })).to.equal(5); //(0,1,2,3,4)
+    });
+    it("returns the correct size for float type with min-max-step", ()=>{
+      expect(getParamAxisSize({ type: "float", min: 1.0, max: 2.0, step: 0.2 })).to.equal(6); //(1.0, 1.2, ..., 2.0)
+      expect(getParamAxisSize({ type: "float", min: -1.0, max: 1.0, step: 0.5 })).to.equal(5); //(-1.0, -0.5, 0.0, 0.5, 1.0)
+    });
+    it("returns the correct size for min-max-step type", ()=>{
+      expect(getParamAxisSize({ type: "min-max-step", min: 1, max: 10, step: 3 })).to.equal(4); //(1,4,7,10)
+    });
+    it("returns the correct size when type is undefined but min-max-step exists", ()=>{
+      expect(getParamAxisSize({ min: 1, max: 5, step: 1 })).to.equal(5); //(1,2,3,4,5)
+    });
+    it("throws an error when axis.type is unknown", ()=>{
+      expect(()=>getParamAxisSize({ type: "unknown" })).to.throw("unknown axis.type");
+    });
+    it("throws an error when axis does not have valid properties", ()=>{
+      expect(()=>getParamAxisSize({})).to.throw();
+      expect(()=>getParamAxisSize(null)).to.throw();
+      expect(()=>getParamAxisSize(undefined)).to.throw();
     });
   });
 });
