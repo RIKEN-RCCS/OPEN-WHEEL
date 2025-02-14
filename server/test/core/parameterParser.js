@@ -14,6 +14,7 @@ const path = require("path");
 const { paramVecGenerator } = require("../../app/core/parameterParser");
 const { getParamSpacev2 } = require("../../app/core/parameterParser");
 const { getFilenames } = require("../../app/core/parameterParser");
+const { getParamSize } = require("../../app/core/parameterParser");
 
 //test data
 const floatCalc = [{
@@ -181,6 +182,49 @@ describe("UT for parameterParser", ()=>{
       ];
       const result = getFilenames(paramSpace);
       expect(result).to.deep.equal(["validFile.txt"]); //空のリストは無視
+    });
+  });
+  describe("#getParamSize", ()=>{
+    it("returns the product of param axis sizes for integer values", ()=>{
+      const paramSpace = [{ min: 1, max: 5, step: 1 }, { min: 10, max: 20, step: 5 }];
+      expect(getParamSize(paramSpace)).to.equal(5 * 3); //(1,2,3,4,5) → 5個, (10,15,20) → 3個
+    });
+    it("returns correct size when there is only one parameter", ()=>{
+      const paramSpace = [{ min: 1, max: 10, step: 2 }];
+      expect(getParamSize(paramSpace)).to.equal(5); //(1,3,5,7,9) → 5個
+    });
+    it("returns 1 when ParamSpace is empty", ()=>{
+      expect(getParamSize([])).to.equal(1);
+    });
+    it("skips multiplication when a param axis size is 0", ()=>{
+      const paramSpace = [{ min: 1, max: 5, step: 1 }, { min: 10, max: 10, step: 1 }, { min: 20, max: 25, step: 5 }];
+      expect(getParamSize(paramSpace)).to.equal(5 * 2); //(1,2,3,4,5) → 5個, (20,25) → 2個
+    });
+    it("handles floating point values correctly", ()=>{
+      const paramSpace = [{ min: 1.0, max: 2.0, step: 0.1 }, { min: 0.0, max: 1.0, step: 0.2 }];
+      expect(getParamSize(paramSpace)).to.equal(11 * 6); //(1.0,1.1,...,2.0) → 11個, (0.0,0.2,0.4,0.6,0.8,1.0) → 6個
+    });
+    it("handles negative values", ()=>{
+      const paramSpace = [{ min: -5, max: -1, step: 1 }, { min: -10, max: 10, step: 5 }];
+      expect(getParamSize(paramSpace)).to.equal(5 * 5); //(-5,-4,-3,-2,-1) → 5個, (-10,-5,0,5,10) → 5個
+    });
+    it("handles mixed positive and negative values", ()=>{
+      const paramSpace = [{ min: -5, max: 5, step: 2 }];
+      expect(getParamSize(paramSpace)).to.equal(6); //(-5,-3,-1,1,3,5) → 6個
+    });
+    it("handles large values correctly", ()=>{
+      const paramSpace = [{ min: 1e6, max: 1e6 + 1000, step: 100 }];
+      expect(getParamSize(paramSpace)).to.equal(11); //(1000000,1000100,...,1001000) → 11個
+    });
+    it("throws an error when ParamSpace is null", ()=>{
+      expect(()=>getParamSize(null)).to.throw();
+    });
+    it("throws an error when ParamSpace is undefined", ()=>{
+      expect(()=>getParamSize(undefined)).to.throw();
+    });
+    it("throws an error when a parameter object is missing required properties", ()=>{
+      const paramSpace = [{ foo: 3 }];
+      expect(()=>getParamSize(paramSpace)).to.throw();
     });
   });
 });
