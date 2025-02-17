@@ -12,6 +12,7 @@ chai.use(require("chai-fs"));
 
 //testee
 const { sanitizePath } = require("../../app/core/pathUtils.js");
+const { replacePathsep } = require("../../app/core/pathUtils.js");
 
 describe("UT for pathUtils class", function () {
   describe("#sanitizePath", ()=>{
@@ -40,6 +41,30 @@ describe("UT for pathUtils class", function () {
     it("throws an error when target is not a string", ()=>{
       expect(()=>sanitizePath(null)).to.throw();
       expect(()=>sanitizePath(undefined)).to.throw();
+    });
+  });
+  describe("#replacePathsep", ()=>{
+    it("replaces backslashes with forward slashes in Windows-style paths", ()=>{
+      expect(replacePathsep("C:\\Users\\Admin\\file.txt")).to.equal("C:/Users/Admin/file.txt");
+      expect(replacePathsep("C:\\Program Files\\MyApp\\app.exe")).to.equal("C:/Program Files/MyApp/app.exe");
+    });
+    it("does not modify already POSIX-style paths", ()=>{
+      expect(replacePathsep("/home/user/file.txt")).to.equal("/home/user/file.txt");
+      expect(replacePathsep("/var/log/syslog")).to.equal("/var/log/syslog");
+    });
+    it("converts only backslashes, keeping existing forward slashes", ()=>{
+      expect(replacePathsep("C:\\Users/Admin\\Documents")).to.equal("C:/Users/Admin/Documents");
+      expect(replacePathsep("/mnt\\shared\\folder")).to.equal("/mnt/shared/folder");
+    });
+    it("returns the original string if there are no backslashes", ()=>{
+      expect(replacePathsep("no_backslashes_here")).to.equal("no_backslashes_here");
+      expect(replacePathsep("just/a/normal/path")).to.equal("just/a/normal/path");
+    });
+    it("throws an error when input is not a string", ()=>{
+      expect(()=>replacePathsep(null)).to.throw();
+      expect(()=>replacePathsep(undefined)).to.throw();
+      expect(()=>replacePathsep(123)).to.throw();
+      expect(()=>replacePathsep({})).to.throw();
     });
   });
 });
