@@ -9,9 +9,12 @@
 const chai = require("chai");
 const expect = chai.expect;
 chai.use(require("chai-fs"));
+const path = require("path");
 
 //testee
 const { sanitizePath } = require("../../app/core/pathUtils.js");
+const { replacePathsep } = require("../../app/core/pathUtils.js");
+const { convertPathSep } = require("../../app/core/pathUtils.js");
 
 describe("UT for pathUtils class", function () {
   describe("#sanitizePath", ()=>{
@@ -40,6 +43,69 @@ describe("UT for pathUtils class", function () {
     it("throws an error when target is not a string", ()=>{
       expect(()=>sanitizePath(null)).to.throw();
       expect(()=>sanitizePath(undefined)).to.throw();
+    });
+  });
+  describe("#replacePathsep", ()=>{
+    it("replaces backslashes with forward slashes in Windows-style paths", ()=>{
+      expect(replacePathsep("C:\\Users\\Admin\\file.txt")).to.equal("C:/Users/Admin/file.txt");
+      expect(replacePathsep("C:\\Program Files\\MyApp\\app.exe")).to.equal("C:/Program Files/MyApp/app.exe");
+    });
+    it("does not modify already POSIX-style paths", ()=>{
+      expect(replacePathsep("/home/user/file.txt")).to.equal("/home/user/file.txt");
+      expect(replacePathsep("/var/log/syslog")).to.equal("/var/log/syslog");
+    });
+    it("converts only backslashes, keeping existing forward slashes", ()=>{
+      expect(replacePathsep("C:\\Users/Admin\\Documents")).to.equal("C:/Users/Admin/Documents");
+      expect(replacePathsep("/mnt\\shared\\folder")).to.equal("/mnt/shared/folder");
+    });
+    it("returns the original string if there are no backslashes", ()=>{
+      expect(replacePathsep("no_backslashes_here")).to.equal("no_backslashes_here");
+      expect(replacePathsep("just/a/normal/path")).to.equal("just/a/normal/path");
+    });
+    it("throws an error when input is not a string", ()=>{
+      expect(()=>replacePathsep(null)).to.throw();
+      expect(()=>replacePathsep(undefined)).to.throw();
+      expect(()=>replacePathsep(123)).to.throw();
+      expect(()=>replacePathsep({})).to.throw();
+    });
+  });
+  describe("#convertPathSep", ()=>{
+    if (path.sep === "\\") {
+      it("converts POSIX-style paths to Windows-style paths on Windows", ()=>{
+        expect(convertPathSep("C:/Users/Admin/file.txt")).to.equal("C:\\Users\\Admin\\file.txt");
+        expect(convertPathSep("/home/user/docs")).to.equal("\\home\\user\\docs");
+      });
+      it("does not modify already Windows-style paths", ()=>{
+        expect(convertPathSep("C:\\Users\\Admin\\file.txt")).to.equal("C:\\Users\\Admin\\file.txt");
+        expect(convertPathSep("D:\\Games\\Steam")).to.equal("D:\\Games\\Steam");
+      });
+    }
+    if (path.sep === "/") {
+      it("converts Windows-style paths to POSIX-style paths on Unix", ()=>{
+        expect(convertPathSep("C:\\Users\\Admin\\file.txt")).to.equal("C:/Users/Admin/file.txt");
+        expect(convertPathSep("D:\\Projects\\Code")).to.equal("D:/Projects/Code");
+      });
+      it("does not modify already POSIX-style paths", ()=>{
+        expect(convertPathSep("/home/user/docs")).to.equal("/home/user/docs");
+        expect(convertPathSep("/var/log/syslog")).to.equal("/var/log/syslog");
+      });
+    }
+    it("handles mixed separators correctly", ()=>{
+      if (path.sep === "\\") {
+        expect(convertPathSep("C:\\Users/Admin\\Documents")).to.equal("C:\\Users\\Admin\\Documents");
+      } else {
+        expect(convertPathSep("C:\\Users/Admin\\Documents")).to.equal("C:/Users/Admin/Documents");
+      }
+    });
+    it("returns the original string if there are no path separators", ()=>{
+      expect(convertPathSep("no_separators_here")).to.equal("no_separators_here");
+      expect(convertPathSep("just_a_filename.txt")).to.equal("just_a_filename.txt");
+    });
+    it("throws an error when input is not a string", ()=>{
+      expect(()=>convertPathSep(null)).to.throw();
+      expect(()=>convertPathSep(undefined)).to.throw();
+      expect(()=>convertPathSep(123)).to.throw();
+      expect(()=>convertPathSep({})).to.throw();
     });
   });
 });
