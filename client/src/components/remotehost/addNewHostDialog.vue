@@ -127,6 +127,26 @@
                           label="shared path on shared host"
                         />
                       </v-col>
+                      <v-col cols="12">
+                        <v-checkbox
+                          v-model="host.useGfarm"
+                          label="use gfarm"
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.JWTServerUser"
+                          label="HPCI-ID"
+                          clearable
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.JWTServerURL"
+                          label="JWT server's URL"
+                          clearable
+                        />
+                      </v-col>
                     </v-row>
                   </v-container>
                 </v-expansion-panel-text>
