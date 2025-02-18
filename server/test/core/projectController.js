@@ -7,6 +7,7 @@
 const path = require("path");
 const fs = require("fs-extra");
 const os = require("os");
+const rewire = require("rewire");
 
 //setup test framework
 const chai = require("chai");
@@ -14,20 +15,22 @@ const expect = chai.expect;
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
+const rewProjectController = rewire("../../app/core/projectController");
+const rewRunProject = rewProjectController.__get__("runProject");
 
 //testee
-const { runProject, cleanProject } = require("../app/core/projectController.js");
+const { runProject, cleanProject } = require("../../app/core/projectController.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../app/db/db");
-const { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } = require("../app/core/projectFilesOperator");
-const { gitAdd, gitCommit } = require("../app/core/gitOperator2.js");
+const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../../app/db/db.js");
+const { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } = require("../../app/core/projectFilesOperator.js");
+const { gitAdd, gitCommit } = require("../../app/core/gitOperator2.js");
 
-const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("./testScript");
+const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("../testScript.js");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 async function sleep(time) {
   return new Promise((resolve)=>{
@@ -1544,6 +1547,14 @@ describe("project Controller UT", function () {
           }
         });
       });
+    });
+    it("returns an error if the project is already running", async ()=>{
+      const rootDispatchers = new Map();
+      rootDispatchers.set(projectRootDir, "dummy");
+      rewProjectController.__set__("rootDispatchers", rootDispatchers);
+      const result = await rewRunProject(projectRootDir);
+      expect(result).to.be.an("error");
+      expect(result.message).to.include("project is already running");
     });
   });
 });
