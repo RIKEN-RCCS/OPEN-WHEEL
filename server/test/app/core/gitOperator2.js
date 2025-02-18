@@ -25,11 +25,6 @@ describe("gitAdd", ()=>{
     sinon.restore();
   });
 
-  it("sample test", ()=>{
-    gitPromiseMock.resolves("ok!");
-    gitAdd();
-  });
-
   it("should call gitPromise with correct arguments (without -u)", async ()=>{
     gitPromiseMock.resolves();
 
@@ -70,6 +65,57 @@ describe("gitAdd", ()=>{
     gitPromiseMock.rejects(error);
 
     await expect(gitAdd(rootDir, filename, false)).to.be.rejectedWith(
+      Error,
+      "some other error"
+    );
+  });
+});
+
+describe("gitRm", ()=>{
+  let gitOperator2;
+  let gitRm;
+  let gitPromiseMock;
+
+  const rootDir = "/repo";
+  const filename = "file.txt";
+
+  beforeEach(()=>{
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    gitRm = gitOperator2.__get__("gitRm");
+    gitPromiseMock = sinon.stub();
+    gitOperator2.__set__("gitPromise", gitPromiseMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should call gitPromise with correct arguments", async ()=>{
+    gitPromiseMock.resolves();
+    await gitRm(rootDir, filename);
+
+    sinon.assert.calledWith(
+      gitPromiseMock,
+      rootDir,
+      ["rm", "-r", "--cached", "--", filename],
+      rootDir
+    );
+  });
+
+  it("should not throw error if gitPromise fails with fatal error related to pathspec", async ()=>{
+    const error = new Error(
+      "fatal: pathspec 'file.txt' did not match any files"
+    );
+    gitPromiseMock.rejects(error);
+
+    await expect(gitRm(rootDir, filename)).to.be.fulfilled;
+  });
+
+  it("should throw error if gitPromise fails with another error", async ()=>{
+    const error = new Error("some other error");
+    gitPromiseMock.rejects(error);
+
+    await expect(gitRm(rootDir, filename)).to.be.rejectedWith(
       Error,
       "some other error"
     );
