@@ -276,6 +276,7 @@
     <password-dialog
       v-model="pwDialog"
       :title="pwDialogTitle"
+      :message="pwDialogMessage"
       @password="pwCallback"
       @cancel="pwCallback(null)"
     />
@@ -426,6 +427,7 @@ export default {
       showLogScreen: false,
       pwDialog: false,
       pwDialogTitle: "",
+      pwDialogMessage: null,
       pwCallback: ()=>{},
       descriptionDialog: false,
       viewerScreenDialog: false,
@@ -522,11 +524,12 @@ export default {
     const ID = readCookie("root");
     this.commitRootComponentID(ID);
 
-    SIO.onGlobal("askPassword", (hostname, cb)=>{
+    SIO.onGlobal("askPassword", (title, message, cb)=>{
       this.pwCallback = (pw)=>{
         cb(pw);
       };
-      this.pwDialogTitle = `input password or passphrase for ${hostname}`;
+      this.pwDialogTitle = title;
+      this.pwDialogMessage = message;
       this.pwDialog = true;
     });
     SIO.onGlobal("askSourceFilename", (ID, name, description, candidates, cb)=>{
