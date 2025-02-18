@@ -25,11 +25,6 @@ describe("gitAdd", ()=>{
     sinon.restore();
   });
 
-  it("sample test", ()=>{
-    gitPromiseMock.resolves("ok!");
-    gitAdd();
-  });
-
   it("should call gitPromise with correct arguments (without -u)", async ()=>{
     gitPromiseMock.resolves();
 
