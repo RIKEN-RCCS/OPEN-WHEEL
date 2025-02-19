@@ -614,7 +614,7 @@ export default {
       return this.copySelectedComponent.host === "localhost";
     },
     hasHost() {
-      return isNormalObject(this.selectedComponent) && ["task", "stepjob", "bulkjobTask", "storage"].includes(this.selectedComponent.type);
+      return isNormalObject(this.selectedComponent) && ["task", "stepjob", "bulkjobTask", "storage", "hpciss", "hpcisstar"].includes(this.selectedComponent.type);
     },
     hasJobScheduler() {
       return isNormalObject(this.selectedComponent) && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
@@ -656,7 +656,7 @@ export default {
       return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "bulkjobTask";
     },
     isStorage() {
-      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "storage";
+      return isNormalObject(this.selectedComponent) && ["storage", "hpciss", "hpcisstar"].includes(this.selectedComponent.type);
     },
     excludeList() {
       if (!Array.isArray(this.copySelectedComponent.exclude)) {
