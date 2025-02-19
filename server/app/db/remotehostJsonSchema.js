@@ -24,7 +24,7 @@ const remotehostJsonSchema = {
     path: { type: "string" },
     jobScheduler: { type: "string" },
     numJob: { type: "number", default: 5, minimum: 0 },
-    queue: { type: "string", default: "" },
+    queue: { type: "string" },
     useBulkjob: { type: "boolean", default: false },
     useStepjob: { type: "boolean", default: false },
     sharedHost: { type: "string", default: "" },
@@ -34,11 +34,11 @@ const remotehostJsonSchema = {
     maxStatusCheckError: { type: "number", default: 10, minimum: 0 },
     execInterval: { type: "number", minimum: 0 },
     readyTimeout: { type: "number", minimum: 0 },
-    rcfile: { type: "string", default: "" },
-    prependCmd: { type: "string", default: "" },
+    rcfile: { type: "string", default: "/etc/profile" },
+    prependCmd: { type: "string" },
     useGfarm: { type: "boolean", default: false },
-    JWTServerUser: { type: "string", default: "", format: "uri" },
-    JWTServerURL: { type: "string", default: "" }
+    JWTServerUser: { type: "string", format: "uri" },
+    JWTServerURL: { type: "string" }
   },
   additionalProperties: false,
   required: ["name", "host", "user"]
