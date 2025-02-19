@@ -210,7 +210,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
           throw new Error(`aws type remotehost is no longer supported ${hostInfo.name}`);
         }
         getLogger(projectRootDir).debug(`make ssh connection to ${hostInfo.name}`);
-        await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage);
+        await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage, host.isGfarm);
         if (hostInfo.useWebAPI) {
           getLogger(projectRootDir).debug(`start OIDC authorization for ${hostInfo.name}`);
           await makeOIDCAuth(clientID, id);
