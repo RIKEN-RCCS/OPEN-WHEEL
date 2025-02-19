@@ -221,6 +221,9 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
       addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage, phGfarm);
     }
   } catch (e) {
+    if (e.reason === "CANCELED") {
+      throw e;
+    }
     if (e.message === "Control socket creation failed") {
       e.message += "you can avoid this error by using SSH_CONTROL_PERSIST_DIR environment variable\n";
       e.message += "please refer to https://riken-rccs.github.io/OPEN-WHEEL/attention";
