@@ -464,7 +464,7 @@ async function isInitialComponent(projectRootDir, component) {
   if (await isBehindIfComponent(projectRootDir, component)) {
     return false;
   }
-  if (component.type === "storage") {
+  if (["storage", "hpciss", "hpcisstar"].includes(component.type)) {
     return component.outputFiles.some((outputFile)=>{
       return outputFile.dst.length > 0;
     });
@@ -478,7 +478,7 @@ async function isInitialComponent(projectRootDir, component) {
   if (component.previous.length > 0) {
     return false;
   }
-  //components which have file-based dependency is initial component
+  //components which only have file-based dependency is initial component
   //it will be suspended in dispatcher._dispatch()
 
   return true;
