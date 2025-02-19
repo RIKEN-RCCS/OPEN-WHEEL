@@ -129,13 +129,14 @@ function removeSsh(projectRootDir) {
 /**
  * ask password to client
  * @param {string} clientID - socket's ID
- * @param {string} title - text to be shown on dialog screen at client side
- * @param {string} message - text to be shown on dialog screen at client side
+ * @param {string} hostname - hostname which request password
+ * @param {string} mode - password or passphrase
+ * @param {string | null} JWTServerURL - URL of JWT server if requesting JWT-server passphrase this arg must be specified
  * @returns {Promise} - resolve when get password from browser, rejected if user cancel password input
  */
-function askPassword(clientID, title, message = null) {
+function askPassword(clientID, hostname, mode, JWTServerURL = null) {
   return new Promise((resolve, reject)=>{
-    emitAll(clientID, "askPassword", title, message, (data)=>{
+    emitAll(clientID, "askPassword", hostname, mode, JWTServerURL, (data)=>{
       if (data === null) {
         const err = new Error("user canceled ssh password prompt");
         err.reason = "CANCELED";
@@ -171,7 +172,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
         }
       }
       //pw will be used after canConnect
-      pw = await askPassword(clientID, `input password for ${remoteHostName}`);
+      pw = await askPassword(clientID, remoteHostName, "password", null);
       return pw;
     };
   } else {
@@ -186,13 +187,13 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
         return ph;
       }
     }
-    ph = await askPassword(clientID, `input passphrase for ${remoteHostName}`);
+    ph = await askPassword(clientID, remoteHostName, "passphrase ", null);
     return ph;
   };
   let phGfarm;
   if (hostinfo.useGfarm && isGfarm) {
     getLogger(projectRootDir).debug(`get JWT-server passphrase for ${hostinfo.name}`);
-    phGfarm = await askPassword(clientID, `input JWT-server's passphrase for ${remoteHostName}`, `if you forgot passphrase, go to ${hostinfo.JWTServerURL} and re-generate JWT`);
+    phGfarm = await askPassword(clientID, remoteHostName, "passphrase", hostinfo.JWTServerURL);
   }
   if (hostinfo.renewInterval) {
     hostinfo.ControlPersist = hostinfo.renewInterval * 60;

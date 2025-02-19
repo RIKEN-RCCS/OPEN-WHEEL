@@ -11,8 +11,16 @@
   >
     <v-card
       :title="title"
-      :subtitle="message"
     >
+      <template
+        v-if="jwtServerURL"
+        #subtitle
+      >
+        if you forgot passphrase, go to <a
+          target="_blank"
+          :href="jwtServerURL"
+        >{{ jwtServerURL }}</a> and generate JWT
+      </template>
       <v-card-text>
         <v-form @submit.prevent>
           <v-text-field
@@ -44,7 +52,9 @@ export default {
   },
   props: {
     value: Boolean,
-    title: { type: String, default: "input password" },
+    mode: { type: String, required: true },
+    hostname: { type: String, required: true },
+    jwtServerURL: { type: String, default: null },
     maxWidth: { type: String, default: "50%" }
   },
   emits: ["update:modelValue", "password", "cancel"],
@@ -59,6 +69,9 @@ export default {
     };
   },
   computed: {
+    title() {
+      return this.jwtServerURL === null ? `input ${this.mode} for ${this.hostname}` : `input JWT-server passphrase for ${this.jwtServerURL}`;
+    },
     openDialog: {
       get() {
         return this.value;

@@ -281,8 +281,9 @@
     />
     <password-dialog
       v-model="pwDialog"
-      :title="pwDialogTitle"
-      :message="pwDialogMessage"
+      :hostname="pwHostname"
+      :mode="pwMode"
+      :jwt-server-u-r-l="pwJwtServerURL"
       @password="pwCallback"
       @cancel="pwCallback(null)"
     />
@@ -433,8 +434,9 @@ export default {
       mode: 0,
       showLogScreen: false,
       pwDialog: false,
-      pwDialogTitle: "",
-      pwDialogMessage: null,
+      pwMode: null,
+      pwHostname: null,
+      pwJwtServerURL: null,
       pwCallback: ()=>{},
       descriptionDialog: false,
       viewerScreenDialog: false,
@@ -531,12 +533,14 @@ export default {
     const ID = readCookie("root");
     this.commitRootComponentID(ID);
 
-    SIO.onGlobal("askPassword", (title, message, cb)=>{
+    SIO.onGlobal("askPassword", (hostname, mode, jwtServerURL, cb)=>{
+      console.log("DEBUG: ", hostname, mode, jwtServerURL);
       this.pwCallback = (pw)=>{
         cb(pw);
       };
-      this.pwDialogTitle = title;
-      this.pwDialogMessage = message;
+      this.pwMode = mode;
+      this.pwHostname = hostname;
+      this.pwJwtServerURL = jwtServerURL;
       this.pwDialog = true;
     });
     SIO.onGlobal("askSourceFilename", (ID, name, description, candidates, cb)=>{

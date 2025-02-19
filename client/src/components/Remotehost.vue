@@ -67,8 +67,8 @@
       </v-snackbar>
       <password-dialog
         v-model="pwDialog"
-        :title="pwDialogTitle"
-        :message="pwDialogMessage"
+        :hostname="pwHostname"
+        :mode="pwMode"
         @password="pwCallback"
         @cancel="pwCallback(null)"
       />
@@ -118,8 +118,8 @@ export default {
       drawer: false,
       pwDialog: false,
       pwCallback: null,
-      pwDialogTitle: "",
-      pwDialogMessage: null,
+      pwHostname: null,
+      pwMode: null,
       rmDialog: false,
       newHostDialog: false,
       headers: [
@@ -167,10 +167,13 @@ export default {
       });
       this.hosts.splice(0, this.hosts.length, ...data);
     });
-    SIO.onGlobal("askPassword", (title, message, cb)=>{
-      this.pwCallback = cb;
-      this.pwDialogTitle = title;
-      this.pwDialogMessage = message;
+    SIO.onGlobal("askPassword", (hostname, mode, jwtServerURL, cb)=>{
+      this.pwCallback = (pw)=>{
+        cb(pw);
+      };
+
+      this.pwMode = mode;
+      this.pwHostname = hostname;
       this.pwDialog = true;
     });
     SIO.onGlobal("logERR", (message)=>{
