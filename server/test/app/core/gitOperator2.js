@@ -121,3 +121,56 @@ describe("gitRm", ()=>{
     );
   });
 });
+
+describe("gitClean", ()=>{
+  let gitOperator2;
+  let gitClean;
+  let gitPromiseMock;
+
+  const rootDir = "/repo";
+
+  beforeEach(()=>{
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    gitClean = gitOperator2.__get__("gitClean");
+    gitPromiseMock = sinon.stub();
+    gitOperator2.__set__("gitPromise", gitPromiseMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should call gitPromise with correct arguments when filePatterns is provided", async ()=>{
+    gitPromiseMock.resolves();
+    const filePatterns = "*.log";
+
+    await gitClean(rootDir, filePatterns);
+
+    sinon.assert.calledWith(
+      gitPromiseMock,
+      rootDir,
+      ["clean", "-df", "-e wheel.log", "--", filePatterns],
+      rootDir
+    );
+  });
+
+  it("should call gitPromise with correct arguments when filePatterns is empty", async ()=>{
+    gitPromiseMock.resolves();
+
+    await gitClean(rootDir);
+
+    sinon.assert.calledWith(
+      gitPromiseMock,
+      rootDir,
+      ["clean", "-df", "-e wheel.log", "--", ""],
+      rootDir
+    );
+  });
+
+  it("should throw an error if gitPromise fails", async ()=>{
+    const errorMessage = "git clean failed";
+    gitPromiseMock.rejects(new Error(errorMessage));
+
+    await expect(gitClean(rootDir)).to.be.rejectedWith(Error, errorMessage);
+  });
+});
