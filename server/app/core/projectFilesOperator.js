@@ -985,7 +985,7 @@ async function checkRemoteStoragePathWritePermission(projectRootDir, { host, sto
  * @param {string[]} storageHosts - hosts set to storage component
  * @returns {Promise} - resolved if serch under parentID is done
  */
-async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) {
+async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts, gfarmHosts) {
   const promises = [];
   const children = await getChildren(projectRootDir, parentID);
 
@@ -997,12 +997,14 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) 
       continue;
     }
     if (["task", "stepjob", "bulkjobTask"].includes(component.type)) {
-      hosts.push({ hostname: component.host, isStorage: false });
+      hosts.push({ hostname: component.host });
+    } else if (["hpciss", "hpcisstar"].includes(component.type)) {
+      gfarmHosts.push({ hostname: component.host, isGfarm: true });
     } else if (component.type === "storage") {
       storageHosts.push({ hostname: component.host, isStorage: true });
     }
     if (hasChild(component)) {
-      promises.push(recursiveGetHosts(projectRootDir, component.ID, hosts, storageHosts));
+      promises.push(recursiveGetHosts(projectRootDir, component.ID, hosts, storageHosts, gfarmHosts));
     }
   }
   return Promise.all(promises);
@@ -1017,15 +1019,20 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) 
 async function getHosts(projectRootDir, rootID) {
   const hosts = [];
   const storageHosts = [];
-  await recursiveGetHosts(projectRootDir, rootID, hosts, storageHosts);
+  const gfarmHosts = [];
+  await recursiveGetHosts(projectRootDir, rootID, hosts, storageHosts, gfarmHosts);
+
   const storageHosts2 = Array.from(new Set(storageHosts));
+  const gfarmHosts2 = Array.from(new Set(gfarmHosts));
+  const keepHosts = storageHosts2.concat(gfarmHosts2);
+
   const hosts2 = Array.from(new Set(hosts))
     .filter((host)=>{
-      return !storageHosts.some((e)=>{
+      return !keepHosts.some((e)=>{
         e.hostname === host.hostname;
       });
     });
-  return [...storageHosts2, ...hosts2];
+  return [...keepHosts, ...hosts2];
 }
 
 /**
