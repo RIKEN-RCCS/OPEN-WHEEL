@@ -189,6 +189,14 @@ class StorageSchema extends BaseWorkflowComponentSchema {
   }
 }
 
+class HpcissSchema extends StorageSchema {
+  constructor(...args) {
+    super(...args);
+    this.properties.type = { enum: ["hpciss", "hpcisstar"] };
+    this.properties.host = { type: ["string", "null"], default: null };
+  }
+}
+
 class SourceSchema extends BaseWorkflowComponentSchema {
   constructor(...args) {
     super(...args);
@@ -391,6 +399,10 @@ function getSchema(type) {
       return JSON.parse(JSON.stringify(emptyArraySchema));
     case "psSettingFile":
       return psSettingFileSchema;
+    case "hpciss":
+      return new HpcissSchema();
+    case "hpcisstar":
+      return new HpcissSchema();
     default:
       return null;
   }
