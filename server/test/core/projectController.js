@@ -8,6 +8,7 @@ const path = require("path");
 const fs = require("fs-extra");
 const os = require("os");
 const rewire = require("rewire");
+const sinon = require("sinon");
 
 //setup test framework
 const chai = require("chai");
@@ -17,6 +18,7 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
 const rewProjectController = rewire("../../app/core/projectController");
 const rewRunProject = rewProjectController.__get__("runProject");
+const stopProject = rewProjectController.__get__("stopProject");
 
 //testee
 const { runProject, cleanProject } = require("../../app/core/projectController.js");
@@ -1555,6 +1557,30 @@ describe("project Controller UT", function () {
       const result = await rewRunProject(projectRootDir);
       expect(result).to.be.an("error");
       expect(result.message).to.include("project is already running");
+    });
+  });
+  describe("#stopProject", ()=>{
+    const projectRootDir = "/test/project";
+    let mockDispatcher;
+    const rootDispatchers = new Map();
+    beforeEach(()=>{
+      mockDispatcher = { remove: sinon.stub().resolves() };
+      rootDispatchers.set(projectRootDir, mockDispatcher);
+      rewProjectController.__set__("rootDispatchers", rootDispatchers);
+    });
+    afterEach(()=>{
+      sinon.restore();
+      rootDispatchers.clear();
+    });
+    it("should remove the dispatcher, executers, transferrers, and SSH", async ()=>{
+      await stopProject(projectRootDir);
+      sinon.assert.calledOnce(mockDispatcher.remove);
+      expect(rootDispatchers.has(projectRootDir)).to.be.false;
+    });
+    it("should handle the case where the dispatcher does not exist", async ()=>{
+      rootDispatchers.delete(projectRootDir);
+      await stopProject(projectRootDir);
+      sinon.assert.notCalled(mockDispatcher.remove);
     });
   });
 });
