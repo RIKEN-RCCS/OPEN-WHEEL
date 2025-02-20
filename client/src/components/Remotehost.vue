@@ -12,6 +12,7 @@
       title="remotehost"
       density="comfortable"
       @navIconClick="drawer=!drawer"
+      data-cy="remotehost-remotehost-title"
     />
     <v-main>
       <v-toolbar
@@ -20,11 +21,13 @@
         <v-btn
           @click.stop="openEditDialog()"
           text="new remote host setting"
+          data-cy="remotehost-new_remote_host_setting-btn"
         />
       </v-toolbar>
       <v-data-table
         :items="hosts"
         :headers="headers"
+        data-cy="remotehost-items-data_table"
       >
         <template #item.connectionTest="{ item, index }">
           <v-btn
@@ -34,6 +37,7 @@
             @click="testConnection(index)"
             :text=item.connectionStatus
             :prepend-icon=item.icon
+            data-cy="remotehost-test-btn"
           />
         </template>
         <template #item.action="{ item}">

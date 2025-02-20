@@ -12,6 +12,7 @@
       title="home"
       density="comfortable"
       @navIconClick="drawer=!drawer"
+      data-cy="home-home-application_tool_bar"
     />
     <v-main>
       <v-toolbar
@@ -22,23 +23,27 @@
           @click="openProject"
           prepend-icon="mdi-pencil"
           text="OPEN"
+          data-cy="home-open-btn"
         />
         <v-btn
           :disabled="batchMode"
           @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
           prepend-icon="mdi-plus"
           text="NEW"
+          data-cy="home-new-btn"
         />
         <v-btn
           @click="openDeleteProjectDialog(true)"
           prepend-icon="mdi-text-box-remove-outline"
           text="REMOVE FROM LIST"
+          data-cy="home-remove_from_list-btn"
           :disabled="selectedInTable.length === 0"
         />
         <v-btn
           @click="openDeleteProjectDialog(false)"
           prepend-icon="mdi-trash-can-outline"
           text="REMOVE"
+          data-cy="home-remove-btn"
           :disabled="selectedInTable.length === 0"
         />
         <v-switch
@@ -46,6 +51,7 @@
           label="BATCH MODE"
           color="primary"
           class="mt-6"
+          data-cy="home-batch_mode-btn"
         />
       </v-toolbar>
       <v-data-table
@@ -56,6 +62,7 @@
         :select-strategy="batchMode?'page':'single'"
         :headers="headers"
         :items="projectList"
+        data-cy="home-project_list-data_table"
       >
         <template #item.name="props">
           <v-menu
@@ -73,6 +80,7 @@
                 class="justify-start"
                 :text=props.item.name
                 @click="openInlineEditDialog(props.item.name, props.index, 'name')"
+                data-cy="home-project_name-btn"
               />
             </template>
             <v-sheet
@@ -84,6 +92,7 @@
                 :rules="[required]"
                 clearable
                 @keyup.enter="renameProject(props.item.raw, props.index)"
+                data-cy="home-project_rename-text_field"
               />
             </v-sheet>
           </v-menu>
@@ -104,6 +113,7 @@
                 block
                 @click="openInlineEditDialog(props.item.description, props.index, 'description')"
                 :text=props.item.description
+                data-cy="home-project_description-btn"
               />
             </template>
             <v-sheet
@@ -114,6 +124,7 @@
                 v-model="newVal"
                 clearable
                 @keyup.enter="changeDescripton(props.item. props.index)"
+                data-cy="home-description_change-textarea"
               />
             </v-sheet>
           </v-menu>
@@ -121,6 +132,7 @@
         <template #item.path="{item}">
           <span
             class="d-inline-block text-truncate trancated-row"
+            data-cy="home-path-span"
           >{{ item.path }} </span>
         </template>
       </v-data-table>
@@ -130,7 +142,7 @@
         scrollable
       >
         <v-card>
-          <v-card-title> {{ dialogTitle }}</v-card-title>
+          <v-card-title data-cy="home-create_new_project-title"> {{ dialogTitle }}</v-card-title>
           <v-card-actions>
             <v-spacer />
             <buttons
@@ -146,17 +158,20 @@
               label="project name"
               variant=outlined
               :rules="[required]"
+              data-cy="home-project_name-text_field"
             />
             <v-textarea
               v-model="newProjectDescription"
               label="project description"
               rows="2"
               auto-grow
+              data-cy="home-project_description-textarea"
             />
           </v-card-actions>
           <v-card-text>
             <file-browser
               @update="(a)=>{selectedInTree=a}"
+              data-cy="home-file_browser-file_browser"
             />
           </v-card-text>
         </v-card>
