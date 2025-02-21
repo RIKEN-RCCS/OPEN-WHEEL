@@ -20,8 +20,10 @@ const rewProjectController = rewire("../../app/core/projectController");
 const rewRunProject = rewProjectController.__get__("runProject");
 const stopProject = rewProjectController.__get__("stopProject");
 const rewCleanProject = rewProjectController.__get__("cleanProject");
+const updateProjectState = rewProjectController.__get__("updateProjectState");
 const componentJsonIO = require("../../app/core/componentJsonIO");
 const gitOperator2 = require("../../app/core/gitOperator2");
+const projectFilesOperator = require("../../app/core/projectFilesOperator");
 
 //testee
 const { runProject, cleanProject } = require("../../app/core/projectController.js");
@@ -1631,6 +1633,62 @@ describe("project Controller UT", function () {
       await rewCleanProject("/test/project");
       sinon.assert.calledOnceWithExactly(gitResetHEADStub, "/test/project");
       sinon.assert.calledOnceWithExactly(gitCleanStub, "/test/project");
+    });
+  });
+  describe("#updateProjectState", ()=>{
+    let setProjectStateStub, eventEmitStub, eventEmitterStub, eventEmitMock;
+    beforeEach(()=>{
+      setProjectStateStub = sinon.stub(projectFilesOperator, "setProjectState");
+      eventEmitterStub = { emit: sinon.stub() };
+      eventEmitMock = new Map();
+      eventEmitStub = sinon.stub(eventEmitMock, "get");
+    });
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should update project state and emit projectStateChanged event", async ()=>{
+      const projectRootDir = "/test/project";
+      const state = "running";
+      const mockProjectJson = { state: "running" };
+      setProjectStateStub.resolves(mockProjectJson);
+      eventEmitStub.withArgs(projectRootDir).returns(eventEmitterStub);
+      rewProjectController.__set__("setProjectState", setProjectStateStub);
+      rewProjectController.__set__("eventEmitters", eventEmitMock);
+      await updateProjectState(projectRootDir, state);
+      sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
+      sinon.assert.calledOnceWithExactly(eventEmitStub, projectRootDir);
+      sinon.assert.calledOnceWithExactly(eventEmitterStub.emit, "projectStateChanged", mockProjectJson);
+    });
+    it("should update project state but not emit event if no emitter exists", async ()=>{
+      const projectRootDir = "/test/project";
+      const state = "stopped";
+      const mockProjectJson = { state: "stopped" };
+      setProjectStateStub.resolves(mockProjectJson);
+      eventEmitStub.withArgs(projectRootDir).returns(undefined);
+      rewProjectController.__set__("setProjectState", setProjectStateStub);
+      rewProjectController.__set__("eventEmitters", eventEmitMock);
+      await updateProjectState(projectRootDir, state);
+      sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
+      sinon.assert.calledOnceWithExactly(eventEmitStub, projectRootDir);
+      sinon.assert.notCalled(eventEmitterStub.emit);
+    });
+    it("should handle errors if setProjectState fails", async ()=>{
+      const projectRootDir = "/test/project";
+      const state = "failed";
+      setProjectStateStub.rejects(new Error("Failed to update project state"));
+      eventEmitStub.withArgs(projectRootDir).returns(eventEmitterStub);
+      rewProjectController.__set__("setProjectState", setProjectStateStub);
+      rewProjectController.__set__("eventEmitters", eventEmitMock);
+
+      try {
+        await updateProjectState(projectRootDir, state);
+        throw new Error("Expected function to throw");
+      } catch (error) {
+        expect(error.message).to.equal("Failed to update project state");
+      }
+      sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
+      sinon.assert.notCalled(eventEmitStub);
+      sinon.assert.notCalled(eventEmitterStub.emit);
     });
   });
 });
