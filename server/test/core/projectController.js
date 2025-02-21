@@ -19,6 +19,9 @@ chai.use(require("chai-json-schema"));
 const rewProjectController = rewire("../../app/core/projectController");
 const rewRunProject = rewProjectController.__get__("runProject");
 const stopProject = rewProjectController.__get__("stopProject");
+const rewCleanProject = rewProjectController.__get__("cleanProject");
+const componentJsonIO = require("../../app/core/componentJsonIO");
+const gitOperator2 = require("../../app/core/gitOperator2");
 
 //testee
 const { runProject, cleanProject } = require("../../app/core/projectController.js");
@@ -1581,6 +1584,57 @@ describe("project Controller UT", function () {
       rootDispatchers.delete(projectRootDir);
       await stopProject(projectRootDir);
       sinon.assert.notCalled(mockDispatcher.remove);
+    });
+  });
+  describe("#cleanProject", ()=>{
+    let pathExistsStub, removeStub, readComponentJsonStub, gitResetHEADStub, gitCleanStub;
+    beforeEach(()=>{
+      pathExistsStub = sinon.stub(fs, "pathExists");
+      removeStub = sinon.stub(fs, "remove");
+      readComponentJsonStub = sinon.stub(componentJsonIO, "readComponentJson");
+      gitResetHEADStub = sinon.stub(gitOperator2, "gitResetHEAD");
+      gitCleanStub = sinon.stub(gitOperator2, "gitClean");
+    });
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should remove the viewer directory if it exists", async ()=>{
+      pathExistsStub.resolves(true);
+      removeStub.resolves();
+      readComponentJsonStub.resolves({ ID: "testProject" });
+      rewProjectController.__set__("readComponentJson", readComponentJsonStub);
+      rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
+      rewProjectController.__set__("gitClean", gitCleanStub);
+      rewProjectController.__set__("fs", fs);
+      await rewCleanProject("/test/project");
+      sinon.assert.calledOnceWithExactly(removeStub, "/usr/src/server/app/viewer/testProject");
+    });
+    it("should handle errors gracefully if readComponentJson fails", async ()=>{
+      readComponentJsonStub.rejects(new Error("Failed to read component JSON"));
+      rewProjectController.__set__("readComponentJson", readComponentJsonStub);
+      rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
+      rewProjectController.__set__("gitClean", gitCleanStub);
+      rewProjectController.__set__("fs", fs);
+
+      try {
+        await rewCleanProject("/test/project");
+      } catch (error) {
+        expect(error.message).to.include("Failed to read component JSON");
+      }
+    });
+    it("should call gitResetHEAD and gitClean", async ()=>{
+      readComponentJsonStub.resolves({ ID: "testProject" });
+      pathExistsStub.resolves(true);
+      removeStub.resolves();
+      gitResetHEADStub.resolves();
+      gitCleanStub.resolves();
+      rewProjectController.__set__("readComponentJson", readComponentJsonStub);
+      rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
+      rewProjectController.__set__("gitClean", gitCleanStub);
+      rewProjectController.__set__("fs", fs);
+      await rewCleanProject("/test/project");
+      sinon.assert.calledOnceWithExactly(gitResetHEADStub, "/test/project");
+      sinon.assert.calledOnceWithExactly(gitCleanStub, "/test/project");
     });
   });
 });
