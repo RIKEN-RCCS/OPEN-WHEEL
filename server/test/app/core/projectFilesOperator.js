@@ -5775,3 +5775,442 @@ describe("#removeLink", ()=>{
     expect(writeComponentJsonMock.callCount).to.equal(2);
   });
 });
+
+describe("#removeAllLink", ()=>{
+  let rewireProjectFilesOperator;
+  let removeAllLinkFromComponent;
+  let readComponentJsonByIDMock;
+  let writeComponentJsonByIDMock;
+
+  const mockProjectRootDir = "/mock/project/root";
+  const mockComponentID = "testComponentID";
+
+  beforeEach(()=>{
+    //rewire でモジュールを読み込み
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    //テスト対象関数を取得
+    removeAllLinkFromComponent = rewireProjectFilesOperator.__get__("removeAllLinkFromComponent");
+
+    //使用する内部関数をモック化
+    readComponentJsonByIDMock = sinon.stub();
+    writeComponentJsonByIDMock = sinon.stub();
+
+    //rewire で内部参照を差し替え
+    rewireProjectFilesOperator.__set__({
+      readComponentJsonByID: readComponentJsonByIDMock,
+      writeComponentJsonByID: writeComponentJsonByIDMock
+    });
+  });
+
+  it("should do nothing if component has no link-related properties", async ()=>{
+    //何もリンクを持たないコンポーネント
+    const bareComponent = {
+      ID: mockComponentID,
+      name: "BareComponent"
+    };
+
+    //readComponentJsonByID がこのコンポーネントを返すようスタブ
+    readComponentJsonByIDMock.resolves(bareComponent);
+
+    await removeAllLinkFromComponent(mockProjectRootDir, mockComponentID);
+
+    //counterpart更新処理が起こらないため、writeComponentJsonByIDは呼ばれない想定
+    sinon.assert.calledOnce(readComponentJsonByIDMock);
+    sinon.assert.notCalled(writeComponentJsonByIDMock);
+  });
+
+  it("should remove component.ID from each counterpart's next/else if component has 'previous'", async ()=>{
+    const compWithPrev = {
+      ID: mockComponentID,
+      previous: ["prev1", "prev2"] //この2つが「前コンポーネント」
+    };
+
+    const prev1 = {
+      ID: "prev1",
+      next: ["testComponentID", "someOtherID"],
+      else: ["testComponentID", "anotherID"]
+    };
+    const prev2 = {
+      ID: "prev2",
+      next: ["testComponentID"]
+      //elseなし
+    };
+
+    //readComponentJsonByIDMock が呼ばれたときに返すデータを制御
+    //- 1回目: コンポーネント自身
+    //- 2回目: prev1
+    //- 3回目: prev2
+    readComponentJsonByIDMock
+      .onCall(0).resolves(compWithPrev)
+      .onCall(1)
+      .resolves(prev1)
+      .onCall(2)
+      .resolves(prev2);
+
+    await removeAllLinkFromComponent(mockProjectRootDir, mockComponentID);
+
+    //prev1 の next/else 配列から testComponentID を除去しているか確認
+    expect(prev1.next).to.not.include(mockComponentID);
+    expect(prev1.else).to.not.include(mockComponentID);
+    //prev2 の next 配列から testComponentID を除去しているか確認
+    expect(prev2.next).to.not.include(mockComponentID);
+
+    //更新があったため writeComponentJsonByID は prev1, prev2 の計2回呼ばれる想定
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "prev1",
+      prev1
+    );
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "prev2",
+      prev2
+    );
+  });
+
+  it("should remove component.ID from each counterpart's previous if component has 'next'", async ()=>{
+    const compWithNext = {
+      ID: mockComponentID,
+      next: ["next1", "next2"]
+    };
+
+    const next1 = {
+      ID: "next1",
+      previous: ["testComponentID", "foo"]
+    };
+    const next2 = {
+      ID: "next2",
+      previous: ["testComponentID"]
+    };
+
+    //順番に返す
+    readComponentJsonByIDMock
+      .onCall(0).resolves(compWithNext)
+      .onCall(1)
+      .resolves(next1)
+      .onCall(2)
+      .resolves(next2);
+
+    await removeAllLinkFromComponent(mockProjectRootDir, mockComponentID);
+
+    expect(next1.previous).to.not.include(mockComponentID);
+    expect(next2.previous).to.not.include(mockComponentID);
+
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "next1",
+      next1
+    );
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "next2",
+      next2
+    );
+  });
+
+  it("should remove component.ID from each counterpart's previous if component has 'else'", async ()=>{
+    const compWithElse = {
+      ID: mockComponentID,
+      else: ["else1", "else2"]
+    };
+
+    const else1 = {
+      ID: "else1",
+      previous: ["testComponentID"]
+    };
+    const else2 = {
+      ID: "else2",
+      previous: ["someID", "testComponentID"]
+    };
+
+    readComponentJsonByIDMock
+      .onCall(0).resolves(compWithElse)
+      .onCall(1)
+      .resolves(else1)
+      .onCall(2)
+      .resolves(else2);
+
+    await removeAllLinkFromComponent(mockProjectRootDir, mockComponentID);
+
+    expect(else1.previous).to.not.include(mockComponentID);
+    expect(else2.previous).to.not.include(mockComponentID);
+
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "else1",
+      else1
+    );
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "else2",
+      else2
+    );
+  });
+
+  it("should remove this component from the counterpart.outputFiles[*].dst if component has 'inputFiles'", async ()=>{
+    const compWithInputFiles = {
+      ID: mockComponentID,
+      inputFiles: [
+        {
+          name: "inputA",
+          src: [
+            { srcNode: "srcA", srcName: "outputA" },
+            { srcNode: "srcB", srcName: "outputB" }
+          ]
+        },
+        {
+          name: "inputB",
+          src: [
+            { srcNode: "srcB", srcName: "outputX" }
+          ]
+        }
+      ]
+    };
+
+    const srcA = {
+      ID: "srcA",
+      outputFiles: [
+        {
+          name: "outputA",
+          dst: [
+            { dstNode: mockComponentID, dstName: "inputA" },
+            { dstNode: "someoneElse", dstName: "zzz" }
+          ]
+        }
+      ]
+    };
+    const srcB = {
+      ID: "srcB",
+      outputFiles: [
+        {
+          name: "outputB",
+          dst: [
+            { dstNode: "anotherComp", dstName: "foo" },
+            { dstNode: mockComponentID, dstName: "inputA" }
+          ]
+        },
+        {
+          name: "outputX",
+          dst: [
+            { dstNode: mockComponentID, dstName: "inputB" }
+          ]
+        }
+      ]
+    };
+
+    readComponentJsonByIDMock
+      .onCall(0).resolves(compWithInputFiles) //自身
+      .onCall(1)
+      .resolves(srcA)
+      .onCall(2)
+      .resolves(srcB);
+    //srcB は2回参照されるが、2回目は counterparts.get("srcB") がヒットするので1回だけ読み込み
+    //(ただし実際の実装では最初の1回以降はMapから取得する想定)
+
+    await removeAllLinkFromComponent(mockProjectRootDir, mockComponentID);
+
+    //srcA.outputFiles[0].dst から testComponentID が除去されているか
+    expect(srcA.outputFiles[0].dst.some((d)=>d.dstNode === mockComponentID)).to.be.false;
+
+    //srcB.outputFiles[0].dst から testComponentID が除去されているか
+    expect(srcB.outputFiles[0].dst.some((d)=>d.dstNode === mockComponentID)).to.be.false;
+    //srcB.outputFiles[1].dst からも testComponentID が除去される
+    expect(srcB.outputFiles[1].dst.some((d)=>d.dstNode === mockComponentID)).to.be.false;
+
+    //更新の書き込み
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "srcA",
+      sinon.match.object
+    );
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "srcB",
+      sinon.match.object
+    );
+  });
+
+  it("should remove this component from the counterpart.inputFiles[*].src if component has 'outputFiles'", async ()=>{
+    const compWithOutputFiles = {
+      ID: mockComponentID,
+      outputFiles: [
+        {
+          name: "outA",
+          dst: [
+            { dstNode: "dst1", dstName: "in1" },
+            { dstNode: "dst2", dstName: "in2" }
+          ]
+        }
+      ]
+    };
+
+    const dst1 = {
+      ID: "dst1",
+      inputFiles: [
+        {
+          name: "in1",
+          src: [
+            { srcNode: mockComponentID, srcName: "outA" },
+            { srcNode: "somethingElse", srcName: "outQ" }
+          ]
+        }
+      ]
+    };
+    const dst2 = {
+      ID: "dst2",
+      inputFiles: [
+        {
+          name: "in2",
+          src: [
+            { srcNode: "anotherComp", srcName: "foo" },
+            { srcNode: mockComponentID, srcName: "outA" }
+          ]
+        }
+      ]
+    };
+
+    readComponentJsonByIDMock
+      .onCall(0).resolves(compWithOutputFiles) //自身
+      .onCall(1)
+      .resolves(dst1)
+      .onCall(2)
+      .resolves(dst2);
+
+    await removeAllLinkFromComponent(mockProjectRootDir, mockComponentID);
+
+    //dst1.inputFiles[0].src から testComponentID が除去
+    expect(dst1.inputFiles[0].src.some((s)=>s.srcNode === mockComponentID)).to.be.false;
+    //dst2.inputFiles[0].src から testComponentID が除去
+    expect(dst2.inputFiles[0].src.some((s)=>s.srcNode === mockComponentID)).to.be.false;
+
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "dst1",
+      dst1
+    );
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock,
+      mockProjectRootDir,
+      "dst2",
+      dst2
+    );
+  });
+
+  it("should update multiple counterparts in one go and only read each counterpart once", async ()=>{
+    //すべてのリンクを持つコンポーネント
+    const complexComp = {
+      ID: mockComponentID,
+      previous: ["P1"],
+      next: ["N1"],
+      else: ["E1"],
+      inputFiles: [
+        { src: [{ srcNode: "S1", srcName: "X" }] }
+      ],
+      outputFiles: [
+        { dst: [{ dstNode: "D1", dstName: "Y" }] }
+      ]
+    };
+
+    const p1 = { ID: "P1", next: [mockComponentID], else: [mockComponentID] };
+    const n1 = { ID: "N1", previous: [mockComponentID] };
+    const e1 = { ID: "E1", previous: [mockComponentID] };
+    const s1 = {
+      ID: "S1",
+      outputFiles: [{ name: "X", dst: [{ dstNode: mockComponentID, dstName: "something" }] }]
+    };
+    const d1 = {
+      ID: "D1",
+      inputFiles: [{ name: "Y", src: [{ srcNode: mockComponentID, srcName: "someOut" }] }]
+    };
+
+    readComponentJsonByIDMock
+      .onCall(0).resolves(complexComp)
+      .onCall(1)
+      .resolves(p1)
+      .onCall(2)
+      .resolves(n1)
+      .onCall(3)
+      .resolves(e1)
+      .onCall(4)
+      .resolves(s1)
+      .onCall(5)
+      .resolves(d1);
+
+    await removeAllLinkFromComponent(mockProjectRootDir, mockComponentID);
+
+    //確認: P1, N1, E1, S1, D1 すべてから mockComponentID が除去される
+    expect(p1.next).to.not.include(mockComponentID);
+    expect(p1.else).to.not.include(mockComponentID);
+    expect(n1.previous).to.not.include(mockComponentID);
+    expect(e1.previous).to.not.include(mockComponentID);
+    expect(s1.outputFiles[0].dst.some((d)=>d.dstNode === mockComponentID)).to.be.false;
+    expect(d1.inputFiles[0].src.some((s)=>s.srcNode === mockComponentID)).to.be.false;
+
+    //それぞれ書き戻し
+    sinon.assert.callCount(writeComponentJsonByIDMock, 5);
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock, mockProjectRootDir, "P1", p1
+    );
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock, mockProjectRootDir, "N1", n1
+    );
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock, mockProjectRootDir, "E1", e1
+    );
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock, mockProjectRootDir, "S1", s1
+    );
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock, mockProjectRootDir, "D1", d1
+    );
+  });
+
+  it("should propagate error if readComponentJsonByID fails", async ()=>{
+    //読み込み時にエラーが発生した場合のテスト
+    readComponentJsonByIDMock.rejects(new Error("read error"));
+
+    try {
+      await removeAllLinkFromComponent(mockProjectRootDir, mockComponentID);
+      throw new Error("Expected removeAllLinkFromComponent to throw an error");
+    } catch (err) {
+      expect(err.message).to.equal("read error");
+    }
+    sinon.assert.calledOnce(readComponentJsonByIDMock);
+    sinon.assert.notCalled(writeComponentJsonByIDMock);
+  });
+
+  it("should propagate error if writeComponentJsonByID fails for a counterpart", async ()=>{
+    //正常に component は取得できるが counterpart 書き込みが失敗するパターン
+    const comp = { ID: mockComponentID, previous: ["p1"] };
+    const p1 = { ID: "p1", next: [mockComponentID] };
+
+    readComponentJsonByIDMock
+      .onCall(0).resolves(comp)
+      .onCall(1)
+      .resolves(p1);
+
+    writeComponentJsonByIDMock
+      .onFirstCall().rejects(new Error("write error"));
+
+    try {
+      await removeAllLinkFromComponent(mockProjectRootDir, mockComponentID);
+      throw new Error("Expected removeAllLinkFromComponent to throw an error");
+    } catch (err) {
+      expect(err.message).to.equal("write error");
+    }
+
+    //p1 への書き込みで失敗している
+    sinon.assert.calledWithExactly(
+      writeComponentJsonByIDMock, mockProjectRootDir, "p1", sinon.match.object
+    );
+  });
+});
