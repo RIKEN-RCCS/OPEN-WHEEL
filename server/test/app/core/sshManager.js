@@ -486,3 +486,56 @@ describe("#removeSsh", ()=>{
     expect(dbMock.get(projectRootDir).size).to.equal(2);
   });
 });
+
+describe("#askPassword", ()=>{
+  let rewireSshManager;
+  let askPassword;
+  let emitAllMock;
+
+  beforeEach(()=>{
+    //sshManager.jsをrewireで読み込む
+    rewireSshManager = rewire("../../../app/core/sshManager.js");
+
+    //テスト対象関数を取得
+    askPassword = rewireSshManager.__get__("askPassword");
+
+    //emitAllをsinon.stub()でMock化してrewireにセット
+    emitAllMock = sinon.stub();
+    rewireSshManager.__set__("emitAll", emitAllMock);
+  });
+
+  afterEach(()=>{
+    //各テスト終了後にstub/spyをリセット
+    sinon.restore();
+  });
+
+  it("should resolve with data if the user provides a non-null password", async ()=>{
+    //emitAllのスタブがコールバックを呼び出すようにする
+    //dataがnull以外の値を返す場合 (例: "secretPW")
+    emitAllMock.callsFake((clientID, event, message, callback)=>{
+      callback("secretPW");
+    });
+
+    const result = await askPassword("dummyClientID", "Please enter your password");
+    expect(result).to.equal("secretPW");
+    expect(emitAllMock.calledOnce).to.be.true;
+  });
+
+  it("should reject with an error if the user cancels the password input (data === null)", async ()=>{
+    //dataがnullを返すパターン
+    emitAllMock.callsFake((clientID, event, message, callback)=>{
+      callback(null); //ユーザーがキャンセル
+    });
+
+    try {
+      await askPassword("dummyClientID", "Please enter your password");
+      //ここには来ないはず
+      expect.fail("Expected askPassword to reject, but it resolved");
+    } catch (err) {
+      expect(err).to.be.an("error");
+      expect(err.message).to.equal("user canceled ssh password prompt");
+      expect(err.reason).to.equal("CANCELED");
+    }
+    expect(emitAllMock.calledOnce).to.be.true;
+  });
+});
