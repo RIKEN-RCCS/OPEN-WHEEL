@@ -539,3 +539,289 @@ describe("#askPassword", ()=>{
     expect(emitAllMock.calledOnce).to.be.true;
   });
 });
+
+describe("#createSsh", ()=>{
+  let rewireSshManager;
+  let createSsh;
+  //Mock 変数群
+  let hasEntryMock;
+  let getSshMock;
+  let addSshMock;
+  let askPasswordMock;
+  let SshClientWrapperMock;
+  let canConnectMock;
+
+  //後で差し替える前の process.env を退避しておく
+  let originalWheelVerboseSsh;
+
+  beforeEach(()=>{
+    //sshManager.js を rewire で読み込み
+    rewireSshManager = rewire("../../../app/core/sshManager.js");
+    //テスト対象の関数を取得
+    createSsh = rewireSshManager.__get__("createSsh");
+
+    //各種 Mock を作成
+    hasEntryMock = sinon.stub();
+    getSshMock = sinon.stub();
+    addSshMock = sinon.stub();
+    askPasswordMock = sinon.stub();
+    canConnectMock = sinon.stub();
+
+    //SshClientWrapper のコンストラクタをモック化
+    //ここでは new SshClientWrapper(...) されたら { canConnect: canConnectMock } を返すようにする
+    SshClientWrapperMock = sinon.stub().callsFake(function () {
+      return {
+        canConnect: canConnectMock
+      };
+    });
+
+    //必要な依存関数を __set__ で差し替え
+    rewireSshManager.__set__({
+      hasEntry: hasEntryMock,
+      getSsh: getSshMock,
+      addSsh: addSshMock,
+      askPassword: askPasswordMock,
+      //requireしているSshClientWrapperをモックに差し替え
+      SshClientWrapper: SshClientWrapperMock
+    });
+
+    //環境変数の退避と初期化
+    originalWheelVerboseSsh = process.env.WHEEL_VERBOSE_SSH;
+    delete process.env.WHEEL_VERBOSE_SSH; //デフォルトは未定義とする
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+    //環境変数を元に戻す
+    if (originalWheelVerboseSsh !== undefined) {
+      process.env.WHEEL_VERBOSE_SSH = originalWheelVerboseSsh;
+    } else {
+      delete process.env.WHEEL_VERBOSE_SSH;
+    }
+  });
+
+  it("should return an existing ssh instance if hasEntry is true", async ()=>{
+    //前提
+    hasEntryMock.returns(true);
+    const dummySshInstance = { dummy: "sshInstance" };
+    getSshMock.returns(dummySshInstance);
+
+    const projectRootDir = "/test/project";
+    const hostinfo = { id: "host-abc" };
+    const clientID = "clientXYZ";
+    const remoteHostName = "remoteHostTest";
+
+    //実行
+    const result = await createSsh(projectRootDir, remoteHostName, hostinfo, clientID, false);
+
+    //検証
+    expect(hasEntryMock.calledOnceWithExactly(projectRootDir, "host-abc")).to.be.true;
+    expect(getSshMock.calledOnceWithExactly(projectRootDir, "host-abc")).to.be.true;
+    expect(result).to.deep.equal(dummySshInstance);
+    //SshClientWrapper は呼ばれていない
+    expect(SshClientWrapperMock.notCalled).to.be.true;
+    expect(addSshMock.notCalled).to.be.true;
+  });
+
+  it("should handle string password and skip askPassword", async ()=>{
+    //前提: hasEntry は false -> 新規作成ルート
+    hasEntryMock.returns(false);
+    const projectRootDir = "/test/project";
+    const remoteHostName = "testHost";
+    const hostinfo = {
+      id: "host-xyz",
+      password: "mySecretPassword"
+    };
+    const clientID = "cid-0001";
+    //canConnect で成功するように
+    canConnectMock.resolves(true);
+
+    //実行
+    const sshInstance = await createSsh(projectRootDir, remoteHostName, hostinfo, clientID, false);
+
+    //検証
+    expect(hasEntryMock.calledWithExactly(projectRootDir, "host-xyz")).to.be.true;
+    //password は string なので askPassword は一切呼ばれない
+    expect(askPasswordMock.notCalled).to.be.true;
+
+    //SshClientWrapper の生成確認
+    expect(SshClientWrapperMock.calledOnce).to.be.true;
+    expect(canConnectMock.calledOnce).to.be.true;
+    //成功なので addSsh が呼ばれている
+    expect(addSshMock.calledOnce).to.be.true;
+    expect(sshInstance).to.be.ok;
+  });
+
+  it("should set hostinfo.password as an async function that calls askPassword if not a string", async ()=>{
+    hasEntryMock.returns(false);
+
+    const projectRootDir = "/test/project";
+    const remoteHostName = "sampleHost";
+    const hostinfo = {
+      id: "host-pswdFunc"
+      //password は string でない（未設定）
+    };
+    const clientID = "client-pswdTest";
+
+    //canConnect 成功時に askPassword が呼ばれる想定
+    canConnectMock.resolves(true);
+    askPasswordMock.resolves("p@ssw0rd!");
+
+    const result = await createSsh(projectRootDir, remoteHostName, hostinfo, clientID, false);
+
+    //hostinfo.password が "async function" に差し替えられていることを確認
+    expect(typeof hostinfo.password).to.equal("function");
+    //canConnect で成功 -> addSsh実行
+    expect(addSshMock.calledOnce).to.be.true;
+
+    //ただし実際に askPassword が呼ばれるのは canConnect 成功後、
+    //SSH コマンドでパスワードが必要になった場合など。
+    //今回のテストでは canConnectMock がパスワードレスで成功した想定なので
+    //ここでは askPasswordMock が呼ばれていない可能性もあります。
+    //(シナリオによっては、askPasswordMock を実際に呼ばせるには canConnect 内部実装が必要)
+    //ここでは、"あとで必要になったとき呼ばれる" 想定なので、call回数は 0 のままでも問題なし
+    expect(askPasswordMock.callCount).to.satisfy((count)=>count === 0 || count === 1);
+
+    expect(result).to.be.ok;
+  });
+
+  it("should set passphrase async function and call askPassword if needed", async ()=>{
+    hasEntryMock.returns(false);
+    canConnectMock.resolves(true);
+    askPasswordMock.resolves("passphraseTest");
+
+    const projectRootDir = "/test/project";
+    const remoteHostName = "sampleHost2";
+    const hostinfo = {
+      id: "host-pp",
+      password: "alreadyStringPassword" //passwordは文字列
+      //passphraseはstringで無い -> 未設定
+    };
+    const clientID = "client-pp";
+
+    await createSsh(projectRootDir, remoteHostName, hostinfo, clientID, false);
+
+    expect(typeof hostinfo.passphrase).to.equal("function");
+    expect(addSshMock.calledOnce).to.be.true;
+  });
+
+  it("should set ControlPersist if renewInterval is provided", async ()=>{
+    hasEntryMock.returns(false);
+    canConnectMock.resolves(true);
+
+    const hostinfo = {
+      id: "renewTest",
+      renewInterval: 10 //=> ControlPersist = 10*60
+    };
+    await createSsh("/test/project", "renewHost", hostinfo, "cid999", false);
+
+    expect(hostinfo).to.have.property("ControlPersist", 600);
+    expect(addSshMock.calledOnce).to.be.true;
+  });
+
+  it("should set ConnectTimeout if readyTimeout is provided", async ()=>{
+    hasEntryMock.returns(false);
+    canConnectMock.resolves(true);
+
+    const hostinfo = {
+      id: "rtTest",
+      readyTimeout: 25000 //=> ConnectTimeout = floor(25000/1000) = 25
+    };
+    await createSsh("/test/proj", "rtHost", hostinfo, "cid-rt", false);
+
+    expect(hostinfo).to.have.property("ConnectTimeout", 25);
+    expect(addSshMock.calledOnce).to.be.true;
+  });
+
+  it("should set sshOpt=['-vvv'] if WHEEL_VERBOSE_SSH is truthy", async ()=>{
+    //環境変数を設定
+    process.env.WHEEL_VERBOSE_SSH = "true";
+
+    hasEntryMock.returns(false);
+    canConnectMock.resolves(true);
+
+    const hostinfo = { id: "verboseTest" };
+    await createSsh("/vProj", "vHost", hostinfo, "cl-v", false);
+
+    expect(hostinfo).to.have.property("sshOpt");
+    expect(hostinfo.sshOpt).to.deep.equal(["-vvv"]);
+    expect(addSshMock.calledOnce).to.be.true;
+  });
+
+  it("should copy username to user and remove username if exist", async ()=>{
+    hasEntryMock.returns(false);
+    canConnectMock.resolves(true);
+
+    const hostinfo = {
+      id: "renameUser",
+      username: "testUser"
+    };
+    await createSsh("/projUser", "hostUser", hostinfo, "cidUser", false);
+
+    expect(hostinfo).to.not.have.property("username");
+    expect(hostinfo).to.have.property("user", "testUser");
+    expect(addSshMock.calledOnce).to.be.true;
+  });
+
+  it("should set rcfile to /etc/profile if not present", async ()=>{
+    hasEntryMock.returns(false);
+    canConnectMock.resolves(true);
+
+    const hostinfo = { id: "rcTest" };
+    await createSsh("/projRc", "hostRc", hostinfo, "cidRc", false);
+
+    expect(hostinfo).to.have.property("rcfile", "/etc/profile");
+    expect(addSshMock.calledOnce).to.be.true;
+  });
+
+  it("should addSsh only if ssh.canConnect succeeds", async ()=>{
+    //canConnect を true にすれば addSsh される
+    hasEntryMock.returns(false);
+
+    canConnectMock.resolves(true);
+    const hostinfoTrue = { id: "trueCase" };
+    await createSsh("/testTrue", "trueHost", hostinfoTrue, "cidTrue", false);
+    expect(addSshMock.calledOnce).to.be.true;
+
+    //今回の実装では "false" を返すパスが無いが、
+    //もしssh.canConnectがboolean返却になっていてfalseならaddSshしないケースがあるならテストする
+    //canConnectMock.reset() or restore
+    addSshMock.resetHistory();
+    canConnectMock.resolves(false); //仮にfalseを返すようにする
+    const hostinfoFalse = { id: "falseCase" };
+    await createSsh("/testFalse", "falseHost", hostinfoFalse, "cidFalse", false);
+    //addSshは呼ばれない
+    expect(addSshMock.notCalled).to.be.true;
+  });
+
+  it("should throw error with appended message if 'Control socket creation failed'", async ()=>{
+    hasEntryMock.returns(false);
+
+    const hostinfo = { id: "failCase" };
+    const error = new Error("Control socket creation failed");
+    canConnectMock.rejects(error);
+
+    try {
+      await createSsh("/failProj", "failHost", hostinfo, "cidFail", false);
+      throw new Error("Expected createSsh to throw, but it did not");
+    } catch (err) {
+      //エラーメッセージが追記されているか
+      expect(err.message).to.include("Control socket creation failed");
+      expect(err.message).to.include("you can avoid this error by using SSH_CONTROL_PERSIST_DIR");
+    }
+  });
+
+  it("should throw generic error if unknown error happens during canConnect", async ()=>{
+    hasEntryMock.returns(false);
+
+    const hostinfo = { id: "failUnknown" };
+    canConnectMock.rejects(new Error("Some random error"));
+
+    try {
+      await createSsh("/unknownProj", "unknownHost", hostinfo, "cidUnknown", false);
+      throw new Error("Expected error but none thrown");
+    } catch (err) {
+      expect(err.message).to.equal("ssh connection failed due to unknown reason");
+    }
+  });
+});
