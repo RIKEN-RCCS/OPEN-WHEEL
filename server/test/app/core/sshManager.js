@@ -220,3 +220,53 @@ describe("#getSsh", ()=>{
     expect(result).to.equal(sshInstanceMock);
   });
 });
+
+describe("#getSshHostinfo", ()=>{
+  let rewireSshManager;
+  let getSshHostinfo;
+  let hasEntryMock;
+  let dbMock;
+
+  beforeEach(()=>{
+    rewireSshManager = rewire("../../../app/core/sshManager.js");
+    getSshHostinfo = rewireSshManager.__get__("getSshHostinfo");
+
+    //hasEntry をStub化
+    hasEntryMock = sinon.stub();
+    //rewireでオリジナルのhasEntryを差し替える
+    rewireSshManager.__set__("hasEntry", hasEntryMock);
+
+    //db を擬似的に置き換える
+    dbMock = new Map();
+    dbMock.set("mockProjectDir", new Map([
+      ["mockHostID", { hostinfo: { host: "somehost" } }]
+    ]));
+
+    //rewireでdbを差し替える
+    rewireSshManager.__set__("db", dbMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should throw an error if the hostinfo is not registered", ()=>{
+    hasEntryMock.returns(false);
+
+    try {
+      getSshHostinfo("mockProjectDir", "unregisteredID");
+      throw new Error("Expected getSshHostinfo to throw an error");
+    } catch (err) {
+      expect(err.message).to.equal("hostinfo is not registerd for the project");
+      expect(err.projectRootDir).to.equal("mockProjectDir");
+      expect(err.id).to.equal("unregisteredID");
+    }
+  });
+
+  it("should return hostinfo object if the entry exists", ()=>{
+    hasEntryMock.returns(true);
+
+    const result = getSshHostinfo("mockProjectDir", "mockHostID");
+    expect(result).to.deep.equal({ host: "somehost" });
+  });
+});
