@@ -153,3 +153,70 @@ describe("#addSsh", ()=>{
     })).to.be.true;
   });
 });
+
+describe("#getSsh", ()=>{
+  let rewireSshManager;
+  let getSsh;
+  let hasEntryMock; //hasEntryをStub化
+  let dbMock; //db変数をStub(というか差し替え)
+
+  beforeEach(()=>{
+    //sshManager.jsをrewireでインポート
+    rewireSshManager = rewire("../../../app/core/sshManager.js");
+
+    //テスト対象関数を__get__で取得
+    getSsh = rewireSshManager.__get__("getSsh");
+
+    //sinon.stub()でMock(Stub)を作成
+    hasEntryMock = sinon.stub();
+
+    //Mapを用いたMockの作成（本来のdbを差し替え）
+    dbMock = new Map();
+
+    //rewireを使ってsshManager.js内の変数・関数をStub化
+    rewireSshManager.__set__("hasEntry", hasEntryMock);
+    rewireSshManager.__set__("db", dbMock);
+  });
+
+  it("should throw an error if ssh instance is not registered for the project", ()=>{
+    //hasEntryがfalseを返すMock設定
+    hasEntryMock.returns(false);
+
+    const projectRootDir = "/mock/project/root";
+    const hostID = "someHostID";
+
+    //throwされるErrorを検証
+    try {
+      getSsh(projectRootDir, hostID);
+      //もしthrowされなかったらテスト失敗とする
+      throw new Error("Expected getSsh to throw an error");
+    } catch (err) {
+      //エラーメッセージの確認
+      expect(err).to.be.an("Error");
+      expect(err.message).to.equal("ssh instance is not registerd for the project");
+
+      //Errorオブジェクトに設定されているはずのプロパティを確認
+      expect(err.projectRootDir).to.equal(projectRootDir);
+      expect(err.id).to.equal(hostID);
+    }
+  });
+
+  it("should return ssh instance when entry exists in db", ()=>{
+    //hasEntryがtrueを返すMock設定
+    hasEntryMock.returns(true);
+
+    const projectRootDir = "/mock/project/root";
+    const hostID = "existingHost";
+
+    //dbMockに、該当プロジェクト・IDのsshオブジェクトを格納
+    const sshInstanceMock = { /*任意のオブジェクト */ };
+    const hostMap = new Map();
+    hostMap.set(hostID, { ssh: sshInstanceMock });
+
+    dbMock.set(projectRootDir, hostMap);
+
+    //実行して取得できるsshインスタンスを確認
+    const result = getSsh(projectRootDir, hostID);
+    expect(result).to.equal(sshInstanceMock);
+  });
+});
