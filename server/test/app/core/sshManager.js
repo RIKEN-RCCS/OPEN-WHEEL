@@ -7,6 +7,7 @@
 
 const { expect } = require("chai");
 const { describe, it } = require("mocha");
+const sinon = require("sinon");
 const rewire = require("rewire");
 
 describe("#hasEntry", ()=>{
@@ -53,5 +54,102 @@ describe("#hasEntry", ()=>{
     //検証
     const result = hasEntry(projectDir, id);
     expect(result).to.be.true;
+  });
+});
+
+describe("#addSsh", ()=>{
+  let rewireSshManager;
+  let addSsh;
+  let dbMock;
+
+  beforeEach(()=>{
+    //sshManager.jsをrewireで読み込む
+    rewireSshManager = rewire("../../../app/core/sshManager.js");
+    //テスト対象関数addSshを取得
+    addSsh = rewireSshManager.__get__("addSsh");
+
+    //dbをMock化する
+    //dbはMapオブジェクトですが、has/set/getなどをsinon.stubで差し替えます
+    dbMock = {
+      has: sinon.stub(),
+      set: sinon.stub(),
+      get: sinon.stub()
+    };
+
+    //rewireを使ってsshManager.js内部のdbを差し替え
+    rewireSshManager.__set__("db", dbMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should create a new Map when the projectRootDir does not exist in db", ()=>{
+    //dbMock.has(...)がfalseを返すように設定
+    dbMock.has.returns(false);
+
+    //dbMock.getは返り値をダミーでもいいので設定しておく (後段の .set()呼び出しで利用)
+    const mapStub = {
+      set: sinon.stub()
+    };
+    dbMock.get.returns(mapStub);
+
+    //テスト対象呼び出し
+    const projectRootDir = "/dummy/path";
+    const hostinfo = { id: "host-123" };
+    const ssh = { connect: ()=>{} };
+    const pw = "dummyPw";
+    const ph = "dummyPh";
+    const isStorage = false;
+
+    addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
+
+    //アサーション: dbMock.has(...)が引数"/dummy/path"で呼ばれた
+    expect(dbMock.has.calledOnceWithExactly(projectRootDir)).to.be.true;
+
+    //アサーション: dbMock.set(...)が呼ばれた (新規Map生成)
+    expect(dbMock.set.calledOnceWithExactly(projectRootDir, sinon.match.instanceOf(Map))).to.be.true;
+
+    //アサーション: dbMock.get(...).set(...)にも期待通りの引数で呼ばれているか
+    expect(mapStub.set.calledOnceWithExactly("host-123", {
+      ssh,
+      hostinfo,
+      pw,
+      ph,
+      isStorage
+    })).to.be.true;
+  });
+
+  it("should reuse existing Map when the projectRootDir already exists in db", ()=>{
+    //dbMock.has(...)がtrueを返す
+    dbMock.has.returns(true);
+
+    //既存Mapのモック
+    const existingMapMock = {
+      set: sinon.stub()
+    };
+    dbMock.get.returns(existingMapMock);
+
+    //テスト対象呼び出し
+    const projectRootDir = "/exists/path";
+    const hostinfo = { id: "host-999" };
+    const ssh = { connect: ()=>{} };
+    const pw = "secretPw";
+    const ph = "secretPh";
+    const isStorage = true;
+
+    addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
+
+    //新規Map生成はされないはずなので dbMock.set(...)は呼ばれない
+    expect(dbMock.set.notCalled).to.be.true;
+
+    //代わりに、dbMock.get(...).set(...)で情報を追加
+    expect(existingMapMock.set.calledOnceWithExactly("host-999", {
+      ssh,
+      hostinfo,
+      pw,
+      ph,
+      isStorage
+    })).to.be.true;
   });
 });
