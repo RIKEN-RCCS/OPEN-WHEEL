@@ -405,3 +405,84 @@ describe("#getSshPH", ()=>{
     expect(hasEntryMock.calledOnceWithExactly(projectRootDir, hostID)).to.be.true;
   });
 });
+
+describe("#removeSsh", ()=>{
+  let rewireSshManager;
+  let removeSsh;
+  let dbMock;
+
+  beforeEach(()=>{
+    //sshManager.jsをrewire
+    rewireSshManager = rewire("../../../app/core/sshManager.js");
+    //テスト対象関数を取得
+    removeSsh = rewireSshManager.__get__("removeSsh");
+
+    //dbをスタブ化(Map)して差し替え
+    dbMock = new Map();
+    rewireSshManager.__set__("db", dbMock);
+  });
+
+  it("should return immediately if db does not have projectRootDir", ()=>{
+    //dbMockにキーをセットしない => 存在しない
+    removeSsh("notExistsDir");
+    //何も起こらないことを確認
+    expect(dbMock.has("notExistsDir")).to.be.false;
+  });
+
+  it("should clear the map if it is empty and the projectRootDir is found", ()=>{
+    const projectRootDir = "emptyDir";
+    //projectRootDirに対して空のMapを登録
+    dbMock.set(projectRootDir, new Map());
+
+    removeSsh(projectRootDir);
+
+    //.clear() が呼ばれて、空Mapが空のまま(結果的に要素なし)
+    expect(dbMock.get(projectRootDir).size).to.equal(0);
+  });
+
+  it("should disconnect all non-storage entries and clear db if no storage entries exist", ()=>{
+    const projectRootDir = "noStorageDir";
+    //ssh.disconnect()をモック化
+    const disconnectMock = sinon.stub();
+
+    //2つのエントリを登録。両方isStorage = false
+    const mapForDir = new Map();
+    mapForDir.set("hostA", { isStorage: false, ssh: { disconnect: disconnectMock } });
+    mapForDir.set("hostB", { isStorage: false, ssh: { disconnect: disconnectMock } });
+
+    dbMock.set(projectRootDir, mapForDir);
+
+    removeSsh(projectRootDir);
+
+    //disconnectが呼ばれた回数確認(2回呼ばれる)
+    expect(disconnectMock.callCount).to.equal(2);
+
+    //最終的にclearDB=trueなら.db.clear()が実行され、サイズ0になる
+    expect(dbMock.get(projectRootDir).size).to.equal(0);
+  });
+
+  it("should skip disconnect for storage entries and not clear the map if any storage is found", ()=>{
+    const projectRootDir = "withStorageDir";
+
+    //ストレージのsshオブジェクト(接続を切らない)
+    const storageDisconnectMock = sinon.stub();
+    //非ストレージのsshオブジェクト(切る)
+    const normalDisconnectMock = sinon.stub();
+
+    const mapForDir = new Map();
+    mapForDir.set("hostStorage", { isStorage: true, ssh: { disconnect: storageDisconnectMock } });
+    mapForDir.set("hostNonStorage", { isStorage: false, ssh: { disconnect: normalDisconnectMock } });
+
+    dbMock.set(projectRootDir, mapForDir);
+
+    removeSsh(projectRootDir);
+
+    //storageの方はdisconnectされない
+    expect(storageDisconnectMock.called).to.be.false;
+    //非ストレージの方だけdisconnect呼ばれる
+    expect(normalDisconnectMock.calledOnce).to.be.true;
+
+    //clearDBがfalseになる => mapはclearされないので残る
+    expect(dbMock.get(projectRootDir).size).to.equal(2);
+  });
+});
