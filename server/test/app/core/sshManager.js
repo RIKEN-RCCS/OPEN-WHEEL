@@ -69,7 +69,7 @@ describe("#addSsh", ()=>{
     addSsh = rewireSshManager.__get__("addSsh");
 
     //dbをMock化する
-    //dbはMapオブジェクトですが、has/set/getなどをsinon.stubで差し替えます
+    //dbはMapオブジェクトですが、has/set/getなどをsinon.stubで差し替える
     dbMock = {
       has: sinon.stub(),
       set: sinon.stub(),
@@ -284,7 +284,7 @@ describe("#getSshPW", ()=>{
     //テスト対象の関数を__get__で取得
     getSshPW = rewireSshManager.__get__("getSshPW");
 
-    //sinon.stub()でMockを作成（Stub化）。接尾語はMock。
+    //sinon.stub()でMockを作成（Stub化）。
     hasEntryMock = sinon.stub();
 
     //dbもrewire経由で差し替えるためのMock
@@ -334,5 +334,74 @@ describe("#getSshPW", ()=>{
     //この時点ではpwFunc自体が返る
     expect(result).to.be.a("function");
     expect(result()).to.equal("secretFromFunction");
+  });
+});
+
+describe("#getSshPH", ()=>{
+  let rewireSshManager;
+  let getSshPH;
+  let hasEntryMock;
+  let dbStub; //db自体もMock化するために差し替え
+
+  beforeEach(()=>{
+    //rewire でsshManagerモジュールを読み込む
+    rewireSshManager = rewire("../../../app/core/sshManager.js");
+
+    //テスト対象の関数を__get__で取得
+    getSshPH = rewireSshManager.__get__("getSshPH");
+
+    //hasEntry をスタブ化
+    hasEntryMock = sinon.stub();
+
+    //db は Map構造をモックとして差し替え
+    dbStub = new Map();
+
+    //rewireを用いて内部の依存を差し替え
+    rewireSshManager.__set__({
+      hasEntry: hasEntryMock,
+      db: dbStub
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should throw an error if hostinfo is not registered for the project", ()=>{
+    const projectRootDir = "/dummy/project";
+    const hostID = "unregisteredHost";
+
+    //hasEntry が false を返すように設定
+    hasEntryMock.returns(false);
+
+    try {
+      getSshPH(projectRootDir, hostID);
+      expect.fail("Expected getSshPH to throw an error, but it did not");
+    } catch (err) {
+      expect(err).to.be.instanceOf(Error);
+      expect(err.message).to.equal("hostinfo is not registerd for the project");
+      expect(err.projectRootDir).to.equal(projectRootDir);
+      expect(err.id).to.equal(hostID);
+    }
+    expect(hasEntryMock.calledOnceWithExactly(projectRootDir, hostID)).to.be.true;
+  });
+
+  it("should return the passphrase if hostinfo is registered for the project", ()=>{
+    const projectRootDir = "/dummy/project";
+    const hostID = "registeredHost";
+
+    //hasEntry が true を返すように設定
+    hasEntryMock.returns(true);
+
+    //db の構造をエミュレート
+    //dbStub は Map()
+    //dbStub.get(projectRootDir) も Map() を返し、その中でキー=hostID でオブジェクトを持つ
+    const hostMap = new Map();
+    hostMap.set(hostID, { ph: "mySecretPassphrase" });
+    dbStub.set(projectRootDir, hostMap);
+
+    const result = getSshPH(projectRootDir, hostID);
+    expect(result).to.equal("mySecretPassphrase");
+    expect(hasEntryMock.calledOnceWithExactly(projectRootDir, hostID)).to.be.true;
   });
 });
