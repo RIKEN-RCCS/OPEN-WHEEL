@@ -254,3 +254,65 @@ describe("gitClean", ()=>{
     await expect(gitClean(rootDir)).to.be.rejectedWith(Error, errorMessage);
   });
 });
+
+describe("getUnsavedFiles", ()=>{
+  let gitOperator2;
+  let getUnsavedFiles;
+  let gitStatusMock;
+
+  const rootDir = "/repo";
+
+  beforeEach(()=>{
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    getUnsavedFiles = gitOperator2.__get__("getUnsavedFiles");
+    gitStatusMock = sinon.stub();
+    gitOperator2.__set__("gitStatus", gitStatusMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return unsaved files correctly", async function () {
+    gitStatusMock.resolves({
+      added: ["newFile.txt"],
+      modified: ["modifiedFile.txt"],
+      deleted: ["deletedFile.txt"],
+      renamed: ["renamedFile.txt"],
+      untracked: []
+    });
+    const result = await getUnsavedFiles(rootDir);
+    expect(result).to.deep.equal([
+      { status: "new", name: "newFile.txt" },
+      { status: "modified", name: "modifiedFile.txt" },
+      { status: "deleted", name: "deletedFile.txt" },
+      { status: "renamed", name: "renamedFile.txt" }
+    ]);
+  });
+
+  it("should return an empty array when no unsaved files exist", async function () {
+    gitStatusMock.resolves({
+      added: [],
+      modified: [],
+      deleted: [],
+      renamed: [],
+      untracked: []
+    });
+    const result = await getUnsavedFiles(rootDir);
+    expect(result).to.deep.equal([]);
+  });
+
+  it("should call gitStatus with correct arguments", async ()=>{
+    gitStatusMock.resolves({
+      added: [],
+      modified: [],
+      deleted: [],
+      renamed: [],
+      untracked: []
+    });
+
+    await getUnsavedFiles(rootDir);
+
+    sinon.assert.calledWith(gitStatusMock, rootDir);
+  });
+});
