@@ -270,3 +270,69 @@ describe("#getSshHostinfo", ()=>{
     expect(result).to.deep.equal({ host: "somehost" });
   });
 });
+
+describe("#getSshPW", ()=>{
+  let rewireSshManager;
+  let getSshPW;
+  let hasEntryMock;
+  let dbMock;
+
+  beforeEach(()=>{
+    //sshManagerをrewireで読み込み
+    rewireSshManager = rewire("../../../app/core/sshManager.js");
+
+    //テスト対象の関数を__get__で取得
+    getSshPW = rewireSshManager.__get__("getSshPW");
+
+    //sinon.stub()でMockを作成（Stub化）。接尾語はMock。
+    hasEntryMock = sinon.stub();
+
+    //dbもrewire経由で差し替えるためのMock
+    dbMock = new Map();
+
+    //rewireでテストダブルを注入
+    rewireSshManager.__set__("hasEntry", hasEntryMock);
+    rewireSshManager.__set__("db", dbMock);
+  });
+
+  it("should throw an error if hostinfo is not registered for the project", ()=>{
+    //hasEntryがfalseを返すケース
+    hasEntryMock.returns(false);
+
+    expect(()=>{
+      getSshPW("/path/to/project", "hostID");
+    }).to.throw("hostinfo is not registerd for the project")
+      .and.to.have.property("projectRootDir", "/path/to/project");
+
+    expect(hasEntryMock.calledOnceWithExactly("/path/to/project", "hostID")).to.be.true;
+  });
+
+  it("should return the password (string) if hasEntry is true", ()=>{
+    //hasEntryがtrueを返す
+    hasEntryMock.returns(true);
+
+    //dbに対応するpwを用意
+    dbMock.set("/path/to/project", new Map([
+      ["hostID", { pw: "mySecretPassword" }]
+    ]));
+
+    const result = getSshPW("/path/to/project", "hostID");
+    expect(result).to.equal("mySecretPassword");
+  });
+
+  it("should return the password (function) if pw is defined as a function", ()=>{
+    //hasEntryがtrueを返す
+    hasEntryMock.returns(true);
+
+    //パスワードが関数の場合も想定してテスト
+    const pwFunc = ()=>"secretFromFunction";
+    dbMock.set("/path/to/project", new Map([
+      ["hostID", { pw: pwFunc }]
+    ]));
+
+    const result = getSshPW("/path/to/project", "hostID");
+    //この時点ではpwFunc自体が返る
+    expect(result).to.be.a("function");
+    expect(result()).to.equal("secretFromFunction");
+  });
+});
