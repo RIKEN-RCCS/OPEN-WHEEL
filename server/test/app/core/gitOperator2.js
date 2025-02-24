@@ -6,6 +6,82 @@ const expect = chai.expect;
 chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
+describe("gitCommit", ()=>{
+  let gitOperator2;
+  let gitCommit;
+  let gitPromiseMock;
+
+  const rootDir = "/repo";
+  const defaultMessage = "save project";
+
+  beforeEach(()=>{
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    gitCommit = gitOperator2.__get__("gitCommit");
+    gitPromiseMock = sinon.stub();
+    gitOperator2.__set__("gitPromise", gitPromiseMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should call gitPromise with correct arguments when message and additionalOption are provided", async ()=>{
+    gitPromiseMock.resolves();
+    const message = "Initial commit";
+    const additionalOption = ["--signoff"];
+
+    await gitCommit(rootDir, message, additionalOption);
+
+    sinon.assert.calledWith(
+      gitPromiseMock,
+      rootDir,
+      ["commit", "-m", `"${message}"`, "--signoff"],
+      rootDir
+    );
+  });
+
+  it("should call gitPromise with default message when no message is provided", async ()=>{
+    gitPromiseMock.resolves();
+
+    await gitCommit(rootDir);
+
+    sinon.assert.calledWith(
+      gitPromiseMock,
+      rootDir,
+      ["commit", "-m", `"${defaultMessage}"`],
+      rootDir
+    );
+  });
+
+  it("should handle 'no changes to commit' error and not throw", async ()=>{
+    const error = new Error("nothing to commit, working tree clean");
+    gitPromiseMock.rejects(error);
+
+    await expect(gitCommit(rootDir)).to.be.fulfilled;
+  });
+
+  it("should throw error if gitPromise fails with another error", async ()=>{
+    const errorMessage = "some other error";
+    gitPromiseMock.rejects(new Error(errorMessage));
+
+    await expect(gitCommit(rootDir)).to.be.rejectedWith(Error, errorMessage);
+  });
+
+  it("should handle 'no changes added to commit' error and not throw", async ()=>{
+    const error = new Error("no changes added to commit");
+    gitPromiseMock.rejects(error);
+
+    await expect(gitCommit(rootDir)).to.be.fulfilled;
+  });
+
+  it("should handle 'nothing to commit' error and not throw", async ()=>{
+    const error = new Error("nothing to commit");
+    gitPromiseMock.rejects(error);
+
+    await expect(gitCommit(rootDir)).to.be.fulfilled;
+  });
+});
+
 describe("gitAdd", ()=>{
   let gitOperator2;
   let gitAdd;
