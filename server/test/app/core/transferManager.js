@@ -314,3 +314,52 @@ describe("#register", ()=>{
     expect(sbsOpts.name).to.include("@defaultPortHost:22");
   });
 });
+
+describe("#removeTransferrers", ()=>{
+  let rewireTransferManager;
+  let removeTransferrers;
+  let transferrersMock;
+
+  beforeEach(()=>{
+    //transferManager.jsをrewireで読み込み
+    rewireTransferManager = rewire("../../../app/core/transferManager.js");
+    //テスト対象関数を取得
+    removeTransferrers = rewireTransferManager.__get__("removeTransferrers");
+
+    //transferrers という Map をモック化して差し替え
+    transferrersMock = new Map();
+    rewireTransferManager.__set__("transferrers", transferrersMock);
+  });
+
+  it("should remove all keys that start with the given projectRootDir", ()=>{
+    //テスト用に複数のキーをセット
+    transferrersMock.set("/path/to/projectA-fileX", { dummy: "data1" });
+    transferrersMock.set("/path/to/projectA-fileY", { dummy: "data2" });
+    transferrersMock.set("/path/to/otherProject-fileZ", { dummy: "data3" });
+
+    //実行
+    removeTransferrers("/path/to/projectA");
+
+    //projectA で始まるキーは削除される想定
+    expect(transferrersMock.has("/path/to/projectA-fileX")).to.be.false;
+    expect(transferrersMock.has("/path/to/projectA-fileY")).to.be.false;
+
+    //他のキーは残る
+    expect(transferrersMock.has("/path/to/otherProject-fileZ")).to.be.true;
+    //結果としてキーは1個だけ
+    expect(transferrersMock.size).to.equal(1);
+  });
+
+  it("should do nothing if there are no keys starting with the given projectRootDir", ()=>{
+    //テスト用にキーをセット（どれも "/path/to/projectB" で始まらない）
+    transferrersMock.set("/path/to/unrelated1", { dummy: "data1" });
+    transferrersMock.set("/foo/bar", { dummy: "data2" });
+
+    removeTransferrers("/path/to/projectB");
+
+    //どのキーも削除されない
+    expect(transferrersMock.has("/path/to/unrelated1")).to.be.true;
+    expect(transferrersMock.has("/foo/bar")).to.be.true;
+    expect(transferrersMock.size).to.equal(2);
+  });
+});
