@@ -55,7 +55,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     */
     it("01-01-003:構成要素の機能動作確認-「NEW REMOTE HOST SETTINGS」ボタン押下-リモートホスト設定作成ダイアログが表示されていることを確認", ()=>{
       cy.get('[data-cy="remotehost-new_remote_host_setting-btn"]').click();
-      cy.get('[data-cy="add_new_host-add_new_host-cardtitle"]').should('be.visible');
+      cy.get('[data-cy="add_new_host-add_new_host-card_title"]').should('be.visible');
     });
 
     /**
@@ -71,7 +71,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get('[data-cy="add_new_host-user_id-text_field"]').type(testUser);
       cy.get('[data-cy="add_new_host-ok-btn"]').click();
       cy.get('[data-cy="action_row-edit-btn"]').click();
-      cy.get('[data-cy="add_new_host-add_new_host-cardtitle"]').should('be.visible');
+      cy.get('[data-cy="add_new_host-add_new_host-card_title"]').should('be.visible');
       // ダイアログ内のテキスト確認
       cy.get('[data-cy="add_new_host-label-text_field"]').find('input').should('have.value', 'TestLabel');
       // ダイアログ内のOKボタン

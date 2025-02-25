@@ -18,6 +18,7 @@
       <span
         class="text-decoration-none text-h5 white--text"
         @click="projectDescription=projectJson.description;descriptionDialog=true"
+        data-cy="workflow-project_name-text"
       >
         {{ projectJson !== null ? projectJson.name : "" }}
       </span>
