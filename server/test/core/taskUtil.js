@@ -15,6 +15,7 @@ chai.use(require("chai-fs"));
 //testee
 const rewTaskUtil = rewire("../../app/core/taskUtil.js");
 const cancelDispatchedTasks = rewTaskUtil.__get__("cancelDispatchedTasks");
+const killTask = rewTaskUtil.__get__("killTask");
 
 describe("UT for taskUtil class", function () {
   describe("#cancelDispatchedTasks", ()=>{
@@ -78,6 +79,48 @@ describe("UT for taskUtil class", function () {
       sinon.assert.calledOnce(killTaskStub);
       expect(tasks[0].state).to.equal("not-started");
       expect(tasks[1].state).to.equal("not-started");
+    });
+  });
+  describe("#killTask", ()=>{
+    let cancelLocalJobStub, killLocalProcessStub, cancelRemoteJobStub;
+    beforeEach(()=>{
+      cancelLocalJobStub = sinon.stub();
+      killLocalProcessStub = sinon.stub();
+      cancelRemoteJobStub = sinon.stub();
+      rewTaskUtil.__set__("cancelLocalJob", cancelLocalJobStub);
+      rewTaskUtil.__set__("killLocalProcess", killLocalProcessStub);
+      rewTaskUtil.__set__("cancelRemoteJob", cancelRemoteJobStub);
+    });
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should call cancelLocalJob for local job scheduler tasks", async ()=>{
+      const task = { remotehostID: "localhost", useJobScheduler: true };
+      await killTask(task);
+      sinon.assert.calledOnce(cancelLocalJobStub);
+      sinon.assert.notCalled(killLocalProcessStub);
+      sinon.assert.notCalled(cancelRemoteJobStub);
+    });
+    it("should call killLocalProcess for local tasks without job scheduler", async ()=>{
+      const task = { remotehostID: "localhost", useJobScheduler: false };
+      await killTask(task);
+      sinon.assert.notCalled(cancelLocalJobStub);
+      sinon.assert.calledOnce(killLocalProcessStub);
+      sinon.assert.notCalled(cancelRemoteJobStub);
+    });
+    it("should call cancelRemoteJob for remote tasks using job scheduler", async ()=>{
+      const task = { remotehostID: "remote1", useJobScheduler: true };
+      await killTask(task);
+      sinon.assert.notCalled(cancelLocalJobStub);
+      sinon.assert.notCalled(killLocalProcessStub);
+      sinon.assert.calledOnce(cancelRemoteJobStub);
+    });
+    it("should do nothing for remote tasks using remote execution", async ()=>{
+      const task = { remotehostID: "remote1", useJobScheduler: false };
+      await killTask(task);
+      sinon.assert.notCalled(cancelLocalJobStub);
+      sinon.assert.notCalled(killLocalProcessStub);
+      sinon.assert.notCalled(cancelRemoteJobStub);
     });
   });
 });
