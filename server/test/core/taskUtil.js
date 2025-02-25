@@ -16,6 +16,7 @@ chai.use(require("chai-fs"));
 const rewTaskUtil = rewire("../../app/core/taskUtil.js");
 const cancelDispatchedTasks = rewTaskUtil.__get__("cancelDispatchedTasks");
 const killTask = rewTaskUtil.__get__("killTask");
+const killLocalProcess = rewTaskUtil.__get__("killLocalProcess");
 
 describe("UT for taskUtil class", function () {
   describe("#cancelDispatchedTasks", ()=>{
@@ -121,6 +122,28 @@ describe("UT for taskUtil class", function () {
       sinon.assert.notCalled(cancelLocalJobStub);
       sinon.assert.notCalled(killLocalProcessStub);
       sinon.assert.notCalled(cancelRemoteJobStub);
+    });
+  });
+  describe("#killLocalProcess", ()=>{
+    let task;
+    beforeEach(()=>{
+      task = { handler: { kill: sinon.stub(), killed: false } };
+    });
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should call kill() on the task handler if it is not already killed", async ()=>{
+      await killLocalProcess(task);
+      sinon.assert.calledOnce(task.handler.kill);
+    });
+    it("should not call kill() if the task handler is already killed", async ()=>{
+      task.handler.killed = true;
+      await killLocalProcess(task);
+      sinon.assert.notCalled(task.handler.kill);
+    });
+    it("should not throw an error if handler is undefined", async ()=>{
+      task.handler = undefined;
+      await expect(killLocalProcess(task)).to.not.be.rejected;
     });
   });
 });
