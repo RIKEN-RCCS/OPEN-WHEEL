@@ -652,3 +652,387 @@ describe("#createRequest", ()=>{
     expect(result.allowEmptyOutput).to.be.true;
   });
 });
+
+const EventEmitter = require("events");
+
+describe("#registerJob", ()=>{
+  let rewireJobManager;
+  let registerJob;
+
+  //モック用変数
+  let jobSchedulerMock;
+  let addRequestMock;
+  let getRequestMock;
+  let delRequestMock;
+  let getLoggerMock;
+  let createRequestForWebAPIMock;
+  let createRequestMock;
+  let getStatusCodeMock;
+  let isJobFailedMock;
+
+  let hostinfo;
+  let task;
+
+  beforeEach(()=>{
+    //jobManager.jsをrewireで読み込み
+    rewireJobManager = rewire("../../../app/core/jobManager.js");
+    //テスト対象のregisterJobを取得
+    registerJob = rewireJobManager.__get__("registerJob");
+
+    //jobSchedulerのモック
+    jobSchedulerMock = {
+      dummyJS: {
+        maxStatusCheckError: 2,
+        stat: "dummyStatCommand",
+        bulkstat: "dummyBulkStatCommand",
+        statAfter: "dummyAfterCommand",
+        bulkstatAfter: "dummyBulkAfterCommand",
+        statDelimiter: "\n",
+        reRunning: "RUNNING",
+        allowEmptyOutput: false,
+        acceptableRt: [0]
+      }
+    };
+
+    addRequestMock = sinon.stub();
+    getRequestMock = sinon.stub();
+    delRequestMock = sinon.stub();
+    getLoggerMock = sinon.stub().returns({
+      debug: sinon.stub(),
+      trace: sinon.stub(),
+      warn: sinon.stub()
+    });
+    createRequestForWebAPIMock = sinon.stub();
+    createRequestMock = sinon.stub();
+    getStatusCodeMock = sinon.stub();
+    isJobFailedMock = sinon.stub();
+
+    //rewireで内部の依存を差し替え
+    rewireJobManager.__set__("jobScheduler", jobSchedulerMock);
+    rewireJobManager.__set__("addRequest", addRequestMock);
+    rewireJobManager.__set__("getRequest", getRequestMock);
+    rewireJobManager.__set__("delRequest", delRequestMock);
+    rewireJobManager.__set__("getLogger", getLoggerMock);
+    rewireJobManager.__set__("createRequestForWebAPI", createRequestForWebAPIMock);
+    rewireJobManager.__set__("createRequest", createRequestMock);
+    rewireJobManager.__set__("getStatusCode", getStatusCodeMock);
+    rewireJobManager.__set__("isJobFailed", isJobFailedMock);
+
+    //hostinfo, taskの初期化
+    hostinfo = {
+      jobScheduler: "dummyJS",
+      useWebAPI: false,
+      statusCheckInterval: 1
+    };
+    task = {
+      projectRootDir: "/some/project",
+      jobID: "12345",
+      type: "normalTask"
+    };
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should reject if jobScheduler setting not found", async ()=>{
+    hostinfo.jobScheduler = "notFoundScheduler"; //存在しないキー
+
+    try {
+      await registerJob(hostinfo, task);
+      expect.fail("Expected registerJob to throw, but it did not");
+    } catch (err) {
+      expect(err.message).to.equal("jobscheduler setting not found!");
+      expect(err.hostinfo).to.deep.equal(hostinfo);
+    }
+  });
+
+  it("should use createRequestForWebAPI if useWebAPI=true", async ()=>{
+    //useWebAPI=trueの場合
+    hostinfo.useWebAPI = true;
+
+    //createRequestForWebAPIMock / getRequestMockが返すオブジェクトを用意
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "localhost" },
+      event: eventEmitter
+    };
+
+    createRequestForWebAPIMock.returns(requestObj);
+    addRequestMock.returns("req-999");
+    getRequestMock.returns(requestObj);
+
+    //テスト実行
+    const p = registerJob(hostinfo, task);
+
+    //createRequestForWebAPIが呼ばれていることを確認
+    expect(createRequestForWebAPIMock.calledOnce).to.be.true;
+    expect(createRequestMock.notCalled).to.be.true;
+
+    //finishedLocalHookを参照 => "finished"イベント
+    getStatusCodeMock.resolves(0);
+    isJobFailedMock.returns(false);
+
+    eventEmitter.emit("finished", {
+      argument: "12345",
+      hostInfo: { host: "localhost" },
+      finishedLocalHook: {
+        rt: 0,
+        output: "some dummy output"
+      }
+    });
+
+    const result = await p;
+    expect(result).to.equal(0);
+  });
+
+  it("should re-check output if after cmd output is empty, then continue", async ()=>{
+    //1回目リクエスト
+    const firstEmitter = new EventEmitter();
+    const firstRequestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: firstEmitter
+    };
+    createRequestMock.returns(firstRequestObj);
+
+    let addRequestCallCount = 0;
+    addRequestMock.callsFake(()=>{
+      if (addRequestCallCount === 0) {
+        addRequestCallCount++;
+        return "req-987"; //1回目
+      } else if (addRequestCallCount === 1) {
+        addRequestCallCount++;
+        return "req-recheck"; //2回目(再チェック用)
+      } else {
+        //3回目以降、もし呼ばれるならここ
+        addRequestCallCount++;
+        return "req-other";
+      }
+    });
+
+    //2回目リクエスト
+    const secondEmitter = new EventEmitter();
+    const secondRequestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: secondEmitter
+    };
+    getRequestMock.callsFake((id)=>{
+      //返すオブジェクトを場合分け
+      if (id === "req-987") {
+        return firstRequestObj;
+      } else if (id === "req-recheck") {
+        return secondRequestObj;
+      }
+      return undefined;
+    });
+
+    //実行
+    const p = registerJob(hostinfo, task);
+
+    //1回目finished => output空
+    firstEmitter.emit("finished", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      finishedHook: { rt: 0, output: "" }
+    });
+
+    getStatusCodeMock.resolves(0);
+    isJobFailedMock.returns(false);
+
+    //2回目finished
+    secondEmitter.emit("finished", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      finishedHook: { rt: 0, output: "recheck success" }
+    });
+
+    const result = await p;
+    expect(result).to.equal(0);
+
+    //2回addRequestされたか
+    expect(addRequestMock.callCount).to.equal(2);
+  });
+
+  it("should use createRequest if useWebAPI=false", async ()=>{
+    //デフォルト: useWebAPI = false
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: eventEmitter
+    };
+    createRequestMock.returns(requestObj);
+    addRequestMock.returns("req-123");
+    getRequestMock.returns(requestObj);
+
+    const p = registerJob(hostinfo, task);
+
+    //createRequest が呼ばれる
+    expect(createRequestForWebAPIMock.notCalled).to.be.true;
+    expect(createRequestMock.calledOnce).to.be.true;
+
+    //finishedHook を参照 => "finished"イベント
+    getStatusCodeMock.resolves(0);
+    isJobFailedMock.returns(false);
+
+    eventEmitter.emit("finished", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      finishedHook: {
+        rt: 0,
+        output: "some normal output"
+      }
+    });
+
+    const result = await p;
+    expect(result).to.equal(0);
+  });
+
+  it("should increment error count on 'checked' if request.rt != 0 and reject when it exceeds max", async ()=>{
+    //createRequestMock + getRequestMock の両方で同じオブジェクトを返す
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: eventEmitter
+    };
+    createRequestMock.returns(requestObj);
+    addRequestMock.returns("req-abc");
+    getRequestMock.returns(requestObj);
+
+    //実行
+    const p = registerJob(hostinfo, task);
+
+    //"checked"イベントを3回発火 => 3回目でmaxを超えてreject
+    eventEmitter.emit("checked", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      rt: 999,
+      checkCount: 1,
+      lastOutput: "some output"
+    });
+    eventEmitter.emit("checked", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      rt: 999,
+      checkCount: 2,
+      lastOutput: "some output"
+    });
+
+    try {
+      eventEmitter.emit("checked", {
+        argument: "12345",
+        hostInfo: { host: "dummyHost" },
+        rt: 999,
+        checkCount: 3,
+        lastOutput: "some output"
+      });
+      await p;
+      expect.fail("Expected to reject, but resolved");
+    } catch (err) {
+      expect(err.message).to.equal("max status check error exceeded");
+      expect(delRequestMock.calledOnceWithExactly("req-abc")).to.be.true;
+    }
+  });
+
+  it("should reject if isJobFailed returns true", async ()=>{
+    //reject時に比較しやすいようセット
+    task.jobStatus = -999;
+
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: eventEmitter
+    };
+    createRequestMock.returns(requestObj);
+    addRequestMock.returns("req-555");
+    getRequestMock.returns(requestObj);
+
+    const p = registerJob(hostinfo, task);
+
+    getStatusCodeMock.resolves(123);
+    isJobFailedMock.returns(true);
+
+    eventEmitter.emit("finished", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      finishedHook: {
+        rt: 0,
+        output: "some output"
+      }
+    });
+
+    try {
+      await p;
+      expect.fail("Expected to reject, but it resolved");
+    } catch (err) {
+      //実装では isJobFailed===true で reject(task.jobStatus)
+      expect(err).to.equal(task.jobStatus);
+    }
+  });
+
+  it("should resolve if isJobFailed is false", async ()=>{
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: eventEmitter
+    };
+    createRequestMock.returns(requestObj);
+    addRequestMock.returns("req-666");
+    getRequestMock.returns(requestObj);
+
+    const p = registerJob(hostinfo, task);
+
+    getStatusCodeMock.resolves(0);
+    isJobFailedMock.returns(false);
+
+    eventEmitter.emit("finished", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      finishedHook: {
+        rt: 0,
+        output: "normal output"
+      }
+    });
+
+    const result = await p;
+    expect(result).to.equal(0);
+  });
+
+  it("should reject on 'failed' event", async ()=>{
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: eventEmitter
+    };
+    createRequestMock.returns(requestObj);
+    addRequestMock.returns("req-failTest");
+    getRequestMock.returns(requestObj);
+
+    const p = registerJob(hostinfo, task);
+
+    const hookErr = new Error("some hook error");
+    eventEmitter.emit("failed", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      rt: 1,
+      lastOutput: "failed..."
+    }, hookErr);
+
+    try {
+      await p;
+      expect.fail("Expected to reject, but resolved");
+    } catch (err) {
+      expect(err.message).to.equal("fatal error occurred during job status check");
+      //実装上 err.request = request
+      expect(err.request.argument).to.equal("12345");
+      expect(err.hookErr).to.equal(hookErr);
+    }
+  });
+});
