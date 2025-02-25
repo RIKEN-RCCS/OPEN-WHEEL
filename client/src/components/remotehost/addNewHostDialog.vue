@@ -11,7 +11,7 @@
       persistent
     >
       <v-card>
-        <v-card-title data-cy="add_new_host-add_new_host-cardtitle">
+        <v-card-title data-cy="add_new_host-add_new_host-card_title">
           add new host
         </v-card-title>
         <v-card-text>

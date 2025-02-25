@@ -18,8 +18,8 @@
       <slot name="append" />
       <template #append>
         <v-app-bar-nav-icon
-          data-cy="tool_bar-navi-icon"
           @click="$emit('navIconClick')"
+          data-cy="tool_bar-navi-icon"
         />
       </template>
       <template #extension>
