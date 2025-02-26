@@ -21,6 +21,10 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   afterEach(()=>{
     cy.removeAllProjects();
   })
+
+  afterEach(()=>{
+    cy.removeProject();
+  })
   
   /** 
   Task コンポーネントの基本機能動作確認
