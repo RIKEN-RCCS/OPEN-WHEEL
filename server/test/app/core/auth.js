@@ -435,3 +435,91 @@ describe("#isValidUser", ()=>{
     expect(loggerTraceMock.notCalled).to.be.true;
   });
 });
+
+describe("#listUser", ()=>{
+  let rewireAuth;
+  let listUser;
+  let dbMock;
+  let initializeMock;
+
+  beforeEach(()=>{
+    //auth.jsをrewireで読み込む
+    rewireAuth = rewire("../../../app/core/auth.js");
+
+    //テスト対象関数を__get__で取得
+    listUser = rewireAuth.__get__("listUser");
+
+    //dbのモックを作成 (db.allだけ使うのでそこをStub)
+    dbMock = {
+      all: sinon.stub().resolves([])
+    };
+
+    //initializeのモックを作成
+    initializeMock = sinon.stub().resolves();
+
+    //rewireを使ってauth.js内部の変数をStub化
+    //まだ初期化されていない状態にする
+    rewireAuth.__set__("initialized", false);
+    rewireAuth.__set__("db", dbMock);
+    rewireAuth.__set__("initialize", initializeMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should call initialize if not yet initialized (db is not ready yet)", async ()=>{
+    //前提：initialized = false
+    //dbMock.allはデフォルトで空配列を返すようになっている
+
+    const result = await listUser();
+
+    //initializeが呼ばれているか確認
+    expect(initializeMock.calledOnce).to.be.true;
+
+    //db.allが呼ばれたか
+    expect(dbMock.all.calledOnce).to.be.true;
+
+    //結果は空配列
+    expect(result).to.be.an("array").that.is.empty;
+  });
+
+  it("should not call initialize if already initialized", async ()=>{
+    //すでにinitializedがtrueの場合
+    rewireAuth.__set__("initialized", true);
+
+    const result = await listUser();
+
+    //initializeは呼ばれない
+    expect(initializeMock.notCalled).to.be.true;
+
+    //db.allが呼ばれたか
+    expect(dbMock.all.calledOnce).to.be.true;
+
+    //結果は空配列
+    expect(result).to.be.an("array").that.is.empty;
+  });
+
+  it("should return empty array if db has no users", async ()=>{
+    //dbMock.allが空配列を返す
+    dbMock.all.resolves([]);
+
+    const result = await listUser();
+
+    //空配列が返ることを確認
+    expect(result).to.deep.equal([]);
+  });
+
+  it("should return array of usernames if db has data", async ()=>{
+    //dbMock.allがユーザー名を持つ配列を返すように設定
+    dbMock.all.resolves([
+      { username: "Alice" },
+      { username: "Bob" }
+    ]);
+
+    const result = await listUser();
+
+    //["Alice", "Bob"]が返ることを確認
+    expect(result).to.deep.equal(["Alice", "Bob"]);
+  });
+});
