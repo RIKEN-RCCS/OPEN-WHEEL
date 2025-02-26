@@ -129,3 +129,133 @@ describe("#getHashedPassword", ()=>{
     }
   });
 });
+
+describe("#addUser", ()=>{
+  let rewireAuth;
+  let addUser;
+  let initializeMock;
+  let getUserDataMock;
+  let randomUUIDMock;
+  let randomBytesMock;
+  let getHashedPasswordMock;
+  let dbRunMock;
+
+  beforeEach(()=>{
+    //auth.js を rewire で読み込み
+    rewireAuth = rewire("../../../app/core/auth.js");
+
+    //テスト対象関数を取得
+    addUser = rewireAuth.__get__("addUser");
+
+    //sinon.stub() を用いて Mock（Stub）を作成
+    initializeMock = sinon.stub();
+    getUserDataMock = sinon.stub();
+    randomUUIDMock = sinon.stub();
+    randomBytesMock = sinon.stub();
+    getHashedPasswordMock = sinon.stub();
+    dbRunMock = sinon.stub();
+
+    //auth.js 内部の変数や依存関数を rewireAuth.__set__ で差し替え
+    //initialized をとりあえず false にしておく (各テストで状況を変える)
+    rewireAuth.__set__("initialized", false);
+
+    rewireAuth.__set__("initialize", initializeMock);
+    rewireAuth.__set__("getUserData", getUserDataMock);
+
+    //crypto.randomUUID, crypto.randomBytes を置き換え
+    rewireAuth.__set__("crypto", {
+      randomUUID: randomUUIDMock,
+      randomBytes: randomBytesMock
+    });
+
+    rewireAuth.__set__("getHashedPassword", getHashedPasswordMock);
+
+    //db.run を置き換え
+    rewireAuth.__set__("db", {
+      run: dbRunMock
+    });
+  });
+
+  afterEach(()=>{
+    //テストごとにスタブをリセット
+    sinon.restore();
+  });
+
+  it("should initialize if not initialized, then insert user if the user does not exist", async ()=>{
+    //initialize 未実行のケース
+    //user がまだ存在しないケース
+    initializeMock.resolves();
+    getUserDataMock.resolves(null);
+    randomUUIDMock.returns("unique-id-123");
+    randomBytesMock.returns(Buffer.from("salt123"));
+    getHashedPasswordMock.resolves(Buffer.from("hashed123"));
+    dbRunMock.resolves();
+
+    await addUser("john", "secret");
+
+    //initialize が呼ばれた
+    expect(initializeMock.calledOnce).to.be.true;
+    //getUserData が正しく呼ばれた
+    expect(getUserDataMock.calledOnceWithExactly("john")).to.be.true;
+    //crypto 関連が呼ばれているか
+    expect(randomUUIDMock.calledOnce).to.be.true;
+    expect(randomBytesMock.calledOnceWithExactly(16)).to.be.true;
+    //パスワードハッシュ関数の呼び出し確認
+    expect(getHashedPasswordMock.calledOnceWithExactly("secret", Buffer.from("salt123"))).to.be.true;
+    //DB への INSERT 実行確認
+    expect(dbRunMock.calledOnce).to.be.true;
+
+    //db.run の呼び出し引数を詳細チェック
+    const [sql, id, username, hashedPw, salt] = dbRunMock.firstCall.args;
+    expect(sql).to.include("INSERT OR IGNORE INTO users");
+    expect(id).to.equal("unique-id-123");
+    expect(username).to.equal("john");
+    expect(hashedPw).to.deep.equal(Buffer.from("hashed123"));
+    expect(salt).to.deep.equal(Buffer.from("salt123"));
+  });
+
+  it("should skip initialize if already initialized is true and user does not exist", async ()=>{
+    //すでに initialize 済みのケース
+    rewireAuth.__set__("initialized", true);
+
+    initializeMock.resolves(); //呼ばれない想定だが、stub には一応セット
+    getUserDataMock.resolves(null);
+    randomUUIDMock.returns("unique-id-abc");
+    randomBytesMock.returns(Buffer.from("saltABC"));
+    getHashedPasswordMock.resolves(Buffer.from("hashedABC"));
+    dbRunMock.resolves();
+
+    await addUser("alice", "mypassword");
+
+    //すでに initialized = true なので initialize は呼ばれない
+    expect(initializeMock.notCalled).to.be.true;
+    //そのほかの流れは同様
+    expect(getUserDataMock.calledOnceWithExactly("alice")).to.be.true;
+    expect(randomUUIDMock.calledOnce).to.be.true;
+    expect(randomBytesMock.calledOnce).to.be.true;
+    expect(getHashedPasswordMock.calledOnce).to.be.true;
+    expect(dbRunMock.calledOnce).to.be.true;
+  });
+
+  it("should throw an error if user already exists", async ()=>{
+    //すでにユーザーが存在するケース
+    initializeMock.resolves();
+    getUserDataMock.resolves({ username: "bob" });
+
+    try {
+      await addUser("bob", "secret2");
+      //ここに到達したらテスト失敗
+      expect.fail("Expected addUser to throw an error, but it did not");
+    } catch (err) {
+      //"user already exists" エラーになる
+      expect(err.message).to.equal("user already exists");
+      //エラーオブジェクトには username プロパティが設定される
+      expect(err).to.have.property("username", "bob");
+    }
+
+    //ユーザー存在チェックの前に initialize が呼ばれている
+    expect(initializeMock.calledOnce).to.be.true;
+    //既存ユーザーのため INSERT は実行されない
+    expect(dbRunMock.notCalled).to.be.true;
+  });
+});
