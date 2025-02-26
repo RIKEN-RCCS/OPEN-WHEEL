@@ -259,3 +259,63 @@ describe("#addUser", ()=>{
     expect(dbRunMock.notCalled).to.be.true;
   });
 });
+
+describe("#getUserData", ()=>{
+  let rewireAuth;
+  let getUserData;
+  let dbMock;
+
+  beforeEach(()=>{
+    //auth.js を rewire で読み込む
+    rewireAuth = rewire("../../../app/core/auth.js");
+
+    //テスト対象関数を取得
+    getUserData = rewireAuth.__get__("getUserData");
+
+    //db 変数をモック化 (sinon.stub() を使用)
+    dbMock = {
+      get: sinon.stub()
+    };
+
+    //auth.js 内の db を差し替え
+    rewireAuth.__set__("db", dbMock);
+  });
+
+  it("should return null if user does not exist in DB", async ()=>{
+    //db.get が見つからなかった場合 (undefined など) を返すように設定
+    dbMock.get.resolves(undefined);
+
+    const result = await getUserData("nonexistentUser");
+    expect(result).to.be.null;
+    expect(dbMock.get.calledOnceWithExactly(
+      "SELECT * FROM users WHERE username = ?",
+      "nonexistentUser"
+    )).to.be.true;
+  });
+
+  it("should return null if DB row exists but row.username does not match", async ()=>{
+    //row は取得できるが、username が異なるケース
+    dbMock.get.resolves({
+      username: "anotherUser",
+      hashed_password: Buffer.from("someHash"),
+      salt: Buffer.from("someSalt"),
+      id: "userID999"
+    });
+
+    const result = await getUserData("testUser");
+    expect(result).to.be.null;
+  });
+
+  it("should return the row if DB row exists and row.username matches", async ()=>{
+    const fakeRow = {
+      username: "testUser",
+      hashed_password: Buffer.from("someHash"),
+      salt: Buffer.from("someSalt"),
+      id: "userID123"
+    };
+    dbMock.get.resolves(fakeRow);
+
+    const result = await getUserData("testUser");
+    expect(result).to.deep.equal(fakeRow);
+  });
+});
