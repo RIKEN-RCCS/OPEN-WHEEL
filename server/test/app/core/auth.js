@@ -319,3 +319,119 @@ describe("#getUserData", ()=>{
     expect(result).to.deep.equal(fakeRow);
   });
 });
+
+describe("#isValidUser", ()=>{
+  let rewireAuth;
+  let isValidUser;
+  let initializeMock;
+  let getUserDataMock;
+  let getHashedPasswordMock;
+  let loggerTraceMock;
+  let timingSafeEqualMock;
+
+  beforeEach(()=>{
+    //auth.js を rewire で読み込む
+    rewireAuth = rewire("../../../app/core/auth.js");
+
+    //テスト対象の関数を取得
+    isValidUser = rewireAuth.__get__("isValidUser");
+
+    //各種依存関数・変数をStub化
+    initializeMock = sinon.stub();
+    getUserDataMock = sinon.stub();
+    getHashedPasswordMock = sinon.stub();
+    loggerTraceMock = sinon.stub();
+    timingSafeEqualMock = sinon.stub();
+
+    //auth.js 内部の依存を差し替え
+    rewireAuth.__set__("initialize", initializeMock);
+    rewireAuth.__set__("getUserData", getUserDataMock);
+    rewireAuth.__set__("getHashedPassword", getHashedPasswordMock);
+    //logger.trace だけ使うので logger オブジェクトを Stub にすげ替える
+    rewireAuth.__set__("logger", { trace: loggerTraceMock });
+    //crypto.timingSafeEqual を Stub 化
+    rewireAuth.__set__("crypto.timingSafeEqual", timingSafeEqualMock);
+  });
+
+  afterEach(()=>{
+    //毎テスト後にstubやmockを元に戻す
+    sinon.restore();
+  });
+
+  it("should call initialize if not initialized", async ()=>{
+    //initialized = false のパターン
+    rewireAuth.__set__("initialized", false);
+
+    //ユーザーが存在しないパターンにしておく
+    getUserDataMock.resolves(null);
+
+    const result = await isValidUser("testUser", "testPassword");
+
+    //initialize が呼ばれること
+    expect(initializeMock.calledOnce).to.be.true;
+    //ユーザーが見つからず false
+    expect(result).to.be.false;
+    //ログが正しく出力されているか
+    expect(loggerTraceMock.calledWith("user: testUser not found")).to.be.true;
+  });
+
+  it("should return false if user does not exist", async ()=>{
+    //すでに初期化されているパターン
+    rewireAuth.__set__("initialized", true);
+
+    //ユーザーが存在しない => getUserData が null
+    getUserDataMock.resolves(null);
+
+    const result = await isValidUser("notExisting", "somePassword");
+    expect(result).to.be.false;
+    expect(loggerTraceMock.calledWith("user: notExisting not found")).to.be.true;
+  });
+
+  it("should return false if password is wrong", async ()=>{
+    rewireAuth.__set__("initialized", true);
+
+    //ユーザーが見つかったが、ハッシュが合わないパターン
+    getUserDataMock.resolves({
+      username: "someUser",
+      hashed_password: Buffer.from("correctHash"),
+      salt: Buffer.from("saltValue")
+    });
+    //getHashedPassword の戻り値を「全然違うハッシュ」にする
+    getHashedPasswordMock.resolves(Buffer.from("wrongHash"));
+    //timingSafeEqual は false を返す
+    timingSafeEqualMock.returns(false);
+
+    const result = await isValidUser("someUser", "badPassword");
+
+    //期待通り呼ばれているか
+    expect(getHashedPasswordMock.calledOnceWithExactly("badPassword", Buffer.from("saltValue"))).to.be.true;
+    expect(timingSafeEqualMock.calledOnce).to.be.true;
+    expect(result).to.be.false;
+    expect(loggerTraceMock.calledWith("wrong password")).to.be.true;
+  });
+
+  it("should return the user row if password is correct", async ()=>{
+    rewireAuth.__set__("initialized", true);
+
+    //ユーザーが見つかる場合
+    const userRow = {
+      username: "someUser",
+      hashed_password: Buffer.from("correctHash"),
+      salt: Buffer.from("saltValue")
+    };
+    getUserDataMock.resolves(userRow);
+
+    //正しいハッシュが返ってくる
+    getHashedPasswordMock.resolves(Buffer.from("correctHash"));
+    //timingSafeEqual は true を返す
+    timingSafeEqualMock.returns(true);
+
+    const result = await isValidUser("someUser", "correctPassword");
+
+    expect(getHashedPasswordMock.calledOnceWithExactly("correctPassword", Buffer.from("saltValue"))).to.be.true;
+    expect(timingSafeEqualMock.calledOnce).to.be.true;
+    expect(result).to.equal(userRow);
+    //パスワードが正しい場合はログ出力されない（trace呼び出しなし）
+    expect(loggerTraceMock.notCalled).to.be.true;
+  });
+});
