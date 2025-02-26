@@ -523,3 +523,90 @@ describe("#listUser", ()=>{
     expect(result).to.deep.equal(["Alice", "Bob"]);
   });
 });
+
+describe("#delUser", ()=>{
+  let rewireAuth;
+  let delUser;
+  let dbMock;
+  let initializeMock;
+
+  beforeEach(()=>{
+    rewireAuth = rewire("../../../app/core/auth.js");
+
+    //テスト対象関数 delUser を取得
+    delUser = rewireAuth.__get__("delUser");
+
+    //initialize 関数をスタブ化 (Mock)
+    initializeMock = sinon.stub().resolves();
+
+    //db.run をスタブ化 (Mock)
+    dbMock = {
+      run: sinon.stub()
+    };
+
+    //rewireで差し替え
+    rewireAuth.__set__({
+      db: dbMock, //delUser内で使われるdb
+      initialize: initializeMock
+    });
+
+    //デフォルトでは初期化済み(true)とする
+    rewireAuth.__set__("initialized", true);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should call initialize if not initialized", async ()=>{
+    //まだ初期化されていない状態にセット
+    rewireAuth.__set__("initialized", false);
+
+    //db.runが返す値をセット
+    dbMock.run.resolves({ changes: 1 });
+
+    await delUser("testUserA");
+
+    //initializeが呼ばれることを確認
+    expect(initializeMock.calledOnce).to.be.true;
+    //db.runが適切なクエリで呼ばれたことを確認
+    expect(dbMock.run.calledOnceWithExactly(
+      "DELETE FROM users WHERE username = 'testUserA'"
+    )).to.be.true;
+  });
+
+  it("should not call initialize if already initialized", async ()=>{
+    //すでに初期化済み
+    rewireAuth.__set__("initialized", true);
+
+    dbMock.run.resolves({ changes: 1 });
+
+    await delUser("testUserB");
+
+    //initializeは呼ばれない
+    expect(initializeMock.notCalled).to.be.true;
+    //db.runが適切なクエリで呼ばれたことを確認
+    expect(dbMock.run.calledOnceWithExactly(
+      "DELETE FROM users WHERE username = 'testUserB'"
+    )).to.be.true;
+  });
+
+  it("should return statement object if user exists (changes=1)", async ()=>{
+    //runの戻り値を変更
+    const statement = { changes: 1 };
+    dbMock.run.resolves(statement);
+
+    const result = await delUser("existingUser");
+    //delUserは db.runの戻り値(Statementオブジェクト)をそのまま返す
+    expect(result).to.equal(statement);
+  });
+
+  it("should return statement object if user does not exist (changes=0)", async ()=>{
+    //runの戻り値を変更
+    const statement = { changes: 0 };
+    dbMock.run.resolves(statement);
+
+    const result = await delUser("nonExistingUser");
+    expect(result).to.equal(statement);
+  });
+});
