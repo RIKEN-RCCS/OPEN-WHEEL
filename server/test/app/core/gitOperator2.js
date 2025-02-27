@@ -479,6 +479,46 @@ describe("gitClean", ()=>{
   });
 });
 
+describe("getRelativeFilename", ()=>{
+  let gitOperator2;
+  let getRelativeFilename;
+
+  const rootDir = "/repo";
+
+  beforeEach(()=>{
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    getRelativeFilename = gitOperator2.__get__("getRelativeFilename");
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return the relative path of a file inside the repo", ()=>{
+    const filename = "src/index.js";
+    const result = getRelativeFilename(rootDir, filename);
+    expect(result).to.equal("src/index.js");
+  });
+
+  it("should resolve an absolute path to a relative path", ()=>{
+    const filename = "/repo/src/index.js";
+    const result = getRelativeFilename(rootDir, filename);
+    expect(result).to.equal("src/index.js");
+  });
+
+  it("should return an empty string if the file is at repository root", ()=>{
+    const filename = "/repo";
+    const result = getRelativeFilename(rootDir, filename);
+    expect(result).to.equal("");
+  });
+
+  it("should handle files outside of the repo", ()=>{
+    const filename = "/other_dir/file.js";
+    const result = getRelativeFilename(rootDir, filename);
+    expect(result).to.equal("../other_dir/file.js");
+  });
+});
+
 describe("getUnsavedFiles", ()=>{
   let gitOperator2;
   let getUnsavedFiles;
