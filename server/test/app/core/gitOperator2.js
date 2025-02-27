@@ -1,10 +1,96 @@
 const rewire = require("rewire");
 const sinon = require("sinon");
+const fs = require("fs-extra");
+const path = require("path");
 
 const chai = require("chai");
 const expect = chai.expect;
 chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
+
+describe("gitInit", ()=>{
+  let gitOperator2;
+  let gitInit;
+  let gitAddStub;
+  let gitCommitStub;
+  let gitPromiseStub;
+  let outputFileStub;
+
+  const rootDir = "/repo";
+  const user = "testuser";
+  const mail = "testuser@example.com";
+
+  beforeEach(()=>{
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    gitInit = gitOperator2.__get__("gitInit");
+    gitAddStub = sinon.stub();
+    gitCommitStub = sinon.stub();
+    gitPromiseStub = sinon.stub();
+    gitOperator2.__set__("gitAdd", gitAddStub);
+    gitOperator2.__set__("gitCommit", gitCommitStub);
+    gitOperator2.__set__("gitPromise", gitPromiseStub);
+    sinon.stub(fs, "ensureDir").resolves();
+    outputFileStub = sinon.stub(fs, "outputFile").resolves();
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return an error if user is not a string", async ()=>{
+    const result = await gitInit(rootDir, 123, mail);
+    expect(result).to.be.an("error");
+    expect(result.user).to.equal(123);
+    expect(result.type).to.equal("number");
+    expect(result.message).to.equal("user must be a string");
+  });
+
+  it("should return an error if mail is not a string", async ()=>{
+    const result = await gitInit(rootDir, user, 123);
+    expect(result).to.be.an("error");
+    expect(result.mail).to.equal(123);
+    expect(result.type).to.equal("number");
+    expect(result.message).to.equal("mail must be a string");
+  });
+
+  it("should initialize git repository and set user config", async ()=>{
+    gitPromiseStub.resolves();
+
+    await gitInit(rootDir, user, mail);
+
+    sinon.assert.calledWith(
+      gitPromiseStub,
+      sinon.match.string,
+      ["init", "--", sinon.match.string],
+      rootDir
+    );
+    sinon.assert.calledWith(
+      gitPromiseStub,
+      rootDir,
+      ["config", "user.name", user],
+      rootDir
+    );
+    sinon.assert.calledWith(
+      gitPromiseStub,
+      rootDir,
+      ["config", "user.email", mail],
+      rootDir
+    );
+    sinon.assert.calledWith(
+      gitPromiseStub,
+      rootDir,
+      ["lfs", "install"],
+      rootDir
+    );
+    sinon.assert.calledWith(
+      outputFileStub,
+      path.join(rootDir, ".gitignore"),
+      "wheel.log"
+    );
+    sinon.assert.calledWith(gitAddStub, rootDir, ".gitignore");
+    sinon.assert.calledWith(gitCommitStub, rootDir, "initial commit");
+  });
+});
 
 describe("gitCommit", ()=>{
   let gitOperator2;
