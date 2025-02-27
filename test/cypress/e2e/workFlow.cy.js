@@ -157,7 +157,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   */
   it("03-01-012:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
     cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true);
-    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(3).click();
+    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(3).click(); // Add output file button
     cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
   });
 
@@ -182,8 +182,8 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   */
   it("03-01-014:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
     cy.createDirOrFile(TYPE_FILE, 'test-a', true);
-    cy.get('[data-cy="component_property-script-autocomplete"]').click()
-    cy.get("[role=\"listbox\"]").eq(3).contains('test-a').click()
+    let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
     cy.saveProperty();
     cy.get('[data-cy="workflow-play-btn"]').click(); // Taskコンポーネントを実行する
     cy.clickComponentName(TASK_NAME_0);
@@ -441,8 +441,8 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   */
   it("03-01-035:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-scriptファイル選択表示確認-scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
     cy.createDirOrFile(TYPE_FILE, 'test-a', true);
-    cy.get('[data-cy="component_property-script-autocomplete"]').click();
-    cy.get("[role=\"listbox\"]").eq(3).contains('test-a').click();
+    let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
     cy.get('[data-cy="component_property-script-autocomplete"]').find('input').should('have.value', 'test-a');
   });
 
@@ -455,8 +455,8 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   */
   it("03-01-036:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-scriptファイル選択反映確認-scriptセレクトボックスで選択したファイルが反映されていることを確認", ()=>{
     cy.createDirOrFile(TYPE_FILE, 'test-a', true);
-    cy.get('[data-cy="component_property-script-autocomplete"]').click();
-    cy.get("[role=\"listbox\"]").eq(3).contains('test-a').click();
+    let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
     cy.saveProperty();
     cy.get('[data-cy="component_property-script-autocomplete"]').find('input').should('have.value', 'test-a');
   });

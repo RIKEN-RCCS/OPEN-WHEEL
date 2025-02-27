@@ -6,7 +6,7 @@ const TYPE_FILE = "file"
 
 //opening a project
 Cypress.Commands.add("openProject", ()=>{
-  cy.get('[type="checkbox"]').eq(1).check();
+  cy.get('[type="checkbox"]').eq(1).check(); // The top project checkbox
   cy.get('[data-cy="home-open-btn"]').click();
 })
 
@@ -52,11 +52,11 @@ Cypress.Commands.add("enterInputOrOutputFile", (type, fileName, clickRun)=>{
   }
   if(type == TYPE_INPUT){
     cy.get('[data-cy="component_property-input_files-list_form"]').find('input').type(fileName);
-    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(1).click();
+    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(1).click(); // Add input file button
   }
   else if(type == TYPE_OUTPUT){
     cy.get('[data-cy="component_property-output_files-list_form"]').find('input').type('testOutputFile');
-    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(3).click();
+    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(3).click(); // Add output file button
   }
 })
 
