@@ -284,6 +284,68 @@ describe("gitRm", ()=>{
   });
 });
 
+describe("gitResetHEAD", ()=>{
+  let gitOperator2;
+  let gitResetHEAD;
+  let gitPromiseStub;
+
+  const rootDir = "/repo";
+
+  beforeEach(()=>{
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    gitResetHEAD = gitOperator2.__get__("gitResetHEAD");
+    gitPromiseStub = sinon.stub();
+    gitOperator2.__set__("gitPromise", gitPromiseStub);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should call gitPromise with reset HEAD --hard when filePatterns is empty", async ()=>{
+    gitPromiseStub.resolves();
+
+    await gitResetHEAD(rootDir, "");
+
+    sinon.assert.calledWith(
+      gitPromiseStub,
+      rootDir,
+      ["reset", "HEAD", "--hard"],
+      rootDir
+    );
+  });
+
+  it("should call gitPromise with reset HEAD -- <filePatterns> and then checkout HEAD -- <filePatterns>", async ()=>{
+    gitPromiseStub.resolves();
+    const filePatterns = "test.txt";
+
+    await gitResetHEAD(rootDir, filePatterns);
+
+    sinon.assert.calledWith(
+      gitPromiseStub,
+      rootDir,
+      ["reset", "HEAD", "--", filePatterns],
+      rootDir
+    );
+    sinon.assert.calledWith(
+      gitPromiseStub,
+      rootDir,
+      ["checkout", "HEAD", "--", filePatterns],
+      rootDir
+    );
+  });
+
+  it("should throw an error if gitPromise fails", async ()=>{
+    const errorMessage = "reset error";
+    gitPromiseStub.rejects(new Error(errorMessage));
+
+    await expect(gitResetHEAD(rootDir, "test.txt")).to.be.rejectedWith(
+      Error,
+      errorMessage
+    );
+  });
+});
+
 describe("gitStatus", ()=>{
   let gitOperator2;
   let gitStatus;
