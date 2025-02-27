@@ -27,7 +27,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   })
 
   afterEach(()=>{
-    cy.removeProject();
+    cy.removeAllProjects();
   })
   
   /** 
