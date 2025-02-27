@@ -625,3 +625,70 @@ describe("makeLFSPattern", ()=>{
     expect(result).to.equal("/../other_dir/file.js");
   });
 });
+
+describe("isLFS", ()=>{
+  let gitOperator2;
+  let isLFS;
+  let getRelativeFilenameStub;
+  let gitPromiseStub;
+
+  const rootDir = "/repo";
+
+  beforeEach(()=>{
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    isLFS = gitOperator2.__get__("isLFS");
+    getRelativeFilenameStub = sinon.stub();
+    gitOperator2.__set__("getRelativeFilename", getRelativeFilenameStub);
+    gitPromiseStub = sinon.stub();
+    gitOperator2.__set__("gitPromise", gitPromiseStub);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return true if the file is tracked by LFS", async ()=>{
+    const filename = "src/image.png";
+    getRelativeFilenameStub
+      .withArgs(rootDir, filename)
+      .returns("src/image.png");
+    gitPromiseStub.resolves(
+      "Listing tracked patterns\nsrc/image.png (.gitattributes)\nListing excluded patterns"
+    );
+
+    const result = await isLFS(rootDir, filename);
+    expect(result).to.be.true;
+  });
+
+  it("should return false if the file is not tracked by LFS", async ()=>{
+    const filename = "src/text.txt";
+    getRelativeFilenameStub.withArgs(rootDir, filename).returns("src/text.txt");
+    gitPromiseStub.resolves("*.png (filter=lfs diff=lfs merge=lfs -text)");
+
+    const result = await isLFS(rootDir, filename);
+    expect(result).to.be.false;
+  });
+
+  it("should handle an empty LFS track list and return false", async ()=>{
+    const filename = "src/unknown.dat";
+    getRelativeFilenameStub
+      .withArgs(rootDir, filename)
+      .returns("src/unknown.dat");
+    gitPromiseStub.resolves("");
+
+    const result = await isLFS(rootDir, filename);
+    expect(result).to.be.false;
+  });
+
+  it("should throw an error if gitPromise fails", async ()=>{
+    const filename = "src/error.png";
+    getRelativeFilenameStub
+      .withArgs(rootDir, filename)
+      .returns("src/error.png");
+    gitPromiseStub.rejects(new Error("Git command failed"));
+
+    await expect(isLFS(rootDir, filename)).to.be.rejectedWith(
+      "Git command failed"
+    );
+  });
+});
