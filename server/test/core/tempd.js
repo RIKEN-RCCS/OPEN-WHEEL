@@ -17,6 +17,7 @@ const { createHash } = require("crypto");
 const rewTempd = rewire("../../app/core/tempd.js");
 const getTempd = rewTempd.__get__("getTempd");
 const removeTempd = rewTempd.__get__("removeTempd");
+const createTempd = rewTempd.__get__("createTempd");
 
 describe("UT for tempd class", function () {
   describe("#getTempd", ()=>{
@@ -102,6 +103,41 @@ describe("UT for tempd class", function () {
         expect(err).to.equal(error);
       }
       expect(removeStub.calledOnceWithExactly(tempDirPath)).to.be.true;
+    });
+  });
+  describe("#createTempd", ()=>{
+    const projectRootDir = "/test/project";
+    const prefix = "viewer";
+    let tempDirPath, rootPath;
+    const tempdRoot = process.env.WHEEL_TEMPD || path.dirname("__dirname");
+
+    beforeEach(()=>{
+      //ハッシュを計算してディレクトリパスを決定
+      const hash = require("crypto").createHash("sha256")
+        .update(projectRootDir)
+        .digest("hex");
+      rewTempd.__set__("tempdRoot", tempdRoot);
+      rootPath = path.resolve(tempdRoot, prefix);
+      tempDirPath = path.resolve(rootPath, hash);
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should create the temporary directory and return its path", async ()=>{
+      const result = await createTempd(projectRootDir, prefix);
+      expect(result).to.deep.equal({ dir: tempDirPath, root: rootPath });
+    });
+
+    it("should handle errors gracefully", async ()=>{
+      const error = new Error("Failed to create directory");
+
+      try {
+        await createTempd(projectRootDir, prefix);
+      } catch (err) {
+        expect(err).to.equal(error);
+      }
     });
   });
 });
