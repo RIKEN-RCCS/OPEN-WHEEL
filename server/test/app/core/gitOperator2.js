@@ -580,3 +580,48 @@ describe("getUnsavedFiles", ()=>{
     sinon.assert.calledWith(gitStatusStub, rootDir);
   });
 });
+
+describe("makeLFSPattern", ()=>{
+  let gitOperator2;
+  let makeLFSPattern;
+  let getRelativeFilenameStub;
+
+  const rootDir = "/repo";
+
+  beforeEach(()=>{
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    makeLFSPattern = gitOperator2.__get__("makeLFSPattern");
+    getRelativeFilenameStub = sinon.stub();
+    gitOperator2.__set__("getRelativeFilename", getRelativeFilenameStub);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return a valid LFS pattern for a given file", ()=>{
+    const filename = "src/index.js";
+    getRelativeFilenameStub.withArgs(rootDir, filename).returns("src/index.js");
+
+    const result = makeLFSPattern(rootDir, filename);
+    expect(result).to.equal("/src/index.js");
+  });
+
+  it("should return a valid LFS pattern for a file at the root", ()=>{
+    const filename = "index.js";
+    getRelativeFilenameStub.withArgs(rootDir, filename).returns("index.js");
+
+    const result = makeLFSPattern(rootDir, filename);
+    expect(result).to.equal("/index.js");
+  });
+
+  it("should return a valid LFS pattern for a file outside the repo", ()=>{
+    const filename = "/other_dir/file.js";
+    getRelativeFilenameStub
+      .withArgs(rootDir, filename)
+      .returns("../other_dir/file.js");
+
+    const result = makeLFSPattern(rootDir, filename);
+    expect(result).to.equal("/../other_dir/file.js");
+  });
+});
