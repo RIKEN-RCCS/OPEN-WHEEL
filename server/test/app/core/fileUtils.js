@@ -1064,3 +1064,63 @@ describe("#saveFile", ()=>{
     expect(gitAddMock.notCalled).to.be.true;
   });
 });
+
+describe("#getUnusedPath", ()=>{
+  let rewireFileUtils;
+  let getUnusedPath;
+  let fsMock; //sinon.stub()で作成するモックには Mock の接尾語をつける
+
+  beforeEach(()=>{
+    //fileUtils.js を rewire で取得
+    rewireFileUtils = rewire("../../../app/core/fileUtils.js");
+
+    //テスト対象の関数を __get__ で取得
+    getUnusedPath = rewireFileUtils.__get__("getUnusedPath");
+
+    //fs のモックを作成し、必要なメソッドだけスタブ化
+    fsMock = {
+      pathExists: sinon.stub()
+    };
+
+    //rewire を使って fileUtils.js 内の fs をモックに差し替え
+    rewireFileUtils.__set__("fs", fsMock);
+  });
+
+  it("should return the desired path if it does not exist", async ()=>{
+    //desiredPath がまだ存在しないケース
+    fsMock.pathExists.resolves(false);
+
+    const parent = "/mock/parent/dir";
+    const name = "testFile.txt";
+
+    const result = await getUnusedPath(parent, name);
+
+    //path.resolve の結果 "/mock/parent/dir/testFile.txt" を確認
+    expect(fsMock.pathExists.calledOnceWithExactly("/mock/parent/dir/testFile.txt")).to.be.true;
+    //ファイルが存在しないのでそのまま返る
+    expect(result).to.equal("/mock/parent/dir/testFile.txt");
+  });
+
+  it("should return a suffixed path if the desired path already exists", async ()=>{
+    //1回目: 元のファイルが存在する (true)
+    //2回目: suffix=1 も存在する (true)
+    //3回目: suffix=2 は存在しない (false) => ループを抜けて返す
+    fsMock.pathExists
+      .onFirstCall().resolves(true)
+      .onSecondCall()
+      .resolves(true)
+      .onThirdCall()
+      .resolves(false);
+
+    const parent = "/mock/parent/dir";
+    const name = "testFile.txt";
+
+    const result = await getUnusedPath(parent, name);
+
+    expect(fsMock.pathExists.callCount).to.equal(3);
+    expect(fsMock.pathExists.getCall(0).args[0]).to.equal("/mock/parent/dir/testFile.txt"); //元のパス
+    expect(fsMock.pathExists.getCall(1).args[0]).to.equal("/mock/parent/dir/testFile.txt.1"); //suffix=1
+    expect(fsMock.pathExists.getCall(2).args[0]).to.equal("/mock/parent/dir/testFile.txt.2"); //suffix=2
+    expect(result).to.equal("/mock/parent/dir/testFile.txt.2");
+  });
+});
