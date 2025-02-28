@@ -890,3 +890,177 @@ describe("#openFile", ()=>{
     });
   });
 });
+
+describe("#saveFile", ()=>{
+  let rewireFileUtils;
+  let saveFile;
+  let fsMock;
+  let pathMock;
+  let gitAddMock;
+
+  beforeEach(()=>{
+    rewireFileUtils = rewire("../../../app/core/fileUtils.js");
+
+    //テスト対象関数を取得
+    saveFile = rewireFileUtils.__get__("saveFile");
+
+    //sinon.stub() でテストダブルを作成（末尾はMock）
+    fsMock = {
+      writeFile: sinon.stub().resolves(),
+      pathExists: sinon.stub().resolves()
+    };
+    pathMock = {
+      resolve: sinon.stub(),
+      parse: sinon.stub(),
+      dirname: sinon.stub(),
+      join: sinon.stub()
+    };
+    gitAddMock = sinon.stub().resolves();
+
+    //rewire を使って差し替え
+    rewireFileUtils.__set__({
+      fs: fsMock,
+      path: pathMock,
+      gitAdd: gitAddMock
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should save file and add to git when .git directory is found at the same level", async ()=>{
+    //モックの動作定義
+    pathMock.resolve.returns("/home/user/project/file.txt");
+    pathMock.parse.returns({
+      root: "/home",
+      dir: "/home/user/project",
+      base: "file.txt",
+      name: "file",
+      ext: ".txt"
+    });
+    pathMock.dirname.onCall(0).returns("/home/user/project"); //最初の dirname 呼び出し
+    pathMock.join.callsFake((dir, file)=>`${dir}/${file}`);
+
+    //1回目の pathExists で true (.git が見つかる)
+    fsMock.pathExists.resolves(true);
+
+    await saveFile("file.txt", "Hello, world!");
+
+    //writeFile が正しく呼ばれたか
+    expect(fsMock.writeFile.calledOnceWithExactly(
+      "/home/user/project/file.txt",
+      "Hello, world!"
+    )).to.be.true;
+
+    //pathExists は一度だけ呼ばれて true が返り、ループを抜ける
+    expect(fsMock.pathExists.calledOnceWithExactly("/home/user/project/.git")).to.be.true;
+
+    //gitAdd が呼ばれる
+    expect(gitAddMock.calledOnceWithExactly(
+      "/home/user/project", //repoDir
+      "/home/user/project/file.txt" //absFilename
+    )).to.be.true;
+  });
+
+  it("should climb up directories until .git is found", async ()=>{
+    pathMock.resolve.returns("/home/user/project/subdir/file.txt");
+    pathMock.parse.returns({
+      root: "/home",
+      dir: "/home/user/project/subdir",
+      base: "file.txt",
+      name: "file",
+      ext: ".txt"
+    });
+    //ループの中で dirname が呼ばれるたびにディレクトリを一つずつ上がっていく想定
+    pathMock.dirname.onCall(0).returns("/home/user/project/subdir");
+    pathMock.dirname.onCall(1).returns("/home/user/project");
+    pathMock.dirname.onCall(2).returns("/home/user");
+
+    pathMock.join.callsFake((dir, file)=>`${dir}/${file}`);
+
+    //.git が最初のチェックでは見つからない(false) -> 次の階層で見つかる(true)
+    fsMock.pathExists.onCall(0).resolves(false);
+    fsMock.pathExists.onCall(1).resolves(true);
+
+    await saveFile("/someRelativePath/file.txt", "Some content");
+
+    //writeFile が正しく呼ばれているか
+    expect(fsMock.writeFile.calledOnceWithExactly(
+      "/home/user/project/subdir/file.txt",
+      "Some content"
+    )).to.be.true;
+
+    //最初は "/home/user/project/subdir/.git" を探して失敗 -> 次は "/home/user/project/.git" を探す
+    expect(fsMock.pathExists.getCall(0).args[0]).to.equal("/home/user/project/subdir/.git");
+    expect(fsMock.pathExists.getCall(1).args[0]).to.equal("/home/user/project/.git");
+
+    //gitAdd が最終的に "/home/user/project" を repoDir として呼ばれている
+    expect(gitAddMock.calledOnceWithExactly(
+      "/home/user/project",
+      "/home/user/project/subdir/file.txt"
+    )).to.be.true;
+  });
+
+  it("should throw an error if no .git repository is found up to root directory", async ()=>{
+    pathMock.resolve.returns("/home/user/project/file.txt");
+    pathMock.parse.returns({
+      root: "/home",
+      dir: "/home/user/project",
+      base: "file.txt",
+      name: "file",
+      ext: ".txt"
+    });
+    //dirname を辿っていくと最終的に /home へ。さらに上がると / (root)
+    pathMock.dirname.onCall(0).returns("/home/user/project");
+    pathMock.dirname.onCall(1).returns("/home/user");
+    pathMock.dirname.onCall(2).returns("/home");
+
+    //.git を常に見つけられない
+    fsMock.pathExists.resolves(false);
+
+    //エラーのテスト
+    try {
+      await saveFile("file.txt", "No .git anywhere");
+      expect.fail("Expected an error but none was thrown");
+    } catch (err) {
+      expect(err).to.be.instanceOf(Error);
+      expect(err.message).to.equal("git repository not found");
+      //カスタムで入れているエラー情報も検証
+      expect(err.filename).to.equal("file.txt");
+      expect(err.absFilename).to.equal("/home/user/project/file.txt");
+    }
+
+    //gitAdd は呼ばれていない
+    expect(gitAddMock.notCalled).to.be.true;
+  });
+
+  it("should throw an error if fs.writeFile fails", async ()=>{
+    pathMock.resolve.returns("/home/user/project/file.txt");
+    pathMock.parse.returns({
+      root: "/home",
+      dir: "/home/user/project",
+      base: "file.txt",
+      name: "file",
+      ext: ".txt"
+    });
+    pathMock.dirname.returns("/home/user/project");
+    pathMock.join.returns("/home/user/project/.git");
+
+    //writeFile が失敗するように設定
+    const writeError = new Error("Write operation failed");
+    fsMock.writeFile.rejects(writeError);
+
+    fsMock.pathExists.resolves(true); //一応 .git はある想定
+
+    try {
+      await saveFile("file.txt", "some content");
+      expect.fail("Expected an error due to fs.writeFile, but none was thrown");
+    } catch (err) {
+      expect(err).to.equal(writeError);
+    }
+
+    //gitAdd には到達しない
+    expect(gitAddMock.notCalled).to.be.true;
+  });
+});
