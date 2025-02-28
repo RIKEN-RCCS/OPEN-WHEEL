@@ -609,3 +609,124 @@ describe("#deliverFileOnRemote", ()=>{
     }
   });
 });
+
+describe("#deliverFileFromRemote", ()=>{
+  let rewireFileUtils;
+  let deliverFileFromRemote;
+  let getLoggerMock;
+  let loggerMock;
+  let getSshMock;
+  let sshMock;
+  let consoleLogMock;
+
+  beforeEach(()=>{
+    //fileUtils.js を rewireで読み込む
+    rewireFileUtils = rewire("../../../app/core/fileUtils.js");
+
+    //テスト対象関数を取得
+    deliverFileFromRemote = rewireFileUtils.__get__("deliverFileFromRemote");
+
+    //getLoggerをスタブ化
+    getLoggerMock = sinon.stub();
+    //loggerとして warnやdebugをモック化
+    loggerMock = {
+      warn: sinon.stub(),
+      debug: sinon.stub()
+    };
+    getLoggerMock.returns(loggerMock);
+
+    //getSshをスタブ化
+    getSshMock = sinon.stub();
+    //sshオブジェクトのrecvメソッドをモック化
+    sshMock = {
+      recv: sinon.stub()
+    };
+
+    //console.logをスタブ化（エラー出力部分のカバレッジを取得するため）
+    consoleLogMock = sinon.stub(console, "log");
+
+    //rewireで差し替え
+    rewireFileUtils.__set__({
+      getLogger: getLoggerMock,
+      getSsh: getSshMock
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return null and log a warning if recipe.remoteToLocal is false", async ()=>{
+    //準備
+    const recipe = {
+      projectRootDir: "/dummy/project",
+      remoteToLocal: false
+    };
+
+    //実行
+    const result = await deliverFileFromRemote(recipe);
+
+    //検証
+    expect(result).to.be.null;
+    expect(loggerMock.warn.calledOnceWithExactly("deliverFileFromRemote must be called with remoteToLocal flag")).to.be.true;
+  });
+
+  it("should reject with an error if ssh.recv throws an error", async ()=>{
+    //準備
+    const recipe = {
+      projectRootDir: "/dummy/project",
+      remoteToLocal: true,
+      remotehostID: "host-001",
+      srcRoot: "/remote/src",
+      srcName: "fileA.txt",
+      dstRoot: "/local/dst",
+      dstName: "fileA.txt"
+    };
+    getSshMock.returns(sshMock);
+
+    const fakeError = new Error("recv failed");
+    sshMock.recv.rejects(fakeError);
+
+    //実行 & 検証
+    try {
+      await deliverFileFromRemote(recipe);
+      expect.fail("Expected deliverFileFromRemote to reject, but it resolved");
+    } catch (err) {
+      expect(err).to.equal(fakeError);
+      //console.log(e) が呼ばれたことも確認
+      expect(consoleLogMock.calledWith(fakeError)).to.be.true;
+    }
+  });
+
+  it("should call ssh.recv and return an object if successful", async ()=>{
+    //準備
+    const recipe = {
+      projectRootDir: "/dummy/project",
+      remoteToLocal: true,
+      remotehostID: "host-002",
+      srcRoot: "/remote/src",
+      srcName: "fileB.dat",
+      dstRoot: "/local/dst",
+      dstName: "fileB.dat"
+    };
+    getSshMock.returns(sshMock);
+
+    //recvが正常終了するようにする
+    sshMock.recv.resolves();
+
+    //実行
+    const result = await deliverFileFromRemote(recipe);
+
+    //検証
+    expect(result).to.deep.equal({
+      type: "copy",
+      src: "/remote/src/fileB.dat",
+      dst: "/local/dst/fileB.dat"
+    });
+    expect(sshMock.recv.calledOnceWithExactly(
+      ["/remote/src/fileB.dat"],
+      "/local/dst/fileB.dat",
+      ["-vv"]
+    )).to.be.true;
+  });
+});
