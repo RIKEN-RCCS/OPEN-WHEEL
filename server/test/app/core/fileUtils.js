@@ -160,3 +160,153 @@ describe("#readJsonGreedy", ()=>{
     expect(args.factor).to.equal(1);
   });
 });
+
+describe("#addX", ()=>{
+  let rewireFileUtils;
+  let addX;
+  let fsMock;
+  let modeMock;
+
+  beforeEach(()=>{
+    //fileUtils.js を rewire で読み込む
+    rewireFileUtils = rewire("../../../app/core/fileUtils.js");
+
+    //テスト対象関数を rewire で取得
+    addX = rewireFileUtils.__get__("addX");
+
+    //fs と Mode をモック化する
+    fsMock = {
+      stat: sinon.stub(),
+      chmod: sinon.stub()
+    };
+    modeMock = sinon.stub();
+
+    //rewireでfileUtils内部のfs, Modeを差し替える
+    rewireFileUtils.__set__({
+      fs: fsMock,
+      Mode: modeMock
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should set '444' if no read/write bits are set (owner/group/others)", async ()=>{
+    //モック化したfs.statが返すstatオブジェクト
+    fsMock.stat.resolves({ /*dummy stat object */ });
+
+    //Modeのコンストラクタが返すowner/group/othersのread/writeをすべて false
+    modeMock.returns({
+      owner: { read: false, write: false },
+      group: { read: false, write: false },
+      others: { read: false, write: false }
+    });
+
+    fsMock.chmod.resolves(); //成功を返す
+
+    const filePath = "/dummy/path";
+    await addX(filePath);
+
+    //'444' になっているか
+    expect(fsMock.chmod.calledOnceWithExactly(filePath, "444")).to.be.true;
+  });
+
+  it("should set '555' if only read bits are set for owner/group/others", async ()=>{
+    fsMock.stat.resolves({});
+    modeMock.returns({
+      owner: { read: true, write: false },
+      group: { read: true, write: false },
+      others: { read: true, write: false }
+    });
+    fsMock.chmod.resolves();
+
+    const filePath = "/dummy/path";
+    await addX(filePath);
+
+    //'555' になっているか
+    expect(fsMock.chmod.calledOnceWithExactly(filePath, "555")).to.be.true;
+  });
+
+  it("should set '666' if only write bits are set for owner/group/others", async ()=>{
+    fsMock.stat.resolves({});
+    modeMock.returns({
+      owner: { read: false, write: true },
+      group: { read: false, write: true },
+      others: { read: false, write: true }
+    });
+    fsMock.chmod.resolves();
+
+    const filePath = "/dummy/path";
+    await addX(filePath);
+
+    //'666' になっているか
+    expect(fsMock.chmod.calledOnceWithExactly(filePath, "666")).to.be.true;
+  });
+
+  it("should set '777' if read and write bits are set for owner/group/others", async ()=>{
+    fsMock.stat.resolves({});
+    modeMock.returns({
+      owner: { read: true, write: true },
+      group: { read: true, write: true },
+      others: { read: true, write: true }
+    });
+    fsMock.chmod.resolves();
+
+    const filePath = "/dummy/path";
+    await addX(filePath);
+
+    //'777' になっているか
+    expect(fsMock.chmod.calledOnceWithExactly(filePath, "777")).to.be.true;
+  });
+
+  it("should set mixed bits correctly if only owner has read/write, group has read only, others none", async ()=>{
+    fsMock.stat.resolves({});
+    modeMock.returns({
+      owner: { read: true, write: true }, //=> +1 +2
+      group: { read: true, write: false }, //=> +1
+      others: { read: false, write: false }
+    });
+    fsMock.chmod.resolves();
+
+    const filePath = "/dummy/path";
+    await addX(filePath);
+
+    //owner:4+1+2=7, group:4+1=5, others:4=4 => "754"
+    expect(fsMock.chmod.calledOnceWithExactly(filePath, "754")).to.be.true;
+  });
+
+  it("should reject if fs.stat fails", async ()=>{
+    //statが失敗した場合
+    const statError = new Error("stat error");
+    fsMock.stat.rejects(statError);
+
+    try {
+      await addX("/some/path");
+      expect.fail("Expected addX to reject, but it resolved");
+    } catch (err) {
+      expect(err).to.equal(statError);
+    }
+    //chmodは呼ばれない
+    expect(fsMock.chmod.called).to.be.false;
+  });
+
+  it("should reject if fs.chmod fails", async ()=>{
+    fsMock.stat.resolves({});
+    modeMock.returns({
+      owner: { read: false, write: false },
+      group: { read: false, write: false },
+      others: { read: false, write: false }
+    });
+    //chmodでエラー
+    const chmodError = new Error("chmod error");
+    fsMock.chmod.rejects(chmodError);
+
+    try {
+      await addX("/some/path");
+      expect.fail("Expected addX to reject, but it resolved");
+    } catch (err) {
+      expect(err).to.equal(chmodError);
+    }
+  });
+});

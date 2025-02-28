@@ -148,7 +148,7 @@ describe("#register", ()=>{
     //実行
     const result = await register(hostinfo, task, direction, src, dst, opt);
 
-    //qsubAndWaitの結果が返ってくるはず
+    //qsubAndWaitの結果が返ってくる
     expect(result).to.equal("qsubResultMock");
 
     //SBSMockが呼ばれた回数は1回
@@ -268,7 +268,7 @@ describe("#register", ()=>{
     const opt = null;
 
     //register呼び出し自体は成功するが、
-    //SBSMockのexec呼び出し時に例外が起こるはず
+    //SBSMockのexec呼び出し時に例外が起こる
     await register(hostinfo, task, direction, src, dst, opt);
 
     //SBSのconstructor引数
