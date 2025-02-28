@@ -4614,7 +4614,7 @@ describe("#arrangeComponent", ()=>{
     const stepjobGroupArray = [stepjobTaskGroup];
 
     const result = await arrangeComponent(stepjobGroupArray);
-    //comp3が最後に回されるはず
+    //comp3が最後に回される
     expect(result.map((c)=>c.ID)).to.deep.equal(["comp1", "comp2", "comp3"]);
   });
 
@@ -4721,7 +4721,7 @@ describe("#addInputFile", ()=>{
       expect(err.message).to.equal(`${invalidName} is not valid inputFile name`);
     }
     expect(isValidInputFilenameMock.calledOnceWithExactly(invalidName)).to.be.true;
-    //下記の関数は呼ばれないはず
+    //下記の関数は呼ばれない
     expect(getComponentDirMock.notCalled).to.be.true;
     expect(readComponentJsonMock.notCalled).to.be.true;
     expect(writeComponentJsonMock.notCalled).to.be.true;
@@ -5093,7 +5093,7 @@ describe("#setUploadOndemandOutputFile", ()=>{
     //removeFileLink が正しく呼ばれているか
     //→ 2つ目以降の出力ファイルに記載されたdstセットに対して removeFileLink() が呼ばれる
     //第2〜n番目 outputFiles[i].dst: すべてunique set -> removeFileLinkが複数呼ばれる
-    //具体的には以下で4回呼ばれるはず
+    //具体的には以下で4回呼ばれる
     expect(removeFileLinkMock.callCount).to.equal(3); //2つ目は2回, 3つ目は1回: ただし Set() により重複除外
     //順番は特に保証されないが、呼び出し引数が正しいかチェック
     //例: removeFileLink(projectRootDir, "comp-id", "someOutput2", "dstComp2", "dstFilename2")
@@ -6437,7 +6437,7 @@ describe("#getSourceComponents", ()=>{
   it("should return an empty array if no componentJson files are found", async ()=>{
     //Arrange
     globStub.resolves([]);
-    //readJsonGreedy は呼ばれないはずなのでスタブは設定しなくてもOK
+    //readJsonGreedy は呼ばれないのでスタブは設定しなくてもOK
 
     //Act
     const result = await getSourceComponents(mockProjectRootDir);

@@ -140,7 +140,7 @@ describe("#addSsh", ()=>{
 
     addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
 
-    //新規Map生成はされないはずなので dbMock.set(...)は呼ばれない
+    //新規Map生成はされないので dbMock.set(...)は呼ばれない
     expect(dbMock.set.notCalled).to.be.true;
 
     //代わりに、dbMock.get(...).set(...)で情報を追加
@@ -529,7 +529,7 @@ describe("#askPassword", ()=>{
 
     try {
       await askPassword("dummyClientID", "Please enter your password");
-      //ここには来ないはず
+      //ここには来ない
       expect.fail("Expected askPassword to reject, but it resolved");
     } catch (err) {
       expect(err).to.be.an("error");
