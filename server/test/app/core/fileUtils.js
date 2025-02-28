@@ -469,3 +469,143 @@ describe("#deliverFile", ()=>{
     expect(fsMock.copy.notCalled).to.be.true;
   });
 });
+
+describe("#deliverFileOnRemote", ()=>{
+  let rewireFileUtils;
+  let deliverFileOnRemote;
+  let getLoggerMock;
+  let loggerMock;
+  let getSshMock;
+  let sshMock;
+
+  beforeEach(()=>{
+    //rewire で fileUtils.js を読み込む
+    rewireFileUtils = rewire("../../../app/core/fileUtils.js");
+
+    //テスト対象関数の取得
+    deliverFileOnRemote = rewireFileUtils.__get__("deliverFileOnRemote");
+
+    //logger のモックを準備
+    loggerMock = {
+      warn: sinon.stub(),
+      debug: sinon.stub()
+    };
+    getLoggerMock = sinon.stub().returns(loggerMock);
+
+    //getSsh のモックを準備
+    sshMock = {
+      exec: sinon.stub()
+    };
+    getSshMock = sinon.stub().returns(sshMock);
+
+    //rewire で fileUtils.js 内部の依存を差し替え
+    rewireFileUtils.__set__("getLogger", getLoggerMock);
+    rewireFileUtils.__set__("getSsh", getSshMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return null and log a warning if recipe.onRemote is false", async ()=>{
+    const recipe = {
+      onRemote: false, //onRemoteがfalseの場合のテスト
+      projectRootDir: "/dummy/dir",
+      remotehostID: "hostID"
+    };
+    const result = await deliverFileOnRemote(recipe);
+
+    expect(result).to.be.null;
+    expect(loggerMock.warn.calledOnceWithExactly("deliverFileOnRemote must be called with onRemote flag")).to.be.true;
+    //getSsh は呼ばれない
+    expect(getSshMock.notCalled).to.be.true;
+  });
+
+  it("should execute ln -sf if forceCopy is false and ssh.exec returns 0 (success)", async ()=>{
+    const recipe = {
+      onRemote: true,
+      forceCopy: false,
+      projectRootDir: "/project/test",
+      remotehostID: "testHostID",
+      srcRoot: "/remote/src",
+      srcName: "fileA",
+      dstRoot: "/remote/dest",
+      dstName: "fileB"
+    };
+    //exec結果が成功(0)を返すようにする
+    sshMock.exec.resolves(0);
+
+    const result = await deliverFileOnRemote(recipe);
+
+    //cmd: ln -sf
+    const expectedCmdPart = "ln -sf";
+    expect(sshMock.exec.callCount).to.equal(1);
+    const calledCmd = sshMock.exec.getCall(0).args[0];
+    expect(calledCmd).to.include(expectedCmdPart);
+
+    //logger.debug が実行されているか
+    expect(loggerMock.debug.calledWithExactly("execute on remote", sinon.match.string)).to.be.true;
+
+    //正常完了の場合はオブジェクトを返す
+    expect(result).to.deep.equal({
+      type: "copy",
+      src: "/remote/src/fileA",
+      dst: "/remote/dest/fileB"
+    });
+  });
+
+  it("should execute cp -r if forceCopy is true and ssh.exec returns 0 (success)", async ()=>{
+    const recipe = {
+      onRemote: true,
+      forceCopy: true,
+      projectRootDir: "/project/copy",
+      remotehostID: "copyHostID",
+      srcRoot: "/remote/src2",
+      srcName: "folderA",
+      dstRoot: "/remote/dest2",
+      dstName: "folderB"
+    };
+    sshMock.exec.resolves(0);
+
+    const result = await deliverFileOnRemote(recipe);
+
+    //forceCopy=true => cmd: cp -r
+    const expectedCmdPart = "cp -r";
+    expect(sshMock.exec.callCount).to.equal(1);
+    const calledCmd = sshMock.exec.getCall(0).args[0];
+    expect(calledCmd).to.include(expectedCmdPart);
+
+    expect(result).to.deep.equal({
+      type: "copy",
+      src: "/remote/src2/folderA",
+      dst: "/remote/dest2/folderB"
+    });
+  });
+
+  it("should throw an error if ssh.exec returns a non-zero code", async ()=>{
+    const recipe = {
+      onRemote: true,
+      forceCopy: false,
+      projectRootDir: "/project/fail",
+      remotehostID: "failHostID",
+      srcRoot: "/remote/srcX",
+      srcName: "badfile",
+      dstRoot: "/remote/destX",
+      dstName: "destfile"
+    };
+    //exec結果が失敗(非0)を返すようにする
+    sshMock.exec.resolves(1);
+
+    try {
+      await deliverFileOnRemote(recipe);
+      expect.fail("Expected deliverFileOnRemote to throw, but it did not");
+    } catch (err) {
+      expect(err).to.be.instanceOf(Error);
+      expect(err.message).to.equal("deliver file on remote failed");
+      //logger.warn にも記録されているか
+      expect(loggerMock.warn.calledWithExactly("deliver file on remote failed", 1)).to.be.true;
+      //付与される err.rt が 1 になっているか
+      expect(err).to.have.property("rt", 1);
+    }
+  });
+});
