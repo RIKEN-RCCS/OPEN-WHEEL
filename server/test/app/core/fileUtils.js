@@ -730,3 +730,163 @@ describe("#deliverFileFromRemote", ()=>{
     )).to.be.true;
   });
 });
+
+describe("#openFile", ()=>{
+  let rewireFileUtils;
+  let openFile;
+  let fsMock;
+  let readJsonGreedyMock;
+  let getLoggerMock;
+  let loggerMock;
+  const dummyProjectRoot = "/dummy/projectRoot";
+
+  beforeEach(()=>{
+    //fileUtils.js を rewire で読み込む
+    rewireFileUtils = rewire("../../../app/core/fileUtils.js");
+    //テスト対象関数 openFile を取得
+    openFile = rewireFileUtils.__get__("openFile");
+
+    //fs のスタブを作成
+    fsMock = {
+      readFile: sinon.stub(),
+      ensureFile: sinon.stub()
+    };
+    //logger のスタブ
+    loggerMock = { warn: sinon.stub() };
+    getLoggerMock = sinon.stub().returns(loggerMock);
+    //readJsonGreedy のスタブ
+    readJsonGreedyMock = sinon.stub();
+
+    //rewire で差し替え
+    rewireFileUtils.__set__("fs", fsMock);
+    rewireFileUtils.__set__("getLogger", getLoggerMock);
+    rewireFileUtils.__set__("readJsonGreedy", readJsonGreedyMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should create an empty file and return empty content object if file does not exist (ENOENT)", async ()=>{
+    //readFile が ENOENT を投げる
+    fsMock.readFile.rejects({ code: "ENOENT" });
+    fsMock.ensureFile.resolves();
+
+    const result = await openFile(dummyProjectRoot, "notExist.txt");
+
+    expect(fsMock.ensureFile.calledOnce).to.be.true;
+    //戻り値を検証
+    expect(result).to.have.lengthOf(1);
+    expect(result[0].content).to.equal("");
+    expect(result[0].filename).to.equal("notExist.txt");
+  });
+
+  it("should throw an error if fs.readFile fails with non-ENOENT error", async ()=>{
+    //readFile が別のエラーを投げる
+    fsMock.readFile.rejects(new Error("Unknown error"));
+
+    try {
+      await openFile(dummyProjectRoot, "someFile.txt");
+      expect.fail("Expected openFile to throw but it did not");
+    } catch (err) {
+      expect(err).to.be.an("Error");
+      expect(err.message).to.equal("Unknown error");
+    }
+  });
+
+  it("should return single object if forceNormal = true", async ()=>{
+    //ファイルを正常に読み込める前提
+    fsMock.readFile.resolves(Buffer.from("normal content"));
+    const result = await openFile(dummyProjectRoot, "normalFile.txt", true);
+
+    expect(result).to.have.lengthOf(1);
+    expect(result[0]).to.deep.include({
+      content: "normal content",
+      filename: "normalFile.txt"
+    });
+  });
+
+  it("should return single object if JSON.parse fails (not a parameter file)", async ()=>{
+    fsMock.readFile.resolves(Buffer.from("{ invalid JSON"));
+    //forceNormal = false (デフォルト) のまま
+    const result = await openFile(dummyProjectRoot, "invalid.json");
+
+    expect(result).to.have.lengthOf(1);
+    expect(result[0]).to.deep.include({
+      filename: "invalid.json",
+      content: "{ invalid JSON"
+    });
+  });
+
+  it("should return single object if parsed JSON does not have targetFiles property", async ()=>{
+    fsMock.readFile.resolves(Buffer.from("{\"someKey\": 123}"));
+    const result = await openFile(dummyProjectRoot, "noTargetFiles.json");
+
+    expect(result).to.have.lengthOf(1);
+    expect(result[0].filename).to.equal("noTargetFiles.json");
+    expect(result[0].content).to.equal("{\"someKey\": 123}");
+  });
+
+  it("should return single object if targetFiles is not an array", async ()=>{
+    fsMock.readFile.resolves(Buffer.from("{\"targetFiles\": \"not array\"}"));
+    const result = await openFile(dummyProjectRoot, "notArray.json");
+
+    expect(result).to.have.lengthOf(1);
+    expect(result[0].content).to.equal("{\"targetFiles\": \"not array\"}");
+  });
+
+  it("should read multiple target files if parameter setting file has array of string targetFiles", async ()=>{
+    //ベースファイル: parameter setting file
+    fsMock.readFile.onCall(0).resolves(Buffer.from(JSON.stringify({
+      targetFiles: ["sub1.txt", "sub2.txt"]
+    })));
+    //project.json を読む readJsonGreedy は componentPath を返す想定
+    readJsonGreedyMock.resolves({
+      componentPath: {}
+    });
+    //sub1.txt, sub2.txt の中身を用意
+    fsMock.readFile.onCall(1).resolves(Buffer.from("content sub1"));
+    fsMock.readFile.onCall(2).resolves(Buffer.from("content sub2"));
+
+    const result = await openFile(dummyProjectRoot, "param.json");
+
+    //戻り値の検証
+    expect(result).to.have.lengthOf(3);
+
+    //先頭がパラメータ設定ファイル自身
+    expect(result[0]).to.include({
+      filename: "param.json",
+      isParameterSettingFile: true
+    });
+    //sub1.txt
+    expect(result[1]).to.include({
+      content: "content sub1",
+      filename: "sub1.txt"
+    });
+    //sub2.txt
+    expect(result[2]).to.include({
+      content: "content sub2",
+      filename: "sub2.txt"
+    });
+  });
+
+  it("should handle target files which are object with only targetName (no targetNode)", async ()=>{
+    //parameter file
+    fsMock.readFile.onCall(0).resolves(Buffer.from(JSON.stringify({
+      targetFiles: [
+        { targetName: "hello.txt" }
+      ]
+    })));
+    readJsonGreedyMock.resolves({ componentPath: {} });
+    fsMock.readFile.onCall(1).resolves(Buffer.from("hello content"));
+
+    const result = await openFile(dummyProjectRoot, "paramObj.json");
+
+    expect(result).to.have.lengthOf(2);
+    expect(result[0]).to.have.property("isParameterSettingFile", true);
+    expect(result[1]).to.include({
+      filename: "hello.txt",
+      content: "hello content"
+    });
+  });
+});
