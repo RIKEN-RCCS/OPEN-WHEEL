@@ -310,3 +310,162 @@ describe("#addX", ()=>{
     }
   });
 });
+
+describe("#deliverFile", ()=>{
+  let rewireFileUtils;
+  let deliverFile;
+  let fsMock; //fsモジュールをstub化
+  let statsMock; //fs.lstatで返されるstatオブジェクトをstub化
+
+  beforeEach(()=>{
+    //rewireでfileUtils.jsを読み込み
+    rewireFileUtils = rewire("../../../app/core/fileUtils.js");
+
+    //テスト対象関数deliverFileを取得
+    deliverFile = rewireFileUtils.__get__("deliverFile");
+
+    //fsモックを用意し、呼び出しをすべてsinon.stub()化
+    fsMock = {
+      lstat: sinon.stub(),
+      copy: sinon.stub(),
+      remove: sinon.stub(),
+      ensureSymlink: sinon.stub()
+    };
+
+    //fileUtils.js内部のfsをモックに差し替え
+    rewireFileUtils.__set__("fs", fsMock);
+
+    //isDirectory()の結果を切り替えるためのstatsオブジェクトMock
+    statsMock = {
+      isDirectory: sinon.stub()
+    };
+  });
+
+  it("should deliver directory with symlink if not forced to copy", async ()=>{
+    //isDirectory() => true
+    statsMock.isDirectory.returns(true);
+    fsMock.lstat.resolves(statsMock);
+
+    //remove/ensureSymlink成功を想定
+    fsMock.remove.resolves();
+    fsMock.ensureSymlink.resolves();
+
+    const src = "/path/to/srcDir";
+    const dst = "/path/to/dstDir";
+
+    const result = await deliverFile(src, dst, false);
+
+    expect(fsMock.lstat.calledOnceWithExactly(src)).to.be.true;
+    expect(fsMock.remove.calledOnceWithExactly(dst)).to.be.true;
+    expect(fsMock.ensureSymlink.calledOnceWithExactly(src, dst, "dir")).to.be.true;
+    expect(result).to.deep.equal({
+      type: "link-dir",
+      src,
+      dst
+    });
+  });
+
+  it("should deliver file with symlink if not forced to copy", async ()=>{
+    //isDirectory() => false
+    statsMock.isDirectory.returns(false);
+    fsMock.lstat.resolves(statsMock);
+
+    fsMock.remove.resolves();
+    fsMock.ensureSymlink.resolves();
+
+    const src = "/path/to/srcFile";
+    const dst = "/path/to/dstFile";
+
+    const result = await deliverFile(src, dst, false);
+
+    expect(fsMock.lstat.calledOnceWithExactly(src)).to.be.true;
+    expect(fsMock.remove.calledOnceWithExactly(dst)).to.be.true;
+    expect(fsMock.ensureSymlink.calledOnceWithExactly(src, dst, "file")).to.be.true;
+    expect(result).to.deep.equal({
+      type: "link-file",
+      src,
+      dst
+    });
+  });
+
+  it("should deliver by copying if forceCopy is true", async ()=>{
+    statsMock.isDirectory.returns(true); //dir/file どちらでも可
+    fsMock.lstat.resolves(statsMock);
+
+    fsMock.copy.resolves();
+
+    const src = "/path/to/srcAny";
+    const dst = "/path/to/dstAny";
+
+    const result = await deliverFile(src, dst, true);
+
+    //remove()やensureSymlink()は呼ばれない
+    expect(fsMock.remove.notCalled).to.be.true;
+    expect(fsMock.ensureSymlink.notCalled).to.be.true;
+
+    expect(fsMock.copy.calledOnceWithExactly(src, dst, { overwrite: true })).to.be.true;
+    expect(result).to.deep.equal({
+      type: "copy",
+      src,
+      dst
+    });
+  });
+
+  it("should fallback to copy when ensureSymlink throws EPERM error", async ()=>{
+    //symlink作成時にEPERMエラーを投げる
+    statsMock.isDirectory.returns(false);
+    fsMock.lstat.resolves(statsMock);
+    fsMock.remove.resolves();
+
+    const epermError = new Error("EPERM error");
+    epermError.code = "EPERM";
+    fsMock.ensureSymlink.rejects(epermError);
+
+    //fallbackのcopy
+    fsMock.copy.resolves();
+
+    const src = "/dir/src";
+    const dst = "/dir/dst";
+
+    const result = await deliverFile(src, dst, false);
+
+    //remove -> ensureSymlink(EPERM) -> copy(overwrite: false)
+    expect(fsMock.remove.calledOnceWithExactly(dst)).to.be.true;
+    expect(fsMock.ensureSymlink.calledOnce).to.be.true;
+    expect(fsMock.copy.calledOnceWithExactly(src, dst, { overwrite: false })).to.be.true;
+
+    expect(result).to.deep.equal({
+      type: "copy",
+      src,
+      dst
+    });
+  });
+
+  it("should reject promise if ensureSymlink throws error with non-EPERM code", async ()=>{
+    statsMock.isDirectory.returns(false);
+    fsMock.lstat.resolves(statsMock);
+    fsMock.remove.resolves();
+
+    const otherError = new Error("Some other error");
+    otherError.code = "EACCES"; //例: EPERM以外のコード
+    fsMock.ensureSymlink.rejects(otherError);
+
+    //copyは呼ばれない
+    fsMock.copy.resolves();
+
+    const src = "/some/src";
+    const dst = "/some/dst";
+
+    try {
+      await deliverFile(src, dst, false);
+      expect.fail("Expected deliverFile to reject, but it resolved");
+    } catch (err) {
+      expect(err).to.equal(otherError);
+    }
+
+    expect(fsMock.remove.calledOnceWithExactly(dst)).to.be.true;
+    expect(fsMock.ensureSymlink.calledOnce).to.be.true;
+    //EPERMでないのでコピーも行われない
+    expect(fsMock.copy.notCalled).to.be.true;
+  });
+});
