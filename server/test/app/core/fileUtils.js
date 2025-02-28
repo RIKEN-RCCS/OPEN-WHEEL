@@ -1124,3 +1124,89 @@ describe("#getUnusedPath", ()=>{
     expect(result).to.equal("/mock/parent/dir/testFile.txt.2");
   });
 });
+
+describe("#replaceCRLF", ()=>{
+  let rewireFileUtils;
+  let replaceCRLF;
+  let fsMock;
+
+  beforeEach(()=>{
+    //fileUtils.js をrewireで読み込む
+    rewireFileUtils = rewire("../../../app/core/fileUtils.js");
+
+    //テスト対象関数を取得
+    replaceCRLF = rewireFileUtils.__get__("replaceCRLF");
+
+    //fsをStub化
+    fsMock = {
+      readFile: sinon.stub(),
+      writeFile: sinon.stub()
+    };
+
+    //fileUtils.js内部のfsを差し替え
+    rewireFileUtils.__set__("fs", fsMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should replace CRLF with LF and write the file back", async ()=>{
+    //readFile成功 -> CRLF混じり文字列を返す
+    fsMock.readFile.resolves(Buffer.from("line1\r\nline2\r\n"));
+    fsMock.writeFile.resolves();
+
+    await replaceCRLF("/path/to/windowsfile.txt");
+
+    //readFileが正しく呼ばれたか確認
+    expect(fsMock.readFile.calledOnceWithExactly("/path/to/windowsfile.txt")).to.be.true;
+
+    //writeFileに渡される文字列が \r\n -> \n に変換されているか確認
+    expect(fsMock.writeFile.calledOnce).to.be.true;
+    const writeArgs = fsMock.writeFile.getCall(0).args;
+    expect(writeArgs[0]).to.equal("/path/to/windowsfile.txt");
+    expect(writeArgs[1]).to.equal("line1\nline2\n");
+  });
+
+  it("should keep LF as is if there is no CRLF", async ()=>{
+    //readFile成功 -> LFのみの文字列を返す
+    fsMock.readFile.resolves(Buffer.from("line1\nline2\n"));
+    fsMock.writeFile.resolves();
+
+    await replaceCRLF("/path/to/unixfile.txt");
+
+    expect(fsMock.readFile.calledOnceWithExactly("/path/to/unixfile.txt")).to.be.true;
+    expect(fsMock.writeFile.calledOnce).to.be.true;
+    const writeArgs = fsMock.writeFile.getCall(0).args;
+    expect(writeArgs[0]).to.equal("/path/to/unixfile.txt");
+    //もともと LF だけなので置換内容は同じ
+    expect(writeArgs[1]).to.equal("line1\nline2\n");
+  });
+
+  it("should reject if readFile fails", async ()=>{
+    //readFileが失敗するケース
+    fsMock.readFile.rejects(new Error("readFile error"));
+
+    try {
+      await replaceCRLF("/path/to/errorfile.txt");
+      expect.fail("Expected an error but none was thrown");
+    } catch (err) {
+      expect(err.message).to.equal("readFile error");
+    }
+    //writeFileは呼ばれない
+    expect(fsMock.writeFile.called).to.be.false;
+  });
+
+  it("should reject if writeFile fails", async ()=>{
+    //readFile成功、writeFile失敗のケース
+    fsMock.readFile.resolves(Buffer.from("line1\r\nline2\r\n"));
+    fsMock.writeFile.rejects(new Error("writeFile error"));
+
+    try {
+      await replaceCRLF("/path/to/errorfile2.txt");
+      expect.fail("Expected an error but none was thrown");
+    } catch (err) {
+      expect(err.message).to.equal("writeFile error");
+    }
+  });
+});
