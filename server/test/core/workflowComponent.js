@@ -10,6 +10,7 @@ const { expect } = require("chai");
 
 //testee
 const { isLocalComponent } = require("../../app/core/workflowComponent");
+const { getComponentDefaultName } = require("../../app/core/workflowComponent");
 
 describe("UT for workflowComponents class", ()=>{
   describe("#isLocalComponent", ()=>{
@@ -27,6 +28,24 @@ describe("UT for workflowComponents class", ()=>{
       const component = { host: "remotehost" };
       const result = isLocalComponent(component);
       expect(result).to.be.false;
+    });
+  });
+  describe("#getComponentDefaultName", ()=>{
+    it("should return 'sjTask' for 'stepjobTask' type", ()=>{
+      const result = getComponentDefaultName("stepjobTask");
+      expect(result).to.equal("sjTask");
+    });
+    it("should return 'bjTask' for 'bulkjobTask' type", ()=>{
+      const result = getComponentDefaultName("bulkjobTask");
+      expect(result).to.equal("bjTask");
+    });
+    it("should return the type itself if not 'stepjobTask' or 'bulkjobTask'", ()=>{
+      const result = getComponentDefaultName("task");
+      expect(result).to.equal("task");
+    });
+    it("should return the type itself for unknown types", ()=>{
+      const result = getComponentDefaultName("unknownType");
+      expect(result).to.equal("unknownType");
     });
   });
 });
