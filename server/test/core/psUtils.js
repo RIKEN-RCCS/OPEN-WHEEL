@@ -239,4 +239,61 @@ describe("UT for psUtils class", function () {
       }
     });
   });
+  describe("#getScatterFilesV2", ()=>{
+    let globStub;
+
+    beforeEach(()=>{
+      globStub = sinon.stub();
+      psUtils.__set__("promisify", ()=>globStub);
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should return empty array if paramSettings.scatter is missing", async ()=>{
+      const templateRoot = "/template";
+      const paramSettings = {};
+      const result = await getScatterFilesV2(templateRoot, paramSettings);
+      expect(result).to.deep.equal([]);
+    });
+
+    it("should return empty array if paramSettings.scatter is not an array", async ()=>{
+      const templateRoot = "/template";
+      const paramSettings = { scatter: "not-an-array" };
+      const result = await getScatterFilesV2(templateRoot, paramSettings);
+      expect(result).to.deep.equal([]);
+    });
+    it("should return matched scatter files", async ()=>{
+      const templateRoot = "/template";
+      const paramSettings = {
+        scatter: [
+          { srcName: "file*.txt" },
+          { srcName: "data*.json" }
+        ]
+      };
+      globStub.withArgs("file*.txt", { cwd: templateRoot }).resolves(["file1.txt", "file2.txt"]);
+      globStub.withArgs("data*.json", { cwd: templateRoot }).resolves(["data1.json"]);
+      const result = await getScatterFilesV2(templateRoot, paramSettings);
+      expect(result).to.deep.equal([
+        "file1.txt",
+        "file2.txt",
+        "data1.json"
+      ]);
+    });
+    it("should throw error if glob fails", async ()=>{
+      const templateRoot = "/template";
+      const paramSettings = {
+        scatter: [{ srcName: "file*.txt" }]
+      };
+      globStub.rejects(new Error("Glob error"));
+
+      try {
+        await getScatterFilesV2(templateRoot, paramSettings);
+        expect.fail("Expected error to be thrown");
+      } catch (err) {
+        expect(err.message).to.equal("Glob error");
+      }
+    });
+  });
 });
