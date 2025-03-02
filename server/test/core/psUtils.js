@@ -111,4 +111,84 @@ describe("UT for psUtils class", function () {
       }
     });
   });
+  describe("UT for psUtils class", ()=>{
+    let globStub, nunjucksStub, fsCopyStub, rsyncStub, mockLogger;
+
+    beforeEach(()=>{
+      globStub = sinon.stub().resolves(["file1.txt", "file2.txt"]);
+      nunjucksStub = sinon.stub();
+      fsCopyStub = sinon.stub().resolves();
+      rsyncStub = sinon.stub().resolves();
+      mockLogger = { trace: sinon.stub() };
+      psUtils.__set__("promisify", ()=>globStub);
+      psUtils.__set__("nunjucks", { renderString: nunjucksStub });
+      psUtils.__set__("fs", { copy: fsCopyStub });
+      psUtils.__set__("overwriteByRsync", rsyncStub);
+    });
+    it("should scatter files correctly using fs.copy", async ()=>{
+      const templateRoot = "/template";
+      const instanceRoot = "/instance";
+      const params = { param1: "value1" };
+      const scatterRecipe = [{ srcName: "srcFile", dstName: "dstFile" }];
+      nunjucksStub.withArgs("srcFile", params).returns("srcFile");
+      nunjucksStub.withArgs("dstFile", params).returns("dstFile");
+      await scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, mockLogger, false);
+      expect(fsCopyStub.calledTwice).to.be.true;
+      expect(fsCopyStub.firstCall.calledWithExactly(
+        path.join(templateRoot, "file1.txt"),
+        path.join(instanceRoot, "dstFile"),
+        { overwrite: true }
+      )).to.be.true;
+      expect(fsCopyStub.secondCall.calledWithExactly(
+        path.join(templateRoot, "file2.txt"),
+        path.join(instanceRoot, "dstFile"),
+        { overwrite: true }
+      )).to.be.true;
+    });
+    it("should scatter files correctly using rsync", async ()=>{
+      const templateRoot = "/template";
+      const instanceRoot = "/instance";
+      const params = { param1: "value1" };
+      const scatterRecipe = [{ srcName: "srcFile", dstName: "dstFile" }];
+      nunjucksStub.withArgs("srcFile", params).returns("srcFile");
+      nunjucksStub.withArgs("dstFile", params).returns("dstFile");
+      await scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, mockLogger, true);
+      expect(rsyncStub.calledTwice).to.be.true;
+      expect(rsyncStub.firstCall.calledWithExactly(
+        path.join(templateRoot, "file1.txt"),
+        path.join(instanceRoot, "dstFile")
+      )).to.be.true;
+      expect(rsyncStub.secondCall.calledWithExactly(
+        path.join(templateRoot, "file2.txt"),
+        path.join(instanceRoot, "dstFile")
+      )).to.be.true;
+    });
+    it("should handle ENOENT and EEXIST errors gracefully", async ()=>{
+      fsCopyStub.rejects({ code: "ENOENT" });
+      const templateRoot = "/template";
+      const instanceRoot = "/instance";
+      const params = { param1: "value1" };
+      const scatterRecipe = [{ srcName: "srcFile", dstName: "dstFile" }];
+      nunjucksStub.withArgs("srcFile", params).returns("file1.txt");
+      nunjucksStub.withArgs("dstFile", params).returns("dstFile");
+      const result = await scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, mockLogger, false);
+      expect(result).to.be.true;
+    });
+    it("should throw an error for unexpected errors", async ()=>{
+      fsCopyStub.rejects(new Error("Unexpected error"));
+      const templateRoot = "/template";
+      const instanceRoot = "/instance";
+      const params = { param1: "value1" };
+      const scatterRecipe = [{ srcName: "srcFile", dstName: "dstFile" }];
+      nunjucksStub.withArgs("srcFile", params).returns("file1.txt");
+      nunjucksStub.withArgs("dstFile", params).returns("dstFile");
+
+      try {
+        await scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, mockLogger, false);
+        throw new Error("Test failed: should have thrown an error");
+      } catch (err) {
+        expect(err.message).to.equal("Unexpected error");
+      }
+    });
+  });
 });
