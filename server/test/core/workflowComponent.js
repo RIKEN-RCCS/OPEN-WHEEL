@@ -7,11 +7,15 @@
 
 //setup test framework
 const { expect } = require("chai");
+const sinon = require("sinon");
+const rewire = require("rewire");
+const rewWorkflowComponents = rewire("../../app/core/workflowComponent.js");
 
 //testee
 const { isLocalComponent } = require("../../app/core/workflowComponent");
 const { getComponentDefaultName } = require("../../app/core/workflowComponent");
 const { removeDuplicatedComponent } = require("../../app/core/workflowComponent");
+const isInitialComponent = rewWorkflowComponents.__get__("isInitialComponent");
 
 describe("UT for workflowComponents class", ()=>{
   describe("#isLocalComponent", ()=>{
@@ -103,6 +107,91 @@ describe("UT for workflowComponents class", ()=>{
       const clonedComponents = JSON.parse(JSON.stringify(components));
       removeDuplicatedComponent(components);
       expect(components).to.deep.equal(clonedComponents);
+    });
+  });
+  describe("#isInitialComponent", ()=>{
+    let isBehindIfComponentStub;
+    beforeEach(()=>{
+      isBehindIfComponentStub = sinon.stub();
+      rewWorkflowComponents.__set__("isBehindIfComponent", isBehindIfComponentStub);
+    });
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should return false if the component is behind an 'if' component", async ()=>{
+      const component = { type: "task" };
+      isBehindIfComponentStub.resolves(true);
+      const result = await isInitialComponent("/project/root", component);
+      expect(result).to.be.false;
+    });
+    it("should return true if the component is a viewer", async ()=>{
+      const component = { type: "viewer" };
+      isBehindIfComponentStub.resolves(false);
+      const result = await isInitialComponent("/project/root", component);
+      expect(result).to.be.true;
+    });
+    it("should return false if the component has previous components", async ()=>{
+      const component = {
+        type: "task",
+        previous: ["prev1", "prev2"]
+      };
+      isBehindIfComponentStub.resolves(false);
+      const result = await isInitialComponent("/project/root", component);
+      expect(result).to.be.false;
+    });
+    it("should return true if the component is a storage with output files", async ()=>{
+      const component = {
+        type: "storage",
+        outputFiles: [
+          { dst: ["file1"] },
+          { dst: [] }
+        ]
+      };
+      isBehindIfComponentStub.resolves(false);
+      const result = await isInitialComponent("/project/root", component);
+      expect(result).to.be.true;
+    });
+    it("should return false if the component is a storage without output files", async ()=>{
+      const component = {
+        type: "storage",
+        outputFiles: [
+          { dst: [] }
+        ]
+      };
+      isBehindIfComponentStub.resolves(false);
+      const result = await isInitialComponent("/project/root", component);
+      expect(result).to.be.false;
+    });
+    it("should return true if the component is a source with output destinations", async ()=>{
+      const component = {
+        type: "source",
+        outputFiles: [
+          { dst: ["dest1"] }
+        ]
+      };
+      isBehindIfComponentStub.resolves(false);
+      const result = await isInitialComponent("/project/root", component);
+      expect(result).to.be.true;
+    });
+    it("should return false if the component is a source without output destinations", async ()=>{
+      const component = {
+        type: "source",
+        outputFiles: [
+          { dst: [] }
+        ]
+      };
+      isBehindIfComponentStub.resolves(false);
+      const result = await isInitialComponent("/project/root", component);
+      expect(result).to.be.false;
+    });
+    it("should return true if the component has no previous components and is not behind an 'if'", async ()=>{
+      const component = {
+        type: "task",
+        previous: []
+      };
+      isBehindIfComponentStub.resolves(false);
+      const result = await isInitialComponent("/project/root", component);
+      expect(result).to.be.true;
     });
   });
 });
