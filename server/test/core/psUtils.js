@@ -191,4 +191,52 @@ describe("UT for psUtils class", function () {
       }
     });
   });
+  describe("#replaceByNunjucks", ()=>{
+    let fsStub;
+    let nunjucksRenderStringStub;
+
+    beforeEach(()=>{
+      fsStub = {
+        readFile: sinon.stub(),
+        outputFile: sinon.stub()
+      };
+      psUtils.__set__("fs", fsStub);
+      nunjucksRenderStringStub = sinon.stub(nunjucks, "renderString");
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should throw error if fs.readFile fails", async ()=>{
+      const templateRoot = "/template";
+      const instanceRoot = "/instance";
+      const targetFiles = ["file1.txt"];
+      const params = { param1: "value1" };
+      fsStub.readFile.rejects(new Error("Read error"));
+
+      try {
+        await replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params);
+        expect.fail("Expected error to be thrown");
+      } catch (err) {
+        expect(err.message).to.equal("Read error");
+      }
+    });
+    it("should throw error if fs.outputFile fails", async ()=>{
+      const templateRoot = "/template";
+      const instanceRoot = "/instance";
+      const targetFiles = ["file1.txt"];
+      const params = { param1: "value1" };
+      fsStub.readFile.resolves("template content {{ param1 }}");
+      nunjucksRenderStringStub.returns("template content value1");
+      fsStub.outputFile.rejects(new Error("Write error"));
+
+      try {
+        await replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params);
+        expect.fail("Expected error to be thrown");
+      } catch (err) {
+        expect(err.message).to.equal("Write error");
+      }
+    });
+  });
 });
