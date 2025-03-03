@@ -693,6 +693,62 @@ describe("isLFS", ()=>{
   });
 });
 
+describe("gitLFSTrack", ()=>{
+  let gitOperator2;
+  let gitLFSTrack;
+  let gitPromiseStub;
+  let getLoggerStub;
+  let traceStub;
+  let gitAddStub;
+
+  const rootDir = "/repo";
+  const filename = "src/image.png";
+
+  beforeEach(()=>{
+    gitPromiseStub = sinon.stub();
+    getLoggerStub = sinon.stub();
+    traceStub = sinon.stub();
+    gitAddStub = sinon.stub();
+    getLoggerStub.returns({ trace: traceStub });
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    gitOperator2.__set__({
+      gitPromise: gitPromiseStub,
+      getLogger: getLoggerStub,
+      gitAdd: gitAddStub
+    });
+    gitLFSTrack = gitOperator2.__get__("gitLFSTrack");
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should track a file from LFS and log the action", async ()=>{
+    gitPromiseStub.resolves();
+
+    await gitLFSTrack(rootDir, filename);
+
+    sinon.assert.calledWith(
+      gitPromiseStub,
+      rootDir,
+      ["lfs", "track", "--", "/src/image.png"],
+      rootDir
+    );
+    sinon.assert.calledWith(
+      traceStub,
+      "src/image.png is treated as large file"
+    );
+  });
+
+  it("should add .gitattributes to git", async ()=>{
+    gitPromiseStub.resolves();
+
+    await gitLFSTrack(rootDir, filename);
+
+    sinon.assert.calledWith(gitAddStub, rootDir, ".gitattributes");
+  });
+});
+
 describe("gitLFSUntrack", ()=>{
   let gitOperator2;
   let gitLFSUntrack;
