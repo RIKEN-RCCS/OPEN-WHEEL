@@ -1,11 +1,11 @@
-const animationWaitTime = 500
+const ANIMATION_WAIT_TIME = 500
 
 //remove remote host setting
 Cypress.Commands.add("removeRemoteHost", (remotoHostName)=>{ 
-  cy.visit("/remotehost").wait(animationWaitTime)
+  cy.visit("/remotehost").wait(ANIMATION_WAIT_TIME)
     .then(()=>{
-      const remoteHostRow = cy.contains("tr", remotoHostName, {timeout: 1000})
-      if(remoteHostRow){
+      const REMOTE_HOST_ROW = cy.contains("tr", remotoHostName, {timeout: 1000})
+      if(REMOTE_HOST_ROW){
         cy.get('[data-cy="action_row-delete-btn"]').click();
         cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
       }

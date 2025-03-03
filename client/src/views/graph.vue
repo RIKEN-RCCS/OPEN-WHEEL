@@ -10,7 +10,7 @@
         <component-tree/>
       </v-col>
     </v-row>
-    <v-row no-gutters >
+    <v-row no-gutters data-cy="graph-component-row">
       <component-library />
       <graph-view />
       <component-property />

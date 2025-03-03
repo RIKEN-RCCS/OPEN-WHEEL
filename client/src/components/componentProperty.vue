@@ -10,6 +10,7 @@
     location="right"
     absolute
     :width="propWidth"
+    data-cy="component_property-property-navigation_drawer"
   >
     <v-toolbar
         color='background'
@@ -26,6 +27,7 @@
               class="pt-4"
               density=compact
               :rules="[rules.isValidName, isUniqueName]"
+              data-cy="component_property-name-text_field"
             />
           </v-form>
         </v-toolbar-title>
@@ -48,6 +50,7 @@
                 @click="closeProperty"
                 v-bind="props"
                 icon=mdi-close
+                data-cy="component_property-close-btn"
               />
             </template>
           </v-tooltip>
@@ -57,6 +60,7 @@
                 :disabled="selectedComponent.state === 'not-started'"
                 v-bind="props"
                 icon="mdi-restore"
+                data-cy="component_property-clean-btn"
               />
             </template>
           </v-tooltip>
@@ -78,6 +82,7 @@
               label="description"
               :readonly="readOnly"
               variant=outlined
+              data-cy="component_property-description-textarea"
             />
             <v-autocomplete
               v-if="hasScript"
@@ -87,6 +92,7 @@
               :items="scriptCandidates"
               clearable
               variant=outlined
+              data-cy="component_property-script-autocomplete"
             />
             <v-select
               v-if="hasHost"
@@ -95,6 +101,7 @@
               :readonly="readOnly"
               :items="hostCandidates"
               variant=outlined
+              data-cy="component_property-host-select"
             />
             <v-switch
               v-if="hasJobScheduler"
@@ -102,6 +109,7 @@
               label="use job scheduler"
               :readonly="readOnly"
               color="primary"
+              data-cy="component_property-job_scheduler-switch"
             />
             <v-select
               v-if="hasJobScheduler"
@@ -111,6 +119,7 @@
               :items="queues"
               :disabled="! copySelectedComponent.useJobScheduler"
               variant=outlined
+              data-cy="component_property-queue-select"
             />
             <v-text-field
               v-if="hasJobScheduler"
@@ -119,6 +128,7 @@
               label="submit command"
               :disabled="! copySelectedComponent.useJobScheduler"
               variant=outlined
+              data-cy="component_property-submit_command-text_field"
             />
             <v-text-field
               v-if="hasJobScheduler"
@@ -127,6 +137,7 @@
               :readonly="readOnly"
               :disabled="! copySelectedComponent.useJobScheduler"
               variant=outlined
+              data-cy="component_property-submit_option-text_field"
             />
             <v-text-field
               v-if="isStorage"
@@ -138,7 +149,7 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isTask">
-          <v-expansion-panel-title>retry setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-retry-panel_title">retry setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-text-field
               v-model="copySelectedComponent.retry"
@@ -148,12 +159,14 @@
               type="number"
               :rules="[rules.isInteger, rules.isZeroOrMore]"
               variant=outlined
+              data-cy="component_property-number_or_retry-text_field"
             />
             <v-switch
               v-model.lazy="retryByJS"
               color="primary"
               label="use javascript expression for condition check"
               :readonly="readOnly"
+              data-cy="component_property-task_use_javascript-switch"
             />
             <v-autocomplete
               v-if="!retryByJS"
@@ -163,11 +176,13 @@
               :items="scriptCandidates"
               clearable
               variant=outlined
+              data-cy="component_property-task_use_javascript-autocomplete"
             />
             <v-textarea
               v-if="retryByJS"
               v-model="copySelectedComponent.retryCondition"
               :readonly="readOnly"
+              data-cy="component_property-task_use_javascript-textarea"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -394,13 +409,14 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="hasCondition">
-          <v-expansion-panel-title>condition setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-condition-setting_title">condition setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
               color="primary"
               v-model.lazy="conditionCheckByJS"
               label="use javascript expression for condition check"
               :readonly="readOnly"
+              data-cy="component_property-condition_use_javascript-switch"
             />
             <v-autocomplete
               v-if="!conditionCheckByJS"
@@ -410,11 +426,13 @@
               :items="scriptCandidates"
               clearable
               variant=outlined
+              data-cy="component_property-condition_use_javascript-autocomplete"
             />
             <v-textarea
               v-if="conditionCheckByJS"
               v-model="copySelectedComponent.condition"
               :readonly="readOnly"
+              data-cy="component_property-condition_use_javascript-textarea"
             />
             <v-text-field
               v-if="isWhile"
@@ -426,7 +444,7 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="! isSource && !isViewer">
-          <v-expansion-panel-title>input/output files</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-in_out_files-panel_title">input/output files</v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'input files'"
@@ -438,6 +456,7 @@
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
+              data-cy="component_property-input_files-list_form"
             />
             <list-form
               :label="'output files'"
@@ -449,6 +468,7 @@
               @add="addToOutputFiles"
               @remove="removeFromOutputFiles"
               @update="updateOutputFiles"
+              data-cy="component_property-output_files-list_form"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -456,7 +476,7 @@
           v-if="hasRemote"
           :disabled="disableRemoteSetting"
         >
-          <v-expansion-panel-title>remote file setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-remote_file-panel_title">remote file setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'include'"
@@ -467,6 +487,7 @@
               @add="addToIncludeList"
               @remove="removeFromIncludeList"
               @update="updateIncludeList"
+              data-cy="component_property-include-list_form"
             />
             <list-form
               :label="'exclude'"
@@ -477,6 +498,7 @@
               @add="addToExcludeList"
               @remove="removeFromExcludeList"
               @update="updateExcludeList"
+              data-cy="component_property-exclude-list_form"
             />
             clean up flag
 
@@ -488,20 +510,23 @@
               <v-radio
                 label="remove files"
                 :value="0"
+                data-cy="component_property-remove-radio"
               />
               <v-radio
                 label="keep files"
                 :value="1"
+                data-cy="component_property-keep-radio"
               />
               <v-radio
                 label="same as parent"
                 :value="2"
+                data-cy="component_property-same-radio"
               />
             </v-radio-group>
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel>
-          <v-expansion-panel-title>Files</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-files-panel_title">Files</v-expansion-panel-title>
           <v-expansion-panel-text>
             <file-browser
               v-if="! isRemoteComponent"
