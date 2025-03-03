@@ -17,6 +17,7 @@ const { getComponentDefaultName } = require("../../app/core/workflowComponent");
 const { removeDuplicatedComponent } = require("../../app/core/workflowComponent");
 const isInitialComponent = rewWorkflowComponent.__get__("isInitialComponent");
 const isBehindIfComponent = rewWorkflowComponent.__get__("isBehindIfComponent");
+const { hasChild } = require("../../app/core/workflowComponent");
 
 describe("UT for workflowComponents class", ()=>{
   describe("#isLocalComponent", ()=>{
@@ -256,6 +257,53 @@ describe("UT for workflowComponents class", ()=>{
       readComponentJsonByIDStub.withArgs("/project/root", "prev2").resolves({ type: "task", previous: ["prev1"] });
 
       const result = await isBehindIfComponent("/project/root", component);
+      expect(result).to.be.false;
+    });
+  });
+  describe("#hasChild", ()=>{
+    it("should return true for 'workflow' component", ()=>{
+      const component = { type: "workflow" };
+      const result = hasChild(component);
+      expect(result).to.be.true;
+    });
+    it("should return true for 'parameterStudy' component", ()=>{
+      const component = { type: "parameterStudy" };
+      const result = hasChild(component);
+      expect(result).to.be.true;
+    });
+    it("should return true for 'for' component", ()=>{
+      const component = { type: "for" };
+      const result = hasChild(component);
+      expect(result).to.be.true;
+    });
+    it("should return true for 'while' component", ()=>{
+      const component = { type: "while" };
+      const result = hasChild(component);
+      expect(result).to.be.true;
+    });
+    it("should return true for 'foreach' component", ()=>{
+      const component = { type: "foreach" };
+      const result = hasChild(component);
+      expect(result).to.be.true;
+    });
+    it("should return true for 'stepjob' component", ()=>{
+      const component = { type: "stepjob" };
+      const result = hasChild(component);
+      expect(result).to.be.true;
+    });
+    it("should return false for 'task' component", ()=>{
+      const component = { type: "task" };
+      const result = hasChild(component);
+      expect(result).to.be.false;
+    });
+    it("should return false for unknown component type", ()=>{
+      const component = { type: "unknownType" };
+      const result = hasChild(component);
+      expect(result).to.be.false;
+    });
+    it("should return false if type is missing", ()=>{
+      const component = {};
+      const result = hasChild(component);
       expect(result).to.be.false;
     });
   });
