@@ -692,3 +692,64 @@ describe("isLFS", ()=>{
     );
   });
 });
+
+describe("gitLFSUntrack", ()=>{
+  let gitOperator2;
+  let gitLFSUntrack;
+  let gitPromiseStub;
+  let getLoggerStub;
+  let traceStub;
+  let pathExistsStub;
+  let gitAddStub;
+
+  const rootDir = "/repo";
+  const filename = "src/image.png";
+
+  beforeEach(()=>{
+    gitPromiseStub = sinon.stub();
+    getLoggerStub = sinon.stub();
+    traceStub = sinon.stub();
+    pathExistsStub = sinon.stub();
+    gitAddStub = sinon.stub();
+    getLoggerStub.returns({ trace: traceStub });
+    gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+    gitOperator2.__set__({
+      gitPromise: gitPromiseStub,
+      getLogger: getLoggerStub,
+      fs: { pathExists: pathExistsStub },
+      gitAdd: gitAddStub
+    });
+    gitLFSUntrack = gitOperator2.__get__("gitLFSUntrack");
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should untrack a file from LFS and log the action", async ()=>{
+    pathExistsStub.resolves(false);
+    gitPromiseStub.resolves();
+
+    await gitLFSUntrack(rootDir, filename);
+
+    sinon.assert.calledWith(
+      gitPromiseStub,
+      rootDir,
+      ["lfs", "untrack", "--", "/src/image.png"],
+      rootDir
+    );
+    sinon.assert.calledWith(
+      traceStub,
+      "src/image.png never treated as large file"
+    );
+  });
+
+  it("should add .gitattributes to git if it exists", async ()=>{
+    pathExistsStub.resolves(true);
+    gitPromiseStub.resolves();
+
+    await gitLFSUntrack(rootDir, filename);
+
+    sinon.assert.calledWith(gitAddStub, rootDir, ".gitattributes");
+  });
+});
