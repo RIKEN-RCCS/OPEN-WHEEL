@@ -92,6 +92,7 @@
                 v-bind="props"
                 @click="emitProjectOperation('runProject')"
                 icon="mdi-play"
+                data-cy="workflow-play-btn"
               />
             </template>
           </v-tooltip>
@@ -167,6 +168,7 @@
                 v-bind="props"
                 @click="emitProjectOperation('saveProject')"
                 icon="mdi-content-save"
+                data-cy="workflow-save-text"
               />
             </template>
           </v-tooltip>

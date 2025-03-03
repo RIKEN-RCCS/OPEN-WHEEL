@@ -56,6 +56,7 @@
               @dragover.prevent
               @dragenter.prevent
               @dragend="onDragend($event, item)"
+              data-cy="component_library-component-avatar"
             />
           </template>
           <span>{{item.type}}</span>

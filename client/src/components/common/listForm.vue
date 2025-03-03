@@ -72,6 +72,7 @@
         append-icon="mdi-plus"
         @click:append="addItem"
         @keyup.enter="addItem"
+        data-cy="list_form-add-text_field"
       />
     </template>
     <template
