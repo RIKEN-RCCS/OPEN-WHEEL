@@ -18,6 +18,7 @@ const { removeDuplicatedComponent } = require("../../app/core/workflowComponent"
 const isInitialComponent = rewWorkflowComponent.__get__("isInitialComponent");
 const isBehindIfComponent = rewWorkflowComponent.__get__("isBehindIfComponent");
 const { hasChild } = require("../../app/core/workflowComponent");
+const { componentFactory } = require("../../app/core/workflowComponent");
 
 describe("UT for workflowComponents class", ()=>{
   describe("#isLocalComponent", ()=>{
@@ -305,6 +306,62 @@ describe("UT for workflowComponents class", ()=>{
       const component = {};
       const result = hasChild(component);
       expect(result).to.be.false;
+    });
+  });
+  describe("#componentFactory", ()=>{
+    it("should create a Task component", ()=>{
+      const component = componentFactory("task", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("task");
+    });
+    it("should create a Workflow component", ()=>{
+      const component = componentFactory("workflow", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("workflow");
+    });
+    it("should create a ParameterStudy component", ()=>{
+      const component = componentFactory("PS", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("parameterStudy");
+    });
+    it("should create an If component", ()=>{
+      const component = componentFactory("if", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("if");
+    });
+    it("should create a For component", ()=>{
+      const component = componentFactory("for", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("for");
+    });
+    it("should create a While component", ()=>{
+      const component = componentFactory("while", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("while");
+    });
+    it("should create a Foreach component", ()=>{
+      const component = componentFactory("foreach", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("foreach");
+    });
+    it("should create a Storage component", ()=>{
+      const component = componentFactory("storage", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("storage");
+    });
+    it("should create a Source component", ()=>{
+      const component = componentFactory("source", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("source");
+    });
+    it("should create a Viewer component", ()=>{
+      const component = componentFactory("viewer", { x: 0, y: 0 });
+      expect(component).to.not.be.null;
+      expect(component.type).to.equal("viewer");
+    });
+    it("should return null for unknown component type", ()=>{
+      const component = componentFactory("unknownType", { x: 0, y: 0 });
+      expect(component).to.be.null;
     });
   });
 });
