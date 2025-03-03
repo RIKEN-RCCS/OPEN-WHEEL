@@ -9,13 +9,14 @@
 const { expect } = require("chai");
 const sinon = require("sinon");
 const rewire = require("rewire");
-const rewWorkflowComponents = rewire("../../app/core/workflowComponent.js");
+const rewWorkflowComponent = rewire("../../app/core/workflowComponent.js");
 
 //testee
 const { isLocalComponent } = require("../../app/core/workflowComponent");
 const { getComponentDefaultName } = require("../../app/core/workflowComponent");
 const { removeDuplicatedComponent } = require("../../app/core/workflowComponent");
-const isInitialComponent = rewWorkflowComponents.__get__("isInitialComponent");
+const isInitialComponent = rewWorkflowComponent.__get__("isInitialComponent");
+const isBehindIfComponent = rewWorkflowComponent.__get__("isBehindIfComponent");
 
 describe("UT for workflowComponents class", ()=>{
   describe("#isLocalComponent", ()=>{
@@ -113,7 +114,7 @@ describe("UT for workflowComponents class", ()=>{
     let isBehindIfComponentStub;
     beforeEach(()=>{
       isBehindIfComponentStub = sinon.stub();
-      rewWorkflowComponents.__set__("isBehindIfComponent", isBehindIfComponentStub);
+      rewWorkflowComponent.__set__("isBehindIfComponent", isBehindIfComponentStub);
     });
     afterEach(()=>{
       sinon.restore();
@@ -192,6 +193,70 @@ describe("UT for workflowComponents class", ()=>{
       isBehindIfComponentStub.resolves(false);
       const result = await isInitialComponent("/project/root", component);
       expect(result).to.be.true;
+    });
+  });
+  describe("#isBehindIfComponent", ()=>{
+    let readComponentJsonByIDStub;
+
+    beforeEach(()=>{
+      readComponentJsonByIDStub = sinon.stub();
+      rewWorkflowComponent.__set__("readComponentJsonByID", readComponentJsonByIDStub);
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should return false if the component has no previous or connected input files", async ()=>{
+      const component = {
+        previous: [],
+        inputFiles: []
+      };
+      const result = await isBehindIfComponent("/project/root", component);
+      expect(result).to.be.false;
+    });
+    it("should return true if a previous component is an 'if' component", async ()=>{
+      const component = {
+        previous: ["prev1"],
+        inputFiles: []
+      };
+      readComponentJsonByIDStub.withArgs("/project/root", "prev1").resolves({ type: "if" });
+      const result = await isBehindIfComponent("/project/root", component);
+      expect(result).to.be.true;
+    });
+    it("should return true if a connected input file's source is an 'if' component", async ()=>{
+      const component = {
+        previous: [],
+        inputFiles: [
+          { src: [{ srcNode: "ifComponent" }] }
+        ]
+      };
+      readComponentJsonByIDStub.withArgs("/project/root", "ifComponent").resolves({ type: "if" });
+      const result = await isBehindIfComponent("/project/root", component);
+      expect(result).to.be.true;
+    });
+    it("should return false if no previous or input source components are 'if' components", async ()=>{
+      const component = {
+        previous: ["prev1"],
+        inputFiles: [
+          { src: [{ srcNode: "src1" }] }
+        ]
+      };
+      readComponentJsonByIDStub.withArgs("/project/root", "prev1").resolves({ type: "task" });
+      readComponentJsonByIDStub.withArgs("/project/root", "src1").resolves({ type: "task" });
+      const result = await isBehindIfComponent("/project/root", component);
+      expect(result).to.be.false;
+    });
+    it("should handle circular dependencies gracefully", async ()=>{
+      const component = {
+        previous: ["prev1"],
+        inputFiles: []
+      };
+      readComponentJsonByIDStub.withArgs("/project/root", "prev1").resolves({ type: "task", previous: ["prev2"] });
+      readComponentJsonByIDStub.withArgs("/project/root", "prev2").resolves({ type: "task", previous: ["prev1"] });
+
+      const result = await isBehindIfComponent("/project/root", component);
+      expect(result).to.be.false;
     });
   });
 });
