@@ -6,13 +6,18 @@
 "use strict";
 
 const rewire = require("rewire");
+const chai = require("chai");
 const sinon = require("sinon");
-const { expect } = require("chai");
+const { expect } = chai;
 const componentJsonIO = rewire("../../../app/core/componentJsonIO");
+const path = require("path");
+const chaiAsPromised = require("chai-as-promised");
+chai.use(chaiAsPromised);
 
 //testee
 const readComponentJsonByID = componentJsonIO.__get__("readComponentJsonByID");
 const writeComponentJsonByID = componentJsonIO.__get__("writeComponentJsonByID");
+const readComponentJson = componentJsonIO.__get__("readComponentJson");
 
 describe("UT for componentJsonIO class", ()=>{
   describe("#readComponentJsonByID", ()=>{
@@ -116,6 +121,34 @@ describe("UT for componentJsonIO class", ()=>{
       } catch (err) {
         expect(err.message).to.equal("Write error");
       }
+    });
+  });
+  describe("#readComponentJson", ()=>{
+    let readJsonGreedyStub;
+    const mockComponentDir = "/mock/project/mockComponentDir";
+    const mockComponentJson = { name: "testComponent" };
+    const mockFilename = path.join(mockComponentDir, "cmp.wheel.json");
+    beforeEach(()=>{
+      readJsonGreedyStub = sinon.stub();
+      componentJsonIO.__set__("readJsonGreedy", readJsonGreedyStub);
+    });
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should return component JSON data if valid path is provided", async ()=>{
+      readJsonGreedyStub.resolves(mockComponentJson);
+      const result = await readComponentJson(mockComponentDir);
+      expect(result).to.deep.equal(mockComponentJson);
+      expect(readJsonGreedyStub.calledOnceWith(mockFilename)).to.be.true;
+    });
+    it("should throw error if readJsonGreedy fails", async ()=>{
+      readJsonGreedyStub.rejects(new Error("Read error"));
+      await expect(readComponentJson(mockComponentDir)).to.be.rejectedWith("Read error");
+    });
+    it("should call readJsonGreedy with correct path", async ()=>{
+      readJsonGreedyStub.resolves(mockComponentJson);
+      await readComponentJson(mockComponentDir);
+      expect(readJsonGreedyStub.calledOnceWith(mockFilename)).to.be.true;
     });
   });
 });
