@@ -14,21 +14,20 @@ const componentJsonIO = rewire("../../../app/core/componentJsonIO");
 const readComponentJsonByID = componentJsonIO.__get__("readComponentJsonByID");
 
 describe("UT for componentJsonIO class", ()=>{
-  let getComponentDirStub, readComponentJsonStub;
-
-  beforeEach(()=>{
-    getComponentDirStub = sinon.stub();
-    readComponentJsonStub = sinon.stub();
-
-    componentJsonIO.__set__("getComponentDir", getComponentDirStub);
-    componentJsonIO.__set__("readComponentJson", readComponentJsonStub);
-  });
-
-  afterEach(()=>{
-    sinon.restore();
-  });
-
   describe("#readComponentJsonByID", ()=>{
+    let getComponentDirStub, readComponentJsonStub;
+    beforeEach(()=>{
+      getComponentDirStub = sinon.stub();
+      readComponentJsonStub = sinon.stub();
+
+      componentJsonIO.__set__("getComponentDir", getComponentDirStub);
+      componentJsonIO.__set__("readComponentJson", readComponentJsonStub);
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
     it("should return component JSON data if valid ID is provided", async ()=>{
       const mockProjectRootDir = "/mock/project";
       const mockID = "mockID";
