@@ -49,4 +49,45 @@ describe("UT for regexp class", () => {
           expect(isValidOutputFilename("file_{{var}}|.txt")).to.be.false;
       });
   });
+  describe("#isValidInputFilename", () => {
+    it("should return false for empty string", () => {
+        expect(isValidInputFilename("")).to.be.false;
+    });
+    it("should return false for only whitespace", () => {
+        expect(isValidInputFilename("   ")).to.be.false;
+    });
+    it("should return false for reserved names in Windows", () => {
+        expect(isValidInputFilename("CON.txt")).to.be.false;
+        expect(isValidInputFilename("PRN.txt")).to.be.false;
+        expect(isValidInputFilename("AUX.txt")).to.be.false;
+    });
+    it("should return false for invalid characters", () => {
+        expect(isValidInputFilename("invalid|name.txt")).to.be.false;
+        expect(isValidInputFilename("invalid<name>.txt")).to.be.false;
+    });
+    it("should return true for valid filenames", () => {
+        expect(isValidInputFilename("valid_name.txt")).to.be.true;
+        expect(isValidInputFilename("valid-name_123.txt")).to.be.true;
+        expect(isValidInputFilename("valid.name.txt")).to.be.true;
+    });
+    it("should return true for valid filenames with path separators", () => {
+        expect(isValidInputFilename("dir/valid_name.txt")).to.be.true;
+        expect(isValidInputFilename("dir\\valid_name.txt")).to.be.true;
+    });
+    it("should return false for invalid path separators", () => {
+        expect(isValidInputFilename("dir\\invalid|name.txt")).to.be.false;
+    });
+    it("should return true for filenames with {{ and }}", () => {
+        expect(isValidInputFilename("file_{{var}}.txt")).to.be.true;
+    });
+    it("should return false for filenames with forbidden characters after removing {{ }}", () => {
+        expect(isValidInputFilename("file_{{var}}|.txt")).to.be.false;
+    });
+    it("should return true for filenames with dots and extensions", () => {
+        expect(isValidInputFilename("file.name.with.dots.txt")).to.be.true;
+    });
+    it("should return true for filenames with nested paths", () => {
+        expect(isValidInputFilename("folder/subfolder/file.txt")).to.be.true;
+    });
+});
 });
