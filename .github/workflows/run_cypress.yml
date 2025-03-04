@@ -64,3 +64,11 @@ jobs:
           start: npm start
           wait-on: "http://localhost:8089"
           wait-on-timeout: 300
+
+      - name: upload screenshot
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: test/cypress/screenshots/**/*.png
+          if-no-files-found: ignore
