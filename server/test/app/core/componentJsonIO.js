@@ -12,6 +12,7 @@ const componentJsonIO = rewire("../../../app/core/componentJsonIO");
 
 //testee
 const readComponentJsonByID = componentJsonIO.__get__("readComponentJsonByID");
+const writeComponentJsonByID = componentJsonIO.__get__("writeComponentJsonByID");
 
 describe("UT for componentJsonIO class", ()=>{
   describe("#readComponentJsonByID", ()=>{
@@ -62,6 +63,58 @@ describe("UT for componentJsonIO class", ()=>{
         expect.fail("Expected error was not thrown");
       } catch (err) {
         expect(err.message).to.equal("Read error");
+      }
+    });
+  });
+  describe("#writeComponentJsonByID", ()=>{
+    let getComponentDirStub, writeComponentJsonStub;
+    beforeEach(()=>{
+      getComponentDirStub = sinon.stub();
+      writeComponentJsonStub = sinon.stub();
+
+      componentJsonIO.__set__("getComponentDir", getComponentDirStub);
+      componentJsonIO.__set__("writeComponentJson", writeComponentJsonStub);
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should write component JSON data if valid ID is provided", async ()=>{
+      const mockProjectRootDir = "/mock/project";
+      const mockID = "mockID";
+      const mockComponentDir = "/mock/project/mockComponentDir";
+      const mockComponentData = { name: "testComponent" };
+      getComponentDirStub.resolves(mockComponentDir);
+      writeComponentJsonStub.resolves();
+      await writeComponentJsonByID(mockProjectRootDir, mockID, mockComponentData);
+      expect(getComponentDirStub.calledOnceWith(mockProjectRootDir, mockID, true)).to.be.true;
+      expect(writeComponentJsonStub.calledOnceWith(mockProjectRootDir, mockComponentDir, mockComponentData)).to.be.true;
+    });
+    it("should throw error if getComponentDir fails", async ()=>{
+      const mockProjectRootDir = "/mock/project";
+      const mockID = "mockID";
+      getComponentDirStub.rejects(new Error("Directory not found"));
+
+      try {
+        await writeComponentJsonByID(mockProjectRootDir, mockID, {});
+        expect.fail("Expected error was not thrown");
+      } catch (err) {
+        expect(err.message).to.equal("Directory not found");
+      }
+    });
+    it("should throw error if writeComponentJson fails", async ()=>{
+      const mockProjectRootDir = "/mock/project";
+      const mockID = "mockID";
+      const mockComponentDir = "/mock/project/mockComponentDir";
+      getComponentDirStub.resolves(mockComponentDir);
+      writeComponentJsonStub.rejects(new Error("Write error"));
+
+      try {
+        await writeComponentJsonByID(mockProjectRootDir, mockID, {});
+        expect.fail("Expected error was not thrown");
+      } catch (err) {
+        expect(err.message).to.equal("Write error");
       }
     });
   });
