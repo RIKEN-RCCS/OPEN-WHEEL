@@ -7,11 +7,14 @@
 
 //setup test framework
 const { expect } = require("chai");
+const rewire = require("rewire");
+const rewRegexp = rewire("../../../../common/regexp.cjs");
 
 //testee
 const { isValidOutputFilename } = require("../../../../common/regexp.cjs");
 const { isValidInputFilename } = require("../../../../common/regexp.cjs");
 const { isValidName } = require("../../../../common/regexp.cjs");
+const isSane = rewRegexp.__get__("isSane");
 
 describe("UT for regexp class", () => {
   describe("#isValidOutputFilename", () => {
@@ -179,6 +182,41 @@ describe("UT for regexp class", () => {
     it("should return false for names containing special characters", () => {
         expect(isValidName("name@domain")).to.be.false;
         expect(isValidName("name#domain")).to.be.false;
+    });
+  });
+  describe("#isSane", () => {
+    it("should return false for non-string input", () => {
+        expect(isSane(null)).to.be.false;
+        expect(isSane(undefined)).to.be.false;
+        expect(isSane(123)).to.be.false;
+        expect(isSane({})).to.be.false;
+    });
+    it("should return false for empty string", () => {
+        expect(isSane("")).to.be.false;
+    });
+    it("should return false for only whitespace", () => {
+        expect(isSane("   ")).to.be.false;
+    });
+    it("should return false for reserved Windows names(dosen't have suffix)", () => {
+        expect(isSane("CON")).to.be.true;
+        expect(isSane("PRN")).to.be.true;
+        expect(isSane("AUX")).to.be.true;
+        expect(isSane("NUL")).to.be.true;
+        expect(isSane("COM1")).to.be.true;
+        expect(isSane("LPT1")).to.be.true;
+    });
+    it("should return true for valid filenames", () => {
+        expect(isSane("validName")).to.be.true;
+        expect(isSane("valid123")).to.be.true;
+        expect(isSane("file_name")).to.be.true;
+    });
+    it("should return true for filenames with valid special characters", () => {
+        expect(isSane("file-name")).to.be.true;
+        expect(isSane("file_name")).to.be.true;
+    });
+    it("should return false for filenames with invalid characters", () => {
+        expect(isSane("invalid|name")).to.be.true;
+        expect(isSane("invalid<name>")).to.be.true;
     });
   });
 });
