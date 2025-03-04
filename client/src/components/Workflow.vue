@@ -78,6 +78,7 @@
                 :to="{name: 'editor' }"
                 v-bind="props"
                 icon="mdi-file-document-edit-outline"
+                data-cy="workflow-document_edit-btn"
               />
             </template>
           </v-tooltip>

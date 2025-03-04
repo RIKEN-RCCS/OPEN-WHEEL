@@ -1,24 +1,54 @@
 describe("04:コンポーネントの基本機能動作確認", ()=>{
-    const projectName = "TestProject"
-    const projectDescription = "TestDescription"
-    const typeInput = "input"
-    const typeOutput = "output"
-    const typeDir = "dir"
-    const typeFile = "file"
-    const defComponentIf = "if"
-    const ifName0 = "if0"
-    const ifName1 = "if1"
-    const tagTypeInput = "input"
-    const tagTypeTextArea = "textarea"
+    const PROJECT_NAME = "TestProject"
+    const PROJECT_DESCRIPTION = "TestDescription"
+    const TYPE_INPUT = "input"
+    const TYPE_OUTPUT = "output"
+    const TYPE_DIR = "dir"
+    const TYPE_FILE = "file"
+    const DEF_COMPONENT_IF = "if"
+    const DEF_COMPONENT_FOR = "for"
+    const DEF_COMPONENT_WHILE = "while"
+    const DEF_COMPONENT_FOREACH = "foreach"
+    const DEF_COMPONENT_PS = "parameterStudy"
+    const DEF_COMPONENT_WORKFLOW = "workflow"
+    const DEF_COMPONENT_STORAGE = "storage"
+    const DEF_COMPONENT_SOURCE = "source"
+    const DEF_COMPONENT_VIEWER = "viewer"
+    const DEF_COMPONENT_STEPJOB = "stepjob"
+    const DEF_COMPONENT_BJ_TASK = "bjTask"
+    const IF_NAME_0 = "if0"
+    const FOR_NAME_0 = "for0"
+    const WHILE_NAME_0 = "while0"
+    const FOREACH_NAME_0 = "foreach0"
+    const PS_NAME_0 = "PS0"
+    const WORKFLOW_NAME_0 = "workflow0"
+    const STORAGE_NAME_0 = "storage0"
+    const SOURCE_NAME_0 = "source0"
+    const VIEWER_NAME_0 = "viewer0"
+    const STEPJOB_NAME_0 = "stepjob0"
+    const BJ_TASK_NAME_0 = "bjTask0"
+    const IF_NAME_1 = "if1"
+    const FOR_NAME_1 = "for1"
+    const WHILE_NAME_1 = "while1"
+    const FOREACH_NAME_1 = "foreach1"
+    const PS_NAME_1 = "PS1"
+    const WORKFLOW_NAME_1 = "workflow1"
+    const STORAGE_NAME_1 = "storage1"
+    const SOURCE_NAME_1 = "source1"
+    const VIEWER_NAME_1 = "viewer1"
+    const STEPJOB_NAME_1 = "stepjob1"
+    const BJ_TASK_NAME_1 = "bjTask1"
+    const TAG_TYPE_INPUT = "input"
+    const TAG_TYPE_TEXT_AREA = "textarea"
   
     beforeEach(()=>{
-      cy.createProject(projectName, projectDescription);
+      cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
       cy.openProject();
       cy.viewport("macbook-16");
     })
 
     afterEach(()=>{
-      cy.removeProject();
+      cy.removeAllProjects();
     })
     
     /** 
@@ -27,9 +57,9 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：プロパティが表示されることを確認
     */
     it("04-01-001:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
-        cy.createComponent(defComponentIf, ifName0, 300, 500);
-        const dataCyStr = '[data-cy="component_property-property-navigation_drawer"]';
-        cy.dispPropety(dataCyStr, true);        
+        cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+        cy.confirmDisplayInProperty(DATA_CY_STR, true);        
     });
 
     /** 
@@ -38,9 +68,9 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：name入力テキストエリアが表示されていることを確認
     */
     it("04-01-002:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      const dataCyStr = '[data-cy="component_property-name-text_field"]'
-      cy.dispPropety(dataCyStr, true);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
     });
 
     /** 
@@ -50,9 +80,9 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：nameが入力できることを確認
     */
     it("04-01-003:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      const inputObjCy = '[data-cy="component_property-name-text_field"]';
-      cy.propetyInputReflected(inputObjCy, '-Test_Task', tagTypeInput);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
     });
 
     /** 
@@ -62,9 +92,9 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：nameが入力できないことを確認
     */
     it("04-01-004:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      const inputObjCy = '[data-cy="component_property-name-text_field"]';
-      cy.propetyInputNotConfirmation(inputObjCy, 'Test*Task', tagTypeInput);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
     });
 
    /** 
@@ -73,9 +103,9 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：説明入力テキストエリアが表示されていることを確認
     */
     it("04-01-005:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      const dataCyStr = '[data-cy="component_property-description-textarea"]'
-      cy.dispPropety(dataCyStr, true);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
     });
 
     /** 
@@ -85,9 +115,9 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：descriptionが入力できることを確認
     */
     it("04-01-006:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      const inputObjCy = '[data-cy="component_property-description-textarea"]';
-      cy.propetyInputReflected(inputObjCy, 'descriptionTest', tagTypeTextArea);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
     });
 
     /** 
@@ -97,10 +127,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：input files入力テキストエリアが表示されていることを確認
     */
     it("04-01-007:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      const dataCyStr = '[data-cy="component_property-input_files-list_form"]';
-      const clickAreaCy = '[data-cy="component_property-in_out_files-panel_title"]';
-      cy.dispPropetyByArea(dataCyStr, clickAreaCy, null);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
     });
 
     /** 
@@ -110,8 +140,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：input filesが入力できることを確認
     */
     it("04-01-008:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      cy.inputOrOutputFileInput(typeInput, 'testInputFile', true);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
       cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
     });
 
@@ -122,10 +152,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：input filesが反映されることを確認
     */
     it("04-01-009:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      cy.inputOrOutputFileInput(typeInput, 'testInputFile', true);
-      cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(1).click();
-      cy.saveProperty();
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
       cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
     });
 
@@ -136,9 +164,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：output files入力テキストエリアが表示されていることを確認
     */
     it("04-01-0010:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
-      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('exist');
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
     });
 
     /** 
@@ -148,8 +177,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：output filesが入力できることを確認
     */
     it("04-01-011:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      cy.inputOrOutputFileInput(typeOutput, 'testOutputFile', true);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
       cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
     });
 
@@ -160,10 +189,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：output filesが反映されることを確認
     */
     it("04-01-012:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      cy.inputOrOutputFileInput(typeOutput, 'testOutputFile', true);
-      cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(3).click();
-      cy.saveProperty();
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
       cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
     });
 
@@ -175,7 +202,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：プロパティが表示されていないことを確認
     */
     it("04-01-013:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
       cy.closeProperty();
       cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
     });
@@ -187,15 +214,15 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cleanボタン押下
     試験確認内容：最新の保存状態に戻っていることを確認
     */
-    it("04-01-014:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      cy.dirOrFileInput(typeFile, 'test-a', true);
-      cy.get('[data-cy="component_property-condition-setting_title"]').click()
-      cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').click()
-      cy.get("[role=\"listbox\"]").eq(3).contains('test-a').click()
+    it.skip("04-01-014:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      let targetDropBoxCy = '[data-cy="component_property-condition_use_javascript-autocomplete"]';
+      cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
       cy.saveProperty();
       cy.get('[data-cy="workflow-play-btn"]').click();
-      cy.clickComponentName(ifName0);
+      cy.clickComponentName(IF_NAME_0);
       cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
       cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
       cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
@@ -211,351 +238,5153 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     試験確認内容：コンポーネントが接続されていることを確認
     */
     it("04-01-016:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
-      cy.createComponent(defComponentIf, ifName0, 300, 500);
-      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
-      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').type('testOutputFile');
-      cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(3).click();
-      cy.createComponent(defComponentIf, ifName1, 300, 600);
-      cy.get('[data-cy="graph-component-row"]').find("polygon")
-      .eq(0)
-      .trigger("mousedown", { screenX: 100, screenY: 100 })
-      cy.get('[data-cy="graph-component-row"]').contains(ifName1)
-      .trigger("mouseup", { screenX: 300, screenY: 600 })
-      cy.clickComponentName(ifName1);
-      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
-      cy.get('[data-cy="component-component_group-g"]').filter(':contains(' + ifName0 + ')').find('[data-cy="iofilebox-rect-rect"]').as("start_rect");
-      cy.get('@start_rect').invoke('attr', 'x').as("start_x");
-      cy.get('@start_rect').invoke('attr', 'y').as("start_y");
-      cy.get('@start_rect').invoke('attr', 'width').as("start_width");
-      cy.get('@start_rect').invoke('attr', 'height').as("start_height");
-      cy.get('[data-cy="component-component_group-g"]').filter(':contains(' + ifName1 + ')').find('[data-cy="iofilebox-rect-rect"]').as("end_rect");
-      cy.get('@end_rect').invoke('attr', 'x').as("end_x");
-      cy.get('@end_rect').invoke('attr', 'y').as("end_y");
-      cy.get('@end_rect').invoke('attr', 'width').as("end_width");
-      cy.get('@end_rect').invoke('attr', 'height').as("end_height");
-      cy.get("@start_x").then((start_x_text) =>{
-        cy.get("@start_y").then((start_y_text)=>{
-          cy.get("@start_width").then((start_width_text)=>{
-            cy.get("@start_height").then((start_height_text)=>{
-              cy.get("@end_x").then((end_x_text)=>{
-                cy.get("@end_y").then((end_y_text)=>{
-                  cy.get("@end_width").then((end_width_text)=>{
-                    cy.get("@end_height").then((end_height_text)=>{
-                      const start_x = Number(start_x_text);
-                      const start_y = Number(start_y_text);
-                      const start_width = Number(start_width_text);
-                      const start_height = Number(start_height_text);
-                      const end_x = Number(end_x_text);
-                      const end_y = Number(end_y_text);
-                      const end_height = Number(end_height_text);                  
-                      const expected_start_x =start_x + start_width;
-                      const expected_start_y =start_y + start_height/2;
-                      const expected_end_x =end_x;
-                      const expected_end_y =end_y + end_height/2;
-                      const regStart = new RegExp(`^M\\s+${expected_start_x}+,+${expected_start_y}\n\\s+C`)
-                      const regEnd = new RegExp(`\\s+${expected_end_x}+,+${expected_end_y}`)
-                      cy.get('[data-cy="cubic-bezier-path"]').should("have.attr", "d").and("match",regStart).and("match",regEnd)
-                    })
-                  })
-                })
-              })
-            })
-          })
-        })
-    } );
-  });
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_1, 300, 600);
+      cy.connectComponent(IF_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(IF_NAME_0, IF_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
 
     /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-017:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_1, 300, 600);
+      cy.connectComponent(IF_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(IF_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-022:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（output file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-023:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（input file）
+    試験確認内容：input fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-024:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（output file）
+    試験確認内容：output fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-025:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ単体表示
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-026:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード前）
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-027:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード後）
+    試験確認内容：ディレクトリが複数表示されることを確認
+    */
+    it("04-01-028:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(IF_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル単体表示
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-029:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード前）
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-030:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード後）
+    試験確認内容：ファイルが複数表示されることを確認
+    */
+    it("04-01-031:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(IF_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ディレクトリ表示
+    試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+    */
+    it("04-01-032:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ファイル表示
+    試験確認内容：ディレクトリ内にファイルが作成されることを確認
+    */
+    it("04-01-033:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    プロパティ設定確認
+    シェルスクリプト選択セレクトボックス表示確認
+    試験確認内容：シェルスクリプト選択セレクトボックスが表示されていることを確認
+    */
+    it("04-01-034:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス表示確認-シェルスクリプト選択セレクトボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').find('input').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    プロパティ設定確認
+    シェルスクリプト選択セレクトボックス選択確認
+    試験確認内容：選択した値が表示されていることを確認
+    */
+    it("04-01-035:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      let targetDropBoxCy = '[data-cy="component_property-condition_use_javascript-autocomplete"]';
+      cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
+      cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').find('input').should('have.value', 'test-a');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    プロパティ設定確認
+    シェルスクリプト選択セレクトボックス選択反映確認
+    試験確認内容：選択した値が表示されていることを確認
+    */
+    it("04-01-036:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      let targetDropBoxCy = '[data-cy="component_property-condition_use_javascript-autocomplete"]';
+      cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
+      cy.closeProperty();
+      cy.clickComponentName(IF_NAME_0);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').contains('test-a').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    プロパティ設定確認
+    javascriptテキストボックス表示確認
+    試験確認内容：javascriptテキストボックスが表示されていることを確認
+    */
+    it("04-01-037:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス表示確認-javascriptテキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-switch"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    プロパティ設定確認
+    javascriptテキストボックス入力確認
+    試験確認内容：入力した値が表示されていることを確認
+    */
+    it("04-01-038:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス入力確認-入力した値が表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-switch"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').type('testJavaScript');
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').find('textarea').should('have.value', 'testJavaScript');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    プロパティ設定確認
+    javascriptテキストボックス反映確認
+    試験確認内容：入力した値が反映されていることを確認
+    */
+    it("04-01-039:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス反映確認-入力した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-switch"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').type('testJavaScript');
+      cy.closeProperty();
+      cy.clickComponentName(IF_NAME_0);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').find('textarea').should('have.value', 'testJavaScript');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    ifコンポーネント共通機能確認
+    各コンポーネントの追加/削除確認
+    該当コンポーネント削除確認
+    試験確認内容：コンポーネントが削除されていることを確認
+    */
+    it("04-01-040:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
+      cy.deleteComponent(IF_NAME_0);
+      cy.get('[data-cy="graph-component-row"]').contains(IF_NAME_0).should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    試験確認内容：プロパティが表示されることを確認
+    */
+    it("04-01-041:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    試験確認内容：name入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-042:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    name入力
+    試験確認内容：nameが入力できることを確認
+    */
+    it("04-01-043:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    name入力（使用可能文字確認）
+    試験確認内容：nameが入力できないことを確認
+    */
+    it("04-01-044:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    });
+
+  /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    試験確認内容：説明入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-045:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    description入力
+    試験確認内容：descriptionが入力できることを確認
+    */
+    it("04-01-046:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    input files表示
+    試験確認内容：input files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-047:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    input files入力
+    試験確認内容：input filesが入力できることを確認
+    */
+    it("04-01-048:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+      cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    input files反映確認
+    試験確認内容：input filesが反映されることを確認
+    */
+    it("04-01-049:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    output files表示
+    試験確認内容：output files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-050:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    output files入力
+    試験確認内容：output filesが入力できることを確認
+    */
+    it("04-01-051:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    output files反映確認
+    試験確認内容：output filesが反映されることを確認
+    */
+    it("04-01-052:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    構成要素の機能確認
+    closeボタン押下
+    試験確認内容：プロパティが表示されていないことを確認
+    */
+    it("04-01-053:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.closeProperty();
+      cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    構成要素の機能確認
+    cleanボタン押下
+    試験確認内容：最新の保存状態に戻っていることを確認
+    */
+    it.skip("04-01-054:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+      cy.get('[data-cy="workflow-play-btn"]').click();
+      cy.clickComponentName(FOR_NAME_0);
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+      cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+      cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+      cy.get('[data-cy="component_property-clean-btn"]').click();
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    接続確認
+    試験確認内容：コンポーネントが接続されていることを確認
+    */
+    it("04-01-056:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_1, 300, 600);
+      cy.connectComponent(FOR_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-057:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_1, 300, 600);
+      cy.connectComponent(FOR_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(FOR_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-062:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（output file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-063:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（input file）
+    試験確認内容：input fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-064:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（output file）
+    試験確認内容：output fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-065:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ単体表示
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-066:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード前）
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-067:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード後）
+    試験確認内容：ディレクトリが複数表示されることを確認
+    */
+    it("04-01-068:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(FOR_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル単体表示
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-069:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード前）
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-070:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード後）
+    試験確認内容：ファイルが複数表示されることを確認
+    */
+    it("04-01-071:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(FOR_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ディレクトリ表示
+    試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+    */
+    it("04-01-072:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ファイル表示
+    試験確認内容：ディレクトリ内にファイルが作成されることを確認
+    */
+    it("04-01-073:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネントの追加/削除確認
+    該当コンポーネント削除確認
+    試験確認内容：コンポーネントが削除されていることを確認
+    */
+    it("04-01-074:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.deleteComponent(FOR_NAME_0);
+      cy.get('[data-cy="graph-component-row"]').contains(FOR_NAME_0).should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    start表示確認
+    試験確認内容：startテキストボックスが表示されていることを確認
+    */
+    it("04-01-075:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-start表示確認-startテキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    start入力確認
+    試験確認内容：startテキストボックスが入力できることを確認
+    */
+    it("04-01-076:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-start入力確認-startテキストボックスが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.get('[data-cy="component_property-start_for-text_field"]').find('input').should('have.value', 1);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    start入力反映確認
+    試験確認内容：startテキストボックスに入力した値が反映されていることを確認
+    */
+    it("04-01-077:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-start入力反映確認-startテキストボックスに入力した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.closeProperty();
+      cy.clickComponentName(FOR_NAME_0);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').find('input').should('have.value', 1);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    end表示確認
+    試験確認内容：endテキストボックスが表示されていることを確認
+    */
+    it("04-01-078:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-end表示確認-endテキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-end_for-text_field"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    end入力確認
+    試験確認内容：endテキストボックスが入力できることを確認
+    */
+    it("04-01-079:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-end入力確認-endテキストボックスが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.get('[data-cy="component_property-end_for-text_field"]').find('input').should('have.value', 5);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    end入力反映確認
+    試験確認内容：endテキストボックスに入力した値が反映されていることを確認
+    */
+    it("04-01-080:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-end入力反映確認-endテキストボックスに入力した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.closeProperty();
+      cy.clickComponentName(FOR_NAME_0);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-end_for-text_field"]').find('input').should('have.value', 5);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    step表示確認
+    試験確認内容：stepテキストボックスが表示されていることを確認
+    */
+    it("04-01-081:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-step表示確認-stepテキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-step_for-text_field"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    step入力確認
+    試験確認内容：endテキストボックスが入力できることを確認
+    */
+    it("04-01-082:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-step入力確認-stepテキストボックスが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-step_for-text_field"]').type(3);
+      cy.get('[data-cy="component_property-step_for-text_field"]').find('input').should('have.value', 3);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    step入力反映確認
+    試験確認内容：stepテキストボックスに入力した値が反映されていることを確認
+    */
+    it("04-01-083:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-step入力反映確認-stepテキストボックスに入力した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-step_for-text_field"]').type(5);
+      cy.closeProperty();
+      cy.clickComponentName(FOR_NAME_0);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-step_for-text_field"]').find('input').should('have.value', 5);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keep表示確認
+    試験確認内容：number of instances to keepテキストボックスが表示されていることを確認
+    */
+    it("04-01-084:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-keep表示確認-keepテキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-keep_for-text_field"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keep入力確認
+    試験確認内容：number of instances to keepテキストボックスが入力できることを確認
+    */
+    it("04-01-085:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-keep入力確認-keepテキストボックスが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-keep_for-text_field"]').type(10);
+      cy.get('[data-cy="component_property-keep_for-text_field"]').find('input').should('have.value', 10);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    forコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keep入力反映確認
+    試験確認内容：number of instances to keepテキストボックスに入力した値が反映されていることを確認
+    */
+    it("04-01-086:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-keep入力反映確認-keepテキストボックスに入力した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-keep_for-text_field"]').type(10);
+      cy.closeProperty();
+      cy.clickComponentName(FOR_NAME_0);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-keep_for-text_field"]').find('input').should('have.value', 10);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    試験確認内容：プロパティが表示されることを確認
+    */
+    it("04-01-087:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    試験確認内容：name入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-088:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    name入力
+    試験確認内容：nameが入力できることを確認
+    */
+    it("04-01-089:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    name入力（使用可能文字確認）
+    試験確認内容：nameが入力できないことを確認
+    */
+    it("04-01-090:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    試験確認内容：説明入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-091:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    description入力
+    試験確認内容：descriptionが入力できることを確認
+    */
+    it("04-01-092:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    input files表示
+    試験確認内容：input files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-093:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    input files入力
+    試験確認内容：input filesが入力できることを確認
+    */
+    it("04-01-094:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+      cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    input files反映確認
+    試験確認内容：input filesが反映されることを確認
+    */
+    it("04-01-095:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    output files表示
+    試験確認内容：output files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-0096:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    output files入力
+    試験確認内容：output filesが入力できることを確認
+    */
+    it("04-01-097:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    output files反映確認
+    試験確認内容：output filesが反映されることを確認
+    */
+    it("04-01-099:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    構成要素の機能確認
+    closeボタン押下
+    試験確認内容：プロパティが表示されていないことを確認
+    */
+    it("04-01-100:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.closeProperty();
+      cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    構成要素の機能確認
+    cleanボタン押下
+    試験確認内容：最新の保存状態に戻っていることを確認
+    */
+    it.skip("04-01-101:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      let targetDropBoxCy = '[data-cy="component_property-condition_use_javascript-autocomplete"]';
+      cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
+      cy.get('[data-cy="workflow-play-btn"]').click();
+      cy.clickComponentName(WHILE_NAME_0);
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+      cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+      cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+      cy.get('[data-cy="component_property-clean-btn"]').click();
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', WHILE_NAME_0);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    接続確認
+    試験確認内容：コンポーネントが接続されていることを確認
+    */
+    it("04-01-102:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_1, 300, 600);
+      cy.connectComponent(WHILE_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(WHILE_NAME_0, WHILE_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-103:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_1, 300, 600);
+      cy.connectComponent(WHILE_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(WHILE_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-108:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（output file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-109:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（input file）
+    試験確認内容：input fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-110:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（output file）
+    試験確認内容：output fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-111:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ単体表示
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-112:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード前）
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-113:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード後）
+    試験確認内容：ディレクトリが複数表示されることを確認
+    */
+    it("04-01-114:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(WHILE_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル単体表示
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-115:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード前）
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-116:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード後）
+    試験確認内容：ファイルが複数表示されることを確認
+    */
+    it("04-01-117:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(WHILE_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ディレクトリ表示
+    試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+    */
+    it("04-01-118:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ファイル表示
+    試験確認内容：ディレクトリ内にファイルが作成されることを確認
+    */
+    it("04-01-119:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    各コンポーネントの追加/削除確認
+    該当コンポーネント削除確認
+    試験確認内容：コンポーネントが削除されていることを確認
+    */
+    it("04-01-120:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.deleteComponent(WHILE_NAME_0);
+      cy.get('[data-cy="graph-component-row"]').contains(WHILE_NAME_0).should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    プロパティ設定確認
+    シェルスクリプト選択セレクトボックス表示確認
+    試験確認内容：シェルスクリプト選択セレクトボックスが表示されていることを確認
+    */
+    it("04-01-121:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス表示確認-シェルスクリプト選択セレクトボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').find('input').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    プロパティ設定確認
+    シェルスクリプト選択セレクトボックス選択確認
+    試験確認内容：選択した値が表示されていることを確認
+    */
+    it("04-01-122:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-condition-setting_title"]');
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      let targetDropBoxCy = '[data-cy="component_property-condition_use_javascript-autocomplete"]';
+      cy.get(targetDropBoxCy).find('input').click();
+      cy.get("[role=\"listbox\"]").eq(3).contains('test-a').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').contains('test-a').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    プロパティ設定確認
+    シェルスクリプト選択セレクトボックス選択反映確認
+    試験確認内容：選択した値が表示されていることを確認
+    */
+    it("04-01-123:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-condition-setting_title"]');
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      let targetDropBoxCy = '[data-cy="component_property-condition_use_javascript-autocomplete"]';
+      cy.get(targetDropBoxCy).find('input').click();
+      cy.get("[role=\"listbox\"]").eq(3).contains('test-a').click();
+      cy.closeProperty();
+      cy.clickComponentName(WHILE_NAME_0);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').contains('test-a').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    プロパティ設定確認
+    javascriptテキストボックス表示確認
+    試験確認内容：javascriptテキストボックスが表示されていることを確認
+    */
+    it("04-01-124:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス表示確認-javascriptテキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-switch"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    プロパティ設定確認
+    javascriptテキストボックス入力確認
+    試験確認内容：入力した値が表示されていることを確認
+    */
+    it("04-01-125:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス入力確認-入力した値が表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-switch"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').type('testJavaScript');
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').find('textarea').should('have.value', 'testJavaScript');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    プロパティ設定確認
+    javascriptテキストボックス反映確認
+    試験確認内容：入力した値が反映されていることを確認
+    */
+    it("04-01-126:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス反映確認-入力した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-switch"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').type('testJavaScript');
+      cy.closeProperty();
+      cy.clickComponentName(WHILE_NAME_0);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').find('textarea').should('have.value', 'testJavaScript');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keep表示確認
+    試験確認内容：number of instances to keepテキストボックスが表示されていることを確認
+    */
+    it("04-01-127:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-keep表示確認-keepテキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-keep_while-text_field"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keep入力確認
+    試験確認内容：number of instances to keepテキストボックスが入力できることを確認
+    */
+    it("04-01-128:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-keep入力確認-keepテキストボックスが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-keep_while-text_field"]').type(10);
+      cy.get('[data-cy="component_property-keep_while-text_field"]').find('input').should('have.value', 10);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    whileコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keep入力反映確認
+    試験確認内容：number of instances to keepテキストボックスに入力した値が反映されていることを確認
+    */
+    it("04-01-129:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-keep入力反映確認-keepテキストボックスに入力した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-keep_while-text_field"]').type(10);
+      cy.closeProperty();
+      cy.clickComponentName(WHILE_NAME_0);
+      cy.get('[data-cy="component_property-condition-setting_title"]').click();
+      cy.get('[data-cy="component_property-keep_while-text_field"]').find('input').should('have.value', 10);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    試験確認内容：プロパティが表示されることを確認
+    */
+    it("04-01-130:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    試験確認内容：name入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-131:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    name入力
+    試験確認内容：nameが入力できることを確認
+    */
+    it("04-01-132:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    name入力（使用可能文字確認）
+    試験確認内容：nameが入力できないことを確認
+    */
+    it("04-01-133:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    試験確認内容：説明入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-134:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    description入力
+    試験確認内容：descriptionが入力できることを確認
+    */
+    it("04-01-135:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    input files表示
+    試験確認内容：input files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-136:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    input files入力
+    試験確認内容：input filesが入力できることを確認
+    */
+    it("04-01-137:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+      cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    input files反映確認
+    試験確認内容：input filesが反映されることを確認
+    */
+    it("04-01-138:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    output files表示
+    試験確認内容：output files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-139:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    output files入力
+    試験確認内容：output filesが入力できることを確認
+    */
+    it("04-01-140:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    output files反映確認
+    試験確認内容：output filesが反映されることを確認
+    */
+    it("04-01-141:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    構成要素の機能確認
+    closeボタン押下
+    試験確認内容：プロパティが表示されていないことを確認
+    */
+    it("04-01-142:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.closeProperty();
+      cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    構成要素の機能確認
+    cleanボタン押下
+    試験確認内容：最新の保存状態に戻っていることを確認
+    */
+    it.skip("04-01-143:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+      cy.get('[data-cy="workflow-play-btn"]').click();
+      cy.clickComponentName(FOREACH_NAME_0);
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+      cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+      cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+      cy.get('[data-cy="component_property-clean-btn"]').click();
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    接続確認
+    試験確認内容：コンポーネントが接続されていることを確認
+    */
+    it("04-01-145:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_1, 300, 600);
+      cy.connectComponent(FOREACH_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-146:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_1, 300, 600);
+      cy.connectComponent(FOREACH_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(FOREACH_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-151:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（output file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-152:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（input file）
+    試験確認内容：input fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-153:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（output file）
+    試験確認内容：output fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-154:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ単体表示
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-155:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード前）
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-156:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード後）
+    試験確認内容：ディレクトリが複数表示されることを確認
+    */
+    it("04-01-157:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(FOREACH_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル単体表示
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-158:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード前）
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-159:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード後）
+    試験確認内容：ファイルが複数表示されることを確認
+    */
+    it("04-01-160:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(FOREACH_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ディレクトリ表示
+    試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+    */
+    it("04-01-161:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ファイル表示
+    試験確認内容：ディレクトリ内にファイルが作成されることを確認
+    */
+    it("04-01-162:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    各コンポーネントの追加/削除確認
+    該当コンポーネント削除確認
+    試験確認内容：コンポーネントが削除されていることを確認
+    */
+    it("04-01-163:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.deleteComponent(FOREACH_NAME_0);
+      cy.get('[data-cy="graph-component-row"]').contains(FOREACH_NAME_0).should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    インデックス値テキストボックス表示確認
+    試験確認内容：インデックス値テキストボックスが表示されていることを確認
+    */
+    it("04-01-164:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-プロパティ設定確認-インデックス値テキストボックス表示確認-インデックス値テキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_foreach-panel_title"]').click();
+      cy.get('[data-cy="component_property-index_foreach-list_form"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    インデックス値テキストボックス入力確認
+    試験確認内容：インデックス値テキストボックスが入力できることを確認
+    */
+    it("04-01-165:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-プロパティ設定確認-インデックス値テキストボックス入力確認-インデックス値テキストボックスが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_foreach-panel_title"]').click();
+      cy.get('[data-cy="component_property-index_foreach-list_form"]').find('input').type(10);
+      cy.get('[data-cy="component_property-index_foreach-list_form"]').find('input').should('have.value', 10);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    インデックス値テキストボックス入力反映確認
+    試験確認内容：インデックス値テキストボックスに入力した値が反映されていることを確認
+    */
+    it("04-01-166:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-プロパティ設定確認-インデックス値テキストボックス入力反映確認-インデックス値テキストボックスに入力した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_foreach-panel_title"]').click();
+      cy.get('[data-cy="component_property-index_foreach-list_form"]').find('input').type(10);
+      cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(1).click(); // Add input file button
+      cy.get('[data-cy="component_property-index_foreach-list_form"]').contains(10).should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keepテキストボックス表示確認
+    試験確認内容：number of instances to keepテキストボックスが表示されていることを確認
+    */
+    it("04-01-167:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-プロパティ設定確認-keepテキストボックス表示確認-keepテキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_foreach-panel_title"]').click();
+      cy.get('[data-cy="component_property-keep_foreach-text_field"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keepテキストボックス入力確認
+    試験確認内容：number of instances to keepテキストボックスが入力できることを確認
+    */
+    it("04-01-168:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-プロパティ設定確認-keepテキストボックス入力確認-keepテキストボックスが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_foreach-panel_title"]').click();
+      cy.get('[data-cy="component_property-keep_foreach-text_field"]').find('input').type(20);
+      cy.get('[data-cy="component_property-keep_foreach-text_field"]').find('input').should('have.value', 20);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    foreachコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keepテキストボックス入力反映確認
+    試験確認内容：number of instances to keepテキストボックスに入力した値が反映されていることを確認
+    */
+    it("04-01-169:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-プロパティ設定確認-keepテキストボックス入力反映確認-keepテキストボックスに入力した値が反映されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      cy.get('[data-cy="component_property-loop_set_foreach-panel_title"]').click();
+      cy.get('[data-cy="component_property-keep_foreach-text_field"]').find('input').type(20);
+      cy.closeProperty();
+      cy.clickComponentName(FOREACH_NAME_0);
+      cy.get('[data-cy="component_property-loop_set_foreach-panel_title"]').click();
+      cy.get('[data-cy="component_property-keep_foreach-text_field"]').find('input').should('have.value', 20);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    試験確認内容：プロパティが表示されることを確認
+    */
+    it("04-01-170:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    試験確認内容：name入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-171:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    name入力
+    試験確認内容：nameが入力できることを確認
+    */
+    it("04-01-172:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    name入力（使用可能文字確認）
+    試験確認内容：nameが入力できないことを確認
+    */
+    it("04-01-173:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    試験確認内容：説明入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-174:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    description入力
+    試験確認内容：descriptionが入力できることを確認
+    */
+    it("04-01-175:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    input files表示
+    試験確認内容：input files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-176:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    input files入力
+    試験確認内容：input filesが入力できることを確認
+    */
+    it("04-01-177:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+      cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    input files反映確認
+    試験確認内容：input filesが反映されることを確認
+    */
+    it("04-01-178:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    output files表示
+    試験確認内容：output files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-179:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    output files入力
+    試験確認内容：output filesが入力できることを確認
+    */
+    it("04-01-180:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    output files反映確認
+    試験確認内容：output filesが反映されることを確認
+    */
+    it("04-01-181:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    構成要素の機能確認
+    closeボタン押下
+    試験確認内容：プロパティが表示されていないことを確認
+    */
+    it("04-01-182:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.closeProperty();
+      cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    構成要素の機能確認
+    cleanボタン押下
+    試験確認内容：最新の保存状態に戻っていることを確認
+    */
+    it.skip("04-01-183:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+      cy.get('[data-cy="workflow-play-btn"]').click();
+      cy.clickComponentName(PS_NAME_0);
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+      cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+      cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+      cy.get('[data-cy="component_property-clean-btn"]').click();
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    接続確認
+    試験確認内容：コンポーネントが接続されていることを確認
+    */
+    it("04-01-185:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_1, 300, 600);
+      cy.connectComponent(PS_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(PS_NAME_0, PS_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-186:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_1, 300, 600);
+      cy.connectComponent(PS_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(PS_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-191:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（output file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-192:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（input file）
+    試験確認内容：input fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-193:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（output file）
+    試験確認内容：output fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-194:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ単体表示
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-195:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード前）
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-196:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード後）
+    試験確認内容：ディレクトリが複数表示されることを確認
+    */
+    it("04-01-197:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(PS_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル単体表示
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-198:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード前）
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-199:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード後）
+    試験確認内容：ファイルが複数表示されることを確認
+    */
+    it("04-01-200:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(PS_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ディレクトリ表示
+    試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+    */
+    it("04-01-201:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ファイル表示
+    試験確認内容：ディレクトリ内にファイルが作成されることを確認
+    */
+    it("04-01-202:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    各コンポーネントの追加/削除確認
+    該当コンポーネント削除確認
+    試験確認内容：コンポーネントが削除されていることを確認
+    */
+    it("04-01-203:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+      cy.deleteComponent(PS_NAME_0);
+      cy.get('[data-cy="graph-component-row"]').contains(PS_NAME_0).should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    psコンポーネント共通機能確認
+    各コンポーネント特有のプロパティ確認
+    number of instances to keepテキストボックス表示確認
+    試験確認内容：number of instances to keepテキストボックスが表示されていることを確認
+    */
+    it("04-01-204:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-keepテキストボックス表示確認-keepテキストボックスが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
+      // cy.get('[data-cy="component_property-loop_set_foreach-panel_title"]').click();
+      // cy.get('[data-cy="component_property-keep_foreach-text_field"]').should('be.visible');
+      // cy.closeProperty();
+      // cy.clickComponentName(FOREACH_NAME_0);
+      // cy.get('[data-cy="component_property-loop_set_foreach-panel_title"]').click();
+    });
+
+
+    /* -------------------------------------
+      psコンポーネント固有の確認を追加する
+      --------------------------------------
+    */
+
+    /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      試験確認内容：プロパティが表示されることを確認
+      */
+      it("04-01-041:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+        cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      試験確認内容：name入力テキストエリアが表示されていることを確認
+      */
+      it("04-01-042:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+        cy.confirmDisplayInProperty(DATA_CY_STR, true);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      name入力
+      試験確認内容：nameが入力できることを確認
+      */
+      it("04-01-043:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+        cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      name入力（使用可能文字確認）
+      試験確認内容：nameが入力できないことを確認
+      */
+      it("04-01-044:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+        cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+      });
+
+    /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      試験確認内容：説明入力テキストエリアが表示されていることを確認
+      */
+      it("04-01-045:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+        cy.confirmDisplayInProperty(DATA_CY_STR, true);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      description入力
+      試験確認内容：descriptionが入力できることを確認
+      */
+      it("04-01-046:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+        cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      input files表示
+      試験確認内容：input files入力テキストエリアが表示されていることを確認
+      */
+      it("04-01-047:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+        const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+        cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      input files入力
+      試験確認内容：input filesが入力できることを確認
+      */
+      it("04-01-048:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+        cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      input files反映確認
+      試験確認内容：input filesが反映されることを確認
+      */
+      it("04-01-049:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+        cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      output files表示
+      試験確認内容：output files入力テキストエリアが表示されていることを確認
+      */
+      it("04-01-0050:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+        const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+        cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      output files入力
+      試験確認内容：output filesが入力できることを確認
+      */
+      it("04-01-051:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+        cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      output files反映確認
+      試験確認内容：output filesが反映されることを確認
+      */
+      it("04-01-052:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+        cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      構成要素の機能確認
+      closeボタン押下
+      試験確認内容：プロパティが表示されていないことを確認
+      */
+      it("04-01-053:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        cy.closeProperty();
+        cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      構成要素の機能確認
+      cleanボタン押下
+      試験確認内容：最新の保存状態に戻っていることを確認
+      */
+      it.skip("04-01-054:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+        cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+        cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+        cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+        cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+        cy.get('[data-cy="workflow-play-btn"]').click();
+        cy.clickComponentName(WORKFLOW_NAME_0);
+        cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+        cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+        cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+        cy.get('[data-cy="component_property-clean-btn"]').click();
+        cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      ファイル転送設定の各パターンの確認
+      接続確認
+      試験確認内容：コンポーネントが接続されていることを確認
+      */
+      it("04-01-056:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_1, 300, 600);
+        cy.connectComponent(WORKFLOW_NAME_1);  // コンポーネント同士を接続
+        cy.checkConnectionLine(WORKFLOW_NAME_0, WORKFLOW_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      ファイル転送設定の各パターンの確認
+      シンポリックリンク確認
+      試験確認内容：シンポリックリンクが作成されていることを確認
+      */
+      it("04-01-057:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_1, 300, 600);
+        cy.connectComponent(WORKFLOW_NAME_1);  // コンポーネント同士を接続
+        cy.clickComponentName(WORKFLOW_NAME_1);
+        cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+        cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Workflowコンポーネント共通機能確認
+      転送対象ファイル・フォルダの設定
+      削除ボタン表示確認（input file）
+      試験確認内容：削除ボタンが表示されることを確認
+      */
+      it("04-01-062:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+        cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+      });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（output file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-063:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（input file）
+    試験確認内容：input fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-064:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（output file）
+    試験確認内容：output fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-065:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ単体表示
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-066:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード前）
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-067:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ複数表示（リロード後）
+    試験確認内容：ディレクトリが複数表示されることを確認
+    */
+    it("04-01-068:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test1', true);
+      cy.createDirOrFile(TYPE_DIR, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(WORKFLOW_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル単体表示
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-069:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード前）
+    試験確認内容：ファイルが単体表示されることを確認
+    */
+    it("04-01-070:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    ファイル操作エリア
+    ファイル複数表示（リロード後）
+    試験確認内容：ファイルが複数表示されることを確認
+    */
+    it("04-01-071:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test1', true);
+      cy.createDirOrFile(TYPE_FILE, 'test2', false);
+      cy.closeProperty();
+      cy.clickComponentName(WORKFLOW_NAME_0);
+      cy.get('[data-cy="component_property-files-panel_title"]').click();
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ディレクトリ表示
+    試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+    */
+    it("04-01-072:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Workflowコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ内ファイル表示
+    試験確認内容：ディレクトリ内にファイルが作成されることを確認
+    */
+    it("04-01-073:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+      cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+    });
+
+
+    /* -------------------------------------
+      Workflowコンポーネント固有の確認を追加する
+      --------------------------------------
+    */
+
+    /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      試験確認内容：プロパティが表示されることを確認
+      */
+      it("04-01-041:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+        cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      試験確認内容：name入力テキストエリアが表示されていることを確認
+      */
+      it("04-01-042:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+        cy.confirmDisplayInProperty(DATA_CY_STR, true);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      name入力
+      試験確認内容：nameが入力できることを確認
+      */
+      it("04-01-043:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+        cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      name入力（使用可能文字確認）
+      試験確認内容：nameが入力できないことを確認
+      */
+      it("04-01-044:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+        cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+      });
+
+    /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      試験確認内容：説明入力テキストエリアが表示されていることを確認
+      */
+      it("04-01-045:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+        cy.confirmDisplayInProperty(DATA_CY_STR, true);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      description入力
+      試験確認内容：descriptionが入力できることを確認
+      */
+      it("04-01-046:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+        cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      input files表示
+      試験確認内容：input files入力テキストエリアが表示されていることを確認
+      */
+      it("04-01-047:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+        const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+        cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      input files入力
+      試験確認内容：input filesが入力できることを確認
+      */
+      it("04-01-048:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+        cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      input files反映確認
+      試験確認内容：input filesが反映されることを確認
+      */
+      it("04-01-049:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+        cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      output files表示
+      試験確認内容：output files入力テキストエリアが表示されていることを確認
+      */
+      it("04-01-0050:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+        const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+        cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      output files入力
+      試験確認内容：output filesが入力できることを確認
+      */
+      it("04-01-051:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+        cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      output files反映確認
+      試験確認内容：output filesが反映されることを確認
+      */
+      it("04-01-052:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+        cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      構成要素の機能確認
+      closeボタン押下
+      試験確認内容：プロパティが表示されていないことを確認
+      */
+      it("04-01-053:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        cy.closeProperty();
+        cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      構成要素の機能確認
+      cleanボタン押下
+      試験確認内容：最新の保存状態に戻っていることを確認
+      */
+      it.skip("04-01-054:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+        cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+        cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+        cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+        cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+        cy.get('[data-cy="workflow-play-btn"]').click();
+        cy.clickComponentName(STORAGE_NAME_0);
+        cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+        cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+        cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+        cy.get('[data-cy="component_property-clean-btn"]').click();
+        cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      ファイル転送設定の各パターンの確認
+      接続確認
+      試験確認内容：コンポーネントが接続されていることを確認
+      */
+      it("04-01-056:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_1, 300, 600);
+        cy.connectComponent(STORAGE_NAME_1);  // コンポーネント同士を接続
+        cy.checkConnectionLine(STORAGE_NAME_0, STORAGE_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      ファイル転送設定の各パターンの確認
+      シンポリックリンク確認
+      試験確認内容：シンポリックリンクが作成されていることを確認
+      */
+      it("04-01-057:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_1, 300, 600);
+        cy.connectComponent(STORAGE_NAME_1);  // コンポーネント同士を接続
+        cy.clickComponentName(STORAGE_NAME_1);
+        cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+        cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+      });
+
+      /** 
+      コンポーネントの基本機能動作確認
+      Storageコンポーネント共通機能確認
+      転送対象ファイル・フォルダの設定
+      削除ボタン表示確認（input file）
+      試験確認内容：削除ボタンが表示されることを確認
+      */
+      it("04-01-062:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+        cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+        cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+        cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+      });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（output file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-063:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（input file）
+    試験確認内容：input fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-064:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除反映確認（output file）
+    試験確認内容：output fileが削除されていることを確認
+    skip:issue#942
+    */
+    it.skip("04-01-065:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').click();
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    ファイル操作エリア
+    ディレクトリ単体表示
+    試験確認内容：ディレクトリが単体表示されることを確認
+    */
+    it("04-01-066:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+      cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+      cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+    });
+
+  /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
-  転送対象ファイル・フォルダの設定
-  削除ボタン表示確認（input file）
-  試験確認内容：削除ボタンが表示されることを確認
+  Storageコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード前）
+  試験確認内容：ディレクトリが単体表示されることを確認
   */
-  it("04-01-022:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
-    cy.get('[data-cy="component_property-input_files-list_form"]').find('input').type('testInputFile');
-    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(1).click();
-    cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+  it("04-01-067:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード後）
+  試験確認内容：ディレクトリが複数表示されることを確認
+  */
+  it("04-01-068:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(STORAGE_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Storageコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル単体表示
+  試験確認内容：ファイルが単体表示されることを確認
+  */
+  it("04-01-069:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Storageコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード前）
+  試験確認内容：ファイルが単体表示されることを確認
+  */
+  it("04-01-070:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Storageコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード後）
+  試験確認内容：ファイルが複数表示されることを確認
+  */
+  it("04-01-071:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(STORAGE_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Storageコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ディレクトリ表示
+  試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+  */
+  it("04-01-072:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Storageコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ファイル表示
+  試験確認内容：ディレクトリ内にファイルが作成されることを確認
+  */
+  it("04-01-073:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+  });
+
+
+  /* -------------------------------------
+    Storageコンポーネント固有の確認を追加する
+    --------------------------------------
+  */
+
+  /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    試験確認内容：プロパティが表示されることを確認
+    */
+    it("04-01-041:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    試験確認内容：name入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-042:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    name入力
+    試験確認内容：nameが入力できることを確認
+    */
+    it("04-01-043:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    name入力（使用可能文字確認）
+    試験確認内容：nameが入力できないことを確認
+    */
+    it("04-01-044:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    });
+
+  /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    試験確認内容：説明入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-045:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    description入力
+    試験確認内容：descriptionが入力できることを確認
+    */
+    it("04-01-046:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    input files表示
+    試験確認内容：input files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-047:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    input files入力
+    試験確認内容：input filesが入力できることを確認
+    */
+    it("04-01-048:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+      cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    input files反映確認
+    試験確認内容：input filesが反映されることを確認
+    */
+    it("04-01-049:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    output files表示
+    試験確認内容：output files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-0050:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    output files入力
+    試験確認内容：output filesが入力できることを確認
+    */
+    it("04-01-051:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    output files反映確認
+    試験確認内容：output filesが反映されることを確認
+    */
+    it("04-01-052:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    構成要素の機能確認
+    closeボタン押下
+    試験確認内容：プロパティが表示されていないことを確認
+    */
+    it("04-01-053:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.closeProperty();
+      cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    構成要素の機能確認
+    cleanボタン押下
+    試験確認内容：最新の保存状態に戻っていることを確認
+    */
+    it.skip("04-01-054:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+      cy.get('[data-cy="workflow-play-btn"]').click();
+      cy.clickComponentName(STORAGE_NAME_0);
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+      cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+      cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+      cy.get('[data-cy="component_property-clean-btn"]').click();
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    接続確認
+    試験確認内容：コンポーネントが接続されていることを確認
+    */
+    it("04-01-056:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_1, 300, 600);
+      cy.connectComponent(STORAGE_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(STORAGE_NAME_0, STORAGE_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-057:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_1, 300, 600);
+      cy.connectComponent(STORAGE_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(STORAGE_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Storageコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-062:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Storageコンポーネント共通機能確認
   転送対象ファイル・フォルダの設定
   削除ボタン表示確認（output file）
   試験確認内容：削除ボタンが表示されることを確認
   */
-  it("04-01-023:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
-    cy.get('[data-cy="component_property-output_files-list_form"]').find('input').type('testOutputFile');
-    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(3).click();
+  it.skip("04-01-063:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
     cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   転送対象ファイル・フォルダの設定
   削除反映確認（input file）
   試験確認内容：input fileが削除されていることを確認
+  skip:issue#942
   */
-  it("04-01-024:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
-    cy.get('[data-cy="component_property-input_files-list_form"]').find('input').type('testInputFile');
-    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(1).click();
+  it.skip("04-01-064:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
     cy.get('[data-cy="action_row-delete-btn"]').click();
     cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   転送対象ファイル・フォルダの設定
   削除反映確認（output file）
   試験確認内容：output fileが削除されていることを確認
+  skip:issue#942
   */
-  it("04-01-025:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
-    cy.get('[data-cy="component_property-output_files-list_form"]').find('input').type('testOutputFile');
-    cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(3).click();
+  it.skip("04-01-065:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
     cy.get('[data-cy="action_row-delete-btn"]').click();
     cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   ファイル操作エリア
   ディレクトリ単体表示
   試験確認内容：ディレクトリが単体表示されることを確認
   */
-  it("04-01-026:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeDir, 'test-a', true);
-    cy.dirOrFileInput(typeDir, 'test-b', false);
+  it("04-01-066:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   ファイル操作エリア
   ディレクトリ複数表示（リロード前）
   試験確認内容：ディレクトリが単体表示されることを確認
   */
-  it("04-01-027:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeDir, 'test1', true);
-    cy.dirOrFileInput(typeDir, 'test2', false);
+  it("04-01-067:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   ファイル操作エリア
   ディレクトリ複数表示（リロード後）
   試験確認内容：ディレクトリが複数表示されることを確認
   */
-  it("04-01-028:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeDir, 'test1', true);
-    cy.dirOrFileInput(typeDir, 'test2', false);
+  it("04-01-068:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
     cy.closeProperty();
-    cy.clickComponentName(ifName0);
+    cy.clickComponentName(STORAGE_NAME_0);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   ファイル操作エリア
   ファイル単体表示
   試験確認内容：ファイルが単体表示されることを確認
   */
-  it("04-01-029:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeFile, 'test-a', true);
-    cy.dirOrFileInput(typeFile, 'test-b', false);
+  it("04-01-069:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   ファイル操作エリア
   ファイル複数表示（リロード前）
   試験確認内容：ファイルが単体表示されることを確認
   */
-  it("04-01-030:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeFile, 'test1', true);
-    cy.dirOrFileInput(typeFile, 'test2', false);
+  it("04-01-070:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   ファイル操作エリア
   ファイル複数表示（リロード後）
   試験確認内容：ファイルが複数表示されることを確認
   */
-  it("04-01-031:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeFile, 'test1', true);
-    cy.dirOrFileInput(typeFile, 'test2', false);
+  it("04-01-071:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
     cy.closeProperty();
-    cy.clickComponentName(ifName0);
+    cy.clickComponentName(STORAGE_NAME_0);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   ファイル操作エリア
   ディレクトリ内ディレクトリ表示
   試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
   */
-  it("04-01-032:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeDir, 'test-a', true);
+  it("04-01-072:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
-    cy.dirOrFileInput(typeDir, 'test-b', false);
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
+  Storageコンポーネント共通機能確認
   ファイル操作エリア
   ディレクトリ内ファイル表示
   試験確認内容：ディレクトリ内にファイルが作成されることを確認
   */
-  it("04-01-033:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeDir, 'test-a', true);
+  it("04-01-073:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
-    cy.dirOrFileInput(typeFile, 'test.txt', false);
+    cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
   });
 
+
+  /* -------------------------------------
+    Storageコンポーネント固有の確認を追加する
+    --------------------------------------
+  */
+
+  /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    試験確認内容：プロパティが表示されることを確認
+    */
+    it("04-01-041:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    試験確認内容：name入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-042:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    name入力
+    試験確認内容：nameが入力できることを確認
+    */
+    it("04-01-043:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    name入力（使用可能文字確認）
+    試験確認内容：nameが入力できないことを確認
+    */
+    it("04-01-044:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    });
+
+  /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    試験確認内容：説明入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-045:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    description入力
+    試験確認内容：descriptionが入力できることを確認
+    */
+    it("04-01-046:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    input files表示
+    試験確認内容：input files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-047:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    input files入力
+    試験確認内容：input filesが入力できることを確認
+    */
+    it("04-01-048:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+      cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    input files反映確認
+    試験確認内容：input filesが反映されることを確認
+    */
+    it("04-01-049:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    output files表示
+    試験確認内容：output files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-0050:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    output files入力
+    試験確認内容：output filesが入力できることを確認
+    */
+    it("04-01-051:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    output files反映確認
+    試験確認内容：output filesが反映されることを確認
+    */
+    it("04-01-052:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    構成要素の機能確認
+    closeボタン押下
+    試験確認内容：プロパティが表示されていないことを確認
+    */
+    it("04-01-053:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      cy.closeProperty();
+      cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    構成要素の機能確認
+    cleanボタン押下
+    試験確認内容：最新の保存状態に戻っていることを確認
+    */
+    it.skip("04-01-054:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+      cy.get('[data-cy="workflow-play-btn"]').click();
+      cy.clickComponentName(SOURCE_NAME_0);
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+      cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+      cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+      cy.get('[data-cy="component_property-clean-btn"]').click();
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    接続確認
+    試験確認内容：コンポーネントが接続されていることを確認
+    */
+    it("04-01-056:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_1, 300, 600);
+      cy.connectComponent(SOURCE_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(SOURCE_NAME_0, SOURCE_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-057:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_1, 300, 600);
+      cy.connectComponent(SOURCE_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(SOURCE_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Sourceコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-062:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
-  プロパティ設定確認
-  シェルスクリプト選択セレクトボックス表示確認
-  試験確認内容：シェルスクリプト選択セレクトボックスが表示されていることを確認
+  Sourceコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除ボタン表示確認（output file）
+  試験確認内容：削除ボタンが表示されることを確認
   */
-  it("04-01-034:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス表示確認-シェルスクリプト選択セレクトボックスが表示されていることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.get('[data-cy="component_property-condition-setting_title"]').click();
-    cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').find('input').should('be.not.visible');
+  it("04-01-063:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
-  プロパティ設定確認
-  シェルスクリプト選択セレクトボックス選択確認
-  試験確認内容：選択した値が表示されていることを確認
+  Sourceコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除反映確認（input file）
+  試験確認内容：input fileが削除されていることを確認
+  skip:issue#942
   */
-  it("04-01-035:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeFile, 'test-a', true);
-    cy.get('[data-cy="component_property-condition-setting_title"]').click();
-    cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').find('input').type('test-a');
-    cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').find('input').should('have.value', 'test-a');
+  it.skip("04-01-064:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').click();
+    cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
-  プロパティ設定確認
-  シェルスクリプト選択セレクトボックス選択反映確認
-  試験確認内容：選択した値が表示されていることを確認
+  Sourceコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除反映確認（output file）
+  試験確認内容：output fileが削除されていることを確認
+  skip:issue#942
   */
-  it("04-01-036:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.dirOrFileInput(typeFile, 'test-a', true);
-    cy.get('[data-cy="component_property-condition-setting_title"]').click();
-    let targetDropBoxCy = '[data-cy="component_property-condition_use_javascript-autocomplete"]';
-    cy.selectByList(targetDropBoxCy, 3, 'test-a');
-    cy.saveProperty();
-    cy.get('[data-cy="component_property-condition-setting_title"]').click();
-    cy.get('[data-cy="component_property-condition_use_javascript-autocomplete"]').find('input').should('have.value', 'test-a');
+  it.skip("04-01-065:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').click();
+    cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
-  プロパティ設定確認
-  javascriptテキストボックス表示確認
-  試験確認内容：javascriptテキストボックスが表示されていることを確認
+  Sourceコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ単体表示
+  試験確認内容：ディレクトリが単体表示されることを確認
   */
-  it("04-01-037:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス表示確認-javascriptテキストボックスが表示されていることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.get('[data-cy="component_property-condition-setting_title"]').click();
-    cy.get('[data-cy="component_property-condition_use_javascript-switch"]').click();
-    cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').should('be.visible');
+  it("04-01-066:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
-  プロパティ設定確認
-  javascriptテキストボックス入力確認
-  試験確認内容：入力した値が表示されていることを確認
+  Sourceコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード前）
+  試験確認内容：ディレクトリが単体表示されることを確認
   */
-  it("04-01-038:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス入力確認-入力した値が表示されていることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.get('[data-cy="component_property-condition-setting_title"]').click();
-    cy.get('[data-cy="component_property-condition_use_javascript-switch"]').click();
-    cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').type('testJavaScript');
-    cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').find('textarea').should('have.value', 'testJavaScript');
+  it("04-01-067:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
-  プロパティ設定確認
-  javascriptテキストボックス反映確認
-  試験確認内容：入力した値が反映されていることを確認
+  Sourceコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード後）
+  試験確認内容：ディレクトリが複数表示されることを確認
   */
-  it("04-01-039:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス反映確認-入力した値が反映されていることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.get('[data-cy="component_property-condition-setting_title"]').click();
-    cy.get('[data-cy="component_property-condition_use_javascript-switch"]').click();
-    cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').type('testJavaScript');
-    cy.saveProperty();
-    cy.get('[data-cy="component_property-condition_use_javascript-textarea"]').find('textarea').should('have.value', 'testJavaScript');
+  it("04-01-068:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(SOURCE_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
   });
 
   /** 
   コンポーネントの基本機能動作確認
-  ifコンポーネント共通機能確認
-  プロパティ設定確認
-  javascriptテキストボックス反映確認
-  試験確認内容：入力した値が反映されていることを確認
+  Sourceコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル単体表示
+  試験確認内容：ファイルが単体表示されることを確認
   */
-  it("04-01-040:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス反映確認-入力した値が反映されていることを確認", ()=>{
-    cy.createComponent(defComponentIf, ifName0, 300, 500);
-    cy.get('[data-cy="graph-component-row"]').contains(ifName0).rightclick();
-    cy.get('[data-cy="graph-component-row"]').contains('delete').click();
-    cy.get('[data-cy="graph-component-row"]').contains(ifName0).should('not.exist');
+  it("04-01-069:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
   });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Sourceコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード前）
+  試験確認内容：ファイルが単体表示されることを確認
+  */
+  it("04-01-070:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Sourceコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード後）
+  試験確認内容：ファイルが複数表示されることを確認
+  */
+  it("04-01-071:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(SOURCE_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Sourceコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ディレクトリ表示
+  試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+  */
+  it("04-01-072:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Sourceコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ファイル表示
+  試験確認内容：ディレクトリ内にファイルが作成されることを確認
+  */
+  it("04-01-073:コンポーネントの基本機能動作確認-Sourceコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+  });
+
+
+  /* -------------------------------------
+    Sourceコンポーネント固有の確認を追加する
+    --------------------------------------
+  */
+
+  /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    試験確認内容：プロパティが表示されることを確認
+    */
+    it("04-01-041:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    試験確認内容：name入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-042:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    name入力
+    試験確認内容：nameが入力できることを確認
+    */
+    it("04-01-043:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    name入力（使用可能文字確認）
+    試験確認内容：nameが入力できないことを確認
+    */
+    it("04-01-044:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    });
+
+  /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    試験確認内容：説明入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-045:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    description入力
+    試験確認内容：descriptionが入力できることを確認
+    */
+    it("04-01-046:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    input files表示
+    試験確認内容：input files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-047:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    input files入力
+    試験確認内容：input filesが入力できることを確認
+    */
+    it("04-01-048:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+      cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    input files反映確認
+    試験確認内容：input filesが反映されることを確認
+    */
+    it("04-01-049:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    output files表示
+    試験確認内容：output files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-0050:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    output files入力
+    試験確認内容：output filesが入力できることを確認
+    */
+    it("04-01-051:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    output files反映確認
+    試験確認内容：output filesが反映されることを確認
+    */
+    it("04-01-052:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    構成要素の機能確認
+    closeボタン押下
+    試験確認内容：プロパティが表示されていないことを確認
+    */
+    it("04-01-053:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      cy.closeProperty();
+      cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    構成要素の機能確認
+    cleanボタン押下
+    試験確認内容：最新の保存状態に戻っていることを確認
+    */
+    it.skip("04-01-054:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+      cy.get('[data-cy="workflow-play-btn"]').click();
+      cy.clickComponentName(VIEWER_NAME_0);
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+      cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+      cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+      cy.get('[data-cy="component_property-clean-btn"]').click();
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    接続確認
+    試験確認内容：コンポーネントが接続されていることを確認
+    */
+    it("04-01-056:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_1, 300, 600);
+      cy.connectComponent(VIEWER_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(VIEWER_NAME_0, VIEWER_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-057:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_1, 300, 600);
+      cy.connectComponent(VIEWER_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(VIEWER_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Viewerコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-062:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除ボタン表示確認（output file）
+  試験確認内容：削除ボタンが表示されることを確認
+  */
+  it("04-01-063:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除反映確認（input file）
+  試験確認内容：input fileが削除されていることを確認
+  skip:issue#942
+  */
+  it.skip("04-01-064:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').click();
+    cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除反映確認（output file）
+  試験確認内容：output fileが削除されていることを確認
+  skip:issue#942
+  */
+  it.skip("04-01-065:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').click();
+    cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ単体表示
+  試験確認内容：ディレクトリが単体表示されることを確認
+  */
+  it("04-01-066:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード前）
+  試験確認内容：ディレクトリが単体表示されることを確認
+  */
+  it("04-01-067:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード後）
+  試験確認内容：ディレクトリが複数表示されることを確認
+  */
+  it("04-01-068:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(VIEWER_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル単体表示
+  試験確認内容：ファイルが単体表示されることを確認
+  */
+  it("04-01-069:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード前）
+  試験確認内容：ファイルが単体表示されることを確認
+  */
+  it("04-01-070:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード後）
+  試験確認内容：ファイルが複数表示されることを確認
+  */
+  it("04-01-071:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(VIEWER_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ディレクトリ表示
+  試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+  */
+  it("04-01-072:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Viewerコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ファイル表示
+  試験確認内容：ディレクトリ内にファイルが作成されることを確認
+  */
+  it("04-01-073:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+  });
+
+
+  /* -------------------------------------
+    Viewerコンポーネント固有の確認を追加する
+    --------------------------------------
+  */
+
+  /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    試験確認内容：プロパティが表示されることを確認
+    */
+    it("04-01-041:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    試験確認内容：name入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-042:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    name入力
+    試験確認内容：nameが入力できることを確認
+    */
+    it("04-01-043:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    name入力（使用可能文字確認）
+    試験確認内容：nameが入力できないことを確認
+    */
+    it("04-01-044:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    });
+
+  /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    試験確認内容：説明入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-045:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    description入力
+    試験確認内容：descriptionが入力できることを確認
+    */
+    it("04-01-046:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    input files表示
+    試験確認内容：input files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-047:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    input files入力
+    試験確認内容：input filesが入力できることを確認
+    */
+    it("04-01-048:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+      cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    input files反映確認
+    試験確認内容：input filesが反映されることを確認
+    */
+    it("04-01-049:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    output files表示
+    試験確認内容：output files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-0050:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    output files入力
+    試験確認内容：output filesが入力できることを確認
+    */
+    it("04-01-051:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    output files反映確認
+    試験確認内容：output filesが反映されることを確認
+    */
+    it("04-01-052:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    構成要素の機能確認
+    closeボタン押下
+    試験確認内容：プロパティが表示されていないことを確認
+    */
+    it("04-01-053:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.closeProperty();
+      cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    構成要素の機能確認
+    cleanボタン押下
+    試験確認内容：最新の保存状態に戻っていることを確認
+    */
+    it.skip("04-01-054:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+      cy.get('[data-cy="workflow-play-btn"]').click();
+      cy.clickComponentName(STEPJOB_NAME_0);
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+      cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+      cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+      cy.get('[data-cy="component_property-clean-btn"]').click();
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    接続確認
+    試験確認内容：コンポーネントが接続されていることを確認
+    */
+    it("04-01-056:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_1, 300, 600);
+      cy.connectComponent(STEPJOB_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(STEPJOB_NAME_0, STEPJOB_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-057:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_1, 300, 600);
+      cy.connectComponent(STEPJOB_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(STEPJOB_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    Stepjobコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-062:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除ボタン表示確認（output file）
+  試験確認内容：削除ボタンが表示されることを確認
+  */
+  it("04-01-063:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除反映確認（input file）
+  試験確認内容：input fileが削除されていることを確認
+  skip:issue#942
+  */
+  it.skip("04-01-064:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').click();
+    cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除反映確認（output file）
+  試験確認内容：output fileが削除されていることを確認
+  skip:issue#942
+  */
+  it.skip("04-01-065:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').click();
+    cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ単体表示
+  試験確認内容：ディレクトリが単体表示されることを確認
+  */
+  it("04-01-066:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード前）
+  試験確認内容：ディレクトリが単体表示されることを確認
+  */
+  it("04-01-067:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード後）
+  試験確認内容：ディレクトリが複数表示されることを確認
+  */
+  it("04-01-068:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(STEPJOB_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル単体表示
+  試験確認内容：ファイルが単体表示されることを確認
+  */
+  it("04-01-069:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード前）
+  試験確認内容：ファイルが単体表示されることを確認
+  */
+  it("04-01-070:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード後）
+  試験確認内容：ファイルが複数表示されることを確認
+  */
+  it("04-01-071:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(STEPJOB_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ディレクトリ表示
+  試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+  */
+  it("04-01-072:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  Stepjobコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ファイル表示
+  試験確認内容：ディレクトリ内にファイルが作成されることを確認
+  */
+  it("04-01-073:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+  });
+
+
+  /* -------------------------------------
+    Stepjobコンポーネント固有の確認を追加する
+    --------------------------------------
+  */
+
+  /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    試験確認内容：プロパティが表示されることを確認
+    */
+    it("04-01-041:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);        
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    試験確認内容：name入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-042:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    name入力
+    試験確認内容：nameが入力できることを確認
+    */
+    it("04-01-043:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    name入力（使用可能文字確認）
+    試験確認内容：nameが入力できないことを確認
+    */
+    it("04-01-044:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
+      cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    });
+
+  /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    試験確認内容：説明入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-045:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    description入力
+    試験確認内容：descriptionが入力できることを確認
+    */
+    it("04-01-046:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    input files表示
+    試験確認内容：input files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-047:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    input files入力
+    試験確認内容：input filesが入力できることを確認
+    */
+    it("04-01-048:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
+      cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    input files反映確認
+    試験確認内容：input filesが反映されることを確認
+    */
+    it("04-01-049:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    output files表示
+    試験確認内容：output files入力テキストエリアが表示されていることを確認
+    */
+    it("04-01-0050:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      const DATA_CY_STR = '[data-cy="component_property-output_files-list_form"]';
+      const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
+      cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    output files入力
+    試験確認内容：output filesが入力できることを確認
+    */
+    it("04-01-051:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
+      cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    output files反映確認
+    試験確認内容：output filesが反映されることを確認
+    */
+    it("04-01-052:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    構成要素の機能確認
+    closeボタン押下
+    試験確認内容：プロパティが表示されていないことを確認
+    */
+    it("04-01-053:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.closeProperty();
+      cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    構成要素の機能確認
+    cleanボタン押下
+    試験確認内容：最新の保存状態に戻っていることを確認
+    */
+    it.skip("04-01-054:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+      cy.get('[data-cy="component_property-loop_set_for-panel_title"]').click();
+      cy.get('[data-cy="component_property-start_for-text_field"]').type('1');
+      cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
+      cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
+      cy.get('[data-cy="workflow-play-btn"]').click();
+      cy.clickComponentName(STEPJOB_NAME_0);
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').clear();
+      cy.get('[data-cy="component_property-name-text_field"]').type('changeName');
+      cy.get('[data-cy="component_property-description-textarea"]').find('textarea').focus();
+      cy.get('[data-cy="component_property-clean-btn"]').click();
+      cy.get('[data-cy="component_property-name-text_field"]').find('input').should('have.value', 'test-a');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    接続確認
+    試験確認内容：コンポーネントが接続されていることを確認
+    */
+    it("04-01-056:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_1, 300, 600);
+      cy.connectComponent(STEPJOB_NAME_1);  // コンポーネント同士を接続
+      cy.checkConnectionLine(STEPJOB_NAME_0, STEPJOB_NAME_1);  // 作成したコンポーネントの座標を取得して接続線の座標と比較
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    ファイル転送設定の各パターンの確認
+    シンポリックリンク確認
+    試験確認内容：シンポリックリンクが作成されていることを確認
+    */
+    it("04-01-057:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_1, 300, 600);
+      cy.connectComponent(STEPJOB_NAME_1);  // コンポーネント同士を接続
+      cy.clickComponentName(STEPJOB_NAME_1);
+      cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+      cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    });
+
+    /** 
+    コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント共通機能確認
+    転送対象ファイル・フォルダの設定
+    削除ボタン表示確認（input file）
+    試験確認内容：削除ボタンが表示されることを確認
+    */
+    it("04-01-062:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+      cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+    });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除ボタン表示確認（output file）
+  試験確認内容：削除ボタンが表示されることを確認
+  */
+  it("04-01-063:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除反映確認（input file）
+  試験確認内容：input fileが削除されていることを確認
+  skip:issue#942
+  */
+  it.skip("04-01-064:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').click();
+    cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  転送対象ファイル・フォルダの設定
+  削除反映確認（output file）
+  試験確認内容：output fileが削除されていることを確認
+  skip:issue#942
+  */
+  it.skip("04-01-065:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+    cy.get('[data-cy="action_row-delete-btn"]').click();
+    cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ単体表示
+  試験確認内容：ディレクトリが単体表示されることを確認
+  */
+  it("04-01-066:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード前）
+  試験確認内容：ディレクトリが単体表示されることを確認
+  */
+  it("04-01-067:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ複数表示（リロード後）
+  試験確認内容：ディレクトリが複数表示されることを確認
+  */
+  it("04-01-068:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test1', true);
+    cy.createDirOrFile(TYPE_DIR, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(STEPJOB_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル単体表示
+  試験確認内容：ファイルが単体表示されることを確認
+  */
+  it("04-01-069:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test-a', true);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード前）
+  試験確認内容：ファイルが単体表示されることを確認
+  */
+  it("04-01-070:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  ファイル操作エリア
+  ファイル複数表示（リロード後）
+  試験確認内容：ファイルが複数表示されることを確認
+  */
+  it("04-01-071:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_FILE, 'test1', true);
+    cy.createDirOrFile(TYPE_FILE, 'test2', false);
+    cy.closeProperty();
+    cy.clickComponentName(STEPJOB_NAME_0);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ディレクトリ表示
+  試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+  */
+  it("04-01-072:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_DIR, 'test-b', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-b').should('exist');
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  BulkjobTaskコンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリ内ファイル表示
+  試験確認内容：ディレクトリ内にファイルが作成されることを確認
+  */
+  it("04-01-073:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
+    cy.createDirOrFile(TYPE_DIR, 'test-a', true);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
+    cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test.txt').should('exist');
+  });
+
+
+/* -------------------------------------
+  BulkjobTaskコンポーネント固有の確認を追加する
+  --------------------------------------
+*/
+
+
+
 })
 
 

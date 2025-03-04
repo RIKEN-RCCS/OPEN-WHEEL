@@ -17,6 +17,7 @@
           v-model="selectedText"
           label="current selected text"
           readonly
+          data-cy="parameter-selected_text-text_field"
         />
           <v-btn
             class="text-capitalize"
@@ -24,6 +25,7 @@
             @click="dialog=true"
             prepend-icon="mdi-plus"
             text="add new parameter"
+            data-cy="parameter-add_new_parameter_btn"
           />
           <v-btn
             class="text-capitalize"

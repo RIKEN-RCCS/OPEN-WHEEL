@@ -187,7 +187,7 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isFor">
-          <v-expansion-panel-title>loop setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-loop_set_for-panel_title">loop setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-form @submit.prevent>
               <v-text-field
@@ -196,6 +196,7 @@
               :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
+                data-cy="component_property-start_for-text_field"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.end"
@@ -203,6 +204,7 @@
               :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
+                data-cy="component_property-end_for-text_field"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.step"
@@ -210,6 +212,7 @@
               :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
+                data-cy="component_property-step_for-text_field"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.keep"
@@ -218,12 +221,13 @@
                 type="number"
                 clearable
                 :rules="[rules.isValidKeepProp ]"
+                data-cy="component_property-keep_for-text_field"
               />
             </v-form>
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isForeach">
-          <v-expansion-panel-title>loop setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-loop_set_foreach-panel_title">loop setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'foreach'"
@@ -233,12 +237,14 @@
               @add="addToIndexList"
               @remove="removeFromIndexList"
               @update="updateIndexList"
+              data-cy="component_property-index_foreach-list_form"
             />
             <v-text-field
               v-model.number="copySelectedComponent.keep"
               label="number of instances to keep"
               :readonly="readOnly"
               type="number"
+              data-cy="component_property-keep_foreach-text_field"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -440,6 +446,7 @@
               label="number of instances to keep"
               :readonly="readOnly"
               type="number"
+              data-cy="component_property-keep_while-text_field"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>

@@ -6,7 +6,7 @@ Cypress.Commands.add("removeRemoteHost", (remotoHostName)=>{
     .then(()=>{
       const REMOTE_HOST_ROW = cy.contains("tr", remotoHostName, {timeout: 1000})
       if(REMOTE_HOST_ROW){
-        cy.get('[data-cy="action_row-delete-btn"]').click();
+        cy.contains("tr", remotoHostName).find('[data-cy="action_row-delete-btn"]').click();
         cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
       }
     })
