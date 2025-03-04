@@ -15,6 +15,7 @@ const { isValidOutputFilename } = require("../../../../common/regexp.cjs");
 const { isValidInputFilename } = require("../../../../common/regexp.cjs");
 const { isValidName } = require("../../../../common/regexp.cjs");
 const isSane = rewRegexp.__get__("isSane");
+const { escapeRegExp } = require("../../../../common/regexp.cjs");
 
 describe("UT for regexp class", () => {
   describe("#isValidOutputFilename", () => {
@@ -217,6 +218,35 @@ describe("UT for regexp class", () => {
     it("should return false for filenames with invalid characters", () => {
         expect(isSane("invalid|name")).to.be.true;
         expect(isSane("invalid<name>")).to.be.true;
+    });
+  });
+  describe("#escapeRegExp", () => {
+    it("should escape special regex characters", () => {
+        const input = ".*+?^=!:${}()|[]/\\";
+        const expected = "\\.\\*\\+\\?\\^\\=\\!\\:\\$\\{\\}\\(\\)\\|\\[\\]\\/\\\\";
+        expect(escapeRegExp(input)).to.equal(expected);
+    });
+    it("should return the same string if no special characters", () => {
+        const input = "abc123";
+        expect(escapeRegExp(input)).to.equal("abc123");
+    });
+    it("should handle empty string", () => {
+        expect(escapeRegExp("")).to.equal("");
+    });
+    it("should handle strings with only special characters", () => {
+        const input = "[.*?]";
+        const expected = "\\[\\.\\*\\?\\]";
+        expect(escapeRegExp(input)).to.equal(expected);
+    });
+    it("should handle strings with a mix of special and regular characters", () => {
+        const input = "file(name).txt";
+        const expected = "file\\(name\\)\\.txt";
+        expect(escapeRegExp(input)).to.equal(expected);
+    });
+    it("should escape backslashes correctly", () => {
+        const input = "\\path\\to\\file";
+        const expected = "\\\\path\\\\to\\\\file";
+        expect(escapeRegExp(input)).to.equal(expected);
     });
   });
 });
