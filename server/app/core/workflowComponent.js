@@ -455,6 +455,17 @@ async function isBehindIfComponent(projectRootDir, component) {
 }
 
 /**
+ * determine if component has outputfile which will be used by other components
+ * @param {object} component - Component object
+ * @returns  {boolean} -
+ */
+function hasNeededOutputFiles(component) {
+  return component.outputFiles.some((outputFile)=>{
+    return outputFile.dst.length > 0;
+  });
+}
+
+/**
  * determine if specified component is initial component
  * @param {string} projectRootDir - project's root path
  * @param {object} component - Component object
@@ -465,9 +476,7 @@ async function isInitialComponent(projectRootDir, component) {
     return false;
   }
   if (["storage", "hpciss", "hpcisstar"].includes(component.type)) {
-    return component.outputFiles.some((outputFile)=>{
-      return outputFile.dst.length > 0;
-    });
+    return hasNeededOutputFiles(component);
   }
   if (component.type === "source") {
     return component.outputFiles[0].dst.length > 0;
@@ -537,5 +546,6 @@ module.exports = {
   isInitialComponent,
   isLocalComponent,
   removeDuplicatedComponent,
-  getComponentDefaultName
+  getComponentDefaultName,
+  hasNeededOutputFiles
 };

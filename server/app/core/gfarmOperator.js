@@ -110,9 +110,9 @@ async function gfpcopy(projectRootDir, hostID, src, dst, toGfarm, timeout = 60) 
   let dstPath = dst;
   if (toGfarm) {
     dstPath = formatGfarmURL(dst);
-  } else {
-    srcPath = formatGfarmURL(src);
+    return execOnCSGW(projectRootDir, hostID, timeout, `cd ${srcPath};gfpcopy -p -v -f`, "./", dstPath);
   }
+  srcPath = formatGfarmURL(src);
   return execOnCSGW(projectRootDir, hostID, timeout, "gfpcopy -p -v -f", srcPath, dstPath);
 }
 
