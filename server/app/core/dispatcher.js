@@ -13,15 +13,15 @@ const { debounce } = require("perfect-debounce");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
 const { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename } = require("../db/db");
-const { getSsh } = require("./sshManager.js");
+const { getSsh, getSshHostinfo } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString, writeJsonWrapper } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
-const { readJsonGreedy, deliverFile, deliverFileOnRemote, deliverFileFromRemote } = require("./fileUtils");
+const { readJsonGreedy, deliverFile, deliverFileOnRemote, deliverFileFromRemote, deliverFileFromHPCISS } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
 const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
 const { writeComponentJson, readComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
-const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent.js");
+const { isInitialComponent, removeDuplicatedComponent, hasNeededOutputFiles } = require("./workflowComponent.js");
 const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
@@ -47,6 +47,7 @@ const {
 } = require("./loopUtils.js");
 const { makeCmd } = require("./psUtils.js");
 const { overwriteByRsync } = require("./rsync.js");
+const { gfcp, gfpcopy, gfptarCreate } = require("./gfarmOperator.js");
 
 const wheelSystemEnv = [
   "WHEEL_CURRENT_INDEX",
@@ -402,7 +403,7 @@ class Dispatcher extends EventEmitter {
 
   async _addNextComponent(component, useElse = false) {
     let nextComponentIDs = [];
-    const componentsWithoutNextProp = ["source", "viewer", "storage"];
+    const componentsWithoutNextProp = ["source", "viewer", "storage", "hpciss", "hpcisstar"];
     if (!componentsWithoutNextProp.includes(component.type)) {
       nextComponentIDs = useElse ? Array.from(component.else) : Array.from(component.next);
     }
@@ -461,14 +462,16 @@ class Dispatcher extends EventEmitter {
         if (dstComponent.type === "viewer" || dstComponent.type === "storage") {
           continue;
         }
-        const prviousCmp = await Promise.all(dstComponent.previous.map((id)=>{
-          return this._getComponent(id);
-        }));
-        prviousCmp.forEach((cmp)=>{
-          if (cmp.type === "if") {
-            behindIfComponetList.push(e.dstNode);
-          }
-        });
+        if (Array.isArray(dstComponent.previous)) {
+          const prviousCmp = await Promise.all(dstComponent.previous.map((id)=>{
+            return this._getComponent(id);
+          }));
+          prviousCmp.forEach((cmp)=>{
+            if (cmp.type === "if") {
+              behindIfComponetList.push(e.dstNode);
+            }
+          });
+        }
       }
     }
     return behindIfComponetList;
@@ -1071,6 +1074,49 @@ class Dispatcher extends EventEmitter {
     await this._setComponentState(component, "finished");
   }
 
+  async _hpcissHandler(withTar, component) {
+    getLogger(this.projectRootDir).debug(`_hpcissHandler called with ${component.name} tar=${withTar}`);
+    await this._setComponentState(component, "running");
+    const currentDir = this._getComponentDir(component.ID);
+
+    const targetsToCopy = component.inputFiles.map((e)=>{
+      return path.join(currentDir, e.name);
+    });
+    const remotehostID = remoteHost.getID("name", component.host);
+    const ssh = getSsh(this.projectRootDir, remotehostID);
+    const hostinfo = getSshHostinfo(this.projectRootDir, remotehostID);
+    const prefix = hostinfo.path ? `-p ${hostinfo.path}` : "";
+
+    const { output, rt } = await ssh.execAndGetOutput(`mktemp -d ${prefix} WHEEL_TMP_XXXXXXXX`);
+    if (rt !== 0) {
+      throw new Error("create temporary directory on CSGW failed");
+    }
+    component.remoteTempDir = output[0];
+    await ssh.send(targetsToCopy, `${component.remoteTempDir}/`, ["--exclude=*.wheel.json", "--exclude=*.wheel.txt"]);
+
+    const storagePath = component.storagePath;
+    if (withTar) {
+      await gfptarCreate(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath);
+    } else {
+      const lsResults = await ssh.ls(component.remoteTempDir, ["-l"]);
+      if (lsResults.length === 1 && lsResults[0].startsWith("-")) {
+        const tokens = lsResults[0].split(" ");
+        const filename = tokens[tokens.length - 1];
+        await gfcp(this.projectRootDir, remotehostID, path.join(component.remoteTempDir, filename), path.join(storagePath, filename), true);
+      } else {
+        await gfpcopy(this.projectRootDir, remotehostID, `${component.remoteTempDir}`, storagePath, true);
+      }
+    }
+    const keepTempDir = hasNeededOutputFiles(component);
+    if (!keepTempDir) {
+      getLogger(this.projectRootDir).debug(`remove remote temp dir ${component.remoteTempDir}`);
+      await ssh.exec(`rm -fr ${component.remoteTempDir}`);
+    }
+
+    await this._addNextComponent(component);
+    await this._setComponentState(component, "finished");
+  }
+
   async _sourceHandler(component) {
     getLogger(this.projectRootDir).debug("_sourceHandler called", component.name);
     await this._setComponentState(component, "running");
@@ -1170,6 +1216,8 @@ class Dispatcher extends EventEmitter {
       //resolve real src
       for (const src of inputFile.src) {
         const srcComponent = await this._getComponent(src.srcNode);
+        const fromHPCISS = srcComponent.type === "hpciss";
+        const fromHPCISStar = srcComponent.type === "hpcisstar";
         //get files from upper level
         if (src.srcNode === component.parent) {
           const dstRoot = this._getComponentDir(component.ID);
@@ -1188,7 +1236,7 @@ class Dispatcher extends EventEmitter {
           for (const e of srcEntry.src) {
             const originalSrcRoot = this._getComponentDir(e.srcNode);
             const srcName = nunjucks.renderString(e.srcName, this.env);
-            deliverRecipes.add({ dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy: false });
+            deliverRecipes.add({ dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy: false, fromHPCISS, fromHPCISStar });
           }
         } else if (await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID)) {
           const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
@@ -1198,7 +1246,7 @@ class Dispatcher extends EventEmitter {
           const dstRoot = component.type === "storage" ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const srcName = nunjucks.renderString(src.srcName, this.env);
           const forceCopy = srcComponent.type === "storage";
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy, fromHPCISS, fromHPCISStar });
         } else if (Object.prototype.hasOwnProperty.call(srcComponent, "host") && srcComponent.host !== "localhost" && srcComponent.type !== "task") {
           //memo1: taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼るだけでよいので除外している
           //memo2: この方法だと、接続先が複数あるエントリは複数回rsyncを実行することになるため将来的には全てtaskコンポーネントと同じ方式にする必要がある
@@ -1207,7 +1255,7 @@ class Dispatcher extends EventEmitter {
           const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component);
           const dstRoot = component.type === "storage" ? component.storagePath : this._getComponentDir(component.ID);
           const srcName = nunjucks.renderString(src.srcName, this.env);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, remoteToLocal: true, projectRootDir: this.projectRootDir, remotehostID: srcRemotehostID });
+          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, remoteToLocal: true, projectRootDir: this.projectRootDir, remotehostID: srcRemotehostID, fromHPCISS, fromHPCISStar });
         } else {
           //deliver files under component directory even if destination component is storage
           //in storageHandler, files under component directory will be copied to storagePath (avoid to store symlink in storagePath)
@@ -1226,13 +1274,13 @@ class Dispatcher extends EventEmitter {
                   for (const e of srcEntry.origin) {
                     const srcName = nunjucks.renderString(e.srcName, this.env);
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy: false });
+                    deliverRecipes.add({ dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy: false, fromHPCISS, fromHPCISStar });
                   }
                 } else {
                   const srcName = nunjucks.renderString(src.srcName, this.env);
                   const forceCopy = srcComponent.type === "storage";
                   const srcRoot = srcComponent.type !== "storage" ? this._getComponentDir(src.srcNode) : srcComponent.storagePath;
-                  deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, forceCopy });
+                  deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, forceCopy, fromHPCISS, fromHPCISStar });
                 }
               })
           );
@@ -1248,6 +1296,10 @@ class Dispatcher extends EventEmitter {
         p2.push(deliverFileOnRemote(recipe));
       } else if (recipe.remoteToLocal) {
         p2.push(deliverFileFromRemote(recipe));
+      } else if (recipe.fromHPCISS) {
+        p2.push(deliverFileFromHPCISS(recipe));
+      } else if (recipe.fromHPCISStar) {
+        p2.push(deliverFileFromHPCISS(recipe, true));
       } else {
         const srces = await promisify(glob)(recipe.srcName, { cwd: recipe.srcRoot });
         const hasGlob = glob.hasMagic(recipe.srcName);
@@ -1323,6 +1375,12 @@ class Dispatcher extends EventEmitter {
         break;
       case "continue":
         cmd = this._jumpHandler.bind(this, "continue");
+        break;
+      case "hpciss":
+        cmd = this._hpcissHandler.bind(this, false);
+        break;
+      case "hpcisstar":
+        cmd = this._hpcissHandler.bind(this, true);
         break;
       default:
         getLogger(this.projectRootDir).error("illegal type specified", type);
