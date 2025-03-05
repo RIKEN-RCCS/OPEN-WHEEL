@@ -52,7 +52,7 @@
     <template #item.actions="{ item }">
       <action-row
         :can-edit="allowEditButton"
-        :item="item.raw"
+        :item="item"
         :disabled="readOnly"
         @delete="deleteItem"
       />
