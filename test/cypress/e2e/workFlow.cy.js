@@ -789,7 +789,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   it("03-01-059:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-javascriptテキストボックス表示確認-javascriptテキストボックスが表示されていることを確認", ()=>{
     cy.get('[data-cy="component_property-retry-panel_title"]').click();
     cy.get('[data-cy="component_property-task_use_javascript-switch"]').click();
-    cy.get('[data-cy="component_property-task_use_javascript-textarea"]').should('be.not.visible');
+    cy.get('[data-cy="component_property-task_use_javascript-textarea"]').should('be.visible');
   });
 
   /** 
