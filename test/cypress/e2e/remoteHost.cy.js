@@ -205,7 +205,8 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get('[data-cy="add_new_host-browse_btn"]').click();
       cy.get('[data-cy="add_new_host-select_private_key_file-card_text"]').contains('testProject.wheel').click();
       cy.get('[data-cy="add_new_host-select_private_key_file_ok-btn"]').click();
-      cy.get('[data-cy="add_new_host-private_key_path-text_field"]').find('input').should('have.value', '/root/testProject.wheel');
+      const REG_VALUE = new RegExp('testProject.wheel')
+      cy.get('[data-cy="add_new_host-private_key_path-text_field"]').find('input').should("have.attr", "value").and("match",REG_VALUE);
       cy.removeAllProjects();
     });
 

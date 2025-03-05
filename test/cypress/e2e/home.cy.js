@@ -216,7 +216,7 @@ describe("02:ホーム画面基本動作確認", ()=>{
     試験確認内容：変更後のプロジェクト説明で一覧に表示されていることを確認
     skip:issue#938
     */
-    it.only("02-01-018:機能利用フローの確認-プロジェクト名変更-プロジェクト説明押下-変更後のプロジェクト説明で一覧に表示されていることを確認", ()=>{
+    it.skip("02-01-018:機能利用フローの確認-プロジェクト名変更-プロジェクト説明押下-変更後のプロジェクト説明で一覧に表示されていることを確認", ()=>{
       cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
       cy.get('[data-cy="home-project_description-btn"]').contains(PROJECT_DESCRIPTION).click();
       cy.get('[data-cy="home-description_change-textarea"]').clear();

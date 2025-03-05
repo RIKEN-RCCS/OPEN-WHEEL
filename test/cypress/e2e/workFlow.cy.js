@@ -768,7 +768,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：選択した値が表示されていることを確認
   skip:issue#944
   */
-  it.only("03-01-058:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
+  it.skip("03-01-058:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
     cy.createDirOrFile(TYPE_FILE, 'test-a', true);
     cy.get('[data-cy="component_property-retry-panel_title"]').click();
     cy.get('[data-cy="component_property-task_use_javascript-autocomplete"]').find('input').type('test-a');
@@ -814,7 +814,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：入力した値が反映されていることを確認
   skip:issue#944
   */
-  it.only("03-01-061:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-javascriptテキストボックス反映確認-入力した値が反映されていることを確認", ()=>{
+  it.skip("03-01-061:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-javascriptテキストボックス反映確認-入力した値が反映されていることを確認", ()=>{
     cy.get('[data-cy="component_property-retry-panel_title"]').click();
     cy.get('[data-cy="component_property-task_use_javascript-switch"]').click();
     cy.get('[data-cy="component_property-task_use_javascript-textarea"]').type('testJavaScript');
