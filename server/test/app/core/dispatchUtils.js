@@ -12,6 +12,143 @@ const sinon = require("sinon");
 const rewire = require("rewire");
 const { isFinishedState } = require("../../../app/core/dispatchUtils");
 
+describe("#pspawn", ()=>{
+  let pspawn;
+  let spawnStub;
+  let onStub;
+  let stdoutStub;
+  let stderrStub;
+  let getLoggerStub;
+  let debugStub;
+  let traceStub;
+
+  beforeEach(()=>{
+    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
+    pspawn = dispatchUtils.__get__("pspawn");
+    spawnStub = sinon.stub();
+    onStub = sinon.stub();
+    stdoutStub = sinon.stub();
+    stderrStub = sinon.stub();
+    getLoggerStub = sinon.stub();
+    debugStub = sinon.stub();
+    traceStub = sinon.stub();
+    dispatchUtils.__set__({
+      childProcess: { spawn: spawnStub },
+      getLogger: getLoggerStub
+    });
+    getLoggerStub.returns({ debug: debugStub, trace: traceStub });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should resolve as true if the child process is finished with code 0", async ()=>{
+    spawnStub.withArgs("command", {}).returns({
+      on: onStub,
+      stdout: { on: stdoutStub },
+      stderr: { on: stderrStub }
+    });
+    let closingCallback;
+    onStub.withArgs("close").callsFake((event, callback)=>{
+      closingCallback = callback;
+    });
+    let promise = pspawn("projectRootDir", "command", {});
+    closingCallback(0);
+    await expect(promise).to.eventually.be.true;
+  });
+
+  it("should resolve as false if the child process is finished with code non 0", async ()=>{
+    spawnStub.withArgs("command", {}).returns({
+      on: onStub,
+      stdout: { on: stdoutStub },
+      stderr: { on: stderrStub }
+    });
+    let closingCallback;
+    onStub.withArgs("close").callsFake((event, callback)=>{
+      closingCallback = callback;
+    });
+    let promise = pspawn("projectRootDir", "command", {});
+    closingCallback(1);
+    await expect(promise).to.eventually.be.false;
+  });
+
+  it("should reject if the child process is finished with an error", async ()=>{
+    spawnStub.withArgs("nonexistent_command", {}).returns({
+      on: onStub,
+      stdout: { on: stdoutStub },
+      stderr: { on: stderrStub }
+    });
+    let errorCallback;
+    onStub.withArgs("error").callsFake((event, callback)=>{
+      errorCallback = callback;
+    });
+    let promise = pspawn("projectRootDir", "nonexistent_command", {});
+    errorCallback();
+    await expect(promise).to.be.rejected;
+  });
+
+  it("should log closing when the child process is finished", async ()=>{
+    spawnStub.withArgs("command", {}).returns({
+      on: onStub,
+      stdout: { on: stdoutStub },
+      stderr: { on: stderrStub }
+    });
+    let closingCallback;
+    onStub.withArgs("close").callsFake((event, callback)=>{
+      closingCallback = callback;
+    });
+    let promise = pspawn("projectRootDir", "command", {});
+    closingCallback(123);
+    await promise;
+    expect(
+      debugStub.calledWith("return value of conditional expression = ", 123)
+    ).to.be.true;
+  });
+
+  it("should log stdout", async ()=>{
+    spawnStub.withArgs("command", {}).returns({
+      on: onStub,
+      stdout: { on: stdoutStub },
+      stderr: { on: stderrStub }
+    });
+    let closingCallback;
+    onStub.withArgs("close").callsFake((event, callback)=>{
+      closingCallback = callback;
+    });
+    let stdoutCallback;
+    stdoutStub.callsFake((event, callback)=>{
+      stdoutCallback = callback;
+    });
+    let promise = pspawn("projectRootDir", "command", {});
+    stdoutCallback("processing");
+    closingCallback(0);
+    await promise;
+    expect(traceStub.calledWith("processing")).to.be.true;
+  });
+
+  it("should log stderr", async ()=>{
+    spawnStub.withArgs("command", {}).returns({
+      on: onStub,
+      stdout: { on: stdoutStub },
+      stderr: { on: stderrStub }
+    });
+    let errorCallback;
+    onStub.withArgs("error").callsFake((event, callback)=>{
+      errorCallback = callback;
+    });
+    let stderrCallback;
+    stderrStub.callsFake((event, callback)=>{
+      stderrCallback = callback;
+    });
+    let promise = pspawn("projectRootDir", "command", {});
+    stderrCallback("error occurred");
+    errorCallback();
+    await promise.catch(()=>{});
+    expect(traceStub.calledWith("error occurred")).to.be.true;
+  });
+});
+
 describe("#getRemoteRootWorkingDir", ()=>{
   let getRemoteRootWorkingDir;
   let getIDStub;
