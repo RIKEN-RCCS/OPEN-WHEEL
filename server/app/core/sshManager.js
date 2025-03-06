@@ -6,7 +6,6 @@
 "use strict";
 const SshClientWrapper = require("ssh-client-wrapper");
 const { emitAll } = require("../handlers/commUtils.js");
-const { getLogger } = require("../logSettings");
 
 const db = new Map();
 
@@ -31,13 +30,12 @@ function hasEntry(projectRootDir, id) {
  * @param {string} pw - password
  * @param {string} ph - passphrase
  * @param {boolean} isStorage - whether this host is also used for remote storage component or not
- * @param {string} JWTServerPassphrase - passphrase for JWT server
  */
-function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage, JWTServerPassphrase) {
+function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage) {
   if (!db.has(projectRootDir)) {
     db.set(projectRootDir, new Map());
   }
-  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph, isStorage, JWTServerPassphrase });
+  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph, isStorage });
 }
 
 /**
@@ -154,10 +152,9 @@ function askPassword(clientID, hostname, mode, JWTServerURL = null) {
  * @param {object} hostinfo - one of the ssh connection setting in remotehost json
  * @param {string} clientID - socket's ID
  * @param {boolean} isStorage - whether this host is used for remote storage component or not
- * @param {boolean} isGfarm - whether this host is used for HPCI-SS or HPCI-ss-tar component
  * @returns {object} - ssh instance
  */
-async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isStorage, isGfarm) {
+async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isStorage) {
   if (hasEntry(projectRootDir, hostinfo.id)) {
     return getSsh(projectRootDir, hostinfo.id);
   }
@@ -190,11 +187,6 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
     ph = await askPassword(clientID, remoteHostName, "passphrase ", null);
     return ph;
   };
-  let phGfarm;
-  if (hostinfo.useGfarm && isGfarm) {
-    getLogger(projectRootDir).debug(`get JWT-server passphrase for ${hostinfo.name}`);
-    phGfarm = await askPassword(clientID, remoteHostName, "passphrase", hostinfo.JWTServerURL);
-  }
   if (hostinfo.renewInterval) {
     hostinfo.ControlPersist = hostinfo.renewInterval * 60;
   }
@@ -219,7 +211,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   try {
     const success = await ssh.canConnect(timeout);
     if (success) {
-      addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage, phGfarm);
+      addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
     }
   } catch (e) {
     if (e.reason === "CANCELED") {
