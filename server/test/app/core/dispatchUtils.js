@@ -12,6 +12,108 @@ const sinon = require("sinon");
 const rewire = require("rewire");
 const { isFinishedState } = require("../../../app/core/dispatchUtils");
 
+describe("#getRemoteRootWorkingDir", ()=>{
+  let getRemoteRootWorkingDir;
+  let getIDStub;
+  let getSshHostinfoStub;
+  let replacePathsepStub;
+
+  beforeEach(()=>{
+    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
+    getRemoteRootWorkingDir = dispatchUtils.__get__("getRemoteRootWorkingDir");
+    getIDStub = sinon.stub();
+    getSshHostinfoStub = sinon.stub();
+    replacePathsepStub = sinon.stub();
+    dispatchUtils.__set__({
+      remoteHost: { getID: getIDStub },
+      getSshHostinfo: getSshHostinfoStub,
+      replacePathsep: replacePathsepStub
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return the correct remote root working directory path", ()=>{
+    getIDStub.withArgs("name", "example.com").returns("hostID");
+    getSshHostinfoStub.withArgs("projectRootDir", "hostID").returns({
+      sharedPath: "/remote/shared",
+      path: "/remote/root"
+    });
+    replacePathsepStub
+      .withArgs("/remote/root/20230101-1231")
+      .returns("/remote/root/20230101-1231");
+    const result = getRemoteRootWorkingDir(
+      "projectRootDir",
+      "20230101-1231",
+      {
+        host: "example.com"
+      },
+      false
+    );
+    expect(result).to.equal("/remote/root/20230101-1231");
+  });
+
+  it("should return null if the remotehostID is undefined", ()=>{
+    getIDStub.withArgs("name", "example.com").returns(undefined);
+    getSshHostinfoStub.withArgs("projectRootDir", "hostID").returns({
+      sharedPath: "/remote/shared",
+      path: "/remote/root"
+    });
+    replacePathsepStub
+      .withArgs("/remote/root/20230101-1231")
+      .returns("/remote/root/20230101-1231");
+    const result = getRemoteRootWorkingDir(
+      "projectRootDir",
+      "20230101-1231",
+      {
+        host: "example.com"
+      },
+      false
+    );
+    expect(result).to.be.null;
+  });
+
+  it("should use sharedPath if the isSharedHost is true", ()=>{
+    getIDStub.withArgs("name", "example.com").returns("hostID");
+    getSshHostinfoStub.withArgs("projectRootDir", "hostID").returns({
+      sharedPath: "/remote/shared",
+      path: "/remote/root"
+    });
+    replacePathsepStub
+      .withArgs("/remote/shared/20230101-1231")
+      .returns("/remote/shared/20230101-1231");
+    const result = getRemoteRootWorkingDir(
+      "projectRootDir",
+      "20230101-1231",
+      {
+        host: "example.com"
+      },
+      true
+    );
+    expect(result).to.equal("/remote/shared/20230101-1231");
+  });
+
+  it("should use remoteRoot as empty if the remoteHost is not string", ()=>{
+    getIDStub.withArgs("name", "example.com").returns("hostID");
+    getSshHostinfoStub.withArgs("projectRootDir", "hostID").returns({
+      sharedPath: 123,
+      path: 456
+    });
+    replacePathsepStub.withArgs("20230101-1231").returns("20230101-1231");
+    const result = getRemoteRootWorkingDir(
+      "projectRootDir",
+      "20230101-1231",
+      {
+        host: "example.com"
+      },
+      false
+    );
+    expect(result).to.equal("20230101-1231");
+  });
+});
+
 describe("#getRemoteWorkingDir", ()=>{
   let getRemoteWorkingDir;
   let getRemoteRootWorkingDirStub;
