@@ -149,6 +149,116 @@ describe("#pspawn", ()=>{
   });
 });
 
+describe("#evalCondition", ()=>{
+  let evalCondition;
+  let pathExistsStub;
+  let getLoggerStub;
+  let debugStub;
+  let warnStub;
+  let addXStub;
+  let pspawnStub;
+  let evalStub;
+
+  beforeEach(()=>{
+    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
+    evalCondition = dispatchUtils.__get__("evalCondition");
+    pathExistsStub = sinon.stub();
+    getLoggerStub = sinon.stub();
+    debugStub = sinon.stub();
+    warnStub = sinon.stub();
+    addXStub = sinon.stub();
+    pspawnStub = sinon.stub();
+    dispatchUtils.__set__({
+      process: { env: {} },
+      fs: { pathExists: pathExistsStub },
+      getLogger: getLoggerStub,
+      addX: addXStub,
+      pspawn: pspawnStub,
+      eval: evalStub
+    });
+    getLoggerStub.returns({ debug: debugStub, warn: warnStub });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return condition if the condition is boolean", async ()=>{
+    const result = await evalCondition("/projectRootDir", true, "/cwd", {});
+    expect(result).to.be.true;
+  });
+
+  it("should return error if the condition is not string or boolean", async ()=>{
+    const result = await evalCondition("/projectRootDir", 123, "/cwd", {});
+    expect(result).to.be.an.instanceOf(Error);
+    expect(result.message).to.equal("illegal condition specified number \n123");
+  });
+
+  it("should log warning if the condition is not string or boolean", async ()=>{
+    await evalCondition("/projectRootDir", 123, "/cwd", {});
+    expect(warnStub.calledWith("condition must be string or boolean")).to.be
+      .true;
+  });
+
+  it("should execute the script and return the result", async ()=>{
+    pathExistsStub.withArgs("/cwd/condition").resolves(true);
+    addXStub.withArgs("/cwd/condition").resolves();
+    pspawnStub
+      .withArgs(
+        "/projectRootDir",
+        "/cwd/condition",
+        sinon.match({
+          env: { key: "value" },
+          cwd: "/cwd",
+          shell: "bash"
+        })
+      )
+      .resolves(true);
+    const result = await evalCondition("/projectRootDir", "condition", "/cwd", {
+      key: "value"
+    });
+    expect(result).to.be.true;
+  });
+
+  it("should log execution of the script", async ()=>{
+    pathExistsStub.withArgs("/cwd/condition").resolves(true);
+    addXStub.withArgs("/cwd/condition").resolves();
+    pspawnStub
+      .withArgs(
+        "/projectRootDir",
+        "/cwd/condition",
+        sinon.match({
+          env: { key: "value" },
+          cwd: "/cwd",
+          shell: "bash"
+        })
+      )
+      .resolves(true);
+    await evalCondition("/projectRootDir", "condition", "/cwd", {
+      key: "value"
+    });
+    expect(debugStub.calledWith("execute ", "/cwd/condition")).to.be.true;
+  });
+
+  it("should log evaluation of the condition", async ()=>{
+    pathExistsStub.resolves(false);
+    await evalCondition("/projectRootDir", "condition", "/cwd", {});
+    expect(debugStub.calledWith("evalute ", "condition")).to.be.true;
+  });
+
+  it("should return error if the script is not found", async ()=>{
+    pathExistsStub.withArgs("/cwd/condition").resolves(false);
+    evalStub.withArgs("condition").returns(true);
+    const result = await evalCondition(
+      "/projectRootDir",
+      "condition",
+      "/cwd",
+      {}
+    );
+    expect(result).to.equal("condition");
+  });
+});
+
 describe("#getRemoteRootWorkingDir", ()=>{
   let getRemoteRootWorkingDir;
   let getIDStub;
