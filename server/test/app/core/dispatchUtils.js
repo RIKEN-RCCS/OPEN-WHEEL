@@ -12,6 +12,59 @@ const sinon = require("sinon");
 const rewire = require("rewire");
 const { isFinishedState } = require("../../../app/core/dispatchUtils");
 
+describe("#getRemoteWorkingDir", ()=>{
+  let getRemoteWorkingDir;
+  let getRemoteRootWorkingDirStub;
+  let replacePathsepStub;
+
+  beforeEach(()=>{
+    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
+    getRemoteWorkingDir = dispatchUtils.__get__("getRemoteWorkingDir");
+    getRemoteRootWorkingDirStub = sinon.stub();
+    replacePathsepStub = sinon.stub();
+    dispatchUtils.__set__({
+      getRemoteRootWorkingDir: getRemoteRootWorkingDirStub,
+      replacePathsep: replacePathsepStub
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return the correct remote working directory path", ()=>{
+    getRemoteRootWorkingDirStub
+      .withArgs("/project/root", "20230101-1231", {}, false)
+      .returns("/remote/root/20230101-1231");
+    replacePathsepStub.withArgs("workingDir").returns("workingDir");
+    replacePathsepStub
+      .withArgs("/remote/root/20230101-1231/workingDir")
+      .returns("/remote/root/20230101-1231/workingDir");
+
+    const result = getRemoteWorkingDir(
+      "/project/root",
+      "20230101-1231",
+      "/project/root/workingDir",
+      {},
+      false
+    );
+    expect(result).to.equal("/remote/root/20230101-1231/workingDir");
+  });
+
+  it("should return null if getRemoteRootWorkingDir returns null", ()=>{
+    getRemoteRootWorkingDirStub.returns(null);
+
+    const result = getRemoteWorkingDir(
+      "/project/root",
+      "20230101-1234",
+      "/project/root/workingDir",
+      {},
+      false
+    );
+    expect(result).to.be.null;
+  });
+});
+
 describe("#isFinishedState", ()=>{
   it("should return true if the status is finished", ()=>{
     expect(isFinishedState("finished")).to.be.true;
