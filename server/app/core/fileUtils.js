@@ -156,6 +156,10 @@ async function deliverFileFromRemote(recipe) {
   return { type: "copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
 }
 
+async function deliverFileFromHPCISS(recipe, withTar) {
+  console.log("deliverFileFromHPCISS called with", recipe, "with tar = ", withTar);
+}
+
 /**
  * @typedef File
  * @param {object} File
@@ -303,6 +307,7 @@ module.exports = {
   deliverFile,
   deliverFileOnRemote,
   deliverFileFromRemote,
+  deliverFileFromHPCISS,
   openFile,
   saveFile,
   getUnusedPath,

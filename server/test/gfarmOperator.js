@@ -56,7 +56,17 @@ describe("UT for gfarmOperator", function () {
   const csgwRoot = process.env.WHEEL_GFARMTEST_CSGW_ROOT;
   let ssh;
   let getSsh;
-  let getSshHostinfo;
+  const getSshHostinfo = sinon.spy(()=>{
+    return {
+      JWTServerUser,
+      JWTServerURL: "https://elpis.hpci.nii.ac.jp/"
+    };
+  });
+  GFO.__set__("getSshHostinfo", getSshHostinfo);
+  const getJWTServerPassphrase = sinon.spy(()=>{
+    return JWTServerPassphrase;
+  });
+  GFO.__set__("getJWTServerPassphrase", getJWTServerPassphrase);
   before(function () {
     if (checkEnv()) {
       this.skip();
@@ -65,15 +75,7 @@ describe("UT for gfarmOperator", function () {
     getSsh = sinon.spy(()=>{
       return ssh;
     });
-    getSshHostinfo = sinon.spy(()=>{
-      return {
-        JWTServerUser,
-        JWTServerURL: "https://elpis.hpci.nii.ac.jp/",
-        JWTServerPassphrase
-      };
-    });
     GFO.__set__("getSsh", getSsh);
-    GFO.__set__("getSshHostinfo", getSshHostinfo);
   });
   after(()=>{
     ssh.disconnect();
@@ -246,7 +248,7 @@ describe("UT for gfarmOperator", function () {
       describe("#gfcp from gfarm", ()=>{
         beforeEach(async ()=>{
           await ssh.exec(`rm -fr ${csgwRoot};mkdir ${csgwRoot}; cd ${csgwRoot};mkdir -p dir1/dir2/dir3;echo hoge > hoge; echo foo>dir1/foo`);
-          await gfpcopy(null, "dummHostID", path.join(csgwRoot, "hoge"), target, true);
+          await gfcp(null, "dummHostID", path.join(csgwRoot, "hoge"), path.join(target, "hoge"), true);
           await ssh.exec(`rm -fr ${csgwRoot};mkdir ${csgwRoot}; cd ${csgwRoot};echo hoge > hoge;`);
         });
         it("should copy single file from gfarm", async ()=>{
@@ -283,14 +285,8 @@ describe("UT for gfarmOperator", function () {
         beforeEach(async ()=>{
           await ssh.exec(`rm -fr ${csgwRoot};mkdir ${csgwRoot}; cd ${csgwRoot};mkdir -p dir1/dir2/dir3;echo hoge > hoge; echo foo>dir1/foo`);
         });
-        it("should copy single file to gfarm", async ()=>{
-          const output = await gfpcopy(null, "dummyHostID", path.join(csgwRoot, "hoge"), target, true);
-          expect(output).to.be.an("array").and.has.lengthOf(8); ;
-          expect(output).to.include("copied_file_num: 1");
-
-          const result = await gfls(null, "dummyHostID", path.join(target, "hoge"));
-          expect(result).to.be.an("array").and.has.lengthOf(1);
-          expect(result[0]).to.match(/^-rw-r--r-- .*hoge$/);
+        it("should throw while attempting to copy single file to gfarm", async ()=>{
+          return expect(gfpcopy(null, "dummyHostID", path.join(csgwRoot, "hoge"), target, true)).to.be.rejectedWith(/cd .*gfpcopy -p -v -f.*: Not a directory/);
         });
         it("should copy directory tree to gfarm", async ()=>{
           const result = await gfpcopy(null, "dummyHostID", path.join(csgwRoot, "dir1"), target, true);
@@ -298,8 +294,11 @@ describe("UT for gfarmOperator", function () {
           expect(result).to.include("all_entries_num: 3");
           expect(result).to.include("copied_file_num: 1");
         });
-        it("should throw error if destination path is not exist", ()=>{
-          return expect(gfpcopy(null, "dummyHostID", path.join(csgwRoot, "hoge"), path.join(target, "hoge"), true)).to.be.rejectedWith(/gfpcopy -p -v -f failed: ERROR: .*: no such file or directory/);
+        it("should copy diretory even if destination path is not exist", async ()=>{
+          const result = await gfpcopy(null, "dummyHostID", path.join(csgwRoot, "dir1"), path.join(target, "hoge"), true);
+          expect(result).to.be.an("array").and.has.lengthOf(14); ;
+          expect(result).to.include("all_entries_num: 3");
+          expect(result).to.include("copied_file_num: 1");
         });
         it("should throw error if destination path is existing file", async ()=>{
           expect(await gfcp(null, "dummyHostID", path.join(csgwRoot, "hoge"), path.join(target, "hoge"), true)).to.be.an("array").and.has.lengthOf(3);
@@ -307,7 +306,7 @@ describe("UT for gfarmOperator", function () {
           const result = await gfls(null, "dummyHostID", path.join(target, "hoge"));
           expect(result).to.be.an("array").and.has.lengthOf(1);
           expect(result[0]).to.match(/^-rw-r--r-- .*hoge$/);
-          return expect(gfpcopy(null, "dummyHostID", path.join(csgwRoot, "hoge"), path.join(target, "hoge"), true)).to.be.rejectedWith(/gfpcopy -p -v -f failed: ERROR: .*: not a directory/);
+          return expect(gfpcopy(null, "dummyHostID", path.join(csgwRoot, "hoge"), path.join(target, "hoge"), true)).to.be.rejectedWith(/cd .* gfpcopy -p -v -f.*: Not a directory/);
         });
       });
       describe("#gfpcopy from gfarm", ()=>{
@@ -350,7 +349,7 @@ describe("UT for gfarmOperator", function () {
         });
         it("should create archive files on gfarm", async ()=>{
           const output = await gfptarCreate(null, "dummHostID", csgwRoot, path.join(target, "hoge"));
-          expect(output).to.be.an("array").and.has.lengthOf(9);
+          expect(output).to.be.an("array").and.has.lengthOf(12);
         });
       });
       describe("#gfptarExtract", ()=>{
@@ -361,8 +360,9 @@ describe("UT for gfarmOperator", function () {
         });
         it("should extract archive file on gfarm", async ()=>{
           const output = await gfptarExtract(null, "dummHostID", path.join(target, "hoge"), csgwRoot);
-          expect(output).to.be.an("array").and.has.length(14);
-          const result = await ssh.ls(path.join(csgwRoot, "tmp"), ["-l"]);
+          expect(output).to.be.an("array").and.has.length(13);
+          expect(output.join("\n")).to.match(/^DONE:.*\.tar\.gz/m);
+          const result = await ssh.ls(path.join(csgwRoot), ["-l"]);
           expect(result).to.be.an("array").and.has.length(3);
         });
       });
@@ -374,7 +374,7 @@ describe("UT for gfarmOperator", function () {
         });
         it("should show contents in archive", async ()=>{
           const output = await gfptarList(null, "dummHostID", path.join(target, "hoge"));
-          expect(output).to.be.an("array").and.has.length(6);
+          expect(output).to.be.an("array").and.has.length(5);
         });
       });
     });

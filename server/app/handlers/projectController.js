@@ -17,7 +17,8 @@ const { deliverFile } = require("../core/fileUtils");
 const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getComponentDir } = require("../core/componentJsonIO.js");
 const { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR } = require("../core/projectFilesOperator");
-const { createSsh, removeSsh } = require("../core/sshManager");
+const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
+const { setJWTServerPassphrase, removeAllJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
 const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
 const { isValidOutputFilename } = require("../lib/utility");
 const { checkWritePermissions, parentDirs, eventEmitters } = require("../core/global.js");
@@ -26,6 +27,7 @@ const { emitAll, emitWithPromise } = require("./commUtils.js");
 const { removeTempd, getTempd } = require("../core/tempd.js");
 const { validateComponents } = require("../core/validateComponents.js");
 const { writeJsonWrapper } = require("../lib/utility");
+const { checkJWTAgent, startJWTAgent } = require("../core/gfarmOperator.js");
 const allowedOperations = require("../../../common/allowedOperations.cjs");
 
 const projectOperationQueues = new Map();
@@ -200,20 +202,39 @@ async function onRunProject(clientID, projectRootDir, ack) {
 
       //create remotehost connection
       const hosts = await getHosts(projectRootDir, null);
+
       for (const host of hosts) {
         const id = remoteHost.getID("name", host.hostname);
-        const hostInfo = remoteHost.get(id);
-        if (!hostInfo) {
-          throw new Error(`illegal remote host specified ${hostInfo.name}`);
+        const hostinfo = remoteHost.get(id);
+        if (!hostinfo) {
+          throw new Error(`illegal remote host specified ${hostinfo.name}`);
         }
-        if (hostInfo.type === "aws") {
-          throw new Error(`aws type remotehost is no longer supported ${hostInfo.name}`);
+        if (hostinfo.type === "aws") {
+          throw new Error(`aws type remotehost is no longer supported ${hostinfo.name}`);
         }
-        getLogger(projectRootDir).debug(`make ssh connection to ${hostInfo.name}`);
-        await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage, host.isGfarm);
-        if (hostInfo.useWebAPI) {
-          getLogger(projectRootDir).debug(`start OIDC authorization for ${hostInfo.name}`);
+        getLogger(projectRootDir).debug(`make ssh connection to ${hostinfo.name}`);
+        await createSsh(projectRootDir, hostinfo.name, hostinfo, clientID, host.isStorage);
+        if (hostinfo.useWebAPI) {
+          getLogger(projectRootDir).debug(`start OIDC authorization for ${hostinfo.name}`);
           await makeOIDCAuth(clientID, id);
+        }
+        if (hostinfo.useGfarm && host.isGfarm) {
+          if (await checkJWTAgent(projectRootDir, hostinfo.id)) {
+            getLogger(projectRootDir).debug(`jwt-agent is already running on ${hostinfo.name}`);
+          } else {
+            getLogger(projectRootDir).debug(`get jwt-server passphrase for ${hostinfo.name}`);
+            const phGfarm = await askPassword(clientID, hostinfo.name, "passphrase", hostinfo.JWTServerURL);
+            getLogger(projectRootDir).debug(`start jwt-agent on ${hostinfo.name}`);
+            await startJWTAgent(projectRootDir, hostinfo.id, phGfarm);
+            const result = await checkJWTAgent(projectRootDir, hostinfo.id);
+            if (!result) {
+              const err = new Error(`start jwt-agent failed on ${hostinfo.name}`);
+              err.hostinfo = hostinfo;
+              throw err;
+            }
+            getLogger(projectRootDir).debug(`store jwt-server's passphrase ${hostinfo.name}`);
+            setJWTServerPassphrase(projectRootDir, hostinfo.id, phGfarm);
+          }
         }
         if (!checkWritePermissions.has(projectRootDir)) {
           checkWritePermissions.set(projectRootDir, []);
@@ -237,6 +258,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
         getLogger(projectRootDir).error("fatal error occurred while preparing phase:", err);
       }
       removeSsh(projectRootDir);
+      removeAllJWTServerPassphrase(projectRootDir);
       ack(err);
       return false;
     }
@@ -287,6 +309,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
     await sendWorkflow(ack, projectRootDir);
     eventEmitters.delete(projectRootDir);
     removeSsh(projectRootDir);
+    removeAllJWTServerPassphrase(projectRootDir);
   }
   return;
 }

@@ -7,6 +7,7 @@
 const path = require("path");
 const { getLogger } = require("../logSettings");
 const { getSsh, getSshHostinfo } = require("./sshManager.js");
+const { getJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
 
 async function execOnCSGW(projectRootDir, hostID, timeout, cmd, ...args) {
   const ssh = await getSsh(projectRootDir, hostID);
@@ -54,12 +55,13 @@ async function checkJWTAgent(projectRootDir, hostID) {
   return result;
 }
 
-async function startJWTAgent(projectRootDir, hostID) {
+async function startJWTAgent(projectRootDir, hostID, passphrase) {
   if (await checkJWTAgent(projectRootDir, hostID)) {
     return false;
   }
   const ssh = await getSsh(projectRootDir, hostID);
-  const { JWTServerUser, JWTServerURL, JWTServerPassphrase } = await getSshHostinfo(projectRootDir, hostID);
+  const { JWTServerUser, JWTServerURL } = await getSshHostinfo(projectRootDir, hostID);
+  const JWTServerPassphrase = passphrase || await getJWTServerPassphrase(projectRootDir, hostID);
   return ssh.expect(`jwt-agent -s ${JWTServerURL} -l ${JWTServerUser}`, [
     { expect: "Passphrase", send: JWTServerPassphrase }
   ], null, 60);
@@ -95,10 +97,10 @@ async function gfcp(projectRootDir, hostID, src, dst, toGfarm, timeout = 600) {
 }
 
 /**
- * copy single file to gfarm or vice versa
+ * copy directory to gfarm or vice versa
  * @param {string} projectRootDir - project's root path
  * @param {string} hostID - ID of hostinfo which serve gfarm service
- * @param {string} src - path to be copied
+ * @param {string} src - directory path to be copied
  * @param {string} dst - destination path
  * @param {boolean} toGfarm - dst path treat as gfarm URI
  * @param {number} timeout - timeout in secconds must be positive number
@@ -110,7 +112,7 @@ async function gfpcopy(projectRootDir, hostID, src, dst, toGfarm, timeout = 60) 
   let dstPath = dst;
   if (toGfarm) {
     dstPath = formatGfarmURL(dst);
-    return execOnCSGW(projectRootDir, hostID, timeout, `cd ${srcPath};gfpcopy -p -v -f`, "./", dstPath);
+    return execOnCSGW(projectRootDir, hostID, timeout, `cd ${srcPath} && gfpcopy -p -v -f`, "./", dstPath);
   }
   srcPath = formatGfarmURL(src);
   return execOnCSGW(projectRootDir, hostID, timeout, "gfpcopy -p -v -f", srcPath, dstPath);
@@ -128,7 +130,7 @@ async function gfpcopy(projectRootDir, hostID, src, dst, toGfarm, timeout = 60) 
 async function gfptarCreate(projectRootDir, hostID, src, target, timeout = 60) {
   await startJWTAgent(projectRootDir, hostID, timeout);
   const archivePath = formatGfarmURL(target);
-  return execOnCSGW(projectRootDir, hostID, timeout, "gfptar -v -c", archivePath, "-C", path.dirname(src), path.basename(src));
+  return execOnCSGW(projectRootDir, hostID, timeout, `cd ${src} && shopt -s dotglob nullglob && gfptar -v -c ${archivePath} *`);
 }
 
 /**
