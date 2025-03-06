@@ -4,8 +4,12 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { expect } = require("chai");
+const chai = require("chai");
+const expect = chai.expect;
+chai.use(require("chai-as-promised"));
 const { describe, it } = require("mocha");
+const sinon = require("sinon");
+const rewire = require("rewire");
 const { isFinishedState } = require("../../../app/core/dispatchUtils");
 
 describe("#isFinishedState", ()=>{
@@ -39,5 +43,116 @@ describe("#isFinishedState", ()=>{
 
   it("should return false if the status is undefined", ()=>{
     expect(isFinishedState(undefined)).to.be.false;
+  });
+});
+
+describe("#isSubComponent", ()=>{
+  let isSubComponent;
+  let statStub;
+  let isDirectoryStub;
+  let readJsonGreedyStub;
+
+  beforeEach(()=>{
+    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
+    isSubComponent = dispatchUtils.__get__("isSubComponent");
+    statStub = sinon.stub();
+    isDirectoryStub = sinon.stub();
+    readJsonGreedyStub = sinon.stub();
+    dispatchUtils.__set__({
+      fs: {
+        stat: statStub
+      },
+      readJsonGreedy: readJsonGreedyStub
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return true if the component is a subcomponent", async ()=>{
+    statStub
+      .withArgs("/componentDir")
+      .resolves({ isDirectory: isDirectoryStub });
+    isDirectoryStub.returns(true);
+    readJsonGreedyStub
+      .withArgs("/componentDir/cmp.wheel.json")
+      .resolves({ subComponent: true });
+    const result = await isSubComponent("/componentDir");
+    expect(result).to.be.true;
+  });
+
+  it("should return false if the component is not a subcomponent", async ()=>{
+    statStub
+      .withArgs("/componentDir")
+      .resolves({ isDirectory: isDirectoryStub });
+    isDirectoryStub.returns(true);
+    readJsonGreedyStub
+      .withArgs("/componentDir/cmp.wheel.json")
+      .resolves({ subComponent: false });
+    const result = await isSubComponent("/componentDir");
+    expect(result).to.be.false;
+  });
+
+  it("should return false if the target is not directory", async ()=>{
+    statStub
+      .withArgs("/componentDir")
+      .resolves({ isDirectory: isDirectoryStub });
+    isDirectoryStub.returns(false);
+    readJsonGreedyStub
+      .withArgs("/componentDir/cmp.wheel.json")
+      .resolves({ subComponent: true });
+    const result = await isSubComponent("/componentDir");
+    expect(result).to.be.false;
+  });
+
+  it("should return false if the ENOENT error is occurred when trying to read the target", async ()=>{
+    const error = new Error();
+    error.code = "ENOENT";
+    statStub.withArgs("/invalidDir").throws(error);
+    isDirectoryStub.returns(true);
+    readJsonGreedyStub
+      .withArgs("/invalidDir/cmp.wheel.json")
+      .resolves({ subComponent: true });
+    const result = await isSubComponent("/invalidDir");
+    expect(result).to.be.false;
+  });
+
+  it("should throw error if another error is occurred when trying to read the target", async ()=>{
+    const error = new Error();
+    error.code = "EACCES";
+    statStub.withArgs("/componentDir").throws(error);
+    isDirectoryStub.returns(true);
+    readJsonGreedyStub
+      .withArgs("/componentDir/cmp.wheel.json")
+      .resolves({ subComponent: true });
+    await expect(isSubComponent("/componentDir"))
+      .to.be.rejectedWith(Error)
+      .and.eventually.satisfy((err)=>err.code === "EACCES");
+  });
+
+  it("should return false if the ENOENT error is occurred when trying to read json of subcompoment", async ()=>{
+    statStub
+      .withArgs("/componentDir")
+      .resolves({ isDirectory: isDirectoryStub });
+    isDirectoryStub.returns(true);
+    const error = new Error();
+    error.code = "ENOENT";
+    readJsonGreedyStub.withArgs("/componentDir/cmp.wheel.json").throws(error);
+    const result = await isSubComponent("/componentDir");
+    expect(result).to.be.false;
+  });
+
+  it("should throw error if another error is occurred when trying to read json of subcompoment", async ()=>{
+    statStub
+      .withArgs("/componentDir")
+      .resolves({ isDirectory: isDirectoryStub });
+    isDirectoryStub.returns(true);
+    const error = new Error();
+    error.code = "EACCES";
+    readJsonGreedyStub.withArgs("/componentDir/cmp.wheel.json").throws(error);
+    await expect(isSubComponent("/componentDir"))
+      .to.be.rejectedWith(Error)
+      .and.eventually.satisfy((err)=>err.code === "EACCES");
   });
 });
