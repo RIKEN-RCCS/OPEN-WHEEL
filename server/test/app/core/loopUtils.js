@@ -7,9 +7,23 @@
 //setup test framework
 const chai = require("chai");
 const expect = chai.expect;
+const rewire = require("rewire");
+const sinon = require("sinon");
 
 //testee
-const { forTripCount, loopInitialize, foreachTripCount, foreachIsFinished, foreachGetPrevIndex, foreachGetNextIndex, whileGetNextIndex, forIsFinished, forGetNextIndex, getPrevIndex, getInstanceDirectoryName } = require("../../../app/core/loopUtils.js");
+const {
+  forTripCount,
+  loopInitialize,
+  foreachTripCount,
+  foreachIsFinished,
+  foreachGetPrevIndex,
+  foreachGetNextIndex,
+  whileGetNextIndex,
+  forIsFinished,
+  forGetNextIndex,
+  getPrevIndex,
+  getInstanceDirectoryName
+} = require("../../../app/core/loopUtils.js");
 
 describe("UT for getInstanceDirectoryName", ()=>{
   it("should build name using name & index", ()=>{
@@ -17,19 +31,27 @@ describe("UT for getInstanceDirectoryName", ()=>{
   });
 
   it("should use component.currentIndex instead when index is undefined", ()=>{
-    expect(getInstanceDirectoryName({ currentIndex: 0 }, undefined, "dummy")).to.be.equal("dummy_0");
+    expect(
+      getInstanceDirectoryName({ currentIndex: 0 }, undefined, "dummy")
+    ).to.be.equal("dummy_0");
   });
 
   it("should use component.originalName instead when originalName is undefined", ()=>{
-    expect(getInstanceDirectoryName({ originalName: "dummy" }, 0, undefined)).to.be.equal("dummy_0");
+    expect(
+      getInstanceDirectoryName({ originalName: "dummy" }, 0, undefined)
+    ).to.be.equal("dummy_0");
   });
 
   it("should sanitize index", ()=>{
-    expect(getInstanceDirectoryName({}, "0/0", "dummy")).to.be.equal("dummy_0_0");
+    expect(getInstanceDirectoryName({}, "0/0", "dummy")).to.be.equal(
+      "dummy_0_0"
+    );
   });
 
   it("should not sanitize name", ()=>{
-    expect(getInstanceDirectoryName({}, "0", "dummy/dummy")).to.be.equal("dummy/dummy_0");
+    expect(getInstanceDirectoryName({}, "0", "dummy/dummy")).to.be.equal(
+      "dummy/dummy_0"
+    );
   });
 });
 
@@ -39,50 +61,80 @@ describe("UT for getPrevIndex", ()=>{
   });
 
   it("should calc index when forceCalc is false & prevIndex is undefined", ()=>{
-    expect(getPrevIndex({
-      step: 1,
-      start: 0,
-      currentIndex: 1
-    }, false)).to.be.equal(0);
+    expect(
+      getPrevIndex(
+        {
+          step: 1,
+          start: 0,
+          currentIndex: 1
+        },
+        false
+      )
+    ).to.be.equal(0);
   });
 
   it("should calc index when forceCals is true & prevIndex is not undefined", ()=>{
-    expect(getPrevIndex({
-      prevIndex: 1,
-      step: 1,
-      start: 0,
-      currentIndex: 1
-    }, true)).to.be.equal(0);
+    expect(
+      getPrevIndex(
+        {
+          prevIndex: 1,
+          step: 1,
+          start: 0,
+          currentIndex: 1
+        },
+        true
+      )
+    ).to.be.equal(0);
   });
 
   it("should return previous index", ()=>{
-    expect(getPrevIndex({
-      step: 1,
-      start: 0,
-      currentIndex: 1
-    }, true)).to.be.equal(0);
+    expect(
+      getPrevIndex(
+        {
+          step: 1,
+          start: 0,
+          currentIndex: 1
+        },
+        true
+      )
+    ).to.be.equal(0);
   });
 
   it("should return null when previous index does not exist", ()=>{
-    expect(getPrevIndex({
-      step: 1,
-      start: 0,
-      currentIndex: 0
-    }, true)).to.be.null;
+    expect(
+      getPrevIndex(
+        {
+          step: 1,
+          start: 0,
+          currentIndex: 0
+        },
+        true
+      )
+    ).to.be.null;
   });
 
   it("should calc index by considering step as 1 when step is falsy", ()=>{
-    expect(getPrevIndex({
-      start: 0,
-      currentIndex: 2
-    }, true)).to.be.equal(1);
+    expect(
+      getPrevIndex(
+        {
+          start: 0,
+          currentIndex: 2
+        },
+        true
+      )
+    ).to.be.equal(1);
   });
 
   it("should calc index by considering start as 0 when start is falsy", ()=>{
-    expect(getPrevIndex({
-      step: 1,
-      currentIndex: 0
-    }, true)).to.be.null;
+    expect(
+      getPrevIndex(
+        {
+          step: 1,
+          currentIndex: 0
+        },
+        true
+      )
+    ).to.be.null;
   });
 });
 
@@ -205,51 +257,63 @@ describe("UT for loopInitialize()", ()=>{
 
 describe("UT for forGetNextIndex", ()=>{
   it("should return next index when currentIndex is not null", ()=>{
-    expect(forGetNextIndex({
-      currentIndex: 1,
-      step: 2
-    })).to.be.equal(3);
+    expect(
+      forGetNextIndex({
+        currentIndex: 1,
+        step: 2
+      })
+    ).to.be.equal(3);
   });
 
   it("should return start index when currentIndex is null", ()=>{
-    expect(forGetNextIndex({
-      currentIndex: null,
-      start: 3
-    })).to.be.equal(3);
+    expect(
+      forGetNextIndex({
+        currentIndex: null,
+        start: 3
+      })
+    ).to.be.equal(3);
   });
 });
 
 describe("UT for forIsFinished", ()=>{
   it("should return true when positive step & current index is greater than last index", ()=>{
-    expect(forIsFinished({
-      currentIndex: 2,
-      end: 1,
-      step: 1
-    })).to.be.equal(true);
+    expect(
+      forIsFinished({
+        currentIndex: 2,
+        end: 1,
+        step: 1
+      })
+    ).to.be.equal(true);
   });
 
   it("should return false when positive step & current index is last index or less than last index", ()=>{
-    expect(forIsFinished({
-      currentIndex: 2,
-      end: 2,
-      step: 1
-    })).to.be.equal(false);
+    expect(
+      forIsFinished({
+        currentIndex: 2,
+        end: 2,
+        step: 1
+      })
+    ).to.be.equal(false);
   });
 
   it("should return true when negative step & current index is less than last index", ()=>{
-    expect(forIsFinished({
-      currentIndex: 1,
-      end: 2,
-      step: -1
-    })).to.be.equal(true);
+    expect(
+      forIsFinished({
+        currentIndex: 1,
+        end: 2,
+        step: -1
+      })
+    ).to.be.equal(true);
   });
 
   it("should return false when positive step & current index is last index or greater than last index", ()=>{
-    expect(forIsFinished({
-      currentIndex: 2,
-      end: 2,
-      step: 1
-    })).to.be.equal(false);
+    expect(
+      forIsFinished({
+        currentIndex: 2,
+        end: 2,
+        step: 1
+      })
+    ).to.be.equal(false);
   });
 });
 
@@ -265,31 +329,39 @@ describe("UT for whileGetNextIndex", ()=>{
 
 describe("UT foreachGetNextIndex", ()=>{
   it("should return first index when currentIndex null", ()=>{
-    expect(foreachGetNextIndex({
-      currentIndex: null,
-      indexList: [2, 3]
-    })).to.be.equal(2);
+    expect(
+      foreachGetNextIndex({
+        currentIndex: null,
+        indexList: [2, 3]
+      })
+    ).to.be.equal(2);
   });
 
   it("should return next index when currentIndex it not null", ()=>{
-    expect(foreachGetNextIndex({
-      currentIndex: 2,
-      indexList: [2, 3]
-    })).to.be.equal(3);
+    expect(
+      foreachGetNextIndex({
+        currentIndex: 2,
+        indexList: [2, 3]
+      })
+    ).to.be.equal(3);
   });
 
   it("should return null when currentIndex is last index", ()=>{
-    expect(foreachGetNextIndex({
-      currentIndex: 3,
-      indexList: [2, 3]
-    })).to.be.equal(null);
+    expect(
+      foreachGetNextIndex({
+        currentIndex: 3,
+        indexList: [2, 3]
+      })
+    ).to.be.equal(null);
   });
 
   it("should return null when currentIndex is not in indexList", ()=>{
-    expect(foreachGetNextIndex({
-      currentIndex: 1,
-      indexList: [2, 3]
-    })).to.be.equal(null);
+    expect(
+      foreachGetNextIndex({
+        currentIndex: 1,
+        indexList: [2, 3]
+      })
+    ).to.be.equal(null);
   });
 });
 
@@ -299,55 +371,84 @@ describe("UT foreachGetPrevIndex", ()=>{
   });
 
   it("should calc index when forceCalc is false and prevIndex is undefined", ()=>{
-    expect(foreachGetPrevIndex({
-      indexList: [2, 3],
-      currentIndex: 3
-    }, false)).to.be.equal(2);
+    expect(
+      foreachGetPrevIndex(
+        {
+          indexList: [2, 3],
+          currentIndex: 3
+        },
+        false
+      )
+    ).to.be.equal(2);
   });
 
   it("should calc index when forceCalc is true and prevIndex is not undefined", ()=>{
-    expect(foreachGetPrevIndex({
-      prevIndex: 1,
-      indexList: [2, 3],
-      currentIndex: 3
-    }, true)).to.be.equal(2);
+    expect(
+      foreachGetPrevIndex(
+        {
+          prevIndex: 1,
+          indexList: [2, 3],
+          currentIndex: 3
+        },
+        true
+      )
+    ).to.be.equal(2);
   });
 
   it("should return previous index", ()=>{
-    expect(foreachGetPrevIndex({
-      indexList: [2, 3],
-      currentIndex: 3
-    }, true)).to.be.equal(2);
+    expect(
+      foreachGetPrevIndex(
+        {
+          indexList: [2, 3],
+          currentIndex: 3
+        },
+        true
+      )
+    ).to.be.equal(2);
   });
 
   it("should be return null when currentIndex is fast index", ()=>{
-    expect(foreachGetPrevIndex({
-      indexList: [2, 3],
-      currentIndex: 2
-    }, true)).to.be.equal(null);
+    expect(
+      foreachGetPrevIndex(
+        {
+          indexList: [2, 3],
+          currentIndex: 2
+        },
+        true
+      )
+    ).to.be.equal(null);
   });
 
   it("should be return null when currentIndex is not in indexList", ()=>{
-    expect(foreachGetPrevIndex({
-      indexList: [2, 3],
-      currentIndex: 4
-    }, true)).to.be.equal(null);
+    expect(
+      foreachGetPrevIndex(
+        {
+          indexList: [2, 3],
+          currentIndex: 4
+        },
+        true
+      )
+    ).to.be.equal(null);
   });
 });
 
 describe("UT for foreachIsFinished()", ()=>{
   it("should return false when currentIndex in indexList", ()=>{
-    expect(foreachIsFinished({
-      indexList: [1],
-      currentIndex: 1
-    })).to.be.equal(false);
+    expect(
+      foreachIsFinished({
+        indexList: [1],
+        currentIndex: 1
+      })
+    ).to.be.equal(false);
   });
 
   it("should return true when currentIndex not in indexList", ()=>{
-    expect(foreachIsFinished({
-      indexList: [1],
-      currentIndex: 2
-    })).to.be.equal(true);
+    expect(
+      foreachIsFinished({
+        indexList: [1],
+        currentIndex: 2
+      })
+    ).to.be.equal(true);
   });
 });
 
@@ -358,6 +459,77 @@ describe("UT for foreachTripCount()", ()=>{
 
   it("should return indexList size when indexList contains elements", ()=>{
     expect(foreachTripCount({ indexList: [1] })).to.be.equal(1);
+  });
+});
+
+describe("UT foreachKeepLoopInstance()", ()=>{
+  let foreachKeepLoopInstance;
+  let getInstanceDirectoryNameStub;
+  let removeStub;
+
+  beforeEach(()=>{
+    const loopUtils = rewire("../../../app/core/loopUtils.js");
+    foreachKeepLoopInstance = loopUtils.foreachKeepLoopInstance;
+    getInstanceDirectoryNameStub = sinon.stub();
+    removeStub = sinon.stub();
+    loopUtils.__set__({
+      getInstanceDirectoryName: getInstanceDirectoryNameStub,
+      fs: { remove: removeStub }
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return nothing if component.keep is not number", async ()=>{
+    const result = await foreachKeepLoopInstance({
+      keep: "dummy"
+    });
+    expect(result).to.be.undefined;
+  });
+
+  it("should return nothing if component.keep is less than 0", async ()=>{
+    const result = await foreachKeepLoopInstance({
+      keep: -1
+    });
+    expect(result).to.be.undefined;
+  });
+
+  it("should use component.currentIndex for calculation of removing target when component.currentIndex is not null", async ()=>{
+    const component = {
+      indexList: [1, 2, 3, 4],
+      currentIndex: 3,
+      keep: 1
+    };
+    getInstanceDirectoryNameStub
+      .withArgs(sinon.match(component), 2)
+      .returns("dummy");
+    await foreachKeepLoopInstance(component, "/cwdDir");
+    expect(removeStub.calledWith("/cwdDir/dummy")).to.be.true;
+  });
+
+  it("should use component.indexList.length for calculation of removing target when component.currentIndex is null", async ()=>{
+    const component = {
+      indexList: [1, 2, 3, 4],
+      currentIndex: null,
+      keep: 1
+    };
+    getInstanceDirectoryNameStub
+      .withArgs(sinon.match(component), 4)
+      .returns("dummy");
+    await foreachKeepLoopInstance(component, "/cwdDir");
+    expect(removeStub.calledWith("/cwdDir/dummy")).to.be.true;
+  });
+
+  it("should not remove anything when keep is greater than indexList.length", async ()=>{
+    const component = {
+      indexList: [1, 2, 3, 4],
+      currentIndex: null,
+      keep: 4
+    };
+    await foreachKeepLoopInstance(component, "/cwdDir");
+    expect(removeStub.called).to.be.false;
   });
 });
 
