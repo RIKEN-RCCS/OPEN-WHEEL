@@ -19,6 +19,7 @@ const readComponentJsonByID = componentJsonIO.__get__("readComponentJsonByID");
 const writeComponentJsonByID = componentJsonIO.__get__("writeComponentJsonByID");
 const readComponentJson = componentJsonIO.__get__("readComponentJson");
 const writeComponentJson = componentJsonIO.__get__("writeComponentJson");
+const getComponentDir = componentJsonIO.__get__("getComponentDir");
 
 describe("UT for componentJsonIO class", ()=>{
   describe("#readComponentJsonByID", ()=>{
@@ -199,6 +200,57 @@ describe("UT for componentJsonIO class", ()=>{
         await writeComponentJson("/mock/project", mockComponentDir, mockComponent);
       } catch (err) {
         expect(err.message).to.equal("Git add error");
+      }
+    });
+  });
+  describe("#getComponentDir", ()=>{
+    let readJsonGreedyStub;
+    const mockProjectRoot = "/mock/project";
+    const mockComponentID = "component123";
+
+    beforeEach(()=>{
+      readJsonGreedyStub = sinon.stub();
+      componentJsonIO.__set__("readJsonGreedy", readJsonGreedyStub);
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should return absolute path if isAbsolute is true", async ()=>{
+      const mockComponentPath = "components/component123";
+      readJsonGreedyStub.resolves({
+        componentPath: {
+          [mockComponentID]: mockComponentPath
+        }
+      });
+      const result = await getComponentDir(mockProjectRoot, mockComponentID, true);
+      expect(result).to.equal(path.resolve(mockProjectRoot, mockComponentPath));
+    });
+    it("should return relative path if isAbsolute is false", async ()=>{
+      const mockComponentPath = "components/component123";
+      readJsonGreedyStub.resolves({
+        componentPath: {
+          [mockComponentID]: mockComponentPath
+        }
+      });
+      const result = await getComponentDir(mockProjectRoot, mockComponentID, false);
+      expect(result).to.equal(mockComponentPath);
+    });
+    it("should return null if component ID does not exist", async ()=>{
+      readJsonGreedyStub.resolves({
+        componentPath: {}
+      });
+      const result = await getComponentDir(mockProjectRoot, mockComponentID, true);
+      expect(result).to.be.null;
+    });
+    it("should throw an error if readJsonGreedy fails", async ()=>{
+      readJsonGreedyStub.rejects(new Error("Read error"));
+
+      try {
+        await getComponentDir(mockProjectRoot, mockComponentID, true);
+      } catch (err) {
+        expect(err.message).to.equal("Read error");
       }
     });
   });
