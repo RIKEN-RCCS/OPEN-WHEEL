@@ -327,6 +327,48 @@ describe("UT for whileGetNextIndex", ()=>{
   });
 });
 
+describe("UT for whileIsFinished", ()=>{
+  let whileIsFinished;
+  let evalConditionStub;
+
+  beforeEach(()=>{
+    const loopUtils = rewire("../../../app/core/loopUtils.js");
+    whileIsFinished = loopUtils.whileIsFinished;
+    evalConditionStub = sinon.stub();
+    loopUtils.__set__({
+      evalCondition: evalConditionStub
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return true when condition is true", async ()=>{
+    evalConditionStub.withArgs("/projectRootDir", "condition", "/cwdDir/name", sinon.match({})).returns("condition");
+    expect(await whileIsFinished("/cwdDir", "/projectRootDir", { name: "name", condition: "condition", currentIndex: 1 }, {})).to.be.false;
+  });
+
+  it("should return false when condition is false", async ()=>{
+    evalConditionStub.withArgs("/projectRootDir", "condition", "/cwdDir/name", sinon.match({})).returns("");
+    expect(await whileIsFinished("/cwdDir", "/projectRootDir", { name: "name", condition: "condition", currentIndex: 1 }, {})).to.be.true;
+  });
+
+  it("should set 0 to env.WHEEL_CURRENT_INDEX  when component.currentIndex is null", async ()=>{
+    const env = {};
+    evalConditionStub.withArgs("/projectRootDir", "condition", "/cwdDir/name", env).returns("condition");
+    await whileIsFinished("/cwdDir", "/projectRootDir", { name: "name", condition: "condition", currentIndex: null }, env);
+    expect(env.WHEEL_CURRENT_INDEX).to.be.equal(0);
+  });
+
+  it("should set currentIndex to env.WHEEL_CURRENT_INDEX when component.currentIndex is not null", async ()=>{
+    const env = {};
+    evalConditionStub.withArgs("/projectRootDir", "condition", "/cwdDir/name", env).returns("condition");
+    await whileIsFinished("/cwdDir", "/projectRootDir", { name: "name", condition: "condition", currentIndex: 1 }, env);
+    expect(env.WHEEL_CURRENT_INDEX).to.be.equal(1);
+  });
+});
+
 describe("UT foreachGetNextIndex", ()=>{
   it("should return first index when currentIndex null", ()=>{
     expect(
