@@ -1,5 +1,5 @@
 describe("wheel test", ()=>{
-  const testProject = `WHEEL_TEST_${window.crypto.randomUUID()}`
+  const testProject = `WHEEL_TEST_${Date.now().toString()}`
   const remotehost = Cypress.env("WHEEL_TEST_REMOTEHOST")
   const password = Cypress.env("WHEEL_TEST_REMOTE_PASSWORD")
   const hostname = Cypress.env("WHEEL_TEST_HOSTNAME")
