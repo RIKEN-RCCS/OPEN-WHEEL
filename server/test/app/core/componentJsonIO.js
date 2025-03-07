@@ -20,6 +20,7 @@ const writeComponentJsonByID = componentJsonIO.__get__("writeComponentJsonByID")
 const readComponentJson = componentJsonIO.__get__("readComponentJson");
 const writeComponentJson = componentJsonIO.__get__("writeComponentJson");
 const getComponentDir = componentJsonIO.__get__("getComponentDir");
+const componentJsonReplacer = componentJsonIO.__get__("componentJsonReplacer");
 
 describe("UT for componentJsonIO class", ()=>{
   describe("#readComponentJsonByID", ()=>{
@@ -252,6 +253,28 @@ describe("UT for componentJsonIO class", ()=>{
       } catch (err) {
         expect(err.message).to.equal("Read error");
       }
+    });
+  });
+  describe("#componentJsonReplacer", ()=>{
+    it("should return undefined for handler key", ()=>{
+      const result = componentJsonReplacer("handler", "someValue");
+      expect(result).to.be.undefined;
+    });
+    it("should return undefined for doCleanup key", ()=>{
+      const result = componentJsonReplacer("doCleanup", "someValue");
+      expect(result).to.be.undefined;
+    });
+    it("should return undefined for sbsID key", ()=>{
+      const result = componentJsonReplacer("sbsID", "someValue");
+      expect(result).to.be.undefined;
+    });
+    it("should return undefined for childLoopRunning key", ()=>{
+      const result = componentJsonReplacer("childLoopRunning", "someValue");
+      expect(result).to.be.undefined;
+    });
+    it("should return original value for keys not in the exclusion list", ()=>{
+      const result = componentJsonReplacer("otherKey", "someValue");
+      expect(result).to.equal("someValue");
     });
   });
 });
