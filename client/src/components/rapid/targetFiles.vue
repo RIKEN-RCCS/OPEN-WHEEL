@@ -29,6 +29,7 @@
                      { key: 'targetNode', title: 'component', sortable: true },
                      { key: 'action', title: 'Actions', sortable: false }]"
           :items="targetFiles"
+          data-cy="target_files-data-data_table"
         >
           <template #bottom />
           <template #item.action="{ item }">

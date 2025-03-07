@@ -29,6 +29,18 @@ Cypress.Commands.add("clickComponentName", (componentName)=>{
     .click()
 })
 
+//double click component
+Cypress.Commands.add("doubleClickComponentName", (componentName)=>{
+  cy.get('[data-cy="graph-component-row"]').contains(componentName)
+    .dblclick()
+})
+
+//create a stepjob component and double-click it
+Cypress.Commands.add("createStepjobComponentAndDoubleClick", (targetComponentName, componentName, positionX, positionY)=>{
+  cy.createComponent(targetComponentName, componentName, positionX, positionY);
+  cy.doubleClickComponentName(componentName);
+})
+
 //Select a value from the dropdown list
 Cypress.Commands.add("selectValueFromDropdownList", (targetDropBoxCy, dropBoxNo, selectVal)=>{
   cy.get(targetDropBoxCy).click();

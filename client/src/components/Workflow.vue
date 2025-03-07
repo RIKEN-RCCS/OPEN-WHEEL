@@ -55,6 +55,7 @@
                 :to="{name: 'graph' }"
                 icon="mdi-sitemap"
                 v-bind="props"
+                data-cy="workflow-graph_view-btn"
               />
             </template>
           </v-tooltip>
@@ -130,6 +131,7 @@
               :disabled="viewerDataDir === null"
               @click="openViewerScreen"
               icon="mdi-image-multiple-outline"
+              data-cy="workflow-open_viewer_screen-btn"
             />
           </template>
         </v-tooltip>

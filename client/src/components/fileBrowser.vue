@@ -47,6 +47,7 @@
             v-bind="props"
             @click="openDialog('removeFile')"
             icon="mdi-file-remove-outline"
+            data-cy="file_browser-remove_file-btn"
           />
         </template>
       </v-tooltip>
