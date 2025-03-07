@@ -207,12 +207,138 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：シンポリックリンクが作成されていることを確認
   */
   it("04-01-017:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
-    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
+    // task0
+    cy.createDirOrFile(TYPE_FILE, 'run.sh', true);
+    let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'run.sh');
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'run.sh', true, true);
+    // task1
     cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', true);
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-b');
+    cy.enterInputOrOutputFile(TYPE_INPUT, 'run.sh', true, true);
+    cy.clickComponentName(TASK_NAME_1);
+    cy.connectComponent(TASK_NAME_1);  // コンポーネント同士を接続
+    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // Taskコンポーネントを実行する
+    cy.clickComponentName(TASK_NAME_1);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
+  });
+
+  /** 
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル転送設定の各パターンの確認
+  シンポリックリンク確認
+  試験確認内容：シンポリックリンクが作成されていることを確認
+  */
+  it("04-01-018:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+    // task0
+    cy.createDirOrFile(TYPE_FILE, 'run.sh', true);
+    let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'run.sh');
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'run.sh', true, true);
+    // task1
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', true);
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-b');
+    cy.clickComponentName(TASK_NAME_1);
+    cy.connectComponent(TASK_NAME_1);  // コンポーネント同士を接続
+    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // Taskコンポーネントを実行する
+    cy.clickComponentName(TASK_NAME_1);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
+  });
+
+  /** 
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル転送設定の各パターンの確認
+  シンポリックリンク確認
+  試験確認内容：シンポリックリンクが作成されていることを確認
+  */
+  it("04-01-019:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+    // task0
+    cy.createDirOrFile(TYPE_FILE, 'run.sh', true);
+    let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'run.sh');
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'run.sh', true, true);
+    // task1
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', true);
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-b');
+    cy.clickComponentName(TASK_NAME_1);
     cy.connectComponent(TASK_NAME_1);  // コンポーネント同士を接続
     cy.clickComponentName(TASK_NAME_1);
     cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
-    cy.get('[data-cy="component_property-input_files-list_form"]').contains('testOutputFile').should('exist');
+    cy.get('[data-cy="component_property-input_files-list_form"]').contains('run.sh').click();
+    cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('task1.sh{enter}'); // inputFileの値を変更
+    cy.get('[data-cy="workflow-play-btn"]').click().wait(1000); // Taskコンポーネントを実行する
+    cy.clickComponentName(TASK_NAME_1);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('task1.sh').should('exist');   
+  });
+
+  /** 
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル転送設定の各パターンの確認
+  シンポリックリンク確認
+  試験確認内容：シンポリックリンクが作成されていることを確認
+  */
+  it("04-01-020:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+    // task0
+    cy.createDirOrFile(TYPE_FILE, 'run-a.sh', true);
+    cy.createDirOrFile(TYPE_FILE, 'run-b.sh', false);
+    let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'run-a.sh');
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'run*', true, true);
+    // task1
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', true);
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-b');
+    cy.clickComponentName(TASK_NAME_1);
+    cy.connectComponent(TASK_NAME_1);  // コンポーネント同士を接続
+    cy.clickComponentName(TASK_NAME_1);
+    cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+    cy.get('[data-cy="component_property-input_files-list_form"]').contains('run*').click();
+    cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('task1-run{enter}'); // inputFileの値を変更
+    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // Taskコンポーネントを実行する
+    cy.clickComponentName(TASK_NAME_1);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('task1-run').should('exist').click();   
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run-a.sh').should('exist');
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run-b.sh').should('exist');
+  });
+
+  /** 
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル転送設定の各パターンの確認
+  シンポリックリンク確認
+  試験確認内容：シンポリックリンクが作成されていることを確認
+  */
+  it("04-01-021:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認-シンポリックリンクが作成されていることを確認", ()=>{
+    // task0
+    cy.createDirOrFile(TYPE_FILE, 'run-a.sh', true);
+    let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'run-a.sh');
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, 'run-a.sh', true, true);
+    // task1
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createDirOrFile(TYPE_FILE, 'test-b', true);
+    cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-b');
+    cy.clickComponentName(TASK_NAME_1);
+    cy.connectComponent(TASK_NAME_1);  // コンポーネント同士を接続
+    cy.clickComponentName(TASK_NAME_1);
+    cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
+    cy.get('[data-cy="component_property-input_files-list_form"]').contains('run-a.sh').click();
+    cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('task1-run/{enter}'); // inputFileの値を変更
+    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // Taskコンポーネントを実行する
+    cy.clickComponentName(TASK_NAME_1);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('task1-run').should('exist').click();   
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run-a.sh').should('exist');
   });
 
   /** 
