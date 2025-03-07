@@ -7,7 +7,8 @@
 //setup test framework
 const chai = require("chai");
 const expect = chai.expect;
-//memo
+const rewire = require("rewire");
+const sinon = require("sinon");
 
 //testee
 const {
@@ -458,6 +459,77 @@ describe("UT for foreachTripCount()", ()=>{
 
   it("should return indexList size when indexList contains elements", ()=>{
     expect(foreachTripCount({ indexList: [1] })).to.be.equal(1);
+  });
+});
+
+describe("UT foreachKeepLoopInstance()", ()=>{
+  let foreachKeepLoopInstance;
+  let getInstanceDirectoryNameStub;
+  let removeStub;
+
+  beforeEach(()=>{
+    const loopUtils = rewire("../../../app/core/loopUtils.js");
+    foreachKeepLoopInstance = loopUtils.foreachKeepLoopInstance;
+    getInstanceDirectoryNameStub = sinon.stub();
+    removeStub = sinon.stub();
+    loopUtils.__set__({
+      getInstanceDirectoryName: getInstanceDirectoryNameStub,
+      fs: { remove: removeStub }
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return nothing if component.keep is not number", async ()=>{
+    const result = await foreachKeepLoopInstance({
+      keep: "dummy"
+    });
+    expect(result).to.be.undefined;
+  });
+
+  it("should return nothing if component.keep is less than 0", async ()=>{
+    const result = await foreachKeepLoopInstance({
+      keep: -1
+    });
+    expect(result).to.be.undefined;
+  });
+
+  it("should use component.currentIndex for calculation of removing target when component.currentIndex is not null", async ()=>{
+    const component = {
+      indexList: [1, 2, 3, 4],
+      currentIndex: 3,
+      keep: 1
+    };
+    getInstanceDirectoryNameStub
+      .withArgs(sinon.match(component), 2)
+      .returns("dummy");
+    await foreachKeepLoopInstance(component, "/cwdDir");
+    expect(removeStub.calledWith("/cwdDir/dummy")).to.be.true;
+  });
+
+  it("should use component.indexList.length for calculation of removing target when component.currentIndex is null", async ()=>{
+    const component = {
+      indexList: [1, 2, 3, 4],
+      currentIndex: null,
+      keep: 1
+    };
+    getInstanceDirectoryNameStub
+      .withArgs(sinon.match(component), 4)
+      .returns("dummy");
+    await foreachKeepLoopInstance(component, "/cwdDir");
+    expect(removeStub.calledWith("/cwdDir/dummy")).to.be.true;
+  });
+
+  it("should not remove anything when keep is greater than indexList.length", async ()=>{
+    const component = {
+      indexList: [1, 2, 3, 4],
+      currentIndex: null,
+      keep: 4
+    };
+    await foreachKeepLoopInstance(component, "/cwdDir");
+    expect(removeStub.called).to.be.false;
   });
 });
 
