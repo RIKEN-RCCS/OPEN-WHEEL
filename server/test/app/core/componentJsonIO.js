@@ -18,6 +18,7 @@ chai.use(chaiAsPromised);
 const readComponentJsonByID = componentJsonIO.__get__("readComponentJsonByID");
 const writeComponentJsonByID = componentJsonIO.__get__("writeComponentJsonByID");
 const readComponentJson = componentJsonIO.__get__("readComponentJson");
+const writeComponentJson = componentJsonIO.__get__("writeComponentJson");
 
 describe("UT for componentJsonIO class", ()=>{
   describe("#readComponentJsonByID", ()=>{
@@ -149,6 +150,56 @@ describe("UT for componentJsonIO class", ()=>{
       readJsonGreedyStub.resolves(mockComponentJson);
       await readComponentJson(mockComponentDir);
       expect(readJsonGreedyStub.calledOnceWith(mockFilename)).to.be.true;
+    });
+  });
+  describe("#writeComponentJson", ()=>{
+    let fsStub, gitAddStub, mockComponent, mockComponentDir, mockFilename;
+
+    beforeEach(()=>{
+      fsStub = {
+        writeJson: sinon.stub().resolves()
+      };
+      gitAddStub = sinon.stub().resolves();
+      componentJsonIO.__set__("fs", fsStub);
+      componentJsonIO.__set__("gitAdd", gitAddStub);
+      mockComponent = { name: "TestComponent", type: "task" };
+      mockComponentDir = "/mock/project/components";
+      mockFilename = path.join(mockComponentDir, "cmp.wheel.json");
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should write JSON data to the specified file", async ()=>{
+      await writeComponentJson("/mock/project", mockComponentDir, mockComponent);
+      expect(fsStub.writeJson.calledOnceWithExactly(mockFilename, mockComponent, { spaces: 4, replacer: sinon.match.func })).to.be.true;
+    });
+    it("should call gitAdd if doNotAdd is false or undefined", async ()=>{
+      await writeComponentJson("/mock/project", mockComponentDir, mockComponent, false);
+      expect(gitAddStub.calledOnceWithExactly("/mock/project", mockFilename)).to.be.true;
+    });
+    it("should not call gitAdd if doNotAdd is true", async ()=>{
+      await writeComponentJson("/mock/project", mockComponentDir, mockComponent, true);
+      expect(gitAddStub.notCalled).to.be.true;
+    });
+    it("should throw an error if fs.writeJson fails", async ()=>{
+      fsStub.writeJson.rejects(new Error("Write error"));
+
+      try {
+        await writeComponentJson("/mock/project", mockComponentDir, mockComponent);
+      } catch (err) {
+        expect(err.message).to.equal("Write error");
+      }
+    });
+    it("should throw an error if gitAdd fails", async ()=>{
+      gitAddStub.rejects(new Error("Git add error"));
+
+      try {
+        await writeComponentJson("/mock/project", mockComponentDir, mockComponent);
+      } catch (err) {
+        expect(err.message).to.equal("Git add error");
+      }
     });
   });
 });
