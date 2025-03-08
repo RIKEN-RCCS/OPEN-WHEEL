@@ -7,6 +7,7 @@
 //setup test framework
 const chai = require("chai");
 const expect = chai.expect;
+chai.use(require("chai-as-promised"));
 const rewire = require("rewire");
 const sinon = require("sinon");
 
@@ -572,6 +573,82 @@ describe("UT foreachKeepLoopInstance()", ()=>{
     };
     await foreachKeepLoopInstance(component, "/cwdDir");
     expect(removeStub.called).to.be.false;
+  });
+});
+
+describe("UT for foreachSearchLatestFinishedIndex", ()=>{
+  let foreachSearchLatestFinishedIndex;
+  let getInstanceDirectoryNameStub;
+  let readComponentJsonStub;
+
+  beforeEach(()=>{
+    const loopUtils = rewire("../../../app/core/loopUtils.js");
+    foreachSearchLatestFinishedIndex = loopUtils.foreachSearchLatestFinishedIndex;
+    getInstanceDirectoryNameStub = sinon.stub();
+    readComponentJsonStub = sinon.stub();
+    loopUtils.__set__({
+      getInstanceDirectoryName: getInstanceDirectoryNameStub,
+      readComponentJson: readComponentJsonStub
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return null when indexList is empty", async ()=>{
+    expect(await foreachSearchLatestFinishedIndex({ indexList: [] }, "/cwdDir")).to.be.null;
+  });
+
+  it("should return null when indexList is not empty but all index is not finished", async ()=>{
+    const component = {
+      indexList: [1]
+    };
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 1).returns("dummy");
+    readComponentJsonStub.withArgs("/cwdDir/dummy").resolves({ state: "running" });
+    expect(await foreachSearchLatestFinishedIndex(component, "/cwdDir")).to.be.null;
+  });
+
+  it("should return latest finished index when indexList is not empty and some index is finished", async ()=>{
+    const component = {
+      indexList: [1, 2, 3]
+    };
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 1).returns("dummy1");
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 2).returns("dummy2");
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 3).returns("dummy3");
+    readComponentJsonStub.withArgs("/cwdDir/dummy1").resolves({ state: "finished" });
+    readComponentJsonStub.withArgs("/cwdDir/dummy2").resolves({ state: "finished" });
+    readComponentJsonStub.withArgs("/cwdDir/dummy3").resolves({ state: "running" });
+    expect(await foreachSearchLatestFinishedIndex(component, "/cwdDir")).to.be.equal(2);
+  });
+
+  it("should return previous finished index when next index directory is not exist", async ()=>{
+    const component = {
+      indexList: [1, 2, 3]
+    };
+    const error = new Error("dummy");
+    error.code = "ENOENT";
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 1).returns("dummy1");
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 2).returns("dummy2");
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 3).returns("dummy3");
+    readComponentJsonStub.withArgs("/cwdDir/dummy1").resolves({ state: "finished" });
+    readComponentJsonStub.withArgs("/cwdDir/dummy2").resolves({ state: "finished" });
+    readComponentJsonStub.withArgs("/cwdDir/dummy3").rejects(error);
+    expect(await foreachSearchLatestFinishedIndex(component, "/cwdDir")).to.be.equal(2);
+  });
+
+  it("should throw error when error is not ENOENT", async ()=>{
+    const component = {
+      indexList: [1, 2, 3]
+    };
+    const error = new Error("dummy");
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 1).returns("dummy1");
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 2).returns("dummy2");
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 3).returns("dummy3");
+    readComponentJsonStub.withArgs("/cwdDir/dummy1").resolves({ state: "finished" });
+    readComponentJsonStub.withArgs("/cwdDir/dummy2").resolves({ state: "finished" });
+    readComponentJsonStub.withArgs("/cwdDir/dummy3").rejects(error);
+    await expect(foreachSearchLatestFinishedIndex(component, "/cwdDir")).to.be.rejectedWith(error);
   });
 });
 
