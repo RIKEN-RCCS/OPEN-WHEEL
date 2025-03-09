@@ -274,12 +274,12 @@ class Dispatcher extends EventEmitter {
     if (component.previous) {
       for (const ID of component.previous) {
         const previous = await this._getComponent(ID);
-        if (previous.disable) {
-          return true;
+        if (!previous.disable) {
+          return false;
         }
         const rt = await this._hasDisabledDependency(previous);
-        if (rt) {
-          return true;
+        if (!rt) {
+          return false;
         }
       }
     }
@@ -290,17 +290,17 @@ class Dispatcher extends EventEmitter {
             continue;
           }
           const previousF = await this._getComponent(src.srcNode);
-          if (previousF.disable) {
-            return true;
+          if (!previousF.disable) {
+            return false;
           }
           const rtF = await this._hasDisabledDependency(previousF);
-          if (rtF) {
-            return true;
+          if (!rtF) {
+            return false;
           }
         }
       }
     }
-    return false;
+    return true;
   }
 
   /**
@@ -1155,6 +1155,9 @@ class Dispatcher extends EventEmitter {
     if (component.previous) {
       for (const ID of component.previous) {
         const previous = await this._getComponent(ID);
+        if (previous.disable) {
+          continue;
+        }
         getLogger(this.projectRootDir).trace(`previous component name = ${previous.type}(state:${previous.state})`);
         if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
           getLogger(this.projectRootDir).trace(`${component.name}(${component.ID}) is not ready because ${previous.name}(${previous.ID}) is not finished`);
@@ -1169,6 +1172,9 @@ class Dispatcher extends EventEmitter {
             continue;
           }
           const previous = await this._getComponent(src.srcNode);
+          if (previous.disable) {
+            continue;
+          }
           if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
             getLogger(this.projectRootDir).trace(`${component.name}(${component.ID}) is not ready because ${inputFile} from ${previous.name}(${previous.ID}) is not arrived`);
             return false;
