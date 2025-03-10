@@ -184,3 +184,50 @@ describe("#needDownload", ()=>{
     expect(isSameRemoteHostMock.calledOnce).to.be.true;
   });
 });
+
+describe("#formatSrcFilename", ()=>{
+  let rewireExecUtils; //rewireで読み込んだexecUtils
+  let formatSrcFilename; //テスト対象の関数
+  let replacePathsepMock; //replacePathsepをStub化する
+
+  beforeEach(()=>{
+    //execUtils.js を再取得
+    rewireExecUtils = rewire("../../../app/core/execUtils.js");
+
+    //テスト対象関数を取得
+    formatSrcFilename = rewireExecUtils.__get__("formatSrcFilename");
+
+    //replacePathsep をsinon.stub()でモック化し、execUtils内部のreplacePathsepを差し替える
+    replacePathsepMock = sinon.stub();
+    rewireExecUtils.__set__("replacePathsep", replacePathsepMock);
+  });
+
+  it("should return joined path with '/*' if filename ends with '/'", ()=>{
+    //replacePathsep が返す値をダミー設定
+    replacePathsepMock.returns("convertedDir");
+    //テスト実行
+    const result = formatSrcFilename("/home/user", "mydata/");
+
+    //期待値を検証
+    expect(replacePathsepMock.calledOnceWithExactly("mydata/")).to.be.true;
+    //path.posix.join("/home/user", "convertedDir/*") => "/home/user/convertedDir/*" と等しいか
+    expect(result).to.equal("/home/user/convertedDir/*");
+  });
+
+  it("should return joined path with '/*' if filename ends with backslash '\\'", ()=>{
+    replacePathsepMock.returns("convertedBackslash");
+    const result = formatSrcFilename("/home/user", "mydata\\");
+
+    //replacePathsepが呼ばれていることと、返り値を確認
+    expect(replacePathsepMock.calledOnceWithExactly("mydata\\")).to.be.true;
+    expect(result).to.equal("/home/user/convertedBackslash/*");
+  });
+
+  it("should return joined path without '/*' if filename does not end with slash/backslash", ()=>{
+    const result = formatSrcFilename("/home/user", "file.txt");
+
+    //この場合は replacePathsep を呼ばない分岐
+    expect(replacePathsepMock.notCalled).to.be.true;
+    expect(result).to.equal("/home/user/file.txt");
+  });
+});
