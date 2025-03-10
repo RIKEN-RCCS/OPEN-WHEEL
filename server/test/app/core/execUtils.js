@@ -240,6 +240,94 @@ describe("#formatSrcFilename", ()=>{
   });
 });
 
+describe("#makeDownloadRecipe", ()=>{
+  let rewireExecUtils;
+  let makeDownloadRecipe;
+  let getLoggerMock; //getLogger を Stub 化
+  let traceMock; //getLogger(...).trace を Stub 化
+
+  beforeEach(()=>{
+    //execUtils.js を rewireで読み込む
+    rewireExecUtils = rewire("../../../app/core/execUtils.js");
+
+    //テスト対象関数を rewire で取得
+    makeDownloadRecipe = rewireExecUtils.__get__("makeDownloadRecipe");
+
+    //logger.trace() をモック化する
+    traceMock = sinon.stub();
+
+    //getLogger をモック化し、trace() をさらにモックとして差し替える
+    getLoggerMock = sinon.stub().returns({ trace: traceMock });
+
+    //rewire で execUtils 内の getLogger をモックに差し替える
+    rewireExecUtils.__set__("getLogger", getLoggerMock);
+  });
+
+  afterEach(()=>{
+    //毎テスト後に restore
+    sinon.restore();
+  });
+
+  it("should return { src, dst: workingDir } if the filename has no slash", ()=>{
+    const projectRootDir = "/example/project";
+    const filename = "file.txt"; //スラッシュが含まれないケース
+    const remoteWorkingDir = "/remote/workdir";
+    const workingDir = "/local/workdir";
+
+    const result = makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingDir);
+
+    //src はリモートワーキングディレクトリ + filename
+    expect(result.src).to.equal("/remote/workdir/file.txt");
+    //dst はルートディレクトリ (component root directory)
+    expect(result.dst).to.equal("/local/workdir");
+
+    //ログ出力内容の確認
+    expect(getLoggerMock.calledOnceWithExactly(projectRootDir)).to.be.true;
+    expect(traceMock.calledOnce).to.be.true;
+    expect(traceMock.args[0][0]).to.include(
+      "file.txt will be downloaded to component root directory"
+    );
+  });
+
+  it("should return { src, dst } with subdirectory if the filename contains slash", ()=>{
+    const projectRootDir = "/example/project";
+    const filename = "some/dir/file.txt"; //スラッシュを含むケース
+    const remoteWorkingDir = "/remote/workdir";
+    const workingDir = "/local/workdir";
+
+    const result = makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingDir);
+
+    expect(result.src).to.equal("/remote/workdir/some/dir/file.txt");
+    expect(result.dst).to.equal("/local/workdir/some/dir/file.txt");
+
+    expect(getLoggerMock.calledOnceWithExactly(projectRootDir)).to.be.true;
+    expect(traceMock.calledOnce).to.be.true;
+    expect(traceMock.args[0][0]).to.include(
+      "some/dir/file.txt will be downloaded to /local/workdir/some/dir/file.txt"
+    );
+  });
+
+  it("should handle trailing slash in the filename and append wildcard", ()=>{
+    const projectRootDir = "/example/project";
+    const filename = "some/dir/"; //末尾がスラッシュ
+    const remoteWorkingDir = "/remote/workdir";
+    const workingDir = "/local/workdir";
+
+    const result = makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingDir);
+
+    //末尾がスラッシュの場合、内部で "/*" が付与される
+    expect(result.src).to.equal("/remote/workdir/some/dir/*");
+    //さらに filename.slice(0,-1) にスラッシュが含まれている => 第一分岐を通るので置換される
+    expect(result.dst).to.equal("/local/workdir/some/dir/*");
+
+    expect(getLoggerMock.calledOnceWithExactly(projectRootDir)).to.be.true;
+    expect(traceMock.calledOnce).to.be.true;
+    expect(traceMock.args[0][0]).to.include(
+      "some/dir/ will be downloaded to /local/workdir/some/dir/*"
+    );
+  });
+});
+
 describe("#createStatusFile", ()=>{
   let rewireExecUtils;
   let createStatusFile;
