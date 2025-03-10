@@ -68,6 +68,7 @@
             v-model="newItem.type"
             variant=outlined
             :items="['min-max-step', 'list', 'files']"
+            data-cy="parameter-parameter_setting-select"
           />
           <v-row v-if="newItem.type==='min-max-step'">
             <v-text-field
@@ -77,6 +78,7 @@
               persistent-hint
               :rules="[required]"
               novalidate
+              data-cy="parameter-min-text_field"
             />
             <v-text-field
               v-model="newItem.max"
@@ -85,6 +87,7 @@
               persistent-hint
               :rules="[required]"
               novalidate
+              data-cy="parameter-max-text_field"
             />
             <v-text-field
               v-model="newItem.step"
@@ -93,6 +96,7 @@
               persistent-hint
               :rules="[required]"
               novalidate
+              data-cy="parameter-step-text_field"
             />
           </v-row>
           <div v-if="newItem.type==='list'">
@@ -103,6 +107,7 @@
               @add=addList
               @update=updateList
               @remove=removeList
+              data-cy="parameter-list-list_form"
             />
           </div>
           <div v-if="newItem.type==='files'">
@@ -113,6 +118,7 @@
               @add=addFiles
               @update=updateFiles
               @remove=removeFiles
+              data-cy="parameter-files-list_form"
             />
           </div>
         </v-card-text>
@@ -122,11 +128,13 @@
             @click="commitChange"
             prepend-icon="mdi-check"
             text="OK"
+            data-cy="parameter-ok-btn"
           />
           <v-btn
             @click="closeAndResetDialog"
             prepend-icon="mdi-cancel"
             text="cancel"
+            data-cy="parameter-cancel-btn"
           />
         </v-card-actions>
       </v-card>

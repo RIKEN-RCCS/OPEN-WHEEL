@@ -206,7 +206,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   シンポリックリンク確認（outputFile、inputFile一致）
   試験確認内容：シンポリックリンクが作成されていることを確認
   */
-  it("04-01-017:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFile、inputFile一致）-シンポリックリンクが作成されていることを確認", ()=>{
+  it("03-01-017:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFile、inputFile一致）-シンポリックリンクが作成されていることを確認", ()=>{
     // task0
     cy.createDirOrFile(TYPE_FILE, 'run.sh', true);
     let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
@@ -232,7 +232,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   シンポリックリンク確認（outputFileが通常、inputFileが空白）
   試験確認内容：シンポリックリンクが作成されていることを確認
   */
-  it("04-01-018:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが空白）-シンポリックリンクが作成されていることを確認", ()=>{
+  it("03-01-018:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが空白）-シンポリックリンクが作成されていることを確認", ()=>{
     // task0
     cy.createDirOrFile(TYPE_FILE, 'run.sh', true);
     let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
@@ -257,7 +257,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   シンポリックリンク確認（outputFileが通常、inputFileが「/」で終わらない文字列）
   試験確認内容：シンポリックリンクが作成されていることを確認
   */
-  it("04-01-019:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
+  it("03-01-019:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
     // task0
     cy.createDirOrFile(TYPE_FILE, 'run.sh', true);
     let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
@@ -286,7 +286,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）
   試験確認内容：シンポリックリンクが作成されていることを確認
   */
-  it("04-01-020:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
+  it("03-01-020:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
     // task0
     cy.createDirOrFile(TYPE_FILE, 'run-a.sh', true);
     cy.createDirOrFile(TYPE_FILE, 'run-b.sh', false);
@@ -318,7 +318,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   シンポリックリンク確認（input filesが’/’で終わる文字列のとき）
   試験確認内容：シンポリックリンクが作成されていることを確認
   */
-  it("04-01-021:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（input filesが’/’で終わる文字列のとき）-シンポリックリンクが作成されていることを確認", ()=>{
+  it("03-01-021:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（input filesが’/’で終わる文字列のとき）-シンポリックリンクが作成されていることを確認", ()=>{
     // task0
     cy.createDirOrFile(TYPE_FILE, 'run-a.sh', true);
     let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
