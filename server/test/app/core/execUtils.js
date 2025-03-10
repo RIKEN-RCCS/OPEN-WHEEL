@@ -53,6 +53,10 @@ describe("#setTaskState", ()=>{
     });
   });
 
+  afterEach(()=>{
+    sinon.restore();
+  });
+
   it("should set the task state, write component json, and emit events", async ()=>{
     //テスト用のダミー task オブジェクト
     const task = {
@@ -202,6 +206,10 @@ describe("#formatSrcFilename", ()=>{
     rewireExecUtils.__set__("replacePathsep", replacePathsepMock);
   });
 
+  afterEach(()=>{
+    sinon.restore();
+  });
+
   it("should return joined path with '/*' if filename ends with '/'", ()=>{
     //replacePathsep が返す値をダミー設定
     replacePathsepMock.returns("convertedDir");
@@ -229,5 +237,69 @@ describe("#formatSrcFilename", ()=>{
     //この場合は replacePathsep を呼ばない分岐
     expect(replacePathsepMock.notCalled).to.be.true;
     expect(result).to.equal("/home/user/file.txt");
+  });
+});
+
+describe("#createStatusFile", ()=>{
+  let rewireExecUtils;
+  let createStatusFile;
+  let fsMock; //fs.writeFileをstub化
+
+  beforeEach(()=>{
+    //execUtils.js を rewire で読み込み
+    rewireExecUtils = rewire("../../../app/core/execUtils.js");
+    //テスト対象の関数を取得
+    createStatusFile = rewireExecUtils.__get__("createStatusFile");
+
+    //fs.writeFile を stub 化して置き換え
+    fsMock = {
+      writeFile: sinon.stub().resolves()
+    };
+    rewireExecUtils.__set__("fs", fsMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should create a status file with correct content", async ()=>{
+    //準備：taskオブジェクト
+    const task = {
+      workingDir: "/test/workingDir",
+      state: "RUNNING",
+      rt: 0,
+      jobStatus: "SUBMITTED"
+    };
+
+    await createStatusFile(task);
+
+    //実際に fs.writeFile が呼ばれた時の引数を取得
+    expect(fsMock.writeFile.calledOnce).to.be.true;
+    const [actualPath, actualContent] = fsMock.writeFile.firstCall.args;
+
+    expect(actualPath).to.equal("/test/workingDir/status.wheel.txt");
+
+    //書き込まれる内容の検証
+    expect(actualContent).to.equal("RUNNING\n0\nSUBMITTED");
+  });
+
+  it("should throw an error if fs.writeFile fails", async ()=>{
+    //fs.writeFile をエラーを投げる挙動にする
+    fsMock.writeFile.rejects(new Error("Write failed"));
+
+    const task = {
+      workingDir: "/error/workingDir",
+      state: "FAILED",
+      rt: 1,
+      jobStatus: "ERROR"
+    };
+
+    try {
+      await createStatusFile(task);
+      //エラーが出ない場合はテスト失敗
+      expect.fail("Expected createStatusFile to reject, but it resolved");
+    } catch (err) {
+      expect(err.message).to.equal("Write failed");
+    }
   });
 });
