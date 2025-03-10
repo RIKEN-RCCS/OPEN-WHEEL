@@ -89,3 +89,98 @@ describe("#setTaskState", ()=>{
     expect(eeMock.emit.secondCall.args).to.deep.equal(["componentStateChanged", task]);
   });
 });
+
+describe("#needDownload", ()=>{
+  let rewireExecUtils;
+  let needDownload;
+  let isSameRemoteHostMock;
+
+  beforeEach(()=>{
+    //execUtils.js を rewireで読み込む
+    rewireExecUtils = rewire("../../../app/core/execUtils.js");
+
+    //テスト対象関数を __get__ で取得
+    needDownload = rewireExecUtils.__get__("needDownload");
+
+    //isSameRemoteHost を sinon.stub() でモック化
+    isSameRemoteHostMock = sinon.stub();
+
+    //rewireでオリジナルの isSameRemoteHost を差し替える
+    rewireExecUtils.__set__("isSameRemoteHost", isSameRemoteHostMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return false if outputFile.dst is empty", async ()=>{
+    //dstが空配列の場合
+    const outputFile = { dst: [] };
+
+    //実行
+    const result = await needDownload("/dummy/project", "dummyComponent", outputFile);
+
+    //検証: some() に何も引っかからないので false
+    expect(result).to.be.false;
+    //isSameRemoteHost は呼ばれない
+    expect(isSameRemoteHostMock.notCalled).to.be.true;
+  });
+
+  it("should return false if all destinations are the same remote host", async ()=>{
+    //dst配列に複数のdstNodeがあるケース
+    const outputFile = {
+      dst: [
+        { dstNode: "hostA" },
+        { dstNode: "hostB" }
+      ]
+    };
+
+    //すべて同じホスト扱い (true) を返すモック
+    isSameRemoteHostMock.resolves(true);
+
+    const result = await needDownload("/dummy/project", "dummyComponent", outputFile);
+    expect(result).to.be.false; //全部true → some(!true)=false
+    //呼び出し回数を確認
+    expect(isSameRemoteHostMock.callCount).to.equal(2);
+  });
+
+  it("should return true if at least one destination is different remote host", async ()=>{
+    const outputFile = {
+      dst: [
+        { dstNode: "hostA" },
+        { dstNode: "hostB" }
+      ]
+    };
+
+    //1つ目はtrue、2つ目はfalseを返す
+    //→ どれか1つでもfalseがあればneedDownloadはtrueになる
+    isSameRemoteHostMock.onCall(0).resolves(true);
+    isSameRemoteHostMock.onCall(1).resolves(false);
+
+    const result = await needDownload("/dummy/project", "dummyComponent", outputFile);
+    expect(result).to.be.true;
+    expect(isSameRemoteHostMock.callCount).to.equal(2);
+  });
+
+  it("should reject if isSameRemoteHost rejects", async ()=>{
+    //途中でエラーを投げるケース
+    const outputFile = {
+      dst: [
+        { dstNode: "hostA" }
+      ]
+    };
+    isSameRemoteHostMock.rejects(new Error("some error"));
+
+    //needDownload 自体がthrowすることを確認
+    try {
+      await needDownload("/dummy/project", "dummyComponent", outputFile);
+      //rejectされなければ失敗とみなす
+      expect.fail("Expected needDownload to reject, but it did not");
+    } catch (err) {
+      //エラーメッセージを確認する
+      expect(err).to.be.an("Error");
+      expect(err.message).to.equal("some error");
+    }
+    expect(isSameRemoteHostMock.calledOnce).to.be.true;
+  });
+});
