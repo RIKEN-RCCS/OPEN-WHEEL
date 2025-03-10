@@ -33,6 +33,7 @@ const validateStorage = validateComponents.__get__("validateStorage");
 const validateInputFiles = validateComponents.__get__("validateInputFiles");
 const validateOutputFiles = validateComponents.__get__("validateOutputFiles");
 const getCycleGraph = validateComponents.__get__("getCycleGraph");
+const validateComponent = validateComponents.__get__("validateComponent");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -538,6 +539,62 @@ describe("validation component UT", function () {
       component.outputFiles.push({ name: "hoge", dst: [] });
       expect(await validateOutputFiles(component)).to.be.true;
     });
+  });
+});
+
+describe("validateComponents function", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+  beforeEach(async function () {
+    await fs.remove(testDirRoot);
+
+    try {
+      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  });
+  after(async function () {
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
+  });
+  it("should validate component correctly", async function () {
+    //実際のコンポーネントを作成
+    const task = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+    task.script = "script.sh";
+    //スクリプトファイルを作成
+    fs.writeFileSync(path.resolve(projectRootDir, task.name, "script.sh"), "#!/bin/bash\necho 'Hello'");
+    //validateComponentを実行
+    const error = await validateComponent(projectRootDir, task);
+    expect(error).to.be.null;
+  });
+  it("should detect invalid component", async function () {
+    //validateComponentを直接テスト - 無効なコンポーネント
+    const task = {
+      type: "task",
+      ID: "test-task",
+      name: "test-task"
+      //scriptが指定されていない
+    };
+    //validateComponentを実行
+    const error = await validateComponent(projectRootDir, task);
+    expect(error).to.not.be.null;
+    expect(error).to.include("script is not specified");
+  });
+  it("should detect cycle graph", async function () {
+    //循環依存関係のあるコンポーネントを作成
+    const cycleComponents = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: ["comp3"] },
+      { ID: "comp3", name: "comp3", parent: "root", next: ["comp1"] } //循環依存
+    ];
+    //getCycleGraphを直接テスト
+    const result = await getCycleGraph("dummy", cycleComponents);
+    expect(result).to.be.an("array").that.is.not.empty;
+    expect(result).to.include("comp1");
+    expect(result).to.include("comp2");
+    expect(result).to.include("comp3");
   });
 });
 
