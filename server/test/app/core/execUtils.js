@@ -303,3 +303,86 @@ describe("#createStatusFile", ()=>{
     }
   });
 });
+
+describe("#createBulkStatusFile", ()=>{
+  let rewireExecUtils;
+  let createBulkStatusFile;
+  let fsMock;
+  let pathMock;
+
+  beforeEach(()=>{
+    //execUtils.js を rewire で読み込み
+    rewireExecUtils = rewire("../../../app/core/execUtils.js");
+    //テスト対象関数を取得
+    createBulkStatusFile = rewireExecUtils.__get__("createBulkStatusFile");
+
+    //fs, path を Stub 化
+    fsMock = {
+      writeFile: sinon.stub().resolves()
+    };
+    pathMock = {
+      resolve: sinon.stub()
+    };
+
+    //rewire を使って execUtils.js 内の fs と path を Stub に差し替え
+    rewireExecUtils.__set__("fs", fsMock);
+    rewireExecUtils.__set__("path", pathMock);
+  });
+
+  afterEach(()=>{
+    //毎テスト後に sinon をリセット
+    sinon.restore();
+  });
+
+  it("should write correct content for multiple bulk iterations", async ()=>{
+    pathMock.resolve.returns("/fake/dir/subjob_status.txt");
+
+    const task = {
+      workingDir: "/fake/dir",
+      startBulkNumber: 2,
+      endBulkNumber: 3
+    };
+    const rtList = {
+      2: "RTValue2",
+      3: "RTValue3"
+    };
+    const jobStatusList = {
+      2: "JOBSTATUS2",
+      3: "JOBSTATUS3"
+    };
+
+    await createBulkStatusFile(task, rtList, jobStatusList);
+
+    expect(pathMock.resolve.calledOnceWithExactly(
+      "/fake/dir",
+      "subjob_status.wheel.txt" //subjob_ + statusFilename
+    )).to.be.true;
+
+    const expectedContent
+      = "RT_2=RTValue2\nJOBSTATUS_2=JOBSTATUS2\n"
+      + "RT_3=RTValue3\nJOBSTATUS_3=JOBSTATUS3\n";
+
+    expect(fsMock.writeFile.calledOnceWithExactly(
+      "/fake/dir/subjob_status.txt",
+      expectedContent
+    )).to.be.true;
+  });
+
+  it("should write empty content if startBulkNumber > endBulkNumber", async ()=>{
+    //ループが一度も回らないケース
+    pathMock.resolve.returns("/fake/dir/subjob_status.txt");
+
+    const task = {
+      workingDir: "/fake/dir",
+      startBulkNumber: 5,
+      endBulkNumber: 3
+    };
+    const rtList = {};
+    const jobStatusList = {};
+
+    await createBulkStatusFile(task, rtList, jobStatusList);
+
+    //内容は空文字列で書き込まれる
+    expect(fsMock.writeFile.calledOnceWithExactly("/fake/dir/subjob_status.txt", "")).to.be.true;
+  });
+});
