@@ -272,7 +272,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.enterInputOrOutputFile(TYPE_INPUT, 'run.sh', true, true);
     cy.clickComponentName(IF_NAME_1);
     cy.connectComponent(IF_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(IF_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -300,7 +301,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-b'); // scritファイル選択
     cy.clickComponentName(IF_NAME_1);
     cy.connectComponent(IF_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(IF_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -332,7 +334,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run.sh').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('if1.sh{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(IF_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('if1.sh').should('exist');   
@@ -345,7 +348,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）
   試験確認内容：シンポリックリンクが作成されていることを確認
   */
-  it.only("04-01-020:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", () => {
+  it("04-01-020:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", () => {
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
     // task0
     cy.createDirOrFile(TYPE_FILE, 'run-a.sh', true);
@@ -366,7 +369,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run*').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('task1-run{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // コンポーネントを実行する
+    cy.get('[data-cy="workflow-play-btn"]').click() // コンポーネントを実行する
+    cy.checkProjectStatus("finished")
     cy.clickComponentName(IF_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('task1-run').should('exist').click();   
@@ -401,7 +405,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run-a.sh').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('task1-run/{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // コンポーネントを実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // コンポーネントを実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(IF_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('task1-run').should('exist').click();   
@@ -913,7 +918,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-end_for-text_field"]').type('5');
     cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
     cy.connectComponent(FOR_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOR_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -941,7 +947,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-step_for-text_field"]').type('5');
     cy.clickComponentName(FOR_NAME_1);
     cy.connectComponent(FOR_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOR_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -973,7 +980,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run.sh').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('for1.sh{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOR_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('for1.sh').should('exist');
@@ -1008,7 +1016,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run*').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('for1-run{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(5000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOR_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('for1-run').should('exist').click();   
@@ -1044,7 +1053,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run-a.sh').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('for1-run/{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(5000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOR_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('for1-run').should('exist').click();   
@@ -2202,7 +2212,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.clickComponentName(FOREACH_NAME_1);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, 'run.sh', true, true);
     cy.connectComponent(FOREACH_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOREACH_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -2232,7 +2243,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="list_form-add-text_field"]').find('[role="button"]').eq(1).click(); // Add input file button
     cy.clickComponentName(FOREACH_NAME_1);
     cy.connectComponent(FOREACH_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOREACH_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -2266,7 +2278,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run.sh').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('foreach1.sh{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOREACH_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('foreach1.sh').should('exist');
@@ -2301,7 +2314,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run*').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('foreach1-run{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOREACH_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('foreach1-run').should('exist').click();   
@@ -2337,7 +2351,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run*').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('foreach1-run/{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(FOREACH_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('foreach1-run').should('exist').click();   
@@ -2835,7 +2850,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.enterInputOrOutputFile(TYPE_INPUT, 'run.sh', true, true);
     cy.clickComponentName(PS_NAME_1);
     cy.connectComponent(PS_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(PS_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -3342,14 +3358,15 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   psコンポーネント共通機能確認
   各コンポーネント特有のプロパティ確認
   parameters->+ add new parameter ボタン表示確認
-  試験確認内容：add new parameterボタンが表示されていることを確認
+  試験確認内容：parameter設定ダイアログが表示されることを確認
   */
-  it("04-01-222:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-parameters->+ add new parameter ボタン表示確認-add new parameterボタンが表示されていることを確認", () => {
+  it("04-01-222:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-parameters->+ add new parameter ボタン表示確認-parameter設定ダイアログが表示されることを確認", () => {
     cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
     cy.get('[data-cy="workflow-document_edit-btn"]').click();
-    cy.get('[data-cy="parameter-add_new_parameter_btn"]').should('be.visible');
+    cy.get('[data-cy="parameter-add_new_parameter_btn"]').click();
+    cy.get('[data-cy="parameter-parameter_setting-select"]').should('be.visible');
   });
 
   /** 
@@ -3366,6 +3383,22 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="workflow-document_edit-btn"]').click();
     cy.get('[data-cy="parameter-add_new_parameter_btn"]').click();
     cy.get('[data-cy="parameter-min-text_field"]').should('be.visible')
+  });
+
+  /** 
+  コンポーネントの基本機能動作確認
+  psコンポーネント共通機能確認
+  各コンポーネント特有のプロパティ確認
+  min-max-step表示確認
+  試験確認内容：min-max-step入力フォームが表示されていることを確認
+  */
+  it("04-01-223:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-min-max-step表示確認-min-max-step入力フォームが表示されていることを確認", () => {
+    cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-files-panel_title"]').click();
+    cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
+    cy.get('[data-cy="workflow-document_edit-btn"]').click();
+    cy.get('[data-cy="parameter-add_new_parameter_btn"]').click();
+    cy.get('[data-cy="parameter-min-text_field"]').input('be.visible')
   });
 
   /** 
@@ -3579,7 +3612,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.clickComponentName(WORKFLOW_NAME_1);
     cy.enterInputOrOutputFile(TYPE_INPUT, 'run.sh', true, true);
     cy.connectComponent(WORKFLOW_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(WORKFLOW_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -3601,7 +3635,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_1, 300, 600);
     cy.clickComponentName(WORKFLOW_NAME_1);
     cy.connectComponent(WORKFLOW_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(WORKFLOW_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -3627,7 +3662,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run.sh').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('while1.sh{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(WORKFLOW_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('while1.sh').should('exist');
@@ -3654,7 +3690,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run*').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('while1-run{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(WORKFLOW_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('while1-run').should('exist').click();   
@@ -3682,7 +3719,8 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run-a.sh').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('while1-run/{enter}'); // inputFileの値を変更
     cy.closeProperty();
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // 実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // 実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(WORKFLOW_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('while1-run').should('exist').click();   
