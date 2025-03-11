@@ -540,6 +540,15 @@ function isLocalComponent(component) {
   return typeof component.host === "undefined" || component.host === "localhost";
 }
 
+/**
+ * determine if storage-like component or not
+ * @param {object} component - component object
+ * @returns {boolean} - local component or not
+ */
+function hasStoragePath(component) {
+  return ["storage", "hpciss", "hpcisstar"].includes(component.type);
+}
+
 module.exports = {
   componentFactory,
   hasChild,
@@ -547,5 +556,6 @@ module.exports = {
   isLocalComponent,
   removeDuplicatedComponent,
   getComponentDefaultName,
-  hasNeededOutputFiles
+  hasNeededOutputFiles,
+  hasStoragePath
 };
