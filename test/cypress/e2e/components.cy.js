@@ -1,4 +1,5 @@
 describe("04:コンポーネントの基本機能動作確認", () => {
+  const wheelPath = Cypress.env("WHEEL_PATH")
   const PROJECT_NAME = "TestProject"
   const PROJECT_DESCRIPTION = "TestDescription"
   const TYPE_INPUT = "input"
@@ -4496,6 +4497,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   */
   it("04-01-311:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", () => {
     cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-directory_path-text_field"]').type(wheelPath);
     cy.createDirOrFile(TYPE_DIR, 'test-a', true);
     cy.createDirOrFile(TYPE_DIR, 'test-b', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
@@ -4517,6 +4519,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   */
   it("04-01-312:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", () => {
     cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-directory_path-text_field"]').type(wheelPath);
     cy.createDirOrFile(TYPE_DIR, 'test1', true);
     cy.createDirOrFile(TYPE_DIR, 'test2', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
@@ -4527,7 +4530,6 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test2').click();
     cy.get('[data-cy="file_browser-remove_file-btn"]').click();
     cy.get('[data-cy="file_browser-dialog-dialog"]').find('button').first().click();
-    
   });
 
   /** 
@@ -4539,6 +4541,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   */
   it("04-01-313:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", () => {
     cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-directory_path-text_field"]').type(wheelPath);
     cy.createDirOrFile(TYPE_DIR, 'test1', true);
     cy.createDirOrFile(TYPE_DIR, 'test2', false);
     cy.closeProperty();
@@ -4562,6 +4565,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   */
   it("04-01-314:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", () => {
     cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-directory_path-text_field"]').type(wheelPath);
     cy.createDirOrFile(TYPE_FILE, 'test-a', true);
     cy.createDirOrFile(TYPE_FILE, 'test-b', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
@@ -4583,6 +4587,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   */
   it("04-01-315:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", () => {
     cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-directory_path-text_field"]').type(wheelPath);
     cy.createDirOrFile(TYPE_FILE, 'test1', true);
     cy.createDirOrFile(TYPE_FILE, 'test2', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
@@ -4604,6 +4609,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   */
   it("04-01-316:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", () => {
     cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-directory_path-text_field"]').type(wheelPath);
     cy.createDirOrFile(TYPE_FILE, 'test1', true);
     cy.createDirOrFile(TYPE_FILE, 'test2', false);
     cy.closeProperty();
@@ -4627,6 +4633,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   */
   it("04-01-317:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", () => {
     cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-directory_path-text_field"]').type(wheelPath);
     cy.createDirOrFile(TYPE_DIR, 'test-a', true);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
     cy.createDirOrFile(TYPE_DIR, 'test-b', false);
@@ -4648,6 +4655,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   */
   it("04-01-318:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", () => {
     cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-directory_path-text_field"]').type(wheelPath);
     cy.createDirOrFile(TYPE_DIR, 'test-a', true);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
     cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
