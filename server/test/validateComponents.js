@@ -34,6 +34,7 @@ const validateInputFiles = validateComponents.__get__("validateInputFiles");
 const validateOutputFiles = validateComponents.__get__("validateOutputFiles");
 const getCycleGraph = validateComponents.__get__("getCycleGraph");
 const validateComponent = validateComponents.__get__("validateComponent");
+const recursiveValidateComponents = validateComponents.__get__("recursiveValidateComponents");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -595,6 +596,156 @@ describe("validateComponents function", function () {
     expect(result).to.include("comp1");
     expect(result).to.include("comp2");
     expect(result).to.include("comp3");
+  });
+});
+
+describe("recursiveValidateComponents", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+  beforeEach(async function () {
+    await fs.remove(testDirRoot);
+
+    try {
+      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  });
+  after(async function () {
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
+  });
+
+  it("should return empty report when no components exist", async function () {
+    //空のレポート配列を作成
+    const report = [];
+    //recursiveValidateComponentsを実行
+    await recursiveValidateComponents(projectRootDir, projectRootDir, report);
+    //レポートが空のままであることを確認
+    expect(report).to.be.an("array").that.is.empty;
+  });
+  it("should detect invalid component", async function () {
+    //モックを設定して無効なコンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        {
+          type: "task",
+          ID: "invalid-task",
+          name: "invalid-task"
+          //scriptが指定されていない
+        }
+      ];
+    });
+
+    validateComponents.__set__("getComponentFullName", async (projectRootDir, ID)=>{
+      return `Component ${ID}`;
+    });
+
+    validateComponents.__set__("isInitialComponent", async ()=>{
+      return true; //初期コンポーネントが存在するとする
+    });
+
+    //空のレポート配列を作成
+    const report = [];
+    //recursiveValidateComponentsを実行
+    await recursiveValidateComponents(projectRootDir, "root", report);
+    //レポートにエラーが含まれていることを確認
+    expect(report).to.be.an("array").that.is.not.empty;
+    expect(report[0]).to.have.property("ID", "invalid-task");
+    expect(report[0]).to.have.property("error").that.includes("script is not specified");
+  });
+  it("should detect missing initial component", async function () {
+    //モックを設定して子コンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        {
+          type: "task",
+          ID: "task1",
+          name: "task1",
+          script: "script.sh"
+        }
+      ];
+    });
+
+    validateComponents.__set__("getComponentFullName", async (projectRootDir, ID)=>{
+      return `Component ${ID}`;
+    });
+
+    validateComponents.__set__("isInitialComponent", async ()=>{
+      return false; //初期コンポーネントが存在しないとする
+    });
+
+    //空のレポート配列を作成
+    const report = [];
+    //recursiveValidateComponentsを実行
+    await recursiveValidateComponents(projectRootDir, "parent", report);
+    //レポートにエラーが含まれていることを確認
+    expect(report).to.be.an("array").that.is.not.empty;
+    expect(report.some((item)=>item.ID === "parent" && item.error.includes("no initial component in children"))).to.be.true;
+  });
+  it("should validate components recursively", async function () {
+    //モックを設定して有効なコンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        {
+          type: "task",
+          ID: "valid-task",
+          name: "valid-task",
+          script: "script.sh"
+        }
+      ];
+    });
+
+    validateComponents.__set__("getComponentFullName", async (projectRootDir, ID)=>{
+      return `Component ${ID}`;
+    });
+
+    validateComponents.__set__("isInitialComponent", async ()=>{
+      return true; //初期コンポーネントが存在するとする
+    });
+
+    //validateComponentをモック化して常にnullを返すようにする
+    const originalValidateComponent = validateComponents.__get__("validateComponent");
+    validateComponents.__set__("validateComponent", async ()=>{
+      return null; //エラーなし
+    });
+
+    //空のレポート配列を作成
+    const report = [];
+    //recursiveValidateComponentsを実行
+    await recursiveValidateComponents(projectRootDir, "root", report);
+    //レポートが空であることを確認（エラーがない）
+    expect(report).to.be.an("array").that.is.empty;
+
+    //元の関数に戻す
+    validateComponents.__set__("validateComponent", originalValidateComponent);
+  });
+  it("should detect cycle graph", async function () {
+    //モックの循環依存関係を持つコンポーネントを作成
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        { ID: "comp1", name: "comp1", parent: "root", next: ["comp2"] },
+        { ID: "comp2", name: "comp2", parent: "root", next: ["comp3"] },
+        { ID: "comp3", name: "comp3", parent: "root", next: ["comp1"] } //循環依存
+      ];
+    });
+
+    validateComponents.__set__("getComponentFullName", async (projectRootDir, ID)=>{
+      return `Component ${ID}`;
+    });
+
+    validateComponents.__set__("isInitialComponent", async ()=>{
+      return true; //初期コンポーネントが存在するとする
+    });
+
+    //空のレポート配列を作成
+    const report = [];
+    //recursiveValidateComponentsを実行
+    await recursiveValidateComponents(projectRootDir, "root", report);
+    //レポートにエラーが含まれていることを確認
+    expect(report).to.be.an("array").that.is.not.empty;
+    expect(report.some((item)=>item.error.includes("cycle graph detected"))).to.be.true;
   });
 });
 
