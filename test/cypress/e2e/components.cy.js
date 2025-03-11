@@ -6913,6 +6913,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-477:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-プロパティが表示されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     const DATA_CY_STR = '[data-cy="component_property-property-navigation_drawer"]';
     cy.confirmDisplayInProperty(DATA_CY_STR, true);
   });
@@ -6925,6 +6926,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-478:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     const DATA_CY_STR = '[data-cy="component_property-name-text_field"]'
     cy.confirmDisplayInProperty(DATA_CY_STR, true);
   });
@@ -6938,6 +6940,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-479:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-name入力-nameが入力できることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
     cy.get(INPUT_OBJ_CY).find('input').clear();
     cy.get(INPUT_OBJ_CY).type('-Test_Task');
@@ -6955,7 +6958,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-480:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
     cy.get(INPUT_OBJ_CY).find('input').clear();
     cy.get(INPUT_OBJ_CY).type('Test*Task');
@@ -6972,7 +6975,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-481:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     const DATA_CY_STR = '[data-cy="component_property-description-textarea"]'
     cy.confirmDisplayInProperty(DATA_CY_STR, true);
   });
@@ -6986,7 +6989,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-482:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
     cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
   });
@@ -7000,7 +7003,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-483:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     const DATA_CY_STR = '[data-cy="component_property-input_files-list_form"]';
     const CLICK_AREA_CY = '[data-cy="component_property-in_out_files-panel_title"]';
     cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
@@ -7015,7 +7018,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-484:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, false);
     cy.get('[data-cy="component_property-input_files-list_form"]').find('input').should('have.value', 'testInputFile');
   });
@@ -7029,7 +7032,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-485:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
     cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('exist');
   });
@@ -7043,7 +7046,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-486:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
     cy.get('[data-cy="component_property-output_files-list_form"]').should('exist');
   });
@@ -7057,7 +7060,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-487:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, false);
     cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('have.value', 'testOutputFile');
   });
@@ -7071,7 +7074,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-488:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
     cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('exist');
   });
@@ -7086,7 +7089,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-489:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.closeProperty();
     cy.get('[data-cy="component_property-property-navigation_drawer"]').should('not.exist');
   });
@@ -7101,7 +7104,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-492:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_1, 300, 600);
     cy.connectComponent(STEPJOB_TASK_NAME_1);  // コンポーネント同士を接続
@@ -7118,7 +7121,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-494:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.enterInputOrOutputFile(TYPE_INPUT, 'testInputFile', true, true);
     cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
   });
@@ -7133,7 +7136,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-495:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
     cy.get('[data-cy="action_row-delete-btn"]').should('be.visible');
   });
@@ -7149,7 +7152,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it.skip("04-01-496:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="action_row-delete-btn"]').click();
     cy.get('[data-cy="graph-component-row"]').contains('testInputFile').should('not.exist');
   });
@@ -7165,7 +7168,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it.skip("04-01-497:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="action_row-delete-btn"]').click();
     cy.get('[data-cy="graph-component-row"]').contains('testOutputFile').should('not.exist');
   });
@@ -7180,7 +7183,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-498:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_DIR, 'test-a', true);
     cy.createDirOrFile(TYPE_DIR, 'test-b', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
@@ -7197,7 +7200,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-499:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_DIR, 'test1', true);
     cy.createDirOrFile(TYPE_DIR, 'test2', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
@@ -7214,7 +7217,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-500:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_DIR, 'test1', true);
     cy.createDirOrFile(TYPE_DIR, 'test2', false);
     cy.closeProperty();
@@ -7233,7 +7236,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-501:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_FILE, 'test-a', true);
     cy.createDirOrFile(TYPE_FILE, 'test-b', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').should('exist');
@@ -7250,7 +7253,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-502:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_FILE, 'test1', true);
     cy.createDirOrFile(TYPE_FILE, 'test2', false);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test1').should('exist');
@@ -7267,7 +7270,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-503:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_FILE, 'test1', true);
     cy.createDirOrFile(TYPE_FILE, 'test2', false);
     cy.closeProperty();
@@ -7286,7 +7289,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-504:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_DIR, 'test-a', true);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
     cy.createDirOrFile(TYPE_DIR, 'test-b', false);
@@ -7304,7 +7307,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-505:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_DIR, 'test-a', true);
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test-a').click();
     cy.createDirOrFile(TYPE_FILE, 'test.txt', false);
@@ -7321,7 +7324,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-506:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.deleteComponent(STEPJOB_TASK_NAME_0);
     cy.get('[data-cy="graph-component-row"]').contains(STEPJOB_TASK_NAME_0).should('not.exist');
   });
@@ -7336,7 +7339,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-507:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-script表示確認-scriptセレクトボックスが表示されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     const DATA_CY_STR = '[data-cy="component_property-script-autocomplete"]'
     cy.confirmDisplayInProperty(DATA_CY_STR, true);
   });
@@ -7351,7 +7354,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-508:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-scriptファイル選択表示確認-scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_FILE, 'test-a', true);
     let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
@@ -7368,7 +7371,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-509:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-scriptファイル選択反映確認-scriptセレクトボックスで選択したファイルが反映されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.createDirOrFile(TYPE_FILE, 'test-a', true);
     let targetDropBoxCy = '[data-cy="component_property-script-autocomplete"]';
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
@@ -7387,7 +7390,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-510:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-script表示確認-scriptセレクトボックスが表示されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-stepjob_task-panel_title"]').click();
     cy.get('[data-cy="component_property-use_dependency-switch"]').click();
     const DATA_CY_STR = '[data-cy="component_property-step_number-text_field"]'
@@ -7404,7 +7407,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-511:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-script入力反映確認-scriptセレクトボックスが入力されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.enterInputOrOutputFile(TYPE_OUTPUT, 'testOutputFile', true, true);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_1, 300, 600);
     // コンポーネント同士を接続
@@ -7429,7 +7432,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-512:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-dependencyForm表示確認-dependencyFormテキストボックスが表示されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-stepjob_task-panel_title"]').click();
     cy.get('[data-cy="component_property-use_dependency-switch"]').find('input').click();
     const DATA_CY_STR = '[data-cy="component_property-dependency_form-text_field"]'
@@ -7446,7 +7449,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-513:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-dependencyForm入力確認-dependencyFormテキストボックスが入力できることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-stepjob_task-panel_title"]').click();
     cy.get('[data-cy="component_property-use_dependency-switch"]').find('input').click();
     cy.get('[data-cy="component_property-dependency_form-text_field"]').type('testDependency');
@@ -7463,7 +7466,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-514:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-dependencyForm入力反映確認-dependencyFormテキストボックスに入力した値が反映されることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-stepjob_task-panel_title"]').click();
     cy.get('[data-cy="component_property-use_dependency-switch"]').find('input').click();
     cy.get('[data-cy="component_property-dependency_form-text_field"]').type('testDependency');
@@ -7484,7 +7487,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-515:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-include表示確認-includeテキストボックスが表示されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-include-list_form"]').should('be.visible');
   });
@@ -7499,7 +7502,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-516:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-include入力確認-入力した値が表示されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-include-list_form"]').find('input').type('includeTest');
     cy.get('[data-cy="component_property-include-list_form"]').find('input').should('have.value', 'includeTest');
@@ -7515,7 +7518,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-517:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-include入力反映確認-入力した値が反映されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-include-list_form"]').find('input').type('includeTest{enter}');
     cy.closeProperty();
@@ -7534,7 +7537,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-518:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-exclude表示確認-excludeテキストボックスが表示されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-exclude-list_form"]').should('be.visible');
   });
@@ -7549,7 +7552,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-519:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-exclude入力確認-入力した値が表示されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-exclude-list_form"]').find('input').type('excludeTest');
     cy.get('[data-cy="component_property-exclude-list_form"]').find('input').should('have.value', 'excludeTest');
@@ -7565,7 +7568,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-520:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-exclude入力反映確認-入力した値が反映されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-exclude-list_form"]').find('input').type('excludeTest{enter}');
     cy.closeProperty();
@@ -7584,7 +7587,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-521:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-clean up flag表示確認-各ラジオボタンが表示されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-remove-radio"]').find('input').should('exist');
     cy.get('[data-cy="component_property-keep-radio"]').find('input').should('exist');
@@ -7601,7 +7604,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-522:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-clean up flag入力確認-各ラジオボタンが選択できることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-remove-radio"]').find('input').click();
     cy.get('[data-cy="component_property-remove-radio"]').find('input').should('be.checked');
@@ -7621,7 +7624,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-523:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-clean up flag入力反映確認（remove files）-remove filesが設定されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-remove-radio"]').find('input').click();
     cy.closeProperty();
@@ -7640,7 +7643,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-524:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-clean up flag入力反映確認（keep files）-keep filesが設定されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-keep-radio"]').find('input').click();
     cy.closeProperty();
@@ -7659,7 +7662,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   it("04-01-525:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-clean up flag入力反映確認（same as parent）-same as parentが設定されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
-    cy.wait(1000);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-same-radio"]').find('input').click();
     cy.closeProperty();
