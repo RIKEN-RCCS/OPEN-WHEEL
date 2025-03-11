@@ -166,6 +166,23 @@ Cypress.Commands.add("connectComponent", (componentName)=>{
     .trigger("mouseup", { screenX: 300, screenY: 600 })
 })
 
+// connecting components together multiple
+Cypress.Commands.add("connectComponentMultiple", (componentName, polygonNo)=>{
+  cy.get('[data-cy="graph-component-row"]').find("polygon")
+    .eq(polygonNo)
+    .trigger("mousedown", { screenX: 100, screenY: 100 })
+  cy.get('[data-cy="graph-component-row"]').contains(componentName)
+    .trigger("mouseup", { screenX: 300, screenY: 700 })
+})
+
+//Project status check
+Cypress.Commands.add("checkPropertyScreenOpen", (propertyCy)=>{
+  cy.contains(propertyCy)
+    .then(($el)=>{
+      cy.softAssert($el.text().includes(propertyCy), true)
+    })
+})
+
 // check the connection line
 Cypress.Commands.add("checkConnectionLine", (startComponentName, endComponentName)=>{
   cy.get('[data-cy="component-component_group-g"]').filter(':contains(' + startComponentName + ')').find('[data-cy="iofilebox-rect-rect"]').as("start_rect");
@@ -200,6 +217,50 @@ Cypress.Commands.add("checkConnectionLine", (startComponentName, endComponentNam
                   const REG_START = new RegExp(`^M\\s+${EXPECTED_START_X}+,+${EXPECTED_START_Y}\n\\s+C`)
                   const REG_END = new RegExp(`\\s+${EXPECTED_END_X}+,+${EXPECTED_END_Y}`)
                   cy.get('[data-cy="cubic-bezier-path"]').should("have.attr", "d").and("match",REG_START).and("match",REG_END)
+                })
+              })
+            })
+          })
+        })
+      })
+    })
+  });
+})
+
+// check the connection line
+Cypress.Commands.add("checkConnectionLineMultiple", (startComponentName, endComponentName, pathNo)=>{
+  cy.get('[data-cy="component-component_group-g"]').filter(':contains(' + startComponentName + ')').find('[data-cy="component_header-rect_rect"]').as("start_rect");
+  cy.get('@start_rect').invoke('attr', 'x').as("start_x");
+  cy.get('@start_rect').invoke('attr', 'y').as("start_y");
+  cy.get('@start_rect').invoke('attr', 'width').as("start_width");
+  cy.get('@start_rect').invoke('attr', 'height').as("start_height");
+  cy.get('[data-cy="component-component_group-g"]').filter(':contains(' + endComponentName + ')').find('[data-cy="component_header-rect_rect"]').as("end_rect");
+  cy.get('@end_rect').invoke('attr', 'x').as("end_x");
+  cy.get('@end_rect').invoke('attr', 'y').as("end_y");
+  cy.get('@end_rect').invoke('attr', 'width').as("end_width");
+  cy.get('@end_rect').invoke('attr', 'height').as("end_height");
+  cy.get("@start_x").then((start_x_text) =>{
+    cy.get("@start_y").then((start_y_text)=>{
+      cy.get("@start_width").then((start_width_text)=>{
+        cy.get("@start_height").then((start_height_text)=>{
+          cy.get("@end_x").then((end_x_text)=>{
+            cy.get("@end_y").then((end_y_text)=>{
+              cy.get("@end_width").then((end_width_text)=>{
+                cy.get("@end_height").then((end_height_text)=>{
+                  const START_X = Number(start_x_text);
+                  const START_Y = Number(start_y_text);
+                  const START_WIDTH = Number(start_width_text);
+                  const START_HEIGHT = Number(start_height_text);
+                  const END_X = Number(end_x_text);
+                  const END_Y = Number(end_y_text);
+                  const END_WIDTH = Number(end_width_text);
+                  const EXPECTED_START_X =START_X + START_WIDTH/2;
+                  const EXPECTED_START_Y =START_Y + START_HEIGHT;
+                  const EXPECTED_END_X =END_X + END_WIDTH/2;
+                  const EXPECTED_END_Y =END_Y;
+                  const REG_START = new RegExp(`^M\\s+${EXPECTED_START_X}+,+${EXPECTED_START_Y}\n\\s+C`)
+                  const REG_END = new RegExp(`\\s+${EXPECTED_END_X}+,+${EXPECTED_END_Y}`)
+                  cy.get('[data-cy="cubic-bezier-path"]').eq(pathNo).should("have.attr", "d").and("match",REG_START).and("match",REG_END)
                 })
               })
             })
