@@ -78,6 +78,7 @@ Cypress.Commands.add("assertAll", ()=>{
   }
 })
 
+// This function can't work in firefox.
 Cypress.Commands.add("setClipboardPermission", ()=>{
   cy.wrap(Cypress.automation("remote:debugger:protocol", {
     command: "Browser.grantPermissions",

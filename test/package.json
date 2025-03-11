@@ -15,6 +15,7 @@
     "chrome": "^0.1.0",
     "cypress": "^13.6.3",
     "cypress-delete-downloads-folder": "^0.0.4",
-    "simple-ssh": "^1.1.1"
+    "simple-ssh": "^1.1.1",
+    "@cypress/skip-test": "^2.6.1"
   }
 }
