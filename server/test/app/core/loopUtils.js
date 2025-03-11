@@ -139,6 +139,67 @@ describe("#getPrevIndex", ()=>{
   });
 });
 
+describe("#keepLoopInstance", ()=>{
+  let keepLoopInstance;
+  let getInstanceDirectoryNameStub;
+  let removeStub;
+
+  beforeEach(()=>{
+    const loopUtils = rewire("../../../app/core/loopUtils.js");
+    keepLoopInstance = loopUtils.keepLoopInstance;
+    getInstanceDirectoryNameStub = sinon.stub();
+    removeStub = sinon.stub();
+    loopUtils.__set__({
+      getInstanceDirectoryName: getInstanceDirectoryNameStub,
+      fs: { remove: removeStub }
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should do nothing when component.keep is not number", async ()=>{
+    await keepLoopInstance({ keep: "dummy" });
+    expect(removeStub.called).to.be.false;
+  });
+
+  it("should do nothing when component.keep is less than 0", async ()=>{
+    await keepLoopInstance({ keep: 0 });
+    expect(removeStub.called).to.be.false;
+  });
+
+  it("should remove unnecessary directories", async ()=>{
+    const component = {
+      currentIndex: 3,
+      keep: 1,
+      step: 2
+    };
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 1).returns("dummy");
+    await keepLoopInstance(component, "/cwdDir");
+    expect(removeStub.calledWith("/cwdDir/dummy")).to.be.true;
+  });
+
+  it("should use step as 1 when step is falsy", async ()=>{
+    const component = {
+      currentIndex: 3,
+      keep: 1
+    };
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 2).returns("dummy");
+    await keepLoopInstance(component, "/cwdDir");
+    expect(removeStub.calledWith("/cwdDir/dummy")).to.be.true;
+  });
+
+  it("should do nothing when delete target is not exist", async ()=>{
+    const component = {
+      currentIndex: 0,
+      keep: 1
+    };
+    await keepLoopInstance(component, "/cwdDir");
+    expect(removeStub.called).to.be.false;
+  });
+});
+
 describe("#loopInitialize()", ()=>{
   let component;
 
