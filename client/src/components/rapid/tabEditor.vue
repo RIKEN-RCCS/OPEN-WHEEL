@@ -69,6 +69,7 @@
                 v-model="newFilename"
                 label="new file name"
                 :rules="[isValidName]"
+                data-cy="tab_editor-editor-text_field"
               />
             </v-card-text>
             <v-card-actions>

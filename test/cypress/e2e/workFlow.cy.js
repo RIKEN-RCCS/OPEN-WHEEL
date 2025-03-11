@@ -219,7 +219,8 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.enterInputOrOutputFile(TYPE_INPUT, 'run.sh', true, true);
     cy.clickComponentName(TASK_NAME_1);
     cy.connectComponent(TASK_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // Taskコンポーネントを実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // Taskコンポーネントを実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(TASK_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -244,7 +245,8 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-b');
     cy.clickComponentName(TASK_NAME_1);
     cy.connectComponent(TASK_NAME_1);  // コンポーネント同士を接続
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // Taskコンポーネントを実行する
+    cy.get('[data-cy="workflow-play-btn"]').click(); // Taskコンポーネントを実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(TASK_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('run.sh').should('exist');
@@ -273,7 +275,9 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run.sh').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('task1.sh{enter}'); // inputFileの値を変更
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(1000); // Taskコンポーネントを実行する
+    cy.closeProperty();
+    cy.get('[data-cy="workflow-play-btn"]').click(); // Taskコンポーネントを実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(TASK_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('task1.sh').should('exist');   
@@ -303,7 +307,9 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run*').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('task1-run{enter}'); // inputFileの値を変更
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // Taskコンポーネントを実行する
+    cy.closeProperty();
+    cy.get('[data-cy="workflow-play-btn"]').click(); // Taskコンポーネントを実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(TASK_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('task1-run').should('exist').click();   
@@ -334,7 +340,9 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
     cy.get('[data-cy="component_property-input_files-list_form"]').contains('run-a.sh').click();
     cy.get('[data-cy="list_form_property-edit-text_field"]').find('input').clear().type('task1-run/{enter}'); // inputFileの値を変更
-    cy.get('[data-cy="workflow-play-btn"]').click().wait(3000); // Taskコンポーネントを実行する
+    cy.closeProperty();
+    cy.get('[data-cy="workflow-play-btn"]').click(); // Taskコンポーネントを実行する
+    cy.checkProjectStatus("finished");
     cy.clickComponentName(TASK_NAME_1);
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('task1-run').should('exist').click();   

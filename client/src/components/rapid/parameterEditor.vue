@@ -40,6 +40,7 @@
       @addNewItem="onAddNewItem"
       @updateItem="onUpdateItem"
       @deleteItem="onDeleteItem"
+      data-cy="parameter_editor-scatter-gather_scatter"
     />
     <gather-scatter
       :container="parameterSetting.gather"
@@ -52,6 +53,7 @@
       @addNewItem="onAddNewItem"
       @updateItem="onUpdateItem"
       @deleteItem="onDeleteItem"
+      data-cy="parameter_editor-gather-gather_scatter"
     />
   </div>
 </template>

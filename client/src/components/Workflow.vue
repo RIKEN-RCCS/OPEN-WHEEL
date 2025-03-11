@@ -273,6 +273,7 @@
       title="open viewer screen"
       @ok="openViewerScreen();viewerScreenDialog=false"
       @cancel="viewerScreenDialog=false"
+      data-cy="workflow-viewer_screen-dialog"
     />
     <versatile-dialog
       v-model="dialog"
