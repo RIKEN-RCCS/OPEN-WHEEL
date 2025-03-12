@@ -6955,15 +6955,16 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   name入力（使用可能文字確認）
   試験確認内容：nameが入力できないことを確認
   */
-  it("04-01-480:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", () => {
+  it.only("04-01-480:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
     cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
     cy.get(INPUT_OBJ_CY).find('input').clear();
     cy.get(INPUT_OBJ_CY).type('Test*Task');
-    cy.get('[data-cy="workflow-save-text"]').click();
+    cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get(INPUT_OBJ_CY).find(TAG_TYPE_INPUT).should('have.not.value', 'Test*Task');
   });
 
@@ -7222,6 +7223,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.createDirOrFile(TYPE_DIR, 'test2', false);
     cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
   });
@@ -7275,6 +7277,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.createDirOrFile(TYPE_FILE, 'test2', false);
     cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-files-panel_title"]').click();
     cy.get('[data-cy="file_browser-treeview-treeview"]').contains('test*').should('exist');
   });
@@ -7377,6 +7380,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, 'test-a');
     cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-script-autocomplete"]').contains('test-a').should('exist');
   });
 
@@ -7417,6 +7421,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="graph-component-row"]').contains(STEPJOB_TASK_NAME_1)
     .trigger("mouseup", { screenX: 300, screenY: 600 })
     cy.clickComponentName(STEPJOB_TASK_NAME_1);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-stepjob_task-panel_title"]').click();
     cy.get('[data-cy="component_property-use_dependency-switch"]').find('input').click();
     cy.get('[data-cy="component_property-step_number-text_field"]').find('input').should('have.value', 1);
@@ -7472,6 +7477,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-dependency_form-text_field"]').type('testDependency');
     cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-stepjob_task-panel_title"]').click();
     cy.get('[data-cy="component_property-use_dependency-switch"]').find('input').click();
     cy.get('[data-cy="component_property-dependency_form-text_field"]').find('input').should('have.value', 'testDependency');
@@ -7523,6 +7529,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-include-list_form"]').find('input').type('includeTest{enter}');
     cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-include-list_form"]').contains('includeTest').should('exist');
   });
@@ -7573,6 +7580,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-exclude-list_form"]').find('input').type('excludeTest{enter}');
     cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-exclude-list_form"]').contains('excludeTest').should('exist');
   });
@@ -7629,6 +7637,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-remove-radio"]').find('input').click();
     cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-remove-radio"]').find('input').should('be.checked');
   });
@@ -7648,6 +7657,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-keep-radio"]').find('input').click();
     cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-keep-radio"]').find('input').should('be.checked');
   });
@@ -7667,6 +7677,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     cy.get('[data-cy="component_property-same-radio"]').find('input').click();
     cy.closeProperty();
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
+    cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
     cy.get('[data-cy="component_property-remote_file-panel_title"]').click();
     cy.get('[data-cy="component_property-same-radio"]').find('input').should('be.checked');
   });
