@@ -1,5 +1,5 @@
 describe("05:Source&Viewerコンポーネント機能正常動作確認", () => {
-    const PROJECT_NAME = `WHEEL_TEST_${window.crypto.randomUUID()}`
+    const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`
     const PROJECT_DESCRIPTION = "TestDescription"
     const TYPE_OUTPUT = "output"
     const TYPE_FILE = "file"

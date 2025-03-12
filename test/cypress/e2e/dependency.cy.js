@@ -27,7 +27,7 @@ describe("06:ディペンデンシー&データリンク接続状態のワーク
     })
   
     afterEach(() => {
-      //cy.removeAllProjects();
+      cy.removeAllProjects();
     })
     
     /** 
