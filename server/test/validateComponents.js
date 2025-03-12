@@ -926,4 +926,90 @@ describe("test cycle graph checker", ()=>{
   it("should return empty array if no components are given", async ()=>{
     expect(await getCycleGraph("dummy", noComponents)).to.be.empty;
   });
+
+  //追加のテストケース
+  it("should detect self-referencing component", async ()=>{
+    //自己参照するコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp1"] } //自己参照
+    ];
+
+    //getCycleGraphを実行
+    const result = await getCycleGraph("dummy", components);
+    //結果に自己参照するコンポーネントが含まれていることを確認
+    expect(result).to.be.an("array").that.is.not.empty;
+    expect(result).to.include("comp1");
+  });
+
+  it("should detect multiple cycle dependencies", async ()=>{
+    //複数の循環依存関係を持つコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: ["comp1"] }, //循環依存1
+      { ID: "comp3", name: "comp3", parent: "root", next: ["comp4"] },
+      { ID: "comp4", name: "comp4", parent: "root", next: ["comp5"] },
+      { ID: "comp5", name: "comp5", parent: "root", next: ["comp3"] } //循環依存2
+    ];
+
+    //getCycleGraphを実行
+    const result = await getCycleGraph("dummy", components);
+    //結果に両方の循環依存関係のコンポーネントが含まれていることを確認
+    expect(result).to.be.an("array").that.is.not.empty;
+    expect(result).to.include("comp1");
+    expect(result).to.include("comp2");
+    expect(result).to.include("comp3");
+    expect(result).to.include("comp4");
+    expect(result).to.include("comp5");
+  });
+
+  it("should detect cycle with input and output files", async ()=>{
+    //入力ファイルと出力ファイルを使用した循環依存関係
+    const components = [
+      {
+        ID: "comp1",
+        name: "comp1",
+        parent: "root",
+        next: [],
+        outputFiles: [{ name: "output1.txt", dst: [{ dstNode: "comp2" }] }]
+      },
+      {
+        ID: "comp2",
+        name: "comp2",
+        parent: "root",
+        next: [],
+        outputFiles: [{ name: "output2.txt", dst: [{ dstNode: "comp3" }] }]
+      },
+      {
+        ID: "comp3",
+        name: "comp3",
+        parent: "root",
+        next: [],
+        outputFiles: [{ name: "output3.txt", dst: [{ dstNode: "comp1" }] }]
+      }
+    ];
+
+    //getCycleGraphを実行
+    const result = await getCycleGraph("dummy", components);
+    //結果に循環依存関係のあるコンポーネントが含まれていることを確認
+    expect(result).to.be.an("array").that.is.not.empty;
+    expect(result).to.include("comp1");
+    expect(result).to.include("comp2");
+    expect(result).to.include("comp3");
+  });
+
+  it("should handle complex dependencies without cycles", async ()=>{
+    //複雑な依存関係を持つが循環依存関係のないコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2", "comp3"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: ["comp4"] },
+      { ID: "comp3", name: "comp3", parent: "root", next: ["comp5"] },
+      { ID: "comp4", name: "comp4", parent: "root", next: [] },
+      { ID: "comp5", name: "comp5", parent: "root", next: [] }
+    ];
+
+    //getCycleGraphを実行
+    const result = await getCycleGraph("dummy", components);
+    //結果が空の配列であることを確認（エラーがない）
+    expect(result).to.be.an("array").that.is.empty;
+  });
 });
