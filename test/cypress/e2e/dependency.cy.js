@@ -1,5 +1,5 @@
 describe("06:ディペンデンシー&データリンク接続状態のワークフロー作成動作確認", () => {
-    const PROJECT_NAME = "TestProject"
+    const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`
     const PROJECT_DESCRIPTION = "TestDescription"
     const DEF_COMPONENT_TASK = "task"
     const DEF_COMPONENT_IF = "if"

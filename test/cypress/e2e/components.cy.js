@@ -1,6 +1,6 @@
 describe("04:コンポーネントの基本機能動作確認", () => {
   const wheelPath = Cypress.env("WHEEL_PATH")
-  const PROJECT_NAME = "TestProject"
+  const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`
   const PROJECT_DESCRIPTION = "TestDescription"
   const TYPE_INPUT = "input"
   const TYPE_OUTPUT = "output"

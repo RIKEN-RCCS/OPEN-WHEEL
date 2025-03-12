@@ -1,5 +1,5 @@
 describe("03:ワークフロー画面基本動作確認", ()=>{
-  const PROJECT_NAME = "TestProject"
+  const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`
   const PROJECT_DESCRIPTION = "TestDescription"
   const TYPE_INPUT = "input"
   const TYPE_OUTPUT = "output"
