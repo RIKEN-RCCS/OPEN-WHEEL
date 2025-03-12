@@ -34,6 +34,7 @@ const validateInputFiles = validateComponents.__get__("validateInputFiles");
 const validateOutputFiles = validateComponents.__get__("validateOutputFiles");
 const getCycleGraph = validateComponents.__get__("getCycleGraph");
 const validateComponent = validateComponents.__get__("validateComponent");
+const checkComponentDependency = validateComponents.__get__("checkComponentDependency");
 const recursiveValidateComponents = validateComponents.__get__("recursiveValidateComponents");
 
 //test data
@@ -746,6 +747,115 @@ describe("recursiveValidateComponents", function () {
     //レポートにエラーが含まれていることを確認
     expect(report).to.be.an("array").that.is.not.empty;
     expect(report.some((item)=>item.error.includes("cycle graph detected"))).to.be.true;
+  });
+});
+
+describe("checkComponentDependency", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+  beforeEach(async function () {
+    await fs.remove(testDirRoot);
+
+    try {
+      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  });
+  after(async function () {
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
+  });
+
+  it("should return empty array when no dependencies exist", async function () {
+    //モックを設定して依存関係のないコンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        { ID: "comp1", name: "comp1", parent: "root", next: [] },
+        { ID: "comp2", name: "comp2", parent: "root", next: [] }
+      ];
+    });
+
+    //checkComponentDependencyを実行
+    const result = await checkComponentDependency(projectRootDir, "root");
+    //結果が空の配列であることを確認
+    expect(result).to.be.an("array").that.is.empty;
+  });
+
+  it("should return empty array for valid dependencies", async function () {
+    //モックを設定して正常な依存関係を持つコンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        { ID: "comp1", name: "comp1", parent: "root", next: ["comp2"] },
+        { ID: "comp2", name: "comp2", parent: "root", next: ["comp3"] },
+        { ID: "comp3", name: "comp3", parent: "root", next: [] }
+      ];
+    });
+
+    //checkComponentDependencyを実行
+    const result = await checkComponentDependency(projectRootDir, "root");
+    //結果が空の配列であることを確認（エラーがない）
+    expect(result).to.be.an("array").that.is.empty;
+  });
+
+  it("should detect cycle dependencies", async function () {
+    //モックを設定して循環依存関係を持つコンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        { ID: "comp1", name: "comp1", parent: "root", next: ["comp2"] },
+        { ID: "comp2", name: "comp2", parent: "root", next: ["comp3"] },
+        { ID: "comp3", name: "comp3", parent: "root", next: ["comp1"] } //循環依存
+      ];
+    });
+
+    //checkComponentDependencyを実行
+    const result = await checkComponentDependency(projectRootDir, "root");
+    //結果に循環依存関係のあるコンポーネントが含まれていることを確認
+    expect(result).to.be.an("array").that.is.not.empty;
+    expect(result).to.include("comp1");
+    expect(result).to.include("comp2");
+    expect(result).to.include("comp3");
+  });
+
+  it("should handle complex dependencies", async function () {
+    //モックを設定して複雑な依存関係を持つコンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        { ID: "comp1", name: "comp1", parent: "root", next: ["comp2", "comp3"] },
+        { ID: "comp2", name: "comp2", parent: "root", next: ["comp4"] },
+        { ID: "comp3", name: "comp3", parent: "root", next: ["comp5"] },
+        { ID: "comp4", name: "comp4", parent: "root", next: [] },
+        { ID: "comp5", name: "comp5", parent: "root", next: [] }
+      ];
+    });
+
+    //checkComponentDependencyを実行
+    const result = await checkComponentDependency(projectRootDir, "root");
+    //結果が空の配列であることを確認（エラーがない）
+    expect(result).to.be.an("array").that.is.empty;
+  });
+
+  it("should detect cycle in complex dependencies", async function () {
+    //モックを設定して複雑な循環依存関係を持つコンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        { ID: "comp1", name: "comp1", parent: "root", next: ["comp2", "comp3"] },
+        { ID: "comp2", name: "comp2", parent: "root", next: ["comp4"] },
+        { ID: "comp3", name: "comp3", parent: "root", next: ["comp5"] },
+        { ID: "comp4", name: "comp4", parent: "root", next: ["comp6"] },
+        { ID: "comp5", name: "comp5", parent: "root", next: [] },
+        { ID: "comp6", name: "comp6", parent: "root", next: ["comp2"] } //循環依存
+      ];
+    });
+
+    //checkComponentDependencyを実行
+    const result = await checkComponentDependency(projectRootDir, "root");
+    //結果に循環依存関係のあるコンポーネントが含まれていることを確認
+    expect(result).to.be.an("array").that.is.not.empty;
+    expect(result).to.include("comp2");
+    expect(result).to.include("comp4");
+    expect(result).to.include("comp6");
   });
 });
 
