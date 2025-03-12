@@ -125,7 +125,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   output files表示
   試験確認内容：output files入力テキストエリアが表示されていることを確認
   */
-  it("03-01-0010:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
+  it("03-01-010:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
     cy.get('[data-cy="component_property-in_out_files-panel_title"]').click();
     cy.get('[data-cy="component_property-output_files-list_form"]').find('input').should('exist');
   });

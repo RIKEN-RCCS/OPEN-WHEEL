@@ -25,8 +25,8 @@ Cypress.Commands.add("dragAndDropComponent", (x, y, componentName, targetCompone
 
 //click component
 Cypress.Commands.add("clickComponentName", (componentName)=>{
-  cy.get('[data-cy="graph-component-row"]').contains(componentName)
-    .click()
+  cy.get('[data-cy="graph-component-row"]').contains(componentName).click();
+  cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible');
 })
 
 //double click component
@@ -130,8 +130,6 @@ Cypress.Commands.add("confirmInputValueNotReflection", (inputObjCy, inputVal, ta
   cy.get(inputObjCy).find('input').clear();
   // input
   cy.get(inputObjCy).type(inputVal);
-  // click the Save button
-  cy.get('[data-cy="workflow-save-text"]').click();
   // comparison
   cy.get(inputObjCy).find(tagType).should('have.not.value', inputVal);
 })
@@ -145,8 +143,19 @@ Cypress.Commands.add("confirmInputValueNotReflection", (inputObjCy, inputVal, ta
 */
 Cypress.Commands.add("createComponent", (targetComponentName, componentName, positionX, positionY)=>{
   cy.dragAndDropComponent(positionX, positionY, componentName, targetComponentName).then(()=>{
-    cy.clickComponentName(componentName).wait(ANIMATION_WAIT_TIME)
+    cy.clickComponentName(componentName);
   })
+})
+
+/* createComponentNotOpenProperty
+   argument
+    targetComponentName: component type name
+    componentName      : component name
+    positionX          : horizontal position of the component
+    positionY          : vertical position of the component
+*/
+Cypress.Commands.add("createComponentNotOpenProperty", (targetComponentName, componentName, positionX, positionY)=>{
+  cy.dragAndDropComponent(positionX, positionY, componentName, targetComponentName);
 })
 
 // delete a component
