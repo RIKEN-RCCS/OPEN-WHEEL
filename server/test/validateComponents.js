@@ -536,12 +536,38 @@ describe("validation component UT", function () {
     beforeEach(()=>{
       component = { outputFiles: [] };
     });
-    it("should be rejected if one of output filename is invalid", ()=>{
+    it("should be rejected if output filename is blank", ()=>{
       component.outputFiles.push({ name: "   ", dst: [] });
       expect(validateOutputFiles(component)).to.be.rejectedWith(/.* is not allowed as output filename./);
     });
-    it("should be resolved with true if one of output filename is invalid", async ()=>{
-      component.outputFiles.push({ name: "hoge", dst: [] });
+    it("should be resolved with true if output filename contains special characters", async ()=>{
+      component.outputFiles.push({ name: "file*name", dst: [] });
+      expect(await validateOutputFiles(component)).to.be.true;
+    });
+    it("should be rejected if output filename is null", ()=>{
+      component.outputFiles.push({ name: null, dst: [] });
+      expect(validateOutputFiles(component)).to.be.rejectedWith(/.* is not allowed as output filename./);
+    });
+    it("should be rejected if output filename is empty string", ()=>{
+      component.outputFiles.push({ name: "", dst: [] });
+      expect(validateOutputFiles(component)).to.be.rejectedWith(/.* is not allowed as output filename./);
+    });
+    it("should be resolved with true if output filename is valid", async ()=>{
+      component.outputFiles.push({ name: "validfile.txt", dst: [] });
+      expect(await validateOutputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if multiple output files with valid names", async ()=>{
+      component.outputFiles.push({ name: "file1.txt", dst: [] });
+      component.outputFiles.push({ name: "file2.txt", dst: [] });
+      component.outputFiles.push({ name: "file3.txt", dst: [] });
+      expect(await validateOutputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if no output files", async ()=>{
+      //outputFilesは空の配列のまま
+      expect(await validateOutputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if output filename is a directory path", async ()=>{
+      component.outputFiles.push({ name: "directory/", dst: [] });
       expect(await validateOutputFiles(component)).to.be.true;
     });
   });
