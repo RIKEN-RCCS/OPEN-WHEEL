@@ -6955,7 +6955,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
   name入力（使用可能文字確認）
   試験確認内容：nameが入力できないことを確認
   */
-  it.only("04-01-480:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", () => {
+  it("04-01-480:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", () => {
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
     cy.get('[data-cy="component_property-property-navigation_drawer"]', { timeout: 30000 }).should('be.visible'); // プロパティ表示まで待機
