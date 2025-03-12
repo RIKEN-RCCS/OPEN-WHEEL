@@ -21,6 +21,7 @@ Cypress.Commands.add("createProjectMultiple", (projectName, projectDescription, 
 //remove a project
 Cypress.Commands.add("removeAllProjects", ()=>{
   cy.visit("/");
+  cy.get('[data-cy="home-batch_mode-btn"]', { timeout: 30000 }).should('be.visible'); // バッチモードスイッチボタンが表示されるまで待機
   cy.get('[data-cy="home-batch_mode-btn"]').click();
   cy.get('[type="checkbox"]').eq(1).check();
   cy.get('[data-cy="home-remove-btn"]').click();
