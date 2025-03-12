@@ -34,6 +34,7 @@ const validateInputFiles = validateComponents.__get__("validateInputFiles");
 const validateOutputFiles = validateComponents.__get__("validateOutputFiles");
 const getCycleGraph = validateComponents.__get__("getCycleGraph");
 const isCycleGraph = validateComponents.__get__("isCycleGraph");
+const getNextComponents = validateComponents.__get__("getNextComponents");
 const validateComponent = validateComponents.__get__("validateComponent");
 const checkComponentDependency = validateComponents.__get__("checkComponentDependency");
 const recursiveValidateComponents = validateComponents.__get__("recursiveValidateComponents");
@@ -1039,6 +1040,154 @@ describe("isCycleGraph", function () {
 
     //元の関数に戻す
     validateComponents.__set__("getNextComponents", originalGetNextComponents);
+  });
+});
+
+describe("getNextComponents", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+
+  it("should return components referenced in next array", function () {
+    //next配列を使用した依存関係を持つコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2", "comp3"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] },
+      { ID: "comp3", name: "comp3", parent: "root", next: [] }
+    ];
+
+    //getNextComponentsを実行
+    const result = getNextComponents(components, components[0]);
+
+    //結果にcomp2とcomp3が含まれていることを確認
+    expect(result).to.be.an("array").with.lengthOf(2);
+    expect(result[0]).to.deep.include({ ID: "comp2" });
+    expect(result[1]).to.deep.include({ ID: "comp3" });
+  });
+
+  it("should return components referenced in outputFiles", function () {
+    //outputFilesを使用した依存関係を持つコンポーネント
+    const components = [
+      {
+        ID: "comp1",
+        name: "comp1",
+        parent: "root",
+        next: [],
+        outputFiles: [
+          { name: "output1.txt", dst: [{ dstNode: "comp2" }] },
+          { name: "output2.txt", dst: [{ dstNode: "comp3" }] }
+        ]
+      },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] },
+      { ID: "comp3", name: "comp3", parent: "root", next: [] }
+    ];
+
+    //getNextComponentsを実行
+    const result = getNextComponents(components, components[0]);
+
+    //結果にcomp2とcomp3が含まれていることを確認
+    expect(result).to.be.an("array").with.lengthOf(2);
+    expect(result[0]).to.deep.include({ ID: "comp2" });
+    expect(result[1]).to.deep.include({ ID: "comp3" });
+  });
+
+  it("should return components referenced in both next and outputFiles without duplicates", function () {
+    //next配列とoutputFilesの両方を使用した依存関係を持つコンポーネント
+    const components = [
+      {
+        ID: "comp1",
+        name: "comp1",
+        parent: "root",
+        next: ["comp2", "comp3"],
+        outputFiles: [
+          { name: "output1.txt", dst: [{ dstNode: "comp2" }] }, //重複
+          { name: "output2.txt", dst: [{ dstNode: "comp4" }] }
+        ]
+      },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] },
+      { ID: "comp3", name: "comp3", parent: "root", next: [] },
+      { ID: "comp4", name: "comp4", parent: "root", next: [] }
+    ];
+
+    //getNextComponentsを実行
+    const result = getNextComponents(components, components[0]);
+
+    //結果にcomp2, comp3, comp4が含まれていることを確認（comp2は重複しないこと）
+    expect(result).to.be.an("array").with.lengthOf(3);
+    //IDでソートして確認
+    const sortedResult = result.sort((a, b)=>a.ID.localeCompare(b.ID));
+    expect(sortedResult[0]).to.deep.include({ ID: "comp2" });
+    expect(sortedResult[1]).to.deep.include({ ID: "comp3" });
+    expect(sortedResult[2]).to.deep.include({ ID: "comp4" });
+  });
+
+  it("should return empty array when no dependencies exist", function () {
+    //依存関係のないコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: [] },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] }
+    ];
+
+    //getNextComponentsを実行
+    const result = getNextComponents(components, components[0]);
+
+    //結果が空の配列であることを確認
+    expect(result).to.be.an("array").that.is.empty;
+  });
+
+  it("should handle non-existent component references", function () {
+    //存在しないコンポーネントへの依存関係を持つコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2", "nonexistent"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] }
+    ];
+
+    //getNextComponentsを実行
+    const result = getNextComponents(components, components[0]);
+
+    //結果に存在するコンポーネントのみが含まれていることを確認
+    expect(result).to.be.an("array").with.lengthOf(1);
+    expect(result[0]).to.deep.include({ ID: "comp2" });
+  });
+
+  it("should handle multiple output file destinations", function () {
+    //複数の出力先を持つoutputFilesを使用したコンポーネント
+    const components = [
+      {
+        ID: "comp1",
+        name: "comp1",
+        parent: "root",
+        next: [],
+        outputFiles: [
+          {
+            name: "output1.txt",
+            dst: [
+              { dstNode: "comp2" },
+              { dstNode: "comp3" }
+            ]
+          }
+        ]
+      },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] },
+      { ID: "comp3", name: "comp3", parent: "root", next: [] }
+    ];
+
+    //getNextComponentsを実行
+    const result = getNextComponents(components, components[0]);
+
+    //結果にcomp2とcomp3が含まれていることを確認
+    expect(result).to.be.an("array").with.lengthOf(2);
+    expect(result[0]).to.deep.include({ ID: "comp2" });
+    expect(result[1]).to.deep.include({ ID: "comp3" });
+  });
+
+  it("should throw error for undefined component", function () {
+    //コンポーネントの配列
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: [] },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] }
+    ];
+
+    //getNextComponentsを実行（undefinedを渡す）
+    expect(()=>getNextComponents(components, undefined)).to.throw();
   });
 });
 
