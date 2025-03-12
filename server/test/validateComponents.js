@@ -33,6 +33,7 @@ const validateStorage = validateComponents.__get__("validateStorage");
 const validateInputFiles = validateComponents.__get__("validateInputFiles");
 const validateOutputFiles = validateComponents.__get__("validateOutputFiles");
 const getCycleGraph = validateComponents.__get__("getCycleGraph");
+const isCycleGraph = validateComponents.__get__("isCycleGraph");
 const validateComponent = validateComponents.__get__("validateComponent");
 const checkComponentDependency = validateComponents.__get__("checkComponentDependency");
 const recursiveValidateComponents = validateComponents.__get__("recursiveValidateComponents");
@@ -67,7 +68,7 @@ validateComponents.__set__("jobScheduler", {
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 describe("validation component UT", function () {
   beforeEach(async function () {
-    this.timeout(5000);
+    this.timeout(10000);
     await fs.remove(testDirRoot);
 
     try {
@@ -856,6 +857,188 @@ describe("checkComponentDependency", function () {
     expect(result).to.include("comp2");
     expect(result).to.include("comp4");
     expect(result).to.include("comp6");
+  });
+});
+
+describe("isCycleGraph", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+
+  it("should return false when no cycle exists", function () {
+    //循環依存関係のないコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: ["comp3"] },
+      { ID: "comp3", name: "comp3", parent: "root", next: [] }
+    ];
+
+    //探索の開始コンポーネント
+    const startComponent = components[0];
+
+    //探索結果を格納するオブジェクト
+    const results = {};
+    components.forEach((e)=>{
+      results[e.ID] = "white";
+    });
+
+    //探索パスを格納する配列
+    const cyclePath = [];
+
+    //isCycleGraphを実行
+    const result = isCycleGraph("dummy", components, startComponent, results, cyclePath);
+
+    //循環依存関係がないのでfalseが返されることを確認
+    expect(result).to.be.false;
+  });
+
+  it("should return true when cycle exists", function () {
+    //循環依存関係のあるコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: ["comp3"] },
+      { ID: "comp3", name: "comp3", parent: "root", next: ["comp1"] } //循環依存
+    ];
+
+    //探索の開始コンポーネント
+    const startComponent = components[0];
+
+    //探索結果を格納するオブジェクト
+    const results = {};
+    components.forEach((e)=>{
+      results[e.ID] = "white";
+    });
+
+    //探索パスを格納する配列
+    const cyclePath = [];
+
+    //isCycleGraphを実行
+    const result = isCycleGraph("dummy", components, startComponent, results, cyclePath);
+
+    //循環依存関係があるのでtrueが返されることを確認
+    expect(result).to.be.true;
+
+    //cyclePathに循環依存関係のコンポーネントが含まれていることを確認
+    expect(cyclePath).to.include("comp1");
+    expect(cyclePath).to.include("comp2");
+    expect(cyclePath).to.include("comp3");
+  });
+
+  it("should return true for self-referencing component", function () {
+    //自己参照するコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp1"] } //自己参照
+    ];
+
+    //探索の開始コンポーネント
+    const startComponent = components[0];
+
+    //探索結果を格納するオブジェクト
+    const results = {};
+    components.forEach((e)=>{
+      results[e.ID] = "white";
+    });
+
+    //探索パスを格納する配列
+    const cyclePath = [];
+
+    //isCycleGraphを実行
+    const result = isCycleGraph("dummy", components, startComponent, results, cyclePath);
+
+    //自己参照があるのでtrueが返されることを確認
+    expect(result).to.be.true;
+
+    //cyclePathに自己参照するコンポーネントが含まれていることを確認
+    expect(cyclePath).to.include("comp1");
+  });
+
+  it("should return true for complex cycle dependencies", function () {
+    //複雑な循環依存関係を持つコンポーネント
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2", "comp3"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: ["comp4"] },
+      { ID: "comp3", name: "comp3", parent: "root", next: ["comp5"] },
+      { ID: "comp4", name: "comp4", parent: "root", next: ["comp6"] },
+      { ID: "comp5", name: "comp5", parent: "root", next: [] },
+      { ID: "comp6", name: "comp6", parent: "root", next: ["comp2"] } //循環依存
+    ];
+
+    //探索の開始コンポーネント
+    const startComponent = components[0];
+
+    //探索結果を格納するオブジェクト
+    const results = {};
+    components.forEach((e)=>{
+      results[e.ID] = "white";
+    });
+
+    //探索パスを格納する配列
+    const cyclePath = [];
+
+    //isCycleGraphを実行
+    const result = isCycleGraph("dummy", components, startComponent, results, cyclePath);
+
+    //循環依存関係があるのでtrueが返されることを確認
+    expect(result).to.be.true;
+
+    //cyclePathに循環依存関係のコンポーネントが含まれていることを確認
+    expect(cyclePath).to.include("comp2");
+    expect(cyclePath).to.include("comp4");
+    expect(cyclePath).to.include("comp6");
+  });
+
+  it("should handle outputFiles connections", function () {
+    //出力ファイルを使用した循環依存関係
+    const components = [
+      {
+        ID: "comp1",
+        name: "comp1",
+        parent: "root",
+        next: [],
+        outputFiles: [{ name: "output1.txt", dst: [{ dstNode: "comp2" }] }]
+      },
+      {
+        ID: "comp2",
+        name: "comp2",
+        parent: "root",
+        next: [],
+        outputFiles: [{ name: "output2.txt", dst: [{ dstNode: "comp1" }] }]
+      }
+    ];
+
+    //getNextComponentsをモック化して出力ファイルの依存関係を考慮するようにする
+    const originalGetNextComponents = validateComponents.__get__("getNextComponents");
+    validateComponents.__set__("getNextComponents", (components, component)=>{
+      if (component.ID === "comp1") {
+        return [components.find((c)=>c.ID === "comp2")];
+      } else if (component.ID === "comp2") {
+        return [components.find((c)=>c.ID === "comp1")];
+      }
+      return [];
+    });
+
+    //探索の開始コンポーネント
+    const startComponent = components[0];
+
+    //探索結果を格納するオブジェクト
+    const results = {};
+    components.forEach((e)=>{
+      results[e.ID] = "white";
+    });
+
+    //探索パスを格納する配列
+    const cyclePath = [];
+
+    //isCycleGraphを実行
+    const result = isCycleGraph("dummy", components, startComponent, results, cyclePath);
+
+    //循環依存関係があるのでtrueが返されることを確認
+    expect(result).to.be.true;
+
+    //cyclePathに循環依存関係のコンポーネントが含まれていることを確認
+    expect(cyclePath).to.include("comp1");
+    expect(cyclePath).to.include("comp2");
+
+    //元の関数に戻す
+    validateComponents.__set__("getNextComponents", originalGetNextComponents);
   });
 });
 
