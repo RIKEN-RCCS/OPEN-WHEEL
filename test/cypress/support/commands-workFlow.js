@@ -121,8 +121,6 @@ Cypress.Commands.add("confirmInputValueReflection", (inputObjCy, inputVal, tagTy
   cy.get(inputObjCy).find(tagType).clear();
   // input
   cy.get(inputObjCy).type(inputVal);
-  // click the Save button
-  cy.get('[data-cy="workflow-save-text"]').click();
   // comparison
   cy.get(inputObjCy).find(tagType).should('have.value', inputVal); 
 })
