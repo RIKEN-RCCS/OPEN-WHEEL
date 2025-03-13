@@ -115,10 +115,10 @@ async function deliverFile(src, dst, forceCopy = false) {
  * @param {object} recipe - deliver recipe which has src, dstination and more information
  * @returns {object} - result object
  */
-async function deliverFileOnRemote(recipe) {
+async function deliverFilesOnRemote(recipe) {
   const logger = getLogger(recipe.projectRootDir);
   if (!recipe.onRemote) {
-    logger.warn("deliverFileOnRemote must be called with onRemote flag");
+    logger.warn("deliverFilesOnRemote must be called with onRemote flag");
     return null;
   }
   const ssh = getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
@@ -140,10 +140,10 @@ async function deliverFileOnRemote(recipe) {
  * @param {object} recipe - deliver recipe which has src, dstination and more information
  * @returns {object} - result object
  */
-async function deliverFileFromRemote(recipe) {
+async function deliverFilesFromRemote(recipe) {
   const logger = getLogger(recipe.projectRootDir);
   if (!recipe.remoteToLocal) {
-    logger.warn("deliverFileFromRemote must be called with remoteToLocal flag");
+    logger.warn("deliverFilesFromRemote must be called with remoteToLocal flag");
     return null;
   }
   const ssh = getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
@@ -157,7 +157,7 @@ async function deliverFileFromRemote(recipe) {
  * @param {object} recipe - deliver recipe which has src, dstination and more information
  * @returns {object} - result object
  */
-async function deliverFileFromHPCISS(recipe) {
+async function deliverFilesFromHPCISS(recipe) {
   const withTar = recipe.fromHPCISStar;
   const ssh = getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
   const hostinfo = getSshHostinfo(recipe.projectRootDir, recipe.srcRemotehostID);
@@ -180,7 +180,7 @@ async function deliverFileFromHPCISS(recipe) {
   }
   recipe.remoteToLocal = !recipe.onRemote;
 
-  const result = recipe.onRemote ? await deliverFileOnRemote(recipe) : await deliverFileFromRemote(recipe);
+  const result = recipe.onRemote ? await deliverFilesOnRemote(recipe) : await deliverFilesFromRemote(recipe);
   result.src = `${orgSrcRoot}/${recipe.srcName}`;
   getLogger(recipe.projectRootDir).debug(`remove remote temp dir ${remoteTempDir}`);
   await ssh.exec(`rm -fr ${remoteTempDir}`);
@@ -332,9 +332,9 @@ module.exports = {
   readJsonGreedy,
   addX,
   deliverFile,
-  deliverFileOnRemote,
-  deliverFileFromRemote,
-  deliverFileFromHPCISS,
+  deliverFilesOnRemote,
+  deliverFilesFromRemote,
+  deliverFilesFromHPCISS,
   openFile,
   saveFile,
   getUnusedPath,

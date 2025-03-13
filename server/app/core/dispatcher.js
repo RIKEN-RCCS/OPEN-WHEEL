@@ -17,7 +17,7 @@ const { getSsh, getSshHostinfo } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString, writeJsonWrapper } = require("../lib/utility");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
-const { readJsonGreedy, deliverFile, deliverFileOnRemote, deliverFileFromRemote, deliverFileFromHPCISS } = require("./fileUtils");
+const { readJsonGreedy, deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS } = require("./fileUtils");
 const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
 const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
 const { writeComponentJson, readComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
@@ -1255,6 +1255,7 @@ class Dispatcher extends EventEmitter {
         const fromHPCISS = srcComponent.type === "hpciss";
         const fromHPCISStar = srcComponent.type === "hpcisstar";
         const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
+        const onSameRemote = await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID);
 
         //get files from upper level
         if (src.srcNode === component.parent) {
@@ -1279,7 +1280,7 @@ class Dispatcher extends EventEmitter {
               dstName,
               srcRoot: originalSrcRoot,
               srcName,
-              onRemotes: false,
+              onSameRemote,
               forceCopy: false,
               projectRootDir: this.projectRootDir,
               srcRemotehostID,
@@ -1287,7 +1288,7 @@ class Dispatcher extends EventEmitter {
               fromHPCISStar
             });
           }
-        } else if (await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID)) {
+        } else if (onSameRemote) {
           const remotehostID = remoteHost.getID("name", component.host);
 
           const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
@@ -1299,7 +1300,7 @@ class Dispatcher extends EventEmitter {
             dstName,
             srcRoot,
             srcName,
-            onRemote: true,
+            onSameRemote,
             forceCopy,
             projectRootDir: this.projectRootDir,
             srcRemotehostID,
@@ -1349,7 +1350,7 @@ class Dispatcher extends EventEmitter {
                       srcRoot: originalSrcRoot,
                       srcName,
                       forceCopy: false,
-                      onRemote: false,
+                      onSameRemote,
                       projectRootDir: this.projectRootDir,
                       srcRemotehostID,
                       fromHPCISS,
@@ -1366,7 +1367,7 @@ class Dispatcher extends EventEmitter {
                     srcRoot,
                     srcName,
                     forceCopy,
-                    onRemote: false,
+                    onSameRemote,
                     projectRootDir: this.projectRootDir,
                     srcRemotehostID,
                     fromHPCISS,
@@ -1395,11 +1396,11 @@ class Dispatcher extends EventEmitter {
     const p2 = [];
     for (const recipe of deliverRecipes) {
       if (recipe.fromHPCISS || recipe.fromHPCISStar) {
-        p2.push(deliverFileFromHPCISS(recipe, this.projectRootDir));
+        p2.push(deliverFilesFromHPCISS(recipe, this.projectRootDir));
       } else if (recipe.onRemote) {
-        p2.push(deliverFileOnRemote(recipe));
+        p2.push(deliverFilesOnRemote(recipe));
       } else if (recipe.remoteToLocal) {
-        p2.push(deliverFileFromRemote(recipe));
+        p2.push(deliverFilesFromRemote(recipe));
       } else {
         const srces = await promisify(glob)(recipe.srcName, { cwd: recipe.srcRoot });
         const hasGlob = glob.hasMagic(recipe.srcName);
