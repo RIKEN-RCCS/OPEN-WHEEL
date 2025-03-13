@@ -514,6 +514,18 @@ describe("validation component UT", function () {
       component.inputFiles.push({ name: "h*ge", src: [] });
       expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
     });
+    it("should be rejected if input filename is null", ()=>{
+      component.inputFiles.push({ name: null, src: [] });
+      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+    });
+    it("should be rejected if input filename is empty string", ()=>{
+      component.inputFiles.push({ name: "", src: [] });
+      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+    });
+    it("should be rejected if input filename is blank", ()=>{
+      component.inputFiles.push({ name: "   ", src: [] });
+      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+    });
     it("should be rejected if inputFile is file and has 2 or more connection", ()=>{
       component.inputFiles.push({ name: "hoge", src: [{}, {}] });
       expect(validateInputFiles(component)).to.be.rejectedWith(/inputFile .* data type is 'file' but it has two or more outputFiles./);
@@ -528,6 +540,20 @@ describe("validation component UT", function () {
     });
     it("should be resolved with true if inputFile is directory and has 2 or more connection", async ()=>{
       component.inputFiles.push({ name: "hoge/", src: [{}, {}] });
+      expect(await validateInputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if multiple valid inputFiles", async ()=>{
+      component.inputFiles.push({ name: "file1.txt", src: [] });
+      component.inputFiles.push({ name: "file2.txt", src: [] });
+      component.inputFiles.push({ name: "directory/", src: [] });
+      expect(await validateInputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if no inputFiles", async ()=>{
+      //inputFilesは空の配列のまま
+      expect(await validateInputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if inputFile has valid path format", async ()=>{
+      component.inputFiles.push({ name: "path/to/file.txt", src: [] });
       expect(await validateInputFiles(component)).to.be.true;
     });
   });
