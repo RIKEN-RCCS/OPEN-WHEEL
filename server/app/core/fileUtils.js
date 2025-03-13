@@ -161,13 +161,14 @@ async function deliverFilesFromHPCISS(recipe) {
   const withTar = recipe.fromHPCISStar;
   const ssh = getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
   const hostinfo = getSshHostinfo(recipe.projectRootDir, recipe.srcRemotehostID);
-  const prefix = hostinfo.path ? `-p ${hostinfo.path}` : "";
 
+  const prefix = hostinfo.path ? `-p ${hostinfo.path}` : "";
   const { output, rt } = await ssh.execAndGetOutput(`mktemp -d ${prefix} WHEEL_TMP_XXXXXXXX`);
   if (rt !== 0) {
     throw new Error("create temporary directory on CSGW failed");
   }
   const remoteTempDir = output[0];
+
   const orgSrcRoot = recipe.srcRoot;
   if (withTar) {
     const extractTargetName = path.join(remoteTempDir, "WHEEL_EXTRACT_DIR");
