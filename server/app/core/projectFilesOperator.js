@@ -592,17 +592,17 @@ async function isSameRemoteHost(projectRootDir, src, dst) {
   }
   const srcHostInfo = remoteHost.query("name", srcComponent.host);
   const dstHostInfo = remoteHost.query("name", dstComponent.host);
-  if (srcHostInfo.host === dstHostInfo.host) {
-    if (isDefaultPort(srcHostInfo.port)) {
-      return isDefaultPort(dstHostInfo.port);
-    } else {
-      return srcHostInfo.port === dstHostInfo.port;
-    }
-  }
+
   if (dstHostInfo.sharedHost === srcHostInfo.name) {
     return true;
   }
-  return false;
+
+  if (srcHostInfo.host !== dstHostInfo.host || srcHostInfo.user !== dstHostInfo.user) {
+    return false;
+  }
+  const srcHostPort = isDefaultPort(srcHostInfo.port) ? 22 : srcHostInfo.port;
+  const dstHostPort = isDefaultPort(dstHostInfo.port) ? 22 : dstHostInfo.port;
+  return srcHostPort === dstHostPort;
 }
 
 /**
