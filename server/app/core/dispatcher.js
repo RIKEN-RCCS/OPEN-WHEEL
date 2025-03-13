@@ -47,7 +47,7 @@ const {
 } = require("./loopUtils.js");
 const { makeCmd } = require("./psUtils.js");
 const { overwriteByRsync } = require("./rsync.js");
-const { gfcp, gfpcopy, gfptarCreate } = require("./gfarmOperator.js");
+const { gfcp, gfrm, gfpcopy, gfptarCreate } = require("./gfarmOperator.js");
 
 const wheelSystemEnv = [
   "WHEEL_CURRENT_INDEX",
@@ -1059,7 +1059,7 @@ class Dispatcher extends EventEmitter {
         });
         const remotehostID = remoteHost.getID("name", component.host);
         const ssh = getSsh(this.projectRootDir, remotehostID);
-        await ssh.send(targetsToCopy, `${storagePath}/`, [`--exclude=*${componentJsonFilename}`]);
+        await ssh.send(targetsToCopy, `${storagePath}/`);
       }
     }
     //clean up curentDir
@@ -1074,41 +1074,70 @@ class Dispatcher extends EventEmitter {
     await this._setComponentState(component, "finished");
   }
 
+  async _isDisabledSrcComponent(componentID) {
+    const srcComponent = await this._getComponent(componentID);
+    return srcComponent.disable;
+  }
+
+  async _isDisabledSrc(src) {
+    const tmp = await Promise.any(src.map(async (e)=>{
+      return this._isDisabledSrcComponent(e.srcNode);
+    }));
+    return tmp;
+  }
+
+  async _disabledInputFilesFilter(inputFiles) {
+    return Promise.all(inputFiles.map(async (inputFile)=>{
+      const result = await this._isDisabledSrc(inputFile.src);
+      return !result;
+    }));
+  }
+
   async _hpcissHandler(withTar, component) {
     getLogger(this.projectRootDir).debug(`_hpcissHandler called with ${component.name} tar=${withTar}`);
     await this._setComponentState(component, "running");
     const currentDir = this._getComponentDir(component.ID);
 
-    const targetsToCopy = component.inputFiles.map((e)=>{
-      return path.join(currentDir, e.name);
-    });
-    const remotehostID = remoteHost.getID("name", component.host);
-    const ssh = getSsh(this.projectRootDir, remotehostID);
-    const hostinfo = getSshHostinfo(this.projectRootDir, remotehostID);
-    const prefix = hostinfo.path ? `-p ${hostinfo.path}` : "";
+    const targetFilter = await this._disabledInputFilesFilter(component.inputFiles);
 
-    const { output, rt } = await ssh.execAndGetOutput(`mktemp -d ${prefix} WHEEL_TMP_XXXXXXXX`);
-    if (rt !== 0) {
-      throw new Error("create temporary directory on CSGW failed");
-    }
-    component.remoteTempDir = output[0];
-    await ssh.send(targetsToCopy, `${component.remoteTempDir}/`, [`--exclude=*${componentJsonFilename}`]);
+    const targetsToCopy = component.inputFiles
+      .filter((e, i)=>{
+        return targetFilter[i];
+      })
+      .map((e)=>{
+        return path.join(currentDir, e.name);
+      });
 
-    const storagePath = component.storagePath;
-    if (withTar) {
-      await gfptarCreate(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath);
-    } else {
-      const lsResults = await ssh.ls(component.remoteTempDir, ["-l"]);
-      if (lsResults.length === 1 && lsResults[0].startsWith("-")) {
-        const tokens = lsResults[0].split(" ");
-        const filename = tokens[tokens.length - 1];
-        await gfcp(this.projectRootDir, remotehostID, path.join(component.remoteTempDir, filename), path.join(storagePath, filename), true);
-      } else {
-        await gfpcopy(this.projectRootDir, remotehostID, `${component.remoteTempDir}`, storagePath, true);
+    if (targetsToCopy.length > 0) {
+      const remotehostID = remoteHost.getID("name", component.host);
+      const ssh = getSsh(this.projectRootDir, remotehostID);
+      const hostinfo = getSshHostinfo(this.projectRootDir, remotehostID);
+      const prefix = hostinfo.path ? `-p ${hostinfo.path}` : "";
+
+      const { output, rt } = await ssh.execAndGetOutput(`mktemp -d ${prefix} WHEEL_TMP_XXXXXXXX`);
+      if (rt !== 0) {
+        throw new Error("create temporary directory on CSGW failed");
       }
+      component.remoteTempDir = output[0];
+      await ssh.send(targetsToCopy, `${component.remoteTempDir}/`);
+
+      const storagePath = component.storagePath;
+      if (withTar) {
+        await gfrm(this.projectRootDir, remotehostID, storagePath);
+        await gfptarCreate(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath);
+      } else {
+        const lsResults = await ssh.ls(component.remoteTempDir, ["-l"]);
+        if (lsResults.length === 1 && lsResults[0].startsWith("-")) {
+          const tokens = lsResults[0].split(" ");
+          const filename = tokens[tokens.length - 1];
+          await gfcp(this.projectRootDir, remotehostID, path.join(component.remoteTempDir, filename), path.join(storagePath, filename), true);
+        } else {
+          await gfpcopy(this.projectRootDir, remotehostID, `${component.remoteTempDir}`, storagePath, true);
+        }
+      }
+      getLogger(this.projectRootDir).debug(`remove remote temp dir ${component.remoteTempDir}`);
+      await ssh.exec(`rm -fr ${component.remoteTempDir}`);
     }
-    getLogger(this.projectRootDir).debug(`remove remote temp dir ${component.remoteTempDir}`);
-    await ssh.exec(`rm -fr ${component.remoteTempDir}`);
 
     await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
@@ -1183,6 +1212,7 @@ class Dispatcher extends EventEmitter {
   }
 
   _getComponentDir(id) {
+    //TODO replace by getRelativeComponentDir(id) which is not yet implemented
     const originalCwfDir = convertPathSep(this.componentPath[this.cwfID]);
     const originalDir = convertPathSep(this.componentPath[id]);
     const relativePath = path.relative(originalCwfDir, originalDir);
