@@ -117,19 +117,23 @@ Cypress.Commands.add("confirmDisplayInPropertyByDetailsArea", (dataCyStr, clickA
 })
 
 // confirmation of input value reflection
-Cypress.Commands.add("confirmInputValueReflection", (inputObjCy, inputVal, tagType)=>{
+Cypress.Commands.add("confirmInputValueReflection", (inputObjCy, inputVal, tagType, componentName)=>{
   cy.get(inputObjCy).find(tagType).clear();
   // input
   cy.get(inputObjCy).type(inputVal);
+  cy.closeProperty();
+  cy.clickComponentName(componentName);
   // comparison
   cy.get(inputObjCy).find(tagType).should('have.value', inputVal); 
 })
 
 // confirmation of input value not reflection
-Cypress.Commands.add("confirmInputValueNotReflection", (inputObjCy, inputVal, tagType)=>{
+Cypress.Commands.add("confirmInputValueNotReflection", (inputObjCy, inputVal, tagType, componentName)=>{
   cy.get(inputObjCy).find('input').clear();
   // input
   cy.get(inputObjCy).type(inputVal);
+  cy.closeProperty();
+  cy.clickComponentName(componentName);
   // comparison
   cy.get(inputObjCy).find(tagType).should('have.not.value', inputVal);
 })

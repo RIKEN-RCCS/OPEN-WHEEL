@@ -22,7 +22,7 @@ describe("06:ディペンデンシー&データリンク接続状態のワーク
   
     beforeEach(() => {
       cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
-      cy.openProject();
+      cy.projectOpen(PROJECT_NAME);
       cy.viewport("macbook-16");
     })
   

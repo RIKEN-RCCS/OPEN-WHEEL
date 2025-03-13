@@ -10,7 +10,7 @@ describe("05:Source&Viewerコンポーネント機能正常動作確認", () => 
   
     beforeEach(() => {
       cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
-      cy.openProject();
+      cy.projectOpen(PROJECT_NAME);
       cy.viewport("macbook-16");
     })
   

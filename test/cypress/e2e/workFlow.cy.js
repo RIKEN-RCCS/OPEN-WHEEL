@@ -13,7 +13,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
 
   beforeEach(()=>{
     cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
-    cy.openProject();
+    cy.projectOpen(PROJECT_NAME);
     cy.viewport("macbook-16");
     cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 300, 500);
   })
@@ -50,7 +50,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   */
   it("03-01-003:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
     const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
-    cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT);
+    cy.confirmInputValueReflection(INPUT_OBJ_CY, '-Test_Task', TAG_TYPE_INPUT, '-Test_Task');
   });
 
   /** 
@@ -61,7 +61,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   */
   it("03-01-004:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
     const INPUT_OBJ_CY = '[data-cy="component_property-name-text_field"]';
-    cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT);
+    cy.confirmInputValueNotReflection(INPUT_OBJ_CY, 'Test*Task', TAG_TYPE_INPUT, TASK_NAME_0);
   });
 
  /** 
@@ -82,7 +82,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   */
   it("03-01-006:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
     const INPUT_OBJ_CY = '[data-cy="component_property-description-textarea"]';
-    cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA);
+    cy.confirmInputValueReflection(INPUT_OBJ_CY, 'descriptionTest', TAG_TYPE_TEXT_AREA, TASK_NAME_0);
   });
 
   /** 
