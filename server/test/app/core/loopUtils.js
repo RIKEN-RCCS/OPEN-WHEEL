@@ -26,7 +26,7 @@ const {
   getInstanceDirectoryName
 } = require("../../../app/core/loopUtils.js");
 
-describe("UT for getInstanceDirectoryName", ()=>{
+describe("#getInstanceDirectoryName", ()=>{
   it("should build name using name & index", ()=>{
     expect(getInstanceDirectoryName({}, 0, "dummy")).to.be.equal("dummy_0");
   });
@@ -56,7 +56,7 @@ describe("UT for getInstanceDirectoryName", ()=>{
   });
 });
 
-describe("UT for getPrevIndex", ()=>{
+describe("#getPrevIndex", ()=>{
   it("should return prevIndex when forceCalc is false & prevIndex is not undefined", ()=>{
     expect(getPrevIndex({ prevIndex: 1 }, false)).to.be.equal(1);
   });
@@ -139,7 +139,68 @@ describe("UT for getPrevIndex", ()=>{
   });
 });
 
-describe("UT for loopInitialize()", ()=>{
+describe("#keepLoopInstance", ()=>{
+  let keepLoopInstance;
+  let getInstanceDirectoryNameStub;
+  let removeStub;
+
+  beforeEach(()=>{
+    const loopUtils = rewire("../../../app/core/loopUtils.js");
+    keepLoopInstance = loopUtils.keepLoopInstance;
+    getInstanceDirectoryNameStub = sinon.stub();
+    removeStub = sinon.stub();
+    loopUtils.__set__({
+      getInstanceDirectoryName: getInstanceDirectoryNameStub,
+      fs: { remove: removeStub }
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should do nothing when component.keep is not number", async ()=>{
+    await keepLoopInstance({ keep: "dummy" });
+    expect(removeStub.called).to.be.false;
+  });
+
+  it("should do nothing when component.keep is less than 0", async ()=>{
+    await keepLoopInstance({ keep: 0 });
+    expect(removeStub.called).to.be.false;
+  });
+
+  it("should remove unnecessary directories", async ()=>{
+    const component = {
+      currentIndex: 3,
+      keep: 1,
+      step: 2
+    };
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 1).returns("dummy");
+    await keepLoopInstance(component, "/cwdDir");
+    expect(removeStub.calledWith("/cwdDir/dummy")).to.be.true;
+  });
+
+  it("should use step as 1 when step is falsy", async ()=>{
+    const component = {
+      currentIndex: 3,
+      keep: 1
+    };
+    getInstanceDirectoryNameStub.withArgs(sinon.match(component), 2).returns("dummy");
+    await keepLoopInstance(component, "/cwdDir");
+    expect(removeStub.calledWith("/cwdDir/dummy")).to.be.true;
+  });
+
+  it("should do nothing when delete target is not exist", async ()=>{
+    const component = {
+      currentIndex: 0,
+      keep: 1
+    };
+    await keepLoopInstance(component, "/cwdDir");
+    expect(removeStub.called).to.be.false;
+  });
+});
+
+describe("#loopInitialize()", ()=>{
   let component;
 
   beforeEach(()=>{
@@ -256,7 +317,7 @@ describe("UT for loopInitialize()", ()=>{
   });
 });
 
-describe("UT for forGetNextIndex", ()=>{
+describe("#forGetNextIndex", ()=>{
   it("should return next index when currentIndex is not null", ()=>{
     expect(
       forGetNextIndex({
@@ -276,7 +337,7 @@ describe("UT for forGetNextIndex", ()=>{
   });
 });
 
-describe("UT for forIsFinished", ()=>{
+describe("#forIsFinished", ()=>{
   it("should return true when positive step & current index is greater than last index", ()=>{
     expect(
       forIsFinished({
@@ -318,7 +379,7 @@ describe("UT for forIsFinished", ()=>{
   });
 });
 
-describe("UT for whileGetNextIndex", ()=>{
+describe("#whileGetNextIndex", ()=>{
   it("should return next index when currentIndex is not null", ()=>{
     expect(whileGetNextIndex({ currentIndex: 1 })).to.be.equal(2);
   });
@@ -328,7 +389,7 @@ describe("UT for whileGetNextIndex", ()=>{
   });
 });
 
-describe("UT for whileIsFinished", ()=>{
+describe("#whileIsFinished", ()=>{
   let whileIsFinished;
   let evalConditionStub;
 
@@ -475,7 +536,7 @@ describe("UT foreachGetPrevIndex", ()=>{
   });
 });
 
-describe("UT for foreachIsFinished()", ()=>{
+describe("#foreachIsFinished()", ()=>{
   it("should return false when currentIndex in indexList", ()=>{
     expect(
       foreachIsFinished({
@@ -495,7 +556,7 @@ describe("UT for foreachIsFinished()", ()=>{
   });
 });
 
-describe("UT for foreachTripCount()", ()=>{
+describe("#foreachTripCount()", ()=>{
   it("should return 0 when indexList is empty", ()=>{
     expect(foreachTripCount({ indexList: [] })).to.be.equal(0);
   });
@@ -576,7 +637,7 @@ describe("UT foreachKeepLoopInstance()", ()=>{
   });
 });
 
-describe("UT for foreachSearchLatestFinishedIndex", ()=>{
+describe("#foreachSearchLatestFinishedIndex", ()=>{
   let foreachSearchLatestFinishedIndex;
   let getInstanceDirectoryNameStub;
   let readComponentJsonStub;
@@ -652,7 +713,7 @@ describe("UT for foreachSearchLatestFinishedIndex", ()=>{
   });
 });
 
-describe("UT for forTripCount()", ()=>{
+describe("#forTripCount()", ()=>{
   it("should be work with positive length in 1 increments", ()=>{
     expect(forTripCount({ start: 1, end: 3, step: 1 })).to.be.equal(3);
   });
