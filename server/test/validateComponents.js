@@ -426,11 +426,41 @@ describe("validation component UT", function () {
       foreachComponent.indexList = "hoge";
       expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is broken");
     });
+    it("should be rejected if indexList is null", ()=>{
+      foreachComponent.indexList = null;
+      expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is broken");
+    });
+    it("should be rejected if indexList is undefined", ()=>{
+      foreachComponent.indexList = undefined;
+      expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is broken");
+    });
     it("should be rejected if indexList is empty array", ()=>{
       expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is empty");
     });
-    it("should be resolved with true", async ()=>{
+    it("should be resolved with true if indexList has one string element", async ()=>{
       foreachComponent.indexList.push("hoge");
+      expect(await validateForeach(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if indexList has multiple string elements", async ()=>{
+      foreachComponent.indexList.push("item1");
+      foreachComponent.indexList.push("item2");
+      foreachComponent.indexList.push("item3");
+      expect(await validateForeach(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if indexList has number elements", async ()=>{
+      foreachComponent.indexList.push(1);
+      foreachComponent.indexList.push(2);
+      foreachComponent.indexList.push(3);
+      expect(await validateForeach(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if indexList has mixed type elements", async ()=>{
+      foreachComponent.indexList.push("item1");
+      foreachComponent.indexList.push(2);
+      foreachComponent.indexList.push(true);
+      expect(await validateForeach(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if indexList has empty string", async ()=>{
+      foreachComponent.indexList.push("");
       expect(await validateForeach(foreachComponent)).to.be.true;
     });
   });
