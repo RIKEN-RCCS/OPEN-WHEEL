@@ -478,6 +478,14 @@ describe("validation component UT", function () {
       storage.storagePath = null;
       expect(validateStorage(storage)).to.be.rejectedWith("storagePath is not set");
     });
+    it("should be rejected if storagePath is empty string", ()=>{
+      storage.storagePath = "";
+      expect(validateStorage(storage)).to.be.rejectedWith("specified path does not exist on localhost");
+    });
+    it("should be rejected if storagePath is blank", ()=>{
+      storage.storagePath = "   ";
+      expect(validateStorage(storage)).to.be.rejectedWith("specified path does not exist on localhost");
+    });
     it("should be rejected if storagePath is not existing path", ()=>{
       storage.storagePath = path.resolve(projectRootDir, "hoge");
       expect(validateStorage(storage)).to.be.rejectedWith("specified path does not exist on localhost");
@@ -500,6 +508,26 @@ describe("validation component UT", function () {
     it("should be resolved with true if storagePath is existing file but host is set", async ()=>{
       fs.writeFileSync(path.resolve(projectRootDir, "hoge"), "hoge");
       storage.storagePath = path.resolve(projectRootDir, "hoge");
+      storage.host = "OK";
+      expect(await validateStorage(storage)).to.be.true;
+    });
+    it("should be resolved with true if storagePath is existing directory", async ()=>{
+      //projectRootDirは既に存在するディレクトリ
+      storage.storagePath = projectRootDir;
+      expect(await validateStorage(storage)).to.be.true;
+    });
+    it("should be resolved with true if storagePath is existing directory and host is set", async ()=>{
+      storage.storagePath = projectRootDir;
+      storage.host = "OK";
+      expect(await validateStorage(storage)).to.be.true;
+    });
+    it("should be resolved with true if storagePath is relative path and host is set", async ()=>{
+      storage.storagePath = "./relative/path";
+      storage.host = "OK";
+      expect(await validateStorage(storage)).to.be.true;
+    });
+    it("should be resolved with true if storagePath is absolute path and host is set", async ()=>{
+      storage.storagePath = "/absolute/path";
       storage.host = "OK";
       expect(await validateStorage(storage)).to.be.true;
     });
