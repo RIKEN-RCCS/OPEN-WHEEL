@@ -150,6 +150,16 @@ if (!process.env.WHEEL_USE_HTTP) {
 module.exports.logFilename = logFilename;
 module.exports.credentialFilename = credentialFilename;
 
+module.exports.rsyncExcludeOptionOfWheelSystemFiles = [
+  `--exclude=**/${module.exports.projectJsonFilename}`,
+  `--exclude=**/${module.exports.componentJsonFilename}`,
+  `--exclude=**/${module.exports.statusFilename}`,
+  `--exclude=**/${module.exports.jobManagerJsonFilename}`,
+  `--exclude=**/${module.exports.filesJsonFilename}`,
+  `--exclude=**/${module.exports.defaultPSconfigFilename}`,
+  `--exclude=**/${module.exports.logFilename}`
+];
+
 //re-export server settings
 module.exports.port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
 module.exports.rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));

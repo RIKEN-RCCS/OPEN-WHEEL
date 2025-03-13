@@ -10,8 +10,9 @@ const path = require("path");
 const Mode = require("stat-mode");
 const { getLogger } = require("../logSettings.js");
 const { gitAdd } = require("./gitOperator2");
-const { projectJsonFilename } = require("../db/db");
-const { getSsh } = require("./sshManager.js");
+const { projectJsonFilename, rsyncExcludeOptionOfWheelSystemFiles } = require("../db/db");
+const { getSsh, getSshHostinfo } = require("./sshManager.js");
+const { gfpcopy, gfptarExtract } = require("./gfarmOperator.js");
 
 /**
  * read Json file until get some valid JSON data
@@ -120,7 +121,7 @@ async function deliverFileOnRemote(recipe) {
     logger.warn("deliverFileOnRemote must be called with onRemote flag");
     return null;
   }
-  const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
+  const ssh = getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
   const cmd = recipe.forceCopy ? "cp -r " : "ln -sf";
   const sshCmd = `bash -O failglob -c 'mkdir -p ${recipe.dstRoot} 2>/dev/null; (cd ${recipe.dstRoot} && pwd && for i in ${recipe.srcName}; do ${cmd} ${recipe.srcRoot}/\${i} ${recipe.dstName} ;done)'`;
   logger.debug("execute on remote", sshCmd);
@@ -145,19 +146,45 @@ async function deliverFileFromRemote(recipe) {
     logger.warn("deliverFileFromRemote must be called with remoteToLocal flag");
     return null;
   }
-  const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
+  const ssh = getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
 
-  try {
-    await ssh.recv([`${recipe.srcRoot}/${recipe.srcName}`], `${recipe.dstRoot}/${recipe.dstName}`, ["-vv"]);
-  } catch (e) {
-    console.log(e);
-    return Promise.reject(e);
-  }
+  await ssh.recv([`${recipe.srcRoot}/${recipe.srcName}`], `${recipe.dstRoot}/${recipe.dstName}`, ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]);
   return { type: "copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
 }
 
-async function deliverFileFromHPCISS(recipe, withTar) {
-  console.log("deliverFileFromHPCISS called with", recipe, "with tar = ", withTar);
+/**
+ * deliver file from gfarm to the other component's dir
+ * @param {object} recipe - deliver recipe which has src, dstination and more information
+ * @returns {object} - result object
+ */
+async function deliverFileFromHPCISS(recipe) {
+  const withTar = recipe.fromHPCISStar;
+  const ssh = getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
+  const hostinfo = getSshHostinfo(recipe.projectRootDir, recipe.srcRemotehostID);
+  const prefix = hostinfo.path ? `-p ${hostinfo.path}` : "";
+
+  const { output, rt } = await ssh.execAndGetOutput(`mktemp -d ${prefix} WHEEL_TMP_XXXXXXXX`);
+  if (rt !== 0) {
+    throw new Error("create temporary directory on CSGW failed");
+  }
+  const remoteTempDir = output[0];
+  const orgSrcRoot = recipe.srcRoot;
+  if (withTar) {
+    const extractTargetName = path.join(remoteTempDir, "WHEEL_EXTRACT_DIR");
+    const target = recipe.srcRoot;
+    await gfptarExtract(recipe.projectRootDir, recipe.srcRemotehostID, target, extractTargetName);
+    recipe.srcRoot = extractTargetName;
+  } else {
+    await gfpcopy(recipe.projectRootDir, recipe.srcRemotehostID, recipe.srcRoot, remoteTempDir);
+    recipe.srcRoot = path.join(remoteTempDir, path.basename(orgSrcRoot));
+  }
+  recipe.remoteToLocal = !recipe.onRemote;
+
+  const result = recipe.onRemote ? await deliverFileOnRemote(recipe) : await deliverFileFromRemote(recipe);
+  result.src = `${orgSrcRoot}/${recipe.srcName}`;
+  getLogger(recipe.projectRootDir).debug(`remove remote temp dir ${remoteTempDir}`);
+  await ssh.exec(`rm -fr ${remoteTempDir}`);
+  return result;
 }
 
 /**

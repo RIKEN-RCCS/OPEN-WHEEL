@@ -123,7 +123,7 @@ async function gfpcopy(projectRootDir, hostID, src, dst, toGfarm, timeout = 60) 
  * @param {string} projectRootDir - project's root path
  * @param {string} hostID - ID of hostinfo which serve gfarm service
  * @param {string} src - directory containing the contents to be stored in the tar archive
- * @param {string} target - archive directory
+ * @param {string} target - archive directory name it should not exists
  * @param {number} timeout - timeout in secconds must be positive number
  * @returns {string} - output from gfptar command
  */
