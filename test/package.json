@@ -4,6 +4,7 @@
   "main": "cypress.config.js",
   "scripts": {
     "test": "npx cypress open",
+    "test-all": "npx cypress run --browser chrome",
     "start": "cd ../; npm start",
     "build": "cd ../; npm run build"
   },
