@@ -387,9 +387,27 @@ describe("validation component UT", function () {
       forComponent.start = "hoge";
       expect(validateForLoop(forComponent)).to.be.rejectedWith("start must be number");
     });
+    it("should be rejected if start is null", ()=>{
+      forComponent.start = null;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("start must be number");
+    });
+    it("should be rejected if start is undefined", ()=>{
+      forComponent.start = undefined;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("start must be number");
+    });
     it("should be rejected if step is not number", ()=>{
       forComponent.start = 1;
       forComponent.step = "hoge";
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("step must be number");
+    });
+    it("should be rejected if step is null", ()=>{
+      forComponent.start = 1;
+      forComponent.step = null;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("step must be number");
+    });
+    it("should be rejected if step is undefined", ()=>{
+      forComponent.start = 1;
+      forComponent.step = undefined;
       expect(validateForLoop(forComponent)).to.be.rejectedWith("step must be number");
     });
     it("should be rejected if end is not number", ()=>{
@@ -398,22 +416,64 @@ describe("validation component UT", function () {
       forComponent.end = "hoge";
       expect(validateForLoop(forComponent)).to.be.rejectedWith("end must be number");
     });
+    it("should be rejected if end is null", ()=>{
+      forComponent.start = 1;
+      forComponent.step = 2;
+      forComponent.end = null;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("end must be number");
+    });
+    it("should be rejected if end is undefined", ()=>{
+      forComponent.start = 1;
+      forComponent.step = 2;
+      forComponent.end = undefined;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("end must be number");
+    });
     it("should be rejected if step is 0", ()=>{
       forComponent.start = 1;
       forComponent.step = 0;
       forComponent.end = 3;
       expect(validateForLoop(forComponent)).to.be.rejectedWith("infinite loop");
     });
-    it("should be rejected if step is wrong direction", ()=>{
+    it("should be rejected if step is wrong direction (positive step with start > end)", ()=>{
+      forComponent.start = 5;
+      forComponent.step = 1;
+      forComponent.end = 3;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("infinite loop");
+    });
+    it("should be rejected if step is wrong direction (negative step with start < end)", ()=>{
       forComponent.start = 1;
       forComponent.step = -1;
       forComponent.end = 3;
       expect(validateForLoop(forComponent)).to.be.rejectedWith("infinite loop");
     });
-    it("should be resolved with true", async ()=>{
+    it("should be resolved with true for positive step with start < end", async ()=>{
       forComponent.start = 1;
       forComponent.step = 2;
-      forComponent.end = 3;
+      forComponent.end = 10;
+      expect(await validateForLoop(forComponent)).to.be.true;
+    });
+    it("should be resolved with true for negative step with start > end", async ()=>{
+      forComponent.start = 10;
+      forComponent.step = -2;
+      forComponent.end = 1;
+      expect(await validateForLoop(forComponent)).to.be.true;
+    });
+    it("should be resolved with true for decimal values", async ()=>{
+      forComponent.start = 1.5;
+      forComponent.step = 0.5;
+      forComponent.end = 3.5;
+      expect(await validateForLoop(forComponent)).to.be.true;
+    });
+    it("should be resolved with true for negative values", async ()=>{
+      forComponent.start = -10;
+      forComponent.step = 2;
+      forComponent.end = -2;
+      expect(await validateForLoop(forComponent)).to.be.true;
+    });
+    it("should be resolved with true if start and end are equal", async ()=>{
+      forComponent.start = 5;
+      forComponent.step = 1;
+      forComponent.end = 5;
       expect(await validateForLoop(forComponent)).to.be.true;
     });
   });
