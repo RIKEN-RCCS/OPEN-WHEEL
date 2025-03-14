@@ -473,6 +473,47 @@ describe("validation component UT", function () {
       expect(validateConditionalCheck(projectRootDir, ifComponent)).to.be.rejectedWith(/condition is exist but it is not file .*/);
       expect(validateConditionalCheck(projectRootDir, whileComponent)).to.be.rejectedWith(/condition is exist but it is not file .*/);
     });
+
+    it("should be resolved with true if condition is a valid file", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testIfComponent = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 0, y: 0 });
+      const testWhileComponent = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 0, y: 0 });
+
+      //条件ファイルを作成
+      testIfComponent.condition = "valid_condition.js";
+      testWhileComponent.condition = "valid_condition.js";
+
+      const ifConditionPath = path.resolve(projectRootDir, testIfComponent.name, "valid_condition.js");
+      const whileConditionPath = path.resolve(projectRootDir, testWhileComponent.name, "valid_condition.js");
+
+      await fs.writeFile(ifConditionPath, "module.exports = function() { return true; }");
+      await fs.writeFile(whileConditionPath, "module.exports = function() { return true; }");
+
+      //テスト実行
+      expect(await validateConditionalCheck(projectRootDir, testIfComponent)).to.be.true;
+      expect(await validateConditionalCheck(projectRootDir, testWhileComponent)).to.be.true;
+    });
+
+    it("should be resolved with true if condition is a JavaScript expression", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testIfComponent = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 0, y: 0 });
+      const testWhileComponent = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 0, y: 0 });
+
+      //JavaScriptの式として評価される条件を設定
+      testIfComponent.condition = "js_expression.js";
+      testWhileComponent.condition = "js_expression.js";
+
+      //条件ファイルを作成（中身はJavaScriptの式）
+      const ifConditionPath = path.resolve(projectRootDir, testIfComponent.name, "js_expression.js");
+      const whileConditionPath = path.resolve(projectRootDir, testWhileComponent.name, "js_expression.js");
+
+      await fs.writeFile(ifConditionPath, "module.exports = function() { return true; }");
+      await fs.writeFile(whileConditionPath, "module.exports = function() { return 1 < 2; }");
+
+      //テスト実行
+      expect(await validateConditionalCheck(projectRootDir, testIfComponent)).to.be.true;
+      expect(await validateConditionalCheck(projectRootDir, testWhileComponent)).to.be.true;
+    });
   });
   describe("validateKeepProp", ()=>{
     let whileComponent;
