@@ -387,9 +387,27 @@ describe("validation component UT", function () {
       forComponent.start = "hoge";
       expect(validateForLoop(forComponent)).to.be.rejectedWith("start must be number");
     });
+    it("should be rejected if start is null", ()=>{
+      forComponent.start = null;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("start must be number");
+    });
+    it("should be rejected if start is undefined", ()=>{
+      forComponent.start = undefined;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("start must be number");
+    });
     it("should be rejected if step is not number", ()=>{
       forComponent.start = 1;
       forComponent.step = "hoge";
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("step must be number");
+    });
+    it("should be rejected if step is null", ()=>{
+      forComponent.start = 1;
+      forComponent.step = null;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("step must be number");
+    });
+    it("should be rejected if step is undefined", ()=>{
+      forComponent.start = 1;
+      forComponent.step = undefined;
       expect(validateForLoop(forComponent)).to.be.rejectedWith("step must be number");
     });
     it("should be rejected if end is not number", ()=>{
@@ -398,22 +416,64 @@ describe("validation component UT", function () {
       forComponent.end = "hoge";
       expect(validateForLoop(forComponent)).to.be.rejectedWith("end must be number");
     });
+    it("should be rejected if end is null", ()=>{
+      forComponent.start = 1;
+      forComponent.step = 2;
+      forComponent.end = null;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("end must be number");
+    });
+    it("should be rejected if end is undefined", ()=>{
+      forComponent.start = 1;
+      forComponent.step = 2;
+      forComponent.end = undefined;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("end must be number");
+    });
     it("should be rejected if step is 0", ()=>{
       forComponent.start = 1;
       forComponent.step = 0;
       forComponent.end = 3;
       expect(validateForLoop(forComponent)).to.be.rejectedWith("infinite loop");
     });
-    it("should be rejected if step is wrong direction", ()=>{
+    it("should be rejected if step is wrong direction (positive step with start > end)", ()=>{
+      forComponent.start = 5;
+      forComponent.step = 1;
+      forComponent.end = 3;
+      expect(validateForLoop(forComponent)).to.be.rejectedWith("infinite loop");
+    });
+    it("should be rejected if step is wrong direction (negative step with start < end)", ()=>{
       forComponent.start = 1;
       forComponent.step = -1;
       forComponent.end = 3;
       expect(validateForLoop(forComponent)).to.be.rejectedWith("infinite loop");
     });
-    it("should be resolved with true", async ()=>{
+    it("should be resolved with true for positive step with start < end", async ()=>{
       forComponent.start = 1;
       forComponent.step = 2;
-      forComponent.end = 3;
+      forComponent.end = 10;
+      expect(await validateForLoop(forComponent)).to.be.true;
+    });
+    it("should be resolved with true for negative step with start > end", async ()=>{
+      forComponent.start = 10;
+      forComponent.step = -2;
+      forComponent.end = 1;
+      expect(await validateForLoop(forComponent)).to.be.true;
+    });
+    it("should be resolved with true for decimal values", async ()=>{
+      forComponent.start = 1.5;
+      forComponent.step = 0.5;
+      forComponent.end = 3.5;
+      expect(await validateForLoop(forComponent)).to.be.true;
+    });
+    it("should be resolved with true for negative values", async ()=>{
+      forComponent.start = -10;
+      forComponent.step = 2;
+      forComponent.end = -2;
+      expect(await validateForLoop(forComponent)).to.be.true;
+    });
+    it("should be resolved with true if start and end are equal", async ()=>{
+      forComponent.start = 5;
+      forComponent.step = 1;
+      forComponent.end = 5;
       expect(await validateForLoop(forComponent)).to.be.true;
     });
   });
@@ -426,11 +486,41 @@ describe("validation component UT", function () {
       foreachComponent.indexList = "hoge";
       expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is broken");
     });
+    it("should be rejected if indexList is null", ()=>{
+      foreachComponent.indexList = null;
+      expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is broken");
+    });
+    it("should be rejected if indexList is undefined", ()=>{
+      foreachComponent.indexList = undefined;
+      expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is broken");
+    });
     it("should be rejected if indexList is empty array", ()=>{
       expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is empty");
     });
-    it("should be resolved with true", async ()=>{
+    it("should be resolved with true if indexList has one string element", async ()=>{
       foreachComponent.indexList.push("hoge");
+      expect(await validateForeach(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if indexList has multiple string elements", async ()=>{
+      foreachComponent.indexList.push("item1");
+      foreachComponent.indexList.push("item2");
+      foreachComponent.indexList.push("item3");
+      expect(await validateForeach(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if indexList has number elements", async ()=>{
+      foreachComponent.indexList.push(1);
+      foreachComponent.indexList.push(2);
+      foreachComponent.indexList.push(3);
+      expect(await validateForeach(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if indexList has mixed type elements", async ()=>{
+      foreachComponent.indexList.push("item1");
+      foreachComponent.indexList.push(2);
+      foreachComponent.indexList.push(true);
+      expect(await validateForeach(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if indexList has empty string", async ()=>{
+      foreachComponent.indexList.push("");
       expect(await validateForeach(foreachComponent)).to.be.true;
     });
   });
@@ -478,6 +568,14 @@ describe("validation component UT", function () {
       storage.storagePath = null;
       expect(validateStorage(storage)).to.be.rejectedWith("storagePath is not set");
     });
+    it("should be rejected if storagePath is empty string", ()=>{
+      storage.storagePath = "";
+      expect(validateStorage(storage)).to.be.rejectedWith("specified path does not exist on localhost");
+    });
+    it("should be rejected if storagePath is blank", ()=>{
+      storage.storagePath = "   ";
+      expect(validateStorage(storage)).to.be.rejectedWith("specified path does not exist on localhost");
+    });
     it("should be rejected if storagePath is not existing path", ()=>{
       storage.storagePath = path.resolve(projectRootDir, "hoge");
       expect(validateStorage(storage)).to.be.rejectedWith("specified path does not exist on localhost");
@@ -503,6 +601,26 @@ describe("validation component UT", function () {
       storage.host = "OK";
       expect(await validateStorage(storage)).to.be.true;
     });
+    it("should be resolved with true if storagePath is existing directory", async ()=>{
+      //projectRootDirは既に存在するディレクトリ
+      storage.storagePath = projectRootDir;
+      expect(await validateStorage(storage)).to.be.true;
+    });
+    it("should be resolved with true if storagePath is existing directory and host is set", async ()=>{
+      storage.storagePath = projectRootDir;
+      storage.host = "OK";
+      expect(await validateStorage(storage)).to.be.true;
+    });
+    it("should be resolved with true if storagePath is relative path and host is set", async ()=>{
+      storage.storagePath = "./relative/path";
+      storage.host = "OK";
+      expect(await validateStorage(storage)).to.be.true;
+    });
+    it("should be resolved with true if storagePath is absolute path and host is set", async ()=>{
+      storage.storagePath = "/absolute/path";
+      storage.host = "OK";
+      expect(await validateStorage(storage)).to.be.true;
+    });
   });
   describe("validateInputFiles", ()=>{
     let component;
@@ -512,6 +630,18 @@ describe("validation component UT", function () {
     it("should be rejected if one of input filename is invalid", ()=>{
       component.inputFiles.push({ name: "hoge", src: [] });
       component.inputFiles.push({ name: "h*ge", src: [] });
+      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+    });
+    it("should be rejected if input filename is null", ()=>{
+      component.inputFiles.push({ name: null, src: [] });
+      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+    });
+    it("should be rejected if input filename is empty string", ()=>{
+      component.inputFiles.push({ name: "", src: [] });
+      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+    });
+    it("should be rejected if input filename is blank", ()=>{
+      component.inputFiles.push({ name: "   ", src: [] });
       expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
     });
     it("should be rejected if inputFile is file and has 2 or more connection", ()=>{
@@ -530,18 +660,58 @@ describe("validation component UT", function () {
       component.inputFiles.push({ name: "hoge/", src: [{}, {}] });
       expect(await validateInputFiles(component)).to.be.true;
     });
+    it("should be resolved with true if multiple valid inputFiles", async ()=>{
+      component.inputFiles.push({ name: "file1.txt", src: [] });
+      component.inputFiles.push({ name: "file2.txt", src: [] });
+      component.inputFiles.push({ name: "directory/", src: [] });
+      expect(await validateInputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if no inputFiles", async ()=>{
+      //inputFilesは空の配列のまま
+      expect(await validateInputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if inputFile has valid path format", async ()=>{
+      component.inputFiles.push({ name: "path/to/file.txt", src: [] });
+      expect(await validateInputFiles(component)).to.be.true;
+    });
   });
   describe("validateOutputFiles", ()=>{
     let component;
     beforeEach(()=>{
       component = { outputFiles: [] };
     });
-    it("should be rejected if one of output filename is invalid", ()=>{
+    it("should be rejected if output filename is blank", ()=>{
       component.outputFiles.push({ name: "   ", dst: [] });
       expect(validateOutputFiles(component)).to.be.rejectedWith(/.* is not allowed as output filename./);
     });
-    it("should be resolved with true if one of output filename is invalid", async ()=>{
-      component.outputFiles.push({ name: "hoge", dst: [] });
+    it("should be resolved with true if output filename contains special characters", async ()=>{
+      component.outputFiles.push({ name: "file*name", dst: [] });
+      expect(await validateOutputFiles(component)).to.be.true;
+    });
+    it("should be rejected if output filename is null", ()=>{
+      component.outputFiles.push({ name: null, dst: [] });
+      expect(validateOutputFiles(component)).to.be.rejectedWith(/.* is not allowed as output filename./);
+    });
+    it("should be rejected if output filename is empty string", ()=>{
+      component.outputFiles.push({ name: "", dst: [] });
+      expect(validateOutputFiles(component)).to.be.rejectedWith(/.* is not allowed as output filename./);
+    });
+    it("should be resolved with true if output filename is valid", async ()=>{
+      component.outputFiles.push({ name: "validfile.txt", dst: [] });
+      expect(await validateOutputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if multiple output files with valid names", async ()=>{
+      component.outputFiles.push({ name: "file1.txt", dst: [] });
+      component.outputFiles.push({ name: "file2.txt", dst: [] });
+      component.outputFiles.push({ name: "file3.txt", dst: [] });
+      expect(await validateOutputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if no output files", async ()=>{
+      //outputFilesは空の配列のまま
+      expect(await validateOutputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if output filename is a directory path", async ()=>{
+      component.outputFiles.push({ name: "directory/", dst: [] });
       expect(await validateOutputFiles(component)).to.be.true;
     });
   });
