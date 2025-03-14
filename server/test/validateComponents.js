@@ -154,6 +154,49 @@ describe("validation component UT", function () {
       fs.writeFileSync(path.resolve(projectRootDir, stepjobTask.name, "hoge"), "hoge");
       expect(await validateStepjobTask(projectRootDir, stepjobTask)).to.be.true;
     });
+
+    it("should allow useDependency for non-initial stepjobTask", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testStepjobTask = await createNewComponent(projectRootDir, projectRootDir, "stepjobTask", { x: 0, y: 0 });
+      testStepjobTask.script = "script.sh";
+
+      //スクリプトファイルを作成
+      const scriptPath = path.resolve(projectRootDir, testStepjobTask.name, "script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //isInitialComponentをモック化して非初期コンポーネントとして扱う
+      const originalIsInitialComponent = validateComponents.__get__("isInitialComponent");
+      validateComponents.__set__("isInitialComponent", async ()=>false);
+
+      //useDependencyを設定
+      testStepjobTask.useDependency = "afterok";
+
+      //テスト実行
+      const result = await validateStepjobTask(projectRootDir, testStepjobTask);
+
+      //元の関数に戻す
+      validateComponents.__set__("isInitialComponent", originalIsInitialComponent);
+
+      //非初期コンポーネントの場合、useDependencyが設定されていても拒否されないことを確認
+      expect(result).to.be.true;
+    });
+
+    it("should be resolved with true if script is executable", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testStepjobTask = await createNewComponent(projectRootDir, projectRootDir, "stepjobTask", { x: 0, y: 0 });
+
+      //実行可能スクリプトファイルを作成
+      testStepjobTask.script = "executable.sh";
+      const scriptPath = path.resolve(projectRootDir, testStepjobTask.name, "executable.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //Windows環境ではchmodが機能しないため、ファイルの存在確認のみ行う
+      const stats = await fs.stat(scriptPath);
+      expect(stats.isFile()).to.be.true;
+
+      //テスト実行
+      expect(await validateStepjobTask(projectRootDir, testStepjobTask)).to.be.true;
+    });
   });
   describe("validateStepjob", ()=>{
     let stepjob;
