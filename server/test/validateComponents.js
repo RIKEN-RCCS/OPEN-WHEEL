@@ -127,6 +127,59 @@ describe("validation component UT", function () {
       fs.writeFileSync(path.resolve(projectRootDir, task.name, "hoge"), "hoge");
       expect(await validateTask(projectRootDir, task)).to.be.true;
     });
+
+    it("should be resolved with true for local job (no host set)", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトファイルを作成
+      testTask.script = "local_script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "local_script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //ホストを設定しない（ローカルジョブ）
+      testTask.useJobScheduler = false;
+
+      //テスト実行
+      expect(await validateTask(projectRootDir, testTask)).to.be.true;
+    });
+
+    it("should be resolved with true if remote host and job scheduler are correctly set", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトファイルを作成
+      testTask.script = "remote_script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "remote_script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //リモートホストとジョブスケジューラを設定
+      testTask.useJobScheduler = true;
+      testTask.host = "jobOK";
+
+      //テスト実行
+      expect(await validateTask(projectRootDir, testTask)).to.be.true;
+    });
+
+    it("should be resolved with true if submit option is set and does not duplicate queue option", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトファイルを作成
+      testTask.script = "submit_script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "submit_script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //リモートホストとジョブスケジューラを設定
+      testTask.useJobScheduler = true;
+      testTask.host = "jobOK";
+
+      //submitOptionを設定（queueOptionと重複しない）
+      testTask.submitOption = "-p high -t 10:00";
+
+      //テスト実行
+      expect(await validateTask(projectRootDir, testTask)).to.be.true;
+    });
   });
   describe("validateStepjobTask", ()=>{
     let stepjobTask;
