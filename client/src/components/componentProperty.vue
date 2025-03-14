@@ -145,6 +145,7 @@
               label="directory path"
               :readonly="readOnly"
               variant=outlined
+              data-cy="component_property-directory_path-text_field"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -187,7 +188,7 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isFor">
-          <v-expansion-panel-title>loop setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-loop_set_for-panel_title">loop setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-form @submit.prevent>
               <v-text-field
@@ -196,6 +197,7 @@
               :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
+                data-cy="component_property-start_for-text_field"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.end"
@@ -203,6 +205,7 @@
               :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
+                data-cy="component_property-end_for-text_field"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.step"
@@ -210,6 +213,7 @@
               :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
+                data-cy="component_property-step_for-text_field"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.keep"
@@ -218,12 +222,13 @@
                 type="number"
                 clearable
                 :rules="[rules.isValidKeepProp ]"
+                data-cy="component_property-keep_for-text_field"
               />
             </v-form>
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isForeach">
-          <v-expansion-panel-title>loop setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-loop_set_foreach-panel_title">loop setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'foreach'"
@@ -233,23 +238,26 @@
               @add="addToIndexList"
               @remove="removeFromIndexList"
               @update="updateIndexList"
+              data-cy="component_property-index_foreach-list_form"
             />
             <v-text-field
               v-model.number="copySelectedComponent.keep"
               label="number of instances to keep"
               :readonly="readOnly"
               type="number"
+              data-cy="component_property-keep_foreach-text_field"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isSource">
-          <v-expansion-panel-title>upload setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-upload_setting-panel_title">upload setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
               v-model="copySelectedComponent.uploadOnDemand"
               color="primary"
               label="upload on demand"
               :readonly="readOnly"
+              data-cy="component_property-upload_on_demand-switch"
             />
             <v-row>
               <v-col>
@@ -262,6 +270,7 @@
                   clearable
                   variant=outlined
                   @update:modelValue="updateSourceOutputFile"
+                  data-cy="component_property-source_file_name-autocomplete"
                 />
               </v-col>
               <v-col
@@ -279,7 +288,7 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isViewer">
-          <v-expansion-panel-title>input file setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-input_file_setting-panel_title">input file setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'input files'"
@@ -291,11 +300,12 @@
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
+              data-cy="component_property-input_files_viewer-list_form"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isPS">
-          <v-expansion-panel-title>PS setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-ps-panel_title">PS setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-autocomplete
               v-model="copySelectedComponent.parameterFile"
@@ -304,29 +314,33 @@
               :items="scriptCandidates"
               clearable
               variant=outlined
+              data-cy="component_property-parameter_file-autocomplete"
             />
             <v-switch
               color="primary"
               v-model="copySelectedComponent.forceOverwrite"
               label="force overwrite"
               :readonly="readOnly"
+              data-cy="component_property-force_overwrite-switch"
             />
             <v-switch
               color="primary"
               v-model="copySelectedComponent.deleteLoopInstance"
               label="delete all instances"
               :readonly="readOnly"
+              data-cy="component_property-delete_all_instances-switch"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isStepjobTask">
-          <v-expansion-panel-title>stepjobtask setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-stepjob_task-panel_title">stepjobtask setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
               color="primary"
               v-model="copySelectedComponent.useDependency"
               label="use dependency"
               :readonly="readOnly"
+              data-cy="component_property-use_dependency-switch"
             />
             <v-text-field
               v-model="copySelectedComponent.stepnum"
@@ -334,23 +348,26 @@
               label="step number"
               type="number"
               :disabled="! copySelectedComponent.useDependency"
+              data-cy="component_property-step_number-text_field"
             />
             <v-text-field
               v-model="copySelectedComponent.dependencyForm"
               label="dependencyForm"
               :readonly="readOnly"
               :disabled="! copySelectedComponent.useDependency"
+              data-cy="component_property-dependency_form-text_field"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isBulkjobTask">
-          <v-expansion-panel-title>bulkjob setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-bulijob_task-panel_title">bulkjob setting</v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
               color="primary"
               v-model="copySelectedComponent.usePSSettingFile"
               label="use parameter setting file for bulk number"
               :readonly="readOnly"
+              data-cy="component_property-bulk_number-switch"
             />
             <v-autocomplete
               v-if="copySelectedComponent.usePSSettingFile"
@@ -360,6 +377,7 @@
               :items="scriptCandidates"
               clearable
               variant=outlined
+              data-cy="component_property-parameter_file_bulkjob-autocomplete"
             />
             <v-form
               v-if="! copySelectedComponent.usePSSettingFile"
@@ -370,12 +388,14 @@
                 label="start"
               :readonly="readOnly"
                 type="number"
+                data-cy="component_property-start_bulkjob-text_field"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.endBulkNumber"
                 label="end"
               :readonly="readOnly"
                 type="number"
+                data-cy="component_property-end_bulkjob-text_field"
               />
             </v-form>
             <v-switch
@@ -383,6 +403,7 @@
               v-model="copySelectedComponent.manualFinishCondition"
               label="manual finish condition"
               :readonly="readOnly"
+              data-cy="component_property-manual_finish_condition-switch"
             />
             <div v-if="copySelectedComponent.manualFinishCondition">
               <v-switch
@@ -390,6 +411,7 @@
                 v-model.lazy="conditionCheckByJS"
                 label="use javascript expression for condition check"
               :readonly="readOnly"
+              data-cy="component_property-balkjob_use_javascript-switch"
               />
               <v-autocomplete
                 v-if="!conditionCheckByJS"
@@ -399,11 +421,13 @@
                 :items="scriptCandidates"
                 clearable
                 variant=outlined
+                data-cy="component_property-balkjob_use_javascript-autocomplete"
               />
               <v-textarea
                 v-if="conditionCheckByJS"
                 v-model="copySelectedComponent.condition"
               :readonly="readOnly"
+              data-cy="component_property-balkjob_use_javascript-textarea"
               />
             </div>
           </v-expansion-panel-text>
@@ -440,6 +464,7 @@
               label="number of instances to keep"
               :readonly="readOnly"
               type="number"
+              data-cy="component_property-keep_while-text_field"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>

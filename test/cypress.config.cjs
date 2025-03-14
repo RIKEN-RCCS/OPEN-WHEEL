@@ -7,6 +7,7 @@ module.exports = defineConfig({
   waitForAnimations: true,
   requestTimeout: 300000,
   defaultCommandTimeout: 300000,
+  video: true,
   component: {
     devServer: {
       framework: "vue",

@@ -120,7 +120,7 @@ OPEN-WHEEL/testフォルダで以下のコマンドを実行してください�
 
 4. ブラウザ選択画面が表示されるので、"Chrome"を選択して"Start E2E Testing in Chrome"をクリック。(Cypress実行環境にインストールされているブラウザによって画面の内容は異なります。)
 
-   ![](img/2024-03-29-21-30-33.png)
+   ![](img/2025-03-13-13-55-00.png)
 
 5. Chromeが起動し、テストファイルの一覧が表示されるので"cypress/e2e/spec.cy.js"をクリック
 
@@ -222,3 +222,6 @@ env: {
 # WHEEL_TEST_REMOTEHOST を上書きする場合
 $ export CYPRESS_WHEEL_TEST_REMOTEHOST=example
    ```
+## GitHub Actions 実行時に発生するエラーについて
+
+GitHub Actions の状態（メモリ負荷など）によって、機能上またはテストコードに問題ないにも関わらず、ランダムにエラーが発生する場合があります。

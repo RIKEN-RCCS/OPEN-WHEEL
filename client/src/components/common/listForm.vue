@@ -45,6 +45,7 @@
                 :rules=updateItemValidator
                 clearable
                 @keyup.enter="saveEditDialog"
+                data-cy="list_form_property-edit-text_field"
               />
           </v-sheet>
         </v-menu>

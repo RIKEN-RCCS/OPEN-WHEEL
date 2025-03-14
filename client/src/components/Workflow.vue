@@ -55,6 +55,7 @@
                 :to="{name: 'graph' }"
                 icon="mdi-sitemap"
                 v-bind="props"
+                data-cy="workflow-graph_view-btn"
               />
             </template>
           </v-tooltip>
@@ -78,6 +79,7 @@
                 :to="{name: 'editor' }"
                 v-bind="props"
                 icon="mdi-file-document-edit-outline"
+                data-cy="workflow-document_edit-btn"
               />
             </template>
           </v-tooltip>
@@ -129,6 +131,7 @@
               :disabled="viewerDataDir === null"
               @click="openViewerScreen"
               icon="mdi-image-multiple-outline"
+              data-cy="workflow-open_viewer_screen-btn"
             />
           </template>
         </v-tooltip>
@@ -270,6 +273,7 @@
       title="open viewer screen"
       @ok="openViewerScreen();viewerScreenDialog=false"
       @cancel="viewerScreenDialog=false"
+      data-cy="workflow-viewer_screen-dialog"
     />
     <versatile-dialog
       v-model="dialog"
