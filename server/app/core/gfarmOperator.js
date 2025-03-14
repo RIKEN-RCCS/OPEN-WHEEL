@@ -108,13 +108,8 @@ async function gfcp(projectRootDir, hostID, src, dst, toGfarm, timeout = 600) {
  */
 async function gfpcopy(projectRootDir, hostID, src, dst, toGfarm, timeout = 60) {
   await startJWTAgent(projectRootDir, hostID);
-  let srcPath = src;
-  let dstPath = dst;
-  if (toGfarm) {
-    dstPath = formatGfarmURL(dst);
-    return execOnCSGW(projectRootDir, hostID, timeout, `cd ${srcPath} && gfpcopy -p -v -f`, "./", dstPath);
-  }
-  srcPath = formatGfarmURL(src);
+  const srcPath = toGfarm ? src : formatGfarmURL(src); ;
+  const dstPath = toGfarm ? formatGfarmURL(dst) : dst;
   return execOnCSGW(projectRootDir, hostID, timeout, "gfpcopy -p -v -f", srcPath, dstPath);
 }
 
