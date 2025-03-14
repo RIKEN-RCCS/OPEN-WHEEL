@@ -183,9 +183,33 @@ describe("validation component UT", function () {
       stepjob.host = "stepjobNG";
       expect(validateStepjob(projectRootDir, stepjob)).to.be.rejectedWith(/.* does not set to use stepjob/);
     });
-    it("should be resolved with true", async ()=>{
+    it("should be rejected if host supports stepjob but useStepjob is false", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testStepjob = await createNewComponent(projectRootDir, projectRootDir, "stepjob", { x: 0, y: 0 });
+      testStepjob.useJobScheduler = true;
+
+      //stepjobNGはジョブスケジューラがstepjobをサポートしているが、useStepjobがfalse
+      testStepjob.host = "stepjobNG";
+
+      //テスト実行
+      await expect(validateStepjob(projectRootDir, testStepjob)).to.be.rejectedWith(/.* does not set to use stepjob/);
+    });
+
+    it("should be resolved with true if all requirements are met", async ()=>{
       stepjob.host = "stepjobOK";
       expect(await validateStepjob(projectRootDir, stepjob)).to.be.true;
+    });
+
+    it("should be resolved with true if host is set to use stepjob and jobscheduler supports stepjob", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testStepjob = await createNewComponent(projectRootDir, projectRootDir, "stepjob", { x: 0, y: 0 });
+      testStepjob.useJobScheduler = true;
+
+      //stepjobOKはジョブスケジューラがstepjobをサポートしており、useStepjobがtrue
+      testStepjob.host = "stepjobOK";
+
+      //テスト実行
+      expect(await validateStepjob(projectRootDir, testStepjob)).to.be.true;
     });
   });
   describe("validateBulkjobTask", ()=>{
@@ -225,11 +249,45 @@ describe("validation component UT", function () {
       //bulkjobTask.usePSSettingFile is true by default, so we do not set it here
       expect(validateBulkjobTask(projectRootDir, bulkjobTask)).to.be.rejectedWith("usePSSettingFile is set but parameter setting file is not specified");
     });
-    it.skip("should be rejected if usePSSettingFile and parameterFile is set but parameterFile does not exist", ()=>{
+
+    it("should be rejected if script is not specified for usePSSettingFile=true case", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testBulkjobTask = await createNewComponent(projectRootDir, projectRootDir, "bulkjobTask", { x: 0, y: 0 });
+      testBulkjobTask.host = "bulkjobOK";
+      testBulkjobTask.usePSSettingFile = true;
+      testBulkjobTask.parameterFile = "nonexistent.json";
+      //scriptを設定しない
+
+      //テスト実行
+      await expect(validateBulkjobTask(projectRootDir, testBulkjobTask)).to.be.rejectedWith(/script is not specified/);
     });
-    it.skip("should be rejected if parameterFile is not file", ()=>{
+
+    it("should be rejected if script does not exist for usePSSettingFile=true case", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testBulkjobTask = await createNewComponent(projectRootDir, projectRootDir, "bulkjobTask", { x: 0, y: 0 });
+      testBulkjobTask.host = "bulkjobOK";
+      testBulkjobTask.usePSSettingFile = true;
+      testBulkjobTask.parameterFile = "paramFile.json";
+      testBulkjobTask.script = "nonexistent.sh";
+
+      //テスト実行
+      await expect(validateBulkjobTask(projectRootDir, testBulkjobTask)).to.be.rejectedWith(/script is not existing file/);
     });
-    it.skip("should be rejected if parameterFile is not valid parameterFile", ()=>{
+
+    it("should be rejected if script is not a file for usePSSettingFile=true case", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testBulkjobTask = await createNewComponent(projectRootDir, projectRootDir, "bulkjobTask", { x: 0, y: 0 });
+      testBulkjobTask.host = "bulkjobOK";
+      testBulkjobTask.usePSSettingFile = true;
+      testBulkjobTask.parameterFile = "paramFile.json";
+      testBulkjobTask.script = "scriptDir";
+
+      //スクリプトディレクトリを作成
+      const scriptDirPath = path.resolve(projectRootDir, testBulkjobTask.name, "scriptDir");
+      await fs.mkdir(scriptDirPath);
+
+      //テスト実行
+      await expect(validateBulkjobTask(projectRootDir, testBulkjobTask)).to.be.rejectedWith(/script is not file/);
     });
 
     it("should be rejected if usePSSettingFile is not set and startBulkNumber is not set", async ()=>{
