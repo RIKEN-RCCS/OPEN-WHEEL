@@ -414,7 +414,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
         cy.get('[data-cy="add_new_host-ok-btn"]').click();
         // ホーム画面からプロジェクトを開き検証を行う
         cy.visit("/");
-        cy.openProject();
+        cy.projectOpen(PROJECT_NAME);
         cy.clickComponentName(STEPJOB_NAME_0);
         cy.get('[data-cy="component_property-host-select"]').type('TestLabel');
         cy.get('[data-cy="component_property-host-select"]').contains('TestLabel').should('exist');
@@ -437,7 +437,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
         cy.get('[data-cy="add_new_host-ok-btn"]').click();
         // ホーム画面からプロジェクトを開き検証を行う
         cy.visit("/");
-        cy.openProject();
+        cy.projectOpen(PROJECT_NAME);
         cy.clickComponentName(STEPJOB_NAME_0);
         cy.get('[data-cy="component_property-host-select"]').type('TestLabel');
         cy.saveProperty();
@@ -499,7 +499,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
         cy.get('[data-cy="add_new_host-ok-btn"]').click();
         // ホーム画面からプロジェクトを開き検証を行う
         cy.visit("/");
-        cy.openProject();
+        cy.projectOpen(PROJECT_NAME);
         cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
         let targetDropBoxCy = '[data-cy="component_property-host-select"]';
         cy.selectValueFromDropdownList(targetDropBoxCy, 2, 'TestLabel');
@@ -525,7 +525,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
         cy.get('[data-cy="add_new_host-ok-btn"]').click();
         // ホーム画面からプロジェクトを開き検証を行う
         cy.visit("/");
-        cy.openProject();
+        cy.projectOpen(PROJECT_NAME);
         cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
         let targetDropBoxCy = '[data-cy="component_property-host-select"]';
         cy.selectValueFromDropdownList(targetDropBoxCy, 2, 'TestLabel');
@@ -578,7 +578,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
         cy.get('[data-cy="add_new_host-ok-btn"]').click();
         // ホーム画面からプロジェクトを開き検証を行う
         cy.visit("/");
-        cy.openProject();
+        cy.projectOpen(PROJECT_NAME);
         cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
         cy.clickComponentName(STEPJOB_NAME_0);
         let targetDropBoxCy = '[data-cy="component_property-host-select"]';
