@@ -337,6 +337,14 @@ describe("validation component UT", function () {
       expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
       expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
     });
+    it("should be rejected if keep is a string that looks like a number", ()=>{
+      whileComponent.keep = "5";
+      forComponent.keep = "5";
+      foreachComponent.keep = "5";
+      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+    });
     it("should be rejected if keep is real number", ()=>{
       whileComponent.keep = 3.1;
       forComponent.keep = 3.1;
@@ -349,6 +357,14 @@ describe("validation component UT", function () {
       whileComponent.keep = -1;
       forComponent.keep = -1;
       foreachComponent.keep = -1;
+      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+    });
+    it("should be rejected if keep is boolean", ()=>{
+      whileComponent.keep = true;
+      forComponent.keep = true;
+      foreachComponent.keep = true;
       expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
       expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
       expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
@@ -369,10 +385,34 @@ describe("validation component UT", function () {
       expect(await validateKeepProp(forComponent)).to.be.true;
       expect(await validateKeepProp(foreachComponent)).to.be.true;
     });
+    it("should be rejected if keep is undefined", ()=>{
+      whileComponent.keep = undefined;
+      forComponent.keep = undefined;
+      foreachComponent.keep = undefined;
+      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+    });
+    it("should be resolved with true if keep is 0", async ()=>{
+      whileComponent.keep = 0;
+      forComponent.keep = 0;
+      foreachComponent.keep = 0;
+      expect(await validateKeepProp(whileComponent)).to.be.true;
+      expect(await validateKeepProp(forComponent)).to.be.true;
+      expect(await validateKeepProp(foreachComponent)).to.be.true;
+    });
     it("should be resolved with true if keep is positive integer", async ()=>{
       whileComponent.keep = 5;
       forComponent.keep = 5;
       foreachComponent.keep = 5;
+      expect(await validateKeepProp(whileComponent)).to.be.true;
+      expect(await validateKeepProp(forComponent)).to.be.true;
+      expect(await validateKeepProp(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if keep is large positive integer", async ()=>{
+      whileComponent.keep = 1000000;
+      forComponent.keep = 1000000;
+      foreachComponent.keep = 1000000;
       expect(await validateKeepProp(whileComponent)).to.be.true;
       expect(await validateKeepProp(forComponent)).to.be.true;
       expect(await validateKeepProp(foreachComponent)).to.be.true;
