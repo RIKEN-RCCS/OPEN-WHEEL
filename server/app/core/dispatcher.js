@@ -12,17 +12,18 @@ const glob = require("glob");
 const { debounce } = require("perfect-debounce");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename } = require("../db/db");
+const { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename } = require("../db/db.js");
 const { getSsh, getSshHostinfo } = require("./sshManager.js");
 const { exec } = require("./executer");
-const { getDateString, writeJsonWrapper } = require("../lib/utility");
+const { getDateString, writeJsonWrapper } = require("../lib/utility.js");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
-const { readJsonGreedy, deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS } = require("./fileUtils");
-const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
-const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
+const { readJsonGreedy } = require("./fileUtils.js");
+const { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS } = require("./deliverFile.js");
+const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser.js");
+const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator.js");
 const { writeComponentJson, readComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
 const { isInitialComponent, removeDuplicatedComponent, hasStoragePath, isLocalComponent } = require("./workflowComponent.js");
-const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
+const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils.js");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
 const { eventEmitters } = require("./global.js");
@@ -1132,7 +1133,7 @@ class Dispatcher extends EventEmitter {
           const filename = tokens[tokens.length - 1];
           await gfcp(this.projectRootDir, remotehostID, path.join(component.remoteTempDir, filename), path.join(storagePath, filename), true);
         } else {
-          await gfpcopy(this.projectRootDir, remotehostID, `${component.remoteTempDir}`, storagePath, true);
+          await gfpcopy(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath, true);
         }
       }
       getLogger(this.projectRootDir).debug(`remove remote temp dir ${component.remoteTempDir}`);
@@ -1292,7 +1293,7 @@ class Dispatcher extends EventEmitter {
           const remotehostID = remoteHost.getID("name", component.host);
 
           const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
-          const dstRoot = hasStoragePath(srcComponent) ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
+          const dstRoot = hasStoragePath(component) ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const srcName = nunjucks.renderString(src.srcName, this.env);
           const forceCopy = hasStoragePath(srcComponent);
           tmpDeliverRecipes.push({
@@ -1397,7 +1398,7 @@ class Dispatcher extends EventEmitter {
     for (const recipe of deliverRecipes) {
       if (recipe.fromHPCISS || recipe.fromHPCISStar) {
         p2.push(deliverFilesFromHPCISS(recipe, this.projectRootDir));
-      } else if (recipe.onRemote) {
+      } else if (recipe.onSameRemote) {
         p2.push(deliverFilesOnRemote(recipe));
       } else if (recipe.remoteToLocal) {
         p2.push(deliverFilesFromRemote(recipe));
