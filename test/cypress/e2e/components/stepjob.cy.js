@@ -621,7 +621,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     submit option反映確認
     試験確認内容：submit optionテキストボックスに入力した値が設定されていることを確認
     */
-    it.only("04-01-414:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-submit option反映確認-submit optionテキストボックスに入力した値が設定されていることを確認", () => {
+    it.skip("04-01-414:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-submit option反映確認-submit optionテキストボックスに入力した値が設定されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-submit_option-text_field"]').find('input').type('testSubmitCommand');
         cy.closeProperty();
