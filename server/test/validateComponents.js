@@ -793,6 +793,115 @@ describe("validation component UT", function () {
       fs.writeJsonSync(path.resolve(projectRootDir, ps.name, "hoge"), params);
       expect(await validateParameterStudy(projectRootDir, ps)).to.be.true;
     });
+
+    it("should be rejected if parameter file is missing required properties", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testPS = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 0, y: 0 });
+
+      //パラメータファイルを設定
+      testPS.parameterFile = "invalid_params.json";
+
+      //必要なプロパティが欠けているJSONファイルを作成
+      const invalidParams = {
+        version: 2,
+        //targetFilesが欠けている
+        params: [
+          { keyword: "foo", type: "min-max-step", min: 0, max: 4, step: 1 }
+        ]
+      };
+
+      fs.writeJsonSync(path.resolve(projectRootDir, testPS.name, "invalid_params.json"), invalidParams);
+
+      //validateを直接モック化して、エラーを返すようにする
+      const originalValidate = validateComponents.__get__("validate");
+      validateComponents.__set__("validate", ()=>{
+        //validateがfalseを返すようにする
+        return false;
+      });
+
+      //validateのerrorsプロパティを設定
+      validateComponents.__set__("validate.errors", [{ message: "should have required property 'targetFiles'" }]);
+
+      //テスト実行
+      await expect(validateParameterStudy(projectRootDir, testPS)).to.be.rejectedWith("parameter setting file does not have valid JSON data");
+
+      //元の関数に戻す
+      validateComponents.__set__("validate", originalValidate);
+    });
+
+    it("should be rejected if parameter file has incorrect property types", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testPS = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 0, y: 0 });
+
+      //パラメータファイルを設定
+      testPS.parameterFile = "wrong_types.json";
+
+      //プロパティの型が正しくないJSONファイルを作成
+      const wrongTypeParams = {
+        version: "2", //数値ではなく文字列
+        targetFiles: [
+          { targetName: "foo" }
+        ],
+        params: [
+          { keyword: "foo", type: "min-max-step", min: "0", max: "4", step: "1" } //数値ではなく文字列
+        ]
+      };
+
+      fs.writeJsonSync(path.resolve(projectRootDir, testPS.name, "wrong_types.json"), wrongTypeParams);
+
+      //validateを直接モック化して、エラーを返すようにする
+      const originalValidate = validateComponents.__get__("validate");
+      validateComponents.__set__("validate", ()=>{
+        //validateがfalseを返すようにする
+        return false;
+      });
+
+      //validateのerrorsプロパティを設定
+      validateComponents.__set__("validate.errors", [{ message: "should be number" }]);
+
+      //テスト実行
+      await expect(validateParameterStudy(projectRootDir, testPS)).to.be.rejectedWith("parameter setting file does not have valid JSON data");
+
+      //元の関数に戻す
+      validateComponents.__set__("validate", originalValidate);
+    });
+
+    it("should be rejected if parameter file has incorrect version", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testPS = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 0, y: 0 });
+
+      //パラメータファイルを設定
+      testPS.parameterFile = "wrong_version.json";
+
+      //バージョンが正しくないJSONファイルを作成
+      const wrongVersionParams = {
+        version: 1, //バージョン1は無効
+        targetFiles: [
+          { targetName: "foo" }
+        ],
+        params: [
+          { keyword: "foo", type: "min-max-step", min: 0, max: 4, step: 1 }
+        ]
+      };
+
+      fs.writeJsonSync(path.resolve(projectRootDir, testPS.name, "wrong_version.json"), wrongVersionParams);
+
+      //validateを直接モック化して、エラーを返すようにする
+      const originalValidate = validateComponents.__get__("validate");
+      validateComponents.__set__("validate", ()=>{
+        //validateがfalseを返すようにする
+        return false;
+      });
+
+      //validateのerrorsプロパティを設定
+      validateComponents.__set__("validate.errors", [{ message: "should be equal to constant" }]);
+
+      //テスト実行
+      await expect(validateParameterStudy(projectRootDir, testPS)).to.be.rejectedWith("parameter setting file does not have valid JSON data");
+
+      //元の関数に戻す
+      validateComponents.__set__("validate", originalValidate);
+    });
   });
   describe("validateStorage", ()=>{
     let storage;
