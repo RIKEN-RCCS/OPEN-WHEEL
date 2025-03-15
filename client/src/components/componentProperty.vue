@@ -747,7 +747,7 @@ export default {
       }
       this.sourceOutputFile = Array.isArray(this.selectedComponent.outputFiles) && this.selectedComponent.outputFiles[0] ? this.selectedComponent.outputFiles[0].name : null;
       //get script candidate
-      if (!["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type)) {
+      if (!["for", "foreach", "workflow", "storage", "viewer", "hpciss", "hpcisstar"].includes(this.selectedComponent.type)) {
         const mode = this.selectedComponent.type === "source" ? "sourceComponent" : "underComponent";
         SIO.emitGlobal("getFileList", this.projectRootDir, { path: this.selectedComponentAbsPath, mode }, (fileList)=>{
           if (Array.isArray(fileList)) {
