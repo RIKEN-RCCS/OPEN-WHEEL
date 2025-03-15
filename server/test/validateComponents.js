@@ -39,6 +39,7 @@ const getComponentIDsInCycle = validateComponents.__get__("getComponentIDsInCycl
 const validateComponent = validateComponents.__get__("validateComponent");
 const checkComponentDependency = validateComponents.__get__("checkComponentDependency");
 const recursiveValidateComponents = validateComponents.__get__("recursiveValidateComponents");
+const checkScript = validateComponents.__get__("checkScript");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -85,6 +86,82 @@ describe("validation component UT", function () {
       await fs.remove(testDirRoot);
     }
   });
+  describe("checkScript", ()=>{
+    //各テストケースで独自にコンポーネントを作成する
+
+    it("should be rejected if script is not specified", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //scriptプロパティが指定されていない場合
+      await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("script is not specified");
+    });
+
+    it("should be rejected if script is empty string", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //scriptプロパティが空文字列の場合
+      component.script = "";
+      await expect(checkScript(projectRootDir, component)).to.be.rejectedWith(/script is not file/);
+    });
+
+    it("should be rejected if script file does not exist", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトファイルが存在しない場合
+      component.script = "nonexistent_script.sh";
+      await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("script is not existing file");
+    });
+
+    it("should be rejected if script is a directory", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトがディレクトリの場合
+      component.script = "script_dir";
+      fs.mkdirSync(path.resolve(projectRootDir, component.name, "script_dir"));
+      await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("script is not file");
+    });
+
+    it("should be resolved with true if script is a valid file", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトが有効なファイルの場合
+      component.script = "valid_script.sh";
+      fs.writeFileSync(path.resolve(projectRootDir, component.name, "valid_script.sh"), "#!/bin/bash\necho 'Hello'");
+      const result = await checkScript(projectRootDir, component);
+      expect(result).to.be.true;
+    });
+
+    it("should handle fs.stat errors other than ENOENT", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //fs.statがENOENT以外のエラーを投げる場合
+      component.script = "error_script.sh";
+      fs.writeFileSync(path.resolve(projectRootDir, component.name, "error_script.sh"), "#!/bin/bash\necho 'Hello'");
+
+      //fs.statをモック化してエラーを投げるようにする
+      const originalFsStat = fs.stat;
+      try {
+        fs.stat = async ()=>{
+          const error = new Error("Permission denied");
+          error.code = "EACCES";
+          throw error;
+        };
+
+        //エラーが伝播することを確認
+        await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("Permission denied");
+      } finally {
+        //テストが成功しても失敗しても必ず元の関数に戻す
+        fs.stat = originalFsStat;
+      }
+    });
+  });
+
   describe("validateTask", ()=>{
     let task;
     beforeEach(async ()=>{
