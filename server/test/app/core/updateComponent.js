@@ -16,6 +16,7 @@ chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
 chai.use(require("deep-equal-in-any-order"));
+chai.use(require("chai-as-promised"));
 const sinon = require("sinon");
 const rewire = require("rewire");
 const { createNewProject, createNewComponent } = require("../../../app/core/projectFilesOperator.js");
@@ -684,6 +685,320 @@ describe("updateComponent", ()=>{
       readComponentJsonStub.withArgs("/projectRootDir/dstNode").resolves(dstJson);
       await removeOutputFileLinkToSiblings("/projectRootDir", "srcNode", "srcName", "dstNode", "dstName");
       expect(dstJson.inputFiles[0].src).to.have.lengthOf(1);
+    });
+  });
+
+  describe("#removeInputFileCounterpart", ()=>{
+    let removeInputFileCounterpart;
+    let removeInputFileLinkFromParentStub;
+    let removeInputFileLinkFromSiblingsStub;
+
+    beforeEach(()=>{
+      const updateComponent = rewire("../../../app/core/updateComponent.js");
+      removeInputFileCounterpart = updateComponent.__get__("removeInputFileCounterpart");
+      removeInputFileLinkFromParentStub = sinon.stub();
+      removeInputFileLinkFromSiblingsStub = sinon.stub();
+      updateComponent.__set__({
+        removeInputFileLinkFromParent: removeInputFileLinkFromParentStub,
+        removeInputFileLinkFromSiblings: removeInputFileLinkFromSiblingsStub
+      });
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should remove input file link from counterpart", async ()=>{
+      const componentJson = {
+        ID: "id",
+        parent: "parentName",
+        inputFiles: [{},
+          {
+            name: "srcName",
+            src: [{
+              srcNode: "parent",
+              srcName: "srcName1"
+            },
+            {
+              srcNode: "parentName",
+              srcName: "srcName2"
+            },
+            {
+              srcNode: "siblings",
+              srcName: "srcName3"
+            }]
+          }]
+      };
+      await removeInputFileCounterpart("/projectRootDir", componentJson, 1);
+      expect(removeInputFileLinkFromParentStub.calledTwice).to.be.true;
+      expect(removeInputFileLinkFromParentStub.calledWith("/projectRootDir", "srcName1", "id", "srcName")).to.be.true;
+      expect(removeInputFileLinkFromParentStub.calledWith("/projectRootDir", "srcName2", "id", "srcName")).to.be.true;
+      expect(removeInputFileLinkFromSiblingsStub.calledOnce).to.be.true;
+      expect(removeInputFileLinkFromSiblingsStub.calledWith("/projectRootDir", "siblings", "srcName3", "id", "srcName")).to.be.true;
+    });
+
+    it("should resolve if the all removing operation is successful", async ()=>{
+      removeInputFileLinkFromParentStub.resolves();
+      removeInputFileLinkFromSiblingsStub.resolves();
+      const componentJson = {
+        ID: "id",
+        parent: "parentName",
+        inputFiles: [{},
+          {
+            name: "srcName",
+            src: [{
+              srcNode: "parent",
+              srcName: "srcName1"
+            },
+            {
+              srcNode: "siblings",
+              srcName: "srcName3"
+            }]
+          }]
+      };
+      const ret = removeInputFileCounterpart("/projectRootDir", componentJson, 1);
+      await expect(ret).to.be.fulfilled;
+    });
+
+    it("should reject if one or more delete operations is failed", async ()=>{
+      removeInputFileLinkFromParentStub.resolves();
+      removeInputFileLinkFromSiblingsStub.rejects();
+      const componentJson = {
+        ID: "id",
+        parent: "parentName",
+        inputFiles: [{},
+          {
+            name: "srcName",
+            src: [{
+              srcNode: "parent",
+              srcName: "srcName1"
+            },
+            {
+              srcNode: "siblings",
+              srcName: "srcName3"
+            }]
+          }]
+      };
+      const ret = removeInputFileCounterpart("/projectRootDir", componentJson, 1);
+      await expect(ret).to.be.rejected;
+    });
+
+    it("should resolve if there is no counterpart", async ()=>{
+      const componentJson = {
+        ID: "id",
+        parent: "parentName",
+        inputFiles: [{},
+          {
+            name: "srcName",
+            src: []
+          }]
+      };
+      const ret = removeInputFileCounterpart("/projectRootDir", componentJson, 1);
+      await expect(ret).to.be.fulfilled;
+    });
+  });
+
+  describe("#removeOutputFileCounterpart", ()=>{
+    let removeOutputFileCounterpart;
+    let removeOutputFileLinkToParentStub;
+    let removeOutputFileLinkToSiblingsStub;
+
+    beforeEach(()=>{
+      const updateComponent = rewire("../../../app/core/updateComponent.js");
+      removeOutputFileCounterpart = updateComponent.__get__("removeOutputFileCounterpart");
+      removeOutputFileLinkToParentStub = sinon.stub();
+      removeOutputFileLinkToSiblingsStub = sinon.stub();
+      updateComponent.__set__({
+        removeOutputFileLinkToParent: removeOutputFileLinkToParentStub,
+        removeOutputFileLinkToSiblings: removeOutputFileLinkToSiblingsStub
+      });
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should remove output file link from counterpart", async ()=>{
+      const componentJson = {
+        ID: "id",
+        parent: "parentName",
+        outputFiles: [{},
+          {
+            name: "dstName",
+            dst: [{
+              dstNode: "parent",
+              dstName: "dstName1"
+            },
+            {
+              dstNode: "parentName",
+              dstName: "dstName2"
+            },
+            {
+              dstNode: "siblings",
+              dstName: "dstName3"
+            }]
+          }]
+      };
+      await removeOutputFileCounterpart("/projectRootDir", componentJson, 1);
+      expect(removeOutputFileLinkToParentStub.calledTwice).to.be.true;
+      expect(removeOutputFileLinkToParentStub.calledWith("/projectRootDir", "id", "dstName", "dstName1")).to.be.true;
+      expect(removeOutputFileLinkToParentStub.calledWith("/projectRootDir", "id", "dstName", "dstName2")).to.be.true;
+      expect(removeOutputFileLinkToSiblingsStub.calledOnce).to.be.true;
+      expect(removeOutputFileLinkToSiblingsStub.calledWith("/projectRootDir", "id", "dstName", "siblings", "dstName3")).to.be.true;
+    });
+
+    it("should resolve if the all removing operation is successful", async ()=>{
+      removeOutputFileLinkToParentStub.resolves();
+      removeOutputFileLinkToSiblingsStub.resolves();
+      const componentJson = {
+        ID: "id",
+        parent: "parentName",
+        outputFiles: [{},
+          {
+            name: "dstName",
+            dst: [{
+              dstNode: "parent",
+              dstName: "dstName1"
+            },
+            {
+              dstNode: "siblings",
+              dstName: "dstName3"
+            }]
+          }]
+      };
+      const ret = removeOutputFileCounterpart("/projectRootDir", componentJson, 1);
+      await expect(ret).to.be.fulfilled;
+    });
+
+    it("should reject if one or more delete operations is failed", async ()=>{
+      removeOutputFileLinkToParentStub.resolves();
+      removeOutputFileLinkToSiblingsStub.rejects();
+      const componentJson = {
+        ID: "id",
+        parent: "parentName",
+        outputFiles: [{},
+          {
+            name: "dstName",
+            dst: [{
+              dstNode: "parent",
+              dstName: "dstName1"
+            },
+            {
+              dstNode: "siblings",
+              dstName: "dstName3"
+            }]
+          }]
+      };
+      const ret = removeOutputFileCounterpart("/projectRootDir", componentJson, 1);
+      await expect(ret).to.be.rejected;
+    });
+
+    it("should resolve if there is no counterpart", async ()=>{
+      const componentJson = {
+        ID: "id",
+        parent: "parentName",
+        outputFiles: [{},
+          {
+            name: "dstName",
+            dst: []
+          }]
+      };
+      const ret = removeOutputFileCounterpart("/projectRootDir", componentJson, 1);
+      await expect(ret).to.be.fulfilled;
+    });
+  });
+
+  describe("#renameComponentDir", ()=>{
+    let renameComponentDir;
+    let getComponentDirStub;
+    let gitRmStub;
+    let moveStub;
+    let updateComponentPathStub;
+
+    beforeEach(()=>{
+      const updateComponent = rewire("../../../app/core/updateComponent.js");
+      renameComponentDir = updateComponent.__get__("renameComponentDir");
+      getComponentDirStub = sinon.stub();
+      gitRmStub = sinon.stub();
+      moveStub = sinon.stub();
+      updateComponentPathStub = sinon.stub();
+      updateComponent.__set__({
+        getComponentDir: getComponentDirStub,
+        gitRm: gitRmStub,
+        updateComponentPath: updateComponentPathStub,
+        fs: {
+          move: moveStub
+        }
+      });
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should rename component directory", async ()=>{
+      getComponentDirStub.withArgs("/projectRootDir", "id", true).returns("/projectRootDir/id/oldName");
+      gitRmStub.withArgs("/projectRootDir", "/projectRootDir/id/oldName").resolves();
+      moveStub.withArgs("/projectRootDir/id/oldName", "/projectRootDir/id/newName").resolves();
+      updateComponentPathStub.withArgs("/projectRootDir", "id", "newName").resolves();
+      await expect(renameComponentDir("/projectRootDir", "id", "/projectRootDir/id/newName")).to.be.fulfilled;
+      expect(gitRmStub.calledWith("/projectRootDir", "/projectRootDir/id/oldName")).to.be.true;
+      expect(moveStub.calledWith("/projectRootDir/id/oldName", "/projectRootDir/id/newName")).to.be.true;
+      expect(updateComponentPathStub.calledWith("/projectRootDir", "id", "/projectRootDir/id/newName")).to.be.true;
+    });
+
+    it("should reject if the project root dir is same as the component dir", async ()=>{
+      getComponentDirStub.withArgs("/projectRootDir", "id", true).returns("/projectRootDir");
+      await expect(renameComponentDir("/projectRootDir", "id", "newName")).to.be.rejected;
+    });
+  });
+
+  describe("#updateComponentPos", ()=>{
+    let updateComponentPos;
+    let getLoggerStub;
+    let debugStub;
+    let warnStub;
+    let getComponentDirStub;
+    let readComponentJsonStub;
+    let writeComponentJsonStub;
+
+    beforeEach(()=>{
+      const updateComponent = rewire("../../../app/core/updateComponent.js");
+      updateComponentPos = updateComponent.__get__("updateComponentPos");
+      getLoggerStub = sinon.stub();
+      debugStub = sinon.stub();
+      warnStub = sinon.stub();
+      getComponentDirStub = sinon.stub();
+      readComponentJsonStub = sinon.stub();
+      writeComponentJsonStub = sinon.stub();
+
+      updateComponent.__set__({
+        getLogger: getLoggerStub,
+        getComponentDir: getComponentDirStub,
+        readComponentJson: readComponentJsonStub,
+        writeComponentJson: writeComponentJsonStub
+      });
+      getLoggerStub.returns({
+        debug: debugStub,
+        warn: warnStub
+      });
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should update component position", async ()=>{
+      getComponentDirStub.withArgs("/projectRootDir", "id", true).returns("/projectRootDir/id");
+      const componentJson = {
+        pos: {
+          x: 0,
+          y: 0
+        }
+      };
+      readComponentJsonStub.withArgs("/projectRootDir/id").resolves(componentJson);
+      await updateComponentPos("/projectRootDir", "id", { x: 1, y: 2 });
+      expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/id", sinon.match({ pos: { x: 1, y: 2 } }))).to.be.true;
     });
   });
 });
