@@ -511,18 +511,21 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel>
-          <v-expansion-panel-title>Files</v-expansion-panel-title>
+          <v-expansion-panel-title :class="{ 'remote': hasRemoteFileBrowser}">
+            Files
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <file-browser
-              v-if="! isRemoteComponent"
+              v-if="! hasRemoteFileBrowser"
               :readonly="false"
               :project-root-dir="projectRootDir"
             />
             <remote-file-browser
-              v-if="isRemoteComponent"
+              v-if="hasRemoteFileBrowser"
               ref="rfb"
               :readonly="false"
               :project-root-dir="projectRootDir"
+              :remote-icon-color="remoteIconColor"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -540,6 +543,14 @@ import { isValidInputFilename, isValidOutputFilename } from "../lib/clientUtilit
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import { propWidth } from "../lib/componentSizes.json";
+
+import loadComponentDefinition from "../lib/componentDefinision.js";
+const componentDefinitionObj = loadComponentDefinition();
+
+const colorMap = {
+  hpciss: " #ef8d33",
+  storage: componentDefinitionObj["storage"].color
+};
 
 const isNormalObject = (target)=>{
   const type = typeof target;
@@ -602,10 +613,21 @@ export default {
   computed: {
     ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler", "readOnly"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
-    isRemoteComponent() {
-      return this.selectedComponent.type === "storage"
+    remoteIconColor() {
+      return colorMap[this.selectedComponent.type];
+    },
+    hasRemoteFileBrowser() {
+      return ["storage", "hpciss"].includes(this.selectedComponent.type)
         && typeof this.selectedComponent.host === "string"
         && this.selectedComponent.host !== "localhost";
+    },
+    hasHPCISSTarBrowser() {
+      return this.selectedComponent.type === "hpcisstar"
+        && typeof this.selectedComponent.host === "string"
+        && this.selectedComponent.host !== "localhost";
+    },
+    hasLocalFileBrowser() {
+      return (!this.hasRemoteFileBrowser && !this.hasHPCISSTarBrowser);
     },
     disableRemoteSetting() {
       if (this.isStepjobTask) {
