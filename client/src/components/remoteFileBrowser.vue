@@ -20,6 +20,8 @@
           <v-btn
             :disabled="isSND"
             v-bind="props"
+            :rounded="false"
+            :color="remoteIconColor"
             icon="mdi-folder-plus-outline"
             @click="openDialog('createNewDir')"
           />
@@ -33,6 +35,8 @@
           <v-btn
             :disabled="isSND"
             v-bind="props"
+            :rounded="false"
+            :color="remoteIconColor"
             icon="mdi-file-plus-outline"
             @click="openDialog('createNewFile')"
           />
@@ -46,6 +50,8 @@
           <v-btn
             :disabled="isSND"
             v-bind="props"
+            :rounded="false"
+            :color="remoteIconColor"
             icon="mdi-file-move-outline"
             @click="openDialog('renameFile')"
           />
@@ -59,6 +65,8 @@
           <v-btn
             :disabled="isSND"
             v-bind="props"
+            :rounded="false"
+            :color="remoteIconColor"
             icon="mdi-file-remove-outline"
             @click="openDialog('removeFile')"
           />
@@ -72,6 +80,8 @@
           <v-btn
             :disabled="isSND"
             v-bind="props"
+            :rounded="false"
+            :color="remoteIconColor"
             icon="mdi-upload"
             @click="showUploadDialog"
           />
@@ -85,6 +95,8 @@
           <v-btn
             :disabled="isSND"
             v-bind="props"
+            :rounded="false"
+            :color="remoteIconColor"
             icon="mdi-download"
             @click="download"
           />
@@ -97,6 +109,8 @@
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
+            :rounded="false"
+            :color="remoteIconColor"
             icon="mdi-share-outline"
             v-bind="props"
             @click="openDialog('shareFile')"
@@ -199,7 +213,8 @@ export default {
   },
   props: {
     readonly: { type: Boolean, default: true },
-    projectRootDir: { type: String, default: null }
+    projectRootDir: { type: String, default: null },
+    remoteIconColor: { type: String, required: true }
   },
   data: function () {
     return {
