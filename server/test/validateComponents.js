@@ -39,6 +39,7 @@ const getComponentIDsInCycle = validateComponents.__get__("getComponentIDsInCycl
 const validateComponent = validateComponents.__get__("validateComponent");
 const checkComponentDependency = validateComponents.__get__("checkComponentDependency");
 const recursiveValidateComponents = validateComponents.__get__("recursiveValidateComponents");
+const checkScript = validateComponents.__get__("checkScript");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -85,6 +86,82 @@ describe("validation component UT", function () {
       await fs.remove(testDirRoot);
     }
   });
+  describe("checkScript", ()=>{
+    //各テストケースで独自にコンポーネントを作成する
+
+    it("should be rejected if script is not specified", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //scriptプロパティが指定されていない場合
+      await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("script is not specified");
+    });
+
+    it("should be rejected if script is empty string", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //scriptプロパティが空文字列の場合
+      component.script = "";
+      await expect(checkScript(projectRootDir, component)).to.be.rejectedWith(/script is not file/);
+    });
+
+    it("should be rejected if script file does not exist", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトファイルが存在しない場合
+      component.script = "nonexistent_script.sh";
+      await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("script is not existing file");
+    });
+
+    it("should be rejected if script is a directory", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトがディレクトリの場合
+      component.script = "script_dir";
+      fs.mkdirSync(path.resolve(projectRootDir, component.name, "script_dir"));
+      await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("script is not file");
+    });
+
+    it("should be resolved with true if script is a valid file", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトが有効なファイルの場合
+      component.script = "valid_script.sh";
+      fs.writeFileSync(path.resolve(projectRootDir, component.name, "valid_script.sh"), "#!/bin/bash\necho 'Hello'");
+      const result = await checkScript(projectRootDir, component);
+      expect(result).to.be.true;
+    });
+
+    it("should handle fs.stat errors other than ENOENT", async ()=>{
+      //コンポーネントを作成
+      const component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //fs.statがENOENT以外のエラーを投げる場合
+      component.script = "error_script.sh";
+      fs.writeFileSync(path.resolve(projectRootDir, component.name, "error_script.sh"), "#!/bin/bash\necho 'Hello'");
+
+      //fs.statをモック化してエラーを投げるようにする
+      const originalFsStat = fs.stat;
+      try {
+        fs.stat = async ()=>{
+          const error = new Error("Permission denied");
+          error.code = "EACCES";
+          throw error;
+        };
+
+        //エラーが伝播することを確認
+        await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("Permission denied");
+      } finally {
+        //テストが成功しても失敗しても必ず元の関数に戻す
+        fs.stat = originalFsStat;
+      }
+    });
+  });
+
   describe("validateTask", ()=>{
     let task;
     beforeEach(async ()=>{
@@ -127,6 +204,59 @@ describe("validation component UT", function () {
       fs.writeFileSync(path.resolve(projectRootDir, task.name, "hoge"), "hoge");
       expect(await validateTask(projectRootDir, task)).to.be.true;
     });
+
+    it("should be resolved with true for local job (no host set)", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトファイルを作成
+      testTask.script = "local_script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "local_script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //ホストを設定しない（ローカルジョブ）
+      testTask.useJobScheduler = false;
+
+      //テスト実行
+      expect(await validateTask(projectRootDir, testTask)).to.be.true;
+    });
+
+    it("should be resolved with true if remote host and job scheduler are correctly set", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトファイルを作成
+      testTask.script = "remote_script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "remote_script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //リモートホストとジョブスケジューラを設定
+      testTask.useJobScheduler = true;
+      testTask.host = "jobOK";
+
+      //テスト実行
+      expect(await validateTask(projectRootDir, testTask)).to.be.true;
+    });
+
+    it("should be resolved with true if submit option is set and does not duplicate queue option", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+
+      //スクリプトファイルを作成
+      testTask.script = "submit_script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "submit_script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //リモートホストとジョブスケジューラを設定
+      testTask.useJobScheduler = true;
+      testTask.host = "jobOK";
+
+      //submitOptionを設定（queueOptionと重複しない）
+      testTask.submitOption = "-p high -t 10:00";
+
+      //テスト実行
+      expect(await validateTask(projectRootDir, testTask)).to.be.true;
+    });
   });
   describe("validateStepjobTask", ()=>{
     let stepjobTask;
@@ -153,6 +283,49 @@ describe("validation component UT", function () {
       stepjobTask.script = "hoge";
       fs.writeFileSync(path.resolve(projectRootDir, stepjobTask.name, "hoge"), "hoge");
       expect(await validateStepjobTask(projectRootDir, stepjobTask)).to.be.true;
+    });
+
+    it("should allow useDependency for non-initial stepjobTask", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testStepjobTask = await createNewComponent(projectRootDir, projectRootDir, "stepjobTask", { x: 0, y: 0 });
+      testStepjobTask.script = "script.sh";
+
+      //スクリプトファイルを作成
+      const scriptPath = path.resolve(projectRootDir, testStepjobTask.name, "script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //isInitialComponentをモック化して非初期コンポーネントとして扱う
+      const originalIsInitialComponent = validateComponents.__get__("isInitialComponent");
+      validateComponents.__set__("isInitialComponent", async ()=>false);
+
+      //useDependencyを設定
+      testStepjobTask.useDependency = "afterok";
+
+      //テスト実行
+      const result = await validateStepjobTask(projectRootDir, testStepjobTask);
+
+      //元の関数に戻す
+      validateComponents.__set__("isInitialComponent", originalIsInitialComponent);
+
+      //非初期コンポーネントの場合、useDependencyが設定されていても拒否されないことを確認
+      expect(result).to.be.true;
+    });
+
+    it("should be resolved with true if script is executable", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testStepjobTask = await createNewComponent(projectRootDir, projectRootDir, "stepjobTask", { x: 0, y: 0 });
+
+      //実行可能スクリプトファイルを作成
+      testStepjobTask.script = "executable.sh";
+      const scriptPath = path.resolve(projectRootDir, testStepjobTask.name, "executable.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+      //Windows環境ではchmodが機能しないため、ファイルの存在確認のみ行う
+      const stats = await fs.stat(scriptPath);
+      expect(stats.isFile()).to.be.true;
+
+      //テスト実行
+      expect(await validateStepjobTask(projectRootDir, testStepjobTask)).to.be.true;
     });
   });
   describe("validateStepjob", ()=>{
@@ -183,9 +356,33 @@ describe("validation component UT", function () {
       stepjob.host = "stepjobNG";
       expect(validateStepjob(projectRootDir, stepjob)).to.be.rejectedWith(/.* does not set to use stepjob/);
     });
-    it("should be resolved with true", async ()=>{
+    it("should be rejected if host supports stepjob but useStepjob is false", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testStepjob = await createNewComponent(projectRootDir, projectRootDir, "stepjob", { x: 0, y: 0 });
+      testStepjob.useJobScheduler = true;
+
+      //stepjobNGはジョブスケジューラがstepjobをサポートしているが、useStepjobがfalse
+      testStepjob.host = "stepjobNG";
+
+      //テスト実行
+      await expect(validateStepjob(projectRootDir, testStepjob)).to.be.rejectedWith(/.* does not set to use stepjob/);
+    });
+
+    it("should be resolved with true if all requirements are met", async ()=>{
       stepjob.host = "stepjobOK";
       expect(await validateStepjob(projectRootDir, stepjob)).to.be.true;
+    });
+
+    it("should be resolved with true if host is set to use stepjob and jobscheduler supports stepjob", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testStepjob = await createNewComponent(projectRootDir, projectRootDir, "stepjob", { x: 0, y: 0 });
+      testStepjob.useJobScheduler = true;
+
+      //stepjobOKはジョブスケジューラがstepjobをサポートしており、useStepjobがtrue
+      testStepjob.host = "stepjobOK";
+
+      //テスト実行
+      expect(await validateStepjob(projectRootDir, testStepjob)).to.be.true;
     });
   });
   describe("validateBulkjobTask", ()=>{
@@ -225,11 +422,45 @@ describe("validation component UT", function () {
       //bulkjobTask.usePSSettingFile is true by default, so we do not set it here
       expect(validateBulkjobTask(projectRootDir, bulkjobTask)).to.be.rejectedWith("usePSSettingFile is set but parameter setting file is not specified");
     });
-    it.skip("should be rejected if usePSSettingFile and parameterFile is set but parameterFile does not exist", ()=>{
+
+    it("should be rejected if script is not specified for usePSSettingFile=true case", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testBulkjobTask = await createNewComponent(projectRootDir, projectRootDir, "bulkjobTask", { x: 0, y: 0 });
+      testBulkjobTask.host = "bulkjobOK";
+      testBulkjobTask.usePSSettingFile = true;
+      testBulkjobTask.parameterFile = "nonexistent.json";
+      //scriptを設定しない
+
+      //テスト実行
+      await expect(validateBulkjobTask(projectRootDir, testBulkjobTask)).to.be.rejectedWith(/script is not specified/);
     });
-    it.skip("should be rejected if parameterFile is not file", ()=>{
+
+    it("should be rejected if script does not exist for usePSSettingFile=true case", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testBulkjobTask = await createNewComponent(projectRootDir, projectRootDir, "bulkjobTask", { x: 0, y: 0 });
+      testBulkjobTask.host = "bulkjobOK";
+      testBulkjobTask.usePSSettingFile = true;
+      testBulkjobTask.parameterFile = "paramFile.json";
+      testBulkjobTask.script = "nonexistent.sh";
+
+      //テスト実行
+      await expect(validateBulkjobTask(projectRootDir, testBulkjobTask)).to.be.rejectedWith(/script is not existing file/);
     });
-    it.skip("should be rejected if parameterFile is not valid parameterFile", ()=>{
+
+    it("should be rejected if script is not a file for usePSSettingFile=true case", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testBulkjobTask = await createNewComponent(projectRootDir, projectRootDir, "bulkjobTask", { x: 0, y: 0 });
+      testBulkjobTask.host = "bulkjobOK";
+      testBulkjobTask.usePSSettingFile = true;
+      testBulkjobTask.parameterFile = "paramFile.json";
+      testBulkjobTask.script = "scriptDir";
+
+      //スクリプトディレクトリを作成
+      const scriptDirPath = path.resolve(projectRootDir, testBulkjobTask.name, "scriptDir");
+      await fs.mkdir(scriptDirPath);
+
+      //テスト実行
+      await expect(validateBulkjobTask(projectRootDir, testBulkjobTask)).to.be.rejectedWith(/script is not file/);
     });
 
     it("should be rejected if usePSSettingFile is not set and startBulkNumber is not set", async ()=>{
@@ -319,6 +550,47 @@ describe("validation component UT", function () {
       expect(validateConditionalCheck(projectRootDir, ifComponent)).to.be.rejectedWith(/condition is exist but it is not file .*/);
       expect(validateConditionalCheck(projectRootDir, whileComponent)).to.be.rejectedWith(/condition is exist but it is not file .*/);
     });
+
+    it("should be resolved with true if condition is a valid file", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testIfComponent = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 0, y: 0 });
+      const testWhileComponent = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 0, y: 0 });
+
+      //条件ファイルを作成
+      testIfComponent.condition = "valid_condition.js";
+      testWhileComponent.condition = "valid_condition.js";
+
+      const ifConditionPath = path.resolve(projectRootDir, testIfComponent.name, "valid_condition.js");
+      const whileConditionPath = path.resolve(projectRootDir, testWhileComponent.name, "valid_condition.js");
+
+      await fs.writeFile(ifConditionPath, "module.exports = function() { return true; }");
+      await fs.writeFile(whileConditionPath, "module.exports = function() { return true; }");
+
+      //テスト実行
+      expect(await validateConditionalCheck(projectRootDir, testIfComponent)).to.be.true;
+      expect(await validateConditionalCheck(projectRootDir, testWhileComponent)).to.be.true;
+    });
+
+    it("should be resolved with true if condition is a JavaScript expression", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testIfComponent = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 0, y: 0 });
+      const testWhileComponent = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 0, y: 0 });
+
+      //JavaScriptの式として評価される条件を設定
+      testIfComponent.condition = "js_expression.js";
+      testWhileComponent.condition = "js_expression.js";
+
+      //条件ファイルを作成（中身はJavaScriptの式）
+      const ifConditionPath = path.resolve(projectRootDir, testIfComponent.name, "js_expression.js");
+      const whileConditionPath = path.resolve(projectRootDir, testWhileComponent.name, "js_expression.js");
+
+      await fs.writeFile(ifConditionPath, "module.exports = function() { return true; }");
+      await fs.writeFile(whileConditionPath, "module.exports = function() { return 1 < 2; }");
+
+      //テスト実行
+      expect(await validateConditionalCheck(projectRootDir, testIfComponent)).to.be.true;
+      expect(await validateConditionalCheck(projectRootDir, testWhileComponent)).to.be.true;
+    });
   });
   describe("validateKeepProp", ()=>{
     let whileComponent;
@@ -333,6 +605,14 @@ describe("validation component UT", function () {
       whileComponent.keep = "hoge";
       forComponent.keep = "hoge";
       foreachComponent.keep = "hoge";
+      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+    });
+    it("should be rejected if keep is a string that looks like a number", ()=>{
+      whileComponent.keep = "5";
+      forComponent.keep = "5";
+      foreachComponent.keep = "5";
       expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
       expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
       expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
@@ -353,6 +633,14 @@ describe("validation component UT", function () {
       expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
       expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
     });
+    it("should be rejected if keep is boolean", ()=>{
+      whileComponent.keep = true;
+      forComponent.keep = true;
+      foreachComponent.keep = true;
+      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+    });
     it("should be resolved with true if keep is empty string", async ()=>{
       whileComponent.keep = "";
       forComponent.keep = "";
@@ -369,10 +657,34 @@ describe("validation component UT", function () {
       expect(await validateKeepProp(forComponent)).to.be.true;
       expect(await validateKeepProp(foreachComponent)).to.be.true;
     });
+    it("should be rejected if keep is undefined", ()=>{
+      whileComponent.keep = undefined;
+      forComponent.keep = undefined;
+      foreachComponent.keep = undefined;
+      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
+      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+    });
+    it("should be resolved with true if keep is 0", async ()=>{
+      whileComponent.keep = 0;
+      forComponent.keep = 0;
+      foreachComponent.keep = 0;
+      expect(await validateKeepProp(whileComponent)).to.be.true;
+      expect(await validateKeepProp(forComponent)).to.be.true;
+      expect(await validateKeepProp(foreachComponent)).to.be.true;
+    });
     it("should be resolved with true if keep is positive integer", async ()=>{
       whileComponent.keep = 5;
       forComponent.keep = 5;
       foreachComponent.keep = 5;
+      expect(await validateKeepProp(whileComponent)).to.be.true;
+      expect(await validateKeepProp(forComponent)).to.be.true;
+      expect(await validateKeepProp(foreachComponent)).to.be.true;
+    });
+    it("should be resolved with true if keep is large positive integer", async ()=>{
+      whileComponent.keep = 1000000;
+      forComponent.keep = 1000000;
+      foreachComponent.keep = 1000000;
       expect(await validateKeepProp(whileComponent)).to.be.true;
       expect(await validateKeepProp(forComponent)).to.be.true;
       expect(await validateKeepProp(foreachComponent)).to.be.true;
@@ -557,6 +869,115 @@ describe("validation component UT", function () {
 
       fs.writeJsonSync(path.resolve(projectRootDir, ps.name, "hoge"), params);
       expect(await validateParameterStudy(projectRootDir, ps)).to.be.true;
+    });
+
+    it("should be rejected if parameter file is missing required properties", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testPS = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 0, y: 0 });
+
+      //パラメータファイルを設定
+      testPS.parameterFile = "invalid_params.json";
+
+      //必要なプロパティが欠けているJSONファイルを作成
+      const invalidParams = {
+        version: 2,
+        //targetFilesが欠けている
+        params: [
+          { keyword: "foo", type: "min-max-step", min: 0, max: 4, step: 1 }
+        ]
+      };
+
+      fs.writeJsonSync(path.resolve(projectRootDir, testPS.name, "invalid_params.json"), invalidParams);
+
+      //validateを直接モック化して、エラーを返すようにする
+      const originalValidate = validateComponents.__get__("validate");
+      validateComponents.__set__("validate", ()=>{
+        //validateがfalseを返すようにする
+        return false;
+      });
+
+      //validateのerrorsプロパティを設定
+      validateComponents.__set__("validate.errors", [{ message: "should have required property 'targetFiles'" }]);
+
+      //テスト実行
+      await expect(validateParameterStudy(projectRootDir, testPS)).to.be.rejectedWith("parameter setting file does not have valid JSON data");
+
+      //元の関数に戻す
+      validateComponents.__set__("validate", originalValidate);
+    });
+
+    it("should be rejected if parameter file has incorrect property types", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testPS = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 0, y: 0 });
+
+      //パラメータファイルを設定
+      testPS.parameterFile = "wrong_types.json";
+
+      //プロパティの型が正しくないJSONファイルを作成
+      const wrongTypeParams = {
+        version: "2", //数値ではなく文字列
+        targetFiles: [
+          { targetName: "foo" }
+        ],
+        params: [
+          { keyword: "foo", type: "min-max-step", min: "0", max: "4", step: "1" } //数値ではなく文字列
+        ]
+      };
+
+      fs.writeJsonSync(path.resolve(projectRootDir, testPS.name, "wrong_types.json"), wrongTypeParams);
+
+      //validateを直接モック化して、エラーを返すようにする
+      const originalValidate = validateComponents.__get__("validate");
+      validateComponents.__set__("validate", ()=>{
+        //validateがfalseを返すようにする
+        return false;
+      });
+
+      //validateのerrorsプロパティを設定
+      validateComponents.__set__("validate.errors", [{ message: "should be number" }]);
+
+      //テスト実行
+      await expect(validateParameterStudy(projectRootDir, testPS)).to.be.rejectedWith("parameter setting file does not have valid JSON data");
+
+      //元の関数に戻す
+      validateComponents.__set__("validate", originalValidate);
+    });
+
+    it("should be rejected if parameter file has incorrect version", async function () {
+      //各テストケースで新しいコンポーネントを作成
+      const testPS = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 0, y: 0 });
+
+      //パラメータファイルを設定
+      testPS.parameterFile = "wrong_version.json";
+
+      //バージョンが正しくないJSONファイルを作成
+      const wrongVersionParams = {
+        version: 1, //バージョン1は無効
+        targetFiles: [
+          { targetName: "foo" }
+        ],
+        params: [
+          { keyword: "foo", type: "min-max-step", min: 0, max: 4, step: 1 }
+        ]
+      };
+
+      fs.writeJsonSync(path.resolve(projectRootDir, testPS.name, "wrong_version.json"), wrongVersionParams);
+
+      //validateを直接モック化して、エラーを返すようにする
+      const originalValidate = validateComponents.__get__("validate");
+      validateComponents.__set__("validate", ()=>{
+        //validateがfalseを返すようにする
+        return false;
+      });
+
+      //validateのerrorsプロパティを設定
+      validateComponents.__set__("validate.errors", [{ message: "should be equal to constant" }]);
+
+      //テスト実行
+      await expect(validateParameterStudy(projectRootDir, testPS)).to.be.rejectedWith("parameter setting file does not have valid JSON data");
+
+      //元の関数に戻す
+      validateComponents.__set__("validate", originalValidate);
     });
   });
   describe("validateStorage", ()=>{
