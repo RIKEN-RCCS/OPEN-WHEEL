@@ -40,6 +40,7 @@ const validateComponent = validateComponents.__get__("validateComponent");
 const checkComponentDependency = validateComponents.__get__("checkComponentDependency");
 const recursiveValidateComponents = validateComponents.__get__("recursiveValidateComponents");
 const checkScript = validateComponents.__get__("checkScript");
+const checkPSSettingFile = validateComponents.__get__("checkPSSettingFile");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -1149,11 +1150,168 @@ describe("validateComponents function", function () {
       console.log(e);
       throw e;
     }
+
+    //getComponentDirをモック化
+    const originalGetComponentDir = validateComponents.__get__("getComponentDir");
+    validateComponents.__set__("getComponentDir", async (projectRootDir, ID, isAbsolute)=>{
+      //テスト用のコンポーネントディレクトリを返す
+      if (ID === "test-ps") {
+        return path.resolve(projectRootDir, "test-ps");
+      }
+      //それ以外のIDの場合は元の関数を呼び出す
+      return originalGetComponentDir(projectRootDir, ID, isAbsolute);
+    });
   });
   after(async function () {
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
       await fs.remove(testDirRoot);
     }
+  });
+
+  it("should validate if component with else branch", async function () {
+    //ifコンポーネントを作成（else分岐あり）
+    const ifComponent = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 0, y: 0 });
+    ifComponent.condition = "condition.js";
+    ifComponent.else = ["else-branch-id"]; //else分岐を追加
+
+    //条件ファイルを作成
+    const conditionPath = path.resolve(projectRootDir, ifComponent.name, "condition.js");
+    await fs.writeFile(conditionPath, "module.exports = function() { return true; }");
+
+    //getNextComponentsをモック化してelse分岐を処理するようにする
+    const originalGetNextComponents = validateComponents.__get__("getNextComponents");
+    validateComponents.__set__("getNextComponents", (components, component)=>{
+      const nextComponentIDs = [];
+      if (component.next) {
+        nextComponentIDs.push(...component.next);
+      }
+      if (component.else) {
+        nextComponentIDs.push(...component.else);
+      }
+      return components.filter((c)=>nextComponentIDs.includes(c.ID));
+    });
+
+    //validateComponentを実行
+    const error = await validateComponent(projectRootDir, ifComponent);
+
+    //元の関数に戻す
+    validateComponents.__set__("getNextComponents", originalGetNextComponents);
+
+    //エラーがないことを確認
+    expect(error).to.be.null;
+  });
+
+  it("should validate bulkjobTask with manualFinishCondition", async function () {
+    //bulkjobTaskコンポーネントを作成（manualFinishConditionあり）
+    const bulkjobTask = await createNewComponent(projectRootDir, projectRootDir, "bulkjobTask", { x: 0, y: 0 });
+    bulkjobTask.host = "bulkjobOK";
+    bulkjobTask.usePSSettingFile = false;
+    bulkjobTask.startBulkNumber = 1;
+    bulkjobTask.endBulkNumber = 5;
+    bulkjobTask.script = "script.sh";
+    bulkjobTask.manualFinishCondition = true;
+    bulkjobTask.condition = "condition.js";
+
+    //スクリプトファイルを作成
+    const scriptPath = path.resolve(projectRootDir, bulkjobTask.name, "script.sh");
+    await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+    //条件ファイルを作成
+    const conditionPath = path.resolve(projectRootDir, bulkjobTask.name, "condition.js");
+    await fs.writeFile(conditionPath, "module.exports = function() { return true; }");
+
+    //validateBulkjobTaskを実行
+    const result = await validateBulkjobTask(projectRootDir, bulkjobTask);
+
+    //結果がtrueであることを確認
+    expect(result).to.be.true;
+  });
+
+  it("should validate component with outputFiles having multiple destinations", async function () {
+    //タスクコンポーネントを作成（複数の出力先を持つoutputFiles）
+    const task = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+    task.script = "script.sh";
+    task.outputFiles = [
+      {
+        name: "output.txt",
+        dst: [
+          { dstNode: "comp1" },
+          { dstNode: "comp2" },
+          { origin: "some-origin", dstNode: "comp3" } //originプロパティを持つ
+        ]
+      }
+    ];
+
+    //スクリプトファイルを作成
+    const scriptPath = path.resolve(projectRootDir, task.name, "script.sh");
+    await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+
+    //getNextComponentsをモック化して出力先を処理するようにする
+    const originalGetNextComponents = validateComponents.__get__("getNextComponents");
+    validateComponents.__set__("getNextComponents", (components, component)=>{
+      const nextComponentIDs = [];
+      if (component.outputFiles) {
+        component.outputFiles.forEach((outputFile)=>{
+          outputFile.dst.forEach((dst)=>{
+            if (!dst.origin) {
+              nextComponentIDs.push(dst.dstNode);
+            }
+          });
+        });
+      }
+      return components.filter((c)=>nextComponentIDs.includes(c.ID));
+    });
+
+    //validateComponentを実行
+    const error = await validateComponent(projectRootDir, task);
+
+    //元の関数に戻す
+    validateComponents.__set__("getNextComponents", originalGetNextComponents);
+
+    //エラーがないことを確認
+    expect(error).to.be.null;
+  });
+
+  it("should handle complex component hierarchy in recursiveValidateComponents", async function () {
+    //複雑な階層構造を持つコンポーネントをモック
+    validateComponents.__set__("getChildren", async (projectRootDir, parentID)=>{
+      if (parentID === "root") {
+        return [
+          { ID: "parent1", name: "parent1", type: "task", script: "script.sh" },
+          { ID: "parent2", name: "parent2", type: "task", script: "script.sh" }
+        ];
+      } else if (parentID === "parent1") {
+        return [
+          { ID: "child1", name: "child1", type: "task", script: "script.sh" },
+          { ID: "child2", name: "child2", type: "task", script: "script.sh" }
+        ];
+      } else if (parentID === "parent2") {
+        return [
+          { ID: "child3", name: "child3", type: "task", script: "script.sh", disable: true }, //無効化されたコンポーネント
+          { ID: "child4", name: "child4", type: "task", script: undefined } //エラーになるコンポーネント
+        ];
+      }
+      return [];
+    });
+
+    validateComponents.__set__("hasChild", (component)=>{
+      return component.ID === "parent1" || component.ID === "parent2";
+    });
+
+    validateComponents.__set__("isInitialComponent", async ()=>{
+      return true; //すべてのコンポーネントを初期コンポーネントとして扱う
+    });
+
+    //レポート配列を作成
+    const report = [];
+
+    //recursiveValidateComponentsを実行
+    await recursiveValidateComponents(projectRootDir, "root", report);
+
+    //レポートにエラーが含まれていることを確認（child4のみエラー、child3は無効化されているためスキップ）
+    expect(report).to.be.an("array");
+    expect(report.some((item)=>item.ID === "child4")).to.be.true;
+    expect(report.some((item)=>item.ID === "child3")).to.be.false;
   });
   it("should validate component correctly", async function () {
     //実際のコンポーネントを作成
@@ -1191,6 +1349,237 @@ describe("validateComponents function", function () {
     expect(result).to.include("comp1");
     expect(result).to.include("comp2");
     expect(result).to.include("comp3");
+  });
+
+  it("should validate parameterStudy component correctly", async function () {
+    //parameterStudyコンポーネントを直接作成
+    const ps = {
+      type: "parameterStudy",
+      ID: "test-ps",
+      name: "test-ps",
+      parameterFile: "params.json"
+    };
+
+    //コンポーネントディレクトリを作成
+    await fs.ensureDir(path.resolve(projectRootDir, ps.name));
+
+    //パラメータファイルを作成
+    const params = {
+      version: 2,
+      targetFiles: [
+        { targetName: "foo" }
+      ],
+      params: [
+        { keyword: "foo", type: "min-max-step", min: 0, max: 4, step: 1 }
+      ]
+    };
+    await fs.writeJson(path.resolve(projectRootDir, ps.name, "params.json"), params);
+
+    //validateComponentを実行
+    const error = await validateComponent(projectRootDir, ps);
+    expect(error).to.be.null;
+  });
+
+  it("should validate component with inputFiles and outputFiles", async function () {
+    //コンポーネントを作成
+    const task = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+    task.script = "script.sh";
+    fs.writeFileSync(path.resolve(projectRootDir, task.name, "script.sh"), "#!/bin/bash\necho 'Hello'");
+
+    //入出力ファイルを追加
+    task.inputFiles = [
+      { name: "input.txt", src: [] },
+      { name: "data/", src: [{ srcNode: "other" }] }
+    ];
+    task.outputFiles = [
+      { name: "output.txt", dst: [] },
+      { name: "results/", dst: [] }
+    ];
+
+    //validateComponentを実行
+    const error = await validateComponent(projectRootDir, task);
+    expect(error).to.be.null;
+  });
+
+  it("should call validateComponents with startComponentID", async function () {
+    //コンポーネントを作成
+    const task = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+    task.script = "script.sh";
+    fs.writeFileSync(path.resolve(projectRootDir, task.name, "script.sh"), "#!/bin/bash\necho 'Hello'");
+
+    //validateComponentsを実行（startComponentIDを指定）
+    const { validateComponents: validateComponentsFunc } = require("../app/core/validateComponents.js");
+    const report = await validateComponentsFunc(projectRootDir, task.ID);
+    expect(report).to.be.an("array");
+  });
+
+  it("should call validateComponents without startComponentID", async function () {
+    //validateComponentsを実行（startComponentIDを指定しない）
+    const { validateComponents: validateComponentsFunc } = require("../app/core/validateComponents.js");
+    const report = await validateComponentsFunc(projectRootDir);
+    expect(report).to.be.an("array");
+  });
+});
+
+describe("checkPSSettingFile", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+  beforeEach(async function () {
+    await fs.remove(testDirRoot);
+
+    try {
+      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+
+    validateComponents.__set__("getComponentDir", async (projectRootDir)=>{
+      //テスト用のコンポーネントディレクトリを返す
+      return path.resolve(projectRootDir, "test-ps");
+    });
+  });
+  after(async function () {
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
+  });
+
+  it("should be rejected if parameterFile is not specified", async function () {
+    //コンポーネントを直接作成
+    const ps = {
+      type: "parameterStudy",
+      ID: "test-ps",
+      name: "test-ps",
+      parameterFile: null
+    };
+
+    //コンポーネントディレクトリを作成
+    await fs.ensureDir(path.resolve(projectRootDir, ps.name));
+
+    //checkPSSettingFileを実行
+    await expect(checkPSSettingFile(projectRootDir, ps)).to.be.rejectedWith("parameter setting file is not specified");
+  });
+
+  it("should be rejected if parameterFile does not exist", async function () {
+    //コンポーネントを直接作成
+    const ps = {
+      type: "parameterStudy",
+      ID: "test-ps",
+      name: "test-ps",
+      parameterFile: "nonexistent.json"
+    };
+
+    //コンポーネントディレクトリを作成
+    await fs.ensureDir(path.resolve(projectRootDir, ps.name));
+
+    //checkPSSettingFileを実行
+    await expect(checkPSSettingFile(projectRootDir, ps)).to.be.rejectedWith(/parameter setting file is not existing/);
+  });
+
+  it("should be rejected if parameterFile is not a file", async function () {
+    //コンポーネントを直接作成
+    const ps = {
+      type: "parameterStudy",
+      ID: "test-ps",
+      name: "test-ps",
+      parameterFile: "params_dir"
+    };
+
+    //コンポーネントディレクトリを作成
+    await fs.ensureDir(path.resolve(projectRootDir, ps.name));
+
+    //ディレクトリを作成
+    await fs.mkdir(path.resolve(projectRootDir, ps.name, "params_dir"));
+
+    //checkPSSettingFileを実行
+    await expect(checkPSSettingFile(projectRootDir, ps)).to.be.rejectedWith(/parameter setting file is not file/);
+  });
+
+  it("should be rejected if parameterFile is not valid JSON", async function () {
+    //コンポーネントを直接作成
+    const ps = {
+      type: "parameterStudy",
+      ID: "test-ps",
+      name: "test-ps",
+      parameterFile: "invalid.json"
+    };
+
+    //コンポーネントディレクトリを作成
+    await fs.ensureDir(path.resolve(projectRootDir, ps.name));
+
+    //無効なJSONファイルを作成
+    await fs.writeFile(path.resolve(projectRootDir, ps.name, "invalid.json"), "This is not JSON");
+
+    //checkPSSettingFileを実行
+    await expect(checkPSSettingFile(projectRootDir, ps)).to.be.rejectedWith(/parameter setting file is not JSON file/);
+  });
+
+  it("should be rejected if parameterFile does not match schema", async function () {
+    //コンポーネントを直接作成
+    const ps = {
+      type: "parameterStudy",
+      ID: "test-ps",
+      name: "test-ps",
+      parameterFile: "invalid_schema.json"
+    };
+
+    //コンポーネントディレクトリを作成
+    await fs.ensureDir(path.resolve(projectRootDir, ps.name));
+
+    //スキーマに合わないJSONファイルを作成
+    const invalidParams = {
+      version: 2,
+      //targetFilesが欠けている
+      params: [
+        { keyword: "foo", type: "min-max-step", min: 0, max: 4, step: 1 }
+      ]
+    };
+    await fs.writeJson(path.resolve(projectRootDir, ps.name, "invalid_schema.json"), invalidParams);
+
+    //validateを直接モック化して、エラーを返すようにする
+    const originalValidate = validateComponents.__get__("validate");
+    validateComponents.__set__("validate", ()=>{
+      //validateがfalseを返すようにする
+      return false;
+    });
+
+    //validateのerrorsプロパティを設定
+    validateComponents.__set__("validate.errors", [{ message: "should have required property 'targetFiles'" }]);
+
+    //checkPSSettingFileを実行
+    await expect(checkPSSettingFile(projectRootDir, ps)).to.be.rejectedWith(/parameter setting file does not have valid JSON data/);
+
+    //元の関数に戻す
+    validateComponents.__set__("validate", originalValidate);
+  });
+
+  it("should be resolved with true if parameterFile is valid", async function () {
+    //コンポーネントを直接作成
+    const ps = {
+      type: "parameterStudy",
+      ID: "test-ps",
+      name: "test-ps",
+      parameterFile: "valid.json"
+    };
+
+    //コンポーネントディレクトリを作成
+    await fs.ensureDir(path.resolve(projectRootDir, ps.name));
+
+    //有効なJSONファイルを作成
+    const validParams = {
+      version: 2,
+      targetFiles: [
+        { targetName: "foo" }
+      ],
+      params: [
+        { keyword: "foo", type: "min-max-step", min: 0, max: 4, step: 1 }
+      ]
+    };
+    await fs.writeJson(path.resolve(projectRootDir, ps.name, "valid.json"), validParams);
+
+    //checkPSSettingFileを実行
+    const result = await checkPSSettingFile(projectRootDir, ps);
+    expect(result).to.be.true;
   });
 });
 
@@ -1884,6 +2273,340 @@ describe("getComponentIDsInCycle", function () {
 
     //結果が空の配列であることを確認
     expect(result).to.be.an("array").that.is.empty;
+  });
+});
+
+describe("validateComponent with disabled component", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+  beforeEach(async function () {
+    await fs.remove(testDirRoot);
+
+    try {
+      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  });
+  after(async function () {
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
+  });
+
+  it("should skip disabled components during validation", async function () {
+    //モックを設定して無効化されたコンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async ()=>{
+      return [
+        {
+          type: "task",
+          ID: "disabled-task",
+          name: "disabled-task",
+          disable: true, //無効化されたコンポーネント
+          script: undefined //本来ならエラーになる設定
+        }
+      ];
+    });
+
+    validateComponents.__set__("getComponentFullName", async (projectRootDir, ID)=>{
+      return `Component ${ID}`;
+    });
+
+    validateComponents.__set__("isInitialComponent", async ()=>{
+      return true; //初期コンポーネントが存在するとする
+    });
+
+    //空のレポート配列を作成
+    const report = [];
+    //recursiveValidateComponentsを実行
+    await recursiveValidateComponents(projectRootDir, "root", report);
+    //無効化されたコンポーネントはスキップされるため、レポートは空のままであることを確認
+    expect(report).to.be.an("array").that.is.empty;
+  });
+});
+
+describe("validateComponent with component having children", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+  beforeEach(async function () {
+    await fs.remove(testDirRoot);
+
+    try {
+      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  });
+  after(async function () {
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
+  });
+
+  it("should recursively validate components with children", async function () {
+    //モックを設定して子コンポーネントを持つコンポーネントを返すようにする
+    validateComponents.__set__("getChildren", async (projectRootDir, parentID)=>{
+      if (parentID === "root") {
+        return [
+          {
+            type: "task",
+            ID: "parent-task",
+            name: "parent-task",
+            script: "script.sh"
+          }
+        ];
+      } else if (parentID === "parent-task") {
+        return [
+          {
+            type: "task",
+            ID: "child-task",
+            name: "child-task",
+            script: undefined //エラーになる設定
+          }
+        ];
+      }
+      return [];
+    });
+
+    validateComponents.__set__("getComponentFullName", async (projectRootDir, ID)=>{
+      return `Component ${ID}`;
+    });
+
+    validateComponents.__set__("isInitialComponent", async ()=>{
+      return true; //初期コンポーネントが存在するとする
+    });
+
+    validateComponents.__set__("hasChild", (component)=>{
+      return component.ID === "parent-task"; //parent-taskは子コンポーネントを持つ
+    });
+
+    //validateComponentをモック化して子コンポーネントのエラーを返すようにする
+    const originalValidateComponent = validateComponents.__get__("validateComponent");
+    validateComponents.__set__("validateComponent", async (projectRootDir, component)=>{
+      if (component.ID === "child-task") {
+        return "script is not specified"; //子コンポーネントのエラー
+      }
+      return null; //親コンポーネントはエラーなし
+    });
+
+    //空のレポート配列を作成
+    const report = [];
+    //recursiveValidateComponentsを実行
+    await recursiveValidateComponents(projectRootDir, "root", report);
+
+    //元の関数に戻す
+    validateComponents.__set__("validateComponent", originalValidateComponent);
+
+    //子コンポーネントのエラーがレポートに含まれていることを確認
+    expect(report).to.be.an("array").that.is.not.empty;
+    expect(report[0]).to.have.property("ID", "child-task");
+    expect(report[0]).to.have.property("error").that.includes("script is not specified");
+  });
+});
+
+describe("getNextComponents with special cases", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+
+  it("should handle outputFiles with origin property", function () {
+    //originプロパティを持つdstを含むoutputFilesを持つコンポーネント
+    const components = [
+      {
+        ID: "comp1",
+        name: "comp1",
+        parent: "root",
+        next: [],
+        outputFiles: [
+          {
+            name: "output1.txt",
+            dst: [
+              { dstNode: "comp2" },
+              { origin: "some-origin", dstNode: "comp3" } //originプロパティを持つ
+            ]
+          }
+        ]
+      },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] },
+      { ID: "comp3", name: "comp3", parent: "root", next: [] }
+    ];
+
+    //getNextComponentsを実行
+    const result = getNextComponents(components, components[0]);
+
+    //originプロパティを持つdstはスキップされるため、comp2のみが含まれることを確認
+    expect(result).to.be.an("array").with.lengthOf(1);
+    expect(result[0]).to.deep.include({ ID: "comp2" });
+  });
+
+  it("should remove duplicate component IDs", function () {
+    //重複するコンポーネントIDを持つnext配列を持つコンポーネント
+    const components = [
+      {
+        ID: "comp1",
+        name: "comp1",
+        parent: "root",
+        next: ["comp2", "comp2", "comp3"] //comp2が重複
+      },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] },
+      { ID: "comp3", name: "comp3", parent: "root", next: [] }
+    ];
+
+    //getNextComponentsを実行
+    const result = getNextComponents(components, components[0]);
+
+    //重複が削除されるため、comp2とcomp3が1つずつ含まれることを確認
+    expect(result).to.be.an("array").with.lengthOf(2);
+    expect(result[0]).to.deep.include({ ID: "comp2" });
+    expect(result[1]).to.deep.include({ ID: "comp3" });
+  });
+
+  it("should handle null nextComponents in isCycleGraph", function () {
+    //コンポーネントの配列
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: [] }
+    ];
+
+    //探索の開始コンポーネント
+    const startComponent = components[0];
+
+    //探索結果を格納するオブジェクト
+    const results = {};
+    components.forEach((e)=>{
+      results[e.ID] = "white";
+    });
+
+    //探索パスを格納する配列
+    const cyclePath = [];
+
+    //getNextComponentsをモック化してnullを返すようにする
+    const originalGetNextComponents = validateComponents.__get__("getNextComponents");
+    validateComponents.__set__("getNextComponents", ()=>{
+      return null;
+    });
+
+    //isCycleGraphを実行
+    const result = isCycleGraph("dummy", components, startComponent, results, cyclePath);
+
+    //循環依存関係がないのでfalseが返されることを確認
+    expect(result).to.be.false;
+
+    //元の関数に戻す
+    validateComponents.__set__("getNextComponents", originalGetNextComponents);
+  });
+
+  it("should skip already explored components in isCycleGraph", function () {
+    //コンポーネントの配列
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: ["comp3"] },
+      { ID: "comp3", name: "comp3", parent: "root", next: [] }
+    ];
+
+    //探索の開始コンポーネント
+    const startComponent = components[0];
+
+    //探索結果を格納するオブジェクト - comp3は既に探索済み（black）とする
+    const results = {
+      comp1: "white",
+      comp2: "white",
+      comp3: "black"
+    };
+
+    //探索パスを格納する配列
+    const cyclePath = [];
+
+    //isCycleGraphを実行
+    const result = isCycleGraph("dummy", components, startComponent, results, cyclePath);
+
+    //循環依存関係がないのでfalseが返されることを確認
+    expect(result).to.be.false;
+
+    //comp3は既に探索済みなのでcyclePathに含まれないことを確認
+    expect(cyclePath).to.not.include("comp3");
+  });
+});
+
+describe("getCycleGraph with white components", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+
+  it("should explore white components", function () {
+    //コンポーネントの配列
+    const components = [
+      { ID: "comp1", name: "comp1", parent: "root", next: ["comp2"] },
+      { ID: "comp2", name: "comp2", parent: "root", next: [] }
+    ];
+
+    //isCycleGraphをモック化して呼び出しを記録する
+    const originalIsCycleGraph = validateComponents.__get__("isCycleGraph");
+    let isCycleGraphCalled = false;
+    validateComponents.__set__("isCycleGraph", ()=>{
+      isCycleGraphCalled = true;
+      return false;
+    });
+
+    //getCycleGraphを実行
+    const result = getCycleGraph("dummy", components);
+
+    //isCycleGraphが呼び出されたことを確認
+    expect(isCycleGraphCalled).to.be.true;
+
+    //循環依存関係がないので空の配列が返されることを確認
+    expect(result).to.be.an("array").that.is.empty;
+
+    //元の関数に戻す
+    validateComponents.__set__("isCycleGraph", originalIsCycleGraph);
+  });
+});
+
+describe("checkPSSettingFile with invalid JSON", function () {
+  this.timeout(10000); //タイムアウト時間を延長
+  beforeEach(async function () {
+    await fs.remove(testDirRoot);
+
+    try {
+      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+
+    validateComponents.__set__("getComponentDir", async (projectRootDir)=>{
+      //テスト用のコンポーネントディレクトリを返す
+      return path.resolve(projectRootDir, "test-ps");
+    });
+  });
+  after(async function () {
+    if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+      await fs.remove(testDirRoot);
+    }
+  });
+
+  it("should be rejected if parameterFile has syntax error", async function () {
+    //コンポーネントを直接作成
+    const ps = {
+      type: "parameterStudy",
+      ID: "test-ps",
+      name: "test-ps",
+      parameterFile: "invalid_syntax.json"
+    };
+
+    //コンポーネントディレクトリを作成
+    await fs.ensureDir(path.resolve(projectRootDir, ps.name));
+
+    //構文エラーのあるJSONファイルを作成
+    await fs.writeFile(path.resolve(projectRootDir, ps.name, "invalid_syntax.json"), "{ 'version': 2, unclosed object");
+
+    //readJsonGreedyをモック化してエラーを投げるようにする
+    const originalReadJsonGreedy = validateComponents.__get__("readJsonGreedy");
+    validateComponents.__set__("readJsonGreedy", async ()=>{
+      const error = new Error("Unexpected token");
+      throw error;
+    });
+
+    //checkPSSettingFileを実行
+    await expect(checkPSSettingFile(projectRootDir, ps)).to.be.rejectedWith(/parameter setting file is not JSON file/);
+
+    //元の関数に戻す
+    validateComponents.__set__("readJsonGreedy", originalReadJsonGreedy);
   });
 });
 
