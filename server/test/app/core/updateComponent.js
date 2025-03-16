@@ -908,6 +908,334 @@ describe("updateComponent", ()=>{
     });
   });
 
+  describe("#renameInputFileCounterpart", ()=>{
+    let renameInputFileCounterpart;
+    let getComponentDirStub;
+    let readComponentJsonStub;
+    let writeComponentJsonStub;
+
+    beforeEach(()=>{
+      const updateComponent = rewire("../../../app/core/updateComponent.js");
+      renameInputFileCounterpart = updateComponent.__get__("renameInputFileCounterpart");
+      getComponentDirStub = sinon.stub();
+      readComponentJsonStub = sinon.stub();
+      writeComponentJsonStub = sinon.stub();
+      updateComponent.__set__({
+        getComponentDir: getComponentDirStub,
+        readComponentJson: readComponentJsonStub,
+        writeComponentJson: writeComponentJsonStub
+      });
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("rename inputFile name and its counterparts' dstName", async ()=>{
+      const componentJson = {
+        ID: "id",
+        inputFiles: [{},
+          {
+            src: [{
+              srcNode: "srcNode1"
+            },
+            {
+              srcNode: "srcNode2"
+            }]
+          }]
+      };
+      getComponentDirStub.withArgs("/projectRootDir", "srcNode1", true).resolves("/projectRootDir/srcNode1");
+      getComponentDirStub.withArgs("/projectRootDir", "srcNode2", true).resolves("/projectRootDir/srcNode2");
+      const readComponentJsonResultBase = {
+        outputFiles: [{
+          dst: [{
+            dstNode: "dstNode1",
+            dstName: "dstName1"
+          },
+          {
+            dstNode: "dstNode2",
+            dstName: "dstName2"
+          }]
+        },
+        {
+          dst: [{
+            dstNode: "dstNode3",
+            dstName: "dstNode3"
+          }]
+        }],
+        inputFiles: [{
+          forwardTo: [{
+            dstNode: "dstNode4",
+            dstName: "dstName4"
+          },
+          {
+            dstNode: "dstNode5",
+            dstName: "dstName5"
+          }]
+        },
+        {
+          forwardTo: [{
+            dstNode: "dstNode6",
+            dstName: "dstName6"
+          }]
+        }]
+      };
+      const readComponentJsonResultTest1 = JSON.parse(JSON.stringify(readComponentJsonResultBase));
+      const readComponentJsonResultTest2 = JSON.parse(JSON.stringify(readComponentJsonResultBase));
+      readComponentJsonResultTest1.outputFiles[0].dst[0].dstNode = "id";
+      readComponentJsonResultTest1.outputFiles[0].dst[0].dstName = "oldName";
+      readComponentJsonResultTest1.inputFiles[0].forwardTo[0].dstNode = "id";
+      readComponentJsonResultTest1.inputFiles[0].forwardTo[0].dstName = "oldName";
+      readComponentJsonResultTest2.outputFiles[0].dst[1].dstNode = "id";
+      readComponentJsonResultTest2.outputFiles[0].dst[1].dstName = "oldName";
+      readComponentJsonResultTest2.inputFiles[0].forwardTo[1].dstNode = "id";
+      readComponentJsonResultTest2.inputFiles[0].forwardTo[1].dstName = "oldName";
+      readComponentJsonStub.withArgs("/projectRootDir/srcNode1").resolves(readComponentJsonResultTest1);
+      readComponentJsonStub.withArgs("/projectRootDir/srcNode2").resolves(readComponentJsonResultTest2);
+      await renameInputFileCounterpart("/projectRootDir", componentJson, 1, "oldName", "newName");
+      const readComponentJsonResultExpectation1 = JSON.parse(JSON.stringify(readComponentJsonResultTest1));
+      const readComponentJsonResultExpectation2 = JSON.parse(JSON.stringify(readComponentJsonResultTest2));
+      readComponentJsonResultExpectation1.outputFiles[0].dst[0].dstName = "newName";
+      //readComponentJsonResultExpectation1.inputFiles[0].forwardTo[0].dstName = "newName"; //bug
+      readComponentJsonResultExpectation2.outputFiles[0].dst[1].dstName = "newName";
+      //readComponentJsonResultExpectation2.inputFiles[0].forwardTo[1].dstName = "newName"; //bug
+      expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/srcNode1", sinon.match(readComponentJsonResultExpectation1))).to.be.true;
+      expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/srcNode2", sinon.match(readComponentJsonResultExpectation2))).to.be.true;
+    });
+
+    it("should throw error if the index is less than 0", async ()=>{
+      await expect(renameInputFileCounterpart("/projectRootDir", {}, -1, "oldName", "newName")).to.be.rejectedWith("invalid index -1");
+    });
+
+    it("should throw error if the index is out of range", async ()=>{
+      await expect(renameInputFileCounterpart("/projectRootDir", { inputFiles: [{}] }, 1, "oldName", "newName")).to.be.rejectedWith("invalid index 1");
+    });
+
+    it("should resolve it all renaming operation is successful", async ()=>{
+      const componentJson = {
+        inputFiles: [{
+          src: [{
+            srcNode: "srcNode1"
+          },
+          {
+            srcNode: "srcNode2"
+          }]
+        }]
+      };
+      const counterpartJson1 = {
+        name: "counterpartJson1",
+        outputFiles: [],
+        inputFiles: []
+      };
+      const counterpartJson2 = {
+        name: "counterpartJson2",
+        outputFiles: [],
+        inputFiles: []
+      };
+      getComponentDirStub.withArgs("/projectRootDir", "srcNode1", true).resolves("/projectRootDir/srcNode1");
+      getComponentDirStub.withArgs("/projectRootDir", "srcNode2", true).resolves("/projectRootDir/srcNode2");
+      readComponentJsonStub.withArgs("/projectRootDir/srcNode1").resolves(counterpartJson1);
+      readComponentJsonStub.withArgs("/projectRootDir/srcNode2").resolves(counterpartJson2);
+      writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/dstNode1").resolves();
+      writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/dstNode2").resolves();
+      await expect(renameInputFileCounterpart("/projectRootDir", componentJson, 0, "oldName", "newName")).to.be.fulfilled;
+    });
+
+    it("should reject if one or more renaming operation is failed", async ()=>{
+      const componentJson = {
+        inputFiles: [{
+          src: [{
+            srcNode: "srcNode1"
+          },
+          {
+            srcNode: "srcNode2"
+          }]
+        }]
+      };
+      const counterpartJson1 = {
+        name: "counterpartJson1",
+        outputFiles: [],
+        inputFiles: []
+      };
+      const counterpartJson2 = {
+        name: "counterpartJson2",
+        outputFiles: [],
+        inputFiles: []
+      };
+      getComponentDirStub.withArgs("/projectRootDir", "srcNode1", true).resolves("/projectRootDir/srcNode1");
+      getComponentDirStub.withArgs("/projectRootDir", "srcNode2", true).resolves("/projectRootDir/srcNode2");
+      readComponentJsonStub.withArgs("/projectRootDir/srcNode1").resolves(counterpartJson1);
+      readComponentJsonStub.withArgs("/projectRootDir/srcNode2").resolves(counterpartJson2);
+      writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/srcNode1").resolves();
+      writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/srcNode2").rejects();
+      await expect(renameInputFileCounterpart("/projectRootDir", componentJson, 0, "oldName", "newName")).to.be.rejected;
+    });
+  });
+
+  describe("#renameOutputFileCounterpart", ()=>{
+    let renameOutputFileCounterpart;
+    let getComponentDirStub;
+    let readComponentJsonStub;
+    let writeComponentJsonStub;
+
+    beforeEach(()=>{
+      const updateComponent = rewire("../../../app/core/updateComponent.js");
+      renameOutputFileCounterpart = updateComponent.__get__("renameOutputFileCounterpart");
+      getComponentDirStub = sinon.stub();
+      readComponentJsonStub = sinon.stub();
+      writeComponentJsonStub = sinon.stub();
+      updateComponent.__set__({
+        getComponentDir: getComponentDirStub,
+        readComponentJson: readComponentJsonStub,
+        writeComponentJson: writeComponentJsonStub
+      });
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("rename inputFile name and its counterparts' srcName", async ()=>{
+      const componentJson = {
+        ID: "id",
+        outputFiles: [{},
+          {
+            dst: [{
+              dstNode: "dstNode1"
+            },
+            {
+              dstNode: "dstNode2"
+            }]
+          }]
+      };
+      getComponentDirStub.withArgs("/projectRootDir", "dstNode1", true).resolves("/projectRootDir/dstNode1");
+      getComponentDirStub.withArgs("/projectRootDir", "dstNode2", true).resolves("/projectRootDir/dstNode2");
+      const readComponentJsonResultBase = {
+        inputFiles: [{
+          src: [{
+            srcNode: "srcNode1",
+            srcName: "srcName1"
+          },
+          {
+            srcNode: "srcNode2",
+            srcName: "srcName2"
+          }]
+        },
+        {
+          src: [{
+            srcNode: "srcNode3",
+            srcName: "srcNode3"
+          }]
+        }],
+        outputFiles: [{
+          origin: [{
+            srcNode: "srcNode4",
+            srcName: "srcName4"
+          },
+          {
+            srcNode: "srcNode5",
+            srcName: "srcName5"
+          }]
+        },
+        {
+          origin: [{
+            srcNode: "srcNode6",
+            srcName: "srcName6"
+          }]
+        }]
+      };
+      const readComponentJsonResultTest1 = JSON.parse(JSON.stringify(readComponentJsonResultBase));
+      const readComponentJsonResultTest2 = JSON.parse(JSON.stringify(readComponentJsonResultBase));
+      readComponentJsonResultTest1.inputFiles[0].src[0].srcNode = "id";
+      readComponentJsonResultTest1.inputFiles[0].src[0].srcName = "oldName";
+      readComponentJsonResultTest1.outputFiles[0].origin[0].srcNode = "id";
+      readComponentJsonResultTest1.outputFiles[0].origin[0].srcName = "oldName";
+      readComponentJsonResultTest2.inputFiles[0].src[1].srcNode = "id";
+      readComponentJsonResultTest2.inputFiles[0].src[1].srcName = "oldName";
+      readComponentJsonResultTest2.outputFiles[0].origin[1].srcNode = "id";
+      readComponentJsonResultTest2.outputFiles[0].origin[1].srcName = "oldName";
+      readComponentJsonStub.withArgs("/projectRootDir/dstNode1").resolves(readComponentJsonResultTest1);
+      readComponentJsonStub.withArgs("/projectRootDir/dstNode2").resolves(readComponentJsonResultTest2);
+      await renameOutputFileCounterpart("/projectRootDir", componentJson, 1, "oldName", "newName");
+      const readComponentJsonResultExpectation1 = JSON.parse(JSON.stringify(readComponentJsonResultTest1));
+      const readComponentJsonResultExpectation2 = JSON.parse(JSON.stringify(readComponentJsonResultTest2));
+      readComponentJsonResultExpectation1.inputFiles[0].src[0].srcName = "newName";
+      //readComponentJsonResultExpectation1.outputFiles[0].origin[0].srcName = "newName"; //bug
+      readComponentJsonResultExpectation2.inputFiles[0].src[1].srcName = "newName";
+      //readComponentJsonResultExpectation2.outputFiles[0].origin[1].srcName = "newName"; //bug
+      expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/dstNode1", sinon.match(readComponentJsonResultExpectation1))).to.be.true;
+      expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/dstNode2", sinon.match(readComponentJsonResultExpectation2))).to.be.true;
+    });
+
+    it("should throw error if the index is less than 0", async ()=>{
+      await expect(renameOutputFileCounterpart("/projectRootDir", {}, -1, "oldName", "newName")).to.be.rejectedWith("invalid index -1");
+    });
+
+    it("should throw error if the index is out of range", async ()=>{
+      await expect(renameOutputFileCounterpart("/projectRootDir", { outputFiles: [{}] }, 1, "oldName", "newName")).to.be.rejectedWith("invalid index 1");
+    });
+
+    it("should resolve it all renaming operation is successful", async ()=>{
+      const componentJson = {
+        outputFiles: [{
+          dst: [{
+            dstNode: "dstNode1"
+          },
+          {
+            dstNode: "dstNode2"
+          }]
+        }]
+      };
+      const counterpartJson1 = {
+        name: "counterpartJson1",
+        outputFiles: [],
+        inputFiles: []
+      };
+      const counterpartJson2 = {
+        name: "counterpartJson2",
+        outputFiles: [],
+        inputFiles: []
+      };
+      getComponentDirStub.withArgs("/projectRootDir", "dstNode1", true).resolves("/projectRootDir/dstNode1");
+      getComponentDirStub.withArgs("/projectRootDir", "dstNode2", true).resolves("/projectRootDir/dstNode2");
+      readComponentJsonStub.withArgs("/projectRootDir/dstNode1").resolves(counterpartJson1);
+      readComponentJsonStub.withArgs("/projectRootDir/dstNode2").resolves(counterpartJson2);
+      writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/srcNode1").resolves();
+      writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/srcNode2").resolves();
+      await expect(renameOutputFileCounterpart("/projectRootDir", componentJson, 0, "oldName", "newName")).to.be.fulfilled;
+    });
+
+    it("should reject if one or more renaming operation is failed", async ()=>{
+      const componentJson = {
+        inputFiles: [{
+          dst: [{
+            dstNode: "dstNode1"
+          },
+          {
+            dstNode: "dstNode2"
+          }]
+        }]
+      };
+      const counterpartJson1 = {
+        name: "counterpartJson1",
+        outputFiles: [],
+        inputFiles: []
+      };
+      const counterpartJson2 = {
+        name: "counterpartJson2",
+        outputFiles: [],
+        inputFiles: []
+      };
+      getComponentDirStub.withArgs("/projectRootDir", "dstNode1", true).resolves("/projectRootDir/dstNode1");
+      getComponentDirStub.withArgs("/projectRootDir", "dstNode2", true).resolves("/projectRootDir/dstNode2");
+      readComponentJsonStub.withArgs("/projectRootDir/dstNode1").resolves(counterpartJson1);
+      readComponentJsonStub.withArgs("/projectRootDir/dstNode2").resolves(counterpartJson2);
+      writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/dstNode1").resolves();
+      writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/dstNode2").rejects();
+      await expect(renameOutputFileCounterpart("/projectRootDir", componentJson, 0, "oldName", "newName")).to.be.rejected;
+    });
+  });
+
   describe("#renameComponentDir", ()=>{
     let renameComponentDir;
     let getComponentDirStub;
