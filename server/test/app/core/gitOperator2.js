@@ -15,7 +15,7 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
 describe("gitOperator2", ()=>{
-  describe("gitInit", ()=>{
+  describe("#gitInit", ()=>{
     let gitOperator2;
     let gitInit;
     let gitAddStub;
@@ -99,7 +99,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("gitCommit", ()=>{
+  describe("#gitCommit", ()=>{
     let gitOperator2;
     let gitCommit;
     let gitPromiseStub;
@@ -175,7 +175,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("gitAdd", ()=>{
+  describe("#gitAdd", ()=>{
     let gitOperator2;
     let gitAdd;
     let gitPromiseStub;
@@ -240,7 +240,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("gitRm", ()=>{
+  describe("#gitRm", ()=>{
     let gitOperator2;
     let gitRm;
     let gitPromiseStub;
@@ -291,7 +291,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("gitResetHEAD", ()=>{
+  describe("#gitResetHEAD", ()=>{
     let gitOperator2;
     let gitResetHEAD;
     let gitPromiseStub;
@@ -353,7 +353,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("gitStatus", ()=>{
+  describe("#gitStatus", ()=>{
     let gitOperator2;
     let gitStatus;
     let gitPromiseStub;
@@ -433,7 +433,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("gitClean", ()=>{
+  describe("#gitClean", ()=>{
     let gitOperator2;
     let gitClean;
     let gitPromiseStub;
@@ -486,7 +486,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("getRelativeFilename", ()=>{
+  describe("#getRelativeFilename", ()=>{
     let gitOperator2;
     let getRelativeFilename;
 
@@ -526,7 +526,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("getUnsavedFiles", ()=>{
+  describe("#getUnsavedFiles", ()=>{
     let gitOperator2;
     let getUnsavedFiles;
     let gitStatusStub;
@@ -588,7 +588,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("makeLFSPattern", ()=>{
+  describe("#makeLFSPattern", ()=>{
     let gitOperator2;
     let makeLFSPattern;
     let getRelativeFilenameStub;
@@ -633,7 +633,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("isLFS", ()=>{
+  describe("#isLFS", ()=>{
     let gitOperator2;
     let isLFS;
     let getRelativeFilenameStub;
@@ -700,7 +700,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("gitLFSTrack", ()=>{
+  describe("#gitLFSTrack", ()=>{
     let gitOperator2;
     let gitLFSTrack;
     let gitPromiseStub;
@@ -756,7 +756,7 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("gitLFSUntrack", ()=>{
+  describe("#gitLFSUntrack", ()=>{
     let gitOperator2;
     let gitLFSUntrack;
     let gitPromiseStub;
