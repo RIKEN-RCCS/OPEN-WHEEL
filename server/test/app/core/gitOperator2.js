@@ -15,6 +15,139 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
 describe("gitOperator2", ()=>{
+  describe("#gitPromise", ()=>{
+    let gitPromise;
+    let spawnStub;
+    let getLoggerStub;
+    let traceStub;
+
+    beforeEach(()=>{
+      const gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+      gitPromise = gitOperator2.__get__("gitPromise");
+      spawnStub = sinon.stub();
+      getLoggerStub = sinon.stub();
+      traceStub = sinon.stub();
+      getLoggerStub.returns({ trace: traceStub });
+      gitOperator2.__set__({
+        spawn: spawnStub,
+        getLogger: getLoggerStub
+      });
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should cal git command", async ()=>{
+      const cwd = "/repo/src";
+      const args = ["diff"];
+      const rootDir = "/repo";
+      const cp = { stdout: { on: (event, handler)=>{
+        handler("stdout");
+      } }, stderr: { on: (event, handler)=>{
+        handler("stderr");
+      } }, on: (event, handler)=>{
+        if (event === "exit") {
+          handler(0);
+        }
+      } };
+      spawnStub.returns(cp);
+      await gitPromise(cwd, args, rootDir);
+      expect(spawnStub.calledOnce).to.be.true;
+      expect(spawnStub.calledWith("git", args, sinon.match({ cwd: cwd, env: process.env, shell: true }))).to.be.true;
+    });
+
+    it("should log stdout and stderr", async ()=>{
+      const cwd = "/repo/src";
+      const args = ["diff"];
+      const rootDir = "/repo";
+      const cp = { stdout: { on: (event, handler)=>{
+        handler("stdout");
+      } }, stderr: { on: (event, handler)=>{
+        handler("stderr");
+      } }, on: (event, handler)=>{
+        if (event === "exit") {
+          handler(0);
+        }
+      } };
+      spawnStub.returns(cp);
+      await gitPromise(cwd, args, rootDir);
+      expect(traceStub.calledWith("stdout")).to.be.true;
+      expect(traceStub.calledWith("stderr")).to.be.true;
+    });
+
+    it("should reject with an error if spawn fails", async ()=>{
+      const cwd = "/repo/src";
+      const args = ["diff"];
+      const rootDir = "/repo";
+      const cp = { stdout: { on: (event, handler)=>{
+        handler("stdout");
+      } }, stderr: { on: (event, handler)=>{
+        handler("stderr");
+      } }, on: (event, handler)=>{
+        if (event === "error") {
+          handler("error");
+        }
+      } };
+      spawnStub.returns(cp);
+      const promise = gitPromise(cwd, args, rootDir);
+      await promise.then(()=>{
+        expect.fail();
+      }).catch((err)=>{
+        expect(err).to.be.an("error");
+        expect(err.message).to.equal("error");
+        expect(err.output).to.equal("stdoutstderr");
+        expect(err.cwd).to.equal(cwd);
+        expect(err.abs_cwd).to.equal(path.resolve(cwd));
+        expect(err.args).to.deep.equal(args);
+      });
+    });
+
+    it("should reject with an error if return code is not 0", async ()=>{
+      const cwd = "/repo/src";
+      const args = ["diff"];
+      const rootDir = "/repo";
+      const cp = { stdout: { on: (event, handler)=>{
+        handler("stdout");
+      } }, stderr: { on: (event, handler)=>{
+        handler("stderr");
+      } }, on: (event, handler)=>{
+        if (event === "exit") {
+          handler(1);
+        }
+      } };
+      spawnStub.returns(cp);
+      const promise = gitPromise(cwd, args, rootDir);
+      await promise.then(()=>{
+        expect.fail();
+      }).catch((err)=>{
+        expect(err).to.be.an("error");
+        expect(err.message).to.equal("stdoutstderr");
+        expect(err.cwd).to.equal(cwd);
+        expect(err.abs_cwd).to.equal(path.resolve(cwd));
+        expect(err.args).to.deep.equal(args);
+      });
+    });
+
+    it("should resolve with output if return code is 0", async ()=>{
+      const cwd = "/repo/src";
+      const args = ["diff"];
+      const rootDir = "/repo";
+      const cp = { stdout: { on: (event, handler)=>{
+        handler("stdout");
+      } }, stderr: { on: (event, handler)=>{
+        handler("stderr");
+      } }, on: (event, handler)=>{
+        if (event === "exit") {
+          handler(0);
+        }
+      } };
+      spawnStub.returns(cp);
+      const result = await gitPromise(cwd, args, rootDir);
+      expect(result).to.equal("stdoutstderr");
+    });
+  });
+
   describe("#gitInit", ()=>{
     let gitOperator2;
     let gitInit;
