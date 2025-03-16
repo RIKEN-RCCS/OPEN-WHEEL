@@ -1328,5 +1328,17 @@ describe("updateComponent", ()=>{
       await updateComponentPos("/projectRootDir", "id", { x: 1, y: 2 });
       expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/id", sinon.match({ pos: { x: 1, y: 2 } }))).to.be.true;
     });
+
+    it("should throw error if the typs is invalid", async ()=>{
+      getComponentDirStub.withArgs("/projectRootDir", "id", true).returns("/projectRootDir/id");
+      const componentJson = {
+        pos: {
+          x: 0,
+          y: 0
+        }
+      };
+      readComponentJsonStub.withArgs("/projectRootDir/id").resolves(componentJson);
+      await expect(updateComponentPos("/projectRootDir", "id", { x: 1 })).to.be.rejectedWith("invalid JSON specified");
+    });
   });
 });
