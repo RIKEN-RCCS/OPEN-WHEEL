@@ -996,9 +996,9 @@ describe("updateComponent", ()=>{
       const readComponentJsonResultExpectation1 = JSON.parse(JSON.stringify(readComponentJsonResultTest1));
       const readComponentJsonResultExpectation2 = JSON.parse(JSON.stringify(readComponentJsonResultTest2));
       readComponentJsonResultExpectation1.outputFiles[0].dst[0].dstName = "newName";
-      //readComponentJsonResultExpectation1.inputFiles[0].forwardTo[0].dstName = "newName"; //bug
+      readComponentJsonResultExpectation1.inputFiles[0].forwardTo[0].dstName = "newName";
       readComponentJsonResultExpectation2.outputFiles[0].dst[1].dstName = "newName";
-      //readComponentJsonResultExpectation2.inputFiles[0].forwardTo[1].dstName = "newName"; //bug
+      readComponentJsonResultExpectation2.inputFiles[0].forwardTo[1].dstName = "newName";
       expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/srcNode1", sinon.match(readComponentJsonResultExpectation1))).to.be.true;
       expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/srcNode2", sinon.match(readComponentJsonResultExpectation2))).to.be.true;
     });
