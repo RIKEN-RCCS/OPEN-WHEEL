@@ -4,12 +4,6 @@ const TYPE_OUTPUT = "output"
 const TYPE_DIR = "dir"
 const TYPE_FILE = "file"
 
-//opening a project
-Cypress.Commands.add("openProject", ()=>{
-  cy.get('[type="checkbox"]').eq(1).check(); // The top project checkbox
-  cy.get('[data-cy="home-open-btn"]').click();
-})
-
 //drag&drop component
 Cypress.Commands.add("dragAndDropComponent", (x, y, componentName, targetComponentName)=>{
   cy.wait(ANIMATION_WAIT_TIME).then(()=>{
