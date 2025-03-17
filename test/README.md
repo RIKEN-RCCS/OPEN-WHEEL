@@ -231,7 +231,8 @@ env: {
 # WHEEL_TEST_REMOTEHOST を上書きする場合
 $ export CYPRESS_WHEEL_TEST_REMOTEHOST=example
    ```
-## GitHub Actions 実行時に発生するエラーについて
+## GitHub Actions 実行時に、不具合ではないのに試験結果がNGとなる場合について
 
-GitHub Actions のテスト実行おいて、1ファイルあたりのテストコード量が多い場合に、
-機能上またはテストコードに問題ないにも関わらず、ランダムにエラーが発生する場合があります。
+GitHub Actions のテスト実行おいて、画面表示が不安定になることがあり、試験でNGとなるケースがあります。
+上記が発生した場合、試験を再実施することで解消される可能性があります。
+

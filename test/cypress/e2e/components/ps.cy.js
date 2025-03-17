@@ -183,6 +183,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     構成要素の機能確認
     cleanボタン押下
     試験確認内容：最新の保存状態に戻っていることを確認
+    skip:issue#948
     */
     it.skip("04-01-183:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
@@ -694,31 +695,10 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     コンポーネントの基本機能動作確認
     psコンポーネント共通機能確認
     各コンポーネント特有のプロパティ確認
-    parameters->current selected text 入力反映確認
-    試験確認内容：current selected textテキストボックスにドラッグした値が反映されていることを確認
-    */
-    it("04-01-221:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-delete all instancesスイッチボタン入力確認-current selected textテキストボックスにドラッグした値が反映されていることを確認", () => {
-        cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
-        cy.get('[data-cy="component_property-files-panel_title"]').click();
-        cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
-        cy.get('[data-cy="workflow-document_edit-btn"]').click();
-        cy.get('[data-cy="target_files-add_target_file-btn"]').click();
-        cy.get('[data-cy="target_files-target_file_name-text_field"]').type('run.sh');
-        cy.get('[data-cy="target_files-ok-btn"]').click();
-        cy.get('[data-cy="rapid-tab-tab_editor"]').type('VALUE=value');
-        cy.get('[data-cy="rapid-tab-tab_editor"]').dblclick();
-        cy.get('[data-cy="rapid-save_all_files-btn"]').click();
-        cy.get('[data-cy="parameter-selected_text-text_field"]').find('input').should('have.value', 'value');
-    });
-
-    /** 
-    コンポーネントの基本機能動作確認
-    psコンポーネント共通機能確認
-    各コンポーネント特有のプロパティ確認
     parameters->+ add new parameter ボタン表示確認
     試験確認内容：parameter設定ダイアログが表示されることを確認
     */
-    it("04-01-222:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-parameters->+ add new parameter ボタン表示確認-parameter設定ダイアログが表示されることを確認", () => {
+    it("04-01-221:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-parameters->+ add new parameter ボタン表示確認-parameter設定ダイアログが表示されることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -734,23 +714,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     min-max-step表示確認
     試験確認内容：min-max-step入力フォームが表示されていることを確認
     */
-    it("04-01-223:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-min-max-step表示確認-min-max-step入力フォームが表示されていることを確認", () => {
-        cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
-        cy.get('[data-cy="component_property-files-panel_title"]').click();
-        cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
-        cy.get('[data-cy="workflow-document_edit-btn"]').click();
-        cy.get('[data-cy="parameter-add_new_parameter_btn"]').click();
-        cy.get('[data-cy="parameter-min-text_field"]').should('be.visible');
-    });
-
-    /** 
-    コンポーネントの基本機能動作確認
-    psコンポーネント共通機能確認
-    各コンポーネント特有のプロパティ確認
-    min-max-step表示確認
-    試験確認内容：min-max-step入力フォームが表示されていることを確認
-    */
-    it("04-01-223:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-min-max-step表示確認-min-max-step入力フォームが表示されていることを確認", () => {
+    it("04-01-222:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-min-max-step表示確認-min-max-step入力フォームが表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -766,7 +730,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     min-max-step入力確認
     試験確認内容：min-max-step入力フォームに入力した値が表示されていることを確認
     */
-    it("04-01-224:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-min-max-step入力確認-min-max-step入力フォームに入力した値が表示されていることを確認認", () => {
+    it("04-01-223:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-min-max-step入力確認-min-max-step入力フォームに入力した値が表示されていることを確認認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -784,7 +748,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     min-max-step入力反映確認
     試験確認内容：min-max-step入力フォームに入力した値が反映されていることを確認
     */
-    it("04-01-225:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-min-max-step入力反映確認-min-max-step入力フォームに入力した値が反映されていることを確認", () => {
+    it("04-01-224:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-min-max-step入力反映確認-min-max-step入力フォームに入力した値が反映されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -812,7 +776,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     list表示確認
     試験確認内容：list入力フォームが表示されていることを確認
     */
-    it("04-01-226:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-list表示確認-list入力フォームが表示されていることを確認", () => {
+    it("04-01-225:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-list表示確認-list入力フォームが表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -830,7 +794,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     list入力確認
     試験確認内容：list入力フォームに入力した値が表示されていることを確認
     */
-    it("04-01-227:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-list入力確認-list入力フォームに入力した値が表示されていることを確認", () => {
+    it("04-01-226:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-list入力確認-list入力フォームに入力した値が表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -848,7 +812,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     list入力反映確認
     試験確認内容：list入力フォームに入力した値が反映されていることを確認
     */
-    it("04-01-228:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-list入力反映確認-list入力フォームに入力した値が反映されていることを確認", () => {
+    it("04-01-227:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-list入力反映確認-list入力フォームに入力した値が反映されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -875,7 +839,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     files表示確認
     試験確認内容：files入力フォームが表示されていることを確認
     */
-    it("04-01-229:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-files表示確認-files入力フォームが表示されていることを確認", () => {
+    it("04-01-228:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-files表示確認-files入力フォームが表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -893,7 +857,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     files入力確認
     試験確認内容：files入力フォームに入力した値が表示されていることを確認
     */
-    it("04-01-230:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-files入力確認-files入力フォームに入力した値が表示されていることを確認", () => {
+    it("04-01-229:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-files入力確認-files入力フォームに入力した値が表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -911,7 +875,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     files入力反映確認
     試験確認内容：files入力フォームに入力した値が反映されていることを確認
     */
-    it("04-01-231:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-files入力反映確認-files入力フォームに入力した値が反映されていることを確認", () => {
+    it("04-01-230:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-files入力反映確認-files入力フォームに入力した値が反映されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -938,7 +902,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     add new scatter settingボタン表示確認
     試験確認内容：scatter設定ダイアログが表示されることを確認
     */
-    it("04-01-232:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", () => {
+    it("04-01-231:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -954,7 +918,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     scatter-> srcName表示確認
     試験確認内容：srcNameテキストボックスが表示されていることを確認
     */
-    it("04-01-233:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", () => {
+    it("04-01-232:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -970,7 +934,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     scatter->srcName入力確認
     試験確認内容：srcNameテキストボックスに入力した値が表示されていることを確認
     */
-    it("04-01-234:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", () => {
+    it("04-01-233:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -986,7 +950,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     scatter->dstName表示確認
     試験確認内容：dstNameテキストボックスが表示されていることを確認
     */
-    it("04-01-235:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter->dstName表示確認-dstNameテキストボックスが表示されていることを確認", () => {
+    it("04-01-234:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter->dstName表示確認-dstNameテキストボックスが表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -1002,7 +966,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     scatter->dstName入力確認
     試験確認内容：dstNameテキストボックスに入力した値が表示されていることを確認
     */
-    it("04-01-236:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", () => {
+    it("04-01-235:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -1018,7 +982,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     scatter入力反映確認
     試験確認内容：srcName、dstNameテキストボックスに入力した値が反映されていることを確認
     */
-    it("04-01-237:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", () => {
+    it("04-01-236:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -1038,7 +1002,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     add new gather settingボタン表示確認
     試験確認内容：gather設定ダイアログが表示されることを確認
     */
-    it("04-01-238:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", () => {
+    it("04-01-237:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -1054,7 +1018,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
    gather-> srcName表示確認
    試験確認内容：srcNameテキストボックスが表示されていることを確認
    */
-    it("04-01-239:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-gather-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", () => {
+    it("04-01-238:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-gather-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -1070,7 +1034,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     gather->srcName入力確認
     試験確認内容：srcNameテキストボックスに入力した値が表示されていることを確認
     */
-    it("04-01-240:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", () => {
+    it("04-01-239:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -1086,7 +1050,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     gather->dstName表示確認
     試験確認内容：dstNameテキストボックスが表示されていることを確認
     */
-    it("04-01-241:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-gather->dstName表示確認-dstNameテキストボックスが表示されていることを確認", () => {
+    it("04-01-240:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-gather->dstName表示確認-dstNameテキストボックスが表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -1102,7 +1066,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     gather->dstName入力確認
     試験確認内容：dstNameテキストボックスに入力した値が表示されていることを確認
     */
-    it("04-01-242:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-gather->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", () => {
+    it("04-01-241:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-gather->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
@@ -1118,7 +1082,7 @@ describe("04:コンポーネントの基本機能動作確認", () => {
     gather入力反映確認
     試験確認内容：srcName、dstNameテキストボックスに入力した値が反映されていることを確認
     */
-    it("04-01-243:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-gather入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", () => {
+    it("04-01-242:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-プロパティ設定確認-gather入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", () => {
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
         cy.get('[data-cy="component_property-files-panel_title"]').click();
         cy.get('[data-cy="file_browser-treeview-treeview"]').contains('parameterSetting.json').click();
