@@ -1160,9 +1160,9 @@ describe("updateComponent", ()=>{
       const readComponentJsonResultExpectation1 = JSON.parse(JSON.stringify(readComponentJsonResultTest1));
       const readComponentJsonResultExpectation2 = JSON.parse(JSON.stringify(readComponentJsonResultTest2));
       readComponentJsonResultExpectation1.inputFiles[0].src[0].srcName = "newName";
-      //readComponentJsonResultExpectation1.outputFiles[0].origin[0].srcName = "newName"; //bug
+      readComponentJsonResultExpectation1.outputFiles[0].origin[0].srcName = "newName";
       readComponentJsonResultExpectation2.inputFiles[0].src[1].srcName = "newName";
-      //readComponentJsonResultExpectation2.outputFiles[0].origin[1].srcName = "newName"; //bug
+      readComponentJsonResultExpectation2.outputFiles[0].origin[1].srcName = "newName";
       expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/dstNode1", sinon.match(readComponentJsonResultExpectation1))).to.be.true;
       expect(writeComponentJsonStub.calledWith("/projectRootDir", "/projectRootDir/dstNode2", sinon.match(readComponentJsonResultExpectation2))).to.be.true;
     });
