@@ -154,14 +154,15 @@ async function gfptarList(projectRootDir, hostID, target, timeout = 60) {
  * @param {string} projectRootDir - project's root path
  * @param {string} hostID - ID of hostinfo which serve gfarm service
  * @param {string} target - parent dir path
+ * @param {string} opt - optional arguments of gfls
  * @param {number} timeout - timeout in secconds must be positive number
  * @returns {string[]} - output from gfls command
  */
-async function gfls(projectRootDir, hostID, target, timeout = 60) {
+async function gfls(projectRootDir, hostID, target, opt = "-l", timeout = 60) {
   await startJWTAgent(projectRootDir, hostID);
   const pathOnGfarm = formatGfarmURL(target);
   try {
-    return await execOnCSGW(projectRootDir, hostID, timeout, "gfls -l", pathOnGfarm);
+    return await execOnCSGW(projectRootDir, hostID, timeout, "gfls", opt, pathOnGfarm);
   } catch (e) {
     if (!e.output[0].endsWith("no such file or directory\n")) {
       throw e;
@@ -202,6 +203,22 @@ async function gfmkdir(projectRootDir, hostID, target, timeout = 60) {
   return execOnCSGW(projectRootDir, hostID, timeout, "gfmkdir -p", pathOnGfarm);
 }
 
+/**
+ * rename file or directory under gfarm
+ * @param {string} projectRootDir - project's root path
+ * @param {string} hostID - ID of hostinfo which serve gfarm service
+ * @param {string} target - parent dir path
+ * @param {string} newName - new absolute path of file or directory
+ * @param {number} timeout - timeout in secconds must be positive number
+ * @returns {string} - output from gfmkdir command
+ */
+async function gfmv(projectRootDir, hostID, target, newName, timeout = 60) {
+  await startJWTAgent(projectRootDir, hostID);
+  const src = formatGfarmURL(target);
+  const dst = formatGfarmURL(newName);
+  return execOnCSGW(projectRootDir, hostID, timeout, "gfmv -f", src, dst);
+}
+
 module.exports = {
   checkJWTAgent,
   startJWTAgent,
@@ -213,5 +230,6 @@ module.exports = {
   gfptarList,
   gfls,
   gfrm,
-  gfmkdir
+  gfmkdir,
+  gfmv
 };

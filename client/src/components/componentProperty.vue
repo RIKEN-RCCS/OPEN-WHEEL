@@ -618,12 +618,13 @@ import { isValidInputFilename, isValidOutputFilename } from "../lib/clientUtilit
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import { propWidth } from "../lib/componentSizes.json";
+import { hasRemoteFileBrowser } from "../../../common/checkComponent.cjs";
 
 import loadComponentDefinition from "../lib/componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
 
 const colorMap = {
-  hpciss: " #ef8d33",
+  hpciss: "#ef8d33",
   storage: componentDefinitionObj["storage"].color
 };
 
@@ -692,9 +693,7 @@ export default {
       return colorMap[this.selectedComponent.type];
     },
     hasRemoteFileBrowser() {
-      return ["storage", "hpciss"].includes(this.selectedComponent.type)
-        && typeof this.selectedComponent.host === "string"
-        && this.selectedComponent.host !== "localhost";
+      return hasRemoteFileBrowser(this.selectedComponent);
     },
     hasHPCISSTarBrowser() {
       return this.selectedComponent.type === "hpcisstar"
