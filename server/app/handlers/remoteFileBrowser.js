@@ -12,10 +12,19 @@ const { remoteHost } = require("../db/db");
 const { getLogger } = require("../logSettings");
 const { createSsh, getSsh } = require("../core/sshManager");
 const { createTempd } = require("../core/tempd.js");
-const { formatSshOutput } = require("../lib/utility.js");
+const { hasRemoteFileBrowser } = require("../../../common/checkComponent.cjs");
+const { gfls, gfmkdir, gfrm, gfmv } = require("../core/gfarmOperator.js");
+const {
+  createNewRemoteFile,
+  createNewRemoteDir,
+  removeRemoteFileOrDirectory,
+  renameRemoteFileOrDirectory
+} = require("../core/remoteFileUtils.js");
+
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
-  if (component.type !== "storage" || isLocalComponent(component)) {
+  if (!hasRemoteFileBrowser(component) || isLocalComponent(component)) {
+    getLogger(projectRootDir).warn(projectRootDir, `${component.name} does not have remote storage`);
     return;
   }
   try {
@@ -28,63 +37,76 @@ async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb
   }
   cb(true);
 }
+
+function formatLsResults(lsResults, readlinkResults, target) {
+  return lsResults.map((e)=>{
+    if (e.endsWith("=") || e.endsWith("%") || e.endsWith("|")) {
+      return null;
+    }
+    const islink = e.endsWith("@");
+    const name = islink || e.endsWith("*") || e.endsWith("/") ? e.slice(0, e.length - 1) : e;
+    let type = null;
+    if (islink) {
+      const index = readlinkResults.findIndex((result)=>{
+        return result.split(",")[0] === name;
+      });
+      if (index + 1 < readlinkResults.length) {
+        type = readlinkResults[index + 1] === "directory" ? "dir" : "file";
+      }
+    } else {
+      type = e.endsWith("/") ? "dir" : "file";
+    }
+    return { path: target, name, type, islink };
+  }).filter((e)=>{
+    return e !== null;
+  });
+}
+
+async function onGetRemoteGfarmFileList(projectRootDir, host, { path: target }, cb) {
+  try {
+    const id = remoteHost.getID("name", host);
+    const lsResults = await gfls(projectRootDir, id, target, "-F");
+    const content = formatLsResults(lsResults, [], target);
+    return cb(content);
+  } catch (e) {
+    getLogger(projectRootDir).error(projectRootDir, "error occurred during reading gfarm directory", e);
+    return cb(null);
+  }
+}
+
 async function onGetRemoteFileList(projectRootDir, host, { path: target }, cb) {
   try {
     const id = remoteHost.getID("name", host);
     const ssh = await getSsh(projectRootDir, id);
-    const stdout = [];
-    const rt = await ssh.exec(`ls -F ${target}`, 120, (output)=>{
-      stdout.push(output);
-    });
-    if (rt !== 0) {
-      getLogger(projectRootDir).error(projectRootDir, "ls on remotehost failed", rt);
+    const lsResults = await ssh.ls(target, ["-F"]);
+    if (!Array.isArray(lsResults)) {
+      getLogger(projectRootDir).error(projectRootDir, "ls on remotehost failed", lsResults);
       return cb(null);
     }
-    const lsResults = formatSshOutput(stdout);
     const links = lsResults.filter((e)=>{
       return e.endsWith("@");
     }).map((e)=>{
       return e.slice(0, e.length - 1);
     });
-    const stdout2 = [];
+    const readlinkResults = [];
     if (links.length > 0) {
-      const rt2 = await ssh.exec(` cd ${target};for i in ${links.join(" ")};do echo $i; stat -c %F $(readlink -f $i);done`, 0, (output)=>{
-        stdout2.push(output);
-      });
-      if (rt2 !== 0) {
-        getLogger(projectRootDir).error(projectRootDir, "ls on remotehost failed", rt);
+      const { output, rt } = await ssh.execAndGetOutput(` cd ${target};for i in ${links.join(" ")};do echo $i; stat -c %F $(readlink -f $i);done`, 0);
+
+      if (rt !== 0) {
+        getLogger(projectRootDir).error(projectRootDir, "readlink on remotehost failed", rt);
         return cb(null);
       }
+      readlinkResults.push(...output);
     }
-    const readlinkResults = formatSshOutput(stdout2);
 
-    const content = lsResults.map((e)=>{
-      if (e.endsWith("=") || e.endsWith("%") || e.endsWith("|")) {
-        return null;
-      }
-      const islink = e.endsWith("@");
-      const name = islink || e.endsWith("*") || e.endsWith("/") ? e.slice(0, e.length - 1) : e;
-      let type = null;
-      if (islink) {
-        const index = readlinkResults.findIndex((result)=>{
-          return result.split(",")[0] === name;
-        });
-        if (index + 1 < readlinkResults.length) {
-          type = readlinkResults[index + 1] === "directory" ? "dir" : "file";
-        }
-      } else {
-        type = e.endsWith("/") ? "dir" : "file";
-      }
-      return { path: target, name, type, islink };
-    }).filter((e)=>{
-      return e !== null;
-    });
+    const content = formatLsResults(lsResults, readlinkResults, target);
     return cb(content);
   } catch (e) {
     getLogger(projectRootDir).error(projectRootDir, "error occurred during reading remotedirectory", e);
     return cb(null);
   }
 }
+
 async function onGetRemoteSNDContents(projectRootDir) {
   getLogger(projectRootDir).error(projectRootDir, "onGetRemoteSNDContents should not be called any more");
 }
@@ -112,63 +134,58 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
 }
 
 /**
- * create new empty file by touch on remotehost
- * @param {string} projectRootDir - project's root path
- * @param {string} argFilename -
- * @param {string} host - label of hostInof
- * @param {Function} cb - call back function should be called on client
+ * exec func and call cb function
+ * @param {Function} func - function to be executed
+ * @param {Array} args - args of func. last element must be callback function
  */
-async function onCreateNewRemoteFile(projectRootDir, argFilename, host, cb) {
+async function remoteFileUtilWrapper(func, ...args) {
+  const cb = args.pop();
   try {
-    const id = remoteHost.getID("name", host);
-    const ssh = await getSsh(projectRootDir, id);
-    const rt = await ssh.exec(`touch ${argFilename}`);
-    getLogger(projectRootDir).debug(`create ${argFilename} on ${host}`);
-    return cb(rt === 0 ? true : rt);
+    const rt = await func(...args);
+    cb(rt === 0 ? true : rt);
   } catch (e) {
-    return cb(e);
-  }
-}
-async function onCreateNewRemoteDir(projectRootDir, argDirname, host, cb) {
-  try {
-    const id = remoteHost.getID("name", host);
-    const ssh = await getSsh(projectRootDir, id);
-    const rt = await ssh.exec(`mkdir ${argDirname}`);
-    return cb(rt === 0 ? true : rt);
-  } catch (e) {
-    return cb(e);
-  }
-}
-async function onRemoveRemoteFile(projectRootDir, target, host, cb) {
-  try {
-    const id = remoteHost.getID("name", host);
-    const ssh = await getSsh(projectRootDir, id);
-    const rt = await ssh.exec(`rm -fr ${target}`);
-    return cb(rt === 0 ? true : rt);
-  } catch (e) {
-    return cb(e);
-  }
-}
-async function onRenameRemoteFile(projectRootDir, parentDir, argOldName, argNewName, host, cb) {
-  try {
-    const oldName = path.join(parentDir, argOldName);
-    const newName = path.join(parentDir, argNewName);
-    const id = remoteHost.getID("name", host);
-    const ssh = await getSsh(projectRootDir, id);
-    const rt = await ssh.exec(`mv ${oldName} ${newName}`);
-    return cb(rt === 0 ? true : rt);
-  } catch (e) {
-    return cb(e);
+    cb(e);
   }
 }
 
+/**
+ * exec gfarmOperator function and call cb function
+ * @param {Function} func - function in gfarmOperator
+ * @param {string} projectRootDir - project's root path
+ * @param {string} host - ID of hostinfo which serve gfarm service
+ * @param {Array} args - rest args of func. last element must be callback function
+ */
+async function gfarmFileUtilWrapper(func, projectRootDir, host, ...args) {
+  const cb = args.pop();
+  const hostID = remoteHost.getID("name", host);
+  try {
+    const rt = await func(projectRootDir, hostID, ...args);
+    cb(rt === 0 ? true : rt);
+  } catch (e) {
+    cb(e);
+  }
+}
+
+const onCreateNewRemoteFile = remoteFileUtilWrapper.bind(null, createNewRemoteFile);
+const onCreateNewRemoteDir = remoteFileUtilWrapper.bind(null, createNewRemoteDir);
+const onRemoveRemoteFile = remoteFileUtilWrapper.bind(null, removeRemoteFileOrDirectory);
+const onRenameRemoteFile = remoteFileUtilWrapper.bind(null, renameRemoteFileOrDirectory);
+
+const onCreateNewGfarmDir = gfarmFileUtilWrapper.bind(null, gfmkdir);
+const onRemoveGfarmFile = gfarmFileUtilWrapper.bind(null, gfrm);
+const onRenameGfarmFile = gfarmFileUtilWrapper.bind(null, gfmv);
+
 module.exports = {
   onRequestRemoteConnection,
+  onGetRemoteGfarmFileList,
   onGetRemoteFileList,
   onGetRemoteSNDContents,
   onRemoteDownload,
   onCreateNewRemoteFile,
   onCreateNewRemoteDir,
   onRemoveRemoteFile,
-  onRenameRemoteFile
+  onRenameRemoteFile,
+  onCreateNewGfarmDir,
+  onRemoveGfarmFile,
+  onRenameGfarmFile
 };
