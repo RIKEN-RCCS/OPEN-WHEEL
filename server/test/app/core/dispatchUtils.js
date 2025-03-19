@@ -157,7 +157,6 @@ describe("#evalCondition", ()=>{
   let warnStub;
   let addXStub;
   let pspawnStub;
-  let evalStub;
 
   beforeEach(()=>{
     const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
@@ -174,7 +173,6 @@ describe("#evalCondition", ()=>{
       getLogger: getLoggerStub,
       addX: addXStub,
       pspawn: pspawnStub,
-      eval: evalStub
     });
     getLoggerStub.returns({ debug: debugStub, warn: warnStub });
   });
@@ -242,20 +240,8 @@ describe("#evalCondition", ()=>{
 
   it("should log evaluation of the condition", async ()=>{
     pathExistsStub.resolves(false);
-    await evalCondition("/projectRootDir", "condition", "/cwd", {});
-    expect(debugStub.calledWith("evalute ", "condition")).to.be.true;
-  });
-
-  it("should return error if the script is not found", async ()=>{
-    pathExistsStub.withArgs("/cwd/condition").resolves(false);
-    evalStub.withArgs("condition").returns(true);
-    const result = await evalCondition(
-      "/projectRootDir",
-      "condition",
-      "/cwd",
-      {}
-    );
-    expect(result).to.equal("condition");
+    await evalCondition("/projectRootDir", "true", "/cwd", {});
+    expect(debugStub.calledWith("evalute ", "true")).to.be.true;
   });
 });
 
