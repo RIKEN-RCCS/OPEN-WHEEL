@@ -170,7 +170,7 @@ async function renameInputFileCounterpart(projectRootDir, componentJson, index, 
       }
     }
     for (const inputFile of counterpartJson.inputFiles) {
-      if (!Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
+      if (Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
         for (const dst of inputFile.forwardTo) {
           if (dst.dstNode === componentJson.ID && dst.dstName === oldName) {
             dst.dstName = newName;
@@ -213,7 +213,7 @@ async function renameOutputFileCounterpart(projectRootDir, componentJson, index,
       }
     }
     for (const outputFile of counterpartJson.outputFiles) {
-      if (!Object.prototype.hasOwnProperty.call(outputFile, "origin")) {
+      if (Object.prototype.hasOwnProperty.call(outputFile, "origin")) {
         for (const src of outputFile.origin) {
           if (src.srcNode === componentJson.ID && src.srcName === oldName) {
             src.srcName = newName;

@@ -51,7 +51,7 @@ function calcParamAxisSize(min, max, step) {
   let modifiedMax = max;
   let modifiedMin = min;
   let modifiedStep = step;
-  if (!min.isInteger || !max.isInteger || !step.isInteger) {
+  if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || !Number.isSafeInteger(step) ) {
     const significantDigits = [min, max, step].reduce((a, e)=>{
       const digits = getDigitsAfterTheDecimalPoint(e);
       return Math.max(a, digits);
@@ -92,7 +92,7 @@ function getParamAxisSize(axis) {
     case "min-max-step":
       return calcParamAxisSize(axis.min, axis.max, axis.step);
     default:
-      return new Error("unknown axis.type");
+      throw new Error("unknown axis.type");
   }
 }
 
