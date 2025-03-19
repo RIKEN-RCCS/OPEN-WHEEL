@@ -146,7 +146,13 @@ async function gfptarExtract(projectRootDir, hostID, target, dst, timeout = 60) 
 async function gfptarList(projectRootDir, hostID, target, timeout = 60) {
   await startJWTAgent(projectRootDir, hostID);
   const archivePath = formatGfarmURL(target);
-  return execOnCSGW(projectRootDir, hostID, timeout, "gfptar -v -t", archivePath);
+  const result = await execOnCSGW(projectRootDir, hostID, timeout, "gfptar -t", archivePath);
+  const formatedResult = result.filter((line)=>{
+    return line.startsWith("F");
+  }).map((line)=>{
+    return line.split(" ")[1];
+  });
+  return formatedResult;
 }
 
 /**

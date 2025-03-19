@@ -7,13 +7,12 @@
 const path = require("path");
 const fs = require("fs-extra");
 const { readComponentJsonByID } = require("../core/componentJsonIO.js");
-const { isLocalComponent } = require("../core/workflowComponent.js");
 const { remoteHost } = require("../db/db");
 const { getLogger } = require("../logSettings");
 const { createSsh, getSsh } = require("../core/sshManager");
 const { createTempd } = require("../core/tempd.js");
-const { hasRemoteFileBrowser } = require("../../../common/checkComponent.cjs");
-const { gfls, gfmkdir, gfrm, gfmv } = require("../core/gfarmOperator.js");
+const { hasRemoteFileBrowser, hasGfarmTarBrowser } = require("../../../common/checkComponent.cjs");
+const { gfls, gfmkdir, gfrm, gfmv, gfptarList } = require("../core/gfarmOperator.js");
 const {
   createNewRemoteFile,
   createNewRemoteDir,
@@ -23,7 +22,7 @@ const {
 
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
-  if (!hasRemoteFileBrowser(component) || isLocalComponent(component)) {
+  if (!hasRemoteFileBrowser(component) && !hasGfarmTarBrowser(component)) {
     getLogger(projectRootDir).warn(projectRootDir, `${component.name} does not have remote storage`);
     return;
   }
@@ -174,6 +173,7 @@ const onRenameRemoteFile = remoteFileUtilWrapper.bind(null, renameRemoteFileOrDi
 const onCreateNewGfarmDir = gfarmFileUtilWrapper.bind(null, gfmkdir);
 const onRemoveGfarmFile = gfarmFileUtilWrapper.bind(null, gfrm);
 const onRenameGfarmFile = gfarmFileUtilWrapper.bind(null, gfmv);
+const onListGfarmTarfile = gfarmFileUtilWrapper.bind(null, gfptarList);
 
 module.exports = {
   onRequestRemoteConnection,
@@ -187,5 +187,6 @@ module.exports = {
   onRenameRemoteFile,
   onCreateNewGfarmDir,
   onRemoveGfarmFile,
-  onRenameGfarmFile
+  onRenameGfarmFile,
+  onListGfarmTarfile
 };
