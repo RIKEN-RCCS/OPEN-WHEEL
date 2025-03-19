@@ -7,8 +7,9 @@
 // memo move functions in server/app/core/workflowComponent.js and client/src/component/componentProperty.vue to this file
 
 /**
- *
- * @param component
+ * check if specified component should have remote file browser
+ * @param {object} component - component object which to be checked
+ * @returns {boolean} - true if component should have remote file browser
  */
 function hasRemoteFileBrowser(component) {
   return ["storage", "hpciss"].includes(component.type)
@@ -17,8 +18,20 @@ function hasRemoteFileBrowser(component) {
 }
 
 /**
- *
- * @param component
+ * check if specified component should have gfarm tar browser
+ * @param {object} component - component object which to be checked
+ * @returns {boolean} - true if component should have gfarm tar browser
+ */
+function hasGfarmTarBrowser(component) {
+  return component.type === "hpcisstar"
+    && typeof component.host === "string"
+    && component.host !== "localhost";
+}
+
+/**
+ * check if specified componet is HPCI-SS or not
+ * @param {object} component - component object which to be checked
+ * @returns {boolean} - true if component is HPCI-SS
  */
 function isHPCISS(component) {
   return component.type === "hpciss";
@@ -26,5 +39,6 @@ function isHPCISS(component) {
 
 module.exports = {
   hasRemoteFileBrowser,
+  hasGfarmTarBrowser,
   isHPCISS,
 };

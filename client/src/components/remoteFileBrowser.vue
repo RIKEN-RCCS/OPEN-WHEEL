@@ -225,7 +225,6 @@ export default {
   },
   props: {
     readonly: { type: Boolean, default: true },
-    projectRootDir: { type: String, default: null },
     remoteIconColor: { type: String, required: true }
   },
   data: function () {
@@ -254,7 +253,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
+    ...mapState(["projectRootDir", "selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
     storagePath() {
       return this.copySelectedComponent.storagePath || "./";

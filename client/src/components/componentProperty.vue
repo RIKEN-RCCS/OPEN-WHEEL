@@ -516,16 +516,17 @@
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <file-browser
-              v-if="! hasRemoteFileBrowser"
+              v-if="hasLocalFileBrowser"
               :readonly="false"
-              :project-root-dir="projectRootDir"
             />
             <remote-file-browser
               v-if="hasRemoteFileBrowser"
               ref="rfb"
               :readonly="false"
-              :project-root-dir="projectRootDir"
               :remote-icon-color="remoteIconColor"
+            />
+            <gfarm-tar-browser
+              v-if="hasGfarmTarBrowser"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -538,12 +539,16 @@
 import listForm from "../components/common/listForm.vue";
 import fileBrowser from "../components/fileBrowser.vue";
 import remoteFileBrowser from "../components/remoteFileBrowser.vue";
+import gfarmTarBrowser from "../components/gfarmTarBrowser.vue";
 import { isValidName } from "../lib/utility.js";
 import { isValidInputFilename, isValidOutputFilename } from "../lib/clientUtility.js";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import { propWidth } from "../lib/componentSizes.json";
-import { hasRemoteFileBrowser } from "../../../common/checkComponent.cjs";
+import {
+  hasRemoteFileBrowser,
+  hasGfarmTarBrowser
+} from "../../../common/checkComponent.cjs";
 
 import loadComponentDefinition from "../lib/componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
@@ -581,7 +586,8 @@ export default {
   components: {
     listForm,
     fileBrowser,
-    remoteFileBrowser
+    remoteFileBrowser,
+    gfarmTarBrowser
   },
   data: function () {
     return {
@@ -620,13 +626,11 @@ export default {
     hasRemoteFileBrowser() {
       return hasRemoteFileBrowser(this.selectedComponent);
     },
-    hasHPCISSTarBrowser() {
-      return this.selectedComponent.type === "hpcisstar"
-        && typeof this.selectedComponent.host === "string"
-        && this.selectedComponent.host !== "localhost";
+    hasGfarmTarBrowser() {
+      return hasGfarmTarBrowser(this.selectedComponent);
     },
     hasLocalFileBrowser() {
-      return (!this.hasRemoteFileBrowser && !this.hasHPCISSTarBrowser);
+      return (!this.hasRemoteFileBrowser && !this.hasGfarmTarBrowser);
     },
     disableRemoteSetting() {
       if (this.isStepjobTask) {

@@ -192,8 +192,7 @@ export default {
     myTreeview
   },
   props: {
-    readonly: { type: Boolean, default: true },
-    projectRootDir: { type: String, default: null }
+    readonly: { type: Boolean, default: true }
   },
   data: function () {
     return {
@@ -221,7 +220,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent", "projectState"]),
+    ...mapState(["projectRootDir", "selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent", "projectState"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
     storagePath() {
       return this.copySelectedComponent.storagePath || "/";

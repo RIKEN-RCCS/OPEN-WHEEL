@@ -39,7 +39,8 @@ const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemp
 const { onGetResultFiles } = require("./resultFiles.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
-const { onCreateNewRemoteFile,
+const {
+  onCreateNewRemoteFile,
   onCreateNewRemoteDir,
   onRequestRemoteConnection,
   onGetRemoteGfarmFileList,
@@ -50,7 +51,9 @@ const { onCreateNewRemoteFile,
   onRemoveRemoteFile,
   onCreateNewGfarmDir,
   onRemoveGfarmFile,
-  onRenameGfarmFile } = require("./remoteFileBrowser.js");
+  onRenameGfarmFile,
+  onListGfarmTarfile
+} = require("./remoteFileBrowser.js");
 const { aboutWheel } = require("../core/versionInfo.js");
 const { onImportProject, onExportProject } = require("./projectArchive.js");
 const { getTempdRoot } = require("../core/tempd.js");
@@ -147,6 +150,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getRemoteFileList", onGetRemoteFileList);
   socket.on("getRemoteSNDContents", onGetRemoteSNDContents);
   socket.on("downloadRemote", onRemoteDownload);
+  socket.on("listGfarmTarfile", onListGfarmTarfile);
   //update
   socket.on("renameRemoteFile", onRenameRemoteFile);
   socket.on("renameGfarmFile", onRenameGfarmFile);
