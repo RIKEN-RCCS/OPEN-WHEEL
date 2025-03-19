@@ -78,7 +78,7 @@ async function evalCondition(projectRootDir, condition, cwd, env) {
     conditionExpression += `let ${key}="${value}";\n`;
   }
   conditionExpression += condition;
-  return eval(conditionExpression);
+  return eval?.(conditionExpression);
 }
 
 /**

@@ -17,7 +17,7 @@ const exec = util.promisify(require("node:child_process").exec);
  */
 async function overwriteByRsync(src, dst, ignoreFiles = []) {
   const exclude = ignoreFiles.reduce((a, c)=>{
-    if (typeof e !== "string") {
+    if (typeof c !== "string") {
       return a;
     }
     return `${a} --exclude=${c} `;
