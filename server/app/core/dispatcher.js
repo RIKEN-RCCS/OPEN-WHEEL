@@ -95,18 +95,19 @@ async function replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bu
  */
 async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber) {
   const paramsKeys = Object.keys(params);
+  let data = "";
   let targetNum = 0;
-  return Promise.all(
-    targetFiles.map(async (targetFile, index)=>{
+  targetFiles.forEach((targetFile, index)=>{
       const label = `BULKNUM_${bulkNumber}`;
       const target = replacePathsep(targetFile);
       const targetKey = paramsKeys[index];
       const targetVal = params[targetKey];
-      const data = `${label}_TARGETNUM_${targetNum}_FILE="./${target}"\n${label}_TARGETNUM_${targetNum}_KEY="${targetKey}"\n${label}_TARGETNUM_${targetNum}_VALUE="${targetVal}"\n`;
+      data += `${label}_TARGETNUM_${targetNum}_FILE="./${target}"\n${label}_TARGETNUM_${targetNum}_KEY="${targetKey}"\n${label}_TARGETNUM_${targetNum}_VALUE="${targetVal}"\n`;
       targetNum++;
-      return fs.appendFile(path.resolve(templateRoot, "parameterSet.wheel.txt"), data);
-    })
-  );
+  })
+  if(data !== ""){
+  await fs.writeFile(path.resolve(templateRoot, "parameterSet.wheel.txt"), data);
+  }
 }
 
 /**
