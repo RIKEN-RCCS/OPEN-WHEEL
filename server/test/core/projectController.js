@@ -1605,7 +1605,7 @@ describe("project Controller UT", function () {
       rewProjectController.__set__("gitClean", gitCleanStub);
       rewProjectController.__set__("fs", fs);
       await rewCleanProject("/test/project");
-      sinon.assert.calledOnceWithExactly(removeStub, "/usr/src/server/app/viewer/testProject");
+      sinon.assert.calledOnceWithExactly(removeStub, path.resolve(__dirname, "../../app/viewer/testProject"));
     });
     it("should handle errors gracefully if readComponentJson fails", async ()=>{
       readComponentJsonStub.rejects(new Error("Failed to read component JSON"));
