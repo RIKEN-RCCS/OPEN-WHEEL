@@ -44,7 +44,6 @@ async function deliverFile(src, dst, forceCopy = false) {
  * @returns {object} - result object
  */
 async function deliverFilesOnRemote(recipe) {
-  console.log("DEBUG: *****  deliverFilesOnRemote called with ", recipe);
   const logger = getLogger(recipe.projectRootDir);
   if (!recipe.onSameRemote) {
     logger.warn("deliverFilesOnRemote must be called with onSameRemote flag");
@@ -91,7 +90,6 @@ async function deliverFilesFromRemote(recipe) {
  * @returns {object} - result object
  */
 async function deliverFilesFromHPCISS(recipe) {
-  console.log("DEBUG: deliverFilesFromHPCISS", recipe);
   const withTar = recipe.fromHPCISStar;
   const ssh = getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
   const hostinfo = getSshHostinfo(recipe.projectRootDir, recipe.srcRemotehostID);
