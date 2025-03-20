@@ -12,6 +12,7 @@ const SshClientWrapper = require("ssh-client-wrapper");
 const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
+const rewire = require("rewire");
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
@@ -20,14 +21,14 @@ chai.use(require("chai-json-schema"));
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 //testee
-const Dispatcher = require("../app/core/dispatcher");
-const { eventEmitters } = require("../app/core/global.js");
+const Dispatcher = require("../../app/core/dispatcher");
+const { eventEmitters } = require("../../app/core/global.js");
 eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename } = require("../app/db/db");
-const { createNewProject, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, renameOutputFile } = require("../app/core/projectFilesOperator");
-const { scriptName, pwdCmd, scriptHeader } = require("./testScript");
+const { projectJsonFilename, componentJsonFilename } = require("../../app/db/db.js");
+const { createNewProject, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, renameOutputFile } = require("../../app/core/projectFilesOperator.js");
+const { scriptName, pwdCmd, scriptHeader } = require("../testScript.js");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 const wait = ()=>{
   return new Promise((resolve)=>{
@@ -35,8 +36,8 @@ const wait = ()=>{
   });
 };
 
-const { remoteHost } = require("../app/db/db");
-const { addSsh } = require("../app/core/sshManager");
+const { remoteHost } = require("../../app/db/db.js");
+const { addSsh } = require("../../app/core/sshManager.js");
 
 describe("UT for Dispatcher class", function () {
   this.timeout(0);
@@ -51,6 +52,115 @@ describe("UT for Dispatcher class", function () {
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
       await fs.remove(testDirRoot);
     }
+  });
+
+  describe("#replaceByNunjucksForBulkjob test", async ()=>{
+    const templateRoot = path.resolve(testDirRoot, "templates");
+    const targetFiles = ["template1.txt", "template2.txt"];
+    const params = { key1: "value1", key2: "value2" };
+    const bulkNumber = 42;
+    const templates = {
+      "template1.txt": "Hello, {{ key1 }}!",
+      "template2.txt": "Goodbye, {{ key2 }}!"
+    };
+    const reWireDispatcher = rewire("../../app/core/dispatcher.js");
+    const replaceByNunjucksForBulkjob = reWireDispatcher.__get__("replaceByNunjucksForBulkjob");
+
+    beforeEach(async function () {
+      await fs.ensureDir(templateRoot);
+
+      for (const [file, content] of Object.entries(templates)) {
+        await fs.outputFile(path.join(templateRoot, file), content);
+      }
+    });
+    afterEach(async function () {
+      await fs.remove(testDirRoot);
+    });
+    it("should replace target files and save with new filenames", async function () {
+      await replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber);
+      const newFile1 = path.resolve(templateRoot, `${bulkNumber}.template1.txt`);
+      const newFile2 = path.resolve(templateRoot, `${bulkNumber}.template2.txt`);
+      expect(newFile1).to.be.a.file().with.content("Hello, value1!");
+      expect(newFile2).to.be.a.file().with.content("Goodbye, value2!");
+    });
+    it("should throw an error if a target file does not exist", async function () {
+      const invalidFiles = ["template1.txt", "nonexistent.txt"];
+      await expect(
+        replaceByNunjucksForBulkjob(templateRoot, invalidFiles, params, bulkNumber)
+      ).to.be.rejectedWith(Error);
+    });
+    it("should handle empty targetFiles gracefully", async function () {
+      await replaceByNunjucksForBulkjob(templateRoot, [], params, bulkNumber);
+      //ファイルが作成されていないことを確認
+      const files = await fs.readdir(templateRoot);
+      expect(files).to.have.members(Object.keys(templates));
+    });
+  });
+
+  describe("writeParameterSetFile test", function () {
+    const templateRoot = path.resolve(testDirRoot, "templates");
+    const targetFiles = ["file1.txt", "file2.txt"];
+    const params = { key1: "value1", key2: "value2" };
+    const bulkNumber = 42;
+    const reWireDispatcher = rewire("../../app/core/dispatcher.js");
+    const writeParameterSetFile = reWireDispatcher.__get__("writeParameterSetFile");
+    beforeEach(async function () {
+      await fs.ensureDir(templateRoot);
+
+      for (const file of targetFiles) {
+        await fs.outputFile(path.join(templateRoot, file), "content");
+      }
+    });
+    afterEach(async function () {
+      await fs.remove(testDirRoot);
+    });
+    it("should write parameters to parameterSet.wheel.txt", async function () {
+      const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
+      await writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
+      expect(parameterSetFilePath).to.be.a.file();
+      const expectedContent = [
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_KEY="key1"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_VALUE="value1"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_FILE="./file2.txt"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_KEY="key2"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_VALUE="value2"`
+      ].join("\n") + "\n";
+      const actualContent = await fs.readFile(parameterSetFilePath, "utf-8");
+      expect(actualContent).to.equal(expectedContent);
+    });
+    it("should handle empty targetFiles gracefully", async function () {
+      const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
+      await writeParameterSetFile(templateRoot, [], {}, bulkNumber);
+      expect(parameterSetFilePath).not.to.be.a.path();
+    });
+    it("should append parameters to an existing file", async function () {
+      const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
+      await fs.outputFile(parameterSetFilePath, "Initial content\n");
+      await writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
+      const expectedContent = [
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_KEY="key1"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_0_VALUE="value1"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_FILE="./file2.txt"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_KEY="key2"`,
+        `BULKNUM_${bulkNumber}_TARGETNUM_1_VALUE="value2"`
+      ].join("\n") + "\n";
+      const actualContent = await fs.readFile(parameterSetFilePath, "utf-8");
+      expect(actualContent).to.equal(expectedContent);
+    });
+    it("should throw an error if a file cannot be written", async function () {
+      const nonWritableDir = path.resolve(testDirRoot, "nonWritable");
+      await fs.ensureDir(nonWritableDir);
+      await fs.chmod(nonWritableDir, 0o400); //読み取り専用に設定
+      const invalidTemplateRoot = path.join(nonWritableDir, "templates");
+      await expect(
+        writeParameterSetFile(invalidTemplateRoot, targetFiles, params, bulkNumber)
+      ).to.be.rejectedWith(Error);
+      //権限を元に戻してディレクトリを削除
+      await fs.chmod(nonWritableDir, 0o700);
+      await fs.remove(nonWritableDir);
+    });
   });
 
   describe("#outputFile delivery functionality", async ()=>{

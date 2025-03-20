@@ -439,7 +439,7 @@ function promisifiedSpawn(task, script, options) {
       getLogger(task.projectRootDir).stderr(data.toString());
     });
     cp.on("error", (err)=>{
-      cp.removeAlllisteners("exit");
+      cp.removeAllListeners("exit");
       reject(err);
     });
     cp.on("exit", (rt)=>{

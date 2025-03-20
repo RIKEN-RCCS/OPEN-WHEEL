@@ -7,6 +7,8 @@
 const path = require("path");
 const fs = require("fs-extra");
 const os = require("os");
+const rewire = require("rewire");
+const sinon = require("sinon");
 
 //setup test framework
 const chai = require("chai");
@@ -14,20 +16,28 @@ const expect = chai.expect;
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
+const rewProjectController = rewire("../../app/core/projectController");
+const rewRunProject = rewProjectController.__get__("runProject");
+const stopProject = rewProjectController.__get__("stopProject");
+const rewCleanProject = rewProjectController.__get__("cleanProject");
+const updateProjectState = rewProjectController.__get__("updateProjectState");
+const componentJsonIO = require("../../app/core/componentJsonIO");
+const gitOperator2 = require("../../app/core/gitOperator2");
+const projectFilesOperator = require("../../app/core/projectFilesOperator");
 
 //testee
-const { runProject, cleanProject } = require("../app/core/projectController.js");
+const { runProject, cleanProject } = require("../../app/core/projectController.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../app/db/db");
-const { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } = require("../app/core/projectFilesOperator");
-const { gitAdd, gitCommit } = require("../app/core/gitOperator2.js");
+const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../../app/db/db.js");
+const { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } = require("../../app/core/projectFilesOperator.js");
+const { gitAdd, gitCommit } = require("../../app/core/gitOperator2.js");
 
-const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("./testScript");
+const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("../testScript.js");
 const { sleep } = require("./testUtil.js");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
@@ -1540,6 +1550,145 @@ describe("project Controller UT", function () {
           }
         });
       });
+    });
+    it("returns an error if the project is already running", async ()=>{
+      const rootDispatchers = new Map();
+      rootDispatchers.set(projectRootDir, "dummy");
+      rewProjectController.__set__("rootDispatchers", rootDispatchers);
+      const result = await rewRunProject(projectRootDir);
+      expect(result).to.be.an("error");
+      expect(result.message).to.include("project is already running");
+    });
+  });
+  describe("#stopProject", ()=>{
+    const projectRootDir = "/test/project";
+    let mockDispatcher;
+    const rootDispatchers = new Map();
+    beforeEach(()=>{
+      mockDispatcher = { remove: sinon.stub().resolves() };
+      rootDispatchers.set(projectRootDir, mockDispatcher);
+      rewProjectController.__set__("rootDispatchers", rootDispatchers);
+    });
+    afterEach(()=>{
+      sinon.restore();
+      rootDispatchers.clear();
+    });
+    it("should remove the dispatcher, executers, transferrers, and SSH", async ()=>{
+      await stopProject(projectRootDir);
+      sinon.assert.calledOnce(mockDispatcher.remove);
+      expect(rootDispatchers.has(projectRootDir)).to.be.false;
+    });
+    it("should handle the case where the dispatcher does not exist", async ()=>{
+      rootDispatchers.delete(projectRootDir);
+      await stopProject(projectRootDir);
+      sinon.assert.notCalled(mockDispatcher.remove);
+    });
+  });
+  describe("#cleanProject", ()=>{
+    let pathExistsStub, removeStub, readComponentJsonStub, gitResetHEADStub, gitCleanStub;
+    beforeEach(()=>{
+      pathExistsStub = sinon.stub(fs, "pathExists");
+      removeStub = sinon.stub(fs, "remove");
+      readComponentJsonStub = sinon.stub(componentJsonIO, "readComponentJson");
+      gitResetHEADStub = sinon.stub(gitOperator2, "gitResetHEAD");
+      gitCleanStub = sinon.stub(gitOperator2, "gitClean");
+    });
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should remove the viewer directory if it exists", async ()=>{
+      pathExistsStub.resolves(true);
+      removeStub.resolves();
+      readComponentJsonStub.resolves({ ID: "testProject" });
+      rewProjectController.__set__("readComponentJson", readComponentJsonStub);
+      rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
+      rewProjectController.__set__("gitClean", gitCleanStub);
+      rewProjectController.__set__("fs", fs);
+      await rewCleanProject("/test/project");
+      sinon.assert.calledOnceWithExactly(removeStub, path.resolve(__dirname, "../../app/viewer/testProject"));
+    });
+    it("should handle errors gracefully if readComponentJson fails", async ()=>{
+      readComponentJsonStub.rejects(new Error("Failed to read component JSON"));
+      rewProjectController.__set__("readComponentJson", readComponentJsonStub);
+      rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
+      rewProjectController.__set__("gitClean", gitCleanStub);
+      rewProjectController.__set__("fs", fs);
+
+      try {
+        await rewCleanProject("/test/project");
+      } catch (error) {
+        expect(error.message).to.include("Failed to read component JSON");
+      }
+    });
+    it("should call gitResetHEAD and gitClean", async ()=>{
+      readComponentJsonStub.resolves({ ID: "testProject" });
+      pathExistsStub.resolves(true);
+      removeStub.resolves();
+      gitResetHEADStub.resolves();
+      gitCleanStub.resolves();
+      rewProjectController.__set__("readComponentJson", readComponentJsonStub);
+      rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
+      rewProjectController.__set__("gitClean", gitCleanStub);
+      rewProjectController.__set__("fs", fs);
+      await rewCleanProject("/test/project");
+      sinon.assert.calledOnceWithExactly(gitResetHEADStub, "/test/project");
+      sinon.assert.calledOnceWithExactly(gitCleanStub, "/test/project");
+    });
+  });
+  describe("#updateProjectState", ()=>{
+    let setProjectStateStub, eventEmitStub, eventEmitterStub, eventEmitMock;
+    beforeEach(()=>{
+      setProjectStateStub = sinon.stub(projectFilesOperator, "setProjectState");
+      eventEmitterStub = { emit: sinon.stub() };
+      eventEmitMock = new Map();
+      eventEmitStub = sinon.stub(eventEmitMock, "get");
+    });
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should update project state and emit projectStateChanged event", async ()=>{
+      const projectRootDir = "/test/project";
+      const state = "running";
+      const mockProjectJson = { state: "running" };
+      setProjectStateStub.resolves(mockProjectJson);
+      eventEmitStub.withArgs(projectRootDir).returns(eventEmitterStub);
+      rewProjectController.__set__("setProjectState", setProjectStateStub);
+      rewProjectController.__set__("eventEmitters", eventEmitMock);
+      await updateProjectState(projectRootDir, state);
+      sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
+      sinon.assert.calledOnceWithExactly(eventEmitStub, projectRootDir);
+      sinon.assert.calledOnceWithExactly(eventEmitterStub.emit, "projectStateChanged", mockProjectJson);
+    });
+    it("should update project state but not emit event if no emitter exists", async ()=>{
+      const projectRootDir = "/test/project";
+      const state = "stopped";
+      const mockProjectJson = { state: "stopped" };
+      setProjectStateStub.resolves(mockProjectJson);
+      eventEmitStub.withArgs(projectRootDir).returns(undefined);
+      rewProjectController.__set__("setProjectState", setProjectStateStub);
+      rewProjectController.__set__("eventEmitters", eventEmitMock);
+      await updateProjectState(projectRootDir, state);
+      sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
+      sinon.assert.calledOnceWithExactly(eventEmitStub, projectRootDir);
+      sinon.assert.notCalled(eventEmitterStub.emit);
+    });
+    it("should handle errors if setProjectState fails", async ()=>{
+      const projectRootDir = "/test/project";
+      const state = "failed";
+      setProjectStateStub.rejects(new Error("Failed to update project state"));
+      eventEmitStub.withArgs(projectRootDir).returns(eventEmitterStub);
+      rewProjectController.__set__("setProjectState", setProjectStateStub);
+      rewProjectController.__set__("eventEmitters", eventEmitMock);
+
+      try {
+        await updateProjectState(projectRootDir, state);
+        throw new Error("Expected function to throw");
+      } catch (error) {
+        expect(error.message).to.equal("Failed to update project state");
+      }
+      sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
+      sinon.assert.notCalled(eventEmitStub);
+      sinon.assert.notCalled(eventEmitterStub.emit);
     });
   });
 });
