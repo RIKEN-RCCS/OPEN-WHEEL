@@ -139,7 +139,6 @@ describe("UT for Dispatcher class", function () {
       await fs.outputFile(parameterSetFilePath, "Initial content\n");
       await writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
       const expectedContent = [
-        "Initial content",
         `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
         `BULKNUM_${bulkNumber}_TARGETNUM_0_KEY="key1"`,
         `BULKNUM_${bulkNumber}_TARGETNUM_0_VALUE="value1"`,
