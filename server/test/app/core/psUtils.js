@@ -8,7 +8,7 @@
 //setup test framework
 const { expect } = require("chai");
 const rewire = require("rewire");
-const { getParamSpacev2 } = require("../../app/core/parameterParser");
+const { getParamSpacev2 } = require("../../../app/core/parameterParser");
 
 const sinon = require("sinon");
 const fs = require("fs-extra");
@@ -16,7 +16,7 @@ const path = require("path");
 const nunjucks = require("nunjucks");
 
 //testee
-const psUtils = rewire("../../app/core/psUtils.js");
+const psUtils = rewire("../../../app/core/psUtils.js");
 const makeCmd = psUtils.__get__("makeCmd");
 const getScatterFilesV2 = psUtils.__get__("getScatterFilesV2");
 const scatterFilesV2 = psUtils.__get__("scatterFilesV2");

@@ -12,9 +12,9 @@ chai.use(require("chai-fs"));
 const path = require("path");
 
 //testee
-const { sanitizePath } = require("../../app/core/pathUtils.js");
-const { replacePathsep } = require("../../app/core/pathUtils.js");
-const { convertPathSep } = require("../../app/core/pathUtils.js");
+const { sanitizePath } = require("../../../app/core/pathUtils.js");
+const { replacePathsep } = require("../../../app/core/pathUtils.js");
+const { convertPathSep } = require("../../../app/core/pathUtils.js");
 
 describe("UT for pathUtils class", function () {
   describe("#sanitizePath", ()=>{

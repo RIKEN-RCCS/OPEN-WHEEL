@@ -6,6 +6,8 @@
 
 "use strict";
 const path = require("node:path");
+const util = require("node:util");
+const exec = util.promisify(require("node:child_process").exec);
 const fs = require("fs-extra");
 
 //setup test framework
@@ -17,7 +19,7 @@ const rewire = require("rewire");
 const sinon = require("sinon");
 
 //testee
-const IP = rewire("../app/core/importProject.js");
+const IP = rewire("../../../app/core/importProject.js");
 const isEmptyDir = IP.__get__("isEmptyDir");
 const extractAndReadArchiveMetadata = IP.__get__("extractAndReadArchiveMetadata");
 const importProject = IP.__get__("importProject");
@@ -27,7 +29,7 @@ IP.__set__("projectList", dummyProjectList);
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
-const testArchiveFile = path.resolve(__dirname, "testFiles/WHEEL_project_test_project.tgz");
+const testArchiveFile = path.resolve(__dirname, "../../testFiles/WHEEL_project_test_project.tgz");
 
 describe("import project UT", function () {
   this.timeout(10000);
@@ -70,10 +72,17 @@ describe("import project UT", function () {
     IP.__set__("getHosts", getHosts);
     IP.__set__("askHostMap", askHostMap);
     IP.__set__("rewriteHosts", rewriteHosts);
-    beforeEach(()=>{
+    beforeEach(async ()=>{
       getHosts.resetHistory();
       askHostMap.resetHistory();
       rewriteHosts.resetHistory();
+      await exec(`cp ${testArchiveFile} ${testArchiveFile}.bak`);
+    });
+    afterEach(async ()=>{
+      await exec(`cp ${testArchiveFile}.bak ${testArchiveFile}`);
+    });
+    after(async ()=>{
+      await exec(`rm ${testArchiveFile}.bak`);
     });
     it("should import project and add it to projectList", async ()=>{
       getHosts.onCall(0).returns([]);

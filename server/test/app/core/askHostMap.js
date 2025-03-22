@@ -13,11 +13,15 @@ chai.use(require("chai-as-promised"));
 const rewire = require("rewire");
 const sinon = require("sinon");
 
-const dummyRemoteHost = [{ name: "a" }, { name: "b" }, { name: "c" }];
+const dummyRemoteHost = {
+  getAll() {
+    return [{ name: "a" }, { name: "b" }, { name: "c" }];
+  }
+};
 const emitAll = sinon.stub();
 
 //testee
-const AHM = rewire("../app/core/askHostMap.js");
+const AHM = rewire("../../../app/core/askHostMap.js");
 AHM.__set__("emitAll", emitAll);
 AHM.__set__("remoteHost", dummyRemoteHost);
 const isValidHostMap = AHM.__get__("isValidHostMap");
@@ -32,16 +36,16 @@ describe("hostMapper UT", function () {
       expect(isValidHostMap({ key: "hostname" }, [])).to.be.false;
     });
     it("should return false if one of hostMap's value is not included in remoteHost", ()=>{
-      expect(isValidHostMap({ key: "hostname" }, ["key"])).to.be.false;
+      expect(isValidHostMap({ key: "hostname" }, [{ hostname: "key" }])).to.be.false;
     });
     it("sholud return true if all hostMap entry is valid", ()=>{
-      expect(isValidHostMap({ foo: "a", bar: "b", baz: "b" }, ["foo", "bar"])).to.be.true;
+      expect(isValidHostMap({ foo: "a", bar: "b", baz: "b" }, [{ hostname: "foo" }, { hostname: "bar" }])).to.be.true;
     });
   });
   describe("#askHostMap", ()=>{
     const clientID = "dummyClientID";
     const hostMap = { foo: "a", bar: "b", baz: "b" };
-    const hosts = ["foo", "bar"];
+    const hosts = [{ hostname: "foo" }, { hostname: "bar" }];
     beforeEach(()=>{
       emitAll.reset();
     });

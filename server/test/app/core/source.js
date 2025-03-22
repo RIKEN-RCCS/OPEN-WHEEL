@@ -15,17 +15,17 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
 
 //testee
-const { runProject } = require("../app/core/projectController");
+const { runProject } = require("../../../app/core/projectController");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename } = require("../app/db/db");
-const { createNewProject, updateComponent, createNewComponent, addInputFile, addFileLink, renameOutputFile } = require("../app/core/projectFilesOperator");
+const { projectJsonFilename, componentJsonFilename } = require("../../../app/db/db");
+const { createNewProject, updateComponent, createNewComponent, addInputFile, addFileLink, renameOutputFile } = require("../../../app/core/projectFilesOperator");
 
-const { scriptName, pwdCmd, scriptHeader } = require("./testScript");
+const { scriptName, pwdCmd, scriptHeader } = require("../../testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
 describe("UT for source component", function () {

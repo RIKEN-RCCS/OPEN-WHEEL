@@ -512,7 +512,7 @@ describe("#askPassword", ()=>{
   it("should resolve with data if the user provides a non-null password", async ()=>{
     //emitAllのスタブがコールバックを呼び出すようにする
     //dataがnull以外の値を返す場合 (例: "secretPW")
-    emitAllMock.callsFake((clientID, event, message, callback)=>{
+    emitAllMock.callsFake((clientID, event, hostname, mode, JWTServerURL, callback)=>{
       callback("secretPW");
     });
 
@@ -523,7 +523,7 @@ describe("#askPassword", ()=>{
 
   it("should reject with an error if the user cancels the password input (data === null)", async ()=>{
     //dataがnullを返すパターン
-    emitAllMock.callsFake((clientID, event, message, callback)=>{
+    emitAllMock.callsFake((clientID, event, hostname, mode, JWTServerURL, callback)=>{
       callback(null); //ユーザーがキャンセル
     });
 

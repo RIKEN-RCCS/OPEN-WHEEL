@@ -15,15 +15,14 @@ chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 
 //testee
-const { runProject } = require("../app/core/projectController.js");
+const { runProject } = require("../../../app/core/projectController.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
-const testFileDir = path.resolve("./test/testFiles");
-
+const testFileDir = path.resolve(__dirname, "../../testFiles");
 describe("restart UT", function () {
   this.timeout(0);
   beforeEach(async ()=>{

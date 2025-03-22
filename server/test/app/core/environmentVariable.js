@@ -16,19 +16,19 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
 
 //testee
-const { runProject } = require("../app/core/projectController");
+const { runProject } = require("../../../app/core/projectController");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
-const { eventEmitters } = require("../app/core/global.js");
+const { eventEmitters } = require("../../../app/core/global.js");
 eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 //helper functions
-const { readComponentJson } = require("../app/core/componentJsonIO.js");
-const { addLink, replaceEnv, updateComponent, createNewComponent, createNewProject } = require("../app/core/projectFilesOperator");
-const { componentJsonFilename, statusFilename } = require("../app/db/db");
-const { scriptName, scriptHeader } = require("./testScript");
+const { readComponentJson } = require("../../../app/core/componentJsonIO.js");
+const { addLink, replaceEnv, updateComponent, createNewComponent, createNewProject } = require("../../../app/core/projectFilesOperator");
+const { componentJsonFilename, statusFilename } = require("../../../app/db/db");
+const { scriptName, scriptHeader } = require("../../testScript");
 const logfilename = "env.log";
 const scriptEcho = `${scriptHeader}
 {

@@ -17,7 +17,7 @@ chai.use(require("chai-json-schema"));
 chai.use(require("chai-as-promised"));
 
 const rewire = require("rewire");
-const GFO = rewire("../app/core/gfarmOperator.js");
+const GFO = rewire("../../../app/core/gfarmOperator.js");
 
 //testee
 const checkJWTAgent = GFO.__get__("checkJWTAgent");

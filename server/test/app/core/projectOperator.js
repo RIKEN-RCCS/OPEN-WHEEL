@@ -14,9 +14,9 @@ const sinon = require("sinon");
 const rewire = require("rewire");
 chai.use(require("sinon-chai"));
 
-const { createNewProject } = require("../app/core/projectFilesOperator.js");
+const { createNewProject } = require("../../../app/core/projectFilesOperator.js");
 //testee
-const projectController = rewire("../app/handlers/projectController.js");
+const projectController = rewire("../../../app/handlers/projectController.js");
 const onProjectOperation = projectController.__get__("onProjectOperation");
 const onRunProject = sinon.stub();
 const onStopProject = sinon.stub();

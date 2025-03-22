@@ -16,7 +16,7 @@ chai.use(require("chai-fs"));
 const rewire = require("rewire");
 
 //testee
-const fileManager = rewire("../app/handlers/fileManager.js");
+const fileManager = rewire("../../../app/handlers/fileManager.js");
 const onGetFileList = fileManager.__get__("onGetFileList");
 const onGetSNDContents = fileManager.__get__("onGetSNDContents");
 const onRemoveFile = fileManager.__get__("onRemoveFile");
@@ -30,7 +30,7 @@ const emit = sinon.stub();
 const cb = sinon.stub();
 
 //helper function
-const { gitInit } = require("../app/core/gitOperator2");
+const { gitInit } = require("../../../app/core/gitOperator2");
 
 //fileManager.__set__("getLogger", ()=>{
 //return { tarace: console.log, info: console.log, debug: console.log, error: console.log, warn: console.log };

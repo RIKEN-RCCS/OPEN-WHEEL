@@ -16,10 +16,10 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
 chai.use(require("deep-equal-in-any-order"));
 chai.use(require("chai-as-promised"));
-const { createNewProject, createNewComponent } = require("../app/core/projectFilesOperator");
+const { createNewProject, createNewComponent } = require("../../../app/core/projectFilesOperator");
 
 //testee
-const validateComponents = rewire("../app/core/validateComponents.js");
+const validateComponents = rewire("../../../app/core/validateComponents.js");
 const validateTask = validateComponents.__get__("validateTask");
 const validateStepjobTask = validateComponents.__get__("validateStepjobTask");
 const validateStepjob = validateComponents.__get__("validateStepjob");
@@ -1408,14 +1408,14 @@ describe("validateComponents function", function () {
     fs.writeFileSync(path.resolve(projectRootDir, task.name, "script.sh"), "#!/bin/bash\necho 'Hello'");
 
     //validateComponentsを実行（startComponentIDを指定）
-    const { validateComponents: validateComponentsFunc } = require("../app/core/validateComponents.js");
+    const { validateComponents: validateComponentsFunc } = require("../../../app/core/validateComponents.js");
     const report = await validateComponentsFunc(projectRootDir, task.ID);
     expect(report).to.be.an("array");
   });
 
   it("should call validateComponents without startComponentID", async function () {
     //validateComponentsを実行（startComponentIDを指定しない）
-    const { validateComponents: validateComponentsFunc } = require("../app/core/validateComponents.js");
+    const { validateComponents: validateComponentsFunc } = require("../../../app/core/validateComponents.js");
     const report = await validateComponentsFunc(projectRootDir);
     expect(report).to.be.an("array");
   });

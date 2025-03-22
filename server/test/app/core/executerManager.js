@@ -15,7 +15,7 @@ const { expect } = require("chai");
 const rewire = require("rewire");
 const { EventEmitter } = require("events");
 
-const executerManager = rewire("../../app/core/executerManager");
+const executerManager = rewire("../../../app/core/executerManager");
 const executers = executerManager.__get__("executers");
 const removeExecuters = executerManager.__get__("removeExecuters");
 const isExceededLimit = executerManager.__get__("isExceededLimit");
