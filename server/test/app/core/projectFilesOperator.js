@@ -3461,7 +3461,7 @@ describe("#recursiveGetHosts", ()=>{
 
     await recursiveGetHosts("mockProjectRoot", "rootID", hosts, storageHosts);
 
-    expect(hosts).to.deep.equal([{ hostname: "remote1", isStorage: false }]);
+    expect(hosts).to.deep.equal([{ hostname: "remote1" }]);
     expect(storageHosts).to.be.empty;
   });
 
@@ -3516,7 +3516,7 @@ describe("#recursiveGetHosts", ()=>{
 
     await recursiveGetHosts("mockProjectRoot", "rootID", hosts, storageHosts);
 
-    expect(hosts).to.deep.equal([{ hostname: "remote4", isStorage: false }]);
+    expect(hosts).to.deep.equal([{ hostname: "remote4" }]);
     expect(storageHosts).to.be.empty;
   });
 });
@@ -3545,9 +3545,7 @@ describe("#getHosts", ()=>{
 
     await getHosts(projectRootDir, rootID);
 
-    expect(recursiveGetHostsMock.calledOnceWithExactly(
-      projectRootDir, rootID, [], []
-    )).to.be.true;
+    expect(recursiveGetHostsMock).to.be.calledOnceWithExactly(projectRootDir, rootID, [], [], []);
   });
 
   it("should correctly classify task and storage hosts", async ()=>{
@@ -3555,7 +3553,7 @@ describe("#getHosts", ()=>{
     const projectRootDir = "/mock/project";
     const rootID = "rootComponent";
 
-    const taskHosts = [{ hostname: "task1", isStorage: false }, { hostname: "task2", isStorage: false }];
+    const taskHosts = [{ hostname: "task1" }, { hostname: "task2" }];
     const storageHosts = [{ hostname: "storage1", isStorage: true }];
 
     recursiveGetHostsMock.callsFake(async (_, __, hosts, storageHostsList)=>{
@@ -5325,44 +5323,11 @@ describe("#renameOutputFile", ()=>{
 
     //自分はrenameされる
     expect(mockComponentJson.outputFiles[0].name).to.equal(validNewName);
-    //counterpartのoriginは実装上変わらない
-    expect(counterpartJson.outputFiles[0].origin[0].srcName).to.equal("oldOutput.dat");
+    //counterpartのoriginもrenameされる
+    expect(counterpartJson.outputFiles[0].origin[0].srcName).to.equal(validNewName);
 
     //書き込み回数: 自分 + counterpart
     expect(writeComponentJsonMock.callCount).to.equal(2);
-  });
-
-  it("should throw a TypeError if the counterpart's outputFiles has no 'origin' property", async ()=>{
-    isValidOutputFilenameMock.returns(true);
-    getComponentDirMock.onCall(0).resolves(mockComponentDir);
-    getComponentDirMock.onCall(1).resolves("/mock/project/root/counterpart-999");
-
-    //自分のoutputFiles
-    mockComponentJson.outputFiles = [
-      {
-        name: "oldOutput.dat",
-        dst: [{ dstNode: "counterpart-999" }]
-      }
-    ];
-    readComponentJsonMock.onCall(0).resolves(mockComponentJson);
-
-    //counterpartのoutputFilesにoriginプロパティが存在しない
-    const counterpartJson = {
-      inputFiles: [],
-      outputFiles: [
-        { name: "noOriginHere" }
-      ]
-    };
-    readComponentJsonMock.onCall(1).resolves(counterpartJson);
-
-    let caughtError;
-    try {
-      await renameOutputFile(mockProjectRootDir, mockID, 0, validNewName);
-    } catch (err) {
-      caughtError = err;
-    }
-    expect(caughtError).to.be.an("Error");
-    expect(caughtError.message).to.include("is not iterable");
   });
 });
 

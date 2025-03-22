@@ -14,7 +14,7 @@ const sinon = require("sinon");
 const { createHash } = require("crypto");
 
 //testee
-const rewTempd = rewire("../../app/core/tempd.js");
+const rewTempd = rewire("../../../app/core/tempd.js");
 const getTempd = rewTempd.__get__("getTempd");
 const removeTempd = rewTempd.__get__("removeTempd");
 const createTempd = rewTempd.__get__("createTempd");

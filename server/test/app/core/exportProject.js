@@ -16,13 +16,13 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
 //helper
-const { createNewComponent, createNewProject } = require("../app/core/projectFilesOperator");
-const { gitCommit } = require("../app/core/gitOperator2.js");
-const { projectJsonFilename, componentJsonFilename } = require("../app/db/db.js");
-const { getTempdRoot } = require("../app/core/tempd.js");
+const { createNewComponent, createNewProject } = require("../../../app/core/projectFilesOperator");
+const { gitCommit } = require("../../../app/core/gitOperator2.js");
+const { projectJsonFilename, componentJsonFilename } = require("../../../app/db/db.js");
+const { getTempdRoot } = require("../../../app/core/tempd.js");
 
 //testee
-const { exportProject } = require("../app/core/exportProject.js");
+const { exportProject } = require("../../../app/core/exportProject.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";

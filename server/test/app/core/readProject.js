@@ -18,12 +18,12 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
 //helper
-const { updateComponent, createNewComponent, createNewProject } = require("../app/core/projectFilesOperator");
-const { gitAdd, gitRm, gitStatus, gitCommit } = require("../app/core/gitOperator2.js");
-const { componentJsonFilename, projectJsonFilename } = require("../app/db/db.js");
+const { updateComponent, createNewComponent, createNewProject } = require("../../../app/core/projectFilesOperator.js");
+const { gitAdd, gitRm, gitStatus, gitCommit } = require("../../../app/core/gitOperator2.js");
+const { componentJsonFilename, projectJsonFilename } = require("../../../app/db/db.js");
 
 //testee
-const PFO = rewire("../app/core/projectFilesOperator.js");
+const PFO = rewire("../../../app/core/projectFilesOperator.js");
 const readProject = PFO.__get__("readProject");
 
 let onList = false;

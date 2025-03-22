@@ -43,7 +43,7 @@ const {
   gitLFSTrack,
   gitLFSUntrack,
   isLFS
-} = require("../app/core/gitOperator2.js");
+} = require("../../../app/core/gitOperator2.js");
 
 //test data
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");

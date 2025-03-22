@@ -20,11 +20,11 @@ chai.use((_chai, _)=>{
 });
 const rewire = require("rewire");
 
-const { logFilename } = require("../app/db/db.js");
+const { logFilename } = require("../../app/db/db.js");
 const projectRootDir = path.resolve("hoge");
 
 //testee
-const LOG = rewire("../app/logSettings.js");
+const LOG = rewire("../../app/logSettings.js");
 const getLogger = LOG.__get__("getLogger");
 
 //stubs

@@ -11,10 +11,10 @@ const chai = require("chai");
 const rewire = require("rewire");
 const expect = chai.expect;
 chai.use(require("chai-fs"));
-const { jobScheduler } = require("../../app/db/db");
+const { jobScheduler } = require("../../../app/db/db");
 
 //testee
-const rewTaskUtil = rewire("../../app/core/taskUtil.js");
+const rewTaskUtil = rewire("../../../app/core/taskUtil.js");
 const cancelDispatchedTasks = rewTaskUtil.__get__("cancelDispatchedTasks");
 const killTask = rewTaskUtil.__get__("killTask");
 const killLocalProcess = rewTaskUtil.__get__("killLocalProcess");

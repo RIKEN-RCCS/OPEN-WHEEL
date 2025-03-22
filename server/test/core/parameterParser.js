@@ -12,11 +12,11 @@ const path = require("path");
 const rewire = require("rewire");
 
 //testee
-const { paramVecGenerator } = require("../../app/core/parameterParser");
-const { getParamSpacev2 } = require("../../app/core/parameterParser");
-const { getFilenames } = require("../../app/core/parameterParser");
-const { getParamSize } = require("../../app/core/parameterParser");
-const rewParameterParser = rewire("../../app/core/parameterParser");
+const { paramVecGenerator } = require("../../../app/core/parameterParser");
+const { getParamSpacev2 } = require("../../../app/core/parameterParser");
+const { getFilenames } = require("../../../app/core/parameterParser");
+const { getParamSize } = require("../../../app/core/parameterParser");
+const rewParameterParser = rewire("../../../app/core/parameterParser");
 const getNthParamVec = rewParameterParser.__get__("getNthParamVec");
 const getNthValue = rewParameterParser.__get__("getNthValue");
 const getDigitsAfterTheDecimalPoint = rewParameterParser.__get__("getDigitsAfterTheDecimalPoint ");

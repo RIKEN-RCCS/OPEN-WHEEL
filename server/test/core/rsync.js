@@ -16,7 +16,7 @@ chai.use(require("chai-as-promised"));
 //testee
 const {
   overwriteByRsync
-} = require("../../app/core/rsync");
+} = require("../../../app/core/rsync");
 
 describe("rsync functions", function () {
   const testRoot = "WHEEL_TEST_TMP";

@@ -16,7 +16,7 @@ chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
 
 //testee
-const { exec } = require("../app/core/executer.js");
+const { exec } = require("../../../app/core/executer.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -24,15 +24,15 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 const remoteHome = "/home/testuser";
 
 //helper functions
-const { componentJsonFilename, statusFilename, jobManagerJsonFilename } = require("../app/db/db");
-const { createNewProject, updateComponent, createNewComponent } = require("../app/core/projectFilesOperator");
-const { replacePathsep } = require("../app/core/pathUtils");
+const { componentJsonFilename, statusFilename, jobManagerJsonFilename } = require("../../../app/db/db");
+const { createNewProject, updateComponent, createNewComponent } = require("../../../app/core/projectFilesOperator");
+const { replacePathsep } = require("../../../app/core/pathUtils");
 
-const { scriptName, pwdCmd, scriptHeader, exit } = require("./testScript");
+const { scriptName, pwdCmd, scriptHeader, exit } = require("../../testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
-const { remoteHost } = require("../app/db/db");
-const { createSsh } = require("../app/core/sshManager");
+const { remoteHost } = require("../../../app/db/db");
+const { createSsh } = require("../../../app/core/sshManager");
 
 describe("UT for executer class", function () {
   this.timeout(0);

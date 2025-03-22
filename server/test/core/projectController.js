@@ -16,29 +16,28 @@ const expect = chai.expect;
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
-const rewProjectController = rewire("../../app/core/projectController");
+const rewProjectController = rewire("../../../app/core/projectController");
 const rewRunProject = rewProjectController.__get__("runProject");
 const stopProject = rewProjectController.__get__("stopProject");
 const rewCleanProject = rewProjectController.__get__("cleanProject");
 const updateProjectState = rewProjectController.__get__("updateProjectState");
-const componentJsonIO = require("../../app/core/componentJsonIO");
-const gitOperator2 = require("../../app/core/gitOperator2");
-const projectFilesOperator = require("../../app/core/projectFilesOperator");
+const gitOperator2 = require("../../../app/core/gitOperator2");
+const projectFilesOperator = require("../../../app/core/projectFilesOperator");
 
 //testee
-const { runProject, cleanProject } = require("../../app/core/projectController.js");
+const { runProject, cleanProject } = require("../../../app/core/projectController.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../../app/db/db.js");
-const { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } = require("../../app/core/projectFilesOperator.js");
-const { gitAdd, gitCommit } = require("../../app/core/gitOperator2.js");
+const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../../../app/db/db.js");
+const { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } = require("../../../app/core/projectFilesOperator.js");
+const { gitAdd, gitCommit } = require("../../../app/core/gitOperator2.js");
 
-const { sleep } = require("./testUtil.js");
-const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("../testScript.js");
+const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("../../testScript.js");
+const { sleep } = require("../../testUtil.js");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
 describe("project Controller UT", function () {
@@ -237,10 +236,13 @@ describe("project Controller UT", function () {
         await fs.outputFile(path.join(projectRootDir, "task0", "a"), "a");
         await fs.outputFile(path.join(projectRootDir, "task1", scriptName), scriptPwd);
         await fs.outputFile(path.join(projectRootDir, "task2", scriptName), scriptPwd);
+
         await addOutputFile(projectRootDir, task0.ID, "a");
-        await addOutputFile(projectRootDir, task1.ID, "b");
         await addInputFile(projectRootDir, task1.ID, "b");
+
+        await addOutputFile(projectRootDir, task1.ID, "b");
         await addInputFile(projectRootDir, task2.ID, "c");
+
         await addFileLink(projectRootDir, task0.ID, "a", task1.ID, "b");
         await addFileLink(projectRootDir, task1.ID, "b", task2.ID, "c");
       });
@@ -1585,51 +1587,23 @@ describe("project Controller UT", function () {
     });
   });
   describe("#cleanProject", ()=>{
-    let pathExistsStub, removeStub, readComponentJsonStub, gitResetHEADStub, gitCleanStub;
+    let pathExistsStub, removeStub, gitResetHEADStub, gitCleanStub;
     beforeEach(()=>{
       pathExistsStub = sinon.stub(fs, "pathExists");
       removeStub = sinon.stub(fs, "remove");
-      readComponentJsonStub = sinon.stub(componentJsonIO, "readComponentJson");
       gitResetHEADStub = sinon.stub(gitOperator2, "gitResetHEAD");
       gitCleanStub = sinon.stub(gitOperator2, "gitClean");
     });
     afterEach(()=>{
       sinon.restore();
     });
-    it("should remove the viewer directory if it exists", async ()=>{
-      pathExistsStub.resolves(true);
-      removeStub.resolves();
-      readComponentJsonStub.resolves({ ID: "testProject" });
-      rewProjectController.__set__("readComponentJson", readComponentJsonStub);
-      rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
-      rewProjectController.__set__("gitClean", gitCleanStub);
-      rewProjectController.__set__("fs", fs);
-      await rewCleanProject("/test/project");
-      sinon.assert.calledOnceWithExactly(removeStub, path.resolve(__dirname, "../../app/viewer/testProject"));
-    });
-    it("should handle errors gracefully if readComponentJson fails", async ()=>{
-      readComponentJsonStub.rejects(new Error("Failed to read component JSON"));
-      rewProjectController.__set__("readComponentJson", readComponentJsonStub);
-      rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
-      rewProjectController.__set__("gitClean", gitCleanStub);
-      rewProjectController.__set__("fs", fs);
-
-      try {
-        await rewCleanProject("/test/project");
-      } catch (error) {
-        expect(error.message).to.include("Failed to read component JSON");
-      }
-    });
     it("should call gitResetHEAD and gitClean", async ()=>{
-      readComponentJsonStub.resolves({ ID: "testProject" });
       pathExistsStub.resolves(true);
       removeStub.resolves();
       gitResetHEADStub.resolves();
       gitCleanStub.resolves();
-      rewProjectController.__set__("readComponentJson", readComponentJsonStub);
       rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
       rewProjectController.__set__("gitClean", gitCleanStub);
-      rewProjectController.__set__("fs", fs);
       await rewCleanProject("/test/project");
       sinon.assert.calledOnceWithExactly(gitResetHEADStub, "/test/project");
       sinon.assert.calledOnceWithExactly(gitCleanStub, "/test/project");

@@ -21,14 +21,14 @@ chai.use(require("chai-json-schema"));
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 //testee
-const Dispatcher = require("../../app/core/dispatcher");
-const { eventEmitters } = require("../../app/core/global.js");
+const Dispatcher = require("../../../app/core/dispatcher");
+const { eventEmitters } = require("../../../app/core/global.js");
 eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename } = require("../../app/db/db.js");
-const { createNewProject, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, renameOutputFile } = require("../../app/core/projectFilesOperator.js");
-const { scriptName, pwdCmd, scriptHeader } = require("../testScript.js");
+const { projectJsonFilename, componentJsonFilename } = require("../../../app/db/db.js");
+const { createNewProject, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, renameOutputFile } = require("../../../app/core/projectFilesOperator.js");
+const { scriptName, pwdCmd, scriptHeader } = require("../../testScript.js");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 const wait = ()=>{
   return new Promise((resolve)=>{
@@ -36,8 +36,8 @@ const wait = ()=>{
   });
 };
 
-const { remoteHost } = require("../../app/db/db.js");
-const { addSsh } = require("../../app/core/sshManager.js");
+const { remoteHost } = require("../../../app/db/db.js");
+const { addSsh } = require("../../../app/core/sshManager.js");
 
 describe("UT for Dispatcher class", function () {
   this.timeout(0);
@@ -63,7 +63,7 @@ describe("UT for Dispatcher class", function () {
       "template1.txt": "Hello, {{ key1 }}!",
       "template2.txt": "Goodbye, {{ key2 }}!"
     };
-    const reWireDispatcher = rewire("../../app/core/dispatcher.js");
+    const reWireDispatcher = rewire("../../../app/core/dispatcher.js");
     const replaceByNunjucksForBulkjob = reWireDispatcher.__get__("replaceByNunjucksForBulkjob");
 
     beforeEach(async function () {
@@ -102,7 +102,7 @@ describe("UT for Dispatcher class", function () {
     const targetFiles = ["file1.txt", "file2.txt"];
     const params = { key1: "value1", key2: "value2" };
     const bulkNumber = 42;
-    const reWireDispatcher = rewire("../../app/core/dispatcher.js");
+    const reWireDispatcher = rewire("../../../app/core/dispatcher.js");
     const writeParameterSetFile = reWireDispatcher.__get__("writeParameterSetFile");
     beforeEach(async function () {
       await fs.ensureDir(templateRoot);

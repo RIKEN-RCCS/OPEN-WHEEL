@@ -9,16 +9,16 @@
 const { expect } = require("chai");
 const sinon = require("sinon");
 const rewire = require("rewire");
-const rewWorkflowComponent = rewire("../../app/core/workflowComponent.js");
+const rewWorkflowComponent = rewire("../../../app/core/workflowComponent.js");
 
 //testee
-const { isLocalComponent } = require("../../app/core/workflowComponent");
-const { getComponentDefaultName } = require("../../app/core/workflowComponent");
-const { removeDuplicatedComponent } = require("../../app/core/workflowComponent");
+const { isLocalComponent } = require("../../../app/core/workflowComponent");
+const { getComponentDefaultName } = require("../../../app/core/workflowComponent");
+const { removeDuplicatedComponent } = require("../../../app/core/workflowComponent");
 const isInitialComponent = rewWorkflowComponent.__get__("isInitialComponent");
 const isBehindIfComponent = rewWorkflowComponent.__get__("isBehindIfComponent");
-const { hasChild } = require("../../app/core/workflowComponent");
-const { componentFactory } = require("../../app/core/workflowComponent");
+const { hasChild } = require("../../../app/core/workflowComponent");
+const { componentFactory } = require("../../../app/core/workflowComponent");
 
 describe("UT for workflowComponents class", ()=>{
   describe("#isLocalComponent", ()=>{
