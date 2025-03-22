@@ -210,6 +210,7 @@ async function gitClean(rootDir, filePatterns = "") {
 }
 
 /**
+/**
  * remove origin url
  * @param {string} rootDir - repo's root dir
  * @param {string} name - remote name
@@ -217,7 +218,7 @@ async function gitClean(rootDir, filePatterns = "") {
  */
 async function gitRemoveOrigin(rootDir, name = "origin") {
   const opt = ["remote", "remove", name];
-  return gitPromise(rootDir, opt);
+  return gitPromise(rootDir, opt, rootDir);
 }
 
 /**
@@ -235,7 +236,7 @@ async function gitClone(cwd, depth, rootDir) {
   opt.push("--single-branch");
   opt.push(rootDir);
   opt.push(".");
-  return gitPromise(cwd, opt);
+  return gitPromise(cwd, opt, rootDir);
 }
 
 /**
@@ -246,7 +247,7 @@ async function gitClone(cwd, depth, rootDir) {
  */
 async function gitArchive(rootDir, filename) {
   const opt = ["archive", "-o", filename, "HEAD"];
-  return gitPromise(rootDir, opt);
+  return gitPromise(rootDir, opt, rootDir);
 }
 
 /**
@@ -261,13 +262,13 @@ async function gitConfig(rootDir, key, value, keep = false) {
   const opt = ["config", "--local", key, value];
   if (keep) {
     try {
-      await gitPromise(rootDir, ["config", "--get", key]);
+      await gitPromise(rootDir, ["config", "--get", key], rootDir);
       return;
     } catch (e) {
       //do nothing
     }
   }
-  return gitPromise(rootDir, opt);
+  return gitPromise(rootDir, opt, rootDir);
 }
 
 /**

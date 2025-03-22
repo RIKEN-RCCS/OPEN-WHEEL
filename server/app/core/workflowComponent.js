@@ -466,6 +466,23 @@ function hasNeededOutputFiles(component) {
 }
 
 /**
+ * determine if component has one of more inputFile which is connected to sibling component
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - Component object
+ * @returns  {boolean} -
+ */
+async function hasConnecteddInputFiles(projectRootDir, component) {
+  return component.inputFiles.some((inputFile)=>{
+    if (inputFile.src.length === 0) {
+      false;
+    }
+    return inputFile.src.some((src)=>{
+      return src.srcNode !== "parent" && src.srcNode !== component.parent;
+    });
+  });
+}
+
+/**
  * determine if specified component is initial component
  * @param {string} projectRootDir - project's root path
  * @param {object} component - Component object
@@ -484,11 +501,13 @@ async function isInitialComponent(projectRootDir, component) {
   if (component.type === "viewer") {
     return true;
   }
-  if (component.previous.length > 0) {
+  if (Array.isArray(component.previous) && component.previous.length > 0) {
     return false;
   }
-  //components which only have file-based dependency is initial component
-  //it will be suspended in dispatcher._dispatch()
+  if (Array.isArray(component.inputFiles) && component.inputFiles.length > 0) {
+    const result = await hasConnecteddInputFiles(projectRootDir, component);
+    return !result;
+  }
 
   return true;
 }
