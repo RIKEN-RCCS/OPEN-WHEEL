@@ -24,8 +24,9 @@ const { setComponentStateR } = require("./projectFilesOperator.js");
 async function exportProject(projectRootDir, name = null, mail = null, memo = null) {
   const { dir } = await createTempd(projectRootDir, "exportProject");
   const workDir = await fs.mkdtemp(`${dir}/`);
-  await gitClone(workDir, 1, projectRootDir);
   const tmpProjectRootDir = path.join(workDir, path.basename(projectRootDir));
+  await fs.mkdir(tmpProjectRootDir);
+  await gitClone(tmpProjectRootDir, 1, projectRootDir);
   await gitRemoveOrigin(tmpProjectRootDir);
   await setComponentStateR(tmpProjectRootDir, tmpProjectRootDir, "not-started");
 

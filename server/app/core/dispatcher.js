@@ -273,6 +273,10 @@ class Dispatcher extends EventEmitter {
   }
 
   async _hasDisabledDependency(component) {
+    if ((!component.previous || component.previous.length === 0)
+      && (!component.inputFiles || component.inputFiles.length === 0)) {
+      return false;
+    }
     if (component.previous) {
       for (const ID of component.previous) {
         const previous = await this._getComponent(ID);
@@ -311,9 +315,8 @@ class Dispatcher extends EventEmitter {
    * @returns {object[]} - component list which do not have disabled dependency
    */
   async _removeComponentsWhichHasDisabledDependency(components) {
-    const shouldBeRemoved = await Promise.all(components.map((component)=>{
-      const rt = this._hasDisabledDependency(component);
-      return rt;
+    const shouldBeRemoved = await Promise.all(components.map(async (component)=>{
+      return this._hasDisabledDependency(component);
     }));
     return components.filter((v, index)=>{
       return !shouldBeRemoved[index];
@@ -366,6 +369,7 @@ class Dispatcher extends EventEmitter {
         resolve(state);
       };
       const onError = (err)=>{
+        getLogger(this.projectRootDir).trace(`dispatcher terminated ${this.cwfDir} with ${err}`);
         onStop();
         reject(err);
       };
@@ -588,6 +592,7 @@ class Dispatcher extends EventEmitter {
       await fs.copy(lastDir, dstDir, { overwrite: true, dereference: true }); //dst will be overwrite always
     }
     if (component.keep === 0) {
+      getLogger(this.projectRootDir).debug("remove last instance dir because keep is set to 0");
       await fs.remove(lastDir);
     }
 
@@ -711,10 +716,11 @@ class Dispatcher extends EventEmitter {
       await writeComponentJson(this.projectRootDir, dstDir, newComponent, true);
       await this._delegate(newComponent, true, component);
 
-      if (component.keep === 0) {
-        await fs.remove(srcDir);
-      } else {
+      //remove old instance
+      if (Number.isInteger(component.keep) && component.keep > 0) {
         await keepLoopInstance(component, this.cwfDir);
+      } else if (component.keep === 0 && srcDirName !== component.name) {
+        await fs.remove(srcDir);
       }
 
       if (newComponent.state === "failed") {
@@ -1148,7 +1154,7 @@ class Dispatcher extends EventEmitter {
   async _sourceHandler(component) {
     getLogger(this.projectRootDir).debug("_sourceHandler called", component.name);
     await this._setComponentState(component, "running");
-    this._addNextComponent(component);
+    await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
   }
 

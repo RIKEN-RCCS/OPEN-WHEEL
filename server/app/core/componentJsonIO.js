@@ -29,6 +29,7 @@ function componentJsonReplacer(key, value) {
  * @param {string} projectRootDir - project's root path
  * @param {string} ID - id string for the component
  * @param {boolean} isAbsolute - return absolute path if true
+ * @returns {string} - path of component dir
  */
 async function getComponentDir(projectRootDir, ID, isAbsolute) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
@@ -37,6 +38,20 @@ async function getComponentDir(projectRootDir, ID, isAbsolute) {
     return isAbsolute ? path.resolve(projectRootDir, relativePath) : relativePath;
   }
   return null;
+}
+
+/**
+ * get relative path from srcComponent to targetComponent
+ * @param {string} projectRootDir - project's root path
+ * @param {string} srcComponentID - id of the component which will be starting point to calc relative path
+ * @param {string} targetComponentID - id string of target component
+ * @returns { string} - relative path from srcComponent to targetComponent
+ */
+async function getComponentRelativePathFromAnotherComponent(projectRootDir, srcComponentID, targetComponentID) {
+  const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+  const srcRelativePath = projectJson.componentPath[srcComponentID];
+  const targetRelativePath = projectJson.componentPath[targetComponentID];
+  return path.relative(srcRelativePath, targetRelativePath);
 }
 
 /**
@@ -92,6 +107,7 @@ async function readComponentJsonByID(projectRootDir, ID) {
 
 module.exports = {
   getComponentDir,
+  getComponentRelativePathFromAnotherComponent,
   writeComponentJson,
   writeComponentJsonByID,
   readComponentJson,
