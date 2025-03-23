@@ -10,7 +10,7 @@
       class="d-flex justify-center align-center"
     >
       <v-btn
-        v-if="!connected"
+        v-if="!connected && !loading"
         text="browse files on remotehost"
         size="x-large"
         @click="requestRemoteConnection"
