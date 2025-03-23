@@ -14,6 +14,15 @@
     >
       <template
         v-if="jwtServerURL"
+        #prepend
+      >
+        <v-avatar
+          rounded="0"
+          :image="img"
+        />
+      </template>
+      <template
+        v-if="jwtServerURL"
         #subtitle
       >
         if you forgot passphrase, go to <a
@@ -45,6 +54,8 @@
 </template>
 <script>
 import buttons from "../../components/common/buttons.vue";
+import loadComponentDefinition from "../../lib/componentDefinision.js";
+const componentDefinitionObj = loadComponentDefinition();
 export default {
   name: "PasswordDialog",
   components: {
@@ -60,6 +71,7 @@ export default {
   emits: ["update:modelValue", "password", "cancel"],
   data: function () {
     return {
+      img: componentDefinitionObj["hpciss"].img,
       showPassword: false,
       password: "",
       buttons: [
