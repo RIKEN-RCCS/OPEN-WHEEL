@@ -5,14 +5,28 @@
  */
 <template>
   <div>
-    <v-btn
-      v-if="!connected"
-      text="browse files on remotehost"
-      @click="requestRemoteConnection"
-    />
+    <v-container
+      v-if="!connected || loading"
+      class="d-flex justify-center align-center"
+    >
+      <v-btn
+        v-if="!connected"
+        text="browse files on remotehost"
+        size="x-large"
+        @click="requestRemoteConnection"
+      />
+      <v-btn
+        v-if="loading"
+        size="x-large"
+        :loading="loading"
+        variant="text"
+        class="ma-16"
+      />
+    </v-container>
     <v-data-table
-      v-if="connected"
+      v-if="connected && !loading"
       :items="items"
+      :headers="headers"
       density="compact"
       :search="search"
     />
@@ -26,9 +40,17 @@ export default {
   name: "GfarmTarBrowser",
   data: function () {
     return {
+      loading: false,
       connected: false,
       items: [],
-      search: ""
+      search: "",
+      headers: [
+        {
+          title: "FILES IN ARCHIVE",
+          value: "name",
+          sortable: true
+        }
+      ]
     };
   },
   computed: {
@@ -39,8 +61,12 @@ export default {
   },
   methods: {
     requestRemoteConnection() {
+      this.loading = true;
       SIO.emitGlobal("requestRemoteConnection", this.projectRootDir, this.selectedComponent.ID, (isReady)=>{
         this.connected = isReady;
+        if (!isReady) {
+          this.loading = false;
+        }
         SIO.emitGlobal(
           "listGfarmTarfile",
           this.projectRootDir,
@@ -53,6 +79,7 @@ export default {
             this.items = fileList.map((e)=>{
               return { name: e };
             });
+            this.loading = false;
           });
       });
     }
