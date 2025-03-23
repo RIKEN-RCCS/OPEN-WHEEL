@@ -150,6 +150,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model="host.JWTServerUser"
+                          :disabled="!host.useGfarm"
                           label="HPCI-ID"
                           clearable
                         />
@@ -157,6 +158,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model="host.JWTServerURL"
+                          :disabled="!host.useGfarm"
                           label="JWT server's URL"
                           clearable
                         />
@@ -295,7 +297,7 @@ export default {
   emits: ["update:modelValue", "newHost", "cancel"],
   data: function () {
     return {
-      host: {},
+      host: { JWTServerURL: "https://elpis.hpci.nii.ac.jp/" },
       openPanel: [0],
       pathSep: "/",
       home: "/",
@@ -343,6 +345,10 @@ export default {
     validPortNumber,
     positiveNumber: positiveNumber.bind(null, true),
     submitHost() {
+      if (!this.host.useGfarm) {
+        delete this.host.JWTServerURL;
+        delete this.host.JWTServerUser;
+      }
       this.$emit("newHost", this.host);
       this.closeDialog();
     },
@@ -351,7 +357,7 @@ export default {
       this.closeDialog();
     },
     closeDialog() {
-      this.host = {};
+      this.host = { JWTServerURL: "https://elpis.hpci.nii.ac.jp/" };
       this.$refs.form.reset();
       this.openDialog = false;
     }
