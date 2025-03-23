@@ -9,16 +9,17 @@ const fs = require("fs-extra");
 const { readComponentJsonByID } = require("../core/componentJsonIO.js");
 const { remoteHost } = require("../db/db");
 const { getLogger } = require("../logSettings");
-const { createSsh, getSsh } = require("../core/sshManager");
+const { createSsh, getSsh, askPassword } = require("../core/sshManager");
 const { createTempd } = require("../core/tempd.js");
 const { hasRemoteFileBrowser, hasGfarmTarBrowser } = require("../../../common/checkComponent.cjs");
-const { gfls, gfmkdir, gfrm, gfmv, gfptarList } = require("../core/gfarmOperator.js");
+const { checkJWTAgent, startJWTAgent, gfls, gfmkdir, gfrm, gfmv, gfptarList } = require("../core/gfarmOperator.js");
 const {
   createNewRemoteFile,
   createNewRemoteDir,
   removeRemoteFileOrDirectory,
   renameRemoteFileOrDirectory
 } = require("../core/remoteFileUtils.js");
+const { setJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
 
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
@@ -28,8 +29,26 @@ async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb
   }
   try {
     const id = remoteHost.getID("name", component.host);
-    const hostInfo = remoteHost.get(id);
-    await createSsh(projectRootDir, component.host, hostInfo, socket.id, true);
+    const hostinfo = remoteHost.get(id);
+    await createSsh(projectRootDir, component.host, hostinfo, socket.id, true);
+    if (["hpciss", "hpcisstar"].includes(component.type)) {
+      if (await checkJWTAgent(projectRootDir, hostinfo.id)) {
+        getLogger(projectRootDir).debug(`jwt-agent is already running on ${hostinfo.name}`);
+      } else {
+        getLogger(projectRootDir).debug(`get jwt-server passphrase for ${hostinfo.name}`);
+        const phGfarm = await askPassword(socket.id, hostinfo.name, "passphrase", hostinfo.JWTServerURL);
+        getLogger(projectRootDir).debug(`start jwt-agent on ${hostinfo.name}`);
+        await startJWTAgent(projectRootDir, hostinfo.id, phGfarm);
+        const result = await checkJWTAgent(projectRootDir, hostinfo.id);
+        if (!result) {
+          const err = new Error(`start jwt-agent failed on ${hostinfo.name}`);
+          err.hostinfo = hostinfo;
+          throw err;
+        }
+        getLogger(projectRootDir).debug(`store jwt-server's passphrase ${hostinfo.name}`);
+        setJWTServerPassphrase(projectRootDir, hostinfo.id, phGfarm);
+      }
+    }
   } catch (e) {
     cb(false);
     return;
