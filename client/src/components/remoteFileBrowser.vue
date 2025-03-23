@@ -5,13 +5,32 @@
  */
 <template>
   <div>
-    <v-btn
-      v-if="!connected"
-      text="browse files on remotehost"
-      @click="requestRemoteConnection"
-    />
-    <div v-if="! readonly && connected">
+    <v-container
+      v-if="!connected || loading"
+      class="d-flex justify-center align-center"
+    >
+      <v-btn
+        v-if="!connected"
+        text="browse files on remotehost"
+        size="x-large"
+        @click="requestRemoteConnection"
+      />
+      <v-btn
+        v-if="loading"
+        size="x-large"
+        :loading="loading"
+        variant="text"
+        class="ma-16"
+      />
+    </v-container>
+    <div v-if="! readonly && connected && !loading">
       <v-spacer />
+      <v-avatar
+        v-if="selectedComponent.type === 'hpciss'"
+        :image="img"
+        rounded="0"
+        size="48"
+      />
       <v-tooltip
         location="top"
         text="new folder"
@@ -20,7 +39,7 @@
           <v-btn
             v-bind="props"
             :rounded="false"
-            :color="remoteIconColor"
+            :color="iconColor"
             icon="mdi-folder-plus-outline"
             @click="openDialog('createNewDir')"
           />
@@ -35,7 +54,7 @@
             :disabled="isHPCISS"
             v-bind="props"
             :rounded="false"
-            :color="remoteIconColor"
+            :color="iconColor"
             icon="mdi-file-plus-outline"
             @click="openDialog('createNewFile')"
           />
@@ -49,7 +68,7 @@
           <v-btn
             v-bind="props"
             :rounded="false"
-            :color="remoteIconColor"
+            :color="iconColor"
             icon="mdi-file-move-outline"
             @click="openDialog('rename')"
           />
@@ -63,7 +82,7 @@
           <v-btn
             v-bind="props"
             :rounded="false"
-            :color="remoteIconColor"
+            :color="iconColor"
             icon="mdi-file-remove-outline"
             @click="openDialog('remove')"
           />
@@ -78,7 +97,7 @@
             :disabled="isHPCISS"
             v-bind="props"
             :rounded="false"
-            :color="remoteIconColor"
+            :color="iconColor"
             icon="mdi-upload"
             @click="showUploadDialog"
           />
@@ -93,7 +112,7 @@
             :disabled="isHPCISS"
             v-bind="props"
             :rounded="false"
-            :color="remoteIconColor"
+            :color="iconColor"
             icon="mdi-download"
             @click="download"
           />
@@ -106,7 +125,7 @@
         <template #activator="{ props }">
           <v-btn
             :rounded="false"
-            :color="remoteIconColor"
+            :color="iconColor"
             icon="mdi-share-outline"
             v-bind="props"
             @click="openDialog('share')"
@@ -120,7 +139,7 @@
       />
     </div>
     <my-treeview
-      v-if="connected"
+      v-if="connected && !loading"
       :items="items"
       :load-children="getChildren"
       activatable
@@ -201,6 +220,8 @@ import versatileDialog from "../components/versatileDialog.vue";
 import myTreeview from "../components/common/myTreeview.vue";
 import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "../components/common/fileTreeUtils.js";
 import { hasRemoteFileBrowser, isHPCISS } from "../../../common/checkComponent.cjs";
+import loadComponentDefinition from "../lib/componentDefinision.js";
+const componentDefinitionObj = loadComponentDefinition();
 
 const APINameTable = {
   storage: {
@@ -224,11 +245,11 @@ export default {
     myTreeview
   },
   props: {
-    readonly: { type: Boolean, default: true },
-    remoteIconColor: { type: String, required: true }
+    readonly: { type: Boolean, default: true }
   },
   data: function () {
     return {
+      loading: false,
       connected: false,
       currentDir: null,
       activeItem: null,
@@ -249,7 +270,8 @@ export default {
       ],
       downloadURL: null,
       downloadDialog: false,
-      API: "getRemoteFileList"
+      API: "getRemoteFileList",
+      iconColor: componentDefinitionObj["storage"].color
     };
   },
   computed: {
@@ -260,6 +282,9 @@ export default {
     },
     isHPCISS() {
       return isHPCISS(this.selectedComponent);
+    },
+    img() {
+      return componentDefinitionObj[this.copySelectedComponent.type].img;
     }
   },
   watch: {
@@ -320,8 +345,12 @@ export default {
       return icons[item.type];
     },
     requestRemoteConnection() {
+      this.loading = true;
       SIO.emitGlobal("requestRemoteConnection", this.projectRootDir, this.selectedComponent.ID, (isReady)=>{
         this.connected = isReady;
+        if (!isReady) {
+          this.loading = false;
+        }
       });
     },
     copyToClipboard() {
@@ -339,6 +368,7 @@ export default {
         this.items = fileList
           .filter((e)=>{ return !e.isComponentDir; })
           .map(fileListModifier.bind(null, this.pathSep));
+        this.loading = false;
       };
       const path = hasRemoteFileBrowser(this.selectedComponent) ? this.storagePath : this.selectedComponentAbsPath;
       SIO.emitGlobal(this.getFileListAPI, this.projectRootDir, this.selectedComponent.host, { path, mode: "underComponent" }, cb);

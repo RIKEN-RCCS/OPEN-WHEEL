@@ -598,7 +598,6 @@
               v-if="hasRemoteFileBrowser"
               ref="rfb"
               :readonly="false"
-              :remote-icon-color="remoteIconColor"
             />
             <gfarm-tar-browser
               v-if="hasGfarmTarBrowser"
@@ -624,14 +623,6 @@ import {
   hasRemoteFileBrowser,
   hasGfarmTarBrowser
 } from "../../../common/checkComponent.cjs";
-
-import loadComponentDefinition from "../lib/componentDefinision.js";
-const componentDefinitionObj = loadComponentDefinition();
-
-const colorMap = {
-  hpciss: "#ef8d33",
-  storage: componentDefinitionObj["storage"].color
-};
 
 const isNormalObject = (target)=>{
   const type = typeof target;
@@ -695,9 +686,6 @@ export default {
   computed: {
     ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler", "readOnly"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
-    remoteIconColor() {
-      return colorMap[this.selectedComponent.type];
-    },
     hasRemoteFileBrowser() {
       return hasRemoteFileBrowser(this.selectedComponent);
     },
