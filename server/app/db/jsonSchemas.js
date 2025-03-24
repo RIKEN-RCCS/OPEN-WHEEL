@@ -111,6 +111,8 @@ class TaskSchema extends GeneralWorkflowComponentSchema {
     this.properties.include = stringArraySchema;
     this.properties.exclude = stringArraySchema;
     this.properties.state.enum.push(...["stage-in", "waiting", "queued", "stage-out"]);
+    this.properties.retryCondition = { type: ["string", "null"], default: null };
+    this.properties.retry = { type: ["number", "null"], default: null };
   }
 }
 
