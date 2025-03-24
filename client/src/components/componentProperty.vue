@@ -797,6 +797,9 @@ export default {
     }
   },
   watch: {
+    retryByJS() {
+      this.copySelectedComponent.retryCondition = null;
+    },
     open(newValue) {
       //another component is selected while componentProperty is open
       if (this.reopening || this.open) {
