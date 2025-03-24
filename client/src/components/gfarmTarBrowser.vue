@@ -23,43 +23,86 @@
         class="ma-16"
       />
     </v-container>
-    <v-data-table
+    <div
       v-if="connected && !loading"
-      :items="items"
-      :headers="headers"
-      density="compact"
-      :search="search"
+    >
+      <v-toolbar>
+        <v-avatar
+          :image="img"
+          rounded="0"
+          size="48"
+        />
+        <v-toolbar-title text="files in tar archive" />
+        <v-tooltip
+          location="top"
+          text="remove storage directory"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              :rounded="false"
+              variant="flat"
+              color="red"
+              icon="mdi-trash-can-outline"
+              v-bind="props"
+              @click="dialog=true"
+            />
+          </template>
+        </v-tooltip>
+      </v-toolbar>
+      <v-data-table
+        :items="items"
+        hide-default-header
+        density="compact"
+      />
+    </div>
+    <versatile-dialog
+      v-model="dialog"
+      max-width="40vw"
+      :title="dialogTitle"
+      @ok="submitAndCloseDialog"
+      @cancel="dialog=false"
     />
   </div>
 </template>
 <script>
 import { mapState } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
+import { getTitle } from "../components/common/fileTreeUtils.js";
+import versatileDialog from "../components/versatileDialog.vue";
+import loadComponentDefinition from "../lib/componentDefinision.js";
+const componentDefinitionObj = loadComponentDefinition();
 
 export default {
   name: "GfarmTarBrowser",
+  components: {
+    versatileDialog
+  },
   data: function () {
     return {
       loading: false,
       connected: false,
       items: [],
-      search: "",
-      headers: [
-        {
-          title: "FILES IN ARCHIVE",
-          value: "name",
-          sortable: true
-        }
-      ]
+      dialog: false,
+      dialogTitle: getTitle("removeStoragePath", null)
     };
   },
   computed: {
     ...mapState(["selectedComponent", "projectRootDir"]),
-    storagePath() {
-      return this.selectedComponent.storagePath || "./";
+    img() {
+      return componentDefinitionObj["hpcisstar"].img;
     }
   },
   methods: {
+    submitAndCloseDialog() {
+      SIO.emitGlobal("removeGfarmFile", this.projectRootDir, this.selectedComponent.storagePath, this.selectedComponent.host, (rt)=>{
+        if (!rt) {
+          console.log(rt);
+          return;
+        }
+        this.items = [];
+        this.dialog = false;
+      });
+    },
     requestRemoteConnection() {
       this.loading = true;
       SIO.emitGlobal("requestRemoteConnection", this.projectRootDir, this.selectedComponent.ID, (isReady)=>{
@@ -68,10 +111,10 @@ export default {
           this.loading = false;
         }
         SIO.emitGlobal(
-          "listGfarmTarfile",
+          "getRemoteGfarmTarFileList",
           this.projectRootDir,
           this.selectedComponent.host,
-          this.storagePath,
+          this.selectedComponent.storagePath,
           (fileList)=>{
             if (fileList === null) {
               return;

@@ -143,6 +143,14 @@ async function gfptarExtract(projectRootDir, hostID, target, dst, timeout = 60) 
   return execOnCSGW(projectRootDir, hostID, timeout, "gfptar -v -x", dst, archivePath);
 }
 
+/**
+ * list files in gfarm-tar archive
+ * @param {string} projectRootDir - project's root path
+ * @param {string} hostID - ID of hostinfo which serve gfarm service
+ * @param {string} target - archive directory
+ * @param {number} timeout - timeout in secconds must be positive number
+ * @returns {string} - files in gfarm-tar archive
+ */
 async function gfptarList(projectRootDir, hostID, target, timeout = 60) {
   await startJWTAgent(projectRootDir, hostID);
   const archivePath = formatGfarmURL(target);
@@ -168,7 +176,7 @@ async function gfls(projectRootDir, hostID, target, opt = "-l", timeout = 60) {
   await startJWTAgent(projectRootDir, hostID);
   const pathOnGfarm = formatGfarmURL(target);
   try {
-    return await execOnCSGW(projectRootDir, hostID, timeout, "gfls", opt, pathOnGfarm);
+    return execOnCSGW(projectRootDir, hostID, timeout, "gfls", opt, pathOnGfarm);
   } catch (e) {
     if (!e.output[0].endsWith("no such file or directory\n")) {
       throw e;
@@ -182,12 +190,13 @@ async function gfls(projectRootDir, hostID, target, opt = "-l", timeout = 60) {
  * @param {string} hostID - ID of hostinfo which serve gfarm service
  * @param {string} target - parent dir path
  * @param {number} timeout - timeout in secconds must be positive number
+ * @returns {string} - output from gfrm command
  */
 async function gfrm(projectRootDir, hostID, target, timeout = 60) {
   await startJWTAgent(projectRootDir, hostID);
   const pathOnGfarm = formatGfarmURL(target);
   try {
-    await execOnCSGW(projectRootDir, hostID, timeout, "gfrm -fr", pathOnGfarm);
+    return execOnCSGW(projectRootDir, hostID, timeout, "gfrm -fr", pathOnGfarm);
   } catch (e) {
     if (!e.output[0].endsWith("no such file or directory\n")) {
       throw e;

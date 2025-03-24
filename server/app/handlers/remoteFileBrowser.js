@@ -88,7 +88,21 @@ async function onGetRemoteGfarmFileList(projectRootDir, host, { path: target }, 
     return cb(content);
   } catch (e) {
     getLogger(projectRootDir).error(projectRootDir, "error occurred during reading gfarm directory", e);
-    return cb(null);
+    return cb(false);
+  }
+}
+
+async function onGetRemoteGfarmTarFileList(projectRootDir, host, target, cb) {
+  try {
+    const id = remoteHost.getID("name", host);
+    const filesInTar = await gfptarList(projectRootDir, id, target);
+    if (Number.isInteger(filesInTar)) {
+      return cb(false);
+    }
+    return cb(filesInTar);
+  } catch (e) {
+    getLogger(projectRootDir).error(projectRootDir, "error occurred during reading gfarm directory", e);
+    return cb(false);
   }
 }
 
@@ -160,9 +174,9 @@ async function remoteFileUtilWrapper(func, ...args) {
   const cb = args.pop();
   try {
     const rt = await func(...args);
-    cb(rt === 0 ? true : rt);
+    cb(rt === 0);
   } catch (e) {
-    cb(e);
+    cb(false);
   }
 }
 
@@ -170,17 +184,21 @@ async function remoteFileUtilWrapper(func, ...args) {
  * exec gfarmOperator function and call cb function
  * @param {Function} func - function in gfarmOperator
  * @param {string} projectRootDir - project's root path
- * @param {string} host - ID of hostinfo which serve gfarm service
  * @param {Array} args - rest args of func. last element must be callback function
  */
-async function gfarmFileUtilWrapper(func, projectRootDir, host, ...args) {
+async function gfarmFileUtilWrapper(func, projectRootDir, ...args) {
   const cb = args.pop();
+  const host = args.pop();
   const hostID = remoteHost.getID("name", host);
+  if (!hostID) {
+    getLogger(projectRootDir).error(`${host} not found in remotehost settings`);
+    cb(false);
+  }
   try {
-    const rt = await func(projectRootDir, hostID, ...args);
-    cb(rt === 0 ? true : rt);
+    const output = await func(projectRootDir, hostID, ...args);
+    cb(!(Number.isInteger(output) && output !== 0));
   } catch (e) {
-    cb(e);
+    cb(false);
   }
 }
 
@@ -192,11 +210,11 @@ const onRenameRemoteFile = remoteFileUtilWrapper.bind(null, renameRemoteFileOrDi
 const onCreateNewGfarmDir = gfarmFileUtilWrapper.bind(null, gfmkdir);
 const onRemoveGfarmFile = gfarmFileUtilWrapper.bind(null, gfrm);
 const onRenameGfarmFile = gfarmFileUtilWrapper.bind(null, gfmv);
-const onListGfarmTarfile = gfarmFileUtilWrapper.bind(null, gfptarList);
 
 module.exports = {
   onRequestRemoteConnection,
   onGetRemoteGfarmFileList,
+  onGetRemoteGfarmTarFileList,
   onGetRemoteFileList,
   onGetRemoteSNDContents,
   onRemoteDownload,
@@ -206,6 +224,5 @@ module.exports = {
   onRenameRemoteFile,
   onCreateNewGfarmDir,
   onRemoveGfarmFile,
-  onRenameGfarmFile,
-  onListGfarmTarfile
+  onRenameGfarmFile
 };

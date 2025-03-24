@@ -132,6 +132,21 @@
           />
         </template>
       </v-tooltip>
+      <v-tooltip
+        location="top"
+        text="remove storage directory"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="!isHPCISS"
+            :rounded="false"
+            color="red"
+            icon="mdi-trash-can-outline"
+            v-bind="props"
+            @click="openDialog('removeStoragePath')"
+          />
+        </template>
+      </v-tooltip>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"
@@ -234,7 +249,8 @@ const APINameTable = {
   hpciss: {
     createNewDir: "createGfarmDir",
     remove: "removeGfarmFile",
-    rename: "renameGfarmFile"
+    rename: "renameGfarmFile",
+    removeStoragePath: "removeGfarmFile"
   }
 };
 
@@ -454,6 +470,21 @@ export default {
         this.commitSelectedFile(null);
         this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
         this.activeItem = null;
+        this.clearAndCloseDialog();
+      });
+    },
+    removeStoragePath() {
+      const APIName = APINameTable[this.selectedComponent.type][this.dialog.submitEvent];
+      SIO.emitGlobal(APIName, this.projectRootDir, this.storagePath, this.selectedComponent.host, (rt)=>{
+        if (!rt) {
+          console.log(rt);
+          return;
+        }
+        this.commitSelectedFile(null);
+        this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
+        this.activeItem = null;
+        this.items = [];
+        this.clearAndCloseDialog();
       });
     },
     rename() {
@@ -470,10 +501,10 @@ export default {
         const re = new RegExp(oldName + "$");
         this.activeItem.id = this.activeItem.id.replace(re, newName);
         this.updateSelected(this.activeItem);
+        this.clearAndCloseDialog();
       });
     },
     createNewFileOrDir() {
-      console.log("DEBUG:");
       const name = this.dialog.inputField;
       const fullPath = `${this.currentDir}${this.pathSep}${name}`;
       if (!this.noDuplicate(name)) {
@@ -498,6 +529,7 @@ export default {
         if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
           this.openItems.push(this.activeItem.id);
         }
+        this.clearAndCloseDialog();
       });
     },
     submitAndCloseDialog() {
@@ -507,6 +539,8 @@ export default {
         return this.rename();
       } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
         return this.createNewFileOrDir();
+      } else if (this.dialog.submitEvent === "removeStoragePath") {
+        return this.removeStoragePath();
       } else {
         console.log("unsupported event", this.dialog.submitEvent);
       }

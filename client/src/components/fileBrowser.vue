@@ -42,7 +42,7 @@
             :disabled="isSND"
             v-bind="props"
             icon="mdi-file-move-outline"
-            @click="openDialog('renameFile')"
+            @click="openDialog('rename')"
           />
         </template>
       </v-tooltip>
@@ -55,7 +55,7 @@
             :disabled="isSND"
             v-bind="props"
             icon="mdi-file-remove-outline"
-            @click="openDialog('removeFile')"
+            @click="openDialog('remove')"
           />
         </template>
       </v-tooltip>
@@ -94,7 +94,7 @@
             :disabled="isSND"
             icon="mdi-share-outline"
             v-bind="props"
-            @click="openDialog('shareFile')"
+            @click="openDialog('share')"
           />
         </template>
       </v-tooltip>
@@ -121,18 +121,18 @@
       @cancel="clearAndCloseDialog"
     >
       <template
-        v-if="['createNewDir','createNewFile','renameFile','shareFile'].includes(dialog.submitEvent)"
+        v-if="['createNewDir','createNewFile','rename','share'].includes(dialog.submitEvent)"
         #message
       >
         <v-text-field
-          v-if="['createNewDir','createNewFile','renameFile'].includes(dialog.submitEvent)"
+          v-if="['createNewDir','createNewFile','rename'].includes(dialog.submitEvent)"
           v-model="dialog.inputField"
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
           variant="outlined"
         />
         <v-text-field
-          v-if="dialog.submitEvent === 'shareFile'"
+          v-if="dialog.submitEvent === 'share'"
           v-model="dialog.inputField"
           readonly
           :label="dialog.inputFieldLabel"
@@ -395,8 +395,8 @@ export default {
       this.showCopyButtonTooltipText = false;
     },
     submitAndCloseDialog() {
-      if (this.dialog.submitEvent === "removeFile") {
-        SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
+      if (this.dialog.submitEvent === "remove") {
+        SIO.emitGlobal("remove", this.projectRootDir, this.activeItem.id, (rt)=>{
           if (!rt) {
             console.log(rt);
             return;
@@ -407,7 +407,7 @@ export default {
           this.currentDir = this.selectedComponentAbsPath;
           this.activeItem = null;
         });
-      } else if (this.dialog.submitEvent === "renameFile") {
+      } else if (this.dialog.submitEvent === "rename") {
         const newName = this.dialog.inputField;
         const oldName = this.activeItem.name;
 
@@ -472,7 +472,7 @@ export default {
       });
     },
     openDialog(event) {
-      if (["removeFile", "renameFile", "shareFile"].includes(event)) {
+      if (["remove", "rename", "share"].includes(event)) {
         if (!this.activeItem) {
           console.log("remove or rename without active item is not allowed");
           return;
@@ -482,7 +482,7 @@ export default {
           return;
         }
       }
-      if (event === "shareFile") {
+      if (event === "share") {
         this.dialog.inputField = this.activeItem.id;
       }
 

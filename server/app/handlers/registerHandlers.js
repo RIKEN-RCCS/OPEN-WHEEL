@@ -52,7 +52,7 @@ const {
   onCreateNewGfarmDir,
   onRemoveGfarmFile,
   onRenameGfarmFile,
-  onListGfarmTarfile
+  onGetRemoteGfarmTarFileList
 } = require("./remoteFileBrowser.js");
 const { aboutWheel } = require("../core/versionInfo.js");
 const { onImportProject, onExportProject } = require("./projectArchive.js");
@@ -150,7 +150,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getRemoteFileList", onGetRemoteFileList);
   socket.on("getRemoteSNDContents", onGetRemoteSNDContents);
   socket.on("downloadRemote", onRemoteDownload);
-  socket.on("listGfarmTarfile", onListGfarmTarfile);
+  socket.on("getRemoteGfarmTarFileList", onGetRemoteGfarmTarFileList);
   //update
   socket.on("renameRemoteFile", onRenameRemoteFile);
   socket.on("renameGfarmFile", onRenameGfarmFile);
