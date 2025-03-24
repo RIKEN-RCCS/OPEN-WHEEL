@@ -18,6 +18,11 @@ const { getSsh } = require("../core/sshManager");
  */
 async function execRemote(projectRootDir, host, cmd) {
   const id = remoteHost.getID("name", host);
+  if (!id) {
+    const err = new Error(`${host} not found in remotehost settings`);
+    err.host = host;
+    throw err;
+  }
   const ssh = await getSsh(projectRootDir, id);
   return ssh.exec(cmd);
 }
