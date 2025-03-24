@@ -524,14 +524,14 @@ async function addProject(projectDir, description) {
  * @param {string} oldDir - old projectRootDir
  */
 async function renameProject(id, argNewName, oldDir) {
-  const newName = argNewName.endsWith(suffix) ? argNewName : argNewName + suffix;
+  const newName = argNewName.endsWith(suffix) ? argNewName.slice(0, -suffix.length) : argNewName;
   if (!isValidName(newName)) {
     getLogger().error(newName, "is not allowed for project name");
     throw (new Error("illegal project name"));
   }
-  const newDir = path.resolve(path.dirname(oldDir), newName);
+  const newDir = path.resolve(path.dirname(oldDir), `${newName}${suffix}`);
   if (await fs.pathExists(newDir)) {
-    getLogger().error(newName, "is already exists");
+    getLogger().error(newName, "directory is already exists");
     throw (new Error("already exists"));
   }
 

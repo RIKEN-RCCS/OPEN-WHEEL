@@ -2134,7 +2134,7 @@ describe("#renameProject", ()=>{
 
     await renameProject(mockId, mockNewName, mockOldDir);
 
-    expect(isValidNameMock.calledOnceWithExactly(`${mockNewName}.wheel`)).to.be.true;
+    expect(isValidNameMock.calledOnceWithExactly(mockNewName)).to.be.true;
     expect(fsMock.pathExists.calledOnceWithExactly(`${mockNewDir}.wheel`)).to.be.true;
     expect(fsMock.move.calledOnceWithExactly(mockOldDir, `${mockNewDir}.wheel`)).to.be.true;
     expect(readJsonGreedyMock.calledTwice).to.be.true;
@@ -2157,7 +2157,7 @@ describe("#renameProject", ()=>{
       throw new Error("Expected renameProject to throw");
     } catch (err) {
       expect(err.message).to.equal("illegal project name");
-      expect(isValidNameMock.calledOnceWithExactly(`${mockNewName}.wheel`)).to.be.true;
+      expect(isValidNameMock.calledOnceWithExactly(mockNewName)).to.be.true;
     }
   });
 
@@ -2175,7 +2175,7 @@ describe("#renameProject", ()=>{
       throw new Error("Expected renameProject to throw");
     } catch (err) {
       expect(err.message).to.equal("already exists");
-      expect(isValidNameMock.calledOnceWithExactly(`${mockNewName}.wheel`)).to.be.true;
+      expect(isValidNameMock.calledOnceWithExactly(mockNewName)).to.be.true;
     }
   });
 
@@ -2195,7 +2195,7 @@ describe("#renameProject", ()=>{
     } catch (err) {
       expect(err.message).to.equal("File system error");
       expect(fsMock.pathExists.calledOnceWithExactly(`${mockNewDir}.wheel`)).to.be.true;
-      expect(isValidNameMock.calledOnceWithExactly(`${mockNewName}.wheel`)).to.be.true;
+      expect(isValidNameMock.calledOnceWithExactly(mockNewName)).to.be.true;
       expect(fsMock.move.calledOnceWithExactly(mockOldDir, `${mockNewDir}.wheel`)).to.be.true;
     }
   });

@@ -96,7 +96,7 @@
                 v-model="newVal"
                 :rules="[required]"
                 clearable
-                @keyup.enter="renameProject(props.item.raw, props.index)"
+                @keyup.enter="renameProject(props.item, props.index)"
               />
             </v-sheet>
           </v-menu>
@@ -126,7 +126,7 @@
               <v-textarea
                 v-model="newVal"
                 clearable
-                @keyup.enter="changeDescripton(props.item. props.index)"
+                @keyup.enter="changeDescription(props.item, props.index)"
               />
             </v-sheet>
           </v-menu>
@@ -385,6 +385,7 @@ export default {
         if (!rt) {
           console.log("create project failed", this.selected, this.newProjectName, this.newProjectDescription, path);
           this.forceUpdateProjectList();
+          return;
         }
       });
       this.closeDialog();
@@ -409,15 +410,16 @@ export default {
       form.appendChild(input);
       form.submit();
     },
-    changeDescripton(item, index) {
+    changeDescription(item, index) {
       if (this.newVal === item.description) {
         console.log("project name not changed");
       } else {
-        SIO.emitGlobal("updateProjectDescription", item.path, this.newVal, (rt)=>{
+        const description = this.newVal.trimEnd();
+        SIO.emitGlobal("updateProjectDescription", item.path, description, (rt)=>{
           if (!rt) {
-            console.log("update description failed", item.path, this.newVal);
-            this.forceUpdateProjectList();
+            console.log("update description failed", item.path, description);
           }
+          this.forceUpdateProjectList();
         });
       }
       this.editDescriptionDialog[index] = false;
@@ -430,6 +432,7 @@ export default {
           if (!rt) {
             console.log("rename failed", item.id, this.newVal, item.path);
             this.forceUpdateProjectList();
+            return;
           }
         });
       }
