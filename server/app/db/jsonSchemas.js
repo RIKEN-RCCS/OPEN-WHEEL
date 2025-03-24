@@ -224,6 +224,7 @@ class StepjobSchema extends GeneralWorkflowComponentSchema {
     this.properties.host = { type: "string", default: "localhost" };
     this.properties.useJobScheduler = { type: "boolean", default: false };
     this.properties.queue = { type: ["string", "null"], default: null };
+    this.properties.submitOption = { type: ["string", "null"], default: null };
   }
 }
 
