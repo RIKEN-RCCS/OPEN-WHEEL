@@ -52,7 +52,7 @@ export function getTitle(event, itemName) {
     remove: `Are you sure you want to delete ${itemName} ?`,
     rename: `Rename ${itemName}`,
     share: `Copy file path ${itemName}`,
-    removeStoragePath: `Are you sure you want to remove ALL CONTENTS under storage path?`
+    removeStoragePath: `Are you sure you want to remove ${itemName} and ALL CONTENTS under it?`
   };
   return titles[event];
 }

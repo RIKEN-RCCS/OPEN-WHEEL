@@ -138,7 +138,7 @@
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="!isHPCISS"
+            v-if="isHPCISS"
             :rounded="false"
             color="red"
             icon="mdi-trash-can-outline"
@@ -167,6 +167,7 @@
       v-model="dialog.open"
       max-width="40vw"
       :title="dialog.title"
+      :message="dialog.message"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
     >
@@ -276,6 +277,7 @@ export default {
       dialog: {
         open: false,
         title: "",
+        message: "",
         withInputField: true,
         inputFieldLabel: "",
         inputField: "",
@@ -455,6 +457,7 @@ export default {
     },
     clearAndCloseDialog() {
       this.dialog.title = "";
+      this.dialog.message = "";
       this.dialog.inputFieldLabel = "";
       this.dialog.inputField = "";
       this.dialog.open = false;
@@ -474,8 +477,10 @@ export default {
       });
     },
     removeStoragePath() {
+      this.loading = true;
       const APIName = APINameTable[this.selectedComponent.type][this.dialog.submitEvent];
       SIO.emitGlobal(APIName, this.projectRootDir, this.storagePath, this.selectedComponent.host, (rt)=>{
+        this.loading = false;
         if (!rt) {
           console.log(rt);
           return;
@@ -484,8 +489,8 @@ export default {
         this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
         this.activeItem = null;
         this.items = [];
-        this.clearAndCloseDialog();
       });
+      this.clearAndCloseDialog();
     },
     rename() {
       const APIName = APINameTable[this.selectedComponent.type][this.dialog.submitEvent];
@@ -580,7 +585,11 @@ export default {
         this.dialog.inputField = this.activeItem.id;
       }
 
-      this.dialog.title = getTitle(event, this.activeItem ? this.activeItem.name : null);
+      if (event !== "removeStoragePath") {
+        this.dialog.title = getTitle(event, this.activeItem ? this.activeItem.name : null);
+      } else {
+        this.dialog.message = getTitle(event, this.selectedComponent.storagePath);
+      }
       this.dialog.inputFieldLabel = getLabel(event);
       this.dialog.submitEvent = event;
       this.dialog.open = true;

@@ -44,7 +44,7 @@
               color="red"
               icon="mdi-trash-can-outline"
               v-bind="props"
-              @click="dialog=true"
+              @click="openDialog"
             />
           </template>
         </v-tooltip>
@@ -58,9 +58,9 @@
     <versatile-dialog
       v-model="dialog"
       max-width="40vw"
-      :title="dialogTitle"
+      :message="dialogMessage"
       @ok="submitAndCloseDialog"
-      @cancel="dialog=false"
+      @cancel="closeDialog"
     />
   </div>
 </template>
@@ -83,7 +83,7 @@ export default {
       connected: false,
       items: [],
       dialog: false,
-      dialogTitle: getTitle("removeStoragePath", null)
+      dialogMessage: null
     };
   },
   computed: {
@@ -93,15 +93,25 @@ export default {
     }
   },
   methods: {
+    openDialog() {
+      this.dialogMessage = getTitle("removeStoragePath", this.selectedComponent.storagePath);
+      this.dialog = true;
+    },
+    closeDialog() {
+      this.dialogMessage = null;
+      this.dialog = false;
+    },
     submitAndCloseDialog() {
+      this.loading = true;
       SIO.emitGlobal("removeGfarmFile", this.projectRootDir, this.selectedComponent.storagePath, this.selectedComponent.host, (rt)=>{
+        this.loading = false;
         if (!rt) {
           console.log(rt);
           return;
         }
         this.items = [];
-        this.dialog = false;
       });
+      this.closeDialog();
     },
     requestRemoteConnection() {
       this.loading = true;
