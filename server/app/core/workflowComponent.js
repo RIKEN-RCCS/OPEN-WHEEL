@@ -165,6 +165,13 @@ class Task extends GeneralComponent {
 
     /**exclude filter for recieve files from remote host */
     this.exclude = [];
+
+    //number of retry after task failed
+    this.retry = null;
+
+    //how to determie task is failed or not
+    //this prop can have filename of shell script or statement of javascript
+    this.retryCondition = null;
   }
 }
 
@@ -263,6 +270,9 @@ class Stepjob extends GeneralComponent {
     /*queue name */
     this.useJobScheduler = true;
     this.queue = null;
+
+    /**submit option */
+    this.submitOption = null;
   }
 }
 
