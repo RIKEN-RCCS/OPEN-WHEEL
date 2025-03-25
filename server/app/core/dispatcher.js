@@ -12,7 +12,7 @@ const glob = require("glob");
 const { debounce } = require("perfect-debounce");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename } = require("../db/db.js");
+const { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename, rsyncExcludeOptionOfWheelSystemFiles } = require("../db/db.js");
 const { getSsh, getSshHostinfo } = require("./sshManager.js");
 const { exec } = require("./executer");
 const { getDateString, writeJsonWrapper } = require("../lib/utility.js");
@@ -1067,7 +1067,7 @@ class Dispatcher extends EventEmitter {
         });
         const remotehostID = remoteHost.getID("name", component.host);
         const ssh = getSsh(this.projectRootDir, remotehostID);
-        await ssh.send(targetsToCopy, `${storagePath}/`);
+        await ssh.send(targetsToCopy, `${storagePath}/`, ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]);
       }
     }
     //clean up curentDir
@@ -1127,7 +1127,7 @@ class Dispatcher extends EventEmitter {
         throw new Error("create temporary directory on CSGW failed");
       }
       component.remoteTempDir = output[0];
-      await ssh.send(targetsToCopy, `${component.remoteTempDir}/`);
+      await ssh.send(targetsToCopy, `${component.remoteTempDir}/`, ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]);
 
       const storagePath = component.storagePath;
       if (withTar) {
