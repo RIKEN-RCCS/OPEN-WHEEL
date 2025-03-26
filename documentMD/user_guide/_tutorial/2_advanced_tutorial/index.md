@@ -519,5 +519,199 @@ __dependencyForm__ の記述方法については、TCSのドキュメントや�
 また、個々の機能の詳細な内容については、[リファレンスマニュアル]({{ site.baseurl }}/reference/) をご参照ください。
 
 
+
+### 9. HPCI 共用ストレージの利用
+WHEELには、HPCI共用ストレージにデータを保存するための HPCI-SS および HPCI-SS-tar コンポーネントが用意されています。
+これらのコンポーネントは、storage コンポーネントと同じような機能を持ちますが、ファイルの保存場所としてHPCI共用ストレージを使う点が異なります。
+
+![img](./img/component_library_hpciss.png "HPCI-SS および HPCI-SS-tarコンポーネント")
+
+HPCI-SSコンポーネントでは、HPCI共用ストレージ内の指定したディレクトリ内にファイルを保存します。
+この時同時に転送するファイル数に応じてファイル単位での並列転送(gfpcopyコマンド)か1ファイルの並列転送(gfcpコマンド)をWHEELが自動的に選択して実行します。
+
+HPCI-SS-tarコンポーネントでは、gfptarコマンドを利用して並列にtarアーカイブをHPCI共用ストレージ内に作成します。
+
+それぞれのコンポーネントを使って、ファイルを保存または取り出すサンプルプロジェクトを用意しています。
+これらを用いて実際にHPCI-SSおよびHPCI-SS-tarコンポーネントを使ってみましょう。
+
+1. [HPCI-SS への保存](sample/WHEEL_project_tutorial-HPCISS-store.tgz)
+1. [HPCI-SS からの取り出し](sample/WHEEL_project_tutorial-HPCISS-load.tgz)
+1. [HPCI-SS-tar への保存](sample/WHEEL_project_tutorial-HPCISStar-store.tgz)
+1. [HPCI-SS-tar からの取り出し](sample/WHEEL_project_tutorial-HPCISStar-load.tgz)
+
+#### 9.1 事前準備
+HPCI-SS,HPCI-SS-tarコンポーネントを利用するためには、HPCI共用ストレージの利用申請を行なった上で
+OAuth認証用のJWTトークンを発行しておく必要があります。
+詳しくは、 [こちら](https://www.hpci-office.jp/for_users/hpci_info_manuals) のページにある `HPCI 共用ストレージ 利用マニュアル OAuth 利用編`
+を参照してください。
+
+#### 9.2 チュートリアルデータのダウンロード
+上記リンクより、4つのプロジェクトアーカイブをダウンロードしてください。
+
+#### 9.3 リモートホスト設定
+リモートホスト設定画面を開いて、新規リモートホスト設定を作成してください。
+
+![img](./img/remotehost_screen.png)
+
+この時、`(1) use gfarm` をチェックし、`(2) HPCI-ID` に自分のHPCI-IDを入力してください。
+`(3) JWT server's URL` には JWT server の URL を入力しますが、
+規定値として、https://elpis.hpci.nii.ac.jp が入力されているため変更の必要はありません。
+
+#### 9.4 プロジェクトアーカイブのインポート
+HOME 画面で `IMPORT` ボタンをクリックし、ダウンロードした4つのプロジェクトアーカイブを順次インポートしてください。
+プロジェクトのインポート方法は [こちら]({{ site.baseurl }}/reference/1_home_screen/#プロジェクトのインポート) のドキュメントに記載されています。
+
+インポート時に `fugakuCSGW` のリモートホスト設定を、9.3で作成したリモートホスト設定に割り当ててください。
+
+#### 9.5 HPCI-SS コンポートへの保存
+はじめに、HPCI-SSコンポーネントへの保存を行ないます。
+tutorial-HPCISS-store プロジェクトを開いてください。
+
+![img](./img/workflow_hpciss_store.png)
+
+task0コンポーネントはローカルホストで動作して、次のような構成のファイル、ディレクトリを生成します。
+
+HPCI-SSコンポーネントは、task0コンポーネントから受け取ったデータを `test1` 以下に保存します。
+
+
+プロジェクトを実行する前に、HPCI-SSコンポーネントのプロパティを開いて、 `directory path` にgfarm領域内の自分のアカウントで書き込めるパスを
+指定してください。なお、パスの先頭に `gfarm://` を付けていなくても自動的にgfarm URLに変換して扱われます。
+
+![img](./img/directory_path_HPCISS.png)
+
+プロジェクトを実行すると、初めにcsgwへsshでログインするためのパスフレーズを聞かれます。
+
+![img](./img/ssh_passphrase.png)
+
+このダイアログにssh認証鍵のパスフレーズを入力してOKをクリックすると、
+次にJWT serverのパスフレーズを聞かれます。
+
+![img](./img/jwt_server_passphrase.png)
+
+既にcsgwでjwt-agentが実行されている場合は、こちらのパスフレーズは聞かれることなくプロジェクトの実行が開始されます。
+
+プロジェクトの実行が終了した後で、HPCI-SS0コンポーネントをクリックしてプロパティ画面を表示し、
+`Files` の右側にある下矢印をクリックしてください。
+
+`browse on remotehost` ボタンが表示されるので、これをクリックすることで
+HPCI共用ストレージに保存されたファイル、ディレクトリを見ることができます。
+
+![img](./img/browse_on_remote_button.png)
+
+__パスフレーズについて__
+WHEELは、プロジェクト実行開始時にユーザが入力したパスフレーズは、実行終了時に破棄しています。
+ただし、ssh-agentが起動されていて、sshのconfigで `AddKeysToAgent yes` が設定されていた場合は
+1回目のログイン成功時以降はssh-agentによる認証が行なわれるため、パスフレーズを聞かれることなく
+ssh接続が行なわれます。
+また、jwt-serverのパスフレーズは、富岳csgw上でjwt-agentを起動する際に入力されますが、jwt-agentのプロセスは
+WHEELからは終了させていません。このため、既にjwt-agentが起動している場合はこちらのパスフレーズは入力することなく
+HPCI共用ストレージを利用することができます。
+ただし、富岳csgwはロードバランサが使われているため、jwt-agentを起動していない側のサーバにログイン処理が振り分けられてしまった場合は、
+再度jwt-serverのパスフレーズを入力する必要があります。
+{: .notice--info}
+
+![img](./img/files_hpciss.png)
+
+このエリアには、`directory path` で指定したパス配下のファイル、ディレクトリが表示されています。
+操作方法は、他のコンポーネントと共通ですので、[リファレンスマニュアル]({{ site.baseurl }}/reference/4_component/00_common.html#ファイル操作エリア)を確認してください。
+
+ただし、以下の2点が他のコンポーネントとは異なります。
+
+1. [remove storage directory] ボタンをクリックすると、 `directory path` に指定したディレクトリ自体を削除します。
+2. [新規ファイル作成]、[アップロード]、[ダウンロード]機能は使えません。
+
+__remove storage directoryボタンに関連する補足__
+HPCI-SSコンポーネントでは、保存先として指定したディレクトリが既に存在した場合そのディレクトリの中に
+`WHEEL_TMP_XXXXX` という名前のディレクトリが作成され、さらにその中に先行コンポーネントのoutputFileに指定したファイル、ディレクトリが保存されます。
+これはgfarmのコマンドの仕様により、既存のgfarm上のディレクトリに対してディレクトリをコピーすることができないことによる制約です。
+inputFileに"./"を指定して、directory pathに指定したパス直下にファイル、ディレクトリを保存する設定にした場合
+前述の現象を避けるためには、directory path自体を削除する必要があります。
+このような場合、通常の`remove`ボタンではなく、`remove storage directory` ボタンを使用してください。
+なお、`remove storage directory` ボタンはファイルやディレクトリを選択していた場合でも
+選択中のファイル、ディレクトリだけではなく directory path 自体を削除するのでご注意ください
+{: .notice--info}
+
+続けて、HPCI-SSコンポーネントからデータを取り出すチュートリアルに移ります。
+保存するプロジェクトでHPCI-SSコンポーネントに指定した `directory path` の値が必要になるので
+メモしてから、HOME画面に戻ってください。
+
+#### 9.6 HPCI-SS コンポートからの取り出し
+tutorial-HPCISS-loadプロジェクトを開いてください。
+
+![img](./img/workflow_hpciss_load.png)
+
+こちらのプロジェクトには、HPCI-SSコンポーネントとtaskコンポーネントが1つづつ含まれており
+HPCI-SSコンポーネントが持つファイル、ディレクトリを全てダウンロードして、taskコンポーネント内で `ls -lR` を
+実行することで表示します。
+
+HPCI-SS0コンポーネントを開いて、`directory_path` に 「9.5 HPCI-SSコンポーネントの保存」 と同じ値を設定してください。
+
+コンポーネントプロパティ画面を開いて、下部の `Files` エリアを開き、`browse on remotehost` ボタンをクリックすると
+さきほどと同じファイル、ディレクトリが表示されます。
+
+![img](./img/files_hpciss.png)
+
+プロジェクト実行ボタンをクリックすると実行が始まります。
+ssh、jwt-serverのパスワードの再入力が必要なことがあるので
+ダイアログが表示された場合は、それぞれのパスフレーズを入力してください。
+
+実行が終了すると、task0コンポーネント内に `test1` ディレクトリが作成され
+その中にHPCI-SSコンポーネントに保存されていたファイル、ディレクトリが入っています。
+
+#### 9.7 HPCI-SS-tar コンポートへの保存
+次に、HPCI-SS-tarコンポーネントを使ってアーカイブを保存するサンプルプロジェクトを実行してみましょう。
+
+tutorial-HPCISS-storeプロジェクトを開いてください。
+
+![img](./img/workflow_hpciss_tar_store.png)
+
+こちらのプロジェクトは、tutoraial-HPCISS-storeとほぼ同じですが、HPCI-SSコンポーネントがHPCI-SS-tarコンポーネントに置き換わっています。
+HPCI-SS-tarコンポーネントは、HPCI共用ストレージ内にtarアーカイブ(gzip圧縮)として、ファイルを並列転送して保存するコンポーネントです。
+
+HPCI-SSコンポーネントと同じく、`directory path`を設定してください。ただし、「9.5 HPCI-SSコンポーネントの保存」「9.6 HPCI-SS コンポートからの取り出し」
+で使ったパスを削除していない場合は、違うパスを指定してください。
+
+設定後、プロジェクト実行ボタンをクリックすると実行が始まります。
+
+実行終了後、HPCI-SS-tarコンポーネントをクリックしてコンポーネントプロパティ画面を開き
+下部の `Files` 領域を展開してください。
+
+HPCI-SSコンポーネントと同じく `browse on remotehost` ボタンが表示されるので
+クリックして接続してください。
+
+![img](./img/browse_on_remote_button.png)
+
+tarアーカイブ内に保存されているファイル一覧が表示されます。
+
+![img](./img/files_hpciss-tar.png)
+
+HPCI-SSなど他のコンポーネントと異なり、HPCI-SS-tarコンポーネントでは
+WHEELのGUIから個別のファイルに対する操作(削除、リネームなど)や、新規ディレクトリの作成などは行なえません。
+
+`remove storage directory` ボタンの機能は、HPCI-SSコンポーネントと同じですので
+HPCI共用ストレージ上のtarアーカイブを削除する時には、こちらのボタンをクリックして削除してください。
+
+
+#### 9.8 HPCI-SS-tar コンポートからの取り出し
+最後に、HPCI-SS-tarコンポーネントからファイルを取り出すサンプルプロジェクトを実行してみましょう。
+
+tutorial-HPCISS-loadプロジェクトを開いてください。
+
+![img](./img/workflow_hpciss_tar_load.png)
+
+HPCI-SS-tarコンポーネントのプロパティ画面を表示し、 `directory path` に 「9.7 HPCI-SS-tar コンポートへの保存」 と同じパスを設定してください。
+
+このプロジェクトでは、tarアーカイブに保存されている file2 ファイルのみを取り出してtask0コンポーネントに渡しています。
+
+このようにWHEELのGUI上ではHPCI-SS-tarコンポーネント内のファイルに対して個別の操作は行なえませんが
+ワークフローの中では一部のファイルのみを取り出して他のコンポーネントに渡すことができます。
+
+それでは、プロジェクト実行ボタンをクリックして実行してください。
+
+プロジェクトが終了した後でtask0コンポーネントを開くとHPCI-SS-tarコンポーネントのoutputFileに指定した
+file2のみがtask0コンポーネントに渡っており、アーカイブ内の他のファイルはダウンロードされてこないことが分かります。
+
+![img](./img/result_hpciss_tar_load.png)
+
 --------
 [利用者向けのトップページに戻る]({{ site.baseurl }}/tutorial/)
