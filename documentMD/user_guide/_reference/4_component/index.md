@@ -18,6 +18,8 @@ permalink: /reference/4_component/
 * [PS](06_PS.html)
 * [Workflow](07_Workflow.html)
 * [Storage](08_Storage.html)
+* [HPCI-SS](15_HPCISS.html)
+* [HPCI-SS-tar](16_HPCISStar.html)
 * [Source](09_Source.html)
 * [Viewer](10_Viewer.html)
 * [Stepjob](11_Stepjob.html)
