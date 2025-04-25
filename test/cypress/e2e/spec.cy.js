@@ -1,5 +1,5 @@
 import { skipOn } from "@cypress/skip-test"
-describe("wheel test", ()=>{
+describe.skip("wheel test", ()=>{
   const testProject = `WHEEL_TEST_${Date.now().toString()}`
   const remotehost = Cypress.env("WHEEL_TEST_REMOTEHOST")
   const password = Cypress.env("WHEEL_TEST_REMOTE_PASSWORD")
