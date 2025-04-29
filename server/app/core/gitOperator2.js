@@ -9,6 +9,7 @@ const path = require("path");
 const fs = require("fs-extra");
 const { getLogger } = require("../logSettings");
 const { escapeRegExp } = require("../lib/utility");
+const promiseRetry = require("promise-retry");
 
 /**
  * asynchronous git call
@@ -16,7 +17,7 @@ const { escapeRegExp } = require("../lib/utility");
  * @param {string[]} args - argument list including git's sub command eg. add,commit,init... etc.
  * @param {string} rootDir - repo's root dir
  */
-async function gitPromise(cwd, args, rootDir) {
+async function promisifiedGit(cwd, args, rootDir) {
   return new Promise((resolve, reject)=>{
     const cp = spawn("git", args, { cwd: path.resolve(cwd), env: process.env, shell: true });
     let output = "";
@@ -46,6 +47,27 @@ async function gitPromise(cwd, args, rootDir) {
       }
       resolve(output);
     });
+  });
+}
+
+/**
+ * asynchronous git call with retry
+ * @param {string} cwd - working directory
+ * @param {string[]} args - argument list including git's sub command eg. add,commit,init... etc.
+ * @param {string} rootDir - repo's root dir
+ */
+async function gitPromise(cwd, args, rootDir) {
+  return promiseRetry(async(retry)=>{
+    promisifiedGit(cwd, args, rootDir).catch((err)=>{
+        if (!/fatal: Unable to create '.*index.lock': File exists/.test(err.message)) {
+          throw err;
+        }
+      return retry(err);
+    })
+  },{
+    retries: 10,
+    minTimeout: 300,
+    factor: 1
   });
 }
 
@@ -88,7 +110,7 @@ async function gitInit(rootDir, user, mail) {
 async function gitCommit(rootDir, message = "save project", additionalOption = []) {
   return gitPromise(rootDir, ["commit", "-m", `"${message}"`, ...additionalOption], rootDir)
     .catch((err)=>{
-      if (!/(no changes|nothing)( added | )to commit/m.test(err)) {
+      if (!/(no changes|nothing)( added | )to commit/m.test(err.message)) {
         throw err;
       }
     });
@@ -108,12 +130,7 @@ async function gitAdd(rootDir, filename, updateOnly) {
   }
   args.push("--");
   args.push(filename);
-  return gitPromise(rootDir, args, rootDir)
-    .catch((err)=>{
-      if (!/fatal: Unable to create '.*index.lock': File exists/.test(err)) {
-        throw err;
-      }
-    });
+  return gitPromise(rootDir, args, rootDir);
 }
 
 /**
@@ -125,7 +142,7 @@ async function gitAdd(rootDir, filename, updateOnly) {
 async function gitRm(rootDir, filename) {
   return gitPromise(rootDir, ["rm", "-r", "--cached", "--", filename], rootDir)
     .catch((err)=>{
-      if (!/fatal: pathspec '.*' did not match any files/.test(err)) {
+      if (!/fatal: pathspec '.*' did not match any files/.test(err.message)) {
         throw err;
       }
     });
