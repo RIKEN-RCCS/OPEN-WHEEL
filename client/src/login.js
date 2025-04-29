@@ -5,7 +5,9 @@
  */
 import { createApp } from "vue";
 import Login from "./components/Login.vue";
+import store from "./store";
 import vuetify from "./plugins/vuetify";
 
 createApp(Login).use(vuetify)
+  .use(store)
   .mount("#app");

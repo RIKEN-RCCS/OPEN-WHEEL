@@ -4,55 +4,28 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { EventEmitter } = require("events");
-const path = require("path");
-const fs = require("fs-extra");
-const SBS = require("simple-batch-system");
-const { getSsh } = require("./sshManager");
+const { addRequest, getRequest, delRequest } = require("rwatchd");
 const { getLogger } = require("../logSettings");
-const { getDateString, writeJsonWrapper } = require("../lib/utility");
-const { gatherFiles } = require("./execUtils");
-const { jobScheduler, jobManagerJsonFilename } = require("../db/db");
-const { createStatusFile, createBulkStatusFile } = require("./execUtils");
-const { eventEmitters } = require("./global.js");
-const { formatSshOutput } = require("../lib/utility.js");
-
-const jobManagers = new Map();
+const { jobScheduler } = require("../db/db");
+const { createBulkStatusFile } = require("./execUtils");
 
 /**
  * parse output text from batch server and get return code or jobstatus code from it
+ * @param {string} outputText - output from batch server
+ * @param {RegExp} reCode - regexp to extract value from outputText
  */
 function getFirstCapture(outputText, reCode) {
   const re = new RegExp(reCode, "m");
   const result = re.exec(outputText);
-  return result === null || typeof (result[1]) === "undefined" ? null : result[1];
+  const rt = result === null || typeof (result[1]) === "undefined" ? null : result[1];
+  return rt;
 }
 
-function getStatCommand(JS, jobID, type) {
-  let rt = "";
-  const stat = type !== "bulkjobTask" ? JS.stat : JS.bulkstat;
-  if (typeof (stat) === "string") {
-    rt = `${stat} ${jobID}`;
-  } else if (Array.isArray(stat)) {
-    rt = stat.reduce((a, cmd)=>{
-      return `${a} ; ${cmd} ${jobID}`;
-    }, "");
-    rt = rt.replace(/^ +; +/, "");
-  }
-  return `. /etc/profile;${rt}`;
-}
-
-async function issueStatCmd(statCmd, task, output) {
-  if (task.remotehostID === "localhost") {
-    getLogger(task.projectRootDir).error("local submit is not supported yet!!");
-    return Promise.reject(new Error("local submit is not supported"));
-  }
-  const ssh = getSsh(task.projectRootDir, task.remotehostID);
-  return ssh.exec(statCmd, 30, (data)=>{
-    output.push(data);
-  });
-}
-
+/**
+ * parse output text from batch server and get bulkjob's status code from it
+ * @param {string} outputText - output from batch server
+ * @param {RegExp} reSubCode - regexp to extract value from outputText
+ */
 function getBulkFirstCapture(outputText, reSubCode) {
   const outputs = outputText.split("\n");
   const codeRegex = new RegExp(reSubCode, "m");
@@ -74,9 +47,9 @@ function getBulkFirstCapture(outputText, reSubCode) {
 
 /**
  * check if Job status code means failed or not
- * @param {Object} JS - jobScheduler.json info
- * @param {String} code - job status code get from status check command
- * @returns {Boolean} -
+ * @param {object} JS - jobScheduler.json info
+ * @param {string} code - job status code get from status check command
+ * @returns {boolean} - true means job is failed.
  */
 function isJobFailed(JS, code) {
   const statusList = [];
@@ -89,76 +62,51 @@ function isJobFailed(JS, code) {
   } else {
     return false;
   }
-  return !statusList.includes(code);
+  return statusList.includes(code);
 }
 
 /**
- * check if job is finished or not on remote server
- * @param {Object} JS - jobScheduler.json info
- * @param {Task} task - task instance
- * @returns {number | null} - return code
+ * get status code from job status command's output
+ * @param {object} JS - jobScheduler.json info
+ * @param {object} task - task component instance
+ * @param {number} statCmdRt  - status check command's return code
+ * @param {string} outputText - output from status check command
+ * @returns {number} - return code of job
  */
-async function isFinished(JS, task) {
-  const statCmd = getStatCommand(JS, task.jobID, task.type);
-
-  const output = [];
-  getLogger(task.projectRootDir).trace(task.jobID, "issue stat cmd");
-  const statCmdRt = await issueStatCmd(statCmd, task, output);
-  getLogger(task.projectRootDir).trace(task.jobID, "stat cmd rt =", statCmdRt);
-  const outputText = formatSshOutput(output).join("\n");
-
-  const rtList = Array.isArray(JS.acceptableRt) ? [0, ...JS.acceptableRt] : [0, JS.acceptableRt];
-  if (!rtList.includes(statCmdRt)) {
-    const error = new Error("job stat command failed!");
-    error.cmd = statCmd;
-    error.rt = statCmdRt;
-    error.output = outputText;
-    return Promise.reject(error);
-  }
-
-  const reFinishedState = new RegExp(JS.reFinishedState, "m");
-
-  const finished = reFinishedState.test(outputText);
-  if (!finished) {
-    getLogger(task.projectRootDir).debug(`JobStatusCheck: ${task.jobID} is not yet completed\n${outputText}`);
-    return null;
-  }
-
-  getLogger(task.projectRootDir).debug(`JobStatusCheck: ${task.jobID} is finished\n${outputText}`);
-
+async function getStatusCode(JS, task, statCmdRt, outputText) {
   //for backward compatibility use reJobStatus if JS does not have reJobStatusCode
   const reJobStatusCode = JS.reJobStatusCode || JS.reJobStatus;
   let [jobStatus, jobStatusList] = [0, []];
-
   if (task.type !== "bulkjobTask") {
-    task.jobStatus = getFirstCapture(outputText, reJobStatusCode);
+    task.jobStatus = getFirstCapture(outputText, reJobStatusCode.replace("{{ JOBID }}", task.jobID));
   } else {
-    [jobStatus, jobStatusList] = getBulkFirstCapture(outputText, JS.reSubJobStatusCode);
+    [jobStatus, jobStatusList] = getBulkFirstCapture(outputText, JS.reSubJobStatusCode.replace("{{ JOBID }}", task.jobID));
     getLogger(task.projectRootDir).debug(`JobStatus: ${jobStatus} ,jobStatusList: ${jobStatusList}`);
     task.jobStatus = jobStatus;
   }
-
-  //status.wheel.txtの出力方法を検討する
   if (task.jobStatus === null) {
     getLogger(task.projectRootDir).warn("get job status code failed, code is overwrited by -2");
     task.jobStatus = -2;
   }
   if (statCmdRt !== 0) {
+    if (!JS.acceptableRt.includes(statCmdRt)) {
+      getLogger(task.projectRootDir).warn(`status check command failed (${statCmdRt})`);
+      return -2;
+    }
     getLogger(task.projectRootDir).warn(`status check command returns ${statCmdRt} and it is in acceptableRt: ${JS.acceptableRt}`);
     getLogger(task.projectRootDir).warn("it may fail to get job script's return code. so it is overwirted by 0");
     return 0;
   }
+
   let strRt = 0;
   let [rt, rtCodeList] = [0, []];
-
   if (task.type !== "bulkjobTask") {
-    strRt = getFirstCapture(outputText, JS.reReturnCode);
+    strRt = getFirstCapture(outputText, JS.reReturnCode.replace("{{ JOBID }}", task.jobID));
   } else {
-    [rt, rtCodeList] = getBulkFirstCapture(outputText, JS.reSubReturnCode);
+    [rt, rtCodeList] = getBulkFirstCapture(outputText, JS.reSubReturnCode.replace("{{ JOBID }}", task.jobID));
     getLogger(task.projectRootDir).debug(`rt: ${rt} ,rtCodeList: ${rtCodeList}`);
     strRt = rt;
   }
-
   if (strRt === null) {
     getLogger(task.projectRootDir).warn("get return code failed, code is overwrited by -2");
     return -2;
@@ -167,148 +115,137 @@ async function isFinished(JS, task) {
     getLogger(task.projectRootDir).warn("get return code 6, this job was canceled by stepjob dependency");
     return 0;
   }
-
   if (task.type === "bulkjobTask") {
     await createBulkStatusFile(task, rtCodeList, jobStatusList);
   }
-  return parseInt(strRt, 10);
-}
-
-class JobManager extends EventEmitter {
-  constructor(projectRootDir, hostinfo) {
-    super();
-
-    this.taskListFilename = path.resolve(projectRootDir, `${hostinfo.id}.${jobManagerJsonFilename}`);
-
-    try {
-      const taskStateList = fs.readJsonSync(this.taskListFilename);
-      this.tasks = Array.isArray(taskStateList) ? taskStateList : [];
-    } catch (e) {
-      if (e.code !== "ENOENT") {
-        throw e;
-      }
-      this.tasks = [];
-    }
-    const hostname = hostinfo != null ? hostinfo.host : null;
-    const statusCheckInterval = hostinfo != null ? hostinfo.statusCheckInterval : 5;
-    const maxStatusCheckError = hostinfo != null ? hostinfo.maxStatusCheckError : 10;
-    let statusCheckFailedCount = 0;
-    let statusCheckCount = 0;
-    this.hostinfo = hostinfo;
-    const JS = jobScheduler[hostinfo.jobScheduler];
-
-    if (typeof JS === "undefined") {
-      const err = new Error("invalid job scheduler");
-      err.hostinfo = hostinfo;
-      throw err;
-    }
-    this.batch = new SBS({
-      exec: async (task)=>{
-        if (task.state !== "running") {
-          getLogger(task.projectRootDir).trace(`${task.jobID} status check will not start due to task state is ${task.state}`);
-          return 0;
-        }
-        getLogger(task.projectRootDir).trace(task.jobID, "status check start count=", statusCheckCount);
-        task.jobStartTime = task.jobStartTime || getDateString(true, true);
-        ++statusCheckCount;
-
-        try {
-          task.rt = await isFinished(JS, task);
-
-          if (task.rt === null) {
-            getLogger(task.projectRootDir).trace(task.jobID, "is not finished");
-            return Promise.reject(new Error("not finished"));
-          }
-          getLogger(task.projectRootDir).info(task.jobID, "is finished (remote). rt =", task.rt);
-          task.jobEndTime = task.jobEndTime || getDateString(true, true);
-
-          if (task.rt === 0) {
-            await gatherFiles(task);
-          }
-          await createStatusFile(task);
-
-          return isJobFailed(JS, task.jobStatus) ? task.jobStatus : task.rt;
-        } catch (err) {
-          ++statusCheckFailedCount;
-          err.jobID = task.jobID;
-          err.JS = JS;
-          getLogger(task.projectRootDir).warn("status check failed", err);
-
-          if (statusCheckFailedCount > maxStatusCheckError) {
-            getLogger(task.projectRootDir).warn("max status check error count exceeded");
-            err.jobStatusCheckFaild = true;
-            err.statusCheckFailedCount = statusCheckFailedCount;
-            err.statusCheckCount = statusCheckCount;
-            err.maxStatusCheckError = maxStatusCheckError;
-            return Promise.reject(err);
-          }
-          getLogger(task.projectRootDir).trace(task.jobID, "is not finished");
-          return Promise.reject(new Error("not finished"));
-        }
-      },
-      retry: (e)=>{
-        return e.message === "not finished";
-      },
-      retryLater: true,
-      maxConcurrent: 1,
-      interval: statusCheckInterval * 1000,
-      name: `statusChecker ${hostname}`
-    });
-    this.once("taskListUpdated", this.onTaskListUpdated);
-  }
-
-  async onTaskListUpdated() {
-    getLogger(this.projectRootDir).trace("taskListUpdated");
-
-    if (this.tasks.length > 0) {
-      await writeJsonWrapper(this.taskListFilename, this.tasks);
-    } else {
-      await fs.remove(this.taskListFilename);
-    }
-    this.once("taskListUpdated", this.onTaskListUpdated);
-  }
-
-  addTaskList(task) {
-    this.tasks.push(task);
-    this.emit("taskListUpdated");
-  }
-
-  dropFromTaskList(task) {
-    this.tasks = this.tasks.filter((e)=>{
-      return !e.ID === task.ID && e.sbsID === task.sbsID;
-    });
-    this.emit("taskListUpdated");
-  }
-
-  async register(task) {
-    getLogger(task.projectRootDir).trace("register task", task);
-
-    if (this.tasks.some((e)=>{
-      //task.sbsID is set by executer class
-      return e.sbsID === task.sbsID;
-    })) {
-      getLogger(task.projectRootDir).debug("this task is already registerd", task);
-      return null;
-    }
-    this.addTaskList(task);
-    const rt = await this.batch.qsubAndWait(task);
-    this.dropFromTaskList(task);
-    const ee = eventEmitters.get(task.projectRootDir);
-    ee.emit(task.projetRootDir, "taskStateChanged", task);
-    return rt;
-  }
+  task.rt = parseInt(strRt, 10);
+  return task.rt;
 }
 
 /**
- * register job status check and resolve when the job is finished
+ * create request object to check job status by webAPI on fugaku
+ * @param {object} hostinfo - target host information object
+ * @param {object} task - task component instance
+ * @param {object} JS - jobScheduler.json info
  */
-async function registerJob(hostinfo, task) {
-  if (!jobManagers.has(hostinfo.id)) {
-    const JM = new JobManager(task.projectRootDir, hostinfo);
-    jobManagers.set(hostinfo.id, JM);
-  }
-  const JM = jobManagers.get(hostinfo.id);
-  return JM.register(task);
+function createRequestForWebAPI(hostinfo, task, JS) {
+  const baseURL = "https://api.fugaku.r-ccs.riken.jp/queue/computer";
+  //TODO curlのオプションをaccessTokenを使うものに変更
+  return {
+    cmd: `curl --cert-type P12 -X POST  --cert ${process.env.WHEEL_CERT_FILENAME}:${process.env.WHEEL_CERT_PASSPHRASE} ${baseURL}/`,
+    withoutArgument: true,
+    finishedLocalHook: {
+      cmd: `curl --cert-type P12 -X POST --cert ${process.env.WHEEL_CERT_FILENAME}:${process.env.WHEEL_CERT_PASSPHRASE} ${baseURL}/${task.jobID}`
+    },
+    delimiter: JS.statDelimiter,
+    re: JS.reRunning.replace("{{ JOBID }}", task.jobID),
+    interval: hostinfo.statusCheckInterval * 1000,
+    argument: task.jobID,
+    hostInfo: { host: "localhost" },
+    numAllowFirstFewEmptyOutput: 3,
+    allowEmptyOutput: JS.allowEmptyOutput
+  };
+}
+
+/**
+ * create request object to check job status
+ * @param {object} hostinfo - target host information object
+ * @param {object} task - task component instance
+ * @param {object} JS - jobScheduler.json info
+ */
+function createRequest(hostinfo, task, JS) {
+  return {
+    cmd: task.type !== "bulkjobTask" ? JS.stat : JS.bulkstat,
+    finishedHook: {
+      cmd: task.type !== "bulkjobTask" ? JS.statAfter : JS.bulkstatAfter,
+      withArgument: true
+    },
+    delimiter: JS.statDelimiter,
+    re: JS.reRunning.replace("{{ JOBID }}", task.jobID),
+    interval: hostinfo.statusCheckInterval * 1000,
+    argument: task.jobID,
+    hostInfo: hostinfo,
+    numAllowFirstFewEmptyOutput: 3,
+    allowEmptyOutput: JS.allowEmptyOutput
+  };
+}
+
+/**
+ * register job to job manager
+ * @param {object} hostinfo - target host information object
+ * @param {object} task - task component instance
+ */
+function registerJob(hostinfo, task) {
+  return new Promise((resolve, reject)=>{
+    const JS = jobScheduler[hostinfo.jobScheduler];
+    if (!JS) {
+      const err = new Error("jobscheduler setting not found!");
+      err.hostinfo = hostinfo;
+      reject(err);
+    }
+    const request = hostinfo.useWebAPI ? createRequestForWebAPI(hostinfo, task, JS) : createRequest(hostinfo, task, JS);
+    const id = addRequest(request);
+    const result = getRequest(id);
+    const requestName = `${request.argument} on ${request.hostInfo.host}`;
+    let statusCheckErrorCount = 0;
+    result.event.on("checked", (request)=>{
+      getLogger(task.projectRootDir).debug(`${requestName} status checked ${request.checkCount}`);
+      getLogger(task.projectRootDir).trace(`${requestName} status checked output:\n ${request.lastOutput}`);
+      //TODO accessTokenの更新が必要ならここに入れる
+      if (request.rt !== 0) {
+        statusCheckErrorCount++;
+      }
+      if (JS.maxStatusCheckError < statusCheckErrorCount) {
+        const err = new Error("max status check error exceeded");
+        err.numStatusCheckError = statusCheckErrorCount;
+        err.maxStatusCheckError = JS.maxStatusCheckError;
+        delRequest(id);
+        reject(err);
+      }
+    });
+    result.event.on("finished", async (request)=>{
+      const hook = hostinfo.useWebAPI ? request.finishedLocalHook : request.finishedHook;
+      getLogger(task.projectRootDir).debug(`${requestName} done`);
+      getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${hook.output}`);
+      const reEmpty = /^\s*$/;
+      if (reEmpty.test(hook.output)) {
+        getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`);
+
+        const request2 = structuredClone(request);
+        request2.cmd = hook.cmd;
+        request2.re = reEmpty.toString();
+        delete request2.finishedHook;
+        delete request2.finishedLocalHook;
+
+        const id2 = addRequest(request2);
+        const result2 = getRequest(id2);
+        await new Promise((resolve, reject)=>{
+          result2.event.on("finished", ()=>{
+            hook.rt = result2.rt;
+            hook.output = result2.lastOutput;
+            resolve();
+          });
+          result2.event.on("failed", (args)=>{
+            reject(args);
+          });
+        });
+      }
+      const rt = await getStatusCode(JS, task, hook.rt, hook.output);
+      if (isJobFailed(JS, task.jobStatus)) {
+        return reject(task.jobStatus);
+      }
+      return resolve(rt);
+    });
+    //faild event does not mean job failure
+    result.event.on("failed", (request, hookErr)=>{
+      const err = new Error("fatal error occurred during job status check");
+      err.request = request;
+      if (typeof hookErr !== "undefined") {
+        err.hookErr = hookErr;
+      }
+      reject(err);
+    });
+  });
 }
 
 module.exports = {

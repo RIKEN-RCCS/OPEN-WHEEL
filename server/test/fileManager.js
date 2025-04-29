@@ -36,7 +36,7 @@ const { gitInit } = require("../app/core/gitOperator2");
 //return { tarace: console.log, info: console.log, debug: console.log, error: console.log, warn: console.log };
 //});
 
-const testDirRoot = "WHEEL_TEST_TMP";
+const testDirRoot = path.resolve("./WHEEL_TEST_TMP");
 
 describe("fileManager UT", ()=>{
   beforeEach(async function () {
@@ -205,21 +205,21 @@ describe("fileManager UT", ()=>{
       expect(path.join(testDirRoot, "hoge")).to.be.a.file();
     });
   });
-  describe.skip("#downloadFile (not implemented for now)", ()=>{
+  describe("#downloadFile", ()=>{
     it("should send file", async ()=>{
-      await onDownload(emit, "dummy", { path: testDirRoot, name: "foo_1" }, cb);
+      await onDownload(testDirRoot, path.resolve(testDirRoot, "foo_1"), cb);
       expect(cb).to.have.been.calledOnce;
-      expect(cb).to.have.been.calledWith(true);
-      expect(emit).to.have.been.calledOnce;
-      expect(emit).to.have.been.calledWith("downloadData");
-      const sendData = emit.args[0][1];
-      expect(sendData.toString()).to.equal("foo_1");
+      expect(cb).to.have.been.calledWithMatch(/\/.*\/.*\/foo_1/);
     });
-    it("should not send directory", async ()=>{
-      await onDownload(emit, "dummy", { path: testDirRoot, name: "foo" }, cb);
+    it("should send directory as zipped archive", async ()=>{
+      await onDownload(testDirRoot, path.resolve(testDirRoot, "foo"), cb);
       expect(cb).to.have.been.calledOnce;
-      expect(cb).to.have.been.calledWith(false);
-      expect(emit).not.to.have.been.called;
+      expect(cb).to.have.been.calledWithMatch(/\/.*\/.*\/foo.zip/);
+    });
+    it("should send multi files as zipped archive", async ()=>{
+      await onDownload(testDirRoot, path.join(testDirRoot, "foo_*"), cb);
+      expect(cb).to.have.been.calledOnce;
+      expect(cb).to.have.been.calledWithMatch(/\/.*\/.*\/multifile.zip/);
     });
   });
   describe("#createNewFile", ()=>{

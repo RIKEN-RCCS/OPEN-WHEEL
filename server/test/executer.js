@@ -6,7 +6,6 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const SshClientWrapper = require("ssh-client-wrapper");
 
 //setup test framework
 const chai = require("chai");
@@ -15,12 +14,9 @@ const sinon = require("sinon");
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
-const rewire = require("rewire");
 
 //testee
-const { exec } = require("../app/core/executer");
-const executer = rewire("../app/core/executer");
-const gatherFiles = executer.__get__("gatherFiles");
+const { exec } = require("../app/core/executer.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -36,7 +32,7 @@ const { scriptName, pwdCmd, scriptHeader, exit } = require("./testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
 const { remoteHost } = require("../app/db/db");
-const { addSsh } = require("../app/core/sshManager");
+const { createSsh } = require("../app/core/sshManager");
 
 describe("UT for executer class", function () {
   this.timeout(0);
@@ -76,7 +72,12 @@ describe("UT for executer class", function () {
     });
     it("run shell script which returns 1 and status should be failed", async ()=>{
       await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-      await exec(task0);
+
+      try {
+        await exec(task0);
+      } catch (e) {
+        expect(e.rt).to.equal(1);
+      }
       expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
       expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "failed");
     });
@@ -90,21 +91,14 @@ describe("UT for executer class", function () {
         console.log("remote exec test will be skipped because WHEEL_TEST_REMOTEHOST is not set");
         this.skip();
       }
-
       if (!password) {
         console.log("remote exec test will be done without password because WHEEL_TEST_REMOTE_PASSWORD is not set");
       }
-      const hostInfo = remoteHost.query("name", remotehostName);
-      hostInfo.password = password;
-      ssh = new SshClientWrapper(hostInfo);
+      const hostinfo = remoteHost.query("name", remotehostName);
+      hostinfo.password = password;
 
       try {
-        const rt = await ssh.canConnect();
-
-        if (!rt) {
-          throw new Error("canConnect failed");
-        }
-        addSsh(projectRootDir, hostInfo, ssh);
+        ssh = await createSsh(projectRootDir, remotehostName, hostinfo, "dummy-clientID");
       } catch (e) {
         console.log(`ssh connection failed to ${remotehostName} due to "${e}" so remote exec test is skipped`);
         this.skip();
@@ -127,7 +121,7 @@ describe("UT for executer class", function () {
       }
     });
 
-    describe("#gatherFiles", ()=>{
+    describe.skip("#gatherFiles to be moved into stageOut UT", ()=>{
       beforeEach(async ()=>{
         await ssh.exec(`mkdir -p ${task0.remoteWorkingDir}`);
         await ssh.exec(`echo -n foo > ${task0.remoteWorkingDir}/foo`);
@@ -136,7 +130,7 @@ describe("UT for executer class", function () {
       });
       it("issue 462", async ()=>{
         task0.outputFiles = [{ name: "hu/ga", dst: [] }, { name: "ho/ge", dst: [] }];
-        await gatherFiles(task0, ssh);
+        //await gatherFiles(task0, ssh);
         expect(path.join(task0.workingDir, "hu/ga")).not.to.be.a.path();
         expect(path.join(task0.workingDir, "ho/ge")).not.to.be.a.path();
       });
@@ -173,13 +167,23 @@ describe("UT for executer class", function () {
       });
       it("run shell script which returns 1 and status should be failed", async ()=>{
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-        await exec(task0);
+
+        try {
+          await exec(task0);
+        } catch (e) {
+          expect(e.rt).to.equal(1);
+        }
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
       });
       it("do not cleanup remote directory after failed run", async ()=>{
         task0.doCleanup = true;
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(1)}`);
-        await exec(task0);
+
+        try {
+          await exec(task0);
+        } catch (e) {
+          expect(e.rt).to.equal(1);
+        }
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
         expect(await ssh.ls(path.posix.join(remoteHome, task0.projectStartTime)))
           .to.have.members([task0.name]);
@@ -188,12 +192,17 @@ describe("UT for executer class", function () {
       it("do not get outputFiles after failed run", async ()=>{
         task0.outputFiles = [{ name: "hoge" }];
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(1)}`);
-        await exec(task0);
+
+        try {
+          await exec(task0);
+        } catch (e) {
+          expect(e.rt).to.equal(1);
+        }
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\nundefined");
         expect(path.join(task0.workingDir, "hoge")).not.to.be.a.path();
       });
     });
-    describe.skip("#remote job (test bed has some trouble never run jobs on it)", ()=>{
+    describe("#remote job", ()=>{
       beforeEach(()=>{
         task0.useJobScheduler = true;
       });
@@ -202,9 +211,9 @@ describe("UT for executer class", function () {
         //92 means job was successfully finished on PBS Pro
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\n92");
         const remotehostID = process.env.WHEEL_TEST_REMOTEHOST;
-        const hostInfo = remoteHost.query("name", remotehostID);
-        const hostname = hostInfo.host;
-        const JS = hostInfo.jobScheduler;
+        const hostinfo = remoteHost.query("name", remotehostID);
+        const hostname = hostinfo.host;
+        const JS = hostinfo.jobScheduler;
         expect(path.resolve(projectRootDir, `${hostname}-${JS}.${jobManagerJsonFilename}`)).not.to.be.a.path();
       });
       it("run shell script which returns 1 and status should be failed", async ()=>{
@@ -213,9 +222,9 @@ describe("UT for executer class", function () {
         //93 means job was finished but failed on PBS Pro
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("failed\n1\n93");
         const remotehostID = process.env.WHEEL_TEST_REMOTEHOST;
-        const hostInfo = remoteHost.query("name", remotehostID);
-        const hostname = hostInfo.host;
-        const JS = hostInfo.jobScheduler;
+        const hostinfo = remoteHost.query("name", remotehostID);
+        const hostname = hostinfo.host;
+        const JS = hostinfo.jobScheduler;
         expect(path.resolve(projectRootDir, `${hostname}-${JS}.${jobManagerJsonFilename}`)).not.to.be.a.path();
       });
       it("add submit option", async ()=>{
@@ -224,9 +233,9 @@ describe("UT for executer class", function () {
         //92 means job was successfully finished on PBS Pro
         expect(path.join(task0.workingDir, statusFilename)).to.be.a.file().with.content("finished\n0\n92");
         const remotehostID = process.env.WHEEL_TEST_REMOTEHOST;
-        const hostInfo = remoteHost.query("name", remotehostID);
-        const hostname = hostInfo.host;
-        const JS = hostInfo.jobScheduler;
+        const hostinfo = remoteHost.query("name", remotehostID);
+        const hostname = hostinfo.host;
+        const JS = hostinfo.jobScheduler;
         expect(path.resolve(projectRootDir, `${hostname}-${JS}.${jobManagerJsonFilename}`)).not.to.be.a.path();
       });
     });

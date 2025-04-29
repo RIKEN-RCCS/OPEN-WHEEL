@@ -7,6 +7,7 @@
     :control1=control[0]
     :control2=control[1]
     v-if="start.x !== end.x || start.y !== end.y"
+    @click.right.prevent.stop="onRightclick"
   />
 </template>
 <script>
@@ -19,6 +20,9 @@ export default {
   components: {
     CubicBezierCurve
   },
+  emits: [
+    "openContextMenu"
+  ],
   props: {
     start: {
       required: true,
@@ -55,6 +59,11 @@ export default {
         return [{ x: mx, y: this.start.y + offset },
           { x: mx, y: this.end.y - offset }];
       }
+    }
+  },
+  methods: {
+    onRightclick(e) {
+      this.$emit("openContextMenu", e);
     }
   }
 };

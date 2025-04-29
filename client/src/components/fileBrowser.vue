@@ -15,6 +15,7 @@
             v-bind="props"
             @click="openDialog('createNewDir')"
             icon=mdi-folder-plus-outline
+            data-cy="file_browser-new_dir-btn"
           />
         </template>
       </v-tooltip>
@@ -25,6 +26,7 @@
             v-bind="props"
             icon="mdi-file-plus-outline"
             @click="openDialog('createNewFile')"
+            data-cy="file_browser-new_file-btn"
           />
         </template>
       </v-tooltip>
@@ -45,6 +47,7 @@
             v-bind="props"
             @click="openDialog('removeFile')"
             icon="mdi-file-remove-outline"
+            data-cy="file_browser-remove_file-btn"
           />
         </template>
       </v-tooltip>
@@ -92,6 +95,7 @@
       @update:active="updateSelected"
       :get-node-icon="getNodeIcon"
       :get-leaf-icon="getLeafIcon"
+      data-cy="file_browser-treeview-treeview"
     />
     <versatile-dialog
       v-model="dialog.open"
@@ -99,6 +103,7 @@
       :title="dialog.title"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
+      data-cy="file_browser-dialog-dialog"
     >
       <template
         #message
@@ -109,6 +114,7 @@
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
           variant="outlined"
+          data-cy="file_browser-input-text_field"
         />
       </template>
       <template
@@ -121,7 +127,7 @@
           :label="dialog.inputFieldLabel"
         >
           <template #append>
-            <v-tooltip text="copy file path" location="bottom" >
+            <v-tooltip :text=copyButtonTooltipText location="bottom" v-model=showCopyButtonTooltipText>
               <template #activator="{ props }">
                 <v-btn
                   icon="mdi-content-copy"
@@ -191,7 +197,9 @@ export default {
         { icon: "mdi-close", label: "close" }
       ],
       downloadURL: null,
-      downloadDialog: false
+      downloadDialog: false,
+      showCopyButtonTooltipText: false,
+      copyButtonTooltipText: "copy file path"
     };
   },
   computed: {
@@ -267,7 +275,9 @@ export default {
     },
     async copyToClipboard() {
       debug("copy file path", this.dialog.inputField);
-      navigator.clipboard.writeText(this.dialog.inputField);
+      await navigator.clipboard.writeText(this.dialog.inputField);
+      this.copyButtonTooltipText = "copied!";
+      this.showCopyButtonTooltipText = true;
     },
     getActiveItem(key) {
       return _getActiveItem(this.items, key);
@@ -364,6 +374,8 @@ export default {
       this.dialog.inputFieldLabel = "";
       this.dialog.inputField = "";
       this.dialog.open = false;
+      this.copyButtonTooltipText = "copy file path";
+      this.showCopyButtonTooltipText = false;
     },
     submitAndCloseDialog() {
       if (this.dialog.submitEvent === "removeFile") {

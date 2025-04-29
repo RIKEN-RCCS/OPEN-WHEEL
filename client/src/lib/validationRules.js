@@ -24,3 +24,7 @@ export function positiveNumber(allowEmpty, v) {
   }
   return (typeof v === "number" && v >= 0) || allowEmpty ? "0 or more" : "more than 0";
 }
+
+export function isValidURL(v) {
+  return URL.canParse(v) || "invalid URL";
+}

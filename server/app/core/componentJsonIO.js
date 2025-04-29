@@ -13,6 +13,9 @@ const { readJsonGreedy } = require("./fileUtils");
 /**
  * remove temporaly props from component
  * memo: this function should be used with JSON.stringify
+ * @param {string} key -
+ * @param {string} value -
+ * @returns {string | undefined} -
  */
 function componentJsonReplacer(key, value) {
   if (["handler", "doCleanup", "sbsID", "childLoopRunning"].includes(key)) {
@@ -23,9 +26,9 @@ function componentJsonReplacer(key, value) {
 
 /**
  * return component's absolute or relative path
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} projectRootDir - project's root path
  * @param {string} ID - id string for the component
- * @param {Boolean} isAbsolute - return absolute path if true
+ * @param {boolean} isAbsolute - return absolute path if true
  */
 async function getComponentDir(projectRootDir, ID, isAbsolute) {
   const projectJson = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
@@ -38,10 +41,10 @@ async function getComponentDir(projectRootDir, ID, isAbsolute) {
 
 /**
  * write component JSON file and git add
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} projectRootDir - project's root path
  * @param {string} componentDir - absolute or relative path to component directory
- * @param {Object} component - component JSON data
- * @param {Boolean} doNotAdd- - call gitAdd if false
+ * @param {object} component - component JSON data
+ * @param {boolean} doNotAdd - call gitAdd if false
  */
 async function writeComponentJson(projectRootDir, componentDir, component, doNotAdd = false) {
   const filename = path.join(componentDir, componentJsonFilename);
@@ -56,7 +59,7 @@ async function writeComponentJson(projectRootDir, componentDir, component, doNot
 /**
  * read component Json by directory
  * @param {string} componentDir - absolute or relative path to component directory
- * @return {Object} - component JSON data
+ * @returns {object} - component JSON data
  */
 async function readComponentJson(componentDir) {
   const filename = path.join(componentDir, componentJsonFilename);
@@ -66,10 +69,10 @@ async function readComponentJson(componentDir) {
 
 /**
  * write componentJson by ID
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} projectRootDir - project's root path
  * @param {string} ID - component's ID string
- * @param {Object} component - component JSON data
- * @param {Boolean} doNotAdd- - call gitAdd if false
+ * @param {object} component - component JSON data
+ * @param {boolean} doNotAdd - call gitAdd if false
  */
 async function writeComponentJsonByID(projectRootDir, ID, component, doNotAdd) {
   const componentDir = await getComponentDir(projectRootDir, ID, true);
@@ -78,9 +81,9 @@ async function writeComponentJsonByID(projectRootDir, ID, component, doNotAdd) {
 
 /**
  * read componentJson by ID
- * @param {string} projectRootDir - project projectRootDir's absolute path
+ * @param {string} projectRootDir - project's root path
  * @param {string} ID - component's ID string
- * @return {Object} - component JSON data
+ * @returns {object} - component JSON data
  */
 async function readComponentJsonByID(projectRootDir, ID) {
   const componentDir = await getComponentDir(projectRootDir, ID, true);
@@ -88,7 +91,6 @@ async function readComponentJsonByID(projectRootDir, ID) {
 }
 
 module.exports = {
-  componentJsonReplacer,
   getComponentDir,
   writeComponentJson,
   writeComponentJsonByID,

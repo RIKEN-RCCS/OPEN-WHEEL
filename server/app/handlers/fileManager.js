@@ -9,9 +9,9 @@ const fs = require("fs-extra");
 const glob = require("glob");
 const minimatch = require("minimatch");
 const klaw = require("klaw");
-const { zip } = require("zip-a-folder");
+
 const isPathInside = require("is-path-inside");
-const { gitAdd, gitRm, gitLFSTrack, gitLFSUntrack, isLFS } = require("../core/gitOperator2");
+const { gitAdd, gitRm, gitCommit, gitLFSTrack, gitLFSUntrack, isLFS } = require("../core/gitOperator2");
 const { convertPathSep } = require("../core/pathUtils");
 const { getUnusedPath, deliverFile } = require("../core/fileUtils.js");
 const { escapeRegExp } = require("../lib/utility");
@@ -30,13 +30,13 @@ const projectJsonFileOnly = new RegExp(`^.*(?:${escapeRegExp(projectJsonFilename
 
 /**
  * getFileList event handler
- * @param {string} projectRootDir - project root dir path for logger
- * @param {Object} msg - option parameters
+ * @param {string} projectRootDir - project's root path
+ * @param {object} msg - option parameters
  * @param {string} msg.path - directory path to be read
  * @param {string} msg.mode - mode flag. it must be one of dir, dirWithProjectJson, underComponent, SND
  * @param {Function} cb - call back function
  */
-const onGetFileList = async (projectRootDir, msg, cb)=>{
+async function onGetFileList(projectRootDir, msg, cb) {
   const target = msg.path ? path.normalize(convertPathSep(msg.path)) : rootDir;
   const request = target;
 
@@ -62,13 +62,22 @@ const onGetFileList = async (projectRootDir, msg, cb)=>{
       },
       withParentDir: false
     });
-    return cb(result);
+    cb(result);
   } catch (e) {
     getLogger(projectRootDir).error(projectRootDir, "error occurred during reading directory", e);
-    return cb(null);
+    cb(null);
   }
 };
-const onGetSNDContents = async (projectRootDir, requestDir, pattern, isDir, cb)=>{
+
+/**
+ * get each content of SND containts
+ * @param {string} projectRootDir - project's root path
+ * @param {string} requestDir - requested item's parent dir
+ * @param {string} pattern - requested item name
+ * @param {boolean} isDir - requset directory or not
+ * @param {Function} cb - call back function
+ */
+async function onGetSNDContents(projectRootDir, requestDir, pattern, isDir, cb) {
   const modifiedRequestDir = path.normalize(convertPathSep(requestDir));
   getLogger(projectRootDir).debug(projectRootDir, "getSNDContents in", modifiedRequestDir);
 
@@ -84,12 +93,19 @@ const onGetSNDContents = async (projectRootDir, requestDir, pattern, isDir, cb)=
         dir: null
       }
     });
-    return cb(result);
+    cb(result);
   } catch (e) {
     getLogger(projectRootDir).error(requestDir, "read failed", e);
-    return cb(null);
+    cb(null);
   }
 };
+
+/**
+ * create new empty file
+ * @param {string} projectRootDir - project's root path
+ * @param {string} argFilename - filename
+ * @param {Function} cb - call back function
+ */
 async function onCreateNewFile(projectRootDir, argFilename, cb) {
   const filename = convertPathSep(argFilename);
   try {
@@ -104,6 +120,13 @@ async function onCreateNewFile(projectRootDir, argFilename, cb) {
   }
   cb({ filename, parent: path.dirname(filename) });
 }
+
+/**
+ * create new directory and add .gitkeep file to the directory
+ * @param {string} projectRootDir - project's root path
+ * @param {string} argDirname - directory name
+ * @param {Function} cb - call back function
+ */
 async function onCreateNewDir(projectRootDir, argDirname, cb) {
   const dirname = convertPathSep(argDirname);
   try {
@@ -119,6 +142,13 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
   }
   cb({ dirname, parent: path.dirname(dirname) });
 }
+
+/**
+ * remove file or directory
+ * @param {string} projectRootDir - project's root path
+ * @param {string} target - file or directory name to be removed
+ * @param {Function} cb - call back function
+ */
 async function onRemoveFile(projectRootDir, target, cb) {
   try {
     if (isPathInside(target, projectRootDir)) {
@@ -132,6 +162,15 @@ async function onRemoveFile(projectRootDir, target, cb) {
   }
   cb(true);
 }
+
+/**
+ * rename file or directory
+ * @param {string} projectRootDir - project's root path
+ * @param {string} parentDir - directory path of target file or directory
+ * @param {string} argOldName - directory or file name to be renamed
+ * @param {string} argNewName - new name
+ * @param {Function} cb - call back function
+ */
 async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, cb) {
   const oldName = path.resolve(parentDir, argOldName);
   const newName = path.resolve(parentDir, argNewName);
@@ -178,7 +217,38 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
   cb(true);
 }
 
-const onUploadFileSaved = async (event)=>{
+/**
+ * git add or remove and commit files
+ * @param {string} projectRootDir - project's root path
+ * @param {object[]} files - array of files to commit
+ * @param {Function} cb - call back function
+ *
+ * each object in files array should have name and status property
+ * status prop should be one of "new", "modified", "deleted", or "renamed"
+ */
+async function onCommitFiles(projectRootDir, files, cb) {
+  getLogger(projectRootDir).trace("save files", files
+    .map((file)=>{ return file.name; })
+  );
+
+  try {
+    const filenames = files.map((file)=>{
+      return file.name;
+    });
+    await gitCommit(projectRootDir, undefined, filenames);
+  } catch (err) {
+    getLogger(projectRootDir).error("commit files failed", err);
+    cb(false);
+    return;
+  }
+  cb(true);
+}
+
+/**
+ * handler function which will be called when upload file is saved
+ * @param {object} event - event object from socket-io-fileupload
+ */
+async function onUploadFileSaved(event) {
   const projectRootDir = event.file.meta.projectRootDir;
   if (!event.file.success) {
     getLogger(projectRootDir).error("file upload failed", event.file.name);
@@ -222,14 +292,22 @@ const onUploadFileSaved = async (event)=>{
   });
   emitAll(uploadClient, "fileList", result);
 };
-const onDownload = async (projectRootDir, target, cb)=>{
+
+/**
+ * download file or directory
+ * @param {string} projectRootDir - project's root path
+ * @param {string} target - file or directory name to be downloaded
+ * @param {Function} cb - call back function
+ */
+async function onDownload(projectRootDir, target, cb) {
   const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
   const tmpDir = await fs.mkdtemp(`${dir}/`);
+  const { zip } = await import("zip-a-folder");
 
   let downloadZip = false;
   let targetBasename = "";
   if (glob.hasMagic(target)) {
-    targetBasename = path.basename("SND_CONTENT");
+    targetBasename = "multifile";
     await zip(target, `${path.join(tmpDir, targetBasename)}.zip`);
     downloadZip = true;
   } else {
@@ -249,7 +327,14 @@ const onDownload = async (projectRootDir, target, cb)=>{
   getLogger(projectRootDir).debug("Download url is ready", url);
   cb(url);
 };
-const onRemoveDownloadFile = async (projectRootDir, URL, cb)=>{
+
+/**
+ * remove file which have been prepared for download
+ * @param {string} projectRootDir - project's root path
+ * @param {string} URL - download file's URL
+ * @param {Function} cb - call back function
+ */
+async function onRemoveDownloadFile(projectRootDir, URL, cb) {
   const dir = await getTempd(projectRootDir, "download");
   const target = path.join(dir, path.basename(path.dirname(URL)));
   getLogger(projectRootDir).debug(`remove ${target}`);
@@ -264,6 +349,7 @@ module.exports = {
   onCreateNewDir,
   onRemoveFile,
   onRenameFile,
+  onCommitFiles,
   onUploadFileSaved,
   onDownload,
   onRemoveDownloadFile

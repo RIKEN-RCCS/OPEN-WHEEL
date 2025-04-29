@@ -31,6 +31,11 @@ Options:
 
 
 `;
+
+/**
+ * generate 12-digit random password
+ * @returns {string} - generated password
+ */
 function generatePassword() {
   const pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+{}[]<>:?.";
   let password = "";
@@ -41,6 +46,11 @@ function generatePassword() {
   return password;
 }
 
+/**
+ * parse command line option
+ * @param {object} options - commandline options
+ * @returns {object} -
+ */
 function parseOptions(options) {
   if (options["--version"] === true) {
     return "version";
@@ -72,6 +82,9 @@ function parseOptions(options) {
   return { mode, clear, username, password };
 }
 
+/**
+ * create anonymous user with random password and print it
+ */
 async function createAnonymousUser() {
   const password = generatePassword();
   await delUser("anonymous");
@@ -79,6 +92,10 @@ async function createAnonymousUser() {
   console.log("Anonymous user created with password = ", password);
 }
 
+/**
+ * print all users in DB
+ * @returns {string[]} - array of user names
+ */
 async function printAllUsers() {
   const users = await listUser();
   console.log(`${users.length} user exists`);

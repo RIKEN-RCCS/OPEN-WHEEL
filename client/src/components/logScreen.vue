@@ -55,6 +55,9 @@
 
 <script>
 import xterm from "../components/xterm.vue";
+import { mapState } from "vuex";
+import SIO from "../lib/socketIOWrapper.js";
+
 export default {
   name: "LogScreen",
   components: {
@@ -73,6 +76,9 @@ export default {
         { label: "output(SSH)", id: "sshout", clear: 0, log: "", unread: false, eventNames: ["logSSHout", "logSSHerr"] }
       ]
     };
+  },
+  computed: {
+    ...mapState(["projectRootDir"])
   },
   watch: {
     show() {
@@ -109,6 +115,9 @@ export default {
         item.unread = false;
         item.clear = (item.clear + 1) % 2;
       }
+      SIO.emitGlobal("aboutWheel", this.projectRootDir, ()=>{
+        console.log("version info should be on INFO log");
+      });
     }
   }
 };

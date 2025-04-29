@@ -12,6 +12,14 @@ const { getLogger } = require("../logSettings.js");
 const { replacePathsep } = require("./pathUtils");
 const { remoteHost, componentJsonFilename } = require("../db/db");
 const { getSshHostinfo } = require("./sshManager.js");
+
+/**
+ * run script with options via child_process.spawn
+ * @param {string} projectRootDir - project's root path
+ * @param {string} script - script file name
+ * @param {object} options - option object for child_process.spawn
+ * @returns {Promise} - resolved with return value of script if normaly finished. rejected if abnormal termination occurred
+ */
 async function pspawn(projectRootDir, script, options) {
   return new Promise((resolve, reject)=>{
     const cp = childProcess.spawn(script, options, (err)=>{
@@ -35,11 +43,11 @@ async function pspawn(projectRootDir, script, options) {
 
 /**
  * evalute condition by executing external command or evalute JS expression
- * @param {string} projectRootDir - root directory path of project
- * @param {string} condition - command name or javascript expression
+ * @param {string} projectRootDir - project's root path
+ * @param {string | boolean} condition - command name or javascript expression
  * @param {string} cwd - task component's directory
- * @param {number} currentIndex - innermost loop index (WHEEL_CURRENT_INDEX)
- * @returns {Promise} *
+ * @param {object} env - environment variables
+ * @returns {Promise | boolean} -
  */
 async function evalCondition(projectRootDir, condition, cwd, env) {
   //condition is always string for now. but keep following just in case
@@ -72,6 +80,14 @@ async function evalCondition(projectRootDir, condition, cwd, env) {
   conditionExpression += condition;
   return eval(conditionExpression);
 }
+
+/**
+ * return top working directory on remotehost
+ * @param {string} projectRootDir - project's root path
+ * @param {string} projectStartTime - YYYYMMDD-HHSS style string which is used as top directory name on remotehost
+ * @param {object} component - component object
+ * @param {boolean} isSharedHost - return as sharedHost path or ordinary remote path
+ */
 function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, isSharedHost) {
   const remotehostID = remoteHost.getID("name", component.host);
   if (typeof remotehostID === "undefined") {
@@ -85,6 +101,14 @@ function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, is
   return replacePathsep(path.posix.join(remoteRoot, projectStartTime));
 }
 
+/**
+ * return comoponent's working directory on remoteshot
+ * @param {string} projectRootDir - project's root path
+ * @param {string} projectStartTime - YYYYMMDD-HHSS style string which is used as top directory name on remotehost
+ * @param {string} workingDir - component's working directory on localhost
+ * @param {object} component - component object
+ * @param {boolean} isSharedHost - return as sharedHost path or ordinary remote path
+ */
 function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, component, isSharedHost) {
   const remoteRootWorkingDir = getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, isSharedHost);
   if (remoteRootWorkingDir === null) {

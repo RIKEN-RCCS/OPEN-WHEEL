@@ -4,10 +4,10 @@
     :color=color
     :center=end
     :size=size
-    @update:center="end=$event"
     direction="down"
     :draggable=true
     @dragstart.stop=onDragStart
+    @drag="end=$event"
     @dragend=onDragEnd
   />
   <equilateral-triangle
@@ -15,6 +15,7 @@
     :center=start
     :size=size
     direction="down"
+    :draggable="false"
     v-if=dragging
   />
   <vconnector
@@ -58,6 +59,14 @@ export default {
       size: plugSize,
       dragging: false
     };
+  },
+  watch: {
+    start(v) {
+      if (this.dragging) {
+        return;
+      }
+      this.end = v;
+    }
   },
   methods: {
     onDragStart() {

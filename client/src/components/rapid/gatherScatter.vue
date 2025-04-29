@@ -17,6 +17,7 @@
             @click="dialog=true"
             prepend-icon="mdi-plus"
             :text="`add new ${label} setting`"
+            data-cy="gather_scatter-add_new_setting_btn"
           />
         </v-row>
       </v-card-title>
@@ -54,6 +55,7 @@
                 v-model.trim.lazy="newItem.srcName"
                 label="srcName"
                 :rules="[required, notDupulicated]"
+                data-cy="gather_scatter-srcName_text_field"
               />
             </v-col>
             <v-col>
@@ -61,6 +63,7 @@
                 v-model.trim.lazy="newItem.dstName"
                 label="dstName"
                 :rules="[required, notDupulicated]"
+                data-cy="gather_scatter-dstName_text_field"
               />
             </v-col>
           </v-row>
@@ -77,12 +80,14 @@
             @click="commitChange"
             prepend-icon=mdi-check
             text=OK
+            data-cy="gather_scatter-ok-btn"
           />
           <v-btn
             variant=text
             @click="closeAndResetDialog"
             prepend-icon=mdi-cancel
             text=Cancel
+            data-cy="gather_scatter-cancel-btn"
           />
         </v-card-actions>
       </v-card>

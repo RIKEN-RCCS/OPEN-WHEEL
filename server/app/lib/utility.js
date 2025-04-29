@@ -29,6 +29,12 @@ const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]/\\])/g;
 function escapeRegExp(target) {
   return target.replace(reMustBeEscapedChars, "\\$1");
 }
+
+/**
+ * check if specified name is sane
+ * @param {string} name - name to be checked
+ * @returns {boolean} -
+ */
 function isSane(name) {
   if (typeof name !== "string") {
     return false;
@@ -44,7 +50,7 @@ function isSane(name) {
 
 /**
  * determin specified name is valid file or directory name or not
- * @param {strint} name - name to be checked
+ * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
 function isValidName(name) {
@@ -61,7 +67,7 @@ function isValidName(name) {
 
 /**
  * determin specified name is valid for inputFilename
- * @param {strint} name - name to be checked
+ * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
 function isValidInputFilename(name) {
@@ -98,11 +104,11 @@ function isValidOutputFilename(name) {
   return true;
 }
 
-/*
+/**
  * get date as string
  * @param {boolean} humanReadable - option flag for using delimiters(/and:) or not
- * @param {boolean} withMiliseconds - option flag for time resolution
- * return {string}
+ * @param {boolean} withMilliseconds - option flag for time resolution
+ * @returns {string} - string form of the date
  */
 function getDateString(humanReadable = false, withMilliseconds = false) {
   const now = new Date();
@@ -119,6 +125,12 @@ function getDateString(humanReadable = false, withMilliseconds = false) {
   }
   return withMilliseconds ? `${yyyy}${mm}${dd}-${HH}${MM}${ss}${ms}` : `${yyyy}${mm}${dd}-${HH}${MM}${ss}`;
 }
+
+/**
+ * split each element of array of string by '\n' and flatten
+ * @param {string[]} outputArray - array of string which can have multiline in one elemetnt
+ * @returns {string[]} -
+ */
 function formatSshOutput(outputArray) {
   const rt = [];
   for (const e of outputArray) {
@@ -128,6 +140,12 @@ function formatSshOutput(outputArray) {
     return e !== "";
   });
 }
+
+/**
+ * write JSON data to file with 4 space indent
+ * @param {filename} filename - filename
+ * @param {object} data - JSON data to be written
+ */
 function writeJsonWrapper(filename, data) {
   return fs.writeJson(filename, data, { spaces: 4 });
 }

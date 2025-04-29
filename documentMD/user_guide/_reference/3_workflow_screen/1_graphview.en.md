@@ -20,7 +20,7 @@ The graph view screen is organized as follows.
 | 4| Edit date and time display area　　　　　| Displays the date and time the project was created and updated.　　　　　　　　　　　　　　|
 | 5| Workflow Screen Switching Button Area | Displays buttons for switching the workflow screen to Graph View, List View, or Text Editor |
 | 6| Project Operation Buttons Area | Displays the Run, Stop, and Clean Project buttons.　　　　　　　　|
-| 7| Save button area           | The Save Project, Discard Changes button appears.　　　　　　　　　　|
+| 7| Save button area           | Validate project, Save Project, Discard Changes button appears.　　　　　　　　　　|
 | 8| Hierarchy display/transition button　　　　| Displays the hierarchy of the currently displayed component　　　　　　　|
 | 9| Environment variable editor display button | Environment variable setting screen is displayed.　　　　　　　　　　　　　　　　　　　　|
 |10| Component Library　　| Palette for adding components that are components of a workflow |
@@ -31,30 +31,30 @@ The following describes each area and button in detail.
 ### Status display area
 The status display area shows the following statuses depending on the execution status of the entire project:
 
-1. not-started: Before project execution  
-![img](./img/not-started.png "not_started")  
-1. preparing  : Preparing for Project Execution  
-![img](./img/preparing.png "preparing")  
-2. running    : Project running  
-![img](./img/running.png "running")  
-1. stopped    : Project execution stopped  
-![img](./img/stopped.png "stopped")  
-1. finished   : Project Finish (Normal Finish)  
-![img](./img/finished.png "finished")  
-1. failed     : End Project (Error occurs)  
-![img](./img/failed.png "failed")  
-1. holding     : Checking for jobs with unknown execution status  
-![img](./img/holding.png "holding")  
-1. unknown     : Job with unknown execution status  
+1. not-started: Before project execution
+![img](./img/not-started.png "not_started")
+1. preparing  : Preparing for Project Execution
+![img](./img/preparing.png "preparing")
+2. running    : Project running
+![img](./img/running.png "running")
+1. stopped    : Project execution stopped
+![img](./img/stopped.png "stopped")
+1. finished   : Project Finish (Normal Finish)
+![img](./img/finished.png "finished")
+1. failed     : End Project (Error occurs)
+![img](./img/failed.png "failed")
+1. holding     : Checking for jobs with unknown execution status
+![img](./img/holding.png "holding")
+1. unknown     : Job with unknown execution status
 ![img](./img/unknown.png "unknown")
 
-__About holding__  
-After checking the execution status of submitted jobs was interrupted during project execution due to a restart of the WHEEL process, the execution status of jobs is checked when the project is opened.  
+__About holding__
+After checking the execution status of submitted jobs was interrupted during project execution due to a restart of the WHEEL process, the execution status of jobs is checked when the project is opened.
 In this state, no project operations are accepted, but as soon as the job status check is completed, other states such as stopped/finished/failed/unknonw are transitioned.
 {: .notice--info}
 
-__About unknown__  
-The status changes to unknown when an error occurs more than the specified number of times when checking the execution status of a job submitted by WHEEL.  
+__About unknown__
+The status changes to unknown when an error occurs more than the specified number of times when checking the execution status of a job submitted by WHEEL.
 Move from the root workflow to the lower components to find the task components that are in the unknown state and check whether the execution status of the job has any effect on the success or failure of the entire workflow.
 {: .notice--info}
 
@@ -76,11 +76,12 @@ This area contains buttons for saving edited projects.
 
 || Component | Description |
 |----------|----------|---------------------------------|
-|1|save project button  | Save project |
-|2|revert project button | Revert project to previous save state |
+|1|validate project button  | validate project |
+|2|save project button  | Save project |
+|3|revert project button | Revert project to previous save state |
 
-__About save project button/revert project button behavior__  
-WHEEL uses git for file history management.  
+__About save project button/revert project button behavior__
+WHEEL uses git for file history management.
 Your edits on the graph view screen are immediately reflected in the server-side file, but are not registered in the git repository until you click the save project button.
 Click the revert project button to discard all changes made since the last commit and return the repository to the state it was in when it was last committed.<br/><br/>
 For more information about git operations, see the developer documentation [detailed design document](https://github.com/{{site.repository}}/blob/master/documentMD/design/design.md).
@@ -97,8 +98,8 @@ This area displays buttons that switch the workflow screen between graph view, l
 |2|list view button    | Switch to the list view screen |
 |3|text editor button  | Switch to the text editor screen |
 
-__About Transitions to Text Editor Screens__  
-Transitions to the text editor screen are limited by the selected state of the file or the selected state of the project.  
+__About Transitions to Text Editor Screens__
+Transitions to the text editor screen are limited by the selected state of the file or the selected state of the project.
 If the transition cannot be made, the text editor button is displayed in a state that cannot be clicked.
 {: .notice--info}
 
@@ -121,11 +122,11 @@ Click this button to display a screen for setting environment variables that can
 
 ![img](./img/environment_variables_editor.png "environment_variables_editor")
 
- - Create environment variables  
+ - Create environment variables
 You can add a new environment variable by entering the environment variable name in __name__ and the value in __value__ and clicking the __+__ button.
- - Edit environment variables  
+ - Edit environment variables
 You can change it by clicking the __environment variable name__ or __value__ in the environment variable row you want to edit.
- - Delete environment variable  
+ - Delete environment variable
 You can delete a previously set environment variable by clicking the trash can icon at the right end of the environment variable row that you want to delete.
 
 After changing the settings, clicking the __save__ button will actually take effect.

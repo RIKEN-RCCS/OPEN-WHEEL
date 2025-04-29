@@ -1,6 +1,6 @@
 <template>
   <g >
-    <rect :x=x :y=y :width=width :height=height :fill=componentBackgroundColor />
+    <rect :x=x :y=y :width=width :height=height :fill=componentBackgroundColor  data-cy="iofilebox-rect-rect" />
     <input-file-box
       :center=center
       :index=index
@@ -54,6 +54,10 @@ export default {
       type: Number
     }
   },
+  emits: [
+    "addFileLink",
+    "removeFileLink"
+  ],
   data() {
     return {
       width: boxWidth,

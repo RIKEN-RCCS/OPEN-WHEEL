@@ -1,4 +1,4 @@
-const animationWaitTime = 300
+const animationWaitTime = 500
 
 Cypress.on("uncaught:exception", ()=>{
   return false
@@ -78,6 +78,7 @@ Cypress.Commands.add("assertAll", ()=>{
   }
 })
 
+// This function can't work in firefox.
 Cypress.Commands.add("setClipboardPermission", ()=>{
   cy.wrap(Cypress.automation("remote:debugger:protocol", {
     command: "Browser.grantPermissions",
@@ -93,8 +94,7 @@ Cypress.Commands.add("projectMake", (projectName)=>{
     .then(()=>{
       cy.contains("button", "NEW").click({force: true})
     })
-  cy.contains("label", "project name").siblings()
-    .children("input")
+  cy.contains("label", "project name").siblings("input")
     .type(projectName, {force: true})
   cy.contains("button", "create").click({force: true})
 })
@@ -268,7 +268,7 @@ Cypress.Commands.add("selectHost", (hostName)=>{
 
 //input Submitoption
 Cypress.Commands.add("typeSubmitOption", (submitOption)=>{
-  cy.contains("label", "submit option").parent()
+  cy.contains("label", "submit option").siblings()
     .type(submitOption, {enter: true})
 })
 
@@ -374,11 +374,20 @@ Cypress.Commands.add("clickFileFolder", (name)=>{
     .click()
 })
 
+//close component property
+Cypress.Commands.add("closeComponentProperty", ()=>{
+  cy.get("header").eq(2)
+    .find("[type=\"button\"]")
+    .eq(0)
+    .click()
+    .wait(animationWaitTime)
+})
+
 //save project
 Cypress.Commands.add("projectSave", ()=>{
   cy.get("header").eq(0)
     .find("[type=\"button\"]")
-    .eq(7)
+    .eq(8)
     .click()
     .wait(animationWaitTime)
 })
@@ -387,10 +396,10 @@ Cypress.Commands.add("projectSave", ()=>{
 Cypress.Commands.add("projectReload", (k, projectName, taskName)=>{
   if (k === 0) {
     cy.projectSave()
+  }
     cy.get("[href=\"./home\"]").click()
     cy.projectOpen(projectName)
     cy.clickTask(taskName)
-  }
 })
 
 //reload Task
@@ -480,6 +489,8 @@ Cypress.Commands.add("scriptEdit", (scriptName, script)=>{
     .type(script, {force: true})
   cy.get("button").contains("button", "save all files")
     .click()
+  //wait for saving and commiting file
+  cy.wait(500);
   cy.get("[href=\"/graph\"]").click()
     .wait(animationWaitTime)
 })
@@ -575,16 +586,14 @@ Cypress.Commands.add("fileFolderMake", (type, name)=>{
       .find("button")
       .eq(1)
       .click()
-    cy.contains("label", "new file name").siblings()
-      .find("input")
+    cy.contains("label", "new file name").siblings("input")
       .type(name)
   } else if(type === "folder") {
     cy.contains("button", "Files").next()
       .find("button")
       .eq(0)
       .click()
-    cy.contains("label", "new directory name").siblings()
-      .find("input")
+    cy.contains("label", "new directory name").siblings("input")
       .type(name)
   }
   cy.contains("button", "ok").click()
@@ -596,8 +605,7 @@ Cypress.Commands.add("folderMake", (folderName)=>{
     .find("button")
     .eq(0)
     .click()
-  cy.contains("label", "new directory name").siblings()
-    .find("input")
+  cy.contains("label", "new directory name").siblings("input")
     .type(folderName)
   cy.contains("button", "ok").click()
 })

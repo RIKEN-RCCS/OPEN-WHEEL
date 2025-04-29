@@ -42,6 +42,10 @@ export default {
       default: ""
     }
   },
+  emits: [
+    "addFileLink",
+    "removeFileLink"
+  ],
   computed: {
     ...mapState(["projectRootDir", "currentComponent"]),
     frecieverPos() {

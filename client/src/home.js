@@ -6,6 +6,8 @@
 import { createApp } from "vue";
 import Home from "./components/Home.vue";
 import vuetify from "./plugins/vuetify";
+import store from "./store";
 
 createApp(Home).use(vuetify)
+  .use(store)
   .mount("#app");

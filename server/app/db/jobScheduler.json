@@ -3,85 +3,53 @@
     "submit": "qsub",
     "queueOpt": "-q",
     "stat": "qstat -xf",
+    "statAfter": "qstat -xf",
     "del": "qdel",
+    "grpName": "",
     "reJobID": "^(\\d+).*",
-    "reFinishedState": "substate \\= (91|92|93)$",
+    "reRunning": "<JOB_Id>{{ JOBID }}.*job_state\\=(R|H|Q|T|W)$",
     "reReturnCode": "Exit_status \\= (\\d+)$",
     "reJobStatusCode": "substate \\= (\\d+)$",
-    "acceptableJobStatus": 92,
-    "grpName": ""
-  },
-  "PBSProWithoutHistory": {
-    "submit": "qsub",
-    "queueOpt": "-q",
-    "stat": "qstat -xf",
-    "del": "qdel",
-    "reJobID": "^(\\d+).*",
-    "reFinishedState": "(?:Unknown Job Id|PBS is not configured to maintain job history)",
-    "reReturnCode": "",
-    "reJobStatusCode": "",
-    "acceptableRt": 153,
-    "grpName": ""
+    "acceptableJobStatus": [
+      92,
+      93
+    ],
+    "acceptableRt": [
+      153
+    ]
   },
   "SLURM": {
     "submit": "sbatch",
     "queueOpt": "-p",
-    "stat": "sacct -P --delimiter=, -o JobID,State,ExitCode -n -j ",
+    "stat": "sacct -P --delimiter=, -o JobID,State -n -j ",
+    "statAfter": "sacct -P --delimiter=, -o JobID,State,ExitCode -n -j ",
+    "statDelimiter": " -j ",
     "del": "scancel",
+    "grpName": "",
     "reJobID": "Submitted batch job (\\d+)",
-    "reFinishedState": "^\\d+,(?:COMPLETED|FAILED|CANCELLED|DEADLINE|NODE_FAIL|TIMEOUT),\\d+:\\d+",
-    "reReturnCode": "^\\d+,\\S+,(\\d+):\\d+$",
-    "reJobStatusCode": "^\\d+,(\\S+),\\d+:\\d+$",
-    "acceptableJobStatus": "COMPLETED",
-    "grpName": ""
+    "reRunning": "^{{ JOBID }},(?:CONFIGURING|COMPLETING|PENDING|REVOKED|RUNNING|SPECIAL_EXIT|SUSPENDED)",
+    "reReturnCode": "{{ JOBID }},\\S+,(\\d+):\\d+$",
+    "reJobStatusCode": "{{ JOBID }},(\\S+),\\d+:\\d+$",
+    "reExceededLimitError": "job submit limit"
   },
   "Fugaku": {
     "submit": "pjsub -X",
     "queueOpt": "-L rscgrp=",
-    "stat": [
-      "pjstat -v --choose jid,st,ec,pc",
-      "pjstat -v -H day=3 --choose jid,st,ec,pc"
-    ],
-    "bulkstat": [
-      "pjstat -E -v --choose jid,st,ec,pc",
-      "pjstat -E -v -H day=3 --choose jid,st,ec,pc"
-    ],
+    "stat": "pjstat -v --choose jid,st",
+    "statAfter": "pjstat -v -H day=3 --choose jid,st,ec,pc",
     "del": "pjdel",
     "reJobID": "pjsub Job (\\d+_*\\d*) submitted.",
-    "reFinishedState": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:CCL|ERR|EXT|RJT) *(?:\\d+|\\S+) *(?:\\d+|\\S+)",
-    "reReturnCode": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+|\\d+\\[\\d+\\]) *(?:EXT|CCL) *(\\d+) *(?:\\d+)",
-    "reJobStatusCode": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+|\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
+    "grpName": "",
+    "supportBulkjob": true,
+    "supportStepjob": true,
+    "supportWebAPI": true,
+    "bulkstat": "pjstat -E -v --choose jid,st",
+    "bulkstatAfter": "pjstat -E -v -H day=3 --choose jid,st,ec,pc",
+    "reRunning": "{{ JOBID }} *(?:ACC|HLD|QUE|RNA|RNE|RNO|RNP|RSM|RUN|SPD|SPP)",
+    "reReturnCode": "{{ JOBID }} *(?:EXT|CCL) *(\\d+) *\\d+",
+    "reJobStatusCode": "{{ JOBID }} *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
     "reSubReturnCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *(\\d+) *\\d+",
     "reSubJobStatusCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
-    "grpName": "",
-    "bulkjob": true,
-    "stepjob": true
-  },
-  "TCS": {
-    "submit": "pjsub -X",
-    "queueOpt": "-L rscgrp=",
-    "stat": "pjstat -v -H day=3 --choose jid,st,ec,pc",
-    "del": "pjdel",
-    "reJobID": "pjsub Job (\\d+_*\\d*) submitted.",
-    "reFinishedState": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:CCL|ERR|EXT|RJT) *\\d+ *\\d+",
-    "reReturnCode": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:EXT|CCL) *(\\d+) *\\d+",
-    "reJobStatusCode": "^JOB_ID *ST *EC *PC *\\n(?:\\d+|\\d+_\\d+) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
-    "grpName": "",
-    "stepjob": true
-  },
-  "UGE": {
-    "submit": "qsub",
-    "queueOpt": "-l ",
-    "stat": [
-      "qstat -j",
-      "qacct -j"
-    ],
-    "del": "qdel",
-    "reJobID": "(\\d+).*",
-    "reFinishedState": "failed *0",
-    "reFailedState": "failed *(\\d+)",
-    "reReturnCode": "exit_status *(\\d+)",
-    "reJobStatusCode": "exit_status *(\\d+)",
-    "grpName": "-g"
+    "reExceededLimitError": "PJM 0072 pjsub Job exceeded the accept limit"
   }
 }

@@ -9,6 +9,8 @@ const fs = require("fs-extra");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
 const { removeSsh } = require("./sshManager");
+const { removeExecuters } = require("./executerManager.js");
+const { removeTransferrers } = require("./transferManager.js");
 const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
 const { setProjectState } = require("../core/projectFilesOperator");
 const { writeComponentJson, readComponentJson } = require("./componentJsonIO.js");
@@ -20,22 +22,23 @@ const rootDispatchers = new Map();
 
 /**
  * @event projectStateChanged
- * @type {Object} - updated projectJson
- *
+ * @type {object} - updated projectJson
  * @event taskStateChanged
- * @type {Object} - updated task object
- *
+ * @type {object} - updated task object
  * @event componentStateChanged
- * @type {Object} - updated component Json
- *
+ * @type {object} - updated component Json
  * @event resultFilesReady
- * @type {Object[]] - array of result file's url
+ * @type {object[]} - array of result file's url
  * @property {string} componentID - component.ID
  * @property {string} filename    - relative path from projectRoot
  * @property {string} url         - URL to view result file
- *
  */
 
+/**
+ * update project status
+ * @param {string} projectRootDir - project's root path
+ * @param {string} state - status
+ */
 async function updateProjectState(projectRootDir, state) {
   const projectJson = await setProjectState(projectRootDir, state);
   if (projectJson) {
@@ -45,7 +48,12 @@ async function updateProjectState(projectRootDir, state) {
     }
   }
 }
-const cleanProject = async (projectRootDir)=>{
+
+/**
+ * clean up project
+ * @param {string} projectRootDir - project's root path
+ */
+async function cleanProject(projectRootDir) {
   const { ID } = await readComponentJson(projectRootDir);
   const viewerURLRoot = path.resolve(path.dirname(__dirname), "viewer");
   const viewerDir = path.join(viewerURLRoot, ID);
@@ -57,22 +65,28 @@ const cleanProject = async (projectRootDir)=>{
   await gitClean(projectRootDir);
   //project state must be updated by onCleanProject()
 };
-async function pauseProject(projectRootDir) {
-  const rootDispatcher = rootDispatchers.get(projectRootDir);
-  if (rootDispatcher) {
-    await rootDispatcher.pause();
-  }
-  //project state must be updated by onPauseProject()
-}
+
+/**
+ * stop project run
+ * @param {string} projectRootDir - project's root path
+ */
 async function stopProject(projectRootDir) {
   const rootDispatcher = rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
     await rootDispatcher.remove();
     rootDispatchers.delete(projectRootDir);
   }
+  removeExecuters(projectRootDir);
+  removeTransferrers(projectRootDir);
   removeSsh(projectRootDir);
   //project state must be updated by onStopProject()
 }
+
+/**
+ * run project
+ * @param {string} projectRootDir - project's root path
+ * @returns {string} - project status after run
+ */
 async function runProject(projectRootDir) {
   if (rootDispatchers.has(projectRootDir)) {
     return new Error(`project is already running ${projectRootDir}`);
@@ -95,16 +109,18 @@ async function runProject(projectRootDir) {
   await updateProjectState(projectRootDir, "running", projectJson);
   getLogger(projectRootDir).info("project start");
   rootWF.state = await rootDispatcher.start();
-  getLogger(projectRootDir).info("project finished");
+  getLogger(projectRootDir).info(`project ${rootWF.state}`);
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
   await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
   rootDispatchers.delete(projectRootDir);
+  removeExecuters(projectRootDir);
+  removeTransferrers(projectRootDir);
+  removeSsh(projectRootDir);
   return rootWF.state;
 }
 
 module.exports = {
   cleanProject,
   runProject,
-  pauseProject,
   stopProject
 };

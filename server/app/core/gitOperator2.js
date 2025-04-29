@@ -9,6 +9,7 @@ const path = require("path");
 const fs = require("fs-extra");
 const { getLogger } = require("../logSettings");
 const { escapeRegExp } = require("../lib/utility");
+const promiseRetry = require("promise-retry");
 
 /**
  * asynchronous git call
@@ -16,7 +17,7 @@ const { escapeRegExp } = require("../lib/utility");
  * @param {string[]} args - argument list including git's sub command eg. add,commit,init... etc.
  * @param {string} rootDir - repo's root dir
  */
-async function gitPromise(cwd, args, rootDir) {
+async function promisifiedGit(cwd, args, rootDir) {
   return new Promise((resolve, reject)=>{
     const cp = spawn("git", args, { cwd: path.resolve(cwd), env: process.env, shell: true });
     let output = "";
@@ -46,6 +47,27 @@ async function gitPromise(cwd, args, rootDir) {
       }
       resolve(output);
     });
+  });
+}
+
+/**
+ * asynchronous git call with retry
+ * @param {string} cwd - working directory
+ * @param {string[]} args - argument list including git's sub command eg. add,commit,init... etc.
+ * @param {string} rootDir - repo's root dir
+ */
+async function gitPromise(cwd, args, rootDir) {
+  return promiseRetry(async(retry)=>{
+    promisifiedGit(cwd, args, rootDir).catch((err)=>{
+        if (!/fatal: Unable to create '.*index.lock': File exists/.test(err.message)) {
+          throw err;
+        }
+      return retry(err);
+    })
+  },{
+    retries: 10,
+    minTimeout: 300,
+    factor: 1
   });
 }
 
@@ -83,11 +105,12 @@ async function gitInit(rootDir, user, mail) {
  * commit already staged(indexed) files
  * @param {string} rootDir - repo's root dir
  * @param {string} message - commmit message
+ * @param additionalOption
  */
 async function gitCommit(rootDir, message = "save project", additionalOption = []) {
   return gitPromise(rootDir, ["commit", "-m", `"${message}"`, ...additionalOption], rootDir)
     .catch((err)=>{
-      if (!/(no changes|nothing)( added | )to commit/m.test(err)) {
+      if (!/(no changes|nothing)( added | )to commit/m.test(err.message)) {
         throw err;
       }
     });
@@ -107,12 +130,7 @@ async function gitAdd(rootDir, filename, updateOnly) {
   }
   args.push("--");
   args.push(filename);
-  return gitPromise(rootDir, args, rootDir)
-    .catch((err)=>{
-      if (!/fatal: Unable to create '.*index.lock': File exists/.test(err)) {
-        throw err;
-      }
-    });
+  return gitPromise(rootDir, args, rootDir);
 }
 
 /**
@@ -124,7 +142,7 @@ async function gitAdd(rootDir, filename, updateOnly) {
 async function gitRm(rootDir, filename) {
   return gitPromise(rootDir, ["rm", "-r", "--cached", "--", filename], rootDir)
     .catch((err)=>{
-      if (!/fatal: pathspec '.*' did not match any files/.test(err)) {
+      if (!/fatal: pathspec '.*' did not match any files/.test(err.message)) {
         throw err;
       }
     });
@@ -188,13 +206,34 @@ async function gitStatus(rootDir) {
 async function gitClean(rootDir, filePatterns = "") {
   return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", "--", filePatterns], rootDir);
 }
+
+/**
+ * return relative filename from repository's root directry
+ * @param {string} rootDir - repo's root dir
+ * @param {string} filename - filename
+ */
 function getRelativeFilename(rootDir, filename) {
+  //TODO filename must be checked if already absolute path or not
   const absFilename = path.resolve(rootDir, filename);
   return path.relative(rootDir, absFilename);
 }
+
+/**
+ * make file pattern string for lfs track/untrack command
+ * @param {string} rootDir - repo's root dir
+ * @param {string} filename - filename
+ * @returns {string} -
+ */
 function makeLFSPattern(rootDir, filename) {
   return `/${getRelativeFilename(rootDir, filename)}`;
 }
+
+/**
+ * determine if specified filename is LFS target
+ * @param {string} rootDir - repo's root dir
+ * @param {string} filename - filename
+ * @returns {boolean} -
+ */
 async function isLFS(rootDir, filename) {
   const lfsPattern = getRelativeFilename(rootDir, filename);
   const lfsTrackResult = await gitPromise(rootDir, ["lfs", "track"], rootDir);
@@ -206,6 +245,7 @@ async function isLFS(rootDir, filename) {
  * performe git lfs track
  * @param {string} rootDir - repo's root dir
  * @param {string} filename - files to be track
+ * @returns {Promise} - resolved when LFS track setting is done
  */
 async function gitLFSTrack(rootDir, filename) {
   await gitPromise(rootDir, ["lfs", "track", "--", makeLFSPattern(rootDir, filename)], rootDir);
@@ -227,7 +267,7 @@ async function gitLFSUntrack(rootDir, filename) {
 }
 
 /**
- * @typedef {Object} unsavedFile
+ * @typedef {object} unsavedFile
  * @property {string} status - unsaved file's status which is one of ["new", "modified", "deleted',"renamed"]
  * @property {string} name - unsaved file's name
  */
@@ -235,7 +275,6 @@ async function gitLFSUntrack(rootDir, filename) {
  * get unsavedFiles
  * @param {string} rootDir - repo's root dir
  * @returns {unsavedFile[]} - unsaved files
- *
  */
 async function getUnsavedFiles(rootDir) {
   const { added, modified, deleted, renamed } = await gitStatus(rootDir);

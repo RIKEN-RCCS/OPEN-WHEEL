@@ -35,14 +35,15 @@
         />
         <v-switch
           class='mt-n1'
-          v-model="readOnly"
+          v-model="readOnlyEditor"
           label="read only"
-          :disabled="! isEdittable"
+          v-if="! readOnly"
           color="primary"
         />
         <v-btn @click="saveAllFiles"
           prepend-icon=mdi-content-save-all
           text="save all files"
+          data-cy="rapid-save_all_files-btn"
         />
       </v-toolbar-items>
     </v-toolbar>
@@ -52,6 +53,7 @@
           ref="text"
           :read-only="readOnly"
           @jobscript="setIsJobScript"
+          data-cy="rapid-tab-tab_editor"
         />
       </v-col>
       <v-col v-show="mode === 'PS-config'">
@@ -61,6 +63,7 @@
           @openNewTab="openNewTab"
           @insertBraces="insertBraces"
           @openFilterEditor=openFilterEditor
+          data-cy="rapid-parameter-parameter_editor"
         />
       </v-col>
       <v-col v-show="mode === 'jobScriptEditor'">
@@ -70,6 +73,7 @@
           :is-job-script="isJobScript"
           @insert="insertSnipet"
           @remove="removeSnipet"
+          data-cy="rapid-script-script_editor"
         />
       </v-col>
     </v-row>
@@ -77,6 +81,7 @@
       v-model=filterDialog
       :placeholders=placeholders
       @updatePlaceholders=getAllPlaceholders
+      data-cy="rapid-filter-filter_editor"
     />
     <unsaved-files-dialog
       :unsaved-files="unsavedFiles"
@@ -87,7 +92,7 @@
 </template>
 <script>
 "use strict";
-import { mapState, mapGetters, mapActions } from "vuex";
+import { mapState, mapActions } from "vuex";
 import getNodeAndPath from "../lib/getNodeAndPath.js";
 import unsavedFilesDialog from "../components/rapid/unsavedFilesDialog.vue";
 import componentButton from "../components/common/componentButton.vue";
@@ -126,13 +131,13 @@ export default {
   data: ()=>{
     return {
       mode: "normal",
-      readOnly_: false,
       isJobScript: false,
       showUnsavedFilesDialog: false,
       unsavedFiles: [],
       leave: null,
       filterDialog: false,
-      placeholders: []
+      placeholders: [],
+      readOnlyEditor: false
     };
   },
   computed: {
@@ -141,16 +146,8 @@ export default {
       "componentPath",
       "selectedComponent",
       "currentComponent",
-      "componentTree"]),
-    ...mapGetters(["isEdittable"]),
-    readOnly: {
-      get() {
-        return this.isEdittable ? this.readOnly_ : true;
-      },
-      set(v) {
-        this.readOnly_ = v;
-      }
-    },
+      "componentTree",
+      "readOnly"]),
     pathToCurrentComponent: function () {
       const rt = [];
       if (this.currentComponent !== null) {
@@ -222,6 +219,9 @@ export default {
         this.unsavedFiles.splice(0);
         this.showUnsavedFilesDialog = false;
         return;
+      }
+      if (mode === "save") {
+        this.saveAllFiles();
       }
       this.unsavedFiles.splice(0);
       this.showUnsavedFilesDialog = false;

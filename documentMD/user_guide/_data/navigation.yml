@@ -64,6 +64,10 @@ refs:
         url: /reference/4_component/04_while.html
       - title: Foreach
         url: /reference/4_component/05_Foreach.html
+      - title: Continue
+        url: /reference/4_component/13_Continue.html
+      - title: Break
+        url: /reference/4_component/14_Break.html
       - title: PS
         url: /reference/4_component/06_PS.html
       - title: Workflow
@@ -80,4 +84,3 @@ refs:
         url: /reference/4_component/12_BulkjobTask.html
   - title: 5. ログイン画面
     url: /reference/5_login/
-

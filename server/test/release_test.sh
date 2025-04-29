@@ -14,11 +14,10 @@ export WHEEL_CONFIG_DIR
 {
 echo '[{'
 echo '  "name": "testServer",'
-echo '  "host": "wheel_release_test_server",'
+echo '  "host": "'${TAG_TEST_SERVER}'",'
 echo '  "path": "/home/testuser",'
-echo '  "keyFile": null,'
 echo '  "username": "testuser",'
-echo '  "numJob": 5,'
+echo '  "numJob": 1,'
 echo '  "port": 22,'
 echo '  "id": "dummy-id",'
 echo '  "jobScheduler": "PBSPro",'
@@ -32,7 +31,8 @@ echo '}]'
 
 
 echo boot up test server
-docker compose up ${TAG_TEST_SERVER} -d
+docker compose up ${TAG_TEST_SERVER} -d --wait
+docker exec ${TAG_TEST_SERVER} /opt/pbs/bin/qmgr -c "set server job_history_enable=True"
 
 echo remove entry from known_hosts
 ssh-keygen -R 'wheel_release_test_server'
@@ -60,4 +60,8 @@ fi
 
 docker compose down
 rm -fr ${WHEEL_CONFIG_DIR}
+
+echo clean up known_hosts
+ssh-keygen -R '['${REMOTE_HOSTNAME}']:'${REMOTE_PORT} 2>/dev/null
+
 exit ${rt}

@@ -10,16 +10,17 @@ import vuetify from "eslint-plugin-vuetify";
 import vueParser from "vue-eslint-parser";
 
 const jsdocRules = {
+  "jsdoc/require-jsdoc": ["warn", { enableFixer: false }],
+  "jsdoc/require-param": ["warn", { enableFixer: false }],
+  "jsdoc/require-param-description": "warn",
+  "jsdoc/require-param-name": "warn",
+  "jsdoc/require-param-type": "warn",
   "jsdoc/require-hyphen-before-param-description": [
     "warn",
     "always"
   ],
-  "jsdoc/require-param-description": "warn",
-  "jsdoc/require-param-name": "warn",
-  "jsdoc/require-param-type": "warn",
-  "jsdoc/require-jsdoc": "off",
-  "jsdoc/require-param": "off",
-  "jsdoc/require-returns": "off"
+  "jsdoc/require-returns": "warn",
+  "jsdoc/require-returns-check": "error"
 };
 
 const styleRules = {
@@ -122,6 +123,7 @@ const styleRules = {
 
 export default [
   js.configs.recommended,
+  jsdoc.configs["flat/recommended"],
   stylistic.configs["disable-legacy"],
   stylistic.configs.customize({
     indent: 2,
@@ -163,7 +165,6 @@ export default [
       sourceType: "commonjs"
     },
     rules: {
-      ...jsdocRules,
       "node/exports-style": [
         "error",
         "module.exports"
@@ -200,8 +201,8 @@ export default [
       reportUnusedDisableDirectives: true
     },
     rules: {
-      ...jsdocRules,
       ...styleRules,
+      ...jsdocRules,
       "no-nested-ternary": "off",
       "no-param-reassign": "warn",
       "camelcase": [

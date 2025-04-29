@@ -116,29 +116,18 @@ const logSettings = {
 //configure with default setting
 log4js.configure(logSettings);
 
-async function setLoglevel(appender, loglevel) {
-  if (!["filterdConsole", "filterdFile", "log2client"].includes(appender)) {
-    return;
-  }
-  logSettings.appenders[appender].level = loglevel || getLoglevel();
-  await promisify(log4js.shutdown)();
-  log4js.configure(logSettings);
-}
-
-function reset() {
-  log4js.configure(logSettings);
-}
-
 function getLogger(projectRootDir) {
+  const contextProjectRootDir = typeof projectRootDir === "string" ? projectRootDir : path.dirname(logFilename);
+  if (logger.context.projectRootDir === contextProjectRootDir) {
+    return logger;
+  }
+
   //please note projectRootDir context will remain after logging
-  logger.addContext("projectRootDir", projectRootDir || path.dirname(logFilename));
-  logger.shutdown = promisify(log4js.shutdown); //only use in test code
-  //logger.reset = log4js.configure.bind(log4js, logSettings);
+  logger.addContext("projectRootDir", contextProjectRootDir);
+  logger.shutdown = promisify(log4js.shutdown);
   return logger;
 }
 
 module.exports = {
-  setLoglevel,
-  getLogger,
-  reset
+  getLogger
 };

@@ -15,6 +15,10 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+import './commands-vuetify'
+import './commands-home'
+import './commands-remoteHost'
+import './commands-workFlow'
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')

@@ -31,8 +31,8 @@
         v-bind="menuProps"
         block
         class="justify-start"
-        :text=props.item.columns.name
-        @click="openDialog(props.item.columns.name, props.index)"
+        :text=props.item.name
+        @click="openDialog(props.item.name, props.index)"
       />
     </template>
             <v-sheet
@@ -45,6 +45,7 @@
                 :rules=updateItemValidator
                 clearable
                 @keyup.enter="saveEditDialog"
+                data-cy="list_form_property-edit-text_field"
               />
           </v-sheet>
         </v-menu>
@@ -53,6 +54,7 @@
       <action-row
         :can-edit="allowEditButton"
         :item="item.raw"
+        :disabled=readOnly
         @delete="deleteItem"
       />
     </template>
@@ -66,10 +68,12 @@
         :disabled="disabled"
         variant=outlined
         density=compact
+        :readonly=readOnly
         clearable
         append-icon="mdi-plus"
         @click:append="addItem"
         @keyup.enter="addItem"
+        data-cy="list_form-add-text_field"
       />
     </template>
     <template
@@ -94,6 +98,11 @@ export default {
     actionRow,
     versatileDialog
   },
+  emits: [
+    "add",
+    "remove",
+    "update"
+  ],
   props: {
     editDialogMinWidth: {
       type: [String, Number],
@@ -147,7 +156,11 @@ export default {
         return { name: "" };
       }
     },
-    disabled: Boolean
+    disabled: Boolean,
+    readOnly: {
+      type: Boolean,
+      default: false
+    }
   },
   mounted() {
     if (this.additionalRules) {
@@ -228,6 +241,9 @@ export default {
       return this.isDuplicate(newItem, [this.oldVal]) ? "duplicated name is not allowed" : true;
     },
     openDialog(name, index) {
+      if (this.readOnly) {
+        return;
+      }
       this.targetIndex = index;
       this.newVal = name;
       this.oldVal = name;

@@ -16,34 +16,35 @@ const { getSsh } = require("./sshManager.js");
 /**
  * read Json file until get some valid JSON data
  * @param {string} filename - filename to be read
+ * @param {number} retry - max number of retry
  */
-async function readJsonGreedy(filename) {
+async function readJsonGreedy(filename, retry) {
+  const retries = typeof retry === "number" ? retry : 10;
   return promiseRetry(async (retry)=>{
     const buf = await fs.readFile(filename)
       .catch((e)=>{
         if (e.code === "ENOENT") {
-          retry(e);
+          return retry(e);
         }
         throw e;
       });
     const strData = buf.toString("utf8").replace(/^\uFEFF/, "");
     if (strData.length === 0) {
-      retry(new Error("read failed"));
+      return retry(new Error("read failed"));
     }
     let jsonData;
     try {
       jsonData = JSON.parse(strData);
     } catch (e) {
       if (e instanceof SyntaxError) {
-        retry(e);
+        return retry(e);
       }
       throw e;
     }
-    //need check by jsonSchema but it may cause performance problem
     return jsonData;
   },
   {
-    retries: 10,
+    retries,
     minTimeout: 500,
     factor: 1
   });
@@ -86,7 +87,6 @@ async function addX(file) {
  * @param {string} src - absolute path of src path
  * @param {string} dst - absolute path of dst path
  * @param {boolean} forceCopy - use copy instead of symlink
- *
  */
 async function deliverFile(src, dst, forceCopy = false) {
   const stats = await fs.lstat(src);
@@ -111,6 +111,8 @@ async function deliverFile(src, dst, forceCopy = false) {
 
 /**
  * execut ln -s or cp -r command on remotehost to make shallow symlink
+ * @param {object} recipe - deliver recipe which has src, dstination and more information
+ * @returns {object} - result object
  */
 async function deliverFileOnRemote(recipe) {
   const logger = getLogger(recipe.projectRootDir);
@@ -132,6 +134,11 @@ async function deliverFileOnRemote(recipe) {
   return { type: "copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
 }
 
+/**
+ * deliver file from remotehost to localhost
+ * @param {object} recipe - deliver recipe which has src, dstination and more information
+ * @returns {object} - result object
+ */
 async function deliverFileFromRemote(recipe) {
   const logger = getLogger(recipe.projectRootDir);
   if (!recipe.remoteToLocal) {
@@ -151,7 +158,7 @@ async function deliverFileFromRemote(recipe) {
 
 /**
  * @typedef File
- * @param {Object} File
+ * @param {object} File
  * @param {string} File.filename - filename
  * @param {string} File.dirname - dirname of the file
  * @param {string} File.content - file content
@@ -159,7 +166,7 @@ async function deliverFileFromRemote(recipe) {
 
 /**
  * open file or target Files which is listed in parameter setting file
- * @param {string} projectRootDir -
+ * @param {string} projectRootDir - project's root path"
  * @param {string} argFilename - target file's name
  * @param {boolean} forceNormal - if true absFilename is not treated as parameter setting file
  * @returns {File[]} - array of file object which is read
@@ -280,6 +287,16 @@ async function getUnusedPath(parent, name) {
   return path.resolve(parent, `${name}.${suffix}`);
 }
 
+/**
+ * replace CRLF to LF
+ * @param {string} filename - tareget file name
+ */
+async function replaceCRLF(filename) {
+  let contents = await fs.readFile(filename);
+  contents = contents.toString().replace(/\r\n/g, "\n");
+  return fs.writeFile(filename, contents);
+}
+
 module.exports = {
   readJsonGreedy,
   addX,
@@ -288,5 +305,6 @@ module.exports = {
   deliverFileFromRemote,
   openFile,
   saveFile,
-  getUnusedPath
+  getUnusedPath,
+  replaceCRLF
 };

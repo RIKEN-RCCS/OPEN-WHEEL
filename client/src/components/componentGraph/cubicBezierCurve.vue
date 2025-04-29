@@ -1,5 +1,5 @@
 <template>
-  <path :d=cmd :stroke=strokeColor :stroke-width=width fill="transparent"/>
+  <path :d=cmd :stroke=strokeColor :stroke-width=width fill="transparent" data-cy="cubic-bezier-path"/>
 </template>
 <script>
 "use strict";

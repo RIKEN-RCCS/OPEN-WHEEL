@@ -21,6 +21,14 @@ async function expandArrayOfGlob(globs, cwd) {
   );
   return Array.prototype.concat.apply([], names);
 }
+
+/**
+ * check if the combination of min, max, and step is valid
+ * @param {number} min - one end point
+ * @param {number} max - the other ent point
+ * @param {number} step - step width
+ * @returns {boolean} -
+ */
 function isValidParamAxis(min, max, step) {
   if (max > min) {
     return step > 0;
@@ -31,6 +39,14 @@ function isValidParamAxis(min, max, step) {
   //max == min
   return true;
 }
+
+/**
+ * get size of parameters in the min-max-step type axis
+ * @param {number} min - one end point
+ * @param {number} max - the other ent point
+ * @param {number} step - step width
+ * @returns {number} -
+ */
 function calcParamAxisSize(min, max, step) {
   let modifiedMax = max;
   let modifiedMin = min;
@@ -51,6 +67,12 @@ function calcParamAxisSize(min, max, step) {
   }
   return Math.floor((modifiedMax - modifiedMin) / Math.abs(modifiedStep)) + 1;
 }
+
+/**
+ * get number of parameter in the axis
+ * @param {object} axis - paramter set
+ * @returns {number} -
+ */
 function getParamAxisSize(axis) {
   if (Array.isArray(axis.list)) {
     return axis.list.length;
@@ -73,10 +95,23 @@ function getParamAxisSize(axis) {
       return new Error("unknown axis.type");
   }
 }
-function getDigitsAfterTheDecimalPoint(floatVal) {
-  const strVal = floatVal.toString();
+
+/**
+ * get the number of decimal places
+ * @param {number} val - integer or fixed-point number
+ * @returns {number} -
+ */
+function getDigitsAfterTheDecimalPoint(val) {
+  const strVal = val.toString();
   return strVal.indexOf(".") !== -1 ? strVal.length - strVal.indexOf(".") - 1 : 0;
 }
+
+/**
+ * get n-th parameter value in the axis
+ * @param {number} n - index number
+ * @param {object} axis - paramter set
+ * @returns {string} - n-th parameter
+ */
 function getNthValue(n, axis) {
   if (Array.isArray(axis.list)) {
     return axis.list[n].toString();
@@ -91,6 +126,13 @@ function getNthValue(n, axis) {
   }
   return rt.toString();
 }
+
+/**
+ * get Nth parameter vector
+ * @param {number} argN - index of needed param
+ * @param {object} ParamSpace - parameter space
+ * @returns {object} - parameter vector
+ */
 function getNthParamVec(argN, ParamSpace) {
   const paramVec = [];
   let n = argN;
@@ -104,12 +146,24 @@ function getNthParamVec(argN, ParamSpace) {
   }
   return paramVec;
 }
+
+/**
+ * get total number of parameters in parameter space
+ * @param {object} ParamSpace - parameter space
+ * @returns {number} -
+ */
 function getParamSize(ParamSpace) {
   return ParamSpace.reduce((p, a)=>{
     const paramAxisSize = getParamAxisSize(a);
     return paramAxisSize !== 0 ? p * paramAxisSize : p;
   }, 1);
 }
+
+/**
+ * return parameter vector
+ * @param {object} ParamSpace - parameter space
+ * @yields {object} -
+ */
 function *paramVecGenerator(ParamSpace) {
   const totalSize = getParamSize(ParamSpace);
   let index = 0;
@@ -118,6 +172,12 @@ function *paramVecGenerator(ParamSpace) {
     index++;
   }
 }
+
+/**
+ * get array of filename in parameter space
+ * @param {object} ParamSpace - parameter space
+ * @returns {string[]} -
+ */
 function getFilenames(ParamSpace) {
   return ParamSpace.reduce((p, c)=>{
     if (c.type !== "file") {
@@ -126,37 +186,15 @@ function getFilenames(ParamSpace) {
     return p.concat(c.list);
   }, []);
 }
-function workAroundForVersion1(paramSpace) {
-  paramSpace.forEach((e)=>{
-    if (e.type === "integer") {
-      e.min = parseInt(e.min, 10);
-      e.max = parseInt(e.max, 10);
-      e.step = parseInt(e.step, 10);
-    } else if (e.type === "float") {
-      e.min = parseFloat(e.min);
-      e.max = parseFloat(e.max);
-      e.step = parseFloat(e.step);
-    } else if (e.type === "file") {
-      e.list = e.list.filter((filename)=>{
-        return filename !== "";
-      });
-    }
-  });
-  return paramSpace;
-}
-function removeInvalid(paramSpace) {
-  return paramSpace.filter((e)=>{
-    if (e.type === "integer" || e.type === "float") {
-      return isValidParamAxis(e.min, e.max, e.step);
-    }
-    return (e.type === "file" && e.list.length > 0) || (e.type === "string" && e.list.length > 0);
-  });
-}
-function removeInvalidv1(paramSpace) {
-  return removeInvalid(workAroundForVersion1(paramSpace));
-}
-function removeInvalidv2(paramSpace) {
-  return paramSpace.filter((e)=>{
+
+/**
+ * remove invalid parameter from parameter space
+ * @param {object []} paramSpace - array of parameters
+ * @param {string} cwd - working directory for globbing
+ * @returns {object []} - parameter space which does not contain invalid parameter
+ */
+async function getParamSpacev2(paramSpace, cwd) {
+  const cleanParamSpace = paramSpace.filter((e)=>{
     if (Object.prototype.hasOwnProperty.call(e, "min")
       && Object.prototype.hasOwnProperty.call(e, "max")
       && Object.prototype.hasOwnProperty.call(e, "step")) {
@@ -170,9 +208,6 @@ function removeInvalidv2(paramSpace) {
     }
     return false;
   });
-}
-async function getParamSpacev2(paramSpace, cwd) {
-  const cleanParamSpace = removeInvalidv2(paramSpace);
   for (const param of cleanParamSpace) {
     if (Object.prototype.hasOwnProperty.call(param, "files")) {
       param.type = "file";
@@ -182,12 +217,9 @@ async function getParamSpacev2(paramSpace, cwd) {
   return cleanParamSpace;
 }
 
-//workAroundForVersion1 is used in UT
 module.exports = {
   paramVecGenerator,
   getParamSize,
   getFilenames,
-  removeInvalidv1,
-  getParamSpacev2,
-  workAroundForVersion1
+  getParamSpacev2
 };

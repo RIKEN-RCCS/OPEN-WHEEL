@@ -9,6 +9,13 @@ const fs = require("fs-extra");
 const { createHash } = require("crypto");
 const tempdRoot = process.env.WHEEL_TEMPD || path.dirname(__dirname);
 const { getLogger } = require("../logSettings.js");
+
+/**
+ * create temporary directory
+ * @param {string} projectRootDir - project's root path
+ * @param {string} prefix - purpose for the temp dir (ex. viewer, download)
+ * @returns {object} - dir: absolute path of temp dir, root: parent dir path of temp dir
+ */
 async function createTempd(projectRootDir, prefix) {
   const root = path.resolve(tempdRoot, prefix);
   const hash = createHash("sha256");
@@ -18,6 +25,13 @@ async function createTempd(projectRootDir, prefix) {
   getLogger(projectRootDir).debug(`create temporary directory ${dir}`);
   return { dir, root };
 }
+
+/**
+ * remote temporary directory
+ * @param {string} projectRootDir - project's root path
+ * @param {string} prefix - purpose for the temp dir (ex. viewer, download)
+ * @returns {Promise} - resolved after directory is removed
+ */
 async function removeTempd(projectRootDir, prefix) {
   const hash = createHash("sha256");
   const ID = hash.update(projectRootDir).digest("hex");
@@ -25,6 +39,13 @@ async function removeTempd(projectRootDir, prefix) {
   getLogger(projectRootDir).debug(`remove temporary directory ${dir}`);
   return fs.remove(dir);
 }
+
+/**
+ * re-calcurate existing temporaly directory path
+ * @param {string} projectRootDir - project's root path
+ * @param {string} prefix - purpose for the temp dir (ex. viewer, download)
+ * @returns {string} - absolute path of temporary directory
+ */
 async function getTempd(projectRootDir, prefix) {
   const hash = createHash("sha256");
   const ID = hash.update(projectRootDir).digest("hex");

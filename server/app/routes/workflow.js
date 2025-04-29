@@ -5,9 +5,9 @@
  */
 "use strict";
 const path = require("path");
-const { projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { getComponent } = require("../core/workflowUtil");
-const { importProject } = require("../core/projectFilesOperator");
+const { projectJsonFilename } = require("../db/db");
+const { readProject } = require("../core/projectFilesOperator");
+const { readComponentJson } = require("../core/componentJsonIO.js");
 
 module.exports = {
   get: async (req, res)=>{
@@ -21,11 +21,11 @@ module.exports = {
   },
   post: async (req, res)=>{
     const projectRootDir = req.body.project;
-    const newProjectRootDir = await importProject(projectRootDir);
+    const newProjectRootDir = await readProject(projectRootDir);
     if (!newProjectRootDir) {
       return;
     }
-    const { ID } = await getComponent(newProjectRootDir, path.resolve(newProjectRootDir, componentJsonFilename));
+    const { ID } = await readComponentJson(newProjectRootDir);
     res.cookie("root", ID);
     res.cookie("rootDir", newProjectRootDir);
     res.cookie("project", path.resolve(newProjectRootDir, projectJsonFilename));

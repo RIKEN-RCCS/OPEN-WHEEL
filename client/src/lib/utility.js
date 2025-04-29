@@ -26,6 +26,12 @@ export function escapeRegExp(target) {
   //eslint-disable-next-line no-useless-escape
   return target.replace(/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
 }
+
+/**
+ * check if specified name is generally valid for filename
+ * @param {string} name - string to be checked
+ * @returns {boolean} -
+ */
 function isSane(name) {
   if (typeof name !== "string") {
     return false;
@@ -93,8 +99,8 @@ export function isValidOutputFilename(name) {
 /**
  * get date as string
  * @param {boolean} humanReadable - option flag for using delimiters(/and:) or not
- * @param {boolean} withMiliseconds - option flag for time resolution
- * return {string}
+ * @param {boolean} withMilliseconds - option flag for time resolution
+ * @returns {string} - string form of current date
  */
 export function getDateString(humanReadable = false, withMilliseconds = false) {
   const now = new Date();
@@ -115,7 +121,7 @@ export function getDateString(humanReadable = false, withMilliseconds = false) {
 /**
  * determine component can have children or not
  * @param {componeyt || string} target - component type of component itself
- * @return {boolean} - if true, specified component can have children
+ * @returns {boolean} - if true, specified component can have children
  */
 export function isContainer(target) {
   const type = typeof target === "string" ? target : target.type;
@@ -125,7 +131,7 @@ export function isContainer(target) {
 /**
  * get value from cookie
  * @param { string } key - target cookie's property
- * @return { string } - value
+ * @returns { string } - value
  */
 export function readCookie(key) {
   const encodedValue = document.cookie
@@ -142,7 +148,7 @@ export function readCookie(key) {
 /**
  * get color corresponding to state
  * @param {string} state - project or component status
- * @return {string} - corresponding color
+ * @returns {string} - corresponding color
  */
 export function state2color(state) {
   const table = {

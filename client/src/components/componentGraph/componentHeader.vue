@@ -1,8 +1,8 @@
 <template>
   <g>
     <rect :x=x :y=y :width=width :height=height :fill=color
-
     :data-droparea=true @drop=onDrop
+    data-cy="component_header-rect_rect"
   />
   <text :x=x+height/1.2 font-size="90%" :y=center.y fill="white" text-anchor="start" v-if="stepnum !== null"> {{ stepnum }} </text>
     <image :href=iconImg :x=x :y=center.y-height/2 :width=height :height=height />
@@ -63,6 +63,9 @@ export default {
       default: null
     }
   },
+  emits: [
+    "drop"
+  ],
   data() {
     return {
       width: boxWidth,

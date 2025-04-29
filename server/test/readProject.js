@@ -24,7 +24,7 @@ const { componentJsonFilename, projectJsonFilename } = require("../app/db/db.js"
 
 //testee
 const PFO = rewire("../app/core/projectFilesOperator.js");
-const importProject = PFO.__get__("importProject");
+const readProject = PFO.__get__("readProject");
 
 let onList = false;
 const projectList = PFO.__get__("projectList");
@@ -46,7 +46,7 @@ PFO.__set__("projectList", projectList);
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
 const projectRootDir = path.resolve(testDirRoot, "test_project.wheel");
 
-describe("importProject UT", function () {
+describe("readProject UT", function () {
   this.timeout(10000);
   let task0;
   beforeEach(async ()=>{
@@ -63,7 +63,7 @@ describe("importProject UT", function () {
     }
   });
   it("should do nothing git-controlled and not-started state", async ()=>{
-    await importProject(projectRootDir);
+    await readProject(projectRootDir);
 
     const { added, modified, deleted, renamed, untracked } = await gitStatus(projectRootDir);
     expect(added).to.be.an("array").that.is.empty;
@@ -74,7 +74,7 @@ describe("importProject UT", function () {
   });
   it("should do nothing if git-controlled and something modified", async ()=>{
     await updateComponent(projectRootDir, task0.ID, "state", "hoge");
-    await importProject(projectRootDir);
+    await readProject(projectRootDir);
 
     const { added, modified, deleted, renamed, untracked } = await gitStatus(projectRootDir);
     expect(added).to.be.an("array").that.is.empty;
@@ -87,7 +87,7 @@ describe("importProject UT", function () {
     await updateComponent(projectRootDir, task0.ID, "include", "foo,bar,baz");
     await updateComponent(projectRootDir, task0.ID, "exclude", "hoge,huga,piyo");
     await gitCommit(projectRootDir);
-    await importProject(projectRootDir);
+    await readProject(projectRootDir);
 
     const { added, modified, deleted, renamed, untracked } = await gitStatus(projectRootDir);
     expect(added).to.be.an("array").that.is.empty;
@@ -105,7 +105,7 @@ describe("importProject UT", function () {
     await gitRm(projectRootDir, ".gitignore");
     await fs.remove(ignoreFile);
     await gitCommit(projectRootDir);
-    await importProject(projectRootDir);
+    await readProject(projectRootDir);
 
     const { added, modified, deleted, renamed, untracked } = await gitStatus(projectRootDir);
     expect(added).to.be.an("array").that.is.empty;
@@ -118,7 +118,7 @@ describe("importProject UT", function () {
   it("should set all components and project to 'not-started' and commit everything if project is not git-controlled", async ()=>{
     await updateComponent(projectRootDir, task0.ID, "state", "hoge");
     await fs.remove(path.resolve(projectRootDir, ".git"));
-    await importProject(projectRootDir);
+    await readProject(projectRootDir);
 
     const { added, modified, deleted, renamed, untracked } = await gitStatus(projectRootDir);
     expect(added).to.be.an("array").that.is.empty;
@@ -141,25 +141,24 @@ describe("importProject UT", function () {
     const { state: prjState } = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     expect(prjState).to.equal("not-started");
   });
-  it("should rename root directory to projectJson.name if that is differ", async ()=>{
+  it("should rename projectJson.name if that is differ from directory name", async ()=>{
     const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+    const oldProjectName = projectJson.name;
     projectJson.name = "hoge";
     await fs.writeJson(path.resolve(projectRootDir, projectJsonFilename), projectJson);
     await gitAdd(projectRootDir, projectJsonFilename);
     await gitCommit(projectRootDir);
-    await importProject(projectRootDir);
+    await readProject(projectRootDir);
 
-    const newProjectRootDir = path.resolve(testDirRoot, "hoge.wheel");
-    const { added, modified, deleted, renamed, untracked } = await gitStatus(newProjectRootDir);
+    const { added, modified, deleted, renamed, untracked } = await gitStatus(projectRootDir);
     expect(added).to.be.an("array").that.is.empty;
     expect(modified).to.be.an("array").that.is.empty;
     expect(deleted).to.be.an("array").that.is.empty;
     expect(renamed).to.be.an("array").that.is.empty;
     expect(untracked).to.be.an("array").that.is.empty;
-
-    const { name: rootWFName } = await fs.readJson(path.resolve(newProjectRootDir, componentJsonFilename));
-    expect(rootWFName).to.equal("hoge");
-    const { name: prjName } = await fs.readJson(path.resolve(newProjectRootDir, projectJsonFilename));
-    expect(prjName).to.equal("hoge");
+    const { name: rootWFName } = await fs.readJson(path.resolve(projectRootDir, componentJsonFilename));
+    expect(rootWFName).to.equal(oldProjectName);
+    const { name: prjName } = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+    expect(prjName).to.equal(oldProjectName);
   });
 });

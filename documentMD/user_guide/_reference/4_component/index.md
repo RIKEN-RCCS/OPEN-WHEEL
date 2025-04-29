@@ -13,6 +13,8 @@ permalink: /reference/4_component/
 * [For](03_For.html)
 * [While](04_while.html)
 * [Foreach](05_Foreach.html)
+* [Continue](13_Continue.html)
+* [Break](14_Break.html)
 * [PS](06_PS.html)
 * [Workflow](07_Workflow.html)
 * [Storage](08_Storage.html)

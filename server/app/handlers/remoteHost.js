@@ -46,7 +46,9 @@ const schema = {
     statusCheckInterval: { type: "number", default: 60, minimum: 0 },
     maxStatusCheckError: { type: "number", default: 10, minimum: 0 },
     execInterval: { type: "number", minimum: 0 },
-    readyTimeout: { type: "number", minimum: 0 }
+    readyTimeout: { type: "number", minimum: 0 },
+    rcfile: { type: "string", default: "" },
+    prependCmd: { type: "string", default: "" }
   },
   additionalProperties: false,
   required: ["name", "host", "user"]
@@ -91,7 +93,7 @@ async function onGetHostList(cb) {
       delete hostInfo.username;
     }
   });
-  cb(remoteHost.getAll());
+  cb(hostList);
 }
 async function onUpdateHost(socket, updatedHost, cb) {
   Object.keys(updatedHost).forEach((prop)=>{
