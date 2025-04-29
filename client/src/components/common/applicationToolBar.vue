@@ -6,8 +6,8 @@
 <template>
     <v-app-bar >
       <template #prepend>
-        <a :href="homeURL">
-        <v-img height=72px width=180px :src="imgLogo" alt="wheel title logo"/>
+        <a :href="homeURL" data-cy="tool_bar-wheel_logo-logo">
+        <v-img height=72px width=180px :src="imgLogo" alt="wheel title logo" />
       </a>
       </template>
       <v-app-bar-title
@@ -19,6 +19,7 @@
       <template #append>
         <v-app-bar-nav-icon
           @click="$emit('navIconClick')"
+          data-cy="tool_bar-navi-icon"
         />
       </template>
       <template #extension>

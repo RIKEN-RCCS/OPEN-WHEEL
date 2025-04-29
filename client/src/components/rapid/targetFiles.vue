@@ -18,6 +18,7 @@
             @click="openDialog(null)"
             prepend-icon=mdi-plus
             text="add new target file"
+            data-cy="target_files-add_target_file-btn"
           />
         </v-row>
       </v-card-title>
@@ -28,6 +29,7 @@
                      { key: 'targetNode', title: 'component', sortable: true },
                      { key: 'action', title: 'Actions', sortable: false }]"
           :items="targetFiles"
+          data-cy="target_files-data-data_table"
         >
           <template #bottom />
           <template #item.action="{ item }">
@@ -59,6 +61,7 @@
             v-model.trim="newTargetFilename"
             label="filename"
             :rules="[required, notDupulicated]"
+            data-cy="target_files-target_file_name-text_field"
           />
           <lower-component-tree @selected="targetNodeSelected" />
         </v-card-text>
@@ -70,12 +73,14 @@
             prepend-icon="mdi-check"
             :disabled="hasError"
             text="OK"
+            data-cy="target_files-ok-btn"
           />
           <v-btn
             variant=text
             @click="closeAndResetDialog"
             prepend-icon="mdi-cancel"
             text="cancel"
+            data-cy="target_files-cancel-btn"
           />
         </v-card-actions>
       </v-card>

@@ -17,6 +17,7 @@
         variant=text
         class="text-capitalize"
         text="Remotehost editor"
+        data-cy="navigation-remote_host_editor-btn"
       />
       <v-btn
         prepend-icon=mdi-help-circle-outline
@@ -25,6 +26,7 @@
         variant=text
         class="text-capitalize"
         text="User guide"
+        data-cy="navigation-user_guide_editor-btn"
       />
     </v-list>
   </v-navigation-drawer>

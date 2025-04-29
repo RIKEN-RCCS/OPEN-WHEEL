@@ -45,6 +45,7 @@
                 :rules=updateItemValidator
                 clearable
                 @keyup.enter="saveEditDialog"
+                data-cy="list_form_property-edit-text_field"
               />
           </v-sheet>
         </v-menu>
@@ -72,6 +73,7 @@
         append-icon="mdi-plus"
         @click:append="addItem"
         @keyup.enter="addItem"
+        data-cy="list_form-add-text_field"
       />
     </template>
     <template

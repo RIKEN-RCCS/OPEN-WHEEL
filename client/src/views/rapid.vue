@@ -43,6 +43,7 @@
         <v-btn @click="saveAllFiles"
           prepend-icon=mdi-content-save-all
           text="save all files"
+          data-cy="rapid-save_all_files-btn"
         />
       </v-toolbar-items>
     </v-toolbar>
@@ -52,6 +53,7 @@
           ref="text"
           :read-only="readOnly"
           @jobscript="setIsJobScript"
+          data-cy="rapid-tab-tab_editor"
         />
       </v-col>
       <v-col v-show="mode === 'PS-config'">
@@ -61,6 +63,7 @@
           @openNewTab="openNewTab"
           @insertBraces="insertBraces"
           @openFilterEditor=openFilterEditor
+          data-cy="rapid-parameter-parameter_editor"
         />
       </v-col>
       <v-col v-show="mode === 'jobScriptEditor'">
@@ -70,6 +73,7 @@
           :is-job-script="isJobScript"
           @insert="insertSnipet"
           @remove="removeSnipet"
+          data-cy="rapid-script-script_editor"
         />
       </v-col>
     </v-row>
@@ -77,6 +81,7 @@
       v-model=filterDialog
       :placeholders=placeholders
       @updatePlaceholders=getAllPlaceholders
+      data-cy="rapid-filter-filter_editor"
     />
     <unsaved-files-dialog
       :unsaved-files="unsavedFiles"

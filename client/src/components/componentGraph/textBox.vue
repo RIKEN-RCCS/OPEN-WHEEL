@@ -1,5 +1,5 @@
 <template>
-    <text :x=x :y=y :fill=color :text-anchor="textAnchor" > {{ trancatedText }} </text>
+    <text :x=x :y=y :fill=color :text-anchor="textAnchor" data-cy="text-title" > {{ trancatedText }} </text>
 </template>
 <script>
 "use strict";

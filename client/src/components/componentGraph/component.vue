@@ -3,6 +3,7 @@
     @click.stop="onClick"
     @dblclick.stop="onDblclick"
     @click.right.prevent.stop="onRightclick"
+    data-cy="component-component_group-g"
   >
     <rect
       :x="componentPos.x-boxWidth/2-borderWidth"

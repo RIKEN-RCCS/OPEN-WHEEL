@@ -11,7 +11,7 @@
       persistent
     >
       <v-card>
-        <v-card-title>
+        <v-card-title data-cy="add_new_host-add_new_host-card_title">
           add new host
         </v-card-title>
         <v-card-text>
@@ -34,6 +34,7 @@
                           :rules="[required, notDupulicatedLabel]"
                           placeholder="required"
                           validate-on="blur"
+                          data-cy="add_new_host-label-text_field"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -43,6 +44,7 @@
                           :rules="[required]"
                           placeholder="required"
                           validate-on="blur"
+                          data-cy="add_new_host-hostname-text_field"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -51,6 +53,7 @@
                           :label=portNumberLabel
                           :rules="[validPortNumber]"
                           validate-on="blur"
+                          data-cy="add_new_host-port_number_label-text_field"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -60,6 +63,7 @@
                           :rules="[required]"
                           placeholder="required"
                           validate-on="blur"
+                          data-cy="add_new_host-user_id-text_field"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -67,12 +71,14 @@
                           v-model="host.path"
                           :label=workDirLabel
                           validate-on="blur"
+                          data-cy="add_new_host-work_dir_label-text_field"
                         />
                       </v-col>
                       <v-col cols="4">
                         <v-text-field
                           v-model="host.keyFile"
                           label="private key path"
+                          data-cy="add_new_host-private_key_path-text_field"
                           clearable
                         />
                       </v-col>
@@ -80,6 +86,7 @@
                         <v-btn
                           @click="openFileBrowser=!openFileBrowser"
                           text=browse
+                          data-cy="add_new_host-browse_btn"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -87,30 +94,35 @@
                           v-model="host.jobScheduler"
                           :items="availableJobSchedulers"
                           label="job scheduler"
+                          data-cy="add_new_host-job_schedulers-select"
                         />
                       </v-col>
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.numJob"
                           label="max number of jobs"
+                          data-cy="add_new_host-max_number_of_jobs-text_field"
                         />
                       </v-col>
                       <v-col cols="6">
                         <v-text-field
                           v-model="host.queue"
                           label="available queues"
+                          data-cy="add_new_host-available_queues-text_field"
                         />
                       </v-col>
                       <v-col cols="3">
                         <v-checkbox
                           v-model="host.useBulkjob"
                           label="use bulkjob"
+                          data-cy="add_new_host-use_bulkjob-checkbox"
                         />
                       </v-col>
                       <v-col cols="3">
                         <v-checkbox
                           v-model="host.useStepjob"
                           label="use stepjob"
+                          data-cy="add_new_host-use_stepjob-checkbox"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -118,6 +130,7 @@
                           v-model="host.sharedHost"
                           :items="hostNames"
                           label="shared host"
+                          data-cy="add_new_host-shared_host-select"
                           clearable
                         />
                       </v-col>
@@ -125,6 +138,7 @@
                         <v-text-field
                           v-model="host.sharedPath"
                           label="shared path on shared host"
+                          data-cy="add_new_host-shared_path_on_shared_host-text_field"
                         />
                       </v-col>
                     </v-row>
@@ -132,7 +146,7 @@
                 </v-expansion-panel-text>
               </v-expansion-panel>
               <v-expansion-panel>
-                <v-expansion-panel-title>Advanced settings</v-expansion-panel-title>
+                <v-expansion-panel-title data-cy="add_new_host-advanced_settings-title">Advanced settings</v-expansion-panel-title>
                 <v-expansion-panel-text>
                   <v-container>
                     <v-row>
@@ -142,6 +156,7 @@
                           label="connection renewal interval (min.) [default: 0]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="add_new_host-connection_renewal-text_field"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -150,6 +165,7 @@
                           label="status check interval (sec.) [default: 60]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="add_new_host-status_check-text_field"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -158,6 +174,7 @@
                           label="max number of status check error allowed [default: 10]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="add_new_host-max_number-text_field"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -166,6 +183,7 @@
                           label="execution interval (sec.) [default: job 5, task 1]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="add_new_host-execution_interval-text_field"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -174,6 +192,7 @@
                           label="timeout during handshake phase (msec.) [default: 0]"
                           :rules="[positiveNumber]"
                           validate-on="blur"
+                          data-cy="add_new_host-timeout_during-text_field"
                         />
                       </v-col>
                     </v-row>
@@ -189,6 +208,7 @@
             @click="submitHost"
             :prepend-icon="mdi-check"
             text="OK"
+            data-cy="add_new_host-ok-btn"
           />
           <v-btn
             @click="cancelDialog"
@@ -214,14 +234,16 @@
             @click="host.keyFile=selectedFile;closeFileBrowser()"
             prepend-icon="mdi-check"
             text="OK"
+            data-cy="add_new_host-select_private_key_file_ok-btn"
           />
           <v-btn
             @click="closeFileBrowser"
             prepend-icon="mdi-close"
             text="cancel"
+            data-cy="add_new_host-select_private_key_file_cancel-btn"
           />
         </v-card-actions>
-        <v-card-text>
+        <v-card-text data-cy="add_new_host-select_private_key_file-card_text">
           <file-browser
             mode="all"
             @update="(a)=>{selectedFile=a}"

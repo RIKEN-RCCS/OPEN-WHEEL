@@ -15,6 +15,7 @@
             v-bind="props"
             @click="openDialog('createNewDir')"
             icon=mdi-folder-plus-outline
+            data-cy="file_browser-new_dir-btn"
           />
         </template>
       </v-tooltip>
@@ -25,6 +26,7 @@
             v-bind="props"
             icon="mdi-file-plus-outline"
             @click="openDialog('createNewFile')"
+            data-cy="file_browser-new_file-btn"
           />
         </template>
       </v-tooltip>
@@ -45,6 +47,7 @@
             v-bind="props"
             @click="openDialog('removeFile')"
             icon="mdi-file-remove-outline"
+            data-cy="file_browser-remove_file-btn"
           />
         </template>
       </v-tooltip>
@@ -92,6 +95,7 @@
       @update:active="updateSelected"
       :get-node-icon="getNodeIcon"
       :get-leaf-icon="getLeafIcon"
+      data-cy="file_browser-treeview-treeview"
     />
     <versatile-dialog
       v-model="dialog.open"
@@ -99,6 +103,7 @@
       :title="dialog.title"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
+      data-cy="file_browser-dialog-dialog"
     >
       <template
         #message
@@ -109,6 +114,7 @@
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
           variant="outlined"
+          data-cy="file_browser-input-text_field"
         />
       </template>
       <template

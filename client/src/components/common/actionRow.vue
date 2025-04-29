@@ -12,6 +12,7 @@
       class="mr-2"
       @click="$emit('edit', item)"
       icon="mdi-pencil"
+      data-cy="action_row-edit-btn"
     />
     <v-icon
       v-if="canDelete"
@@ -19,6 +20,7 @@
       small
       @click="$emit('delete',item)"
       icon=mdi-delete
+      data-cy="action_row-delete-btn"
     />
   </div>
 </template>
