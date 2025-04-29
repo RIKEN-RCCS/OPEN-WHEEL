@@ -233,6 +233,7 @@ describe("02:ホーム画面基本動作確認", () => {
   */
   it("02-01-019:機能利用フローの確認-プロジェクトを削除-REMOVEボタン押下-一覧にプロジェクトが表示されていない且つ、実体ファイルが削除されていることを確認", () => {
     cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
+    cy.wait(500);
     cy.get('[data-cy="home-project_list-data_table"]').find('[type="checkbox"]').first().check();
     cy.get('[data-cy="home-remove-btn"]').click();
     cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
@@ -267,6 +268,7 @@ describe("02:ホーム画面基本動作確認", () => {
   */
   it("02-01-021:機能利用フローの確認-プロジェクトを削除-REMOVEボタン押下-BATCH MODE選択-一覧にプロジェクトが表示されていない且つ、実体ファイルが削除されていることを確認", () => {
     cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
+    cy.wait(500);
     cy.get('[data-cy="home-batch_mode-btn"]').click();
     cy.get('[data-cy="home-project_list-data_table"]').find('[type="checkbox"]').first().check();
     cy.get('[data-cy="home-remove-btn"]').click();
