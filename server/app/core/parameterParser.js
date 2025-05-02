@@ -51,7 +51,7 @@ function calcParamAxisSize(min, max, step) {
   let modifiedMax = max;
   let modifiedMin = min;
   let modifiedStep = step;
-  if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || !Number.isSafeInteger(step) ) {
+  if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || !Number.isSafeInteger(step)) {
     const significantDigits = [min, max, step].reduce((a, e)=>{
       const digits = getDigitsAfterTheDecimalPoint(e);
       return Math.max(a, digits);

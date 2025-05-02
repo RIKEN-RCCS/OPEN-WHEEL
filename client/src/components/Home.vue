@@ -92,8 +92,8 @@
                 block
                 class="justify-start"
                 :text="props.item.name"
-                @click="openInlineEditDialog(props.item.name, props.index, 'name')"
                 data-cy="home-project_name-btn"
+                @click="openInlineEditDialog(props.item.name, props.index, 'name')"
               />
             </template>
             <v-sheet
@@ -124,9 +124,9 @@
                 class="justify-start text-truncate trancated-row"
                 v-bind="menuProps"
                 block
-                @click="openInlineEditDialog(props.item.description, props.index, 'description')"
                 :text="props.item.description"
                 data-cy="home-project_description-btn"
+                @click="openInlineEditDialog(props.item.description, props.index, 'description')"
               />
             </template>
             <v-sheet
@@ -155,7 +155,9 @@
         scrollable
       >
         <v-card>
-          <v-card-title data-cy="home-create_new_project-title"> {{ dialogTitle }}</v-card-title>
+          <v-card-title data-cy="home-create_new_project-title">
+            {{ dialogTitle }}
+          </v-card-title>
           <v-card-actions>
             <v-spacer />
             <buttons
@@ -183,8 +185,8 @@
           </v-card-actions>
           <v-card-text>
             <file-browser
-              @update="(a)=>{selectedInTree=a}"
               data-cy="home-file_browser-file_browser"
+              @update="(a)=>{selectedInTree=a}"
             />
           </v-card-text>
         </v-card>

@@ -39,10 +39,10 @@
                   { title: 'Actions', key: 'action', sortable: false }]"
       :label="'scatter'"
       :read-only="readOnly"
-      @addNewItem="onAddNewItem"
-      @updateItem="onUpdateItem"
-      @deleteItem="onDeleteItem"
       data-cy="parameter_editor-scatter-gather_scatter"
+      @add-new-item="onAddNewItem"
+      @update-item="onUpdateItem"
+      @delete-item="onDeleteItem"
     />
     <gather-scatter
       :container="parameterSetting.gather"
@@ -52,10 +52,10 @@
                   { title: 'Actions', key: 'action', sortable: false }]"
       :label="'gather'"
       :read-only="readOnly"
-      @addNewItem="onAddNewItem"
-      @updateItem="onUpdateItem"
-      @deleteItem="onDeleteItem"
       data-cy="parameter_editor-gather-gather_scatter"
+      @add-new-item="onAddNewItem"
+      @update-item="onUpdateItem"
+      @delete-item="onDeleteItem"
     />
   </div>
 </template>

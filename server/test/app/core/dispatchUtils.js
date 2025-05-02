@@ -172,7 +172,7 @@ describe("#evalCondition", ()=>{
       fs: { pathExists: pathExistsStub },
       getLogger: getLoggerStub,
       addX: addXStub,
-      pspawn: pspawnStub,
+      pspawn: pspawnStub
     });
     getLoggerStub.returns({ debug: debugStub, warn: warnStub });
   });

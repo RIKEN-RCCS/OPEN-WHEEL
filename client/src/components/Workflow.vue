@@ -15,33 +15,33 @@
       @nav-icon-click="drawer=!drawer"
     >
       <template #append>
-      <span
-        class="text-decoration-none text-h5 white--text"
-        @click="projectDescription=projectJson.description;descriptionDialog=true"
-        data-cy="workflow-project_name-text"
-      >
-        {{ projectJson !== null ? projectJson.name : "" }}
-      </span>
-      <v-spacer />
-      <v-btn
-        rounded
-        variant=outlined
-        :ripple="false"
-        :style="{backgroundColor : stateColor}"
-      >
-        status: {{ projectState }}{{isReadOnly}}
-      </v-btn>
-      <v-spacer />
-      <v-btn
-        shaped
-        variant=outlined
-        plain
-        :ripple="false"
-      >
-        last updated: {{ projectJson !== null ? projectJson.mtime : "" }}
-      </v-btn>
-      <v-spacer />
-      </template >
+        <span
+          class="text-decoration-none text-h5 white--text"
+          data-cy="workflow-project_name-text"
+          @click="projectDescription=projectJson.description;descriptionDialog=true"
+        >
+          {{ projectJson !== null ? projectJson.name : "" }}
+        </span>
+        <v-spacer />
+        <v-btn
+          rounded
+          variant="outlined"
+          :ripple="false"
+          :style="{backgroundColor : stateColor}"
+        >
+          status: {{ projectState }}{{ isReadOnly }}
+        </v-btn>
+        <v-spacer />
+        <v-btn
+          shaped
+          variant="outlined"
+          plain
+          :ripple="false"
+        >
+          last updated: {{ projectJson !== null ? projectJson.mtime : "" }}
+        </v-btn>
+        <v-spacer />
+      </template>
       <template #extension>
         <v-btn-toggle
           v-model="mode"
@@ -305,9 +305,9 @@
       v-model="viewerScreenDialog"
       max-width="50vw"
       title="open viewer screen"
+      data-cy="workflow-viewer_screen-dialog"
       @ok="openViewerScreen();viewerScreenDialog=false"
       @cancel="viewerScreenDialog=false"
-      data-cy="workflow-viewer_screen-dialog"
     />
     <versatile-dialog
       v-model="dialog"

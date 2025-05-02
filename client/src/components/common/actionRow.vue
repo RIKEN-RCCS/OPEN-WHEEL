@@ -19,9 +19,8 @@
       :disabled="disabled"
       small
       icon="mdi-delete"
-      @click="$emit('delete',item)"
-      icon=mdi-delete
       data-cy="action_row-delete-btn"
+      @click="$emit('delete',item)"
     />
   </div>
 </template>

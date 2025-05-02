@@ -54,8 +54,8 @@
         <tab-editor
           ref="text"
           :read-only="readOnly"
-          @jobscript="setIsJobScript"
           data-cy="rapid-tab-tab_editor"
+          @jobscript="setIsJobScript"
         />
       </v-col>
       <v-col v-show="mode === 'PS-config'">
@@ -73,18 +73,15 @@
           ref="jse"
           :read-only="readOnly"
           :is-job-script="isJobScript"
+          data-cy="rapid-script-script_editor"
           @insert="insertSnipet"
           @remove="removeSnipet"
-          data-cy="rapid-script-script_editor"
         />
       </v-col>
     </v-row>
     <filter-editor
-      v-model=filterDialog
-      :placeholders=placeholders
-      @updatePlaceholders=getAllPlaceholders
-      data-cy="rapid-filter-filter_editor"
       v-model="filterDialog"
+      data-cy="rapid-filter-filter_editor"
       :placeholders="placeholders"
       @update-placeholders="getAllPlaceholders"
     />

@@ -16,7 +16,6 @@
             :disabled="isSND"
             v-bind="props"
             icon="mdi-folder-plus-outline"
-            icon="mdi-folder-plus-outline"
             data-cy="file_browser-new_dir-btn"
             @click="openDialog('createNewDir')"
           />

@@ -4,9 +4,12 @@
  * See License in the project root for the license information.
  */
 <template>
-    <v-app-bar >
-      <template #prepend>
-        <a :href="homeURL" data-cy="tool_bar-wheel_logo-logo">
+  <v-app-bar>
+    <template #prepend>
+      <a
+        :href="homeURL"
+        data-cy="tool_bar-wheel_logo-logo"
+      >
         <v-img
           height="72px"
           width="180px"
@@ -14,17 +17,17 @@
           alt="wheel title logo"
         />
       </a>
-      </template>
-      <v-app-bar-title
-        class="text-lowercase text-decoration-none text-h5 white--text"
-      >
-        {{ title }}
-      </v-app-bar-title>
-      <slot name="append" />
+    </template>
+    <v-app-bar-title
+      class="text-lowercase text-decoration-none text-h5 white--text"
+    >
+      {{ title }}
+    </v-app-bar-title>
+    <slot name="append" />
     <template #append>
       <v-app-bar-nav-icon
+        data-cy="tool_bar-navi-icon"
         @click="$emit('navIconClick')"
-          data-cy="tool_bar-navi-icon"
       />
     </template>
     <template #extension>
