@@ -30,6 +30,7 @@
   "dependencies": {
     "@eyalsh/docopt": "^1.0.7",
     "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "axios": "^1.7.7",
     "body-parser": "^1.20.3",
     "connect-ensure-login": "^0.1.1",
