@@ -33,7 +33,7 @@
     "reExceededLimitError": "job submit limit"
   },
   "Fugaku": {
-    "submit": "pjsub -X",
+    "submit": "pjsub",
     "queueOpt": "-L rscgrp=",
     "stat": "pjstat -v --choose jid,st",
     "statAfter": "pjstat -v -H day=3 --choose jid,st,ec,pc",
