@@ -311,7 +311,7 @@ describe("gitOperator2", ()=>{
   describe("#gitAdd", ()=>{
     let gitOperator2;
     let gitAdd;
-    let gitPromiseStub;
+    let promisifiedGitStub;
 
     const rootDir = "/repo";
     const filename = "file.txt";
@@ -319,8 +319,8 @@ describe("gitOperator2", ()=>{
     beforeEach(()=>{
       gitOperator2 = rewire("../../../app/core/gitOperator2.js");
       gitAdd = gitOperator2.__get__("gitAdd");
-      gitPromiseStub = sinon.stub();
-      gitOperator2.__set__("gitPromise", gitPromiseStub);
+      promisifiedGitStub = sinon.stub();
+      gitOperator2.__set__("promisifiedGit", promisifiedGitStub);
     });
 
     afterEach(()=>{
@@ -328,12 +328,12 @@ describe("gitOperator2", ()=>{
     });
 
     it("should call gitPromise with correct arguments (without -u)", async ()=>{
-      gitPromiseStub.resolves();
+      promisifiedGitStub.resolves();
 
       await gitAdd(rootDir, filename, false);
 
       sinon.assert.calledWith(
-        gitPromiseStub,
+        promisifiedGitStub,
         rootDir,
         ["add", "--", filename],
         rootDir
@@ -341,30 +341,50 @@ describe("gitOperator2", ()=>{
     });
 
     it("should call gitPromise with correct arguments (with -u)", async ()=>{
-      gitPromiseStub.resolves();
+      promisifiedGitStub.resolves();
 
       await gitAdd(rootDir, filename, true);
 
       sinon.assert.calledWith(
-        gitPromiseStub,
+        promisifiedGitStub,
         rootDir,
         ["add", "-u", "--", filename],
         rootDir
       );
     });
 
-    it("should handle index.lock error and not throw", async ()=>{
+    it("should handle index.lock error and not throw", async function () {
+      this.timeout(5000);
       const error = new Error(
         "fatal: Unable to create '/repo/.git/index.lock': File exists"
       );
-      gitPromiseStub.rejects(error);
+      promisifiedGitStub.onCall(0).rejects(error);
+      promisifiedGitStub.onCall(1).rejects(error);
+      promisifiedGitStub.onCall(2).rejects(error);
+      promisifiedGitStub.onCall(3).rejects(error);
+      promisifiedGitStub.onCall(4).rejects(error);
+      promisifiedGitStub.onCall(5).resolves(undefined);
 
       await expect(gitAdd(rootDir, filename, false)).to.be.fulfilled;
+    });
+    it("should handle index.lock error but throw after 6th fail", async function () {
+      this.timeout(5000);
+      const error = new Error(
+        "fatal: Unable to create '/repo/.git/index.lock': File exists"
+      );
+      promisifiedGitStub.onCall(0).rejects(error);
+      promisifiedGitStub.onCall(1).rejects(error);
+      promisifiedGitStub.onCall(2).rejects(error);
+      promisifiedGitStub.onCall(3).rejects(error);
+      promisifiedGitStub.onCall(4).rejects(error);
+      promisifiedGitStub.onCall(5).rejects(error);
+
+      return expect(gitAdd(rootDir, filename, false)).to.be.rejected;
     });
 
     it("should throw error if gitPromise fails with another error", async ()=>{
       const error = new Error("some other error");
-      gitPromiseStub.rejects(error);
+      promisifiedGitStub.rejects(error);
 
       await expect(gitAdd(rootDir, filename, false)).to.be.rejectedWith(
         Error,

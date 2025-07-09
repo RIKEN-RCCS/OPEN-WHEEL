@@ -21,6 +21,7 @@ const promiseRetry = require("promise-retry");
 async function promisifiedGit(cwd, args, rootDir) {
   return new Promise((resolve, reject)=>{
     const cp = spawn("git", args, { cwd: path.resolve(cwd), env: process.env, shell: true });
+    getLogger(rootDir).trace(`git ${args.join(" ")} called at ${cwd}`);
     let output = "";
     cp.stdout.on("data", (data)=>{
       getLogger(rootDir).trace(data.toString());
@@ -36,6 +37,7 @@ async function promisifiedGit(cwd, args, rootDir) {
       err.cwd = cwd;
       err.abs_cwd = path.resolve(cwd);
       err.args = args;
+      getLogger(rootDir).trace("git command failed", err);
       reject(err);
     });
     cp.on("exit", (rt)=>{
@@ -58,17 +60,21 @@ async function promisifiedGit(cwd, args, rootDir) {
  * @param {string} rootDir - repo's root dir
  */
 async function gitPromise(cwd, args, rootDir) {
-  return promiseRetry(async(retry)=>{
-    promisifiedGit(cwd, args, rootDir).catch((err)=>{
-        if (!/fatal: Unable to create '.*index.lock': File exists/.test(err.message)) {
-          throw err;
-        }
+  return promiseRetry(async (retry)=>{
+    return promisifiedGit(cwd, args, rootDir).catch((err)=>{
+      getLogger(rootDir).trace(`RETRYING git ${args.join(" ")} at cwd`);
+      if (!/fatal: Unable to create '.*index.lock': File exists/.test(err.message)
+        && !/error: could not lock .*: File exists/.test(err.message)) {
+        throw err;
+      }
       return retry(err);
-    })
-  },{
-    retries: 10,
+    });
+  }, {
+    retries: 5,
     minTimeout: 300,
-    factor: 1
+    maxTimeout: 2000,
+    randomize: true,
+    factor: 1.2
   });
 }
 
