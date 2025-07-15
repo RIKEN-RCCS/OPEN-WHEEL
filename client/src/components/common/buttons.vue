@@ -11,7 +11,7 @@
       :prepend-icon="item.icon"
       :disabled="item.disabled"
       :text="item.label"
-      data-cy="buttons-ok_or_cancel-btn"
+      :data-cy="`buttons-${item.label}-btn`"
       @click="$emit(item.label)"
     />
   </v-btn-group>

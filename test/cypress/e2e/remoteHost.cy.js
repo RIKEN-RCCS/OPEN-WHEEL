@@ -59,20 +59,24 @@ describe("01:リモートホスト画面基本動作確認", () => {
   「編集」ボタン押下
   試験確認内容：リモートホスト設定作成ダイアログが表示されていることを確認
   */
-  it("01-01-006:構成要素の機能動作確認-「編集」ボタン押下-リモートホスト設定作成ダイアログが表示されていることを確認", () => {
-    cy.get('[data-cy="remotehost-new_remote_host_setting-btn"]').click();
-    cy.get('[data-cy="add_new_host-label-text_field"]').type(LABEL);
-    cy.get('[data-cy="add_new_host-hostname-text_field"]').type(HOST_NAME);
-    cy.get('[data-cy="add_new_host-port_number_label-text_field"]').type(PORT_NUMBER);
-    cy.get('[data-cy="add_new_host-user_id-text_field"]').type(TEST_USER);
-    cy.get('[data-cy="add_new_host-ok-btn"]').click();
-    cy.contains("tr", LABEL).find('[data-cy="action_row-edit-btn"]').click();
-    cy.get('[data-cy="add_new_host-add_new_host-card_title"]').should('be.visible');
-    // ダイアログ内のテキスト確認
-    cy.get('[data-cy="add_new_host-label-text_field"]').find('input').should('have.value', 'TestLabel');
-    // ダイアログ内のOKボタン
-    cy.get('[data-cy="add_new_host-ok-btn"]').click();
-    cy.removeRemoteHost(LABEL);
+  describe("",()=>{
+    afterEach(()=>{
+      cy.removeRemoteHost(LABEL);
+    });
+    it.only("01-01-006:構成要素の機能動作確認-「編集」ボタン押下-リモートホスト設定作成ダイアログが表示されていることを確認", () => {
+      cy.get('[data-cy="remotehost-new_remote_host_setting-btn"]').click();
+      cy.get('[data-cy="add_new_host-label-text_field"]').type(LABEL);
+      cy.get('[data-cy="add_new_host-hostname-text_field"]').type(HOST_NAME);
+      cy.get('[data-cy="add_new_host-port_number_label-text_field"]').type(PORT_NUMBER);
+      cy.get('[data-cy="add_new_host-user_id-text_field"]').type(TEST_USER);
+      cy.get('[data-cy="add_new_host-ok-btn"]').click();
+      cy.contains("tr", LABEL).find('[data-cy="action_row-edit-btn"]').click();
+      cy.get('[data-cy="add_new_host-add_new_host-card_title"]').should('be.visible');
+      // ダイアログ内のテキスト確認
+      cy.get('[data-cy="add_new_host-label-text_field"]').find('input').should('have.value', 'TestLabel');
+      // ダイアログ内のOKボタン
+      cy.get('[data-cy="add_new_host-ok-btn"]').click();
+    });
   });
 
   /**
@@ -91,7 +95,7 @@ describe("01:リモートホスト画面基本動作確認", () => {
     // 削除ボタン
     cy.contains("tr", LABEL).find('[data-cy="action_row-delete-btn"]').click();
     // 削除確認ダイアログ内CANCELボタン
-    cy.get('[data-cy="buttons-ok_or_cancel-btn"]').eq(1).click();
+    cy.get('[data-cy="buttons-cancel-btn"]').click();
     cy.get('[data-cy="remotehost-items-data_table"]').contains(LABEL);
     cy.removeRemoteHost(LABEL);
   });
@@ -113,7 +117,7 @@ describe("01:リモートホスト画面基本動作確認", () => {
     cy.contains("tr", LABEL).find('[data-cy="action_row-delete-btn"]').click();
     //cy.get('[data-cy="action_row-delete-btn"]').click();
     // 削除確認ダイアログ内OKボタン
-    cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
+    cy.get('[data-cy="buttons-cancel-btn"]').click();
     cy.contains("tr", LABEL).should('not.exist');
     //cy.get('[data-cy="remotehost-items-data_table"]').contains('No data available');
   });

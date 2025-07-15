@@ -236,7 +236,7 @@ describe("02:ホーム画面基本動作確認", () => {
     cy.wait(500);
     cy.get('[data-cy="home-project_list-data_table"]').find('[type="checkbox"]').first().check();
     cy.get('[data-cy="home-remove-btn"]').click();
-    cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
+    cy.get('[data-cy="buttons-remove-btn"]').click();
     cy.contains(PROJECT_NAME).should('not.be.visible');
     cy.get('[data-cy="home-new-btn"]').click();
     cy.get('[data-cy="home-file_browser-file_browser"]').contains(PROJECT_NAME + EXTENSION).should('not.exist');
@@ -253,7 +253,7 @@ describe("02:ホーム画面基本動作確認", () => {
     cy.createProject(PROJECT_NAME_RANDOM, PROJECT_DESCRIPTION);
     cy.get('[data-cy="home-project_list-data_table"]').find('[type="checkbox"]').first().check();
     cy.get('[data-cy="home-remove_from_list-btn"]').click();
-    cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
+    cy.get('[data-cy="buttons-remove-btn"]').click();
     cy.contains(PROJECT_NAME_RANDOM).should('not.be.visible');
     cy.get('[data-cy="home-new-btn"]').click();
     cy.get('[data-cy="home-file_browser-file_browser"]').contains(PROJECT_NAME_RANDOM + EXTENSION).should('exist');
@@ -272,7 +272,7 @@ describe("02:ホーム画面基本動作確認", () => {
     cy.get('[data-cy="home-batch_mode-btn"]').click();
     cy.get('[data-cy="home-project_list-data_table"]').find('[type="checkbox"]').first().check();
     cy.get('[data-cy="home-remove-btn"]').click();
-    cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
+    cy.get('[data-cy="buttons-remove-btn"]').click();
     cy.contains(PROJECT_NAME).should('not.be.visible');
     cy.get('[data-cy="home-batch_mode-btn"]').click();
     cy.get('[data-cy="home-new-btn"]').click();
@@ -292,7 +292,7 @@ describe("02:ホーム画面基本動作確認", () => {
     cy.get('[data-cy="home-batch_mode-btn"]').click();
     cy.get('[data-cy="home-project_list-data_table"]').find('[type="checkbox"]').first().check();
     cy.get('[data-cy="home-remove_from_list-btn"]').click();
-    cy.get('[data-cy="buttons-ok_or_cancel-btn"]').first().click();
+    cy.get('[data-cy="buttons-remove-btn"]').click();
     cy.contains(PROJECT_NAME_RANDOM).should('not.be.visible');
     cy.get('[data-cy="home-batch_mode-btn"]').click();
     cy.get('[data-cy="home-new-btn"]').click();

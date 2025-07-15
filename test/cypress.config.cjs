@@ -8,7 +8,7 @@ module.exports = defineConfig({
   requestTimeout: 3000,
   defaultCommandTimeout: 10000,
   video: true,
-  retries: 2,
+  retries: 0,
   component: {
     devServer: {
       framework: "vue",
