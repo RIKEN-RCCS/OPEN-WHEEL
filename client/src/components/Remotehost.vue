@@ -36,8 +36,8 @@
             :loading="item.loading"
             :text="item.connectionStatus"
             :prepend-icon="item.icon"
-            @click="testConnection(index)"
             data-cy="remotehost-test-btn"
+            @click="testConnection(index)"
           />
         </template>
         <template #item.action="{ item}">

@@ -98,15 +98,15 @@ async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumb
   let data = "";
   let targetNum = 0;
   targetFiles.forEach((targetFile, index)=>{
-      const label = `BULKNUM_${bulkNumber}`;
-      const target = replacePathsep(targetFile);
-      const targetKey = paramsKeys[index];
-      const targetVal = params[targetKey];
-      data += `${label}_TARGETNUM_${targetNum}_FILE="./${target}"\n${label}_TARGETNUM_${targetNum}_KEY="${targetKey}"\n${label}_TARGETNUM_${targetNum}_VALUE="${targetVal}"\n`;
-      targetNum++;
-  })
-  if(data !== ""){
-  await fs.writeFile(path.resolve(templateRoot, "parameterSet.wheel.txt"), data);
+    const label = `BULKNUM_${bulkNumber}`;
+    const target = replacePathsep(targetFile);
+    const targetKey = paramsKeys[index];
+    const targetVal = params[targetKey];
+    data += `${label}_TARGETNUM_${targetNum}_FILE="./${target}"\n${label}_TARGETNUM_${targetNum}_KEY="${targetKey}"\n${label}_TARGETNUM_${targetNum}_VALUE="${targetVal}"\n`;
+    targetNum++;
+  });
+  if (data !== "") {
+    await fs.writeFile(path.resolve(templateRoot, "parameterSet.wheel.txt"), data);
   }
 }
 

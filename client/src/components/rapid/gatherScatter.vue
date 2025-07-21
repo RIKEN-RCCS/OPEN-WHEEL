@@ -79,15 +79,15 @@
             :disabled="hasError"
             prepend-icon="mdi-check"
             text="OK"
-            @click="commitChange"
             data-cy="gather_scatter-ok-btn"
+            @click="commitChange"
           />
           <v-btn
             variant="text"
             prepend-icon="mdi-cancel"
             text="Cancel"
-            @click="closeAndResetDialog"
             data-cy="gather_scatter-cancel-btn"
+            @click="closeAndResetDialog"
           />
         </v-card-actions>
       </v-card>

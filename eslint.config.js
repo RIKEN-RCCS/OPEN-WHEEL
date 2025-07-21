@@ -196,6 +196,7 @@ export default [
         ...globals.nodeBuiltin,
         ...globals.node,
         ...globals.mocha,
+        expect: "readonly",
         cy: "readonly",
         Cypress: "readonly"
       }

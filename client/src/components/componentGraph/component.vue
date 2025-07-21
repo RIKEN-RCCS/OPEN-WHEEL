@@ -1,9 +1,9 @@
 <template>
   <g
+    data-cy="component-component_group-g"
     @click.stop="onClick"
     @dblclick.stop="onDblclick"
     @click.right.prevent.stop="onRightclick"
-    data-cy="component-component_group-g"
   >
     <rect
       v-if="isSelected || isInvalid"
