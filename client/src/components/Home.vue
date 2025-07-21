@@ -36,6 +36,7 @@
           :disabled="batchMode"
           prepend-icon="mdi-import"
           text="IMPORT"
+          data-cy="home-import-btn"
           @click="importDialog=true"
         />
         <v-btn
@@ -55,6 +56,7 @@
         <v-btn
           prepend-icon="mdi-export"
           text="EXPORT"
+          data-cy="home-export-btn"
           :disabled="selectedInTable.length === 0 || batchMode"
           @click="openExportProjectDialog"
         />
