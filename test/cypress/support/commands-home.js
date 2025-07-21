@@ -20,10 +20,17 @@ Cypress.Commands.add("createProjectMultiple", (projectName, projectDescription, 
 
 //remove a project
 Cypress.Commands.add("removeAllProjects", ()=>{
+
   cy.visit("/");
-  cy.get('[data-cy="home-batch_mode-btn"]', { timeout: 30000 }).should('be.visible'); // バッチモードスイッチボタンが表示されるまで待機
-  cy.get('[data-cy="home-batch_mode-btn"]').click();
-  cy.get('[type="checkbox"]').eq(1).check();
-  cy.get('[data-cy="home-remove-btn"]').click();
-  cy.get('[data-cy="buttons-remove-btn"]').click();
+  cy.get('[data-cy="home-batch_mode-btn"]', {timeout: 30000}).should('be.visible');
+  cy.get('[data-cy="home-project_list-data_table"]', { timeout: 30000,  includeShadowDom: true  }).then(($el) => {
+    if ($el.is(':visible')) {
+      cy.get('[data-cy="home-batch_mode-btn"]').find('input[type="checkbox"]').first().click({force:true});
+      cy.contains('th','Project Name').parent().find('input[type="checkbox"]').first().click({force:true}); //check all projects
+      cy.get('[data-cy="home-remove-btn"]').click({force:true});
+      cy.get('[data-cy="buttons-remove-btn"]').click({force:true});
+    } else {
+        cy.log("no project found");
+    }
+  });
 })
