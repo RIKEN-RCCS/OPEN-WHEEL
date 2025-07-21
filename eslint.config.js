@@ -132,7 +132,7 @@ export default [
     arrowParens: true
   }),
   {
-    ignores: ["node_modules/", "server/app/public/", "test/", "documentMD/"]
+    ignores: ["node_modules/", "server/app/public/", "documentMD/"]
   },
   {
     files: ["client/**/*.js", "client/**/*.vue"],
@@ -171,7 +171,7 @@ export default [
     }
   },
   {
-    files: ["server/test/**/*.js"],
+    files: ["server/test/**/*.{cjs,js}"],
     plugins: {
       node,
       chaiFriendly
@@ -181,12 +181,39 @@ export default [
       globals: {
         ...globals.nodeBuiltin,
         ...globals.node,
-        it: "readonly",
-        describe: "readonly",
-        before: "readonly",
-        after: "readonly",
-        beforeEach: "readonly",
-        afterEach: "readonly"
+        ...globals.mocha
+      }
+    }
+  },
+  {
+    files: ["test/**/*.js"],
+    plugins: {
+      chaiFriendly
+    },
+    languageOptions: {
+      sourceType: "module",
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node,
+        ...globals.mocha,
+        cy: "readonly",
+        Cypress: "readonly"
+      }
+    }
+  },
+  {
+    files: ["test/**/*.cjs"],
+    plugins: {
+      chaiFriendly
+    },
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node,
+        ...globals.mocha,
+        cy: "readonly",
+        Cypress: "readonly"
       }
     }
   },
