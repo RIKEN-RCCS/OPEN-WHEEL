@@ -35,6 +35,7 @@ describe("05:Source&Viewerコンポーネント機能正常動作確認", ()=>{
     cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 600);
     cy.connectComponent(VIEWER_NAME_0); //コンポーネント同士を接続
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
+    cy.wait(3000);
     cy.checkProjectStatus("finished");
     cy.contains("open viewer screen").should("exist");
   });

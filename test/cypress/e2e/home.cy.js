@@ -83,6 +83,7 @@ describe("02:ホーム画面基本動作確認", ()=>{
   it("02-01-008:機能利用フローの確認-新規プロジェクトの作成-プロジェクトデータ作成場所選択-ディレクトリツリーでプロジェクトデータ作成場所が選択できることを確認", ()=>{
     cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
     cy.get("[data-cy=\"home-new-btn\"]").click();
+    cy.wait(1000);
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains(PROJECT_NAME + EXTENSION)
       .click();
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains("prj.wheel.json")

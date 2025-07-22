@@ -102,7 +102,7 @@ Cypress.Commands.add("projectMake", (projectName)=>{
 });
 
 Cypress.Commands.add("projectOpen", (projectName)=>{
-  cy.contains("tr", projectName, { timeout: 1000000 }).find("[type=\"checkbox\"]")
+  cy.contains("tr", projectName).find("[type=\"checkbox\"]")
     .click({ force: true });
   cy.contains("button", "OPEN").click({ force: true });
 });

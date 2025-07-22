@@ -21,7 +21,7 @@ Cypress.Commands.add("dragAndDropComponent", (x, y, componentName, targetCompone
 Cypress.Commands.add("clickComponentName", (componentName)=>{
   cy.get("[data-cy=\"graph-component-row\"]").contains(componentName)
     .click();
-  cy.get("[data-cy=\"component_property-property-navigation_drawer\"]", { timeout: 30000 }).should("be.visible");
+  cy.get("[data-cy=\"component_property-property-navigation_drawer\"]", { timeout: 5000 }).should("be.visible");
 });
 
 //double click component
