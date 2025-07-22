@@ -1,4 +1,5 @@
 const animationWaitTime = 500;
+require("cypress-wait-until");
 
 Cypress.on("uncaught:exception", ()=>{
   return false;

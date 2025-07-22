@@ -1,6 +1,8 @@
 const { defineConfig } = require("cypress");
 const SSH = require("simple-ssh");
 const { removeDirectory } = require("cypress-delete-downloads-folder");
+const fs = require("fs-extra");
+const tar = require("tar");
 
 module.exports = defineConfig({
   waitForAnimations: true,
@@ -58,6 +60,13 @@ module.exports = defineConfig({
               })
               .start();
           });
+        },
+        async extractTarArchive({ file, cwd }) {
+          await tar.x({ file, cwd });
+          return fs.readdir(cwd);
+        },
+        async fileExists(filePath) {
+          return fs.pathExists(filePath);
         },
       });
     },

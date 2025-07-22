@@ -27,14 +27,17 @@
             <v-text-field
               v-model="newName"
               label="your name"
+              data-cy="export-dialog-name-field"
             />
             <v-text-field
               v-model="newEmail"
               label="your e-mail"
+              data-cy="export-dialog-email-field"
             />
             <v-textarea
               v-model="newMemo"
               label="memo"
+              data-cy="export-dialog-memo-field"
               auto-grow
             />
           </v-form>
