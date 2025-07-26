@@ -22,8 +22,8 @@ Cypress.Commands.add("createProjectMultiple", (projectName, projectDescription, 
 //remove a project
 Cypress.Commands.add("removeAllProjects", ()=>{
   cy.visit("/");
-  cy.get("[data-cy=\"home-batch_mode-btn\"]", { timeout: 5000 }).should("be.visible");
-  cy.get("[data-cy=\"home-project_list-data_table\"]", { timeout: 5000, includeShadowDom: true }).then(($el)=>{
+  cy.get("[data-cy=\"home-project_list-progress_bar\"]", { timeout: 5000 }).should("not.be.visible");
+  cy.get("[data-cy=\"home-project_list-data_table\"]", { timeout: 5000 }).then(($el)=>{
     if ($el.is(":visible")) {
       cy.get("[data-cy=\"home-batch_mode-btn\"]").find("input[type=\"checkbox\"]")
         .first()

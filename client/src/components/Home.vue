@@ -69,8 +69,17 @@
           data-cy="home-batch_mode-btn"
         />
       </v-toolbar>
+      <div class="text-center">
+        <v-progress-circular
+          v-show="loading"
+          indeterminate
+          :size="70"
+          :width="6"
+          data-cy="home-project_list-progress_bar"
+        />
+      </div>
       <v-data-table
-        v-if="projectList.length > 0"
+        v-show="!loading && projectList.length > 0"
         v-model="selectedInTable"
         :show-select="true"
         :return-object="true"
@@ -261,6 +270,7 @@ export default {
   },
   data: ()=>{
     return {
+      loading: true,
       batchMode: false,
       drawer: false,
       dialog: false,
@@ -349,6 +359,7 @@ export default {
     debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
     SIO.onGlobal("projectList", (data)=>{
+      this.loading = false;
       this.projectList.splice(0, this.projectList.length, ...data);
     });
     this.forceUpdateProjectList();
@@ -382,11 +393,13 @@ export default {
       }
     },
     forceUpdateProjectList() {
+      this.loading = true;
       SIO.emitGlobal("getProjectList", (data)=>{
         if (!Array.isArray(data)) {
           console.log("unexpected projectlist recieved", data);
           return;
         }
+        this.loading = false;
         this.projectList.splice(0, this.projectList.length, ...data);
       });
     },

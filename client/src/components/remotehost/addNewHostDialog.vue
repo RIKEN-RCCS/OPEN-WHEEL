@@ -145,6 +145,7 @@
                         <v-checkbox
                           v-model="host.useGfarm"
                           label="use gfarm"
+                          data-cy="add_new_host-use_gfarm-checkbox"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -152,6 +153,7 @@
                           v-model="host.JWTServerUser"
                           :disabled="!host.useGfarm"
                           label="HPCI-ID"
+                          data-cy="add_new_host-JWT_server_user-text_field"
                           clearable
                         />
                       </v-col>
@@ -160,28 +162,7 @@
                           v-model="host.JWTServerURL"
                           :disabled="!host.useGfarm"
                           label="JWT server's URL"
-                          clearable
-                        />
-                      </v-col>
-                      <v-col cols="12">
-                        <v-checkbox
-                          v-model="host.useGfarm"
-                          label="use gfarm"
-                        />
-                      </v-col>
-                      <v-col cols="6">
-                        <v-text-field
-                          v-model="host.JWTServerUser"
-                          :disabled="!host.useGfarm"
-                          label="HPCI-ID"
-                          clearable
-                        />
-                      </v-col>
-                      <v-col cols="6">
-                        <v-text-field
-                          v-model="host.JWTServerURL"
-                          :disabled="!host.useGfarm"
-                          label="JWT server's URL"
+                          data-cy="add_new_host-JWT_server_URL-text_field"
                           clearable
                         />
                       </v-col>

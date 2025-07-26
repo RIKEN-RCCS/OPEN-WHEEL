@@ -11,10 +11,14 @@
     persistent
   >
     <v-card>
-      <v-card-title>
+      <v-card-title
+        data-cy="versatile_dialog-title"
+      >
         {{ title }}
       </v-card-title>
-      <v-card-text>
+      <v-card-text
+        data-cy="versatile_dialog-message"
+      >
         <slot name="message">
           {{ message }}
         </slot>
@@ -28,6 +32,7 @@
           <v-btn
             :prepend-icon="item.icon"
             :text="item.label"
+            :data-cy="`versatile_dialog-${item.label}-btn`"
             @click="$emit(item.label)"
           />
         </div>

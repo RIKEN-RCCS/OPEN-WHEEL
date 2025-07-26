@@ -20,11 +20,13 @@
             :prepend-icon="mdi-check"
             :disabled="isReady"
             text="ok"
+            data-cy="import_dialog-ok-btn"
             @click="openImportWarningDialog=true"
           />
           <v-btn
             :prepend-icon="mdi-close"
             text="cancel"
+            data-cy="import_dialog-cancel-btn"
             @click="closeDialog"
           />
         </v-btn-group>
@@ -49,6 +51,7 @@
               label="select or drop project archive file"
               variant="outlined"
               accept=".tgz"
+              data-cy="import_dialog-upload_file-input"
             />
           </v-tabs-window-item>
           <v-tabs-window-item value="url">
@@ -56,6 +59,7 @@
               v-model="archiveURL"
               class="mt-4"
               label="project repository url"
+              data-cy="import_dialog-url-text_field"
             />
           </v-tabs-window-item>
         </v-tabs-window>
@@ -63,6 +67,7 @@
       <v-card-text>
         <file-browser
           :with-current-dir="true"
+          data-cy="import_dialog-file_browser"
           @update="(a)=>{selectedInTree=a}"
         />
       </v-card-text>
