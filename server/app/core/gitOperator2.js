@@ -416,6 +416,7 @@ async function getUnsavedFiles(rootDir) {
 }
 
 module.exports = {
+  gitSetup,
   gitInit,
   gitCommit,
   gitAdd,

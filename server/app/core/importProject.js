@@ -12,7 +12,7 @@ const { extract } = require("tar");
 const { createTempd } = require("./tempd.js");
 const { readJsonGreedy } = require("./fileUtils.js");
 const { projectList, projectJsonFilename, componentJsonFilename, suffix } = require("../db/db.js");
-const { gitClone, gitCommit, gitConfig, gitRemoveOrigin } = require("./gitOperator2.js");
+const { gitSetup, gitClone, gitCommit, gitConfig, gitRemoveOrigin } = require("./gitOperator2.js");
 const { setComponentStateR, updateProjectROStatus, getHosts } = require("./projectFilesOperator.js");
 const { askHostMap } = require("./askHostMap.js");
 const { askRewindState } = require("./askRewindState.js");
@@ -135,6 +135,7 @@ async function importProject(clientID, archiveFile, parentDir) {
     await checkAndFixProject(src, clientID);
     await gitClone(projectRootDir, 1, src);
     await gitRemoveOrigin(projectRootDir);
+    await gitSetup(projectRootDir, "wheel", "wheel@example.com");
     projectList.unshift({ path: projectRootDir });
   } finally {
     await fs.remove(archiveFile);
