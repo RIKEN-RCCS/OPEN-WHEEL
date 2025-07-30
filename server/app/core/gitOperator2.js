@@ -7,6 +7,7 @@
 const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs-extra");
+const { readFile } = require("node:fs/promises");
 const { getLogger } = require("../logSettings");
 const { escapeRegExp } = require("../lib/utility");
 const promiseRetry = require("promise-retry");
@@ -43,6 +44,7 @@ async function promisifiedGit(cwd, args, rootDir) {
     cp.on("exit", (rt)=>{
       if (rt !== 0) {
         const err = new Error(output);
+        err.rt = rt;
         err.cwd = cwd;
         err.abs_cwd = path.resolve(cwd);
         err.args = args;
@@ -79,10 +81,64 @@ async function gitPromise(cwd, args, rootDir) {
 }
 
 /**
+ * check and setup wheel specific git repo setting
+ * @param {string} rootDir - repo's root dir
+ * @param {string} user - committer's user name only for the project
+ * @param {string} mail - committer's user email address only for the project
+ */
+async function gitSetup(rootDir, user, mail) {
+  let needCommit = false;
+
+  try {
+    await gitPromise(rootDir, ["config", "--get", "user.name"], rootDir);
+  } catch (err) {
+    if (typeof err.rt === "undefined") {
+      throw err;
+    }
+    await gitPromise(rootDir, ["config", "user.name", user], rootDir);
+    needCommit = true;
+  }
+
+  try {
+    await gitPromise(rootDir, ["config", "--get", "user.email"], rootDir);
+  } catch (err) {
+    if (typeof err.rt === "undefined") {
+      throw err;
+    }
+    await gitPromise(rootDir, ["config", "user.email", mail], rootDir);
+    needCommit = true;
+  }
+
+  //git lfs install does not affect if already installed
+  await gitPromise(rootDir, ["lfs", "install"], rootDir);
+
+  const ignoreFile = path.join(rootDir, ".gitignore");
+
+  try {
+    const ignore = await readFile(ignoreFile, { encoding: "utf8" });
+    if (!ignore.includes("wheel.log")) {
+      await fs.appendFile(path.join(rootDir, ".gitignore"), "\nwheel.log\n");
+      await gitAdd(rootDir, ".gitignore");
+      needCommit = true;
+    }
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      throw err;
+    }
+    await fs.outputFile(path.join(rootDir, ".gitignore"), "\nwheel.log\n");
+    await gitAdd(rootDir, ".gitignore");
+    needCommit = true;
+  }
+
+  return needCommit ? gitCommit(rootDir, "initial commit") : false;
+}
+
+/**
  * initialize repository with git-lfs support
  * @param {string} rootDir - repo's root dir
  * @param {string} user - committer's user name only for the project
  * @param {string} mail - committer's user email address only for the project
+ * @returns {Promise} - settled when git commit command issued
  */
 async function gitInit(rootDir, user, mail) {
   if (typeof user !== "string") {
@@ -100,12 +156,7 @@ async function gitInit(rootDir, user, mail) {
   const { dir, base } = path.parse(path.resolve(rootDir));
   await fs.ensureDir(dir);
   await gitPromise(dir, ["init", "--", base], rootDir);
-  await gitPromise(rootDir, ["config", "user.name", user], rootDir);
-  await gitPromise(rootDir, ["config", "user.email", mail], rootDir);
-  await gitPromise(rootDir, ["lfs", "install"], rootDir);
-  await fs.outputFile(path.join(rootDir, ".gitignore"), "wheel.log");
-  await gitAdd(rootDir, ".gitignore");
-  return gitCommit(rootDir, "initial commit");
+  return gitSetup(rootDir, user, mail);
 }
 
 /**

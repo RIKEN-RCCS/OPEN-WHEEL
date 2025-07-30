@@ -148,13 +148,111 @@ describe("gitOperator2", ()=>{
     });
   });
 
-  describe("#gitInit", ()=>{
+  describe("#gitSetup", ()=>{
     let gitOperator2;
-    let gitInit;
+    let gitSetup;
+    const rootDir = "/repo";
+    const user = "testuser";
+    const mail = "testuser@example.com";
+    let outputFileStub;
+    let appendFileStub;
     let gitAddStub;
     let gitCommitStub;
     let gitPromiseStub;
-    let outputFileStub;
+    let readFileStub;
+
+    beforeEach(()=>{
+      gitOperator2 = rewire("../../../app/core/gitOperator2.js");
+      gitSetup = gitOperator2.__get__("gitSetup");
+      outputFileStub = sinon.stub(fs, "outputFile").resolves();
+      appendFileStub = sinon.stub(fs, "appendFile").resolves();
+      gitPromiseStub = sinon.stub();
+      readFileStub = sinon.stub();
+      gitAddStub = sinon.stub();
+      gitCommitStub = sinon.stub();
+      gitOperator2.__set__("gitAdd", gitAddStub);
+      gitOperator2.__set__("gitCommit", gitCommitStub);
+      gitOperator2.__set__("gitPromise", gitPromiseStub);
+      gitOperator2.__set__("readFile", readFileStub);
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should set commiter name, email and setup lfs, create .gitignore", async ()=>{
+      const err = new Error("dummy error object");
+      err.rt = 1;
+      err.code = "ENOENT";
+      gitPromiseStub.onCall(0).rejects(err);
+      gitPromiseStub.onCall(2).rejects(err);
+      readFileStub.rejects(err);
+
+      await gitSetup(rootDir, user, mail);
+      expect(gitPromiseStub).to.have.callCount(5);
+      expect(gitPromiseStub.getCall(0)).to.be.calledWithExactly(rootDir, ["config", "--get", "user.name"], rootDir);
+      expect(gitPromiseStub.getCall(1)).to.be.calledWithExactly(rootDir, ["config", "user.name", user], rootDir);
+      expect(gitPromiseStub.getCall(2)).to.be.calledWithExactly(rootDir, ["config", "--get", "user.email"], rootDir);
+      expect(gitPromiseStub.getCall(3)).to.be.calledWithExactly(rootDir, ["config", "user.email", mail], rootDir);
+      expect(gitPromiseStub.getCall(4)).to.be.calledWithExactly(rootDir, ["lfs", "install"], rootDir);
+
+      expect(outputFileStub).to.be.calledOnceWithExactly(path.join(rootDir, ".gitignore"), "\nwheel.log\n");
+      expect(appendFileStub).not.to.be.called;
+
+      expect(gitAddStub).calledOnceWithExactly(rootDir, ".gitignore");
+      expect(gitCommitStub).calledOnceWithExactly(rootDir, "initial commit");
+    });
+    it("should setup lfs and create .gitignore", async ()=>{
+      const err = new Error("dummy error object");
+      err.code = "ENOENT";
+      readFileStub.rejects(err);
+      await gitSetup(rootDir, user, mail);
+      expect(gitPromiseStub).to.have.callCount(3);
+      expect(gitPromiseStub.getCall(0)).to.be.calledWithExactly(rootDir, ["config", "--get", "user.name"], rootDir);
+      expect(gitPromiseStub.getCall(1)).to.be.calledWithExactly(rootDir, ["config", "--get", "user.email"], rootDir);
+      expect(gitPromiseStub.getCall(2)).to.be.calledWithExactly(rootDir, ["lfs", "install"], rootDir);
+
+      expect(outputFileStub).to.be.calledOnceWithExactly(path.join(rootDir, ".gitignore"), "\nwheel.log\n");
+      expect(appendFileStub).not.to.be.called;
+
+      expect(gitAddStub).calledOnceWithExactly(rootDir, ".gitignore");
+      expect(gitCommitStub).calledOnceWithExactly(rootDir, "initial commit");
+    });
+    it("should use appendFile if .gitignore already exists and do not have .wheel", async ()=>{
+      readFileStub.resolves("hoge");
+      await gitSetup(rootDir, user, mail);
+      expect(gitPromiseStub).to.have.callCount(3);
+      expect(gitPromiseStub.getCall(0)).to.be.calledWithExactly(rootDir, ["config", "--get", "user.name"], rootDir);
+      expect(gitPromiseStub.getCall(1)).to.be.calledWithExactly(rootDir, ["config", "--get", "user.email"], rootDir);
+      expect(gitPromiseStub.getCall(2)).to.be.calledWithExactly(rootDir, ["lfs", "install"], rootDir);
+
+      expect(appendFileStub).to.be.calledOnceWithExactly(path.join(rootDir, ".gitignore"), "\nwheel.log\n");
+      expect(outputFileStub).not.to.be.called;
+
+      expect(gitAddStub).calledOnceWithExactly(rootDir, ".gitignore");
+      expect(gitCommitStub).calledOnceWithExactly(rootDir, "initial commit");
+    });
+    it("should not commit if the repo is already set up", async ()=>{
+      readFileStub.resolves("wheel.log");
+      await gitSetup(rootDir, user, mail);
+      expect(gitPromiseStub).to.have.callCount(3);
+      expect(gitPromiseStub.getCall(0)).to.be.calledWithExactly(rootDir, ["config", "--get", "user.name"], rootDir);
+      expect(gitPromiseStub.getCall(1)).to.be.calledWithExactly(rootDir, ["config", "--get", "user.email"], rootDir);
+      expect(gitPromiseStub.getCall(2)).to.be.calledWithExactly(rootDir, ["lfs", "install"], rootDir);
+
+      expect(appendFileStub).not.to.be.called;
+      expect(outputFileStub).not.to.be.called;
+
+      expect(gitAddStub).not.to.be.called;
+      expect(gitCommitStub).not.to.be.called;
+    });
+  });
+
+  describe("#gitInit", ()=>{
+    let gitOperator2;
+    let gitInit;
+    let gitPromiseStub;
+    let gitSetupStub;
 
     const rootDir = "/repo";
     const user = "testuser";
@@ -163,14 +261,11 @@ describe("gitOperator2", ()=>{
     beforeEach(()=>{
       gitOperator2 = rewire("../../../app/core/gitOperator2.js");
       gitInit = gitOperator2.__get__("gitInit");
-      gitAddStub = sinon.stub();
-      gitCommitStub = sinon.stub();
       gitPromiseStub = sinon.stub();
-      gitOperator2.__set__("gitAdd", gitAddStub);
-      gitOperator2.__set__("gitCommit", gitCommitStub);
+      gitSetupStub = sinon.stub();
       gitOperator2.__set__("gitPromise", gitPromiseStub);
+      gitOperator2.__set__("gitSetup", gitSetupStub);
       sinon.stub(fs, "ensureDir").resolves();
-      outputFileStub = sinon.stub(fs, "outputFile").resolves();
     });
 
     afterEach(()=>{
@@ -197,38 +292,13 @@ describe("gitOperator2", ()=>{
       gitPromiseStub.resolves();
 
       await gitInit(rootDir, user, mail);
-
       sinon.assert.calledWith(
         gitPromiseStub,
         sinon.match.string,
         ["init", "--", sinon.match.string],
         rootDir
       );
-      sinon.assert.calledWith(
-        gitPromiseStub,
-        rootDir,
-        ["config", "user.name", user],
-        rootDir
-      );
-      sinon.assert.calledWith(
-        gitPromiseStub,
-        rootDir,
-        ["config", "user.email", mail],
-        rootDir
-      );
-      sinon.assert.calledWith(
-        gitPromiseStub,
-        rootDir,
-        ["lfs", "install"],
-        rootDir
-      );
-      sinon.assert.calledWith(
-        outputFileStub,
-        path.join(rootDir, ".gitignore"),
-        "wheel.log"
-      );
-      sinon.assert.calledWith(gitAddStub, rootDir, ".gitignore");
-      sinon.assert.calledWith(gitCommitStub, rootDir, "initial commit");
+      expect(gitSetupStub).to.be.calledWith(rootDir, user, mail);
     });
   });
 
