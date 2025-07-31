@@ -6,6 +6,7 @@
 "use strict";
 const { emitAll } = require("../handlers/commUtils.js");
 const { remoteHost } = require("../db/db.js");
+const { getLogger } = require("../logSettings");
 
 /**
  * determine hostMap is valid
@@ -17,17 +18,21 @@ function isValidHostMap(hostMap, hosts) {
   const remotehostLabels = remoteHost.getAll().map((host)=>{
     return host.name;
   });
+  remotehostLabels.push("localhost");
   const oldRemotehostLabels = hosts.map((host)=>{
     return host.hostname;
   });
   return Object.entries(hostMap).some(([oldHost, newHost])=>{
     if (typeof newHost !== "string") {
+      getLogger().error("newHost must be string", newHost);
       return false;
     }
     if (!oldRemotehostLabels.includes(oldHost)) {
+      getLogger().error("invaild oldHost", oldHost);
       return false;
     }
     if (!remotehostLabels.includes(newHost)) {
+      getLogger().error("invaild newHost", newHost);
       return false;
     }
     return true;
