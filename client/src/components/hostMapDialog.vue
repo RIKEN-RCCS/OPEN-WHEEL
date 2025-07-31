@@ -7,17 +7,26 @@
   <versatile-dialog
     v-model="openDialog"
     max-width="60vw"
-    title=""
+    title="Hostmapping"
+    data-cy="hostmap_dialog-dialog"
     @ok="ok"
     @cancel="cancel"
   >
     <template #message>
       <v-row>
         <v-col cols="6">
-          <p>hostname in project archive</p>
+          <p
+            data-cy="hostmap_dialog-header_oldname-text_field"
+          >
+            hostname in project archive
+          </p>
         </v-col>
         <v-col cols="6">
-          <p>newly assigned host</p>
+          <p
+            data-cy="hostmap_dialog-header_newname-text_field"
+          >
+            newly assigned host
+          </p>
         </v-col>
       </v-row>
       <v-divider class="border-opacity-100 mb-6" />
@@ -33,9 +42,11 @@
           />
         </v-col>
         <v-col cols="6">
-          <v-select
+          <v-combobox
             v-model="newHosts[index]"
             :items="hostCandidates"
+            label="select or input host label"
+            clearable
           />
         </v-col>
       </v-row>

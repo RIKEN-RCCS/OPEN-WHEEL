@@ -12,12 +12,12 @@
   >
     <v-card>
       <v-card-title
-        data-cy="versatile_dialog-title"
+        :data-cy="`versatile_dialog_${title.replace(/ /g,'_')}-title`"
       >
         {{ title }}
       </v-card-title>
       <v-card-text
-        data-cy="versatile_dialog-message"
+        :data-cy="`versatile_dialog_${title.replace(/ /g,'_',)}-message`"
       >
         <slot name="message">
           {{ message }}
@@ -32,7 +32,7 @@
           <v-btn
             :prepend-icon="item.icon"
             :text="item.label"
-            :data-cy="`versatile_dialog-${item.label}-btn`"
+            :data-cy="`versatile_dialog_${title.replace(/ /g,'_')}-${item.label}-btn`"
             @click="$emit(item.label)"
           />
         </div>
