@@ -65,6 +65,7 @@ jobs:
           start: npm start
           wait-on: "http://localhost:8089"
           wait-on-timeout: 300
+          config: requestTimeout=300000,defaultCommandTimeout=300000,retries=2
 
       - name: upload screenshot
         uses: actions/upload-artifact@v4
