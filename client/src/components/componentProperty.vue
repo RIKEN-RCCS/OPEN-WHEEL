@@ -45,6 +45,7 @@
               color="error"
               label="disable"
               v-bind="props"
+              data-cy="component_property-disable-switch"
             />
           </template>
         </v-tooltip>

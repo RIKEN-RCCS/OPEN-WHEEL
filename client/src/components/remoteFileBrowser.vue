@@ -13,6 +13,7 @@
         v-if="!connected && !loading"
         text="browse files on remotehost"
         size="x-large"
+        data-cy="remote_file_browser-request_remote_connection-btn"
         @click="requestRemoteConnection"
       />
       <v-btn
@@ -143,6 +144,7 @@
             color="red"
             icon="mdi-trash-can-outline"
             v-bind="props"
+            data-cy="remote_file_browser-remove_storage_directory-btn"
             @click="openDialog('removeStoragePath')"
           />
         </template>
@@ -161,6 +163,7 @@
       :open="openItems"
       :get-node-icon="getNodeIcon"
       :get-leaf-icon="getLeafIcon"
+      data-cy="remote_file_browser-treeview"
       @update:active="updateSelected"
     />
     <versatile-dialog
@@ -588,6 +591,7 @@ export default {
       if (event !== "removeStoragePath") {
         this.dialog.title = getTitle(event, this.activeItem ? this.activeItem.name : null);
       } else {
+        this.dialog.title = "remove remote storage directory";
         this.dialog.message = getTitle(event, this.selectedComponent.storagePath);
       }
       this.dialog.inputFieldLabel = getLabel(event);

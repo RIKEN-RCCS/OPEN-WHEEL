@@ -28,6 +28,7 @@
           variant="outlined"
           :ripple="false"
           :style="{backgroundColor : stateColor}"
+          data-cy="workflow-project_state-btn"
         >
           status: {{ projectState }}{{ isReadOnly }}
         </v-btn>

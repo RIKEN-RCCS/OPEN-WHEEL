@@ -6,9 +6,10 @@ Cypress.Commands.add("removeRemoteHost", (remotoHostName)=>{
     .then(()=>{
       const REMOTE_HOST_ROW = cy.contains("tr", remotoHostName, { timeout: 5000 });
       if (REMOTE_HOST_ROW) {
+        cy.wait(2000);
         cy.contains("tr", remotoHostName).find("[data-cy=\"action_row-delete-btn\"]")
           .click();
-        cy.get("[data-cy=\"buttons-remove-btn\"]").click();
+        cy.get("[data-cy=\"buttons-remove-btn\"]", { timeout: 5000 }).click();
       }
     });
 });
