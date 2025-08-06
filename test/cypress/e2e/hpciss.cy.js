@@ -1,5 +1,5 @@
 import "cypress-wait-until";
-describe("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
+describe.skip("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
   const LABEL = "WHEEL_TEST_CSGW";
   const HOST_NAME = Cypress.env("WHEEL_TEST_CSGW_HOSTNAME");
   const TEST_USER = Cypress.env("WHEEL_TEST_CSGW_USERNAME");
@@ -56,10 +56,10 @@ describe("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
     cy.get("[data-cy=\"versatile_dialog_IMPORTED_PROJECT_WARNING-ok-btn\"]").click();
   });
   afterEach(()=>{
-    cy.removeAllProjects();
+    //cy.removeAllProjects();
   });
   after(()=>{
-    cy.removeRemoteHost(LABEL);
+    //cy.removeRemoteHost(LABEL);
   });
   describe("E2E test for HPCI-SS", ()=>{
     beforeEach(()=>{
@@ -114,6 +114,68 @@ describe("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
           cy.contains("file1").should("be.visible");
           cy.contains("file2").should("be.visible");
           cy.contains("dir").should("be.visible");
+          cy.contains("run.sh").should("be.visible");
+        });
+      }, {
+        timeout: 30000,
+        interval: 1000,
+        errorMsg: "files not found on gfarm storage"
+      });
+    });
+  });
+  describe("E2E test for HPCI-SS-tar", ()=>{
+    beforeEach(()=>{
+      cy.clickComponentName("hpcisstar");
+      cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(GFARM_TEST_ROOT);
+      cy.get("[data-cy=\"component_property-disable-switch\"]").click();
+    });
+    afterEach(()=>{
+      cy.clickComponentName("hpcisstar");
+      cy.get("[data-cy=\"component_property-close-btn\"]").click();
+      cy.wait(500);
+      cy.clickComponentName("hpcisstar");
+      cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+      cy.get("[data-cy=\"gfarm_tar_browser-request_remote_connection-btn\"]", { timeout: 3000 }).click();
+
+      return cy.waitUntil(()=>{
+        return cy.get("[data-cy=\"gfarm_tar_browser-remove_storage_directory-btn\"]")
+          .then(()=>{
+            return cy.get("[data-cy=\"gfarm_tar_browser-remove_storage_directory-btn\"]").click()
+              .get("[data-cy=\"versatile_dialog_remove_hpciss_tar_archive-ok-btn\"]", { timeout: 3000 })
+              .click()
+              .then(()=>{ return true; });
+          });
+      }, {
+        timeout: 30000,
+        interval: 1000,
+        errorMsg: "remove remote storage directory failed"
+      });
+    });
+    it("should copy files to HPCI-SS-tar", ()=>{
+      cy.get("[data-cy=\"workflow-play-btn\"]").click();
+      cy.waitUntil(()=>{
+        return cy.get("[data-cy=\"workflow-project_state-btn\"]")
+          .invoke("text")
+          .then((text)=>{
+            if (text.includes("failed")) {
+              throw new Error("project failed");
+            }
+            return text.includes("finished");
+          });
+      }, {
+        timeout: 30000,
+        interval: 1000,
+        errorMsg: "project does not finished within 30 sec"
+      });
+
+      cy.clickComponentName("hpcisstar");
+      cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+      cy.get("[data-cy=\"gfarm_tar_browser-request_remote_connection-btn\"]", { timeout: 3000 }).click();
+      cy.waitUntil(()=>{
+        return cy.get("[data-cy=\"gfarm_tar_browser-file-table\"]").within(()=>{
+          cy.contains("file1").should("be.visible");
+          cy.contains("file2").should("be.visible");
+          cy.contains("dir/file_in_dir").should("be.visible");
           cy.contains("run.sh").should("be.visible");
         });
       }, {

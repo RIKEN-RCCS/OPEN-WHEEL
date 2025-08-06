@@ -13,6 +13,7 @@
         v-if="!connected && !loading"
         text="browse files on remotehost"
         size="x-large"
+        data-cy="gfarm_tar_browser-request_remote_connection-btn"
         @click="requestRemoteConnection"
       />
       <v-btn
@@ -44,6 +45,7 @@
               color="red"
               icon="mdi-trash-can-outline"
               v-bind="props"
+              data-cy="gfarm_tar_browser-remove_storage_directory-btn"
               @click="openDialog"
             />
           </template>
@@ -53,10 +55,12 @@
         :items="items"
         hide-default-header
         density="compact"
+        data-cy="gfarm_tar_browser-file-table"
       />
     </div>
     <versatile-dialog
       v-model="dialog"
+      :title="dialogTitle"
       max-width="40vw"
       :message="dialogMessage"
       @ok="submitAndCloseDialog"
@@ -83,7 +87,8 @@ export default {
       connected: false,
       items: [],
       dialog: false,
-      dialogMessage: null
+      dialogMessage: null,
+      dialogTitle: null
     };
   },
   computed: {
@@ -95,10 +100,12 @@ export default {
   methods: {
     openDialog() {
       this.dialogMessage = getTitle("removeStoragePath", this.selectedComponent.storagePath);
+      this.dialogTitle = "remove hpciss tar archive";
       this.dialog = true;
     },
     closeDialog() {
       this.dialogMessage = null;
+      this.dialogTitle = null;
       this.dialog = false;
     },
     submitAndCloseDialog() {
