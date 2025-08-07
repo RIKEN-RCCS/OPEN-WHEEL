@@ -227,9 +227,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   転送対象ファイル・フォルダの設定
   削除反映確認（input file）
   試験確認内容：input fileが削除されていることを確認
-  skip:issue#942
    */
-  it.skip("04-01-410:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+  it("04-01-410:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
     cy.get("[data-cy=\"action_row-delete-btn\"]").click();
@@ -243,9 +242,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   転送対象ファイル・フォルダの設定
   削除反映確認（output file）
   試験確認内容：output fileが削除されていることを確認
-  skip:issue#942
    */
-  it.skip("04-01-411:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+  it("04-01-411:コンポーネントの基本機能動作確認-BulkjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
     cy.get("[data-cy=\"action_row-delete-btn\"]").click();

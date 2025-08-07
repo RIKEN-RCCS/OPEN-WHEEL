@@ -215,9 +215,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   転送対象ファイル・フォルダの設定
   削除反映確認（input file）
   試験確認内容：input fileが削除されていることを確認
-  skip:issue#942
    */
-  it.skip("04-01-342:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+  it("04-01-342:コンポーネントの基本機能動作確認-Viewerコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 500);
     cy.get("[data-cy=\"component_property-input_file_setting-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files_viewer-list_form\"]").find("input")
