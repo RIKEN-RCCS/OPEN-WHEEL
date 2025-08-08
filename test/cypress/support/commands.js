@@ -1,6 +1,4 @@
 const animationWaitTime = 500;
-require("cypress-wait-until");
-
 Cypress.on("uncaught:exception", ()=>{
   return false;
 });
@@ -103,6 +101,7 @@ Cypress.Commands.add("projectMake", (projectName)=>{
 });
 
 Cypress.Commands.add("projectOpen", (projectName)=>{
+  cy.waitProjectAppear(projectName);
   cy.contains("tr", projectName).find("[type=\"checkbox\"]")
     .click({ force: true });
   cy.contains("button", "OPEN").click({ force: true });
@@ -547,11 +546,10 @@ Cypress.Commands.add("execProject", ()=>{
 });
 
 //Project status check
-Cypress.Commands.add("checkProjectStatus", (status)=>{
-  cy.get("header").contains(status)
-    .then(($el)=>{
-      cy.softAssert($el.text().includes(status), true);
-    });
+Cypress.Commands.add("checkProjectStatus", (status, timeout = 5000)=>{
+  return cy.get("[data-cy=\"workflow-project_state-btn\"]", { timeout })
+    .should("be.visible")
+    .should("contain.text", status);
 });
 
 //Project Reset

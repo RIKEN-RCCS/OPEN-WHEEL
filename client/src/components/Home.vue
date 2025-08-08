@@ -79,7 +79,7 @@
         />
       </div>
       <v-data-table
-        v-show="!loading && projectList.length > 0"
+        v-show="!loading"
         v-model="selectedInTable"
         :show-select="true"
         :return-object="true"
@@ -413,6 +413,7 @@ export default {
     },
     createProject() {
       const path = `${this.selected || "."}/${this.newProjectName}`;
+      this.loading = true;
       SIO.emitGlobal("addProject", path, this.newProjectDescription, (rt)=>{
         if (!rt) {
           console.log("create project failed", this.selected, this.newProjectName, this.newProjectDescription, path);
@@ -489,12 +490,14 @@ export default {
           return e.id;
         });
       const eventName = this.removeFromList ? "removeProjectsFromList" : "removeProjects";
+      this.loading = true;
       SIO.emitGlobal(eventName, removeIDs, (rt)=>{
         if (!rt) {
           console.log("remove failed", eventName, removeIDs);
           this.forceUpdateProjectList();
         }
         this.selectedInTable = [];
+        this.loading = false;
       });
     }
   }

@@ -1,6 +1,7 @@
 //create a project
 Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
   cy.visit("/");
+  cy.waitProjectList();
   cy.get("[data-cy=\"home-new-btn\"]").click();
   cy.get("[data-cy=\"home-project_name-text_field\"]").type(projectName);
   cy.get("[data-cy=\"home-project_description-textarea\"]").type(projectDescription);
@@ -19,29 +20,43 @@ Cypress.Commands.add("createProjectMultiple", (projectName, projectDescription, 
   }
 });
 
+Cypress.Commands.add("waitProjectList", (timeout = 5000)=>{
+  return cy
+    .get("[data-cy=\"home-project_list-data_table\"]", { timeout })
+    .should("be.visible")
+    .should("contain.text", "Items per page:");
+});
+
+Cypress.Commands.add("waitProjectAppear", (projectName, timeout = 10000)=>{
+  return cy.waitProjectList()
+    .get("[data-cy=\"home-project_name-btn\"]", { timeout })
+    .should("be.visible")
+    .should(($els)=>{
+      //$els is jQuery object
+      //it turns into array to avoid error raise from only one element on the page
+      const found = Array.from($els).some((el)=>{
+        return el.innerText.includes(projectName);
+      });
+      expect(found).to.be.true;
+    });
+});
+
 //remove a project
 Cypress.Commands.add("removeAllProjects", ()=>{
   cy.visit("/");
-  cy.get("body").then(($body)=>{
-    if ($body.find("[data-cy=\"home-project_list-progress_bar\"]").length > 0) {
-      cy.get("[data-cy=\"home-project_list-progress_bar\"]", { timeout: 10000 }).should("not.be.visible");
-    } else {
-      cy.log("progress bar was already hidden");
-    }
-  });
-  cy.get("[data-cy=\"home-project_list-data_table\"]", { timeout: 5000 }).then(($el)=>{
-    if ($el.is(":visible")) {
-      cy.get("[data-cy=\"home-batch_mode-btn\"]").find("input[type=\"checkbox\"]")
-        .first()
-        .click({ force: true });
-      cy.contains("th", "Project Name").parent()
-        .find("input[type=\"checkbox\"]")
-        .first()
-        .click({ force: true }); //check all projects
-      cy.get("[data-cy=\"home-remove-btn\"]").click({ force: true });
-      cy.get("[data-cy=\"buttons-remove-btn\"]").click({ force: true });
-    } else {
-      cy.log("no project found");
-    }
-  });
+  return cy.waitProjectList()
+    .get("[data-cy=\"home-batch_mode-btn\"]")
+    .find("input[type=\"checkbox\"]")
+    .first()
+    .click({ force: true })
+    .get("[data-cy=\"home-project_list-data_table\"]")
+    .contains("th", "Project Name")
+    .parent() //select all project
+    .find("input[type=\"checkbox\"]")
+    .first()
+    .click({ force: true })
+    .get("[data-cy=\"home-remove-btn\"]")
+    .click({ force: true })
+    .get("[data-cy=\"buttons-remove-btn\"]")
+    .click({ force: true });
 });
