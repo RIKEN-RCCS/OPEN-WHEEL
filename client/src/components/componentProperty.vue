@@ -86,7 +86,10 @@
         multiple
         variant="accordion"
       >
-        <v-expansion-panel title="basic">
+        <v-expansion-panel
+          title="basic"
+          data-cy="component_property-basic-panel_title"
+        >
           <v-expansion-panel-text>
             <v-textarea
               v-model="copySelectedComponent.description"
