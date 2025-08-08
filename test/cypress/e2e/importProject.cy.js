@@ -8,7 +8,7 @@ describe("import project e2e test", ()=>{
     cy.goToScreen("home");
   });
   afterEach(()=>{
-    cy.removeAllProjects();
+    return cy.removeAllProjects();
   });
   it("should import project from tar archive", ()=>{
     cy.get("[data-cy=\"home-import-btn\"]").click();
