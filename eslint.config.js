@@ -23,6 +23,7 @@ const jsdocRules = {
 };
 
 const styleRules = {
+  "arrow-body-style": ["error", "always"],
   "@stylistic/arrow-spacing": [
     "error",
     {
