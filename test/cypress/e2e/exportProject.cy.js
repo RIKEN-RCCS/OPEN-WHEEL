@@ -6,16 +6,21 @@ describe("export project e2e test", ()=>{
   const TEST_EMAIL = "test email";
   const TEST_MEMO = "test memo";
   const downloadsFolder = Cypress.config("downloadsFolder");
+  const DEF_COMPONENT_TASK = "task";
+  const TASK_NAME_0 = "task0";
 
   beforeEach(()=>{
-    cy.goToScreen("home");
-    cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
+    cy.viewport("macbook-16");
+    return cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION)
+      .projectOpen(PROJECT_NAME)
+      .createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 300, 500)
+      .saveProperty();
   });
   afterEach(()=>{
-    cy.removeAllProjects();
-    cy.task("removeDirectory", downloadsFolder);
+    return cy.removeAllProjects().task("removeDirectory", downloadsFolder);
   });
   it("should export project as tar archive", ()=>{
+    cy.visit("/");
     cy.contains("td", PROJECT_NAME).parent()
       .find("input[type=\"checkbox\"]")
       .first()
