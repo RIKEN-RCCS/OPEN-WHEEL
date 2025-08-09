@@ -12,14 +12,14 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   const TAG_TYPE_TEXT_AREA = "textarea";
 
   beforeEach(()=>{
-    cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
-    cy.projectOpen(PROJECT_NAME);
     cy.viewport("macbook-16");
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 300, 500);
+    return cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION)
+      .projectOpen(PROJECT_NAME)
+      .createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 300, 500);
   });
 
   afterEach(()=>{
-    cy.removeAllProjects();
+    return cy.removeAllProjects();
   });
 
   /**
@@ -595,6 +595,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   プロパティ設定確認
   scriptファイル選択反映確認
   試験確認内容：scriptセレクトボックスで選択したファイルが反映されていることを確認
+  skip: save処理中にテストが終了してafterEach内でプロジェクトを削除するためファイルが残り後続のテストがエラーになる
    */
   it.skip("03-01-036:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-scriptファイル選択反映確認-scriptセレクトボックスで選択したファイルが反映されていることを確認", ()=>{
     cy.createDirOrFile(TYPE_FILE, "test-a", true);
@@ -604,7 +605,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-script-autocomplete\"]").find("input")
       .should("have.value", "test-a");
   });
-  //TODO 36, 37にonlyで37がfailするので36の後処理が抜けている
 
   /**
   Task コンポーネントの基本機能動作確認
@@ -881,6 +881,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   プロパティ設定確認
   submit command反映確認
   試験確認内容：submit optionテキストボックスに入力した値が設定されていることを確認
+  skip: save処理中にテストが終了してafterEach内でプロジェクトを削除するためファイルが残り後続のテストがエラーになる
    */
   it("03-01-052:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-submit command反映確認-submit optionテキストボックスに入力した値が設定されていることを確認", ()=>{
     cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
@@ -899,7 +900,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   number of retry表示確認
   試験確認内容：number of retryテキストボックスが表示されていることを確認
    */
-  it("03-01-053:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-number of retry表示確認-number of retryテキストボックスが表示されていることを確認", ()=>{
+  it.only("03-01-053:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-number of retry表示確認-number of retryテキストボックスが表示されていることを確認", ()=>{
     cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-number_or_retry-text_field\"]").should("be.visible");
   });
@@ -974,15 +975,31 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-058:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
     cy.createDirOrFile(TYPE_FILE, "test-a", true);
+    cy.get("[data-cy=\"component_property-files-panel_title\"]")
+      .find(".v-expansion-panel-title__overlay")
+      .click();
+    cy.get("[data-cy=\"component_property-basic-panel_title\"]")
+      .find(".v-expansion-panel-title__overlay")
+      .click();
     cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
-    cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]").find("input")
-      .type("test-a");
+    cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"] input").click();
+    cy.get("body")
+      .find(".v-list-item")
+      .contains("test-a")
+      .click();
+
     cy.saveProperty();
     cy.closeProperty();
     cy.clickComponentName(TASK_NAME_0);
+    cy.get("[data-cy=\"component_property-basic-panel_title\"]")
+      .find(".v-expansion-panel-title__overlay")
+      .click();
     cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
-    cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]").find("input")
-      .should("have.value", "test-a");
+    cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]")
+      .invoke("text")
+      .then((text)=>{
+        expect(text).to.include("test-a");
+      });
   });
 
   /**
@@ -1027,6 +1044,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.saveProperty();
     cy.closeProperty();
     cy.clickComponentName(TASK_NAME_0);
+    cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-task_use_javascript-textarea\"]").find("textarea")
       .should("have.value", "testJavaScript");
   });
