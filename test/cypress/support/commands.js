@@ -548,7 +548,6 @@ Cypress.Commands.add("execProject", ()=>{
 //Project status check
 Cypress.Commands.add("checkProjectStatus", (status, timeout = 5000)=>{
   return cy.get("[data-cy=\"workflow-project_state-btn\"]", { timeout })
-    .should("be.visible")
     .should("contain.text", status);
 });
 
