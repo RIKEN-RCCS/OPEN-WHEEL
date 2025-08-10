@@ -1,48 +1,37 @@
 # syntax=docker/dockerfile:1
-#build WHEEL client code
 ARG PLATFORM=linux/amd64
-FROM --platform=${PLATFORM} node:20-slim AS builder
+FROM --platform=${PLATFORM} node:20-slim AS base
+RUN apt-get update && apt -y install curl git rsync openssh-server bzip2 python3 g++ build-essential&&\
+    curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
+    apt -y install git-lfs &&\
+    apt-get clean  &&\
+    rm -rf /var/lib/apt/lists/*
+
+FROM base AS run_base
 WORKDIR /usr/src/
-# to install phantomjs
-RUN apt-get update && apt -y install bzip2 python3 g++ build-essential
-# build WHEEL
 COPY package.json package.json
 COPY package-lock.json package-lock.json
 COPY server server
 COPY common common
 COPY client client
 RUN npm install
+
+#build client
+FROM run_base AS builder
 WORKDIR /usr/src/client
 RUN npm run build
 
-#build base image to run WHEEL
-FROM --platform=${PLATFORM} node:20-slim AS base
-WORKDIR /usr/src/
-RUN apt-get update && apt -y install curl git rsync openssh-server &&\
-    curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
-    apt -y install git-lfs &&\
-    apt-get clean  &&\
-    rm -rf /var/lib/apt/lists/*
-COPY --from=builder /usr/src/node_modules /usr/src/node_modules
-COPY --from=builder /usr/src/server /usr/src/server
-COPY --from=builder /usr/src/common /usr/src/common
-RUN rm -fr server/app/config/*
-
 # run UT
-FROM base AS ut
+FROM run_base AS ut
 WORKDIR /usr/src/server
-RUN apt-get update && apt -y install python3 g++ build-essential
-RUN npm install cross-env\
-    chai chai-as-promised chai-fs chai-iterator chai-json-schema deep-equal-in-any-order\
-    mocha nyc rewire sinon sinon-chai
 CMD ["npm", "run", "coverage"]
 
 # run WHEEL
-FROM base AS exec
-WORKDIR /usr/src/server
-
+FROM run_base AS exec
+WORKDIR /usr/src
+RUN npm prune --production
 COPY --from=builder /usr/src/server/app/public /usr/src/server/app/public
 COPY entrypoint.sh /usr/src/server/
-RUN rm -fr server/app/config/* server/test/
-
+RUN rm -fr client server/app/config/* server/test
+WORKDIR /usr/src/server
 ENTRYPOINT ["./entrypoint.sh"]
