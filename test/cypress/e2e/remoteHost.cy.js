@@ -64,7 +64,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     afterEach(()=>{
       cy.removeRemoteHost(LABEL);
     });
-    it.skip("01-01-006:構成要素の機能動作確認-「編集」ボタン押下-リモートホスト設定作成ダイアログが表示されていることを確認", ()=>{
+    it("01-01-006:構成要素の機能動作確認-「編集」ボタン押下-リモートホスト設定作成ダイアログが表示されていることを確認", ()=>{
       cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
       cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
       cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
@@ -88,8 +88,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   削除キャンセル
   試験確認内容：該当データの削除が行われていないことを確認
    */
-  it.skip("01-01-007:構成要素の機能動作確認-「削除」ボタン押下-削除キャンセル-該当データの削除が行われていないことを確認", ()=>{
-    //【要修正】新規remotehost追加後にリストにダイアログを閉じただけではリストに表示されない
+  it("01-01-007:構成要素の機能動作確認-「削除」ボタン押下-削除キャンセル-該当データの削除が行われていないことを確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
     cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
@@ -111,7 +110,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   削除実行
   試験確認内容：該当データの削除が行われていることを確認
    */
-  it.skip("01-01-008:構成要素の機能動作確認-「削除」ボタン押下-削除実行-該当データの削除が行われていることを確認", ()=>{
+  it("01-01-008:構成要素の機能動作確認-「削除」ボタン押下-削除実行-該当データの削除が行われていることを確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
     cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
@@ -123,7 +122,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       .click();
     //cy.get('[data-cy="action_row-delete-btn"]').click();
     //削除確認ダイアログ内OKボタン
-    cy.get("[data-cy=\"buttons-cancel-btn\"]").click();
+    cy.get("[data-cy=\"buttons-remove-btn\"]").click();
     cy.contains("tr", LABEL).should("not.exist");
     //cy.get('[data-cy="remotehost-items-data_table"]').contains('No data available');
   });
@@ -314,7 +313,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   「shared host」セレクトボックス
   試験確認内容：選択した値が正しく反映されていることを確認
    */
-  it.skip("01-01-021:構成要素の設定入力確認-テキスト入力-「shared host」セレクトボックス-選択した値が正しく反映されていることを確認", ()=>{
+  it("01-01-021:構成要素の設定入力確認-テキスト入力-「shared host」セレクトボックス-選択した値が正しく反映されていることを確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.enterRequiredRemoteHost(LABEL, HOST_NAME, PORT_NUMBER, TEST_USER);
     cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
@@ -421,7 +420,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   一覧から確認
   試験確認内容：値が正しく反映されていることを確認
    */
-  it.skip("01-01-028:設定入力後の反映確認-一覧から確認-値が正しく反映されていることを確認", ()=>{
+  it("01-01-028:設定入力後の反映確認-一覧から確認-値が正しく反映されていることを確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.enterRequiredRemoteHost(LABEL, HOST_NAME, PORT_NUMBER, TEST_USER);
     cy.enterRemoteHost(HOST_WORK_DIR, PRIVATE_KEY_FILE, JOB_SCHEDULERS, MAX_NUMBER, AVAILABLE_QUEUES, BULKJOB_CHK_NO, STEPJOB_CHK_NO, SHARED_HOST);
@@ -440,7 +439,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   基本設定確認
   試験確認内容：値が正しく反映されていることを確認
    */
-  it.skip("01-01-029:設定入力後の反映確認-編集ダイアログから確認-基本設定確認-値が正しく反映されていることを確認", ()=>{
+  it("01-01-029:設定入力後の反映確認-編集ダイアログから確認-基本設定確認-値が正しく反映されていることを確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.enterRequiredRemoteHost(LABEL, HOST_NAME, PORT_NUMBER, TEST_USER);
     cy.enterRemoteHost(HOST_WORK_DIR, PRIVATE_KEY_FILE, JOB_SCHEDULERS, MAX_NUMBER, AVAILABLE_QUEUES, BULKJOB_CHK_YES, STEPJOB_CHK_YES, SHARED_HOST);
@@ -482,7 +481,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   試験確認内容：値が正しく反映されていることを確認
    */
   //Advanced settingの部分で値を入力しているのにエラーになっていた
-  it.skip("01-01-030:設定入力後の反映確認-編集ダイアログから確認-詳細設定確認-値が正しく反映されていることを確認", ()=>{
+  it("01-01-030:設定入力後の反映確認-編集ダイアログから確認-詳細設定確認-値が正しく反映されていることを確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.enterRequiredRemoteHost(LABEL, HOST_NAME, PORT_NUMBER, TEST_USER);
     cy.enterRemoteHost(HOST_WORK_DIR, PRIVATE_KEY_FILE, JOB_SCHEDULERS, MAX_NUMBER, AVAILABLE_QUEUES, BULKJOB_CHK_YES, STEPJOB_CHK_YES, SHARED_HOST);
