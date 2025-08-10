@@ -54,6 +54,7 @@ async function validateHostSetting(newHost) {
       return false;
     }
   }
+  return true;
 }
 
 async function onAddHost(socket, newHost, cb) {
