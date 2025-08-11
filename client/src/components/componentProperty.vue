@@ -72,6 +72,7 @@
               v-bind="props"
               icon="mdi-restore"
               data-cy="component_property-clean-btn"
+              @click="cleanComponent"
             />
           </template>
         </v-tooltip>
@@ -863,6 +864,9 @@ export default {
     }),
     isValidInputFilename,
     isValidOutputFilename,
+    cleanComponent() {
+      SIO.emitGlobal("cleanComponent", this.projectRootDir, this.selectedComponent.ID, SIO.generalCallback);
+    },
     closeProperty() {
       this.commitSelectedComponent(null);
       this.open = false;
