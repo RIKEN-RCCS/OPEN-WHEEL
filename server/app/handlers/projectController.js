@@ -37,9 +37,9 @@ async function updateProjectState(projectRootDir, state) {
     await emitAll(projectRootDir, "projectState", projectJson.state);
   }
 }
-async function askUnsavedFiles(clientID, projectRootDir) {
+async function askUnsavedFiles(clientID, projectRootDir, targetDir) {
   const logger = getLogger(projectRootDir);
-  const unsavedFiles = await getUnsavedFiles(projectRootDir);
+  const unsavedFiles = await getUnsavedFiles(projectRootDir, targetDir);
   const filterdUnsavedFiles = unsavedFiles.filter((e)=>{
     return !(e.name === componentJsonFilename || e.name === projectJsonFilename);
   });
@@ -55,7 +55,7 @@ async function askUnsavedFiles(clientID, projectRootDir) {
       return unsaved.name;
     }));
   } else if (mode === "update") {
-    return askUnsavedFiles(clientID, projectRootDir);
+    return askUnsavedFiles(clientID, projectRootDir, targetDir);
   }
 }
 async function getSourceCandidates(projectRootDir, ID) {
@@ -317,6 +317,25 @@ async function onStopProject(projectRootDir) {
   await stopProject(projectRootDir);
   await updateProjectState(projectRootDir, "stopped");
 }
+
+async function onCleanComponent(clientID, projectRootDir, targetComponentID) {
+  const componentDir = await getComponentDir(projectRootDir, targetComponentID);
+  try {
+    await askUnsavedFiles(clientID, projectRootDir, componentDir);
+  } catch (err) {
+    if (err.message === "canceled by user") {
+      return;
+    }
+    throw err;
+  }
+  await cleanProject(projectRootDir, componentDir);
+  await Promise.all([
+    sendWorkflow(null, projectRootDir),
+    sendTaskStateList(projectRootDir),
+    sendComponentTree(projectRootDir)
+  ]);
+}
+
 async function onCleanProject(clientID, projectRootDir) {
   try {
     await askUnsavedFiles(clientID, projectRootDir);
@@ -443,6 +462,7 @@ async function onProjectOperation(clientID, projectRootDir, operation, ack) {
 module.exports = {
   onGetProjectJson,
   onGetWorkflow,
+  onCleanComponent,
   onUpdateProjectDescription,
   onUpdateProjectROStatus,
   onProjectOperation
