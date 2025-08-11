@@ -51,10 +51,11 @@ async function updateProjectState(projectRootDir, state) {
 /**
  * clean up project
  * @param {string} projectRootDir - project's root path
+ * @param {string} targetDir - If this argument is specified, limit git clean operations to under this directory
  */
-async function cleanProject(projectRootDir) {
-  await gitResetHEAD(projectRootDir);
-  await gitClean(projectRootDir);
+async function cleanProject(projectRootDir, targetDir) {
+  await gitResetHEAD(projectRootDir, targetDir);
+  await gitClean(projectRootDir, targetDir);
   //project state must be updated by onCleanProject()
   //temp dirs also removed by onCleanProject()
 };

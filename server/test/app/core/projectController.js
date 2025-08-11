@@ -1605,8 +1605,8 @@ describe("project Controller UT", function () {
       rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
       rewProjectController.__set__("gitClean", gitCleanStub);
       await rewCleanProject("/test/project");
-      sinon.assert.calledOnceWithExactly(gitResetHEADStub, "/test/project");
-      sinon.assert.calledOnceWithExactly(gitCleanStub, "/test/project");
+      sinon.assert.calledOnceWithExactly(gitResetHEADStub, "/test/project", undefined);
+      sinon.assert.calledOnceWithExactly(gitCleanStub, "/test/project", undefined);
     });
   });
   describe("#updateProjectState", ()=>{
