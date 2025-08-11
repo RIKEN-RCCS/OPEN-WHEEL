@@ -209,22 +209,27 @@ async function gitRm(rootDir, filename) {
 /**
  * performe git reset HEAD
  * @param {string} rootDir - repo's root dir
- * @param {string} filePatterns - files to be reset
+ * @param {string} pathspec - files to be reset
  */
-async function gitResetHEAD(rootDir, filePatterns = "") {
-  if (filePatterns === "") {
+async function gitResetHEAD(rootDir, pathspec) {
+  if (!pathspec || typeof pathspec !== "string") {
     return gitPromise(rootDir, ["reset", "HEAD", "--hard"], rootDir);
   }
-  await gitPromise(rootDir, ["reset", "HEAD", "--", filePatterns], rootDir);
-  return gitPromise(rootDir, ["checkout", "HEAD", "--", filePatterns], rootDir);
+  await gitPromise(rootDir, ["reset", "HEAD", "--", pathspec], rootDir);
+  return gitPromise(rootDir, ["checkout", "HEAD", "--", pathspec], rootDir);
 }
 
 /**
  * get repo's status
  * @param {string} rootDir - repo's root dir
+ * @param {string} pathspec - file pattern to limit status command
  */
-async function gitStatus(rootDir) {
-  const output = await gitPromise(rootDir, ["status", "--short"], rootDir);
+async function gitStatus(rootDir, pathspec) {
+  const opt = ["status", "--short"];
+  if (typeof pathspec === "string") {
+    opt.push(pathspec);
+  }
+  const output = await gitPromise(rootDir, opt, rootDir);
   const rt = { added: [], modified: [], deleted: [], renamed: [], untracked: [] };
   //parse output from git
   for (const token of output.split(/\n/)) {
@@ -259,11 +264,16 @@ async function gitStatus(rootDir) {
 /**
  * performe git clean -df
  * @param {string} rootDir - repo's root dir
- * @param {string} filePatterns - files to be reset
+ * @param {string} pathspec - files to be reset
  * @returns {Promise} - resolved when git clean done
  */
-async function gitClean(rootDir, filePatterns = "") {
-  return gitPromise(rootDir, ["clean", "-df", "-e wheel.log", "--", filePatterns], rootDir);
+async function gitClean(rootDir, pathspec) {
+  const opt = ["clean", "-df", "-e wheel.log"];
+  if (typeof pathspec === "string") {
+    opt.push("--");
+    opt.push(pathspec);
+  }
+  return gitPromise(rootDir, opt, rootDir);
 }
 
 /**
@@ -397,8 +407,8 @@ async function gitLFSUntrack(rootDir, filename) {
  * @param {string} rootDir - repo's root dir
  * @returns {unsavedFile[]} - unsaved files
  */
-async function getUnsavedFiles(rootDir) {
-  const { added, modified, deleted, renamed } = await gitStatus(rootDir);
+async function getUnsavedFiles(rootDir, pathspec) {
+  const { added, modified, deleted, renamed } = await gitStatus(rootDir, pathspec);
   const unsavedFiles = [];
   for (const e of added) {
     unsavedFiles.push({ status: "new", name: e });

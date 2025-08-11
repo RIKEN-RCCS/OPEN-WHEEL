@@ -594,7 +594,7 @@ describe("gitOperator2", ()=>{
       sinon.restore();
     });
 
-    it("should call gitStatus with correct arguments", async ()=>{
+    it("should call gitStatus with correct arguments without pathspec", async ()=>{
       gitPromiseStub.resolves("");
       await gitStatus(rootDir);
 
@@ -602,6 +602,17 @@ describe("gitOperator2", ()=>{
         gitPromiseStub,
         rootDir,
         ["status", "--short"],
+        rootDir
+      );
+    });
+    it("should call gitStatus with correct arguments with pathspec", async ()=>{
+      gitPromiseStub.resolves("");
+      await gitStatus(rootDir, "/tmp");
+
+      sinon.assert.calledWith(
+        gitPromiseStub,
+        rootDir,
+        ["status", "--short", "/tmp"],
         rootDir
       );
     });
@@ -696,7 +707,7 @@ describe("gitOperator2", ()=>{
       sinon.assert.calledWith(
         gitPromiseStub,
         rootDir,
-        ["clean", "-df", "-e wheel.log", "--", ""],
+        ["clean", "-df", "-e wheel.log"],
         rootDir
       );
     });
