@@ -311,6 +311,9 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isViewer">
+          <v-expansion-panel-title data-cy="component_property-input_file_setting-panel_title">
+            input file setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'input files'"
