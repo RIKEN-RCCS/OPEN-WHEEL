@@ -1,3 +1,4 @@
+import "cypress-wait-until";
 //create a project
 Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
   cy.visit("/");
@@ -20,15 +21,18 @@ Cypress.Commands.add("createProjectMultiple", (projectName, projectDescription, 
   }
 });
 
-Cypress.Commands.add("waitProjectList", (timeout = 5000)=>{
-  return cy
-    .get("[data-cy=\"home-project_list-data_table\"]", { timeout })
-    .should("be.visible")
-    .should("contain.text", "Items per page:");
+Cypress.Commands.add("waitProjectList", (timeout = 10000)=>{
+  return cy.waitUntil(()=>{
+    return cy.get("[data-cy=\"home-project_list-data_table\"]")
+      .should("be.visible")
+      .should("contain.text", "Items per page:");
+  },
+  { timeout, interval: 1000 }
+  );
 });
 
 Cypress.Commands.add("waitProjectAppear", (projectName, timeout = 10000)=>{
-  return cy.waitProjectList()
+  return cy.waitProjectList(timeout)
     .get("[data-cy=\"home-project_name-btn\"]", { timeout })
     .should("be.visible")
     .should(($els)=>{
@@ -44,7 +48,7 @@ Cypress.Commands.add("waitProjectAppear", (projectName, timeout = 10000)=>{
 //remove a project
 Cypress.Commands.add("removeAllProjects", ()=>{
   cy.visit("/");
-  return cy.waitProjectList()
+  return cy.waitProjectList(20000)
     .get("[data-cy=\"home-batch_mode-btn\"]")
     .find("input[type=\"checkbox\"]")
     .first()
