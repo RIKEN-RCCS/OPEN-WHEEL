@@ -21,13 +21,13 @@ describe("06:ディペンデンシー&データリンク接続状態のワーク
   const BJ_TASK_NAME_0 = "bjTask0";
 
   beforeEach(()=>{
-    cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
-    cy.projectOpen(PROJECT_NAME);
     cy.viewport("macbook-16");
+    return cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION)
+      .projectOpen(PROJECT_NAME);
   });
 
   afterEach(()=>{
-    cy.removeAllProjects();
+    return cy.removeAllProjects();
   });
 
   /**

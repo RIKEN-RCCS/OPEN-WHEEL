@@ -20,7 +20,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   const TIMEOUT_DURING = 7;
 
   beforeEach(()=>{
-    cy.goToScreen("remotehost");
+    return cy.goToScreen("remotehost");
   });
 
   /**

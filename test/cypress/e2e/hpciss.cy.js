@@ -26,7 +26,7 @@ describe.skip("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
     cy.get("[data-cy=\"add_new_host-JWT_server_user-text_field\"]").type(JWT_SERVER_USERNAME);
     //do not type JWT_SERVER_URL because nii's server is default value for now
     //cy.get("[data-cy=\"add_new_host-JWT_server_URL-text_field\"]").type(JWT_SERVER_URL);
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+    return cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
   });
   beforeEach(()=>{
     cy.goToScreen("home");
@@ -53,13 +53,13 @@ describe.skip("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
     cy.get("[data-cy=\"home-project_name-btn\"]").contains(PROJECT_NAME);
     cy.projectOpen(PROJECT_NAME);
     cy.get("[data-cy=\"versatile_dialog_IMPORTED_PROJECT_WARNING-title\"]").contains("IMPORTED PROJECT WARNING");
-    cy.get("[data-cy=\"versatile_dialog_IMPORTED_PROJECT_WARNING-ok-btn\"]").click();
+    return cy.get("[data-cy=\"versatile_dialog_IMPORTED_PROJECT_WARNING-ok-btn\"]").click();
   });
   afterEach(()=>{
-    //cy.removeAllProjects();
+    return cy.removeAllProjects();
   });
   after(()=>{
-    //cy.removeRemoteHost(LABEL);
+    return cy.removeRemoteHost(LABEL);
   });
   describe("E2E test for HPCI-SS", ()=>{
     beforeEach(()=>{

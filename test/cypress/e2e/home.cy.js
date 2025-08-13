@@ -4,7 +4,7 @@ describe("02:ホーム画面基本動作確認", ()=>{
   const EXTENSION = ".wheel";
 
   beforeEach(()=>{
-    cy.goToScreen("home");
+    return cy.goToScreen("home");
   });
 
   /**

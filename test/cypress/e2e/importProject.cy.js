@@ -5,7 +5,7 @@ describe("import project e2e test", ()=>{
   const ARCHIVE_FILENAME = "cypress/fixtures/importProjectE2Etest.tgz";
 
   beforeEach(()=>{
-    cy.goToScreen("home");
+    return cy.goToScreen("home");
   });
   afterEach(()=>{
     return cy.removeAllProjects();
