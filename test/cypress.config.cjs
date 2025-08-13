@@ -6,6 +6,7 @@ const tar = require("tar");
 
 module.exports = defineConfig({
   waitForAnimations: true,
+  trashAssetsBeforeRuns: false,
   requestTimeout: 3000,
   defaultCommandTimeout: 5000,
   video: true,
