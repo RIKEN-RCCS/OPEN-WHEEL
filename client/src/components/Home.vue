@@ -71,7 +71,7 @@
       </v-toolbar>
       <div class="text-center">
         <v-progress-circular
-          v-show="loading"
+          v-if="loading"
           indeterminate
           :size="70"
           :width="6"
@@ -79,7 +79,7 @@
         />
       </div>
       <v-data-table
-        v-show="!loading"
+        v-if="!loading"
         v-model="selectedInTable"
         :show-select="true"
         :return-object="true"
