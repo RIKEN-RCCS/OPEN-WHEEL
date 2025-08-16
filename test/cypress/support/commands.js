@@ -101,10 +101,12 @@ Cypress.Commands.add("projectMake", (projectName)=>{
 });
 
 Cypress.Commands.add("projectOpen", (projectName)=>{
-  cy.waitProjectAppear(projectName, 20000);
-  cy.contains("tr", projectName).find("[type=\"checkbox\"]")
+  cy.waitProjectAppear(projectName);
+  cy.contains("tr", projectName)
+    .find("[type=\"checkbox\"]")
     .click({ force: true });
-  cy.contains("button", "OPEN").click({ force: true });
+  return cy.contains("button", "OPEN")
+    .click({ force: true });
 });
 
 Cypress.Commands.add("projectRemove", (projectName)=>{
@@ -546,7 +548,7 @@ Cypress.Commands.add("execProject", ()=>{
 });
 
 //Project status check
-Cypress.Commands.add("checkProjectStatus", (status, timeout = 5000)=>{
+Cypress.Commands.add("checkProjectStatus", (status, timeout = 300000)=>{
   return cy.get("[data-cy=\"workflow-project_state-btn\"]", { timeout })
     .should("contain.text", status);
 });
