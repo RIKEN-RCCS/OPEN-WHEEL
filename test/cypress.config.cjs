@@ -8,6 +8,7 @@ module.exports = defineConfig({
   waitForAnimations: true,
   trashAssetsBeforeRuns: false,
   requestTimeout: 3000,
+  experimentalMemoryManagement: true,
   defaultCommandTimeout: 5000,
   video: true,
   retries: 0,
