@@ -512,6 +512,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test.txt")
       .should("exist")
       .click();
+    cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
+      .click();
     cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
       .first()

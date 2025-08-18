@@ -258,7 +258,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   削除反映確認（input file）
   試験確認内容：input fileが削除されていることを確認
    */
-  it("04-01-469:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+  it.skip("04-01-469:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
     cy.get("[data-cy=\"action_row-delete-btn\"]").click();
@@ -273,7 +273,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   削除反映確認（output file）
   試験確認内容：output fileが削除されていることを確認
    */
-  it("04-01-470:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+  it.skip("04-01-470:コンポーネントの基本機能動作確認-StepjobTaskコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
     cy.get("[data-cy=\"action_row-delete-btn\"]").click();

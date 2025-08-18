@@ -255,6 +255,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.clickComponentName(FOREACH_NAME_1);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
     cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
     cy.clickComponentName(FOREACH_NAME_1);
@@ -293,6 +294,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .click(); //Add input file button
     cy.clickComponentName(FOREACH_NAME_1);
     cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
     cy.clickComponentName(FOREACH_NAME_1);
@@ -331,6 +333,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .click(); //Add input file button
     cy.clickComponentName(FOREACH_NAME_1);
     cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run.sh")
       .click();
@@ -378,6 +381,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .click(); //Add input file button
     cy.clickComponentName(FOREACH_NAME_1);
     cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run*")
       .click();
@@ -428,6 +432,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .click(); //Add input file button
     cy.clickComponentName(FOREACH_NAME_1);
     cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run*")
       .click();

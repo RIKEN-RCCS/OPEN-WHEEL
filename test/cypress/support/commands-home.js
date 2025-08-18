@@ -10,7 +10,8 @@ Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
     .type(projectDescription);
   cy.get("[data-cy=\"buttons-create-btn\"]")
     .click();
-  return cy.waitProjectList();
+  cy.waitProjectList();
+  return cy.waitProjectAppear(projectName);
 });
 
 //create multiple projects
@@ -42,17 +43,20 @@ Cypress.Commands.add("removeAllProjects", ()=>{
   cy.visit("/");
   cy.waitProjectList();
   cy.get("[data-cy=\"home-batch_mode-btn\"]")
-    .find("input[type=\"checkbox\"]")
-    .first()
-    .click({ force: true });
+    .should("be.visible")
+    .click();
   cy.get("[data-cy=\"home-project_list-data_table\"]")
     .contains("th", "Project Name")
     .parent() //select all project
     .find("input[type=\"checkbox\"]")
     .first()
-    .click({ force: true });
+    .check();
   cy.get("[data-cy=\"home-remove-btn\"]")
-    .click({ force: true });
-  return cy.get("[data-cy=\"buttons-remove-btn\"]")
-    .click({ force: true });
+    .should("be.visible")
+    .click();
+  cy.get("[data-cy=\"buttons-remove-btn\"]")
+    .should("be.visible")
+    .click();
+  return cy.get("[data-cy=\"home-project_list-data_table\"]")
+    .should("contain.text", "No data available");
 });
