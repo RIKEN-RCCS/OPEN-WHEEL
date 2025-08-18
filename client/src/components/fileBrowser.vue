@@ -402,7 +402,7 @@ export default {
     },
     submitAndCloseDialog() {
       if (this.dialog.submitEvent === "remove") {
-        SIO.emitGlobal("remove", this.projectRootDir, this.activeItem.id, (rt)=>{
+        SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
           if (!rt) {
             console.log(rt);
             return;
