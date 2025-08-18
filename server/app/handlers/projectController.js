@@ -385,7 +385,7 @@ async function onSaveProject(projectRootDir, ack) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
   await writeJsonWrapper(filename, projectJson);
   await gitAdd(projectRootDir, filename);
-  await setComponentStateR(projectRootDir, projectRootDir, "not-started", false, ["finished"]);
+  await setComponentStateR(projectRootDir, projectRootDir, "not-started", false, []);
   await gitCommit(projectRootDir);
 }
 
