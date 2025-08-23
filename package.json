@@ -51,8 +51,5 @@
   "lint-staged": {
     "*.js": "eslint --fix",
     "*.vue": "eslint --fix"
-  },
-  "dependencies": {
-    "@cypress/skip-test": "^2.6.1"
   }
 }
