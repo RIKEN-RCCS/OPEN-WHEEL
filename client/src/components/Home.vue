@@ -89,75 +89,29 @@
         data-cy="home-project_list-data_table"
       >
         <template #item.name="props">
-          <v-menu
-            v-model="renameDialog[props.index]"
-            location="bottom"
-            :close-on-content-click="false"
-            min-width="auto"
-            max-width="50vw"
-          >
-            <template #activator="{ props: menuProps }">
-              <v-btn
-                variant="text"
-                v-bind="menuProps"
-                block
-                class="justify-start"
-                :text="props.item.name"
-                data-cy="home-project_name-btn"
-                @click="openInlineEditDialog(props.item.name, props.index, 'name')"
-              />
-            </template>
-            <v-sheet
-              min-width="auto"
-              max-width="50vw"
-            >
-              <v-text-field
-                v-model="newVal"
-                :rules="[required]"
-                clearable
-                data-cy="home-project_rename-text_field"
-                @keyup.enter="renameProject(props.item, props.index)"
-              />
-            </v-sheet>
-          </v-menu>
+          <inline-editor
+            :current-value="props.item.name"
+            data-cy-prefix="home-project_name"
+            :additional-rules="[required, isValidName]"
+            @confirmed="renameProject(props.item, $event)"
+          />
         </template>
         <template #item.description="props">
-          <v-menu
-            v-model="editDescriptionDialog[props.index]"
-            location="bottom"
-            :close-on-content-click="false"
-            min-width="auto"
-            max-width="50vw"
-          >
-            <template #activator="{ props: menuProps }">
-              <v-btn
-                variant="text"
-                class="justify-start text-truncate trancated-row"
-                v-bind="menuProps"
-                block
-                :text="props.item.description"
-                data-cy="home-project_description-btn"
-                @click="openInlineEditDialog(props.item.description, props.index, 'description')"
-              />
-            </template>
-            <v-sheet
-              min-width="auto"
-              max-width="50vw"
-            >
-              <v-textarea
-                v-model="newVal"
-                clearable
-                data-cy="home-description_change-textarea"
-                @keyup.enter="changeDescription(props.item, props.index)"
-              />
-            </v-sheet>
-          </v-menu>
+          <inline-editor
+            :current-value="props.item.description"
+            text-area
+            data-cy-prefix="home-project_description"
+            :additional-rules="[required]"
+            @confirmed="changeDescription(props.item, $event)"
+          />
         </template>
         <template #item.path="{item}">
           <span
             class="d-inline-block text-truncate trancated-row"
             data-cy="home-path-span"
-          >{{ item.path }} </span>
+          >
+            {{ item.path }}
+          </span>
         </template>
       </v-data-table>
       <v-dialog
@@ -249,9 +203,11 @@ import removeConfirmDialog from "../components/common/removeConfirmDialog.vue";
 import exportDialog from "../components/exportDialog.vue";
 import importDialog from "../components/importDialog.vue";
 import buttons from "../components/common/buttons.vue";
+import inlineEditor from "./common/inlineEditor.vue";
 import { readCookie } from "../lib/utility.js";
 import SIO from "../lib/socketIOWrapper.js";
 import { required } from "../lib/validationRules.js";
+import { isValidName } from "../lib/utility.js";
 
 //it should be get from server
 const projectJsonFilename = "prj.wheel.json";
@@ -266,7 +222,8 @@ export default {
     buttons,
     removeConfirmDialog,
     exportDialog,
-    importDialog
+    importDialog,
+    inlineEditor
   },
   data: ()=>{
     return {
@@ -296,10 +253,7 @@ export default {
       removeCandidates: [],
       pathSep: "/",
       home: "/",
-      renameDialog: [],
-      editDescriptionDialog: [],
       newVal: null,
-      edittingIndex: null,
       exportDialogButtons: [
         { icon: "mdi-close", label: "close" }
       ],
@@ -382,16 +336,7 @@ export default {
       closeSnackbar: "closeSnackbar"
     }),
     required,
-    openInlineEditDialog(name, index, prop) {
-      this.newVal = name;
-      this.oldVal = name;
-      this.edittingIndex = index;
-      if (prop === "name") {
-        this.renameDialog[index] = true;
-      } else if (prop === "description") {
-        this.editDescriptionDialog[index] = true;
-      }
-    },
+    isValidName,
     forceUpdateProjectList() {
       this.loading = true;
       SIO.emitGlobal("getProjectList", (data)=>{
@@ -443,11 +388,11 @@ export default {
       form.appendChild(input);
       form.submit();
     },
-    changeDescription(item, index) {
-      if (this.newVal === item.description) {
+    changeDescription(item, newVal) {
+      if (newVal === item.description) {
         console.log("project name not changed");
       } else {
-        const description = this.newVal.trimEnd();
+        const description = newVal.trimEnd();
         SIO.emitGlobal("updateProjectDescription", item.path, description, (rt)=>{
           if (!rt) {
             console.log("update description failed", item.path, description);
@@ -455,21 +400,20 @@ export default {
           this.forceUpdateProjectList();
         });
       }
-      this.editDescriptionDialog[index] = false;
     },
-    renameProject(item, index) {
-      if (this.newVal === item.name) {
+    renameProject(item, newVal) {
+      if (newVal === item.name) {
         console.log("project name not changed");
       } else {
-        SIO.emitGlobal("renameProject", item.id, this.newVal, item.path, (rt)=>{
+        SIO.emitGlobal("renameProject", item.id, newVal, item.path, (rt)=>{
+          console.log("renameProject called", item.id, newVal, item.path);
           if (!rt) {
-            console.log("rename failed", item.id, this.newVal, item.path);
+            console.log("rename failed", item.id, newVal, item.path);
             this.forceUpdateProjectList();
             return;
           }
         });
       }
-      this.renameDialog[index] = false;
     },
     openExportProjectDialog() {
       if (this.exportProject === null) {

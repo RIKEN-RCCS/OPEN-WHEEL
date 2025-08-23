@@ -20,67 +20,20 @@
           :headers="headers"
         >
           <template #item.name="props">
-            <v-menu
-              v-model="editKeyDialog[props.index]"
-              location="bottom"
-              :close-on-content-click="false"
-              min-width="auto"
-              max-width="50vw"
-            >
-              <template #activator="{ props: menuProps }">
-                <v-btn
-                  variant="text"
-                  v-bind="menuProps"
-                  block
-                  class="justify-start"
-                  :text="props.item.name"
-                />
-              </template>
-              <v-sheet
-                min-width="auto"
-                max-width="50vw"
-              >
-                <v-text-field
-                  v-model="props.item.raw.name"
-                  :rules="[required]"
-                  clearable
-                  :readonly="readOnly"
-                  @keyup.enter="editKeyDialog[props.index]=false"
-                />
-              </v-sheet>
-            </v-menu>
+            <inline-editor
+              :current-value="props.item.name"
+              data-cy-prefix="env_setting-name"
+              :additional-rules="[required]"
+              @confirmed="(newVal)=>{props.item.name = newVal}"
+            />
           </template>
           <template #item.value="props">
-            <v-menu
-              v-model="editValueDialog[props.index]"
-              location="bottom"
-              :close-on-content-click="false"
-              :readonly="readOnly"
-              min-width="auto"
-              max-width="50vw"
-            >
-              <template #activator="{ props: menuProps }">
-                <v-btn
-                  variant="text"
-                  v-bind="menuProps"
-                  block
-                  class="justify-start"
-                  :text="props.item.value"
-                />
-              </template>
-              <v-sheet
-                min-width="auto"
-                max-width="50vw"
-              >
-                <v-text-field
-                  v-model="props.item.raw.value"
-                  :rules="[required]"
-                  :readonly="readOnly"
-                  clearable
-                  @keyup.enter="editValueDialog[props.index]=false"
-                />
-              </v-sheet>
-            </v-menu>
+            <inline-editor
+              :current-value="props.item.value"
+              data-cy-prefix="env_setting-value"
+              :additional-rules="[required]"
+              @confirmed="(newVal)=>{props.item.value= newVal}"
+            />
           </template>
           <template #item.actions="{ item }">
             <action-row
@@ -136,19 +89,21 @@
   </v-dialog>
 </template>
 <script>
-import { toRaw } from "vue";
+import { toRaw, nextTick } from "vue";
 import { mapState, mapMutations } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import actionRow from "../components/common/actionRow.vue";
 import buttons from "../components/common/buttons.vue";
 import { removeFromArray } from "../lib/clientUtility.js";
 import { required } from "../lib/validationRules.js";
+import inlineEditor from "./common/inlineEditor.vue";
 
 export default {
   name: "EnvSettingDialog",
   components: {
     actionRow,
-    buttons
+    buttons,
+    inlineEditor
   },
   emits: [
     "update:modelValue"
@@ -164,7 +119,9 @@ export default {
         { title: "name", key: "name" },
         { title: "value", key: "value" },
         { title: "", key: "actions" }
-      ]
+      ],
+      itemRefs: {},
+      itemWidths: {}
     };
   },
   computed: {
@@ -192,9 +149,21 @@ export default {
       });
       this.env.splice(0, this.env.length, ...env);
       this.commitWaitingEnv(false);
+      nextTick(()=>{
+        for (const id in this.itemRefs) {
+          if (this.itemRefs[id]) {
+            this.itemWidths[id] = this.itemRefs[id].offsetWidth;
+          }
+        }
+      });
     });
   },
   methods: {
+    setItemRef(id, el) {
+      if (el) {
+        this.itemRefs[id] = el;
+      }
+    },
     required,
     ...mapMutations(
       {
