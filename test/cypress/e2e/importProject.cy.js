@@ -12,10 +12,10 @@ describe("import project e2e test", ()=>{
   });
   it("should import project from tar archive", ()=>{
     cy.get("[data-cy=\"home-import-btn\"]").click();
-    cy.get("[data-cy=\"import_dialog-upload_file-input\"]").find("input")
-      .selectFile(ARCHIVE_FILENAME);
     cy.get("[data-cy=\"import_dialog-file_browser\"]").contains("div", "./")
       .click();
+    cy.get("[data-cy=\"import_dialog-upload_file-input\"]").find("input")
+      .selectFile(ARCHIVE_FILENAME, { force: true });
     cy.get("[data-cy=\"import_dialog-ok-btn\"]").click();
 
     cy.get("[data-cy=\"versatile_dialog_IMPORTED_PROJECT_WARNING-title\"]").contains("IMPORTED PROJECT WARNING");
