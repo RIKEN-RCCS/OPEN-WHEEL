@@ -73,7 +73,7 @@ describe("02:ホーム画面基本動作確認", ()=>{
     cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
     cy.waitProjectList();
     cy.get("[data-cy=\"home-project_name-btn\"]").click();
-    cy.get("[data-cy=\"home-project_rename-text_field\"]").should("be.visible");
+    cy.get("[data-cy=\"home-project_name-text_field\"]").should("be.visible");
     cy.removeAllProjects();
   });
 
@@ -174,7 +174,7 @@ describe("02:ホーム画面基本動作確認", ()=>{
     cy.waitProjectList();
     cy.get("[data-cy=\"home-project_name-btn\"]").contains(PROJECT_NAME)
       .click();
-    cy.get("[data-cy=\"home-project_rename-text_field\"]").should("not.be.visible");
+    cy.get("[data-cy=\"home-project_name-text_field\"]").should("not.be.visible");
     cy.removeAllProjects();
   });
 
@@ -189,9 +189,9 @@ describe("02:ホーム画面基本動作確認", ()=>{
     cy.waitProjectList();
     cy.get("[data-cy=\"home-project_name-btn\"]").contains(PROJECT_NAME)
       .click();
-    cy.get("[data-cy=\"home-project_rename-text_field\"]").clear();
-    cy.get("[data-cy=\"home-project_rename-text_field\"]").type("change-" + PROJECT_NAME);
-    cy.get("[data-cy=\"home-project_rename-text_field\"]").find("input")
+    cy.get("[data-cy=\"home-project_name-text_field\"]").clear();
+    cy.get("[data-cy=\"home-project_name-text_field\"]").type("change-" + PROJECT_NAME);
+    cy.get("[data-cy=\"home-project_name-text_field\"]").find("input")
       .should("have.value", "change-" + PROJECT_NAME);
     cy.removeAllProjects();
   });
@@ -207,9 +207,9 @@ describe("02:ホーム画面基本動作確認", ()=>{
     cy.waitProjectList();
     cy.get("[data-cy=\"home-project_name-btn\"]").contains(PROJECT_NAME)
       .click();
-    cy.get("[data-cy=\"home-project_rename-text_field\"]").clear();
-    cy.get("[data-cy=\"home-project_rename-text_field\"]").type("changeProjectName");
-    cy.get("[data-cy=\"home-project_rename-text_field\"]").type("{enter}");
+    cy.get("[data-cy=\"home-project_name-text_field\"]").clear();
+    cy.get("[data-cy=\"home-project_name-text_field\"]").type("changeProjectName");
+    cy.get("[data-cy=\"home-project_name-text_field\"]").type("{enter}");
     cy.get("[data-cy=\"home-project_name-btn\"]").contains("changeProjectName");
 
     cy.removeAllProjects();
@@ -226,7 +226,7 @@ describe("02:ホーム画面基本動作確認", ()=>{
     cy.waitProjectList();
     cy.get("[data-cy=\"home-project_description-btn\"]").contains(PROJECT_DESCRIPTION)
       .click();
-    cy.get("[data-cy=\"home-description_change-textarea\"]").should("not.be.visible");
+    cy.get("[data-cy=\"home-project_description-textarea\"]").should("not.be.visible");
     cy.removeAllProjects();
   });
 
@@ -241,9 +241,9 @@ describe("02:ホーム画面基本動作確認", ()=>{
     cy.waitProjectList();
     cy.get("[data-cy=\"home-project_description-btn\"]").contains(PROJECT_DESCRIPTION)
       .click();
-    cy.get("[data-cy=\"home-description_change-textarea\"]").clear();
-    cy.get("[data-cy=\"home-description_change-textarea\"]").type("change-" + PROJECT_DESCRIPTION);
-    cy.get("[data-cy=\"home-description_change-textarea\"]").find("textarea")
+    cy.get("[data-cy=\"home-project_description-textarea\"]").clear();
+    cy.get("[data-cy=\"home-project_description-textarea\"]").type("change-" + PROJECT_DESCRIPTION);
+    cy.get("[data-cy=\"home-project_description-textarea\"]").find("textarea")
       .should("have.value", "change-" + PROJECT_DESCRIPTION);
     cy.removeAllProjects();
   });
@@ -259,9 +259,9 @@ describe("02:ホーム画面基本動作確認", ()=>{
     cy.waitProjectList();
     cy.get("[data-cy=\"home-project_description-btn\"]").contains(PROJECT_DESCRIPTION)
       .click();
-    cy.get("[data-cy=\"home-description_change-textarea\"]").clear();
-    cy.get("[data-cy=\"home-description_change-textarea\"]").type("change-" + PROJECT_DESCRIPTION);
-    cy.get("[data-cy=\"home-description_change-textarea\"]").type("{enter}");
+    cy.get("[data-cy=\"home-project_description-textarea\"]").clear();
+    cy.get("[data-cy=\"home-project_description-textarea\"]").type("change-" + PROJECT_DESCRIPTION);
+    cy.get("[data-cy=\"home-project_description_textarea_ok-btn\"]").click();
     cy.get("[data-cy=\"home-project_description-btn\"]").contains("change-" + PROJECT_DESCRIPTION)
       .should("exist");
     cy.removeAllProjects();

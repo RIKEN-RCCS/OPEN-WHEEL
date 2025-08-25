@@ -31,16 +31,19 @@
                 v-model="newVal"
                 :rules="rules"
                 :bg-color="inputBackgroundColor"
+                :data-cy="`${dataCyPrefix}-textarea`"
                 clearable
               />
             </v-card-text>
             <v-card-actions>
               <v-btn
+                :data-cy="`${dataCyPrefix}_textarea_ok-btn`"
                 @click="isActive.value=false;$emit('confirmed', newVal)"
               >
                 OK
               </v-btn>
               <v-btn
+                :data-cy="`${dataCyPrefix}_textarea_cancel-btn`"
                 @click="isActive.value=false"
               >
                 Cancel
@@ -52,7 +55,7 @@
             v-model="newVal"
             :rules="rules"
             clearable
-            data-cy="home-project_rename-text_field"
+            :data-cy="`${dataCyPrefix}-text_field`"
             :bg-color="inputBackgroundColor"
             @keyup.enter="isActive.value=false;$emit('confirmed', newVal)"
           />

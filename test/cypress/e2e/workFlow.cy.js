@@ -286,7 +286,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run.sh")
       .click();
-    cy.get("[data-cy=\"list_form_property-edit-text_field\"]").find("input")
+    cy.get("[data-cy=\"list_form_property-text_field\"]").find("input")
       .clear()
       .type("task1.sh{enter}"); //inputFileの値を変更
     cy.closeProperty();
@@ -323,7 +323,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run*")
       .click();
-    cy.get("[data-cy=\"list_form_property-edit-text_field\"]").find("input")
+    cy.get("[data-cy=\"list_form_property-text_field\"]").find("input")
       .clear()
       .type("task1-run{enter}"); //inputFileの値を変更
     cy.closeProperty();
@@ -363,7 +363,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run-a.sh")
       .click();
-    cy.get("[data-cy=\"list_form_property-edit-text_field\"]").find("input")
+    cy.get("[data-cy=\"list_form_property-text_field\"]").find("input")
       .clear()
       .type("task1-run/{enter}"); //inputFileの値を変更
     cy.closeProperty();
