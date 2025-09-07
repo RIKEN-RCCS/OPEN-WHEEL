@@ -7,7 +7,7 @@
 
 const allowedOperations = {
   "not-started": ["runProject", "revertProject", "saveProject", "checkProject"],
-  "preparing": [],
+  "preparing": ["cleanProject"],
   "running": ["stopProject"],
   "stopped": ["cleanProject"],
   "finished": ["cleanProject"],
