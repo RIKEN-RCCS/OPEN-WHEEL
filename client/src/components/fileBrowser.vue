@@ -81,7 +81,6 @@
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
             v-bind="props"
             icon="mdi-download"
             @click="download"
