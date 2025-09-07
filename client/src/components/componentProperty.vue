@@ -805,6 +805,11 @@ export default {
     retryByJS() {
       this.copySelectedComponent.retryCondition = null;
     },
+    "copySelectedComponent.host"(newValue) {
+      if (newValue === "localhost") {
+        this.copySelectedComponent.useJobScheduler = false;
+      }
+    },
     open(newValue) {
       //another component is selected while componentProperty is open
       if (this.reopening || this.open) {
