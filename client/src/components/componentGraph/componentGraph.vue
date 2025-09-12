@@ -71,6 +71,7 @@
         :y="menuY"
         :items="componentContextMenuItems"
         @delete="deleteComponent"
+        @clean="cleanComponent"
       />
       <context-menu
         v-if="openConnectorContextMenu"
@@ -126,9 +127,6 @@ export default {
       targetComponent: null,
       targetConnector: null,
       targetVconnector: null,
-      componentContextMenuItems: [
-        { label: "delete", event: "delete" }
-      ],
       connectorContextMenuItems: [
         { label: "delete", event: "delete" }
       ],
@@ -138,7 +136,16 @@ export default {
     };
   },
   computed: {
-    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly"]),
+    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState"]),
+    componentContextMenuItems() {
+      const rt = [];
+      if (this.projectState !== "not-started") {
+        rt.push({ label: "clean", event: "clean" });
+      } else {
+        rt.push({ label: "delete", event: "delete" });
+      }
+      return rt;
+    },
     linkGraph() {
       const rt = [];
       if (this.currentComponent === null) {
@@ -289,13 +296,19 @@ export default {
     }
   },
   methods: {
+    cleanComponent() {
+      SIO.emitGlobal("cleanComponent", this.projectRootDir, this.targetComponent.ID, SIO.generalCallback);
+      this.closeContextMenus();
+    },
     deleteComponent() {
       if (this.readOnly) {
         debug("delete component called but this project is not read-only for now");
+        this.closeContextMenus();
         return;
       }
       SIO.emitGlobal("removeNode", this.projectRootDir, this.targetComponent.ID, this.currentComponent.ID, (rt)=>{
         if (!rt) {
+          this.closeContextMenus();
           return;
         }
         this.commitSelectedComponent(null);

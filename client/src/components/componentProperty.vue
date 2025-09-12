@@ -62,20 +62,6 @@
             />
           </template>
         </v-tooltip>
-        <v-tooltip
-          location="bottom"
-          text="clean"
-        >
-          <template #activator="{ props }">
-            <v-btn
-              :disabled="selectedComponent.state === 'not-started'"
-              v-bind="props"
-              icon="mdi-restore"
-              data-cy="component_property-clean-btn"
-              @click="cleanComponent"
-            />
-          </template>
-        </v-tooltip>
       </v-toolbar-items>
     </v-toolbar>
     <v-form
@@ -872,9 +858,6 @@ export default {
     }),
     isValidInputFilename,
     isValidOutputFilename,
-    cleanComponent() {
-      SIO.emitGlobal("cleanComponent", this.projectRootDir, this.selectedComponent.ID, SIO.generalCallback);
-    },
     closeProperty() {
       this.commitSelectedComponent(null);
       this.open = false;
