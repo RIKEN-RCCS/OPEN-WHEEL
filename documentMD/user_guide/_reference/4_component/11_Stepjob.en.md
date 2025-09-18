@@ -30,6 +30,13 @@ It is enabled by default, and if disabled, the project will not run properly.
 ### queue
 Like the Task component, it sets the queue to which the job is submitted.
 
+### submit command
+Displays the name of the command used to submit the job to the batch system specified in [Remote host settings]({{site.baseurl}}/for_admins/how_to_boot/#remote-host-settings).
+Therefore, it cannot be changed here.
+
+### submit option
+Sets additional options to be specified when the job is submitted.
+
 ## StepjobTask
 Only available within the StepJob component.
 You can place a StepjobTask by double-clicking the Stepjob component to display it.
