@@ -143,27 +143,27 @@ class Task extends GeneralComponent {
     super(...args);
     this.type = "task";
 
-    /**filename of entry point of this task */
+    //filename of entry point of this task
     this.script = null;
 
-    /**hostname where this task will execute on */
+    //hostname where this task will execute on
     this.host = "localhost";
 
-    /**run as batch job or not*/
+    //run as batch job or not
     this.useJobScheduler = false;
 
-    /**queue name */
+    //queue name
     this.queue = null;
 
-    /**submit option */
+    //submit option
     this.submitOption = null;
 
     //note on filters
     //if include filter is set, matched files are transferd if it does not match exclude filter
-    /**include filter for recieve files from remote host */
+    //include filter for recieve files from remote host
     this.include = [];
 
-    /**exclude filter for recieve files from remote host */
+    //exclude filter for recieve files from remote host
     this.exclude = [];
 
     //number of retry after task failed
@@ -172,6 +172,9 @@ class Task extends GeneralComponent {
     //how to determie task is failed or not
     //this prop can have filename of shell script or statement of javascript
     this.retryCondition = null;
+
+    //if true, project will continue after failing this task.
+    this.ignoreFailure = false;
   }
 }
 

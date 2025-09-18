@@ -113,6 +113,7 @@ class TaskSchema extends GeneralWorkflowComponentSchema {
     this.properties.state.enum.push(...["stage-in", "waiting", "queued", "stage-out"]);
     this.properties.retryCondition = { type: ["string", "null"], default: null };
     this.properties.retry = { type: ["number", "null"], default: null };
+    this.properties.ignoreFailure = { type: "boolean", default: false };
   }
 }
 

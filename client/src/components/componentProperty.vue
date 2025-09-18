@@ -148,6 +148,14 @@
               variant="outlined"
               data-cy="component_property-directory_path-text_field"
             />
+            <v-switch
+              v-if="isTask"
+              v-model="copySelectedComponent.ignoreFailure"
+              label="continue project execution after filure"
+              :readonly="readOnly"
+              color="primary"
+              data-cy="component_property-ignore_failure-switch"
+            />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isTask">

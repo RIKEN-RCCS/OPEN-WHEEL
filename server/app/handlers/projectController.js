@@ -275,7 +275,13 @@ async function onRunProject(clientID, projectRootDir, ack) {
     ee.on("projectStateChanged", sendProjectJson.bind(null, projectRootDir));
     ee.on("taskDispatched", sendTaskStateList.bind(null, projectRootDir));
     ee.on("taskCompleted", sendTaskStateList.bind(null, projectRootDir));
-    ee.on("taskStateChanged", sendTaskStateList.bind(null, projectRootDir));
+    ee.on("taskStateChanged", async (task)=>{
+      sendTaskStateList(projectRootDir);
+      if (task.ignoreFailure !== true && task.stage !== "finished") {
+        await stopProject(projectRootDir);
+        await updateProjectState(projectRootDir, "stopped");
+      }
+    });
     ee.on("resultFilesReady", sendResultsFileDir.bind(null, projectRootDir));
 
     const { webhook } = await getProjectJson(projectRootDir);
