@@ -484,21 +484,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   コンポーネントの基本機能動作確認
   Stepjobコンポーネント共通機能確認
   各コンポーネント特有のプロパティ確認
-  queue表示確認（無効）
-  試験確認内容：queueセレクトボックスが無効となっていることを確認
-   */
-  it("04-01-384:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-queue表示確認（無効）-queueセレクトボックスが無効となっていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
-    cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
-      .click();
-    cy.get("[data-cy=\"component_property-queue-select\"]").find("input")
-      .should("be.disabled");
-  });
-
-  /**
-  コンポーネントの基本機能動作確認
-  Stepjobコンポーネント共通機能確認
-  各コンポーネント特有のプロパティ確認
   queue表示確認（有効）
   試験確認内容：queueセレクトボックスが有効となっていることを確認
    */
@@ -568,21 +553,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   コンポーネントの基本機能動作確認
   Stepjobコンポーネント共通機能確認
   各コンポーネント特有のプロパティ確認
-  submit command表示確認（無効）
-  試験確認内容：submit commandテキストボックスが無効となっていることを確認
-   */
-  it("04-01-388:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-submit command表示確認（無効）-submit commandテキストボックスが無効となっていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
-    cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
-      .click();
-    cy.get("[data-cy=\"component_property-submit_command-text_field\"]").find("input")
-      .should("be.disabled");
-  });
-
-  /**
-  コンポーネントの基本機能動作確認
-  Stepjobコンポーネント共通機能確認
-  各コンポーネント特有のプロパティ確認
   submit command表示確認（有効）
   試験確認内容：submit commandテキストボックスが有効となっていることを確認
    */
@@ -618,21 +588,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-submit_command-text_field\"]").find("input")
       .should("have.value", "qsub");
     cy.removeRemoteHost("TestLabel");
-  });
-
-  /**
-  コンポーネントの基本機能動作確認
-  Stepjobコンポーネント共通機能確認
-  各コンポーネント特有のプロパティ確認
-  submit option表示確認（無効）
-  試験確認内容：submit optionテキストボックスが無効となっていることを確認
-   */
-  it("04-01-391:コンポーネントの基本機能動作確認-Stepjobコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-submit option表示確認（無効）-submit optionテキストボックスが無効となっていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
-    cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
-      .click();
-    cy.get("[data-cy=\"component_property-submit_option-text_field\"]").find("input")
-      .should("be.disabled");
   });
 
   /**

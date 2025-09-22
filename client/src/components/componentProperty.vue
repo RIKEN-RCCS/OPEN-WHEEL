@@ -109,6 +109,7 @@
               v-model="copySelectedComponent.useJobScheduler"
               label="use job scheduler"
               :readonly="readOnly"
+              :disabled="isBulkjobTask || isStepjobTask || isStepjob"
               color="primary"
               data-cy="component_property-job_scheduler-switch"
             />
@@ -739,6 +740,9 @@ export default {
     isStepjobTask() {
       return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "stepjobTask";
     },
+    isStepjob() {
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "stepjob";
+    },
     isBulkjobTask() {
       return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "bulkjobTask";
     },
@@ -800,7 +804,7 @@ export default {
       this.copySelectedComponent.retryCondition = null;
     },
     "copySelectedComponent.host"(newValue) {
-      if (newValue === "localhost") {
+      if (newValue === "localhost" && !this.isBulkjobTask() && !this.isStepjobTask() && this.isStepjob()) {
         this.copySelectedComponent.useJobScheduler = false;
       }
     },
