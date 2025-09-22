@@ -276,8 +276,8 @@ async function onRunProject(clientID, projectRootDir, ack) {
     ee.on("taskDispatched", sendTaskStateList.bind(null, projectRootDir));
     ee.on("taskCompleted", sendTaskStateList.bind(null, projectRootDir));
     ee.on("taskStateChanged", async (task)=>{
-      sendTaskStateList(projectRootDir);
-      if (task.ignoreFailure !== true && task.stage !== "finished") {
+      await sendTaskStateList(projectRootDir);
+      if (task.ignoreFailure !== true && ["failed", "unknow"].includes(task.state)) {
         await stopProject(projectRootDir);
         await updateProjectState(projectRootDir, "stopped");
       }
