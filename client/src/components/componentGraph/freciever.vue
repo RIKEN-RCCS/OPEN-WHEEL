@@ -1,10 +1,15 @@
 <template>
-  <rect :x=x :y=y :width=width :height=height
-    :fill=color
-    stroke-width=12 stroke="transparent"
-    :data-droparea=true
-    @drop=onDrop
-    @click.stop=onClick
+  <rect
+    :x="x"
+    :y="y"
+    :width="width"
+    :height="height"
+    :fill="color"
+    stroke-width="12"
+    stroke="transparent"
+    :data-droparea="true"
+    @drop="onDrop"
+    @click.stop="onClick"
     @mousedown.stop
   />
 </template>
@@ -14,13 +19,6 @@ import { filePlugColor, socketLongSideLength, socketShortSideLength } from "../.
 
 export default {
   name: "Freciever",
-  data: ()=>{
-    return {
-      color: filePlugColor,
-      width: socketShortSideLength,
-      height: socketLongSideLength
-    };
-  },
   props: {
     center: {
       required: true,
@@ -31,6 +29,13 @@ export default {
     "drop",
     "click"
   ],
+  data: ()=>{
+    return {
+      color: filePlugColor,
+      width: socketShortSideLength,
+      height: socketLongSideLength
+    };
+  },
   computed: {
     x() {
       return this.center.x - this.width / 2;

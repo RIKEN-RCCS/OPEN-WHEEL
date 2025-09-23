@@ -11,7 +11,7 @@ const { register } = require("./executerManager.js");
 
 /**
  * enqueue task
- * @param {Task} task - task component object
+ * @param {object} task - task component object
  * task component is defined in workflowComponent.js
  */
 async function exec(task) {

@@ -78,7 +78,7 @@ async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params,
   }
   return Promise.all(p).catch((err)=>{
     logger.trace("error occurred at scatter", err);
-    if (err.code !== "ENOENT" || err.code !== "EEXIST") {
+    if (err.code !== "ENOENT" && err.code !== "EEXIST") {
       return Promise.reject(err);
     }
     return true;

@@ -103,6 +103,8 @@ sio.on("connection", (socket)=>{
   const projectRootDir = socket.handshake.auth.projectRootDir;
   if (typeof projectRootDir === "string") {
     socket.join(projectRootDir);
+  } else {
+    socket.join("default");
   }
   socket.prependAny((eventName, ...args)=>{
     if (eventName.startsWith("siofu")) {
@@ -127,6 +129,7 @@ router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
 logger.info(`${tempdRoot} is used as static content directory`);
 router.use(express.static(path.resolve(tempdRoot, "viewer"), { index: false }));
 router.use(express.static(path.resolve(tempdRoot, "download"), { index: false }));
+router.use(express.static(path.resolve(tempdRoot, "exportProject"), { index: false }));
 if (process.env.WHEEL_ENABLE_WEB_API) {
   router.use(asyncHandler(async (req, res, next)=>{
     if (!req.query.code) {

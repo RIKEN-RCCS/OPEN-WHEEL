@@ -16,19 +16,19 @@
           label="filter"
         />
         <v-row>
-        <v-btn
-          class="text-capitalize"
-          @click="applyFilter"
-          prepend-icon="add"
-          text="apply"
-        />
-        <v-btn
-          class="text-capitalize"
-          @click="closeFilterEditor"
-          prepend-icon="close"
-          text="close"
-        />
-      </v-row>
+          <v-btn
+            class="text-capitalize"
+            prepend-icon="add"
+            text="apply"
+            @click="applyFilter"
+          />
+          <v-btn
+            class="text-capitalize"
+            prepend-icon="close"
+            text="close"
+            @click="closeFilterEditor"
+          />
+        </v-row>
       </v-card-title>
       <v-card-text>
         <v-data-table
@@ -44,7 +44,7 @@
           :items="placeholders"
         >
           <template #bottom />
-      </v-data-table>
+        </v-data-table>
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -65,6 +65,15 @@ export default {
       required: true
     }
   },
+  emits: ["update:modelValue", "updatePlaceholders"],
+  data: function () {
+    return {
+      newFilter: "",
+      search: "",
+      selected: [],
+      tableFooterProps
+    };
+  },
   computed: {
     filterEditor: {
       get() {
@@ -74,14 +83,6 @@ export default {
         this.$emit("update:modelValue", v);
       }
     }
-  },
-  data: function () {
-    return {
-      newFilter: "",
-      search: "",
-      selected: [],
-      tableFooterProps
-    };
   },
   methods: {
     applyFilter() {

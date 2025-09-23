@@ -7,7 +7,7 @@
   <v-app>
     <application-tool-bar
       title="viewer"
-      @navIconClick="drawer=!drawer"
+      @nav-icon-click="drawer=!drawer"
     />
     <nav-drawer
       v-model="drawer"
@@ -31,23 +31,23 @@
           >
         </template>
       </vue-viewer>
-    <v-snackbar
-      v-model="openSnackbar"
-      multi-line
-      :timeout=snackbarTimeout
-      centered
-      variant="outlined"
-    >
-      {{ snackbarMessage }}
-      <template #actions>
-        <v-btn
-          class="justify-end"
-          variant="outlined"
-          @click="closeSnackbar"
-          text="Close"
-        />
-      </template>
-    </v-snackbar>
+      <v-snackbar
+        v-model="openSnackbar"
+        multi-line
+        :timeout="snackbarTimeout"
+        centered
+        variant="outlined"
+      >
+        {{ snackbarMessage }}
+        <template #actions>
+          <v-btn
+            class="justify-end"
+            variant="outlined"
+            text="Close"
+            @click="closeSnackbar"
+          />
+        </template>
+      </v-snackbar>
     </v-main>
   </v-app>
 </template>

@@ -18,43 +18,18 @@
       v-if="allowRenameInline"
       #item.name="props"
     >
-          <v-menu
-            location="start"
-            v-model="editDialog[props.index]"
-            :close-on-content-click="false"
-            :min-width="editDialogMinWidth"
-            :max-width="editDialogMaxWidth"
-          >
-            <template v-slot:activator="{ props: menuProps }">
-      <v-btn
-        variant="text"
-        v-bind="menuProps"
-        block
-        class="justify-start"
-        :text=props.item.name
-        @click="openDialog(props.item.name, props.index)"
+      <inline-editor
+        :current-value="props.item.name"
+        data-cy-prefix="list_form_property"
+        :additional-rules="[updateItemValidator]"
+        @confirmed="saveEditDialog(props.index, $event)"
       />
-    </template>
-            <v-sheet
-
-            :min-width="editDialogMinWidth"
-            :max-width="editDialogMaxWidth"
-            >
-              <v-text-field
-                v-model="newVal"
-                :rules=updateItemValidator
-                clearable
-                @keyup.enter="saveEditDialog"
-                data-cy="list_form_property-edit-text_field"
-              />
-          </v-sheet>
-        </v-menu>
     </template>
     <template #item.actions="{ item }">
       <action-row
         :can-edit="allowEditButton"
-        :item="item.raw"
-        :disabled=readOnly
+        :item="item"
+        :disabled="readOnly"
         @delete="deleteItem"
       />
     </template>
@@ -64,16 +39,16 @@
     >
       <v-text-field
         v-model.lazy="inputField"
-        :rules=newItemValidator
+        :rules="newItemValidator"
         :disabled="disabled"
-        variant=outlined
-        density=compact
-        :readonly=readOnly
+        variant="outlined"
+        density="compact"
+        :readonly="readOnly"
         clearable
         append-icon="mdi-plus"
+        data-cy="list_form-add-text_field"
         @click:append="addItem"
         @keyup.enter="addItem"
-        data-cy="list_form-add-text_field"
       />
     </template>
     <template
@@ -84,7 +59,8 @@
 </template>
 <script>
 import actionRow from "../../components/common/actionRow.vue";
-import versatileDialog from "../../components/versatileDialog.vue";
+import inlineEditor from "./inlineEditor.vue";
+
 const emptyStringIsNotAllowed = (v)=>{
   return v !== "";
 };
@@ -96,13 +72,8 @@ export default {
   name: "ListForm",
   components: {
     actionRow,
-    versatileDialog
+    inlineEditor
   },
-  emits: [
-    "add",
-    "remove",
-    "update"
-  ],
   props: {
     editDialogMinWidth: {
       type: [String, Number],
@@ -117,7 +88,8 @@ export default {
       default: ""
     },
     additionalRules: {
-      type: Array
+      type: Array,
+      default: ()=>{ return []; }
     },
     allowEditButton: {
       type: Boolean,
@@ -162,30 +134,16 @@ export default {
       default: false
     }
   },
-  mounted() {
-    if (this.additionalRules) {
-      this.updateItemValidator.push(...this.additionalRules);
-      this.newItemValidator.push(...this.additionalRules);
-    }
-    //store array of false with the same length as this.items
-    this.editDialog.push(...this.items.map(()=>{
-      return false;
-    }));
-  },
-  watch: {
-    items() {
-      this.editDialog.push(...this.items.map(()=>{
-        return false;
-      }));
-    }
-  },
+  emits: [
+    "update:modelValue",
+    "add",
+    "remove",
+    "update"
+  ],
   data: function () {
     return {
       inputField: null,
-      editDialog: [],
-      newVal: null,
       oldVal: null,
-      targetIndex: null,
       updateItemValidator: [this.editingItemIsNotDuplicate, emptyStringIsNotAllowed, isString],
       newItemValidator: [this.newItemIsNotDuplicate, emptyStringIsNotAllowed, isString]
     };
@@ -225,6 +183,12 @@ export default {
       });
     }
   },
+  mounted() {
+    if (this.additionalRules.length > 0) {
+      this.updateItemValidator.push(...this.additionalRules);
+      this.newItemValidator.push(...this.additionalRules);
+    }
+  },
   methods: {
     isDuplicate(newItem, except = []) {
       if (typeof newItem !== "string") {
@@ -240,43 +204,36 @@ export default {
     editingItemIsNotDuplicate: function (newItem) {
       return this.isDuplicate(newItem, [this.oldVal]) ? "duplicated name is not allowed" : true;
     },
-    openDialog(name, index) {
+    openDialog(name) {
       if (this.readOnly) {
         return;
       }
-      this.targetIndex = index;
-      this.newVal = name;
       this.oldVal = name;
-      this.editDialog[index] = true;
     },
-    closeDialog(index) {
-      this.targetIndex = null;
-      this.newVal = null;
+    closeDialog() {
       this.oldVal = null;
-      this.editDialog[index] = false;
     },
-    saveEditDialog: function () {
-      const index = this.targetIndex;
+    saveEditDialog: function (index, newVal) {
       const isValid = this.updateItemValidator.every((func)=>{
-        return func(this.newVal) === true;
+        return func(newVal) === true;
       });
       if (!isValid) {
-        console.log("new value is not valid", this.newVal);
-        this.closeDialog(index);
+        console.log("new value is not valid", newVal);
+        this.closeDialog();
         return;
       }
-      if (this.newVal === this.oldVal) {
-        console.log("new value is not changed", this.newVal);
-        this.closeDialog(index);
+      if (newVal === this.oldVal) {
+        console.log("new value is not changed", newVal);
+        this.closeDialog();
         return;
       }
       if (this.stringItems) {
-        this.$emit("update", this.newVal, index);
+        this.$emit("update", newVal, index);
       } else {
-        const newItem = this.stringItems ? this.newVal : Object.assign({}, this.newItemTemplate || {}, { name: this.newVal });
+        const newItem = this.stringItems ? newVal : Object.assign({}, this.newItemTemplate || {}, { name: newVal });
         this.$emit("update", newItem, index);
       }
-      this.closeDialog(index);
+      this.closeDialog();
     },
     addItem: function () {
       const isInvalid = this.newItemValidator.some((func)=>{

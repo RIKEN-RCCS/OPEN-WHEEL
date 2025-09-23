@@ -5,84 +5,150 @@
  */
 <template>
   <div>
-    <v-btn
-      v-if="!connected"
-      @click="requestRemoteConnection"
-      text="browse files on remotehost"
-    />
-    <div v-if="! readonly && connected">
+    <v-container
+      v-if="!connected || loading"
+      class="d-flex justify-center align-center"
+    >
+      <v-btn
+        v-if="!connected && !loading"
+        text="browse files on remotehost"
+        size="x-large"
+        data-cy="remote_file_browser-request_remote_connection-btn"
+        @click="requestRemoteConnection"
+      />
+      <v-btn
+        v-if="loading"
+        size="x-large"
+        :loading="loading"
+        variant="text"
+        class="ma-16"
+      />
+    </v-container>
+    <div v-if="! readonly && connected && !loading">
       <v-spacer />
-      <v-tooltip location="top" text="new folder"
+      <v-avatar
+        v-if="selectedComponent.type === 'hpciss'"
+        :image="img"
+        rounded="0"
+        size="48"
+      />
+      <v-tooltip
+        location="top"
+        text="new folder"
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
             v-bind="props"
+            :rounded="false"
+            :color="iconColor"
+            icon="mdi-folder-plus-outline"
             @click="openDialog('createNewDir')"
-            icon=mdi-folder-plus-outline
           />
         </template>
       </v-tooltip>
-      <v-tooltip text="new file" location="top">
+      <v-tooltip
+        text="new file"
+        location="top"
+      >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
+            :disabled="isHPCISS"
             v-bind="props"
+            :rounded="false"
+            :color="iconColor"
             icon="mdi-file-plus-outline"
             @click="openDialog('createNewFile')"
           />
         </template>
       </v-tooltip>
-      <v-tooltip text="rename" location="top" >
+      <v-tooltip
+        text="rename"
+        location="top"
+      >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
-            @click="openDialog('renameFile')"
             v-bind="props"
+            :rounded="false"
+            :color="iconColor"
             icon="mdi-file-move-outline"
+            @click="openDialog('rename')"
           />
         </template>
       </v-tooltip>
-      <v-tooltip location="top" text="delete" >
+      <v-tooltip
+        location="top"
+        text="delete"
+      >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
             v-bind="props"
-            @click="openDialog('removeFile')"
+            :rounded="false"
+            :color="iconColor"
             icon="mdi-file-remove-outline"
+            @click="openDialog('remove')"
           />
         </template>
       </v-tooltip>
-      <v-tooltip text="upload file" location="top">
+      <v-tooltip
+        text="upload file"
+        location="top"
+      >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
-              v-bind="props"
+            :disabled="isHPCISS"
+            v-bind="props"
+            :rounded="false"
+            :color="iconColor"
             icon="mdi-upload"
-              @click="showUploadDialog"
-            />
-        </template>
-      </v-tooltip>
-      <v-tooltip text="download" location="top" >
-        <template #activator="{ props }">
-        <v-btn
-          :disabled="isSND"
-              v-bind="props"
-            @click="download"
-            icon="mdi-download"
+            @click="showUploadDialog"
           />
         </template>
       </v-tooltip>
-          <v-tooltip location="top" text="share file" >
-            <template #activator="{ props }">
-        <v-btn
-          :disabled="isSND"
-            @click="openDialog('shareFile')"
+      <v-tooltip
+        text="download"
+        location="top"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isHPCISS"
+            v-bind="props"
+            :rounded="false"
+            :color="iconColor"
+            icon="mdi-download"
+            @click="download"
+          />
+        </template>
+      </v-tooltip>
+      <v-tooltip
+        location="top"
+        text="share file"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :rounded="false"
+            :color="iconColor"
             icon="mdi-share-outline"
             v-bind="props"
+            @click="openDialog('share')"
           />
-            </template>
-          </v-tooltip>
+        </template>
+      </v-tooltip>
+      <v-tooltip
+        location="top"
+        text="remove storage directory"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            v-if="isHPCISS"
+            :rounded="false"
+            color="red"
+            icon="mdi-trash-can-outline"
+            v-bind="props"
+            data-cy="remote_file_browser-remove_storage_directory-btn"
+            @click="openDialog('removeStoragePath')"
+          />
+        </template>
+      </v-tooltip>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"
@@ -90,45 +156,47 @@
       />
     </div>
     <my-treeview
-      v-if="connected"
+      v-if="connected && !loading"
       :items="items"
       :load-children="getChildren"
       activatable
       :open="openItems"
-      @update:active="updateSelected"
       :get-node-icon="getNodeIcon"
       :get-leaf-icon="getLeafIcon"
+      data-cy="remote_file_browser-treeview"
+      @update:active="updateSelected"
     />
     <versatile-dialog
       v-model="dialog.open"
       max-width="40vw"
       :title="dialog.title"
+      :message="dialog.message"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
     >
       <template
+        v-if="['createNewDir','createNewFile','rename', 'share'].includes(dialog.submitEvent)"
         #message
-        v-if="['createNewDir','createNewFile','renameFile'].includes(dialog.submitEvent)"
       >
         <v-text-field
+          v-if="['createNewDir','createNewFile','rename'].includes(dialog.submitEvent)"
           v-model="dialog.inputField"
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
           variant="outlined"
         />
-      </template>
-      <template
-        v-if="dialog.submitEvent === 'shareFile'"
-        #message
-      >
         <v-text-field
+          v-if="dialog.submitEvent === 'share'"
           v-model="dialog.inputField"
           readonly
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
         >
           <template #append>
-            <v-tooltip text="copy file path" location="bottom" >
+            <v-tooltip
+              text="copy file path"
+              location="bottom"
+            >
               <template #activator="{ props }">
                 <v-btn
                   icon="mdi-content-copy"
@@ -148,11 +216,14 @@
       :buttons="downloadDialogButton"
       @close="closeDownloadDialog"
     >
-      <template #message >
+      <template #message>
         <v-row>
           <v-btn class="mx-auto mt-10 mb-6">
             <!-- Do NOT remove download attribute. some files may open in browser e.g. text, json -->
-            <a :href="downloadURL" download>download</a>
+            <a
+              :href="downloadURL"
+              download
+            >download</a>
           </v-btn>
         </v-row>
       </template>
@@ -167,6 +238,25 @@ import SIO from "../lib/socketIOWrapper.js";
 import versatileDialog from "../components/versatileDialog.vue";
 import myTreeview from "../components/common/myTreeview.vue";
 import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "../components/common/fileTreeUtils.js";
+import { hasRemoteFileBrowser, isHPCISS } from "../../../common/checkComponent.cjs";
+import loadComponentDefinition from "../lib/componentDefinision.js";
+const componentDefinitionObj = loadComponentDefinition();
+
+const APINameTable = {
+  storage: {
+    createNewFile: "createNewRemoteFile",
+    createNewDir: "createNewRemoteFile",
+    remove: "removeRemoteFile",
+    rename: "renameRemoteFile",
+    download: "downloadRemote"
+  },
+  hpciss: {
+    createNewDir: "createGfarmDir",
+    remove: "removeGfarmFile",
+    rename: "renameGfarmFile",
+    removeStoragePath: "removeGfarmFile"
+  }
+};
 
 export default {
   name: "RemoteFileBrowser",
@@ -175,11 +265,11 @@ export default {
     myTreeview
   },
   props: {
-    readonly: { type: Boolean, default: true },
-    projectRootDir: { type: String, default: null }
+    readonly: { type: Boolean, default: true }
   },
   data: function () {
     return {
+      loading: false,
       connected: false,
       currentDir: null,
       activeItem: null,
@@ -190,6 +280,7 @@ export default {
       dialog: {
         open: false,
         title: "",
+        message: "",
         withInputField: true,
         inputFieldLabel: "",
         inputField: "",
@@ -199,14 +290,22 @@ export default {
         { icon: "mdi-close", label: "close" }
       ],
       downloadURL: null,
-      downloadDialog: false
+      downloadDialog: false,
+      API: "getRemoteFileList",
+      iconColor: componentDefinitionObj["storage"].color
     };
   },
   computed: {
-    ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
+    ...mapState(["projectRootDir", "selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
     storagePath() {
       return this.copySelectedComponent.storagePath || "./";
+    },
+    isHPCISS() {
+      return isHPCISS(this.selectedComponent);
+    },
+    img() {
+      return componentDefinitionObj[this.copySelectedComponent.type].img;
     }
   },
   watch: {
@@ -252,8 +351,9 @@ export default {
       SIO.onUploaderEvent("progress", this.updateProgressBar);
     }
     this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
+    this.getFileListAPI = this.selectedComponent.type === "hpciss" ? "getRemoteGfarmFileList" : "getRemoteFileList";
   },
-  beforeDestroy() {
+  beforeUnmount() {
     SIO.removeUploaderEvent("choose", this.onChoose);
     SIO.removeUploaderEvent("complete", this.onUploadComplete);
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
@@ -266,8 +366,12 @@ export default {
       return icons[item.type];
     },
     requestRemoteConnection() {
+      this.loading = true;
       SIO.emitGlobal("requestRemoteConnection", this.projectRootDir, this.selectedComponent.ID, (isReady)=>{
         this.connected = isReady;
+        if (!isReady) {
+          this.loading = false;
+        }
       });
     },
     copyToClipboard() {
@@ -285,9 +389,10 @@ export default {
         this.items = fileList
           .filter((e)=>{ return !e.isComponentDir; })
           .map(fileListModifier.bind(null, this.pathSep));
+        this.loading = false;
       };
-      const path = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
-      SIO.emitGlobal("getRemoteFileList", this.projectRootDir, this.selectedComponent.host, { path, mode: "underComponent" }, cb);
+      const path = hasRemoteFileBrowser(this.selectedComponent) ? this.storagePath : this.selectedComponentAbsPath;
+      SIO.emitGlobal(this.getFileListAPI, this.projectRootDir, this.selectedComponent.host, { path, mode: "underComponent" }, cb);
     },
     noDuplicate(v) {
       return !this.items
@@ -346,7 +451,7 @@ export default {
           return;
         }
         if (item.type === "dir" || item.type === "dir-link") {
-          SIO.emitGlobal("getRemoteFileList", this.projectRootDir, this.selectedComponent.host, { path: item.id, mode: "underComponent" }, cb);
+          SIO.emitGlobal(this.getFileListAPI, this.projectRootDir, this.selectedComponent.host, { path: item.id, mode: "underComponent" }, cb);
         } else {
           //memo SND content is not supported in remote file browser for now
           SIO.emitGlobal("getSNDContents", this.projectRootDir, item.path, item.name, item.type.startsWith("sndd"), cb);
@@ -355,76 +460,116 @@ export default {
     },
     clearAndCloseDialog() {
       this.dialog.title = "";
+      this.dialog.message = "";
       this.dialog.inputFieldLabel = "";
       this.dialog.inputField = "";
       this.dialog.open = false;
     },
-    submitAndCloseDialog() {
-      if (this.dialog.submitEvent === "removeFile") {
-        SIO.emitGlobal("removeRemoteFile", this.projectRootDir, this.activeItem.id, this.selectedComponent.host, (rt)=>{
-          if (!rt) {
-            console.log(rt);
-            return;
-          }
-          removeItem(this.items, this.activeItem.id);
-          this.commitSelectedFile(null);
-          this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
-          this.activeItem = null;
-        });
-      } else if (this.dialog.submitEvent === "renameFile") {
-        const newName = this.dialog.inputField;
-        const oldName = this.activeItem.name;
-
-        SIO.emitGlobal("renameRemoteFile", this.projectRootDir, this.activeItem.path, this.activeItem.name, newName, this.selectedComponent.host, (rt)=>{
-          if (!rt) {
-            console.log(rt);
-            return;
-          }
-          this.activeItem.name = newName;
-          const re = new RegExp(oldName + "$");
-          this.activeItem.id = this.activeItem.id.replace(re, newName);
-          this.updateSelected(this.activeItem);
-        });
-      } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
-        const name = this.dialog.inputField;
-        const fullPath = `${this.currentDir}${this.pathSep}${name}`;
-        if (!this.noDuplicate(name)) {
-          console.log("duplicated name is not allowed");
-          this.clearAndCloseDialog();
+    remove() {
+      const APIName = APINameTable[this.selectedComponent.type][this.dialog.submitEvent];
+      SIO.emitGlobal(APIName, this.projectRootDir, this.activeItem.id, this.selectedComponent.host, (rt)=>{
+        if (!rt) {
+          console.log(rt);
           return;
         }
-        const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir";
-        const event = this.dialog.submitEvent === "createNewFile" ? "createNewRemoteFile" : "createNewRemoteDir";
-        SIO.emitGlobal(event, this.projectRootDir, fullPath, this.selectedComponent.host, (rt)=>{
-          if (!rt) {
-            console.log(rt);
-            return;
-          }
-          const newItem = { id: fullPath, name, path: this.currentDir, type };
-          if (this.dialog.submitEvent === "createNewDir") {
-            newItem.children = [];
-          }
-          const container = this.activeItem ? this.activeItem.children : this.items;
-          container.push(newItem);
-          if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
-            this.openItems.push(this.activeItem.id);
-          }
-        });
+        removeItem(this.items, this.activeItem.id);
+        this.commitSelectedFile(null);
+        this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
+        this.activeItem = null;
+        this.clearAndCloseDialog();
+      });
+    },
+    removeStoragePath() {
+      this.loading = true;
+      const APIName = APINameTable[this.selectedComponent.type][this.dialog.submitEvent];
+      SIO.emitGlobal(APIName, this.projectRootDir, this.storagePath, this.selectedComponent.host, (rt)=>{
+        this.loading = false;
+        if (!rt) {
+          console.log(rt);
+          return;
+        }
+        this.commitSelectedFile(null);
+        this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
+        this.activeItem = null;
+        this.items = [];
+      });
+      this.clearAndCloseDialog();
+    },
+    rename() {
+      const APIName = APINameTable[this.selectedComponent.type][this.dialog.submitEvent];
+      const newName = this.dialog.inputField;
+      const oldName = this.activeItem.name;
+
+      SIO.emitGlobal(APIName, this.projectRootDir, this.activeItem.path, this.activeItem.name, newName, this.selectedComponent.host, (rt)=>{
+        if (!rt) {
+          console.log(rt);
+          return;
+        }
+        this.activeItem.name = newName;
+        const re = new RegExp(oldName + "$");
+        this.activeItem.id = this.activeItem.id.replace(re, newName);
+        this.updateSelected(this.activeItem);
+        this.clearAndCloseDialog();
+      });
+    },
+    createNewFileOrDir() {
+      const name = this.dialog.inputField;
+      const fullPath = `${this.currentDir}${this.pathSep}${name}`;
+      if (!this.noDuplicate(name)) {
+        console.log("duplicated name is not allowed");
+        this.clearAndCloseDialog();
+        return;
+      }
+      const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir";
+
+      const APIName = APINameTable[this.selectedComponent.type][this.dialog.submitEvent];
+      SIO.emitGlobal(APIName, this.projectRootDir, fullPath, this.selectedComponent.host, (rt)=>{
+        if (!rt) {
+          console.log(rt);
+          return;
+        }
+        const newItem = { id: fullPath, name, path: this.currentDir, type };
+        if (this.dialog.submitEvent === "createNewDir") {
+          newItem.children = [];
+        }
+        const container = this.activeItem ? this.activeItem.children : this.items;
+        container.push(newItem);
+        if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
+          this.openItems.push(this.activeItem.id);
+        }
+        this.clearAndCloseDialog();
+      });
+    },
+    submitAndCloseDialog() {
+      if (this.dialog.submitEvent === "remove") {
+        return this.remove();
+      } else if (this.dialog.submitEvent === "rename") {
+        return this.rename();
+      } else if (this.dialog.submitEvent === "createNewFile" || this.dialog.submitEvent === "createNewDir") {
+        return this.createNewFileOrDir();
+      } else if (this.dialog.submitEvent === "removeStoragePath") {
+        return this.removeStoragePath();
       } else {
         console.log("unsupported event", this.dialog.submitEvent);
       }
       this.clearAndCloseDialog();
     },
     closeDownloadDialog() {
-      SIO.emitGlobal("removeDownloadFile", this.projectRootDir, this.downloadURL, ()=>{
+      const APIName = APINameTable[this.selectedComponent.type][this.dialog.submitEvent];
+      SIO.emitGlobal(APIName, this.projectRootDir, this.downloadURL, ()=>{
         this.downloadURL = null;
         this.downloadDialog = false;
       });
     },
     download() {
+      const APIName = APINameTable[this.selectedComponent.type][this.dialog.submitEvent];
+      if (!event) {
+        console.log(`download is not supported for ${this.selectedComponent.type} component`);
+        return;
+      }
       this.commitWaitingDownload(true);
 
-      SIO.emitGlobal("downloadRemote", this.projectRootDir, this.activeItem.id, this.selectedComponent.host, (url)=>{
+      SIO.emitGlobal(APIName, this.projectRootDir, this.activeItem.id, this.selectedComponent.host, (url)=>{
         this.commitWaitingDownload(false);
         if (url === null) {
           console.log("download failed.");
@@ -435,21 +580,20 @@ export default {
       });
     },
     openDialog(event) {
-      if (["removeFile", "renameFile", "shareFile"].includes(event)) {
-        if (!this.activeItem) {
-          console.log("remove or rename without active item is not allowed");
-          return;
-        }
-        if (this.activeItem.type.startsWith("snd")) {
-          console.log(`${event.replace("File", "")} SND or SNDD is not allowed`);
-          return;
-        }
+      if (["remove", "rename", "share"].includes(event) && !this.activeItem) {
+        console.log("remove or rename without active item is not allowed");
+        return;
       }
-      if (event === "shareFile") {
+      if (event === "share") {
         this.dialog.inputField = this.activeItem.id;
       }
 
-      this.dialog.title = getTitle(event, this.activeItem ? this.activeItem.name : null);
+      if (event !== "removeStoragePath") {
+        this.dialog.title = getTitle(event, this.activeItem ? this.activeItem.name : null);
+      } else {
+        this.dialog.title = "remove remote storage directory";
+        this.dialog.message = getTitle(event, this.selectedComponent.storagePath);
+      }
       this.dialog.inputFieldLabel = getLabel(event);
       this.dialog.submitEvent = event;
       this.dialog.open = true;

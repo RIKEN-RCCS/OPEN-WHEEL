@@ -4,11 +4,11 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const os = require("os");
 const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onCommitFiles, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } = require("./fileManager.js");
+const { onUploadFileSaved2 } = require("./fileManager2.js");
 const { onTryToConnect, onTryToConnectById } = require("./tryToConnect.js");
 const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./projectList.js");
-const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription, onUpdateProjectROStatus } = require("./projectController.js");
+const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription, onUpdateProjectROStatus, onCleanComponent } = require("./projectController.js");
 const { onSaveFile, onOpenFile } = require("./rapid.js");
 const { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } = require("./remoteHost.js");
 const { onGetJobSchedulerList, onGetJobSchedulerLabelList } = require("./jobScheduler.js");
@@ -39,8 +39,25 @@ const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemp
 const { onGetResultFiles } = require("./resultFiles.js");
 const { sendTaskStateList, sendComponentTree } = require("./senders.js");
 const { getLogger } = require("../logSettings");
-const { onCreateNewRemoteFile, onCreateNewRemoteDir, onRequestRemoteConnection, onGetRemoteFileList, onGetRemoteSNDContents, onRemoteDownload, onRenameRemoteFile, onRemoveRemoteFile } = require("./remoteFileBrowser.js");
+const {
+  onCreateNewRemoteFile,
+  onCreateNewRemoteDir,
+  onRequestRemoteConnection,
+  onGetRemoteGfarmFileList,
+  onGetRemoteFileList,
+  onGetRemoteSNDContents,
+  onRemoteDownload,
+  onRenameRemoteFile,
+  onRemoveRemoteFile,
+  onCreateNewGfarmDir,
+  onRemoveGfarmFile,
+  onRenameGfarmFile,
+  onGetRemoteGfarmTarFileList
+} = require("./remoteFileBrowser.js");
 const { aboutWheel } = require("../core/versionInfo.js");
+const { onImportProject, onExportProject } = require("./projectArchive.js");
+const { getTempdRoot } = require("../core/tempd.js");
+
 const registerHandlers = (socket, Siofu)=>{
   //
   //read information
@@ -80,18 +97,24 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("removeAllLink", onRemoveAllLink);
   socket.on("removeFileLink", onRemoveFileLink);
   socket.on("removeAllFileLink", onRemoveAllFileLink);
+  socket.on("cleanComponent", onCleanComponent.bind(null, socket.id));
 
   //
   //filemanager
   ///
   const uploader = new Siofu();
   uploader.listen(socket);
-  uploader.dir = os.homedir();
+  uploader.dir = getTempdRoot();
   uploader.on("start", (event)=>{
     const projectRootDir = event.file.meta.projectRootDir;
     getLogger(projectRootDir).debug("upload request recieved", event.file.name);
   });
-  uploader.on("saved", onUploadFileSaved);
+  uploader.on("saved", (event)=>{
+    if (typeof event.file.meta.projectRootDir !== "string") {
+      return onUploadFileSaved2(event);
+    }
+    return onUploadFileSaved(event);
+  });
   uploader.on("error", (event)=>{
     const projectRootDir = event.file.meta.projectRootDir;
     getLogger(projectRootDir).error("file upload failed", event.file, event.error);
@@ -122,23 +145,30 @@ const registerHandlers = (socket, Siofu)=>{
   //create
   socket.on("createNewRemoteFile", onCreateNewRemoteFile);
   socket.on("createNewRemoteDir", onCreateNewRemoteDir);
+  socket.on("createGfarmDir", onCreateNewGfarmDir);
   //read
+  socket.on("getRemoteGfarmFileList", onGetRemoteGfarmFileList);
   socket.on("getRemoteFileList", onGetRemoteFileList);
   socket.on("getRemoteSNDContents", onGetRemoteSNDContents);
   socket.on("downloadRemote", onRemoteDownload);
+  socket.on("getRemoteGfarmTarFileList", onGetRemoteGfarmTarFileList);
   //update
   socket.on("renameRemoteFile", onRenameRemoteFile);
+  socket.on("renameGfarmFile", onRenameGfarmFile);
   //delete
   socket.on("removeRemoteFile", onRemoveRemoteFile);
+  socket.on("removeGfarmFile", onRemoveGfarmFile);
 
   //
   //projectList
   //
   //create
   socket.on("addProject", onAddProject.bind(null, socket));
+  socket.on("importProject", onImportProject.bind(null, socket.id));
   //read
   socket.on("getProjectList", onGetProjectList.bind(null, socket));
   socket.on("renameProject", onRenameProject.bind(null, socket));
+  socket.on("exportProject", onExportProject);
   //update
   socket.on("reorderProjectList", onReorderProjectList.bind(null, socket));
   //delete

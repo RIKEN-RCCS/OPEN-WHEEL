@@ -1,13 +1,57 @@
 <template>
   <g>
-    <circle :cx=x :cy=y :r=radius stroke=black fill="black" />
-    <path :d=successCmd stroke=black fill="#88BB00" v-if=showPiChart />
-    <path :d=failedCmd  stroke=black fill="#E60000" v-if=showPiChart />
-    <circle :cx=x :cy=y :r=radius stroke=black fill="#88BB00" v-if="showPiChart && successRatio === 100"/>
-    <circle :cx=x :cy=y :r=radius stroke=black fill="#E60000" v-if="showPiChart && failedRatio === 100"/>
-    <circle :cx=x :cy=y :r=radius*0.8 stroke=black fill="black" v-if="state !== 'not-started'" />
-    <image :href=iconImg :x=x-radius*0.4*2 :y=y-radius*0.4*2 :width=radius*0.8*2 :height=radius*0.8*2 v-if="state !== 'not-started'" />
- </g>
+    <circle
+      :cx="x"
+      :cy="y"
+      :r="radius"
+      stroke="black"
+      fill="black"
+    />
+    <path
+      v-if="showPiChart"
+      :d="successCmd"
+      stroke="black"
+      fill="#88BB00"
+    />
+    <path
+      v-if="showPiChart"
+      :d="failedCmd"
+      stroke="black"
+      fill="#E60000"
+    />
+    <circle
+      v-if="showPiChart && successRatio === 100"
+      :cx="x"
+      :cy="y"
+      :r="radius"
+      stroke="black"
+      fill="#88BB00"
+    />
+    <circle
+      v-if="showPiChart && failedRatio === 100"
+      :cx="x"
+      :cy="y"
+      :r="radius"
+      stroke="black"
+      fill="#E60000"
+    />
+    <circle
+      v-if="state !== 'not-started'"
+      :cx="x"
+      :cy="y"
+      :r="radius*0.8"
+      stroke="black"
+      fill="black"
+    />
+    <image
+      v-if="state !== 'not-started'"
+      :href="iconImg"
+      :x="x-radius*0.4*2"
+      :y="y-radius*0.4*2"
+      :width="radius*0.8*2"
+      :height="radius*0.8*2"
+    />
+  </g>
 </template>
 <script>
 "use strict";
@@ -28,7 +72,7 @@ const stateIcon = {
 };
 
 export default {
-  name: "status-icon",
+  name: "StatusIcon",
   props: {
     x: {
       required: true,
@@ -43,14 +87,22 @@ export default {
       type: String
     },
     numTotal: {
-      type: Number
+      type: Number,
+      default: null
     },
     numFinished: {
-      type: Number
+      type: Number,
+      default: null
     },
     numFailed: {
-      type: Number
+      type: Number,
+      default: null
     }
+  },
+  data() {
+    return {
+      radius: textHeight * 0.8 / 2
+    };
   },
   computed: {
     successRatio() {
@@ -91,11 +143,6 @@ export default {
     iconImg() {
       return stateIcon[this.state];
     }
-  },
-  data() {
-    return {
-      radius: textHeight * 0.8 / 2
-    };
   }
 };
 

@@ -6,8 +6,8 @@
 <template>
   <v-navigation-drawer
     permanent
-    :width=widthComponentLibrary
-    class='pt-2'
+    :width="widthComponentLibrary"
+    class="pt-2"
   >
     <v-list
       id="iconlist"
@@ -15,9 +15,9 @@
     >
       <v-list-item>
         <v-menu location="end">
-          <template v-slot:activator="{ props: menu }">
+          <template #activator="{ props: menu }">
             <v-tooltip location="top">
-              <template v-slot:activator="{ props: tooltip }">
+              <template #activator="{ props: tooltip }">
                 <v-btn
                   icon="mdi-cog"
                   v-bind="mergeProps(menu, tooltip)"
@@ -40,32 +40,38 @@
       </v-list-item>
       <v-list-item
         v-for="item in librarys"
-        :key="item.type"
         :id="item.type"
+        :key="item.type"
       >
-        <v-tooltip location="end" >
-          <template v-slot:activator="{ props }">
+        <v-tooltip location="end">
+          <template #activator="{ props }">
             <v-avatar
-              v-bind=props
+              v-bind="props"
+              :ref="item.type"
               :color="item.color"
               :image="item.img"
-              :ref="item.type"
               rounded="0"
               draggable="!readOnly"
+              data-cy="component_library-component-avatar"
               @dragstart.capture="onDragstart($event, item)"
               @dragover.prevent
               @dragenter.prevent
               @dragend="onDragend($event, item)"
-              data-cy="component_library-component-avatar"
             />
           </template>
-          <span>{{item.type}}</span>
+          <span>{{ item.type }}</span>
         </v-tooltip>
       </v-list-item>
     </v-list>
   </v-navigation-drawer>
-  <env-setting-dialog v-model="envDialog" class='mb-16'/>
-  <webhook-setting-dialog v-model="webhookDialog" class='mb-16'/>
+  <env-setting-dialog
+    v-model="envDialog"
+    class="mb-16"
+  />
+  <webhook-setting-dialog
+    v-model="webhookDialog"
+    class="mb-16"
+  />
 </template>
 <script>
 import Debug from "debug";
@@ -118,9 +124,10 @@ export default {
         });
       }
 
-      const componentTypes = this.isLoop
-        ? ["task", "if", "for", "while", "foreach", "break", "continue", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"]
-        : ["task", "if", "for", "while", "foreach", "source", "storage", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"];
+      const componentTypes = ["task", "if", "for", "while", "foreach", "source", "storage", "hpciss", "hpcisstar", "viewer", "parameterStudy", "workflow", "stepjob", "bulkjobTask"];
+      if (this.isLoop) {
+        componentTypes.push("break", "continue");
+      }
       return this.componentDefinitions.filter((e)=>{
         return componentTypes.includes(e.type);
       });

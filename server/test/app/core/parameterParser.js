@@ -1,0 +1,518 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
+const chai = require("chai");
+const { expect } = require("chai");
+const chaiIterator = require("chai-iterator");
+chai.use(chaiIterator);
+const fs = require("fs-extra");
+const path = require("path");
+const rewire = require("rewire");
+
+//testee
+const { paramVecGenerator } = require("../../../app/core/parameterParser");
+const { getParamSpacev2 } = require("../../../app/core/parameterParser");
+const { getFilenames } = require("../../../app/core/parameterParser");
+const { getParamSize } = require("../../../app/core/parameterParser");
+const rewParameterParser = rewire("../../../app/core/parameterParser");
+const getNthParamVec = rewParameterParser.__get__("getNthParamVec");
+const getNthValue = rewParameterParser.__get__("getNthValue");
+const getDigitsAfterTheDecimalPoint = rewParameterParser.__get__("getDigitsAfterTheDecimalPoint ");
+const getParamAxisSize = rewParameterParser.__get__("getParamAxisSize");
+const calcParamAxisSize = rewParameterParser.__get__("calcParamAxisSize");
+const isValidParamAxis = rewParameterParser.__get__("isValidParamAxis");
+const expandArrayOfGlob = rewParameterParser.__get__("expandArrayOfGlob");
+const testRoot = "WHEEL_TEST_TMP"; ;
+var testDir;
+
+//test data
+const floatCalc = [{
+  target: "hoge",
+  keyword: "KEYWORD1",
+  type: "float",
+  min: 0.3,
+  max: 0.6,
+  step: 0.1,
+  list: ""
+}];
+const intCalc = [{
+  target: "hoge",
+  keyword: "KEYWORD1",
+  type: "integer",
+  min: 1,
+  max: 3,
+  step: 1,
+  list: ""
+}];
+const floatList = [{
+  target: "hoge",
+  keyword: "KEYWORD1",
+  type: "string",
+  min: "",
+  max: "",
+  step: "",
+  list: [
+    "3.14",
+    "0.08",
+    "9.2"
+  ]
+}];
+const intList = [{
+  target: "hoge",
+  keyword: "KEYWORD1",
+  type: "string",
+  min: "",
+  max: "",
+  step: "",
+  list: [
+    "1",
+    "5",
+    "9",
+    "13"
+  ]
+}];
+const stringList = [{
+  target: "test",
+  keyword: "KEYWORD1",
+  type: "string",
+  list: [
+    "foo",
+    "bar",
+    "baz"
+  ]
+}];
+
+//actual test start here
+describe("UT for parameterParser", ()=>{
+  describe("#paramVecGenerator", ()=>{
+    it("retuns calclated float values", ()=>{
+      expect(paramVecGenerator(floatCalc)).to.deep.iterate.over([
+        [{ key: "KEYWORD1", value: "0.3", type: "float" }],
+        [{ key: "KEYWORD1", value: "0.4", type: "float" }],
+        [{ key: "KEYWORD1", value: "0.5", type: "float" }],
+        [{ key: "KEYWORD1", value: "0.6", type: "float" }]]);
+    });
+    it("retuns calclated int values", ()=>{
+      expect(paramVecGenerator(intCalc)).to.deep.iterate.over([
+        [{ key: "KEYWORD1", value: "1", type: "integer" }],
+        [{ key: "KEYWORD1", value: "2", type: "integer" }],
+        [{ key: "KEYWORD1", value: "3", type: "integer" }]]);
+    });
+    it("retuns float values in the list", ()=>{
+      expect(paramVecGenerator(floatList)).to.deep.iterate.over([
+        [{ key: "KEYWORD1", value: "3.14", type: "string" }],
+        [{ key: "KEYWORD1", value: "0.08", type: "string" }],
+        [{ key: "KEYWORD1", value: "9.2", type: "string" }]]);
+    });
+    it("retuns int values in the list", ()=>{
+      expect(paramVecGenerator(intList)).to.deep.iterate.over([
+        [{ key: "KEYWORD1", value: "1", type: "string" }],
+        [{ key: "KEYWORD1", value: "5", type: "string" }],
+        [{ key: "KEYWORD1", value: "9", type: "string" }],
+        [{ key: "KEYWORD1", value: "13", type: "string" }]]);
+    });
+    it("retuns string values in the list", ()=>{
+      expect(paramVecGenerator(stringList)).to.deep.iterate.over([
+        [{ key: "KEYWORD1", value: "foo", type: "string" }],
+        [{ key: "KEYWORD1", value: "bar", type: "string" }],
+        [{ key: "KEYWORD1", value: "baz", type: "string" }]]);
+    });
+    it("throws an error when ParamSpace is null", ()=>{
+      expect(()=>[...paramVecGenerator(null)]).to.throw();
+      expect(()=>[...paramVecGenerator({})]).to.throw();
+    });
+  });
+  describe("#getParamSpacev2", function () {
+    testDir = path.resolve(testRoot, "paramParserDir");
+    before(async function () {
+      await fs.ensureDir(testDir);
+      await Promise.all([
+        fs.outputFile(path.resolve(testDir, "file1.txt"), "test1"),
+        fs.outputFile(path.resolve(testDir, "file2.txt"), "test2"),
+        fs.outputFile(path.resolve(testDir, "file3.log"), "test3")
+      ]);
+    });
+    after(async function () {
+      await fs.remove(testDir);
+    });
+    it("should expand file globs correctly", async function () {
+      const paramSpace = [
+        { target: "fileParam", files: ["*.txt"] }
+      ];
+      const result = await getParamSpacev2(paramSpace, testDir);
+      expect(result).to.deep.equal([
+        { target: "fileParam", files: ["*.txt"], type: "file", list: ["file1.txt", "file2.txt"] }
+      ]);
+    });
+    it("should filter out invalid parameters", async function () {
+      const paramSpace = [
+        { target: "valid1", min: 1, max: 10, step: 2 },
+        { target: "invalid1", min: 1, max: 10 }, //stepがないため無効
+        { target: "valid2", list: ["a", "b", "c"] },
+        { target: "invalid2", list: [] }, //空のlistは無効
+        { target: "valid3", files: ["*.log"] } //ファイルがある
+      ];
+      const result = await getParamSpacev2(paramSpace, testDir);
+      expect(result).to.deep.equal([
+        { target: "valid1", min: 1, max: 10, step: 2 },
+        { target: "valid2", list: ["a", "b", "c"] },
+        { target: "valid3", files: ["*.log"], type: "file", list: ["file3.log"] }
+      ]);
+    });
+  });
+  describe("#getFilenames", ()=>{
+    it("should return an array of filenames when file type parameters exist", ()=>{
+      const paramSpace = [
+        { type: "file", list: ["file1.txt", "file2.txt"] },
+        { type: "file", list: ["file3.txt"] },
+        { type: "integer", min: 1, max: 3, step: 1 } //無関係なデータ
+      ];
+      const result = getFilenames(paramSpace);
+      expect(result).to.deep.equal(["file1.txt", "file2.txt", "file3.txt"]);
+    });
+    it("should ignore non-file type parameters", ()=>{
+      const paramSpace = [
+        { type: "integer", min: 1, max: 3, step: 1 },
+        { type: "string", list: ["value1", "value2"] }
+      ];
+      const result = getFilenames(paramSpace);
+      expect(result).to.deep.equal([]); //ファイルパスがないため空
+    });
+    it("should return an empty array if there are no file type parameters", ()=>{
+      const paramSpace = [];
+      const result = getFilenames(paramSpace);
+      expect(result).to.deep.equal([]); //何もない場合も空
+    });
+    it("should ignore file type parameters with empty lists", ()=>{
+      const paramSpace = [
+        { type: "file", list: [] }, //空のリスト
+        { type: "file", list: ["validFile.txt"] }
+      ];
+      const result = getFilenames(paramSpace);
+      expect(result).to.deep.equal(["validFile.txt"]); //空のリストは無視
+    });
+  });
+  describe("#getParamSize", ()=>{
+    it("returns the product of param axis sizes for integer values", ()=>{
+      const paramSpace = [{ min: 1, max: 5, step: 1 }, { min: 10, max: 20, step: 5 }];
+      expect(getParamSize(paramSpace)).to.equal(5 * 3); //(1,2,3,4,5) → 5個, (10,15,20) → 3個
+    });
+    it("returns correct size when there is only one parameter", ()=>{
+      const paramSpace = [{ min: 1, max: 10, step: 2 }];
+      expect(getParamSize(paramSpace)).to.equal(5); //(1,3,5,7,9) → 5個
+    });
+    it("returns 1 when ParamSpace is empty", ()=>{
+      expect(getParamSize([])).to.equal(1);
+    });
+    it("skips multiplication when a param axis size is 0", ()=>{
+      const paramSpace = [{ min: 1, max: 5, step: 1 }, { min: 10, max: 10, step: 1 }, { min: 20, max: 25, step: 5 }];
+      expect(getParamSize(paramSpace)).to.equal(5 * 2); //(1,2,3,4,5) → 5個, (20,25) → 2個
+    });
+    it("handles floating point values correctly", ()=>{
+      const paramSpace = [{ min: 1.0, max: 2.0, step: 0.1 }, { min: 0.0, max: 1.0, step: 0.2 }];
+      expect(getParamSize(paramSpace)).to.equal(11 * 6); //(1.0,1.1,...,2.0) → 11個, (0.0,0.2,0.4,0.6,0.8,1.0) → 6個
+    });
+    it("handles negative values", ()=>{
+      const paramSpace = [{ min: -5, max: -1, step: 1 }, { min: -10, max: 10, step: 5 }];
+      expect(getParamSize(paramSpace)).to.equal(5 * 5); //(-5,-4,-3,-2,-1) → 5個, (-10,-5,0,5,10) → 5個
+    });
+    it("handles mixed positive and negative values", ()=>{
+      const paramSpace = [{ min: -5, max: 5, step: 2 }];
+      expect(getParamSize(paramSpace)).to.equal(6); //(-5,-3,-1,1,3,5) → 6個
+    });
+    it("handles large values correctly", ()=>{
+      const paramSpace = [{ min: 1e6, max: 1e6 + 1000, step: 100 }];
+      expect(getParamSize(paramSpace)).to.equal(11); //(1000000,1000100,...,1001000) → 11個
+    });
+    it("throws an error when ParamSpace is null", ()=>{
+      expect(()=>getParamSize(null)).to.throw();
+    });
+    it("throws an error when ParamSpace is undefined", ()=>{
+      expect(()=>getParamSize(undefined)).to.throw();
+    });
+    it("throws an error when a parameter object is missing required properties", ()=>{
+      const paramSpace = [{ foo: 3 }];
+      expect(()=>getParamSize(paramSpace)).to.throw();
+    });
+  });
+  describe("#getNthParamVec", ()=>{
+    it("returns the correct parameter vector for simple integer values", ()=>{
+      const paramSpace = [
+        { keyword: "param1", type: "integer", min: 1, max: 3, step: 1 }, //(1,2,3) → 3個
+        { keyword: "param2", type: "integer", min: 10, max: 20, step: 5 } //(10,15,20) → 3個
+      ];
+      expect(getNthParamVec(0, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1", type: "integer" },
+        { key: "param2", value: "10", type: "integer" }
+      ]);
+      expect(getNthParamVec(1, paramSpace)).to.deep.equal([
+        { key: "param1", value: "2", type: "integer" },
+        { key: "param2", value: "10", type: "integer" }
+      ]);
+      expect(getNthParamVec(3, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1", type: "integer" },
+        { key: "param2", value: "15", type: "integer" }
+      ]);
+    });
+    it("returns correct vector for mixed integer and string values", ()=>{
+      const paramSpace = [
+        { keyword: "param1", type: "integer", min: 1, max: 2, step: 1 }, //(1,2) → 2個
+        { keyword: "param2", type: "string", list: ["A", "B", "C"] } //["A", "B", "C"] → 3個
+      ];
+      expect(getNthParamVec(0, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1", type: "integer" },
+        { key: "param2", value: "A", type: "string" }
+      ]);
+      expect(getNthParamVec(2, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1", type: "integer" },
+        { key: "param2", value: "B", type: "string" }
+      ]);
+      expect(getNthParamVec(3, paramSpace)).to.deep.equal([
+        { key: "param1", value: "2", type: "integer" },
+        { key: "param2", value: "B", type: "string" }
+      ]);
+    });
+    it("handles floating point values correctly", ()=>{
+      const paramSpace = [
+        { keyword: "param1", type: "float", min: 1.1, max: 1.5, step: 0.2 },
+        { keyword: "param2", type: "string", list: ["X", "Y"] }
+      ];
+      expect(getNthParamVec(0, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1.1", type: "float" },
+        { key: "param2", value: "X", type: "string" }
+      ]);
+      expect(getNthParamVec(3, paramSpace)).to.deep.equal([
+        { key: "param1", value: "1.1", type: "float" },
+        { key: "param2", value: "Y", type: "string" }
+      ]);
+    });
+    it("handles negative values", ()=>{
+      const paramSpace = [
+        { keyword: "param1", type: "integer", min: -2, max: 0, step: 1 },
+        { keyword: "param2", type: "integer", min: -5, max: 5, step: 5 }
+      ];
+      expect(getNthParamVec(0, paramSpace)).to.deep.equal([
+        { key: "param1", value: "-2", type: "integer" },
+        { key: "param2", value: "-5", type: "integer" }
+      ]);
+      expect(getNthParamVec(4, paramSpace)).to.deep.equal([
+        { key: "param1", value: "-1", type: "integer" },
+        { key: "param2", value: "0", type: "integer" }
+      ]);
+    });
+  });
+  describe("#getNthValue", ()=>{
+    it("returns the correct value from a list", ()=>{
+      const axis = { list: ["A", "B", "C", "D"] };
+      expect(getNthValue(0, axis)).to.equal("A");
+      expect(getNthValue(1, axis)).to.equal("B");
+      expect(getNthValue(2, axis)).to.equal("C");
+      expect(getNthValue(3, axis)).to.equal("D");
+    });
+    it("returns the correct nth integer value", ()=>{
+      const axis = { type: "integer", min: 1, max: 10, step: 2 };
+      expect(getNthValue(0, axis)).to.equal("1");
+      expect(getNthValue(1, axis)).to.equal("3");
+      expect(getNthValue(2, axis)).to.equal("5");
+      expect(getNthValue(3, axis)).to.equal("7");
+      expect(getNthValue(4, axis)).to.equal("9");
+    });
+    it("returns the correct nth floating-point value with proper precision", ()=>{
+      const axis = { type: "float", min: 1.0, max: 2.0, step: 0.2 };
+      expect(getNthValue(0, axis)).to.equal("1");
+      expect(getNthValue(1, axis)).to.equal("1.2");
+      expect(getNthValue(2, axis)).to.equal("1.4");
+      expect(getNthValue(3, axis)).to.equal("1.6");
+      expect(getNthValue(4, axis)).to.equal("1.8");
+      expect(getNthValue(5, axis)).to.equal("2");
+    });
+    it("handles negative values correctly", ()=>{
+      const axis = { type: "integer", min: -5, max: 5, step: 5 };
+      expect(getNthValue(0, axis)).to.equal("-5"); //(-5, 0, 5)
+      expect(getNthValue(1, axis)).to.equal("0");
+      expect(getNthValue(2, axis)).to.equal("5");
+    });
+  });
+  describe("#getDigitsAfterTheDecimalPoint", ()=>{
+    it("returns 0 for integer values", ()=>{
+      expect(getDigitsAfterTheDecimalPoint(5)).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint(100)).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint(-42)).to.equal(0);
+    });
+    it("returns the correct number of decimal places for floating point numbers", ()=>{
+      expect(getDigitsAfterTheDecimalPoint(5.1)).to.equal(1);
+      expect(getDigitsAfterTheDecimalPoint(3.1415)).to.equal(4);
+      expect(getDigitsAfterTheDecimalPoint(0.000123)).to.equal(6);
+      expect(getDigitsAfterTheDecimalPoint(-2.75)).to.equal(2);
+    });
+    it("counts trailing zeros correctly", ()=>{
+      expect(getDigitsAfterTheDecimalPoint(2.50)).to.equal(1);
+      expect(getDigitsAfterTheDecimalPoint(1.000)).to.equal(0);
+    });
+    it("returns 0 for special values like NaN, Infinity", ()=>{
+      expect(getDigitsAfterTheDecimalPoint(NaN)).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint(Infinity)).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint(-Infinity)).to.equal(0);
+    });
+    it("returns the correct decimal places when a number is given as a string", ()=>{
+      expect(getDigitsAfterTheDecimalPoint("3.14")).to.equal(2);
+      expect(getDigitsAfterTheDecimalPoint("100")).to.equal(0);
+      expect(getDigitsAfterTheDecimalPoint("-2.75")).to.equal(2);
+    });
+  });
+  describe("#getParamAxisSize", ()=>{
+    it("returns the correct size for a list", ()=>{
+      expect(getParamAxisSize({ list: ["A", "B", "C"] })).to.equal(3);
+      expect(getParamAxisSize({ list: [] })).to.equal(0);
+      expect(getParamAxisSize({ list: ["X"] })).to.equal(1);
+    });
+    it("returns the correct size for string type with list", ()=>{
+      expect(getParamAxisSize({ type: "string", list: ["foo", "bar", "baz"] })).to.equal(3);
+      expect(getParamAxisSize({ type: "string", list: [] })).to.equal(0);
+    });
+    it("returns the correct size for file type with list", ()=>{
+      expect(getParamAxisSize({ type: "file", list: ["file1.txt", "file2.txt"] })).to.equal(2);
+      expect(getParamAxisSize({ type: "file", list: [] })).to.equal(0);
+    });
+    it("returns the correct size for integer type with min-max-step", ()=>{
+      expect(getParamAxisSize({ type: "integer", min: 1, max: 10, step: 2 })).to.equal(5); //(1,3,5,7,9)
+      expect(getParamAxisSize({ type: "integer", min: 0, max: 4, step: 1 })).to.equal(5); //(0,1,2,3,4)
+    });
+    it("returns the correct size for float type with min-max-step", ()=>{
+      expect(getParamAxisSize({ type: "float", min: 1.0, max: 2.0, step: 0.2 })).to.equal(6); //(1.0, 1.2, ..., 2.0)
+      expect(getParamAxisSize({ type: "float", min: -1.0, max: 1.0, step: 0.5 })).to.equal(5); //(-1.0, -0.5, 0.0, 0.5, 1.0)
+    });
+    it("returns the correct size for min-max-step type", ()=>{
+      expect(getParamAxisSize({ type: "min-max-step", min: 1, max: 10, step: 3 })).to.equal(4); //(1,4,7,10)
+    });
+    it("returns the correct size when type is undefined but min-max-step exists", ()=>{
+      expect(getParamAxisSize({ min: 1, max: 5, step: 1 })).to.equal(5); //(1,2,3,4,5)
+    });
+    it("throws an error when axis.type is unknown", ()=>{
+      expect(()=>getParamAxisSize({ type: "unknown" })).to.throw("unknown axis.type");
+    });
+    it("throws an error when axis does not have valid properties", ()=>{
+      expect(()=>getParamAxisSize({})).to.throw();
+      expect(()=>getParamAxisSize(null)).to.throw();
+      expect(()=>getParamAxisSize(undefined)).to.throw();
+    });
+    it("string type with null", ()=>{
+      //Array.isArray(axis.list)を通過せずswitch - case "string" を通すためのnull
+      const axis = { type: "string", list: null };
+      expect(()=>getParamAxisSize(axis)).to.throw(TypeError);
+    });
+    it("file type with null", ()=>{
+      //Array.isArray(axis.list)を通過せずswitch - case "file" を通すためのnull
+      const axis = { type: "file", list: null };
+      expect(()=>getParamAxisSize(axis)).to.throw(TypeError);
+    });
+  });
+
+  describe("#calcParamAxisSize", ()=>{
+    it("returns the correct size for integer values", ()=>{
+      expect(calcParamAxisSize(1, 10, 1)).to.equal(10);
+      expect(calcParamAxisSize(2, 10, 2)).to.equal(5);
+      expect(calcParamAxisSize(-5, 5, 5)).to.equal(3);
+    });
+    it("returns the correct size for floating point values", ()=>{
+      expect(calcParamAxisSize(1.0, 2.0, 0.2)).to.equal(6);
+      expect(calcParamAxisSize(-1.0, 1.0, 0.5)).to.equal(5);
+      expect(calcParamAxisSize(0.1, 0.5, 0.1)).to.equal(5);
+    });
+    it("handles negative step values correctly", ()=>{
+      expect(calcParamAxisSize(10, 1, -1)).to.equal(-8);
+      expect(calcParamAxisSize(5, -5, -5)).to.equal(-1);
+    });
+    it("handles floating point precision correctly", ()=>{
+      expect(calcParamAxisSize(0.1, 0.3, 0.1)).to.equal(3);
+      expect(calcParamAxisSize(0.0001, 0.0005, 0.0001)).to.equal(5);
+    });
+    it("returns 1 when min and max are the same", ()=>{
+      expect(calcParamAxisSize(5, 5, 1)).to.equal(1);
+      expect(calcParamAxisSize(0.5, 0.5, 0.1)).to.equal(1);
+    });
+    it("when step is zero", ()=>{
+      expect(calcParamAxisSize(1, 10, 0)).to.equal(Infinity);
+    });
+    it("when step is Infinity", ()=>{
+      expect(calcParamAxisSize(1, 10, Infinity)).to.equal(1);
+    });
+    it("when min > max and step is positive", ()=>{
+      expect(calcParamAxisSize(10, 1, 1)).to.equal(-8);
+    });
+    it("when min < max and step is negative", ()=>{
+      expect(calcParamAxisSize(1, 10, -1)).to.equal(10);
+    });
+    it("when step is larger than the range", ()=>{
+      expect(calcParamAxisSize(1, 10, 20)).to.equal(1);
+    });
+  });
+  describe("#isValidParamAxis", ()=>{
+    it("returns true for increasing range with positive step", ()=>{
+      expect(isValidParamAxis(1, 10, 1)).to.equal(true);
+      expect(isValidParamAxis(-5, 5, 2)).to.equal(true);
+      expect(isValidParamAxis(0, 100, 10)).to.equal(true);
+    });
+    it("returns true for decreasing range with negative step", ()=>{
+      expect(isValidParamAxis(10, 1, -1)).to.equal(true);
+      expect(isValidParamAxis(5, -5, -2)).to.equal(true);
+      expect(isValidParamAxis(100, 0, -10)).to.equal(true);
+    });
+    it("returns true when min and max are the same regardless of step", ()=>{
+      expect(isValidParamAxis(5, 5, 1)).to.equal(true);
+      expect(isValidParamAxis(0, 0, -1)).to.equal(true);
+      expect(isValidParamAxis(-3.5, -3.5, 2)).to.equal(true);
+    });
+    it("returns false for increasing range with non-positive step", ()=>{
+      expect(isValidParamAxis(1, 10, 0)).to.equal(false);
+      expect(isValidParamAxis(-5, 5, -1)).to.equal(false);
+    });
+    it("returns false for decreasing range with non-negative step", ()=>{
+      expect(isValidParamAxis(10, 1, 0)).to.equal(false);
+      expect(isValidParamAxis(5, -5, 1)).to.equal(false);
+    });
+    it("returns false when step is NaN", ()=>{
+      expect(isValidParamAxis(1, 10, NaN)).to.equal(false);
+    });
+  });
+  describe("#expandArrayOfGlob", ()=>{
+    testDir = path.resolve(testRoot, "test_glob");
+    before(function () {
+      if (!fs.existsSync(testDir)) fs.mkdirSync(testDir);
+      fs.writeFileSync(path.join(testDir, "file1.js"), "");
+      fs.writeFileSync(path.join(testDir, "file2.js"), "");
+      fs.writeFileSync(path.join(testDir, "fileA.txt"), "");
+      fs.mkdirSync(path.join(testDir, "subdir"), { recursive: true });
+      fs.writeFileSync(path.join(testDir, "subdir", "nested.js"), "");
+    });
+    after(function () {
+      fs.rmSync(testDir, { recursive: true, force: true });
+    });
+    it("returns file paths for a single glob pattern", async function () {
+      const result = await expandArrayOfGlob(["*.js"], testDir);
+      expect(result).to.include.members(["file1.js", "file2.js"]);
+    });
+    it("returns merged file paths for multiple glob patterns", async function () {
+      const result = await expandArrayOfGlob(["*.js", "*.txt"], testDir);
+      expect(result).to.include.members(["file1.js", "file2.js", "fileA.txt"]);
+    });
+    it("returns files from subdirectories when using a recursive glob pattern", async function () {
+      const result = await expandArrayOfGlob(["**/*.js"], testDir);
+      expect(result).to.include.members(["file1.js", "file2.js", "subdir/nested.js"]);
+    });
+    it("returns an empty array when no files match", async function () {
+      const result = await expandArrayOfGlob(["*.md"], testDir);
+      expect(result).to.deep.equal([]);
+    });
+    it("includes directories if they match the glob pattern", async function () {
+      const result = await expandArrayOfGlob(["subdir"], testDir);
+      expect(result).to.include("subdir");
+    });
+    it("removes duplicate file paths", async function () {
+      const result = await expandArrayOfGlob(["*.js", "file1.js"], testDir);
+      expect([...new Set(result)]).to.include.members(["file1.js", "file2.js"]);
+    });
+  });
+});

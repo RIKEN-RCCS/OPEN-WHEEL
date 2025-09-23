@@ -10,6 +10,8 @@ const { getLogger } = require("../logSettings");
 const { projectList, projectJsonFilename } = require("../db/db.js");
 const { readJsonGreedy } = require("../core/fileUtils");
 const { addProject, renameProject } = require("../core/projectFilesOperator.js");
+const { removeTempd } = require("../core/tempd.js");
+
 const getAllProject = async ()=>{
   const pj = await Promise.all(projectList.getAll().map(async (v)=>{
     let rt;
@@ -68,7 +70,11 @@ const onRemoveProjects = async (socket, ids, cb)=>{
     await Promise.all(
       ids.map((id)=>{
         const target = projectList.get(id);
-        return fs.remove(target.path);
+        const projectRootDir = target.path;
+        return Promise.all([
+          removeTempd(projectRootDir, "viewer"),
+          removeTempd(projectRootDir, "download"),
+          fs.remove(projectRootDir)]);
       })
     );
     await projectList.removeMany(ids);

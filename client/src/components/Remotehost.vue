@@ -11,17 +11,17 @@
     <application-tool-bar
       title="remotehost"
       density="comfortable"
-      @navIconClick="drawer=!drawer"
       data-cy="remotehost-remotehost-title"
+      @nav-icon-click="drawer=!drawer"
     />
     <v-main>
       <v-toolbar
-        color='background'
+        color="background"
       >
         <v-btn
-          @click.stop="openEditDialog()"
           text="new remote host setting"
           data-cy="remotehost-new_remote_host_setting-btn"
+          @click.stop="openEditDialog()"
         />
       </v-toolbar>
       <v-data-table
@@ -34,10 +34,10 @@
             :disable="testing !== null && testing !== index"
             :color="item.testResult"
             :loading="item.loading"
-            @click="testConnection(index)"
-            :text=item.connectionStatus
-            :prepend-icon=item.icon
+            :text="item.connectionStatus"
+            :prepend-icon="item.icon"
             data-cy="remotehost-test-btn"
+            @click="testConnection(index)"
           />
         </template>
         <template #item.action="{ item}">
@@ -48,29 +48,30 @@
           />
         </template>
       </v-data-table>
-    <v-snackbar
-      v-model="openSnackbar"
-      multi-line
-      :timeout=snackbarTimeout
-      centered
-      variant="outlined"
-    >
-      {{ snackbarMessage }}
-      <template #actions>
-        <v-btn
-          class="justify-end"
-          variant="outlined"
-          @click="closeSnackbar"
-          text="Close"
-        />
-      </template>
-    </v-snackbar>
-    <password-dialog
-      v-model="pwDialog"
-      :title="pwDialogTitle"
-      @password="pwCallback"
-      @cancel="pwCallback(null)"
-    />
+      <v-snackbar
+        v-model="openSnackbar"
+        multi-line
+        :timeout="snackbarTimeout"
+        centered
+        variant="outlined"
+      >
+        {{ snackbarMessage }}
+        <template #actions>
+          <v-btn
+            class="justify-end"
+            variant="outlined"
+            text="Close"
+            @click="closeSnackbar"
+          />
+        </template>
+      </v-snackbar>
+      <password-dialog
+        v-model="pwDialog"
+        :hostname="pwHostname"
+        :mode="pwMode"
+        @password="pwCallback"
+        @cancel="pwCallback(null)"
+      />
       <remove-confirm-dialog
         v-model="rmDialog"
         :title="removeConfirmMessage"
@@ -82,7 +83,7 @@
         :initial-value="currentSetting"
         :host-names="hostList"
         :available-job-schedulers="jobSchedulerNames"
-        @newHost="addNewSetting"
+        @new-host="addNewSetting"
         @cancel="currentSetting={}"
       />
     </v-main>
@@ -117,7 +118,8 @@ export default {
       drawer: false,
       pwDialog: false,
       pwCallback: null,
-      pwDialogTitle: "",
+      pwHostname: null,
+      pwMode: null,
       rmDialog: false,
       newHostDialog: false,
       headers: [
@@ -165,9 +167,13 @@ export default {
       });
       this.hosts.splice(0, this.hosts.length, ...data);
     });
-    SIO.onGlobal("askPassword", (hostname, cb)=>{
-      this.pwCallback = cb;
-      this.pwDialogTitle = `input password or passphrase for ${hostname}`;
+    SIO.onGlobal("askPassword", (hostname, mode, jwtServerURL, cb)=>{
+      this.pwCallback = (pw)=>{
+        cb(pw);
+      };
+
+      this.pwMode = mode;
+      this.pwHostname = hostname;
       this.pwDialog = true;
     });
     SIO.onGlobal("logERR", (message)=>{

@@ -48,6 +48,9 @@ __NEW REMOTE HOST SETTING__ ボタンをクリックすると、新規リモー�
 |use stepjob|(富士通TCS使用サイトのみ)ステップジョブを使えるサイトかどうか|
 |shared host|ストレージを共用している他のリモートホストのラベル<br/>詳細は [shared hostの使用方法](#shared-hostの使用方法) をご参照ください。|
 |shared path on shared host|shared host上でHost work dirへアクセスするためのパス|
+|use gfarm|(富岳CSGWのみ) gfarmコマンドを用いてHPCI共用ストレージへアクセスできるかどうか|
+|HPCI-ID|HPCI共用ストレージのOAuth認証に用いるためのHPCI-ID|
+|JWT server URL|HPCI共用ストレージのOAuth認証で用いるJWT-tokenを保管するサーバのURL|
 
 `Advanced settings`の右にある▽をクリックすると、詳細設定の入力フォームが開きます。
 

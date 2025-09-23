@@ -33,7 +33,7 @@
     "reExceededLimitError": "job submit limit"
   },
   "Fugaku": {
-    "submit": "pjsub -X",
+    "submit": "pjsub",
     "queueOpt": "-L rscgrp=",
     "stat": "pjstat -v --choose jid,st",
     "statAfter": "pjstat -v -H day=3 --choose jid,st,ec,pc",
@@ -50,6 +50,9 @@
     "reJobStatusCode": "{{ JOBID }} *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
     "reSubReturnCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *(\\d+) *\\d+",
     "reSubJobStatusCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
-    "reExceededLimitError": "PJM 0072 pjsub Job exceeded the accept limit"
+    "reExceededLimitError": "PJM 0072 pjsub Job exceeded the accept limit",
+    "acceptableJobStatus": [
+      0,6
+    ]
   }
 }

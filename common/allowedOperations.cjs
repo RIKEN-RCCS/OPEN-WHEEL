@@ -7,13 +7,13 @@
 
 const allowedOperations = {
   "not-started": ["runProject", "revertProject", "saveProject", "checkProject"],
-  "preparing": [],
+  "preparing": ["cleanProject"],
   "running": ["stopProject"],
-  "stopped": ["cleanProject", "saveProject"],
-  "finished": ["cleanProject", "saveProject"],
-  "failed": ["cleanProject", "saveProject"],
+  "stopped": ["cleanProject"],
+  "finished": ["cleanProject"],
+  "failed": ["cleanProject"],
   "holding": [],
-  "unknown": ["cleanProject", "saveProject"],
+  "unknown": ["cleanProject"],
 };
 
 module.exports = allowedOperations;

@@ -19,7 +19,8 @@
   "scripts": {
     "start": "node app/index",
     "mocha": "mocha",
-    "test": "cross-env WHEEL_LOGLEVEL=OFF WHEEL_RUNNING_TEST=1 mocha --recursive --unhandled-rejections=strict",
+    "test": "cross-env WHEEL_LOGLEVEL=OFF WHEEL_RUNNING_TEST=1 mocha --recursive --unhandled-rejections=strict --ignore **/gfarmOperator.js",
+    "testGfarm": "cross-env WHEEL_LOGLEVEL=OFF WHEEL_RUNNING_TEST=1 mocha --unhandled-rejections=strict **/gfarmOperator.js",
     "coverage": "nyc --reporter=html --reporter=text npm run test"
   },
   "files": [
@@ -29,6 +30,7 @@
   "dependencies": {
     "@eyalsh/docopt": "^1.0.7",
     "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "axios": "^1.7.7",
     "body-parser": "^1.20.3",
     "connect-ensure-login": "^0.1.1",
@@ -56,17 +58,17 @@
     "passport-local": "^1.0.0",
     "perfect-debounce": "^1.0.0",
     "promise-retry": "^2.0.1",
-    "rwatchd": "^0.6.0",
-    "simple-batch-system": "^1.21.0",
+    "rwatchd": "=0.6.0",
+    "simple-batch-system": "=1.21.0",
     "socket.io": "^4.8.1",
     "socketio-file-upload": "^0.7.3",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "ssh-client-wrapper": "^2.11.0",
+    "ssh-client-wrapper": "=2.12.4",
     "stat-mode": "^1.0.0",
     "tar": "^6.2.0",
     "uuid": "^9.0.1",
-    "zip-a-folder": "^2.0.2"
+    "zip-a-folder": "^3.1.9"
   },
   "devDependencies": {
     "chai": "^4.5.0",

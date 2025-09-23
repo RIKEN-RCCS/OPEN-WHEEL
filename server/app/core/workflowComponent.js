@@ -55,6 +55,22 @@ class Storage extends BaseWorkflowComponent {
   }
 }
 
+class Hpciss extends Storage {
+  constructor(pos, parent) {
+    super(pos, parent);
+    this.type = "hpciss";
+    this.host = null;
+  }
+}
+
+class Hpcisstar extends Storage {
+  constructor(pos, parent) {
+    super(pos, parent);
+    this.type = "hpcisstar";
+    this.host = null;
+  }
+}
+
 class Source extends BaseWorkflowComponent {
   constructor(pos, parent) {
     super(pos, parent);
@@ -127,28 +143,38 @@ class Task extends GeneralComponent {
     super(...args);
     this.type = "task";
 
-    /**filename of entry point of this task */
+    //filename of entry point of this task
     this.script = null;
 
-    /**hostname where this task will execute on */
+    //hostname where this task will execute on
     this.host = "localhost";
 
-    /**run as batch job or not*/
+    //run as batch job or not
     this.useJobScheduler = false;
 
-    /**queue name */
+    //queue name
     this.queue = null;
 
-    /**submit option */
+    //submit option
     this.submitOption = null;
 
     //note on filters
     //if include filter is set, matched files are transferd if it does not match exclude filter
-    /**include filter for recieve files from remote host */
+    //include filter for recieve files from remote host
     this.include = [];
 
-    /**exclude filter for recieve files from remote host */
+    //exclude filter for recieve files from remote host
     this.exclude = [];
+
+    //number of retry after task failed
+    this.retry = null;
+
+    //how to determie task is failed or not
+    //this prop can have filename of shell script or statement of javascript
+    this.retryCondition = null;
+
+    //if true, project will continue after failing this task.
+    this.ignoreFailure = false;
   }
 }
 
@@ -247,6 +273,9 @@ class Stepjob extends GeneralComponent {
     /*queue name */
     this.useJobScheduler = true;
     this.queue = null;
+
+    /**submit option */
+    this.submitOption = null;
   }
 }
 
@@ -314,7 +343,7 @@ class Continue extends GeneralComponent {
 /**
  * factory method for workflow component class
  * @param {string} type -  component type
- * @param {...any} args
+ * @param {...any} args - argument for constructor
  * @returns {*} - component object
  */
 function componentFactory(type, ...args) {
@@ -343,6 +372,14 @@ function componentFactory(type, ...args) {
       break;
     case "storage":
       component = new Storage(...args);
+      break;
+    case "hpciss":
+      component = new Hpciss(...args);
+      component.type = "hpciss";
+      break;
+    case "hpcisstar":
+      component = new Hpcisstar(...args);
+      component.type = "hpcisstar";
       break;
     case "source":
       component = new Source(...args);
@@ -431,6 +468,34 @@ async function isBehindIfComponent(projectRootDir, component) {
 }
 
 /**
+ * determine if component has outputfile which will be used by other components
+ * @param {object} component - Component object
+ * @returns  {boolean} -
+ */
+function hasNeededOutputFiles(component) {
+  return component.outputFiles.some((outputFile)=>{
+    return outputFile.dst.length > 0;
+  });
+}
+
+/**
+ * determine if component has one of more inputFile which is connected to sibling component
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - Component object
+ * @returns  {boolean} -
+ */
+async function hasConnecteddInputFiles(projectRootDir, component) {
+  return component.inputFiles.some((inputFile)=>{
+    if (inputFile.src.length === 0) {
+      false;
+    }
+    return inputFile.src.some((src)=>{
+      return src.srcNode !== "parent" && src.srcNode !== component.parent;
+    });
+  });
+}
+
+/**
  * determine if specified component is initial component
  * @param {string} projectRootDir - project's root path
  * @param {object} component - Component object
@@ -440,10 +505,8 @@ async function isInitialComponent(projectRootDir, component) {
   if (await isBehindIfComponent(projectRootDir, component)) {
     return false;
   }
-  if (component.type === "storage") {
-    return component.outputFiles.some((outputFile)=>{
-      return outputFile.dst.length > 0;
-    });
+  if (["storage", "hpciss", "hpcisstar"].includes(component.type)) {
+    return hasNeededOutputFiles(component);
   }
   if (component.type === "source") {
     return component.outputFiles[0].dst.length > 0;
@@ -451,11 +514,13 @@ async function isInitialComponent(projectRootDir, component) {
   if (component.type === "viewer") {
     return true;
   }
-  if (component.previous.length > 0) {
+  if (Array.isArray(component.previous) && component.previous.length > 0) {
     return false;
   }
-  //components which have file-based dependency is initial component
-  //it will be suspended in dispatcher._dispatch()
+  if (Array.isArray(component.inputFiles) && component.inputFiles.length > 0) {
+    const result = await hasConnecteddInputFiles(projectRootDir, component);
+    return !result;
+  }
 
   return true;
 }
@@ -489,6 +554,12 @@ function getComponentDefaultName(type) {
   if (type === "bulkjobTask") {
     return "bjTask";
   }
+  if (type === "hpciss") {
+    return "HPCI-SS";
+  }
+  if (type === "hpcisstar") {
+    return "HPCI-SS-tar";
+  }
   return type;
 }
 
@@ -501,11 +572,22 @@ function isLocalComponent(component) {
   return typeof component.host === "undefined" || component.host === "localhost";
 }
 
+/**
+ * determine if storage-like component or not
+ * @param {object} component - component object
+ * @returns {boolean} - local component or not
+ */
+function hasStoragePath(component) {
+  return ["storage", "hpciss", "hpcisstar"].includes(component.type);
+}
+
 module.exports = {
   componentFactory,
   hasChild,
   isInitialComponent,
   isLocalComponent,
   removeDuplicatedComponent,
-  getComponentDefaultName
+  getComponentDefaultName,
+  hasNeededOutputFiles,
+  hasStoragePath
 };

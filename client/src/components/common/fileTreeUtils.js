@@ -47,11 +47,12 @@ export function removeItem(items, key) {
 }
 export function getTitle(event, itemName) {
   const titles = {
-    createNewDir: "create new directory",
-    createNewFile: "create new File",
-    removeFile: `are you sure you want to delete ${itemName} ?`,
-    renameFile: `rename ${itemName}`,
-    shareFile: `copy file path ${itemName}`
+    createNewDir: "Create new directory",
+    createNewFile: "Create new File",
+    remove: `Are you sure you want to delete ${itemName} ?`,
+    rename: `Rename ${itemName}`,
+    share: `Copy file path ${itemName}`,
+    removeStoragePath: `Are you sure you want to remove ${itemName} and ALL CONTENTS under it?`
   };
   return titles[event];
 }
@@ -59,8 +60,8 @@ export function getLabel(event) {
   const labels = {
     createNewDir: "new directory name",
     createNewFile: "new file name",
-    renameFile: "new name",
-    shareFile: "file path"
+    rename: "new name",
+    share: "file path"
   };
   return labels[event];
 }

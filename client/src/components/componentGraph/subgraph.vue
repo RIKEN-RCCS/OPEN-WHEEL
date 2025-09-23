@@ -1,23 +1,31 @@
 <template>
   <g>
-    <rect :x=x :y=y :width=width :height=height :fill=componentBackgroundColor />
-    <g v-for="item in descendants">
     <rect
-      :x="x+(item.pos.x-minX)*xRatio"
-      :y="y+(item.pos.y-minY)*yRatio"
-      :width=iconSize
-      :height=iconSize
-      :fill=getIconColor(item.type)
+      :x="x"
+      :y="y"
+      :width="width"
+      :height="height"
+      :fill="componentBackgroundColor"
     />
-    <image
-      :href="getComponentIcon(item.type, item.host, item.useJobScheduler)"
-      :x="x+(item.pos.x-minX)*xRatio"
-      :y="y+(item.pos.y-minY)*yRatio"
-      :width=iconSize
-      :height=iconSize
-    />
-  </g>
-
+    <g
+      v-for="item in descendants"
+      :key="item.ID"
+    >
+      <rect
+        :x="x+(item.pos.x-minX)*xRatio"
+        :y="y+(item.pos.y-minY)*yRatio"
+        :width="iconSize"
+        :height="iconSize"
+        :fill="getIconColor(item.type)"
+      />
+      <image
+        :href="getComponentIcon(item.type, item.host, item.useJobScheduler)"
+        :x="x+(item.pos.x-minX)*xRatio"
+        :y="y+(item.pos.y-minY)*yRatio"
+        :width="iconSize"
+        :height="iconSize"
+      />
+    </g>
   </g>
 </template>
 
@@ -26,7 +34,7 @@
 import { boxWidth, textHeight, iconSize, componentBackgroundColor } from "../../lib/constants.json";
 import { getComponentIcon, getColor, calcSubgraphHeight } from "../../lib/utils.js";
 export default {
-  name: "sub-graph",
+  name: "SubGraph",
   props: {
     descendants: {
       required: true,

@@ -13,7 +13,8 @@ const klaw = require("klaw");
 const isPathInside = require("is-path-inside");
 const { gitAdd, gitRm, gitCommit, gitLFSTrack, gitLFSUntrack, isLFS } = require("../core/gitOperator2");
 const { convertPathSep } = require("../core/pathUtils");
-const { getUnusedPath, deliverFile } = require("../core/fileUtils.js");
+const { getUnusedPath } = require("../core/fileUtils.js");
+const { deliverFile } = require("../core/deliverFile.js");
 const { escapeRegExp } = require("../lib/utility");
 const fileBrowser = require("../core/fileBrowser");
 const { getLogger } = require("../logSettings");
@@ -43,6 +44,8 @@ async function onGetFileList(projectRootDir, msg, cb) {
   const sendFilename = msg.mode !== "dir";
   const SND = msg.mode === "underComponent"; //send serial numberd content as SND or not
   const allFilter = msg.mode === "dir" || msg.mode === "dirWithProjectJson" ? noDotFiles : allFiles;
+  const withParentDir = msg.withParentDir;
+  const withCurrentDir = msg.withCurrentDir;
   const filterTable = {
     dirWithProjectJson: projectJsonFileOnly,
     underComponent: exceptSystemFiles,
@@ -60,7 +63,8 @@ async function onGetFileList(projectRootDir, msg, cb) {
         file: fileFilter,
         dir: null
       },
-      withParentDir: false
+      withParentDir,
+      withCurrentDir
     });
     cb(result);
   } catch (e) {

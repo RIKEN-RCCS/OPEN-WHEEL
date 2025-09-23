@@ -10,7 +10,7 @@
   >
     <v-toolbar
       color="background"
-      density=compact
+      density="compact"
     >
       <v-breadcrumbs
         :items="pathToCurrentComponent"
@@ -21,7 +21,8 @@
         <template #title="{ item }">
           <v-breadcrumbs-item>
             <component-button
-              :item="item"
+              :type="item.type"
+              :nane="item.name"
             />
           </v-breadcrumbs-item>
         </template>
@@ -29,21 +30,22 @@
       <v-spacer />
       <v-toolbar-items>
         <v-select
-          class='mt-n1'
           v-model="mode"
+          class="mt-n1"
           :items="modes"
         />
         <v-switch
-          class='mt-n1'
-          v-model="readOnlyEditor"
-          label="read only"
           v-if="! readOnly"
+          v-model="readOnlyEditor"
+          class="mt-n1"
+          label="read only"
           color="primary"
         />
-        <v-btn @click="saveAllFiles"
-          prepend-icon=mdi-content-save-all
+        <v-btn
+          prepend-icon="mdi-content-save-all"
           text="save all files"
           data-cy="rapid-save_all_files-btn"
+          @click="saveAllFiles"
         />
       </v-toolbar-items>
     </v-toolbar>
@@ -52,18 +54,18 @@
         <tab-editor
           ref="text"
           :read-only="readOnly"
-          @jobscript="setIsJobScript"
           data-cy="rapid-tab-tab_editor"
+          @jobscript="setIsJobScript"
         />
       </v-col>
       <v-col v-show="mode === 'PS-config'">
         <parameter-editor
           ref="param"
           :read-only="readOnly"
-          @openNewTab="openNewTab"
-          @insertBraces="insertBraces"
-          @openFilterEditor=openFilterEditor
           data-cy="rapid-parameter-parameter_editor"
+          @open-new-tab="openNewTab"
+          @insert-braces="insertBraces"
+          @open-filter-editor="openFilterEditor"
         />
       </v-col>
       <v-col v-show="mode === 'jobScriptEditor'">
@@ -71,17 +73,17 @@
           ref="jse"
           :read-only="readOnly"
           :is-job-script="isJobScript"
+          data-cy="rapid-script-script_editor"
           @insert="insertSnipet"
           @remove="removeSnipet"
-          data-cy="rapid-script-script_editor"
         />
       </v-col>
     </v-row>
     <filter-editor
-      v-model=filterDialog
-      :placeholders=placeholders
-      @updatePlaceholders=getAllPlaceholders
+      v-model="filterDialog"
       data-cy="rapid-filter-filter_editor"
+      :placeholders="placeholders"
+      @update-placeholders="getAllPlaceholders"
     />
     <unsaved-files-dialog
       :unsaved-files="unsavedFiles"

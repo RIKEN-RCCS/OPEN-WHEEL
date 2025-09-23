@@ -11,41 +11,56 @@
     <application-tool-bar
       title="home"
       density="comfortable"
-      @navIconClick="drawer=!drawer"
       data-cy="home-home-application_tool_bar"
+      @nav-icon-click="drawer=!drawer"
     />
     <v-main>
       <v-toolbar
-        color='background'
+        color="background"
       >
         <v-btn
           :disabled="batchMode"
-          @click="openProject"
           prepend-icon="mdi-pencil"
           text="OPEN"
           data-cy="home-open-btn"
+          @click="openProject"
         />
         <v-btn
           :disabled="batchMode"
-          @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
           prepend-icon="mdi-plus"
           text="NEW"
           data-cy="home-new-btn"
+          @click="dialogMode='newProject';dialogTitle = 'create new project'; dialog=true"
         />
         <v-btn
-          @click="openDeleteProjectDialog(true)"
+          :disabled="batchMode"
+          prepend-icon="mdi-import"
+          text="IMPORT"
+          data-cy="home-import-btn"
+          @click="importDialog=true"
+        />
+        <v-btn
           prepend-icon="mdi-text-box-remove-outline"
           text="REMOVE FROM LIST"
           data-cy="home-remove_from_list-btn"
           :disabled="selectedInTable.length === 0"
+          @click="openDeleteProjectDialog(true)"
         />
         <v-btn
-          @click="openDeleteProjectDialog(false)"
           prepend-icon="mdi-trash-can-outline"
           text="REMOVE"
           data-cy="home-remove-btn"
           :disabled="selectedInTable.length === 0"
+          @click="openDeleteProjectDialog(false)"
         />
+        <v-btn
+          prepend-icon="mdi-export"
+          text="EXPORT"
+          data-cy="home-export-btn"
+          :disabled="selectedInTable.length === 0 || batchMode"
+          @click="openExportProjectDialog"
+        />
+        <v-spacer />
         <v-switch
           v-model="batchMode"
           label="BATCH MODE"
@@ -54,8 +69,17 @@
           data-cy="home-batch_mode-btn"
         />
       </v-toolbar>
+      <div class="text-center">
+        <v-progress-circular
+          v-if="loading"
+          indeterminate
+          :size="70"
+          :width="6"
+          data-cy="home-project_list-progress_bar"
+        />
+      </div>
       <v-data-table
-        v-if="projectList.length > 0"
+        v-if="!loading"
         v-model="selectedInTable"
         :show-select="true"
         :return-object="true"
@@ -65,75 +89,29 @@
         data-cy="home-project_list-data_table"
       >
         <template #item.name="props">
-          <v-menu
-            location="bottom"
-            v-model="renameDialog[props.index]"
-            :close-on-content-click="false"
-            min-width="auto"
-            max-width="50vw"
-          >
-            <template v-slot:activator="{ props: menuProps }">
-              <v-btn
-                variant="text"
-                v-bind="menuProps"
-                block
-                class="justify-start"
-                :text=props.item.name
-                @click="openInlineEditDialog(props.item.name, props.index, 'name')"
-                data-cy="home-project_name-btn"
-              />
-            </template>
-            <v-sheet
-            min-width="auto"
-            max-width="50vw"
-            >
-              <v-text-field
-                v-model="newVal"
-                :rules="[required]"
-                clearable
-                @keyup.enter="renameProject(props.item.raw, props.index)"
-                data-cy="home-project_rename-text_field"
-              />
-            </v-sheet>
-          </v-menu>
+          <inline-editor
+            :current-value="props.item.name"
+            data-cy-prefix="home-project_name"
+            :additional-rules="[required, isValidName]"
+            @confirmed="renameProject(props.item, $event)"
+          />
         </template>
         <template #item.description="props">
-          <v-menu
-            location="bottom"
-            v-model="editDescriptionDialog[props.index]"
-            :close-on-content-click="false"
-            min-width="auto"
-            max-width="50vw"
-          >
-            <template v-slot:activator="{ props: menuProps }">
-              <v-btn
-                variant="text"
-                class="justify-start text-truncate trancated-row"
-                v-bind="menuProps"
-                block
-                @click="openInlineEditDialog(props.item.description, props.index, 'description')"
-                :text=props.item.description
-                data-cy="home-project_description-btn"
-              />
-            </template>
-            <v-sheet
-            min-width="auto"
-            max-width="50vw"
-            >
-              <v-textarea
-                v-model="newVal"
-                clearable
-                @keyup.enter="changeDescripton(props.item. props.index)"
-                data-cy="home-description_change-textarea"
-              />
-            </v-sheet>
-          </v-menu>
+          <inline-editor
+            :current-value="props.item.description"
+            text-area
+            data-cy-prefix="home-project_description"
+            :additional-rules="[required]"
+            @confirmed="changeDescription(props.item, $event)"
+          />
         </template>
         <template #item.path="{item}">
           <span
             class="d-inline-block text-truncate trancated-row"
             data-cy="home-path-span"
-          >{{ item.path }} </span>
+          >
+            {{ item.path }}
+          </span>
         </template>
       </v-data-table>
       <v-dialog
@@ -142,7 +120,9 @@
         scrollable
       >
         <v-card>
-          <v-card-title data-cy="home-create_new_project-title"> {{ dialogTitle }}</v-card-title>
+          <v-card-title data-cy="home-create_new_project-title">
+            {{ dialogTitle }}
+          </v-card-title>
           <v-card-actions>
             <v-spacer />
             <buttons
@@ -156,7 +136,7 @@
             <v-text-field
               v-model="newProjectName"
               label="project name"
-              variant=outlined
+              variant="outlined"
               :rules="[required]"
               data-cy="home-project_name-text_field"
             />
@@ -170,52 +150,64 @@
           </v-card-actions>
           <v-card-text>
             <file-browser
-              @update="(a)=>{selectedInTree=a}"
               data-cy="home-file_browser-file_browser"
+              @update="(a)=>{selectedInTree=a}"
             />
           </v-card-text>
         </v-card>
       </v-dialog>
-    <remove-confirm-dialog
-      v-model="rmDialog"
-      title="remove project"
-      :message="removeProjectMessage"
-      :remove-candidates="removeCandidates"
-      @remove="commitRemoveProjects"
-    />
-    <v-snackbar
-      v-model="openSnackbar"
-      multi-line
-      :timeout=snackbarTimeout
-      centered
-      variant="outlined"
-    >
-      {{ snackbarMessage }}
-      <template #actions>
-        <v-btn
-          class="justify-end"
-          variant="outlined"
-          @click="closeSnackbar"
-          text="Close"
-        />
-      </template>
-    </v-snackbar>
+      <remove-confirm-dialog
+        v-model="rmDialog"
+        title="remove project"
+        :message="removeProjectMessage"
+        :remove-candidates="removeCandidates"
+        @remove="commitRemoveProjects"
+      />
+      <export-dialog
+        v-model="exportDialog"
+        :project-json="exportProject"
+      />
+      <import-dialog
+        v-model="importDialog"
+        @imported="forceUpdateProjectList"
+      />
+      <v-snackbar
+        v-model="openSnackbar"
+        multi-line
+        :timeout="snackbarTimeout"
+        centered
+        variant="outlined"
+      >
+        {{ snackbarMessage }}
+        <template #actions>
+          <v-btn
+            class="justify-end"
+            variant="outlined"
+            text="Close"
+            @click="closeSnackbar"
+          />
+        </template>
+      </v-snackbar>
     </v-main>
   </v-app>
 </template>
 <script>
 "use strict";
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapMutations } from "vuex";
 import Debug from "debug";
 const debug = Debug("wheel:home");
 import navDrawer from "../components/common/NavigationDrawer.vue";
 import applicationToolBar from "../components/common/applicationToolBar.vue";
 import fileBrowser from "../components/common/fileBrowserLite.vue";
 import removeConfirmDialog from "../components/common/removeConfirmDialog.vue";
+import exportDialog from "../components/exportDialog.vue";
+import importDialog from "../components/importDialog.vue";
 import buttons from "../components/common/buttons.vue";
+import inlineEditor from "./common/inlineEditor.vue";
 import { readCookie } from "../lib/utility.js";
 import SIO from "../lib/socketIOWrapper.js";
 import { required } from "../lib/validationRules.js";
+import { isValidName } from "../lib/utility.js";
 
 //it should be get from server
 const projectJsonFilename = "prj.wheel.json";
@@ -228,14 +220,20 @@ export default {
     applicationToolBar,
     fileBrowser,
     buttons,
-    removeConfirmDialog
+    removeConfirmDialog,
+    exportDialog,
+    importDialog,
+    inlineEditor
   },
   data: ()=>{
     return {
+      loading: true,
       batchMode: false,
       drawer: false,
       dialog: false,
       rmDialog: false,
+      exportDialog: false,
+      importDialog: false,
       removeFromList: false,
       dialogMode: "default",
       selectedInTree: null,
@@ -255,18 +253,13 @@ export default {
       removeCandidates: [],
       pathSep: "/",
       home: "/",
-      renameDialog: [],
-      editDescriptionDialog: [],
       newVal: null,
-      edittingIndex: null
+      exportDialogButtons: [
+        { icon: "mdi-close", label: "close" }
+      ],
+      downloadURL: null,
+      isProjectArchiveReady: false
     };
-  },
-  watch: {
-    batchMode(newMode) {
-      if (!newMode) {
-        this.selectedInTable.splice(0, this.selectedInTable.length);
-      }
-    }
   },
   computed: {
     ...mapState([
@@ -300,6 +293,17 @@ export default {
     },
     hasError() {
       return this.required(this.newProjectName) !== true;
+    },
+    exportProject() {
+      return this.selectedInTable[0] || null;
+    }
+
+  },
+  watch: {
+    batchMode(newMode) {
+      if (!newMode) {
+        this.selectedInTable.splice(0, this.selectedInTable.length);
+      }
     }
   },
   mounted: function () {
@@ -309,6 +313,7 @@ export default {
     debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
     SIO.onGlobal("projectList", (data)=>{
+      this.loading = false;
       this.projectList.splice(0, this.projectList.length, ...data);
     });
     this.forceUpdateProjectList();
@@ -317,29 +322,29 @@ export default {
       const output = rt ? rt[1] || rt[0] : message;
       this.showSnackbar(output);
     });
+    SIO.onGlobal("hostList", this.commitRemoteHost);
+    SIO.emitGlobal("getHostList", (hostList)=>{
+      this.commitRemoteHost(hostList);
+    });
   },
   methods: {
+    ...mapMutations({
+      commitRemoteHost: "remoteHost"
+    }),
     ...mapActions({
       showSnackbar: "showSnackbar",
       closeSnackbar: "closeSnackbar"
     }),
     required,
-    openInlineEditDialog(name, index, prop) {
-      this.newVal = name;
-      this.oldVal = name;
-      this.edittingIndex = index;
-      if (prop === "name") {
-        this.renameDialog[index] = true;
-      } else if (prop === "description") {
-        this.editDescriptionDialog[index] = true;
-      }
-    },
+    isValidName,
     forceUpdateProjectList() {
+      this.loading = true;
       SIO.emitGlobal("getProjectList", (data)=>{
         if (!Array.isArray(data)) {
           console.log("unexpected projectlist recieved", data);
           return;
         }
+        this.loading = false;
         this.projectList.splice(0, this.projectList.length, ...data);
       });
     },
@@ -353,10 +358,12 @@ export default {
     },
     createProject() {
       const path = `${this.selected || "."}/${this.newProjectName}`;
+      this.loading = true;
       SIO.emitGlobal("addProject", path, this.newProjectDescription, (rt)=>{
         if (!rt) {
           console.log("create project failed", this.selected, this.newProjectName, this.newProjectDescription, path);
           this.forceUpdateProjectList();
+          return;
         }
       });
       this.closeDialog();
@@ -381,31 +388,38 @@ export default {
       form.appendChild(input);
       form.submit();
     },
-    changeDescripton(item, index) {
-      if (this.newVal === item.description) {
+    changeDescription(item, newVal) {
+      if (newVal === item.description) {
         console.log("project name not changed");
       } else {
-        SIO.emitGlobal("updateProjectDescription", item.path, this.newVal, (rt)=>{
+        const description = newVal.trimEnd();
+        SIO.emitGlobal("updateProjectDescription", item.path, description, (rt)=>{
           if (!rt) {
-            console.log("update description failed", item.path, this.newVal);
-            this.forceUpdateProjectList();
+            console.log("update description failed", item.path, description);
           }
+          this.forceUpdateProjectList();
         });
       }
-      this.editDescriptionDialog[index] = false;
     },
-    renameProject(item, index) {
-      if (this.newVal === item.name) {
+    renameProject(item, newVal) {
+      if (newVal === item.name) {
         console.log("project name not changed");
       } else {
-        SIO.emitGlobal("renameProject", item.id, this.newVal, item.path, (rt)=>{
+        SIO.emitGlobal("renameProject", item.id, newVal, item.path, (rt)=>{
+          console.log("renameProject called", item.id, newVal, item.path);
           if (!rt) {
-            console.log("rename failed", item.id, this.newVal, item.path);
+            console.log("rename failed", item.id, newVal, item.path);
             this.forceUpdateProjectList();
+            return;
           }
         });
       }
-      this.renameDialog[index] = false;
+    },
+    openExportProjectDialog() {
+      if (this.exportProject === null) {
+        return;
+      }
+      this.exportDialog = true;
     },
     openDeleteProjectDialog(fromListOnly) {
       this.removeFromList = fromListOnly;
@@ -420,12 +434,14 @@ export default {
           return e.id;
         });
       const eventName = this.removeFromList ? "removeProjectsFromList" : "removeProjects";
+      this.loading = true;
       SIO.emitGlobal(eventName, removeIDs, (rt)=>{
         if (!rt) {
           console.log("remove failed", eventName, removeIDs);
           this.forceUpdateProjectList();
         }
         this.selectedInTable = [];
+        this.loading = false;
       });
     }
   }

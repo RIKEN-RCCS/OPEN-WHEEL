@@ -7,80 +7,99 @@
   <div>
     <div v-if="! readonly">
       <v-spacer />
-      <v-tooltip location="top" text="new folder"
+      <v-tooltip
+        location="top"
+        text="new folder"
       >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
             v-bind="props"
-            @click="openDialog('createNewDir')"
-            icon=mdi-folder-plus-outline
+            icon="mdi-folder-plus-outline"
             data-cy="file_browser-new_dir-btn"
+            @click="openDialog('createNewDir')"
           />
         </template>
       </v-tooltip>
-      <v-tooltip text="new file" location="top">
+      <v-tooltip
+        text="new file"
+        location="top"
+      >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
             v-bind="props"
             icon="mdi-file-plus-outline"
-            @click="openDialog('createNewFile')"
             data-cy="file_browser-new_file-btn"
+            @click="openDialog('createNewFile')"
           />
         </template>
       </v-tooltip>
-      <v-tooltip text="rename" location="top" >
+      <v-tooltip
+        text="rename"
+        location="top"
+      >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
-            @click="openDialog('renameFile')"
             v-bind="props"
             icon="mdi-file-move-outline"
+            @click="openDialog('rename')"
           />
         </template>
       </v-tooltip>
-      <v-tooltip location="top" text="delete" >
+      <v-tooltip
+        location="top"
+        text="delete"
+      >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
             v-bind="props"
-            @click="openDialog('removeFile')"
             icon="mdi-file-remove-outline"
             data-cy="file_browser-remove_file-btn"
+            @click="openDialog('remove')"
           />
         </template>
       </v-tooltip>
-      <v-tooltip text="upload file" location="top">
+      <v-tooltip
+        text="upload file"
+        location="top"
+      >
         <template #activator="{ props }">
           <v-btn
             :disabled="isSND"
-              v-bind="props"
+            v-bind="props"
             icon="mdi-upload"
-              @click="showUploadDialog"
-            />
-        </template>
-      </v-tooltip>
-      <v-tooltip text="download" location="top" >
-        <template #activator="{ props }">
-        <v-btn
-          :disabled="isSND"
-              v-bind="props"
-            @click="download"
-            icon="mdi-download"
+            @click="showUploadDialog"
           />
         </template>
       </v-tooltip>
-          <v-tooltip location="top" text="share file" >
-            <template #activator="{ props }">
-        <v-btn
-          :disabled="isSND"
-            @click="openDialog('shareFile')"
+      <v-tooltip
+        text="download"
+        location="top"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            icon="mdi-download"
+            @click="download"
+          />
+        </template>
+      </v-tooltip>
+      <v-tooltip
+        location="top"
+        text="share file"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
             icon="mdi-share-outline"
             v-bind="props"
+            @click="openDialog('share')"
           />
-            </template>
-          </v-tooltip>
+        </template>
+      </v-tooltip>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"
@@ -92,47 +111,48 @@
       :load-children="getChildren"
       activatable
       :open="openItems"
-      @update:active="updateSelected"
       :get-node-icon="getNodeIcon"
       :get-leaf-icon="getLeafIcon"
       data-cy="file_browser-treeview-treeview"
+      @update:active="updateSelected"
     />
     <versatile-dialog
       v-model="dialog.open"
       max-width="40vw"
       :title="dialog.title"
+      data-cy="file_browser-dialog-dialog"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
-      data-cy="file_browser-dialog-dialog"
     >
       <template
+        v-if="['createNewDir','createNewFile','rename','share'].includes(dialog.submitEvent)"
         #message
-        v-if="['createNewDir','createNewFile','renameFile'].includes(dialog.submitEvent)"
       >
         <v-text-field
+          v-if="['createNewDir','createNewFile','rename'].includes(dialog.submitEvent)"
           v-model="dialog.inputField"
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
           variant="outlined"
           data-cy="file_browser-input-text_field"
         />
-      </template>
-      <template
-        v-if="dialog.submitEvent === 'shareFile'"
-        #message
-      >
         <v-text-field
+          v-if="dialog.submitEvent === 'share'"
           v-model="dialog.inputField"
           readonly
           :label="dialog.inputFieldLabel"
         >
           <template #append>
-            <v-tooltip :text=copyButtonTooltipText location="bottom" v-model=showCopyButtonTooltipText>
+            <v-tooltip
+              v-model="showCopyButtonTooltipText"
+              :text="copyButtonTooltipText"
+              location="bottom"
+            >
               <template #activator="{ props }">
                 <v-btn
                   icon="mdi-content-copy"
                   v-bind="props"
-                  @click=copyToClipboard
+                  @click="copyToClipboard"
                 />
               </template>
             </v-tooltip>
@@ -147,11 +167,14 @@
       :buttons="downloadDialogButton"
       @close="closeDownloadDialog"
     >
-      <template #message >
+      <template #message>
         <v-row>
           <v-btn class="mx-auto mt-10 mb-6">
             <!-- Do NOT remove download attribute. some files may open in browser e.g. text, json -->
-            <a :href="downloadURL" download>download</a>
+            <a
+              :href="downloadURL"
+              download
+            >download</a>
           </v-btn>
         </v-row>
       </template>
@@ -174,8 +197,7 @@ export default {
     myTreeview
   },
   props: {
-    readonly: { type: Boolean, default: true },
-    projectRootDir: { type: String, default: null }
+    readonly: { type: Boolean, default: true }
   },
   data: function () {
     return {
@@ -203,7 +225,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent", "projectState"]),
+    ...mapState(["projectRootDir", "selectedComponent", "selectedFile", "currentComponent", "copySelectedComponent", "projectState"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
     storagePath() {
       return this.copySelectedComponent.storagePath || "/";
@@ -248,7 +270,7 @@ export default {
     }
     this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
   },
-  beforeDestroy() {
+  beforeUnmount() {
     SIO.removeUploaderEvent("choose", this.onChoose);
     SIO.removeUploaderEvent("complete", this.onUploadComplete);
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
@@ -378,7 +400,7 @@ export default {
       this.showCopyButtonTooltipText = false;
     },
     submitAndCloseDialog() {
-      if (this.dialog.submitEvent === "removeFile") {
+      if (this.dialog.submitEvent === "remove") {
         SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
           if (!rt) {
             console.log(rt);
@@ -390,7 +412,7 @@ export default {
           this.currentDir = this.selectedComponentAbsPath;
           this.activeItem = null;
         });
-      } else if (this.dialog.submitEvent === "renameFile") {
+      } else if (this.dialog.submitEvent === "rename") {
         const newName = this.dialog.inputField;
         const oldName = this.activeItem.name;
 
@@ -455,7 +477,7 @@ export default {
       });
     },
     openDialog(event) {
-      if (["removeFile", "renameFile", "shareFile"].includes(event)) {
+      if (["remove", "rename", "share"].includes(event)) {
         if (!this.activeItem) {
           console.log("remove or rename without active item is not allowed");
           return;
@@ -465,7 +487,7 @@ export default {
           return;
         }
       }
-      if (event === "shareFile") {
+      if (event === "share") {
         this.dialog.inputField = this.activeItem.id;
       }
 

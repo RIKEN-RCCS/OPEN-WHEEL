@@ -13,12 +13,12 @@ const { askPassword } = require("../core/sshManager.js");
 /**
  * try to connect remote host via ssh
  * @param {string} clientID - socketIO client's ID string
- * @param {Hostinfo} hostInfo - target host
+ * @param {object} hostInfo - target host's information
  * @param {Function} cb - call back function called with string "success" or "error"
  */
 async function onTryToConnect(clientID, hostInfo, cb) {
-  hostInfo.password = askPassword.bind(null, clientID, `${hostInfo.name} - password`);
-  hostInfo.passphrase = askPassword.bind(null, clientID, `${hostInfo.name} - passpharse`);
+  hostInfo.password = askPassword.bind(null, clientID, hostInfo.name, "password", null);
+  hostInfo.passphrase = askPassword.bind(null, clientID, hostInfo.name, "passphrase", null);
   if (process.env.WHEEL_VERBOSE_SSH) {
     hostInfo.sshOpt = ["-vvv"];
   }

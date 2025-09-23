@@ -106,8 +106,7 @@ async function removeOutputFileLinkToSiblings(projectRootDir, srcNode, srcName, 
  * remove input file link from counter part to specified component
  * @param {string} projectRootDir - project's root path
  * @param {object} componentJson -  component JSON data about to be renamed
- * @param {string} name - inputFile name to be removed
- * @param index
+ * @param {number} index - index number of input file which to be removed
  */
 async function removeInputFileCounterpart(projectRootDir, componentJson, index) {
   const name = componentJson.inputFiles[index].name;
@@ -126,8 +125,7 @@ async function removeInputFileCounterpart(projectRootDir, componentJson, index) 
  * remove output file link from counter part to specified component
  * @param {string} projectRootDir - project's root path
  * @param {object} componentJson -  component JSON data about to be renamed
- * @param {string} name - inputFile name to be removed
- * @param index
+ * @param {number} index - index number of input file which to be removed
  */
 async function removeOutputFileCounterpart(projectRootDir, componentJson, index) {
   const promises = [];
@@ -172,7 +170,7 @@ async function renameInputFileCounterpart(projectRootDir, componentJson, index, 
       }
     }
     for (const inputFile of counterpartJson.inputFiles) {
-      if (!Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
+      if (Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
         for (const dst of inputFile.forwardTo) {
           if (dst.dstNode === componentJson.ID && dst.dstName === oldName) {
             dst.dstName = newName;
@@ -215,7 +213,7 @@ async function renameOutputFileCounterpart(projectRootDir, componentJson, index,
       }
     }
     for (const outputFile of counterpartJson.outputFiles) {
-      if (!Object.prototype.hasOwnProperty.call(outputFile, "origin")) {
+      if (Object.prototype.hasOwnProperty.call(outputFile, "origin")) {
         for (const src of outputFile.origin) {
           if (src.srcNode === componentJson.ID && src.srcName === oldName) {
             src.srcName = newName;
@@ -232,7 +230,7 @@ async function renameOutputFileCounterpart(projectRootDir, componentJson, index,
  * rename component directory and update componentJsonPath
  * @param {string} projectRootDir - project's root path
  * @param {string} ID - component ID
- * @param newName
+ * @param {string} newName - component's new name
  */
 async function renameComponentDir(projectRootDir, ID, newName) {
   const oldDir = await getComponentDir(projectRootDir, ID, true);

@@ -1,10 +1,16 @@
 <template>
-  <polygon :points=points :fill=color :storoke=storokeColor :stroke-width=width :transform=rotation />
+  <polygon
+    :points="points"
+    :fill="color"
+    :storoke="storokeColor"
+    :stroke-width="width"
+    :transform="rotation"
+  />
 </template>
 <script>
 "use strict";
 export default {
-  name: "equilateral-triangle",
+  name: "EquilateralTriangle",
   props: {
     center: {
       required: true,
@@ -19,13 +25,16 @@ export default {
       type: Number
     },
     width: {
-      type: Number
+      type: [Number, String],
+      default: "1px"
     },
     storokeColor: {
-      type: String
+      type: String,
+      default: "none"
     },
     direction: {
-      type: String
+      type: String,
+      default: "right"
     },
     draggable: {
       type: Boolean,
@@ -37,6 +46,37 @@ export default {
     "drag",
     "dragend"
   ],
+  data() {
+    return {
+      startX: null,
+      startY: null,
+      oldcenter: { x: null, y: null },
+      dragging: false
+    };
+  },
+  computed: {
+    rotation() {
+      if (this.direction === "left") {
+        return `rotate(180 ${this.center.x} ${this.center.y})`;
+      } else if (this.direction === "up") {
+        return `rotate(270 ${this.center.x} ${this.center.y})`;
+      } else if (this.direction === "down") {
+        return `rotate(90 ${this.center.x} ${this.center.y})`;
+      }
+      return null;
+    },
+    points() {
+      const Ax = this.center.x + 2 * this.size / 3;
+      const Ay = this.center.y;
+
+      const Bx = this.center.x - this.size / 3;
+      const By = this.center.y + this.size / 2;
+
+      const Cx = this.center.x - this.size / 3;
+      const Cy = this.center.y - this.size / 2;
+      return `${Ax},${Ay} ${Bx},${By} ${Cx},${Cy}`;
+    }
+  },
   mounted() {
     if (!this.draggable) {
       return;
@@ -46,7 +86,7 @@ export default {
     svg.addEventListener("mousemove", this.mouseMove);
     svg.addEventListener("mouseup", this.mouseUp);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (!this.draggable) {
       return;
     }
@@ -88,37 +128,6 @@ export default {
       this.startY = null;
       this.dragging = false;
       this.$emit("dragend", e);
-    }
-  },
-  data() {
-    return {
-      startX: null,
-      startY: null,
-      oldcenter: { x: null, y: null },
-      dragging: false
-    };
-  },
-  computed: {
-    rotation() {
-      if (this.direction === "left") {
-        return `rotate(180 ${this.center.x} ${this.center.y})`;
-      } else if (this.direction === "up") {
-        return `rotate(270 ${this.center.x} ${this.center.y})`;
-      } else if (this.direction === "down") {
-        return `rotate(90 ${this.center.x} ${this.center.y})`;
-      }
-      return null;
-    },
-    points() {
-      const Ax = this.center.x + 2 * this.size / 3;
-      const Ay = this.center.y;
-
-      const Bx = this.center.x - this.size / 3;
-      const By = this.center.y + this.size / 2;
-
-      const Cx = this.center.x - this.size / 3;
-      const Cy = this.center.y - this.size / 2;
-      return `${Ax},${Ay} ${Bx},${By} ${Cx},${Cy}`;
     }
   }
 

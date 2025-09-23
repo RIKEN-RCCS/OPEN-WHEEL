@@ -23,3 +23,8 @@ user.db
 server/app/public
 server/app/viewer
 server/app/download
+.vscode/settings.json
+test/cypress/screenshots/
+test/cypress/videos/
+test/wheel_config/jobScriptTemplate.json
+test/wheel_config/projectList.json.bak

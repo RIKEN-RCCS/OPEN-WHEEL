@@ -12,17 +12,18 @@ const glob = require("glob");
 const { debounce } = require("perfect-debounce");
 const nunjucks = require("nunjucks");
 nunjucks.configure({ autoescape: true });
-const { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename } = require("../db/db");
-const { getSsh } = require("./sshManager.js");
+const { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename, rsyncExcludeOptionOfWheelSystemFiles } = require("../db/db.js");
+const { getSsh, getSshHostinfo } = require("./sshManager.js");
 const { exec } = require("./executer");
-const { getDateString, writeJsonWrapper } = require("../lib/utility");
+const { getDateString, writeJsonWrapper } = require("../lib/utility.js");
 const { sanitizePath, convertPathSep, replacePathsep } = require("./pathUtils");
-const { readJsonGreedy, deliverFile, deliverFileOnRemote, deliverFileFromRemote } = require("./fileUtils");
-const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser");
-const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator");
+const { readJsonGreedy } = require("./fileUtils.js");
+const { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS } = require("./deliverFile.js");
+const { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } = require("./parameterParser.js");
+const { getChildren, isLocal, isSameRemoteHost, setComponentStateR } = require("./projectFilesOperator.js");
 const { writeComponentJson, readComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
-const { isInitialComponent, removeDuplicatedComponent } = require("./workflowComponent.js");
-const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils");
+const { isInitialComponent, removeDuplicatedComponent, hasStoragePath, isLocalComponent } = require("./workflowComponent.js");
+const { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } = require("./dispatchUtils.js");
 const { getLogger } = require("../logSettings.js");
 const { cancelDispatchedTasks } = require("./taskUtil.js");
 const { eventEmitters } = require("./global.js");
@@ -47,6 +48,7 @@ const {
 } = require("./loopUtils.js");
 const { makeCmd } = require("./psUtils.js");
 const { overwriteByRsync } = require("./rsync.js");
+const { gfcp, gfrm, gfpcopy, gfptarCreate } = require("./gfarmOperator.js");
 
 const wheelSystemEnv = [
   "WHEEL_CURRENT_INDEX",
@@ -93,18 +95,19 @@ async function replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bu
  */
 async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber) {
   const paramsKeys = Object.keys(params);
+  let data = "";
   let targetNum = 0;
-  return Promise.all(
-    targetFiles.map(async (targetFile, index)=>{
-      const label = `BULKNUM_${bulkNumber}`;
-      const target = replacePathsep(targetFile);
-      const targetKey = paramsKeys[index];
-      const targetVal = params[targetKey];
-      const data = `${label}_TARGETNUM_${targetNum}_FILE="./${target}"\n${label}_TARGETNUM_${targetNum}_KEY="${targetKey}"\n${label}_TARGETNUM_${targetNum}_VALUE="${targetVal}"\n`;
-      targetNum++;
-      return fs.appendFile(path.resolve(templateRoot, "parameterSet.wheel.txt"), data);
-    })
-  );
+  targetFiles.forEach((targetFile, index)=>{
+    const label = `BULKNUM_${bulkNumber}`;
+    const target = replacePathsep(targetFile);
+    const targetKey = paramsKeys[index];
+    const targetVal = params[targetKey];
+    data += `${label}_TARGETNUM_${targetNum}_FILE="./${target}"\n${label}_TARGETNUM_${targetNum}_KEY="${targetKey}"\n${label}_TARGETNUM_${targetNum}_VALUE="${targetVal}"\n`;
+    targetNum++;
+  });
+  if (data !== "") {
+    await fs.writeFile(path.resolve(templateRoot, "parameterSet.wheel.txt"), data);
+  }
 }
 
 /**
@@ -270,15 +273,19 @@ class Dispatcher extends EventEmitter {
   }
 
   async _hasDisabledDependency(component) {
+    if ((!component.previous || component.previous.length === 0)
+      && (!component.inputFiles || component.inputFiles.length === 0)) {
+      return false;
+    }
     if (component.previous) {
       for (const ID of component.previous) {
         const previous = await this._getComponent(ID);
-        if (previous.disable) {
-          return true;
+        if (!previous.disable) {
+          return false;
         }
         const rt = await this._hasDisabledDependency(previous);
-        if (rt) {
-          return true;
+        if (!rt) {
+          return false;
         }
       }
     }
@@ -289,17 +296,17 @@ class Dispatcher extends EventEmitter {
             continue;
           }
           const previousF = await this._getComponent(src.srcNode);
-          if (previousF.disable) {
-            return true;
+          if (!previousF.disable) {
+            return false;
           }
           const rtF = await this._hasDisabledDependency(previousF);
-          if (rtF) {
-            return true;
+          if (!rtF) {
+            return false;
           }
         }
       }
     }
-    return false;
+    return true;
   }
 
   /**
@@ -308,9 +315,8 @@ class Dispatcher extends EventEmitter {
    * @returns {object[]} - component list which do not have disabled dependency
    */
   async _removeComponentsWhichHasDisabledDependency(components) {
-    const shouldBeRemoved = await Promise.all(components.map((component)=>{
-      const rt = this._hasDisabledDependency(component);
-      return rt;
+    const shouldBeRemoved = await Promise.all(components.map(async (component)=>{
+      return this._hasDisabledDependency(component);
     }));
     return components.filter((v, index)=>{
       return !shouldBeRemoved[index];
@@ -363,6 +369,7 @@ class Dispatcher extends EventEmitter {
         resolve(state);
       };
       const onError = (err)=>{
+        getLogger(this.projectRootDir).trace(`dispatcher terminated ${this.cwfDir} with ${err}`);
         onStop();
         reject(err);
       };
@@ -402,7 +409,7 @@ class Dispatcher extends EventEmitter {
 
   async _addNextComponent(component, useElse = false) {
     let nextComponentIDs = [];
-    const componentsWithoutNextProp = ["source", "viewer", "storage"];
+    const componentsWithoutNextProp = ["source", "viewer", "storage", "hpciss", "hpcisstar"];
     if (!componentsWithoutNextProp.includes(component.type)) {
       nextComponentIDs = useElse ? Array.from(component.else) : Array.from(component.next);
     }
@@ -461,14 +468,16 @@ class Dispatcher extends EventEmitter {
         if (dstComponent.type === "viewer" || dstComponent.type === "storage") {
           continue;
         }
-        const prviousCmp = await Promise.all(dstComponent.previous.map((id)=>{
-          return this._getComponent(id);
-        }));
-        prviousCmp.forEach((cmp)=>{
-          if (cmp.type === "if") {
-            behindIfComponetList.push(e.dstNode);
-          }
-        });
+        if (Array.isArray(dstComponent.previous)) {
+          const prviousCmp = await Promise.all(dstComponent.previous.map((id)=>{
+            return this._getComponent(id);
+          }));
+          prviousCmp.forEach((cmp)=>{
+            if (cmp.type === "if") {
+              behindIfComponetList.push(e.dstNode);
+            }
+          });
+        }
       }
     }
     return behindIfComponetList;
@@ -583,6 +592,7 @@ class Dispatcher extends EventEmitter {
       await fs.copy(lastDir, dstDir, { overwrite: true, dereference: true }); //dst will be overwrite always
     }
     if (component.keep === 0) {
+      getLogger(this.projectRootDir).debug("remove last instance dir because keep is set to 0");
       await fs.remove(lastDir);
     }
 
@@ -706,10 +716,11 @@ class Dispatcher extends EventEmitter {
       await writeComponentJson(this.projectRootDir, dstDir, newComponent, true);
       await this._delegate(newComponent, true, component);
 
-      if (component.keep === 0) {
-        await fs.remove(srcDir);
-      } else {
+      //remove old instance
+      if (Number.isInteger(component.keep) && component.keep > 0) {
         await keepLoopInstance(component, this.cwfDir);
+      } else if (component.keep === 0 && srcDirName !== component.name) {
+        await fs.remove(srcDir);
       }
 
       if (newComponent.state === "failed") {
@@ -1056,7 +1067,7 @@ class Dispatcher extends EventEmitter {
         });
         const remotehostID = remoteHost.getID("name", component.host);
         const ssh = getSsh(this.projectRootDir, remotehostID);
-        await ssh.send(targetsToCopy, `${storagePath}/`);
+        await ssh.send(targetsToCopy, `${storagePath}/`, ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]);
       }
     }
     //clean up curentDir
@@ -1071,10 +1082,79 @@ class Dispatcher extends EventEmitter {
     await this._setComponentState(component, "finished");
   }
 
+  async _isDisabledSrcComponent(componentID) {
+    const srcComponent = await this._getComponent(componentID);
+    return srcComponent.disable;
+  }
+
+  async _isDisabledSrc(src) {
+    const tmp = await Promise.any(src.map(async (e)=>{
+      return this._isDisabledSrcComponent(e.srcNode);
+    }));
+    return tmp;
+  }
+
+  async _disabledInputFilesFilter(inputFiles) {
+    return Promise.all(inputFiles.map(async (inputFile)=>{
+      const result = await this._isDisabledSrc(inputFile.src);
+      return !result;
+    }));
+  }
+
+  async _hpcissHandler(withTar, component) {
+    getLogger(this.projectRootDir).debug(`_hpcissHandler called with ${component.name} tar=${withTar}`);
+    await this._setComponentState(component, "running");
+    const currentDir = this._getComponentDir(component.ID);
+
+    const targetFilter = await this._disabledInputFilesFilter(component.inputFiles);
+
+    const targetsToCopy = component.inputFiles
+      .filter((e, i)=>{
+        return targetFilter[i];
+      })
+      .map((e)=>{
+        return path.join(currentDir, e.name);
+      });
+
+    if (targetsToCopy.length > 0) {
+      const remotehostID = remoteHost.getID("name", component.host);
+      const ssh = getSsh(this.projectRootDir, remotehostID);
+      const hostinfo = getSshHostinfo(this.projectRootDir, remotehostID);
+      const prefix = hostinfo.path ? `-p ${hostinfo.path}` : "";
+
+      const { output, rt } = await ssh.execAndGetOutput(`mktemp -d ${prefix} WHEEL_TMP_XXXXXXXX`);
+      if (rt !== 0) {
+        throw new Error("create temporary directory on CSGW failed");
+      }
+      component.remoteTempDir = output[0];
+      await ssh.send(targetsToCopy, `${component.remoteTempDir}/`, ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]);
+
+      const storagePath = component.storagePath;
+      if (withTar) {
+        await gfrm(this.projectRootDir, remotehostID, storagePath);
+        await gfptarCreate(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath);
+      } else {
+        const lsResults = await ssh.ls(component.remoteTempDir, ["-l"]);
+        if (lsResults.length === 1 && lsResults[0].startsWith("-")) {
+          const tokens = lsResults[0].split(" ");
+          const filename = tokens[tokens.length - 1];
+          await gfcp(this.projectRootDir, remotehostID, path.join(component.remoteTempDir, filename), path.join(storagePath, filename), true);
+        } else {
+          await gfpcopy(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath, true);
+        }
+      }
+      getLogger(this.projectRootDir).debug(`remove remote temp dir ${component.remoteTempDir}`);
+      await ssh.exec(`rm -fr ${component.remoteTempDir}`);
+    }
+
+    await this._addNextComponent(component);
+    await this._setComponentState(component, "finished");
+  }
+
   async _sourceHandler(component) {
     getLogger(this.projectRootDir).debug("_sourceHandler called", component.name);
     await this._setComponentState(component, "running");
-    this._addNextComponent(component);
+    await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
   }
 
@@ -1109,6 +1189,9 @@ class Dispatcher extends EventEmitter {
     if (component.previous) {
       for (const ID of component.previous) {
         const previous = await this._getComponent(ID);
+        if (previous.disable) {
+          continue;
+        }
         getLogger(this.projectRootDir).trace(`previous component name = ${previous.type}(state:${previous.state})`);
         if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
           getLogger(this.projectRootDir).trace(`${component.name}(${component.ID}) is not ready because ${previous.name}(${previous.ID}) is not finished`);
@@ -1123,6 +1206,9 @@ class Dispatcher extends EventEmitter {
             continue;
           }
           const previous = await this._getComponent(src.srcNode);
+          if (previous.disable) {
+            continue;
+          }
           if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
             getLogger(this.projectRootDir).trace(`${component.name}(${component.ID}) is not ready because ${inputFile} from ${previous.name}(${previous.ID}) is not arrived`);
             return false;
@@ -1134,6 +1220,7 @@ class Dispatcher extends EventEmitter {
   }
 
   _getComponentDir(id) {
+    //TODO replace by getRelativeComponentDir(id) which is not yet implemented
     const originalCwfDir = convertPathSep(this.componentPath[this.cwfID]);
     const originalDir = convertPathSep(this.componentPath[id]);
     const relativePath = path.relative(originalCwfDir, originalDir);
@@ -1164,12 +1251,20 @@ class Dispatcher extends EventEmitter {
     }
     getLogger(this.projectRootDir).debug(`getInputFiles for ${component.name}`);
     const promises = [];
-    const deliverRecipes = new Set();
+    const tmpDeliverRecipes = [];
     for (const inputFile of component.inputFiles) {
       const dstName = nunjucks.renderString(inputFile.name, this.env);
       //resolve real src
       for (const src of inputFile.src) {
         const srcComponent = await this._getComponent(src.srcNode);
+        if (srcComponent.disable) {
+          continue;
+        }
+        const fromHPCISS = srcComponent.type === "hpciss";
+        const fromHPCISStar = srcComponent.type === "hpcisstar";
+        const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
+        const onSameRemote = await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID);
+
         //get files from upper level
         if (src.srcNode === component.parent) {
           const dstRoot = this._getComponentDir(component.ID);
@@ -1188,29 +1283,60 @@ class Dispatcher extends EventEmitter {
           for (const e of srcEntry.src) {
             const originalSrcRoot = this._getComponentDir(e.srcNode);
             const srcName = nunjucks.renderString(e.srcName, this.env);
-            deliverRecipes.add({ dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy: false });
+            tmpDeliverRecipes.push({
+              dstRoot,
+              dstName,
+              srcRoot: originalSrcRoot,
+              srcName,
+              onSameRemote,
+              forceCopy: false,
+              projectRootDir: this.projectRootDir,
+              srcRemotehostID,
+              fromHPCISS,
+              fromHPCISStar
+            });
           }
-        } else if (await isSameRemoteHost(this.projectRootDir, src.srcNode, component.ID)) {
-          const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
+        } else if (onSameRemote) {
           const remotehostID = remoteHost.getID("name", component.host);
 
-          const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
-          const dstRoot = component.type === "storage" ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
+          const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
+          const dstRoot = hasStoragePath(component) ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
           const srcName = nunjucks.renderString(src.srcName, this.env);
-          const forceCopy = srcComponent.type === "storage";
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, onRemote: true, projectRootDir: this.projectRootDir, remotehostID, forceCopy });
-        } else if (Object.prototype.hasOwnProperty.call(srcComponent, "host") && srcComponent.host !== "localhost" && srcComponent.type !== "task") {
+          const forceCopy = hasStoragePath(srcComponent);
+          tmpDeliverRecipes.push({
+            dstRoot,
+            dstName,
+            srcRoot,
+            srcName,
+            onSameRemote,
+            forceCopy,
+            projectRootDir: this.projectRootDir,
+            srcRemotehostID,
+            fromHPCISS,
+            fromHPCISStar
+          });
+        } else if (!isLocalComponent(srcComponent) && !["task", "stepjobTask", "bulkjobtask", "hpciss", "hpcisstar"].includes(srcComponent.type)) {
           //memo1: taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼るだけでよいので除外している
           //memo2: この方法だと、接続先が複数あるエントリは複数回rsyncを実行することになるため将来的には全てtaskコンポーネントと同じ方式にする必要がある
-          const srcRemotehostID = remoteHost.getID("name", srcComponent.host);
 
-          const srcRoot = srcComponent.type === "storage" ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component);
-          const dstRoot = component.type === "storage" ? component.storagePath : this._getComponentDir(component.ID);
+          const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component);
+          const dstRoot = hasStoragePath(component) ? component.storagePath : this._getComponentDir(component.ID);
           const srcName = nunjucks.renderString(src.srcName, this.env);
-          deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, remoteToLocal: true, projectRootDir: this.projectRootDir, remotehostID: srcRemotehostID });
+          tmpDeliverRecipes.push({
+            dstRoot,
+            dstName,
+            srcRoot,
+            srcName,
+            remoteToLocal: true,
+            projectRootDir: this.projectRootDir,
+            srcRemotehostID,
+            fromHPCISS,
+            fromHPCISStar
+          });
         } else {
           //deliver files under component directory even if destination component is storage
           //in storageHandler, files under component directory will be copied to storagePath (avoid to store symlink in storagePath)
+          //HPCISS and HPCISStar component are treated as same way
           const dstRoot = this._getComponentDir(component.ID);
           promises.push(
             this._getComponent(src.srcNode)
@@ -1226,13 +1352,35 @@ class Dispatcher extends EventEmitter {
                   for (const e of srcEntry.origin) {
                     const srcName = nunjucks.renderString(e.srcName, this.env);
                     const originalSrcRoot = this._getComponentDir(e.srcNode);
-                    deliverRecipes.add({ dstRoot, dstName, srcRoot: originalSrcRoot, srcName, forceCopy: false });
+                    tmpDeliverRecipes.push({
+                      dstRoot,
+                      dstName,
+                      srcRoot: originalSrcRoot,
+                      srcName,
+                      forceCopy: false,
+                      onSameRemote,
+                      projectRootDir: this.projectRootDir,
+                      srcRemotehostID,
+                      fromHPCISS,
+                      fromHPCISStar
+                    });
                   }
                 } else {
                   const srcName = nunjucks.renderString(src.srcName, this.env);
-                  const forceCopy = srcComponent.type === "storage";
-                  const srcRoot = srcComponent.type !== "storage" ? this._getComponentDir(src.srcNode) : srcComponent.storagePath;
-                  deliverRecipes.add({ dstRoot, dstName, srcRoot, srcName, forceCopy });
+                  const forceCopy = hasStoragePath(srcComponent);
+                  const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : this._getComponentDir(src.srcNode);
+                  tmpDeliverRecipes.push({
+                    dstRoot,
+                    dstName,
+                    srcRoot,
+                    srcName,
+                    forceCopy,
+                    onSameRemote,
+                    projectRootDir: this.projectRootDir,
+                    srcRemotehostID,
+                    fromHPCISS,
+                    fromHPCISStar
+                  });
                 }
               })
           );
@@ -1240,14 +1388,27 @@ class Dispatcher extends EventEmitter {
       }
     }
     await Promise.all(promises);
+    const deliverRecipes = [];
+    for (const recipe of tmpDeliverRecipes) {
+      if (!deliverRecipes.some((e)=>{
+        return e.dstRoot === recipe.dstRoot
+          && e.dstName === recipe.dstName
+          && e.srcRoot === recipe.srcRoot
+          && e.srcName === recipe.srcName;
+      })) {
+        deliverRecipes.push(recipe);
+      }
+    }
 
     //actual deliver file process
     const p2 = [];
     for (const recipe of deliverRecipes) {
-      if (recipe.onRemote) {
-        p2.push(deliverFileOnRemote(recipe));
+      if (recipe.fromHPCISS || recipe.fromHPCISStar) {
+        p2.push(deliverFilesFromHPCISS(recipe, this.projectRootDir));
+      } else if (recipe.onSameRemote) {
+        p2.push(deliverFilesOnRemote(recipe));
       } else if (recipe.remoteToLocal) {
-        p2.push(deliverFileFromRemote(recipe));
+        p2.push(deliverFilesFromRemote(recipe));
       } else {
         const srces = await promisify(glob)(recipe.srcName, { cwd: recipe.srcRoot });
         const hasGlob = glob.hasMagic(recipe.srcName);
@@ -1323,6 +1484,12 @@ class Dispatcher extends EventEmitter {
         break;
       case "continue":
         cmd = this._jumpHandler.bind(this, "continue");
+        break;
+      case "hpciss":
+        cmd = this._hpcissHandler.bind(this, false);
+        break;
+      case "hpcisstar":
+        cmd = this._hpcissHandler.bind(this, true);
         break;
       default:
         getLogger(this.projectRootDir).error("illegal type specified", type);

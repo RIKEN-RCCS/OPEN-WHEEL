@@ -29,7 +29,7 @@ function hasEntry(projectRootDir, id) {
  * @param {object} ssh -  ssh connection instance
  * @param {string} pw - password
  * @param {string} ph - passphrase
- * @param {boolean} isStorage - whether this host is used for remote storage component or not
+ * @param {boolean} isStorage - whether this host is also used for remote storage component or not
  */
 function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage) {
   if (!db.has(projectRootDir)) {
@@ -113,7 +113,7 @@ function removeSsh(projectRootDir) {
   }
   let clearDB = true;
   for (const e of target.values()) {
-    if (e.isStorage) {
+    if (e.isStorage || e.isGfarm) {
       clearDB = false;
       continue;
     }
@@ -127,12 +127,14 @@ function removeSsh(projectRootDir) {
 /**
  * ask password to client
  * @param {string} clientID - socket's ID
- * @param {string} message - text to be shown on dialog screen at client side
+ * @param {string} hostname - hostname which request password
+ * @param {string} mode - password or passphrase
+ * @param {string | null} JWTServerURL - URL of JWT server if requesting JWT-server passphrase this arg must be specified
  * @returns {Promise} - resolve when get password from browser, rejected if user cancel password input
  */
-function askPassword(clientID, message) {
+function askPassword(clientID, hostname, mode, JWTServerURL = null) {
   return new Promise((resolve, reject)=>{
-    emitAll(clientID, "askPassword", message, (data)=>{
+    emitAll(clientID, "askPassword", hostname, mode, JWTServerURL, (data)=>{
       if (data === null) {
         const err = new Error("user canceled ssh password prompt");
         err.reason = "CANCELED";
@@ -167,7 +169,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
         }
       }
       //pw will be used after canConnect
-      pw = await askPassword(clientID, `${remoteHostName} - password`);
+      pw = await askPassword(clientID, remoteHostName, "password", null);
       return pw;
     };
   } else {
@@ -182,7 +184,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
         return ph;
       }
     }
-    ph = await askPassword(clientID, `${remoteHostName} - passpharse`);
+    ph = await askPassword(clientID, remoteHostName, "passphrase ", null);
     return ph;
   };
   if (hostinfo.renewInterval) {
@@ -212,6 +214,9 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
       addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
     }
   } catch (e) {
+    if (e.reason === "CANCELED") {
+      throw e;
+    }
     if (e.message === "Control socket creation failed") {
       e.message += "you can avoid this error by using SSH_CONTROL_PERSIST_DIR environment variable\n";
       e.message += "please refer to https://riken-rccs.github.io/OPEN-WHEEL/attention";

@@ -6,15 +6,19 @@
 <template>
   <v-dialog
     v-model="dialog"
-    :activator=activator
+    :activator="activator"
     :max-width="maxWidth"
     persistent
   >
     <v-card>
-      <v-card-title>
+      <v-card-title
+        :data-cy="`versatile_dialog_${title.replace(/ /g,'_')}-title`"
+      >
         {{ title }}
       </v-card-title>
-      <v-card-text>
+      <v-card-text
+        :data-cy="`versatile_dialog_${title.replace(/ /g,'_',)}-message`"
+      >
         <slot name="message">
           {{ message }}
         </slot>
@@ -26,9 +30,10 @@
           :key="item.label"
         >
           <v-btn
+            :prepend-icon="item.icon"
+            :text="item.label"
+            :data-cy="`versatile_dialog_${title.replace(/ /g,'_')}-${item.label}-btn`"
             @click="$emit(item.label)"
-            :prepend-icon=item.icon
-            :text=item.label
           />
         </div>
       </v-card-actions>
@@ -40,9 +45,10 @@ export default {
   name: "VersatileDialog",
   props: {
     activator: {
-      required: false
+      type: [String, Object],
+      default: undefined
     },
-    value: {
+    modelValue: {
       type: Boolean,
       required: true
     },
@@ -72,10 +78,11 @@ export default {
       default: undefined
     }
   },
+  emits: ["update:modelValue"],
   computed: {
     dialog: {
       get() {
-        return this.value;
+        return this.modelValue;
       },
       set(v) {
         this.$emit("update:modelValue", v);

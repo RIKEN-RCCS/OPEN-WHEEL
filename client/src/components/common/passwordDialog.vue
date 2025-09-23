@@ -10,9 +10,26 @@
     :max-width="maxWidth"
   >
     <v-card
-      :title=title
-      :subtitle=message
+      :title="title"
     >
+      <template
+        v-if="jwtServerURL"
+        #prepend
+      >
+        <v-avatar
+          rounded="0"
+          :image="img"
+        />
+      </template>
+      <template
+        v-if="jwtServerURL"
+        #subtitle
+      >
+        if you forgot passphrase, go to <a
+          target="_blank"
+          :href="jwtServerURL"
+        >{{ jwtServerURL }}</a> and generate JWT
+      </template>
       <v-card-text>
         <v-form @submit.prevent>
           <v-text-field
@@ -37,6 +54,8 @@
 </template>
 <script>
 import buttons from "../../components/common/buttons.vue";
+import loadComponentDefinition from "../../lib/componentDefinision.js";
+const componentDefinitionObj = loadComponentDefinition();
 export default {
   name: "PasswordDialog",
   components: {
@@ -44,11 +63,15 @@ export default {
   },
   props: {
     value: Boolean,
-    title: { type: String, default: "input password" },
+    mode: { type: String, required: true },
+    hostname: { type: String, required: true },
+    jwtServerURL: { type: String, default: null },
     maxWidth: { type: String, default: "50%" }
   },
+  emits: ["update:modelValue", "password", "cancel"],
   data: function () {
     return {
+      img: componentDefinitionObj["hpciss"].img,
       showPassword: false,
       password: "",
       buttons: [
@@ -58,6 +81,9 @@ export default {
     };
   },
   computed: {
+    title() {
+      return this.jwtServerURL === null ? `input ${this.mode} for ${this.hostname}` : `input JWT-server passphrase for ${this.jwtServerURL}`;
+    },
     openDialog: {
       get() {
         return this.value;

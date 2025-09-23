@@ -102,5 +102,13 @@ ssh-keygen -R 'XXX'
 
 Or, you can delete the previous entry at line number YYYY on `~/.ssh/known_hosts`  by using a text editor or something
 
+***
+## git committer setting
+WHEEL projects are managed as a git repository. If the committer's name, email is not set when a new project is created or imported, a dummy name (wheel), email (wheel@example.com) is set as a repository local setting
+If the global settings (usually in $HOME/.gitconfig) name and email exist, the repository-local dummy settings are not set, so if the global settings are deleted during project creation or import, the git commit command will fail and you will not be able to save or run the project.
+
+This is most likely to happen when a project created or imported with $HOME, the host OS's global configuration, mounted in a container, is attempted to operate
+in a container launched without mounting ${HOME}, or when a project file is copied and executed on a different machine without using the project import and export functions.
+
 --------
 [Return to home page]({{site.baseurl}}/)

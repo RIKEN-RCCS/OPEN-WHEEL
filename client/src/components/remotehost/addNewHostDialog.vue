@@ -50,7 +50,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.port"
-                          :label=portNumberLabel
+                          :label="portNumberLabel"
                           :rules="[validPortNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-port_number_label-text_field"
@@ -69,7 +69,7 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model="host.path"
-                          :label=workDirLabel
+                          :label="workDirLabel"
                           validate-on="blur"
                           data-cy="add_new_host-work_dir_label-text_field"
                         />
@@ -84,9 +84,9 @@
                       </v-col>
                       <v-col cols="2">
                         <v-btn
-                          @click="openFileBrowser=!openFileBrowser"
-                          text=browse
+                          text="browse"
                           data-cy="add_new_host-browse_btn"
+                          @click="openFileBrowser=!openFileBrowser"
                         />
                       </v-col>
                       <v-col cols="6">
@@ -141,12 +141,39 @@
                           data-cy="add_new_host-shared_path_on_shared_host-text_field"
                         />
                       </v-col>
+                      <v-col cols="12">
+                        <v-checkbox
+                          v-model="host.useGfarm"
+                          label="use gfarm"
+                          data-cy="add_new_host-use_gfarm-checkbox"
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.JWTServerUser"
+                          :disabled="!host.useGfarm"
+                          label="HPCI-ID"
+                          data-cy="add_new_host-JWT_server_user-text_field"
+                          clearable
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.JWTServerURL"
+                          :disabled="!host.useGfarm"
+                          label="JWT server's URL"
+                          data-cy="add_new_host-JWT_server_URL-text_field"
+                          clearable
+                        />
+                      </v-col>
                     </v-row>
                   </v-container>
                 </v-expansion-panel-text>
               </v-expansion-panel>
               <v-expansion-panel>
-                <v-expansion-panel-title data-cy="add_new_host-advanced_settings-title">Advanced settings</v-expansion-panel-title>
+                <v-expansion-panel-title data-cy="add_new_host-advanced_settings-title">
+                  Advanced settings
+                </v-expansion-panel-title>
                 <v-expansion-panel-text>
                   <v-container>
                     <v-row>
@@ -205,15 +232,15 @@
         <v-card-actions>
           <v-btn
             :disabled="hasError"
-            @click="submitHost"
             :prepend-icon="mdi-check"
             text="OK"
             data-cy="add_new_host-ok-btn"
+            @click="submitHost"
           />
           <v-btn
-            @click="cancelDialog"
             prepend-icon="mdi-close"
             text="cancel"
+            @click="cancelDialog"
           />
         </v-card-actions>
       </v-card>
@@ -231,16 +258,16 @@
           <v-spacer />
           <v-btn
             :disabled="!selectedFile"
-            @click="host.keyFile=selectedFile;closeFileBrowser()"
             prepend-icon="mdi-check"
             text="OK"
             data-cy="add_new_host-select_private_key_file_ok-btn"
+            @click="host.keyFile=selectedFile;closeFileBrowser()"
           />
           <v-btn
-            @click="closeFileBrowser"
             prepend-icon="mdi-close"
             text="cancel"
             data-cy="add_new_host-select_private_key_file_cancel-btn"
+            @click="closeFileBrowser"
           />
         </v-card-actions>
         <v-card-text data-cy="add_new_host-select_private_key_file-card_text">
@@ -270,9 +297,10 @@ export default {
     initialValue: { type: Object, default: ()=>{ return {}; } },
     availableJobSchedulers: { type: Array, default: ()=>{ return []; } }
   },
+  emits: ["update:modelValue", "newHost", "cancel"],
   data: function () {
     return {
-      host: {},
+      host: { JWTServerURL: "https://elpis.hpci.nii.ac.jp/" },
       openPanel: [0],
       pathSep: "/",
       home: "/",
@@ -320,6 +348,10 @@ export default {
     validPortNumber,
     positiveNumber: positiveNumber.bind(null, true),
     submitHost() {
+      if (!this.host.useGfarm) {
+        delete this.host.JWTServerURL;
+        delete this.host.JWTServerUser;
+      }
       this.$emit("newHost", this.host);
       this.closeDialog();
     },
@@ -328,7 +360,7 @@ export default {
       this.closeDialog();
     },
     closeDialog() {
-      this.host = {};
+      this.host = { JWTServerURL: "https://elpis.hpci.nii.ac.jp/" };
       this.$refs.form.reset();
       this.openDialog = false;
     }

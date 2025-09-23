@@ -5,7 +5,7 @@
  */
 <template>
   <v-dialog
-    :model-value="modelValue"
+    v-model="openDialog"
     persistent
     scrollable
     width="80vw"
@@ -19,69 +19,22 @@
           :items="env"
           :headers="headers"
         >
-        <template #item.name="props">
-          <v-menu
-            location="bottom"
-            v-model="editKeyDialog[props.index]"
-            :close-on-content-click="false"
-            min-width="auto"
-            max-width="50vw"
-          >
-            <template v-slot:activator="{ props: menuProps }">
-              <v-btn
-                variant="text"
-                v-bind="menuProps"
-                block
-                class="justify-start"
-                :text=props.item.name
-              />
-            </template>
-            <v-sheet
-            min-width="auto"
-            max-width="50vw"
-            >
-              <v-text-field
-                v-model="props.item.raw.name"
-                :rules="[required]"
-                clearable
-                :readonly="readOnly"
-                @keyup.enter="editKeyDialog[props.index]=false"
-              />
-            </v-sheet>
-          </v-menu>
-        </template>
-        <template #item.value="props">
-          <v-menu
-            location="bottom"
-            v-model="editValueDialog[props.index]"
-            :close-on-content-click="false"
-            :readonly="readOnly"
-            min-width="auto"
-            max-width="50vw"
-          >
-            <template v-slot:activator="{ props: menuProps }">
-              <v-btn
-                variant="text"
-                v-bind="menuProps"
-                block
-                class="justify-start"
-                :text=props.item.value
-              />
-            </template>
-            <v-sheet
-            min-width="auto"
-            max-width="50vw"
-            >
-              <v-text-field
-                v-model="props.item.raw.value"
-                :rules="[required]"
-                :readonly="readOnly"
-                clearable
-                @keyup.enter="editValueDialog[props.index]=false"
-              />
-            </v-sheet>
-          </v-menu>
-        </template>
+          <template #item.name="props">
+            <inline-editor
+              :current-value="props.item.name"
+              data-cy-prefix="env_setting-name"
+              :additional-rules="[required]"
+              @confirmed="(newVal)=>{props.item.name = newVal}"
+            />
+          </template>
+          <template #item.value="props">
+            <inline-editor
+              :current-value="props.item.value"
+              data-cy-prefix="env_setting-value"
+              :additional-rules="[required]"
+              @confirmed="(newVal)=>{props.item.value= newVal}"
+            />
+          </template>
           <template #item.actions="{ item }">
             <action-row
               :item="item"
@@ -90,14 +43,14 @@
               @delete="deleteEnv"
             />
           </template>
-          <template #bottom >
+          <template #bottom>
             <v-row>
               <v-col cols="5">
                 <v-text-field
                   v-model="newKey"
                   label="name"
-                  variant=outlined
-                  density=compact
+                  variant="outlined"
+                  density="compact"
                   clearable
                   :rules="[noDuplicatedName]"
                 />
@@ -105,16 +58,16 @@
               <v-col cols="5">
                 <v-text-field
                   v-model="newValue"
-                  variant=outlined
-                  density=compact
+                  variant="outlined"
+                  density="compact"
                   label="value"
                   clearable
                 />
               </v-col>
               <v-col cols="auto">
                 <v-btn
-                  @click="addEnv"
                   icon="mdi-plus"
+                  @click="addEnv"
                 />
               </v-col>
             </v-row>
@@ -136,25 +89,25 @@
   </v-dialog>
 </template>
 <script>
-import { toRaw } from "vue";
+import { toRaw, nextTick } from "vue";
 import { mapState, mapMutations } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import actionRow from "../components/common/actionRow.vue";
 import buttons from "../components/common/buttons.vue";
 import { removeFromArray } from "../lib/clientUtility.js";
 import { required } from "../lib/validationRules.js";
+import inlineEditor from "./common/inlineEditor.vue";
 
 export default {
-  name: "envSettingDialog",
+  name: "EnvSettingDialog",
   components: {
     actionRow,
-    buttons
+    buttons,
+    inlineEditor
   },
-  props: ["modelValue"],
-  emits: ["update:modelValue"],
-  computed: {
-    ...mapState(["projectState", "currentComponent", "projectRootDir", "rootComponentID", "readOnly"])
-  },
+  emits: [
+    "update:modelValue"
+  ],
   data: function () {
     return {
       env: [],
@@ -166,8 +119,21 @@ export default {
         { title: "name", key: "name" },
         { title: "value", key: "value" },
         { title: "", key: "actions" }
-      ]
+      ],
+      itemRefs: {},
+      itemWidths: {}
     };
+  },
+  computed: {
+    openDialog: {
+      get() {
+        return this.modelValue;
+      },
+      set(v) {
+        this.$emit("update:modelValue", v);
+      }
+    },
+    ...mapState(["projectState", "currentComponent", "projectRootDir", "rootComponentID", "readOnly"])
   },
   mounted() {
     this.commitWaitingEnv(true);
@@ -183,9 +149,21 @@ export default {
       });
       this.env.splice(0, this.env.length, ...env);
       this.commitWaitingEnv(false);
+      nextTick(()=>{
+        for (const id in this.itemRefs) {
+          if (this.itemRefs[id]) {
+            this.itemWidths[id] = this.itemRefs[id].offsetWidth;
+          }
+        }
+      });
     });
   },
   methods: {
+    setItemRef(id, el) {
+      if (el) {
+        this.itemRefs[id] = el;
+      }
+    },
     required,
     ...mapMutations(
       {
@@ -201,7 +179,7 @@ export default {
     closeEnvironmentVariableSetting() {
       this.newKey = null;
       this.newValue = null;
-      this.$emit("update:model-value", false);
+      this.$emit("update:modelValue", false);
     },
     addEnv() {
       this.env.push({ name: this.newKey, value: this.newValue });

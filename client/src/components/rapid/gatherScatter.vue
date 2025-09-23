@@ -5,7 +5,7 @@
  */
 <template>
   <div>
-    <v-card >
+    <v-card>
       <v-card-title>
         {{ label }}
         <v-row
@@ -14,16 +14,16 @@
           <v-btn
             class="text-capitalize"
             :disabled="readOnly"
-            @click="dialog=true"
             prepend-icon="mdi-plus"
             :text="`add new ${label} setting`"
             data-cy="gather_scatter-add_new_setting_btn"
+            @click="dialog=true"
           />
         </v-row>
       </v-card-title>
       <v-card-text>
         <v-data-table
-          density=compact
+          density="compact"
           :headers="headers"
           :items="modifiedContainer"
         >
@@ -69,25 +69,25 @@
           </v-row>
           {{ label2 }}
           <lower-component-tree
-            @selected=onDstNodeSelected
+            @selected="onDstNodeSelected"
           />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn
-            variant=text
+            variant="text"
             :disabled="hasError"
-            @click="commitChange"
-            prepend-icon=mdi-check
-            text=OK
+            prepend-icon="mdi-check"
+            text="OK"
             data-cy="gather_scatter-ok-btn"
+            @click="commitChange"
           />
           <v-btn
-            variant=text
-            @click="closeAndResetDialog"
-            prepend-icon=mdi-cancel
-            text=Cancel
+            variant="text"
+            prepend-icon="mdi-cancel"
+            text="Cancel"
             data-cy="gather_scatter-cancel-btn"
+            @click="closeAndResetDialog"
           />
         </v-card-actions>
       </v-card>
@@ -125,6 +125,7 @@ export default {
       required: true
     }
   },
+  emits: ["addNewItem", "updateItem", "deleteItem"],
   data() {
     return {
       dialog: false,

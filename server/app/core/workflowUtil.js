@@ -41,7 +41,7 @@ async function getChildren(projectRootDir, parentID) {
 /**
  * return component,  its children, and grandsons
  * @param {string} projectRootDir - project's root path
- * @param {strint} rootComponentDir - path of component to be obrained
+ * @param {string} rootComponentDir - path of component to be obrained
  * @returns {object} - nested component JSON object
  */
 async function getThreeGenerationFamily(projectRootDir, rootComponentDir) {

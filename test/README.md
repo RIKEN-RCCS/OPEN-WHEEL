@@ -252,3 +252,43 @@ $ export CYPRESS_WHEEL_TEST_REMOTEHOST=example
 
 GitHub Actions のテスト実行おいて、画面表示が不安定になることがあり、試験でNGとなるケースがあります。
 上記が発生した場合、試験を再実施することで解消される可能性があります。
+
+## デフォルトでは実行されないテスト
+auth.cy.js (パスワードベースのログイン制限機能) および hpciss.cy.js(HPCI-SS, HPCI-SS-tarコンポーネントを使うテスト) はデフォルトでは実行されないように設定しています。
+これらのテストを実行する時は、describe関数に指定しているskipを削除してから実行してください。
+
+ただし、実行時にそれぞれ次の変数を指定して起動する必要があります。
+
+### auth
+- `WHEEL_TEST_LOGIN_PASSWORD` ログインパスワード
+
+### hpciss
+-`WHEEL_TEST_CSGW_HOSTNAME`      CSGWのホスト名
+-`WHEEL_TEST_CSGW_USERNAME`      CSGWへログインするユーザのユーザ名
+-`WHEEL_TEST_JWTServer_USERNAME` JWT tokenを発行したhpci-id
+-`WHEEL_TEST_GROUPNAME`          gfarm領域上で、前項のユーザが所属するグループ
+
+
+これらの変数は次のようにcypressの--envオプションに対して、カンマ区切りで複数の設定を続けて渡して起動してください。
+```
+npm run test -- --env "WHEEL_TEST_CSGW_HOSTNAME=foo,WHEEL_TEST_CSGW_USERNAME=bar"
+```
+
+また、hpcissのテストはログイン時にエージェント認証を行なうことを前提としています。
+テスト実行前に、WHEELサーバのコンテナにログインして
+
+1. 鍵ペアの作成
+2. ssh-addで鍵の登録
+
+を行なった上で、CSGWの`authorized_keys`に作成した公開鍵を追記してください。
+
+この作業は、コンテナを再起動する度に行なう必要があります。
+
+## remotehost.jsonについて
+コンテナが参照するremotehost.jsonはホスト側に残っているので、
+テストが異常終了した時などは、次のコマンドを実行してremotehost.jsonを初期状態に戻してください。
+```
+git reset HEAD wheel_config/remotehost.json
+```
+
+

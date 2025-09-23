@@ -13,26 +13,30 @@
     data-cy="component_property-property-navigation_drawer"
   >
     <v-toolbar
-        color='background'
-      >
-        <v-toolbar-title>
-          <v-form v-model="validName"
-              @submit.prevent
-          >
-            <v-text-field
-              v-model="copySelectedComponent.name"
-              label="name"
-              :readonly="readOnly"
-              variant=outlined
-              class="pt-4"
-              density=compact
-              :rules="[rules.isValidName, isUniqueName]"
-              data-cy="component_property-name-text_field"
-            />
-          </v-form>
-        </v-toolbar-title>
-        <v-toolbar-items>
-        <v-tooltip location="bottom" text="disable">
+      color="background"
+    >
+      <v-toolbar-title>
+        <v-form
+          v-model="validName"
+          @submit.prevent
+        >
+          <v-text-field
+            v-model="copySelectedComponent.name"
+            label="name"
+            :readonly="readOnly"
+            variant="outlined"
+            class="pt-4"
+            density="compact"
+            :rules="[rules.isValidName, isUniqueName]"
+            data-cy="component_property-name-text_field"
+          />
+        </v-form>
+      </v-toolbar-title>
+      <v-toolbar-items>
+        <v-tooltip
+          location="bottom"
+          text="disable"
+        >
           <template #activator="{ props}">
             <v-switch
               v-model="copySelectedComponent.disable"
@@ -41,31 +45,25 @@
               color="error"
               label="disable"
               v-bind="props"
+              data-cy="component_property-disable-switch"
             />
           </template>
         </v-tooltip>
-          <v-tooltip location="bottom" text="close">
-            <template #activator="{ props }">
-              <v-btn
-                @click="closeProperty"
-                v-bind="props"
-                icon=mdi-close
-                data-cy="component_property-close-btn"
-              />
-            </template>
-          </v-tooltip>
-          <v-tooltip location=bottom text="clean" >
-            <template #activator="{ props }">
-              <v-btn
-                :disabled="selectedComponent.state === 'not-started'"
-                v-bind="props"
-                icon="mdi-restore"
-                data-cy="component_property-clean-btn"
-              />
-            </template>
-          </v-tooltip>
-        </v-toolbar-items>
-      </v-toolbar>
+        <v-tooltip
+          location="bottom"
+          text="close"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-close"
+              data-cy="component_property-close-btn"
+              @click="closeProperty"
+            />
+          </template>
+        </v-tooltip>
+      </v-toolbar-items>
+    </v-toolbar>
     <v-form
       v-model="valid"
       @submit.prevent
@@ -75,13 +73,16 @@
         multiple
         variant="accordion"
       >
-        <v-expansion-panel title="basic">
+        <v-expansion-panel
+          title="basic"
+          data-cy="component_property-basic-panel_title"
+        >
           <v-expansion-panel-text>
             <v-textarea
               v-model="copySelectedComponent.description"
               label="description"
               :readonly="readOnly"
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-description-textarea"
             />
             <v-autocomplete
@@ -91,7 +92,7 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-script-autocomplete"
             />
             <v-select
@@ -100,7 +101,7 @@
               label="host"
               :readonly="readOnly"
               :items="hostCandidates"
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-host-select"
             />
             <v-switch
@@ -108,6 +109,7 @@
               v-model="copySelectedComponent.useJobScheduler"
               label="use job scheduler"
               :readonly="readOnly"
+              :disabled="isBulkjobTask || isStepjobTask || isStepjob"
               color="primary"
               data-cy="component_property-job_scheduler-switch"
             />
@@ -118,7 +120,7 @@
               :readonly="readOnly"
               :items="queues"
               :disabled="! copySelectedComponent.useJobScheduler"
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-queue-select"
             />
             <v-text-field
@@ -127,7 +129,7 @@
               :readonly="readOnly"
               label="submit command"
               :disabled="! copySelectedComponent.useJobScheduler"
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-submit_command-text_field"
             />
             <v-text-field
@@ -136,7 +138,7 @@
               label="submit option"
               :readonly="readOnly"
               :disabled="! copySelectedComponent.useJobScheduler"
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-submit_option-text_field"
             />
             <v-text-field
@@ -144,13 +146,23 @@
               v-model="copySelectedComponent.storagePath"
               label="directory path"
               :readonly="readOnly"
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-directory_path-text_field"
+            />
+            <v-switch
+              v-if="isTask"
+              v-model="copySelectedComponent.ignoreFailure"
+              label="continue project execution after filure"
+              :readonly="readOnly"
+              color="primary"
+              data-cy="component_property-ignore_failure-switch"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isTask">
-          <v-expansion-panel-title data-cy="component_property-retry-panel_title">retry setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-retry-panel_title">
+            retry setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-text-field
               v-model="copySelectedComponent.retry"
@@ -159,7 +171,7 @@
               hide-details
               type="number"
               :rules="[rules.isInteger, rules.isZeroOrMore]"
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-number_or_retry-text_field"
             />
             <v-switch
@@ -176,7 +188,7 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-task_use_javascript-autocomplete"
             />
             <v-textarea
@@ -188,13 +200,15 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isFor">
-          <v-expansion-panel-title data-cy="component_property-loop_set_for-panel_title">loop setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-loop_set_for-panel_title">
+            loop setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-form @submit.prevent>
               <v-text-field
                 v-model.number="copySelectedComponent.start"
                 label="start"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
                 data-cy="component_property-start_for-text_field"
@@ -202,7 +216,7 @@
               <v-text-field
                 v-model.number="copySelectedComponent.end"
                 label="end"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
                 data-cy="component_property-end_for-text_field"
@@ -210,7 +224,7 @@
               <v-text-field
                 v-model.number="copySelectedComponent.step"
                 label="step"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 :rules="[rules.isInteger]"
                 data-cy="component_property-step_for-text_field"
@@ -218,7 +232,7 @@
               <v-text-field
                 v-model.number="copySelectedComponent.keep"
                 label="number of instances to keep"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 clearable
                 :rules="[rules.isValidKeepProp ]"
@@ -228,17 +242,19 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isForeach">
-          <v-expansion-panel-title data-cy="component_property-loop_set_foreach-panel_title">loop setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-loop_set_foreach-panel_title">
+            loop setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'foreach'"
               :readonly="readOnly"
               :items="indexList"
               :edit-dialog-min-width="propWidth"
+              data-cy="component_property-index_foreach-list_form"
               @add="addToIndexList"
               @remove="removeFromIndexList"
               @update="updateIndexList"
-              data-cy="component_property-index_foreach-list_form"
             />
             <v-text-field
               v-model.number="copySelectedComponent.keep"
@@ -250,7 +266,9 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isSource">
-          <v-expansion-panel-title data-cy="component_property-upload_setting-panel_title">upload setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-upload_setting-panel_title">
+            upload setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
               v-model="copySelectedComponent.uploadOnDemand"
@@ -265,12 +283,12 @@
                   v-if="!copySelectedComponent.uploadOnDemand"
                   v-model="sourceOutputFile"
                   label="source file name"
-              :readonly="readOnly"
+                  :readonly="readOnly"
                   :items="scriptCandidates"
                   clearable
-                  variant=outlined
-                  @update:modelValue="updateSourceOutputFile"
+                  variant="outlined"
                   data-cy="component_property-source_file_name-autocomplete"
+                  @update:model-value="updateSourceOutputFile"
                 />
               </v-col>
               <v-col
@@ -280,32 +298,36 @@
               >
                 <v-btn
                   v-if="!copySelectedComponent.uploadOnDemand"
-                  icon=mdi-trash-can-outline
-              :readonly="readOnly"
+                  icon="mdi-trash-can-outline"
+                  :readonly="readOnly"
                 />
               </v-col>
             </v-row>
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isViewer">
-          <v-expansion-panel-title data-cy="component_property-input_file_setting-panel_title">input file setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-input_file_setting-panel_title">
+            input file setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'input files'"
               :readonly="readOnly"
               :items="copySelectedComponent.inputFiles"
               :new-item-template="inputFileTemplate"
-              :additionalRules="[isValidInputFilename]"
+              :additional-rules="[isValidInputFilename]"
               :edit-dialog-min-width="propWidth"
+              data-cy="component_property-input_files_viewer-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
-              data-cy="component_property-input_files_viewer-list_form"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isPS">
-          <v-expansion-panel-title data-cy="component_property-ps-panel_title">PS setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-ps-panel_title">
+            PS setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-autocomplete
               v-model="copySelectedComponent.parameterFile"
@@ -313,19 +335,19 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-parameter_file-autocomplete"
             />
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.forceOverwrite"
+              color="primary"
               label="force overwrite"
               :readonly="readOnly"
               data-cy="component_property-force_overwrite-switch"
             />
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.deleteLoopInstance"
+              color="primary"
               label="delete all instances"
               :readonly="readOnly"
               data-cy="component_property-delete_all_instances-switch"
@@ -333,11 +355,13 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isStepjobTask">
-          <v-expansion-panel-title data-cy="component_property-stepjob_task-panel_title">stepjobtask setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-stepjob_task-panel_title">
+            stepjobtask setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.useDependency"
+              color="primary"
               label="use dependency"
               :readonly="readOnly"
               data-cy="component_property-use_dependency-switch"
@@ -360,11 +384,13 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isBulkjobTask">
-          <v-expansion-panel-title data-cy="component_property-bulijob_task-panel_title">bulkjob setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-bulijob_task-panel_title">
+            bulkjob setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.usePSSettingFile"
+              color="primary"
               label="use parameter setting file for bulk number"
               :readonly="readOnly"
               data-cy="component_property-bulk_number-switch"
@@ -376,7 +402,7 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-parameter_file_bulkjob-autocomplete"
             />
             <v-form
@@ -386,58 +412,60 @@
               <v-text-field
                 v-model.number="copySelectedComponent.startBulkNumber"
                 label="start"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 data-cy="component_property-start_bulkjob-text_field"
               />
               <v-text-field
                 v-model.number="copySelectedComponent.endBulkNumber"
                 label="end"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 type="number"
                 data-cy="component_property-end_bulkjob-text_field"
               />
             </v-form>
             <v-switch
-              color="primary"
               v-model="copySelectedComponent.manualFinishCondition"
+              color="primary"
               label="manual finish condition"
               :readonly="readOnly"
               data-cy="component_property-manual_finish_condition-switch"
             />
             <div v-if="copySelectedComponent.manualFinishCondition">
               <v-switch
-              color="primary"
                 v-model.lazy="conditionCheckByJS"
+                color="primary"
                 label="use javascript expression for condition check"
-              :readonly="readOnly"
-              data-cy="component_property-balkjob_use_javascript-switch"
+                :readonly="readOnly"
+                data-cy="component_property-balkjob_use_javascript-switch"
               />
               <v-autocomplete
                 v-if="!conditionCheckByJS"
                 v-model="copySelectedComponent.condition"
                 label="script name for condition check"
-              :readonly="readOnly"
+                :readonly="readOnly"
                 :items="scriptCandidates"
                 clearable
-                variant=outlined
+                variant="outlined"
                 data-cy="component_property-balkjob_use_javascript-autocomplete"
               />
               <v-textarea
                 v-if="conditionCheckByJS"
                 v-model="copySelectedComponent.condition"
-              :readonly="readOnly"
-              data-cy="component_property-balkjob_use_javascript-textarea"
+                :readonly="readOnly"
+                data-cy="component_property-balkjob_use_javascript-textarea"
               />
             </div>
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="hasCondition">
-          <v-expansion-panel-title data-cy="component_property-condition-setting_title">condition setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-condition-setting_title">
+            condition setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-switch
-              color="primary"
               v-model.lazy="conditionCheckByJS"
+              color="primary"
               label="use javascript expression for condition check"
               :readonly="readOnly"
               data-cy="component_property-condition_use_javascript-switch"
@@ -449,7 +477,7 @@
               :readonly="readOnly"
               :items="scriptCandidates"
               clearable
-              variant=outlined
+              variant="outlined"
               data-cy="component_property-condition_use_javascript-autocomplete"
             />
             <v-textarea
@@ -469,7 +497,9 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="! isSource && !isViewer">
-          <v-expansion-panel-title data-cy="component_property-in_out_files-panel_title">input/output files</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-in_out_files-panel_title">
+            input/output files
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'input files'"
@@ -478,10 +508,10 @@
               :new-item-template="inputFileTemplate"
               :additional-rules="[isValidInputFilename]"
               :edit-dialog-min-width="propWidth"
+              data-cy="component_property-input_files-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
-              data-cy="component_property-input_files-list_form"
             />
             <list-form
               :label="'output files'"
@@ -490,10 +520,10 @@
               :new-item-template="outputFileTemplate"
               :additional-rules="[isValidOutputFilename]"
               :edit-dialog-min-width="propWidth"
+              data-cy="component_property-output_files-list_form"
               @add="addToOutputFiles"
               @remove="removeFromOutputFiles"
               @update="updateOutputFiles"
-              data-cy="component_property-output_files-list_form"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -501,7 +531,9 @@
           v-if="hasRemote"
           :disabled="disableRemoteSetting"
         >
-          <v-expansion-panel-title data-cy="component_property-remote_file-panel_title">remote file setting</v-expansion-panel-title>
+          <v-expansion-panel-title data-cy="component_property-remote_file-panel_title">
+            remote file setting
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <list-form
               :label="'include'"
@@ -509,10 +541,10 @@
               :items="includeList"
               :disabled="disableRemoteSetting"
               :edit-dialog-min-width="propWidth"
+              data-cy="component_property-include-list_form"
               @add="addToIncludeList"
               @remove="removeFromIncludeList"
               @update="updateIncludeList"
-              data-cy="component_property-include-list_form"
             />
             <list-form
               :label="'exclude'"
@@ -520,10 +552,10 @@
               :items="excludeList"
               :disabled="disableRemoteSetting"
               :edit-dialog-min-width="propWidth"
+              data-cy="component_property-exclude-list_form"
               @add="addToExcludeList"
               @remove="removeFromExcludeList"
               @update="updateExcludeList"
-              data-cy="component_property-exclude-list_form"
             />
             clean up flag
 
@@ -551,18 +583,24 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel>
-          <v-expansion-panel-title data-cy="component_property-files-panel_title">Files</v-expansion-panel-title>
+          <v-expansion-panel-title
+            :class="{ 'remote': hasRemoteFileBrowser}"
+            data-cy="component_property-files-panel_title"
+          >
+            Files
+          </v-expansion-panel-title>
           <v-expansion-panel-text>
             <file-browser
-              v-if="! isRemoteComponent"
+              v-if="hasLocalFileBrowser"
               :readonly="false"
-              :project-root-dir="projectRootDir"
             />
             <remote-file-browser
-              v-if="isRemoteComponent"
+              v-if="hasRemoteFileBrowser"
+              ref="rfb"
               :readonly="false"
-              :project-root-dir="projectRootDir"
-              ref=rfb
+            />
+            <gfarm-tar-browser
+              v-if="hasGfarmTarBrowser"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -575,11 +613,16 @@
 import listForm from "../components/common/listForm.vue";
 import fileBrowser from "../components/fileBrowser.vue";
 import remoteFileBrowser from "../components/remoteFileBrowser.vue";
+import gfarmTarBrowser from "../components/gfarmTarBrowser.vue";
 import { isValidName } from "../lib/utility.js";
 import { isValidInputFilename, isValidOutputFilename } from "../lib/clientUtility.js";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import { propWidth } from "../lib/componentSizes.json";
+import {
+  hasRemoteFileBrowser,
+  hasGfarmTarBrowser
+} from "../../../common/checkComponent.cjs";
 
 const isNormalObject = (target)=>{
   const type = typeof target;
@@ -609,7 +652,8 @@ export default {
   components: {
     listForm,
     fileBrowser,
-    remoteFileBrowser
+    remoteFileBrowser,
+    gfarmTarBrowser
   },
   data: function () {
     return {
@@ -642,10 +686,14 @@ export default {
   computed: {
     ...mapState(["selectedComponent", "copySelectedComponent", "remoteHost", "currentComponent", "scriptCandidates", "projectRootDir", "jobScheduler", "readOnly"]),
     ...mapGetters(["selectedComponentAbsPath", "pathSep"]),
-    isRemoteComponent() {
-      return this.selectedComponent.type === "storage"
-        && typeof this.selectedComponent.host === "string"
-        && this.selectedComponent.host !== "localhost";
+    hasRemoteFileBrowser() {
+      return hasRemoteFileBrowser(this.selectedComponent);
+    },
+    hasGfarmTarBrowser() {
+      return hasGfarmTarBrowser(this.selectedComponent);
+    },
+    hasLocalFileBrowser() {
+      return (!this.hasRemoteFileBrowser && !this.hasGfarmTarBrowser);
     },
     disableRemoteSetting() {
       if (this.isStepjobTask) {
@@ -654,7 +702,7 @@ export default {
       return this.copySelectedComponent.host === "localhost";
     },
     hasHost() {
-      return isNormalObject(this.selectedComponent) && ["task", "stepjob", "bulkjobTask", "storage"].includes(this.selectedComponent.type);
+      return isNormalObject(this.selectedComponent) && ["task", "stepjob", "bulkjobTask", "storage", "hpciss", "hpcisstar"].includes(this.selectedComponent.type);
     },
     hasJobScheduler() {
       return isNormalObject(this.selectedComponent) && ["task", "stepjob", "bulkjobTask"].includes(this.selectedComponent.type);
@@ -692,11 +740,14 @@ export default {
     isStepjobTask() {
       return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "stepjobTask";
     },
+    isStepjob() {
+      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "stepjob";
+    },
     isBulkjobTask() {
       return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "bulkjobTask";
     },
     isStorage() {
-      return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "storage";
+      return isNormalObject(this.selectedComponent) && ["storage", "hpciss", "hpcisstar"].includes(this.selectedComponent.type);
     },
     excludeList() {
       if (!Array.isArray(this.copySelectedComponent.exclude)) {
@@ -749,6 +800,14 @@ export default {
     }
   },
   watch: {
+    retryByJS() {
+      this.copySelectedComponent.retryCondition = null;
+    },
+    "copySelectedComponent.host"(newValue) {
+      if (newValue === "localhost" && !this.isBulkjobTask() && !this.isStepjobTask() && this.isStepjob()) {
+        this.copySelectedComponent.useJobScheduler = false;
+      }
+    },
     open(newValue) {
       //another component is selected while componentProperty is open
       if (this.reopening || this.open) {
@@ -765,7 +824,7 @@ export default {
       }
       this.sourceOutputFile = Array.isArray(this.selectedComponent.outputFiles) && this.selectedComponent.outputFiles[0] ? this.selectedComponent.outputFiles[0].name : null;
       //get script candidate
-      if (!["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type)) {
+      if (!["for", "foreach", "workflow", "storage", "viewer", "hpciss", "hpcisstar"].includes(this.selectedComponent.type)) {
         const mode = this.selectedComponent.type === "source" ? "sourceComponent" : "underComponent";
         SIO.emitGlobal("getFileList", this.projectRootDir, { path: this.selectedComponentAbsPath, mode }, (fileList)=>{
           if (Array.isArray(fileList)) {

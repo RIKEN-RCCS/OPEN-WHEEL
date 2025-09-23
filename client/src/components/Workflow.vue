@@ -11,46 +11,50 @@
     />
     <application-tool-bar
       title="workflow"
-      @navIconClick="drawer=!drawer"
       :base-url="baseURL"
+      @nav-icon-click="drawer=!drawer"
     >
       <template #append>
-      <span
-        class="text-decoration-none text-h5 white--text"
-        @click="projectDescription=projectJson.description;descriptionDialog=true"
-        data-cy="workflow-project_name-text"
-      >
-        {{ projectJson !== null ? projectJson.name : "" }}
-      </span>
-      <v-spacer />
-      <v-btn
-        rounded
-        variant=outlined
-        :ripple="false"
-        :style="{backgroundColor : stateColor}"
-      >
-        status: {{ projectState }}{{isReadOnly}}
-      </v-btn>
-      <v-spacer />
-      <v-btn
-        shaped
-        variant=outlined
-        plain
-        :ripple="false"
-      >
-        last updated: {{ projectJson !== null ? projectJson.mtime : "" }}
-      </v-btn>
-      <v-spacer />
-      </template >
+        <span
+          class="text-decoration-none text-h5 white--text"
+          data-cy="workflow-project_name-text"
+          @click="projectDescription=projectJson.description;descriptionDialog=true"
+        >
+          {{ projectJson !== null ? projectJson.name : "" }}
+        </span>
+        <v-spacer />
+        <v-btn
+          rounded
+          variant="outlined"
+          :ripple="false"
+          :style="{backgroundColor : stateColor}"
+          data-cy="workflow-project_state-btn"
+        >
+          status: {{ projectState }}{{ isReadOnly }}
+        </v-btn>
+        <v-spacer />
+        <v-btn
+          shaped
+          variant="outlined"
+          plain
+          :ripple="false"
+        >
+          last updated: {{ projectJson !== null ? projectJson.mtime : "" }}
+        </v-btn>
+        <v-spacer />
+      </template>
       <template #extension>
         <v-btn-toggle
           v-model="mode"
           mandatory
         >
-          <v-tooltip text="graph view" location="bottom">
+          <v-tooltip
+            text="graph view"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 replace
                 :to="{name: 'graph' }"
                 icon="mdi-sitemap"
@@ -59,10 +63,13 @@
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="list view" location="bottom">
+          <v-tooltip
+            text="list view"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 replace
                 :to="{name: 'list' }"
                 v-bind="props"
@@ -70,10 +77,13 @@
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="text editor" location="bottom">
+          <v-tooltip
+            text="text editor"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 replace
                 :disabled="selectedComponent === null || selectedFile === null"
                 :to="{name: 'editor' }"
@@ -86,22 +96,28 @@
         </v-btn-toggle>
         <v-spacer />
         <v-card>
-          <v-tooltip text="run project" location=bottom>
+          <v-tooltip
+            text="run project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 :disabled="! runProjectAllowed"
                 v-bind="props"
-                @click="emitProjectOperation('runProject')"
                 icon="mdi-play"
                 data-cy="workflow-play-btn"
+                @click="emitProjectOperation('runProject')"
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="stop project" location="bottom">
+          <v-tooltip
+            text="stop project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 icon="mdi-stop"
                 :disabled="! stopProjectAllowed"
                 v-bind="props"
@@ -109,77 +125,94 @@
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="cleanup project" location=bottom>
+          <v-tooltip
+            text="cleanup project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
+                variant="outlined"
                 icon="mdi-restore"
                 :disabled="! cleanProjectAllowed"
                 v-bind="props"
                 @click="openProjectOperationComfirmationDialog('cleanProject')"
-              >
-              </v-btn>
+              />
             </template>
           </v-tooltip>
         </v-card>
 
         <v-spacer />
-        <v-tooltip text="open viewer screen" location=bottom>
+        <v-tooltip
+          text="open viewer screen"
+          location="bottom"
+        >
           <template #activator="{ props }">
             <v-btn
               v-bind="props"
               :disabled="viewerDataDir === null"
-              @click="openViewerScreen"
               icon="mdi-image-multiple-outline"
               data-cy="workflow-open_viewer_screen-btn"
+              @click="openViewerScreen"
             />
           </template>
         </v-tooltip>
         <v-spacer />
         <v-card>
-          <v-tooltip text="force edit" location="bottom">
+          <v-tooltip
+            text="force edit"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                icon=mdi-pencil-lock-outline
                 v-if="readOnly"
-                rounded=0
-                variant=outlined
+                icon="mdi-pencil-lock-outline"
+                rounded="0"
+                variant="outlined"
                 v-bind="props"
                 :style="{backgroundColor : readOnlyColor}"
                 @click="forceEditDialog=true"
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="validation check" location="bottom">
+          <v-tooltip
+            text="validation check"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
-                rounded=0
+                variant="outlined"
+                rounded="0"
                 :disabled="! checkProjectAllowed"
                 v-bind="props"
-                @click="checkComponents"
                 icon="mdi-check-outline"
+                @click="checkComponents"
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="save project" location="bottom">
+          <v-tooltip
+            text="save project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                variant=outlined
-                rounded=0
+                variant="outlined"
+                rounded="0"
                 :disabled="! saveProjectAllowed"
                 v-bind="props"
-                @click="emitProjectOperation('saveProject')"
                 icon="mdi-content-save"
                 data-cy="workflow-save-text"
+                @click="emitProjectOperation('saveProject')"
               />
             </template>
           </v-tooltip>
-          <v-tooltip text="revert project" location="bottom">
+          <v-tooltip
+            text="revert project"
+            location="bottom"
+          >
             <template #activator="{ props }">
               <v-btn
-                rounded=0
-                variant=outlined
+                rounded="0"
+                variant="outlined"
                 :disabled="! revertProjectAllowed"
                 v-bind="props"
                 icon="mdi-folder-refresh-outline"
@@ -201,8 +234,8 @@
         no-gutters
       >
         <v-btn
-          @click="showLogScreen=!showLogScreen"
           :icon="`mdi-triangle-outline ${showLogScreen? '':'mdi-rotate-180'}`"
+          @click="showLogScreen=!showLogScreen"
         />
         <v-col
           cols="12"
@@ -217,7 +250,7 @@
       <v-snackbar
         v-model="openSnackbar"
         multi-line
-        :timeout=snackbarTimeout
+        :timeout="snackbarTimeout"
         centered
         variant="outlined"
       >
@@ -226,8 +259,8 @@
           <v-btn
             class="justify-end"
             variant="outlined"
-            @click="closeSnackbar"
             text="Close"
+            @click="closeSnackbar"
           />
         </template>
       </v-snackbar>
@@ -249,7 +282,9 @@
     />
     <password-dialog
       v-model="pwDialog"
-      :title="pwDialogTitle"
+      :hostname="pwHostname"
+      :mode="pwMode"
+      :jwt-server-u-r-l="pwJwtServerURL"
       @password="pwCallback"
       @cancel="pwCallback(null)"
     />
@@ -263,7 +298,7 @@
       <template #message>
         <v-textarea
           v-model="projectDescription"
-          variant=outlined
+          variant="outlined"
         />
       </template>
     </versatile-dialog>
@@ -271,15 +306,15 @@
       v-model="viewerScreenDialog"
       max-width="50vw"
       title="open viewer screen"
+      data-cy="workflow-viewer_screen-dialog"
       @ok="openViewerScreen();viewerScreenDialog=false"
       @cancel="viewerScreenDialog=false"
-      data-cy="workflow-viewer_screen-dialog"
     />
     <versatile-dialog
       v-model="dialog"
       max-width="50vw"
-      :title=dialogTitle
-      :message=dialogMessage
+      :title="dialogTitle"
+      :message="dialogMessage"
       @ok="confirmed();dialog=false"
       @cancel="dialog=false"
     />
@@ -290,7 +325,7 @@
       @ok="selectSourceFileDialogCallback(true)"
       @cancel="selectSourceFileDialogCallback(false)"
     >
-      <template slot="message">
+      <template #message>
         <v-data-table
           v-model="selectedSourceFilenames"
           :items="sourceFileCandidates"
@@ -341,7 +376,7 @@
           variant="outlined"
           hide-details
           single-line
-        ></v-text-field>
+        />
         <v-data-table
           v-model:sort-by="validationErrorsSortBy"
           :items="validationErrors"
@@ -351,6 +386,9 @@
         />
       </template>
     </versatile-dialog>
+    <import-warning-dialog
+      v-model="warnDialog"
+    />
   </v-app>
 </template>
 
@@ -368,6 +406,7 @@ import SIO from "../lib/socketIOWrapper.js";
 import { readCookie, state2color } from "../lib/utility.js";
 import Debug from "debug";
 import allowedOperations from "../../../common/allowedOperations.cjs";
+import importWarningDialog from "../components/importWarningDialog.vue";
 
 const debug = Debug("wheel:workflow:main");
 const isAllowed = (state, operation)=>{
@@ -386,6 +425,7 @@ export default {
     unsavedFilesDialog,
     versatileDialog,
     sourceFileUploadDialog,
+    importWarningDialog,
     passwordDialog
   },
   data: ()=>{
@@ -395,7 +435,9 @@ export default {
       mode: 0,
       showLogScreen: false,
       pwDialog: false,
-      pwDialogTitle: "",
+      pwMode: null,
+      pwHostname: null,
+      pwJwtServerURL: null,
       pwCallback: ()=>{},
       descriptionDialog: false,
       viewerScreenDialog: false,
@@ -423,7 +465,8 @@ export default {
       validationErrorTableHeader: [
         { title: "component", value: "name", key: "component" },
         { title: "error", value: "error", key: "error" }
-      ]
+      ],
+      warnDialog: null
     };
   },
   computed: {
@@ -491,11 +534,14 @@ export default {
     const ID = readCookie("root");
     this.commitRootComponentID(ID);
 
-    SIO.onGlobal("askPassword", (hostname, cb)=>{
+    SIO.onGlobal("askPassword", (hostname, mode, jwtServerURL, cb)=>{
+      console.log("DEBUG: ", hostname, mode, jwtServerURL);
       this.pwCallback = (pw)=>{
         cb(pw);
       };
-      this.pwDialogTitle = `input password or passphrase for ${hostname}`;
+      this.pwMode = mode;
+      this.pwHostname = hostname;
+      this.pwJwtServerURL = jwtServerURL;
       this.pwDialog = true;
     });
     SIO.onGlobal("askSourceFilename", (ID, name, description, candidates, cb)=>{
@@ -520,7 +566,6 @@ export default {
       const output = rt ? rt[1] || rt[0] : message;
       this.showSnackbar(output);
     });
-    SIO.onGlobal("hostList", this.commitRemoteHost);
     SIO.onGlobal("projectState", (state)=>{
       this.commitProjectState(state.toLowerCase());
     });
@@ -530,6 +575,9 @@ export default {
       this.commitProjectReadOnly(projectJson.readOnly);
       this.commitComponentPath(projectJson.componentPath);
       this.commitWaitingProjectJson(false);
+      if (this.warnDialog === null && projectJson.exportInfo && projectJson.exportInfo.notChanged) {
+        this.warnDialog = true;
+      }
     });
     SIO.onGlobal("workflow", (wf)=>{
       if (this.currentComponent !== null && wf.ID !== this.currentComponent.ID) {
@@ -578,9 +626,6 @@ export default {
       ack(true);
     });
 
-    SIO.emitGlobal("getHostList", (hostList)=>{
-      this.commitRemoteHost(hostList);
-    });
     SIO.emitGlobal("getJobSchedulerList", (JSList)=>{
       this.commitJobScheduler(JSList);
     });
@@ -593,6 +638,10 @@ export default {
     this.commitWaitingWorkflow(true);
     SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
       debug("getWorkflow done", rt);
+    });
+    SIO.onGlobal("hostList", this.commitRemoteHost);
+    SIO.emitGlobal("getHostList", (hostList)=>{
+      this.commitRemoteHost(hostList);
     });
     this.$router.replace({ name: "graph" })
       .catch((err)=>{

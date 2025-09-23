@@ -442,6 +442,9 @@ async function readProject(projectRootDir) {
 async function setComponentStateR(projectRootDir, dir, state, doNotAdd = false, ignoreStates = []) {
   const filenames = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
   filenames.push(path.join(dir, componentJsonFilename));
+  if (!ignoreStates.includes(state)) {
+    ignoreStates.push(state);
+  }
   const p = filenames.map((filename)=>{
     return readJsonGreedy(filename)
       .then((component)=>{
@@ -521,14 +524,14 @@ async function addProject(projectDir, description) {
  * @param {string} oldDir - old projectRootDir
  */
 async function renameProject(id, argNewName, oldDir) {
-  const newName = argNewName.endsWith(suffix) ? argNewName : argNewName + suffix;
+  const newName = argNewName.endsWith(suffix) ? argNewName.slice(0, -suffix.length) : argNewName;
   if (!isValidName(newName)) {
     getLogger().error(newName, "is not allowed for project name");
     throw (new Error("illegal project name"));
   }
-  const newDir = path.resolve(path.dirname(oldDir), newName);
+  const newDir = path.resolve(path.dirname(oldDir), `${newName}${suffix}`);
   if (await fs.pathExists(newDir)) {
-    getLogger().error(newName, "is already exists");
+    getLogger().error(newName, "directory is already exists");
     throw (new Error("already exists"));
   }
 
@@ -589,17 +592,17 @@ async function isSameRemoteHost(projectRootDir, src, dst) {
   }
   const srcHostInfo = remoteHost.query("name", srcComponent.host);
   const dstHostInfo = remoteHost.query("name", dstComponent.host);
-  if (srcHostInfo.host === dstHostInfo.host) {
-    if (isDefaultPort(srcHostInfo.port)) {
-      return isDefaultPort(dstHostInfo.port);
-    } else {
-      return srcHostInfo.port === dstHostInfo.port;
-    }
-  }
+
   if (dstHostInfo.sharedHost === srcHostInfo.name) {
     return true;
   }
-  return false;
+
+  if (srcHostInfo.host !== dstHostInfo.host || srcHostInfo.user !== dstHostInfo.user) {
+    return false;
+  }
+  const srcHostPort = isDefaultPort(srcHostInfo.port) ? 22 : srcHostInfo.port;
+  const dstHostPort = isDefaultPort(dstHostInfo.port) ? 22 : dstHostInfo.port;
+  return srcHostPort === dstHostPort;
 }
 
 /**
@@ -982,9 +985,10 @@ async function checkRemoteStoragePathWritePermission(projectRootDir, { host, sto
  * @param {string[]} storageHosts - hosts set to storage component
  * @returns {Promise} - resolved if serch under parentID is done
  */
-async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) {
+async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts, gfarmHosts) {
   const promises = [];
   const children = await getChildren(projectRootDir, parentID);
+
   for (const component of children) {
     if (component.disable) {
       continue;
@@ -993,12 +997,14 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) 
       continue;
     }
     if (["task", "stepjob", "bulkjobTask"].includes(component.type)) {
-      hosts.push({ hostname: component.host, isStorage: false });
+      hosts.push({ hostname: component.host });
+    } else if (["hpciss", "hpcisstar"].includes(component.type)) {
+      gfarmHosts.push({ hostname: component.host, isGfarm: true });
     } else if (component.type === "storage") {
       storageHosts.push({ hostname: component.host, isStorage: true });
     }
     if (hasChild(component)) {
-      promises.push(recursiveGetHosts(projectRootDir, component.ID, hosts, storageHosts));
+      promises.push(recursiveGetHosts(projectRootDir, component.ID, hosts, storageHosts, gfarmHosts));
     }
   }
   return Promise.all(promises);
@@ -1013,15 +1019,20 @@ async function recursiveGetHosts(projectRootDir, parentID, hosts, storageHosts) 
 async function getHosts(projectRootDir, rootID) {
   const hosts = [];
   const storageHosts = [];
-  await recursiveGetHosts(projectRootDir, rootID, hosts, storageHosts);
+  const gfarmHosts = [];
+  await recursiveGetHosts(projectRootDir, rootID, hosts, storageHosts, gfarmHosts);
+
   const storageHosts2 = Array.from(new Set(storageHosts));
+  const gfarmHosts2 = Array.from(new Set(gfarmHosts));
+  const keepHosts = storageHosts2.concat(gfarmHosts2);
+
   const hosts2 = Array.from(new Set(hosts))
     .filter((host)=>{
-      return !storageHosts.some((e)=>{
+      return !keepHosts.some((e)=>{
         e.hostname === host.hostname;
       });
     });
-  return [...storageHosts2, ...hosts2];
+  return [...keepHosts, ...hosts2];
 }
 
 /**
@@ -1332,6 +1343,93 @@ async function setUploadOndemandOutputFile(projectRootDir, ID) {
   return renameOutputFile(projectRootDir, ID, 0, "UPLOAD_ONDEMAND");
 }
 
+async function removeInputFile(projectRootDir, ID, name) {
+  const counterparts = new Set();
+  const componentDir = await getComponentDir(projectRootDir, ID, true);
+  const componentJson = await readComponentJson(componentDir);
+  componentJson.inputFiles.forEach((inputFile)=>{
+    if (name === inputFile.name) {
+      for (const src of inputFile.src) {
+        counterparts.add(src);
+      }
+    }
+  });
+
+  for (const counterPart of counterparts) {
+    await removeFileLink(projectRootDir, counterPart.srcNode, counterPart.srcName, ID, name);
+  }
+
+  componentJson.inputFiles = componentJson.inputFiles.filter((inputFile)=>{
+    return name !== inputFile.name;
+  });
+  return writeComponentJson(projectRootDir, componentDir, componentJson);
+}
+async function removeOutputFile(projectRootDir, ID, name) {
+  const counterparts = new Set();
+  const componentDir = await getComponentDir(projectRootDir, ID, true);
+  const componentJson = await readComponentJson(componentDir);
+
+  componentJson.outputFiles = componentJson.outputFiles.filter((outputFile)=>{
+    if (name !== outputFile.name) {
+      return true;
+    }
+    for (const dst of outputFile.dst) {
+      counterparts.add(dst);
+    }
+    return false;
+  });
+
+  for (const counterPart of counterparts) {
+    await removeFileLink(projectRootDir, ID, name, counterPart.dstNode, counterPart.dstName);
+  }
+  return writeComponentJson(projectRootDir, componentDir, componentJson);
+}
+
+async function renameInputFile(projectRootDir, ID, index, newName) {
+  if (!isValidInputFilename(newName)) {
+    return Promise.reject(new Error(`${newName} is not valid inputFile name`));
+  }
+  const componentDir = await getComponentDir(projectRootDir, ID, true);
+  const componentJson = await readComponentJson(componentDir);
+  if (index < 0 || componentJson.inputFiles.length - 1 < index) {
+    return Promise.reject(new Error(`invalid index ${index}`));
+  }
+
+  const counterparts = new Set();
+  const oldName = componentJson.inputFiles[index].name;
+  componentJson.inputFiles[index].name = newName;
+  componentJson.inputFiles[index].src.forEach((e)=>{
+    counterparts.add(e.srcNode);
+  });
+  await writeComponentJson(projectRootDir, componentDir, componentJson);
+
+  const p = [];
+  for (const counterPartID of counterparts) {
+    const counterpartDir = await getComponentDir(projectRootDir, counterPartID, true);
+    const counterpartJson = await readComponentJson(counterpartDir);
+    for (const outputFile of counterpartJson.outputFiles) {
+      for (const dst of outputFile.dst) {
+        if (dst.dstNode === ID && dst.dstName === oldName) {
+          dst.dstName = newName;
+        }
+      }
+    }
+    if (Array.isArray(counterpartJson.inputFiles)) {
+      for (const inputFile of counterpartJson.inputFiles) {
+        if (Object.prototype.hasOwnProperty.call(inputFile, "forwardTo")) {
+          for (const dst of inputFile.forwardTo) {
+            if (dst.dstNode === ID && dst.dstName === oldName) {
+              dst.dstName = newName;
+            }
+          }
+        }
+      }
+    }
+    p.push(writeComponentJson(projectRootDir, counterpartDir, counterpartJson));
+  }
+  return Promise.all(p);
+}
+
 /**
  * rename outputFile
  * @param {string} projectRootDir - project's root path
@@ -1369,11 +1467,13 @@ async function renameOutputFile(projectRootDir, ID, index, newName) {
         }
       }
     }
-    for (const outputFile of counterpartJson.outputFiles) {
-      if (!Object.prototype.hasOwnProperty.call(outputFile, "origin")) {
-        for (const src of outputFile.origin) {
-          if (src.srcNode === ID && src.srcName === oldName) {
-            src.srcName = newName;
+    if (Array.isArray(counterpartJson.outputFiles)) {
+      for (const outputFile of counterpartJson.outputFiles) {
+        if (Object.prototype.hasOwnProperty.call(outputFile, "origin")) {
+          for (const src of outputFile.origin) {
+            if (src.srcNode === ID && src.srcName === oldName) {
+              src.srcName = newName;
+            }
           }
         }
       }
@@ -1685,6 +1785,9 @@ module.exports = {
   updateComponent,
   addInputFile,
   addOutputFile,
+  removeInputFile,
+  removeOutputFile,
+  renameInputFile,
   renameOutputFile,
   addLink,
   addFileLink,

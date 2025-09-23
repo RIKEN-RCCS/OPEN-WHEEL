@@ -111,6 +111,9 @@ class TaskSchema extends GeneralWorkflowComponentSchema {
     this.properties.include = stringArraySchema;
     this.properties.exclude = stringArraySchema;
     this.properties.state.enum.push(...["stage-in", "waiting", "queued", "stage-out"]);
+    this.properties.retryCondition = { type: ["string", "null"], default: null };
+    this.properties.retry = { type: ["number", "null"], default: null };
+    this.properties.ignoreFailure = { type: "boolean", default: false };
   }
 }
 
@@ -189,6 +192,14 @@ class StorageSchema extends BaseWorkflowComponentSchema {
   }
 }
 
+class HpcissSchema extends StorageSchema {
+  constructor(...args) {
+    super(...args);
+    this.properties.type = { enum: ["hpciss", "hpcisstar"] };
+    this.properties.host = { type: ["string", "null"], default: null };
+  }
+}
+
 class SourceSchema extends BaseWorkflowComponentSchema {
   constructor(...args) {
     super(...args);
@@ -216,6 +227,7 @@ class StepjobSchema extends GeneralWorkflowComponentSchema {
     this.properties.host = { type: "string", default: "localhost" };
     this.properties.useJobScheduler = { type: "boolean", default: false };
     this.properties.queue = { type: ["string", "null"], default: null };
+    this.properties.submitOption = { type: ["string", "null"], default: null };
   }
 }
 
@@ -391,6 +403,10 @@ function getSchema(type) {
       return JSON.parse(JSON.stringify(emptyArraySchema));
     case "psSettingFile":
       return psSettingFileSchema;
+    case "hpciss":
+      return new HpcissSchema();
+    case "hpcisstar":
+      return new HpcissSchema();
     default:
       return null;
   }

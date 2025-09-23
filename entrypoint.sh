@@ -18,4 +18,9 @@ if [ "xYES" == "x${WHEEL_ANONYMOUS_LOGIN}" ]; then
   export WHEEL_ENABLE_AUTH=YES
 fi
 
+SSH_ENV_FILE=/root/ssh_env
+ssh-agent -s > ${SSH_ENV_FILE}
+source ${SSH_ENV_FILE}
+echo "source ${SSH_ENV_FILE}" >> /root/.bashrc
+
 npm start

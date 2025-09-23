@@ -31,27 +31,27 @@
         <v-spacer />
         <v-btn
           class="text-capitalize"
-          @click="commit"
           prepend-icon="mdi-content-save-outline"
           text="Save selected files"
+          @click="commit"
         />
         <v-btn
           class="text-capitalize"
-          @click="commitAll"
           prepend-icon="mdi-content-save-all-outline"
           text="Save All"
+          @click="commitAll"
         />
         <v-btn
           class="text-capitalize"
-          @click="discardChanges"
-          prepend-icon=mdi-close-box-multiple-outline
+          prepend-icon="mdi-close-box-multiple-outline"
           text="discard all changes"
+          @click="discardChanges"
         />
         <v-btn
           class="text-capitalize"
+          prepend-icon="mdi-close"
+          text="cancel"
           @click="closeDialog"
-          prepend-icon=mdi-close
-          text=cancel
         />
       </v-card-actions>
     </v-card>
@@ -59,6 +59,7 @@
 </template>
 <script>
 export default {
+  name: "UnsavedFilesDialog",
   props: {
     unsavedFiles: {
       type: Array,
@@ -73,6 +74,7 @@ export default {
       default: false
     }
   },
+  emits: ["update:modelValue", "closed", "commit"],
   data() {
     return {
       headers: [
@@ -82,17 +84,17 @@ export default {
       selected: []
     };
   },
-  mounted() {
-    if (this.withoutStatus) {
-      this.headers.splice(0, 1);
-    }
-  },
   computed: {
     show() {
       return this.dialog;
     },
     items() {
       return this.unsavedFiles;
+    }
+  },
+  mounted() {
+    if (this.withoutStatus) {
+      this.headers.splice(0, 1);
     }
   },
   methods: {

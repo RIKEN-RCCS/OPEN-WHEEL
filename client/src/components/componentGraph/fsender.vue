@@ -1,27 +1,27 @@
 <template>
   <g>
-  <equilateral-triangle
-    :color=color
-    :center=end
-    :size=size
-    @drag="end=$event"
-    :draggable=true
-    @dragstart.stop=onDragStart
-    @dragend.stop=onDragEnd
-  />
-  <equilateral-triangle
-    :color=color
-    :center=start
-    :size=size
-    v-if=dragging
-  />
-  <connector
-    :color=color
-    :start=start
-    :end=end
-    :box-height=boxHeight
-  />
-</g>
+    <equilateral-triangle
+      :color="color"
+      :center="end"
+      :size="size"
+      :draggable="true"
+      @drag="end=$event"
+      @dragstart.stop="onDragStart"
+      @dragend.stop="onDragEnd"
+    />
+    <equilateral-triangle
+      v-if="dragging"
+      :color="color"
+      :center="start"
+      :size="size"
+    />
+    <connector
+      :color="color"
+      :start="start"
+      :end="end"
+      :box-height="boxHeight"
+    />
+  </g>
 </template>
 <script>
 "use strict";

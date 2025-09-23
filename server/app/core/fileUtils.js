@@ -11,7 +11,6 @@ const Mode = require("stat-mode");
 const { getLogger } = require("../logSettings.js");
 const { gitAdd } = require("./gitOperator2");
 const { projectJsonFilename } = require("../db/db");
-const { getSsh } = require("./sshManager.js");
 
 /**
  * read Json file until get some valid JSON data
@@ -80,80 +79,6 @@ async function addX(file) {
   }
   const modeString = u.toString() + g.toString() + o.toString();
   return fs.chmod(file, modeString);
-}
-
-/**
- * deliver src to dst
- * @param {string} src - absolute path of src path
- * @param {string} dst - absolute path of dst path
- * @param {boolean} forceCopy - use copy instead of symlink
- */
-async function deliverFile(src, dst, forceCopy = false) {
-  const stats = await fs.lstat(src);
-  const type = stats.isDirectory() ? "dir" : "file";
-  try {
-    if (forceCopy) {
-      await fs.copy(src, dst, { overwrite: true });
-      return { type: "copy", src, dst };
-    }
-    await fs.remove(dst);
-    await fs.ensureSymlink(src, dst, type);
-
-    return { type: `link-${type}`, src, dst };
-  } catch (e) {
-    if (e.code === "EPERM") {
-      await fs.copy(src, dst, { overwrite: false });
-      return { type: "copy", src, dst };
-    }
-    return Promise.reject(e);
-  }
-}
-
-/**
- * execut ln -s or cp -r command on remotehost to make shallow symlink
- * @param {object} recipe - deliver recipe which has src, dstination and more information
- * @returns {object} - result object
- */
-async function deliverFileOnRemote(recipe) {
-  const logger = getLogger(recipe.projectRootDir);
-  if (!recipe.onRemote) {
-    logger.warn("deliverFileOnRemote must be called with onRemote flag");
-    return null;
-  }
-  const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
-  const cmd = recipe.forceCopy ? "cp -r " : "ln -sf";
-  const sshCmd = `bash -O failglob -c 'mkdir -p ${recipe.dstRoot} 2>/dev/null; (cd ${recipe.dstRoot} && pwd && for i in ${recipe.srcName}; do ${cmd} ${recipe.srcRoot}/\${i} ${recipe.dstName} ;done)'`;
-  logger.debug("execute on remote", sshCmd);
-  const rt = await ssh.exec(sshCmd, 0, logger.debug.bind(logger));
-  if (rt !== 0) {
-    logger.warn("deliver file on remote failed", rt);
-    const err = new Error("deliver file on remote failed");
-    err.rt = rt;
-    return Promise.reject(err);
-  }
-  return { type: "copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
-}
-
-/**
- * deliver file from remotehost to localhost
- * @param {object} recipe - deliver recipe which has src, dstination and more information
- * @returns {object} - result object
- */
-async function deliverFileFromRemote(recipe) {
-  const logger = getLogger(recipe.projectRootDir);
-  if (!recipe.remoteToLocal) {
-    logger.warn("deliverFileFromRemote must be called with remoteToLocal flag");
-    return null;
-  }
-  const ssh = getSsh(recipe.projectRootDir, recipe.remotehostID);
-
-  try {
-    await ssh.recv([`${recipe.srcRoot}/${recipe.srcName}`], `${recipe.dstRoot}/${recipe.dstName}`, ["-vv"]);
-  } catch (e) {
-    console.log(e);
-    return Promise.reject(e);
-  }
-  return { type: "copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
 }
 
 /**
@@ -300,9 +225,6 @@ async function replaceCRLF(filename) {
 module.exports = {
   readJsonGreedy,
   addX,
-  deliverFile,
-  deliverFileOnRemote,
-  deliverFileFromRemote,
   openFile,
   saveFile,
   getUnusedPath,

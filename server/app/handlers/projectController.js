@@ -14,10 +14,11 @@ const SBS = require("simple-batch-system");
 const { getLogger } = require("../logSettings");
 const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
 const { deliverFile } = require("../core/fileUtils");
-const { gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
+const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getComponentDir } = require("../core/componentJsonIO.js");
 const { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR } = require("../core/projectFilesOperator");
-const { createSsh, removeSsh } = require("../core/sshManager");
+const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
+const { setJWTServerPassphrase, removeAllJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
 const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
 const { isValidOutputFilename } = require("../lib/utility");
 const { checkWritePermissions, parentDirs, eventEmitters } = require("../core/global.js");
@@ -25,6 +26,8 @@ const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, se
 const { emitAll, emitWithPromise } = require("./commUtils.js");
 const { removeTempd, getTempd } = require("../core/tempd.js");
 const { validateComponents } = require("../core/validateComponents.js");
+const { writeJsonWrapper } = require("../lib/utility");
+const { checkJWTAgent, startJWTAgent } = require("../core/gfarmOperator.js");
 const allowedOperations = require("../../../common/allowedOperations.cjs");
 
 const projectOperationQueues = new Map();
@@ -34,9 +37,9 @@ async function updateProjectState(projectRootDir, state) {
     await emitAll(projectRootDir, "projectState", projectJson.state);
   }
 }
-async function askUnsavedFiles(clientID, projectRootDir) {
+async function askUnsavedFiles(clientID, projectRootDir, targetDir) {
   const logger = getLogger(projectRootDir);
-  const unsavedFiles = await getUnsavedFiles(projectRootDir);
+  const unsavedFiles = await getUnsavedFiles(projectRootDir, targetDir);
   const filterdUnsavedFiles = unsavedFiles.filter((e)=>{
     return !(e.name === componentJsonFilename || e.name === projectJsonFilename);
   });
@@ -52,7 +55,7 @@ async function askUnsavedFiles(clientID, projectRootDir) {
       return unsaved.name;
     }));
   } else if (mode === "update") {
-    return askUnsavedFiles(clientID, projectRootDir);
+    return askUnsavedFiles(clientID, projectRootDir, targetDir);
   }
 }
 async function getSourceCandidates(projectRootDir, ID) {
@@ -199,20 +202,39 @@ async function onRunProject(clientID, projectRootDir, ack) {
 
       //create remotehost connection
       const hosts = await getHosts(projectRootDir, null);
+
       for (const host of hosts) {
         const id = remoteHost.getID("name", host.hostname);
-        const hostInfo = remoteHost.get(id);
-        if (!hostInfo) {
-          throw new Error(`illegal remote host specified ${hostInfo.name}`);
+        const hostinfo = remoteHost.get(id);
+        if (!hostinfo) {
+          throw new Error(`illegal remote host specified ${hostinfo.name}`);
         }
-        if (hostInfo.type === "aws") {
-          throw new Error(`aws type remotehost is no longer supported ${hostInfo.name}`);
+        if (hostinfo.type === "aws") {
+          throw new Error(`aws type remotehost is no longer supported ${hostinfo.name}`);
         }
-        getLogger(projectRootDir).debug(`make ssh connection to ${hostInfo.name}`);
-        await createSsh(projectRootDir, hostInfo.name, hostInfo, clientID, host.isStorage);
-        if (hostInfo.useWebAPI) {
-          getLogger(projectRootDir).debug(`start OIDC authorization for ${hostInfo.name}`);
+        getLogger(projectRootDir).debug(`make ssh connection to ${hostinfo.name}`);
+        await createSsh(projectRootDir, hostinfo.name, hostinfo, clientID, host.isStorage);
+        if (hostinfo.useWebAPI) {
+          getLogger(projectRootDir).debug(`start OIDC authorization for ${hostinfo.name}`);
           await makeOIDCAuth(clientID, id);
+        }
+        if (hostinfo.useGfarm && host.isGfarm) {
+          if (await checkJWTAgent(projectRootDir, hostinfo.id)) {
+            getLogger(projectRootDir).debug(`jwt-agent is already running on ${hostinfo.name}`);
+          } else {
+            getLogger(projectRootDir).debug(`get jwt-server passphrase for ${hostinfo.name}`);
+            const phGfarm = await askPassword(clientID, hostinfo.name, "passphrase", hostinfo.JWTServerURL);
+            getLogger(projectRootDir).debug(`start jwt-agent on ${hostinfo.name}`);
+            await startJWTAgent(projectRootDir, hostinfo.id, phGfarm);
+            const result = await checkJWTAgent(projectRootDir, hostinfo.id);
+            if (!result) {
+              const err = new Error(`start jwt-agent failed on ${hostinfo.name}`);
+              err.hostinfo = hostinfo;
+              throw err;
+            }
+            getLogger(projectRootDir).debug(`store jwt-server's passphrase ${hostinfo.name}`);
+            setJWTServerPassphrase(projectRootDir, hostinfo.id, phGfarm);
+          }
         }
         if (!checkWritePermissions.has(projectRootDir)) {
           checkWritePermissions.set(projectRootDir, []);
@@ -236,6 +258,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
         getLogger(projectRootDir).error("fatal error occurred while preparing phase:", err);
       }
       removeSsh(projectRootDir);
+      removeAllJWTServerPassphrase(projectRootDir);
       ack(err);
       return false;
     }
@@ -252,7 +275,13 @@ async function onRunProject(clientID, projectRootDir, ack) {
     ee.on("projectStateChanged", sendProjectJson.bind(null, projectRootDir));
     ee.on("taskDispatched", sendTaskStateList.bind(null, projectRootDir));
     ee.on("taskCompleted", sendTaskStateList.bind(null, projectRootDir));
-    ee.on("taskStateChanged", sendTaskStateList.bind(null, projectRootDir));
+    ee.on("taskStateChanged", async (task)=>{
+      await sendTaskStateList(projectRootDir);
+      if (task.ignoreFailure !== true && ["failed", "unknow"].includes(task.state)) {
+        await stopProject(projectRootDir);
+        await updateProjectState(projectRootDir, "stopped");
+      }
+    });
     ee.on("resultFilesReady", sendResultsFileDir.bind(null, projectRootDir));
 
     const { webhook } = await getProjectJson(projectRootDir);
@@ -286,6 +315,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
     await sendWorkflow(ack, projectRootDir);
     eventEmitters.delete(projectRootDir);
     removeSsh(projectRootDir);
+    removeAllJWTServerPassphrase(projectRootDir);
   }
   return;
 }
@@ -293,6 +323,25 @@ async function onStopProject(projectRootDir) {
   await stopProject(projectRootDir);
   await updateProjectState(projectRootDir, "stopped");
 }
+
+async function onCleanComponent(clientID, projectRootDir, targetComponentID) {
+  const componentDir = await getComponentDir(projectRootDir, targetComponentID);
+  try {
+    await askUnsavedFiles(clientID, projectRootDir, componentDir);
+  } catch (err) {
+    if (err.message === "canceled by user") {
+      return;
+    }
+    throw err;
+  }
+  await cleanProject(projectRootDir, componentDir);
+  await Promise.all([
+    sendWorkflow(null, projectRootDir),
+    sendTaskStateList(projectRootDir),
+    sendComponentTree(projectRootDir)
+  ]);
+}
+
 async function onCleanProject(clientID, projectRootDir) {
   try {
     await askUnsavedFiles(clientID, projectRootDir);
@@ -324,21 +373,28 @@ async function onRevertProject(clientID, projectRootDir) {
   ]);
 }
 async function onSaveProject(projectRootDir, ack) {
-  const { readOnly } = await getProjectJson(projectRootDir);
+  const projectJson = await getProjectJson(projectRootDir);
+  const { readOnly, state: projectState } = projectJson;
   if (readOnly) {
     getLogger(projectRootDir).error("readOnly project can not be saved", projectRootDir);
     return ack(new Error("project is read-only"));
   }
-  const projectState = await getProjectState(projectRootDir);
   if (!allowedOperations[projectState].includes("saveProject")) {
     getLogger(projectRootDir).error(projectState, "project can not be saved", projectRootDir);
     return ack(new Error(`${projectState} project is not allowed to save`));
   }
+  if (projectJson.exportInfo && projectJson.exportInfo.notChanged) {
+    projectJson.exportInfo.notChanged = false;
+  }
 
-  await setProjectState(projectRootDir, "not-started", true);
-  await setComponentStateR(projectRootDir, projectRootDir, "not-started", false, ["finished"]);
+  projectJson.state = "not-started";
+  const filename = path.resolve(projectRootDir, projectJsonFilename);
+  await writeJsonWrapper(filename, projectJson);
+  await gitAdd(projectRootDir, filename);
+  await setComponentStateR(projectRootDir, projectRootDir, "not-started", false, []);
   await gitCommit(projectRootDir);
 }
+
 async function projectOperator({ clientID, projectRootDir, ack, operation }) {
   const projectState = await getProjectState(projectRootDir);
   //ignore disallowd operation for this state
@@ -412,6 +468,7 @@ async function onProjectOperation(clientID, projectRootDir, operation, ack) {
 module.exports = {
   onGetProjectJson,
   onGetWorkflow,
+  onCleanComponent,
   onUpdateProjectDescription,
   onUpdateProjectROStatus,
   onProjectOperation

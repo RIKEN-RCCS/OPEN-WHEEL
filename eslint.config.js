@@ -6,7 +6,6 @@ import jsdoc from "eslint-plugin-jsdoc";
 import node from "eslint-plugin-node";
 import chaiFriendly from "eslint-plugin-chai-friendly";
 import vue from "eslint-plugin-vue";
-import vuetify from "eslint-plugin-vuetify";
 import vueParser from "vue-eslint-parser";
 
 const jsdocRules = {
@@ -24,6 +23,7 @@ const jsdocRules = {
 };
 
 const styleRules = {
+  "arrow-body-style": ["error", "always"],
   "@stylistic/arrow-spacing": [
     "error",
     {
@@ -125,6 +125,7 @@ export default [
   js.configs.recommended,
   jsdoc.configs["flat/recommended"],
   stylistic.configs["disable-legacy"],
+  ...vue.configs["flat/recommended"],
   stylistic.configs.customize({
     indent: 2,
     quotes: "double",
@@ -132,7 +133,7 @@ export default [
     arrowParens: true
   }),
   {
-    ignores: ["node_modules/", "server/app/public/", "test/", "documentMD/"]
+    ignores: ["node_modules/", "server/app/public/", "documentMD/"]
   },
   {
     files: ["client/**/*.js", "client/**/*.vue"],
@@ -148,12 +149,11 @@ export default [
       parser: vueParser
     },
     plugins: {
-      vue,
-      vuetify
+      vue
     }
   },
   {
-    files: ["server/app/**/*.js", "server/bin/*.js"],
+    files: ["server/app/**/*.js", "server/bin/*.js", "common/*.cjs"],
     plugins: {
       node
     },
@@ -172,7 +172,7 @@ export default [
     }
   },
   {
-    files: ["server/test/**/*.js"],
+    files: ["server/test/**/*.{cjs,js}"],
     plugins: {
       node,
       chaiFriendly
@@ -182,12 +182,40 @@ export default [
       globals: {
         ...globals.nodeBuiltin,
         ...globals.node,
-        it: "readonly",
-        describe: "readonly",
-        before: "readonly",
-        after: "readonly",
-        beforeEach: "readonly",
-        afterEach: "readonly"
+        ...globals.mocha
+      }
+    }
+  },
+  {
+    files: ["test/**/*.js"],
+    plugins: {
+      chaiFriendly
+    },
+    languageOptions: {
+      sourceType: "module",
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node,
+        ...globals.mocha,
+        expect: "readonly",
+        cy: "readonly",
+        Cypress: "readonly"
+      }
+    }
+  },
+  {
+    files: ["test/**/*.cjs"],
+    plugins: {
+      chaiFriendly
+    },
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node,
+        ...globals.mocha,
+        cy: "readonly",
+        Cypress: "readonly"
       }
     }
   },
@@ -203,6 +231,11 @@ export default [
     rules: {
       ...styleRules,
       ...jsdocRules,
+      "vue/multi-word-component-names": "off",
+      "vue/valid-v-slot": ["error", {
+        allowModifiers: true
+      }],
+      "vue/require-explicit-emits": "error",
       "no-nested-ternary": "off",
       "no-param-reassign": "warn",
       "camelcase": [

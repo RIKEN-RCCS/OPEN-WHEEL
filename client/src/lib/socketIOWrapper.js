@@ -36,6 +36,20 @@ const onGlobal = (event, callback)=>{
   }
   socket.on(event, callback);
 };
+const off = (event, callback)=>{
+  if (!initialized) {
+    debug(`on ${event} called but socketIO is not initialized`);
+    return;
+  }
+  socket.off(event, callback);
+};
+const once = (event, callback)=>{
+  if (!initialized) {
+    debug(`onve ${event} called but socketIO is not initialized`);
+    return;
+  }
+  socket.once(event, callback);
+};
 const emitGlobal = (event, ...args)=>{
   if (!initialized) {
     debug(`emit ${event} called but socketIO is not initialized`);
@@ -81,15 +95,22 @@ const getID = ()=>{
   return socket !== null ? socket.id : null;
 };
 
+function submitFile(file) {
+  uploader.submitFiles([file]);
+}
+
 export default {
   init,
   generalCallback,
   onGlobal,
+  once,
+  off,
   emitGlobal,
   close,
   listenOnDrop,
   prompt,
   onUploaderEvent,
   removeUploaderEvent,
-  getID
+  getID,
+  submitFile
 };
