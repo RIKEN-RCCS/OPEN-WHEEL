@@ -13,9 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: eWaterCycle/setup-apptainer@v2
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}
+      - run: "apptainer build wheel.sif docker-daemon://wheel:latest"
+      - name: create release and upload artifact
+        uses: softprops/action-gh-release@v1
+        with:
+          files: wheel.sif
+          tag_name: ${{ github.run_id }}
+          body: "release for ${{ github.sha }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   backup:
     needs: ["build_and_deploy"]
     env:
