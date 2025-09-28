@@ -17,8 +17,7 @@ jobs:
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}
-      - run: |
-        apptainer build wheel.sif docker-daemon://wheel:latest
+      - run: "apptainer build wheel.sif docker-daemon://wheel:latest"
       - name: create release and upload artifact
         uses: softprops/action-gh-release@v1
         with:
