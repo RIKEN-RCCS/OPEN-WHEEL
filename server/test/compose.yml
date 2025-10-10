@@ -19,5 +19,9 @@ services:
       WHEEL_USE_HTTP: 1
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
+      WHEEL_RUNNING_TEST: 1
+      WHEEL_LOGLEVEL: OFF
+      NODE_ENV: test
+
     volumes:
       - "./${WHEEL_CONFIG_DIR}:/usr/src/server/app/config"
