@@ -1,36 +1,8 @@
-/*
- * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
- * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * See License in the project root for the license information.
- */
-"use strict";
-const SshClientWrapper = require("ssh-client-wrapper");
-const path = require("path");
-
-//setup test framework
-const chai = require("chai");
-const expect = chai.expect;
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
-chai.use(require("chai-fs"));
-chai.use(require("chai-json-schema"));
-chai.use(require("chai-as-promised"));
-
-const rewire = require("rewire");
-const GFO = rewire("../../../app/core/gfarmOperator.js");
+const gfarmOperator = require("../../../app/core/gfarmOperator.js");
+const { _internal } = gfarmOperator;
 
 //testee
-const checkJWTAgent = GFO.__get__("checkJWTAgent");
-const startJWTAgent = GFO.__get__("startJWTAgent");
-const stopJWTAgent = GFO.__get__("stopJWTAgent");
-const gfcp = GFO.__get__("gfcp");
-const gfpcopy = GFO.__get__("gfpcopy");
-const gfptarCreate = GFO.__get__("gfptarCreate ");
-const gfptarExtract = GFO.__get__("gfptarExtract ");
-const gfptarList = GFO.__get__("gfptarList ");
-const gfls = GFO.__get__("gfls");
-const gfrm = GFO.__get__("gfrm");
-const gfmkdir = GFO.__get__("gfmkdir");
+const { checkJWTAgent, startJWTAgent, stopJWTAgent, gfcp, gfpcopy, gfptarCreate, gfptarExtract, gfptarList, gfls, gfrm, gfmkdir } = gfarmOperator;
 
 function checkEnv() {
   ["WHEEL_GFARMTEST_HOST",
@@ -47,7 +19,7 @@ function checkEnv() {
   });
 }
 
-describe("UT for gfarmOperator", function () {
+describe("UT for gfarmOperator", function() {
   this.timeout(0);
   const host = process.env.WHEEL_GFARMTEST_HOST;
   let JWTServerPassphrase = process.env.WHEEL_GFARMTEST_PASSPHRASE;
@@ -55,45 +27,37 @@ describe("UT for gfarmOperator", function () {
   const gfarmRoot = process.env.WHEEL_GFARMTEST_ROOT;
   const csgwRoot = process.env.WHEEL_GFARMTEST_CSGW_ROOT;
   let ssh;
-  let getSsh;
-  const getSshHostinfo = sinon.spy(()=>{
-    return {
-      JWTServerUser,
-      JWTServerURL: "https://elpis.hpci.nii.ac.jp/"
-    };
-  });
-  GFO.__set__("getSshHostinfo", getSshHostinfo);
-  const getJWTServerPassphrase = sinon.spy(()=>{
-    return JWTServerPassphrase;
-  });
-  GFO.__set__("getJWTServerPassphrase", getJWTServerPassphrase);
-  before(function () {
+  let getSshStub;
+  let getSshHostinfoStub;
+  let getJWTServerPassphraseStub;
+
+  before(function() {
     if (checkEnv()) {
       this.skip();
     }
     ssh = new SshClientWrapper({ host });
-    getSsh = sinon.spy(()=>{
-      return ssh;
-    });
-    GFO.__set__("getSsh", getSsh);
+    getSshStub = sinon.stub(_internal, "getSsh").resolves(ssh);
+    getSshHostinfoStub = sinon.stub(_internal, "getSshHostinfo").returns({ JWTServerUser, JWTServerURL: "https://elpis.hpci.nii.ac.jp/" });
+    getJWTServerPassphraseStub = sinon.stub(_internal, "getJWTServerPassphrase").returns(JWTServerPassphrase);
   });
   after(()=>{
     ssh.disconnect();
+    sinon.restore();
   });
   beforeEach(async ()=>{
-    getSsh.resetHistory();
+    getSshStub.resetHistory();
   });
   describe("checkJWTAgent, startJWTAgent, and stopJWTAgent test are depends on each other, so if one test failes then all three are not success", ()=>{
     describe("#checkJWTAgent", async ()=>{
       it("should return false if jwt-agent is not running", async ()=>{
         await stopJWTAgent(null, "dummyHostID");
         expect(await checkJWTAgent(null, "dummyHostID")).to.be.false;
-        expect(getSsh).always.to.be.calledWithMatch(null, "dummyHostID");
+        expect(getSshStub).always.to.be.calledWithMatch(null, "dummyHostID");
       });
       it("should return true if jwt-agent is running", async ()=>{
         await startJWTAgent(null, "dummyHostID");
         expect(await checkJWTAgent(null, "dummyHostID")).to.be.true;
-        expect(getSsh).always.to.be.calledWithMatch(null, "dummyHostID");
+        expect(getSshStub).always.to.be.calledWithMatch(null, "dummyHostID");
       });
     });
     describe("#startJWTAgent", async ()=>{
@@ -104,16 +68,15 @@ describe("UT for gfarmOperator", function () {
         expect(await checkJWTAgent(null, "dummyHostID")).to.be.false;
         expect(await startJWTAgent(null, "dummyHostID")).to.equal(0);
         expect(await checkJWTAgent(null, "dummyHostID")).to.be.true;
-        expect(getSsh).always.to.be.calledWithMatch(null, "dummyHostID");
+        expect(getSshStub).always.to.be.calledWithMatch(null, "dummyHostID");
       });
       it("sholud not start jwt-agent with wrong passphrase", async ()=>{
-        const originalJWTPassphrase = JWTServerPassphrase;
-        JWTServerPassphrase = "hoge";
+        getJWTServerPassphraseStub.returns("hoge");
         expect(await checkJWTAgent(null, "dummyHostID")).to.be.false;
         expect(await startJWTAgent(null, "dummyHostID")).to.equal(1);
         expect(await checkJWTAgent(null, "dummyHostID")).to.be.false;
-        expect(getSsh).always.to.be.calledWithMatch(null, "dummyHostID");
-        JWTServerPassphrase = originalJWTPassphrase;
+        expect(getSshStub).always.to.be.calledWithMatch(null, "dummyHostID");
+        getJWTServerPassphraseStub.returns(JWTServerPassphrase);
       });
       it("should return false if jwt-agent is already started", async ()=>{
         await startJWTAgent(null, "dummyHostID");
@@ -142,7 +105,7 @@ describe("UT for gfarmOperator", function () {
       }
     });
     beforeEach(async ()=>{
-      await gfrm (null, "dummyHostID", target);
+      await gfrm(null, "dummyHostID", target);
       await gfmkdir(null, "dummyHostID", target);
     });
     after(async ()=>{
@@ -196,13 +159,13 @@ describe("UT for gfarmOperator", function () {
           expect(result[0]).to.match(/^drwxr-xr-x .* foo$/);
         });
         it("should remove existing directory", async ()=>{
-          await gfrm (null, "dummyHostID", path.join(target, "foo"));
+          await gfrm(null, "dummyHostID", path.join(target, "foo"));
           const result = await gfls(null, "dummyHostID", target);
           expect(result).to.be.an("array").and.empty;
         });
         it("should remove directory recursively", async ()=>{
           await gfmkdir(null, "dummyHostID", path.join(target, "foo", "bar", "baz", "qux"));
-          await gfrm (null, "dummyHostID", path.join(target, "foo"));
+          await gfrm(null, "dummyHostID", path.join(target, "foo"));
           const result = await gfls(null, "dummyHostID", target);
           expect(result).to.be.an("array").and.empty;
         });

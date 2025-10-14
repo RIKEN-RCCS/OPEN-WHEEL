@@ -11,24 +11,36 @@ const { getSshHostinfo, getSsh } = require("./sshManager.js");
 const { getLogger } = require("../logSettings.js");
 const { register } = require("./transferManager.js");
 
+const _internal = {
+  addX,
+  replaceCRLF,
+  setTaskState,
+  needDownload,
+  makeDownloadRecipe,
+  getSshHostinfo,
+  getSsh,
+  getLogger,
+  register
+};
+
 /**
  * prepare task component on remotehost
  * @param {object} task - component to be executed on remotehost
  * @returns {Promise} - resolved after preparation done
  */
 async function stageIn(task) {
-  await setTaskState(task, "stage-in");
-  const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
+  await _internal.setTaskState(task, "stage-in");
+  const hostinfo = _internal.getSshHostinfo(task.projectRootDir, task.remotehostID);
 
   //convert \r\n to \n
   const localScriptPath = path.resolve(task.workingDir, task.script);
-  await replaceCRLF(localScriptPath);
+  await _internal.replaceCRLF(localScriptPath);
 
   //add exec permission to script
-  await addX(localScriptPath);
+  await _internal.addX(localScriptPath);
 
   //register send request
-  return register(hostinfo, task, "send", [task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
+  return _internal.register(hostinfo, task, "send", [task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
 }
 
 /**
@@ -41,18 +53,18 @@ async function stageOut(task) {
   if (taskState !== "finished") {
     return;
   }
-  await setTaskState(task, "stage-out");
-  const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
+  await _internal.setTaskState(task, "stage-out");
+  const hostinfo = _internal.getSshHostinfo(task.projectRootDir, task.remotehostID);
 
-  getLogger(task.projectRootDir).debug("start to get files from remote server if specified");
+  _internal.getLogger(task.projectRootDir).debug("start to get files from remote server if specified");
 
   const downloadRecipe = [];
   for (const outputFile of task.outputFiles) {
-    if (!await needDownload(task.projectRootDir, task.ID, outputFile)) {
-      getLogger(task.projectRootDir).trace(`${outputFile.name} will NOT be downloaded`);
+    if (!await _internal.needDownload(task.projectRootDir, task.ID, outputFile)) {
+      _internal.getLogger(task.projectRootDir).trace(`${outputFile.name} will NOT be downloaded`);
       continue;
     }
-    downloadRecipe.push(makeDownloadRecipe(task.projectRootDir, outputFile.name, task.remoteWorkingDir, task.workingDir));
+    downloadRecipe.push(_internal.makeDownloadRecipe(task.projectRootDir, outputFile.name, task.remoteWorkingDir, task.workingDir));
   }
 
   const promises = [];
@@ -67,7 +79,7 @@ async function stageOut(task) {
     }).map((e)=>{
       return e.src;
     });
-    promises.push(register(hostinfo, task, "recv", srces, dst));
+    promises.push(_internal.register(hostinfo, task, "recv", srces, dst));
   }
   let opt;
   if (Array.isArray(task.exclude)) {
@@ -78,7 +90,7 @@ async function stageOut(task) {
   //get files which match include filter
   if (Array.isArray(task.include) && task.include.length > 0) {
     const downloadRecipe2 = task.include.map((e)=>{
-      return makeDownloadRecipe(task.projectRootDir, e, task.remoteWorkingDir, task.workingDir);
+      return _internal.makeDownloadRecipe(task.projectRootDir, e, task.remoteWorkingDir, task.workingDir);
     });
     const dsts2 = Array.from(new Set(downloadRecipe2.map((e)=>{
       return e.dst;
@@ -89,27 +101,31 @@ async function stageOut(task) {
       }).map((e)=>{
         return e.src;
       });
-      promises.push(register(hostinfo, task, "recv", srces, dst, opt));
+      promises.push(_internal.register(hostinfo, task, "recv", srces, dst, opt));
     }
   }
 
   await Promise.all(promises);
   //clean up remote working directory
   if (task.doCleanup && taskState === "finished") {
-    getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
+    _internal.getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
 
     try {
-      const ssh = getSsh(task.projectRootDir, task.remotehostID);
+      const ssh = _internal.getSsh(task.projectRootDir, task.remotehostID);
       await ssh.exec(`rm -fr ${task.remoteWorkingDir}`);
     } catch (e) {
       //just log and ignore error
-      getLogger(task.projectRootDir).warn("remote cleanup failed but ignored", e);
+      _internal.getLogger(task.projectRootDir).warn("remote cleanup failed but ignored", e);
     }
   }
-  await setTaskState(task, taskState);
+  await _internal.setTaskState(task, taskState);
 }
 
 module.exports = {
   stageIn,
   stageOut
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

@@ -17,7 +17,14 @@ const Dispatcher = require("./dispatcher");
 const { getDateString } = require("../lib/utility");
 const { getLogger } = require("../logSettings.js");
 const { eventEmitters } = require("./global.js");
-const rootDispatchers = new Map();
+
+const _internal = {
+  rootDispatchers: new Map(),
+  eventEmitters,
+  gitClean,
+  gitResetHEAD,
+  setProjectState
+};
 
 /**
  * @event projectStateChanged
@@ -39,9 +46,9 @@ const rootDispatchers = new Map();
  * @param {string} state - status
  */
 async function updateProjectState(projectRootDir, state) {
-  const projectJson = await setProjectState(projectRootDir, state);
+  const projectJson = await _internal.setProjectState(projectRootDir, state);
   if (projectJson) {
-    const ee = eventEmitters.get(projectRootDir);
+    const ee = _internal.eventEmitters.get(projectRootDir);
     if (ee) {
       ee.emit("projectStateChanged", projectJson);
     }
@@ -54,8 +61,8 @@ async function updateProjectState(projectRootDir, state) {
  * @param {string} targetDir - If this argument is specified, limit git clean operations to under this directory
  */
 async function cleanProject(projectRootDir, targetDir) {
-  await gitResetHEAD(projectRootDir, targetDir);
-  await gitClean(projectRootDir, targetDir);
+  await _internal.gitResetHEAD(projectRootDir, targetDir);
+  await _internal.gitClean(projectRootDir, targetDir);
   //project state must be updated by onCleanProject()
   //temp dirs also removed by onCleanProject()
 };
@@ -65,10 +72,10 @@ async function cleanProject(projectRootDir, targetDir) {
  * @param {string} projectRootDir - project's root path
  */
 async function stopProject(projectRootDir) {
-  const rootDispatcher = rootDispatchers.get(projectRootDir);
+  const rootDispatcher = _internal.rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
     await rootDispatcher.remove();
-    rootDispatchers.delete(projectRootDir);
+    _internal.rootDispatchers.delete(projectRootDir);
   }
   removeExecuters(projectRootDir);
   removeTransferrers(projectRootDir);
@@ -82,7 +89,7 @@ async function stopProject(projectRootDir) {
  * @returns {string} - project status after run
  */
 async function runProject(projectRootDir) {
-  if (rootDispatchers.has(projectRootDir)) {
+  if (_internal.rootDispatchers.has(projectRootDir)) {
     return new Error(`project is already running ${projectRootDir}`);
   }
 
@@ -98,7 +105,7 @@ async function runProject(projectRootDir) {
   if (rootWF.cleanupFlag === "2") {
     rootDispatcher.doCleanup = defaultCleanupRemoteRoot;
   }
-  rootDispatchers.set(projectRootDir, rootDispatcher);
+  _internal.rootDispatchers.set(projectRootDir, rootDispatcher);
 
   await updateProjectState(projectRootDir, "running", projectJson);
   getLogger(projectRootDir).info("project start");
@@ -106,7 +113,7 @@ async function runProject(projectRootDir) {
   getLogger(projectRootDir).info(`project ${rootWF.state}`);
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
   await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
-  rootDispatchers.delete(projectRootDir);
+  _internal.rootDispatchers.delete(projectRootDir);
   removeExecuters(projectRootDir);
   removeTransferrers(projectRootDir);
   removeSsh(projectRootDir);
@@ -116,5 +123,10 @@ async function runProject(projectRootDir) {
 module.exports = {
   cleanProject,
   runProject,
-  stopProject
+  stopProject,
+  updateProjectState
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

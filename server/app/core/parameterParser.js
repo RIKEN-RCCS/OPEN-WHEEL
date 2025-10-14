@@ -221,5 +221,12 @@ module.exports = {
   paramVecGenerator,
   getParamSize,
   getFilenames,
-  getParamSpacev2
+  getParamSpacev2,
+  getNthParamVec,
+  getNthValue,
+  getDigitsAfterTheDecimalPoint,
+  getParamAxisSize,
+  calcParamAxisSize,
+  isValidParamAxis,
+  expandArrayOfGlob
 };

@@ -10,6 +10,13 @@ const { sanitizePath } = require("./pathUtils");
 const { evalCondition } = require("./dispatchUtils");
 const { readComponentJson } = require("./componentJsonIO.js");
 
+const _internal = {
+  fs,
+  evalCondition,
+  readComponentJson,
+  getInstanceDirectoryName
+};
+
 /**
  * return instance directory name
  * @param {object} component - component object
@@ -22,6 +29,7 @@ function getInstanceDirectoryName(component, index, originalName) {
   const name = typeof originalName === "string" ? originalName : component.originalName;
   return `${name}_${sanitizePath(suffix)}`;
 }
+_internal.getInstanceDirectoryName = getInstanceDirectoryName;
 
 /**
  * return previous index
@@ -54,8 +62,8 @@ async function keepLoopInstance(component, cwfDir) {
   const step = component.step || 1;
   const deleteComponentInstance = component.currentIndex - (component.keep * step);
   if (deleteComponentInstance >= 0) {
-    const target = path.resolve(cwfDir, getInstanceDirectoryName(component, deleteComponentInstance));
-    return fs.remove(target);
+    const target = path.resolve(cwfDir, _internal.getInstanceDirectoryName(component, deleteComponentInstance));
+    return _internal.fs.remove(target);
   }
 }
 
@@ -71,7 +79,7 @@ function forGetNextIndex(component) {
 /**
  * determine if for component is finished
  * @param {object} component - component object
- * @returns {boolean} -
+ * @returns {boolean} - 
  */
 function forIsFinished(component) {
   return (component.currentIndex > component.end && component.step > 0) || (component.currentIndex < component.end && component.step < 0);
@@ -103,7 +111,7 @@ function whileGetNextIndex(component) {
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component object
  * @param {object} env - environment variable
- * @returns {boolean} -
+ * @returns {boolean} - 
  */
 async function whileIsFinished(cwfDir, projectRootDir, component, env) {
   const cwd = path.resolve(cwfDir, component.name);
@@ -113,7 +121,7 @@ async function whileIsFinished(cwfDir, projectRootDir, component, env) {
   //for first loop trip. so we add this prop here. this only used in evalCondition
   //and never affect component.env and Dispatcher.env
   env.WHEEL_CURRENT_INDEX = component.currentIndex || 0;
-  const condition = await evalCondition(projectRootDir, component.condition, cwd, env);
+  const condition = await _internal.evalCondition(projectRootDir, component.condition, cwd, env);
   return !condition;
 }
 
@@ -158,7 +166,7 @@ function foreachGetPrevIndex(component, forceCalc) {
 /**
  * determine foreach component is finished
  * @param {object} component - component object
- * @returns {boolean} -
+ * @returns {boolean} - 
  */
 function foreachIsFinished(component) {
   return !component.indexList.includes(component.currentIndex);
@@ -167,7 +175,7 @@ function foreachIsFinished(component) {
 /**
  * get total number of foreach component's loop trip
  * @param {object} component - component object
- * @returns {boolean} -
+ * @returns {boolean} - 
  */
 function foreachTripCount(component) {
   return component.indexList.length;
@@ -186,9 +194,9 @@ async function foreachKeepLoopInstance(component, cwfDir) {
 
   const currentIndexNumber = component.currentIndex !== null ? component.indexList.indexOf(component.currentIndex) : component.indexList.length;
   const deleteComponentNumber = currentIndexNumber - component.keep;
-  const deleteComponentName = deleteComponentNumber >= 0 ? getInstanceDirectoryName(component, component.indexList[deleteComponentNumber]) : "";
+  const deleteComponentName = deleteComponentNumber >= 0 ? _internal.getInstanceDirectoryName(component, component.indexList[deleteComponentNumber]) : "";
   if (deleteComponentName) {
-    return fs.remove(path.resolve(cwfDir, deleteComponentName));
+    return _internal.fs.remove(path.resolve(cwfDir, deleteComponentName));
   }
 }
 
@@ -201,9 +209,9 @@ async function foreachKeepLoopInstance(component, cwfDir) {
 async function foreachSearchLatestFinishedIndex(component, cwfDir) {
   let rt = null;
   for (const index of component.indexList) {
-    const dir = path.resolve(cwfDir, getInstanceDirectoryName(component, index));
+    const dir = path.resolve(cwfDir, _internal.getInstanceDirectoryName(component, index));
     try {
-      const { state } = await readComponentJson(dir);
+      const { state } = await _internal.readComponentJson(dir);
       if (state === "finished") {
         rt = index;
       } else {
@@ -276,3 +284,7 @@ module.exports = {
   foreachSearchLatestFinishedIndex,
   loopInitialize
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

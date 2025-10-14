@@ -9,11 +9,11 @@ const path = require("path");
 const { promisify } = require("util");
 const { execFile } = require("child_process");
 const asyncExecFile = promisify(execFile);
-const rewire = require("rewire");
 
 //setup test framework
 const chai = require("chai");
 const expect = chai.expect;
+const sinon = require("sinon");
 chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
@@ -23,24 +23,7 @@ const { gitAdd, gitRm, gitStatus, gitCommit } = require("../../../app/core/gitOp
 const { componentJsonFilename, projectJsonFilename } = require("../../../app/db/db.js");
 
 //testee
-const PFO = rewire("../../../app/core/projectFilesOperator.js");
-const readProject = PFO.__get__("readProject");
-
-let onList = false;
-const projectList = PFO.__get__("projectList");
-projectList.query = ()=>{
-  return onList;
-};
-projectList.write = ()=>{};
-PFO.__set__("projectList", projectList);
-////for debug
-//PFO.__set__("getLogger", ()=>{return {
-//trace: console.log.bind(console),
-//debug: console.log.bind(console),
-//info: console.log.bind(console),
-//warn: console.log.bind(console),
-//error: console.log.bind(console)
-//}})
+const { readProject, _internal } = require("../../../app/core/projectFilesOperator.js");
 
 //test data
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
@@ -49,13 +32,27 @@ const projectRootDir = path.resolve(testDirRoot, "test_project.wheel");
 describe("readProject UT", function () {
   this.timeout(10000);
   let task0;
+  let projectListQueryStub;
+  let projectListWriteStub;
+  
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
+    
+    // Set up stubs for projectList
+    if (projectListQueryStub) projectListQueryStub.restore();
+    if (projectListWriteStub) projectListWriteStub.restore();
+    projectListQueryStub = sinon.stub(_internal.projectList, "query").returns(false);
+    projectListWriteStub = sinon.stub(_internal.projectList, "write");
+    
     await createNewProject(projectRootDir, "test_project", null, "test", "test@example.com");
     task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
     await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
     await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
     await gitCommit(projectRootDir);
+  });
+  afterEach(()=>{
+    if (projectListQueryStub) projectListQueryStub.restore();
+    if (projectListWriteStub) projectListWriteStub.restore();
   });
   after(async ()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {

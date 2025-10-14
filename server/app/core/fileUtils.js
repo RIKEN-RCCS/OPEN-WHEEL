@@ -12,6 +12,16 @@ const { getLogger } = require("../logSettings.js");
 const { gitAdd } = require("./gitOperator2");
 const { projectJsonFilename } = require("../db/db");
 
+const _internal = {
+  promiseRetry,
+  fs,
+  path,
+  Mode,
+  getLogger,
+  gitAdd,
+  readJsonGreedy
+};
+
 /**
  * read Json file until get some valid JSON data
  * @param {string} filename - filename to be read
@@ -19,8 +29,8 @@ const { projectJsonFilename } = require("../db/db");
  */
 async function readJsonGreedy(filename, retry) {
   const retries = typeof retry === "number" ? retry : 10;
-  return promiseRetry(async (retry)=>{
-    const buf = await fs.readFile(filename)
+  return _internal.promiseRetry(async (retry)=>{
+    const buf = await _internal.fs.readFile(filename)
       .catch((e)=>{
         if (e.code === "ENOENT") {
           return retry(e);
@@ -48,14 +58,15 @@ async function readJsonGreedy(filename, retry) {
     factor: 1
   });
 }
+_internal.readJsonGreedy = readJsonGreedy;
 
 /**
  * add execute permission to file
  * @param {string} file - filename in absolute path
  */
 async function addX(file) {
-  const stat = await fs.stat(file);
-  const mode = new Mode(stat);
+  const stat = await _internal.fs.stat(file);
+  const mode = new _internal.Mode(stat);
   let u = 4;
   let g = 4;
   let o = 4;
@@ -78,7 +89,7 @@ async function addX(file) {
     o += 2;
   }
   const modeString = u.toString() + g.toString() + o.toString();
-  return fs.chmod(file, modeString);
+  return _internal.fs.chmod(file, modeString);
 }
 
 /**
@@ -97,20 +108,20 @@ async function addX(file) {
  * @returns {File[]} - array of file object which is read
  */
 async function openFile(projectRootDir, argFilename, forceNormal = false) {
-  const absFilename = path.resolve(argFilename);
+  const absFilename = _internal.path.resolve(argFilename);
   let content;
   try {
-    const bufffer = await fs.readFile(absFilename);
+    const bufffer = await _internal.fs.readFile(absFilename);
     content = bufffer.toString();
   } catch (err) {
     if (err.code === "ENOENT") {
-      await fs.ensureFile(absFilename);
-      return [{ content: "", filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
+      await _internal.fs.ensureFile(absFilename);
+      return [{ content: "", filename: _internal.path.basename(absFilename), dirname: _internal.path.dirname(absFilename) }];
     }
     throw err;
   }
   if (forceNormal) {
-    return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
+    return [{ content, filename: _internal.path.basename(absFilename), dirname: _internal.path.dirname(absFilename) }];
   }
 
   //try to parse specified file as parameter setting file
@@ -119,21 +130,21 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
     contentJson = JSON.parse(content);
   } catch (err) {
     //read file is not parameter setting file
-    return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
+    return [{ content, filename: _internal.path.basename(absFilename), dirname: _internal.path.dirname(absFilename) }];
   }
   if (!Object.prototype.hasOwnProperty.call(contentJson, "targetFiles") || !Array.isArray(contentJson.targetFiles)) {
-    return [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename) }];
+    return [{ content, filename: _internal.path.basename(absFilename), dirname: _internal.path.dirname(absFilename) }];
   }
 
-  const rt = [{ content, filename: path.basename(absFilename), dirname: path.dirname(absFilename), isParameterSettingFile: true }];
+  const rt = [{ content, filename: _internal.path.basename(absFilename), dirname: _internal.path.dirname(absFilename), isParameterSettingFile: true }];
 
   //resolve targetFile's path
-  const dirname = path.dirname(absFilename);
-  const { componentPath } = await readJsonGreedy(path.resolve(projectRootDir, projectJsonFilename));
+  const dirname = _internal.path.dirname(absFilename);
+  const { componentPath } = await _internal.readJsonGreedy(_internal.path.resolve(projectRootDir, projectJsonFilename));
   const absTargetFiles = contentJson.targetFiles
     .map((targetFile)=>{
       if (typeof targetFile === "string") {
-        return path.resolve(dirname, targetFile);
+        return _internal.path.resolve(dirname, targetFile);
       }
       if (!Object.prototype.hasOwnProperty.call(targetFile, "targetName")) {
         return null;
@@ -142,11 +153,11 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
         //to avoid circurler dependency, do not use getComponentDir in projectFilesOperator.js
         const relativePath = componentPath[targetFile.targetNode];
         if (typeof relativePath !== "string") {
-          getLogger(projectRootDir).warn("illegal targetNode: ", targetFile.targetNode);
+          _internal.getLogger(projectRootDir).warn("illegal targetNode: ", targetFile.targetNode);
         }
-        return path.resolve(projectRootDir, relativePath, targetFile.targetName);
+        return _internal.path.resolve(projectRootDir, relativePath, targetFile.targetName);
       }
-      return path.resolve(dirname, targetFile.targetName);
+      return _internal.path.resolve(dirname, targetFile.targetName);
     })
     .filter((e)=>{
       return e !== null;
@@ -154,15 +165,15 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
 
   //read all targetFiles
   const contents = await Promise.all(absTargetFiles.map((targetFile)=>{
-    return fs.readFile(targetFile);
+    return _internal.fs.readFile(targetFile);
   }));
 
   rt.push(...absTargetFiles
     .map((targetFile, i)=>{
       return {
         content: contents[i].toString(),
-        dirname: path.dirname(targetFile),
-        filename: path.basename(targetFile)
+        dirname: _internal.path.dirname(targetFile),
+        filename: _internal.path.basename(targetFile)
       };
     }));
 
@@ -173,25 +184,25 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
  * write content to the file
  * @param {string} argFilename - target file's name
  * @param {*} content - content to write
- * @returns {Promise} -
+ * @returns {Promise} - 
  */
 async function saveFile(argFilename, content) {
-  const absFilename = path.resolve(argFilename);
-  await fs.writeFile(absFilename, content);
+  const absFilename = _internal.path.resolve(argFilename);
+  await _internal.fs.writeFile(absFilename, content);
 
-  const { root } = path.parse(absFilename);
-  let repoDir = path.dirname(absFilename);
-  while (!await fs.pathExists(path.join(repoDir, ".git"))) {
+  const { root } = _internal.path.parse(absFilename);
+  let repoDir = _internal.path.dirname(absFilename);
+  while (!await _internal.fs.pathExists(_internal.path.join(repoDir, ".git"))) {
     if (repoDir === root) {
       const err = new Error("git repository not found");
       err.filename = argFilename;
       err.absFilename = absFilename;
       throw err;
     }
-    repoDir = path.dirname(repoDir);
+    repoDir = _internal.path.dirname(repoDir);
   }
 
-  await gitAdd(repoDir, absFilename);
+  await _internal.gitAdd(repoDir, absFilename);
 }
 
 /**
@@ -201,15 +212,16 @@ async function saveFile(argFilename, content) {
  * @returns {string} - file or directory name with suffix
  */
 async function getUnusedPath(parent, name) {
-  const desiredPath = path.resolve(parent, name);
-  if (!await fs.pathExists(desiredPath)) {
+  const desiredPath = _internal.path.resolve(parent, name);
+  if (!await _internal.fs.pathExists(desiredPath)) {
     return desiredPath;
   }
   let suffix = 1;
-  while (await fs.pathExists(path.resolve(parent, `${name}.${suffix}`))) {
+  while (await _internal.fs.pathExists(_internal.path.resolve(parent, `${name}.${suffix}`)))
+ {
     ++suffix;
   }
-  return path.resolve(parent, `${name}.${suffix}`);
+  return _internal.path.resolve(parent, `${name}.${suffix}`);
 }
 
 /**
@@ -217,9 +229,9 @@ async function getUnusedPath(parent, name) {
  * @param {string} filename - tareget file name
  */
 async function replaceCRLF(filename) {
-  let contents = await fs.readFile(filename);
+  let contents = await _internal.fs.readFile(filename);
   contents = contents.toString().replace(/\r\n/g, "\n");
-  return fs.writeFile(filename, contents);
+  return _internal.fs.writeFile(filename, contents);
 }
 
 module.exports = {
@@ -230,3 +242,7 @@ module.exports = {
   getUnusedPath,
   replaceCRLF
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

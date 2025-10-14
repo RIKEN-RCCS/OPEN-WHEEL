@@ -7,15 +7,13 @@
 
 // setup test framework
 const { expect } = require("chai");
-const rewire = require("rewire");
-const rewRegexp = rewire("../../../../common/regexp.cjs");
 
 // testee
-const { isValidOutputFilename } = require("../../../../common/regexp.cjs");
-const { isValidInputFilename } = require("../../../../common/regexp.cjs");
-const { isValidName } = require("../../../../common/regexp.cjs");
-const isSane = rewRegexp.__get__("isSane");
-const { escapeRegExp } = require("../../../../common/regexp.cjs");
+const { isValidOutputFilename,
+  isValidInputFilename,
+  isValidName,
+  isSane, escapeRegExp,
+} = require("../../../../common/regexp.cjs");
 
 describe("UT for regexp class", () => {
   describe("#isValidOutputFilename", () => {

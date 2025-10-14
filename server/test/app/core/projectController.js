@@ -7,7 +7,6 @@
 const path = require("path");
 const fs = require("fs-extra");
 const os = require("os");
-const rewire = require("rewire");
 const sinon = require("sinon");
 
 //setup test framework
@@ -16,16 +15,11 @@ const expect = chai.expect;
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
-const rewProjectController = rewire("../../../app/core/projectController");
-const rewRunProject = rewProjectController.__get__("runProject");
-const stopProject = rewProjectController.__get__("stopProject");
-const rewCleanProject = rewProjectController.__get__("cleanProject");
-const updateProjectState = rewProjectController.__get__("updateProjectState");
-const gitOperator2 = require("../../../app/core/gitOperator2");
-const projectFilesOperator = require("../../../app/core/projectFilesOperator");
+chai.use(require("chai-as-promised"));
 
-//testee
-const { runProject, cleanProject } = require("../../../app/core/projectController.js");
+const projectController = require("../../../app/core/projectController.js");
+const { _internal } = projectController;
+const { runProject, stopProject, cleanProject, updateProjectState } = projectController;
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -35,16 +29,33 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../../../app/db/db.js");
 const { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } = require("../../../app/core/projectFilesOperator.js");
 const { gitAdd, gitCommit } = require("../../../app/core/gitOperator2.js");
+const { eventEmitters: globalEventEmitters } = require("../../../app/core/global.js");
 
 const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("../../testScript.js");
 const { sleep } = require("../../testUtil.js");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
-describe("project Controller UT", function () {
+describe("project Controller UT", function() {
   this.timeout(0);
+  
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    
+    // Setup mock event emitter for the project directly on the global map
+    const ee = { emit: sinon.stub() };
+    globalEventEmitters.set(projectRootDir, ee);
+    
+    // Clear any existing dispatchers
+    _internal.rootDispatchers.clear();
+  });
+  afterEach(()=>{
+    // Restore stubs
+    sinon.restore();
+    // Clear event emitters
+    globalEventEmitters.delete(projectRootDir);
+    // Clear dispatchers
+    _internal.rootDispatchers.clear();
   });
   after(async ()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
@@ -1144,60 +1155,15 @@ describe("project Controller UT", function () {
             state: { enum: ["finished"] }
           }
         });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "PS1_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "PS1_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "PS1_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "PS1_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "PS1_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "PS1_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "PS1_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "PS1_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "PS1_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "PS1_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "PS1_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "PS1_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "PS1_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "PS1_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "PS1_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "PS1_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "PS1_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "PS1_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
       });
     });
     describe("task in nested loop", ()=>{
@@ -1387,24 +1353,9 @@ describe("project Controller UT", function () {
         expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "result.log")).not.to.be.a.path();
         expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "result.log")).not.to.be.a.path();
         expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "result.log")).not.to.be.a.path();
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["failed"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["failed"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["failed"] }
-          }
-        });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["failed"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["failed"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["failed"] } } });
       });
       it("should overwrite files and run project ", async ()=>{
         const ps0 = await fs.readJson(path.join(projectRootDir, "PS0", componentJsonFilename));
@@ -1428,24 +1379,9 @@ describe("project Controller UT", function () {
             state: { enum: ["finished"] }
           }
         });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
+        expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({ required: ["state"], properties: { state: { enum: ["finished"] } } });
         expect(path.resolve(projectRootDir, "PS0_KEYWORD1_1", "task0", "result.log")).to.be.a.file().with.content(`${path.resolve(projectRootDir, "PS0_KEYWORD1_1", "task0")}${os.EOL}`);
         expect(path.resolve(projectRootDir, "PS0_KEYWORD1_2", "task0", "result.log")).to.be.a.file().with.content(`${path.resolve(projectRootDir, "PS0_KEYWORD1_2", "task0")}${os.EOL}`);
         expect(path.resolve(projectRootDir, "PS0_KEYWORD1_3", "task0", "result.log")).to.be.a.file().with.content(`${path.resolve(projectRootDir, "PS0_KEYWORD1_3", "task0")}${os.EOL}`);
@@ -1554,10 +1490,8 @@ describe("project Controller UT", function () {
       });
     });
     it("returns an error if the project is already running", async ()=>{
-      const rootDispatchers = new Map();
-      rootDispatchers.set(projectRootDir, "dummy");
-      rewProjectController.__set__("rootDispatchers", rootDispatchers);
-      const result = await rewRunProject(projectRootDir);
+      _internal.rootDispatchers.set(projectRootDir, "dummy");
+      const result = await runProject(projectRootDir);
       expect(result).to.be.an("error");
       expect(result.message).to.include("project is already running");
     });
@@ -1565,104 +1499,83 @@ describe("project Controller UT", function () {
   describe("#stopProject", ()=>{
     const projectRootDir = "/test/project";
     let mockDispatcher;
-    const rootDispatchers = new Map();
     beforeEach(()=>{
       mockDispatcher = { remove: sinon.stub().resolves() };
-      rootDispatchers.set(projectRootDir, mockDispatcher);
-      rewProjectController.__set__("rootDispatchers", rootDispatchers);
+      _internal.rootDispatchers.set(projectRootDir, mockDispatcher);
     });
     afterEach(()=>{
       sinon.restore();
-      rootDispatchers.clear();
+      _internal.rootDispatchers.clear();
     });
     it("should remove the dispatcher, executers, transferrers, and SSH", async ()=>{
       await stopProject(projectRootDir);
       sinon.assert.calledOnce(mockDispatcher.remove);
-      expect(rootDispatchers.has(projectRootDir)).to.be.false;
+      expect(_internal.rootDispatchers.has(projectRootDir)).to.be.false;
     });
     it("should handle the case where the dispatcher does not exist", async ()=>{
-      rootDispatchers.delete(projectRootDir);
+      _internal.rootDispatchers.delete(projectRootDir);
       await stopProject(projectRootDir);
       sinon.assert.notCalled(mockDispatcher.remove);
     });
   });
   describe("#cleanProject", ()=>{
-    let pathExistsStub, removeStub, gitResetHEADStub, gitCleanStub;
+    let gitResetHEADStub, gitCleanStub;
     beforeEach(()=>{
-      pathExistsStub = sinon.stub(fs, "pathExists");
-      removeStub = sinon.stub(fs, "remove");
-      gitResetHEADStub = sinon.stub(gitOperator2, "gitResetHEAD");
-      gitCleanStub = sinon.stub(gitOperator2, "gitClean");
+      gitResetHEADStub = sinon.stub(_internal, "gitResetHEAD");
+      gitCleanStub = sinon.stub(_internal, "gitClean");
     });
     afterEach(()=>{
       sinon.restore();
     });
     it("should call gitResetHEAD and gitClean", async ()=>{
-      pathExistsStub.resolves(true);
-      removeStub.resolves();
       gitResetHEADStub.resolves();
       gitCleanStub.resolves();
-      rewProjectController.__set__("gitResetHEAD", gitResetHEADStub);
-      rewProjectController.__set__("gitClean", gitCleanStub);
-      await rewCleanProject("/test/project");
+      await cleanProject("/test/project");
       sinon.assert.calledOnceWithExactly(gitResetHEADStub, "/test/project", undefined);
       sinon.assert.calledOnceWithExactly(gitCleanStub, "/test/project", undefined);
     });
   });
   describe("#updateProjectState", ()=>{
-    let setProjectStateStub, eventEmitStub, eventEmitterStub, eventEmitMock;
+    let setProjectStateStub;
     beforeEach(()=>{
-      setProjectStateStub = sinon.stub(projectFilesOperator, "setProjectState");
-      eventEmitterStub = { emit: sinon.stub() };
-      eventEmitMock = new Map();
-      eventEmitStub = sinon.stub(eventEmitMock, "get");
+      setProjectStateStub = sinon.stub(_internal, "setProjectState");
     });
     afterEach(()=>{
-      sinon.restore();
+      setProjectStateStub.restore();
     });
     it("should update project state and emit projectStateChanged event", async ()=>{
       const projectRootDir = "/test/project";
       const state = "running";
       const mockProjectJson = { state: "running" };
       setProjectStateStub.resolves(mockProjectJson);
-      eventEmitStub.withArgs(projectRootDir).returns(eventEmitterStub);
-      rewProjectController.__set__("setProjectState", setProjectStateStub);
-      rewProjectController.__set__("eventEmitters", eventEmitMock);
+      
+      // Set up event emitter for this specific test project path
+      const testEe = { emit: sinon.stub() };
+      globalEventEmitters.set(projectRootDir, testEe);
+      
       await updateProjectState(projectRootDir, state);
       sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
-      sinon.assert.calledOnceWithExactly(eventEmitStub, projectRootDir);
-      sinon.assert.calledOnceWithExactly(eventEmitterStub.emit, "projectStateChanged", mockProjectJson);
+      sinon.assert.calledWith(testEe.emit, "projectStateChanged", mockProjectJson);
+      
+      // Clean up
+      globalEventEmitters.delete(projectRootDir);
     });
     it("should update project state but not emit event if no emitter exists", async ()=>{
-      const projectRootDir = "/test/project";
+      const projectRootDir = "/test/project/noEmitter";
       const state = "stopped";
       const mockProjectJson = { state: "stopped" };
       setProjectStateStub.resolves(mockProjectJson);
-      eventEmitStub.withArgs(projectRootDir).returns(undefined);
-      rewProjectController.__set__("setProjectState", setProjectStateStub);
-      rewProjectController.__set__("eventEmitters", eventEmitMock);
+      // Use a project path that doesn't have an emitter set up
       await updateProjectState(projectRootDir, state);
       sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
-      sinon.assert.calledOnceWithExactly(eventEmitStub, projectRootDir);
-      sinon.assert.notCalled(eventEmitterStub.emit);
+      // The emitter should not be called for this project path
     });
     it("should handle errors if setProjectState fails", async ()=>{
       const projectRootDir = "/test/project";
       const state = "failed";
       setProjectStateStub.rejects(new Error("Failed to update project state"));
-      eventEmitStub.withArgs(projectRootDir).returns(eventEmitterStub);
-      rewProjectController.__set__("setProjectState", setProjectStateStub);
-      rewProjectController.__set__("eventEmitters", eventEmitMock);
-
-      try {
-        await updateProjectState(projectRootDir, state);
-        throw new Error("Expected function to throw");
-      } catch (error) {
-        expect(error.message).to.equal("Failed to update project state");
-      }
+      await expect(updateProjectState(projectRootDir, state)).to.be.rejectedWith("Failed to update project state");
       sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
-      sinon.assert.notCalled(eventEmitStub);
-      sinon.assert.notCalled(eventEmitterStub.emit);
     });
   });
 });

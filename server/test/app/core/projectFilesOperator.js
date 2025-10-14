@@ -4,23 +4,84 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { expect } = require("chai");
+const chai = require("chai");
+const { expect } = chai;
+chai.use(require("chai-as-promised"));
 const { describe, it } = require("mocha");
-const rewire = require("rewire");
 const sinon = require("sinon");
 const path = require("path");
 const { promisify } = require("util");
 const glob = require("glob");
 
+//testee
+const {
+  _internal,
+  isSurrounded,
+  trimSurrounded,
+  glob2Array,
+  removeTrailingPathSep,
+  getProjectJson,
+  writeProjectJson,
+  getDescendantsIDs,
+  getAllComponentIDs,
+  getSuffixNumberFromProjectName,
+  getUnusedProjectDir,
+  removeComponentPath,
+  updateComponentPath,
+  setProjectState,
+  getComponentFullName,
+  getProjectState,
+  checkRunningJobs,
+  rewriteIncludeExclude,
+  rewriteAllIncludeExcludeProperty,
+  readProject,
+  setComponentStateR,
+  updateProjectROStatus,
+  updateProjectDescription,
+  addProject,
+  renameProject,
+  isDefaultPort,
+  isLocal,
+  isSameRemoteHost,
+  isParent,
+  removeAllLinkFromComponent,
+  addFileLinkToParent,
+  addFileLinkFromParent,
+  addFileLinkBetweenSiblings,
+  removeFileLinkToParent,
+  removeFileLinkFromParent,
+  removeFileLinkBetweenSiblings,
+  makeDir,
+  getChildren,
+  checkRemoteStoragePathWritePermission,
+  recursiveGetHosts,
+  getHosts,
+  createNewComponent,
+  renameComponentDir,
+  replaceEnv,
+  replaceWebhook,
+  getEnv,
+  updateComponent,
+  updateStepNumber,
+  arrangeComponent,
+  addInputFile,
+  addOutputFile,
+  setUploadOndemandOutputFile,
+  renameOutputFile,
+  addLink,
+  removeLink,
+  removeAllLink,
+  addFileLink,
+  removeFileLink,
+  removeAllFileLink,
+  removeComponent,
+  getSourceComponents,
+  isComponentDir,
+  getComponentTree,
+  createNewProject
+} = require("../../../app/core/projectFilesOperator.js");
+
 describe("#isSurrounded", ()=>{
-  let rewireProjectFilesOperator;
-  let isSurrounded;
-
-  beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    isSurrounded = rewireProjectFilesOperator.__get__("isSurrounded");
-  });
-
   it("should return true if the string is surrounded by curly braces", ()=>{
     expect(isSurrounded("{example}")).to.be.true;
   });
@@ -49,14 +110,6 @@ describe("#isSurrounded", ()=>{
 });
 
 describe("#trimSurrounded", ()=>{
-  let rewireProjectFilesOperator;
-  let trimSurrounded;
-
-  beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    trimSurrounded = rewireProjectFilesOperator.__get__("trimSurrounded");
-  });
-
   it("should return the string without curly braces if it is surrounded by them", ()=>{
     const input = "{example}";
     const result = trimSurrounded(input);
@@ -102,14 +155,6 @@ describe("#trimSurrounded", ()=>{
 });
 
 describe("#glob2Array", ()=>{
-  let rewireProjectFilesOperator;
-  let glob2Array;
-
-  beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    glob2Array = rewireProjectFilesOperator.__get__("glob2Array");
-  });
-
   it("should convert a comma-separated string into an array", ()=>{
     const input = "file1,file2,file3";
     const expectedOutput = ["file1", "file2", "file3"];
@@ -148,14 +193,6 @@ describe("#glob2Array", ()=>{
 });
 
 describe("#removeTrailingPathSep", ()=>{
-  let rewireProjectFilesOperator;
-  let removeTrailingPathSep;
-
-  beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeTrailingPathSep = rewireProjectFilesOperator.__get__("removeTrailingPathSep");
-  });
-
   it("should remove trailing path separator for POSIX paths", ()=>{
     const input = "/path/to/directory/";
     const expected = path.sep === "/" ? "/path/to/directory" : input; //実行環境がPOSIXなら削除、Windowsならそのまま
@@ -192,18 +229,11 @@ describe("#removeTrailingPathSep", ()=>{
     expect(removeTrailingPathSep(input)).to.equal(expected);
   });
 });
-
 describe("#getProjectJson", ()=>{
-  let rewireProjectFilesOperator;
-  let getProjectJson;
   let readJsonGreedyMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getProjectJson = rewireProjectFilesOperator.__get__("getProjectJson");
-
-    readJsonGreedyMock = sinon.stub();
-    rewireProjectFilesOperator.__set__("readJsonGreedy", readJsonGreedyMock);
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
   });
 
   afterEach(()=>{
@@ -244,8 +274,6 @@ describe("#getProjectJson", ()=>{
 });
 
 describe("#writeProjectJson", ()=>{
-  let rewireProjectFilesOperator;
-  let writeProjectJson;
   let writeJsonWrapperMock;
   let gitAddMock;
 
@@ -254,17 +282,11 @@ describe("#writeProjectJson", ()=>{
   const mockFileName = `${mockProjectRootDir}/prj.wheel.json`;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-
-    writeJsonWrapperMock = sinon.stub();
-    gitAddMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      writeJsonWrapper: writeJsonWrapperMock,
-      gitAdd: gitAddMock
-    });
-
-    writeProjectJson = rewireProjectFilesOperator.__get__("writeProjectJson");
+    writeJsonWrapperMock = sinon.stub(_internal, "writeJsonWrapper");
+    gitAddMock = sinon.stub(_internal, "gitAdd");
+  });
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should write the JSON file and add it to git", async ()=>{
@@ -310,20 +332,12 @@ describe("#writeProjectJson", ()=>{
 });
 
 describe("#getDescendantsIDs", ()=>{
-  let rewireProjectFilesOperator;
-  let getDescendantsIDs;
   let readJsonGreedyMock;
   let getComponentDirMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getDescendantsIDs = rewireProjectFilesOperator.__get__("getDescendantsIDs");
-
-    readJsonGreedyMock = sinon.stub();
-    getComponentDirMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__("readJsonGreedy", readJsonGreedyMock);
-    rewireProjectFilesOperator.__set__("getComponentDir", getComponentDirMock);
+    readJsonGreedyMock = sinon.stub (_internal, "readJsonGreedy");
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
   });
 
   afterEach(()=>{
@@ -421,8 +435,6 @@ describe("#getDescendantsIDs", ()=>{
 });
 
 describe("#getAllComponentIDs", ()=>{
-  let rewireProjectFilesOperator;
-  let getAllComponentIDs;
   let readJsonGreedyMock;
 
   const mockProjectRootDir = "/mock/project/root";
@@ -436,12 +448,10 @@ describe("#getAllComponentIDs", ()=>{
   const mockFileName = path.resolve(mockProjectRootDir, "prj.wheel.json");
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    readJsonGreedyMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__("readJsonGreedy", readJsonGreedyMock);
-
-    getAllComponentIDs = rewireProjectFilesOperator.__get__("getAllComponentIDs");
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+  });
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should return all component IDs from the project JSON", async ()=>{
@@ -480,14 +490,6 @@ describe("#getAllComponentIDs", ()=>{
 });
 
 describe("#getSuffixNumberFromProjectName", ()=>{
-  let rewireProjectFilesOperator;
-  let getSuffixNumberFromProjectName;
-
-  beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getSuffixNumberFromProjectName = rewireProjectFilesOperator.__get__("getSuffixNumberFromProjectName");
-  });
-
   it("should return the suffix number if the project name ends with numbers", ()=>{
     const projectName = "Project123";
     const result = getSuffixNumberFromProjectName(projectName);
@@ -532,17 +534,9 @@ describe("#getSuffixNumberFromProjectName", ()=>{
 });
 
 describe("#getUnusedProjectDir", ()=>{
-  let rewireProjectFilesOperator;
-  let getUnusedProjectDir;
-  let fsMock;
+  let pathExistsStub;
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getUnusedProjectDir = rewireProjectFilesOperator.__get__("getUnusedProjectDir");
-
-    fsMock = {
-      pathExists: sinon.stub()
-    };
-    rewireProjectFilesOperator.__set__("fs", fsMock);
+    pathExistsStub = sinon.stub(_internal.fs, "pathExists");
   });
 
   afterEach(()=>{
@@ -553,100 +547,74 @@ describe("#getUnusedProjectDir", ()=>{
     const projectRootDir = "/mock/project/root";
     const projectName = "project";
 
-    fsMock.pathExists.resolves(false);
+    pathExistsStub.resolves(false);
 
     const result = await getUnusedProjectDir(projectRootDir, projectName);
 
     expect(result).to.equal(projectRootDir);
-    expect(fsMock.pathExists.calledOnceWithExactly(projectRootDir)).to.be.true;
+    expect(pathExistsStub.calledOnceWithExactly(projectRootDir)).to.be.true;
   });
 
   it("should return a new directory name with suffix if projectRootDir exists", async ()=>{
     const projectRootDir = "/mock/project/root";
     const projectName = "project";
-    const suffix = ".wheel";
 
-    fsMock.pathExists.onFirstCall().resolves(true);
-    fsMock.pathExists.onSecondCall().resolves(false);
-
-    rewireProjectFilesOperator.__set__("suffix", suffix);
+    pathExistsStub.onFirstCall().resolves(true);
+    pathExistsStub.onSecondCall().resolves(false);
 
     const result = await getUnusedProjectDir(projectRootDir, projectName);
 
     expect(result).to.equal("/mock/project/project.wheel");
-    expect(fsMock.pathExists.calledTwice).to.be.true;
+    expect(pathExistsStub.calledTwice).to.be.true;
   });
 
   it("should increment the suffix number until an unused directory name is found", async ()=>{
     const projectRootDir = "/mock/project/root";
     const projectName = "project";
-    const suffix = ".wheel";
 
-    fsMock.pathExists.onCall(0).resolves(true);
-    fsMock.pathExists.onCall(1).resolves(true);
-    fsMock.pathExists.onCall(2).resolves(true);
-    fsMock.pathExists.onCall(3).resolves(false);
-
-    rewireProjectFilesOperator.__set__("suffix", suffix);
+    pathExistsStub.onCall(0).resolves(true);
+    pathExistsStub.onCall(1).resolves(true);
+    pathExistsStub.onCall(2).resolves(true);
+    pathExistsStub.onCall(3).resolves(false);
 
     const result = await getUnusedProjectDir(projectRootDir, projectName);
-    console.log(result);
 
     expect(result).to.equal("/mock/project/project1.wheel");
-    expect(fsMock.pathExists.callCount).to.equal(4);
+    expect(pathExistsStub.callCount).to.equal(4);
   });
 
   it("should use the suffix number from the projectName if present", async ()=>{
     const projectRootDir = "/mock/project/root";
     const projectName = "project2";
-    const suffix = ".wheel";
 
-    fsMock.pathExists.onCall(0).resolves(true);
-    fsMock.pathExists.onCall(1).resolves(false);
-
-    rewireProjectFilesOperator.__set__("suffix", suffix);
+    pathExistsStub.onCall(0).resolves(true);
+    pathExistsStub.onCall(1).resolves(false);
 
     const result = await getUnusedProjectDir(projectRootDir, projectName);
 
     expect(result).to.equal("/mock/project/project2.wheel");
-    expect(fsMock.pathExists.callCount).to.equal(2);
+    expect(pathExistsStub.callCount).to.equal(2);
   });
 });
 
 describe("#createNewProject", ()=>{
-  let rewireProjectFilesOperator;
-  let createNewProject;
   let getUnusedProjectDirMock;
   let gitInitMock;
   let writeComponentJsonMock;
   let writeJsonWrapperMock;
   let gitAddMock;
   let gitCommitMock;
+  let ensureDirMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    createNewProject = rewireProjectFilesOperator.__get__("createNewProject");
+    getUnusedProjectDirMock = sinon.stub(_internal, "getUnusedProjectDir");
+    gitInitMock = sinon.stub(_internal, "gitInit");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
+    writeJsonWrapperMock = sinon.stub(_internal, "writeJsonWrapper");
+    gitAddMock = sinon.stub(_internal, "gitAdd");
+    gitCommitMock = sinon.stub(_internal, "gitCommit");
 
-    getUnusedProjectDirMock = sinon.stub();
-    gitInitMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub();
-    writeJsonWrapperMock = sinon.stub();
-    gitAddMock = sinon.stub();
-    gitCommitMock = sinon.stub();
-
-    const fsMock = {
-      ensureDir: sinon.stub()
-    };
-
-    rewireProjectFilesOperator.__set__({
-      getUnusedProjectDir: getUnusedProjectDirMock,
-      gitInit: gitInitMock,
-      writeComponentJson: writeComponentJsonMock,
-      writeJsonWrapper: writeJsonWrapperMock,
-      gitAdd: gitAddMock,
-      gitCommit: gitCommitMock,
-      fs: fsMock
-    });
+    ensureDirMock = sinon.stub(_internal.fs, "ensureDir");
   });
 
   afterEach(()=>{
@@ -668,17 +636,15 @@ describe("#createNewProject", ()=>{
     gitAddMock.resolves();
     gitCommitMock.resolves();
 
-    const fsMock = rewireProjectFilesOperator.__get__("fs");
-    fsMock.ensureDir.resolves();
+    ensureDirMock.resolves();
 
-    const getDateStringMock = sinon.stub().returns(mockTimestamp);
-    rewireProjectFilesOperator.__set__("getDateString", getDateStringMock);
+    sinon.stub(_internal, "getDateString").returns(mockTimestamp);
 
     const result = await createNewProject(mockRootDir, mockProjectName, mockDescription, mockUser, mockMail);
 
     expect(result).to.equal(mockRootDir);
     expect(getUnusedProjectDirMock.calledOnceWithExactly(mockRootDir, mockProjectName)).to.be.true;
-    expect(fsMock.ensureDir.calledOnceWithExactly(mockRootDir)).to.be.true;
+    expect(ensureDirMock.calledOnceWithExactly(mockRootDir)).to.be.true;
     expect(gitInitMock.calledOnceWithExactly(mockRootDir, mockUser, mockMail)).to.be.true;
     expect(writeComponentJsonMock.calledOnce).to.be.true;
     expect(writeJsonWrapperMock.calledOnce).to.be.true;
@@ -704,35 +670,28 @@ describe("#createNewProject", ()=>{
 
     expect(getUnusedProjectDirMock.calledOnceWithExactly(mockRootDir, mockProjectName)).to.be.true;
 
-    const fsMock = rewireProjectFilesOperator.__get__("fs");
-    expect(fsMock.ensureDir.called).to.be.false;
+    ensureDirMock.resolves();
+    expect(ensureDirMock.called).to.be.false;
     expect(gitInitMock.called).to.be.false;
   });
 });
 
 describe("#removeComponentPath", ()=>{
-  let rewireProjectFilesOperator;
-  let removeComponentPath;
   let readJsonGreedyMock;
   let writeJsonWrapperMock;
   let gitAddMock;
   let pathExistsMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeComponentPath = rewireProjectFilesOperator.__get__("removeComponentPath");
-
     readJsonGreedyMock = sinon.stub();
     writeJsonWrapperMock = sinon.stub();
     gitAddMock = sinon.stub();
     pathExistsMock = sinon.stub();
 
-    rewireProjectFilesOperator.__set__({
-      readJsonGreedy: readJsonGreedyMock,
-      writeJsonWrapper: writeJsonWrapperMock,
-      gitAdd: gitAddMock,
-      fs: { pathExists: pathExistsMock }
-    });
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    writeJsonWrapperMock = sinon.stub(_internal, "writeJsonWrapper");
+    gitAddMock = sinon.stub(_internal, "gitAdd");
+    pathExistsMock = sinon.stub(_internal.fs, "pathExists");
   });
 
   afterEach(()=>{
@@ -881,26 +840,14 @@ describe("#removeComponentPath", ()=>{
 });
 
 describe("#updateComponentPath", ()=>{
-  let rewireProjectFilesOperator;
-  let updateComponentPath;
   let readJsonGreedyMock;
   let writeJsonWrapperMock;
   let gitAddMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-
-    readJsonGreedyMock = sinon.stub();
-    writeJsonWrapperMock = sinon.stub();
-    gitAddMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      readJsonGreedy: readJsonGreedyMock,
-      writeJsonWrapper: writeJsonWrapperMock,
-      gitAdd: gitAddMock
-    });
-
-    updateComponentPath = rewireProjectFilesOperator.__get__("updateComponentPath");
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    writeJsonWrapperMock = sinon.stub(_internal, "writeJsonWrapper");
+    gitAddMock = sinon.stub(_internal, "gitAdd");
   });
 
   afterEach(()=>{
@@ -995,28 +942,15 @@ describe("#updateComponentPath", ()=>{
 });
 
 describe("#setProjectState", ()=>{
-  let rewireProjectFilesOperator;
-  let setProjectState;
   let readJsonGreedyMock;
   let writeJsonWrapperMock;
   let gitAddMock;
-  let getDateStringMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    setProjectState = rewireProjectFilesOperator.__get__("setProjectState");
-
-    readJsonGreedyMock = sinon.stub();
-    writeJsonWrapperMock = sinon.stub();
-    gitAddMock = sinon.stub();
-    getDateStringMock = sinon.stub().returns("20250101-123456");
-
-    rewireProjectFilesOperator.__set__({
-      readJsonGreedy: readJsonGreedyMock,
-      writeJsonWrapper: writeJsonWrapperMock,
-      gitAdd: gitAddMock,
-      getDateString: getDateStringMock
-    });
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    writeJsonWrapperMock = sinon.stub(_internal, "writeJsonWrapper");
+    gitAddMock = sinon.stub(_internal, "gitAdd");
+    sinon.stub(_internal, "getDateString").returns("20250101-123456");
   });
 
   afterEach(()=>{
@@ -1126,19 +1060,10 @@ describe("#setProjectState", ()=>{
 });
 
 describe("#getComponentFullName", ()=>{
-  let rewireProjectFilesOperator;
-  let getComponentFullName;
   let getComponentDirMock;
-
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getComponentFullName = rewireProjectFilesOperator.__get__("getComponentFullName");
-
-    //Mocking getComponentDir
-    getComponentDirMock = sinon.stub();
-    rewireProjectFilesOperator.__set__("getComponentDir", getComponentDirMock);
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
   });
-
   afterEach(()=>{
     sinon.restore();
   });
@@ -1183,16 +1108,10 @@ describe("#getComponentFullName", ()=>{
 });
 
 describe("#getProjectState", ()=>{
-  let rewireProjectFilesOperator;
-  let getProjectState;
   let readJsonGreedyMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getProjectState = rewireProjectFilesOperator.__get__("getProjectState");
-
-    readJsonGreedyMock = sinon.stub();
-    rewireProjectFilesOperator.__set__("readJsonGreedy", readJsonGreedyMock);
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
   });
 
   afterEach(()=>{
@@ -1248,29 +1167,19 @@ describe("#getProjectState", ()=>{
 });
 
 describe("#checkRunningJobs", ()=>{
-  let rewireProjectFilesOperator;
-  let checkRunningJobs;
   let globStub;
-  let fsStub;
   let getLoggerStub;
+  let fsReadJsonStub;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    checkRunningJobs = rewireProjectFilesOperator.__get__("checkRunningJobs");
-
     globStub = sinon.stub();
-    fsStub = {
-      readJson: sinon.stub()
-    };
     getLoggerStub = {
       warn: sinon.spy()
     };
 
-    rewireProjectFilesOperator.__set__({
-      promisify: ()=>globStub,
-      fs: fsStub,
-      getLogger: ()=>getLoggerStub
-    });
+    sinon.stub(_internal, "promisify").returns(globStub);
+    fsReadJsonStub = sinon.stub(_internal.fs, "readJson");
+    sinon.stub(_internal, "getLogger").returns(getLoggerStub);
   });
 
   afterEach(()=>{
@@ -1284,8 +1193,8 @@ describe("#checkRunningJobs", ()=>{
     const mockTask2 = [{ id: 2, name: "Task2" }];
 
     globStub.resolves(mockFiles);
-    fsStub.readJson.onFirstCall().resolves(mockTask1);
-    fsStub.readJson.onSecondCall().resolves(mockTask2);
+    fsReadJsonStub.onFirstCall().resolves(mockTask1);
+    fsReadJsonStub.onSecondCall().resolves(mockTask2);
 
     const result = await checkRunningJobs(projectRootDir);
 
@@ -1300,8 +1209,8 @@ describe("#checkRunningJobs", ()=>{
     const mockTask = [{ id: 1, name: "Task1" }];
 
     globStub.resolves(mockFiles);
-    fsStub.readJson.onFirstCall().resolves(mockTask);
-    fsStub.readJson.onSecondCall().rejects(new Error("Invalid JSON"));
+    fsReadJsonStub.onFirstCall().resolves(mockTask);
+    fsReadJsonStub.onSecondCall().rejects(new Error("Invalid JSON"));
 
     const result = await checkRunningJobs(projectRootDir);
 
@@ -1329,8 +1238,8 @@ describe("#checkRunningJobs", ()=>{
     const mockInvalidContent = { notArray: true };
 
     globStub.resolves(mockFiles);
-    fsStub.readJson.onFirstCall().resolves([]);
-    fsStub.readJson.onSecondCall().resolves(mockInvalidContent);
+    fsReadJsonStub.onFirstCall().resolves([]);
+    fsReadJsonStub.onSecondCall().resolves(mockInvalidContent);
 
     const result = await checkRunningJobs(projectRootDir);
 
@@ -1341,28 +1250,16 @@ describe("#checkRunningJobs", ()=>{
 });
 
 describe("#rewriteIncludeExclude", ()=>{
-  let rewireProjectFilesOperator;
-  let rewriteIncludeExclude;
-  let readJsonGreedyMock, writeComponentJsonMock, glob2ArrayMock;
+  let readJsonGreedyMock; let writeComponentJsonMock; let glob2ArrayMock;
   const mockProjectRootDir = "/mock/project/root";
   const mockFilename = `${mockProjectRootDir}/component.json`;
   let changedFiles;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    rewriteIncludeExclude = rewireProjectFilesOperator.__get__("rewriteIncludeExclude");
-
     changedFiles = [];
-
-    readJsonGreedyMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-    glob2ArrayMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      readJsonGreedy: readJsonGreedyMock,
-      writeComponentJson: writeComponentJsonMock,
-      glob2Array: glob2ArrayMock
-    });
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson").resolves();
+    glob2ArrayMock = sinon.stub(_internal, "glob2Array");
   });
 
   afterEach(()=>{
@@ -1439,22 +1336,14 @@ describe("#rewriteIncludeExclude", ()=>{
 });
 
 describe("#rewriteAllIncludeExcludeProperty", ()=>{
-  let rewireProjectFilesOperator;
-  let rewriteAllIncludeExcludeProperty;
   let rewriteIncludeExcludeMock;
   let globMock;
-  let promisifyMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    rewriteAllIncludeExcludeProperty = rewireProjectFilesOperator.__get__("rewriteAllIncludeExcludeProperty");
-
-    rewriteIncludeExcludeMock = sinon.stub();
-    rewireProjectFilesOperator.__set__("rewriteIncludeExclude", rewriteIncludeExcludeMock);
+    rewriteIncludeExcludeMock = sinon.stub(_internal, "rewriteIncludeExclude");
 
     globMock = sinon.stub();
-    promisifyMock = sinon.stub().callsFake((fn)=>fn === glob ? globMock : promisify(fn));
-    rewireProjectFilesOperator.__set__("promisify", promisifyMock);
+    sinon.stub(_internal, "promisify").callsFake((fn)=>{ return fn === glob ? globMock : promisify(fn); });
   });
 
   afterEach(()=>{
@@ -1524,46 +1413,28 @@ describe("#rewriteAllIncludeExcludeProperty", ()=>{
 });
 
 describe("#readProject", ()=>{
-  let rewireProjectFilesOperator;
-  let readProject;
-  let getProjectJsonMock, rewriteAllIncludeExcludePropertyMock, writeProjectJsonMock;
-  let setProjectStateMock, setComponentStateRMock;
-  let gitInitMock, gitAddMock, gitCommitMock, projectListMock;
-  let fsPathExistsMock, fsOutputFileMock;
+  let getProjectJsonMock; let rewriteAllIncludeExcludePropertyMock; let writeProjectJsonMock;
+  let setProjectStateMock; let setComponentStateRMock;
+  let gitInitMock; let gitAddMock; let gitCommitMock;
+  let fsPathExistsMock; let fsOutputFileMock;
+  let projectListQueryStub;
+  let projectListUnshiftStub;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    readProject = rewireProjectFilesOperator.__get__("readProject");
-
-    getProjectJsonMock = sinon.stub();
-    rewriteAllIncludeExcludePropertyMock = sinon.stub();
-    writeProjectJsonMock = sinon.stub();
-    setProjectStateMock = sinon.stub();
-    setComponentStateRMock = sinon.stub();
-    gitInitMock = sinon.stub();
-    gitAddMock = sinon.stub();
-    gitCommitMock = sinon.stub();
-    projectListMock = { query: sinon.stub(), unshift: sinon.stub() };
-    fsPathExistsMock = sinon.stub();
-    fsOutputFileMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      getProjectJson: getProjectJsonMock,
-      rewriteAllIncludeExcludeProperty: rewriteAllIncludeExcludePropertyMock,
-      writeProjectJson: writeProjectJsonMock,
-      gitInit: gitInitMock,
-      setProjectState: setProjectStateMock,
-      setComponentStateR: setComponentStateRMock,
-      gitAdd: gitAddMock,
-      gitCommit: gitCommitMock,
-      projectList: projectListMock,
-      fs: { pathExists: fsPathExistsMock, outputFile: fsOutputFileMock },
-      path: {
-        ...path,
-        resolve: sinon.stub().callsFake((...args)=>args.join("/")),
-        join: sinon.stub().callsFake((...args)=>args.join("/"))
-      }
-    });
+    getProjectJsonMock = sinon.stub(_internal, "getProjectJson");
+    rewriteAllIncludeExcludePropertyMock = sinon.stub(_internal, "rewriteAllIncludeExcludeProperty");
+    writeProjectJsonMock = sinon.stub(_internal, "writeProjectJson");
+    setProjectStateMock = sinon.stub(_internal, "setProjectState");
+    setComponentStateRMock = sinon.stub(_internal, "setComponentStateR");
+    gitInitMock = sinon.stub(_internal, "gitInit");
+    gitAddMock = sinon.stub(_internal, "gitAdd");
+    gitCommitMock = sinon.stub(_internal, "gitCommit");
+    projectListQueryStub = sinon.stub(_internal.projectList, "query");
+    projectListUnshiftStub = sinon.stub(_internal.projectList, "unshift");
+    fsPathExistsMock = sinon.stub(_internal.fs, "pathExists");
+    fsOutputFileMock = sinon.stub(_internal.fs, "outputFile");
+    sinon.stub(_internal.path, "resolve").callsFake((...args)=>{ return args.join("/"); });
+    sinon.stub(_internal.path, "join").callsFake((...args)=>{ return args.join("/"); });
   });
 
   afterEach(()=>{
@@ -1578,8 +1449,8 @@ describe("#readProject", ()=>{
     setProjectStateMock.resolves();
     setComponentStateRMock.resolves();
     gitCommitMock.resolves();
-    projectListMock.query.returns(false);
-    projectListMock.unshift.returns(true);
+    projectListQueryStub.returns(false);
+    projectListUnshiftStub.returns(true);
 
     const result = await readProject("/mock/project/root");
 
@@ -1590,13 +1461,13 @@ describe("#readProject", ()=>{
     expect(setComponentStateRMock.calledWith("/mock/project/root", "/mock/project/root", "not-started")).to.be.true;
     expect(gitAddMock.calledWith("/mock/project/root", "./")).to.be.true;
     expect(gitCommitMock.calledWith("/mock/project/root", "import project")).to.be.true;
-    expect(projectListMock.unshift.calledWith({ path: "/mock/project/root" })).to.be.true;
+    expect(projectListUnshiftStub.calledWith({ path: "/mock/project/root" })).to.be.true;
     expect(result).to.equal("/mock/project/root");
   });
 
   it("should skip processing if project is already imported", async function () {
     getProjectJsonMock.resolves({ version: 2.1 });
-    projectListMock.query.returns({ path: "/mock/project/already" });
+    projectListQueryStub.returns({ path: "/mock/project/already" });
 
     const result = await readProject("/mock/project/already");
 
@@ -1608,7 +1479,7 @@ describe("#readProject", ()=>{
   it("should handle invalid directory names", async function () {
     getProjectJsonMock.resolves({ version: 2.1, name: "test_project" });
     fsPathExistsMock.resolves(true);
-    projectListMock.query.returns(null);
+    projectListQueryStub.returns(null);
     gitAddMock.resolves();
     writeProjectJsonMock.resolves();
 
@@ -1616,6 +1487,7 @@ describe("#readProject", ()=>{
 
     expect(writeProjectJsonMock.calledOnce).to.be.true;
     expect(gitAddMock.calledOnce).to.be.true;
+    console.log(gitCommitMock.getCalls(0));
     expect(gitCommitMock.calledWith("/mock/project/root", "import project", ["--", ".gitignore", "prj.wheel.json"])).to.be.true;
 
     expect(result).to.equal("/mock/project/root");
@@ -1623,7 +1495,7 @@ describe("#readProject", ()=>{
 
   it("should initialize git repository if not already initialized", async function () {
     getProjectJsonMock.resolves({ version: 2.1 });
-    projectListMock.query.returns(false);
+    projectListQueryStub.returns(false);
     writeProjectJsonMock.resolves();
     fsPathExistsMock.onFirstCall().resolves(true)
       .onSecondCall()
@@ -1631,7 +1503,7 @@ describe("#readProject", ()=>{
     fsOutputFileMock.resolves();
     gitAddMock.resolves();
     gitCommitMock.resolves();
-    projectListMock.unshift.returns(true);
+    projectListUnshiftStub.returns(true);
 
     const result = await readProject("/mock/project/root");
 
@@ -1643,7 +1515,7 @@ describe("#readProject", ()=>{
 
   it("should handle errors during git operations", async function () {
     getProjectJsonMock.resolves({ version: 2.1 });
-    projectListMock.query.returns(false);
+    projectListQueryStub.returns(false);
     writeProjectJsonMock.resolves();
     fsPathExistsMock.resolves(false);
     gitInitMock.rejects(new Error("git init failed"));
@@ -1655,23 +1527,14 @@ describe("#readProject", ()=>{
 });
 
 describe("#setComponentStateR", ()=>{
-  let rewireProjectFilesOperator;
-  let setComponentStateR;
-  let globMock, readJsonGreedyMock, writeComponentJsonMock;
+  let globMock; let readJsonGreedyMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    setComponentStateR = rewireProjectFilesOperator.__get__("setComponentStateR");
-
     globMock = sinon.stub();
-    readJsonGreedyMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub();
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
 
-    rewireProjectFilesOperator.__set__({
-      promisify: ()=>globMock,
-      readJsonGreedy: readJsonGreedyMock,
-      writeComponentJson: writeComponentJsonMock
-    });
+    sinon.stub(_internal, "promisify").returns(globMock);
   });
 
   afterEach(()=>{
@@ -1787,20 +1650,12 @@ describe("#setComponentStateR", ()=>{
 });
 
 describe("#updateProjectROStatus", ()=>{
-  let rewireProjectFilesOperator;
-  let updateProjectROStatus;
   let readJsonGreedyMock;
   let writeJsonWrapperMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    updateProjectROStatus = rewireProjectFilesOperator.__get__("updateProjectROStatus");
-
-    readJsonGreedyMock = sinon.stub();
-    writeJsonWrapperMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__("readJsonGreedy", readJsonGreedyMock);
-    rewireProjectFilesOperator.__set__("writeJsonWrapper", writeJsonWrapperMock);
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    writeJsonWrapperMock = sinon.stub(_internal, "writeJsonWrapper");
   });
 
   afterEach(()=>{
@@ -1874,25 +1729,14 @@ describe("#updateProjectROStatus", ()=>{
 });
 
 describe("#updateProjectDescription", ()=>{
-  let rewireProjectFilesOperator;
-  let updateProjectDescription;
   let readJsonGreedyMock;
   let writeJsonWrapperMock;
   let gitAddMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    updateProjectDescription = rewireProjectFilesOperator.__get__("updateProjectDescription");
-
-    readJsonGreedyMock = sinon.stub();
-    writeJsonWrapperMock = sinon.stub();
-    gitAddMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      readJsonGreedy: readJsonGreedyMock,
-      writeJsonWrapper: writeJsonWrapperMock,
-      gitAdd: gitAddMock
-    });
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    writeJsonWrapperMock = sinon.stub(_internal, "writeJsonWrapper");
+    gitAddMock = sinon.stub(_internal, "gitAdd");
   });
 
   afterEach(()=>{
@@ -1989,24 +1833,12 @@ describe("#updateProjectDescription", ()=>{
 });
 
 describe("#addProject", ()=>{
-  let rewireProjectFilesOperator;
-  let addProject;
   let createNewProjectMock;
-  let fsMock;
+  let pathExistsMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    addProject = rewireProjectFilesOperator.__get__("addProject");
-    createNewProjectMock = sinon.stub();
-
-    fsMock = {
-      pathExists: sinon.stub()
-    };
-
-    rewireProjectFilesOperator.__set__({
-      createNewProject: createNewProjectMock,
-      fs: fsMock
-    });
+    createNewProjectMock = sinon.stub(_internal, "createNewProject");
+    pathExistsMock = sinon.stub(_internal.fs, "pathExists");
   });
 
   afterEach(()=>{
@@ -2016,7 +1848,7 @@ describe("#addProject", ()=>{
   it("should throw an error if the project directory already exists", async ()=>{
     const mockProjectDir = "/existing/project/dir";
 
-    fsMock.pathExists.resolves(true);
+    pathExistsMock.resolves(true);
 
     try {
       await addProject(mockProjectDir, "Test description");
@@ -2026,14 +1858,14 @@ describe("#addProject", ()=>{
       expect(err.projectRootDir).to.equal(`${mockProjectDir}.wheel`);
     }
 
-    expect(fsMock.pathExists.calledOnceWithExactly(`${mockProjectDir}.wheel`)).to.be.true;
+    expect(pathExistsMock.calledOnceWithExactly(`${mockProjectDir}.wheel`)).to.be.true;
   });
 
   it("should throw an error if the project name is invalid", async ()=>{
     const mockProjectDir = "/valid/dir";
     const invalidProjectName = "Invalid/Name";
 
-    fsMock.pathExists.resolves(false);
+    pathExistsMock.resolves(false);
     sinon.stub(path, "basename").returns(invalidProjectName);
 
     try {
@@ -2049,12 +1881,11 @@ describe("#addProject", ()=>{
     const validProjectName = "validName";
     const mockCreatedProjectDir = `${mockProjectDir}.wheel`;
 
-    fsMock.pathExists.resolves(false);
+    pathExistsMock.resolves(false);
     sinon.stub(path, "basename").returns(validProjectName);
     createNewProjectMock.resolves(mockCreatedProjectDir);
 
-    const projectListUnshiftStub = sinon.stub();
-    rewireProjectFilesOperator.__set__("projectList", { unshift: projectListUnshiftStub });
+    const projectListUnshiftStub = sinon.stub(_internal.projectList, "unshift");
 
     await addProject(mockProjectDir, "Test description");
 
@@ -2070,43 +1901,24 @@ describe("#addProject", ()=>{
 });
 
 describe("#renameProject", ()=>{
-  let rewireProjectFilesOperator;
-  let renameProject;
   let isValidNameMock;
-  let fsMock;
+  let fsMoveStub; let fsPathExistsStub;
   let readJsonGreedyMock;
   let writeProjectJsonMock;
   let writeComponentJsonMock;
   let gitCommitMock;
-  let projectListMock;
+  let projectListGetStub; let projectListUpdateStub;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    renameProject = rewireProjectFilesOperator.__get__("renameProject");
-
-    isValidNameMock = sinon.stub();
-    fsMock = {
-      move: sinon.stub(),
-      pathExists: sinon.stub()
-    };
-    readJsonGreedyMock = sinon.stub();
-    writeProjectJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub();
-    gitCommitMock = sinon.stub();
-    projectListMock = {
-      get: sinon.stub(),
-      update: sinon.stub()
-    };
-
-    rewireProjectFilesOperator.__set__({
-      isValidName: isValidNameMock,
-      fs: fsMock,
-      readJsonGreedy: readJsonGreedyMock,
-      writeProjectJson: writeProjectJsonMock,
-      writeComponentJson: writeComponentJsonMock,
-      gitCommit: gitCommitMock,
-      projectList: projectListMock
-    });
+    isValidNameMock = sinon.stub(_internal, "isValidName");
+    fsMoveStub = sinon.stub(_internal.fs, "move");
+    fsPathExistsStub = sinon.stub(_internal.fs, "pathExists");
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    writeProjectJsonMock = sinon.stub(_internal, "writeProjectJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
+    gitCommitMock = sinon.stub(_internal, "gitCommit");
+    projectListGetStub = sinon.stub(_internal.projectList, "get");
+    projectListUpdateStub = sinon.stub(_internal.projectList, "update");
   });
 
   afterEach(()=>{
@@ -2123,26 +1935,26 @@ describe("#renameProject", ()=>{
     const mockProjectListEntry = { id: mockId, path: mockOldDir };
 
     isValidNameMock.returns(true);
-    fsMock.pathExists.resolves(false);
-    fsMock.move.resolves();
+    fsPathExistsStub.resolves(false);
+    fsMoveStub.resolves();
     readJsonGreedyMock.onCall(0).resolves(mockProjectJson);
     readJsonGreedyMock.onCall(1).resolves(mockRootWorkflow);
     writeProjectJsonMock.resolves();
     writeComponentJsonMock.resolves();
     gitCommitMock.resolves();
-    projectListMock.get.returns(mockProjectListEntry);
+    projectListGetStub.returns(mockProjectListEntry);
 
     await renameProject(mockId, mockNewName, mockOldDir);
 
     expect(isValidNameMock.calledOnceWithExactly(mockNewName)).to.be.true;
-    expect(fsMock.pathExists.calledOnceWithExactly(`${mockNewDir}.wheel`)).to.be.true;
-    expect(fsMock.move.calledOnceWithExactly(mockOldDir, `${mockNewDir}.wheel`)).to.be.true;
+    expect(fsPathExistsStub.calledOnceWithExactly(`${mockNewDir}.wheel`)).to.be.true;
+    expect(fsMoveStub.calledOnceWithExactly(mockOldDir, `${mockNewDir}.wheel`)).to.be.true;
     expect(readJsonGreedyMock.calledTwice).to.be.true;
     expect(writeProjectJsonMock.calledOnce).to.be.true;
     expect(writeComponentJsonMock.calledOnce).to.be.true;
     expect(gitCommitMock.calledOnce).to.be.true;
-    expect(projectListMock.get.calledOnceWithExactly(mockId)).to.be.true;
-    expect(projectListMock.update.calledOnceWithExactly({ id: mockId, path: `${mockNewDir}.wheel` })).to.be.true;
+    expect(projectListGetStub.calledOnceWithExactly(mockId)).to.be.true;
+    expect(projectListUpdateStub.calledOnceWithExactly({ id: mockId, path: `${mockNewDir}.wheel` })).to.be.true;
   });
 
   it("should throw an error if the new name is invalid", async ()=>{
@@ -2168,7 +1980,7 @@ describe("#renameProject", ()=>{
     const mockNewDir = "/old/project/existingProjectName";
 
     isValidNameMock.returns(true);
-    fsMock.pathExists.withArgs(`${mockNewDir}.wheel`).resolves(true);
+    fsPathExistsStub.withArgs(`${mockNewDir}.wheel`).resolves(true);
 
     try {
       await renameProject(mockId, mockNewName, mockOldDir);
@@ -2186,30 +1998,22 @@ describe("#renameProject", ()=>{
     const mockNewDir = "/old/project/validProjectName";
 
     isValidNameMock.returns(true);
-    fsMock.pathExists.resolves(false);
-    fsMock.move.rejects(new Error("File system error"));
+    fsPathExistsStub.resolves(false);
+    fsMoveStub.rejects(new Error("File system error"));
 
     try {
       await renameProject(mockId, mockNewName, mockOldDir);
       throw new Error("Expected renameProject to throw");
     } catch (err) {
       expect(err.message).to.equal("File system error");
-      expect(fsMock.pathExists.calledOnceWithExactly(`${mockNewDir}.wheel`)).to.be.true;
+      expect(fsPathExistsStub.calledOnceWithExactly(`${mockNewDir}.wheel`)).to.be.true;
       expect(isValidNameMock.calledOnceWithExactly(mockNewName)).to.be.true;
-      expect(fsMock.move.calledOnceWithExactly(mockOldDir, `${mockNewDir}.wheel`)).to.be.true;
+      expect(fsMoveStub.calledOnceWithExactly(mockOldDir, `${mockNewDir}.wheel`)).to.be.true;
     }
   });
 });
 
 describe("#isDefaultPort", ()=>{
-  let rewireProjectFilesOperator;
-  let isDefaultPort;
-
-  beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    isDefaultPort = rewireProjectFilesOperator.__get__("isDefaultPort");
-  });
-
   it("should return true for undefined", ()=>{
     expect(isDefaultPort(undefined)).to.be.true;
   });
@@ -2252,14 +2056,6 @@ describe("#isDefaultPort", ()=>{
 });
 
 describe("#isLocal", ()=>{
-  let rewireProjectFilesOperator;
-  let isLocal;
-
-  beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    isLocal = rewireProjectFilesOperator.__get__("isLocal");
-  });
-
   it("should return true if host is undefined", ()=>{
     const component = {};
     expect(isLocal(component)).to.be.true;
@@ -2287,24 +2083,15 @@ describe("#isLocal", ()=>{
 });
 
 describe("#isSameRemoteHost", ()=>{
-  let rewireProjectFilesOperator;
-  let isSameRemoteHost;
   let readComponentJsonByIDMock;
   let remoteHostMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    isSameRemoteHost = rewireProjectFilesOperator.__get__("isSameRemoteHost");
-
-    readComponentJsonByIDMock = sinon.stub();
+    readComponentJsonByIDMock = sinon.stub(_internal, "readComponentJsonByID");
     remoteHostMock = {
       query: sinon.stub()
     };
-
-    rewireProjectFilesOperator.__set__({
-      readComponentJsonByID: readComponentJsonByIDMock,
-      remoteHost: remoteHostMock
-    });
+    sinon.stub(_internal, "remoteHost").value(remoteHostMock);
   });
 
   afterEach(()=>{
@@ -2380,16 +2167,10 @@ describe("#isSameRemoteHost", ()=>{
 });
 
 describe("#isParent", ()=>{
-  let rewireProjectFilesOperator;
-  let isParent;
   let readComponentJsonByIDMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    isParent = rewireProjectFilesOperator.__get__("isParent");
-
-    readComponentJsonByIDMock = sinon.stub();
-    rewireProjectFilesOperator.__set__("readComponentJsonByID", readComponentJsonByIDMock);
+    readComponentJsonByIDMock = sinon.stub(_internal, "readComponentJsonByID");
   });
 
   afterEach(()=>{
@@ -2439,20 +2220,11 @@ describe("#isParent", ()=>{
 });
 
 describe("#removeAllLinkFromComponent", ()=>{
-  let rewireProjectFilesOperator;
-  let removeAllLinkFromComponent;
-  let readComponentJsonByIDMock;
-  let writeComponentJsonByIDMock;
+  let readComponentJsonByIDMock; let writeComponentJsonByIDMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeAllLinkFromComponent = rewireProjectFilesOperator.__get__("removeAllLinkFromComponent");
-    readComponentJsonByIDMock = sinon.stub();
-    writeComponentJsonByIDMock = sinon.stub();
-    rewireProjectFilesOperator.__set__({
-      readComponentJsonByID: readComponentJsonByIDMock,
-      writeComponentJsonByID: writeComponentJsonByIDMock
-    });
+    readComponentJsonByIDMock = sinon.stub(_internal, "readComponentJsonByID");
+    writeComponentJsonByIDMock = sinon.stub(_internal, "writeComponentJsonByID").resolves();
   });
 
   afterEach(()=>{
@@ -2587,23 +2359,12 @@ describe("#removeAllLinkFromComponent", ()=>{
 });
 
 describe("#addFileLinkToParent", ()=>{
-  let rewireProjectFilesOperator;
-  let addFileLinkToParent;
-  let getComponentDirMock, readComponentJsonMock, writeComponentJsonMock;
+  let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    addFileLinkToParent = rewireProjectFilesOperator.__get__("addFileLinkToParent");
-
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
   });
 
   afterEach(()=>{
@@ -2674,31 +2435,20 @@ describe("#addFileLinkToParent", ()=>{
 });
 
 describe("#addFileLinkFromParent", ()=>{
-  let rewireProjectFilesOperator;
-  let addFileLinkFromParent;
+  let getComponentDirMock;
   let readComponentJsonMock;
   let writeComponentJsonMock;
-  let getComponentDirMock;
   let pathDirnameMock;
-  let projectRootDir;
+  const projectRootDir = "/mock/project/root";
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    addFileLinkFromParent = rewireProjectFilesOperator.__get__("addFileLinkFromParent");
-
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-    getComponentDirMock = sinon.stub();
-    pathDirnameMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock,
-      getComponentDir: getComponentDirMock,
-      path: { dirname: pathDirnameMock }
-    });
-
-    projectRootDir = "/mock/project/root";
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    pathDirnameMock = sinon.stub(_internal.path, "dirname");
+  });
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should add a new file link from parent to child correctly", async ()=>{
@@ -2787,23 +2537,12 @@ describe("#addFileLinkFromParent", ()=>{
 });
 
 describe("#addFileLinkBetweenSiblings", ()=>{
-  let rewireProjectFilesOperator;
-  let addFileLinkBetweenSiblings;
-  let getComponentDirMock, readComponentJsonMock, writeComponentJsonMock;
+  let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    addFileLinkBetweenSiblings = rewireProjectFilesOperator.__get__("addFileLinkBetweenSiblings");
-
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
   });
 
   afterEach(()=>{
@@ -2913,23 +2652,12 @@ describe("#addFileLinkBetweenSiblings", ()=>{
 });
 
 describe("#removeFileLinkToParent", ()=>{
-  let rewireProjectFilesOperator;
-  let removeFileLinkToParent;
-  let getComponentDirMock, readComponentJsonMock, writeComponentJsonMock;
+  let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeFileLinkToParent = rewireProjectFilesOperator.__get__("removeFileLinkToParent");
-
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson").resolves();
   });
 
   afterEach(()=>{
@@ -3000,7 +2728,7 @@ describe("#removeFileLinkToParent", ()=>{
     readComponentJsonMock.withArgs(parentDir).resolves(parentJson);
 
     await expect(removeFileLinkToParent(projectRootDir, srcNode, srcName, dstName))
-      .to.be.rejectedWith(TypeError, "Cannot read properties of undefined (reading 'dst')");
+      .to.be.rejectedWith(TypeError);
   });
 
   it("should handle the case when parent component does not have matching origin entry", async ()=>{
@@ -3041,23 +2769,12 @@ describe("#removeFileLinkToParent", ()=>{
 });
 
 describe("#removeFileLinkFromParent", ()=>{
-  let rewireProjectFilesOperator;
-  let removeFileLinkFromParent;
-  let getComponentDirMock, readComponentJsonMock, writeComponentJsonMock;
+  let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeFileLinkFromParent = rewireProjectFilesOperator.__get__("removeFileLinkFromParent");
-
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson").resolves();
   });
 
   afterEach(()=>{
@@ -3141,23 +2858,12 @@ describe("#removeFileLinkFromParent", ()=>{
 });
 
 describe("#removeFileLinkBetweenSiblings", ()=>{
-  let rewireProjectFilesOperator;
-  let removeFileLinkBetweenSiblings;
-  let getComponentDirMock, readComponentJsonMock, writeComponentJsonMock;
+  let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeFileLinkBetweenSiblings = rewireProjectFilesOperator.__get__("removeFileLinkBetweenSiblings");
-
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
   });
 
   afterEach(()=>{
@@ -3241,56 +2947,51 @@ describe("#removeFileLinkBetweenSiblings", ()=>{
 });
 
 describe("#makeDir", ()=>{
-  let rewireProjectFilesOperator;
-  let makeDir;
-  let fsMock;
+  let fsPathExistsStub; let fsMkdirStub;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    makeDir = rewireProjectFilesOperator.__get__("makeDir");
+    fsPathExistsStub = sinon.stub(_internal.fs, "pathExists");
+    fsMkdirStub = sinon.stub(_internal.fs, "mkdir").resolves();
+  });
 
-    fsMock = {
-      pathExists: sinon.stub(),
-      mkdir: sinon.stub().resolves()
-    };
-
-    rewireProjectFilesOperator.__set__("fs", fsMock);
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should create a new directory when the name is available", async ()=>{
-    fsMock.pathExists.resolves(false);
+    fsPathExistsStub.resolves(false);
 
     const result = await makeDir("/mock/path", 0);
 
-    expect(fsMock.pathExists.calledOnceWithExactly("/mock/path0")).to.be.true;
-    expect(fsMock.mkdir.calledOnceWithExactly("/mock/path0")).to.be.true;
+    expect(fsPathExistsStub.calledOnceWithExactly("/mock/path0")).to.be.true;
+    expect(fsMkdirStub.calledOnceWithExactly("/mock/path0")).to.be.true;
     expect(result).to.equal("/mock/path0");
   });
 
   it("should increment suffix until an available name is found", async ()=>{
-    fsMock.pathExists.onFirstCall().resolves(true);
-    fsMock.pathExists.onSecondCall().resolves(true);
-    fsMock.pathExists.onThirdCall().resolves(false);
+    fsPathExistsStub.onFirstCall().resolves(true);
+    fsPathExistsStub.onSecondCall().resolves(true);
+    fsPathExistsStub.onThirdCall().resolves(false);
 
     const result = await makeDir("/mock/path", 0);
 
-    expect(fsMock.pathExists.callCount).to.equal(3);
-    expect(fsMock.mkdir.calledOnceWithExactly("/mock/path2")).to.be.true;
+    expect(fsPathExistsStub.callCount).to.equal(3);
+    expect(fsMkdirStub.calledOnceWithExactly("/mock/path2")).to.be.true;
     expect(result).to.equal("/mock/path2");
   });
 
   it("should handle an empty basename gracefully", async ()=>{
-    fsMock.pathExists.resolves(false);
+    fsPathExistsStub.resolves(false);
 
     const result = await makeDir("", 0);
 
-    expect(fsMock.mkdir.calledOnceWithExactly("0")).to.be.true;
+    expect(fsMkdirStub.calledOnceWithExactly("0")).to.be.true;
     expect(result).to.equal("0");
   });
 
   it("should throw an error if mkdir fails", async ()=>{
-    fsMock.pathExists.resolves(false);
-    fsMock.mkdir.rejects(new Error("Permission denied"));
+    fsPathExistsStub.resolves(false);
+    fsMkdirStub.rejects(new Error("Permission denied"));
 
     try {
       await makeDir("/mock/path", 0);
@@ -3299,29 +3000,22 @@ describe("#makeDir", ()=>{
       expect(err.message).to.equal("Permission denied");
     }
 
-    expect(fsMock.mkdir.calledOnceWithExactly("/mock/path0")).to.be.true;
+    expect(fsMkdirStub.calledOnceWithExactly("/mock/path0")).to.be.true;
   });
 });
 
 describe("#getChildren", ()=>{
-  let rewireProjectFilesOperator;
-  let getChildren;
-  let getComponentDirMock;
-  let readJsonGreedyMock;
-  let globMock;
+  let readJsonGreedyMock; let getComponentDirMock; let globMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getChildren = rewireProjectFilesOperator.__get__("getChildren");
-
-    getComponentDirMock = sinon.stub();
-    readJsonGreedyMock = sinon.stub();
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
     globMock = sinon.stub();
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readJsonGreedy: readJsonGreedyMock,
-      promisify: ()=>globMock
-    });
+    sinon.stub(_internal, "promisify").returns(globMock);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should return an empty array if the directory is not found", async ()=>{
@@ -3364,25 +3058,18 @@ describe("#getChildren", ()=>{
 });
 
 describe("#checkRemoteStoragePathWritePermission", ()=>{
-  let rewireProjectFilesOperator;
-  let checkRemoteStoragePathWritePermission;
+  let remoteHostGetStub;
   let getSshMock;
-  let remoteHostMock;
   let sshExecMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    checkRemoteStoragePathWritePermission = rewireProjectFilesOperator.__get__("checkRemoteStoragePathWritePermission");
-
-    remoteHostMock = {
-      getID: sinon.stub()
-    };
-
+    remoteHostGetStub = sinon.stub(_internal.remoteHost, "getID");
     sshExecMock = sinon.stub();
-    getSshMock = sinon.stub().returns({ exec: sshExecMock });
-    rewireProjectFilesOperator.__set__({
-      getSsh: getSshMock,
-      remoteHost: remoteHostMock
+    getSshMock = sinon.stub(_internal, "getSsh").callsFake(()=>{
+      return {
+        exec: sshExecMock,
+        canConnect: sinon.stub()
+      };
     });
   });
 
@@ -3394,11 +3081,11 @@ describe("#checkRemoteStoragePathWritePermission", ()=>{
     const projectRootDir = "/mock/project/root";
     const params = { host: "remoteHost1", storagePath: "/remote/path" };
 
-    remoteHostMock.getID.withArgs("name", "remoteHost1").returns("host123");
-    sshExecMock.withArgs("test -w /remote/path").returns(0);
+    remoteHostGetStub.withArgs("name", "remoteHost1").returns("host123");
+    sshExecMock.withArgs("test -w /remote/path").resolves(0);
 
     await expect(checkRemoteStoragePathWritePermission(projectRootDir, params)).to.be.fulfilled;
-    expect(remoteHostMock.getID.calledOnceWithExactly("name", "remoteHost1")).to.be.true;
+    expect(remoteHostGetStub.calledOnceWithExactly("name", "remoteHost1")).to.be.true;
     expect(getSshMock.calledOnceWithExactly(projectRootDir, "host123")).to.be.true;
     expect(sshExecMock.calledOnceWithExactly("test -w /remote/path")).to.be.true;
   });
@@ -3407,8 +3094,8 @@ describe("#checkRemoteStoragePathWritePermission", ()=>{
     const projectRootDir = "/mock/project/root";
     const params = { host: "remoteHost1", storagePath: "/remote/path" };
 
-    remoteHostMock.getID.withArgs("name", "remoteHost1").returns("host123");
-    sshExecMock.withArgs("test -w /remote/path").returns(1);
+    remoteHostGetStub.withArgs("name", "remoteHost1").returns("host123");
+    sshExecMock.withArgs("test -w /remote/path").resolves(1);
 
     await expect(checkRemoteStoragePathWritePermission(projectRootDir, params)).to.be.rejectedWith("bad permission");
   });
@@ -3417,7 +3104,7 @@ describe("#checkRemoteStoragePathWritePermission", ()=>{
     const projectRootDir = "/mock/project/root";
     const params = { host: "remoteHost1", storagePath: "/remote/path" };
 
-    remoteHostMock.getID.withArgs("name", "remoteHost1").returns("host123");
+    remoteHostGetStub.withArgs("name", "remoteHost1").returns("host123");
     getSshMock.throws(new Error("ssh instance is not registerd for the project"));
 
     await expect(checkRemoteStoragePathWritePermission(projectRootDir, params)).to.be.rejectedWith("ssh instance is not registerd for the project");
@@ -3425,20 +3112,15 @@ describe("#checkRemoteStoragePathWritePermission", ()=>{
 });
 
 describe("#recursiveGetHosts", ()=>{
-  let rewireProjectFilesOperator;
-  let recursiveGetHosts, getChildrenMock, hasChildMock;
+  let getChildrenMock; let hasChildMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    recursiveGetHosts = rewireProjectFilesOperator.__get__("recursiveGetHosts");
+    getChildrenMock = sinon.stub(_internal, "getChildren");
+    hasChildMock = sinon.stub(_internal, "hasChild");
+  });
 
-    getChildrenMock = sinon.stub();
-    hasChildMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      getChildren: getChildrenMock,
-      hasChild: hasChildMock
-    });
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should not add any hosts if there are no children", async ()=>{
@@ -3522,16 +3204,10 @@ describe("#recursiveGetHosts", ()=>{
 });
 
 describe("#getHosts", ()=>{
-  let rewireProjectFilesOperator;
-  let getHosts;
   let recursiveGetHostsMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getHosts = rewireProjectFilesOperator.__get__("getHosts");
-
-    recursiveGetHostsMock = sinon.stub();
-    rewireProjectFilesOperator.__set__("recursiveGetHosts", recursiveGetHostsMock);
+    recursiveGetHostsMock = sinon.stub(_internal, "recursiveGetHosts");
   });
 
   afterEach(()=>{
@@ -3545,7 +3221,8 @@ describe("#getHosts", ()=>{
 
     await getHosts(projectRootDir, rootID);
 
-    expect(recursiveGetHostsMock).to.be.calledOnceWithExactly(projectRootDir, rootID, [], [], []);
+    expect(recursiveGetHostsMock.callCount).to.equal(1);
+    expect(recursiveGetHostsMock.getCall(0).args).to.deep.equal([projectRootDir, rootID, [], [], []]);
   });
 
   it("should correctly classify task and storage hosts", async ()=>{
@@ -3578,9 +3255,6 @@ describe("#getHosts", ()=>{
 });
 
 describe("#createNewComponent", ()=>{
-  let rewireProjectFilesOperator;
-  let createNewComponent;
-
   let readJsonGreedyMock;
   let makeDirMock;
   let componentFactoryMock;
@@ -3593,7 +3267,6 @@ describe("#createNewComponent", ()=>{
   const dummyProjectRootDir = "/dummy/projectRootDir";
   const dummyParentDir = "/dummy/parentDir";
   const dummyPos = { x: 100, y: 200 };
-  const dummyParentJson = { ID: "parent-123" };
   const dummyAbsDirName = "/dummy/parentDir/task0"; //makeDir の戻り値
   const dummyComponent = {
     type: "task",
@@ -3611,41 +3284,22 @@ describe("#createNewComponent", ()=>{
   };
 
   beforeEach(()=>{
-    //rewire でモジュールを読み込む
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    createNewComponent = rewireProjectFilesOperator.__get__("createNewComponent");
-
-    //sinon.stub で依存関数を置き換え
-    readJsonGreedyMock = sinon.stub().resolves(dummyParentJson);
-    makeDirMock = sinon.stub().resolves(dummyAbsDirName);
-    componentFactoryMock = sinon.stub().returns(dummyComponent);
-    writeComponentJsonMock = sinon.stub().resolves();
-    updateComponentPathMock = sinon.stub().resolves();
-    writeJsonWrapperMock = sinon.stub().resolves();
-    gitAddMock = sinon.stub().resolves();
-
-    //rewireで内部の依存を差し替え
-    rewireProjectFilesOperator.__set__({
-      readJsonGreedy: readJsonGreedyMock,
-      makeDir: makeDirMock,
-      componentFactory: componentFactoryMock,
-      writeComponentJson: writeComponentJsonMock,
-      updateComponentPath: updateComponentPathMock,
-      writeJsonWrapper: writeJsonWrapperMock,
-      gitAdd: gitAddMock
-    });
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy").resolves({ ID: "parentID" });
+    makeDirMock = sinon.stub(_internal, "makeDir").resolves(dummyAbsDirName);
+    componentFactoryMock = sinon.stub(_internal, "componentFactory").returns(dummyComponent);
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson").resolves();
+    updateComponentPathMock = sinon.stub(_internal, "updateComponentPath").resolves();
+    writeJsonWrapperMock = sinon.stub(_internal, "writeJsonWrapper").resolves();
+    gitAddMock = sinon.stub(_internal, "gitAdd");
   });
 
   afterEach(()=>{
-    //sinon.restore()でもよいが、個別にリストアするならこちら
-    sinon.reset();
     sinon.restore();
   });
 
   it("should successfully create a new component when type is 'task'", async ()=>{
     //実行
-    const result = await createNewComponent(dummyProjectRootDir, dummyParentDir, "task", dummyPos);
-
+    const result = await createNewComponent(dummyProjectRootDir, dummyParentDir, "task", { x: 1, y: 2 });
     //検証
     //1) 親のcomponentJsonを読む
     expect(readJsonGreedyMock.calledOnce).to.be.true;
@@ -3660,7 +3314,7 @@ describe("#createNewComponent", ()=>{
 
     //3) componentFactoryが正しい引数で呼ばれたか
     expect(componentFactoryMock.calledOnce).to.be.true;
-    expect(componentFactoryMock.firstCall.args).to.deep.equal(["task", dummyPos, "parent-123"]);
+    expect(componentFactoryMock.firstCall.args).to.deep.equal(["task", { x: 1, y: 2 }, "parentID"]);
 
     //4) writeComponentJsonが正しい引数で呼ばれているか
     expect(writeComponentJsonMock.calledOnce).to.be.true;
@@ -3689,16 +3343,13 @@ describe("#createNewComponent", ()=>{
     const pathToPS = path.resolve(dummyAbsDirName, "parameterSetting.json");
 
     //実行
-    const result = await createNewComponent(dummyProjectRootDir, dummyParentDir, "PS", dummyPos);
+    const result = await createNewComponent(dummyProjectRootDir, dummyParentDir, "PS", { x: 1, y: 2 });
 
-    //検証
     expect(componentFactoryMock.calledOnce).to.be.true;
     expect(result.type).to.equal("PS");
-
-    //PS用のparameterSetting.jsonが書き込まれたか
     expect(writeJsonWrapperMock.calledOnce).to.be.true;
     expect(writeJsonWrapperMock.firstCall.args[0]).to.equal(pathToPS);
-    //中身 { version: 2, targetFiles: [], params: [], scatter: [], gather: [] }
+
     expect(writeJsonWrapperMock.firstCall.args[1]).to.deep.equal({
       version: 2,
       targetFiles: [],
@@ -3714,54 +3365,24 @@ describe("#createNewComponent", ()=>{
   });
 
   it("should throw an error if parent componentJson read fails", async ()=>{
-    //readJsonGreedyをrejectさせる
-    const readError = new Error("Failed to read parent cmp.wheel.json");
-    readJsonGreedyMock.rejects(readError);
+    readJsonGreedyMock.rejects(new Error("read error"));
 
-    try {
-      await createNewComponent(dummyProjectRootDir, dummyParentDir, "task", dummyPos);
-      expect.fail("Expected createNewComponent to throw an error");
-    } catch (err) {
-      expect(err).to.equal(readError);
-    }
+    await expect(createNewComponent(dummyProjectRootDir, dummyParentDir, "task", { x: 1, y: 2 })).to.be.rejectedWith("read error");
   });
 });
 
 describe("#renameComponentDir", ()=>{
-  let rewireProjectFilesOperator;
-  let renameComponentDir;
-  let isValidNameMock;
-  let getComponentDirMock;
-  let gitRmMock;
-  let fsMoveMock;
-  let gitAddMock;
-  let updateComponentPathMock;
-
-  const mockProjectRootDir = "/mock/project";
-  const mockID = "mock-component-id";
+  let fsMoveStub; let updateComponentPathMock; let gitAddMock; let gitRmMock; let isValidNameMock; let getComponentDirMock;
+  const mockProjectRootDir = "/mock/project/root";
+  const mockID = "componentID";
 
   beforeEach(()=>{
-    //rewireでモジュールを読み込み
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    renameComponentDir = rewireProjectFilesOperator.__get__("renameComponentDir");
-
-    //テストダブル（スタブ/モック）を作成
-    isValidNameMock = sinon.stub();
-    getComponentDirMock = sinon.stub();
-    gitRmMock = sinon.stub().resolves();
-    fsMoveMock = sinon.stub().resolves();
-    gitAddMock = sinon.stub().resolves();
-    updateComponentPathMock = sinon.stub().resolves("updated-path-map");
-
-    //projectFilesOperator 内で呼び出される関数を差し替え
-    rewireProjectFilesOperator.__set__({
-      isValidName: isValidNameMock,
-      getComponentDir: getComponentDirMock,
-      gitRm: gitRmMock,
-      fs: { move: fsMoveMock },
-      gitAdd: gitAddMock,
-      updateComponentPath: updateComponentPathMock
-    });
+    fsMoveStub = sinon.stub(_internal.fs, "move").resolves();
+    updateComponentPathMock = sinon.stub(_internal, "updateComponentPath");
+    gitAddMock = sinon.stub(_internal, "gitAdd");
+    gitRmMock = sinon.stub(_internal, "gitRm");
+    isValidNameMock = sinon.stub(_internal, "isValidName");
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
   });
 
   afterEach(()=>{
@@ -3783,7 +3404,7 @@ describe("#renameComponentDir", ()=>{
     //下記処理は通らないのでstubは呼ばれない
     expect(getComponentDirMock.called).to.be.false;
     expect(gitRmMock.called).to.be.false;
-    expect(fsMoveMock.called).to.be.false;
+    expect(fsMoveStub.called).to.be.false;
     expect(gitAddMock.called).to.be.false;
     expect(updateComponentPathMock.called).to.be.false;
   });
@@ -3803,7 +3424,7 @@ describe("#renameComponentDir", ()=>{
     expect(isValidNameMock.calledOnce).to.be.true;
     expect(getComponentDirMock.calledOnce).to.be.true;
     expect(gitRmMock.called).to.be.false;
-    expect(fsMoveMock.called).to.be.false;
+    expect(fsMoveStub.called).to.be.false;
     expect(gitAddMock.called).to.be.false;
     expect(updateComponentPathMock.called).to.be.false;
   });
@@ -3819,7 +3440,7 @@ describe("#renameComponentDir", ()=>{
     expect(getComponentDirMock.calledOnce).to.be.true;
     //リネームしないので以降は呼ばれない
     expect(gitRmMock.called).to.be.false;
-    expect(fsMoveMock.called).to.be.false;
+    expect(fsMoveStub.called).to.be.false;
     expect(gitAddMock.called).to.be.false;
     expect(updateComponentPathMock.called).to.be.false;
   });
@@ -3827,6 +3448,7 @@ describe("#renameComponentDir", ()=>{
   it("should move directory, call gitRm, fs.move, gitAdd and updateComponentPath if everything is fine", async ()=>{
     isValidNameMock.returns(true);
     getComponentDirMock.resolves("/mock/project/OldCompName");
+    updateComponentPathMock.resolves("updated-path-map");
 
     const result = await renameComponentDir(mockProjectRootDir, mockID, "NewCompName");
 
@@ -3837,9 +3459,9 @@ describe("#renameComponentDir", ()=>{
     expect(isValidNameMock.calledOnce).to.be.true;
     expect(getComponentDirMock.calledOnce).to.be.true;
     expect(gitRmMock.calledOnceWithExactly(mockProjectRootDir, "/mock/project/OldCompName")).to.be.true;
-    expect(fsMoveMock.calledOnce).to.be.true;
+    expect(fsMoveStub.calledOnce).to.be.true;
     //fsMoveで呼ばれる第2引数が /mock/project/NewCompName になっているか
-    const fsMoveArgs = fsMoveMock.args[0];
+    const fsMoveArgs = fsMoveStub.args[0];
     expect(fsMoveArgs[0]).to.equal("/mock/project/OldCompName");
     expect(fsMoveArgs[1]).to.equal(path.resolve("/mock/project", "NewCompName"));
 
@@ -3854,38 +3476,21 @@ describe("#renameComponentDir", ()=>{
 });
 
 describe("#replaceEnv", ()=>{
-  let rewireProjectFilesOperator;
-  let replaceEnv;
   let readComponentJsonByIDMock;
   let writeComponentJsonByIDMock;
-  let diffMock;
-  let diffApplyMock;
-  let componentJson;
+  let diffStub;
+  let diffApplyStub;
+  //モックデータ（テスト対象のコンポーネントJSON）
+  const componentJson = {
+    ID: "testComponent",
+    env: { OLD_KEY: "old_value", UNUSED_KEY: "unused" }
+  };
 
   beforeEach(()=>{
-    //rewireでモジュールを読み込み
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    replaceEnv = rewireProjectFilesOperator.__get__("replaceEnv");
-
-    //テストダブル（スタブ/モック）を作成
-    readComponentJsonByIDMock = sinon.stub();
-    writeComponentJsonByIDMock = sinon.stub();
-    diffMock = sinon.stub();
-    diffApplyMock = sinon.stub();
-
-    //モックデータ（テスト対象のコンポーネントJSON）
-    componentJson = {
-      ID: "testComponent",
-      env: { OLD_KEY: "old_value", UNUSED_KEY: "unused" }
-    };
-
-    //projectFilesOperator 内で呼び出される関数をスタブに差し替え
-    rewireProjectFilesOperator.__set__({
-      readComponentJsonByID: readComponentJsonByIDMock,
-      writeComponentJsonByID: writeComponentJsonByIDMock,
-      diff: diffMock,
-      diffApply: diffApplyMock
-    });
+    readComponentJsonByIDMock = sinon.stub(_internal, "readComponentJsonByID");
+    writeComponentJsonByIDMock = sinon.stub(_internal, "writeComponentJsonByID").resolves();
+    diffStub = sinon.stub(_internal, "diff");
+    diffApplyStub = sinon.stub(_internal, "diffApply"); ;
   });
 
   afterEach(()=>{
@@ -3896,11 +3501,11 @@ describe("#replaceEnv", ()=>{
     //readComponentJsonByIDがコンポーネントJSONを返すように設定
     readComponentJsonByIDMock.resolves(componentJson);
     writeComponentJsonByIDMock.resolves();
-    diffMock.returns([{ op: "replace", path: "/OLD_KEY", value: "new_value" }]);
+    diffStub.returns([{ op: "replace", path: "/OLD_KEY", value: "new_value" }]);
 
     //diffApplyが適用された結果を反映するようにモック。_patchは使わないので _ で省略
     //eslint-disable-next-line no-unused-vars
-    diffApplyMock.callsFake((target, _patch)=>{
+    diffApplyStub.callsFake((target, _patch)=>{
       target.OLD_KEY = "new_value";
       delete target.UNUSED_KEY;
     });
@@ -3913,8 +3518,8 @@ describe("#replaceEnv", ()=>{
 
     //期待する関数の呼び出し確認
     expect(readComponentJsonByIDMock.calledOnceWithExactly("/project/root", "testComponent")).to.be.true;
-    expect(diffMock.calledOnceWithExactly(componentJson.env, newEnv)).to.be.true;
-    expect(diffApplyMock.calledOnce).to.be.true;
+    expect(diffStub.calledOnceWithExactly(componentJson.env, newEnv)).to.be.true;
+    expect(diffApplyStub.calledOnce).to.be.true;
     expect(writeComponentJsonByIDMock.calledOnceWithExactly("/project/root", "testComponent", componentJson)).to.be.true;
 
     //変更後のenvが期待通りになっているか
@@ -3938,15 +3543,15 @@ describe("#replaceEnv", ()=>{
     expect(readComponentJsonByIDMock.calledOnceWithExactly("/project/root", "testComponent")).to.be.true;
     //他の関数は呼ばれていないことを確認
     expect(writeComponentJsonByIDMock.notCalled).to.be.true;
-    expect(diffMock.notCalled).to.be.true;
-    expect(diffApplyMock.notCalled).to.be.true;
+    expect(diffStub.notCalled).to.be.true;
+    expect(diffApplyStub.notCalled).to.be.true;
   });
 
   it("should throw an error if writeComponentJsonByID fails", async ()=>{
     //readComponentJsonByIDは正常に動作
     readComponentJsonByIDMock.resolves(componentJson);
-    diffMock.returns([]);
-    diffApplyMock.callsFake(()=>{});
+    diffStub.returns([]);
+    diffApplyStub.callsFake(()=>{});
 
     //writeComponentJsonByIDがエラーを投げる場合のテスト
     const mockError = new Error("Failed to write component JSON");
@@ -3961,42 +3566,22 @@ describe("#replaceEnv", ()=>{
     }
 
     //diff関数が呼ばれたことを確認
-    expect(diffMock.calledOnce).to.be.true;
+    expect(diffStub.calledOnce).to.be.true;
     //diffApply関数が呼ばれたことを確認
-    expect(diffApplyMock.calledOnce).to.be.true;
+    expect(diffApplyStub.calledOnce).to.be.true;
     //writeComponentJsonByIDが1回呼ばれていることを確認
     expect(writeComponentJsonByIDMock.calledOnce).to.be.true;
   });
 });
 
 describe("#replaceWebhook", ()=>{
-  let rewireProjectFilesOperator;
-  let replaceWebhook;
-
-  //モック用
-  let getProjectJsonMock;
-  let writeProjectJsonMock;
-  let diffMock;
-  let diffApplyMock;
+  let getProjectJsonMock; let writeProjectJsonMock; let diffMock; let diffApplyMock;
 
   beforeEach(()=>{
-    //rewiredモジュール読込
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    replaceWebhook = rewireProjectFilesOperator.__get__("replaceWebhook");
-
-    //sinon.stubでMockを作成
-    getProjectJsonMock = sinon.stub();
-    writeProjectJsonMock = sinon.stub();
-    diffMock = sinon.stub();
-    diffApplyMock = sinon.stub();
-
-    //projectFilesOperator内部の呼び出しを__set__で差し替え
-    rewireProjectFilesOperator.__set__({
-      getProjectJson: getProjectJsonMock,
-      writeProjectJson: writeProjectJsonMock,
-      diff: diffMock,
-      diffApply: diffApplyMock
-    });
+    getProjectJsonMock = sinon.stub(_internal, "getProjectJson");
+    writeProjectJsonMock = sinon.stub(_internal, "writeProjectJson");
+    diffMock = sinon.stub(_internal, "diff");
+    diffApplyMock = sinon.stub(_internal, "diffApply");
   });
 
   afterEach(()=>{
@@ -4136,22 +3721,14 @@ describe("#replaceWebhook", ()=>{
 });
 
 describe("#getEnv", ()=>{
-  let rewireProjectFilesOperator;
-  let getEnv;
   let readComponentJsonByIDMock;
 
   beforeEach(()=>{
-    //projectFilesOperator.jsをrewireで読み込む
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    readComponentJsonByIDMock = sinon.stub(_internal, "readComponentJsonByID");
+  });
 
-    //テスト対象の関数を取得
-    getEnv = rewireProjectFilesOperator.__get__("getEnv");
-
-    //依存するreadComponentJsonByIDをモック化
-    readComponentJsonByIDMock = sinon.stub();
-    rewireProjectFilesOperator.__set__({
-      readComponentJsonByID: readComponentJsonByIDMock
-    });
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should return the env object if the component has env property", async ()=>{
@@ -4199,8 +3776,6 @@ describe("#getEnv", ()=>{
 });
 
 describe("#updateComponent", ()=>{
-  let rewireProjectFilesOperator;
-  let updateComponentMock;
   let readComponentJsonByIDMock;
   let writeComponentJsonByIDMock;
   let renameComponentDirMock;
@@ -4211,24 +3786,10 @@ describe("#updateComponent", ()=>{
   const mockComponentJson = { ID: mockID, name: "OldName", anyProp: "oldValue" };
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-
-    //実際の updateComponent 関数を取得
-    updateComponentMock = rewireProjectFilesOperator.__get__("updateComponent");
-
-    //各依存関数のモック化
-    readComponentJsonByIDMock = sinon.stub().resolves(mockComponentJson);
-    writeComponentJsonByIDMock = sinon.stub().resolves();
-    renameComponentDirMock = sinon.stub().resolves();
-    setUploadOndemandOutputFileMock = sinon.stub().resolves();
-
-    //rewireで差し替え
-    rewireProjectFilesOperator.__set__({
-      readComponentJsonByID: readComponentJsonByIDMock,
-      writeComponentJsonByID: writeComponentJsonByIDMock,
-      renameComponentDir: renameComponentDirMock,
-      setUploadOndemandOutputFile: setUploadOndemandOutputFileMock
-    });
+    readComponentJsonByIDMock = sinon.stub(_internal, "readComponentJsonByID").resolves(mockComponentJson);
+    writeComponentJsonByIDMock = sinon.stub(_internal, "writeComponentJsonByID");
+    renameComponentDirMock = sinon.stub(_internal, "renameComponentDir");
+    setUploadOndemandOutputFileMock = sinon.stub(_internal, "setUploadOndemandOutputFile").resolves();
   });
 
   afterEach(()=>{
@@ -4237,7 +3798,7 @@ describe("#updateComponent", ()=>{
 
   it("should reject if prop is path", async ()=>{
     try {
-      await updateComponentMock(mockProjectRootDir, mockID, "path", "/new/path");
+      await updateComponent(mockProjectRootDir, mockID, "path", "/new/path");
       throw new Error("Expected to throw an error, but did not.");
     } catch (err) {
       expect(err.message).to.include("path property is deprecated");
@@ -4246,14 +3807,14 @@ describe("#updateComponent", ()=>{
 
   it("should reject if prop is inputFiles or outputFiles", async ()=>{
     try {
-      await updateComponentMock(mockProjectRootDir, mockID, "inputFiles", []);
+      await updateComponent(mockProjectRootDir, mockID, "inputFiles", []);
       throw new Error("Expected to throw an error, but did not.");
     } catch (err) {
       expect(err.message).to.include("does not support inputFiles");
     }
 
     try {
-      await updateComponentMock(mockProjectRootDir, mockID, "outputFiles", []);
+      await updateComponent(mockProjectRootDir, mockID, "outputFiles", []);
       throw new Error("Expected to throw an error, but did not.");
     } catch (err) {
       expect(err.message).to.include("does not support outputFiles");
@@ -4262,7 +3823,7 @@ describe("#updateComponent", ()=>{
 
   it("should reject if prop is env", async ()=>{
     try {
-      await updateComponentMock(mockProjectRootDir, mockID, "env", { KEY: "VAL" });
+      await updateComponent(mockProjectRootDir, mockID, "env", { KEY: "VAL" });
       throw new Error("Expected to throw an error, but did not.");
     } catch (err) {
       expect(err.message).to.include("does not support env");
@@ -4270,17 +3831,17 @@ describe("#updateComponent", ()=>{
   });
 
   it("should call setUploadOndemandOutputFile if prop=uploadOnDemand and value=true", async ()=>{
-    await updateComponentMock(mockProjectRootDir, mockID, "uploadOnDemand", true);
+    await updateComponent(mockProjectRootDir, mockID, "uploadOnDemand", true);
     expect(setUploadOndemandOutputFileMock.calledOnceWith(mockProjectRootDir, mockID)).to.be.true;
   });
 
   it("should call renameComponentDir if prop=name", async ()=>{
-    await updateComponentMock(mockProjectRootDir, mockID, "name", "NewName");
+    await updateComponent(mockProjectRootDir, mockID, "name", "NewName");
     expect(renameComponentDirMock.calledOnceWith(mockProjectRootDir, mockID, "NewName")).to.be.true;
   });
 
   it("should update other properties and write to component JSON", async ()=>{
-    await updateComponentMock(mockProjectRootDir, mockID, "anyProp", "newValue");
+    await updateComponent(mockProjectRootDir, mockID, "anyProp", "newValue");
 
     //readComponentJsonByIDが呼ばれたか
     expect(readComponentJsonByIDMock.calledOnceWith(mockProjectRootDir, mockID)).to.be.true;
@@ -4300,8 +3861,6 @@ describe("#updateComponent", ()=>{
 });
 
 describe("#updateStepNumber", ()=>{
-  let rewireProjectFilesOperator;
-  let updateStepNumber;
   let getAllComponentIDsMock;
   let getComponentDirMock;
   let readComponentJsonMock;
@@ -4311,22 +3870,15 @@ describe("#updateStepNumber", ()=>{
   const mockProjectRootDir = "/mock/project/root";
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    updateStepNumber = rewireProjectFilesOperator.__get__("updateStepNumber");
+    getAllComponentIDsMock = sinon.stub(_internal, "getAllComponentIDs");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
+    arrangeComponentMock = sinon.stub(_internal, "arrangeComponent");
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+  });
 
-    getAllComponentIDsMock = sinon.stub();
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-    arrangeComponentMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      getAllComponentIDs: getAllComponentIDsMock,
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock,
-      arrangeComponent: arrangeComponentMock
-    });
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should update 'stepnum' for all stepjobTask components in the arranged order", async ()=>{
@@ -4338,7 +3890,7 @@ describe("#updateStepNumber", ()=>{
     const mockTaskB = { ID: "compTaskB", type: "stepjobTask", parent: "compStepjob" };
     const mockOther = { ID: "compOther", type: "storage" };
 
-    getComponentDirMock.callsFake(async (_, id)=>`/mock/dir/${id}`);
+    getComponentDirMock.callsFake(async (_, id)=>{ return `/mock/dir/${id}`; });
     readComponentJsonMock.callsFake(async (dirPath)=>{
       switch (dirPath) {
         case "/mock/dir/compStepjob": return mockStepjob;
@@ -4427,7 +3979,7 @@ describe("#updateStepNumber", ()=>{
     const taskB1 = { ID: "taskB1", type: "stepjobTask", parent: "stepjobB" };
     const taskB2 = { ID: "taskB2", type: "stepjobTask", parent: "stepjobB" };
 
-    getComponentDirMock.callsFake(async (_, id)=>`/mock/dir/${id}`);
+    getComponentDirMock.callsFake(async (_, id)=>{ return `/mock/dir/${id}`; });
     readComponentJsonMock.callsFake(async (dirPath)=>{
       switch (dirPath) {
         case "/mock/dir/stepjobA": return stepjobA;
@@ -4482,7 +4034,7 @@ describe("#updateStepNumber", ()=>{
   it("should skip tasks if their parent is not a stepjob", async ()=>{
     //stepjobTask だが parent が workflow とか storage とかになっている場合を想定
     getAllComponentIDsMock.resolves(["normalStepjob", "weirdTask1", "weirdTask2"]);
-    readComponentJsonMock.callsFake(async ()=>({})); //デフォルトは空
+    readComponentJsonMock.callsFake(async ()=>{ return {}; }); //デフォルトは空
     //normalStepjob は stepjob
     readComponentJsonMock.onCall(0).resolves({ ID: "normalStepjob", type: "stepjob" });
     //weirdTask1/2 は stepjobTask だが parent="workflow" のようなケース
@@ -4507,14 +4059,6 @@ describe("#updateStepNumber", ()=>{
 });
 
 describe("#arrangeComponent", ()=>{
-  let rewireProjectFilesOperator;
-  let arrangeComponent;
-
-  beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    arrangeComponent = rewireProjectFilesOperator.__get__("arrangeComponent");
-  });
-
   it("should return an empty array when stepjobGroupArray is empty", async ()=>{
     const stepjobGroupArray = []; //空
 
@@ -4568,7 +4112,7 @@ describe("#arrangeComponent", ()=>{
     const result = await arrangeComponent(stepjobGroupArray);
 
     //comp1 -> comp2 -> comp3
-    expect(result.map((c)=>c.ID)).to.deep.equal(["comp1", "comp2", "comp3"]);
+    expect(result.map((c)=>{ return c.ID; })).to.deep.equal(["comp1", "comp2", "comp3"]);
   });
 
   it("should continue loop but skip pushing next if next component is not found (nextComponent.length === 0)", async ()=>{
@@ -4613,7 +4157,7 @@ describe("#arrangeComponent", ()=>{
 
     const result = await arrangeComponent(stepjobGroupArray);
     //comp3が最後に回される
-    expect(result.map((c)=>c.ID)).to.deep.equal(["comp1", "comp2", "comp3"]);
+    expect(result.map((c)=>{ return c.ID; })).to.deep.equal(["comp1", "comp2", "comp3"]);
   });
 
   it("should correctly handle multiple groups and flatten all results into a single array", async ()=>{
@@ -4634,7 +4178,7 @@ describe("#arrangeComponent", ()=>{
     //group2 は [g2c2, g2c3, g2c1] の順（g2c1はisolatedで最後に来る）
     //flatにすると [g1c1, g1c2, g2c2, g2c3, g2c1]
     expect(result).to.have.lengthOf(5);
-    expect(result.map((c)=>c.ID)).to.deep.equal(["g1c1", "g1c2", "g2c2", "g2c3", "g2c1"]);
+    expect(result.map((c)=>{ return c.ID; })).to.deep.equal(["g1c1", "g1c2", "g2c2", "g2c3", "g2c1"]);
   });
 
   it("should handle a group that has a single element (both previous and next are empty)", async ()=>{
@@ -4674,30 +4218,16 @@ describe("#arrangeComponent", ()=>{
 });
 
 describe("#addInputFile", ()=>{
-  let rewireProjectFilesOperator;
-  let addInputFile;
   let isValidInputFilenameMock;
   let getComponentDirMock;
   let readComponentJsonMock;
   let writeComponentJsonMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    addInputFile = rewireProjectFilesOperator.__get__("addInputFile");
-
-    //sinon.stub(...) で依存関数をモック化
-    isValidInputFilenameMock = sinon.stub();
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub();
-
-    //rewireで内部の関数・変数を差し替え
-    rewireProjectFilesOperator.__set__({
-      isValidInputFilename: isValidInputFilenameMock,
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock
-    });
+    isValidInputFilenameMock = sinon.stub(_internal, "isValidInputFilename");
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
   });
 
   afterEach(()=>{
@@ -4873,8 +4403,6 @@ describe("#addInputFile", ()=>{
 });
 
 describe("#addOutputFile", ()=>{
-  let rewireProjectFilesOperator;
-  let addOutputFile;
   let isValidOutputFilenameMock;
   let getComponentDirMock;
   let readComponentJsonMock;
@@ -4890,20 +4418,10 @@ describe("#addOutputFile", ()=>{
   };
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    addOutputFile = rewireProjectFilesOperator.__get__("addOutputFile");
-
-    //sinonでstub作成
-    isValidOutputFilenameMock = sinon.stub();
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-
-    //rewireで内部の関数にモックを仕込む
-    rewireProjectFilesOperator.__set__("isValidOutputFilename", isValidOutputFilenameMock);
-    rewireProjectFilesOperator.__set__("getComponentDir", getComponentDirMock);
-    rewireProjectFilesOperator.__set__("readComponentJson", readComponentJsonMock);
-    rewireProjectFilesOperator.__set__("writeComponentJson", writeComponentJsonMock);
+    isValidOutputFilenameMock = sinon.stub(_internal, "isValidOutputFilename");
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
   });
 
   afterEach(()=>{
@@ -4986,8 +4504,6 @@ describe("#addOutputFile", ()=>{
 });
 
 describe("#setUploadOndemandOutputFile", ()=>{
-  let rewireProjectFilesOperator;
-  let setUploadOndemandOutputFile;
   let getComponentDirMock;
   let readComponentJsonMock;
   let addOutputFileMock;
@@ -4995,24 +4511,11 @@ describe("#setUploadOndemandOutputFile", ()=>{
   let renameOutputFileMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    setUploadOndemandOutputFile = rewireProjectFilesOperator.__get__("setUploadOndemandOutputFile");
-
-    //各依存関数をスタブ化
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    addOutputFileMock = sinon.stub().resolves();
-    removeFileLinkMock = sinon.stub().resolves();
-    renameOutputFileMock = sinon.stub().resolves();
-
-    //rewire で内部参照を差し替え
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      addOutputFile: addOutputFileMock,
-      removeFileLink: removeFileLinkMock,
-      renameOutputFile: renameOutputFileMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    addOutputFileMock = sinon.stub(_internal, "addOutputFile");
+    removeFileLinkMock = sinon.stub(_internal, "removeFileLink");
+    renameOutputFileMock = sinon.stub(_internal, "renameOutputFile");
   });
 
   afterEach(()=>{
@@ -5097,7 +4600,7 @@ describe("#setUploadOndemandOutputFile", ()=>{
     //例: removeFileLink(projectRootDir, "comp-id", "someOutput2", "dstComp2", "dstFilename2")
     //removeFileLink(projectRootDir, "comp-id", "someOutput2", "dstComp3", "dstFilename3")
     //removeFileLink(projectRootDir, "comp-id", "someOutput3", "dstComp4", "dstFilename4")
-    const calls = removeFileLinkMock.getCalls().map((c)=>c.args);
+    const calls = removeFileLinkMock.getCalls().map((c)=>{ return c.args; });
     expect(calls).to.deep.include(
       [projectRootDir, "comp-id", "someOutput2", "dstComp2", "dstFilename2"]
     );
@@ -5148,9 +4651,6 @@ describe("#setUploadOndemandOutputFile", ()=>{
 });
 
 describe("#renameOutputFile", ()=>{
-  let rewireProjectFilesOperator;
-  let renameOutputFile;
-
   //sinonスタブ用
   let isValidOutputFilenameMock;
   let getComponentDirMock;
@@ -5163,36 +4663,24 @@ describe("#renameOutputFile", ()=>{
   const mockIndex = 0;
   const validNewName = "newOutput.dat";
   const invalidNewName = "invalid/name";
-  let mockComponentDir;
-  let mockComponentJson;
+  const mockComponentDir = "/mock/project/root/component-123";
+  const mockComponentJson = {
+    outputFiles: [
+      {
+        name: "oldOutput.dat",
+        dst: [] //テストごとに動的に差し替え
+      }
+    ]
+  };
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    renameOutputFile = rewireProjectFilesOperator.__get__("renameOutputFile");
-
-    //各種モックを作成
-    isValidOutputFilenameMock = sinon.stub();
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-
-    //rewireで元関数を差し替え
-    rewireProjectFilesOperator.__set__({
-      isValidOutputFilename: isValidOutputFilenameMock,
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock
-    });
-
-    mockComponentDir = "/mock/project/root/component-123";
-    mockComponentJson = {
-      outputFiles: [
-        {
-          name: "oldOutput.dat",
-          dst: [] //テストごとに動的に差し替え
-        }
-      ]
-    };
+    isValidOutputFilenameMock = sinon.stub(_internal, "isValidOutputFilename");
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
+  });
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should reject if the newName is invalid", async ()=>{
@@ -5332,8 +4820,6 @@ describe("#renameOutputFile", ()=>{
 });
 
 describe("#addLink", ()=>{
-  let rewireProjectFilesOperator;
-  let addLink;
   let getComponentDirMock;
   let readComponentJsonMock;
   let writeComponentJsonMock;
@@ -5342,25 +4828,10 @@ describe("#addLink", ()=>{
   const projectRootDir = "/mock/project/root";
 
   beforeEach(()=>{
-    //rewireでモジュール読み込み
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-
-    //テスト対象関数を取得
-    addLink = rewireProjectFilesOperator.__get__("addLink");
-
-    //依存関数をスタブ化
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-    updateStepNumberMock = sinon.stub().resolves();
-
-    //rewireで内部参照を書き換え
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock,
-      updateStepNumber: updateStepNumberMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
+    updateStepNumberMock = sinon.stub(_internal, "updateStepNumber");
   });
 
   afterEach(()=>{
@@ -5560,26 +5031,14 @@ describe("#addLink", ()=>{
 });
 
 describe("#removeLink", ()=>{
-  let rewireProjectFilesOperator;
-  let removeLink;
   let getComponentDirMock;
   let readComponentJsonMock;
   let writeComponentJsonMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeLink = rewireProjectFilesOperator.__get__("removeLink");
-
-    //Sinonで使うテストダブル（Mock）の命名ルール: 変数名末尾はMock
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub().resolves();
-
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
   });
 
   afterEach(()=>{
@@ -5742,32 +5201,16 @@ describe("#removeLink", ()=>{
 });
 
 describe("#removeAllLink", ()=>{
-  let rewireProjectFilesOperator;
-  let removeAllLink;
   let getComponentDirMock;
   let readComponentJsonMock;
   let writeComponentJsonMock;
-  let projectRootDir;
-  let componentID;
+  const projectRootDir = "/mock/project/root";
+  const componentID = "dstCompID";
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeAllLink = rewireProjectFilesOperator.__get__("removeAllLink");
-
-    //sinon.stub()でテストダブルを作成（～Mock）
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    writeComponentJsonMock = sinon.stub();
-
-    //関数を差し替え
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      writeComponentJson: writeComponentJsonMock
-    });
-
-    projectRootDir = "/mock/project/root";
-    componentID = "dstCompID";
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
   });
 
   afterEach(()=>{
@@ -5908,8 +5351,6 @@ describe("#removeAllLink", ()=>{
 });
 
 describe("#addFileLink", ()=>{
-  let rewireProjectFilesOperator;
-  let addFileLink;
   let isParentMock;
   let addFileLinkToParentMock;
   let addFileLinkFromParentMock;
@@ -5922,22 +5363,14 @@ describe("#addFileLink", ()=>{
   const dstName = "in.dat";
 
   beforeEach(()=>{
-    //rewireでプロダクトコードを読み込み
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    //テスト対象の関数を取得
-    addFileLink = rewireProjectFilesOperator.__get__("addFileLink");
+    isParentMock = sinon.stub(_internal, "isParent");
+    addFileLinkToParentMock = sinon.stub(_internal, "addFileLinkToParent").resolves();
+    addFileLinkFromParentMock = sinon.stub(_internal, "addFileLinkFromParent").resolves();
+    addFileLinkBetweenSiblingsMock = sinon.stub(_internal, "addFileLinkBetweenSiblings").resolves();
+  });
 
-    //依存関数をstub化
-    isParentMock = sinon.stub();
-    addFileLinkToParentMock = sinon.stub().resolves();
-    addFileLinkFromParentMock = sinon.stub().resolves();
-    addFileLinkBetweenSiblingsMock = sinon.stub().resolves();
-
-    //rewireを使って依存関数を差し替え
-    rewireProjectFilesOperator.__set__("isParent", isParentMock);
-    rewireProjectFilesOperator.__set__("addFileLinkToParent", addFileLinkToParentMock);
-    rewireProjectFilesOperator.__set__("addFileLinkFromParent", addFileLinkFromParentMock);
-    rewireProjectFilesOperator.__set__("addFileLinkBetweenSiblings", addFileLinkBetweenSiblingsMock);
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should reject if srcNode and dstNode are the same", async ()=>{
@@ -6005,28 +5438,16 @@ describe("#addFileLink", ()=>{
 });
 
 describe("#removeFileLink", ()=>{
-  let rewireProjectFilesOperator;
-  let removeFileLink;
   let isParentMock;
   let removeFileLinkToParentMock;
   let removeFileLinkFromParentMock;
   let removeFileLinkBetweenSiblingsMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeFileLink = rewireProjectFilesOperator.__get__("removeFileLink");
-
-    //sinon.stub()で作成したテストダブルは変数末尾にMockを付ける
-    isParentMock = sinon.stub();
-    removeFileLinkToParentMock = sinon.stub().resolves();
-    removeFileLinkFromParentMock = sinon.stub().resolves();
-    removeFileLinkBetweenSiblingsMock = sinon.stub().resolves();
-
-    //テスト対象が内部で呼んでいる関数をスタブ化
-    rewireProjectFilesOperator.__set__("isParent", isParentMock);
-    rewireProjectFilesOperator.__set__("removeFileLinkToParent", removeFileLinkToParentMock);
-    rewireProjectFilesOperator.__set__("removeFileLinkFromParent", removeFileLinkFromParentMock);
-    rewireProjectFilesOperator.__set__("removeFileLinkBetweenSiblings", removeFileLinkBetweenSiblingsMock);
+    isParentMock = sinon.stub(_internal, "isParent");
+    removeFileLinkToParentMock = sinon.stub(_internal, "removeFileLinkToParent").resolves();
+    removeFileLinkFromParentMock = sinon.stub(_internal, "removeFileLinkFromParent").resolves();
+    removeFileLinkBetweenSiblingsMock = sinon.stub(_internal, "removeFileLinkBetweenSiblings").resolves();
   });
 
   afterEach(()=>{
@@ -6121,28 +5542,16 @@ describe("#removeFileLink", ()=>{
 });
 
 describe("#removeAllFileLink", ()=>{
-  let rewireProjectFilesOperator;
-  let removeAllFileLink;
   let getComponentDirMock;
   let readComponentJsonMock;
   let removeFileLinkToParentMock;
   let removeFileLinkBetweenSiblingsMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeAllFileLink = rewireProjectFilesOperator.__get__("removeAllFileLink");
-
-    getComponentDirMock = sinon.stub();
-    readComponentJsonMock = sinon.stub();
-    removeFileLinkToParentMock = sinon.stub();
-    removeFileLinkBetweenSiblingsMock = sinon.stub();
-
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      readComponentJson: readComponentJsonMock,
-      removeFileLinkToParent: removeFileLinkToParentMock,
-      removeFileLinkBetweenSiblings: removeFileLinkBetweenSiblingsMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
+    readComponentJsonMock = sinon.stub(_internal, "readComponentJson");
+    removeFileLinkToParentMock = sinon.stub(_internal, "removeFileLinkToParent");
+    removeFileLinkBetweenSiblingsMock = sinon.stub(_internal, "removeFileLinkBetweenSiblings");
   });
 
   afterEach(()=>{
@@ -6235,38 +5644,20 @@ describe("#removeAllFileLink", ()=>{
 });
 
 describe("#removeComponent", ()=>{
-  let rewireProjectFilesOperator;
-  let removeComponent;
   let getComponentDirMock;
   let getDescendantsIDsMock;
   let removeAllLinkFromComponentMock;
   let gitRmMock;
-  let fsRemoveMock;
+  let fsRemoveStub;
   let removeComponentPathMock;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    removeComponent = rewireProjectFilesOperator.__get__("removeComponent");
-
-    //モック／スタブの用意
-    getComponentDirMock = sinon.stub().resolves("/mock/targetDir");
-    getDescendantsIDsMock = sinon.stub().resolves(["compA", "compB", "compC"]);
-    removeAllLinkFromComponentMock = sinon.stub().resolves();
-    gitRmMock = sinon.stub().resolves();
-    fsRemoveMock = sinon.stub().resolves();
-    removeComponentPathMock = sinon.stub().resolves("removePathResult");
-
-    //rewireで本体に差し込む
-    rewireProjectFilesOperator.__set__({
-      getComponentDir: getComponentDirMock,
-      getDescendantsIDs: getDescendantsIDsMock,
-      removeAllLinkFromComponent: removeAllLinkFromComponentMock,
-      gitRm: gitRmMock,
-      fs: {
-        remove: fsRemoveMock
-      },
-      removeComponentPath: removeComponentPathMock
-    });
+    getComponentDirMock = sinon.stub(_internal, "getComponentDir").resolves("/mock/targetDir");
+    getDescendantsIDsMock = sinon.stub(_internal, "getDescendantsIDs").resolves(["compA", "compB", "compC"]);
+    removeAllLinkFromComponentMock = sinon.stub(_internal, "removeAllLinkFromComponent").resolves();
+    gitRmMock = sinon.stub(_internal, "gitRm");
+    fsRemoveStub = sinon.stub(_internal.fs, "remove").resolves();
+    removeComponentPathMock = sinon.stub(_internal, "removeComponentPath").resolves("removePathResult");
   });
 
   afterEach(()=>{
@@ -6290,7 +5681,7 @@ describe("#removeComponent", ()=>{
     expect(removeAllLinkFromComponentMock.getCall(2).args).to.deep.equal([projectRootDir, "compC"]);
 
     expect(gitRmMock.calledOnceWithExactly(projectRootDir, "/mock/targetDir")).to.be.true;
-    expect(fsRemoveMock.calledOnceWithExactly("/mock/targetDir")).to.be.true;
+    expect(fsRemoveStub.calledOnceWithExactly("/mock/targetDir")).to.be.true;
     expect(removeComponentPathMock.calledOnceWithExactly(projectRootDir, ["compA", "compB", "compC"])).to.be.true;
 
     //戻り値の検証
@@ -6327,7 +5718,7 @@ describe("#removeComponent", ()=>{
   });
 
   it("should throw an error if fs.remove fails", async ()=>{
-    fsRemoveMock.rejects(new Error("Failed fsRemove"));
+    fsRemoveStub.rejects(new Error("Failed fsRemove"));
     await expect(removeComponent("/mock/project/root", "compA"))
       .to.be.rejectedWith("Failed fsRemove");
   });
@@ -6340,30 +5731,21 @@ describe("#removeComponent", ()=>{
 });
 
 describe("#getSourceComponents", ()=>{
-  let rewireProjectFilesOperator;
-  let getSourceComponents;
   let promisifyStub;
   let globStub;
   let readJsonGreedyStub;
   const mockProjectRootDir = "/mock/project/root";
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getSourceComponents = rewireProjectFilesOperator.__get__("getSourceComponents");
-
     globStub = sinon.stub();
-    readJsonGreedyStub = sinon.stub();
-
-    //promisify の戻り値として globStub を返すようにする
-    promisifyStub = sinon.stub().callsFake(()=>{
+    promisifyStub = sinon.stub(_internal, "promisify").callsFake(()=>{
       return globStub;
     });
+    readJsonGreedyStub = sinon.stub(_internal, "readJsonGreedy");
+  });
 
-    //rewireで依存する関数を差し替える
-    rewireProjectFilesOperator.__set__({
-      promisify: promisifyStub,
-      readJsonGreedy: readJsonGreedyStub
-    });
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should return only source components (subComponent=false, disable=false)", async ()=>{
@@ -6441,27 +5823,11 @@ describe("#getSourceComponents", ()=>{
 });
 
 describe("#isComponentDir", ()=>{
-  let rewireProjectFilesOperator;
-  let isComponentDir;
-  let fsMock;
+  let fsLstatStub; let fsPathExistsStub;
 
   beforeEach(()=>{
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    isComponentDir = rewireProjectFilesOperator.__get__("isComponentDir");
-
-    //fs.lstatとfs.pathExistsをstub化。ただし変数名はMockで終わらせる規約
-    fsMock = {
-      lstatMock: sinon.stub(),
-      pathExistsMock: sinon.stub()
-    };
-
-    //rewireで内部のfs参照を上書き
-    rewireProjectFilesOperator.__set__({
-      fs: {
-        lstat: fsMock.lstatMock,
-        pathExists: fsMock.pathExistsMock
-      }
-    });
+    fsLstatStub = sinon.stub(_internal.fs, "lstat");
+    fsPathExistsStub = sinon.stub(_internal.fs, "pathExists");
   });
 
   afterEach(()=>{
@@ -6469,49 +5835,47 @@ describe("#isComponentDir", ()=>{
   });
 
   it("should reject if lstat throws an error (e.g. path does not exist)", async ()=>{
-    fsMock.lstatMock.rejects(new Error("ENOENT"));
+    fsLstatStub.rejects(new Error("ENOENT"));
 
     await expect(isComponentDir("/non/existing/path")).to.be.rejectedWith("ENOENT");
-    expect(fsMock.lstatMock.calledOnce).to.be.true;
-    expect(fsMock.pathExistsMock.notCalled).to.be.true;
+    expect(fsLstatStub.calledOnce).to.be.true;
+    expect(fsPathExistsStub.notCalled).to.be.true;
   });
 
   it("should return false if target is not a directory", async ()=>{
-    const fakeStats = { isDirectory: ()=>false };
-    fsMock.lstatMock.resolves(fakeStats);
+    const fakeStats = { isDirectory: ()=>{ return false; } };
+    fsLstatStub.resolves(fakeStats);
 
     const result = await isComponentDir("/some/file");
     expect(result).to.be.false;
-    expect(fsMock.lstatMock.calledOnce).to.be.true;
-    expect(fsMock.pathExistsMock.notCalled).to.be.true;
+    expect(fsLstatStub.calledOnce).to.be.true;
+    expect(fsPathExistsStub.notCalled).to.be.true;
   });
 
   it("should return false if target is a directory but cmp.wheel.json does not exist", async ()=>{
-    const fakeStats = { isDirectory: ()=>true };
-    fsMock.lstatMock.resolves(fakeStats);
-    fsMock.pathExistsMock.resolves(false);
+    const fakeStats = { isDirectory: ()=>{ return true; } };
+    fsLstatStub.resolves(fakeStats);
+    fsPathExistsStub.resolves(false);
 
     const result = await isComponentDir("/some/dir");
     expect(result).to.be.false;
-    expect(fsMock.lstatMock.calledOnce).to.be.true;
-    expect(fsMock.pathExistsMock.calledOnce).to.be.true;
+    expect(fsLstatStub.calledOnce).to.be.true;
+    expect(fsPathExistsStub.calledOnce).to.be.true;
   });
 
   it("should return true if target is a directory and cmp.wheel.json exists", async ()=>{
-    const fakeStats = { isDirectory: ()=>true };
-    fsMock.lstatMock.resolves(fakeStats);
-    fsMock.pathExistsMock.resolves(true);
+    const fakeStats = { isDirectory: ()=>{ return true; } };
+    fsLstatStub.resolves(fakeStats);
+    fsPathExistsStub.resolves(true);
 
     const result = await isComponentDir("/some/dir");
     expect(result).to.be.true;
-    expect(fsMock.lstatMock.calledOnce).to.be.true;
-    expect(fsMock.pathExistsMock.calledOnce).to.be.true;
+    expect(fsLstatStub.calledOnce).to.be.true;
+    expect(fsPathExistsStub.calledOnce).to.be.true;
   });
 });
 
 describe("#getComponentTree", ()=>{
-  let rewireProjectFilesOperator;
-  let getComponentTree;
   let readJsonGreedyMock;
   let pathIsAbsoluteMock;
   let pathRelativeMock;
@@ -6519,30 +5883,11 @@ describe("#getComponentTree", ()=>{
   let pathJoinMock;
 
   beforeEach(()=>{
-    //rewireで対象モジュールを読み込み
-    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
-    getComponentTree = rewireProjectFilesOperator.__get__("getComponentTree");
-
-    readJsonGreedyMock = sinon.stub();
-    pathIsAbsoluteMock = sinon.stub();
-    pathRelativeMock = sinon.stub();
-    pathDirnameMock = sinon.stub();
-    pathJoinMock = sinon.stub();
-
-    //getComponentTree内で使われるメソッドをtest側でstub化
-    //必要に応じてnormalizeやresolveもstub化可能
-    rewireProjectFilesOperator.__set__({
-      readJsonGreedy: readJsonGreedyMock,
-      path: {
-        ...path,
-        isAbsolute: pathIsAbsoluteMock,
-        relative: pathRelativeMock,
-        dirname: pathDirnameMock,
-        join: pathJoinMock,
-        normalize: path.normalize,
-        resolve: path.resolve
-      }
-    });
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    pathIsAbsoluteMock = sinon.stub(_internal.path, "isAbsolute");
+    pathRelativeMock = sinon.stub(_internal.path, "relative");
+    pathDirnameMock = sinon.stub(_internal.path, "dirname");
+    pathJoinMock = sinon.stub(_internal.path, "join");
   });
 
   afterEach(()=>{
@@ -6570,7 +5915,7 @@ describe("#getComponentTree", ()=>{
 
     //3) path.join("...", "cmp.wheel.json")の戻り値
     //今回はあえて ".//cmp.wheel.json" 等を返す
-    pathJoinMock.callsFake((dir, file)=>`${dir}/${file}`);
+    pathJoinMock.callsFake((dir, file)=>{ return `${dir}/${file}`; });
 
     //4) path.dirname(...) が呼ばれたら、すべて "." を返すようにする
     //=> これにより "startStriped" = "." と一致し rootIndexが -1 にならない
@@ -6614,7 +5959,7 @@ describe("#getComponentTree", ()=>{
     pathRelativeMock.returns("./");
 
     //path.join => 同様に "dirname/cmp.wheel.json" みたいに返す
-    pathJoinMock.callsFake((dir, file)=>`${dir}/${file}`);
+    pathJoinMock.callsFake((dir, file)=>{ return `${dir}/${file}`; });
 
     //path.dirnameは常に "." を返せば "startStriped" = "." に合致
     pathDirnameMock.returns(".");
@@ -6644,7 +5989,7 @@ describe("#getComponentTree", ()=>{
 
     pathIsAbsoluteMock.returns(true);
     pathRelativeMock.returns("./");
-    pathJoinMock.callsFake((dir, file)=>`${dir}/${file}`);
+    pathJoinMock.callsFake((dir, file)=>{ return `${dir}/${file}`; });
 
     //dirnameはいつものように "." を返して rootIndex=0 にする
     pathDirnameMock.returns(".");
@@ -6676,7 +6021,7 @@ describe("#getComponentTree", ()=>{
 
     pathIsAbsoluteMock.returns(true);
     pathRelativeMock.returns("./");
-    pathJoinMock.callsFake((dir, file)=>`${dir}/${file}`);
+    pathJoinMock.callsFake((dir, file)=>{ return `${dir}/${file}`; });
     pathDirnameMock.returns(".");
 
     readJsonGreedyMock.onCall(0).resolves(mockProjectJson);

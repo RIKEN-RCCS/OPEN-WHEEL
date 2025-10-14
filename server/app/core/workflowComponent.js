@@ -8,6 +8,10 @@ const uuid = require("uuid");
 const { defaultPSconfigFilename } = require("../db/db.js");
 const { readComponentJsonByID } = require("./componentJsonIO.js");
 
+const _internal = {
+  readComponentJsonByID
+};
+
 class BaseWorkflowComponent {
   constructor(pos, parent) {
     //parent components's ID
@@ -423,7 +427,11 @@ function hasChild(component) {
  * @param {object} component - Component object
  * @returns  {boolean} -
  */
-async function isBehindIfComponent(projectRootDir, component) {
+_internal.isBehindIfComponent = async function(projectRootDir, component, visited = new Set()) {
+  if (visited.has(component.ID)) {
+    return false; // circular dependency detected
+  }
+
   const hasPrevious = Array.isArray(component.previous) && component.previous.length > 0;
   const hasConnectedInputFiles = Array.isArray(component.inputFiles) && component.inputFiles.some((inputFile)=>{
     return inputFile.src.length > 0;
@@ -433,14 +441,16 @@ async function isBehindIfComponent(projectRootDir, component) {
     return false;
   }
 
+  visited.add(component.ID);
+
   if (hasPrevious) {
     for (const previous of component.previous) {
-      const previousComponent = await readComponentJsonByID(projectRootDir, previous);
+      const previousComponent = await _internal.readComponentJsonByID(projectRootDir, previous);
 
       if (previousComponent.type === "if") {
         return true;
       }
-      const rt = await isBehindIfComponent(projectRootDir, previousComponent);
+      const rt = await _internal.isBehindIfComponent(projectRootDir, previousComponent, visited);
 
       if (rt) {
         return true;
@@ -451,12 +461,12 @@ async function isBehindIfComponent(projectRootDir, component) {
   if (hasConnectedInputFiles) {
     for (const inputFile of component.inputFiles) {
       for (const src of inputFile.src) {
-        const srcComponent = await readComponentJsonByID(projectRootDir, src.srcNode);
+        const srcComponent = await _internal.readComponentJsonByID(projectRootDir, src.srcNode);
 
         if (srcComponent.type === "if") {
           return true;
         }
-        const rt = await isBehindIfComponent(projectRootDir, srcComponent);
+        const rt = await _internal.isBehindIfComponent(projectRootDir, srcComponent, visited);
 
         if (rt) {
           return true;
@@ -465,7 +475,7 @@ async function isBehindIfComponent(projectRootDir, component) {
     }
   }
   return false;
-}
+};
 
 /**
  * determine if component has outputfile which will be used by other components
@@ -502,7 +512,7 @@ async function hasConnecteddInputFiles(projectRootDir, component) {
  * @returns  {boolean} -
  */
 async function isInitialComponent(projectRootDir, component) {
-  if (await isBehindIfComponent(projectRootDir, component)) {
+  if (await _internal.isBehindIfComponent(projectRootDir, component)) {
     return false;
   }
   if (["storage", "hpciss", "hpcisstar"].includes(component.type)) {
@@ -589,5 +599,10 @@ module.exports = {
   removeDuplicatedComponent,
   getComponentDefaultName,
   hasNeededOutputFiles,
-  hasStoragePath
+  hasStoragePath,
+  isBehindIfComponent: _internal.isBehindIfComponent
 };
+
+if (process.env.NODE_ENV === "test") {
+  module.exports._internal = _internal;
+}

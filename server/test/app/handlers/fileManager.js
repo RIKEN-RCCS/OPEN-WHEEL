@@ -13,17 +13,9 @@ const expect = chai.expect;
 const sinon = require("sinon");
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
-const rewire = require("rewire");
 
 //testee
-const fileManager = rewire("../../../app/handlers/fileManager.js");
-const onGetFileList = fileManager.__get__("onGetFileList");
-const onGetSNDContents = fileManager.__get__("onGetSNDContents");
-const onRemoveFile = fileManager.__get__("onRemoveFile");
-const onRenameFile = fileManager.__get__("onRenameFile");
-const onDownload = fileManager.__get__("onDownload");
-const onCreateNewFile = fileManager.__get__("onCreateNewFile");
-const onCreateNewDir = fileManager.__get__("onCreateNewDir");
+const { onGetFileList, onGetSNDContents, onRemoveFile, onRenameFile, onDownload, onCreateNewFile, onCreateNewDir } = require("../../../app/handlers/fileManager.js");
 
 //stubs
 const emit = sinon.stub();
@@ -31,10 +23,6 @@ const cb = sinon.stub();
 
 //helper function
 const { gitInit } = require("../../../app/core/gitOperator2");
-
-//fileManager.__set__("getLogger", ()=>{
-//return { tarace: console.log, info: console.log, debug: console.log, error: console.log, warn: console.log };
-//});
 
 const testDirRoot = path.resolve("./WHEEL_TEST_TMP");
 

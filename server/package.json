@@ -86,7 +86,6 @@
     "deep-equal-in-any-order": "^2.0.6",
     "mocha": "^10.7.3",
     "nyc": "^15.1.0",
-    "rewire": "^6.0.0",
     "sinon": "^15.2.0",
     "sinon-chai": "^3.7.0",
     "tmp": "^0.2.5",

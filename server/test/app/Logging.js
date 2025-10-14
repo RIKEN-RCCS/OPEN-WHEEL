@@ -18,32 +18,26 @@ chai.use((_chai, _)=>{
     _.flag(this, "message", msg);
   });
 });
-const rewire = require("rewire");
 
 const { logFilename } = require("../../app/db/db.js");
 const projectRootDir = path.resolve("hoge");
 
 //testee
-const LOG = rewire("../../app/logSettings.js");
-const getLogger = LOG.__get__("getLogger");
-
-//stubs
-const emitAll = sinon.stub();
-LOG.__set__("emitAll", emitAll);
+const { getLogger, configure, logSettings, _internal } = require("../../app/logSettings.js");
 
 describe("Unit test for log4js's helper functions", ()=>{
   let logger;
-  const log4js = LOG.__get__("log4js");
-  const settings = LOG.__get__("logSettings");
+  let emitAll;
   before(async ()=>{
-    settings.appenders.log2client.level = "debug";
-    settings.appenders.filterdFile.level = "trace";
-    log4js.configure(settings);
+    logSettings.appenders.log2client.level = "debug";
+    logSettings.appenders.filterdFile.level = "trace";
+    configure(logSettings);
+    emitAll = sinon.stub(_internal, "emitAll");
   });
   after(async ()=>{
-    settings.appenders.log2client.level = process.env.WHEEL_LOGLEVEL;
-    settings.appenders.filterdFile.level = process.env.WHEEL_LOGLEVEL;
-    log4js.configure(settings);
+    logSettings.appenders.log2client.level = process.env.WHEEL_LOGLEVEL;
+    logSettings.appenders.filterdFile.level = process.env.WHEEL_LOGLEVEL;
+    configure(logSettings);
   });
   describe("#getLogger", ()=>{
     it("return log4js instance with default projectRootDir", ()=>{
@@ -66,7 +60,7 @@ describe("Unit test for log4js's helper functions", ()=>{
         await fs.remove(path.resolve(__dirname, logFilename));
         await fs.remove(projectRootDir);
       }
-      log4js.configure(settings);
+      configure(logSettings);
     });
     it("should send info, warn and error log to client", ()=>{
       logger = getLogger(projectRootDir);

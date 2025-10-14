@@ -12,7 +12,6 @@ const SshClientWrapper = require("ssh-client-wrapper");
 const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
-const rewire = require("rewire");
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
@@ -23,7 +22,6 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 //testee
 const Dispatcher = require("../../../app/core/dispatcher");
 const { eventEmitters } = require("../../../app/core/global.js");
-eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 //helper functions
 const { projectJsonFilename, componentJsonFilename } = require("../../../app/db/db.js");
@@ -43,10 +41,15 @@ describe("UT for Dispatcher class", function () {
   this.timeout(0);
   let rootWF;
   let projectJson;
+
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
     rootWF = await fs.readJson(path.resolve(projectRootDir, componentJsonFilename));
+    eventEmitters.set(projectRootDir, { emit: sinon.stub() });
+  });
+  afterEach(()=>{
+    eventEmitters.delete(projectRootDir);
   });
   after(async ()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
@@ -63,8 +66,6 @@ describe("UT for Dispatcher class", function () {
       "template1.txt": "Hello, {{ key1 }}!",
       "template2.txt": "Goodbye, {{ key2 }}!"
     };
-    const reWireDispatcher = rewire("../../../app/core/dispatcher.js");
-    const replaceByNunjucksForBulkjob = reWireDispatcher.__get__("replaceByNunjucksForBulkjob");
 
     beforeEach(async function () {
       await fs.ensureDir(templateRoot);
@@ -77,7 +78,7 @@ describe("UT for Dispatcher class", function () {
       await fs.remove(testDirRoot);
     });
     it("should replace target files and save with new filenames", async function () {
-      await replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber);
+      await Dispatcher.replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber);
       const newFile1 = path.resolve(templateRoot, `${bulkNumber}.template1.txt`);
       const newFile2 = path.resolve(templateRoot, `${bulkNumber}.template2.txt`);
       expect(newFile1).to.be.a.file().with.content("Hello, value1!");
@@ -85,12 +86,16 @@ describe("UT for Dispatcher class", function () {
     });
     it("should throw an error if a target file does not exist", async function () {
       const invalidFiles = ["template1.txt", "nonexistent.txt"];
-      await expect(
-        replaceByNunjucksForBulkjob(templateRoot, invalidFiles, params, bulkNumber)
-      ).to.be.rejectedWith(Error);
+      try {
+        await Dispatcher.replaceByNunjucksForBulkjob(templateRoot, invalidFiles, params, bulkNumber);
+      } catch (err) {
+        expect(err).to.be.an.instanceof(Error);
+        return;
+      }
+      expect.fail("should have thrown an error");
     });
     it("should handle empty targetFiles gracefully", async function () {
-      await replaceByNunjucksForBulkjob(templateRoot, [], params, bulkNumber);
+      await Dispatcher.replaceByNunjucksForBulkjob(templateRoot, [], params, bulkNumber);
       //ファイルが作成されていないことを確認
       const files = await fs.readdir(templateRoot);
       expect(files).to.have.members(Object.keys(templates));
@@ -102,8 +107,6 @@ describe("UT for Dispatcher class", function () {
     const targetFiles = ["file1.txt", "file2.txt"];
     const params = { key1: "value1", key2: "value2" };
     const bulkNumber = 42;
-    const reWireDispatcher = rewire("../../../app/core/dispatcher.js");
-    const writeParameterSetFile = reWireDispatcher.__get__("writeParameterSetFile");
     beforeEach(async function () {
       await fs.ensureDir(templateRoot);
 
@@ -116,7 +119,7 @@ describe("UT for Dispatcher class", function () {
     });
     it("should write parameters to parameterSet.wheel.txt", async function () {
       const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
-      await writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
+      await Dispatcher.writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
       expect(parameterSetFilePath).to.be.a.file();
       const expectedContent = [
         `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
@@ -131,13 +134,13 @@ describe("UT for Dispatcher class", function () {
     });
     it("should handle empty targetFiles gracefully", async function () {
       const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
-      await writeParameterSetFile(templateRoot, [], {}, bulkNumber);
+      await Dispatcher.writeParameterSetFile(templateRoot, [], {}, bulkNumber);
       expect(parameterSetFilePath).not.to.be.a.path();
     });
     it("should append parameters to an existing file", async function () {
       const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
       await fs.outputFile(parameterSetFilePath, "Initial content\n");
-      await writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
+      await Dispatcher.writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
       const expectedContent = [
         `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
         `BULKNUM_${bulkNumber}_TARGETNUM_0_KEY="key1"`,
@@ -154,9 +157,13 @@ describe("UT for Dispatcher class", function () {
       await fs.ensureDir(nonWritableDir);
       await fs.chmod(nonWritableDir, 0o400); //読み取り専用に設定
       const invalidTemplateRoot = path.join(nonWritableDir, "templates");
-      await expect(
-        writeParameterSetFile(invalidTemplateRoot, targetFiles, params, bulkNumber)
-      ).to.be.rejectedWith(Error);
+      try {
+        await Dispatcher.writeParameterSetFile(invalidTemplateRoot, targetFiles, params, bulkNumber);
+      } catch (err) {
+        expect(err).to.be.an.instanceof(Error);
+        return;
+      }
+      expect.fail("should have thrown an error");
       //権限を元に戻してディレクトリを削除
       await fs.chmod(nonWritableDir, 0o700);
       await fs.remove(nonWritableDir);

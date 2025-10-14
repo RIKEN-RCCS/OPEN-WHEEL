@@ -9,6 +9,21 @@ const { getLogger } = require("../logSettings");
 const { jobScheduler } = require("../db/db");
 const { createBulkStatusFile } = require("./execUtils");
 
+const _internal = {
+  addRequest,
+  getRequest,
+  delRequest,
+  getLogger,
+  jobScheduler,
+  createBulkStatusFile,
+  createRequest,
+  createRequestForWebAPI,
+  getStatusCode,
+  isJobFailed,
+  getFirstCapture,
+  getBulkFirstCapture
+};
+
 /**
  * parse output text from batch server and get return code or jobstatus code from it
  * @param {string} outputText - output from batch server
@@ -20,6 +35,7 @@ function getFirstCapture(outputText, reCode) {
   const rt = result === null || typeof (result[1]) === "undefined" ? null : result[1];
   return rt;
 }
+_internal.getFirstCapture = getFirstCapture;
 
 /**
  * parse output text from batch server and get bulkjob's status code from it
@@ -44,6 +60,7 @@ function getBulkFirstCapture(outputText, reSubCode) {
 
   return [result, codeList];
 }
+_internal.getBulkFirstCapture = getBulkFirstCapture;
 
 /**
  * check if Job status code means failed or not
@@ -64,6 +81,7 @@ function isJobFailed(JS, code) {
   }
   return statusList.includes(code);
 }
+_internal.isJobFailed = isJobFailed;
 
 /**
  * get status code from job status command's output
@@ -78,49 +96,50 @@ async function getStatusCode(JS, task, statCmdRt, outputText) {
   const reJobStatusCode = JS.reJobStatusCode || JS.reJobStatus;
   let [jobStatus, jobStatusList] = [0, []];
   if (task.type !== "bulkjobTask") {
-    task.jobStatus = getFirstCapture(outputText, reJobStatusCode.replace("{{ JOBID }}", task.jobID));
+    task.jobStatus = _internal.getFirstCapture(outputText, reJobStatusCode.replace("{{ JOBID }}", task.jobID));
   } else {
-    [jobStatus, jobStatusList] = getBulkFirstCapture(outputText, JS.reSubJobStatusCode.replace("{{ JOBID }}", task.jobID));
-    getLogger(task.projectRootDir).debug(`JobStatus: ${jobStatus} ,jobStatusList: ${jobStatusList}`);
+    [jobStatus, jobStatusList] = _internal.getBulkFirstCapture(outputText, JS.reSubJobStatusCode.replace("{{ JOBID }}", task.jobID));
+    _internal.getLogger(task.projectRootDir).debug(`JobStatus: ${jobStatus} ,jobStatusList: ${jobStatusList}`);
     task.jobStatus = jobStatus;
   }
   if (task.jobStatus === null) {
-    getLogger(task.projectRootDir).warn("get job status code failed, code is overwrited by -2");
+    _internal.getLogger(task.projectRootDir).warn("get job status code failed, code is overwrited by -2");
     task.jobStatus = -2;
   }
   if (statCmdRt !== 0) {
     if (!JS.acceptableRt.includes(statCmdRt)) {
-      getLogger(task.projectRootDir).warn(`status check command failed (${statCmdRt})`);
+      _internal.getLogger(task.projectRootDir).warn(`status check command failed (${statCmdRt})`);
       return -2;
     }
-    getLogger(task.projectRootDir).warn(`status check command returns ${statCmdRt} and it is in acceptableRt: ${JS.acceptableRt}`);
-    getLogger(task.projectRootDir).warn("it may fail to get job script's return code. so it is overwirted by 0");
+    _internal.getLogger(task.projectRootDir).warn(`status check command returns ${statCmdRt} and it is in acceptableRt: ${JS.acceptableRt}`);
+    _internal.getLogger(task.projectRootDir).warn("it may fail to get job script's return code. so it is overwirted by 0");
     return 0;
   }
 
   let strRt = 0;
   let [rt, rtCodeList] = [0, []];
   if (task.type !== "bulkjobTask") {
-    strRt = getFirstCapture(outputText, JS.reReturnCode.replace("{{ JOBID }}", task.jobID));
+    strRt = _internal.getFirstCapture(outputText, JS.reReturnCode.replace("{{ JOBID }}", task.jobID));
   } else {
-    [rt, rtCodeList] = getBulkFirstCapture(outputText, JS.reSubReturnCode.replace("{{ JOBID }}", task.jobID));
-    getLogger(task.projectRootDir).debug(`rt: ${rt} ,rtCodeList: ${rtCodeList}`);
+    [rt, rtCodeList] = _internal.getBulkFirstCapture(outputText, JS.reSubReturnCode.replace("{{ JOBID }}", task.jobID));
+    _internal.getLogger(task.projectRootDir).debug(`rt: ${rt} ,rtCodeList: ${rtCodeList}`);
     strRt = rt;
   }
   if (strRt === null) {
-    getLogger(task.projectRootDir).warn("get return code failed, code is overwrited by -2");
+    _internal.getLogger(task.projectRootDir).warn("get return code failed, code is overwrited by -2");
     return -2;
   }
   if (strRt === "6") {
-    getLogger(task.projectRootDir).warn("get return code 6, this job was canceled by stepjob dependency");
+    _internal.getLogger(task.projectRootDir).warn("get return code 6, this job was canceled by stepjob dependency");
     return 0;
   }
   if (task.type === "bulkjobTask") {
-    await createBulkStatusFile(task, rtCodeList, jobStatusList);
+    await _internal.createBulkStatusFile(task, rtCodeList, jobStatusList);
   }
   task.rt = parseInt(strRt, 10);
   return task.rt;
 }
+_internal.getStatusCode = getStatusCode;
 
 /**
  * create request object to check job status by webAPI on fugaku
@@ -146,6 +165,7 @@ function createRequestForWebAPI(hostinfo, task, JS) {
     allowEmptyOutput: JS.allowEmptyOutput
   };
 }
+_internal.createRequestForWebAPI = createRequestForWebAPI;
 
 /**
  * create request object to check job status
@@ -169,6 +189,7 @@ function createRequest(hostinfo, task, JS) {
     allowEmptyOutput: JS.allowEmptyOutput
   };
 }
+_internal.createRequest = createRequest;
 
 /**
  * register job to job manager
@@ -177,20 +198,20 @@ function createRequest(hostinfo, task, JS) {
  */
 function registerJob(hostinfo, task) {
   return new Promise((resolve, reject)=>{
-    const JS = jobScheduler[hostinfo.jobScheduler];
+    const JS = _internal.jobScheduler[hostinfo.jobScheduler];
     if (!JS) {
       const err = new Error("jobscheduler setting not found!");
       err.hostinfo = hostinfo;
       reject(err);
     }
-    const request = hostinfo.useWebAPI ? createRequestForWebAPI(hostinfo, task, JS) : createRequest(hostinfo, task, JS);
-    const id = addRequest(request);
-    const result = getRequest(id);
+    const request = hostinfo.useWebAPI ? _internal.createRequestForWebAPI(hostinfo, task, JS) : _internal.createRequest(hostinfo, task, JS);
+    const id = _internal.addRequest(request);
+    const result = _internal.getRequest(id);
     const requestName = `${request.argument} on ${request.hostInfo.host}`;
     let statusCheckErrorCount = 0;
     result.event.on("checked", (request)=>{
-      getLogger(task.projectRootDir).debug(`${requestName} status checked ${request.checkCount}`);
-      getLogger(task.projectRootDir).trace(`${requestName} status checked output:\n ${request.lastOutput}`);
+      _internal.getLogger(task.projectRootDir).debug(`${requestName} status checked ${request.checkCount}`);
+      _internal.getLogger(task.projectRootDir).trace(`${requestName} status checked output:\n ${request.lastOutput}`);
       //TODO accessTokenの更新が必要ならここに入れる
       if (request.rt !== 0) {
         statusCheckErrorCount++;
@@ -199,17 +220,17 @@ function registerJob(hostinfo, task) {
         const err = new Error("max status check error exceeded");
         err.numStatusCheckError = statusCheckErrorCount;
         err.maxStatusCheckError = JS.maxStatusCheckError;
-        delRequest(id);
+        _internal.delRequest(id);
         reject(err);
       }
     });
     result.event.on("finished", async (request)=>{
       const hook = hostinfo.useWebAPI ? request.finishedLocalHook : request.finishedHook;
-      getLogger(task.projectRootDir).debug(`${requestName} done`);
-      getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${hook.output}`);
+      _internal.getLogger(task.projectRootDir).debug(`${requestName} done`);
+      _internal.getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${hook.output}`);
       const reEmpty = /^\s*$/;
       if (reEmpty.test(hook.output)) {
-        getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`);
+        _internal.getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`);
 
         const request2 = structuredClone(request);
         request2.cmd = hook.cmd;
@@ -217,8 +238,8 @@ function registerJob(hostinfo, task) {
         delete request2.finishedHook;
         delete request2.finishedLocalHook;
 
-        const id2 = addRequest(request2);
-        const result2 = getRequest(id2);
+        const id2 = _internal.addRequest(request2);
+        const result2 = _internal.getRequest(id2);
         await new Promise((resolve, reject)=>{
           result2.event.on("finished", ()=>{
             hook.rt = result2.rt;
@@ -230,8 +251,8 @@ function registerJob(hostinfo, task) {
           });
         });
       }
-      const rt = await getStatusCode(JS, task, hook.rt, hook.output);
-      if (isJobFailed(JS, task.jobStatus)) {
+      const rt = await _internal.getStatusCode(JS, task, hook.rt, hook.output);
+      if (_internal.isJobFailed(JS, task.jobStatus)) {
         return reject(task.jobStatus);
       }
       return resolve(rt);
@@ -249,5 +270,15 @@ function registerJob(hostinfo, task) {
 }
 
 module.exports = {
-  registerJob
+  registerJob,
+  getFirstCapture,
+  getBulkFirstCapture,
+  isJobFailed,
+  getStatusCode,
+  createRequestForWebAPI,
+  createRequest
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

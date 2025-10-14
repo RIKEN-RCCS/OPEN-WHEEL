@@ -12,6 +12,13 @@ const nunjucks = require("nunjucks");
 const { getParamSpacev2 } = require("./parameterParser");
 const { overwriteByRsync } = require("./rsync.js");
 
+const _internal = {
+  fs,
+  nunjucks,
+  overwriteByRsync,
+  promisify
+};
+
 /**
  * get filenames to be scatterd
  * @param {string} templateRoot - path of PS component's "template" directory
@@ -25,7 +32,7 @@ async function getScatterFilesV2(templateRoot, paramSettings) {
   const srcNames = await Promise.all(
     paramSettings.scatter
       .map((e)=>{
-        return promisify(glob)(e.srcName, { cwd: templateRoot });
+        return _internal.promisify(glob)(e.srcName, { cwd: templateRoot });
       })
   );
   return Array.prototype.concat.apply([], srcNames);
@@ -42,9 +49,9 @@ async function getScatterFilesV2(templateRoot, paramSettings) {
 async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params) {
   return Promise.all(
     targetFiles.map(async (targetFile)=>{
-      const template = (await fs.readFile(path.resolve(templateRoot, targetFile))).toString();
-      const result = nunjucks.renderString(template, params);
-      return fs.outputFile(path.resolve(instanceRoot, targetFile), result);
+      const template = (await _internal.fs.readFile(path.resolve(templateRoot, targetFile))).toString();
+      const result = _internal.nunjucks.renderString(template, params);
+      return _internal.fs.outputFile(path.resolve(instanceRoot, targetFile), result);
     })
   );
 }
@@ -62,17 +69,17 @@ async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params
 async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, logger, useRsync) {
   const p = [];
   for (const recipe of scatterRecipe) {
-    const srcName = nunjucks.renderString(recipe.srcName, params);
-    const srces = await promisify(glob)(srcName, { cwd: templateRoot });
+    const srcName = _internal.nunjucks.renderString(recipe.srcName, params);
+    const srces = await _internal.promisify(glob)(srcName, { cwd: templateRoot });
     const dstDir = Object.prototype.hasOwnProperty.call(recipe, "dstNode") ? path.join(instanceRoot, recipe.dstNode) : instanceRoot;
-    const dstName = nunjucks.renderString(recipe.dstName, params);
+    const dstName = _internal.nunjucks.renderString(recipe.dstName, params);
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(dstDir, dstName.slice(0, -1), src) : path.join(dstDir, dstName);
       logger.trace(`scatter copy ${path.join(templateRoot, src)} to ${dst}`);
       if (useRsync) {
-        p.push(overwriteByRsync(path.join(templateRoot, src), dst));
+        p.push(_internal.overwriteByRsync(path.join(templateRoot, src), dst));
       } else {
-        p.push(fs.copy(path.join(templateRoot, src), dst, { overwrite: true }));
+        p.push(_internal.fs.copy(path.join(templateRoot, src), dst, { overwrite: true }));
       }
     }
   }
@@ -98,13 +105,13 @@ async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, l
   const p = [];
   for (const recipe of gatherRecipe) {
     const srcDir = Object.prototype.hasOwnProperty.call(recipe, "srcNode") ? path.join(instanceRoot, recipe.srcNode) : instanceRoot;
-    const srcName = nunjucks.renderString(recipe.srcName, params);
-    const srces = await promisify(glob)(srcName, { cwd: srcDir });
-    const dstName = nunjucks.renderString(recipe.dstName, params);
+    const srcName = _internal.nunjucks.renderString(recipe.srcName, params);
+    const srces = await _internal.promisify(glob)(srcName, { cwd: srcDir });
+    const dstName = _internal.nunjucks.renderString(recipe.dstName, params);
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(templateRoot, dstName.slice(0, -1), src) : path.join(templateRoot, dstName);
       logger.trace(`gather copy ${path.join(srcDir, src)} to ${dst}`);
-      p.push(fs.copy(path.join(srcDir, src), dst, { overwrite: true }));
+      p.push(_internal.fs.copy(path.join(srcDir, src), dst, { overwrite: true }));
     }
   }
   return Promise.all(p).catch((err)=>{
@@ -130,5 +137,13 @@ function makeCmd(paramSettings) {
 }
 
 module.exports = {
-  makeCmd
+  makeCmd,
+  getScatterFilesV2,
+  scatterFilesV2,
+  gatherFilesV2,
+  replaceByNunjucks
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

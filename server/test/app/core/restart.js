@@ -7,6 +7,7 @@
 const path = require("path");
 const fs = require("fs-extra");
 const tar = require("tar");
+const sinon = require("sinon");
 
 //setup test framework
 const chai = require("chai");
@@ -16,6 +17,7 @@ chai.use(require("chai-fs"));
 
 //testee
 const { runProject } = require("../../../app/core/projectController.js");
+const { eventEmitters } = require("../../../app/core/global.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -28,6 +30,13 @@ describe("restart UT", function () {
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await fs.ensureDir(projectRootDir);
+    
+    // Setup mock event emitter for the project
+    eventEmitters.set(projectRootDir, { emit: sinon.stub() });
+  });
+  afterEach(()=>{
+    // Clean up event emitter
+    eventEmitters.delete(projectRootDir);
   });
   after(async ()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {

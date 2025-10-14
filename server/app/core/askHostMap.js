@@ -8,14 +8,19 @@ const { emitAll } = require("../handlers/commUtils.js");
 const { remoteHost } = require("../db/db.js");
 const { getLogger } = require("../logSettings");
 
+const _internal = {
+  emitAll,
+  remoteHost
+};
+
 /**
  * determine hostMap is valid
  * @param {object} hostMap - old and new remotehost label map
  * @param {string[]} hosts - array of old remoteshot labels
- * @returns {boolean} -
+ * @returns {boolean} - 
  */
 function isValidHostMap(hostMap, hosts) {
-  const remotehostLabels = remoteHost.getAll().map((host)=>{
+  const remotehostLabels = _internal.remoteHost.getAll().map((host)=>{
     return host.name;
   });
   remotehostLabels.push("localhost");
@@ -47,7 +52,7 @@ function isValidHostMap(hostMap, hosts) {
  */
 async function askHostMap(clientID, hosts) {
   return new Promise((resolve, reject)=>{
-    emitAll(clientID, "askHostMap", hosts, (hostMap)=>{
+    _internal.emitAll(clientID, "askHostMap", hosts, (hostMap)=>{
       if (hostMap === null) {
         const err = new Error("user canceled host map input");
         err.reason = "CANCELED";
@@ -67,5 +72,10 @@ async function askHostMap(clientID, hosts) {
 }
 
 module.exports = {
-  askHostMap
+  askHostMap,
+  isValidHostMap
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

@@ -8,27 +8,22 @@
 //setup test framework
 const sinon = require("sinon");
 const chai = require("chai");
-const rewire = require("rewire");
 const expect = chai.expect;
 chai.use(require("chai-fs"));
 const { jobScheduler } = require("../../../app/db/db");
 
 //testee
-const rewTaskUtil = rewire("../../../app/core/taskUtil.js");
-const cancelDispatchedTasks = rewTaskUtil.__get__("cancelDispatchedTasks");
-const killTask = rewTaskUtil.__get__("killTask");
-const killLocalProcess = rewTaskUtil.__get__("killLocalProcess");
-const cancelRemoteJob = rewTaskUtil.__get__("cancelRemoteJob");
+const taskUtil = require("../../../app/core/taskUtil.js");
+const { _internal } = taskUtil;
+const { cancelDispatchedTasks, killTask, killLocalProcess, cancelRemoteJob } = taskUtil;
 
-describe("UT for taskUtil class", function () {
+describe("UT for taskUtil class", function() {
   describe("#cancelDispatchedTasks", ()=>{
     let cancelStub, killTaskStub;
     beforeEach(()=>{
       sinon.restore();
-      cancelStub = sinon.stub();
-      killTaskStub = sinon.stub();
-      rewTaskUtil.__set__("cancel", cancelStub);
-      rewTaskUtil.__set__("killTask", killTaskStub);
+      cancelStub = sinon.stub(_internal, "cancel");
+      killTaskStub = sinon.stub(_internal, "killTask");
     });
     afterEach(()=>{
       sinon.restore();
@@ -87,12 +82,9 @@ describe("UT for taskUtil class", function () {
   describe("#killTask", ()=>{
     let cancelLocalJobStub, killLocalProcessStub, cancelRemoteJobStub;
     beforeEach(()=>{
-      cancelLocalJobStub = sinon.stub();
-      killLocalProcessStub = sinon.stub();
-      cancelRemoteJobStub = sinon.stub();
-      rewTaskUtil.__set__("cancelLocalJob", cancelLocalJobStub);
-      rewTaskUtil.__set__("killLocalProcess", killLocalProcessStub);
-      rewTaskUtil.__set__("cancelRemoteJob", cancelRemoteJobStub);
+      cancelLocalJobStub = sinon.stub(_internal, "cancelLocalJob");
+      killLocalProcessStub = sinon.stub(_internal, "killLocalProcess");
+      cancelRemoteJobStub = sinon.stub(_internal, "cancelRemoteJob");
     });
     afterEach(()=>{
       sinon.restore();
@@ -149,7 +141,7 @@ describe("UT for taskUtil class", function () {
     });
   });
   describe("#cancelRemoteJob", ()=>{
-    let task, sshStub, getSshStub, getSshHostinfoStub, loggerStub, getLoggerStub;
+    let task, sshStub, getSshStub, getSshHostinfoStub, loggerDebugStub, getLoggerStub;
     beforeEach(()=>{
       task = {
         jobID: "12345",
@@ -157,24 +149,16 @@ describe("UT for taskUtil class", function () {
         remotehostID: "host1",
         name: "testTask"
       };
-      getSshStub = sinon.stub();
-      getSshHostinfoStub = sinon.stub();
       sshStub = {
         exec: sinon.stub().resolves()
       };
-      getSshStub.returns(sshStub);
-      getSshHostinfoStub.returns({
+      getSshStub = sinon.stub(_internal, "getSsh").returns(sshStub);
+      getSshHostinfoStub = sinon.stub(_internal, "getSshHostinfo").returns({
         jobScheduler: "SLURM"
       });
-      rewTaskUtil.__set__("getSsh", getSshStub);
-      rewTaskUtil.__set__("getSshHostinfo", getSshHostinfoStub);
       jobScheduler.SLURM = { del: "scancel" };
-      loggerStub = {
-        debug: sinon.stub()
-      };
-      getLoggerStub = sinon.stub();
-      getLoggerStub.returns(loggerStub);
-      rewTaskUtil.__set__("getLogger", getLoggerStub);
+      loggerDebugStub = sinon.stub();
+      getLoggerStub = sinon.stub(_internal, "getLogger").returns({ debug: loggerDebugStub });
     });
     afterEach(()=>{
       sinon.restore();
@@ -183,22 +167,22 @@ describe("UT for taskUtil class", function () {
       await cancelRemoteJob(task);
       sinon.assert.calledOnce(sshStub.exec);
       sinon.assert.calledWith(sshStub.exec, "scancel 12345", 60, sinon.match.func);
-      sinon.assert.calledTwice(loggerStub.debug);
-      sinon.assert.calledWith(loggerStub.debug, "cancel job: scancel 12345");
-      sinon.assert.calledWith(loggerStub.debug, "cacnel done", "");
+      sinon.assert.calledTwice(loggerDebugStub);
+      sinon.assert.calledWith(loggerDebugStub, "cancel job: scancel 12345");
+      sinon.assert.calledWith(loggerDebugStub, "cacnel done", "");
     });
     it("should log a debug message and return if jobID is missing", async ()=>{
       task.jobID = null;
       await cancelRemoteJob(task);
-      sinon.assert.calledOnce(loggerStub.debug);
-      sinon.assert.calledWith(loggerStub.debug, "try to cancel testTask but it have not been submitted.");
+      sinon.assert.calledOnce(loggerDebugStub);
+      sinon.assert.calledWith(loggerDebugStub, "try to cancel testTask but it have not been submitted.");
       sinon.assert.notCalled(sshStub.exec);
     });
     it("should handle SSH execution errors gracefully", async ()=>{
       sshStub.exec.rejects(new Error("SSH execution failed"));
       await expect(cancelRemoteJob(task)).to.be.rejectedWith("SSH execution failed");
-      sinon.assert.calledOnce(loggerStub.debug);
-      sinon.assert.calledWith(loggerStub.debug, "cancel job: scancel 12345");
+      sinon.assert.calledOnce(loggerDebugStub);
+      sinon.assert.calledWith(loggerDebugStub, "cancel job: scancel 12345");
     });
   });
 });

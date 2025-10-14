@@ -7,23 +7,17 @@
 
 //setup test framework
 const { expect } = require("chai");
-const rewire = require("rewire");
 const { getParamSpacev2 } = require("../../../app/core/parameterParser");
 
 const sinon = require("sinon");
-const fs = require("fs-extra");
 const path = require("path");
-const nunjucks = require("nunjucks");
 
 //testee
-const psUtils = rewire("../../../app/core/psUtils.js");
-const makeCmd = psUtils.__get__("makeCmd");
-const getScatterFilesV2 = psUtils.__get__("getScatterFilesV2");
-const scatterFilesV2 = psUtils.__get__("scatterFilesV2");
-const gatherFilesV2 = psUtils.__get__("gatherFilesV2");
-const replaceByNunjucks = psUtils.__get__("replaceByNunjucks");
+const psUtils = require("../../../app/core/psUtils.js");
+const { _internal } = psUtils;
+const { makeCmd, getScatterFilesV2, scatterFilesV2, gatherFilesV2, replaceByNunjucks } = psUtils;
 
-describe("UT for psUtils class", function () {
+describe("UT for psUtils class", function() {
   describe("#makeCmd", ()=>{
     it("should return functions for PS version 2", ()=>{
       const paramSettings = {
@@ -40,7 +34,8 @@ describe("UT for psUtils class", function () {
     });
     it("should throw an error for unsupported PS version", ()=>{
       const paramSettings = { version: 1 };
-      expect(()=>makeCmd(paramSettings)).to.throw("PS version 1 is no longer supported");
+      expect(()=>
+        makeCmd(paramSettings)).to.throw("PS version 1 is no longer supported");
     });
     it("should use 'target_param' if 'params' is not provided", ()=>{
       const paramSettings = {
@@ -55,14 +50,14 @@ describe("UT for psUtils class", function () {
     let mockLogger;
     let globStub;
     let fsCopyStub;
-    let nunjucksStub;
+    let nunjucksRenderStringStub;
 
     beforeEach(()=>{
       mockLogger = { trace: sinon.stub() };
-      globStub = sinon.stub().resolves(["source.txt"]); //非同期処理対応
-      fsCopyStub = sinon.stub(fs, "copy").resolves(); //fs.copy のモック
-      nunjucksStub = sinon.stub(nunjucks, "renderString");
-      psUtils.__set__("promisify", ()=>globStub);
+      globStub = sinon.stub().resolves(["source.txt"]);
+      fsCopyStub = sinon.stub(_internal.fs, "copy").resolves();
+      nunjucksRenderStringStub = sinon.stub(_internal.nunjucks, "renderString");
+      sinon.stub(_internal, "promisify").returns(globStub);
     });
 
     afterEach(()=>{
@@ -74,8 +69,8 @@ describe("UT for psUtils class", function () {
       const instanceRoot = "/instance";
       const params = { param1: "value1" };
       const gatherRecipe = [{ srcName: "source.txt", dstName: "destination.txt" }];
-      nunjucksStub.withArgs("source.txt", params).returns("source.txt");
-      nunjucksStub.withArgs("destination.txt", params).returns("destination.txt");
+      nunjucksRenderStringStub.withArgs("source.txt", params).returns("source.txt");
+      nunjucksRenderStringStub.withArgs("destination.txt", params).returns("destination.txt");
       await gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, mockLogger);
       expect(fsCopyStub.calledOnceWith(
         path.join(instanceRoot, "source.txt"),
@@ -88,11 +83,11 @@ describe("UT for psUtils class", function () {
       const instanceRoot = "/instance";
       const params = { param1: "value1" };
       const gatherRecipe = [{ srcName: "source.txt", dstName: "destination.txt" }];
-      nunjucksStub.withArgs("source.txt", params).returns("source.txt");
-      nunjucksStub.withArgs("destination.txt", params).returns("destination.txt");
+      nunjucksRenderStringStub.withArgs("source.txt", params).returns("source.txt");
+      nunjucksRenderStringStub.withArgs("destination.txt", params).returns("destination.txt");
       fsCopyStub.rejects({ code: "ENOENT" });
       const result = await gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, mockLogger);
-      expect(result).to.equal(true); //`true` を返すかチェック
+      expect(result).to.equal(true);
       expect(mockLogger.trace.calledWith("error occurred at gather")).to.be.true;
     });
     it("should throw an error for unexpected errors", async ()=>{
@@ -100,8 +95,8 @@ describe("UT for psUtils class", function () {
       const instanceRoot = "/instance";
       const params = { param1: "value1" };
       const gatherRecipe = [{ srcName: "source.txt", dstName: "destination.txt" }];
-      nunjucksStub.withArgs("source.txt", params).returns("source.txt");
-      nunjucksStub.withArgs("destination.txt", params).returns("destination.txt");
+      nunjucksRenderStringStub.withArgs("source.txt", params).returns("source.txt");
+      nunjucksRenderStringStub.withArgs("destination.txt", params).returns("destination.txt");
       fsCopyStub.rejects(new Error("Unexpected error"));
 
       try {
@@ -112,26 +107,26 @@ describe("UT for psUtils class", function () {
     });
   });
   describe("UT for psUtils class", ()=>{
-    let globStub, nunjucksStub, fsCopyStub, rsyncStub, mockLogger;
+    let globStub, nunjucksRenderStringStub, fsCopyStub, rsyncStub, mockLogger;
 
     beforeEach(()=>{
       globStub = sinon.stub().resolves(["file1.txt", "file2.txt"]);
-      nunjucksStub = sinon.stub();
-      fsCopyStub = sinon.stub().resolves();
-      rsyncStub = sinon.stub().resolves();
+      nunjucksRenderStringStub = sinon.stub(_internal.nunjucks, "renderString");
+      fsCopyStub = sinon.stub(_internal.fs, "copy").resolves();
+      rsyncStub = sinon.stub(_internal, "overwriteByRsync").resolves();
       mockLogger = { trace: sinon.stub() };
-      psUtils.__set__("promisify", ()=>globStub);
-      psUtils.__set__("nunjucks", { renderString: nunjucksStub });
-      psUtils.__set__("fs", { copy: fsCopyStub });
-      psUtils.__set__("overwriteByRsync", rsyncStub);
+      sinon.stub(_internal, "promisify").returns(globStub);
+    });
+    afterEach(()=>{
+      sinon.restore();
     });
     it("should scatter files correctly using fs.copy", async ()=>{
       const templateRoot = "/template";
       const instanceRoot = "/instance";
       const params = { param1: "value1" };
       const scatterRecipe = [{ srcName: "srcFile", dstName: "dstFile" }];
-      nunjucksStub.withArgs("srcFile", params).returns("srcFile");
-      nunjucksStub.withArgs("dstFile", params).returns("dstFile");
+      nunjucksRenderStringStub.withArgs("srcFile", params).returns("srcFile");
+      nunjucksRenderStringStub.withArgs("dstFile", params).returns("dstFile");
       await scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, mockLogger, false);
       expect(fsCopyStub.calledTwice).to.be.true;
       expect(fsCopyStub.firstCall.calledWithExactly(
@@ -150,8 +145,8 @@ describe("UT for psUtils class", function () {
       const instanceRoot = "/instance";
       const params = { param1: "value1" };
       const scatterRecipe = [{ srcName: "srcFile", dstName: "dstFile" }];
-      nunjucksStub.withArgs("srcFile", params).returns("srcFile");
-      nunjucksStub.withArgs("dstFile", params).returns("dstFile");
+      nunjucksRenderStringStub.withArgs("srcFile", params).returns("srcFile");
+      nunjucksRenderStringStub.withArgs("dstFile", params).returns("dstFile");
       await scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, mockLogger, true);
       expect(rsyncStub.calledTwice).to.be.true;
       expect(rsyncStub.firstCall.calledWithExactly(
@@ -169,8 +164,8 @@ describe("UT for psUtils class", function () {
       const instanceRoot = "/instance";
       const params = { param1: "value1" };
       const scatterRecipe = [{ srcName: "srcFile", dstName: "dstFile" }];
-      nunjucksStub.withArgs("srcFile", params).returns("file1.txt");
-      nunjucksStub.withArgs("dstFile", params).returns("dstFile");
+      nunjucksRenderStringStub.withArgs("srcFile", params).returns("file1.txt");
+      nunjucksRenderStringStub.withArgs("dstFile", params).returns("dstFile");
       const result = await scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, mockLogger, false);
       expect(result).to.be.true;
     });
@@ -180,8 +175,8 @@ describe("UT for psUtils class", function () {
       const instanceRoot = "/instance";
       const params = { param1: "value1" };
       const scatterRecipe = [{ srcName: "srcFile", dstName: "dstFile" }];
-      nunjucksStub.withArgs("srcFile", params).returns("file1.txt");
-      nunjucksStub.withArgs("dstFile", params).returns("dstFile");
+      nunjucksRenderStringStub.withArgs("srcFile", params).returns("file1.txt");
+      nunjucksRenderStringStub.withArgs("dstFile", params).returns("dstFile");
 
       try {
         await scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, mockLogger, false);
@@ -192,16 +187,14 @@ describe("UT for psUtils class", function () {
     });
   });
   describe("#replaceByNunjucks", ()=>{
-    let fsStub;
+    let fsReadFileStub;
+    let fsOutputFileStub;
     let nunjucksRenderStringStub;
 
     beforeEach(()=>{
-      fsStub = {
-        readFile: sinon.stub(),
-        outputFile: sinon.stub()
-      };
-      psUtils.__set__("fs", fsStub);
-      nunjucksRenderStringStub = sinon.stub(nunjucks, "renderString");
+      fsReadFileStub = sinon.stub(_internal.fs, "readFile");
+      fsOutputFileStub = sinon.stub(_internal.fs, "outputFile");
+      nunjucksRenderStringStub = sinon.stub(_internal.nunjucks, "renderString");
     });
 
     afterEach(()=>{
@@ -213,7 +206,7 @@ describe("UT for psUtils class", function () {
       const instanceRoot = "/instance";
       const targetFiles = ["file1.txt"];
       const params = { param1: "value1" };
-      fsStub.readFile.rejects(new Error("Read error"));
+      fsReadFileStub.rejects(new Error("Read error"));
 
       try {
         await replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params);
@@ -227,9 +220,9 @@ describe("UT for psUtils class", function () {
       const instanceRoot = "/instance";
       const targetFiles = ["file1.txt"];
       const params = { param1: "value1" };
-      fsStub.readFile.resolves("template content {{ param1 }}");
+      fsReadFileStub.resolves("template content {{ param1 }}");
       nunjucksRenderStringStub.returns("template content value1");
-      fsStub.outputFile.rejects(new Error("Write error"));
+      fsOutputFileStub.rejects(new Error("Write error"));
 
       try {
         await replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params);
@@ -244,7 +237,7 @@ describe("UT for psUtils class", function () {
 
     beforeEach(()=>{
       globStub = sinon.stub();
-      psUtils.__set__("promisify", ()=>globStub);
+      sinon.stub(_internal, "promisify").returns(globStub);
     });
 
     afterEach(()=>{

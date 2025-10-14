@@ -6,6 +6,7 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
+const EventEmitter = require("events");
 
 //setup test framework
 const chai = require("chai");
@@ -33,6 +34,7 @@ const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
 const { remoteHost } = require("../../../app/db/db");
 const { createSsh } = require("../../../app/core/sshManager");
+const { eventEmitters } = require("../../../app/core/global");
 
 describe("UT for executer class", function () {
   this.timeout(0);
@@ -60,6 +62,13 @@ describe("UT for executer class", function () {
     task0.ancestorsName = replacePathsep(path.relative(task0.projectRootDir, path.dirname(task0.workingDir)));
     task0.doCleanup = false;
     task0.emitForDispatcher = sinon.stub();
+    
+    // Setup mock event emitter for the project
+    eventEmitters.set(projectRootDir, { emit: sinon.stub() });
+  });
+  afterEach(()=>{
+    // Clean up event emitter
+    eventEmitters.delete(projectRootDir);
   });
   after(async ()=>{
     await fs.remove(testDirRoot);

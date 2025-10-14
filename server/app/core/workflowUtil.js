@@ -12,6 +12,15 @@ const { componentJsonFilename } = require("../db/db");
 const { getComponentDir, readComponentJson } = require("./componentJsonIO.js");
 const { hasChild } = require("./workflowComponent");
 
+const _internal = {
+  promisify,
+  readJsonGreedy,
+  getComponentDir,
+  readComponentJson,
+  hasChild,
+  getChildren
+};
+
 /**
  * get array of child components
  * @param {string} projectRootDir - project's root path
@@ -19,24 +28,25 @@ const { hasChild } = require("./workflowComponent");
  * @returns {object[]} - array of components
  */
 async function getChildren(projectRootDir, parentID) {
-  const dir = await getComponentDir(projectRootDir, parentID, true);
+  const dir = await _internal.getComponentDir(projectRootDir, parentID, true);
   if (!dir) {
     return [];
   }
 
-  const children = await promisify(glob)(path.join(dir, "*", componentJsonFilename));
+  const children = await _internal.promisify(glob)(path.join(dir, "*", componentJsonFilename));
   if (children.length === 0) {
     return [];
   }
 
   const rt = await Promise.all(children.map((e)=>{
-    return readJsonGreedy(e);
+    return _internal.readJsonGreedy(e);
   }));
 
   return rt.filter((e)=>{
     return !e.subComponent;
   });
 }
+_internal.getChildren = getChildren;
 
 /**
  * return component,  its children, and grandsons
@@ -45,16 +55,16 @@ async function getChildren(projectRootDir, parentID) {
  * @returns {object} - nested component JSON object
  */
 async function getThreeGenerationFamily(projectRootDir, rootComponentDir) {
-  const wf = await readComponentJson(rootComponentDir);
+  const wf = await _internal.readComponentJson(rootComponentDir);
   const rt = Object.assign({}, wf);
-  rt.descendants = await getChildren(projectRootDir, wf.ID);
+  rt.descendants = await _internal.getChildren(projectRootDir, wf.ID);
 
   for (const child of rt.descendants) {
     if (child.handler) {
       delete child.handler;
     }
-    if (hasChild(child)) {
-      const grandson = await getChildren(projectRootDir, child.ID);
+    if (_internal.hasChild(child)) {
+      const grandson = await _internal.getChildren(projectRootDir, child.ID);
       child.descendants = grandson.map((e)=>{
         if (e.type === "task") {
           return { type: e.type, pos: e.pos, host: e.host, useJobScheduler: e.useJobScheduler };
@@ -68,5 +78,10 @@ async function getThreeGenerationFamily(projectRootDir, rootComponentDir) {
 
 module.exports = {
   getChildren,
-  getThreeGenerationFamily
+  getThreeGenerationFamily,
+  componentJsonFilename
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

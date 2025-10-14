@@ -13,6 +13,16 @@ const { writeComponentJson } = require("./componentJsonIO.js");
 const { getLogger } = require("../logSettings");
 const { eventEmitters } = require("./global.js");
 
+const _internal = {
+  path,
+  fs,
+  replacePathsep,
+  isSameRemoteHost,
+  writeComponentJson,
+  getLogger,
+  eventEmitters
+};
+
 /**
  * set task component's status and notice it's changed
  * @param {object} task - task component
@@ -20,9 +30,9 @@ const { eventEmitters } = require("./global.js");
  */
 async function setTaskState(task, state) {
   task.state = state;
-  getLogger(task.projectRootDir).trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
-  await writeComponentJson(task.projectRootDir, task.workingDir, task, true);
-  const ee = eventEmitters.get(task.projectRootDir);
+  _internal.getLogger(task.projectRootDir).trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
+  await _internal.writeComponentJson(task.projectRootDir, task.workingDir, task, true);
+  const ee = _internal.eventEmitters.get(task.projectRootDir);
   ee.emit("taskStateChanged", task);
   ee.emit("componentStateChanged", task);
 }
@@ -32,13 +42,13 @@ async function setTaskState(task, state) {
  * @param {string} projectRootDir - project's root path
  * @param {string} componentID - component's ID string
  * @param {object} outputFile - outputfile object to be checked
- * @returns {boolean} -
+ * @returns {boolean} - 
  */
 async function needDownload(projectRootDir, componentID, outputFile) {
-  const rt = await Promise.all(outputFile.dst.map(({ dstNode })=>{
-    return isSameRemoteHost(projectRootDir, componentID, dstNode);
+  const rt = await Promise.all(outputFile.dst.map(({ dstNode }) => {
+    return _internal.isSameRemoteHost(projectRootDir, componentID, dstNode);
   }));
-  return rt.some((isSame)=>{
+  return rt.some((isSame) => {
     return !isSame;
   });
 }
@@ -51,10 +61,10 @@ async function needDownload(projectRootDir, componentID, outputFile) {
  */
 function formatSrcFilename(remoteWorkingDir, filename) {
   if (filename.endsWith("/") || filename.endsWith("\\")) {
-    const dirname = replacePathsep(filename);
-    return path.posix.join(remoteWorkingDir, `${dirname}/*`);
+    const dirname = _internal.replacePathsep(filename);
+    return _internal.path.posix.join(remoteWorkingDir, `${dirname}/*`);
   }
-  return path.posix.join(remoteWorkingDir, filename);
+  return _internal.path.posix.join(remoteWorkingDir, filename);
 }
 
 /**
@@ -70,10 +80,10 @@ function makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingD
   const src = formatSrcFilename(remoteWorkingDir, filename);
   if (filename.slice(0, -1).includes("/")) {
     const dst = src.replace(reRemoteWorkingDir, workingDir);
-    getLogger(projectRootDir).trace(`${filename} will be downloaded to ${dst}`);
+    _internal.getLogger(projectRootDir).trace(`${filename} will be downloaded to ${dst}`);
     return { src, dst };
   }
-  getLogger(projectRootDir).trace(`${filename} will be downloaded to component root directory`);
+  _internal.getLogger(projectRootDir).trace(`${filename} will be downloaded to component root directory`);
   return { src, dst: workingDir };
 }
 
@@ -82,9 +92,9 @@ function makeDownloadRecipe(projectRootDir, filename, remoteWorkingDir, workingD
  * @param {object} task - task component
  */
 async function createStatusFile(task) {
-  const filename = path.resolve(task.workingDir, statusFilename);
+  const filename = _internal.path.resolve(task.workingDir, statusFilename);
   const statusFile = `${task.state}\n${task.rt}\n${task.jobStatus}`;
-  return fs.writeFile(filename, statusFile);
+  return _internal.fs.writeFile(filename, statusFile);
 }
 
 /**
@@ -94,12 +104,12 @@ async function createStatusFile(task) {
  * @param {string[]} jobStatusList - array of job status codes from bulk job
  */
 async function createBulkStatusFile(task, rtList, jobStatusList) {
-  const filename = path.resolve(task.workingDir, `subjob_${statusFilename}`);
+  const filename = _internal.path.resolve(task.workingDir, `subjob_${statusFilename}`);
   let statusFile = "";
   for (let bulkNum = task.startBulkNumber; bulkNum <= task.endBulkNumber; bulkNum++) {
     statusFile += `RT_${bulkNum}=${rtList[bulkNum]}\nJOBSTATUS_${bulkNum}=${jobStatusList[bulkNum]}\n`;
   }
-  return fs.writeFile(filename, statusFile);
+  return _internal.fs.writeFile(filename, statusFile);
 }
 
 module.exports = {
@@ -107,5 +117,10 @@ module.exports = {
   needDownload,
   makeDownloadRecipe,
   createStatusFile,
-  createBulkStatusFile
+  createBulkStatusFile,
+  formatSrcFilename
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

@@ -15,23 +15,21 @@ const chai = require("chai");
 const expect = chai.expect;
 chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
-const rewire = require("rewire");
+chai.use(require("sinon-chai"));
 const sinon = require("sinon");
 
 //testee
-const IP = rewire("../../../app/core/importProject.js");
-const isEmptyDir = IP.__get__("isEmptyDir");
-const extractAndReadArchiveMetadata = IP.__get__("extractAndReadArchiveMetadata");
-const importProject = IP.__get__("importProject");
-
-const dummyProjectList = [];
-IP.__set__("projectList", dummyProjectList);
+const IP = require("../../../app/core/importProject.js");
+const { _internal } = IP;
+const isEmptyDir = IP.isEmptyDir;
+const extractAndReadArchiveMetadata = IP.extractAndReadArchiveMetadata;
+const importProject = IP.importProject;
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const testArchiveFile = path.resolve(__dirname, "../../testFiles/WHEEL_project_test_project.tgz");
 
-describe("import project UT", function () {
+describe("import project UT", function() {
   this.timeout(10000);
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
@@ -66,43 +64,38 @@ describe("import project UT", function () {
     });
   });
   describe("#importProject", ()=>{
-    const getHosts = sinon.stub();
-    const askHostMap = sinon.stub();
-    const rewriteHosts = sinon.stub();
-    IP.__set__("getHosts", getHosts);
-    IP.__set__("askHostMap", askHostMap);
-    IP.__set__("rewriteHosts", rewriteHosts);
+    let getHostsStub;
+    let askHostMapStub;
+    let rewriteHostsStub;
     beforeEach(async ()=>{
-      getHosts.resetHistory();
-      askHostMap.resetHistory();
-      rewriteHosts.resetHistory();
+      getHostsStub = sinon.stub(_internal, "getHosts");
+      askHostMapStub = sinon.stub(_internal, "askHostMap");
+      rewriteHostsStub = sinon.stub(_internal, "rewriteHosts");
       await exec(`cp ${testArchiveFile} ${testArchiveFile}.bak`);
     });
     afterEach(async ()=>{
-      await exec(`cp ${testArchiveFile}.bak ${testArchiveFile}`);
-    });
-    after(async ()=>{
-      await exec(`rm ${testArchiveFile}.bak`);
+      sinon.restore();
+      await exec(`mv ${testArchiveFile}.bak ${testArchiveFile}`);
     });
     it("should import project and add it to projectList", async ()=>{
-      getHosts.onCall(0).returns([]);
+      getHostsStub.onCall(0).returns([]);
       expect(await importProject("dummyClientID", testArchiveFile, testDirRoot)).to.be.a("string");
-      expect(getHosts).to.be.calledOnce;
-      expect(askHostMap).not.to.be.called;
-      expect(rewriteHosts).not.to.be.called;
-      expect(dummyProjectList[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
+      expect(getHostsStub).to.be.calledOnce;
+      expect(askHostMapStub).not.to.be.called;
+      expect(rewriteHostsStub).not.to.be.called;
+      expect(_internal.projectList.data[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
     });
     it("should import project and add it to projectList with host modification", async ()=>{
       const hosts = ["hoge"];
       const hostMap = { hoge: "huga" };
-      getHosts.onCall(0).returns(hosts);
-      askHostMap.onCall(0).returns(hostMap);
+      getHostsStub.onCall(0).returns(hosts);
+      askHostMapStub.onCall(0).returns(hostMap);
       expect(await importProject("dummyClientID", testArchiveFile, testDirRoot)).to.be.a("string");
-      expect(getHosts).to.be.calledOnce;
-      expect(askHostMap).to.be.calledWith("dummyClientID", hosts);
-      expect(rewriteHosts).to.be.calledOnce;
-      expect(rewriteHosts.getCall(0).args[1]).to.deep.equal(hostMap);
-      expect(dummyProjectList[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
+      expect(getHostsStub).to.be.calledOnce;
+      expect(askHostMapStub).to.be.calledWith("dummyClientID", hosts);
+      expect(rewriteHostsStub).to.be.calledOnce;
+      expect(rewriteHostsStub.getCall(0).args[1]).to.deep.equal(hostMap);
+      expect(_internal.projectList.data[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
     });
   });
 });

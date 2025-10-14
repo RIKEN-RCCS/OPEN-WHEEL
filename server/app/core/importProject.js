@@ -18,6 +18,13 @@ const { askHostMap } = require("./askHostMap.js");
 const { askRewindState } = require("./askRewindState.js");
 const { rewriteHosts } = require("./rewriteHosts.js");
 
+const _internal = {
+  askHostMap,
+  getHosts,
+  projectList,
+  rewriteHosts
+};
+
 /**
  * determine specified directory is empty
  * @param {string} dir - dir path to be checked
@@ -109,11 +116,11 @@ async function checkAndFixProject(src, clientID) {
     await updateProjectROStatus(src, false);
   }
 
-  const hosts = await getHosts(src, null);
+  const hosts = await _internal.getHosts(src, null);
   if (hosts.length > 0) {
     //throw exception if user cancel or input invalid host map
-    const hostMap = await askHostMap(clientID, hosts);
-    await rewriteHosts(src, hostMap);
+    const hostMap = await _internal.askHostMap(clientID, hosts);
+    await _internal.rewriteHosts(src, hostMap);
   }
   await gitConfig(src, "user.name", "wheel");
   await gitConfig(src, "user.email", "wheel@example.com");
@@ -136,7 +143,7 @@ async function importProject(clientID, archiveFile, parentDir) {
     await gitClone(projectRootDir, 1, src);
     await gitRemoveOrigin(projectRootDir);
     await gitSetup(projectRootDir, "wheel", "wheel@example.com");
-    projectList.unshift({ path: projectRootDir });
+    _internal.projectList.unshift({ path: projectRootDir });
   } finally {
     await fs.remove(archiveFile);
     await fs.remove(src);
@@ -159,7 +166,7 @@ async function importProjectFromGitRepository(clientID, URL, parentDir) {
     await ensureProjectRootDir(projectRootDir);
     await checkAndFixProject(src, clientID);
     await gitClone(projectRootDir, 1, src);
-    projectList.unshift({ path: projectRootDir });
+    _internal.projectList.unshift({ path: projectRootDir });
   } finally {
     await fs.remove(src);
   }
@@ -168,6 +175,11 @@ async function importProjectFromGitRepository(clientID, URL, parentDir) {
 
 module.exports = {
   importProject,
-  importProjectFromGitRepository
-
+  importProjectFromGitRepository,
+  isEmptyDir,
+  extractAndReadArchiveMetadata
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

@@ -9,11 +9,14 @@ const expect = chai.expect;
 chai.use(require("chai-as-promised"));
 const { describe, it } = require("mocha");
 const sinon = require("sinon");
-const rewire = require("rewire");
-const { isFinishedState } = require("../../../app/core/dispatchUtils");
+const { isFinishedState, pspawn,
+  evalCondition,
+  getRemoteRootWorkingDir,
+  getRemoteWorkingDir,
+  isSubComponent,
+  _internal } = require("../../../app/core/dispatchUtils");
 
 describe("#pspawn", ()=>{
-  let pspawn;
   let spawnStub;
   let onStub;
   let stdoutStub;
@@ -23,19 +26,13 @@ describe("#pspawn", ()=>{
   let traceStub;
 
   beforeEach(()=>{
-    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
-    pspawn = dispatchUtils.__get__("pspawn");
-    spawnStub = sinon.stub();
+    spawnStub = sinon.stub(_internal.childProcess, "spawn");
     onStub = sinon.stub();
     stdoutStub = sinon.stub();
     stderrStub = sinon.stub();
-    getLoggerStub = sinon.stub();
+    getLoggerStub = sinon.stub(_internal, "getLogger");
     debugStub = sinon.stub();
     traceStub = sinon.stub();
-    dispatchUtils.__set__({
-      childProcess: { spawn: spawnStub },
-      getLogger: getLoggerStub
-    });
     getLoggerStub.returns({ debug: debugStub, trace: traceStub });
   });
 
@@ -44,7 +41,7 @@ describe("#pspawn", ()=>{
   });
 
   it("should resolve as true if the child process is finished with code 0", async ()=>{
-    spawnStub.withArgs("command", {}).returns({
+    spawnStub.withArgs("command", [], {}).returns({
       on: onStub,
       stdout: { on: stdoutStub },
       stderr: { on: stderrStub }
@@ -53,13 +50,13 @@ describe("#pspawn", ()=>{
     onStub.withArgs("close").callsFake((event, callback)=>{
       closingCallback = callback;
     });
-    let promise = pspawn("projectRootDir", "command", {});
+    let promise = pspawn("projectRootDir", "command", [], {});
     closingCallback(0);
     await expect(promise).to.eventually.be.true;
   });
 
   it("should resolve as false if the child process is finished with code non 0", async ()=>{
-    spawnStub.withArgs("command", {}).returns({
+    spawnStub.withArgs("command", [], {}).returns({
       on: onStub,
       stdout: { on: stdoutStub },
       stderr: { on: stderrStub }
@@ -68,13 +65,13 @@ describe("#pspawn", ()=>{
     onStub.withArgs("close").callsFake((event, callback)=>{
       closingCallback = callback;
     });
-    let promise = pspawn("projectRootDir", "command", {});
+    let promise = pspawn("projectRootDir", "command", [], {});
     closingCallback(1);
     await expect(promise).to.eventually.be.false;
   });
 
   it("should reject if the child process is finished with an error", async ()=>{
-    spawnStub.withArgs("nonexistent_command", {}).returns({
+    spawnStub.withArgs("nonexistent_command", [], {}).returns({
       on: onStub,
       stdout: { on: stdoutStub },
       stderr: { on: stderrStub }
@@ -83,13 +80,13 @@ describe("#pspawn", ()=>{
     onStub.withArgs("error").callsFake((event, callback)=>{
       errorCallback = callback;
     });
-    let promise = pspawn("projectRootDir", "nonexistent_command", {});
+    let promise = pspawn("projectRootDir", "nonexistent_command", [], {});
     errorCallback();
     await expect(promise).to.be.rejected;
   });
 
   it("should log closing when the child process is finished", async ()=>{
-    spawnStub.withArgs("command", {}).returns({
+    spawnStub.withArgs("command", [], {}).returns({
       on: onStub,
       stdout: { on: stdoutStub },
       stderr: { on: stderrStub }
@@ -98,7 +95,7 @@ describe("#pspawn", ()=>{
     onStub.withArgs("close").callsFake((event, callback)=>{
       closingCallback = callback;
     });
-    let promise = pspawn("projectRootDir", "command", {});
+    let promise = pspawn("projectRootDir", "command", [], {});
     closingCallback(123);
     await promise;
     expect(
@@ -107,7 +104,7 @@ describe("#pspawn", ()=>{
   });
 
   it("should log stdout", async ()=>{
-    spawnStub.withArgs("command", {}).returns({
+    spawnStub.withArgs("command", [], {}).returns({
       on: onStub,
       stdout: { on: stdoutStub },
       stderr: { on: stderrStub }
@@ -120,7 +117,7 @@ describe("#pspawn", ()=>{
     stdoutStub.callsFake((event, callback)=>{
       stdoutCallback = callback;
     });
-    let promise = pspawn("projectRootDir", "command", {});
+    let promise = pspawn("projectRootDir", "command", [], {});
     stdoutCallback("processing");
     closingCallback(0);
     await promise;
@@ -128,7 +125,7 @@ describe("#pspawn", ()=>{
   });
 
   it("should log stderr", async ()=>{
-    spawnStub.withArgs("command", {}).returns({
+    spawnStub.withArgs("command", [], {}).returns({
       on: onStub,
       stdout: { on: stdoutStub },
       stderr: { on: stderrStub }
@@ -141,43 +138,37 @@ describe("#pspawn", ()=>{
     stderrStub.callsFake((event, callback)=>{
       stderrCallback = callback;
     });
-    let promise = pspawn("projectRootDir", "command", {});
+    let promise = pspawn("projectRootDir", "command", [], {});
     stderrCallback("error occurred");
     errorCallback();
-    await promise.catch(()=>{});
+    await promise.catch(()=>{
+    });
     expect(traceStub.calledWith("error occurred")).to.be.true;
   });
 });
 
 describe("#evalCondition", ()=>{
-  let evalCondition;
   let pathExistsStub;
   let getLoggerStub;
   let debugStub;
   let warnStub;
   let addXStub;
   let pspawnStub;
+  const originalEnv = _internal.process.env;
 
   beforeEach(()=>{
-    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
-    evalCondition = dispatchUtils.__get__("evalCondition");
-    pathExistsStub = sinon.stub();
-    getLoggerStub = sinon.stub();
+    pathExistsStub = sinon.stub(_internal.fs, "pathExists");
+    getLoggerStub = sinon.stub(_internal, "getLogger");
     debugStub = sinon.stub();
     warnStub = sinon.stub();
-    addXStub = sinon.stub();
-    pspawnStub = sinon.stub();
-    dispatchUtils.__set__({
-      process: { env: {} },
-      fs: { pathExists: pathExistsStub },
-      getLogger: getLoggerStub,
-      addX: addXStub,
-      pspawn: pspawnStub
-    });
     getLoggerStub.returns({ debug: debugStub, warn: warnStub });
+    addXStub = sinon.stub(_internal, "addX");
+    pspawnStub = sinon.stub(_internal, "pspawn");
+    _internal.process.env = {};
   });
 
   afterEach(()=>{
+    _internal.process.env = originalEnv;
     sinon.restore();
   });
 
@@ -205,6 +196,7 @@ describe("#evalCondition", ()=>{
       .withArgs(
         "/projectRootDir",
         "/cwd/condition",
+        [],
         sinon.match({
           env: { key: "value" },
           cwd: "/cwd",
@@ -225,6 +217,7 @@ describe("#evalCondition", ()=>{
       .withArgs(
         "/projectRootDir",
         "/cwd/condition",
+        [],
         sinon.match({
           env: { key: "value" },
           cwd: "/cwd",
@@ -246,22 +239,14 @@ describe("#evalCondition", ()=>{
 });
 
 describe("#getRemoteRootWorkingDir", ()=>{
-  let getRemoteRootWorkingDir;
   let getIDStub;
   let getSshHostinfoStub;
   let replacePathsepStub;
 
   beforeEach(()=>{
-    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
-    getRemoteRootWorkingDir = dispatchUtils.__get__("getRemoteRootWorkingDir");
-    getIDStub = sinon.stub();
-    getSshHostinfoStub = sinon.stub();
-    replacePathsepStub = sinon.stub();
-    dispatchUtils.__set__({
-      remoteHost: { getID: getIDStub },
-      getSshHostinfo: getSshHostinfoStub,
-      replacePathsep: replacePathsepStub
-    });
+    getIDStub = sinon.stub(_internal.remoteHost, "getID");
+    getSshHostinfoStub = sinon.stub(_internal, "getSshHostinfo");
+    replacePathsepStub = sinon.stub(_internal, "replacePathsep");
   });
 
   afterEach(()=>{
@@ -348,19 +333,12 @@ describe("#getRemoteRootWorkingDir", ()=>{
 });
 
 describe("#getRemoteWorkingDir", ()=>{
-  let getRemoteWorkingDir;
   let getRemoteRootWorkingDirStub;
   let replacePathsepStub;
 
   beforeEach(()=>{
-    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
-    getRemoteWorkingDir = dispatchUtils.__get__("getRemoteWorkingDir");
-    getRemoteRootWorkingDirStub = sinon.stub();
-    replacePathsepStub = sinon.stub();
-    dispatchUtils.__set__({
-      getRemoteRootWorkingDir: getRemoteRootWorkingDirStub,
-      replacePathsep: replacePathsepStub
-    });
+    getRemoteRootWorkingDirStub = sinon.stub(_internal, "getRemoteRootWorkingDir");
+    replacePathsepStub = sinon.stub(_internal, "replacePathsep");
   });
 
   afterEach(()=>{
@@ -435,23 +413,14 @@ describe("#isFinishedState", ()=>{
 });
 
 describe("#isSubComponent", ()=>{
-  let isSubComponent;
   let statStub;
   let isDirectoryStub;
   let readJsonGreedyStub;
 
   beforeEach(()=>{
-    const dispatchUtils = rewire("../../../app/core/dispatchUtils.js");
-    isSubComponent = dispatchUtils.__get__("isSubComponent");
-    statStub = sinon.stub();
+    statStub = sinon.stub(_internal.fs, "stat");
     isDirectoryStub = sinon.stub();
-    readJsonGreedyStub = sinon.stub();
-    dispatchUtils.__set__({
-      fs: {
-        stat: statStub
-      },
-      readJsonGreedy: readJsonGreedyStub
-    });
+    readJsonGreedyStub = sinon.stub(_internal, "readJsonGreedy");
   });
 
   afterEach(()=>{
@@ -516,7 +485,9 @@ describe("#isSubComponent", ()=>{
       .resolves({ subComponent: true });
     await expect(isSubComponent("/componentDir"))
       .to.be.rejectedWith(Error)
-      .and.eventually.satisfy((err)=>err.code === "EACCES");
+      .and.eventually.satisfy((err)=>{
+        return err.code === "EACCES";
+      });
   });
 
   it("should return false if the ENOENT error is occurred when trying to read json of subcompoment", async ()=>{
@@ -541,6 +512,8 @@ describe("#isSubComponent", ()=>{
     readJsonGreedyStub.withArgs("/componentDir/cmp.wheel.json").throws(error);
     await expect(isSubComponent("/componentDir"))
       .to.be.rejectedWith(Error)
-      .and.eventually.satisfy((err)=>err.code === "EACCES");
+      .and.eventually.satisfy((err)=>{
+        return err.code === "EACCES";
+      });
   });
 });

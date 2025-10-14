@@ -22,7 +22,6 @@ const { runProject } = require("../../../app/core/projectController");
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 const { eventEmitters } = require("../../../app/core/global.js");
-eventEmitters.set(projectRootDir, { emit: sinon.stub() });
 
 //helper functions
 const { readComponentJson } = require("../../../app/core/componentJsonIO.js");
@@ -61,9 +60,10 @@ function checkTaskDoesNotRun(componentDir) {
 describe("UT for environment variables", function () {
   this.timeout(0);
   let state;
-  before(async ()=>{
-    await fs.remove(testDirRoot);
-    await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+    before(async ()=>{
+      await fs.remove(testDirRoot);
+      eventEmitters.set(projectRootDir, { emit: sinon.stub() });
+      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
     const rootWF = await readComponentJson(projectRootDir);
     await replaceEnv(projectRootDir, rootWF.ID, { USER_DEFINED_VALUE: "hoge" });
 
@@ -171,6 +171,7 @@ describe("UT for environment variables", function () {
     state = await runProject(projectRootDir);
   });
   after(async ()=>{
+    eventEmitters.delete(projectRootDir);
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
       await fs.remove(testDirRoot);
     }

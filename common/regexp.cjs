@@ -104,6 +104,7 @@ function isValidOutputFilename(name) {
 
 module.exports = {
   escapeRegExp,
+  isSane,
   isValidName,
   isValidInputFilename,
   isValidOutputFilename,

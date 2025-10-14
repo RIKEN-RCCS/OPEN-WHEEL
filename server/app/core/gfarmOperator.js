@@ -9,11 +9,18 @@ const { getLogger } = require("../logSettings");
 const { getSsh, getSshHostinfo } = require("./sshManager.js");
 const { getJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
 
+const _internal = {
+  getSsh,
+  getSshHostinfo,
+  getJWTServerPassphrase
+};
+
 async function execOnCSGW(projectRootDir, hostID, timeout, cmd, ...args) {
-  const ssh = await getSsh(projectRootDir, hostID);
+  const ssh = await _internal.getSsh(projectRootDir, hostID);
   const cmdline = args.reduce((a, c)=>{
     return `${a} ${c}`;
-  }, cmd);
+  },
+  cmd);
 
   const { rt, output } = await ssh.execAndGetOutput(cmdline, timeout);
   if (rt !== 0) {
@@ -42,7 +49,7 @@ function formatGfarmURL(target) {
 }
 
 async function checkJWTAgent(projectRootDir, hostID) {
-  const ssh = await getSsh(projectRootDir, hostID);
+  const ssh = await _internal.getSsh(projectRootDir, hostID);
   let result = false;
   await ssh.exec("jwt-agent --status", 60, (data)=>{
     if (/^jwt-agent.* is running/.exec(data)) {
@@ -59,9 +66,9 @@ async function startJWTAgent(projectRootDir, hostID, passphrase) {
   if (await checkJWTAgent(projectRootDir, hostID)) {
     return false;
   }
-  const ssh = await getSsh(projectRootDir, hostID);
-  const { JWTServerUser, JWTServerURL } = await getSshHostinfo(projectRootDir, hostID);
-  const JWTServerPassphrase = passphrase || await getJWTServerPassphrase(projectRootDir, hostID);
+  const ssh = await _internal.getSsh(projectRootDir, hostID);
+  const { JWTServerUser, JWTServerURL } = await _internal.getSshHostinfo(projectRootDir, hostID);
+  const JWTServerPassphrase = passphrase || await _internal.getJWTServerPassphrase(projectRootDir, hostID);
   return ssh.expect(`jwt-agent -s ${JWTServerURL} -l ${JWTServerUser}`, [
     { expect: "Passphrase", send: JWTServerPassphrase }
   ], null, 60);
@@ -248,3 +255,7 @@ module.exports = {
   gfmkdir,
   gfmv
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

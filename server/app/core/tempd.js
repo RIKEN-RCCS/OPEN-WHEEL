@@ -9,6 +9,11 @@ const fs = require("fs-extra");
 const { createHash } = require("crypto");
 const { getLogger } = require("../logSettings.js");
 
+const _internal = {
+  getLogger,
+  tempdRoot: null
+};
+
 /**
  * determine tmp directory root
  * @returns {string} - absolute path of tmp directory root
@@ -31,13 +36,13 @@ function getTempdRoot() {
       if (e.code === "EEXIST") {
         return candidate;
       }
-      getLogger().debug(`create ${candidate} failed due to ${e}`);
+      _internal.getLogger().debug(`create ${candidate} failed due to ${e}`);
     }
   }
   return fallback;
 }
 
-const tempdRoot = getTempdRoot(); //must be executed only when this file requred first time
+_internal.tempdRoot = getTempdRoot(); //must be executed only when this file requred first time
 
 /**
  * create temporary directory
@@ -46,12 +51,12 @@ const tempdRoot = getTempdRoot(); //must be executed only when this file requred
  * @returns {object} - dir: absolute path of temp dir, root: parent dir path of temp dir
  */
 async function createTempd(projectRootDir, prefix) {
-  const root = path.resolve(tempdRoot, prefix);
+  const root = path.resolve(_internal.tempdRoot, prefix);
   const hash = createHash("sha256");
   const ID = hash.update(projectRootDir || "wheel_tmp").digest("hex");
   const dir = path.join(root, ID);
   await fs.emptyDir(dir);
-  getLogger(projectRootDir).debug(`create temporary directory ${dir}`);
+  _internal.getLogger(projectRootDir).debug(`create temporary directory ${dir}`);
   return { dir, root };
 }
 
@@ -64,8 +69,8 @@ async function createTempd(projectRootDir, prefix) {
 async function removeTempd(projectRootDir, prefix) {
   const hash = createHash("sha256");
   const ID = hash.update(projectRootDir || "wheel_tmp").digest("hex");
-  const dir = path.resolve(tempdRoot, prefix, ID);
-  getLogger(projectRootDir).debug(`remove temporary directory ${dir}`);
+  const dir = path.resolve(_internal.tempdRoot, prefix, ID);
+  _internal.getLogger(projectRootDir).debug(`remove temporary directory ${dir}`);
   return fs.remove(dir);
 }
 
@@ -78,13 +83,17 @@ async function removeTempd(projectRootDir, prefix) {
 async function getTempd(projectRootDir, prefix) {
   const hash = createHash("sha256");
   const ID = hash.update(projectRootDir || "wheel_tmp").digest("hex");
-  return path.resolve(tempdRoot, prefix, ID);
+  return path.resolve(_internal.tempdRoot, prefix, ID);
 }
 
 module.exports = {
-  tempdRoot,
+  tempdRoot: _internal.tempdRoot,
   createTempd,
   removeTempd,
   getTempd,
   getTempdRoot
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports._internal = _internal;
+}

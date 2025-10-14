@@ -10,12 +10,13 @@ const fs = require("fs-extra");
 //setup test framework
 const chai = require("chai");
 const expect = chai.expect;
+const sinon = require("sinon");
 chai.use(require("sinon-chai"));
 chai.use(require("chai-fs"));
 chai.use(require("chai-json-schema"));
 
 //testee
-const { runProject } = require("../../../app/core/projectController");
+const { runProject, _internal } = require("../../../app/core/projectController");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -24,6 +25,7 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 //helper functions
 const { projectJsonFilename, componentJsonFilename } = require("../../../app/db/db");
 const { createNewProject, updateComponent, createNewComponent, addInputFile, addFileLink, renameOutputFile } = require("../../../app/core/projectFilesOperator");
+const { eventEmitters } = require("../../../app/core/global");
 
 const { scriptName, pwdCmd, scriptHeader } = require("../../testScript");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
@@ -41,6 +43,18 @@ describe("UT for source component", function () {
     await addInputFile(projectRootDir, task0.ID, "bar");
     await fs.outputFile(path.join(projectRootDir, "task0", scriptName), scriptPwd);
     await addFileLink(projectRootDir, source0.ID, "foo", task0.ID, "bar");
+    
+    // Setup mock event emitter for the project
+    eventEmitters.set(projectRootDir, { emit: sinon.stub() });
+    
+    // Clear any existing dispatchers
+    _internal.rootDispatchers.clear();
+  });
+  afterEach(()=>{
+    // Clean up event emitter
+    eventEmitters.delete(projectRootDir);
+    // Clear dispatchers
+    _internal.rootDispatchers.clear();
   });
   after(async ()=>{
     //await fs.remove(testDirRoot);

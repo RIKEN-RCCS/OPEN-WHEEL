@@ -1498,3 +1498,8 @@ class Dispatcher extends EventEmitter {
   }
 }
 module.exports = Dispatcher;
+
+if (process.env.NODE_ENV === 'test') {
+  Dispatcher.replaceByNunjucksForBulkjob = replaceByNunjucksForBulkjob;
+  Dispatcher.writeParameterSetFile = writeParameterSetFile;
+}
