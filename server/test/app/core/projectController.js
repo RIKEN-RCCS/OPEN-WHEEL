@@ -35,26 +35,26 @@ const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("../../
 const { sleep } = require("../../testUtil.js");
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
-describe("project Controller UT", function() {
+describe("project Controller UT", function () {
   this.timeout(0);
-  
+
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
-    
-    // Setup mock event emitter for the project directly on the global map
+
+    //Setup mock event emitter for the project directly on the global map
     const ee = { emit: sinon.stub() };
     globalEventEmitters.set(projectRootDir, ee);
-    
-    // Clear any existing dispatchers
+
+    //Clear any existing dispatchers
     _internal.rootDispatchers.clear();
   });
   afterEach(()=>{
-    // Restore stubs
+    //Restore stubs
     sinon.restore();
-    // Clear event emitters
+    //Clear event emitters
     globalEventEmitters.delete(projectRootDir);
-    // Clear dispatchers
+    //Clear dispatchers
     _internal.rootDispatchers.clear();
   });
   after(async ()=>{
@@ -1133,16 +1133,16 @@ describe("project Controller UT", function() {
       const state = "running";
       const mockProjectJson = { state: "running" };
       setProjectStateStub.resolves(mockProjectJson);
-      
-      // Set up event emitter for this specific test project path
+
+      //Set up event emitter for this specific test project path
       const testEe = { emit: sinon.stub() };
       globalEventEmitters.set(projectRootDir, testEe);
-      
+
       await updateProjectState(projectRootDir, state);
       sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
       sinon.assert.calledWith(testEe.emit, "projectStateChanged", mockProjectJson);
-      
-      // Clean up
+
+      //Clean up
       globalEventEmitters.delete(projectRootDir);
     });
     it("should update project state but not emit event if no emitter exists", async ()=>{
@@ -1150,10 +1150,10 @@ describe("project Controller UT", function() {
       const state = "stopped";
       const mockProjectJson = { state: "stopped" };
       setProjectStateStub.resolves(mockProjectJson);
-      // Use a project path that doesn't have an emitter set up
+      //Use a project path that doesn't have an emitter set up
       await updateProjectState(projectRootDir, state);
       sinon.assert.calledOnceWithExactly(setProjectStateStub, projectRootDir, state);
-      // The emitter should not be called for this project path
+      //The emitter should not be called for this project path
     });
     it("should handle errors if setProjectState fails", async ()=>{
       const projectRootDir = "/test/project";

@@ -184,7 +184,7 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
  * write content to the file
  * @param {string} argFilename - target file's name
  * @param {*} content - content to write
- * @returns {Promise} - 
+ * @returns {Promise} -
  */
 async function saveFile(argFilename, content) {
   const absFilename = _internal.path.resolve(argFilename);
@@ -217,8 +217,7 @@ async function getUnusedPath(parent, name) {
     return desiredPath;
   }
   let suffix = 1;
-  while (await _internal.fs.pathExists(_internal.path.resolve(parent, `${name}.${suffix}`)))
- {
+  while (await _internal.fs.pathExists(_internal.path.resolve(parent, `${name}.${suffix}`))) {
     ++suffix;
   }
   return _internal.path.resolve(parent, `${name}.${suffix}`);
@@ -243,6 +242,6 @@ module.exports = {
   replaceCRLF
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   module.exports._internal = _internal;
 }

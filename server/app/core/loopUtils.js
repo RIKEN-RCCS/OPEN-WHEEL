@@ -79,7 +79,7 @@ function forGetNextIndex(component) {
 /**
  * determine if for component is finished
  * @param {object} component - component object
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 function forIsFinished(component) {
   return (component.currentIndex > component.end && component.step > 0) || (component.currentIndex < component.end && component.step < 0);
@@ -111,7 +111,7 @@ function whileGetNextIndex(component) {
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component object
  * @param {object} env - environment variable
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 async function whileIsFinished(cwfDir, projectRootDir, component, env) {
   const cwd = path.resolve(cwfDir, component.name);
@@ -166,7 +166,7 @@ function foreachGetPrevIndex(component, forceCalc) {
 /**
  * determine foreach component is finished
  * @param {object} component - component object
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 function foreachIsFinished(component) {
   return !component.indexList.includes(component.currentIndex);
@@ -175,7 +175,7 @@ function foreachIsFinished(component) {
 /**
  * get total number of foreach component's loop trip
  * @param {object} component - component object
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 function foreachTripCount(component) {
   return component.indexList.length;
@@ -285,6 +285,6 @@ module.exports = {
   loopInitialize
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   module.exports._internal = _internal;
 }

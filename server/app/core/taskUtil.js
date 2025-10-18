@@ -138,6 +138,6 @@ module.exports = {
   cancelLocalJob
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   module.exports._internal = _internal;
 }

@@ -43,17 +43,17 @@ describe("UT for source component", function () {
     await addInputFile(projectRootDir, task0.ID, "bar");
     await fs.outputFile(path.join(projectRootDir, "task0", scriptName), scriptPwd);
     await addFileLink(projectRootDir, source0.ID, "foo", task0.ID, "bar");
-    
-    // Setup mock event emitter for the project
+
+    //Setup mock event emitter for the project
     eventEmitters.set(projectRootDir, { emit: sinon.stub() });
-    
-    // Clear any existing dispatchers
+
+    //Clear any existing dispatchers
     _internal.rootDispatchers.clear();
   });
   afterEach(()=>{
-    // Clean up event emitter
+    //Clean up event emitter
     eventEmitters.delete(projectRootDir);
-    // Clear dispatchers
+    //Clear dispatchers
     _internal.rootDispatchers.clear();
   });
   after(async ()=>{

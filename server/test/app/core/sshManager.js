@@ -218,8 +218,7 @@ describe("#getSshPW", ()=>{
 
   it("should return the password (function) if pw is defined as a function", ()=>{
     hasEntryStub.returns(true);
-    const pwFunc = ()=>
-      "secretFromFunction";
+    const pwFunc = ()=>{ return "secretFromFunction"; };
     dbMock.set("/path/to/project", new Map([
       ["hostID", { pw: pwFunc }]
     ]));
@@ -392,7 +391,7 @@ describe("#createSsh", ()=>{
     addSshStub = sinon.stub(_internal, "addSsh");
     askPasswordStub = sinon.stub(_internal, "askPassword");
     canConnectStub = sinon.stub();
-    SshClientWrapperStub = sinon.stub(_internal, "SshClientWrapper").callsFake(function() {
+    SshClientWrapperStub = sinon.stub(_internal, "SshClientWrapper").callsFake(function () {
       return {
         canConnect: canConnectStub
       };

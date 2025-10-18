@@ -3,7 +3,7 @@ import js from "@eslint/js";
 import globals from "globals";
 import stylistic from "@stylistic/eslint-plugin";
 import jsdoc from "eslint-plugin-jsdoc";
-import node from "eslint-plugin-node";
+import n from "eslint-plugin-n";
 import chaiFriendly from "eslint-plugin-chai-friendly";
 import vue from "eslint-plugin-vue";
 import vueParser from "vue-eslint-parser";
@@ -155,7 +155,7 @@ export default [
   {
     files: ["server/app/**/*.js", "server/bin/*.js", "common/*.cjs"],
     plugins: {
-      node
+      n
     },
     languageOptions: {
       globals: {
@@ -165,7 +165,7 @@ export default [
       sourceType: "commonjs"
     },
     rules: {
-      "node/exports-style": [
+      "n/exports-style": [
         "error",
         "module.exports"
       ]
@@ -174,7 +174,7 @@ export default [
   {
     files: ["server/test/**/*.{cjs,js}"],
     plugins: {
-      node,
+      n,
       chaiFriendly
     },
     languageOptions: {

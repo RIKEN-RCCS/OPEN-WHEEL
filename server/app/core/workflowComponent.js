@@ -427,9 +427,9 @@ function hasChild(component) {
  * @param {object} component - Component object
  * @returns  {boolean} -
  */
-_internal.isBehindIfComponent = async function(projectRootDir, component, visited = new Set()) {
+_internal.isBehindIfComponent = async function (projectRootDir, component, visited = new Set()) {
   if (visited.has(component.ID)) {
-    return false; // circular dependency detected
+    return false; //circular dependency detected
   }
 
   const hasPrevious = Array.isArray(component.previous) && component.previous.length > 0;

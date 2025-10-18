@@ -17,7 +17,7 @@ const tempd = require("../../../app/core/tempd.js");
 const { _internal } = tempd;
 const { getTempd, removeTempd, createTempd } = tempd;
 
-describe("UT for tempd class", function() {
+describe("UT for tempd class", function () {
   describe("#getTempd", ()=>{
     const projectRootDir = "/test/project";
     const prefix = "viewer";
@@ -94,6 +94,7 @@ describe("UT for tempd class", function() {
     it("should handle errors gracefully", async ()=>{
       const error = new Error("Failed to remove directory");
       removeStub.rejects(error);
+
       try {
         await removeTempd(projectRootDir, prefix);
       } catch (err) {

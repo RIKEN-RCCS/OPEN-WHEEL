@@ -785,7 +785,7 @@ export default {
       });
       return currentHostSetting && typeof currentHostSetting.queue === "string"
         ? currentHostSetting.queue.split(",")
-          .map((e)=>{ return e.trim(); })
+            .map((e)=>{ return e.trim(); })
         : [];
     },
     submitCmd() {

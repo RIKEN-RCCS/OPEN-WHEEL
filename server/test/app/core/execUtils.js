@@ -305,9 +305,9 @@ describe("#createBulkStatusFile", ()=>{
     await createBulkStatusFile(task, rtList, jobStatusList);
 
     expect(pathResolveStub.calledOnceWithExactly("/fake/dir", "subjob_status.wheel.txt")).to.be.true;
-    const expectedContent =
-      "RT_2=RTValue2\nJOBSTATUS_2=JOBSTATUS2\n" +
-      "RT_3=RTValue3\nJOBSTATUS_3=JOBSTATUS3\n";
+    const expectedContent
+      = "RT_2=RTValue2\nJOBSTATUS_2=JOBSTATUS2\n"
+        + "RT_3=RTValue3\nJOBSTATUS_3=JOBSTATUS3\n";
     expect(writeFileStub.calledOnceWithExactly("/fake/dir/subjob_status.txt", expectedContent)).to.be.true;
   });
 

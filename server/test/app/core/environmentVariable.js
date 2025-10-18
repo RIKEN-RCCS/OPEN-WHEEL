@@ -67,10 +67,10 @@ function checkTaskDoesNotRun(componentDir) {
 describe("UT for environment variables", function () {
   this.timeout(0);
   let state;
-    before(async ()=>{
-      await fs.remove(testDirRoot);
-      eventEmitters.set(projectRootDir, { emit: sinon.stub() });
-      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+  before(async ()=>{
+    await fs.remove(testDirRoot);
+    eventEmitters.set(projectRootDir, { emit: sinon.stub() });
+    await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
     const rootWF = await readComponentJson(projectRootDir);
     await replaceEnv(projectRootDir, rootWF.ID, { USER_DEFINED_VALUE: "hoge" });
 

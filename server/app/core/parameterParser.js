@@ -164,7 +164,7 @@ function getParamSize(ParamSpace) {
  * @param {object} ParamSpace - parameter space
  * @yields {object} -
  */
-function *paramVecGenerator(ParamSpace) {
+function* paramVecGenerator(ParamSpace) {
   const totalSize = getParamSize(ParamSpace);
   let index = 0;
   while (index < totalSize) {

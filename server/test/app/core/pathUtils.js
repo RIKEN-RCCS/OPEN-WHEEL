@@ -40,8 +40,8 @@ describe("UT for pathUtils class", function () {
       expect(sanitizePath("folder/subfolder/file")).to.equal("folder_subfolder_file");
     });
     it("throws an error when target is not a string", ()=>{
-      expect(()=>sanitizePath(null)).to.throw();
-      expect(()=>sanitizePath(undefined)).to.throw();
+      expect(()=>{ return sanitizePath(null); }).to.throw();
+      expect(()=>{ return sanitizePath(undefined); }).to.throw();
     });
   });
   describe("#replacePathsep", ()=>{
@@ -62,10 +62,10 @@ describe("UT for pathUtils class", function () {
       expect(replacePathsep("just/a/normal/path")).to.equal("just/a/normal/path");
     });
     it("throws an error when input is not a string", ()=>{
-      expect(()=>replacePathsep(null)).to.throw();
-      expect(()=>replacePathsep(undefined)).to.throw();
-      expect(()=>replacePathsep(123)).to.throw();
-      expect(()=>replacePathsep({})).to.throw();
+      expect(()=>{ return replacePathsep(null); }).to.throw();
+      expect(()=>{ return replacePathsep(undefined); }).to.throw();
+      expect(()=>{ return replacePathsep(123); }).to.throw();
+      expect(()=>{ return replacePathsep({}); }).to.throw();
     });
   });
   describe("#convertPathSep", ()=>{
@@ -101,10 +101,10 @@ describe("UT for pathUtils class", function () {
       expect(convertPathSep("just_a_filename.txt")).to.equal("just_a_filename.txt");
     });
     it("throws an error when input is not a string", ()=>{
-      expect(()=>convertPathSep(null)).to.throw();
-      expect(()=>convertPathSep(undefined)).to.throw();
-      expect(()=>convertPathSep(123)).to.throw();
-      expect(()=>convertPathSep({})).to.throw();
+      expect(()=>{ return convertPathSep(null); }).to.throw();
+      expect(()=>{ return convertPathSep(undefined); }).to.throw();
+      expect(()=>{ return convertPathSep(123); }).to.throw();
+      expect(()=>{ return convertPathSep({}); }).to.throw();
     });
   });
 });

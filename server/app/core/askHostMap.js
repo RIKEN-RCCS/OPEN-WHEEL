@@ -17,7 +17,7 @@ const _internal = {
  * determine hostMap is valid
  * @param {object} hostMap - old and new remotehost label map
  * @param {string[]} hosts - array of old remoteshot labels
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 function isValidHostMap(hostMap, hosts) {
   const remotehostLabels = _internal.remoteHost.getAll().map((host)=>{
@@ -76,6 +76,6 @@ module.exports = {
   isValidHostMap
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   module.exports._internal = _internal;
 }

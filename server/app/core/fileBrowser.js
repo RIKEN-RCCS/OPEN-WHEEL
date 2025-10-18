@@ -191,6 +191,6 @@ module.exports = ls;
 module.exports.getSNDs = getSNDs;
 module.exports.bundleSNDFiles = bundleSNDFiles;
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   module.exports._internal = _internal;
 }

@@ -42,13 +42,13 @@ async function setTaskState(task, state) {
  * @param {string} projectRootDir - project's root path
  * @param {string} componentID - component's ID string
  * @param {object} outputFile - outputfile object to be checked
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 async function needDownload(projectRootDir, componentID, outputFile) {
-  const rt = await Promise.all(outputFile.dst.map(({ dstNode }) => {
+  const rt = await Promise.all(outputFile.dst.map(({ dstNode })=>{
     return _internal.isSameRemoteHost(projectRootDir, componentID, dstNode);
   }));
-  return rt.some((isSame) => {
+  return rt.some((isSame)=>{
     return !isSame;
   });
 }
@@ -121,6 +121,6 @@ module.exports = {
   formatSrcFilename
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   module.exports._internal = _internal;
 }

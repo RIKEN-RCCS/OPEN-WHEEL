@@ -21,7 +21,7 @@ describe("commandCheck", ()=>{
     originalNodeEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "test";
 
-    // for logSettings.js
+    //for logSettings.js
     await fs.mkdir(serverConfigDir, { recursive: true });
     await fs.writeJson(path.resolve(serverConfigDir, "log.json"), {
       appenders: {
@@ -37,7 +37,7 @@ describe("commandCheck", ()=>{
       }
     });
 
-    // for db.js
+    //for db.js
     await fs.mkdir(appConfigDir, { recursive: true });
     await fs.writeJson(path.resolve(appConfigDir, "remotehost.json"), []);
     await fs.writeJson(path.resolve(appConfigDir, "server.json"), {});

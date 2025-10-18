@@ -28,11 +28,11 @@ const { _internal } = updateComponent;
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 
-describe("updateComponent UT", function() {
+describe("updateComponent UT", function () {
   const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
   let task0;
   let task1;
-  beforeEach(async function() {
+  beforeEach(async function () {
     this.timeout(5000);
     await fs.remove(testDirRoot);
 

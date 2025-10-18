@@ -28,7 +28,7 @@ const importProject = IP.importProject;
 const testDirRoot = "WHEEL_TEST_TMP";
 const testArchiveFile = path.resolve(__dirname, "../../testFiles/WHEEL_project_test_project.tgz");
 
-describe("import project UT", function() {
+describe("import project UT", function () {
   this.timeout(10000);
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);

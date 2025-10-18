@@ -863,7 +863,7 @@ describe("#ls", ()=>{
 
   beforeEach(()=>{
     ls = fileBrowser;
-    const {_internal} = fileBrowser
+    const { _internal } = fileBrowser;
 
     readdirStub = sinon.stub(_internal.fs, "readdir");
     lstatStub = sinon.stub(_internal.fs, "lstat");
@@ -884,7 +884,7 @@ describe("#ls", ()=>{
 
   it("should filter out entries if allFilter does not match", async ()=>{
     readdirStub.resolves(["keepThis", "skipThis"]);
-    lstatStub.resolves({ isDirectory: ()=>true, isFile: ()=>false, isSymbolicLink: ()=>false });
+    lstatStub.resolves({ isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } });
     isComponentDirStub.resolves(false);
 
     const options = {
@@ -902,29 +902,29 @@ describe("#ls", ()=>{
 
     lstatStub.callsFake(async (pathName)=>{
       if (pathName.endsWith("okDir")) {
-        return { isDirectory: ()=>true, isFile: ()=>false, isSymbolicLink: ()=>false };
+        return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } };
       }
       if (pathName.endsWith("badEntry")) {
         throw new Error("some lstat error");
       }
-      return { isDirectory: ()=>false, isFile: ()=>true, isSymbolicLink: ()=>false };
+      return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; }, isSymbolicLink: ()=>{ return false; } };
     });
 
     isComponentDirStub.resolves(false);
 
     const result = await ls("/dummy/path");
     expect(result).to.have.lengthOf(2);
-    expect(result.some((e)=>e.name === "okDir" && e.type === "dir")).to.be.true;
-    expect(result.some((e)=>e.name === "okFile" && e.type === "file")).to.be.true;
+    expect(result.some((e)=>{ return e.name === "okDir" && e.type === "dir"; })).to.be.true;
+    expect(result.some((e)=>{ return e.name === "okFile" && e.type === "file"; })).to.be.true;
   });
 
   it("should skip directories if sendDirname=false, skip files if sendFilename=false", async ()=>{
     readdirStub.resolves(["someDir", "someFile"]);
     lstatStub.callsFake(async (pathName)=>{
       if (pathName.endsWith("someDir")) {
-        return { isDirectory: ()=>true, isFile: ()=>false, isSymbolicLink: ()=>false };
+        return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } };
       }
-      return { isDirectory: ()=>false, isFile: ()=>true, isSymbolicLink: ()=>false };
+      return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; }, isSymbolicLink: ()=>{ return false; } };
     });
     isComponentDirStub.resolves(false);
 
@@ -943,9 +943,9 @@ describe("#ls", ()=>{
     readdirStub.resolves(["dirA", "dirB", "file1.txt", "file2.log"]);
     lstatStub.callsFake(async (pathName)=>{
       if (pathName.endsWith("dirA") || pathName.endsWith("dirB")) {
-        return { isDirectory: ()=>true, isFile: ()=>false, isSymbolicLink: ()=>false };
+        return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } };
       }
-      return { isDirectory: ()=>false, isFile: ()=>true, isSymbolicLink: ()=>false };
+      return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; }, isSymbolicLink: ()=>{ return false; } };
     });
     isComponentDirStub.resolves(false);
 
@@ -957,38 +957,38 @@ describe("#ls", ()=>{
     };
     const result = await ls("/some/dirFilterTest", options);
     expect(result).to.have.lengthOf(2);
-    expect(result.some((e)=>e.name === "dirA")).to.be.true;
-    expect(result.some((e)=>e.name === "file1.txt")).to.be.true;
+    expect(result.some((e)=>{ return e.name === "dirA"; })).to.be.true;
+    expect(result.some((e)=>{ return e.name === "file1.txt"; })).to.be.true;
   });
 
   it("should correctly handle symbolic links to directories/files and push them to the list", async ()=>{
     readdirStub.resolves(["linkToDir", "linkToFile"]);
     lstatStub.callsFake(async (_pathName)=>{
       return {
-        isDirectory: ()=>false,
-        isFile: ()=>false,
-        isSymbolicLink: ()=>true
+        isDirectory: ()=>{ return false; },
+        isFile: ()=>{ return false; },
+        isSymbolicLink: ()=>{ return true; }
       };
     });
 
     statStub.callsFake(async (pathName)=>{
       if (pathName.endsWith("linkToDir")) {
-        return { isDirectory: ()=>true, isFile: ()=>false };
+        return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; } };
       }
-      return { isDirectory: ()=>false, isFile: ()=>true };
+      return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; } };
     });
 
-    isComponentDirStub.resolves(true); 
+    isComponentDirStub.resolves(true);
 
     const result = await ls("/some/symlinkDir");
     expect(result).to.have.lengthOf(2);
 
-    const dirLink = result.find((e)=>e.name === "linkToDir");
+    const dirLink = result.find((e)=>{ return e.name === "linkToDir"; });
     expect(dirLink.type).to.equal("dir");
     expect(dirLink.islink).to.be.true;
     expect(dirLink.isComponentDir).to.be.true;
 
-    const fileLink = result.find((e)=>e.name === "linkToFile");
+    const fileLink = result.find((e)=>{ return e.name === "linkToFile"; });
     expect(fileLink.type).to.equal("file");
     expect(fileLink.islink).to.be.true;
   });
@@ -997,9 +997,9 @@ describe("#ls", ()=>{
     readdirStub.resolves(["brokenLink"]);
 
     lstatStub.resolves({
-      isDirectory: ()=>false,
-      isFile: ()=>false,
-      isSymbolicLink: ()=>true
+      isDirectory: ()=>{ return false; },
+      isFile: ()=>{ return false; },
+      isSymbolicLink: ()=>{ return true; }
     });
 
     statStub.rejects({ code: "ENOENT" });
@@ -1016,9 +1016,9 @@ describe("#ls", ()=>{
   it("should throw an error if symbolic link stat error is not ENOENT", async ()=>{
     readdirStub.resolves(["someLink"]);
     lstatStub.resolves({
-      isDirectory: ()=>false,
-      isFile: ()=>false,
-      isSymbolicLink: ()=>true
+      isDirectory: ()=>{ return false; },
+      isFile: ()=>{ return false; },
+      isSymbolicLink: ()=>{ return true; }
     });
     statStub.rejects({ code: "EACCES", message: "permission denied" });
 
@@ -1043,9 +1043,9 @@ describe("#ls", ()=>{
     readdirStub.resolves(["file_001.txt", "file_002.txt", "file_003.log", "normal.txt"]);
     lstatStub.callsFake(async (_fullPath)=>{
       return {
-        isDirectory: ()=>false,
-        isFile: ()=>true,
-        isSymbolicLink: ()=>false
+        isDirectory: ()=>{ return false; },
+        isFile: ()=>{ return true; },
+        isSymbolicLink: ()=>{ return false; }
       };
     });
     isComponentDirStub.resolves(false);
@@ -1055,13 +1055,13 @@ describe("#ls", ()=>{
     const result = await ls("/some/serial", options);
     expect(result).to.have.lengthOf(3);
 
-    const sndItem = result.find((e)=>e.type === "snd");
+    const sndItem = result.find((e)=>{ return e.type === "snd"; });
     expect(sndItem.name).to.equal("file_*.txt");
 
-    const file003 = result.find((e)=>e.name === "file_003.log");
+    const file003 = result.find((e)=>{ return e.name === "file_003.log"; });
     expect(file003.type).to.equal("file");
 
-    const normalFile = result.find((e)=>e.name === "normal.txt");
+    const normalFile = result.find((e)=>{ return e.name === "normal.txt"; });
     expect(normalFile.type).to.equal("file");
   });
 
@@ -1069,9 +1069,9 @@ describe("#ls", ()=>{
     readdirStub.resolves(["zzzFile", "aaaDir", "midFile"]);
     lstatStub.callsFake(async (p)=>{
       if (p.endsWith("zzzFile") || p.endsWith("midFile")) {
-        return { isDirectory: ()=>false, isFile: ()=>true, isSymbolicLink: ()=>false };
+        return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; }, isSymbolicLink: ()=>{ return false; } };
       }
-      return { isDirectory: ()=>true, isFile: ()=>false, isSymbolicLink: ()=>false };
+      return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } };
     });
     isComponentDirStub.resolves(false);
 
@@ -1085,16 +1085,16 @@ describe("#ls", ()=>{
   it("should skip symbolic link to a directory if dirFilter doesn't match", async ()=>{
     readdirStub.resolves(["linkDir"]);
     lstatStub.resolves({
-      isDirectory: ()=>false,
-      isFile: ()=>false,
-      isSymbolicLink: ()=>true
+      isDirectory: ()=>{ return false; },
+      isFile: ()=>{ return false; },
+      isSymbolicLink: ()=>{ return true; }
     });
-    statStub.resolves({ isDirectory: ()=>true, isFile: ()=>false });
+    statStub.resolves({ isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; } });
 
     const options = {
       sendDirname: true,
       filter: {
-        dir: /SHOULD_NOT_MATCH/ 
+        dir: /SHOULD_NOT_MATCH/
       }
     };
 
@@ -1105,16 +1105,16 @@ describe("#ls", ()=>{
   it("should skip symbolic link to a file if fileFilter doesn't match", async ()=>{
     readdirStub.resolves(["linkFile"]);
     lstatStub.resolves({
-      isDirectory: ()=>false,
-      isFile: ()=>false,
-      isSymbolicLink: ()=>true
+      isDirectory: ()=>{ return false; },
+      isFile: ()=>{ return false; },
+      isSymbolicLink: ()=>{ return true; }
     });
-    statStub.resolves({ isDirectory: ()=>false, isFile: ()=>true });
+    statStub.resolves({ isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; } });
 
     const options = {
       sendFilename: true,
       filter: {
-        file: /\\.txt$/ 
+        file: /\\.txt$/
       }
     };
 

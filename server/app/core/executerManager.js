@@ -35,7 +35,7 @@ const _internal = {
  * @param {object} JS - Jobscheduler.json's entry
  * @param {number} rt - rt of submit command
  * @param {string} outputText - output message from submit command
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 function isExceededLimit(JS, rt, outputText) {
   if (Array.isArray(JS.exceededRtList) && JS.exceededRtList.includes(rt)) {
@@ -51,7 +51,7 @@ function isExceededLimit(JS, rt, outputText) {
 /**
  * convert env object to cmandline string
  * @param {object} task - task component instance
- * @returns {string} - 
+ * @returns {string} -
  */
 function makeEnv(task) {
   if (typeof task.env === "undefined" || Object.keys(task.env).length === 0) {
@@ -68,7 +68,7 @@ function makeEnv(task) {
  * @param {object} task - task component instance
  * @param {object} JS - Jobscheduler.json's entry
  * @param {string} queues - comma separated queue name list
- * @returns {string} - 
+ * @returns {string} -
  */
 function makeQueueOpt(task, JS, queues) {
   if (typeof queues !== "string") {
@@ -125,7 +125,7 @@ function makeBulkOpt(task) {
 /**
  * decide task state by condition check script
  * @param {object} task - task component instance
- * @returns {number | boolean} - 
+ * @returns {number | boolean} -
  */
 async function decideFinishState(task) {
   let rt = false;
@@ -141,7 +141,7 @@ async function decideFinishState(task) {
 /**
  * determine if task needs to be re-executed
  * @param {object} task - task component instance
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 async function needsRetry(task) {
   if ((typeof task.retry === "undefined" || task.retryCondition === null)
@@ -538,7 +538,7 @@ function createExecuter(task, hostinfo) {
 /**
  * submit task to executer
  * @param {object} task - task component instance
- * @returns {Promise} - 
+ * @returns {Promise} -
  */
 async function register(task) {
   const onRemote = task.remotehostID !== "localhost";
@@ -625,6 +625,6 @@ module.exports = {
   numJobOnLocal: 5
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   module.exports._internal = _internal;
 }

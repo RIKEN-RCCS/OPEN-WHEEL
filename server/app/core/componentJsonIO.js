@@ -22,9 +22,9 @@ const _internal = {
 /**
  * remove temporaly props from component
  * memo: this function should be used with JSON.stringify
- * @param {string} key - 
- * @param {string} value - 
- * @returns {string | undefined} - 
+ * @param {string} key -
+ * @param {string} value -
+ * @returns {string | undefined} -
  */
 function componentJsonReplacer(key, value) {
   if (["handler", "doCleanup", "sbsID", "childLoopRunning"].includes(key)) {
@@ -127,6 +127,6 @@ module.exports = {
   componentJsonReplacer
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   module.exports._internal = _internal;
 }

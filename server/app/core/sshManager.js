@@ -21,7 +21,7 @@ const _internal = {
  * check if db contains ssh object for the project
  * @param {string} projectRootDir - project's root path
  * @param {string} id - key string
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 function hasEntry(projectRootDir, id) {
   if (_internal.db.has(projectRootDir)) {
@@ -252,6 +252,6 @@ module.exports = {
   getSshPH
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   module.exports._internal = _internal;
 }

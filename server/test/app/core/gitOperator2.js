@@ -405,12 +405,12 @@ describe("gitOperator2", ()=>{
       );
     });
 
-    it("should handle index.lock error and not throw", async function() {
+    it("should handle index.lock error and not throw", async function () {
       this.timeout(5000);
-      // Need to restore gitPromise stub and stub promisifiedGit instead to test retry logic
+      //Need to restore gitPromise stub and stub promisifiedGit instead to test retry logic
       gitPromiseStub.restore();
       promisifiedGitStub = sinon.stub(_internal, "promisifiedGit");
-      
+
       const error = new Error(
         "fatal: Unable to create '/repo/.git/index.lock': File exists"
       );
@@ -423,12 +423,12 @@ describe("gitOperator2", ()=>{
 
       await expect(gitAdd(rootDir, filename, false)).to.be.fulfilled;
     });
-    it("should handle index.lock error but throw after 6th fail", async function() {
+    it("should handle index.lock error but throw after 6th fail", async function () {
       this.timeout(5000);
-      // Need to restore gitPromise stub and stub promisifiedGit instead to test retry logic
+      //Need to restore gitPromise stub and stub promisifiedGit instead to test retry logic
       gitPromiseStub.restore();
       promisifiedGitStub = sinon.stub(_internal, "promisifiedGit");
-      
+
       const error = new Error(
         "fatal: Unable to create '/repo/.git/index.lock': File exists"
       );
@@ -598,37 +598,37 @@ describe("gitOperator2", ()=>{
       );
     });
 
-    it("should correctly parse added files", async function() {
+    it("should correctly parse added files", async function () {
       gitPromiseStub.resolves("A  addedFile.txt");
       const result = await gitStatus(rootDir);
       expect(result.added).to.deep.equal(["addedFile.txt"]);
     });
 
-    it("should correctly parse modified files", async function() {
+    it("should correctly parse modified files", async function () {
       gitPromiseStub.resolves("M  modifiedFile.txt");
       const result = await gitStatus(rootDir);
       expect(result.modified).to.deep.equal(["modifiedFile.txt"]);
     });
 
-    it("should correctly parse deleted files", async function() {
+    it("should correctly parse deleted files", async function () {
       gitPromiseStub.resolves("D  deletedFile.txt");
       const result = await gitStatus(rootDir);
       expect(result.deleted).to.deep.equal(["deletedFile.txt"]);
     });
 
-    it("should correctly parse renamed files", async function() {
+    it("should correctly parse renamed files", async function () {
       gitPromiseStub.resolves("R  oldName.txt -> newName.txt");
       const result = await gitStatus(rootDir);
       expect(result.renamed).to.deep.equal(["newName.txt"]);
     });
 
-    it("should correctly parse untracked files", async function() {
+    it("should correctly parse untracked files", async function () {
       gitPromiseStub.resolves("?? untrackedFile.txt");
       const result = await gitStatus(rootDir);
       expect(result.untracked).to.deep.equal(["untrackedFile.txt"]);
     });
 
-    it("should return empty arrays for clean status", async function() {
+    it("should return empty arrays for clean status", async function () {
       gitPromiseStub.resolves("");
       const result = await gitStatus(rootDir);
       expect(result).to.deep.equal({
@@ -640,7 +640,7 @@ describe("gitOperator2", ()=>{
       });
     });
 
-    it("should throw an error for unknown git status output", async function() {
+    it("should throw an error for unknown git status output", async function () {
       gitPromiseStub.resolves("X  unknownFile.txt");
       await expect(gitStatus(rootDir)).to.be.rejectedWith(
         "unkonw output from git status --short"
@@ -751,7 +751,7 @@ describe("gitOperator2", ()=>{
       sinon.restore();
     });
 
-    it("should return unsaved files correctly", async function() {
+    it("should return unsaved files correctly", async function () {
       gitStatusStub.resolves({
         added: ["newFile.txt"],
         modified: ["modifiedFile.txt"],
@@ -768,7 +768,7 @@ describe("gitOperator2", ()=>{
       ]);
     });
 
-    it("should return an empty array when no unsaved files exist", async function() {
+    it("should return an empty array when no unsaved files exist", async function () {
       gitStatusStub.resolves({
         added: [],
         modified: [],

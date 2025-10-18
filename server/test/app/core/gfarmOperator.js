@@ -19,7 +19,7 @@ function checkEnv() {
   });
 }
 
-describe("UT for gfarmOperator", function() {
+describe("UT for gfarmOperator", function () {
   this.timeout(0);
   const host = process.env.WHEEL_GFARMTEST_HOST;
   let JWTServerPassphrase = process.env.WHEEL_GFARMTEST_PASSPHRASE;
@@ -31,7 +31,7 @@ describe("UT for gfarmOperator", function() {
   let getSshHostinfoStub;
   let getJWTServerPassphraseStub;
 
-  before(function() {
+  before(function () {
     if (checkEnv()) {
       this.skip();
     }

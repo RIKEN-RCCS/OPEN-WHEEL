@@ -765,12 +765,12 @@ class Dispatcher extends EventEmitter {
     //convert id to relative path from PS component
     const targetFiles = Object.prototype.hasOwnProperty.call(paramSettings, "targetFiles")
       ? paramSettings.targetFiles.map((e)=>{
-        if (Object.prototype.hasOwnProperty.call(e, "targetName")) {
-          const targetDir = Object.prototype.hasOwnProperty.call(e, "targetNode") ? path.relative(templateRoot, this._getComponentDir(e.targetNode)) : "";
-          return path.join(targetDir, e.targetName);
-        }
-        return e;
-      })
+          if (Object.prototype.hasOwnProperty.call(e, "targetName")) {
+            const targetDir = Object.prototype.hasOwnProperty.call(e, "targetNode") ? path.relative(templateRoot, this._getComponentDir(e.targetNode)) : "";
+            return path.join(targetDir, e.targetName);
+          }
+          return e;
+        })
       : [];
 
     return { templateRoot, paramSettingsFilename, paramSettings, targetFiles };
@@ -787,22 +787,22 @@ class Dispatcher extends EventEmitter {
 
     const scatterRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "scatter")
       ? paramSettings.scatter
-        .map((e)=>{
-          return {
-            srcName: e.srcName,
-            dstNode: path.relative(templateRoot, this._getComponentDir(e.dstNode)),
-            dstName: e.dstName
-          };
-        })
+          .map((e)=>{
+            return {
+              srcName: e.srcName,
+              dstNode: path.relative(templateRoot, this._getComponentDir(e.dstNode)),
+              dstName: e.dstName
+            };
+          })
       : [];
     const gatherRecipe = Object.prototype.hasOwnProperty.call(paramSettings, "gather")
       ? paramSettings.gather.map((e)=>{
-        return {
-          srcName: e.srcName,
-          srcNode: path.relative(templateRoot, this._getComponentDir(e.srcNode)),
-          dstName: e.dstName
-        };
-      })
+          return {
+            srcName: e.srcName,
+            srcNode: path.relative(templateRoot, this._getComponentDir(e.srcNode)),
+            dstName: e.dstName
+          };
+        })
       : [];
 
     const [getParamSpace, getScatterFiles, scatterFiles, gatherFiles, rewriteTargetFile] = makeCmd(paramSettings);
@@ -1499,7 +1499,7 @@ class Dispatcher extends EventEmitter {
 }
 module.exports = Dispatcher;
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   Dispatcher.replaceByNunjucksForBulkjob = replaceByNunjucksForBulkjob;
   Dispatcher.writeParameterSetFile = writeParameterSetFile;
 }

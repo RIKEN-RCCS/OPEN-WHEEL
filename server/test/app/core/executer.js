@@ -62,12 +62,12 @@ describe("UT for executer class", function () {
     task0.ancestorsName = replacePathsep(path.relative(task0.projectRootDir, path.dirname(task0.workingDir)));
     task0.doCleanup = false;
     task0.emitForDispatcher = sinon.stub();
-    
-    // Setup mock event emitter for the project
+
+    //Setup mock event emitter for the project
     eventEmitters.set(projectRootDir, { emit: sinon.stub() });
   });
   afterEach(()=>{
-    // Clean up event emitter
+    //Clean up event emitter
     eventEmitters.delete(projectRootDir);
   });
   after(async ()=>{

@@ -16,7 +16,7 @@ const taskUtil = require("../../../app/core/taskUtil.js");
 const { _internal } = taskUtil;
 const { cancelDispatchedTasks, killTask, killLocalProcess, cancelRemoteJob } = taskUtil;
 
-describe("UT for taskUtil class", function() {
+describe("UT for taskUtil class", function () {
   describe("#cancelDispatchedTasks", ()=>{
     let cancelStub, killTaskStub;
     beforeEach(()=>{

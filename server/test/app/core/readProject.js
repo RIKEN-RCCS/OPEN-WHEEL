@@ -33,16 +33,16 @@ describe("readProject UT", function () {
   let task0;
   let projectListQueryStub;
   let projectListWriteStub;
-  
+
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
-    
-    // Set up stubs for projectList
+
+    //Set up stubs for projectList
     if (projectListQueryStub) projectListQueryStub.restore();
     if (projectListWriteStub) projectListWriteStub.restore();
     projectListQueryStub = sinon.stub(_internal.projectList, "query").returns(false);
     projectListWriteStub = sinon.stub(_internal.projectList, "write");
-    
+
     await createNewProject(projectRootDir, "test_project", null, "test", "test@example.com");
     task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
     await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });

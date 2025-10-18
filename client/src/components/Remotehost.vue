@@ -208,8 +208,8 @@ export default {
       const eventName = updated.id ? "updateHost" : "addHost";
       const index = updated.id
         ? this.hosts.findIndex((e)=>{
-          return updated.id === e.id;
-        })
+            return updated.id === e.id;
+          })
         : 0;
       const numDelete = updated.id ? 1 : 0;
       SIO.emitGlobal(eventName, updated, (id)=>{

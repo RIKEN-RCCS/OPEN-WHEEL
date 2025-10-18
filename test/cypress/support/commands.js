@@ -63,7 +63,7 @@ Cypress.Commands.add("assertAll", ()=>{
     const errorMessages = Object.entries(errors).map(([title, entries], index)=>{
       const errorMessage = (entries).map(({ error })=>{
         return (
-        `${"=> " + error.message}`
+          `${"=> " + error.message}`
         );
       }).join("\n\n");
 

@@ -146,8 +146,7 @@ describe("#isJobFailed", ()=>{
   it("should return true if acceptableJobStatus is an object that has toString() and code matches that string", ()=>{
     const JS = {
       acceptableJobStatus: {
-        toString: ()=> 
-          "ABC"
+        toString: ()=>{ return "ABC"; }
       }
     };
     const code = "ABC";
@@ -158,8 +157,7 @@ describe("#isJobFailed", ()=>{
   it("should return false if acceptableJobStatus is an object that has toString() but code does not match", ()=>{
     const JS = {
       acceptableJobStatus: {
-        toString: ()=> 
-          "ABC"
+        toString: ()=>{ return "ABC"; }
       }
     };
     const code = "DEF";

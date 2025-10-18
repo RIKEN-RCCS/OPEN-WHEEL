@@ -29,12 +29,12 @@ describe("restart UT", function () {
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await fs.ensureDir(projectRootDir);
-    
-    // Setup mock event emitter for the project
+
+    //Setup mock event emitter for the project
     eventEmitters.set(projectRootDir, { emit: sinon.stub() });
   });
   afterEach(()=>{
-    // Clean up event emitter
+    //Clean up event emitter
     eventEmitters.delete(projectRootDir);
   });
   after(async ()=>{

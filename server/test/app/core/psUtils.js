@@ -17,7 +17,7 @@ const psUtils = require("../../../app/core/psUtils.js");
 const { _internal } = psUtils;
 const { makeCmd, getScatterFilesV2, scatterFilesV2, gatherFilesV2, replaceByNunjucks } = psUtils;
 
-describe("UT for psUtils class", function() {
+describe("UT for psUtils class", function () {
   describe("#makeCmd", ()=>{
     it("should return functions for PS version 2", ()=>{
       const paramSettings = {
@@ -34,8 +34,7 @@ describe("UT for psUtils class", function() {
     });
     it("should throw an error for unsupported PS version", ()=>{
       const paramSettings = { version: 1 };
-      expect(()=>
-        makeCmd(paramSettings)).to.throw("PS version 1 is no longer supported");
+      expect(()=>{ return makeCmd(paramSettings); }).to.throw("PS version 1 is no longer supported");
     });
     it("should use 'target_param' if 'params' is not provided", ()=>{
       const paramSettings = {

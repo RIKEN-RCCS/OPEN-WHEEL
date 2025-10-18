@@ -35,7 +35,7 @@ const logger = getLogger();
 process.on("unhandledRejection", logger.debug.bind(logger));
 process.on("uncaughtException", logger.debug.bind(logger));
 
-// check for essential commands
+//check for essential commands
 (async ()=>{
   if (!await checkAllCommands()) {
     process.exit(1);

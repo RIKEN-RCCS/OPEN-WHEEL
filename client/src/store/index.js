@@ -137,8 +137,8 @@ export default new Vuex.Store({
           if (context.state.snackbarQueue.length > 0) {
             context.dispatch("showSnackbar");
           }
-        }
-        , timeout);
+        },
+        timeout);
       }
       context.commit("snackbarMessage", message);
       context.commit("snackbarTimeout", timeout);

@@ -249,7 +249,7 @@ describe("#getProjectJson", ()=>{
     const result = await getProjectJson(mockProjectRootDir);
 
     expect(readJsonGreedyMock.calledOnceWithExactly(
-            `${mockProjectRootDir}/prj.wheel.json`
+      `${mockProjectRootDir}/prj.wheel.json`
     )).to.be.true;
     expect(result).to.deep.equal(mockProjectJson);
   });
@@ -268,7 +268,7 @@ describe("#getProjectJson", ()=>{
     }
 
     expect(readJsonGreedyMock.calledOnceWithExactly(
-            `${mockProjectRootDir}/prj.wheel.json`
+      `${mockProjectRootDir}/prj.wheel.json`
     )).to.be.true;
   });
 });
@@ -868,8 +868,8 @@ describe("#updateComponentPath", ()=>{
 
     expect(readJsonGreedyMock.calledOnceWithExactly(`${projectRootDir}/prj.wheel.json`)).to.be.true;
     expect(writeJsonWrapperMock.calledOnceWithExactly(
-          `${projectRootDir}/prj.wheel.json`,
-          { componentPath: { newID: "./newComponent" } }
+      `${projectRootDir}/prj.wheel.json`,
+      { componentPath: { newID: "./newComponent" } }
     )).to.be.true;
     expect(gitAddMock.calledOnceWithExactly(projectRootDir, `${projectRootDir}/prj.wheel.json`)).to.be.true;
     expect(result).to.deep.equal({ newID: "./newComponent" });
@@ -893,8 +893,8 @@ describe("#updateComponentPath", ()=>{
     const result = await updateComponentPath(projectRootDir, ID, absPath);
 
     expect(writeJsonWrapperMock.calledOnceWithExactly(
-          `${projectRootDir}/prj.wheel.json`,
-          { componentPath: { existingID: "./newPath", childID: "./newPath/child" } }
+      `${projectRootDir}/prj.wheel.json`,
+      { componentPath: { existingID: "./newPath", childID: "./newPath/child" } }
     )).to.be.true;
     expect(gitAddMock.calledOnceWithExactly(projectRootDir, `${projectRootDir}/prj.wheel.json`)).to.be.true;
     expect(result).to.deep.equal({
@@ -933,8 +933,8 @@ describe("#updateComponentPath", ()=>{
     const result = await updateComponentPath(projectRootDir, ID, absPath);
 
     expect(writeJsonWrapperMock.calledOnceWithExactly(
-          `${projectRootDir}/prj.wheel.json`,
-          { componentPath: { normalizeTestID: "./normalizedPath" } }
+      `${projectRootDir}/prj.wheel.json`,
+      { componentPath: { normalizeTestID: "./normalizedPath" } }
     )).to.be.true;
     expect(gitAddMock.calledOnceWithExactly(projectRootDir, `${projectRootDir}/prj.wheel.json`)).to.be.true;
     expect(result).to.deep.equal({ normalizeTestID: "./normalizedPath" });
@@ -977,8 +977,8 @@ describe("#setProjectState", ()=>{
 
     expect(result).to.deep.equal(updatedMetadata);
     expect(writeJsonWrapperMock.calledOnceWithExactly(
-          `${mockProjectRootDir}/prj.wheel.json`,
-          updatedMetadata
+      `${mockProjectRootDir}/prj.wheel.json`,
+      updatedMetadata
     )).to.be.true;
     expect(gitAddMock.calledOnceWithExactly(mockProjectRootDir, `${mockProjectRootDir}/prj.wheel.json`)).to.be.true;
   });
@@ -1019,8 +1019,8 @@ describe("#setProjectState", ()=>{
 
     expect(result).to.deep.equal(updatedMetadata);
     expect(writeJsonWrapperMock.calledOnceWithExactly(
-          `${mockProjectRootDir}/prj.wheel.json`,
-          updatedMetadata
+      `${mockProjectRootDir}/prj.wheel.json`,
+      updatedMetadata
     )).to.be.true;
     expect(gitAddMock.calledOnceWithExactly(mockProjectRootDir, `${mockProjectRootDir}/prj.wheel.json`)).to.be.true;
   });
