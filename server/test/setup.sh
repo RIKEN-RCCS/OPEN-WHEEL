@@ -35,5 +35,10 @@ docker exec ${TAG_TEST_SERVER} /opt/pbs/bin/qmgr -c "set server job_history_enab
 echo remove entry from known_hosts to avoid error if the entry already exists
 ssh-keygen -R ${KNOWN_HOSTS} 2>/dev/null
 
-echo WHEEL_CONFIG_DIR=${WHEEL_CONFIG_DIR} > .env
+echo NODE_ENV=test > .env
+echo WHEEL_LOGLEVEL=OFF >> .env
+echo NODE_NO_WARNINGS=1 >> .env
+echo WHEEL_CONFIG_DIR=${TEST_DIR}/${WHEEL_CONFIG_DIR} >> .env
 echo SETTING_FILE=${SETTING_FILE} >> .env
+echo WHEEL_TEST_REMOTEHOST=testServer >> .env
+echo WHEEL_TEST_REMOTE_PASSWORD=passw0rd >> .env
