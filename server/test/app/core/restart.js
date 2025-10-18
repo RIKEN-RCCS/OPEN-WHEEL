@@ -13,7 +13,6 @@ const sinon = require("sinon");
 const chai = require("chai");
 const expect = chai.expect;
 chai.use(require("sinon-chai"));
-chai.use(require("chai-fs"));
 
 //testee
 const { runProject } = require("../../../app/core/projectController.js");
@@ -51,10 +50,10 @@ describe("restart UT", function () {
     });
     await runProject(projectRootDir);
 
-    expect(path.resolve(projectRootDir, "for0_1/task0/output.txt")).to.be.a.file().with.contents.that.match(/for0_1\/task0/);
-    expect(path.resolve(projectRootDir, "for0_1/task0/hoge.txt")).not.to.be.a.path();
-    expect(path.resolve(projectRootDir, "for0_2/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/for0_2\/task0/);
-    expect(path.resolve(projectRootDir, "for0_3/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/for0_3\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "for0_1/task0/output.txt"), "utf-8")).to.match(/for0_1\/task0/);
+    expect(fs.existsSync(path.resolve(projectRootDir, "for0_1/task0/hoge.txt"))).to.be.false;
+    expect(fs.readFileSync(path.resolve(projectRootDir, "for0_2/task0/hoge.txt"), "utf-8")).to.match(/for0_2\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "for0_3/task0/hoge.txt"), "utf-8")).to.match(/for0_3\/task0/);
   });
   it("can restart for component from first loop with updated files", async ()=>{
     await tar.x({
@@ -64,9 +63,9 @@ describe("restart UT", function () {
     });
     await runProject(projectRootDir);
 
-    expect(path.resolve(projectRootDir, "for0_1/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/for0_1\/task0/);
-    expect(path.resolve(projectRootDir, "for0_2/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/for0_2\/task0/);
-    expect(path.resolve(projectRootDir, "for0_3/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/for0_3\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "for0_1/task0/hoge.txt"), "utf-8")).to.match(/for0_1\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "for0_2/task0/hoge.txt"), "utf-8")).to.match(/for0_2\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "for0_3/task0/hoge.txt"), "utf-8")).to.match(/for0_3\/task0/);
   });
   it("can restart foreach component from second loop with updated files", async ()=>{
     await tar.x({
@@ -76,10 +75,10 @@ describe("restart UT", function () {
     });
     await runProject(projectRootDir);
 
-    expect(path.resolve(projectRootDir, "foreach0_1/task0/output.txt")).to.be.a.file().with.contents.that.match(/foreach0_1\/task0/);
-    expect(path.resolve(projectRootDir, "foreach0_1/task0/hoge.txt")).not.to.be.a.path();
-    expect(path.resolve(projectRootDir, "foreach0_2/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_2\/task0/);
-    expect(path.resolve(projectRootDir, "foreach0_3/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_3\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_1/task0/output.txt"), "utf-8")).to.match(/foreach0_1\/task0/);
+    expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_1/task0/hoge.txt"))).to.be.false;
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_2/task0/hoge.txt"), "utf-8")).to.match(/foreach0_2\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_3/task0/hoge.txt"), "utf-8")).to.match(/foreach0_3\/task0/);
   });
   it("can restart foreach component from first loop with updated files", async ()=>{
     await tar.x({
@@ -89,9 +88,9 @@ describe("restart UT", function () {
     });
     await runProject(projectRootDir);
 
-    expect(path.resolve(projectRootDir, "foreach0_1/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_1\/task0/);
-    expect(path.resolve(projectRootDir, "foreach0_2/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_2\/task0/);
-    expect(path.resolve(projectRootDir, "foreach0_3/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_3\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_1/task0/hoge.txt"), "utf-8")).to.match(/foreach0_1\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_2/task0/hoge.txt"), "utf-8")).to.match(/foreach0_2\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_3/task0/hoge.txt"), "utf-8")).to.match(/foreach0_3\/task0/);
   });
   it("can restart foreach component from second loop with updated files even if indexList is updated", async ()=>{
     await tar.x({
@@ -101,13 +100,13 @@ describe("restart UT", function () {
     });
     await runProject(projectRootDir);
 
-    expect(path.resolve(projectRootDir, "foreach0_1/task0/output.txt")).to.be.a.file().with.contents.that.match(/foreach0_1\/task0/);
-    expect(path.resolve(projectRootDir, "foreach0_1/task0/hoge.txt")).not.to.be.a.path();
-    expect(path.resolve(projectRootDir, "foreach0_2/task0/hoge.txt")).not.to.be.a.path();
-    expect(path.resolve(projectRootDir, "foreach0_3/task0/hoge.txt")).not.to.be.a.path();
-    expect(path.resolve(projectRootDir, "foreach0_foo/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_foo\/task0/);
-    expect(path.resolve(projectRootDir, "foreach0_bar/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_bar\/task0/);
-    expect(path.resolve(projectRootDir, "foreach0_baz/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/foreach0_baz\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_1/task0/output.txt"), "utf-8")).to.match(/foreach0_1\/task0/);
+    expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_1/task0/hoge.txt"))).to.be.false;
+    expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_2/task0/hoge.txt"))).to.be.false;
+    expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_3/task0/hoge.txt"))).to.be.false;
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_foo/task0/hoge.txt"), "utf-8")).to.match(/foreach0_foo\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_bar/task0/hoge.txt"), "utf-8")).to.match(/foreach0_bar\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "foreach0_baz/task0/hoge.txt"), "utf-8")).to.match(/foreach0_baz\/task0/);
   });
   it("can restart while component from second loop with updated files", async ()=>{
     await tar.x({
@@ -117,10 +116,10 @@ describe("restart UT", function () {
     });
     await runProject(projectRootDir);
 
-    expect(path.resolve(projectRootDir, "while0_0/task0/output.txt")).to.be.a.file().with.contents.that.match(/while0_0\/task0/);
-    expect(path.resolve(projectRootDir, "while0_0/task0/hoge.txt")).not.to.be.a.path();
-    expect(path.resolve(projectRootDir, "while0_1/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/while0_1\/task0/);
-    expect(path.resolve(projectRootDir, "while0_2/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/while0_2\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "while0_0/task0/output.txt"), "utf-8")).to.match(/while0_0\/task0/);
+    expect(fs.existsSync(path.resolve(projectRootDir, "while0_0/task0/hoge.txt"))).to.be.false;
+    expect(fs.readFileSync(path.resolve(projectRootDir, "while0_1/task0/hoge.txt"), "utf-8")).to.match(/while0_1\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "while0_2/task0/hoge.txt"), "utf-8")).to.match(/while0_2\/task0/);
   });
   it("can restart while component from first loop with updated files", async ()=>{
     await tar.x({
@@ -130,9 +129,9 @@ describe("restart UT", function () {
     });
     await runProject(projectRootDir);
 
-    expect(path.resolve(projectRootDir, "while0_0/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/while0_0\/task0/);
-    expect(path.resolve(projectRootDir, "while0_1/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/while0_1\/task0/);
-    expect(path.resolve(projectRootDir, "while0_2/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/while0_2\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "while0_0/task0/hoge.txt"), "utf-8")).to.match(/while0_0\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "while0_1/task0/hoge.txt"), "utf-8")).to.match(/while0_1\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "while0_2/task0/hoge.txt"), "utf-8")).to.match(/while0_2\/task0/);
   });
   it("can restart PS component and re-run only not finished instances", async ()=>{
     await tar.x({
@@ -142,18 +141,18 @@ describe("restart UT", function () {
     });
     await runProject(projectRootDir);
 
-    expect(path.resolve(projectRootDir, "PS0_time_0/task0/output.txt")).to.be.a.file().with.contents.that.match(/PS0_time_0\/task0/);
-    expect(path.resolve(projectRootDir, "PS0_time_5/task0/output.txt")).to.be.a.file().with.contents.that.match(/PS0_time_5\/task0/);
-    expect(path.resolve(projectRootDir, "PS0_time_10/task0/output.txt")).to.be.a.file().with.contents.that.match(/PS0_time_10\/task0/);
-    expect(path.resolve(projectRootDir, "PS0_time_15/task0/output.txt")).to.be.a.file().with.contents.that.match(/hoge/);
-    expect(path.resolve(projectRootDir, "PS0_time_20/task0/output.txt")).to.be.a.file().with.contents.that.match(/hoge/);
-    expect(path.resolve(projectRootDir, "PS0_time_0/task0/hoge.txt")).not.to.be.a.path();
-    expect(path.resolve(projectRootDir, "PS0_time_5/task0/hoge.txt")).not.to.be.a.path();
-    expect(path.resolve(projectRootDir, "PS0_time_10/task0/hoge.txt")).not.to.be.a.path();
-    expect(path.resolve(projectRootDir, "PS0_time_15/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_15\/task0/);
-    expect(path.resolve(projectRootDir, "PS0_time_20/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_20\/task0/);
-    expect(path.resolve(projectRootDir, "PS0/15_hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_15\/task0/);
-    expect(path.resolve(projectRootDir, "PS0/20_hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_20\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_0/task0/output.txt"), "utf-8")).to.match(/PS0_time_0\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_5/task0/output.txt"), "utf-8")).to.match(/PS0_time_5\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_10/task0/output.txt"), "utf-8")).to.match(/PS0_time_10\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_15/task0/output.txt"), "utf-8")).to.match(/hoge/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_20/task0/output.txt"), "utf-8")).to.match(/hoge/);
+    expect(fs.existsSync(path.resolve(projectRootDir, "PS0_time_0/task0/hoge.txt"))).to.be.false;
+    expect(fs.existsSync(path.resolve(projectRootDir, "PS0_time_5/task0/hoge.txt"))).to.be.false;
+    expect(fs.existsSync(path.resolve(projectRootDir, "PS0_time_10/task0/hoge.txt"))).to.be.false;
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_15/task0/hoge.txt"), "utf-8")).to.match(/PS0_time_15\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_20/task0/hoge.txt"), "utf-8")).to.match(/PS0_time_20\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0/15_hoge.txt"), "utf-8")).to.match(/PS0_time_15\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0/20_hoge.txt"), "utf-8")).to.match(/PS0_time_20\/task0/);
   });
   it("can restart PS component and re-run only not finished instances", async ()=>{
     await tar.x({
@@ -163,20 +162,20 @@ describe("restart UT", function () {
     });
     await runProject(projectRootDir);
 
-    expect(path.resolve(projectRootDir, "PS0_time_0/task0/output.txt")).to.be.a.file().with.contents.that.match(/hoge/);
-    expect(path.resolve(projectRootDir, "PS0_time_5/task0/output.txt")).to.be.a.file().with.contents.that.match(/hoge/);
-    expect(path.resolve(projectRootDir, "PS0_time_10/task0/output.txt")).to.be.a.file().with.contents.that.match(/hoge/);
-    expect(path.resolve(projectRootDir, "PS0_time_15/task0/output.txt")).to.be.a.file().with.contents.that.match(/hoge/);
-    expect(path.resolve(projectRootDir, "PS0_time_20/task0/output.txt")).to.be.a.file().with.contents.that.match(/hoge/);
-    expect(path.resolve(projectRootDir, "PS0_time_0/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_0\/task0/);
-    expect(path.resolve(projectRootDir, "PS0_time_5/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_5\/task0/);
-    expect(path.resolve(projectRootDir, "PS0_time_10/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_10\/task0/);
-    expect(path.resolve(projectRootDir, "PS0_time_15/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_15\/task0/);
-    expect(path.resolve(projectRootDir, "PS0_time_20/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_20\/task0/);
-    expect(path.resolve(projectRootDir, "PS0/0_hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_0\/task0/);
-    expect(path.resolve(projectRootDir, "PS0/5_hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_5\/task0/);
-    expect(path.resolve(projectRootDir, "PS0/10_hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_10\/task0/);
-    expect(path.resolve(projectRootDir, "PS0/15_hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_15\/task0/);
-    expect(path.resolve(projectRootDir, "PS0/20_hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_20\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_0/task0/output.txt"), "utf-8")).to.match(/hoge/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_5/task0/output.txt"), "utf-8")).to.match(/hoge/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_10/task0/output.txt"), "utf-8")).to.match(/hoge/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_15/task0/output.txt"), "utf-8")).to.match(/hoge/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_20/task0/output.txt"), "utf-8")).to.match(/hoge/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_0/task0/hoge.txt"), "utf-8")).to.match(/PS0_time_0\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_5/task0/hoge.txt"), "utf-8")).to.match(/PS0_time_5\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_10/task0/hoge.txt"), "utf-8")).to.match(/PS0_time_10\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_15/task0/hoge.txt"), "utf-8")).to.match(/PS0_time_15\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0_time_20/task0/hoge.txt"), "utf-8")).to.match(/PS0_time_20\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0/0_hoge.txt"), "utf-8")).to.match(/PS0_time_0\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0/5_hoge.txt"), "utf-8")).to.match(/PS0_time_5\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0/10_hoge.txt"), "utf-8")).to.match(/PS0_time_10\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0/15_hoge.txt"), "utf-8")).to.match(/PS0_time_15\/task0/);
+    expect(fs.readFileSync(path.resolve(projectRootDir, "PS0/20_hoge.txt"), "utf-8")).to.match(/PS0_time_20\/task0/);
   });
 });

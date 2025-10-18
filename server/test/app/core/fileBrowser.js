@@ -11,7 +11,6 @@ const fs = require("fs-extra");
 const { describe, it, beforeEach, afterEach } = require("mocha");
 const chai = require("chai");
 const { expect } = require("chai");
-chai.use(require("chai-fs"));
 const sinon = require("sinon");
 
 //testee

@@ -22,7 +22,7 @@
     "UT:setup": "test/setup.sh",
     "UT:setupDocker": "test/setup.sh test_setting_docker.txt",
     "UT:teardown": "test/teardown.sh",
-    "UT:local": "cross-env NODE_ENV=test WHEEL_RUNNING_TEST=1 $(cat test/.env) WHEEL_LOGLEVEL=OFF mocha --recursive --unhandled-rejections=strict --ignore **/gfarmOperator.js",
+    "UT:local": "cross-env NODE_ENV=test WHEEL_RUNNING_TEST=1 $(cat test/.env) WHEEL_LOGLEVEL=OFF NODE_NO_WARNINGS=1 mocha --recursive --unhandled-rejections=strict --ignore **/gfarmOperator.js",
     "UT:local-gfarm": "cross-env NODE_ENV=test WHEEL_RUNNING_TEST=1 $(cat test/.env) WHEEL_LOGLEVEL=OFF mocha --unhandled-rejections=strict **/gfarmOperator.js",
     "UT:docker": "source test/.env; docker compose -f test/compose.yml run --build wheel_release_test ",
     "test": "run-s UT:setup UT:local UT:teardown",
@@ -79,9 +79,7 @@
   "devDependencies": {
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.2",
-    "chai-fs": "^2.0.0",
     "chai-iterator": "^3.0.2",
-    "chai-json-schema": "^1.5.1",
     "cross-env": "^7.0.3",
     "deep-equal-in-any-order": "^2.0.6",
     "mocha": "^10.7.3",

@@ -9,7 +9,6 @@
 const sinon = require("sinon");
 const chai = require("chai");
 const expect = chai.expect;
-chai.use(require("chai-fs"));
 const { jobScheduler } = require("../../../app/db/db");
 
 //testee

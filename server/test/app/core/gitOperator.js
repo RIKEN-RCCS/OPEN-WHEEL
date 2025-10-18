@@ -13,7 +13,6 @@ const asyncExecFile = promisify(execFile);
 //setup test framework
 const chai = require("chai");
 const expect = chai.expect;
-chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
 //helper function
@@ -25,10 +24,10 @@ async function checkLFSenabled(repoDir) {
   expect(stdout).to.match(/^filter.lfs.smudge=git-lfs smudge -- %f$/m);
   expect(stdout).to.match(/^filter.lfs.process=git-lfs filter-process$/m);
   expect(stdout).to.match(/^filter.lfs.required=true$/m);
-  expect(path.resolve(repoDir, ".git", "hooks", "post-checkout")).to.be.a.file();
-  expect(path.resolve(repoDir, ".git", "hooks", "post-commit")).to.be.a.file();
-  expect(path.resolve(repoDir, ".git", "hooks", "post-merge")).to.be.a.file();
-  expect(path.resolve(repoDir, ".git", "hooks", "pre-push")).to.be.a.file();
+  expect(fs.statSync(path.resolve(repoDir, ".git", "hooks", "post-checkout")).isFile()).to.be.true;
+  expect(fs.statSync(path.resolve(repoDir, ".git", "hooks", "post-commit")).isFile()).to.be.true;
+  expect(fs.statSync(path.resolve(repoDir, ".git", "hooks", "post-merge")).isFile()).to.be.true;
+  expect(fs.statSync(path.resolve(repoDir, ".git", "hooks", "pre-push")).isFile()).to.be.true;
 }
 
 //testee
@@ -68,27 +67,32 @@ describe("git operator UT", function () {
     it("should initialize git repo on nonExisting directory", async ()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge");
       expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
-      expect(newRepoDir).to.be.a.directory().with.contents([".git", ".gitignore"]);
+      expect(fs.statSync(newRepoDir).isDirectory()).to.be.true;
+      expect(fs.readdirSync(newRepoDir)).to.have.members([".git", ".gitignore"]);
       await checkLFSenabled(newRepoDir);
     });
     it("should initialize git repo on nonExisting directory in nonExisting directory", async ()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge", "huga");
       expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
-      expect(newRepoDir).to.be.a.directory().with.contents([".git", ".gitignore"]);
+      expect(fs.statSync(newRepoDir).isDirectory()).to.be.true;
+      expect(fs.readdirSync(newRepoDir)).to.have.members([".git", ".gitignore"]);
       await checkLFSenabled(newRepoDir);
     });
     it("should initialize git repo on existing directory", async ()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge");
       await fs.mkdir(newRepoDir);
-      expect(newRepoDir).to.be.a.directory().and.empty;
+      expect(fs.statSync(newRepoDir).isDirectory()).to.be.true;
+      expect(fs.readdirSync(newRepoDir)).to.be.empty;
       expect(await gitInit(newRepoDir, "testUser", "testUser@example.com")).to.match(initialCommitResponse);
-      expect(newRepoDir).to.be.a.directory().with.contents([".git", ".gitignore"]);
+      expect(fs.statSync(newRepoDir).isDirectory()).to.be.true;
+      expect(fs.readdirSync(newRepoDir)).to.have.members([".git", ".gitignore"]);
       await checkLFSenabled(newRepoDir);
     });
     it("should reject while attempting to initialize on existing file", async ()=>{
       const newRepoDir = path.resolve(testDirRoot, "hoge");
       await fs.ensureFile(newRepoDir);
-      expect(newRepoDir).to.be.a.file().and.empty;
+      expect(fs.statSync(newRepoDir).isFile()).to.be.true;
+      expect(fs.readFileSync(newRepoDir)).to.be.empty;
       return expect(gitInit(newRepoDir, "testUser", "testUser@example.com")).to.be.rejected;
     });
   });
@@ -392,8 +396,8 @@ describe("git operator UT", function () {
         });
         expect(stdout).to.match(/^foo$/m);
         expect(stdout).to.match(/^dir\/bar$/m);
-        expect(path.resolve(testDirRoot, "foo")).to.be.a.file().with.content("foo");
-        expect(path.resolve(testDirRoot, "dir", "bar")).to.be.a.file().with.content("bar");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "foo"), "utf-8")).to.equal("foo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "dir", "bar"), "utf-8")).to.equal("bar");
       });
       it("should remove untracked files and directories", async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo2"), "foo2");
@@ -407,13 +411,13 @@ describe("git operator UT", function () {
         });
         expect(stdout).to.match(/^foo$/m);
         expect(stdout).to.match(/^dir\/bar$/m);
-        expect(path.resolve(testDirRoot, "foo")).to.be.a.file().with.content("foo");
-        expect(path.resolve(testDirRoot, "dir", "bar")).to.be.a.file().with.content("bar");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "foo"), "utf-8")).to.equal("foo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "dir", "bar"), "utf-8")).to.equal("bar");
         //git clean remove untracked files
-        expect(path.resolve(testDirRoot, "foo2")).not.to.be.a.path();
-        expect(path.resolve(testDirRoot, "dir2")).not.to.be.a.path();
-        expect(path.resolve(testDirRoot, "dir3")).not.to.be.a.path();
-        expect(path.resolve(testDirRoot, "dir2", "bar2")).not.to.be.a.path();
+        expect(fs.existsSync(path.resolve(testDirRoot, "foo2"))).to.be.false;
+        expect(fs.existsSync(path.resolve(testDirRoot, "dir2"))).to.be.false;
+        expect(fs.existsSync(path.resolve(testDirRoot, "dir3"))).to.be.false;
+        expect(fs.existsSync(path.resolve(testDirRoot, "dir2", "bar2"))).to.be.false;
       });
       it("should remove specified file", async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo2"), "foo2");
@@ -428,13 +432,13 @@ describe("git operator UT", function () {
         });
         expect(stdout).to.match(/^foo$/m);
         expect(stdout).to.match(/^dir\/bar$/m);
-        expect(path.resolve(testDirRoot, "foo")).to.be.a.file().with.content("foo");
-        expect(path.resolve(testDirRoot, "dir", "bar")).to.be.a.file().with.content("bar");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "foo"), "utf-8")).to.equal("foo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "dir", "bar"), "utf-8")).to.equal("bar");
         //git clean remove untracked files
-        expect(path.resolve(testDirRoot, "foo2")).not.to.be.a.path();
-        expect(path.resolve(testDirRoot, "dir2")).to.be.a.directory().with.files(["bar2"]);
-        expect(path.resolve(testDirRoot, "dir2", "bar2")).to.be.a.file().with.content("bar2");
-        expect(path.resolve(testDirRoot, "dir3")).to.be.a.directory().and.empty;
+        expect(fs.existsSync(path.resolve(testDirRoot, "foo2"))).to.be.false;
+        expect(fs.readdirSync(path.resolve(testDirRoot, "dir2"))).to.have.members(["bar2"]);
+        expect(fs.readFileSync(path.resolve(testDirRoot, "dir2", "bar2"), "utf-8")).to.equal("bar2");
+        expect(fs.readdirSync(path.resolve(testDirRoot, "dir3"))).to.be.empty;
       });
       it("should remove untracked file under specified directoriy", async ()=>{
         await fs.outputFile(path.resolve(testDirRoot, "foo2"), "foo2");
@@ -456,14 +460,14 @@ describe("git operator UT", function () {
         });
         expect(stdout).to.match(/^foo$/m);
         expect(stdout).to.match(/^dir\/bar$/m);
-        expect(path.resolve(testDirRoot, "foo")).to.be.a.file().with.content("foo");
-        expect(path.resolve(testDirRoot, "dir", "bar")).to.be.a.file().with.content("bar");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "foo"), "utf-8")).to.equal("foo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "dir", "bar"), "utf-8")).to.equal("bar");
         //git clean remove untracked files
-        expect(path.resolve(testDirRoot, "foo2")).to.be.a.file().with.content("foo2");
-        expect(path.resolve(testDirRoot, "dir2", "bar2")).not.to.be.a.path();
-        expect(path.resolve(testDirRoot, "dir2")).to.be.a.directory().with.files(["baz2"]);
-        expect(path.resolve(testDirRoot, "dir2", "baz2")).to.be.a.file().with.content("baz2");
-        expect(path.resolve(testDirRoot, "dir3")).to.be.a.directory().and.empty;
+        expect(fs.readFileSync(path.resolve(testDirRoot, "foo2"), "utf-8")).to.equal("foo2");
+        expect(fs.existsSync(path.resolve(testDirRoot, "dir2", "bar2"))).to.be.false;
+        expect(fs.readdirSync(path.resolve(testDirRoot, "dir2"))).to.have.members(["baz2"]);
+        expect(fs.readFileSync(path.resolve(testDirRoot, "dir2", "baz2"), "utf-8")).to.equal("baz2");
+        expect(fs.readdirSync(path.resolve(testDirRoot, "dir3"))).to.be.empty;
       });
     });
     describe("#gitResetHEAD", ()=>{
@@ -533,18 +537,18 @@ describe("git operator UT", function () {
         expect(stdout2).not.to.match(/^ *puyo$/m);
 
         //check files
-        expect(path.resolve(testDirRoot, "foo")).to.be.a.file().with.content("foo");
-        expect(path.resolve(testDirRoot, "bar")).to.be.a.file().with.content("bar");
-        expect(path.resolve(testDirRoot, "baz")).to.be.a.file().with.content("baz");
-        expect(path.resolve(testDirRoot, "hoge")).to.be.a.file().with.content("hoge");
-        expect(path.resolve(testDirRoot, "huga")).to.be.a.file().with.content("huga");
-        expect(path.resolve(testDirRoot, "hige")).to.be.a.file().with.content("hige");
-        expect(path.resolve(testDirRoot, "piyo")).to.be.a.file().with.content("piyo");
-        expect(path.resolve(testDirRoot, "puyo")).to.be.a.file().with.content("puyo");
-        expect(path.resolve(testDirRoot, "poyo")).to.be.a.file().with.content("poyo");
-        expect(path.resolve(testDirRoot, "punyu")).to.be.a.file().with.content("punyu");
-        expect(path.resolve(testDirRoot, "huga2")).not.to.be.a.path();
-        expect(path.resolve(testDirRoot, "hige2")).not.to.be.a.path();
+        expect(fs.readFileSync(path.resolve(testDirRoot, "foo"), "utf-8")).to.equal("foo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "bar"), "utf-8")).to.equal("bar");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "baz"), "utf-8")).to.equal("baz");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "hoge"), "utf-8")).to.equal("hoge");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "huga"), "utf-8")).to.equal("huga");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "hige"), "utf-8")).to.equal("hige");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "piyo"), "utf-8")).to.equal("piyo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "puyo"), "utf-8")).to.equal("puyo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "poyo"), "utf-8")).to.equal("poyo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "punyu"), "utf-8")).to.equal("punyu");
+        expect(fs.existsSync(path.resolve(testDirRoot, "huga2"))).to.be.false;
+        expect(fs.existsSync(path.resolve(testDirRoot, "hige2"))).to.be.false;
       });
       it("should perform reset HEAD --mixed and checkout", async ()=>{
         await gitResetHEAD(testDirRoot, ".");
@@ -581,56 +585,56 @@ describe("git operator UT", function () {
         expect(stdout2).not.to.match(/^ *puyo$/m);
 
         //check files
-        expect(path.resolve(testDirRoot, "foo")).to.be.a.file().with.content("foo");
-        expect(path.resolve(testDirRoot, "bar")).to.be.a.file().with.content("bar");
-        expect(path.resolve(testDirRoot, "baz")).to.be.a.file().with.content("baz");
-        expect(path.resolve(testDirRoot, "hoge")).to.be.a.file().with.content("hoge");
-        expect(path.resolve(testDirRoot, "huga")).to.be.a.file().with.content("huga");
-        expect(path.resolve(testDirRoot, "hige")).to.be.a.file().with.content("hige");
-        expect(path.resolve(testDirRoot, "piyo")).to.be.a.file().with.content("piyo");
-        expect(path.resolve(testDirRoot, "puyo")).to.be.a.file().with.content("puyo");
-        expect(path.resolve(testDirRoot, "poyo")).to.be.a.file().with.content("poyo");
-        expect(path.resolve(testDirRoot, "punyu")).to.be.a.file().with.content("punyu");
-        expect(path.resolve(testDirRoot, "huga2")).to.be.a.file().with.content("huga");
-        expect(path.resolve(testDirRoot, "hige2")).to.be.a.file().with.content("hige");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "foo"), "utf-8")).to.equal("foo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "bar"), "utf-8")).to.equal("bar");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "baz"), "utf-8")).to.equal("baz");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "hoge"), "utf-8")).to.equal("hoge");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "huga"), "utf-8")).to.equal("huga");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "hige"), "utf-8")).to.equal("hige");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "piyo"), "utf-8")).to.equal("piyo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "puyo"), "utf-8")).to.equal("puyo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "poyo"), "utf-8")).to.equal("poyo");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "punyu"), "utf-8")).to.equal("punyu");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "huga2"), "utf-8")).to.equal("huga");
+        expect(fs.readFileSync(path.resolve(testDirRoot, "hige2"), "utf-8")).to.equal("hige");
       });
     });
     describe("#gitLFSTrack", ()=>{
       const attributeFile = path.resolve(testDirRoot, ".gitattributes");
       it("should add entry to .gitattribute with relative path ", async ()=>{
         await gitLFSTrack(testDirRoot, "foo");
-        expect(attributeFile).to.be.a.file().with.contents.that.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
+        expect(fs.readFileSync(attributeFile, "utf-8")).to.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
       it("should add entry to .gitattribute with absolute path ", async ()=>{
         await gitLFSTrack(testDirRoot, path.resolve(testDirRoot, "foo"));
-        expect(attributeFile).to.be.a.file().with.contents.that.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
+        expect(fs.readFileSync(attributeFile, "utf-8")).to.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
       it("should do nothing if target is already in .gitattribute", async ()=>{
         await gitLFSTrack(testDirRoot, "foo");
-        expect(attributeFile).to.be.a.file().with.contents.that.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
+        expect(fs.readFileSync(attributeFile, "utf-8")).to.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
         const attributes = (await fs.readFile(attributeFile)).toString();
         await gitLFSTrack(testDirRoot, "foo");
-        expect(attributeFile).to.be.a.file().with.content(attributes);
+        expect(fs.readFileSync(attributeFile, "utf-8")).to.equal(attributes);
       });
     });
     describe("#gitLFSUntrack", ()=>{
       const attributeFile = path.resolve(testDirRoot, ".gitattributes");
       beforeEach(async ()=>{
         await gitLFSTrack(testDirRoot, "foo");
-        expect(attributeFile).to.be.a.file().with.contents.that.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
+        expect(fs.readFileSync(attributeFile, "utf-8")).to.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
       it("should remove entry from .gitattribute with relative path", async ()=>{
         await gitLFSUntrack(testDirRoot, "foo");
-        expect(attributeFile).to.be.a.file().with.contents.that.not.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
+        expect(fs.readFileSync(attributeFile, "utf-8")).not.to.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
       it("should remove entry from .gitattribute with absolute path", async ()=>{
         await gitLFSUntrack(testDirRoot, path.resolve(testDirRoot, "foo"));
-        expect(attributeFile).to.be.a.file().with.contents.that.not.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
+        expect(fs.readFileSync(attributeFile, "utf-8")).not.to.match(/^\/foo filter=lfs diff=lfs merge=lfs -text$/m);
       });
       it("should do nothing if target is not in .gitattribute", async ()=>{
         const attributes = (await fs.readFile(attributeFile)).toString().replace("\r\n", "\n");
         await gitLFSUntrack(testDirRoot, "hoge");
-        expect(attributeFile).to.be.a.file().with.content(attributes);
+        expect(fs.readFileSync(attributeFile, "utf-8")).to.equal(attributes);
       });
       it("should do nothing if .gitattribute does not exist", async ()=>{
         await fs.remove(attributeFile);

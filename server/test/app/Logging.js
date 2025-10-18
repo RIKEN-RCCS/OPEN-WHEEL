@@ -10,7 +10,6 @@ const path = require("path");
 //setup test framework
 const chai = require("chai");
 const { expect } = require("chai");
-chai.use(require("chai-fs"));
 const sinon = require("sinon");
 chai.use(require("sinon-chai"));
 chai.use((_chai, _)=>{
@@ -88,7 +87,7 @@ describe("Unit test for log4js's helper functions", ()=>{
       await logger.shutdown();
 
       const filename = path.resolve(projectRootDir, path.basename(logFilename));
-      expect(filename).to.be.a.file();
+      expect(fs.statSync(filename).isFile()).to.be.true;
       const log = await fs.readFile(filename).then((data)=>{
         return data.toString();
       });

@@ -14,7 +14,6 @@ const asyncExecFile = promisify(execFile);
 const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
-chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
 //helper
@@ -110,7 +109,7 @@ describe("readProject UT", function () {
     expect(deleted).to.be.an("array").that.is.empty;
     expect(renamed).to.be.an("array").that.is.empty;
     expect(untracked).to.be.an("array").that.is.empty;
-    expect(ignoreFile).to.be.a.file().with.content("wheel.log");
+    expect(fs.readFileSync(ignoreFile, "utf-8")).to.equal("wheel.log");
   });
   it("should set all components and project to 'not-started' and commit everything if project is not git-controlled", async ()=>{
     await updateComponent(projectRootDir, task0.ID, "state", "hoge");

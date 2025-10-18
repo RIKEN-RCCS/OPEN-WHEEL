@@ -12,7 +12,6 @@ const fs = require("fs-extra");
 //setup test framework
 const chai = require("chai");
 const expect = chai.expect;
-chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 
 //helper
@@ -57,7 +56,7 @@ describe("#export project", function () {
     const url = await exportProject(projectRootDir);
     expect(url).to.be.a("string").and.match(new RegExp(`WHEEL_project_${projectName}.tgz`));
     const archiveFilename = path.join(tmpDir, "exportProject", url);
-    expect(archiveFilename).to.be.a.file();
+    expect(fs.statSync(archiveFilename).isFile()).to.be.true;
   });
   it("should export project even if not-committed files exist and exclude them", async ()=>{
     await fs.outputFile(path.resolve(projectRootDir, workflow0.name, "hoge"), "hoge");
@@ -66,8 +65,8 @@ describe("#export project", function () {
     await fs.ensureDir(extractDir);
     const archiveFilename = path.join(tmpDir, "exportProject", url);
     await exec(`tar xfz ${archiveFilename} -C ${extractDir} --strip 1`);
-    expect(path.join(extractDir, workflow0.name, "hoge")).to.not.be.a.path();
-    expect(path.join(extractDir, projectJsonFilename)).to.be.a.file();
+    expect(fs.existsSync(path.join(extractDir, workflow0.name, "hoge"))).to.be.false;
+    expect(fs.statSync(path.join(extractDir, projectJsonFilename)).isFile()).to.be.true;
   });
   it("should export project and status changed to 'not-started'", async ()=>{
     const workflowJson = await fs.readJson(path.join(projectRootDir, workflow0.name, componentJsonFilename));

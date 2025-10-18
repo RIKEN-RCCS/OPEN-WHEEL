@@ -12,8 +12,8 @@ const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
 chai.use(require("sinon-chai"));
-chai.use(require("chai-fs"));
-chai.use(require("chai-json-schema"));
+const Ajv = require("ajv");
+const ajv = new Ajv({ strict: false });
 
 //testee
 const { runProject, _internal } = require("../../../app/core/projectController");
@@ -63,26 +63,37 @@ describe("UT for source component", function () {
     it("should copy foo to task0/bar", async ()=>{
       const state = await runProject(projectRootDir);
       expect(state).to.equal("finished");
-      expect(path.resolve(projectRootDir, "task0", "bar")).to.be.a.file().with.contents("foo");
-      expect(path.resolve(projectRootDir, projectJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.statSync(path.resolve(projectRootDir, "task0", "bar")).isFile()).to.be.true;
+      expect(fs.readFileSync(path.resolve(projectRootDir, "task0", "bar"), "utf-8")).to.equal("foo");
+
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const projectJsonSchema = {
         required: ["state"],
         properties: {
           state: { enum: ["finished"] }
         }
-      });
-      expect(path.resolve(projectRootDir, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      };
+      const validateProjectJson = ajv.compile(projectJsonSchema);
+      expect(validateProjectJson(projectJson)).to.be.true;
+      const rootWFJson = await fs.readJson(path.resolve(projectRootDir, componentJsonFilename));
+      const rootWFJsonSchema = {
         required: ["state"],
         properties: {
           state: { enum: ["finished"] }
         }
-      });
-      expect(path.resolve(projectRootDir, "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      };
+      const validateRootWFJson = ajv.compile(rootWFJsonSchema);
+      expect(validateRootWFJson(rootWFJson)).to.be.true;
+      const task0Json = await fs.readJson(path.resolve(projectRootDir, "task0", componentJsonFilename));
+      const task0JsonSchema = {
         required: ["state", "ancestorsName"],
         properties: {
           state: { enum: ["finished"] },
           ancestorsName: { enum: [""] }
         }
-      });
+      };
+      const validateTask0Json = ajv.compile(task0JsonSchema);
+      expect(validateTask0Json(task0Json)).to.be.true;
     });
   });
 });

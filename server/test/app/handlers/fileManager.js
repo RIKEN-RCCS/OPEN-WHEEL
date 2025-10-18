@@ -12,7 +12,6 @@ const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
 chai.use(require("sinon-chai"));
-chai.use(require("chai-fs"));
 
 //testee
 const { onGetFileList, onGetSNDContents, onRemoveFile, onRenameFile, onDownload, onCreateNewFile, onCreateNewDir } = require("../../../app/handlers/fileManager.js");
@@ -140,25 +139,25 @@ describe("fileManager UT", ()=>{
   describe("#removeFile", ()=>{
     it("should remove directory", async ()=>{
       await onRemoveFile(testDirRoot, path.join(testDirRoot, "baz"), cb);
-      expect(path.join(testDirRoot, "baz")).not.to.be.a.path();
+      expect(fs.existsSync(path.join(testDirRoot, "baz"))).to.be.false;
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
     });
     it("should remove reguler file", async ()=>{
       await onRemoveFile(testDirRoot, path.join(testDirRoot, "foo_1"), cb);
-      expect(path.join(testDirRoot, "foo_1")).not.to.be.a.path();
+      expect(fs.existsSync(path.join(testDirRoot, "foo_1"))).to.be.false;
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
     });
     it("should remove symlink to directory", async ()=>{
       await onRemoveFile(testDirRoot, path.join(testDirRoot, "linkbar"), cb);
-      expect(path.join(testDirRoot, "linkbar")).not.to.be.a.path();
+      expect(fs.existsSync(path.join(testDirRoot, "linkbar"))).to.be.false;
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
     });
     it("should remove symlink to file", async ()=>{
       await onRemoveFile(testDirRoot, path.join(testDirRoot, "linkpiyo"), cb);
-      expect(path.join(testDirRoot, "linkpiyo")).not.to.be.a.path();
+      expect(fs.existsSync(path.join(testDirRoot, "linkpiyo"))).to.be.false;
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
     });
@@ -168,29 +167,29 @@ describe("fileManager UT", ()=>{
       await onRenameFile(testDirRoot, testDirRoot, "baz", "hoge", cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
-      expect(path.join(testDirRoot, "baz")).not.to.be.a.path();
-      expect(path.join(testDirRoot, "hoge")).to.be.a.directory();
+      expect(fs.existsSync(path.join(testDirRoot, "baz"))).to.be.false;
+      expect(fs.statSync(path.join(testDirRoot, "hoge")).isDirectory()).to.be.true;
     });
     it("should rename reguler file", async ()=>{
       await onRenameFile(testDirRoot, testDirRoot, "foo_1", "hoge", cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
-      expect(path.join(testDirRoot, "foo_1")).not.to.be.a.path();
-      expect(path.join(testDirRoot, "hoge")).to.be.a.file();
+      expect(fs.existsSync(path.join(testDirRoot, "foo_1"))).to.be.false;
+      expect(fs.statSync(path.join(testDirRoot, "hoge")).isFile()).to.be.true;
     });
     it("should rename symlink to directory", async ()=>{
       await onRenameFile(testDirRoot, testDirRoot, "linkbar", "hoge", cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
-      expect(path.join(testDirRoot, "linkbar")).not.to.be.a.path();
-      expect(path.join(testDirRoot, "hoge")).to.be.a.directory();
+      expect(fs.existsSync(path.join(testDirRoot, "linkbar"))).to.be.false;
+      expect(fs.statSync(path.join(testDirRoot, "hoge")).isDirectory()).to.be.true;
     });
     it("should rename symlink to file", async ()=>{
       await onRenameFile(testDirRoot, testDirRoot, "linkpiyo", "hoge", cb);
       expect(cb).to.have.been.calledOnce;
       expect(cb).to.have.been.calledWith(true);
-      expect(path.join(testDirRoot, "linkpiyo")).not.to.be.a.path();
-      expect(path.join(testDirRoot, "hoge")).to.be.a.file();
+      expect(fs.existsSync(path.join(testDirRoot, "linkpiyo"))).to.be.false;
+      expect(fs.statSync(path.join(testDirRoot, "hoge")).isFile()).to.be.true;
     });
   });
   describe("#downloadFile", function () {
@@ -214,21 +213,25 @@ describe("fileManager UT", ()=>{
   describe("#createNewFile", ()=>{
     it("should create new file by relative path", async ()=>{
       await onCreateNewFile(testDirRoot, path.join(testDirRoot, "hoge"), cb);
-      expect(path.join(testDirRoot, "hoge")).to.be.a.file().and.empty;
+      expect(fs.statSync(path.join(testDirRoot, "hoge")).isFile()).to.be.true;
+      expect(fs.readFileSync(path.join(testDirRoot, "hoge")).length).to.equal(0);
     });
     it("should create new file by absolute path", async ()=>{
       await onCreateNewFile(testDirRoot, path.resolve(testDirRoot, "hoge"), cb);
-      expect(path.join(testDirRoot, "hoge")).to.be.a.file().and.empty;
+      expect(fs.statSync(path.join(testDirRoot, "hoge")).isFile()).to.be.true;
+      expect(fs.readFileSync(path.join(testDirRoot, "hoge")).length).to.equal(0);
     });
   });
   describe("#createNewDir", async ()=>{
     it("should create new directory by relative path", async ()=>{
       await onCreateNewDir(testDirRoot, path.join(testDirRoot, "hoge"), cb);
-      expect(path.join(testDirRoot, "hoge")).to.be.a.directory().with.files([".gitkeep"]);
+      expect(fs.statSync(path.join(testDirRoot, "hoge")).isDirectory()).to.be.true;
+      expect(fs.readdirSync(path.join(testDirRoot, "hoge"))).to.have.members([".gitkeep"]);
     });
     it("should create new directory by absolute path", async ()=>{
       await onCreateNewDir(testDirRoot, path.resolve(testDirRoot, "hoge"), cb);
-      expect(path.join(testDirRoot, "hoge")).to.be.a.directory().with.files([".gitkeep"]);
+      expect(fs.statSync(path.join(testDirRoot, "hoge")).isDirectory()).to.be.true;
+      expect(fs.readdirSync(path.join(testDirRoot, "hoge"))).to.have.members([".gitkeep"]);
     });
   });
 });

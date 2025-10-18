@@ -10,7 +10,6 @@ const path = require("path");
 
 const chai = require("chai");
 const expect = chai.expect;
-chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 chai.use(require("sinon-chai"));
 

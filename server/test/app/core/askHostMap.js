@@ -8,7 +8,6 @@
 //setup test framework
 const chai = require("chai");
 const expect = chai.expect;
-chai.use(require("chai-fs"));
 chai.use(require("chai-as-promised"));
 const sinon = require("sinon");
 

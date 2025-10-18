@@ -13,8 +13,8 @@ const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
 chai.use(require("sinon-chai"));
-chai.use(require("chai-fs"));
-chai.use(require("chai-json-schema"));
+const Ajv = require("ajv");
+const ajv = new Ajv({ strict: false });
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -81,8 +81,10 @@ describe("UT for Dispatcher class", function () {
       await Dispatcher.replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber);
       const newFile1 = path.resolve(templateRoot, `${bulkNumber}.template1.txt`);
       const newFile2 = path.resolve(templateRoot, `${bulkNumber}.template2.txt`);
-      expect(newFile1).to.be.a.file().with.content("Hello, value1!");
-      expect(newFile2).to.be.a.file().with.content("Goodbye, value2!");
+      expect(fs.statSync(newFile1).isFile()).to.be.true;
+      expect(fs.readFileSync(newFile1, "utf-8")).to.equal("Hello, value1!");
+      expect(fs.statSync(newFile2).isFile()).to.be.true;
+      expect(fs.readFileSync(newFile2, "utf-8")).to.equal("Goodbye, value2!");
     });
     it("should throw an error if a target file does not exist", async function () {
       const invalidFiles = ["template1.txt", "nonexistent.txt"];
@@ -120,7 +122,7 @@ describe("UT for Dispatcher class", function () {
     it("should write parameters to parameterSet.wheel.txt", async function () {
       const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
       await Dispatcher.writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
-      expect(parameterSetFilePath).to.be.a.file();
+      expect(fs.statSync(parameterSetFilePath).isFile()).to.be.true;
       const expectedContent = [
         `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
         `BULKNUM_${bulkNumber}_TARGETNUM_0_KEY="key1"`,
@@ -135,7 +137,7 @@ describe("UT for Dispatcher class", function () {
     it("should handle empty targetFiles gracefully", async function () {
       const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
       await Dispatcher.writeParameterSetFile(templateRoot, [], {}, bulkNumber);
-      expect(parameterSetFilePath).not.to.be.a.path();
+      expect(fs.existsSync(parameterSetFilePath)).to.be.false;
     });
     it("should append parameters to an existing file", async function () {
       const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
@@ -189,8 +191,9 @@ describe("UT for Dispatcher class", function () {
       await fs.outputFile(path.resolve(projectRootDir, previous.name, "a"), "hoge");
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
+      expect(fs.existsSync(path.resolve(projectRootDir, next.name, "a"))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, next.name, "b")).isFile()).to.be.true;
+      expect(fs.readFileSync(path.resolve(projectRootDir, next.name, "b"), "utf-8")).to.equal(fs.readFileSync(path.resolve(projectRootDir, previous.name, "a"), "utf-8"));
     });
     it("should do nothing if outputFile has glob which match nothing", async ()=>{
       await addOutputFile(projectRootDir, previous.ID, "a*");
@@ -198,8 +201,8 @@ describe("UT for Dispatcher class", function () {
       await addFileLink(projectRootDir, previous.ID, "a*", next.ID, "b");
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, next.name, "b")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, next.name, "a*")).not.to.be.a.path();
+      expect(fs.existsSync(path.resolve(projectRootDir, next.name, "b"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, next.name, "a*"))).to.be.false;
     });
     it("should accept environment variable as part of outputFile name ", async ()=>{
       await addOutputFile(projectRootDir, previous.ID, "{{ WHEEL_CURRENT_INDEX }}a");
@@ -209,8 +212,9 @@ describe("UT for Dispatcher class", function () {
       projectJson.env = { WHEEL_CURRENT_INDEX: 3 };
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, projectJson.env, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, next.name, "3a")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "3a"));
+      expect(fs.existsSync(path.resolve(projectRootDir, next.name, "3a"))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, next.name, "b")).isFile()).to.be.true;
+      expect(fs.readFileSync(path.resolve(projectRootDir, next.name, "b"), "utf-8")).to.equal(fs.readFileSync(path.resolve(projectRootDir, previous.name, "3a"), "utf-8"));
     });
     it("should accept environment variable as part of inputFile name ", async ()=>{
       await addOutputFile(projectRootDir, previous.ID, "a");
@@ -220,8 +224,9 @@ describe("UT for Dispatcher class", function () {
       projectJson.env = { WHEEL_CURRENT_INDEX: "hoge" };
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, projectJson.env, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, next.name, "bhoge")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
+      expect(fs.existsSync(path.resolve(projectRootDir, next.name, "a"))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, next.name, "bhoge")).isFile()).to.be.true;
+      expect(fs.readFileSync(path.resolve(projectRootDir, next.name, "bhoge"), "utf-8")).to.equal(fs.readFileSync(path.resolve(projectRootDir, previous.name, "a"), "utf-8"));
     });
     it("should copy files from storage component's outputFile to inputFile", async ()=>{
       await addOutputFile(projectRootDir, storage.ID, "a");
@@ -230,8 +235,9 @@ describe("UT for Dispatcher class", function () {
       await fs.outputFile(path.join(storageArea, "a"), "hoge");
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file().and.equal(path.resolve(storageArea, "a"));
+      expect(fs.existsSync(path.resolve(projectRootDir, next.name, "a"))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, next.name, "b")).isFile()).to.be.true;
+      expect(fs.readFileSync(path.resolve(projectRootDir, next.name, "b"), "utf-8")).to.equal(fs.readFileSync(path.resolve(storageArea, "a"), "utf-8"));
       const stats = await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
       expect(stats.isSymbolicLink()).to.be.false;
     });
@@ -242,9 +248,10 @@ describe("UT for Dispatcher class", function () {
       await fs.outputFile(path.resolve(projectRootDir, previous.name, "a"), "hoge");
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, storage.name, "a")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, storage.name, "b")).not.to.be.a.path();
-      expect(path.resolve(storageArea, "b")).to.be.a.file().and.equal(path.resolve(projectRootDir, previous.name, "a"));
+      expect(fs.existsSync(path.resolve(projectRootDir, storage.name, "a"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, storage.name, "b"))).to.be.false;
+      expect(fs.statSync(path.resolve(storageArea, "b")).isFile()).to.be.true;
+      expect(fs.readFileSync(path.resolve(storageArea, "b"), "utf-8")).to.equal(fs.readFileSync(path.resolve(projectRootDir, previous.name, "a"), "utf-8"));
     });
     describe("run on remote host", ()=>{
       let ssh;
@@ -296,8 +303,8 @@ describe("UT for Dispatcher class", function () {
         it("should deliver file as real file", async ()=>{
           const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
           expect(await DP.start()).to.be.equal("finished");
-          expect(path.resolve(projectRootDir, next.name, "a")).not.to.be.a.path();
-          expect(path.resolve(projectRootDir, next.name, "b")).to.be.a.file();
+          expect(fs.existsSync(path.resolve(projectRootDir, next.name, "a"))).to.be.false;
+          expect(fs.statSync(path.resolve(projectRootDir, next.name, "b")).isFile()).to.be.true;
           const stats = await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
           expect(stats.isSymbolicLink()).to.be.false;
         });
@@ -318,11 +325,12 @@ describe("UT for Dispatcher class", function () {
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, `${for0.name}_0`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_0`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_1`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_2`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_3`))).to.be.false;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -336,7 +344,9 @@ describe("UT for Dispatcher class", function () {
             maximum: 3
           }
         }
-      });
+      };
+      const validate = ajv.compile(schema);
+      expect(validate(for0Json)).to.be.true;
     });
 
     it("should work with negative step number", async ()=>{
@@ -345,11 +355,12 @@ describe("UT for Dispatcher class", function () {
       await updateComponent(projectRootDir, for0.ID, "step", -1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_0`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_1`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_2`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_3`))).to.be.false;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -363,7 +374,9 @@ describe("UT for Dispatcher class", function () {
             maximum: 3
           }
         }
-      });
+      };
+      const validate = ajv.compile(schema);
+      expect(validate(for0Json)).to.be.true;
     });
     it("should work with step number which is greater than 1", async ()=>{
       await updateComponent(projectRootDir, for0.ID, "start", 1);
@@ -371,12 +384,13 @@ describe("UT for Dispatcher class", function () {
       await updateComponent(projectRootDir, for0.ID, "step", 2);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_3`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_4`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_5`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_1`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_2`))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_3`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_4`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_5`))).to.be.false;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -390,7 +404,9 @@ describe("UT for Dispatcher class", function () {
             maximum: 2
           }
         }
-      });
+      };
+      const validate = ajv.compile(schema);
+      expect(validate(for0Json)).to.be.true;
     });
     it("should work beyond 0", async ()=>{
       await updateComponent(projectRootDir, for0.ID, "start", -1);
@@ -398,11 +414,12 @@ describe("UT for Dispatcher class", function () {
       await updateComponent(projectRootDir, for0.ID, "step", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, `${for0.name}_-1`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_0`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_-1`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_0`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_1`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_2`))).to.be.false;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -416,7 +433,9 @@ describe("UT for Dispatcher class", function () {
             maximum: 3
           }
         }
-      });
+      };
+      const validate = ajv.compile(schema);
+      expect(validate(for0Json)).to.be.true;
     });
     it("should copy 3 times and back to original component", async ()=>{
       await updateComponent(projectRootDir, for0.ID, "start", 0);
@@ -424,17 +443,17 @@ describe("UT for Dispatcher class", function () {
       await updateComponent(projectRootDir, for0.ID, "step", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_0`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_1`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_2`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_3`))).to.be.false;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
             minimum: 3,
             maximum: 3
-
           },
           numTotal: {
             type: "integer",
@@ -442,7 +461,9 @@ describe("UT for Dispatcher class", function () {
             maximum: 3
           }
         }
-      });
+      };
+      const validate = ajv.compile(schema);
+      expect(validate(for0Json)).to.be.true;
     });
     it("should copy 3 times and delete all", async ()=>{
       await updateComponent(projectRootDir, for0.ID, "start", 0);
@@ -451,11 +472,12 @@ describe("UT for Dispatcher class", function () {
       await updateComponent(projectRootDir, for0.ID, "keep", 0);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_0`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_1`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_2`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_3`))).to.be.false;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -469,7 +491,9 @@ describe("UT for Dispatcher class", function () {
             maximum: 3
           }
         }
-      });
+      };
+      const validate = ajv.compile(schema);
+      expect(validate(for0Json)).to.be.true;
     });
     it("should copy 3 times and keep last", async ()=>{
       await updateComponent(projectRootDir, for0.ID, "start", 0);
@@ -478,11 +502,12 @@ describe("UT for Dispatcher class", function () {
       await updateComponent(projectRootDir, for0.ID, "keep", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_0`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_1`))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_2`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_3`))).to.be.false;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -496,7 +521,9 @@ describe("UT for Dispatcher class", function () {
             maximum: 3
           }
         }
-      });
+      };
+      const validate = ajv.compile(schema);
+      expect(validate(for0Json)).to.be.true;
     });
     it("should copy 3 times and keep last 2", async ()=>{
       await updateComponent(projectRootDir, for0.ID, "start", 0);
@@ -505,11 +532,12 @@ describe("UT for Dispatcher class", function () {
       await updateComponent(projectRootDir, for0.ID, "keep", 2);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_0`))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_1`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_2`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_3`))).to.be.false;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -523,7 +551,9 @@ describe("UT for Dispatcher class", function () {
             maximum: 3
           }
         }
-      });
+      };
+      const validate = ajv.compile(schema);
+      expect(validate(for0Json)).to.be.true;
     });
   });
 
@@ -556,10 +586,11 @@ describe("UT for Dispatcher class", function () {
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_1`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_2`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_3`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, PS0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      expect(fs.existsSync(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_1`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_2`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${PS0.name}_KEYWORD1_3`))).to.be.false;
+      const ps0Json = await fs.readJson(path.resolve(projectRootDir, PS0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -573,7 +604,9 @@ describe("UT for Dispatcher class", function () {
             maximum: 3
           }
         }
-      });
+      };
+      const validate = ajv.compile(schema);
+      expect(validate(ps0Json)).to.be.true;
     });
   });
   describe("#Foreach component", ()=>{
@@ -588,30 +621,30 @@ describe("UT for Dispatcher class", function () {
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_foo`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_bar`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_baz`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_fizz`)).not.to.be.a.path();
+      expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_foo`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_bar`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_baz`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_fizz`))).to.be.false;
     });
     it("should copy 3 times and keep last component", async ()=>{
       await updateComponent(projectRootDir, foreach0.ID, "keep", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_foo`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_bar`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_baz`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_fizz`)).to.be.a.directory();
+      expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_foo`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_bar`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_baz`))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, `${foreach0.name}_fizz`)).isDirectory()).to.be.true;
     });
     it("should copy 3 times and keep last 2 component", async ()=>{
       await updateComponent(projectRootDir, foreach0.ID, "keep", 2);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_foo`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_bar`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_baz`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${foreach0.name}_fizz`)).to.be.a.directory();
+      expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_foo`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_bar`))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, `${foreach0.name}_baz`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${foreach0.name}_fizz`)).isDirectory()).to.be.true;
     });
   });
 
@@ -627,30 +660,30 @@ describe("UT for Dispatcher class", function () {
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, `${while0.name}_0`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${while0.name}_1`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${while0.name}_2`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${while0.name}_3`)).not.to.be.a.path();
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_0`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_1`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_2`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_3`))).to.be.false;
     });
     it("should copy 3 times and keep last component", async ()=>{
       await updateComponent(projectRootDir, while0.ID, "keep", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, `${while0.name}_0`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${while0.name}_1`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${while0.name}_2`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${while0.name}_3`)).not.to.be.a.path();
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_0`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_1`))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, `${while0.name}_2`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_3`))).to.be.false;
     });
     it("should copy 3 times and keep last 2 component", async ()=>{
       await updateComponent(projectRootDir, while0.ID, "keep", 2);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, `${while0.name}_0`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${while0.name}_1`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${while0.name}_2`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${while0.name}_3`)).not.to.be.a.path();
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_0`))).to.be.false;
+      expect(fs.statSync(path.resolve(projectRootDir, `${while0.name}_1`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${while0.name}_2`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_3`))).to.be.false;
     });
   });
   describe("#Break", ()=>{
@@ -678,58 +711,52 @@ describe("UT for Dispatcher class", function () {
     it("should run from 0 to 2 and task1 under for0_2 should not run", async ()=>{
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_3`)).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, `${for0.name}`, task0.name, "hoge")).to.be.a.file().with.content("task0 2\n");
-      expect(path.resolve(projectRootDir, `${for0.name}`, task1.name, "hoge")).to.be.a.file().with.content("task1 1\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`, task0.name, "hoge")).to.be.a.file().with.content("task0 0\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`, task1.name, "hoge")).to.be.a.file().with.content("task1 0\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_1`, task0.name, "hoge")).to.be.a.file().with.content("task0 1\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_1`, task1.name, "hoge")).to.be.a.file().with.content("task1 1\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_2`, task0.name, "hoge")).to.be.a.file().with.content("task0 2\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_2`, task1.name, "hoge")).to.be.a.file().with.content("task1 1\n");
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_0`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_1`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_2`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_3`))).to.be.false;
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}`, task0.name, "hoge"), "utf-8")).to.equal("task0 2\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}`, task1.name, "hoge"), "utf-8")).to.equal("task1 1\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_0`, task0.name, "hoge"), "utf-8")).to.equal("task0 0\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_0`, task1.name, "hoge"), "utf-8")).to.equal("task1 0\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_1`, task0.name, "hoge"), "utf-8")).to.equal("task0 1\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_1`, task1.name, "hoge"), "utf-8")).to.equal("task1 1\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_2`, task0.name, "hoge"), "utf-8")).to.equal("task0 2\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_2`, task1.name, "hoge"), "utf-8")).to.equal("task1 1\n");
 
       for (const dir of ["for0_0", "for0_1"]) {
-        expect(path.resolve(projectRootDir, dir, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        const componentJsonContent = await fs.readJson(path.resolve(projectRootDir, dir, componentJsonFilename));
+        const schema = {
           required: ["state"],
           properties: {
             state: { enum: ["finished"] }
           }
-        });
-        expect(path.resolve(projectRootDir, dir, task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, dir, task1.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
+        };
+        expect(ajv.validate(schema, componentJsonContent)).to.be.true;
+        const task0JsonContent = await fs.readJson(path.resolve(projectRootDir, dir, task0.name, componentJsonFilename));
+        expect(ajv.validate(schema, task0JsonContent)).to.be.true;
+        const task1JsonContent = await fs.readJson(path.resolve(projectRootDir, dir, task1.name, componentJsonFilename));
+        expect(ajv.validate(schema, task1JsonContent)).to.be.true;
       }
       for (const dir of ["for0", "for0_2"]) {
-        expect(path.resolve(projectRootDir, dir, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        const componentJsonContent = await fs.readJson(path.resolve(projectRootDir, dir, componentJsonFilename));
+        const schema = {
           required: ["state"],
           properties: {
             state: { enum: ["finished"] }
           }
-        });
-        expect(path.resolve(projectRootDir, dir, task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
-        expect(path.resolve(projectRootDir, dir, task1.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        };
+        expect(ajv.validate(schema, componentJsonContent)).to.be.true;
+        const task0JsonContent = await fs.readJson(path.resolve(projectRootDir, dir, task0.name, componentJsonFilename));
+        expect(ajv.validate(schema, task0JsonContent)).to.be.true;
+        const task1JsonContent = await fs.readJson(path.resolve(projectRootDir, dir, task1.name, componentJsonFilename));
+        const schema2 = {
           required: ["state"],
           properties: {
             state: { enum: ["not-started"] }
           }
-        });
+        };
+        expect(ajv.validate(schema2, task1JsonContent)).to.be.true;
       }
     });
   });
@@ -758,49 +785,51 @@ describe("UT for Dispatcher class", function () {
     it("should run from 0 to 3 but task1 should be skipped when index=2", async ()=>{
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_1`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_2`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}_3`)).to.be.a.directory();
-      expect(path.resolve(projectRootDir, `${for0.name}`, task0.name, "hoge")).to.be.a.file().with.content("task0 3\n");
-      expect(path.resolve(projectRootDir, `${for0.name}`, task1.name, "hoge")).to.be.a.file().with.content("task1 3\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`, task0.name, "hoge")).to.be.a.file().with.content("task0 0\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`, task1.name, "hoge")).to.be.a.file().with.content("task1 0\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_1`, task0.name, "hoge")).to.be.a.file().with.content("task0 1\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_1`, task1.name, "hoge")).to.be.a.file().with.content("task1 1\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_2`, task0.name, "hoge")).to.be.a.file().with.content("task0 2\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_2`, task1.name, "hoge")).to.be.a.file().with.content("task1 1\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_3`, task0.name, "hoge")).to.be.a.file().with.content("task0 3\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_3`, task1.name, "hoge")).to.be.a.file().with.content("task1 3\n");
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_0`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_1`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_2`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_3`)).isDirectory()).to.be.true;
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}`, task0.name, "hoge"), "utf-8")).to.equal("task0 3\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}`, task1.name, "hoge"), "utf-8")).to.equal("task1 3\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_0`, task0.name, "hoge"), "utf-8")).to.equal("task0 0\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_0`, task1.name, "hoge"), "utf-8")).to.equal("task1 0\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_1`, task0.name, "hoge"), "utf-8")).to.equal("task0 1\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_1`, task1.name, "hoge"), "utf-8")).to.equal("task1 1\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_2`, task0.name, "hoge"), "utf-8")).to.equal("task0 2\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_2`, task1.name, "hoge"), "utf-8")).to.equal("task1 1\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_3`, task0.name, "hoge"), "utf-8")).to.equal("task0 3\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_3`, task1.name, "hoge"), "utf-8")).to.equal("task1 3\n");
 
       for (const dir of ["for0", "for0_0", "for0_1", "for0_2", "for0_3"]) {
-        expect(path.resolve(projectRootDir, dir, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        const componentJsonContent = await fs.readJson(path.resolve(projectRootDir, dir, componentJsonFilename));
+        const schema = {
           required: ["state"],
           properties: {
             state: { enum: ["finished"] }
           }
-        });
-        expect(path.resolve(projectRootDir, dir, task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
-          required: ["state"],
-          properties: {
-            state: { enum: ["finished"] }
-          }
-        });
+        };
+        expect(ajv.validate(schema, componentJsonContent)).to.be.true;
+        const task0JsonContent = await fs.readJson(path.resolve(projectRootDir, dir, task0.name, componentJsonFilename));
+        expect(ajv.validate(schema, task0JsonContent)).to.be.true;
       }
       for (const dir of ["for0", "for0_0", "for0_1", "for0_3"]) {
-        expect(path.resolve(projectRootDir, dir, task1.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+        const task1JsonContent = await fs.readJson(path.resolve(projectRootDir, dir, task1.name, componentJsonFilename));
+        const schema = {
           required: ["state"],
           properties: {
             state: { enum: ["finished"] }
           }
-        });
+        };
+        expect(ajv.validate(schema, task1JsonContent)).to.be.true;
       }
-      expect(path.resolve(projectRootDir, "for0_2", task1.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      const task1JsonContent = await fs.readJson(path.resolve(projectRootDir, "for0_2", task1.name, componentJsonFilename));
+      const schema = {
         required: ["state"],
         properties: {
           state: { enum: ["not-started"] }
         }
-      });
+      };
+      expect(ajv.validate(schema, task1JsonContent)).to.be.true;
     });
   });
 
@@ -832,10 +861,10 @@ describe("UT for Dispatcher class", function () {
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, for0.name, task0.name, "hoge")).to.be.a.file().with.content("hoge 2\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_0`, task0.name, "hoge")).to.be.a.file().with.content("hoge 0\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_1`, task0.name, "hoge")).to.be.a.file().with.content("hoge 1\n");
-      expect(path.resolve(projectRootDir, `${for0.name}_2`, task0.name, "hoge")).to.be.a.file().with.content("hoge 2\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, for0.name, task0.name, "hoge"), "utf-8")).to.equal("hoge 2\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_0`, task0.name, "hoge"), "utf-8")).to.equal("hoge 0\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_1`, task0.name, "hoge"), "utf-8")).to.equal("hoge 1\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_2`, task0.name, "hoge"), "utf-8")).to.equal("hoge 2\n");
     });
   });
   describe("[reproduction test] task with sub directory in a for loop", ()=>{
@@ -854,36 +883,22 @@ describe("UT for Dispatcher class", function () {
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
-      expect(path.resolve(projectRootDir, "for0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, "for0", componentJsonFilename));
+      const schema = {
         required: ["state"],
         properties: {
           state: { enum: ["finished"] }
         }
-      });
-      expect(path.resolve(projectRootDir, "for0_0", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-        required: ["state"],
-        properties: {
-          state: { enum: ["finished"] }
-        }
-      });
-      expect(path.resolve(projectRootDir, "for0_1", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-        required: ["state"],
-        properties: {
-          state: { enum: ["finished"] }
-        }
-      });
-      expect(path.resolve(projectRootDir, "for0_2", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-        required: ["state"],
-        properties: {
-          state: { enum: ["finished"] }
-        }
-      });
-      expect(path.resolve(projectRootDir, "for0", "task0", componentJsonFilename)).to.be.a.file().with.json.using.schema({
-        required: ["state"],
-        properties: {
-          state: { enum: ["finished"] }
-        }
-      });
+      };
+      expect(ajv.validate(schema, for0Json)).to.be.true;
+      const for0Task0Json = await fs.readJson(path.resolve(projectRootDir, "for0_0", "task0", componentJsonFilename));
+      expect(ajv.validate(schema, for0Task0Json)).to.be.true;
+      const for1Task0Json = await fs.readJson(path.resolve(projectRootDir, "for0_1", "task0", componentJsonFilename));
+      expect(ajv.validate(schema, for1Task0Json)).to.be.true;
+      const for2Task0Json = await fs.readJson(path.resolve(projectRootDir, "for0_2", "task0", componentJsonFilename));
+      expect(ajv.validate(schema, for2Task0Json)).to.be.true;
+      const forTask0Json = await fs.readJson(path.resolve(projectRootDir, "for0", "task0", componentJsonFilename));
+      expect(ajv.validate(schema, forTask0Json)).to.be.true;
     });
   });
   describe("[reproduction test] PS in loop", ()=>{
@@ -925,7 +940,8 @@ describe("UT for Dispatcher class", function () {
     it("should run project and successfully finish", async ()=>{
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
-      expect(path.resolve(projectRootDir, for0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      const schema = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -938,8 +954,10 @@ describe("UT for Dispatcher class", function () {
             maximum: 4
           }
         }
-      });
-      expect(path.resolve(projectRootDir, for0.name, PS0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      };
+      expect(ajv.validate(schema, for0Json)).to.be.true;
+      const ps0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, PS0.name, componentJsonFilename));
+      const schema2 = {
         properties: {
           numFinishd: {
             type: "integer",
@@ -952,43 +970,34 @@ describe("UT for Dispatcher class", function () {
             maximum: 3
           }
         }
-      });
-      expect(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_1", task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
+      };
+      expect(ajv.validate(schema2, ps0Json)).to.be.true;
+      const ps0Keyword1Task0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_1", task0.name, componentJsonFilename));
+      const schema3 = {
         properties: {
           state: {
             type: "string",
             pattern: "^finished$"
           }
         }
-      });
-      expect(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_2", task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
-        properties: {
-          state: {
-            type: "string",
-            pattern: "^finished$"
-          }
-        }
-      });
-      expect(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_3", task0.name, componentJsonFilename)).to.be.a.file().with.json.using.schema({
-        properties: {
-          state: {
-            type: "string",
-            pattern: "^finished$"
-          }
-        }
-      });
-      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_1", task0.name, "hoge")).to.be.a.file().with.content("hoge 0\n");
-      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_2", task0.name, "hoge")).to.be.a.file().with.content("hoge 0\n");
-      expect(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_3", task0.name, "hoge")).to.be.a.file().with.content("hoge 0\n");
-      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_1", task0.name, "hoge")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_2", task0.name, "hoge")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_3", task0.name, "hoge")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_1", task0.name, "hoge")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_2", task0.name, "hoge")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_3", task0.name, "hoge")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_1", task0.name, "hoge")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_2", task0.name, "hoge")).not.to.be.a.path();
-      expect(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_3", task0.name, "hoge")).not.to.be.a.path();
+      };
+      expect(ajv.validate(schema3, ps0Keyword1Task0Json)).to.be.true;
+      const ps0Keyword2Task0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_2", task0.name, componentJsonFilename));
+      expect(ajv.validate(schema3, ps0Keyword2Task0Json)).to.be.true;
+      const ps0Keyword3Task0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, "PS0_KEYWORD1_3", task0.name, componentJsonFilename));
+      expect(ajv.validate(schema3, ps0Keyword3Task0Json)).to.be.true;
+      expect(fs.readFileSync(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_1", task0.name, "hoge"), "utf-8")).to.equal("hoge 0\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_2", task0.name, "hoge"), "utf-8")).to.equal("hoge 0\n");
+      expect(fs.readFileSync(path.resolve(projectRootDir, "for0_0", "PS0_KEYWORD1_3", task0.name, "hoge"), "utf-8")).to.equal("hoge 0\n");
+      expect(fs.existsSync(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_1", task0.name, "hoge"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_2", task0.name, "hoge"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, "for0_1", "PS0_KEYWORD1_3", task0.name, "hoge"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_1", task0.name, "hoge"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_2", task0.name, "hoge"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, "for0_2", "PS0_KEYWORD1_3", task0.name, "hoge"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_1", task0.name, "hoge"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_2", task0.name, "hoge"))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_3", task0.name, "hoge"))).to.be.false;
     });
   });
 });
