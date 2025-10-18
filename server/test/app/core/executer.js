@@ -115,8 +115,6 @@ describe("UT for executer class", function () {
       } catch (e) {
         console.log(`ssh connection failed to ${remotehostName} due to "${e}" so remote exec test is skipped`);
         this.skip();
-      } finally {
-        await ssh.disconnect();
       }
     });
     beforeEach(()=>{

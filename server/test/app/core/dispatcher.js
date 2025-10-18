@@ -281,8 +281,6 @@ describe("UT for Dispatcher class", function () {
         } catch (e) {
           console.log(`ssh connection failed to ${remotehostName} due to "${e}" so remote exec test is skipped`);
           this.skip();
-        } finally {
-          await ssh.disconnect();
         }
       });
       after(async ()=>{

@@ -1487,7 +1487,6 @@ describe("#readProject", ()=>{
 
     expect(writeProjectJsonMock.calledOnce).to.be.true;
     expect(gitAddMock.calledOnce).to.be.true;
-    console.log(gitCommitMock.getCalls(0));
     expect(gitCommitMock.calledWith("/mock/project/root", "import project", ["--", ".gitignore", "prj.wheel.json"])).to.be.true;
 
     expect(result).to.equal("/mock/project/root");
