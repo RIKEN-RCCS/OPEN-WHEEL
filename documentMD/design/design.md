@@ -48,7 +48,7 @@ workflowComponentの詳細は後のクラス構造の章で述べます。
 保存されます。なお、projectRootディレクトリ自体は必ずworkflowコンポーネントとなっており、
 プロジェクト内の全てのコンポーネントはrootのワークフローの子孫コンポーネントとなります。
 
-コンポーネントの種類には、次の9種類があります。
+コンポーネントの種類には、次の17種類があります。
 
 - Task
 - If
@@ -59,6 +59,15 @@ workflowComponentの詳細は後のクラス構造の章で述べます。
 - Foreach
 - Viewer
 - Source
+- Storage
+- Hpciss
+- Hpcisstar
+- Stepjob
+- StepjobTask
+- BulkjobTask
+- Break
+- Continue
+
 
 個々のworkflowComponentの説明は、クラス構成の章を参照してください。
 taskコンポーネント内で実行するスクリプトなど、処理に必要なファイルは全て
@@ -79,27 +88,35 @@ BaseWorkflowComponentの各派生クラスのプロパティのうち、エン�
 なお、parentコンポーネントは現時点では別のコンポーネント配下へ移動するAPIが用意されていないので
 ユーザ操作によって変更されることはありません。
 
-### Task
+### GeneralComponent
 property        | type         | description
 ----------------|--------------|--------------
-name            | string       | コンポーネンのディレクトリ名
+name            | string       | コンポーネントのディレクトリ名
 parent          | string       | 親コンポーネントのID
 description     | string       | ユーザが指定するコンポーネントの説明文
 previous        | number[]     | 先行コンポーネントのID
 next            | number[]     | 後続コンポーネントのID
 inputFiles      | inputFile[]  | 先行コンポーネントから受け取るファイル
 outputFiles     | outputFile[] | 後続コンポーネントへ渡すファイル
-script          | string       | Task内の処理を記述したスクリプトのファイル名
-host            | string       | Taskを実行するhost、localhostまたは登録済のremotehostのlabelを指定することができる
-useJobScheduler | boolean      | scriptをバッチスケジューラ経由で実行するか直接実行するかのフラグ
-queue           | string       | ジョブの投入先キュー(useJobSchedulerがfalseの時は使われない)
 cleanupFlag     | number       | リモート環境に作成した一時ファイルを削除するかどうかのフラグ *1
-include         | string       | リモート環境から回収してくるファイル *2
-exclude         | string       | リモート環境から回収しないファイル  *2
 
 *1 0,1,2のいずれかの値を指定することができる。
 0は削除、1は削除しない、2は親ノードと同じ挙動を意味する。
 初期値は2だが、rootワークフローは作成時にserver.jsonに定義された"defaultCleanupRemoteRoot"の値に変更される。
+
+### Task
+property        | type         | description
+----------------|--------------|--------------
+script          | string       | Task内の処理を記述したスクリプトのファイル名
+host            | string       | Taskを実行するhost、localhostまたは登録済のremotehostのlabelを指定することができる
+useJobScheduler | boolean      | scriptをバッチスケジューラ経由で実行するか直接実行するかのフラグ
+queue           | string       | ジョブの投入先キュー(useJobSchedulerがfalseの時は使われない)
+submitOption    | string       | 投入オプション
+include         | string[]     | リモート環境から回収してくるファイル
+exclude         | string[]     | リモート環境から回収しないファイル
+retry           | number       | タスク失敗後の再試行回数
+retryCondition  | string       | タスクが失敗したかどうかを判断する方法
+ignoreFailure   | boolean      | このタスクの失敗後にプロジェクトを続行するかどうか
 
 *2 include, excludeともにglobパターンまたはカンマ区切りで複数のglobを指定することができる。
 includeにマッチしなおかつexcludeにマッチしないファイルを回収してくる。
@@ -144,6 +161,11 @@ next          | number[]     | 後続ノードのID
 inputFiles    | inputFile[]  | 先行ノードから受け取るファイル
 outputFiles   | outputFile[] | 後続ノードへ渡すファイル
 parameterFile | string       | パラメータスタディの設定を記述したファイル
+numTotal      | number       | 総数
+numFinished   | number       | 完成数
+numFailed     | number       | 失敗数
+forceOverwrite| boolean      | 強制的に上書きするかどうか
+deleteLoopInstance | boolean | ループインスタンスを削除するかどうか
 
 ### For
 property     | type         | description
@@ -158,6 +180,7 @@ outputFiles  | outputFile[] | 後続ノードへ渡すファイル
 start        | number       | ループの始値
 end          | number       | ループの終値
 step         | number       | 1回のループでのインデックスの増分(負値も可)
+keep         | number       | 保持するインスタンス数
 
 ### While
 property    | type         | description
@@ -170,6 +193,7 @@ next        | number[]     | 後続ノードのID
 inputFiles  | inputFile[]  | 先行ノードから受け取るファイル
 outputFiles | outputFile[] | 後続ノードへ渡すファイル
 condition   | string       | 条件判定を行うスクリプトのファイル名 *1
+keep        | number       | 保持するインスタンス数
 
 *1 設定値の取り扱いはIfと同じ
 
@@ -184,6 +208,7 @@ next        | number[]     | 後続ノードのID
 inputFiles  | inputFile[]  | 先行ノードから受け取るファイル
 outputFiles | outputFile[] | 後続ノードへ渡すファイル
 indexList   | string[]     | ループインデックスに指定される値のリスト
+keep        | number       | 保持するインスタンス数
 
 ### Viewer
 property    | type         | description
@@ -201,7 +226,94 @@ parent         | string       | 親コンポーネントのID
 description    | string       | ノードの説明文
 uploadOnDemand | boolean      | プロジェクト実行開始時にクライアントからアップロードさせるかどうかのフラグ
 outputFiles    | outputFile[] | 後続ノードへ渡すファイル
+cleanupFlag    | number       | リモートホスト上の一時作業ディレクトリをクリーンアップするためのフラグ
 
+### Storage
+property       | type         | description
+---------------| -------------| --------------
+name           | string       | コンポーネントのディレクトリ名
+parent         | string       | 親コンポーネントのID
+description    | string       | ノードの説明文
+inputFiles     | inputFile[]  | 先行ノードから受け取るファイル
+outputFiles    | outputFile[] | 後続ノードへ渡すファイル
+host           | string       | Storageの存在するホスト
+storagePath    | string       | Storageのパス
+
+Storageコンポーネントは、プロジェクトの外部にあるファイルやディレクトリを参照するために使用されます。
+
+### Hpciss
+HpcissコンポーネントはStorageコンポーネントを継承しており、HPCI共用ストレージサービス(HPCI-SS)上のファイルやディレクトリを参照するために使用されます。
+
+### Hpcisstar
+HpcisstarコンポーネントはStorageコンポーネントを継承しており、HPCI共用ストレージサービス(HPCI-SS)上のtarアーカイブ内のファイルやディレクトリを参照するために使用されます。
+
+### Stepjob
+property       | type         | description
+---------------| -------------| --------------
+name           | string       | コンポーネントのディレクトリ名
+parent         | string       | 親コンポーネントのID
+description    | string       | ノードの説明文
+previous       | number[]     | 先行ノードのID
+next           | number[]     | 後続ノードのID
+inputFiles     | inputFile[]  | 先行ノードから受け取るファイル
+outputFiles    | outputFile[] | 後続ノードへ渡すファイル
+host           | string       | StepjobTaskを実行するホスト
+useJobScheduler| boolean      | ジョブスケジューラを使用するかどうか
+queue          | string       | 投入先のキュー名
+submitOption   | string       | 投入オプション
+
+Stepjobコンポーネントは、複数のTaskコンポーネントをまとめてジョブとして投入するために使用されます。
+
+### StepjobTask
+StepjobTaskコンポーネントはTaskコンポーネントを継承しており、以下のプロパティが追加されています。
+property       | type         | description
+---------------| -------------| --------------
+stepnum        | number       | ステップ番号
+useDependency  | boolean      | 依存関係を使用するかどうか
+dependencyForm | string       | 依存関係の形式
+
+StepjobTaskコンポーネントは、Stepjobコンポーネント内で実行される個々のタスクを表します。
+
+### BulkjobTask
+BulkjobTaskコンポーネントはTaskコンポーネントを継承しており、以下のプロパティが追加されています。
+property       | type         | description
+---------------| -------------| --------------
+usePSSettingFile| boolean      | パラメータスタディ設定ファイルを使用するかどうか
+parameterFile  | string       | パラメータファイル
+startBulkNumber| number       | バルクの開始番号
+endBulkNumber  | number       | バルクの終了番号
+manualFinishCondition | boolean | 手動で終了条件を指定するかどうか
+condition      | string       | 終了条件
+
+BulkjobTaskコンポーネントは、パラメータスタディのように、多数のジョブを一度に投入するために使用されます。
+
+### Break
+property       | type         | description
+---------------| -------------| --------------
+name           | string       | コンポーネントのディレクトリ名
+parent         | string       | 親コンポーネントのID
+description    | string       | ノードの説明文
+previous       | number[]     | 先行ノードのID
+next           | number[]     | 後続ノードのID
+inputFiles     | inputFile[]  | 先行ノードから受け取るファイル
+outputFiles    | outputFile[] | 後続ノードへ渡すファイル
+condition      | string       | 中断条件
+
+Breakコンポーネントは、ループコンポーネント(For, While, Foreach)内で使用され、指定された条件が満たされた場合にループを中断します。
+
+### Continue
+property       | type         | description
+---------------| -------------| --------------
+name           | string       | コンポーネントのディレクトリ名
+parent         | string       | 親コンポーネントのID
+description    | string       | ノードの説明文
+previous       | number[]     | 先行ノードのID
+next           | number[]     | 後続ノードのID
+inputFiles     | inputFile[]  | 先行ノードから受け取るファイル
+outputFiles    | outputFile[] | 後続ノードへ渡すファイル
+condition      | string       | 次のステップに進む条件
+
+Continueコンポーネントは、ループコンポーネント(For, While, Foreach)内で使用され、指定された条件が満たされた場合に現在のループをスキップし、次のループに進みます。
 
 ## inputFileおよびoutputFile
 前章に示したworkflow componentのinputFilesおよびoutputFilesプロパティに格納する
