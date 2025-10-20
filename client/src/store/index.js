@@ -58,6 +58,7 @@ const state = {
   currentComponent: null,
   selectedComponent: null,
   copySelectedComponent: null,
+  copyInfo: null,
   projectState: null,
   projectRootDir: null,
   rootComponentID: null,
@@ -92,6 +93,9 @@ export default new Vuex.Store({
   state,
   mutations,
   actions: {
+    pasteComponent: (context, cb)=>{
+      SIO.emitGlobal("pasteComponent", context.state.projectRootDir, context.state.copyInfo, context.state.currentComponent.ID, cb);
+    },
     selectedComponent: (context, payload)=>{
       const { selectedComponent: selected,
         copySelectedComponent: copied,
