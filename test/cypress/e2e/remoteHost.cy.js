@@ -68,9 +68,12 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
       cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
       cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
-      cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(PORT_NUMBER);
+      cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(`{selectall}{backspace}${PORT_NUMBER}`);
+      //click on next field to trigger blur and validation on port number field
+      cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").click();
       cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").type(TEST_USER);
-      cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+      // Wait for OK button to be enabled (with longer timeout for Vue reactivity)
+      cy.get("[data-cy=\"add_new_host-ok-btn\"]", {timeout: 10000}).should("not.be.disabled").click();
       cy.contains("tr", LABEL).find("[data-cy=\"action_row-edit-btn\"]")
         .click();
       cy.get("[data-cy=\"add_new_host-add_new_host-card_title\"]").should("be.visible");
@@ -92,9 +95,12 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
     cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
-    cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(PORT_NUMBER);
+    cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(`{selectall}{backspace}${PORT_NUMBER}`);
+    //click on next field to trigger blur and validation on port number field
+    cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").click();
     cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").type(TEST_USER);
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+    // Wait for OK button to be enabled (with longer timeout for Vue reactivity)
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]", {timeout: 10000}).should("not.be.disabled").click();
     //削除ボタン
     cy.contains("tr", LABEL).find("[data-cy=\"action_row-delete-btn\"]")
       .click();
@@ -114,9 +120,12 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
     cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
-    cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(PORT_NUMBER);
+    cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(`{selectall}{backspace}${PORT_NUMBER}`);
+    //click on next field to trigger blur and validation on port number field
+    cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").click();
     cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").type(TEST_USER);
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+    // Wait for OK button to be enabled (with longer timeout for Vue reactivity)
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]", {timeout: 10000}).should("not.be.disabled").click();
     //削除ボタン
     cy.contains("tr", LABEL).find("[data-cy=\"action_row-delete-btn\"]")
       .click();
@@ -316,7 +325,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   it("01-01-021:構成要素の設定入力確認-テキスト入力-「shared host」セレクトボックス-選択した値が正しく反映されていることを確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.enterRequiredRemoteHost(LABEL, HOST_NAME, PORT_NUMBER, TEST_USER);
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]").should("not.be.disabled").click();
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.get("[data-cy=\"add_new_host-shared_host-select\"]").type(LABEL);
     cy.get("[data-cy=\"add_new_host-shared_host-select\"]").click();
@@ -424,7 +433,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.enterRequiredRemoteHost(LABEL, HOST_NAME, PORT_NUMBER, TEST_USER);
     cy.enterRemoteHost(HOST_WORK_DIR, PRIVATE_KEY_FILE, JOB_SCHEDULERS, MAX_NUMBER, AVAILABLE_QUEUES, BULKJOB_CHK_NO, STEPJOB_CHK_NO, SHARED_HOST);
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]").should("not.be.disabled").click();
     cy.get("[data-cy=\"remotehost-items-data_table\"]").contains(LABEL);
     cy.get("[data-cy=\"remotehost-items-data_table\"]").contains(HOST_NAME);
     cy.get("[data-cy=\"remotehost-items-data_table\"]").contains(PORT_NUMBER);
@@ -443,7 +452,7 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.enterRequiredRemoteHost(LABEL, HOST_NAME, PORT_NUMBER, TEST_USER);
     cy.enterRemoteHost(HOST_WORK_DIR, PRIVATE_KEY_FILE, JOB_SCHEDULERS, MAX_NUMBER, AVAILABLE_QUEUES, BULKJOB_CHK_YES, STEPJOB_CHK_YES, SHARED_HOST);
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]").should("not.be.disabled").click();
     cy.contains("tr", LABEL).find("[data-cy=\"action_row-edit-btn\"]")
       .click();
     cy.get("[data-cy=\"add_new_host-label-text_field\"]").find("input")
@@ -480,13 +489,12 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   詳細設定確認
   試験確認内容：値が正しく反映されていることを確認
    */
-  //Advanced settingの部分で値を入力しているのにエラーになっていた
   it("01-01-030:設定入力後の反映確認-編集ダイアログから確認-詳細設定確認-値が正しく反映されていることを確認", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.enterRequiredRemoteHost(LABEL, HOST_NAME, PORT_NUMBER, TEST_USER);
     cy.enterRemoteHost(HOST_WORK_DIR, PRIVATE_KEY_FILE, JOB_SCHEDULERS, MAX_NUMBER, AVAILABLE_QUEUES, BULKJOB_CHK_YES, STEPJOB_CHK_YES, SHARED_HOST);
     cy.enterAdvancedRemoteHost(INTERVAL_MIN, STATUS_CHECK_SEC, HOST_MAX_NUMBER, EXECUTION_INTERVAL, TIMEOUT_DURING);
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]").should("not.be.disabled").click();
     cy.contains("tr", LABEL).find("[data-cy=\"action_row-edit-btn\"]")
       .click();
     cy.get("[data-cy=\"add_new_host-advanced_settings-title\"]").click();

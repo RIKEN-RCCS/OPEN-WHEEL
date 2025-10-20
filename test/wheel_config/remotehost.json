@@ -1,5 +1,23 @@
 [
     {
+        "name": "TestLabel",
+        "host": "TestHostname",
+        "port": 8000,
+        "user": "testUser",
+        "queue": "testQueues",
+        "numJob": 5,
+        "useBulkjob": false,
+        "useStepjob": false,
+        "sharedHost": "",
+        "sharedPath": "",
+        "renewInterval": 0,
+        "statusCheckInterval": 60,
+        "maxStatusCheckError": 10,
+        "rcfile": "/etc/profile",
+        "useGfarm": false,
+        "id": "1c9c5970-acfc-11f0-8b46-cb1d6430e79e"
+    },
+    {
         "name": "testServer",
         "host": "wheel_release_test_server",
         "port": 8000,

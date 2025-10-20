@@ -2,24 +2,27 @@ const ANIMATION_WAIT_TIME = 500;
 
 //remove remote host setting
 Cypress.Commands.add("removeRemoteHost", (remotoHostName)=>{
-  cy.visit("/remotehost").wait(ANIMATION_WAIT_TIME)
-    .then(()=>{
-      const REMOTE_HOST_ROW = cy.contains("tr", remotoHostName, { timeout: 5000 });
-      if (REMOTE_HOST_ROW) {
-        cy.wait(2000);
-        cy.contains("tr", remotoHostName).find("[data-cy=\"action_row-delete-btn\"]")
-          .click();
-        cy.get("[data-cy=\"buttons-remove-btn\"]", { timeout: 5000 }).click();
-      }
-    });
+  cy.visit("/remotehost").wait(ANIMATION_WAIT_TIME);
+  cy.get("body").then(($body)=>{
+    if ($body.find(`tr:contains("${remotoHostName}")`).length > 0) {
+      cy.wait(2000);
+      cy.contains("tr", remotoHostName).find("[data-cy=\"action_row-delete-btn\"]")
+        .click();
+      cy.get("[data-cy=\"buttons-remove-btn\"]", { timeout: 5000 }).click();
+    }
+  });
 });
 
 //enter required fields on the remote host screen
 Cypress.Commands.add("enterRequiredRemoteHost", (label, hostname, portNumber, testUser)=>{
   cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(label);
   cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(hostname);
-  cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(portNumber);
+  cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(`{selectall}{backspace}${portNumber}`);
+  //click on next field to trigger blur and validation on port number field
+  cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").click();
   cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").type(testUser);
+  // Wait for OK button to be enabled (with longer timeout for Vue reactivity)
+  cy.get("[data-cy=\"add_new_host-ok-btn\"]", {timeout: 10000}).should("not.be.disabled");
 });
 
 //enter any items on the remote host screen

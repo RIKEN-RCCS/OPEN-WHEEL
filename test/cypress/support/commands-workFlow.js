@@ -39,7 +39,7 @@ Cypress.Commands.add("createStepjobComponentAndDoubleClick", (targetComponentNam
 //Select a value from the dropdown list
 Cypress.Commands.add("selectValueFromDropdownList", (targetDropBoxCy, dropBoxNo, selectVal)=>{
   cy.get(targetDropBoxCy).click();
-  cy.get("[role=\"listbox\"]").eq(dropBoxNo)
+  cy.get("[role=\"listbox\"]").should("be.visible")
     .contains(selectVal)
     .click();
 });
