@@ -1,0 +1,9 @@
+{
+    "port": 8089,
+    "key": null,
+    "cert": null,
+    "numLogFiles": 5,
+    "withLogin": false,
+    "userid": null,
+    "enablePassword": true
+}

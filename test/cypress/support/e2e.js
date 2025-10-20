@@ -19,6 +19,7 @@ import "./commands-vuetify";
 import "./commands-home";
 import "./commands-remoteHost";
 import "./commands-workFlow";
+import "./commands-shortcut";
 
 //Alternatively you can use CommonJS syntax:
 //require('./commands')
