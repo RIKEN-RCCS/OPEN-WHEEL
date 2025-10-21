@@ -20,6 +20,5 @@ services:
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
       WHEEL_LOGLEVEL: info
-      WHEEL_ENABLE_AUTH: 1
     volumes:
       - "./wheel_config:/root/.wheel"

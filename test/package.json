@@ -5,6 +5,10 @@
   "scripts": {
     "test": "npx cypress open",
     "test-all": "npx cypress run --browser chrome",
+    "test:e2e": "npm run test:e2e:start && npm run test:e2e:run; npm run test:e2e:stop",
+    "test:e2e:start": "docker compose up -d && node ./wait-for-services.js",
+    "test:e2e:run": "npm run test-all",
+    "test:e2e:stop": "docker compose down",
     "start": "cd ../; npm start",
     "build": "cd ../; npm run build"
   },
