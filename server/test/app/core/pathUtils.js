@@ -37,7 +37,9 @@ describe("UT for pathUtils class", function () {
       expect(sanitizePath("folder/subfolder/file")).to.equal("folder_subfolder_file");
     });
     it("throws an error when target is not a string", ()=>{
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return sanitizePath(null); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return sanitizePath(undefined); }).to.throw();
     });
   });
@@ -59,9 +61,13 @@ describe("UT for pathUtils class", function () {
       expect(replacePathsep("just/a/normal/path")).to.equal("just/a/normal/path");
     });
     it("throws an error when input is not a string", ()=>{
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return replacePathsep(null); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return replacePathsep(undefined); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return replacePathsep(123); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return replacePathsep({}); }).to.throw();
     });
   });
@@ -98,9 +104,13 @@ describe("UT for pathUtils class", function () {
       expect(convertPathSep("just_a_filename.txt")).to.equal("just_a_filename.txt");
     });
     it("throws an error when input is not a string", ()=>{
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return convertPathSep(null); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return convertPathSep(undefined); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return convertPathSep(123); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return convertPathSep({}); }).to.throw();
     });
   });

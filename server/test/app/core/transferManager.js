@@ -8,7 +8,6 @@ import { expect } from "chai";
 import sinon from "sinon";
 import { getKey, register, removeTransferrers, _internal } from "../../../app/core/transferManager.js";
 describe("#getKey", ()=>{
-
   beforeEach(()=>{
   });
 
@@ -35,6 +34,7 @@ describe("#getKey", ()=>{
 describe("#register", ()=>{
   let getSshStub;
   let getDateStringStub;
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let loggerDebugStub;
   let SBSStub;

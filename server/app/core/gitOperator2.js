@@ -336,7 +336,7 @@ async function gitConfig(rootDir, key, value, keep = false) {
     try {
       await _internal.gitPromise(rootDir, ["config", "--get", key], rootDir);
       return;
-    } catch (e) {
+    } catch {
       //do nothing
     }
   }

@@ -12,7 +12,7 @@ const allowedOperations = {
   "finished": ["cleanProject"],
   "failed": ["cleanProject"],
   "holding": [],
-  "unknown": ["cleanProject"],
+  "unknown": ["cleanProject"]
 };
 
 export default allowedOperations;

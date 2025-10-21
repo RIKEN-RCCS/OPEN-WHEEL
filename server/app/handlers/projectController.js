@@ -4,7 +4,6 @@
  * See License in the project root for the license information.
  */
 import path from "path";
-import { promisify } from "util";
 import EventEmitter from "events";
 import axios from "axios";
 import { glob } from "glob";

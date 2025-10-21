@@ -21,8 +21,8 @@ Cypress.Commands.add("enterRequiredRemoteHost", (label, hostname, portNumber, te
   //click on next field to trigger blur and validation on port number field
   cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").click();
   cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").type(testUser);
-  // Wait for OK button to be enabled (with longer timeout for Vue reactivity)
-  cy.get("[data-cy=\"add_new_host-ok-btn\"]", {timeout: 10000}).should("not.be.disabled");
+  //Wait for OK button to be enabled (with longer timeout for Vue reactivity)
+  cy.get("[data-cy=\"add_new_host-ok-btn\"]", { timeout: 10000 }).should("not.be.disabled");
 });
 
 //enter any items on the remote host screen

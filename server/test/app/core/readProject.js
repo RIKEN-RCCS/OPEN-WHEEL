@@ -34,7 +34,7 @@ describe("readProject UT", function () {
   let projectListQueryStub;
   let projectListWriteStub;
 
-  beforeEach(async () =>{
+  beforeEach(async ()=>{
     await fs.remove(testDirRoot);
 
     //Set up stubs for projectList
@@ -49,16 +49,16 @@ describe("readProject UT", function () {
     await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
     await gitCommit(projectRootDir);
   });
-  afterEach(() =>{
+  afterEach(()=>{
     if (projectListQueryStub) projectListQueryStub.restore();
     if (projectListWriteStub) projectListWriteStub.restore();
   });
-  after(async () =>{
+  after(async ()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
       await fs.remove(testDirRoot);
     }
   });
-  it("should do nothing git-controlled and not-started state", async () =>{
+  it("should do nothing git-controlled and not-started state", async ()=>{
     await readProject(projectRootDir);
 
     const { added, modified, deleted, renamed, untracked } = await gitStatus(projectRootDir);
@@ -68,7 +68,7 @@ describe("readProject UT", function () {
     expect(renamed).to.be.an("array").that.is.empty;
     expect(untracked).to.be.an("array").that.is.empty;
   });
-  it("should do nothing if git-controlled and something modified", async () =>{
+  it("should do nothing if git-controlled and something modified", async ()=>{
     await updateComponent(projectRootDir, task0.ID, "state", "hoge");
     await readProject(projectRootDir);
 
@@ -79,7 +79,7 @@ describe("readProject UT", function () {
     expect(renamed).to.be.an("array").that.is.empty;
     expect(untracked).to.be.an("array").that.is.empty;
   });
-  it("should convert include or exclude prop is comma separated string", async () =>{
+  it("should convert include or exclude prop is comma separated string", async ()=>{
     await updateComponent(projectRootDir, task0.ID, "include", "foo,bar,baz");
     await updateComponent(projectRootDir, task0.ID, "exclude", "hoge,huga,piyo");
     await gitCommit(projectRootDir);
@@ -96,7 +96,7 @@ describe("readProject UT", function () {
     expect(task0include).to.be.an("array").that.has.deep.members([{ name: "foo" }, { name: "bar" }, { name: "baz" }]);
     expect(task0exclude).to.be.an("array").that.has.deep.members([{ name: "piyo" }, { name: "huga" }, { name: "hoge" }]);
   });
-  it("should add and commit .gitignore if git-controlled but .gitignore is not inclueded", async () =>{
+  it("should add and commit .gitignore if git-controlled but .gitignore is not inclueded", async ()=>{
     const ignoreFile = path.join(projectRootDir, ".gitignore");
     await gitRm(projectRootDir, ".gitignore");
     await fs.remove(ignoreFile);
@@ -111,7 +111,7 @@ describe("readProject UT", function () {
     expect(untracked).to.be.an("array").that.is.empty;
     expect(fs.readFileSync(ignoreFile, "utf-8")).to.equal("wheel.log");
   });
-  it("should set all components and project to 'not-started' and commit everything if project is not git-controlled", async () =>{
+  it("should set all components and project to 'not-started' and commit everything if project is not git-controlled", async ()=>{
     await updateComponent(projectRootDir, task0.ID, "state", "hoge");
     await fs.remove(path.resolve(projectRootDir, ".git"));
     await readProject(projectRootDir);
@@ -137,7 +137,7 @@ describe("readProject UT", function () {
     const { state: prjState } = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     expect(prjState).to.equal("not-started");
   });
-  it("should rename projectJson.name if that is differ from directory name", async () =>{
+  it("should rename projectJson.name if that is differ from directory name", async ()=>{
     const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     const oldProjectName = projectJson.name;
     projectJson.name = "hoge";

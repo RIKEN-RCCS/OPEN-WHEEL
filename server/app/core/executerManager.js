@@ -130,7 +130,7 @@ async function decideFinishState(task) {
   let rt = false;
   try {
     rt = await _internal.evalCondition(task.projectRootDir, task.condition, task.workingDir, task.currentIndex);
-  } catch (err) {
+  } catch {
     _internal.getLogger(task.projectRootDir).info(`manualFinishCondition of ${task.name}(${task.ID}) is set but exception occurred while evaluting it.`);
     return false;
   }
@@ -153,7 +153,7 @@ async function needsRetry(task) {
   }
   try {
     rt = await _internal.evalCondition(task.projectRootDir, task.retryCondition, task.workingDir, task.currentIndex);
-  } catch (err) {
+  } catch {
     _internal.getLogger(task.projectRootDir).info(`retryCondition of ${task.name}(${task.ID}) is set but exception occurred while evaluting it. so give up retring`);
     return false;
   }

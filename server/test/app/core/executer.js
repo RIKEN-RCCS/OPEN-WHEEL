@@ -5,6 +5,7 @@
  */
 import path from "path";
 import fs from "fs-extra";
+//eslint-disable-next-line no-unused-vars
 import EventEmitter from "events";
 
 //setup test framework
@@ -14,6 +15,7 @@ import sinon from "sinon";
 import sinonChai from "sinon-chai";
 chai.use(sinonChai);
 import Ajv from "ajv";
+//eslint-disable-next-line no-unused-vars
 const ajv = new Ajv({ strict: false });
 
 //testee

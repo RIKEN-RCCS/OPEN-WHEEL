@@ -13,6 +13,7 @@ describe("commandCheck", ()=>{
   let commands;
   const serverConfigDir = path.resolve(process.cwd(), "config");
   const appConfigDir = path.resolve(process.cwd(), "app/config");
+  //eslint-disable-next-line no-unused-vars
   let originalNodeEnv;
 
   before(async ()=>{

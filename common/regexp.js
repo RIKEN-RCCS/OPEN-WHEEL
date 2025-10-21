@@ -4,18 +4,18 @@
  * See License in the project root for the license information.
  */
 
-// NG
+//NG
 const reWin32ReservedNames = /^(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
 const reOnlyWhilteSpace = /^\s*$/;
-// OK
+//OK
 const alphanumeric = "a-zA-Z0-9";
-// due to escapeRegExp's spec, bars must be added separately any other regexp strings
+//due to escapeRegExp's spec, bars must be added separately any other regexp strings
 
 const bars = "_\\-";
 const pathseps = "/\\";
 const metaCharactors = "*?[]{}()!?+@.";
 
-const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]\/\\])/g;
+const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]/\\])/g;
 
 /**
  * escape meta character of regex (from MDN)
@@ -74,7 +74,7 @@ function isValidInputFilename(name) {
 
   const forbidonChars = new RegExp(`[^${escapeRegExp(`${alphanumeric + pathseps}.`) + bars + "{}"}]`);
 
-  // ignore white space between {{ and }}
+  //ignore white space between {{ and }}
   const modifiedName = name.replace(/\{\{.*?\}\}/g, "");
   if (forbidonChars.test(modifiedName)) {
     return false;
@@ -93,7 +93,7 @@ function isValidOutputFilename(name) {
   }
   const forbidonChars = new RegExp(`[^${escapeRegExp(alphanumeric + pathseps + metaCharactors) + bars + "{}"}]`);
 
-  // ignore white space between {{ and }}
+  //ignore white space between {{ and }}
   const modifiedName = name.replace(/\{\{.*?\}\}/g, "");
   if (forbidonChars.test(modifiedName)) {
     return false;
@@ -109,5 +109,5 @@ export {
   isValidOutputFilename,
   reWin32ReservedNames,
   pathseps,
-  metaCharactors,
+  metaCharactors
 };

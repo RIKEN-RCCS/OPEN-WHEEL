@@ -48,7 +48,7 @@ async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb
         setJWTServerPassphrase(projectRootDir, hostinfo.id, phGfarm);
       }
     }
-  } catch (e) {
+  } catch {
     cb(false);
     return;
   }
@@ -174,7 +174,7 @@ async function remoteFileUtilWrapper(func, ...args) {
   try {
     const rt = await func(...args);
     cb(rt === 0);
-  } catch (e) {
+  } catch {
     cb(false);
   }
 }
@@ -196,7 +196,7 @@ async function gfarmFileUtilWrapper(func, projectRootDir, ...args) {
   try {
     const output = await func(projectRootDir, hostID, ...args);
     cb(!(Number.isInteger(output) && output !== 0));
-  } catch (e) {
+  } catch {
     cb(false);
   }
 }

@@ -1,4 +1,3 @@
-
 Cypress.Commands.add("login", ()=>{
   cy.visit("/login");
   cy.get("[data-cy=username]").type("user");
@@ -18,6 +17,7 @@ Cypress.Commands.add("openProject", (projectName)=>{
     .click({ force: true });
 });
 
+//eslint-disable-next-line no-unused-vars
 Cypress.Commands.add("removeProject", (projectName)=>{
   cy.visit("/");
   cy.waitProjectList();

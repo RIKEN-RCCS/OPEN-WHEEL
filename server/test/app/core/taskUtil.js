@@ -139,6 +139,7 @@ describe("UT for taskUtil class", function () {
     });
   });
   describe("#cancelRemoteJob", ()=>{
+    //eslint-disable-next-line no-unused-vars
     let task, sshStub, getSshStub, getSshHostinfoStub, loggerDebugStub, getLoggerStub;
     beforeEach(()=>{
       task = {

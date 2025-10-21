@@ -69,6 +69,7 @@ describe("UT for tempd class", function () {
     const tempdRoot = process.env.WHEEL_TEMPD || path.dirname(__dirname);
     let tempDirPath;
     let removeStub;
+    //eslint-disable-next-line no-unused-vars
     let getLoggerStub;
     let logDebugStub;
     beforeEach(()=>{

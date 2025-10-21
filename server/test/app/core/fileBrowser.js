@@ -861,7 +861,7 @@ describe("#ls", ()=>{
 
   beforeEach(()=>{
     ls = lsFunction;
-    // _internal is already imported
+    //_internal is already imported
 
     readdirStub = sinon.stub(_internal.fs, "readdir");
     lstatStub = sinon.stub(_internal.fs, "lstat");
@@ -882,6 +882,7 @@ describe("#ls", ()=>{
 
   it("should filter out entries if allFilter does not match", async ()=>{
     readdirStub.resolves(["keepThis", "skipThis"]);
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     lstatStub.resolves({ isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } });
     isComponentDirStub.resolves(false);
 
@@ -900,11 +901,13 @@ describe("#ls", ()=>{
 
     lstatStub.callsFake(async (pathName)=>{
       if (pathName.endsWith("okDir")) {
+        //eslint-disable-next-line @stylistic/max-statements-per-line
         return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } };
       }
       if (pathName.endsWith("badEntry")) {
         throw new Error("some lstat error");
       }
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; }, isSymbolicLink: ()=>{ return false; } };
     });
 
@@ -912,7 +915,9 @@ describe("#ls", ()=>{
 
     const result = await ls("/dummy/path");
     expect(result).to.have.lengthOf(2);
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     expect(result.some((e)=>{ return e.name === "okDir" && e.type === "dir"; })).to.be.true;
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     expect(result.some((e)=>{ return e.name === "okFile" && e.type === "file"; })).to.be.true;
   });
 
@@ -920,8 +925,10 @@ describe("#ls", ()=>{
     readdirStub.resolves(["someDir", "someFile"]);
     lstatStub.callsFake(async (pathName)=>{
       if (pathName.endsWith("someDir")) {
+        //eslint-disable-next-line @stylistic/max-statements-per-line
         return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } };
       }
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; }, isSymbolicLink: ()=>{ return false; } };
     });
     isComponentDirStub.resolves(false);
@@ -941,8 +948,10 @@ describe("#ls", ()=>{
     readdirStub.resolves(["dirA", "dirB", "file1.txt", "file2.log"]);
     lstatStub.callsFake(async (pathName)=>{
       if (pathName.endsWith("dirA") || pathName.endsWith("dirB")) {
+        //eslint-disable-next-line @stylistic/max-statements-per-line
         return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } };
       }
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; }, isSymbolicLink: ()=>{ return false; } };
     });
     isComponentDirStub.resolves(false);
@@ -955,12 +964,15 @@ describe("#ls", ()=>{
     };
     const result = await ls("/some/dirFilterTest", options);
     expect(result).to.have.lengthOf(2);
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     expect(result.some((e)=>{ return e.name === "dirA"; })).to.be.true;
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     expect(result.some((e)=>{ return e.name === "file1.txt"; })).to.be.true;
   });
 
   it("should correctly handle symbolic links to directories/files and push them to the list", async ()=>{
     readdirStub.resolves(["linkToDir", "linkToFile"]);
+    //eslint-disable-next-line no-unused-vars
     lstatStub.callsFake(async (_pathName)=>{
       return {
         isDirectory: ()=>{ return false; },
@@ -971,8 +983,10 @@ describe("#ls", ()=>{
 
     statStub.callsFake(async (pathName)=>{
       if (pathName.endsWith("linkToDir")) {
+        //eslint-disable-next-line @stylistic/max-statements-per-line
         return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; } };
       }
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; } };
     });
 
@@ -981,11 +995,13 @@ describe("#ls", ()=>{
     const result = await ls("/some/symlinkDir");
     expect(result).to.have.lengthOf(2);
 
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const dirLink = result.find((e)=>{ return e.name === "linkToDir"; });
     expect(dirLink.type).to.equal("dir");
     expect(dirLink.islink).to.be.true;
     expect(dirLink.isComponentDir).to.be.true;
 
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const fileLink = result.find((e)=>{ return e.name === "linkToFile"; });
     expect(fileLink.type).to.equal("file");
     expect(fileLink.islink).to.be.true;
@@ -1039,6 +1055,7 @@ describe("#ls", ()=>{
 
   it("should bundle serial-numbered files if SND=true", async ()=>{
     readdirStub.resolves(["file_001.txt", "file_002.txt", "file_003.log", "normal.txt"]);
+    //eslint-disable-next-line no-unused-vars
     lstatStub.callsFake(async (_fullPath)=>{
       return {
         isDirectory: ()=>{ return false; },
@@ -1053,12 +1070,15 @@ describe("#ls", ()=>{
     const result = await ls("/some/serial", options);
     expect(result).to.have.lengthOf(3);
 
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const sndItem = result.find((e)=>{ return e.type === "snd"; });
     expect(sndItem.name).to.equal("file_*.txt");
 
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const file003 = result.find((e)=>{ return e.name === "file_003.log"; });
     expect(file003.type).to.equal("file");
 
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const normalFile = result.find((e)=>{ return e.name === "normal.txt"; });
     expect(normalFile.type).to.equal("file");
   });
@@ -1067,8 +1087,10 @@ describe("#ls", ()=>{
     readdirStub.resolves(["zzzFile", "aaaDir", "midFile"]);
     lstatStub.callsFake(async (p)=>{
       if (p.endsWith("zzzFile") || p.endsWith("midFile")) {
+        //eslint-disable-next-line @stylistic/max-statements-per-line
         return { isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; }, isSymbolicLink: ()=>{ return false; } };
       }
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       return { isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; }, isSymbolicLink: ()=>{ return false; } };
     });
     isComponentDirStub.resolves(false);
@@ -1087,6 +1109,7 @@ describe("#ls", ()=>{
       isFile: ()=>{ return false; },
       isSymbolicLink: ()=>{ return true; }
     });
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     statStub.resolves({ isDirectory: ()=>{ return true; }, isFile: ()=>{ return false; } });
 
     const options = {
@@ -1107,6 +1130,7 @@ describe("#ls", ()=>{
       isFile: ()=>{ return false; },
       isSymbolicLink: ()=>{ return true; }
     });
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     statStub.resolves({ isDirectory: ()=>{ return false; }, isFile: ()=>{ return true; } });
 
     const options = {

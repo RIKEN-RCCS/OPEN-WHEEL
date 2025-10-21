@@ -60,6 +60,7 @@ describe("UT for executerManager class", function () {
     it("should not throw an error if no matching executers exist", function () {
       _internal.executers.clear();
 
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return removeExecuters(mockProjectRootDir); }).to.not.throw();
       expect(_internal.executers.size).to.equal(0);
     });
@@ -122,6 +123,7 @@ describe("UT for executerManager class", function () {
       const task = { env: { KEY1: "value1", KEY2: "value2" } };
       const result = makeEnv(task);
       //`result` 内の変数順序が一定でない可能性があるため、複数のパターンを考慮
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(result).to.satisfy((str)=>{ return str === "env KEY1=value1 KEY2=value2" || str === "env KEY2=value2 KEY1=value1"; }
       );
     });
@@ -255,6 +257,7 @@ describe("UT for executerManager class", function () {
       ID: "mockID"
     };
     let evalConditionStub;
+    //eslint-disable-next-line no-unused-vars
     let getLoggerStub;
     let loggerInfoStub;
 
@@ -300,7 +303,9 @@ describe("UT for executerManager class", function () {
       name: "mockTask",
       ID: "mockID"
     };
+
     let evalConditionStub;
+    //eslint-disable-next-line no-unused-vars
     let getLoggerStub;
     let loggerInfoStub;
 
@@ -355,8 +360,10 @@ describe("UT for executerManager class", function () {
       expect(loggerInfoStub).to.have.been.calledWith(`${mockTask.name}(${mockTask.ID}) failed but retring`);
     });
   });
+
   describe("promisifiedSpawn", function () {
     let spawnStub;
+    //eslint-disable-next-line no-unused-vars
     let getLoggerStub;
     let loggerStdoutStub;
     let loggerStderrStub;
@@ -443,6 +450,7 @@ describe("UT for executerManager class", function () {
     });
   });
   describe("getMaxNumJob", function () {
+    //eslint-disable-next-line no-unused-vars
     let numJobOnLocalStub;
     beforeEach(()=>{
       numJobOnLocalStub = sinon.stub(_internal, "numJobOnLocal").value(5);
@@ -470,13 +478,16 @@ describe("UT for executerManager class", function () {
       expect(result).to.equal(1);
       const negativeHostinfo = { numJob: "-5" };
       const negativeResult = getMaxNumJob(negativeHostinfo);
+
       expect(negativeResult).to.equal(1);
     });
   });
   describe("createExecuter", function () {
+    //eslint-disable-next-line no-unused-vars
     let getLoggerStub;
     let loggerDebugStub;
     let loggerErrorStub;
+    //eslint-disable-next-line no-unused-vars
     let jobSchedulerStub;
     beforeEach(()=>{
       loggerDebugStub = sinon.stub();
@@ -517,12 +528,15 @@ describe("UT for executerManager class", function () {
     });
     it("should throw an error if an invalid job scheduler is specified", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true };
+
       const hostinfo = { host: "remoteHost", jobScheduler: "invalidScheduler" };
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return createExecuter(task, hostinfo); }).to.throw("illegal job Scheduler specifies");
       expect(loggerErrorStub).to.have.been.calledOnce;
     });
   });
   describe("register", function () {
+    //eslint-disable-next-line no-unused-vars
     let mockExecuter, mockTask, mockHostInfo, getSshHostinfoStub, getLoggerStub, createExecuterStub;
     beforeEach(()=>{
       mockExecuter = {
@@ -571,6 +585,7 @@ describe("UT for executerManager class", function () {
       expect(mockExecuter.setQueues).to.have.been.calledOnceWith(mockHostInfo.queue);
       expect(mockExecuter.setGrpName).to.have.been.calledOnceWith(mockHostInfo.grpName);
     });
+
     it("should throw an error if an invalid job scheduler is specified", async function () {
       _internal.executers.set(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`, mockExecuter);
       getSshHostinfoStub.returns({ jobScheduler: "invalidScheduler" });
@@ -578,8 +593,10 @@ describe("UT for executerManager class", function () {
     });
   });
   describe("cancel", function () {
+    //eslint-disable-next-line no-unused-vars
     let getLoggerStub;
     let loggerWarnStub;
+    //eslint-disable-next-line no-unused-vars
     let remoteHostGetIDStub;
     beforeEach(()=>{
       loggerWarnStub = sinon.stub();

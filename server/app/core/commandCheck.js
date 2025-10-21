@@ -19,7 +19,7 @@ const commands = [
 /**
  * check if specified command is executable
  * @param {string} command - command name which will be checked
- * @returns {Promise} - 
+ * @returns {Promise} -
  */
 function execCheck(command) {
   return new Promise((resolve)=>{

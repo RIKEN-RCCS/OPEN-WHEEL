@@ -3,7 +3,7 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-// memo move functions in server/app/core/workflowComponent.js and client/src/component/componentProperty.vue to this file
+//memo move functions in server/app/core/workflowComponent.js and client/src/component/componentProperty.vue to this file
 
 /**
  * check if specified component should have remote file browser
@@ -39,5 +39,5 @@ function isHPCISS(component) {
 export {
   hasRemoteFileBrowser,
   hasGfarmTarBrowser,
-  isHPCISS,
+  isHPCISS
 };

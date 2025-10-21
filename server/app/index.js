@@ -24,7 +24,7 @@ import { tempdRoot } from "./core/tempd.js";
 import { aboutWheel } from "./core/versionInfo.js";
 import { hasEntry, hasCode, hasRefreshToken, storeCode, acquireAccessToken, getURLtoAcquireCode, getRemotehostIDFromState } from "./core/webAPI.js";
 import checkAllCommands from "./core/commandCheck.js";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

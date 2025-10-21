@@ -11,7 +11,7 @@ chai.use(chaiAsPromised);
 import sinon from "sinon";
 
 //testee
-import { 
+import {
   _internal,
   forTripCount,
   loopInitialize,

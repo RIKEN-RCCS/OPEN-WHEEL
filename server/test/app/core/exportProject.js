@@ -4,6 +4,7 @@
  * See License in the project root for the license information.
  */
 import { promisify } from "node:util";
+//eslint-disable-next-line camelcase
 import { exec as exec_cb } from "node:child_process";
 const exec = promisify(exec_cb);
 import path from "node:path";

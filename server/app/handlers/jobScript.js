@@ -5,6 +5,7 @@
  */
 "use strict";
 import { jobScriptTemplate } from "../db/db.js";
+
 async function onAddJobScriptTemplate(socket, template) {
   await jobScriptTemplate.add(template);
   onGetJobScriptTemplates(socket);

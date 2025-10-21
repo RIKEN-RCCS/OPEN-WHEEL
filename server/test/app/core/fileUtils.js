@@ -6,7 +6,7 @@
 
 import { expect } from "chai";
 import sinon from "sinon";
-import path from "path";
+//import path from "path";
 import { _internal, readJsonGreedy, addX, openFile, saveFile, getUnusedPath, replaceCRLF } from "../../../app/core/fileUtils.js";
 
 describe("#readJsonGreedy", ()=>{
@@ -242,6 +242,7 @@ describe("#openFile", ()=>{
   let readFileStub;
   let ensureFileStub;
   let readJsonGreedyStub;
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let loggerWarnStub;
   const dummyProjectRoot = "/dummy/projectRoot";
@@ -386,6 +387,7 @@ describe("#saveFile", ()=>{
       .onCall(2)
       .returns("/home")
       .returns("/"); //Default for subsequent calls
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     sinon.stub(_internal.path, "join").callsFake((dir, file)=>{ return `${dir}/${file}`; });
     gitAddStub = sinon.stub(_internal, "gitAdd").resolves();
   });
@@ -444,6 +446,7 @@ describe("#getUnusedPath", ()=>{
 
   beforeEach(()=>{
     pathExistsStub = sinon.stub(_internal.fs, "pathExists");
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     sinon.stub(_internal.path, "resolve").callsFake((...args)=>{ return args.join("/"); });
   });
 

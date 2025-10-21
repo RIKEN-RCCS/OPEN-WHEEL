@@ -7,7 +7,7 @@ import os from "os";
 import path from "path";
 import fs from "fs-extra";
 import JsonArrayManager from "./jsonArrayManager.js";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -120,11 +120,11 @@ async function readAndMergeConfigFile(filename) {
     }
   }
   const defaultConfigPath = path.resolve(__dirname, filename);
-  const defaultConfig = JSON.parse(await fs.readFile(defaultConfigPath, 'utf-8'));
+  const defaultConfig = JSON.parse(await fs.readFile(defaultConfigPath, "utf-8"));
   if (!userConfigFilename) {
     return defaultConfig;
   }
-  const userConfig = JSON.parse(await fs.readFile(userConfigFilename, 'utf-8'));
+  const userConfig = JSON.parse(await fs.readFile(userConfigFilename, "utf-8"));
   return { ...defaultConfig, ...userConfig };
 }
 

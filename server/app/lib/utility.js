@@ -13,11 +13,11 @@ const reOnlyWhilteSpace = /^\s*$/;
 //OK
 const alphanumeric = "a-zA-Z0-9";
 //due to escapeRegExp's spec, bars must be added separately any other regexp strings
-const bars = "_\-";
+const bars = "_-";
 export const pathseps = "/\\";
 export const metaCharactors = "*?[]{}()!?+@.";
 
-const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]\/\\])/g;
+const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]/\\])/g;
 
 /**
  * escape meta character of regex (from MDN)
@@ -32,7 +32,7 @@ export function escapeRegExp(target) {
 /**
  * check if specified name is sane
  * @param {string} name - name to be checked
- * @returns {boolean} - 
+ * @returns {boolean} -
  */
 function isSane(name) {
   if (typeof name !== "string") {
@@ -128,7 +128,7 @@ export function getDateString(humanReadable = false, withMilliseconds = false) {
 /**
  * split each element of array of string by '\n' and flatten
  * @param {string[]} outputArray - array of string which can have multiline in one elemetnt
- * @returns {string[]} - 
+ * @returns {string[]} -
  */
 export function formatSshOutput(outputArray) {
   const rt = [];

@@ -697,7 +697,6 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#getRelativeFilename", ()=>{
-
     const rootDir = "/repo";
 
     beforeEach(()=>{

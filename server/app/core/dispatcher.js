@@ -5,7 +5,6 @@
  */
 import fs from "fs-extra";
 import path from "path";
-import { promisify } from "util";
 import { EventEmitter } from "events";
 import { glob, hasMagic } from "glob";
 import { debounce } from "perfect-debounce";

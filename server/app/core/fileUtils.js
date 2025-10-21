@@ -127,7 +127,7 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
   let contentJson = {};
   try {
     contentJson = JSON.parse(content);
-  } catch (err) {
+  } catch {
     //read file is not parameter setting file
     return [{ content, filename: _internal.path.basename(absFilename), dirname: _internal.path.dirname(absFilename) }];
   }

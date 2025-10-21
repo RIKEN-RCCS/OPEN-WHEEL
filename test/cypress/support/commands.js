@@ -85,7 +85,7 @@ Cypress.Commands.add("setClipboardPermission", ()=>{
     command: "Browser.grantPermissions",
     params: {
       permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"],
-      origin: window.location.origin
+      origin: global.location.origin
     }
   }));
 });

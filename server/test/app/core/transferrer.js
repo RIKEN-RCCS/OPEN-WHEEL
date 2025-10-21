@@ -60,6 +60,7 @@ describe("#stageOut", ()=>{
   let registerStub;
   let getSshStub;
   let sshExecStub;
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let loggerDebugStub;
   let loggerTraceStub;

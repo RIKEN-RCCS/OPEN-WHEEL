@@ -10,6 +10,15 @@ import { componentJsonFilename } from "../db/db.js";
 import { getComponentDir, readComponentJson } from "./componentJsonIO.js";
 import { hasChild } from "./workflowComponent.js";
 
+const _internal = {
+  glob,
+  readJsonGreedy,
+  getComponentDir,
+  readComponentJson,
+  hasChild,
+  getChildren: null
+};
+
 /**
  * get array of child components
  * @param {string} projectRootDir - project's root path
@@ -36,6 +45,7 @@ export async function getChildren(projectRootDir, parentID, isParentDir) {
     return !e.subComponent;
   });
 }
+_internal.getChildren = getChildren;
 
 /**
  * return component,  its children, and grandsons
@@ -65,12 +75,4 @@ export async function getThreeGenerationFamily(projectRootDir, rootComponentDir)
   return rt;
 }
 
-
-export const _internal = {
-  glob,
-  readJsonGreedy,
-  getComponentDir,
-  readComponentJson,
-  hasChild,
-  getChildren
-};
+export { _internal };

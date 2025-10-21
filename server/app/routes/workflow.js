@@ -7,7 +7,7 @@ import path from "path";
 import { projectJsonFilename } from "../db/db.js";
 import { readProject } from "../core/projectFilesOperator.js";
 import { readComponentJson } from "../core/componentJsonIO.js";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

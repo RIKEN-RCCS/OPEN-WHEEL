@@ -7,6 +7,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+//eslint-disable-next-line camelcase
 import { exec as exec_cb } from "node:child_process";
 const exec = promisify(exec_cb);
 import fs from "fs-extra";

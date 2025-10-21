@@ -134,7 +134,7 @@ async function ls(targetDir, options = {}) {
     let stats;
     try {
       stats = await _internal.fs.lstat(absoluteFilename);
-    } catch (err) {
+    } catch {
       //just ignore error
       return;
     }

@@ -8,9 +8,8 @@ import { expect } from "chai";
 import sinon from "sinon";
 import { _internal, getFirstCapture, getBulkFirstCapture, isJobFailed, getStatusCode, createRequestForWebAPI, createRequest, registerJob } from "../../../app/core/jobManager.js";
 describe("#getFirstCapture", ()=>{
-
   beforeEach(()=>{
-    // getFirstCapture is now imported directly
+    //getFirstCapture is now imported directly
   });
 
   it("should return null if there is no match (result === null)", ()=>{
@@ -43,9 +42,8 @@ describe("#getFirstCapture", ()=>{
 });
 
 describe("#getBulkFirstCapture", ()=>{
-
   beforeEach(()=>{
-    // getBulkFirstCapture is now imported directly
+    //getBulkFirstCapture is now imported directly
   });
 
   it("should return [1, []] if no lines match the pattern", ()=>{
@@ -55,7 +53,7 @@ describe("#getBulkFirstCapture", ()=>{
       "yet another line"
     ].join("\n");
 
-    const reSubCode = /CODE=(\d+)/;
+    const reSubCode = /CODE=(d+)/;
     const result = getBulkFirstCapture(outputText, reSubCode);
 
     expect(result).to.deep.equal([1, []]);
@@ -68,7 +66,7 @@ describe("#getBulkFirstCapture", ()=>{
       "last line CODE=2"
     ].join("\n");
 
-    const reSubCode = /CODE=(\d+)/;
+    const reSubCode = /CODE=(d+)/;
     const result = getBulkFirstCapture(outputText, reSubCode);
 
     expect(result).to.deep.equal([0, ["1", "0", "2"]]);
@@ -80,7 +78,7 @@ describe("#getBulkFirstCapture", ()=>{
       "some line CODE=9"
     ].join("\n");
 
-    const reSubCode = /CODE=(\d+)/;
+    const reSubCode = /CODE=(d+)/;
     const result = getBulkFirstCapture(outputText, reSubCode);
 
     expect(result).to.deep.equal([1, ["5", "9"]]);
@@ -92,7 +90,7 @@ describe("#getBulkFirstCapture", ()=>{
       "line2 CODE=123"
     ].join("\n");
 
-    const reSubCode = /CODE=\d+/;
+    const reSubCode = /CODE=d+/;
 
     const result = getBulkFirstCapture(outputText, reSubCode);
 
@@ -101,9 +99,8 @@ describe("#getBulkFirstCapture", ()=>{
 });
 
 describe("#isJobFailed", ()=>{
-
   beforeEach(()=>{
-    // isJobFailed is now imported directly
+    //isJobFailed is now imported directly
   });
 
   it("should return true if acceptableJobStatus is undefined and code is '0'", ()=>{
@@ -174,6 +171,7 @@ describe("#isJobFailed", ()=>{
 });
 
 describe("#getStatusCode", ()=>{
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let loggerDebugStub;
   let loggerWarnStub;
@@ -182,7 +180,7 @@ describe("#getStatusCode", ()=>{
   let createBulkStatusFileStub;
 
   beforeEach(()=>{
-    // getStatusCode is now imported directly
+    //getStatusCode is now imported directly
     loggerDebugStub = sinon.stub();
     loggerWarnStub = sinon.stub();
     getLoggerStub = sinon.stub(_internal, "getLogger").returns({ debug: loggerDebugStub, warn: loggerWarnStub });
@@ -197,8 +195,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return parsed int when (task.type !== 'bulkjobTask') and everything is normal", async ()=>{
     const JS = {
-      reJobStatusCode: "RE_JOB_STATUSCODE_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "RE_RETURNCODE_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "RE_JOB_STATUSCODE_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "RE_RETURNCODE_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0, 1]
     };
     const task = {
@@ -223,8 +221,8 @@ describe("#getStatusCode", ()=>{
 
   it("should use JS.reJobStatus instead of JS.reJobStatusCode if the latter is undefined", async ()=>{
     const JS = {
-      reJobStatus: "FALLBACK_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "FALLBACK_RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatus: "FALLBACK_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "FALLBACK_RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -247,8 +245,8 @@ describe("#getStatusCode", ()=>{
 
   it("should set jobStatus to -2 when jobStatus is not found (null)", async ()=>{
     const JS = {
-      reJobStatusCode: "NO_MATCH_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "NO_MATCH_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -271,8 +269,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return -2 immediately if statCmdRt is not acceptable", async ()=>{
     const JS = {
-      reJobStatusCode: "ANY_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "ANY_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0, 5]
     };
     const task = {
@@ -290,8 +288,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return 0 if statCmdRt is acceptable but not zero", async ()=>{
     const JS = {
-      reJobStatusCode: "ANY_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "ANY_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0, 8]
     };
     const task = {
@@ -309,8 +307,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return -2 when strRt is null", async ()=>{
     const JS = {
-      reJobStatusCode: "JS_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "JS_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -331,8 +329,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return 0 when strRt is '6'", async ()=>{
     const JS = {
-      reJobStatusCode: "JS_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "JS_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -354,9 +352,9 @@ describe("#getStatusCode", ()=>{
   it("should handle bulkjobTask by calling createBulkStatusFile", async ()=>{
     const JS = {
       reJobStatusCode: "NO_USE",
-      reSubJobStatusCode: "SUBSTATUS_{{ JOBID }}=" + "(\d+)",
+      reSubJobStatusCode: "SUBSTATUS_{{ JOBID }}=" + "(d+)",
       reReturnCode: "NO_USE",
-      reSubReturnCode: "SUBRET_{{ JOBID }}=" + "(\d+)",
+      reSubReturnCode: "SUBRET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -504,12 +502,13 @@ describe("#createRequest", ()=>{
   });
 });
 
-
 describe("#registerJob", ()=>{
+  //eslint-disable-next-line no-unused-vars
   let jobSchedulerStub;
   let addRequestStub;
   let getRequestStub;
   let delRequestStub;
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let createRequestForWebAPIStub;
   let createRequestStub;
@@ -519,7 +518,7 @@ describe("#registerJob", ()=>{
   let task;
 
   beforeEach(()=>{
-    // registerJob is now imported directly
+    //registerJob is now imported directly
     jobSchedulerStub = sinon.stub(_internal, "jobScheduler").value({
       dummyJS: {
         maxStatusCheckError: 2,

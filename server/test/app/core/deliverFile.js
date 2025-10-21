@@ -133,6 +133,7 @@ describe("#deliverFile", ()=>{
 });
 
 describe("#deliverFilesOnRemote", ()=>{
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let loggerWarnStub;
   let loggerDebugStub;
@@ -243,8 +244,10 @@ describe("#deliverFilesOnRemote", ()=>{
 });
 
 describe("#deliverFilesFromRemote", ()=>{
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let loggerWarnStub;
+  //eslint-disable-next-line no-unused-vars
   let getSshStub;
   let sshRecvStub;
 

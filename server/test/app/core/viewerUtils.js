@@ -6,7 +6,7 @@
 import path from "path";
 import { expect } from "chai";
 import fs from "fs-extra";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,7 +66,7 @@ describe("#getFiletype (Integration Test)", ()=>{
     let result;
     try {
       result = await getFiletype(missingFilePath);
-    } catch (err) {
+    } catch {
       //ここに入った時点で fs.readFile がエラーを投げている
     }
 

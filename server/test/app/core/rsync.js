@@ -12,7 +12,6 @@ import chaiAsPromised from "chai-as-promised";
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-
 //testee
 import {
   overwriteByRsync

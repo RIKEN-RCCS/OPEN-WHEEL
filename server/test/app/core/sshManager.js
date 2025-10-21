@@ -216,6 +216,7 @@ describe("#getSshPW", ()=>{
 
   it("should return the password (function) if pw is defined as a function", ()=>{
     hasEntryStub.returns(true);
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const pwFunc = ()=>{ return "secretFromFunction"; };
     dbMock.set("/path/to/project", new Map([
       ["hostID", { pw: pwFunc }]

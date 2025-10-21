@@ -14,6 +14,7 @@ const expect = chai.expect;
 import sinonChai from "sinon-chai";
 chai.use(sinonChai);
 import Ajv from "ajv";
+//eslint-disable-next-line no-unused-vars
 const ajv = new Ajv({ strict: false });
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 chai.use(deepEqualInAnyOrder);
@@ -1217,6 +1218,7 @@ describe("updateComponent", ()=>{
 
   describe("#updateComponentPos", ()=>{
     let updateComponentPos;
+    //eslint-disable-next-line no-unused-vars
     let getLoggerStub;
     let debugStub;
     let warnStub;

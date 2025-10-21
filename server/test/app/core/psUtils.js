@@ -31,6 +31,7 @@ describe("UT for psUtils class", function () {
     });
     it("should throw an error for unsupported PS version", ()=>{
       const paramSettings = { version: 1 };
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return makeCmd(paramSettings); }).to.throw("PS version 1 is no longer supported");
     });
     it("should use 'target_param' if 'params' is not provided", ()=>{

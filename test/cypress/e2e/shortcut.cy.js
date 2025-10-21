@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
@@ -23,12 +22,14 @@ describe("test for shortcut key", ()=>{
     cy.selectComponent(TASK_NAME);
     cy.get("body").type("{ctrl}c");
     cy.get("body").type("{ctrl}v");
-    cy.get("@vue").its("store.state.copyInfo.type").should("eq", "copy");
+    cy.get("@vue").its("store.state.copyInfo.type")
+      .should("eq", "copy");
   });
   it("cut and paste", ()=>{
     cy.selectComponent(TASK_NAME);
     cy.get("body").type("{ctrl}x");
     cy.get("body").type("{ctrl}v");
-    cy.get("@vue").its("store.state.copyInfo.type").should("eq", "cut");
+    cy.get("@vue").its("store.state.copyInfo.type")
+      .should("eq", "cut");
   });
 });

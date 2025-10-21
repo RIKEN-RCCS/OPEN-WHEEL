@@ -17,7 +17,7 @@ const getAllProject = async ()=>{
     try {
       const projectJson = await readJsonGreedy(path.join(v.path, projectJsonFilename));
       rt = Object.assign(projectJson, v);
-    } catch (err) {
+    } catch {
       getLogger().warn(v, "read failed remove from the list");
       projectList.remove(v.id);
       rt = null;
@@ -35,7 +35,7 @@ const sendProjectListIfExists = async (socket, cb)=>{
     if (pjList) {
       socket.emit("projectList", pjList);
     }
-  } catch (e) {
+  } catch {
     cb(false);
     return;
   }

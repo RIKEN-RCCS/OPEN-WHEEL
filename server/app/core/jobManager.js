@@ -268,6 +268,4 @@ export function registerJob(hostinfo, task) {
   });
 }
 
-
-
 export { _internal };

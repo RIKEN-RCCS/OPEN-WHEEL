@@ -56,7 +56,7 @@ export const pspawn = _internal.pspawn;
  * @param {string | boolean} condition - command name or javascript expression
  * @param {string} cwd - task component's directory
  * @param {object} env - environment variables
- * @returns {Promise | boolean} - 
+ * @returns {Promise | boolean} -
  */
 export async function evalCondition(projectRootDir, condition, cwd, env) {
   //condition is always string for now. but keep following just in case

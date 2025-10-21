@@ -14,6 +14,7 @@ import sinon from "sinon";
 import { isValidHostMap, askHostMap, _internal } from "../../../app/core/askHostMap.js";
 
 describe("hostMapper UT", function () {
+  //eslint-disable-next-line no-unused-vars
   let remoteHostStub;
   let emitAllStub;
   beforeEach(()=>{
