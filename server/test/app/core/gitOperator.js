@@ -3,17 +3,17 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
-const { promisify } = require("util");
-const { execFile } = require("child_process");
+import fs from "fs-extra";
+import path from "path";
+import { promisify } from "util";
+import { execFile } from "child_process";
 const asyncExecFile = promisify(execFile);
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("chai-as-promised"));
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
 
 //helper function
 async function checkLFSenabled(repoDir) {
@@ -31,7 +31,7 @@ async function checkLFSenabled(repoDir) {
 }
 
 //testee
-const {
+import {
   gitInit,
   gitAdd,
   gitRm,
@@ -42,7 +42,7 @@ const {
   gitLFSTrack,
   gitLFSUntrack,
   isLFS
-} = require("../../../app/core/gitOperator2.js");
+} from "../../../app/core/gitOperator2.js";
 
 //test data
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");

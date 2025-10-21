@@ -3,31 +3,31 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
+import path from "path";
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
-const Ajv = require("ajv");
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
 
 //testee
-const { runProject } = require("../../../app/core/projectController");
+import { runProject } from "../../../app/core/projectController.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
-const { eventEmitters } = require("../../../app/core/global.js");
+import { eventEmitters } from "../../../app/core/global.js";
 
 //helper functions
-const { readComponentJson } = require("../../../app/core/componentJsonIO.js");
-const { addLink, replaceEnv, updateComponent, createNewComponent, createNewProject } = require("../../../app/core/projectFilesOperator");
-const { componentJsonFilename, statusFilename } = require("../../../app/db/db");
-const { scriptName, scriptHeader } = require("../../testScript");
+import { readComponentJson } from "../../../app/core/componentJsonIO.js";
+import { addLink, replaceEnv, updateComponent, createNewComponent, createNewProject } from "../../../app/core/projectFilesOperator.js";
+import { componentJsonFilename, statusFilename } from "../../../app/db/db.js";
+import { scriptName, scriptHeader } from "../../testScript.js";
 const logfilename = "env.log";
 const scriptEcho = `${scriptHeader}
 {

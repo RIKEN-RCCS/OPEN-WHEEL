@@ -1,5 +1,4 @@
-module.exports = {
-  ok: [
+export const ok = [
     {
       parent: "0a903cf0-239c-11ef-8cf7-6705d44703e7",
       pos: {
@@ -183,8 +182,9 @@ module.exports = {
       include: [],
       exclude: []
     }
-  ],
-  previousNext: [
+  ];
+
+export const previousNext = [
     {
       parent: "12c4ea60-239c-11ef-8cf7-6705d44703e7",
       pos: {
@@ -300,8 +300,9 @@ module.exports = {
       include: [],
       exclude: []
     }
-  ],
-  notConnected: [
+  ];
+
+export const notConnected = [
     {
       parent: "87bf1f70-23bf-11ef-8cf7-6705d44703e7",
       pos: {
@@ -401,8 +402,9 @@ module.exports = {
       include: [],
       exclude: []
     }
-  ],
-  inputOutput: [
+  ];
+
+export const inputOutput = [
     {
       parent: "1cc88b70-239c-11ef-8cf7-6705d44703e7",
       pos: {
@@ -543,8 +545,9 @@ module.exports = {
       include: [],
       exclude: []
     }
-  ],
-  both: [
+  ];
+
+export const both = [
     {
       parent: "22951280-239c-11ef-8cf7-6705d44703e7",
       pos: {
@@ -706,8 +709,9 @@ module.exports = {
       include: [],
       exclude: []
     }
-  ],
-  withTail: [
+  ];
+
+export const withTail = [
     {
       parent: "3dc41950-26e6-11ef-8b70-5bf5636e4460",
       pos: {
@@ -827,8 +831,9 @@ module.exports = {
       include: [],
       exclude: []
     }
-  ],
-  branched: [
+  ];
+
+export const branched = [
     {
       parent: "6f03d230-2790-11ef-a6ac-2f44b3871473",
       pos: {
@@ -1065,8 +1070,9 @@ module.exports = {
       include: [],
       exclude: []
     }
-  ],
-  double: [
+  ];
+
+export const double = [
     {
       parent: "66e85350-26e6-11ef-8b70-5bf5636e4460",
       pos: {
@@ -1217,6 +1223,6 @@ module.exports = {
       include: [],
       exclude: []
     }
-  ],
-  noComponents: []
-};
+  ];
+
+export const noComponents = [];

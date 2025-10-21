@@ -238,7 +238,7 @@ import SIO from "../lib/socketIOWrapper.js";
 import versatileDialog from "../components/versatileDialog.vue";
 import myTreeview from "../components/common/myTreeview.vue";
 import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "../components/common/fileTreeUtils.js";
-import { hasRemoteFileBrowser, isHPCISS } from "../../../common/checkComponent.cjs";
+import { hasRemoteFileBrowser, isHPCISS } from "../../../common/checkComponent.js";
 import loadComponentDefinition from "../lib/componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
 

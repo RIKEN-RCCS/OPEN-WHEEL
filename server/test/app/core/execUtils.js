@@ -3,23 +3,17 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const { expect } = require("chai");
-const { describe, it } = require("mocha");
-const sinon = require("sinon");
-const execUtils = require("../../../app/core/execUtils.js");
-const { _internal } = execUtils;
-
+import { expect } from "chai";
+import sinon from "sinon";
+import { setTaskState, needDownload, formatSrcFilename, makeDownloadRecipe, createStatusFile, createBulkStatusFile, _internal } from "../../../app/core/execUtils.js";
 describe("#setTaskState", ()=>{
-  let setTaskState;
   let getLoggerStub;
   let writeComponentJsonStub;
   let eventEmitters;
   let ee;
 
   beforeEach(()=>{
-    setTaskState = execUtils.setTaskState;
     getLoggerStub = sinon.stub(_internal, "getLogger").returns({ trace: sinon.stub() });
     writeComponentJsonStub = sinon.stub(_internal, "writeComponentJson").resolves();
     ee = { emit: sinon.stub() };
@@ -54,11 +48,9 @@ describe("#setTaskState", ()=>{
 });
 
 describe("#needDownload", ()=>{
-  let needDownload;
   let isSameRemoteHostStub;
 
   beforeEach(()=>{
-    needDownload = execUtils.needDownload;
     isSameRemoteHostStub = sinon.stub(_internal, "isSameRemoteHost");
   });
 
@@ -122,11 +114,9 @@ describe("#needDownload", ()=>{
 });
 
 describe("#formatSrcFilename", ()=>{
-  let formatSrcFilename;
   let replacePathsepStub;
 
   beforeEach(()=>{
-    formatSrcFilename = execUtils.formatSrcFilename;
     replacePathsepStub = sinon.stub(_internal, "replacePathsep");
   });
 
@@ -156,12 +146,10 @@ describe("#formatSrcFilename", ()=>{
 });
 
 describe("#makeDownloadRecipe", ()=>{
-  let makeDownloadRecipe;
   let getLoggerStub;
   let traceStub;
 
   beforeEach(()=>{
-    makeDownloadRecipe = execUtils.makeDownloadRecipe;
     traceStub = sinon.stub();
     getLoggerStub = sinon.stub(_internal, "getLogger").returns({ trace: traceStub });
   });
@@ -223,11 +211,9 @@ describe("#makeDownloadRecipe", ()=>{
 });
 
 describe("#createStatusFile", ()=>{
-  let createStatusFile;
   let writeFileStub;
 
   beforeEach(()=>{
-    createStatusFile = execUtils.createStatusFile;
     writeFileStub = sinon.stub(_internal.fs, "writeFile").resolves();
   });
 
@@ -271,12 +257,10 @@ describe("#createStatusFile", ()=>{
 });
 
 describe("#createBulkStatusFile", ()=>{
-  let createBulkStatusFile;
   let writeFileStub;
   let pathResolveStub;
 
   beforeEach(()=>{
-    createBulkStatusFile = execUtils.createBulkStatusFile;
     writeFileStub = sinon.stub(_internal.fs, "writeFile").resolves();
     pathResolveStub = sinon.stub(_internal.path, "resolve");
   });

@@ -4,14 +4,14 @@
  * See License in the project root for the license information.
  */
 
-"use strict";
 //setup test framework
-const chai = require("chai");
-const expect = chai.expect;
-chai.use(require("chai-as-promised"));
-const sinon = require("sinon");
+import * as chai from "chai";
+import { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinon from "sinon";
 
-const { isValidHostMap, askHostMap, _internal } = require("../../../app/core/askHostMap.js");
+import { isValidHostMap, askHostMap, _internal } from "../../../app/core/askHostMap.js";
 
 describe("hostMapper UT", function () {
   let remoteHostStub;

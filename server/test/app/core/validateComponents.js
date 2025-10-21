@@ -3,23 +3,25 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
+import path from "path";
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("sinon-chai"));
-const Ajv = require("ajv");
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
-chai.use(require("deep-equal-in-any-order"));
-chai.use(require("chai-as-promised"));
-const sinon = require("sinon");
-const { createNewProject, createNewComponent } = require("../../../app/core/projectFilesOperator");
+import deepEqualInAnyOrder from "deep-equal-in-any-order";
+chai.use(deepEqualInAnyOrder);
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinon from "sinon";
+import { createNewProject, createNewComponent } from "../../../app/core/projectFilesOperator.js";
 
 //testee
-const { _internal,
+import { _internal,
   validateTask,
   validateStepjobTask,
   validateStepjob,
@@ -40,7 +42,7 @@ const { _internal,
   checkComponentDependency,
   recursiveValidateComponents,
   checkScript,
-  checkPSSettingFile } = require("../../../app/core/validateComponents.js");
+  checkPSSettingFile } from "../../../app/core/validateComponents.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -1232,13 +1234,13 @@ describe("validateComponents function", function () {
     task.script = "script.sh";
     fs.writeFileSync(path.resolve(projectRootDir, task.name, "script.sh"), "#!/bin/bash\necho 'Hello'");
 
-    const { validateComponents: validateComponentsFunc } = require("../../../app/core/validateComponents.js");
+    const { validateComponents: validateComponentsFunc } = await import("../../../app/core/validateComponents.js");
     const report = await validateComponentsFunc(projectRootDir, task.ID);
     expect(report).to.be.an("array");
   });
 
   it("should call validateComponents without startComponentID", async function () {
-    const { validateComponents: validateComponentsFunc } = require("../../../app/core/validateComponents.js");
+    const { validateComponents: validateComponentsFunc } = await import("../../../app/core/validateComponents.js");
     const report = await validateComponentsFunc(projectRootDir);
     expect(report).to.be.an("array");
   });
@@ -2228,7 +2230,7 @@ describe("checkPSSettingFile with invalid JSON", function () {
   });
 });
 
-describe("test cycle graph checker", ()=>{
+describe("test cycle graph checker", async ()=>{
   const testFileDir = path.resolve("./test/testFiles");
   const {
     ok,
@@ -2240,7 +2242,7 @@ describe("test cycle graph checker", ()=>{
     branched,
     double,
     noComponents
-  } = require(path.resolve(testFileDir, "cycleTestData.js"));
+  } = await import(path.resolve(testFileDir, "cycleTestData.js"));
   it("should return empty array if no cycle graph detected", async ()=>{
     expect(await getCycleGraph("dummy", ok)).to.be.empty;
   });

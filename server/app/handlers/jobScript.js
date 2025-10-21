@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { jobScriptTemplate } = require("../db/db");
+import { jobScriptTemplate } from "../db/db.js";
 async function onAddJobScriptTemplate(socket, template) {
   await jobScriptTemplate.add(template);
   onGetJobScriptTemplates(socket);
@@ -21,7 +21,7 @@ async function onGetJobScriptTemplates(socket) {
   socket.emit("jobScriptTemplateList", jobScriptTemplate.getAll());
 }
 
-module.exports = {
+export {
   onAddJobScriptTemplate,
   onUpdateJobScriptTemplate,
   onRemoveJobScriptTemplate,

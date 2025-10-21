@@ -3,24 +3,23 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { promisify } = require("util");
-const fs = require("fs-extra");
-const path = require("path");
-const isPathInside = require("is-path-inside");
-const glob = require("glob");
-const { diff } = require("just-diff");
-const { diffApply } = require("just-diff-apply");
-const { getComponentDir, writeComponentJson, writeComponentJsonByID, readComponentJson, readComponentJsonByID } = require("./componentJsonIO.js");
-const { componentFactory, getComponentDefaultName } = require("./workflowComponent");
-const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, defaultPSconfigFilename } = require("../db/db");
-const { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
-const { replacePathsep, convertPathSep } = require("./pathUtils");
-const { readJsonGreedy } = require("./fileUtils");
-const { gitInit, gitAdd, gitCommit, gitRm } = require("./gitOperator2");
-const { hasChild, isLocalComponent } = require("./workflowComponent");
-const { getLogger } = require("../logSettings");
-const { getSsh } = require("./sshManager.js");
+import fs from "fs-extra";
+import path from "path";
+import isPathInside from "is-path-inside";
+import { glob } from "glob";
+import { diff } from "just-diff";
+import { diffApply } from "just-diff-apply";
+import { getComponentDir, writeComponentJson, writeComponentJsonByID, readComponentJson, readComponentJsonByID } from "./componentJsonIO.js";
+import { componentFactory, getComponentDefaultName } from "./workflowComponent.js";
+import { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, defaultPSconfigFilename } from "../db/db.js";
+import { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } from "../lib/utility.js";
+import { replacePathsep, convertPathSep } from "./pathUtils.js";
+import { readJsonGreedy } from "./fileUtils.js";
+import { gitInit, gitAdd, gitCommit, gitRm } from "./gitOperator2.js";
+import { hasChild, isLocalComponent } from "./workflowComponent.js";
+import { getLogger } from "../logSettings.js";
+import { getSsh } from "./sshManager.js";
+import { getChildren } from "./workflowUtil.js";
 
 const _internal = {
   fs,
@@ -28,7 +27,6 @@ const _internal = {
   readJsonGreedy,
   writeJsonWrapper,
   gitAdd,
-  promisify,
   path,
   diff,
   diffApply,
@@ -50,7 +48,8 @@ const _internal = {
   gitRm,
   getDateString,
   isLocalComponent,
-  isValidName
+  isValidName,
+  getChildren
 };
 
 /**
@@ -345,7 +344,7 @@ _internal.checkRunningJobs = async function (projectRootDir) {
   const tasks = [];
   const jmFiles = [];
 
-  const candidates = await _internal.promisify(glob)(`*.${jobManagerJsonFilename}`, { cwd: projectRootDir });
+  const candidates = await _internal.glob(`*.${jobManagerJsonFilename}`, { cwd: projectRootDir });
   for (const jmFile of candidates) {
     try {
       const taskInJmFile = await _internal.fs.readJson(path.resolve(projectRootDir, jmFile));
@@ -404,7 +403,7 @@ _internal.rewriteIncludeExclude = async function (projectRootDir, filename, chan
  */
 _internal.rewriteAllIncludeExcludeProperty = async function (projectRootDir, changed) {
   //convert include and exclude property to array
-  const files = await _internal.promisify(glob)(`./**/${componentJsonFilename}`, { cwd: projectRootDir });
+  const files = await _internal.glob(`./**/${componentJsonFilename}`, { cwd: projectRootDir });
   await Promise.all(files.map((filename)=>{
     return _internal.rewriteIncludeExclude(projectRootDir, path.resolve(projectRootDir, filename), changed);
   }));
@@ -475,7 +474,7 @@ _internal.readProject = async function (projectRootDir) {
  * @returns {Promise} - resolved when all componentJSON meta data file is written
  */
 _internal.setComponentStateR = async function (projectRootDir, dir, state, doNotAdd = false, ignoreStates = []) {
-  const filenames = await _internal.promisify(glob)(path.join(dir, "**", componentJsonFilename));
+  const filenames = await _internal.glob(path.join(dir, "**", componentJsonFilename));
   filenames.push(path.join(dir, componentJsonFilename));
   if (!ignoreStates.includes(state)) {
     ignoreStates.push(state);
@@ -605,7 +604,7 @@ _internal.isDefaultPort = isDefaultPort;
  * @param {object} component - component object
  * @returns {boolean} -
  */
-function isLocal(component) {
+export function isLocal(component) {
   return typeof component.host === "undefined" || component.host === "localhost";
 }
 _internal.isLocal = isLocal;
@@ -980,34 +979,6 @@ async function makeDir(basename, argSuffix) {
 _internal.makeDir = makeDir;
 
 /**
- * get array of child components
- * @param {string} projectRootDir - project's root path
- * @param {string} parentID - parent component's ID or directory path
- * @param {boolean} isParentDir - if true, parentID is regard as path to parent directory, not ID string
- * @returns {object[]} - array of child components except for subComponent
- */
-async function getChildren(projectRootDir, parentID, isParentDir) {
-  const dir = isParentDir ? parentID : parentID === null ? projectRootDir : await _internal.getComponentDir(projectRootDir, parentID, true);
-  if (!dir) {
-    return [];
-  }
-
-  const children = await _internal.promisify(glob)(path.join(dir, "*", componentJsonFilename));
-  if (children.length === 0) {
-    return [];
-  }
-
-  const rt = await Promise.all(children.map((e)=>{
-    return _internal.readJsonGreedy(e);
-  }));
-
-  return rt.filter((e)=>{
-    return !e.subComponent;
-  });
-}
-_internal.getChildren = getChildren;
-
-/**
  * check if user has write permission to storagePath on remotehost
  * @param {string} projectRootDir - project's root path
  * @param {object} secondArg -
@@ -1015,7 +986,7 @@ _internal.getChildren = getChildren;
  * @param {string} secondArg.storagePath - storage path on remotehost
  * @returns {Promise} - resolved if user has write permission to storagePath on remotehost
  */
-async function checkRemoteStoragePathWritePermission(projectRootDir, { host, storagePath }) {
+export async function checkRemoteStoragePathWritePermission(projectRootDir, { host, storagePath }) {
   const remotehostID = remoteHost.getID("name", host);
   const ssh = _internal.getSsh(projectRootDir, remotehostID);
   const rt = await ssh.exec(`test -w ${storagePath}`);
@@ -1069,7 +1040,7 @@ _internal.recursiveGetHosts = async function (projectRootDir, parentID, hosts, s
  * @param {string | null} rootID - ID of the component to start travarsal. start from project root if rootID is null
  * @returns {object[]} - exclusive array of hosts
  */
-async function getHosts(projectRootDir, rootID) {
+export async function getHosts(projectRootDir, rootID) {
   const hosts = [];
   const storageHosts = [];
   const gfarmHosts = [];
@@ -1185,7 +1156,7 @@ _internal.replaceWebhook = replaceWebhook;
  * @param {string} ID - component ID
  * @returns {object} -
  */
-async function getEnv(projectRootDir, ID) {
+export async function getEnv(projectRootDir, ID) {
   const componentJson = await _internal.readComponentJsonByID(projectRootDir, ID);
   const env = componentJson.env || {};
   return env;
@@ -1757,7 +1728,7 @@ _internal.removeComponent = async function (projectRootDir, ID) {
  * @returns {object[]} - array of source component
  */
 _internal.getSourceComponents = async function (projectRootDir) {
-  const componentJsonFiles = await _internal.promisify(glob)(path.join(projectRootDir, "**", componentJsonFilename));
+  const componentJsonFiles = await _internal.glob(path.join(projectRootDir, "**", componentJsonFilename));
   const components = await Promise.all(componentJsonFiles
     .map((componentJsonFile)=>{
       return _internal.readJsonGreedy(componentJsonFile);
@@ -1825,78 +1796,66 @@ _internal.getComponentTree = async function (projectRootDir, rootDir) {
   return root;
 };
 
-module.exports = {
-  createNewProject: _internal.createNewProject,
-  updateComponentPath: _internal.updateComponentPath,
-  getComponentFullName: _internal.getComponentFullName,
-  setProjectState: _internal.setProjectState,
-  getProjectState: _internal.getProjectState,
-  checkRunningJobs: _internal.checkRunningJobs,
-  readProject: _internal.readProject,
-  updateProjectROStatus: _internal.updateProjectROStatus,
-  updateProjectDescription: _internal.updateProjectDescription,
-  getProjectJson: _internal.getProjectJson,
-  addProject: _internal.addProject,
-  renameProject: _internal.renameProject,
-  setComponentStateR: _internal.setComponentStateR,
-  getHosts: _internal.getHosts,
-  checkRemoteStoragePathWritePermission: _internal.checkRemoteStoragePathWritePermission,
-  getSourceComponents: _internal.getSourceComponents,
-  getChildren: _internal.getChildren,
-  updateComponent: _internal.updateComponent,
-  addInputFile: _internal.addInputFile,
-  addOutputFile: _internal.addOutputFile,
-  removeInputFile: _internal.removeInputFile,
-  removeOutputFile: _internal.removeOutputFile,
-  renameInputFile: _internal.renameInputFile,
-  renameOutputFile: _internal.renameOutputFile,
-  addLink: _internal.addLink,
-  addFileLink: _internal.addFileLink,
-  removeLink: _internal.removeLink,
-  removeAllLink: _internal.removeAllLink,
-  removeFileLink: _internal.removeFileLink,
-  removeAllFileLink: _internal.removeAllFileLink,
-  getEnv: _internal.getEnv,
-  replaceEnv: _internal.replaceEnv,
-  replaceWebhook: _internal.replaceWebhook,
-  removeComponent: _internal.removeComponent,
-  isComponentDir: _internal.isComponentDir,
-  getComponentTree: _internal.getComponentTree,
-  isLocal: _internal.isLocal,
-  isSameRemoteHost: _internal.isSameRemoteHost,
-  isSurrounded: _internal.isSurrounded,
-  trimSurrounded: _internal.trimSurrounded,
-  glob2Array: _internal.glob2Array,
-  removeTrailingPathSep: _internal.removeTrailingPathSep,
-  writeProjectJson: _internal.writeProjectJson,
-  getDescendantsIDs: _internal.getDescendantsIDs,
-  getAllComponentIDs: _internal.getAllComponentIDs,
-  getSuffixNumberFromProjectName: _internal.getSuffixNumberFromProjectName,
-  getUnusedProjectDir: _internal.getUnusedProjectDir,
-  removeComponentPath: _internal.removeComponentPath,
-  arrangeComponent: _internal.arrangeComponent,
-  isDefaultPort: _internal.isDefaultPort,
-  isParent: _internal.isParent,
-  removeAllLinkFromComponent: _internal.removeAllLinkFromComponent,
-  addFileLinkToParent: _internal.addFileLinkToParent,
-  addFileLinkFromParent: _internal.addFileLinkFromParent,
-  addFileLinkBetweenSiblings: _internal.addFileLinkBetweenSiblings,
-  removeFileLinkToParent: _internal.removeFileLinkToParent,
-  removeFileLinkFromParent: _internal.removeFileLinkFromParent,
-  removeFileLinkBetweenSiblings: _internal.removeFileLinkBetweenSiblings,
-  makeDir: _internal.makeDir,
-  recursiveGetHosts: _internal.recursiveGetHosts,
-  setUploadOndemandOutputFile: _internal.setUploadOndemandOutputFile,
-  updateStepNumber: _internal.updateStepNumber,
-  rewriteIncludeExclude: _internal.rewriteIncludeExclude,
-  rewriteAllIncludeExcludeProperty: _internal.rewriteAllIncludeExcludeProperty,
-  gitInit: _internal.gitInit,
-  gitCommit: _internal.gitCommit,
-  gitRm: _internal.gitRm,
-  createNewComponent: _internal.createNewComponent,
-  renameComponentDir: _internal.renameComponentDir
-};
+export const createNewProject = _internal.createNewProject;
+export const updateComponentPath = _internal.updateComponentPath;
+export { getComponentFullName };
+export { setProjectState };
+export { getProjectState };
+export const checkRunningJobs = _internal.checkRunningJobs;
+export const readProject = _internal.readProject;
+export { updateProjectROStatus };
+export { updateProjectDescription };
+export const getProjectJson = _internal.getProjectJson;
+export const addProject = _internal.addProject;
+export const renameProject = _internal.renameProject;
+export const setComponentStateR = _internal.setComponentStateR;
+export const getSourceComponents = _internal.getSourceComponents;
+export const updateComponent = _internal.updateComponent;
+export const addInputFile = _internal.addInputFile;
+export const addOutputFile = _internal.addOutputFile;
+export { removeInputFile };
+export { removeOutputFile };
+export { renameInputFile };
+export const renameOutputFile = _internal.renameOutputFile;
+export const addLink = _internal.addLink;
+export const addFileLink = _internal.addFileLink;
+export const removeLink = _internal.removeLink;
+export const removeAllLink = _internal.removeAllLink;
+export const removeFileLink = _internal.removeFileLink;
+export { removeAllFileLink };
+export const replaceEnv = _internal.replaceEnv;
+export { replaceWebhook };
+export const removeComponent = _internal.removeComponent;
+export const isComponentDir = _internal.isComponentDir;
+export const getComponentTree = _internal.getComponentTree;
+export const isSameRemoteHost = _internal.isSameRemoteHost;
+export const isSurrounded = _internal.isSurrounded;
+export const trimSurrounded = _internal.trimSurrounded;
+export const glob2Array = _internal.glob2Array;
+export const removeTrailingPathSep = _internal.removeTrailingPathSep;
+export const writeProjectJson = _internal.writeProjectJson;
+export const getDescendantsIDs = _internal.getDescendantsIDs;
+export const getAllComponentIDs = _internal.getAllComponentIDs;
+export const getSuffixNumberFromProjectName = _internal.getSuffixNumberFromProjectName;
+export const getUnusedProjectDir = _internal.getUnusedProjectDir;
+export const arrangeComponent = _internal.arrangeComponent;
+export { isDefaultPort };
+export const isParent = _internal.isParent;
+export const removeAllLinkFromComponent = _internal.removeAllLinkFromComponent;
+export { addFileLinkToParent };
+export { addFileLinkFromParent };
+export { addFileLinkBetweenSiblings };
+export { removeFileLinkToParent };
+export { removeFileLinkFromParent };
+export { removeFileLinkBetweenSiblings };
+export { makeDir };
+export const recursiveGetHosts = _internal.recursiveGetHosts;
+export const setUploadOndemandOutputFile = _internal.setUploadOndemandOutputFile;
+export const updateStepNumber = _internal.updateStepNumber;
+export const rewriteIncludeExclude = _internal.rewriteIncludeExclude;
+export const rewriteAllIncludeExcludeProperty = _internal.rewriteAllIncludeExcludeProperty;
+export const createNewComponent = _internal.createNewComponent;
+export const renameComponentDir = _internal.renameComponentDir;
+export { removeComponentPath };
 
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export { _internal };

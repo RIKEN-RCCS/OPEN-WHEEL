@@ -3,14 +3,13 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { getLogger } = require("../logSettings.js");
+import { getLogger } from "../logSettings.js";
 const logger = getLogger();
 
-const { remotehostJsonSchema } = require("../db/remotehostJsonSchema.js");
-const { remoteHost } = require("../db/db.js");
-const Ajv = require("ajv");
-const addFormats = require("ajv-formats");
+import { remotehostJsonSchema } from "../db/remotehostJsonSchema.js";
+import { remoteHost } from "../db/db.js";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
 
 const ajv = new Ajv({
   allErrors: true,
@@ -57,7 +56,7 @@ async function validateHostSetting(newHost) {
   return true;
 }
 
-async function onAddHost(socket, newHost, cb) {
+export async function onAddHost(socket, newHost, cb) {
   if (!await validateHostSetting(newHost)) {
     cb(false);
   }
@@ -65,12 +64,12 @@ async function onAddHost(socket, newHost, cb) {
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
   return cb(id);
 }
-async function onCopyHost(socket, id, cb) {
+export async function onCopyHost(socket, id, cb) {
   await remoteHost.copy(id);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
   cb(remoteHost.get(id));
 }
-async function onGetHostList(cb) {
+export async function onGetHostList(cb) {
   const hostList = remoteHost.getAll();
   hostList.forEach((hostInfo)=>{
     if (hostInfo.username) {
@@ -82,7 +81,7 @@ async function onGetHostList(cb) {
   });
   cb(hostList);
 }
-async function onUpdateHost(socket, updatedHost, cb) {
+export async function onUpdateHost(socket, updatedHost, cb) {
   if (updatedHost.username) {
     if (!updatedHost.user) {
       updatedHost.user = updatedHost.username;
@@ -98,16 +97,8 @@ async function onUpdateHost(socket, updatedHost, cb) {
   return cb(updatedHost.id);
 }
 
-async function onRemoveHost(socket, id, cb) {
+export async function onRemoveHost(socket, id, cb) {
   await remoteHost.remove(id);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
   cb(true);
 }
-
-module.exports = {
-  onAddHost,
-  onCopyHost,
-  onGetHostList,
-  onUpdateHost,
-  onRemoveHost
-};

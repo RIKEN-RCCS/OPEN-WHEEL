@@ -3,19 +3,18 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
-const { diff } = require("just-diff");
-const { diffApply } = require("just-diff-apply");
-const Ajv = require("ajv");
+import fs from "fs-extra";
+import path from "path";
+import { diff } from "just-diff";
+import { diffApply } from "just-diff-apply";
+import Ajv from "ajv";
 
-const { gitRm } = require("./gitOperator2");
-const { isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
-const { updateComponentPath } = require("./projectFilesOperator.js");
-const { getComponentDir, readComponentJson, writeComponentJson, writeComponentJsonByID } = require("./componentJsonIO.js");
-const getSchema = require("../db/jsonSchemas.js");
-const { getLogger } = require("../logSettings.js");
+import { gitRm } from "./gitOperator2.js";
+import { isValidName, isValidInputFilename, isValidOutputFilename } from "../lib/utility.js";
+import { updateComponentPath } from "./projectFilesOperator.js";
+import { getComponentDir, readComponentJson, writeComponentJson, writeComponentJsonByID } from "./componentJsonIO.js";
+import getSchema from "../db/jsonSchemas.js";
+import { getLogger } from "../logSettings.js";
 
 const _internal = {
   fs,
@@ -415,9 +414,9 @@ async function updateComponentPos(projectRootDir, ID, pos) {
   componentJson.pos.x = pos.x;
   componentJson.pos.y = pos.y;
   await _internal.writeComponentJson(projectRootDir, componentDir, componentJson);
-};
+}
 
-module.exports = {
+export default {
   updateComponent,
   updateComponentPos,
   removeInputFileLinkFromParent,
@@ -431,6 +430,17 @@ module.exports = {
   renameComponentDir
 };
 
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export {
+  updateComponent,
+  updateComponentPos,
+  removeInputFileLinkFromParent,
+  removeOutputFileLinkToParent,
+  removeInputFileLinkFromSiblings,
+  removeOutputFileLinkToSiblings,
+  removeInputFileCounterpart,
+  removeOutputFileCounterpart,
+  renameInputFileCounterpart,
+  renameOutputFileCounterpart,
+  renameComponentDir,
+  _internal
+};

@@ -3,18 +3,17 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("chai-as-promised"));
-const { describe, it } = require("mocha");
-const sinon = require("sinon");
-const { isFinishedState, pspawn,
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinon from "sinon";
+import { isFinishedState, pspawn,
   evalCondition,
   getRemoteRootWorkingDir,
   getRemoteWorkingDir,
   isSubComponent,
-  _internal } = require("../../../app/core/dispatchUtils");
+  _internal } from "../../../app/core/dispatchUtils.js";
 
 describe("#pspawn", ()=>{
   let spawnStub;

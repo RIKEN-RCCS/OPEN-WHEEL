@@ -3,28 +3,27 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { getSsh, getSshHostinfo } = require("./sshManager");
-const { cancel } = require("./executerManager.js");
-const { jobScheduler } = require("../db/db");
-const { getLogger } = require("../logSettings.js");
+import { getSsh, getSshHostinfo } from "./sshManager.js";
+import { cancel } from "./executerManager.js";
+import { jobScheduler } from "../db/db.js";
+import { getLogger } from "../logSettings.js";
 
 const _internal = {
   getSsh,
   getSshHostinfo,
   cancel,
   getLogger,
-  killTask,
-  killLocalProcess,
-  cancelRemoteJob,
-  cancelLocalJob
+  killTask: null,
+  killLocalProcess: null,
+  cancelRemoteJob: null,
+  cancelLocalJob: null
 };
 
 /**
  * cancel job on remotehost
  * @param {object} task - task component
  */
-async function cancelRemoteJob(task) {
+export async function cancelRemoteJob(task) {
   if (!task.jobID) {
     _internal.getLogger(task.projectRootDir).debug(`try to cancel ${task.name} but it have not been submitted.`);
     return;
@@ -45,7 +44,7 @@ _internal.cancelRemoteJob = cancelRemoteJob;
 /**
  * cancel job on localhost but not implemented
  */
-async function cancelLocalJob() {
+export async function cancelLocalJob() {
   console.log("not implimented yet!!");
 }
 _internal.cancelLocalJob = cancelLocalJob;
@@ -54,7 +53,7 @@ _internal.cancelLocalJob = cancelLocalJob;
  * kill process which was invoked from specified task
  * @param {object} task - task component
  */
-async function killLocalProcess(task) {
+export async function killLocalProcess(task) {
   if (task.handler && task.handler.killed === false) {
     task.handler.kill();
   }
@@ -65,7 +64,7 @@ _internal.killLocalProcess = killLocalProcess;
  * cancel dispatched task
  * @param {object} task - task component
  */
-async function killTask(task) {
+export async function killTask(task) {
   if (task.remotehostID !== "localhost") {
     if (task.useJobScheduler) {
       await _internal.cancelRemoteJob(task);
@@ -88,7 +87,7 @@ _internal.killTask = killTask;
  * @param {object[]} tasks - array of task components
  * @returns {Promise} - resolved when all tasks are canceled
  */
-async function cancelDispatchedTasks(tasks) {
+export async function cancelDispatchedTasks(tasks) {
   const p = [];
   for (const task of tasks) {
     if (task.state === "finished" || task.state === "failed") {
@@ -108,7 +107,7 @@ async function cancelDispatchedTasks(tasks) {
  * @param {object} task - task component
  * @returns {object} - reduced task component
  */
-function taskStateFilter(task) {
+export function taskStateFilter(task) {
   return {
     name: task.name,
     ID: task.ID,
@@ -129,15 +128,4 @@ function taskStateFilter(task) {
   };
 }
 
-module.exports = {
-  cancelDispatchedTasks,
-  taskStateFilter,
-  killTask,
-  killLocalProcess,
-  cancelRemoteJob,
-  cancelLocalJob
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export { _internal };

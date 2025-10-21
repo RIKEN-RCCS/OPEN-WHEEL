@@ -3,7 +3,6 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 // NG
 const reWin32ReservedNames = /^(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
@@ -16,7 +15,7 @@ const bars = "_\\-";
 const pathseps = "/\\";
 const metaCharactors = "*?[]{}()!?+@.";
 
-const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]/\\])/g;
+const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]\/\\])/g;
 
 /**
  * escape meta character of regex (from MDN)
@@ -102,7 +101,7 @@ function isValidOutputFilename(name) {
   return true;
 }
 
-module.exports = {
+export {
   escapeRegExp,
   isSane,
   isValidName,

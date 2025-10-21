@@ -3,25 +3,25 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
+import path from "path";
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
 
 //testee
-const { onGetFileList, onGetSNDContents, onRemoveFile, onRenameFile, onDownload, onCreateNewFile, onCreateNewDir } = require("../../../app/handlers/fileManager.js");
+import { onGetFileList, onGetSNDContents, onRemoveFile, onRenameFile, onDownload, onCreateNewFile, onCreateNewDir } from "../../../app/handlers/fileManager.js";
 
 //stubs
 const emit = sinon.stub();
 const cb = sinon.stub();
 
 //helper function
-const { gitInit } = require("../../../app/core/gitOperator2");
+import { gitInit } from "../../../app/core/gitOperator2.js";
 
 const testDirRoot = path.resolve("./WHEEL_TEST_TMP");
 

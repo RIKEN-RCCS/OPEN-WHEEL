@@ -3,12 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const { expect } = require("chai");
-const { describe, it, before, after, beforeEach, afterEach } = require("mocha");
-const tmp = require("tmp-promise");
+import path from "path";
+import fs from "fs-extra";
+import { expect } from "chai";
+import tmp from "tmp-promise";
 
 describe("commandCheck", ()=>{
   let checkAllCommands;
@@ -18,9 +16,6 @@ describe("commandCheck", ()=>{
   let originalNodeEnv;
 
   before(async ()=>{
-    originalNodeEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "test";
-
     //for logSettings.js
     await fs.mkdir(serverConfigDir, { recursive: true });
     await fs.writeJson(path.resolve(serverConfigDir, "log.json"), {
@@ -48,16 +43,14 @@ describe("commandCheck", ()=>{
     await fs.writeFile(path.resolve(appConfigDir, "server.key"), "dummy key");
     await fs.writeFile(path.resolve(appConfigDir, "server.crt"), "dummy crt");
 
-    const checkAllCommandsModule = require("../../../app/core/commandCheck.js");
-    checkAllCommands = checkAllCommandsModule;
+    const checkAllCommandsModule = await import("../../../app/core/commandCheck.js");
+    checkAllCommands = checkAllCommandsModule.default;
     commands = checkAllCommandsModule._internal.commands;
   });
 
   after(async ()=>{
-    process.env.NODE_ENV = originalNodeEnv;
     await fs.remove(serverConfigDir);
     await fs.remove(appConfigDir);
-    delete require.cache[require.resolve("../../../app/core/commandCheck.js")];
   });
 
   describe("checkAllCommands", ()=>{

@@ -3,19 +3,13 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const { expect } = require("chai");
-const { describe, it } = require("mocha");
-const sinon = require("sinon");
-const transferManager = require("../../../app/core/transferManager.js");
-const { _internal } = transferManager;
-
+import { expect } from "chai";
+import sinon from "sinon";
+import { getKey, register, removeTransferrers, _internal } from "../../../app/core/transferManager.js";
 describe("#getKey", ()=>{
-  let getKey;
 
   beforeEach(()=>{
-    getKey = transferManager.getKey;
   });
 
   it("should return correct key string if task has projectRootDir and remotehostID", ()=>{
@@ -39,7 +33,6 @@ describe("#getKey", ()=>{
 });
 
 describe("#register", ()=>{
-  let register;
   let getSshStub;
   let getDateStringStub;
   let getLoggerStub;
@@ -51,7 +44,6 @@ describe("#register", ()=>{
   let sshRecvStub;
 
   beforeEach(()=>{
-    register = transferManager.register;
     getSshStub = sinon.stub(_internal, "getSsh");
     getDateStringStub = sinon.stub(_internal, "getDateString");
     loggerDebugStub = sinon.stub();
@@ -231,11 +223,9 @@ describe("#register", ()=>{
 });
 
 describe("#removeTransferrers", ()=>{
-  let removeTransferrers;
   let transferrersMap;
 
   beforeEach(()=>{
-    removeTransferrers = transferManager.removeTransferrers;
     transferrersMap = new Map();
     sinon.stub(_internal, "transferrers").value(transferrersMap);
   });

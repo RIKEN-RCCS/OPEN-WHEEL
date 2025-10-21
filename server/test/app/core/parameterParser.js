@@ -3,15 +3,15 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-const chai = require("chai");
-const { expect } = require("chai");
-const chaiIterator = require("chai-iterator");
+import * as chai from "chai";
+const { expect } = chai;
+import chaiIterator from "chai-iterator";
 chai.use(chaiIterator);
-const fs = require("fs-extra");
-const path = require("path");
+import fs from "fs-extra";
+import path from "path";
 
 //testee
-const { getParamSize,
+import { getParamSize,
   getFilenames,
   paramVecGenerator,
   getParamSpacev2,
@@ -21,7 +21,7 @@ const { getParamSize,
   getParamAxisSize,
   calcParamAxisSize,
   isValidParamAxis,
-  expandArrayOfGlob } = require("../../../app/core/parameterParser");
+  expandArrayOfGlob } from "../../../app/core/parameterParser.js";
 const testRoot = "WHEEL_TEST_TMP"; ;
 var testDir;
 

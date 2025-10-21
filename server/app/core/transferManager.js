@@ -3,13 +3,12 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const SBS = require("simple-batch-system");
-const { getLogger } = require("../logSettings.js");
-const { getDateString } = require("../lib/utility");
-const { getSsh } = require("./sshManager.js");
+import SBS from "simple-batch-system";
+import { getLogger } from "../logSettings.js";
+import { getDateString } from "../lib/utility.js";
+import { getSsh } from "./sshManager.js";
 
-const _internal = {
+export const _internal = {
   SBS,
   getLogger,
   getDateString,
@@ -22,7 +21,7 @@ const _internal = {
  * @param {object} task - task component
  * @returns {string} - ID string
  */
-function getKey(task) {
+export function getKey(task) {
   return `${task.projectRootDir}-${task.remotehostID}`;
 }
 
@@ -35,7 +34,7 @@ function getKey(task) {
  * @param {string} dst - destination path
  * @param {string[]} opt - option object for ssh.send or ssh.recv
  */
-async function register(hostinfo, task, direction, src, dst, opt) {
+export async function register(hostinfo, task, direction, src, dst, opt) {
   if (!_internal.transferrers.has(getKey(task))) {
     const transferrer = new _internal.SBS({
       exec: async ({ direction, src, dst, task })=>{
@@ -66,21 +65,11 @@ async function register(hostinfo, task, direction, src, dst, opt) {
  * remove all transfer class instance from DB
  * @param {string} projectRootDir - project's root path
  */
-function removeTransferrers(projectRootDir) {
+export function removeTransferrers(projectRootDir) {
   const keysToRemove = Array.from(_internal.transferrers.keys()).filter((key)=>{
     return key.startsWith(projectRootDir);
   });
   keysToRemove.forEach((key)=>{
     _internal.transferrers.delete(key);
   });
-}
-
-module.exports = {
-  register,
-  removeTransferrers,
-  getKey
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
 }

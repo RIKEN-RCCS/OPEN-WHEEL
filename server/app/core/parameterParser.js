@@ -3,9 +3,7 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { promisify } = require("util");
-const glob = require("glob");
+import { glob } from "glob";
 
 /**
  * expand array of glob and return flat array of path
@@ -13,13 +11,13 @@ const glob = require("glob");
  * @param {string} cwd - working directory for globbing
  * @returns {string[]} - array of path
  */
-async function expandArrayOfGlob(globs, cwd) {
+export async function expandArrayOfGlob(globs, cwd) {
   const names = await Promise.all(
     globs.map((e)=>{
-      return promisify(glob)(e, { cwd });
+      return glob(e, { cwd });
     })
   );
-  return Array.prototype.concat.apply([], names);
+  return Array.prototype.concat.apply([], names).sort();
 }
 
 /**
@@ -29,7 +27,7 @@ async function expandArrayOfGlob(globs, cwd) {
  * @param {number} step - step width
  * @returns {boolean} -
  */
-function isValidParamAxis(min, max, step) {
+export function isValidParamAxis(min, max, step) {
   if (max > min) {
     return step > 0;
   }
@@ -47,7 +45,7 @@ function isValidParamAxis(min, max, step) {
  * @param {number} step - step width
  * @returns {number} -
  */
-function calcParamAxisSize(min, max, step) {
+export function calcParamAxisSize(min, max, step) {
   let modifiedMax = max;
   let modifiedMin = min;
   let modifiedStep = step;
@@ -73,7 +71,7 @@ function calcParamAxisSize(min, max, step) {
  * @param {object} axis - paramter set
  * @returns {number} -
  */
-function getParamAxisSize(axis) {
+export function getParamAxisSize(axis) {
   if (Array.isArray(axis.list)) {
     return axis.list.length;
   }
@@ -101,7 +99,7 @@ function getParamAxisSize(axis) {
  * @param {number} val - integer or fixed-point number
  * @returns {number} -
  */
-function getDigitsAfterTheDecimalPoint(val) {
+export function getDigitsAfterTheDecimalPoint(val) {
   const strVal = val.toString();
   return strVal.indexOf(".") !== -1 ? strVal.length - strVal.indexOf(".") - 1 : 0;
 }
@@ -112,7 +110,7 @@ function getDigitsAfterTheDecimalPoint(val) {
  * @param {object} axis - paramter set
  * @returns {string} - n-th parameter
  */
-function getNthValue(n, axis) {
+export function getNthValue(n, axis) {
   if (Array.isArray(axis.list)) {
     return axis.list[n].toString();
   }
@@ -133,7 +131,7 @@ function getNthValue(n, axis) {
  * @param {object} ParamSpace - parameter space
  * @returns {object} - parameter vector
  */
-function getNthParamVec(argN, ParamSpace) {
+export function getNthParamVec(argN, ParamSpace) {
   const paramVec = [];
   let n = argN;
   for (let i = 0; i < ParamSpace.length; i++) {
@@ -152,7 +150,7 @@ function getNthParamVec(argN, ParamSpace) {
  * @param {object} ParamSpace - parameter space
  * @returns {number} -
  */
-function getParamSize(ParamSpace) {
+export function getParamSize(ParamSpace) {
   return ParamSpace.reduce((p, a)=>{
     const paramAxisSize = getParamAxisSize(a);
     return paramAxisSize !== 0 ? p * paramAxisSize : p;
@@ -164,7 +162,7 @@ function getParamSize(ParamSpace) {
  * @param {object} ParamSpace - parameter space
  * @yields {object} -
  */
-function* paramVecGenerator(ParamSpace) {
+export function* paramVecGenerator(ParamSpace) {
   const totalSize = getParamSize(ParamSpace);
   let index = 0;
   while (index < totalSize) {
@@ -178,7 +176,7 @@ function* paramVecGenerator(ParamSpace) {
  * @param {object} ParamSpace - parameter space
  * @returns {string[]} -
  */
-function getFilenames(ParamSpace) {
+export function getFilenames(ParamSpace) {
   return ParamSpace.reduce((p, c)=>{
     if (c.type !== "file") {
       return p;
@@ -193,7 +191,7 @@ function getFilenames(ParamSpace) {
  * @param {string} cwd - working directory for globbing
  * @returns {object []} - parameter space which does not contain invalid parameter
  */
-async function getParamSpacev2(paramSpace, cwd) {
+export async function getParamSpacev2(paramSpace, cwd) {
   const cleanParamSpace = paramSpace.filter((e)=>{
     if (Object.prototype.hasOwnProperty.call(e, "min")
       && Object.prototype.hasOwnProperty.call(e, "max")
@@ -216,17 +214,3 @@ async function getParamSpacev2(paramSpace, cwd) {
   }
   return cleanParamSpace;
 }
-
-module.exports = {
-  paramVecGenerator,
-  getParamSize,
-  getFilenames,
-  getParamSpacev2,
-  getNthParamVec,
-  getNthValue,
-  getDigitsAfterTheDecimalPoint,
-  getParamAxisSize,
-  calcParamAxisSize,
-  isValidParamAxis,
-  expandArrayOfGlob
-};

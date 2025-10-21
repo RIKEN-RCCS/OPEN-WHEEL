@@ -3,21 +3,21 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const EventEmitter = require("events");
+import path from "path";
+import fs from "fs-extra";
+import EventEmitter from "events";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
-const Ajv = require("ajv");
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
 
 //testee
-const { exec } = require("../../../app/core/executer.js");
+import { exec } from "../../../app/core/executer.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -25,16 +25,16 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 const remoteHome = "/home/testuser";
 
 //helper functions
-const { componentJsonFilename, statusFilename, jobManagerJsonFilename } = require("../../../app/db/db");
-const { createNewProject, updateComponent, createNewComponent } = require("../../../app/core/projectFilesOperator");
-const { replacePathsep } = require("../../../app/core/pathUtils");
+import { componentJsonFilename, statusFilename, jobManagerJsonFilename } from "../../../app/db/db.js";
+import { createNewProject, updateComponent, createNewComponent } from "../../../app/core/projectFilesOperator.js";
+import { replacePathsep } from "../../../app/core/pathUtils.js";
 
-const { scriptName, pwdCmd, scriptHeader, exit } = require("../../testScript");
+import { scriptName, pwdCmd, scriptHeader, exit } from "../../testScript.js";
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
-const { remoteHost } = require("../../../app/db/db");
-const { createSsh } = require("../../../app/core/sshManager");
-const { eventEmitters } = require("../../../app/core/global");
+import { remoteHost } from "../../../app/db/db.js";
+import { createSsh } from "../../../app/core/sshManager.js";
+import { eventEmitters } from "../../../app/core/global.js";
 
 describe("UT for executer class", function () {
   this.timeout(0);

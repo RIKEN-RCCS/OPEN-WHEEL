@@ -4,9 +4,9 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { getLogger } = require("../logSettings");
-const { exportProject } = require("../core/exportProject.js");
-const { importProject, importProjectFromGitRepository } = require("../core/importProject.js");
+import { getLogger } from "../logSettings.js";
+import { exportProject } from "../core/exportProject.js";
+import { importProject, importProjectFromGitRepository } from "../core/importProject.js";
 
 async function onImportProject(clientID, target, parentDir, isURL, cb) {
   const importProjectFunc = isURL ? importProjectFromGitRepository : importProject;
@@ -28,7 +28,7 @@ async function onExportProject(projectRootDir, name, mail, memo, cb) {
   cb(url);
 }
 
-module.exports = {
+export {
   onImportProject,
   onExportProject
 };

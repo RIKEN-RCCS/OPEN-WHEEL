@@ -3,29 +3,33 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See Licensethe project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const cors = require("cors");
-const express = require("express");
-const ipfilter = require("express-ipfilter").IpFilter;
-const passport = require("passport");
-const session = require("express-session");
-const SQLiteStore = require("connect-sqlite3")(session);
-const { ensureLoggedIn } = require("connect-ensure-login");
-const asyncHandler = require("express-async-handler");
-const cookieParser = require("cookie-parser");
-const bodyParser = require("body-parser");
-const Siofu = require("socketio-file-upload");
-const { port, projectList } = require("./db/db.js");
-const { setProjectState, checkRunningJobs } = require("./core/projectFilesOperator");
-const { getLogger } = require("./logSettings");
-const { registerHandlers } = require("./handlers/registerHandlers");
-const { baseURL, setSio } = require("./core/global.js");
-const { tempdRoot } = require("./core/tempd.js");
-const { aboutWheel } = require("./core/versionInfo.js");
-const { hasEntry, hasCode, hasRefreshToken, storeCode, acquireAccessToken, getURLtoAcquireCode, getRemotehostIDFromState } = require("./core/webAPI.js");
-const checkAllCommands = require("./core/commandCheck.js");
+import path from "path";
+import fs from "fs-extra";
+import cors from "cors";
+import express from "express";
+import { IpFilter } from "express-ipfilter";
+import passport from "passport";
+import session from "express-session";
+import connectSqlite3 from "connect-sqlite3";
+import { ensureLoggedIn } from "connect-ensure-login";
+import asyncHandler from "express-async-handler";
+import cookieParser from "cookie-parser";
+import Siofu from "socketio-file-upload";
+import { port, projectList } from "./db/db.js";
+import { setProjectState, checkRunningJobs } from "./core/projectFilesOperator.js";
+import { getLogger } from "./logSettings.js";
+import { registerHandlers } from "./handlers/registerHandlers.js";
+import { baseURL, setSio } from "./core/global.js";
+import { tempdRoot } from "./core/tempd.js";
+import { aboutWheel } from "./core/versionInfo.js";
+import { hasEntry, hasCode, hasRefreshToken, storeCode, acquireAccessToken, getURLtoAcquireCode, getRemotehostIDFromState } from "./core/webAPI.js";
+import checkAllCommands from "./core/commandCheck.js";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const SQLiteStore = connectSqlite3(session);
 const secret = "wheel";
 const sessionDBFilename = "session.db";
 const sessionDBDir = process.env.WHEEL_SESSION_DB_DIR || path.resolve(__dirname, "db");
@@ -85,12 +89,12 @@ portNumber = portNumber > 0 ? portNumber : defaultPort;
 //middlewares
 if (address) {
   const ips = [address];
-  app.use(ipfilter(ips, { mode: "allow", logF: logger.debug.bind(logger) }));
+  app.use(IpFilter(ips, { mode: "allow", logF: logger.debug.bind(logger) }));
 }
 
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(Siofu.router);
 app.use(session({
@@ -174,11 +178,11 @@ if (process.env.WHEEL_ENABLE_WEB_API) {
 }
 
 const routes = {
-  home: require("./routes/home"),
-  workflow: require("./routes/workflow"),
-  remotehost: require("./routes/remotehost"),
-  login: require("./routes/login"),
-  viewer: require("./routes/viewer")
+  home: await import("./routes/home.js"),
+  workflow: await import("./routes/workflow.js"),
+  remotehost: await import("./routes/remotehost.js"),
+  login: await import("./routes/login.js"),
+  viewer: await import("./routes/viewer.js")
 };
 
 let checkLoggedIn = (req, res, next)=>{

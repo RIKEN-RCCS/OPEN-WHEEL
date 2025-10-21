@@ -3,22 +3,21 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
+import fs from "fs-extra";
 
 //DO NOT require any other WHEEL modules in this file
 
 //NG
-const reWin32ReservedNames = /^(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
+export const reWin32ReservedNames = /^(CON|PRN|AUX|NUL|CLOCK$|COM[0-9]|LPT[0-9])\..*$/i;
 const reOnlyWhilteSpace = /^\s*$/;
 //OK
 const alphanumeric = "a-zA-Z0-9";
 //due to escapeRegExp's spec, bars must be added separately any other regexp strings
-const bars = "_\\-";
-const pathseps = "/\\";
-const metaCharactors = "*?[]{}()!?+@.";
+const bars = "_\-";
+export const pathseps = "/\\";
+export const metaCharactors = "*?[]{}()!?+@.";
 
-const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]/\\])/g;
+const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]\/\\])/g;
 
 /**
  * escape meta character of regex (from MDN)
@@ -26,14 +25,14 @@ const reMustBeEscapedChars = /([.*+?^=!:${}()|[\]/\\])/g;
  * @param {string} target - target string which will be escaped
  * @returns {string} escaped regex string
  */
-function escapeRegExp(target) {
+export function escapeRegExp(target) {
   return target.replace(reMustBeEscapedChars, "\\$1");
 }
 
 /**
  * check if specified name is sane
  * @param {string} name - name to be checked
- * @returns {boolean} -
+ * @returns {boolean} - 
  */
 function isSane(name) {
   if (typeof name !== "string") {
@@ -53,7 +52,7 @@ function isSane(name) {
  * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
-function isValidName(name) {
+export function isValidName(name) {
   if (!isSane(name)) {
     return false;
   }
@@ -70,7 +69,7 @@ function isValidName(name) {
  * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
-function isValidInputFilename(name) {
+export function isValidInputFilename(name) {
   if (!isSane(name)) {
     return false;
   }
@@ -90,7 +89,7 @@ function isValidInputFilename(name) {
  * @param {string} name - name to be checked
  * @returns {boolean} - return true if it is ok
  */
-function isValidOutputFilename(name) {
+export function isValidOutputFilename(name) {
   if (!isSane(name)) {
     return false;
   }
@@ -110,7 +109,7 @@ function isValidOutputFilename(name) {
  * @param {boolean} withMilliseconds - option flag for time resolution
  * @returns {string} - string form of the date
  */
-function getDateString(humanReadable = false, withMilliseconds = false) {
+export function getDateString(humanReadable = false, withMilliseconds = false) {
   const now = new Date();
   const yyyy = `0000${now.getFullYear()}`.slice(-4);
   const month = now.getMonth() + 1;
@@ -129,9 +128,9 @@ function getDateString(humanReadable = false, withMilliseconds = false) {
 /**
  * split each element of array of string by '\n' and flatten
  * @param {string[]} outputArray - array of string which can have multiline in one elemetnt
- * @returns {string[]} -
+ * @returns {string[]} - 
  */
-function formatSshOutput(outputArray) {
+export function formatSshOutput(outputArray) {
   const rt = [];
   for (const e of outputArray) {
     rt.push(...e.split("\n"));
@@ -147,19 +146,6 @@ function formatSshOutput(outputArray) {
  * @param {object} data - JSON data to be written
  * @returns {Promise} - resolved when writing is done
  */
-function writeJsonWrapper(filename, data) {
+export function writeJsonWrapper(filename, data) {
   return fs.writeJson(filename, data, { spaces: 4 });
 }
-
-module.exports = {
-  escapeRegExp,
-  isValidName,
-  isValidInputFilename,
-  isValidOutputFilename,
-  reWin32ReservedNames,
-  pathseps,
-  metaCharactors,
-  getDateString,
-  formatSshOutput,
-  writeJsonWrapper
-};

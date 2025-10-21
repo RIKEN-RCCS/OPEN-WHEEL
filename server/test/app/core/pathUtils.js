@@ -3,17 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-const path = require("path");
+import path from "path";
 
 //testee
-const { sanitizePath } = require("../../../app/core/pathUtils.js");
-const { replacePathsep } = require("../../../app/core/pathUtils.js");
-const { convertPathSep } = require("../../../app/core/pathUtils.js");
+import { sanitizePath, replacePathsep, convertPathSep } from "../../../app/core/pathUtils.js";
 
 describe("UT for pathUtils class", function () {
   describe("#sanitizePath", ()=>{

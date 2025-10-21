@@ -3,23 +3,22 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const { readComponentJsonByID } = require("../core/componentJsonIO.js");
-const { remoteHost } = require("../db/db");
-const { getLogger } = require("../logSettings");
-const { createSsh, getSsh, askPassword } = require("../core/sshManager");
-const { createTempd } = require("../core/tempd.js");
-const { hasRemoteFileBrowser, hasGfarmTarBrowser } = require("../../../common/checkComponent.cjs");
-const { checkJWTAgent, startJWTAgent, gfls, gfmkdir, gfrm, gfmv, gfptarList } = require("../core/gfarmOperator.js");
-const {
+import path from "path";
+import fs from "fs-extra";
+import { readComponentJsonByID } from "../core/componentJsonIO.js";
+import { remoteHost } from "../db/db.js";
+import { getLogger } from "../logSettings.js";
+import { createSsh, getSsh, askPassword } from "../core/sshManager.js";
+import { createTempd } from "../core/tempd.js";
+import { hasRemoteFileBrowser, hasGfarmTarBrowser } from "../../../common/checkComponent.js";
+import { checkJWTAgent, startJWTAgent, gfls, gfmkdir, gfrm, gfmv, gfptarList } from "../core/gfarmOperator.js";
+import {
   createNewRemoteFile,
   createNewRemoteDir,
   removeRemoteFileOrDirectory,
   renameRemoteFileOrDirectory
-} = require("../core/remoteFileUtils.js");
-const { setJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
+} from "../core/remoteFileUtils.js";
+import { setJWTServerPassphrase } from "../core/jwtServerPassphraseManager.js";
 
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
@@ -211,7 +210,7 @@ const onCreateNewGfarmDir = gfarmFileUtilWrapper.bind(null, gfmkdir);
 const onRemoveGfarmFile = gfarmFileUtilWrapper.bind(null, gfrm);
 const onRenameGfarmFile = gfarmFileUtilWrapper.bind(null, gfmv);
 
-module.exports = {
+export {
   onRequestRemoteConnection,
   onGetRemoteGfarmFileList,
   onGetRemoteGfarmTarFileList,

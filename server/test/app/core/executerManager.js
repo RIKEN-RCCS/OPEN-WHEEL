@@ -3,20 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const chai = require("chai");
-chai.use(require("sinon-chai"));
-chai.use(require("chai-as-promised"));
-const path = require("path");
-const sinon = require("sinon");
-const fs = require("fs-extra");
-const { expect } = require("chai");
-const { EventEmitter } = require("events");
+import * as chai from "chai";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import path from "path";
+import sinon from "sinon";
+import fs from "fs-extra";
+const { expect } = chai;
+import { EventEmitter } from "events";
 
-const executerManager = require("../../../app/core/executerManager");
-const { _internal } = executerManager;
-const { removeExecuters, isExceededLimit, makeQueueOpt, makeEnv, makeStepOpt, makeBulkOpt, decideFinishState, needsRetry, promisifiedSpawn, getExecutersKey, getMaxNumJob, createExecuter, register, cancel } = executerManager;
+import { _internal, removeExecuters, isExceededLimit, makeQueueOpt, makeEnv, makeStepOpt, makeBulkOpt, decideFinishState, needsRetry, promisifiedSpawn, getExecutersKey, getMaxNumJob, createExecuter, register, cancel, RemoteJobExecuter, RemoteTaskExecuter, RemoteJobWebAPIExecuter, LocalTaskExecuter } from "../../../app/core/executerManager.js";
 const testDirRoot = "WHEEL_TEST_TMP";
 
 describe("UT for executerManager class", function () {
@@ -475,7 +474,6 @@ describe("UT for executerManager class", function () {
     });
   });
   describe("createExecuter", function () {
-    let RemoteJobExecuter, RemoteTaskExecuter, RemoteJobWebAPIExecuter, LocalTaskExecuter;
     let getLoggerStub;
     let loggerDebugStub;
     let loggerErrorStub;
@@ -485,7 +483,6 @@ describe("UT for executerManager class", function () {
       loggerErrorStub = sinon.stub();
       getLoggerStub = sinon.stub(_internal, "getLogger").returns({ debug: loggerDebugStub, error: loggerErrorStub });
       jobSchedulerStub = sinon.stub(_internal, "jobScheduler").value({ validScheduler: { submit: "mockSubmitCommand", queueOpt: "--queue=", reJobID: "mockJobIDPattern" } });
-      ({ RemoteJobExecuter, RemoteTaskExecuter, RemoteJobWebAPIExecuter, LocalTaskExecuter } = executerManager);
     });
     afterEach(()=>{
       sinon.restore();

@@ -3,14 +3,13 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const promiseRetry = require("promise-retry");
-const fs = require("fs-extra");
-const path = require("path");
-const Mode = require("stat-mode");
-const { getLogger } = require("../logSettings.js");
-const { gitAdd } = require("./gitOperator2");
-const { projectJsonFilename } = require("../db/db");
+import promiseRetry from "promise-retry";
+import fs from "fs-extra";
+import path from "path";
+import Mode from "stat-mode";
+import { getLogger } from "../logSettings.js";
+import { gitAdd } from "./gitOperator2.js";
+import { projectJsonFilename } from "../db/db.js";
 
 const _internal = {
   promiseRetry,
@@ -233,15 +232,4 @@ async function replaceCRLF(filename) {
   return _internal.fs.writeFile(filename, contents);
 }
 
-module.exports = {
-  readJsonGreedy,
-  addX,
-  openFile,
-  saveFile,
-  getUnusedPath,
-  replaceCRLF
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export { readJsonGreedy, addX, openFile, saveFile, getUnusedPath, replaceCRLF, _internal };

@@ -3,14 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { expect } = require("chai");
-const { describe, it, beforeEach, afterEach } = require("mocha");
-const sinon = require("sinon");
-const { rsyncExcludeOptionOfWheelSystemFiles } = require("../../../app/db/db");
-const deliverFile = require("../../../app/core/deliverFile.js");
-const { _internal } = deliverFile;
-
+import { expect } from "chai";
+import sinon from "sinon";
+import { rsyncExcludeOptionOfWheelSystemFiles } from "../../../app/db/db.js";
+import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, _internal } from "../../../app/core/deliverFile.js";
 describe("#deliverFile", ()=>{
   let lstatStub, copyStub, removeStub, ensureSymlinkStub, statsMock;
 
@@ -34,7 +30,7 @@ describe("#deliverFile", ()=>{
     const src = "/path/to/srcDir";
     const dst = "/path/to/dstDir";
 
-    const result = await deliverFile.deliverFile(src, dst, false);
+    const result = await deliverFile(src, dst, false);
 
     expect(lstatStub.calledOnceWithExactly(src)).to.be.true;
     expect(removeStub.calledOnceWithExactly(dst)).to.be.true;
@@ -55,7 +51,7 @@ describe("#deliverFile", ()=>{
     const src = "/path/to/srcFile";
     const dst = "/path/to/dstFile";
 
-    const result = await deliverFile.deliverFile(src, dst, false);
+    const result = await deliverFile(src, dst, false);
 
     expect(lstatStub.calledOnceWithExactly(src)).to.be.true;
     expect(removeStub.calledOnceWithExactly(dst)).to.be.true;
@@ -75,7 +71,7 @@ describe("#deliverFile", ()=>{
     const src = "/path/to/srcAny";
     const dst = "/path/to/dstAny";
 
-    const result = await deliverFile.deliverFile(src, dst, true);
+    const result = await deliverFile(src, dst, true);
 
     expect(removeStub.notCalled).to.be.true;
     expect(ensureSymlinkStub.notCalled).to.be.true;
@@ -99,7 +95,7 @@ describe("#deliverFile", ()=>{
     const src = "/dir/src";
     const dst = "/dir/dst";
 
-    const result = await deliverFile.deliverFile(src, dst, false);
+    const result = await deliverFile(src, dst, false);
 
     expect(removeStub.calledOnceWithExactly(dst)).to.be.true;
     expect(ensureSymlinkStub.calledOnce).to.be.true;
@@ -124,7 +120,7 @@ describe("#deliverFile", ()=>{
     const dst = "/some/dst";
 
     try {
-      await deliverFile.deliverFile(src, dst, false);
+      await deliverFile(src, dst, false);
       expect.fail("Expected deliverFile to reject, but it resolved");
     } catch (err) {
       expect(err).to.equal(otherError);
@@ -137,7 +133,6 @@ describe("#deliverFile", ()=>{
 });
 
 describe("#deliverFilesOnRemote", ()=>{
-  let deliverFilesOnRemote;
   let getLoggerStub;
   let loggerWarnStub;
   let loggerDebugStub;
@@ -145,7 +140,6 @@ describe("#deliverFilesOnRemote", ()=>{
   let sshExecStub;
 
   beforeEach(()=>{
-    deliverFilesOnRemote = deliverFile.deliverFilesOnRemote;
     loggerWarnStub = sinon.stub();
     loggerDebugStub = sinon.stub();
     getLoggerStub = sinon.stub(_internal, "getLogger").returns({ warn: loggerWarnStub, debug: loggerDebugStub });
@@ -249,14 +243,12 @@ describe("#deliverFilesOnRemote", ()=>{
 });
 
 describe("#deliverFilesFromRemote", ()=>{
-  let deliverFilesFromRemote;
   let getLoggerStub;
   let loggerWarnStub;
   let getSshStub;
   let sshRecvStub;
 
   beforeEach(()=>{
-    deliverFilesFromRemote = deliverFile.deliverFilesFromRemote;
     loggerWarnStub = sinon.stub();
     getLoggerStub = sinon.stub(_internal, "getLogger").returns({ warn: loggerWarnStub });
     sshRecvStub = sinon.stub();

@@ -3,17 +3,16 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 // setup test framework
-const { expect } = require("chai");
+import { expect } from "chai";
 
 // testee
-const { isValidOutputFilename,
+import { isValidOutputFilename,
   isValidInputFilename,
   isValidName,
   isSane, escapeRegExp,
-} = require("../../../../common/regexp.cjs");
+} from "../../../../common/regexp.js";
 
 describe("UT for regexp class", () => {
   describe("#isValidOutputFilename", () => {

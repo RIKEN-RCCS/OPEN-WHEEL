@@ -3,22 +3,20 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { promisify } = require("util");
-const path = require("path");
-const fs = require("fs-extra");
-const glob = require("glob");
-const { extract } = require("tar");
-const { createTempd } = require("./tempd.js");
-const { readJsonGreedy } = require("./fileUtils.js");
-const { projectList, projectJsonFilename, componentJsonFilename, suffix } = require("../db/db.js");
-const { gitSetup, gitClone, gitCommit, gitConfig, gitRemoveOrigin } = require("./gitOperator2.js");
-const { setComponentStateR, updateProjectROStatus, getHosts } = require("./projectFilesOperator.js");
-const { askHostMap } = require("./askHostMap.js");
-const { askRewindState } = require("./askRewindState.js");
-const { rewriteHosts } = require("./rewriteHosts.js");
+import path from "path";
+import fs from "fs-extra";
+import { glob } from "glob";
+import * as tar from "tar";
+import { createTempd } from "./tempd.js";
+import { readJsonGreedy } from "./fileUtils.js";
+import { projectList, projectJsonFilename, componentJsonFilename, suffix } from "../db/db.js";
+import { gitSetup, gitClone, gitCommit, gitConfig, gitRemoveOrigin } from "./gitOperator2.js";
+import { setComponentStateR, updateProjectROStatus, getHosts } from "./projectFilesOperator.js";
+import { askHostMap } from "./askHostMap.js";
+import { askRewindState } from "./askRewindState.js";
+import { rewriteHosts } from "./rewriteHosts.js";
 
-const _internal = {
+export const _internal = {
   askHostMap,
   getHosts,
   projectList,
@@ -30,7 +28,7 @@ const _internal = {
  * @param {string} dir - dir path to be checked
  * @returns {Promise} - resolved true if direcrory is empty, false if one or more containts exist
  */
-async function isEmptyDir(dir) {
+export async function isEmptyDir(dir) {
   const containts = await fs.readdir(dir);
   return containts.length === 0;
 }
@@ -40,10 +38,10 @@ async function isEmptyDir(dir) {
  * @param {string} archiveFile - path to archive file
  * @returns {object} - project name, export date, exporter
  */
-async function extractAndReadArchiveMetadata(archiveFile) {
+export async function extractAndReadArchiveMetadata(archiveFile) {
   const { dir } = await createTempd(null, "importProject");
   const workDir = await fs.mkdtemp(`${dir}/`);
-  await extract({ strict: true, file: archiveFile, cwd: workDir, strip: 1, preserveOwner: false, unlink: true });
+  await tar.x({ file: archiveFile, cwd: workDir, strip: 1, preserveOwner: false, unlink: true });
   const projectJson = await readJsonGreedy(path.join(workDir, projectJsonFilename));
   return { name: projectJson.name, dir: workDir };
 }
@@ -75,7 +73,7 @@ async function checkProjectAndComponentStatus(dir) {
   if (state !== "not-started") {
     result.push({ path: "project", state, ID: "projectState" });
   }
-  const componentJsonFiles = await promisify(glob)(path.join(dir, "**", componentJsonFilename));
+  const componentJsonFiles = await glob(path.join(dir, "**", componentJsonFilename));
   const componentsToBeFixed = await Promise.all(componentJsonFiles
     .map(async (componentJsonFile)=>{
       const { state, ID } = await readJsonGreedy(componentJsonFile);
@@ -134,7 +132,7 @@ async function checkAndFixProject(src, clientID) {
  * @param {string} parentDir - path to be extracted archive file
  * @returns {Promise} - resolved when project archive is imported
  */
-async function importProject(clientID, archiveFile, parentDir) {
+export async function importProject(clientID, archiveFile, parentDir) {
   const { name: projectName, dir: src } = await extractAndReadArchiveMetadata(archiveFile);
   const projectRootDir = path.resolve(parentDir, projectName + suffix);
   try {
@@ -159,7 +157,7 @@ async function importProject(clientID, archiveFile, parentDir) {
  * @param {string} parentDir - path to be extracted archive file
  * @returns {Promise} - resolved when project archive is imported
  */
-async function importProjectFromGitRepository(clientID, URL, parentDir) {
+export async function importProjectFromGitRepository(clientID, URL, parentDir) {
   const { name: projectName, dir: src } = await gitCloneAndReadArchiveMetadata(URL);
   const projectRootDir = path.resolve(parentDir, projectName + suffix);
   try {
@@ -171,15 +169,4 @@ async function importProjectFromGitRepository(clientID, URL, parentDir) {
     await fs.remove(src);
   }
   return projectRootDir;
-}
-
-module.exports = {
-  importProject,
-  importProjectFromGitRepository,
-  isEmptyDir,
-  extractAndReadArchiveMetadata
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
 }

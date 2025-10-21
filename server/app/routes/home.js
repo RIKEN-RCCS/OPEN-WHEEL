@@ -3,10 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { rootDir } = require("../db/db");
-module.exports = (req, res)=>{
+import path from "path";
+import { rootDir } from "../db/db.js";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default (req, res)=>{
   res.cookie("home", rootDir);
   res.cookie("pathSep", path.sep);
   const baseURL = process.env.WHEEL_BASE_URL || "/";

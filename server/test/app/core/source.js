@@ -3,31 +3,31 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
+import path from "path";
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
-const Ajv = require("ajv");
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
 
 //testee
-const { runProject, _internal } = require("../../../app/core/projectController");
+import { runProject, _internal } from "../../../app/core/projectController.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename } = require("../../../app/db/db");
-const { createNewProject, updateComponent, createNewComponent, addInputFile, addFileLink, renameOutputFile } = require("../../../app/core/projectFilesOperator");
-const { eventEmitters } = require("../../../app/core/global");
+import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
+import { createNewProject, updateComponent, createNewComponent, addInputFile, addFileLink, renameOutputFile } from "../../../app/core/projectFilesOperator.js";
+import { eventEmitters } from "../../../app/core/global.js";
 
-const { scriptName, pwdCmd, scriptHeader } = require("../../testScript");
+import { scriptName, pwdCmd, scriptHeader } from "../../testScript.js";
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
 describe("UT for source component", function () {

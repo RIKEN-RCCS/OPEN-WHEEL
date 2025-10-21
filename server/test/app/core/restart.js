@@ -3,26 +3,29 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const tar = require("tar");
-const sinon = require("sinon");
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs-extra";
+import * as tar from "tar";
+import sinon from "sinon";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("sinon-chai"));
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
 
 //testee
-const { runProject } = require("../../../app/core/projectController.js");
-const { eventEmitters } = require("../../../app/core/global.js");
+import { runProject } from "../../../app/core/projectController.js";
+import { eventEmitters } from "../../../app/core/global.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const testFileDir = path.resolve(__dirname, "../../testFiles");
 describe("restart UT", function () {
   this.timeout(0);

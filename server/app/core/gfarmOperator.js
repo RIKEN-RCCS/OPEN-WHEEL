@@ -3,11 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { getLogger } = require("../logSettings");
-const { getSsh, getSshHostinfo } = require("./sshManager.js");
-const { getJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
+import path from "path";
+import { getLogger } from "../logSettings.js";
+import { getSsh, getSshHostinfo } from "./sshManager.js";
+import { getJWTServerPassphrase } from "../core/jwtServerPassphraseManager.js";
 
 const _internal = {
   getSsh,
@@ -241,7 +240,7 @@ async function gfmv(projectRootDir, hostID, target, newName, timeout = 60) {
   return execOnCSGW(projectRootDir, hostID, timeout, "gfmv -f", src, dst);
 }
 
-module.exports = {
+export {
   checkJWTAgent,
   startJWTAgent,
   stopJWTAgent,
@@ -253,9 +252,6 @@ module.exports = {
   gfls,
   gfrm,
   gfmkdir,
-  gfmv
+  gfmv,
+  _internal
 };
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}

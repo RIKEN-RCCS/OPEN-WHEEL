@@ -3,20 +3,18 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
+import path from "path";
+import fs from "fs-extra";
 
 //setup test framework
-const { describe, it, beforeEach, afterEach } = require("mocha");
-const chai = require("chai");
-const { expect } = require("chai");
-const sinon = require("sinon");
+import * as chai from "chai";
+const { expect } = chai;
+import sinon from "sinon";
 
 //testee
-const fileBrowser = require("../../../app/core/fileBrowser");
-const { getSNDs, bundleSNDFiles } = fileBrowser;
-const getContents = require("../../../app/core/fileBrowser");
+import lsFunction from "../../../app/core/fileBrowser.js";
+import { getSNDs, bundleSNDFiles, _internal } from "../../../app/core/fileBrowser.js";
+const getContents = lsFunction;
 
 const testDirRoot = "WHEEL_TEST_TMP";
 describe("file Browser UT", ()=>{
@@ -862,8 +860,8 @@ describe("#ls", ()=>{
   let isComponentDirStub;
 
   beforeEach(()=>{
-    ls = fileBrowser;
-    const { _internal } = fileBrowser;
+    ls = lsFunction;
+    // _internal is already imported
 
     readdirStub = sinon.stub(_internal.fs, "readdir");
     lstatStub = sinon.stub(_internal.fs, "lstat");

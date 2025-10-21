@@ -3,17 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { expect } = require("chai");
-const sinon = require("sinon");
-const jobManager = require("../../../app/core/jobManager.js");
-const { _internal } = jobManager;
-
+import { EventEmitter } from "events";
+import { expect } from "chai";
+import sinon from "sinon";
+import { _internal, getFirstCapture, getBulkFirstCapture, isJobFailed, getStatusCode, createRequestForWebAPI, createRequest, registerJob } from "../../../app/core/jobManager.js";
 describe("#getFirstCapture", ()=>{
-  let getFirstCapture;
 
   beforeEach(()=>{
-    getFirstCapture = jobManager.getFirstCapture;
+    // getFirstCapture is now imported directly
   });
 
   it("should return null if there is no match (result === null)", ()=>{
@@ -46,10 +43,9 @@ describe("#getFirstCapture", ()=>{
 });
 
 describe("#getBulkFirstCapture", ()=>{
-  let getBulkFirstCapture;
 
   beforeEach(()=>{
-    getBulkFirstCapture = jobManager.getBulkFirstCapture;
+    // getBulkFirstCapture is now imported directly
   });
 
   it("should return [1, []] if no lines match the pattern", ()=>{
@@ -105,10 +101,9 @@ describe("#getBulkFirstCapture", ()=>{
 });
 
 describe("#isJobFailed", ()=>{
-  let isJobFailed;
 
   beforeEach(()=>{
-    isJobFailed = jobManager.isJobFailed;
+    // isJobFailed is now imported directly
   });
 
   it("should return true if acceptableJobStatus is undefined and code is '0'", ()=>{
@@ -179,7 +174,6 @@ describe("#isJobFailed", ()=>{
 });
 
 describe("#getStatusCode", ()=>{
-  let getStatusCode;
   let getLoggerStub;
   let loggerDebugStub;
   let loggerWarnStub;
@@ -188,7 +182,7 @@ describe("#getStatusCode", ()=>{
   let createBulkStatusFileStub;
 
   beforeEach(()=>{
-    getStatusCode = jobManager.getStatusCode;
+    // getStatusCode is now imported directly
     loggerDebugStub = sinon.stub();
     loggerWarnStub = sinon.stub();
     getLoggerStub = sinon.stub(_internal, "getLogger").returns({ debug: loggerDebugStub, warn: loggerWarnStub });
@@ -396,7 +390,7 @@ describe("#createRequestForWebAPI", ()=>{
   let JS;
 
   beforeEach(()=>{
-    createRequestForWebAPIFunc = jobManager.createRequestForWebAPI;
+    createRequestForWebAPIFunc = createRequestForWebAPI;
     originalCertFilename = process.env.WHEEL_CERT_FILENAME;
     originalCertPassphrase = process.env.WHEEL_CERT_PASSPHRASE;
     process.env.WHEEL_CERT_FILENAME = "testCertFile.p12";
@@ -448,7 +442,7 @@ describe("#createRequest", ()=>{
   let JS;
 
   beforeEach(()=>{
-    createRequestFunc = jobManager.createRequest;
+    createRequestFunc = createRequest;
     hostinfo = {
       statusCheckInterval: 10,
       someOtherProperty: "dummy"
@@ -510,10 +504,8 @@ describe("#createRequest", ()=>{
   });
 });
 
-const EventEmitter = require("events");
 
 describe("#registerJob", ()=>{
-  let registerJob;
   let jobSchedulerStub;
   let addRequestStub;
   let getRequestStub;
@@ -527,7 +519,7 @@ describe("#registerJob", ()=>{
   let task;
 
   beforeEach(()=>{
-    registerJob = jobManager.registerJob;
+    // registerJob is now imported directly
     jobSchedulerStub = sinon.stub(_internal, "jobScheduler").value({
       dummyJS: {
         maxStatusCheckError: 2,

@@ -3,10 +3,9 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { emitAll } = require("../handlers/commUtils.js");
-const { remoteHost } = require("../db/db.js");
-const { getLogger } = require("../logSettings");
+import { emitAll } from "../handlers/commUtils.js";
+import { remoteHost } from "../db/db.js";
+import { getLogger } from "../logSettings.js";
 
 const _internal = {
   emitAll,
@@ -71,11 +70,4 @@ async function askHostMap(clientID, hosts) {
   });
 }
 
-module.exports = {
-  askHostMap,
-  isValidHostMap
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export { askHostMap, isValidHostMap, _internal };

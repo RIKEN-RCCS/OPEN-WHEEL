@@ -3,32 +3,31 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { promisify } = require("util");
-const EventEmitter = require("events");
-const axios = require("axios");
-const glob = require("glob");
-const fs = require("fs-extra");
-const SBS = require("simple-batch-system");
-const { getLogger } = require("../logSettings");
-const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } = require("../db/db");
-const { deliverFile } = require("../core/fileUtils");
-const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
-const { getComponentDir } = require("../core/componentJsonIO.js");
-const { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR } = require("../core/projectFilesOperator");
-const { createSsh, removeSsh, askPassword } = require("../core/sshManager.js");
-const { setJWTServerPassphrase, removeAllJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
-const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
-const { isValidOutputFilename } = require("../lib/utility");
-const { checkWritePermissions, parentDirs, eventEmitters } = require("../core/global.js");
-const { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, sendComponentTree } = require("./senders.js");
-const { emitAll, emitWithPromise } = require("./commUtils.js");
-const { removeTempd, getTempd } = require("../core/tempd.js");
-const { validateComponents } = require("../core/validateComponents.js");
-const { writeJsonWrapper } = require("../lib/utility");
-const { checkJWTAgent, startJWTAgent } = require("../core/gfarmOperator.js");
-const allowedOperations = require("../../../common/allowedOperations.cjs");
+import path from "path";
+import { promisify } from "util";
+import EventEmitter from "events";
+import axios from "axios";
+import { glob } from "glob";
+import fs from "fs-extra";
+import SBS from "simple-batch-system";
+import { getLogger } from "../logSettings.js";
+import { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } from "../db/db.js";
+import { deliverFile } from "../core/deliverFile.js";
+import { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } from "../core/gitOperator2.js";
+import { getComponentDir } from "../core/componentJsonIO.js";
+import { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR } from "../core/projectFilesOperator.js";
+import { createSsh, removeSsh, askPassword } from "../core/sshManager.js";
+import { setJWTServerPassphrase, removeAllJWTServerPassphrase } from "../core/jwtServerPassphraseManager.js";
+import { runProject, cleanProject, stopProject } from "../core/projectController.js";
+import { isValidOutputFilename } from "../lib/utility.js";
+import { checkWritePermissions, parentDirs, eventEmitters } from "../core/global.js";
+import { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, sendComponentTree } from "./senders.js";
+import { emitAll, emitWithPromise } from "./commUtils.js";
+import { removeTempd, getTempd } from "../core/tempd.js";
+import { validateComponents } from "../core/validateComponents.js";
+import { writeJsonWrapper } from "../lib/utility.js";
+import { checkJWTAgent, startJWTAgent } from "../core/gfarmOperator.js";
+import allowedOperations from "../../../common/allowedOperations.js";
 
 const _internal = {
   projectOperationQueues: new Map(),
@@ -76,7 +75,7 @@ async function askUnsavedFiles(clientID, projectRootDir, targetDir) {
 }
 async function getSourceCandidates(projectRootDir, ID) {
   const componentDir = await getComponentDir(projectRootDir, ID);
-  return promisify(glob)("*", { cwd: path.join(projectRootDir, componentDir), ignore: componentJsonFilename });
+  return glob("*", { cwd: path.join(projectRootDir, componentDir), ignore: componentJsonFilename });
 }
 async function askSourceFilename(clientID, ID, name, description, candidates) {
   return new Promise((resolve, reject)=>{
@@ -140,7 +139,7 @@ async function makeOIDCAuth(clientID, remotehostID) {
   });
 }
 
-async function onGetProjectJson(projectRootDir, ack) {
+export async function onGetProjectJson(projectRootDir, ack) {
   try {
     const projectJson = await getProjectJson(projectRootDir);
     emitAll(projectRootDir, "projectJson", projectJson);
@@ -155,15 +154,15 @@ async function onGetProjectJson(projectRootDir, ack) {
   }
   return ack(true);
 }
-async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
+export async function onGetWorkflow(clientID, projectRootDir, componentID, ack) {
   const requestedComponentDir = await getComponentDir(projectRootDir, componentID);
   return _internal.sendWorkflow(ack, projectRootDir, requestedComponentDir, clientID);
 }
-async function onUpdateProjectDescription(projectRootDir, description, ack) {
+export async function onUpdateProjectDescription(projectRootDir, description, ack) {
   await updateProjectDescription(projectRootDir, description);
   onGetProjectJson(projectRootDir, ack);
 }
-async function onUpdateProjectROStatus(projectRootDir, isRO, ack) {
+export async function onUpdateProjectROStatus(projectRootDir, isRO, ack) {
   await updateProjectROStatus(projectRootDir, isRO);
   onGetProjectJson(projectRootDir, ack);
 }
@@ -344,7 +343,7 @@ async function onStopProject(projectRootDir) {
 }
 _internal.onStopProject = onStopProject;
 
-async function onCleanComponent(clientID, projectRootDir, targetComponentID) {
+export async function onCleanComponent(clientID, projectRootDir, targetComponentID) {
   const componentDir = await getComponentDir(projectRootDir, targetComponentID);
   try {
     await askUnsavedFiles(clientID, projectRootDir, componentDir);
@@ -484,27 +483,17 @@ function getProjectOperationQueue(projectRootDir) {
   }
   return _internal.projectOperationQueues.get(projectRootDir);
 }
-async function onProjectOperation(clientID, projectRootDir, operation, ack) {
+export async function onProjectOperation(clientID, projectRootDir, operation, ack) {
   const queue = getProjectOperationQueue(projectRootDir);
   const rt = await queue.qsub({ operation, clientID, projectRootDir, ack });
   return rt;
 }
 
-module.exports = {
-  onGetProjectJson,
-  onGetWorkflow,
-  onCleanComponent,
-  onUpdateProjectDescription,
-  onUpdateProjectROStatus,
-  onProjectOperation,
-  projectOperationQueues: _internal.projectOperationQueues,
-  onRunProject: _internal.onRunProject,
-  onStopProject: _internal.onStopProject,
-  onCleanProject: _internal.onCleanProject,
-  onRevertProject: _internal.onRevertProject,
-  onSaveProject: _internal.onSaveProject
-};
+export const projectOperationQueues = _internal.projectOperationQueues;
+_internal.onRunProject = onRunProject;
+_internal.onStopProject = onStopProject;
+_internal.onCleanProject = onCleanProject;
+_internal.onRevertProject = onRevertProject;
+_internal.onSaveProject = onSaveProject;
 
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export { _internal };

@@ -3,19 +3,16 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const chai = require("chai");
-const sinon = require("sinon");
+import * as chai from "chai";
+import sinon from "sinon";
 const { expect } = chai;
-const componentJsonIO = require("../../../app/core/componentJsonIO");
-const { _internal } = componentJsonIO;
-const path = require("path");
-const chaiAsPromised = require("chai-as-promised");
+import { _internal, readComponentJsonByID, writeComponentJsonByID, readComponentJson, writeComponentJson, getComponentDir, componentJsonReplacer } from "../../../app/core/componentJsonIO.js";
+import path from "path";
+import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 
 //testee
-const { readComponentJsonByID, writeComponentJsonByID, readComponentJson, writeComponentJson, getComponentDir, componentJsonReplacer } = componentJsonIO;
 
 describe("UT for componentJsonIO class", ()=>{
   describe("#readComponentJsonByID", ()=>{

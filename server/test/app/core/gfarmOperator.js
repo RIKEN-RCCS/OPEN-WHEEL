@@ -1,4 +1,4 @@
-const gfarmOperator = require("../../../app/core/gfarmOperator.js");
+import gfarmOperator from "../../../app/core/gfarmOperator.js";
 const { _internal } = gfarmOperator;
 
 //testee

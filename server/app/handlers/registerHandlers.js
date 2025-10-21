@@ -3,17 +3,16 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onCommitFiles, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } = require("./fileManager.js");
-const { onUploadFileSaved2 } = require("./fileManager2.js");
-const { onTryToConnect, onTryToConnectById } = require("./tryToConnect.js");
-const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./projectList.js");
-const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription, onUpdateProjectROStatus, onCleanComponent } = require("./projectController.js");
-const { onSaveFile, onOpenFile } = require("./rapid.js");
-const { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } = require("./remoteHost.js");
-const { onGetJobSchedulerList, onGetJobSchedulerLabelList } = require("./jobScheduler.js");
-const { validateComponents } = require("../core/validateComponents.js");
-const {
+import { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onCommitFiles, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } from "./fileManager.js";
+import { onUploadFileSaved2 } from "./fileManager2.js";
+import { onTryToConnect, onTryToConnectById } from "./tryToConnect.js";
+import { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } from "./projectList.js";
+import { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription, onUpdateProjectROStatus, onCleanComponent } from "./projectController.js";
+import { onSaveFile, onOpenFile } from "./rapid.js";
+import { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } from "./remoteHost.js";
+import { onGetJobSchedulerList, onGetJobSchedulerLabelList } from "./jobScheduler.js";
+import { validateComponents } from "../core/validateComponents.js";
+import {
   onCreateNode,
   onUpdateComponent,
   onUpdateComponentPos,
@@ -34,12 +33,12 @@ const {
   onUpdateEnv,
   onGetWebhook,
   onUpdateWebhook
-} = require("./workflowEditor.js");
-const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } = require("./jobScript.js");
-const { onGetResultFiles } = require("./resultFiles.js");
-const { sendTaskStateList, sendComponentTree } = require("./senders.js");
-const { getLogger } = require("../logSettings");
-const {
+} from "./workflowEditor.js";
+import { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } from "./jobScript.js";
+import { onGetResultFiles } from "./resultFiles.js";
+import { sendTaskStateList, sendComponentTree } from "./senders.js";
+import { getLogger } from "../logSettings.js";
+import {
   onCreateNewRemoteFile,
   onCreateNewRemoteDir,
   onRequestRemoteConnection,
@@ -53,10 +52,10 @@ const {
   onRemoveGfarmFile,
   onRenameGfarmFile,
   onGetRemoteGfarmTarFileList
-} = require("./remoteFileBrowser.js");
-const { aboutWheel } = require("../core/versionInfo.js");
-const { onImportProject, onExportProject } = require("./projectArchive.js");
-const { getTempdRoot } = require("../core/tempd.js");
+} from "./remoteFileBrowser.js";
+import { aboutWheel } from "../core/versionInfo.js";
+import { onImportProject, onExportProject } from "./projectArchive.js";
+import { getTempdRoot } from "../core/tempd.js";
 
 const registerHandlers = (socket, Siofu)=>{
   //
@@ -257,6 +256,6 @@ const registerHandlers = (socket, Siofu)=>{
   });
 };
 
-module.exports = {
+export {
   registerHandlers
 };

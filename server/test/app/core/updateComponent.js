@@ -3,28 +3,28 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const path = require("path");
-const fs = require("fs-extra");
-const { componentJsonFilename } = require("../../../app/db/db.js");
+import path from "path";
+import fs from "fs-extra";
+import { componentJsonFilename } from "../../../app/db/db.js";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("sinon-chai"));
-const Ajv = require("ajv");
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
-chai.use(require("deep-equal-in-any-order"));
-chai.use(require("chai-as-promised"));
-const sinon = require("sinon");
-const { createNewProject, createNewComponent } = require("../../../app/core/projectFilesOperator.js");
-const { writeComponentJson } = require("../../../app/core/componentJsonIO.js");
+import deepEqualInAnyOrder from "deep-equal-in-any-order";
+chai.use(deepEqualInAnyOrder);
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinon from "sinon";
+import { createNewProject, createNewComponent } from "../../../app/core/projectFilesOperator.js";
+import { writeComponentJson } from "../../../app/core/componentJsonIO.js";
 
 //testee
-const updateComponent = require("../../../app/core/updateComponent.js");
-const { _internal } = updateComponent;
-
+import updateComponent, { _internal } from "../../../app/core/updateComponent.js";
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 

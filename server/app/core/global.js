@@ -4,7 +4,8 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const debug = require("debug")("wheel");
+import debugLib from "debug";
+const debug = debugLib("wheel");
 const baseURL = process.env.WHEEL_BASE_URL || "/";
 const parentDirs = new Map(); //workflow path which is displayed on graphview
 const eventEmitters = new Map(); //event emitter object which is used to communicate while running project
@@ -31,7 +32,7 @@ function getSio() {
   return sio;
 }
 
-module.exports = {
+export {
   parentDirs,
   eventEmitters,
   watchers,

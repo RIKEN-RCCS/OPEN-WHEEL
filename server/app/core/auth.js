@@ -3,14 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const crypto = require("crypto");
-const { promisify } = require("util");
-const { Database } = require("sqlite3");
-const { open } = require("sqlite");
-const { userDBFilename, userDBDir } = require("../db/db.js");
-const { getLogger } = require("../logSettings");
+import path from "path";
+import crypto from "crypto";
+import { promisify } from "util";
+import sqlite3 from "sqlite3";
+const { Database } = sqlite3;
+import { open } from "sqlite";
+import { userDBFilename, userDBDir } from "../db/db.js";
+import { getLogger } from "../logSettings.js";
 
 const _internal = {
   crypto,
@@ -134,16 +134,8 @@ async function delUser(username) {
   return _internal.db.run(`DELETE FROM users WHERE username = '${username}'`);
 }
 
-module.exports = {
-  getHashedPassword: _internal.getHashedPassword,
-  initialize: _internal.initialize,
-  addUser,
-  isValidUser,
-  listUser,
-  delUser
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-  module.exports.getUserData = _internal.getUserData;
-}
+export const getHashedPassword = _internal.getHashedPassword;
+export const initialize = _internal.initialize;
+export { addUser, isValidUser, listUser, delUser };
+export const getUserData = _internal.getUserData;
+export { _internal };

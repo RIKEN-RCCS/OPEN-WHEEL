@@ -3,39 +3,48 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
+import fs from "fs-extra";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 //setup test framework
-const chai = require("chai");
-const { expect } = require("chai");
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
+import { expect } from "chai";
+import * as chai from "chai";
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
 chai.use((_chai, _)=>{
   _chai.Assertion.addMethod("withMessage", function (msg) {
     _.flag(this, "message", msg);
   });
 });
 
-const { logFilename } = require("../../app/db/db.js");
+import { logFilename } from "../../app/db/db.js";
 const projectRootDir = path.resolve("hoge");
 
 //testee
-const { getLogger, configure, logSettings, _internal } = require("../../app/logSettings.js");
+import { getLogger, configure, logSettings, _internal } from "../../app/logSettings.js";
 
 describe("Unit test for log4js's helper functions", ()=>{
   let logger;
   let emitAll;
+  let originalLog2clientLevel;
+  let originalFilterdFileLevel;
   before(async ()=>{
+    originalLog2clientLevel = logSettings.appenders.log2client.level;
+    originalFilterdFileLevel = logSettings.appenders.filterdFile.level;
     logSettings.appenders.log2client.level = "debug";
     logSettings.appenders.filterdFile.level = "trace";
     configure(logSettings);
     emitAll = sinon.stub(_internal, "emitAll");
   });
   after(async ()=>{
-    logSettings.appenders.log2client.level = process.env.WHEEL_LOGLEVEL;
-    logSettings.appenders.filterdFile.level = process.env.WHEEL_LOGLEVEL;
+    sinon.restore();
+    logSettings.appenders.log2client.level = originalLog2clientLevel;
+    logSettings.appenders.filterdFile.level = originalFilterdFileLevel;
     configure(logSettings);
   });
   describe("#getLogger", ()=>{

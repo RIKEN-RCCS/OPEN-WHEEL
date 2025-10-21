@@ -3,36 +3,35 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const os = require("os");
-const sinon = require("sinon");
+import path from "path";
+import fs from "fs-extra";
+import os from "os";
+import sinon from "sinon";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("sinon-chai"));
-const Ajv = require("ajv");
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
-chai.use(require("chai-as-promised"));
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
 
-const projectController = require("../../../app/core/projectController.js");
-const { _internal } = projectController;
-const { runProject, stopProject, cleanProject, updateProjectState } = projectController;
+import { _internal, runProject, stopProject, cleanProject, updateProjectState } from "../../../app/core/projectController.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename, statusFilename } = require("../../../app/db/db.js");
-const { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } = require("../../../app/core/projectFilesOperator.js");
-const { gitAdd, gitCommit } = require("../../../app/core/gitOperator2.js");
-const { eventEmitters: globalEventEmitters } = require("../../../app/core/global.js");
+import { projectJsonFilename, componentJsonFilename, statusFilename } from "../../../app/db/db.js";
+import { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } from "../../../app/core/projectFilesOperator.js";
+import { gitAdd, gitCommit } from "../../../app/core/gitOperator2.js";
+import { eventEmitters as globalEventEmitters } from "../../../app/core/global.js";
 
-const { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } = require("../../testScript.js");
-const { sleep } = require("../../testUtil.js");
+import { scriptName, pwdCmd, scriptHeader, referenceEnv, exit } from "../../testScript.js";
+import { sleep } from "../../testUtil.js";
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
 describe("project Controller UT", function () {

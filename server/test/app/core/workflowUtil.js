@@ -3,21 +3,17 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-
-const { expect } = require("chai");
-const sinon = require("sinon");
-const workflowUtil = require("../../../app/core/workflowUtil.js");
-const { _internal } = workflowUtil;
+import { expect } from "chai";
+import sinon from "sinon";
+import { _internal, getThreeGenerationFamily, getChildren as getChildrenUtil } from "../../../app/core/workflowUtil.js";
+import { componentJsonFilename } from "../../../app/db/db.js";
 
 describe("#getThreeGenerationFamily", ()=>{
-  let getThreeGenerationFamily;
   let readComponentJsonStub;
   let getChildrenStub;
   let hasChildStub;
 
   beforeEach(()=>{
-    getThreeGenerationFamily = workflowUtil.getThreeGenerationFamily;
     readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
     getChildrenStub = sinon.stub(_internal, "getChildren");
     hasChildStub = sinon.stub(_internal, "hasChild");
@@ -103,17 +99,14 @@ describe("#getChildren", ()=>{
   let getChildren;
   let getComponentDirStub;
   let readJsonGreedyStub;
-  let promisifyStub;
   let globStub;
-  let componentJsonFilename;
 
   beforeEach(()=>{
-    getChildren = workflowUtil.getChildren;
+    getChildren = getChildrenUtil;
     getComponentDirStub = sinon.stub(_internal, "getComponentDir");
     readJsonGreedyStub = sinon.stub(_internal, "readJsonGreedy");
     globStub = sinon.stub();
-    promisifyStub = sinon.stub(_internal, "promisify").returns(globStub);
-    componentJsonFilename = workflowUtil.componentJsonFilename;
+    sinon.stub(_internal, "glob").callsFake(globStub);
   });
 
   afterEach(()=>{
@@ -126,7 +119,6 @@ describe("#getChildren", ()=>{
     const result = await getChildren("/some/project", "parentID");
     expect(result).to.be.an("array").that.is.empty;
     expect(getComponentDirStub.calledOnceWithExactly("/some/project", "parentID", true)).to.be.true;
-    expect(promisifyStub.notCalled).to.be.true;
     expect(globStub.notCalled).to.be.true;
   });
 
@@ -136,8 +128,8 @@ describe("#getChildren", ()=>{
 
     const result = await getChildren("/projRoot", "someParent");
     expect(result).to.be.an("array").that.is.empty;
-    const expectedGlobPath = require("path").join("/path/to/component", "*", componentJsonFilename);
-    expect(promisifyStub.calledOnce).to.be.true;
+    const { join } = await import("path");
+    const expectedGlobPath = join("/path/to/component", "*", componentJsonFilename);
     expect(globStub.calledOnceWithExactly(expectedGlobPath)).to.be.true;
   });
 
@@ -156,8 +148,49 @@ describe("#getChildren", ()=>{
     expect(result).to.have.lengthOf(2);
     expect(result).to.deep.include({ ID: "child1", subComponent: false });
     expect(result).to.deep.include({ ID: "child3" });
-    const expectedGlobPath = require("path").join("/my/component", "*", componentJsonFilename);
+    const { join } = await import("path");
+    const expectedGlobPath = join("/my/component", "*", componentJsonFilename);
     expect(globStub.calledOnceWithExactly(expectedGlobPath)).to.be.true;
     expect(readJsonGreedyStub.callCount).to.equal(3);
+  });
+
+  it("should handle the case where isParentDir is true and use parentID as directory path", async ()=>{
+    globStub.resolves(["/mock/project/parent/child/cmp.wheel.json"]);
+    readJsonGreedyStub.resolves({ ID: "child", subComponent: false });
+
+    const result = await getChildren("/mock/project", "/mock/project/parent", true);
+
+    expect(result).to.deep.equal([{ ID: "child", subComponent: false }]);
+    expect(getComponentDirStub.notCalled).to.be.true;
+  });
+
+  it("should handle the case where parentID is null and use projectRootDir", async ()=>{
+    globStub.resolves(["/mock/project/child/cmp.wheel.json"]);
+    readJsonGreedyStub.resolves({ ID: "child", subComponent: false });
+
+    const result = await getChildren("/mock/project", null, false);
+
+    expect(result).to.deep.equal([{ ID: "child", subComponent: false }]);
+    expect(getComponentDirStub.notCalled).to.be.true;
+  });
+
+  it("should return an empty array if the directory is not found", async ()=>{
+    getComponentDirStub.resolves(null);
+
+    const result = await getChildren("/mock/project", "invalidID", false);
+
+    expect(result).to.deep.equal([]);
+  });
+
+  it("should return an array of child components excluding subComponents", async ()=>{
+    getComponentDirStub.resolves("/mock/project/component");
+    globStub.resolves(["/mock/project/component/child1/cmp.wheel.json", "/mock/project/component/child2/cmp.wheel.json"]);
+
+    readJsonGreedyStub.withArgs("/mock/project/component/child1/cmp.wheel.json").resolves({ ID: "child1", subComponent: false });
+    readJsonGreedyStub.withArgs("/mock/project/component/child2/cmp.wheel.json").resolves({ ID: "child2", subComponent: true });
+
+    const result = await getChildren("/mock/project", "validID", false);
+
+    expect(result).to.deep.equal([{ ID: "child1", subComponent: false }]);
   });
 });

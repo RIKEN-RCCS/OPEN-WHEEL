@@ -3,20 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
-const Ajv = require("ajv");
-const { getLogger } = require("../logSettings.js");
-const { hasChild, isInitialComponent, isLocalComponent } = require("./workflowComponent.js");
-const { getComponentFullName } = require("./projectFilesOperator.js");
-const { jobScheduler } = require("../db/db");
-const { readComponentJson, getComponentDir } = require("./componentJsonIO.js");
-const { readJsonGreedy } = require("./fileUtils");
-const { getChildren } = require("./workflowUtil.js");
-const { isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
-const { remoteHost } = require("../db/db.js");
-const getSchema = require("../db/jsonSchemas.js");
+import fs from "fs-extra";
+import path from "path";
+import Ajv from "ajv";
+import { getLogger } from "../logSettings.js";
+import { hasChild, isInitialComponent, isLocalComponent } from "./workflowComponent.js";
+import { getComponentFullName } from "./projectFilesOperator.js";
+import { jobScheduler } from "../db/db.js";
+import { readComponentJson, getComponentDir } from "./componentJsonIO.js";
+import { readJsonGreedy } from "./fileUtils.js";
+import { getChildren } from "./workflowUtil.js";
+import { isValidInputFilename, isValidOutputFilename } from "../lib/utility.js";
+import { remoteHost } from "../db/db.js";
+import getSchema from "../db/jsonSchemas.js";
 
 const _internal = {
   getLogger,
@@ -676,7 +675,7 @@ async function validateComponents(projectRootDir, startComponentID) {
   return report;
 }
 
-module.exports = {
+export {
   validateComponents,
   validateTask,
   validateStepjobTask,
@@ -698,9 +697,6 @@ module.exports = {
   checkComponentDependency,
   recursiveValidateComponents,
   checkScript,
-  checkPSSettingFile
+  checkPSSettingFile,
+  _internal
 };
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}

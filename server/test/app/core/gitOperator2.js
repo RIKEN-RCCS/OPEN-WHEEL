@@ -3,28 +3,42 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const sinon = require("sinon");
-const fs = require("fs-extra");
-const path = require("path");
+import sinon from "sinon";
+import fs from "fs-extra";
+import path from "path";
 
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("chai-as-promised"));
-chai.use(require("sinon-chai"));
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
 
-const gitOperator2 = require("../../../app/core/gitOperator2.js");
-const { _internal } = gitOperator2;
-
+import {
+  gitPromise,
+  gitSetup,
+  gitInit,
+  gitCommit,
+  gitAdd,
+  gitRm,
+  gitResetHEAD,
+  gitStatus,
+  gitClean,
+  getRelativeFilename,
+  getUnsavedFiles,
+  makeLFSPattern,
+  isLFS,
+  gitLFSTrack,
+  gitLFSUntrack,
+  _internal
+} from "../../../app/core/gitOperator2.js";
 describe("gitOperator2", ()=>{
   describe("#gitPromise", ()=>{
-    let gitPromise;
     let spawnStub;
     let getLoggerStub;
     let traceStub;
 
     beforeEach(()=>{
-      gitPromise = gitOperator2.gitPromise;
       spawnStub = sinon.stub(_internal, "spawn");
       getLoggerStub = sinon.stub(_internal, "getLogger");
       traceStub = sinon.stub();
@@ -146,7 +160,6 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitSetup", ()=>{
-    let gitSetup;
     const rootDir = "/repo";
     const user = "testuser";
     const mail = "testuser@example.com";
@@ -158,7 +171,6 @@ describe("gitOperator2", ()=>{
     let readFileStub;
 
     beforeEach(()=>{
-      gitSetup = gitOperator2.gitSetup;
       outputFileStub = sinon.stub(fs, "outputFile").resolves();
       appendFileStub = sinon.stub(fs, "appendFile").resolves();
       gitPromiseStub = sinon.stub(_internal, "gitPromise");
@@ -240,7 +252,6 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitInit", ()=>{
-    let gitInit;
     let gitPromiseStub;
     let gitSetupStub;
 
@@ -249,7 +260,6 @@ describe("gitOperator2", ()=>{
     const mail = "testuser@example.com";
 
     beforeEach(()=>{
-      gitInit = gitOperator2.gitInit;
       gitPromiseStub = sinon.stub(_internal, "gitPromise");
       gitSetupStub = sinon.stub(_internal, "gitSetup");
       sinon.stub(fs, "ensureDir").resolves();
@@ -290,14 +300,12 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitCommit", ()=>{
-    let gitCommit;
     let gitPromiseStub;
 
     const rootDir = "/repo";
     const defaultMessage = "save project";
 
     beforeEach(()=>{
-      gitCommit = gitOperator2.gitCommit;
       gitPromiseStub = sinon.stub(_internal, "gitPromise");
     });
 
@@ -363,7 +371,6 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitAdd", ()=>{
-    let gitAdd;
     let gitPromiseStub;
     let promisifiedGitStub;
 
@@ -371,7 +378,6 @@ describe("gitOperator2", ()=>{
     const filename = "file.txt";
 
     beforeEach(()=>{
-      gitAdd = gitOperator2.gitAdd;
       gitPromiseStub = sinon.stub(_internal, "gitPromise");
     });
 
@@ -454,14 +460,12 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitRm", ()=>{
-    let gitRm;
     let gitPromiseStub;
 
     const rootDir = "/repo";
     const filename = "file.txt";
 
     beforeEach(()=>{
-      gitRm = gitOperator2.gitRm;
       gitPromiseStub = sinon.stub(_internal, "gitPromise");
     });
 
@@ -502,13 +506,11 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitResetHEAD", ()=>{
-    let gitResetHEAD;
     let gitPromiseStub;
 
     const rootDir = "/repo";
 
     beforeEach(()=>{
-      gitResetHEAD = gitOperator2.gitResetHEAD;
       gitPromiseStub = sinon.stub(_internal, "gitPromise");
     });
 
@@ -561,13 +563,11 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitStatus", ()=>{
-    let gitStatus;
     let gitPromiseStub;
 
     const rootDir = "/repo";
 
     beforeEach(()=>{
-      gitStatus = gitOperator2.gitStatus;
       gitPromiseStub = sinon.stub(_internal, "gitPromise");
     });
 
@@ -649,13 +649,11 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitClean", ()=>{
-    let gitClean;
     let gitPromiseStub;
 
     const rootDir = "/repo";
 
     beforeEach(()=>{
-      gitClean = gitOperator2.gitClean;
       gitPromiseStub = sinon.stub(_internal, "gitPromise");
     });
 
@@ -699,12 +697,10 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#getRelativeFilename", ()=>{
-    let getRelativeFilename;
 
     const rootDir = "/repo";
 
     beforeEach(()=>{
-      getRelativeFilename = gitOperator2.getRelativeFilename;
     });
 
     afterEach(()=>{
@@ -737,13 +733,11 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#getUnsavedFiles", ()=>{
-    let getUnsavedFiles;
     let gitStatusStub;
 
     const rootDir = "/repo";
 
     beforeEach(()=>{
-      getUnsavedFiles = gitOperator2.getUnsavedFiles;
       gitStatusStub = sinon.stub(_internal, "gitStatus");
     });
 
@@ -796,13 +790,11 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#makeLFSPattern", ()=>{
-    let makeLFSPattern;
     let getRelativeFilenameStub;
 
     const rootDir = "/repo";
 
     beforeEach(()=>{
-      makeLFSPattern = gitOperator2.makeLFSPattern;
       getRelativeFilenameStub = sinon.stub(_internal, "getRelativeFilename");
     });
 
@@ -838,14 +830,12 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#isLFS", ()=>{
-    let isLFS;
     let getRelativeFilenameStub;
     let gitPromiseStub;
 
     const rootDir = "/repo";
 
     beforeEach(()=>{
-      isLFS = gitOperator2.isLFS;
       getRelativeFilenameStub = sinon.stub(_internal, "getRelativeFilename");
       gitPromiseStub = sinon.stub(_internal, "gitPromise");
     });
@@ -901,7 +891,6 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitLFSTrack", ()=>{
-    let gitLFSTrack;
     let gitPromiseStub;
     let getLoggerStub;
     let traceStub;
@@ -916,7 +905,6 @@ describe("gitOperator2", ()=>{
       traceStub = sinon.stub();
       gitAddStub = sinon.stub(_internal, "gitAdd");
       getLoggerStub.returns({ trace: traceStub });
-      gitLFSTrack = gitOperator2.gitLFSTrack;
     });
 
     afterEach(()=>{
@@ -950,7 +938,6 @@ describe("gitOperator2", ()=>{
   });
 
   describe("#gitLFSUntrack", ()=>{
-    let gitLFSUntrack;
     let gitPromiseStub;
     let getLoggerStub;
     let traceStub;
@@ -967,7 +954,6 @@ describe("gitOperator2", ()=>{
       pathExistsStub = sinon.stub(fs, "pathExists");
       gitAddStub = sinon.stub(_internal, "gitAdd");
       getLoggerStub.returns({ trace: traceStub });
-      gitLFSUntrack = gitOperator2.gitLFSUntrack;
     });
 
     afterEach(()=>{
