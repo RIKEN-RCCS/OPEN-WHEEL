@@ -218,8 +218,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   it("04-01-185:コンポーネントの基本機能動作確認-psコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     cy.createComponent(DEF_COMPONENT_PS, PS_NAME_1, 300, 600);
-    cy.connectComponent(PS_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.connectComponentMultiple(PS_NAME_0, PS_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(PS_NAME_0, PS_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -329,6 +331,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -381,6 +384,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -481,6 +485,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-ps-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-parameter_file-autocomplete\"]").contains("test.json")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -529,6 +534,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-ps-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-force_overwrite-switch\"]").find("input")
       .should("be.checked");
+      cy.closeProperty();
   });
 
   /**
@@ -577,6 +583,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-ps-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-delete_all_instances-switch\"]").find("input")
       .should("be.checked");
+      cy.closeProperty();
   });
 
   /**

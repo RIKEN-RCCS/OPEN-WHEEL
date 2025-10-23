@@ -13,6 +13,41 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   const HPCISS_NAME_1 = "HPCISStar1";
   const TAG_TYPE_INPUT = "input";
   const TAG_TYPE_TEXT_AREA = "textarea";
+  const TEST_LABEL = "TestLabelBulk";
+
+  before(()=>{
+    // Create remotehost via UI so server loads it
+    cy.visit("/remotehost");
+    cy.get("body").then(($body)=>{
+      // Remove if it exists from previous run
+      if ($body.text().includes(TEST_LABEL)) {
+        cy.contains("tr", TEST_LABEL).find("[data-cy=\"action_row-delete-btn\"]")
+          .click();
+        cy.get("[data-cy=\"buttons-remove-btn\"]").click();
+        cy.wait(500);
+      }
+    });
+    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
+    cy.enterRequiredRemoteHost(TEST_LABEL, "TestHostname", 8000, "testUser");
+    cy.get("[data-cy=\"add_new_host-available_queues-text_field\"]").type("testQueues");
+    cy.get("[data-cy=\"add_new_host-job_schedulers-select\"]").type("PBSPro");
+    cy.get("[data-cy=\"add_new_host-use_bulkjob-checkbox\"]").find("input")
+      .check();
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+    cy.wait(1000);
+  });
+
+  after(()=>{
+    // Clean up the remotehost
+    cy.visit("/remotehost");
+    cy.get("body").then(($body)=>{
+      if ($body.text().includes(TEST_LABEL)) {
+        cy.contains("tr", TEST_LABEL).find("[data-cy=\"action_row-delete-btn\"]")
+          .click();
+        cy.get("[data-cy=\"buttons-remove-btn\"]").click();
+      }
+    });
+  });
 
   beforeEach(()=>{
     cy.viewport("macbook-16");
@@ -224,7 +259,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.confirmInputValueReflection(INPUT_OBJ_CY, HPCISS_NAME_1, TAG_TYPE_INPUT, HPCISS_NAME_1);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
     cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 300, 600);
-    cy.connectComponent(HPCISS_NAME_0); //コンポーネント同士を接続
+    cy.connectComponentMultiple(HPCISS_NAME_1, HPCISS_NAME_0); //コンポーネント同士を接続
     cy.checkConnectionLine(HPCISS_NAME_1, HPCISS_NAME_0); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -558,19 +593,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
    */
   it("04-01-305:コンポーネントの基本機能動作確認-HPCISS-tarコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-host選択確認（localhost以外を選択）-hostセレクトボックスで選択した値が表示されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 300, 500);
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(HPCISS_NAME_0);
-    cy.get("[data-cy=\"component_property-host-select\"]").type("TestLabel");
-    cy.get("[data-cy=\"component_property-host-select\"]").contains("TestLabel")
-      .should("exist");
-    cy.removeRemoteHost("TestLabel");
+    const targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
+    cy.get("[data-cy=\"component_property-host-select\"]").find("input")
+      .should("have.value", TEST_LABEL);
   });
 
   /**
@@ -595,7 +621,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.saveProperty();
     cy.get("[data-cy=\"component_property-host-select\"]").contains("TestLabel")
       .should("exist");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**

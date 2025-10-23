@@ -218,8 +218,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   it("04-01-056:コンポーネントの基本機能動作確認-forコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_1, 300, 600);
-    cy.connectComponent(FOR_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -234,24 +236,30 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
     cy.createDirOrFile(TYPE_FILE, "run.sh", true);
-    cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
     cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
     cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
     cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.clickComponentName(FOR_NAME_1); //Re-open the property panel
     cy.enterInputOrOutputFile(TYPE_INPUT, "run.sh", true, true);
-    cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
     cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
     cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
-    cy.connectComponent(FOR_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
     cy.clickComponentName(FOR_NAME_1);
-    cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -275,7 +283,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
     cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
     cy.clickComponentName(FOR_NAME_1);
-    cy.connectComponent(FOR_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
@@ -283,6 +291,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -306,7 +315,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
     cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
     cy.clickComponentName(FOR_NAME_1);
-    cy.connectComponent(FOR_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run.sh")
@@ -321,6 +330,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("for1.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -337,20 +347,23 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run*", true, true);
     cy.createDirOrFile(TYPE_FILE, "run-a.sh", true);
     cy.createDirOrFile(TYPE_FILE, "run-b.sh", false);
-    cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
     cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
     cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
     //for1
     cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_1, 400, 700);
-    cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
     cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
     cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
     cy.clickComponentName(FOR_NAME_1);
-    cy.connectComponent(FOR_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
-    cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run*")
       .click();
     cy.get("[data-cy=\"list_form_property-text_field\"]").find("input")
@@ -368,6 +381,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .should("exist");
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-b.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -392,8 +406,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
     cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
     cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
-    cy.clickComponentName(FOR_NAME_1);
-    cy.connectComponent(FOR_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run-a.sh")
@@ -411,6 +424,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -519,6 +533,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -571,6 +586,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -667,6 +683,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-start_for-text_field\"]").find("input")
       .should("have.value", 1);
+    cy.closeProperty();
   });
 
   /**
@@ -713,6 +730,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-end_for-text_field\"]").find("input")
       .should("have.value", 5);
+    cy.closeProperty();
   });
 
   /**
@@ -759,6 +777,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-step_for-text_field\"]").find("input")
       .should("have.value", 5);
+    cy.closeProperty();
   });
 
   /**
@@ -805,5 +824,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-keep_for-text_field\"]").find("input")
       .should("have.value", 10);
+    cy.closeProperty();
   });
 });

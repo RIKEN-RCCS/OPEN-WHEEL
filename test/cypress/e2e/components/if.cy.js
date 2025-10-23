@@ -218,8 +218,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   it("04-01-016:コンポーネントの基本機能動作確認-ifコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_1, 300, 600);
-    cy.connectComponent(IF_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.connectComponentMultiple(IF_NAME_0, IF_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(IF_NAME_0, IF_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -234,24 +236,31 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
     //if0
     cy.createDirOrFile(TYPE_FILE, "run.sh", true);
-    cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
+    cy.get("[data-cy=\"component_property-condition-setting_title\"]").scrollIntoView()
+      .click();
     let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run.sh"); //scritファイル選択
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //if1
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.clickComponentName(IF_NAME_1); //Re-open the property panel
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
-    cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
+    cy.get("[data-cy=\"component_property-condition-setting_title\"]").scrollIntoView()
+      .click();
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b"); //scritファイル選択
     cy.enterInputOrOutputFile(TYPE_INPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     cy.clickComponentName(IF_NAME_1);
-    cy.connectComponent(IF_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(IF_NAME_0, IF_NAME_1); //コンポーネント同士を接続
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
     cy.clickComponentName(IF_NAME_1);
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -269,19 +278,22 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run.sh"); //scritファイル選択
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //if1
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b"); //scritファイル選択
     cy.clickComponentName(IF_NAME_1);
-    cy.connectComponent(IF_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(IF_NAME_0, IF_NAME_1); //コンポーネント同士を接続
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
     cy.clickComponentName(IF_NAME_1);
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -299,13 +311,15 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run.sh"); //scritファイル選択
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //if1
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b"); //scritファイル選択
     cy.clickComponentName(IF_NAME_1);
-    cy.connectComponent(IF_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(IF_NAME_0, IF_NAME_1); //コンポーネント同士を接続
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run.sh")
       .click();
@@ -319,6 +333,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("if1.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -338,13 +353,15 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run-a.sh"); //scritファイル選択
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run*", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //task1
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b"); //scritファイル選択
     cy.clickComponentName(IF_NAME_1);
-    cy.connectComponent(IF_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(IF_NAME_0, IF_NAME_1); //コンポーネント同士を接続
     cy.clickComponentName(IF_NAME_1);
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run*")
@@ -364,6 +381,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .should("exist");
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-b.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -381,13 +399,15 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run-a.sh"); //scritファイル選択
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run-a.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //task1
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b"); //scritファイル選択
     cy.clickComponentName(IF_NAME_1);
-    cy.connectComponent(IF_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(IF_NAME_0, IF_NAME_1); //コンポーネント同士を接続
     cy.clickComponentName(IF_NAME_1);
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run-a.sh")
@@ -405,6 +425,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -513,6 +534,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -565,6 +587,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -652,6 +675,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-autocomplete\"]").contains("test-a")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -701,6 +725,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").find("textarea")
       .should("have.value", "testJavaScript");
+      cy.closeProperty();
   });
 
   /**

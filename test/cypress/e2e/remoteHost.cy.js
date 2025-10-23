@@ -20,7 +20,15 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   const TIMEOUT_DURING = 7;
 
   beforeEach(()=>{
-    return cy.goToScreen("remotehost");
+    cy.goToScreen("remotehost");
+    //Ensure TestLabel doesn't exist from previous runs
+    cy.get("body").then(($body)=>{
+      if ($body.find(`tr:contains("${LABEL}")`).length > 0) {
+        cy.contains("tr", LABEL).find("[data-cy=\"action_row-delete-btn\"]")
+          .click();
+        cy.get("[data-cy=\"buttons-remove-btn\"]").click();
+      }
+    });
   });
 
   /**
@@ -69,11 +77,11 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
       cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
       cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
       cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(`{selectall}{backspace}${PORT_NUMBER}`);
-      //click on next field to trigger blur and validation on port number field
-      cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").click();
       cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").type(TEST_USER);
-      //Wait for OK button to be enabled (with longer timeout for Vue reactivity)
-      cy.get("[data-cy=\"add_new_host-ok-btn\"]", { timeout: 10000 }).should("not.be.disabled")
+      //Click on dialog title to trigger blur from all fields
+      cy.get("[data-cy=\"add_new_host-add_new_host-card_title\"]").click();
+      //Wait for OK button to be enabled
+      cy.get("[data-cy=\"add_new_host-ok-btn\"]", { timeout: 1000 }).should("not.be.disabled")
         .click();
       cy.contains("tr", LABEL).find("[data-cy=\"action_row-edit-btn\"]")
         .click();
@@ -97,11 +105,11 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
     cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
     cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(`{selectall}{backspace}${PORT_NUMBER}`);
-    //click on next field to trigger blur and validation on port number field
-    cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").click();
     cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").type(TEST_USER);
-    //Wait for OK button to be enabled (with longer timeout for Vue reactivity)
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]", { timeout: 10000 }).should("not.be.disabled")
+    //Click on dialog title to trigger blur from all fields
+    cy.get("[data-cy=\"add_new_host-add_new_host-card_title\"]").click();
+    //Wait for OK button to be enabled
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]", { timeout: 1000 }).should("not.be.disabled")
       .click();
     //削除ボタン
     cy.contains("tr", LABEL).find("[data-cy=\"action_row-delete-btn\"]")
@@ -123,11 +131,11 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
     cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
     cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
     cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(`{selectall}{backspace}${PORT_NUMBER}`);
-    //click on next field to trigger blur and validation on port number field
-    cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").click();
     cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").type(TEST_USER);
-    //Wait for OK button to be enabled (with longer timeout for Vue reactivity)
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]", { timeout: 10000 }).should("not.be.disabled")
+    //Click on dialog title to trigger blur from all fields
+    cy.get("[data-cy=\"add_new_host-add_new_host-card_title\"]").click();
+    //Wait for OK button to be enabled
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]", { timeout: 1000 }).should("not.be.disabled")
       .click();
     //削除ボタン
     cy.contains("tr", LABEL).find("[data-cy=\"action_row-delete-btn\"]")

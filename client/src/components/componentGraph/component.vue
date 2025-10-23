@@ -1,6 +1,7 @@
 <template>
   <g
     data-cy="component-component_group-g"
+    :data-component-id="componentData.ID"
     @click.stop="onClick"
     @dblclick.stop="onDblclick"
     @click.right.prevent.stop="onRightclick"

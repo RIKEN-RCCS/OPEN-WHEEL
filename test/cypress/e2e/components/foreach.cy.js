@@ -218,8 +218,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   it("04-01-145:コンポーネントの基本機能動作確認-foreachコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_1, 300, 600);
-    cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.connectComponentMultiple(FOREACH_NAME_0, FOREACH_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -234,7 +236,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 300, 500);
     //foreach0
     cy.createDirOrFile(TYPE_FILE, "run.sh", true);
-    cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
       .type(1);
     cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
@@ -243,9 +246,13 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.closeProperty();
     cy.clickComponentName(FOREACH_NAME_0);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //foreach1
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_1, 300, 600);
-    cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.clickComponentName(FOREACH_NAME_1); //Re-open the property panel
+    cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
       .type(2);
     cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
@@ -254,7 +261,8 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.closeProperty();
     cy.clickComponentName(FOREACH_NAME_1);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
-    cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
+    cy.connectComponentMultiple(FOREACH_NAME_0, FOREACH_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
@@ -262,6 +270,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -284,16 +293,18 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.closeProperty();
     cy.clickComponentName(FOREACH_NAME_0);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //foreach1
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.clickComponentName(FOREACH_NAME_1); //Re-open the property panel
     cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
       .type(2);
     cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
       .eq(1)
       .click(); //Add input file button
-    cy.clickComponentName(FOREACH_NAME_1);
-    cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(FOREACH_NAME_0, FOREACH_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
@@ -301,6 +312,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -323,16 +335,18 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.closeProperty();
     cy.clickComponentName(FOREACH_NAME_0);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //foreach1
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.clickComponentName(FOREACH_NAME_1); //Re-open the property panel
     cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
       .type(2);
     cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
       .eq(1)
       .click(); //Add input file button
-    cy.clickComponentName(FOREACH_NAME_1);
-    cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(FOREACH_NAME_0, FOREACH_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run.sh")
@@ -347,6 +361,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("foreach1.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -371,16 +386,18 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.closeProperty();
     cy.clickComponentName(FOREACH_NAME_0);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run*", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //foreach1
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.clickComponentName(FOREACH_NAME_1); //Re-open the property panel
     cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
       .type(2);
     cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
       .eq(1)
       .click(); //Add input file button
-    cy.clickComponentName(FOREACH_NAME_1);
-    cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(FOREACH_NAME_0, FOREACH_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run*")
@@ -400,6 +417,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .should("exist");
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-b.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -422,16 +440,18 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.closeProperty();
     cy.clickComponentName(FOREACH_NAME_0);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run*", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //foreach1
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.clickComponentName(FOREACH_NAME_1); //Re-open the property panel
     cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
       .type(2);
     cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
       .eq(1)
       .click(); //Add input file button
-    cy.clickComponentName(FOREACH_NAME_1);
-    cy.connectComponent(FOREACH_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(FOREACH_NAME_0, FOREACH_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(FOREACH_NAME_0, FOREACH_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run*")
@@ -449,6 +469,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -557,6 +578,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -609,6 +631,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+    cy.closeProperty();
   });
 
   /**
@@ -755,5 +778,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").find("input")
       .should("have.value", 20);
+    cy.closeProperty();
   });
 });

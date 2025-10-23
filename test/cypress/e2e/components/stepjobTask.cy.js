@@ -12,6 +12,41 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   const STEPJOB_TASK_NAME_1 = "sjTask1";
   const TAG_TYPE_INPUT = "input";
   const TAG_TYPE_TEXT_AREA = "textarea";
+  const TEST_LABEL = "TestLabelBulk";
+
+  before(()=>{
+    // Create remotehost via UI so server loads it
+    cy.visit("/remotehost");
+    cy.get("body").then(($body)=>{
+      // Remove if it exists from previous run
+      if ($body.text().includes(TEST_LABEL)) {
+        cy.contains("tr", TEST_LABEL).find("[data-cy=\"action_row-delete-btn\"]")
+          .click();
+        cy.get("[data-cy=\"buttons-remove-btn\"]").click();
+        cy.wait(500);
+      }
+    });
+    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
+    cy.enterRequiredRemoteHost(TEST_LABEL, "TestHostname", 8000, "testUser");
+    cy.get("[data-cy=\"add_new_host-available_queues-text_field\"]").type("testQueues");
+    cy.get("[data-cy=\"add_new_host-job_schedulers-select\"]").type("PBSPro");
+    cy.get("[data-cy=\"add_new_host-use_bulkjob-checkbox\"]").find("input")
+      .check();
+    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
+    cy.wait(1000);
+  });
+
+  after(()=>{
+    // Clean up the remotehost
+    cy.visit("/remotehost");
+    cy.get("body").then(($body)=>{
+      if ($body.text().includes(TEST_LABEL)) {
+        cy.contains("tr", TEST_LABEL).find("[data-cy=\"action_row-delete-btn\"]")
+          .click();
+        cy.get("[data-cy=\"buttons-remove-btn\"]").click();
+      }
+    });
+  });
 
   beforeEach(()=>{
     cy.viewport("macbook-16");
@@ -64,6 +99,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.clickComponentName("-Test_Task");
     cy.get(INPUT_OBJ_CY).find(TAG_TYPE_INPUT)
       .should("have.value", "-Test_Task");
+      cy.closeProperty();
   });
 
   /**
@@ -83,6 +119,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
     cy.get(INPUT_OBJ_CY).find(TAG_TYPE_INPUT)
       .should("have.not.value", "Test*Task");
+      cy.closeProperty();
   });
 
   /**
@@ -218,8 +255,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_1, 300, 600);
-    cy.connectComponent(STEPJOB_TASK_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.connectComponentMultiple(STEPJOB_TASK_NAME_0, STEPJOB_TASK_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(STEPJOB_TASK_NAME_0, STEPJOB_TASK_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -334,6 +373,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -389,6 +429,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -492,6 +533,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.clickComponentName(STEPJOB_TASK_NAME_0);
     cy.get("[data-cy=\"component_property-script-autocomplete\"]").contains("test-a")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -521,7 +563,9 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 300, 500);
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     //コンポーネント同士を接続
     cy.get("[data-cy=\"graph-component-row\"]").find("polygon")
       .eq(1)
@@ -529,11 +573,13 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"graph-component-row\"]").contains(STEPJOB_TASK_NAME_1)
       .trigger("mouseup", { screenX: 300, screenY: 600 });
     cy.clickComponentName(STEPJOB_TASK_NAME_1);
-    cy.get("[data-cy=\"component_property-stepjob_task-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-stepjob_task-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"component_property-use_dependency-switch\"]").find("input")
       .click();
     cy.get("[data-cy=\"component_property-step_number-text_field\"]").find("input")
       .should("have.value", 1);
+      cy.closeProperty();
   });
 
   /**
@@ -592,6 +638,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .click();
     cy.get("[data-cy=\"component_property-dependency_form-text_field\"]").find("input")
       .should("have.value", "testDependency");
+      cy.closeProperty();
   });
 
   /**
@@ -643,6 +690,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-include-list_form\"]").contains("includeTest")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -694,6 +742,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-exclude-list_form\"]").contains("excludeTest")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -758,6 +807,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-remove-radio\"]").find("input")
       .should("be.checked");
+      cy.closeProperty();
   });
 
   /**
@@ -778,6 +828,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-keep-radio\"]").find("input")
       .should("be.checked");
+      cy.closeProperty();
   });
 
   /**
@@ -798,5 +849,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-same-radio\"]").find("input")
       .should("be.checked");
+      cy.closeProperty();
   });
 });

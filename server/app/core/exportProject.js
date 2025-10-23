@@ -5,12 +5,14 @@
  */
 import path from "path";
 import fs from "fs-extra";
-import { create } from "tar";
+import * as tar from "tar";
 import { createTempd } from "./tempd.js";
 import { readJsonGreedy } from "./fileUtils.js";
 import { projectJsonFilename } from "../db/db.js";
 import { gitAdd, gitClone, gitCommit, gitConfig, gitRemoveOrigin } from "./gitOperator2.js";
 import { setComponentStateR } from "./projectFilesOperator.js";
+
+const { create } = tar;
 
 /**
  * export existing project as archive file

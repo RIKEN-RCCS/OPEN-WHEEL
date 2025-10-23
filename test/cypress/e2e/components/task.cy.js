@@ -234,6 +234,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -261,6 +262,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -296,6 +298,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("task1.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -338,6 +341,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .should("exist");
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-b.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -376,6 +380,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -477,6 +482,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -526,6 +532,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -638,19 +645,9 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：hostセレクトボックスで選択した値が表示されていることを確認
    */
   it("03-01-039:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-host選択確認（localhost以外を選択）-hostセレクトボックスで選択した値が表示されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     cy.get("[data-cy=\"component_property-host-select\"]").type("TestLabel");
     cy.get("[data-cy=\"component_property-host-select\"]").contains("TestLabel")
       .should("exist");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -661,20 +658,10 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：hostセレクトボックスで選択した値が反映されていることを確認
    */
   it("03-01-040:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-hostファイル選択表示確認-hostセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     cy.get("[data-cy=\"component_property-host-select\"]").type("TestLabel");
     cy.saveProperty();
     cy.get("[data-cy=\"component_property-host-select\"]").contains("TestLabel")
       .should("exist");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -685,19 +672,9 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：localhostが設定されていることを確認
    */
   it("03-01-041:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-host選択反映確認（localhost選択）-localhostが設定されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     cy.get("[data-cy=\"component_property-host-select\"]").type("localhost");
     cy.get("[data-cy=\"component_property-host-select\"]").contains("localhost")
       .should("exist");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -746,16 +723,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：queueセレクトボックスに選択した値が表示されていることを確認
    */
   it("03-01-045:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-queue選択確認-queueセレクトボックスに選択した値が表示されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-available_queues-text_field\"]").type("testQueues");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
@@ -764,7 +731,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "testQueues");
     cy.get("[data-cy=\"component_property-queue-select\"]").find("input")
       .should("have.value", "testQueues");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -775,16 +741,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：queueセレクトボックスに選択した値が反映されていることを確認
    */
   it("03-01-046:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-queue選択反映確認-queueセレクトボックスに選択した値が反映されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-available_queues-text_field\"]").type("testQueues");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
@@ -794,7 +750,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.saveProperty();
     cy.get("[data-cy=\"component_property-queue-select\"]").find("input")
       .should("have.value", "testQueues");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -846,7 +801,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.saveProperty();
     cy.get("[data-cy=\"component_property-submit_command-text_field\"]").find("input")
       .should("have.value", "qsub");
-    cy.removeRemoteHost("TestLabel");
+      cy.closeProperty();
   });
 
   /**
@@ -891,6 +846,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.clickComponentName(TASK_NAME_0);
     cy.get("[data-cy=\"component_property-submit_option-text_field\"]").find("input")
       .should("have.value", "testSubmitCommand");
+      cy.closeProperty();
   });
 
   /**
@@ -900,7 +856,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   number of retry表示確認
   試験確認内容：number of retryテキストボックスが表示されていることを確認
    */
-  it.only("03-01-053:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-number of retry表示確認-number of retryテキストボックスが表示されていることを確認", ()=>{
+  it("03-01-053:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-number of retry表示確認-number of retryテキストボックスが表示されていることを確認", ()=>{
     cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-number_or_retry-text_field\"]").should("be.visible");
   });
@@ -935,6 +891,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-number_or_retry-text_field\"]").find("input")
       .should("have.value", 10);
+      cy.closeProperty();
   });
 
   /**
@@ -1000,6 +957,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .then((text)=>{
         expect(text).to.include("test-a");
       });
+      cy.closeProperty();
   });
 
   /**
@@ -1047,6 +1005,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-task_use_javascript-textarea\"]").find("textarea")
       .should("have.value", "testJavaScript");
+      cy.closeProperty();
   });
 
   /**
@@ -1057,20 +1016,10 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：includeテキストボックスが表示されていることを確認
    */
   it("03-01-062:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-include表示確認-includeテキストボックスが表示されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-include-list_form\"]").should("be.visible");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -1081,15 +1030,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：入力した値が表示されていることを確認
    */
   it("03-01-063:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-include入力確認-入力した値が表示されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1097,7 +1037,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .type("includeTest");
     cy.get("[data-cy=\"component_property-include-list_form\"]").find("input")
       .should("have.value", "includeTest");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -1108,15 +1047,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：入力した値が反映されていることを確認
    */
   it("03-01-064:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-include入力反映確認-入力した値が反映されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1128,7 +1058,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-include-list_form\"]").contains("includeTest")
       .should("exist");
-    cy.removeRemoteHost("TestLabel");
+      cy.closeProperty();
   });
 
   /**
@@ -1139,20 +1069,10 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：includeテキストボックスが表示されていることを確認
    */
   it("03-01-065:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-exclude表示確認-excludeテキストボックスが表示されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-exclude-list_form\"]").should("be.not.visible");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -1163,15 +1083,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：入力した値が表示されていることを確認
    */
   it("03-01-066:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-exclude入力確認-入力した値が表示されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1179,7 +1090,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .type("excludeTest");
     cy.get("[data-cy=\"component_property-exclude-list_form\"]").find("input")
       .should("have.value", "excludeTest");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -1190,15 +1100,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：入力した値が反映されていることを確認
    */
   it("03-01-067:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-exclude入力反映確認-入力した値が反映されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1210,7 +1111,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-exclude-list_form\"]").contains("excludeTest")
       .should("exist");
-    cy.removeRemoteHost("TestLabel");
+      cy.closeProperty();
   });
 
   /**
@@ -1221,15 +1122,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：各ラジオボタンが表示されていることを確認
    */
   it("03-01-068:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag表示確認-各ラジオボタンが表示されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1239,7 +1131,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .should("exist");
     cy.get("[data-cy=\"component_property-same-radio\"]").find("input")
       .should("exist");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -1250,15 +1141,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：各ラジオボタンが選択できることを確認
    */
   it("03-01-069:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag入力確認-各ラジオボタンが選択できることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1274,7 +1156,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .click();
     cy.get("[data-cy=\"component_property-same-radio\"]").find("input")
       .should("be.checked");
-    cy.removeRemoteHost("TestLabel");
   });
 
   /**
@@ -1285,15 +1166,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：remove filesが設定されていることを確認
    */
   it("03-01-070:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag入力反映確認（remove files）-remove filesが設定されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1305,7 +1177,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-remove-radio\"]").find("input")
       .should("be.checked");
-    cy.removeRemoteHost("TestLabel");
+      cy.closeProperty();
   });
 
   /**
@@ -1316,15 +1188,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：keep filesが設定されていることを確認
    */
   it("03-01-071:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag入力反映確認（keep files）-keep filesが設定されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1336,7 +1199,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-keep-radio\"]").find("input")
       .should("be.checked");
-    cy.removeRemoteHost("TestLabel");
+      cy.closeProperty();
   });
 
   /**
@@ -1347,15 +1210,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：same as parentが設定されていることを確認
    */
   it("03-01-072:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag入力反映確認（same as parent）-same as parentが設定されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
-    cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1367,6 +1221,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-same-radio\"]").find("input")
       .should("be.checked");
-    cy.removeRemoteHost("TestLabel");
+      cy.closeProperty();
   });
 });

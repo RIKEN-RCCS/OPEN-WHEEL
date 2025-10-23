@@ -1,10 +1,28 @@
 [
     {
-        "name": "TestLabel",
+        "name": "TestLabelBulk",
         "host": "TestHostname",
         "port": 8000,
         "user": "testUser",
         "queue": "testQueues",
+        "jobScheduler": "PBSPro",
+        "useBulkjob": true,
+        "numJob": 5,
+        "useStepjob": false,
+        "sharedHost": "",
+        "sharedPath": "",
+        "renewInterval": 0,
+        "statusCheckInterval": 60,
+        "maxStatusCheckError": 10,
+        "rcfile": "/etc/profile",
+        "useGfarm": false,
+        "id": "58c91110-b2cc-11f0-bbe8-272d67e9e112"
+    },
+    {
+        "name": "TestLabel",
+        "host": "TestHostname",
+        "port": 8000,
+        "user": "testUser",
         "numJob": 5,
         "useBulkjob": false,
         "useStepjob": false,
@@ -15,7 +33,7 @@
         "maxStatusCheckError": 10,
         "rcfile": "/etc/profile",
         "useGfarm": false,
-        "id": "1c9c5970-acfc-11f0-8b46-cb1d6430e79e"
+        "id": "545dd3e0-b26d-11f0-bbe8-272d67e9e112"
     },
     {
         "name": "testServer",

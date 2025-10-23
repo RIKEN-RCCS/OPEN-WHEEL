@@ -218,8 +218,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   it("04-01-257:コンポーネントの基本機能動作確認-Workflowコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_1, 300, 600);
-    cy.connectComponent(WORKFLOW_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.connectComponentMultiple(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -235,11 +237,14 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     //ps0
     cy.createDirOrFile(TYPE_FILE, "run.sh", true);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //ps1
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     cy.clickComponentName(WORKFLOW_NAME_1);
     cy.enterInputOrOutputFile(TYPE_INPUT, "run.sh", true, true);
-    cy.connectComponent(WORKFLOW_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
+    cy.connectComponentMultiple(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
@@ -247,6 +252,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -261,10 +267,12 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     //ps0
     cy.createDirOrFile(TYPE_FILE, "run.sh", true);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //ps1
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     cy.clickComponentName(WORKFLOW_NAME_1);
-    cy.connectComponent(WORKFLOW_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //実行する
     cy.checkProjectStatus("finished");
@@ -272,6 +280,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -286,10 +295,12 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     //ps0
     cy.createDirOrFile(TYPE_FILE, "run.sh", true);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //ps1
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     cy.clickComponentName(WORKFLOW_NAME_1);
-    cy.connectComponent(WORKFLOW_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run.sh")
@@ -304,6 +315,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("while1.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -320,12 +332,15 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.createDirOrFile(TYPE_FILE, "run-a.sh", true);
     cy.createDirOrFile(TYPE_FILE, "run-b.sh", false);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run*", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //Workflow1
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     cy.clickComponentName(WORKFLOW_NAME_1);
-    cy.connectComponent(WORKFLOW_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
-    cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").scrollIntoView()
+      .click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run*")
       .click();
     cy.get("[data-cy=\"list_form_property-text_field\"]").find("input")
@@ -343,6 +358,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .should("exist");
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-b.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -357,10 +373,12 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     //Workflow0
     cy.createDirOrFile(TYPE_FILE, "run-a.sh", true);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run-a.sh", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     //Workflow1
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_1, 300, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
     cy.clickComponentName(WORKFLOW_NAME_1);
-    cy.connectComponent(WORKFLOW_NAME_1); //コンポーネント同士を接続
+    cy.connectComponentMultiple(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(WORKFLOW_NAME_0, WORKFLOW_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run-a.sh")
@@ -378,6 +396,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
       .click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -486,6 +505,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -538,6 +558,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**

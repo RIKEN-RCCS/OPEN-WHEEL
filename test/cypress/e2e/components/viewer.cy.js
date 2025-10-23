@@ -187,7 +187,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
     cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 600);
-    cy.connectComponent(VIEWER_NAME_0); //コンポーネント同士を接続
+    cy.connectComponentMultiple(IF_NAME_0, VIEWER_NAME_0); //コンポーネント同士を接続
     cy.checkConnectionLine(IF_NAME_0, VIEWER_NAME_0); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -279,6 +279,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -331,6 +332,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -399,7 +401,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
     cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 300, 600);
-    cy.connectComponent(VIEWER_NAME_0); //コンポーネント同士を接続
+    cy.connectComponentMultiple(IF_NAME_0, VIEWER_NAME_0); //コンポーネント同士を接続
     cy.get("[data-cy=\"workflow-open_viewer_screen-btn\"]").should("be.disabled");
   });
 });

@@ -217,8 +217,10 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   it("04-01-102:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
     cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_1, 300, 600);
-    cy.connectComponent(WHILE_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.connectComponentMultiple(WHILE_NAME_0, WHILE_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(WHILE_NAME_0, WHILE_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -328,6 +330,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -380,6 +383,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -491,6 +495,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-autocomplete\"]").contains("test-a")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -540,6 +545,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").find("textarea")
       .should("have.value", "testJavaScript");
+      cy.closeProperty();
   });
 
   /**
@@ -586,5 +592,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-keep_while-text_field\"]").find("input")
       .should("have.value", 10);
+      cy.closeProperty();
   });
 });

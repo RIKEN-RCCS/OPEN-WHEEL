@@ -83,8 +83,21 @@ export default {
       } });
       const elements = document.elementsFromPoint(event.clientX, event.clientY);
       elements.forEach((element)=>{
+        // Skip if the drop target belongs to the same component that's being dragged
         if (element.dataset.droparea) {
-          element.dispatchEvent(dropEvent);
+          // Check if this element belongs to the same component
+          let currentEl = element;
+          let belongsToSameComponent = false;
+          while (currentEl && currentEl !== document.body) {
+            if (currentEl.dataset && currentEl.dataset.componentId === this.componentId) {
+              belongsToSameComponent = true;
+              break;
+            }
+            currentEl = currentEl.parentElement;
+          }
+          if (!belongsToSameComponent) {
+            element.dispatchEvent(dropEvent);
+          }
         }
       });
     }

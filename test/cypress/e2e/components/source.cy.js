@@ -138,12 +138,13 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
    */
   it("04-01-318:コンポーネントの基本機能動作確認-Storageコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 300, 500);
-    cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").click();
+    cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").scrollIntoView()
+      .click();
     cy.createDirOrFile(TYPE_FILE, "test-a", true);
     let targetDropBoxCy = "[data-cy=\"component_property-source_file_name-autocomplete\"]";
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
     cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 300, 600);
-    cy.connectComponent(TASK_NAME_0); //コンポーネント同士を接続
+    cy.connectComponentMultiple(SOURCE_NAME_0, TASK_NAME_0); //コンポーネント同士を接続
     cy.checkConnectionLine(SOURCE_NAME_0, TASK_NAME_0); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -309,5 +310,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-source_file_name-autocomplete\"]").contains("test-a")
       .should("exist");
+      cy.closeProperty();
   });
 });
