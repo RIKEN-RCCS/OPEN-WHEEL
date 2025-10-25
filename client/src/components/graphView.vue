@@ -47,7 +47,7 @@ export default {
       {
         commitCanvasWidth: "canvasWidth",
         commitCanvasHeight: "canvasHeight",
-        setCopyInfo: "setCopyInfo"
+        setCopyInfo: "copyInfo"
       }),
     ...mapActions(["pasteComponent"]),
     fit: function () {
