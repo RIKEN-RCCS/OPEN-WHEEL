@@ -38,6 +38,14 @@ Cypress.Commands.add("waitProjectAppear", (projectName, timeout = 20000)=>{
     .should("be.visible");
 });
 
+//remove a project by name
+Cypress.Commands.add("removeProject", (projectName)=>{
+  cy.get("[data-cy=\"home-project_name-btn\"]").contains(projectName).parents("tr").find("[type=\"checkbox\"]").check();
+  cy.get("[data-cy=\"home-remove-btn\"]").click();
+  cy.get("[data-cy=\"buttons-remove-btn\"]").click();
+  return cy.contains(projectName).should("not.be.visible");
+});
+
 const projectListFilename = "wheel_config/projectList.json";
 const containerName = "test-wheel_release_test-1";
 
@@ -51,6 +59,6 @@ Cypress.Commands.add("removeAllProjects", ()=>{
     });
   });
   cy.writeFile(projectListFilename, "[]");
-  cy.visit("/");
-  cy.waitProjectList();
+  //Wait for file system to sync
+  cy.wait(300);
 });

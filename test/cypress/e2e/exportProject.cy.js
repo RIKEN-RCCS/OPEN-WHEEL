@@ -14,7 +14,7 @@ describe("export project e2e test", ()=>{
     cy.viewport("macbook-16");
     return cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION)
       .projectOpen(PROJECT_NAME)
-      .createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 300, 500)
+      .createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 501, 500)
       .saveProperty();
   });
   afterEach(()=>{

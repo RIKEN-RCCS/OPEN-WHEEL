@@ -3,6 +3,7 @@ import SSH from "simple-ssh";
 import { removeDirectory } from "cypress-delete-downloads-folder";
 import fs from "fs-extra";
 import tar from "tar";
+import path from "path";
 
 export default defineConfig({
   waitForAnimations: true,
@@ -10,26 +11,27 @@ export default defineConfig({
   requestTimeout: 3000,
   experimentalMemoryManagement: true,
   defaultCommandTimeout: 5000,
-  video: true,
+  video: false,
   retries: 0,
+  numTestsKeptInMemory: 0,
   component: {
     devServer: {
       framework: "vue",
-      bundler: "vite",
-    },
+      bundler: "vite"
+    }
   },
 
   e2e: {
     env: {
       browserPermissions: {
-        clipboard: "allow",
+        clipboard: "allow"
       },
       WHEEL_TEST_REMOTEHOST: "testServer",
       WHEEL_TEST_REMOTE_PASSWORD: "passw0rd",
       WHEEL_TEST_HOSTNAME: "localhost",
       WHEEL_TEST_PORT: 8000,
       WHEEL_TEST_USER: "testuser",
-      WHEEL_PATH: "/root",
+      WHEEL_PATH: "/root"
     },
     numTestsKeptInMemory: 1,
     experimentalMemoryManagement: true,
@@ -43,7 +45,7 @@ export default defineConfig({
           return null;
         },
         sshExecuteCmd({ sshconn, command }) {
-          return new Promise((resolve) => {
+          return new Promise((resolve)=>{
             let ssh = new SSH(sshconn);
 
             ssh.exec(command, {
@@ -54,9 +56,9 @@ export default defineConfig({
               err: function (stderr) {
                 console.log("stderr: " + stderr);
                 resolve(stderr);
-              },
-            }).on("ready", () => { console.log("READY"); })
-              .on("error", (err) => {
+              }
+            }).on("ready", ()=>{ console.log("READY"); })
+              .on("error", (err)=>{
                 console.log("ERROR");
                 console.log(err);
               })
@@ -71,12 +73,41 @@ export default defineConfig({
           return fs.pathExists(filePath);
         },
         readJson(filePath) {
-          return fs.readJson(filePath).catch((err) => {
+          return fs.readJson(filePath).catch((err)=>{
             console.error(err);
             return null;
           });
         },
+        backupFile({ src, dest }) {
+          return new Promise((resolve, reject)=>{
+            const destDir = path.dirname(dest);
+            if (!fs.existsSync(destDir)) {
+              fs.mkdirSync(destDir, { recursive: true });
+            }
+            fs.copyFile(src, dest, (err)=>{
+              if (err) {
+                return reject(err);
+              }
+              resolve(null);
+            });
+          });
+        },
+        restoreFile({ src, dest }) {
+          return new Promise((resolve, reject)=>{
+            fs.copyFile(src, dest, (err)=>{
+              if (err) {
+                return reject(err);
+              }
+              fs.unlink(src, (err)=>{
+                if (err) {
+                  return reject(err);
+                }
+                resolve(null);
+              });
+            });
+          });
+        }
       });
-    },
-  },
+    }
+  }
 });

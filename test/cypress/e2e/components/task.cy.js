@@ -10,12 +10,13 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   const TASK_NAME_1 = "task1";
   const TAG_TYPE_INPUT = "input";
   const TAG_TYPE_TEXT_AREA = "textarea";
+  const COMPONENT_TEST_LABEL = "componentTestLabel";
 
   beforeEach(()=>{
     cy.viewport("macbook-16");
     return cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION)
       .projectOpen(PROJECT_NAME)
-      .createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 300, 500);
+      .createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 501, 500);
   });
 
   afterEach(()=>{
@@ -203,8 +204,9 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-016:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
-    cy.connectComponent(TASK_NAME_1); //コンポーネント同士を接続
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 600);
+    cy.closeProperty();
+    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(TASK_NAME_0, TASK_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -222,19 +224,23 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run.sh");
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
     //task1
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 600);
+    cy.closeProperty();
+    cy.clickComponentName(TASK_NAME_1);
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b");
     cy.enterInputOrOutputFile(TYPE_INPUT, "run.sh", true, true);
+    cy.closeProperty();
+    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(TASK_NAME_0, TASK_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.clickComponentName(TASK_NAME_1);
-    cy.connectComponent(TASK_NAME_1); //コンポーネント同士を接続
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //Taskコンポーネントを実行する
     cy.checkProjectStatus("finished");
     cy.clickComponentName(TASK_NAME_1);
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -251,18 +257,22 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run.sh");
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
     //task1
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 600);
+    cy.closeProperty();
+    cy.clickComponentName(TASK_NAME_1);
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b");
+    cy.closeProperty();
+    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(TASK_NAME_0, TASK_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.clickComponentName(TASK_NAME_1);
-    cy.connectComponent(TASK_NAME_1); //コンポーネント同士を接続
     cy.get("[data-cy=\"workflow-play-btn\"]").click(); //Taskコンポーネントを実行する
     cy.checkProjectStatus("finished");
     cy.clickComponentName(TASK_NAME_1);
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run.sh")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -279,11 +289,14 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run.sh");
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run.sh", true, true);
     //task1
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 600);
+    cy.closeProperty();
+    cy.clickComponentName(TASK_NAME_1);
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b");
-    cy.clickComponentName(TASK_NAME_1);
-    cy.connectComponent(TASK_NAME_1); //コンポーネント同士を接続
+    cy.closeProperty();
+    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(TASK_NAME_0, TASK_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.clickComponentName(TASK_NAME_1);
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run.sh")
@@ -298,18 +311,18 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("task1.sh")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
   Task コンポーネントの基本機能動作確認
   コンポーネント共通機能確認
   ファイル転送設定の各パターンの確認
-  シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）
+  シンポリックリンク確認（outputFileがglob(*や?など)を含むパス、inputFileが「/」で終わらない文字列）
   試験確認内容：シンポリックリンクが作成されていることを確認
    */
-  //eslint-disable-next-line no-useless-escape
-  it("03-01-020:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
+
+  it("03-01-020:Task コンポーネントの基本機能動作確認-コンポーネント共通機能確認-ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileがglob(*や?など)を含むパス、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
     //task0
     cy.createDirOrFile(TYPE_FILE, "run-a.sh", true);
     cy.createDirOrFile(TYPE_FILE, "run-b.sh", false);
@@ -317,14 +330,17 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run-a.sh");
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run*", true, true);
     //task1
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 600);
+    cy.closeProperty();
+    cy.clickComponentName(TASK_NAME_1);
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b");
-    cy.clickComponentName(TASK_NAME_1);
-    cy.connectComponent(TASK_NAME_1); //コンポーネント同士を接続
+    cy.closeProperty();
+    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(TASK_NAME_0, TASK_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.clickComponentName(TASK_NAME_1);
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
-    cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run*")
+    cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("./")
       .click();
     cy.get("[data-cy=\"list_form_property-text_field\"]").find("input")
       .clear()
@@ -341,7 +357,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .should("exist");
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-b.sh")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -358,11 +374,14 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run-a.sh");
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "run-a.sh", true, true);
     //task1
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 300, 600);
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 600);
+    cy.closeProperty();
+    cy.clickComponentName(TASK_NAME_1);
     cy.createDirOrFile(TYPE_FILE, "test-b", true);
     cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b");
-    cy.clickComponentName(TASK_NAME_1);
-    cy.connectComponent(TASK_NAME_1); //コンポーネント同士を接続
+    cy.closeProperty();
+    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); //コンポーネント同士を接続
+    cy.checkConnectionLine(TASK_NAME_0, TASK_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
     cy.clickComponentName(TASK_NAME_1);
     cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").contains("run-a.sh")
@@ -380,7 +399,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -482,7 +501,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -532,7 +551,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -645,8 +664,8 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：hostセレクトボックスで選択した値が表示されていることを確認
    */
   it("03-01-039:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-host選択確認（localhost以外を選択）-hostセレクトボックスで選択した値が表示されていることを確認", ()=>{
-    cy.get("[data-cy=\"component_property-host-select\"]").type("TestLabel");
-    cy.get("[data-cy=\"component_property-host-select\"]").contains("TestLabel")
+    cy.selectValueFromDropdownList("[data-cy=\"component_property-host-select\"]", 2, COMPONENT_TEST_LABEL);
+    cy.get("[data-cy=\"component_property-host-select\"]").contains(COMPONENT_TEST_LABEL)
       .should("exist");
   });
 
@@ -658,9 +677,8 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：hostセレクトボックスで選択した値が反映されていることを確認
    */
   it("03-01-040:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-hostファイル選択表示確認-hostセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
-    cy.get("[data-cy=\"component_property-host-select\"]").type("TestLabel");
-    cy.saveProperty();
-    cy.get("[data-cy=\"component_property-host-select\"]").contains("TestLabel")
+    cy.selectValueFromDropdownList("[data-cy=\"component_property-host-select\"]", 2, COMPONENT_TEST_LABEL);
+    cy.get("[data-cy=\"component_property-host-select\"]").contains(COMPONENT_TEST_LABEL)
       .should("exist");
   });
 
@@ -724,7 +742,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-045:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-queue選択確認-queueセレクトボックスに選択した値が表示されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
       .click();
     targetDropBoxCy = "[data-cy=\"component_property-queue-select\"]";
@@ -742,7 +760,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-046:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-queue選択反映確認-queueセレクトボックスに選択した値が反映されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
       .click();
     targetDropBoxCy = "[data-cy=\"component_property-queue-select\"]";
@@ -786,22 +804,13 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
   試験確認内容：リモートホストのジョブ投入コマンドが表示されていることを確認
    */
   it("03-01-049:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-submit command反映確認-リモートホストのジョブ投入コマンドが表示されていることを確認", ()=>{
-    //新規リモートホスト設定を作成
-    cy.visit("/remotehost");
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-    cy.enterRequiredRemoteHost("TestLabel", "TestHostname", 8000, "testUser");
-    cy.get("[data-cy=\"add_new_host-job_schedulers-select\"]").type("PBSPro");
-    cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-    //ホーム画面からプロジェクトを開き検証を行う
-    cy.visit("/");
-    cy.projectOpen(PROJECT_NAME);
     cy.clickComponentName(TASK_NAME_0);
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.saveProperty();
     cy.get("[data-cy=\"component_property-submit_command-text_field\"]").find("input")
       .should("have.value", "qsub");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -846,7 +855,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.clickComponentName(TASK_NAME_0);
     cy.get("[data-cy=\"component_property-submit_option-text_field\"]").find("input")
       .should("have.value", "testSubmitCommand");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -891,7 +900,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-number_or_retry-text_field\"]").find("input")
       .should("have.value", 10);
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -957,7 +966,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
       .then((text)=>{
         expect(text).to.include("test-a");
       });
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -1005,7 +1014,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-task_use_javascript-textarea\"]").find("textarea")
       .should("have.value", "testJavaScript");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -1017,7 +1026,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-062:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-include表示確認-includeテキストボックスが表示されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-include-list_form\"]").should("be.visible");
   });
@@ -1031,7 +1040,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-063:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-include入力確認-入力した値が表示されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-include-list_form\"]").find("input")
       .type("includeTest");
@@ -1048,7 +1057,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-064:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-include入力反映確認-入力した値が反映されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-include-list_form\"]").find("input")
       .type("includeTest{enter}");
@@ -1058,7 +1067,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-include-list_form\"]").contains("includeTest")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -1070,7 +1079,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-065:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-exclude表示確認-excludeテキストボックスが表示されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-exclude-list_form\"]").should("be.not.visible");
   });
@@ -1084,7 +1093,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-066:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-exclude入力確認-入力した値が表示されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-exclude-list_form\"]").find("input")
       .type("excludeTest");
@@ -1101,7 +1110,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-067:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-exclude入力反映確認-入力した値が反映されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-exclude-list_form\"]").find("input")
       .type("excludeTest{enter}");
@@ -1111,7 +1120,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-exclude-list_form\"]").contains("excludeTest")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -1123,7 +1132,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-068:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag表示確認-各ラジオボタンが表示されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-remove-radio\"]").find("input")
       .should("exist");
@@ -1142,7 +1151,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-069:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag入力確認-各ラジオボタンが選択できることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-remove-radio\"]").find("input")
       .click();
@@ -1167,7 +1176,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-070:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag入力反映確認（remove files）-remove filesが設定されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-remove-radio\"]").find("input")
       .click();
@@ -1177,7 +1186,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-remove-radio\"]").find("input")
       .should("be.checked");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -1189,7 +1198,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-071:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag入力反映確認（keep files）-keep filesが設定されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-keep-radio\"]").find("input")
       .click();
@@ -1199,7 +1208,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-keep-radio\"]").find("input")
       .should("be.checked");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -1211,7 +1220,7 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
    */
   it("03-01-072:Task コンポーネントの基本機能動作確認-Taskコンポーネント機能確認-プロパティ設定確認-clean up flag入力反映確認（same as parent）-same as parentが設定されていることを確認", ()=>{
     let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
-    cy.selectValueFromDropdownList(targetDropBoxCy, 2, "TestLabel");
+    cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-same-radio\"]").find("input")
       .click();
@@ -1221,6 +1230,6 @@ describe("03:ワークフロー画面基本動作確認", ()=>{
     cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-same-radio\"]").find("input")
       .should("be.checked");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 });

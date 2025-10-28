@@ -15,7 +15,7 @@ describe("test for shortcut key", ()=>{
     cy.projectOpen(PROJECT_NAME);
     // Wait for graph view to load
     cy.get("[data-cy=\"component_library-component-avatar\"]", { timeout: 1000 }).should("be.visible");
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME, 300, 500);
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME, 501, 500);
   });
   
   afterEach(()=>{
