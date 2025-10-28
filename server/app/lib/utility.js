@@ -13,7 +13,7 @@ const reOnlyWhilteSpace = /^\s*$/;
 //OK
 const alphanumeric = "a-zA-Z0-9";
 //due to escapeRegExp's spec, bars must be added separately any other regexp strings
-const bars = "_-";
+const bars = "_\\-";
 export const pathseps = "/\\";
 export const metaCharactors = "*?[]{}()!?+@.";
 
