@@ -6,7 +6,7 @@
 import fs from "fs-extra";
 import path from "path";
 import isPathInside from "is-path-inside";
-import { glob } from "glob";
+import { glob, hasMagic } from "glob";
 import { diff } from "just-diff";
 import { diffApply } from "just-diff-apply";
 import { getComponentDir, writeComponentJson, writeComponentJsonByID, readComponentJson, readComponentJsonByID } from "./componentJsonIO.js";
@@ -1627,13 +1627,14 @@ _internal.removeAllLink = async function (projectRootDir, componentID) {
  * @param {string} srcNode - src component ID
  * @param {string} srcName - outputFile name
  * @param {string} dstNode - destination component ID
- * @param {string} dstName - inputFile name
+ * @param {string} argDstName - inputFile name
  * @returns {Promise} - resolved after updated
  */
-_internal.addFileLink = async function (projectRootDir, srcNode, srcName, dstNode, dstName) {
+_internal.addFileLink = async function (projectRootDir, srcNode, srcName, dstNode, argDstName) {
   if (srcNode === dstNode) {
     return Promise.reject(new Error("cyclic link is not allowed"));
   }
+  const dstName = hasMagic(argDstName) ? "./" : argDstName;
   if (await _internal.isParent(projectRootDir, dstNode, srcNode)) {
     return _internal.addFileLinkToParent(projectRootDir, srcNode, srcName, dstName);
   }
