@@ -51,5 +51,8 @@
   "lint-staged": {
     "*.js": "eslint --fix",
     "*.vue": "eslint --fix"
+  },
+  "dependencies": {
+    "@isaacs/fs-minipass": "^4.0.1"
   }
 }
