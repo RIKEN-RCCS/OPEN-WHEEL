@@ -18,10 +18,10 @@
   "description": "",
   "dependencies": {
     "@cypress/skip-test": "^2.6.1",
-    "@cypress/webpack-preprocessor": "^6.0.1",
+    "@cypress/webpack-preprocessor": "^7.0.1",
     "chrome": "^0.1.0",
-    "cypress": "^13.6.3",
-    "cypress-delete-downloads-folder": "^0.0.4",
+    "cypress": "^15.5.0",
+    "cypress-delete-downloads-folder": "^0.0.6",
     "cypress-real-events": "^1.15.0",
     "cypress-wait-until": "^3.0.2",
     "simple-ssh": "^1.1.1"

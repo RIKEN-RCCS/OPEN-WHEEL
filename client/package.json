@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "sass": "1.93.2",
-    "vite": "^7.1.10",
+    "vite": "^7.1.12",
     "vite-plugin-vue-devtools": "^8.0.3"
   },
   "dependencies": {
@@ -31,7 +31,7 @@
     "vue": "^3.5.22",
     "vue-zoomable": "^1.0.0",
     "vue-router": "^4.6.3",
-    "vuetify": "^3.10.5",
+    "vuetify": "^3.10.8",
     "vuex": "^4.1.0"
   }
 }
