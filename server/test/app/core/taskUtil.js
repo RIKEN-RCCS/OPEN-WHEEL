@@ -3,18 +3,17 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 //setup test framework
-const sinon = require("sinon");
-const chai = require("chai");
+import sinon from "sinon";
+import * as chai from "chai";
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
 const expect = chai.expect;
-const { jobScheduler } = require("../../../app/db/db");
+import { jobScheduler } from "../../../app/db/db.js";
 
 //testee
-const taskUtil = require("../../../app/core/taskUtil.js");
-const { _internal } = taskUtil;
-const { cancelDispatchedTasks, killTask, killLocalProcess, cancelRemoteJob } = taskUtil;
+import { cancelDispatchedTasks, killTask, killLocalProcess, cancelRemoteJob, _internal } from "../../../app/core/taskUtil.js";
 
 describe("UT for taskUtil class", function () {
   describe("#cancelDispatchedTasks", ()=>{
@@ -136,10 +135,11 @@ describe("UT for taskUtil class", function () {
     });
     it("should not throw an error if handler is undefined", async ()=>{
       task.handler = undefined;
-      await expect(killLocalProcess(task)).to.not.be.rejected;
+      await expect(killLocalProcess(task)).to.be.fulfilled;
     });
   });
   describe("#cancelRemoteJob", ()=>{
+    //eslint-disable-next-line no-unused-vars
     let task, sshStub, getSshStub, getSshHostinfoStub, loggerDebugStub, getLoggerStub;
     beforeEach(()=>{
       task = {
@@ -179,7 +179,7 @@ describe("UT for taskUtil class", function () {
     });
     it("should handle SSH execution errors gracefully", async ()=>{
       sshStub.exec.rejects(new Error("SSH execution failed"));
-      await expect(cancelRemoteJob(task)).to.be.rejectedWith("SSH execution failed");
+      await expect(cancelRemoteJob(task)).to.be.rejectedWith(Error, "SSH execution failed");
       sinon.assert.calledOnce(loggerDebugStub);
       sinon.assert.calledWith(loggerDebugStub, "cancel job: scancel 12345");
     });

@@ -3,15 +3,15 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-const chai = require("chai");
-const { expect } = require("chai");
-const chaiIterator = require("chai-iterator");
+import * as chai from "chai";
+const { expect } = chai;
+import chaiIterator from "chai-iterator";
 chai.use(chaiIterator);
-const fs = require("fs-extra");
-const path = require("path");
+import fs from "fs-extra";
+import path from "path";
 
 //testee
-const { getParamSize,
+import { getParamSize,
   getFilenames,
   paramVecGenerator,
   getParamSpacev2,
@@ -21,7 +21,7 @@ const { getParamSize,
   getParamAxisSize,
   calcParamAxisSize,
   isValidParamAxis,
-  expandArrayOfGlob } = require("../../../app/core/parameterParser");
+  expandArrayOfGlob } from "../../../app/core/parameterParser.js";
 const testRoot = "WHEEL_TEST_TMP"; ;
 var testDir;
 
@@ -118,7 +118,9 @@ describe("UT for parameterParser", ()=>{
         [{ key: "KEYWORD1", value: "baz", type: "string" }]]);
     });
     it("throws an error when ParamSpace is null", ()=>{
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return [...paramVecGenerator(null)]; }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return [...paramVecGenerator({})]; }).to.throw();
     });
   });
@@ -225,13 +227,16 @@ describe("UT for parameterParser", ()=>{
       expect(getParamSize(paramSpace)).to.equal(11); //(1000000,1000100,...,1001000) → 11個
     });
     it("throws an error when ParamSpace is null", ()=>{
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return getParamSize(null); }).to.throw();
     });
     it("throws an error when ParamSpace is undefined", ()=>{
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return getParamSize(undefined); }).to.throw();
     });
     it("throws an error when a parameter object is missing required properties", ()=>{
       const paramSpace = [{ foo: 3 }];
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return getParamSize(paramSpace); }).to.throw();
     });
   });
@@ -389,21 +394,27 @@ describe("UT for parameterParser", ()=>{
       expect(getParamAxisSize({ min: 1, max: 5, step: 1 })).to.equal(5); //(1,2,3,4,5)
     });
     it("throws an error when axis.type is unknown", ()=>{
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return getParamAxisSize({ type: "unknown" }); }).to.throw("unknown axis.type");
     });
     it("throws an error when axis does not have valid properties", ()=>{
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return getParamAxisSize({}); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return getParamAxisSize(null); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return getParamAxisSize(undefined); }).to.throw();
     });
     it("string type with null", ()=>{
       //Array.isArray(axis.list)を通過せずswitch - case "string" を通すためのnull
       const axis = { type: "string", list: null };
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return getParamAxisSize(axis); }).to.throw(TypeError);
     });
     it("file type with null", ()=>{
       //Array.isArray(axis.list)を通過せずswitch - case "file" を通すためのnull
       const axis = { type: "file", list: null };
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return getParamAxisSize(axis); }).to.throw(TypeError);
     });
   });

@@ -1,4 +1,8 @@
-const gfarmOperator = require("../../../app/core/gfarmOperator.js");
+import { expect } from "chai";
+import sinon from "sinon";
+import path from "path";
+import { SshClientWrapper } from "../../../app/core/sshManager.js";
+import gfarmOperator from "../../../app/core/gfarmOperator.js";
 const { _internal } = gfarmOperator;
 
 //testee
@@ -28,6 +32,7 @@ describe("UT for gfarmOperator", function () {
   const csgwRoot = process.env.WHEEL_GFARMTEST_CSGW_ROOT;
   let ssh;
   let getSshStub;
+  //eslint-disable-next-line no-unused-vars
   let getSshHostinfoStub;
   let getJWTServerPassphraseStub;
 

@@ -3,9 +3,8 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const SshClientWrapper = require("ssh-client-wrapper");
-const { emitAll } = require("../handlers/commUtils.js");
+import SshClientWrapper from "ssh-client-wrapper";
+import { emitAll } from "../handlers/commUtils.js";
 
 const _internal = {
   db: new Map(),
@@ -240,7 +239,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   return ssh;
 }
 
-module.exports = {
+export {
   addSsh,
   getSsh,
   getSshHostinfo,
@@ -249,9 +248,6 @@ module.exports = {
   createSsh,
   hasEntry,
   getSshPW,
-  getSshPH
+  getSshPH,
+  _internal
 };
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}

@@ -153,7 +153,20 @@ export default [
     }
   },
   {
-    files: ["server/app/**/*.js", "server/bin/*.js", "common/*.cjs"],
+    files: ["server/app/**/*.js", "server/bin/*.js"],
+    plugins: {
+      n
+    },
+    languageOptions: {
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node
+      },
+      sourceType: "module"
+    }
+  },
+  {
+    files: ["common/*.cjs"],
     plugins: {
       n
     },
@@ -172,7 +185,22 @@ export default [
     }
   },
   {
-    files: ["server/test/**/*.{cjs,js}"],
+    files: ["server/test/**/*.js"],
+    plugins: {
+      n,
+      chaiFriendly
+    },
+    languageOptions: {
+      sourceType: "module",
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node,
+        ...globals.mocha
+      }
+    }
+  },
+  {
+    files: ["server/test/**/*.cjs"],
     plugins: {
       n,
       chaiFriendly

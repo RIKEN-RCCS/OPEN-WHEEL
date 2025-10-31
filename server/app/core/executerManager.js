@@ -3,20 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const childProcess = require("child_process");
-const axios = require("axios");
-const { getAccessToken } = require("./webAPI.js");
-const SBS = require("simple-batch-system");
-const { remoteHost, jobScheduler, numJobOnLocal, defaultTaskRetryCount } = require("../db/db");
-const { addX } = require("./fileUtils");
-const { evalCondition } = require("./dispatchUtils");
-const { getDateString } = require("../lib/utility");
-const { getSsh, getSshHostinfo } = require("./sshManager.js");
-const { setTaskState, createStatusFile } = require("./execUtils");
-const { registerJob } = require("./jobManager");
-const { getLogger } = require("../logSettings.js");
+import path from "path";
+import childProcess from "child_process";
+import axios from "axios";
+import { getAccessToken } from "./webAPI.js";
+import SBS from "simple-batch-system";
+import { remoteHost, jobScheduler, numJobOnLocal, defaultTaskRetryCount } from "../db/db.js";
+import { addX } from "./fileUtils.js";
+import { evalCondition } from "./dispatchUtils.js";
+import { getDateString } from "../lib/utility.js";
+import { getSsh, getSshHostinfo } from "./sshManager.js";
+import { setTaskState, createStatusFile } from "./execUtils.js";
+import { registerJob } from "./jobManager.js";
+import { getLogger } from "../logSettings.js";
 
 const _internal = {
   childProcess,
@@ -131,7 +130,7 @@ async function decideFinishState(task) {
   let rt = false;
   try {
     rt = await _internal.evalCondition(task.projectRootDir, task.condition, task.workingDir, task.currentIndex);
-  } catch (err) {
+  } catch {
     _internal.getLogger(task.projectRootDir).info(`manualFinishCondition of ${task.name}(${task.ID}) is set but exception occurred while evaluting it.`);
     return false;
   }
@@ -154,7 +153,7 @@ async function needsRetry(task) {
   }
   try {
     rt = await _internal.evalCondition(task.projectRootDir, task.retryCondition, task.workingDir, task.currentIndex);
-  } catch (err) {
+  } catch {
     _internal.getLogger(task.projectRootDir).info(`retryCondition of ${task.name}(${task.ID}) is set but exception occurred while evaluting it. so give up retring`);
     return false;
   }
@@ -603,7 +602,7 @@ function removeExecuters(projectRootDir) {
   });
 }
 
-module.exports = {
+export {
   register,
   cancel,
   removeExecuters,
@@ -622,9 +621,7 @@ module.exports = {
   RemoteTaskExecuter,
   RemoteJobWebAPIExecuter,
   LocalTaskExecuter,
-  numJobOnLocal: 5
+  _internal
 };
 
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export { numJobOnLocal };

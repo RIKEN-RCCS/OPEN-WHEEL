@@ -3,17 +3,13 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { expect } = require("chai");
-const sinon = require("sinon");
-const jobManager = require("../../../app/core/jobManager.js");
-const { _internal } = jobManager;
-
+import { EventEmitter } from "events";
+import { expect } from "chai";
+import sinon from "sinon";
+import { _internal, getFirstCapture, getBulkFirstCapture, isJobFailed, getStatusCode, createRequestForWebAPI, createRequest, registerJob } from "../../../app/core/jobManager.js";
 describe("#getFirstCapture", ()=>{
-  let getFirstCapture;
-
   beforeEach(()=>{
-    getFirstCapture = jobManager.getFirstCapture;
+    //getFirstCapture is now imported directly
   });
 
   it("should return null if there is no match (result === null)", ()=>{
@@ -46,10 +42,8 @@ describe("#getFirstCapture", ()=>{
 });
 
 describe("#getBulkFirstCapture", ()=>{
-  let getBulkFirstCapture;
-
   beforeEach(()=>{
-    getBulkFirstCapture = jobManager.getBulkFirstCapture;
+    //getBulkFirstCapture is now imported directly
   });
 
   it("should return [1, []] if no lines match the pattern", ()=>{
@@ -59,7 +53,7 @@ describe("#getBulkFirstCapture", ()=>{
       "yet another line"
     ].join("\n");
 
-    const reSubCode = /CODE=(\d+)/;
+    const reSubCode = /CODE=(d+)/;
     const result = getBulkFirstCapture(outputText, reSubCode);
 
     expect(result).to.deep.equal([1, []]);
@@ -72,7 +66,7 @@ describe("#getBulkFirstCapture", ()=>{
       "last line CODE=2"
     ].join("\n");
 
-    const reSubCode = /CODE=(\d+)/;
+    const reSubCode = /CODE=(d+)/;
     const result = getBulkFirstCapture(outputText, reSubCode);
 
     expect(result).to.deep.equal([0, ["1", "0", "2"]]);
@@ -84,7 +78,7 @@ describe("#getBulkFirstCapture", ()=>{
       "some line CODE=9"
     ].join("\n");
 
-    const reSubCode = /CODE=(\d+)/;
+    const reSubCode = /CODE=(d+)/;
     const result = getBulkFirstCapture(outputText, reSubCode);
 
     expect(result).to.deep.equal([1, ["5", "9"]]);
@@ -96,7 +90,7 @@ describe("#getBulkFirstCapture", ()=>{
       "line2 CODE=123"
     ].join("\n");
 
-    const reSubCode = /CODE=\d+/;
+    const reSubCode = /CODE=d+/;
 
     const result = getBulkFirstCapture(outputText, reSubCode);
 
@@ -105,10 +99,8 @@ describe("#getBulkFirstCapture", ()=>{
 });
 
 describe("#isJobFailed", ()=>{
-  let isJobFailed;
-
   beforeEach(()=>{
-    isJobFailed = jobManager.isJobFailed;
+    //isJobFailed is now imported directly
   });
 
   it("should return true if acceptableJobStatus is undefined and code is '0'", ()=>{
@@ -179,7 +171,7 @@ describe("#isJobFailed", ()=>{
 });
 
 describe("#getStatusCode", ()=>{
-  let getStatusCode;
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let loggerDebugStub;
   let loggerWarnStub;
@@ -188,7 +180,7 @@ describe("#getStatusCode", ()=>{
   let createBulkStatusFileStub;
 
   beforeEach(()=>{
-    getStatusCode = jobManager.getStatusCode;
+    //getStatusCode is now imported directly
     loggerDebugStub = sinon.stub();
     loggerWarnStub = sinon.stub();
     getLoggerStub = sinon.stub(_internal, "getLogger").returns({ debug: loggerDebugStub, warn: loggerWarnStub });
@@ -203,8 +195,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return parsed int when (task.type !== 'bulkjobTask') and everything is normal", async ()=>{
     const JS = {
-      reJobStatusCode: "RE_JOB_STATUSCODE_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "RE_RETURNCODE_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "RE_JOB_STATUSCODE_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "RE_RETURNCODE_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0, 1]
     };
     const task = {
@@ -229,8 +221,8 @@ describe("#getStatusCode", ()=>{
 
   it("should use JS.reJobStatus instead of JS.reJobStatusCode if the latter is undefined", async ()=>{
     const JS = {
-      reJobStatus: "FALLBACK_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "FALLBACK_RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatus: "FALLBACK_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "FALLBACK_RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -253,8 +245,8 @@ describe("#getStatusCode", ()=>{
 
   it("should set jobStatus to -2 when jobStatus is not found (null)", async ()=>{
     const JS = {
-      reJobStatusCode: "NO_MATCH_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "NO_MATCH_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -277,8 +269,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return -2 immediately if statCmdRt is not acceptable", async ()=>{
     const JS = {
-      reJobStatusCode: "ANY_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "ANY_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0, 5]
     };
     const task = {
@@ -296,8 +288,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return 0 if statCmdRt is acceptable but not zero", async ()=>{
     const JS = {
-      reJobStatusCode: "ANY_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "ANY_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "ANY_RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0, 8]
     };
     const task = {
@@ -315,8 +307,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return -2 when strRt is null", async ()=>{
     const JS = {
-      reJobStatusCode: "JS_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "JS_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -337,8 +329,8 @@ describe("#getStatusCode", ()=>{
 
   it("should return 0 when strRt is '6'", async ()=>{
     const JS = {
-      reJobStatusCode: "JS_{{ JOBID }}=" + "(\d+)",
-      reReturnCode: "RET_{{ JOBID }}=" + "(\d+)",
+      reJobStatusCode: "JS_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "RET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -360,9 +352,9 @@ describe("#getStatusCode", ()=>{
   it("should handle bulkjobTask by calling createBulkStatusFile", async ()=>{
     const JS = {
       reJobStatusCode: "NO_USE",
-      reSubJobStatusCode: "SUBSTATUS_{{ JOBID }}=" + "(\d+)",
+      reSubJobStatusCode: "SUBSTATUS_{{ JOBID }}=" + "(d+)",
       reReturnCode: "NO_USE",
-      reSubReturnCode: "SUBRET_{{ JOBID }}=" + "(\d+)",
+      reSubReturnCode: "SUBRET_{{ JOBID }}=" + "(d+)",
       acceptableRt: [0]
     };
     const task = {
@@ -396,7 +388,7 @@ describe("#createRequestForWebAPI", ()=>{
   let JS;
 
   beforeEach(()=>{
-    createRequestForWebAPIFunc = jobManager.createRequestForWebAPI;
+    createRequestForWebAPIFunc = createRequestForWebAPI;
     originalCertFilename = process.env.WHEEL_CERT_FILENAME;
     originalCertPassphrase = process.env.WHEEL_CERT_PASSPHRASE;
     process.env.WHEEL_CERT_FILENAME = "testCertFile.p12";
@@ -448,7 +440,7 @@ describe("#createRequest", ()=>{
   let JS;
 
   beforeEach(()=>{
-    createRequestFunc = jobManager.createRequest;
+    createRequestFunc = createRequest;
     hostinfo = {
       statusCheckInterval: 10,
       someOtherProperty: "dummy"
@@ -510,14 +502,13 @@ describe("#createRequest", ()=>{
   });
 });
 
-const EventEmitter = require("events");
-
 describe("#registerJob", ()=>{
-  let registerJob;
+  //eslint-disable-next-line no-unused-vars
   let jobSchedulerStub;
   let addRequestStub;
   let getRequestStub;
   let delRequestStub;
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let createRequestForWebAPIStub;
   let createRequestStub;
@@ -527,7 +518,7 @@ describe("#registerJob", ()=>{
   let task;
 
   beforeEach(()=>{
-    registerJob = jobManager.registerJob;
+    //registerJob is now imported directly
     jobSchedulerStub = sinon.stub(_internal, "jobScheduler").value({
       dummyJS: {
         maxStatusCheckError: 2,

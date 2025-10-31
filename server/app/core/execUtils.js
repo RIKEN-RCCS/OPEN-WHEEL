@@ -3,15 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const { statusFilename } = require("../db/db");
-const { replacePathsep } = require("./pathUtils");
-const { isSameRemoteHost } = require("./projectFilesOperator.js");
-const { writeComponentJson } = require("./componentJsonIO.js");
-const { getLogger } = require("../logSettings");
-const { eventEmitters } = require("./global.js");
+import path from "path";
+import fs from "fs-extra";
+import { statusFilename } from "../db/db.js";
+import { replacePathsep } from "./pathUtils.js";
+import { isSameRemoteHost } from "./projectFilesOperator.js";
+import { writeComponentJson } from "./componentJsonIO.js";
+import { getLogger } from "../logSettings.js";
+import { eventEmitters } from "./global.js";
 
 const _internal = {
   path,
@@ -112,15 +111,12 @@ async function createBulkStatusFile(task, rtList, jobStatusList) {
   return _internal.fs.writeFile(filename, statusFile);
 }
 
-module.exports = {
+export {
   setTaskState,
   needDownload,
   makeDownloadRecipe,
   createStatusFile,
   createBulkStatusFile,
-  formatSrcFilename
+  formatSrcFilename,
+  _internal
 };
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}

@@ -622,7 +622,7 @@ import { propWidth } from "../lib/componentSizes.json";
 import {
   hasRemoteFileBrowser,
   hasGfarmTarBrowser
-} from "../../../common/checkComponent.cjs";
+} from "../../../common/checkComponent.js";
 
 const isNormalObject = (target)=>{
   const type = typeof target;

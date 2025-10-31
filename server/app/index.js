@@ -3,29 +3,36 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See Licensethe project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const cors = require("cors");
-const express = require("express");
-const ipfilter = require("express-ipfilter").IpFilter;
-const passport = require("passport");
-const session = require("express-session");
-const SQLiteStore = require("connect-sqlite3")(session);
-const { ensureLoggedIn } = require("connect-ensure-login");
-const asyncHandler = require("express-async-handler");
-const cookieParser = require("cookie-parser");
-const bodyParser = require("body-parser");
-const Siofu = require("socketio-file-upload");
-const { port, projectList } = require("./db/db.js");
-const { setProjectState, checkRunningJobs } = require("./core/projectFilesOperator");
-const { getLogger } = require("./logSettings");
-const { registerHandlers } = require("./handlers/registerHandlers");
-const { baseURL, setSio } = require("./core/global.js");
-const { tempdRoot } = require("./core/tempd.js");
-const { aboutWheel } = require("./core/versionInfo.js");
-const { hasEntry, hasCode, hasRefreshToken, storeCode, acquireAccessToken, getURLtoAcquireCode, getRemotehostIDFromState } = require("./core/webAPI.js");
-const checkAllCommands = require("./core/commandCheck.js");
+import path from "path";
+import fs from "fs-extra";
+import cors from "cors";
+import express from "express";
+import { IpFilter } from "express-ipfilter";
+import passport from "passport";
+import session from "express-session";
+import connectSqlite3 from "connect-sqlite3";
+import { ensureLoggedIn } from "connect-ensure-login";
+import asyncHandler from "express-async-handler";
+import cookieParser from "cookie-parser";
+import Siofu from "socketio-file-upload";
+import { createServer as createHTTPServer } from "http";
+import { createServer as createHTTPSServer } from "https";
+import { Server as SocketIOServer } from "socket.io";
+import { port, projectList, keyFilename, certFilename } from "./db/db.js";
+import { setProjectState, checkRunningJobs } from "./core/projectFilesOperator.js";
+import { getLogger } from "./logSettings.js";
+import { registerHandlers } from "./handlers/registerHandlers.js";
+import { baseURL, setSio } from "./core/global.js";
+import { tempdRoot } from "./core/tempd.js";
+import { aboutWheel } from "./core/versionInfo.js";
+import { hasEntry, hasCode, hasRefreshToken, storeCode, acquireAccessToken, getURLtoAcquireCode, getRemotehostIDFromState } from "./core/webAPI.js";
+import checkAllCommands from "./core/commandCheck.js";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const SQLiteStore = connectSqlite3(session);
 const secret = "wheel";
 const sessionDBFilename = "session.db";
 const sessionDBDir = process.env.WHEEL_SESSION_DB_DIR || path.resolve(__dirname, "db");
@@ -36,11 +43,9 @@ process.on("unhandledRejection", logger.debug.bind(logger));
 process.on("uncaughtException", logger.debug.bind(logger));
 
 //check for essential commands
-(async ()=>{
-  if (!await checkAllCommands()) {
-    process.exit(1);
-  }
-})();
+if (!await checkAllCommands()) {
+  process.exit(1);
+}
 
 if (process.env.WHEEL_CLEAR_SESSION_DB) {
   try {
@@ -57,20 +62,14 @@ if (process.env.WHEEL_CLEAR_SESSION_DB) {
 const app = express();
 const address = process.env.WHEEL_ACCEPT_ADDRESS;
 
-function createHTTPSServer(argApp) {
-  const { keyFilename, certFilename } = require("./db/db");
-  //read SSL related files
-  const key = fs.readFileSync(keyFilename);
-  const cert = fs.readFileSync(certFilename);
-  const opt = { key, cert };
-  return require("https").createServer(opt, argApp);
-}
-function createHTTPServer(argApp) {
-  return require("http").createServer(argApp);
-}
+const server = process.env.WHEEL_USE_HTTP 
+  ? createHTTPServer(app)
+  : createHTTPSServer({
+      key: fs.readFileSync(keyFilename),
+      cert: fs.readFileSync(certFilename)
+    }, app);
 
-const server = process.env.WHEEL_USE_HTTP ? createHTTPServer(app) : createHTTPSServer(app);
-const sio = require("socket.io")(server, { path: path.normalize(`${baseURL}/socket.io/`) });
+const sio = new SocketIOServer(server, { path: path.normalize(`${baseURL}/socket.io/`) });
 setSio(sio);
 
 //
@@ -85,12 +84,12 @@ portNumber = portNumber > 0 ? portNumber : defaultPort;
 //middlewares
 if (address) {
   const ips = [address];
-  app.use(ipfilter(ips, { mode: "allow", logF: logger.debug.bind(logger) }));
+  app.use(IpFilter(ips, { mode: "allow", logF: logger.debug.bind(logger) }));
 }
 
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(Siofu.router);
 app.use(session({
@@ -135,9 +134,11 @@ sio.on("connection", (socket)=>{
 const router = express.Router();
 router.use(express.static(path.resolve(__dirname, "public"), { index: false }));
 logger.info(`${tempdRoot} is used as static content directory`);
+logger.info("DEBUG: About to set up static routes...");
 router.use(express.static(path.resolve(tempdRoot, "viewer"), { index: false }));
 router.use(express.static(path.resolve(tempdRoot, "download"), { index: false }));
 router.use(express.static(path.resolve(tempdRoot, "exportProject"), { index: false }));
+logger.info("DEBUG: Static routes configured, setting up web API routes...");
 if (process.env.WHEEL_ENABLE_WEB_API) {
   router.use(asyncHandler(async (req, res, next)=>{
     if (!req.query.code) {
@@ -174,12 +175,14 @@ if (process.env.WHEEL_ENABLE_WEB_API) {
 }
 
 const routes = {
-  home: require("./routes/home"),
-  workflow: require("./routes/workflow"),
-  remotehost: require("./routes/remotehost"),
-  login: require("./routes/login"),
-  viewer: require("./routes/viewer")
+  home: await import("./routes/home.js"),
+  workflow: await import("./routes/workflow.js"),
+  remotehost: await import("./routes/remotehost.js"),
+  login: await import("./routes/login.js"),
+  viewer: await import("./routes/viewer.js")
 };
+
+logger.info("DEBUG: Routes imported successfully");
 
 let checkLoggedIn = (req, res, next)=>{
   next();
@@ -190,9 +193,9 @@ if (process.env.WHEEL_ENABLE_AUTH) {
   router.route("/login").get(routes.login.get)
     .post(routes.login.post);
 }
-router.get("/", checkLoggedIn, routes.home);
-router.get("/home", checkLoggedIn, routes.home);
-router.get("/remotehost", checkLoggedIn, routes.remotehost);
+router.get("/", checkLoggedIn, routes.home.default);
+router.get("/home", checkLoggedIn, routes.home.default);
+router.get("/remotehost", checkLoggedIn, routes.remotehost.default);
 router.route("/workflow").get(checkLoggedIn, routes.workflow.get)
   .post(checkLoggedIn, routes.workflow.post);
 router.route("/graph").get(checkLoggedIn, routes.workflow.get)
@@ -231,7 +234,9 @@ if (process.env.WHEEL_ENABLE_WEB_API) {
   }));
 }
 
+logger.info("DEBUG: About to call app.use(baseURL, router)...");
 app.use(baseURL, router);
+logger.info("DEBUG: Routes configured, setting up error handlers...");
 
 //handle 404 not found
 app.use((req, res, next)=>{
@@ -249,28 +254,31 @@ app.use((err, req, res, next)=>{
   next();
 });
 
+logger.info("DEBUG: Error handlers configured, checking projects...");
 //check each project has running job or not
-Promise.all(projectList.getAll()
+logger.info("About to check projects for running jobs...");
+await Promise.all(projectList.getAll()
   .map(async (pj)=>{
     const { jmFiles } = await checkRunningJobs(pj.path);
     if (jmFiles.length > 0) {
       setProjectState(pj.path, "holding");
     }
-  }))
-  .then(()=>{
-    //Listen on provided port, on all network interfaces.
-    server.listen(portNumber);
-    server.on("error", onError);
-    server.on("listening", onListening);
-    process.on("SIGINT", ()=>{
-      if (logger) {
-        logger.info("WHEEL will shut down because Control-C pressed");
-      } else {
-        console.log("WHEEL will shut down because Control-C pressed");
-      }
-      process.exit();
-    });
-  });
+  }));
+
+logger.info("Projects checked, about to start server...");
+//Listen on provided port, on all network interfaces.
+logger.info("Starting server on port", portNumber);
+server.listen(portNumber);
+server.on("error", onError);
+server.on("listening", onListening);
+process.on("SIGINT", ()=>{
+  if (logger) {
+    logger.info("WHEEL will shut down because Control-C pressed");
+  } else {
+    console.log("WHEEL will shut down because Control-C pressed");
+  }
+  process.exit();
+});
 
 /**
  * Event listener for HTTP server "error" event.

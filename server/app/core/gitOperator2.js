@@ -3,14 +3,13 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { spawn } = require("child_process");
-const path = require("path");
-const fs = require("fs-extra");
-const { readFile } = require("node:fs/promises");
-const { getLogger } = require("../logSettings");
-const { escapeRegExp } = require("../lib/utility");
-const promiseRetry = require("promise-retry");
+import { spawn } from "child_process";
+import path from "path";
+import fs from "fs-extra";
+import { readFile } from "node:fs/promises";
+import { getLogger } from "../logSettings.js";
+import { escapeRegExp } from "../lib/utility.js";
+import promiseRetry from "promise-retry";
 
 const _internal = {
   spawn,
@@ -337,7 +336,7 @@ async function gitConfig(rootDir, key, value, keep = false) {
     try {
       await _internal.gitPromise(rootDir, ["config", "--get", key], rootDir);
       return;
-    } catch (e) {
+    } catch {
       //do nothing
     }
   }
@@ -431,28 +430,23 @@ async function getUnsavedFiles(rootDir, pathspec) {
   return unsavedFiles;
 }
 
-module.exports = {
-  gitPromise: _internal.gitPromise,
-  gitSetup: _internal.gitSetup,
-  gitInit,
-  gitCommit: _internal.gitCommit,
-  gitAdd: _internal.gitAdd,
-  gitRm,
-  gitResetHEAD,
-  gitStatus: _internal.gitStatus,
-  gitClean,
-  gitRemoveOrigin,
-  gitClone,
-  gitArchive,
-  gitConfig,
-  getRelativeFilename: _internal.getRelativeFilename,
-  makeLFSPattern,
-  gitLFSTrack,
-  gitLFSUntrack,
-  isLFS,
-  getUnsavedFiles
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export const gitPromise = _internal.gitPromise;
+export const gitSetup = _internal.gitSetup;
+export { gitInit };
+export const gitCommit = _internal.gitCommit;
+export const gitAdd = _internal.gitAdd;
+export { gitRm };
+export { gitResetHEAD };
+export const gitStatus = _internal.gitStatus;
+export { gitClean };
+export { gitRemoveOrigin };
+export { gitClone };
+export { gitArchive };
+export { gitConfig };
+export const getRelativeFilename = _internal.getRelativeFilename;
+export { makeLFSPattern };
+export { gitLFSTrack };
+export { gitLFSUntrack };
+export { isLFS };
+export { getUnsavedFiles };
+export { _internal };

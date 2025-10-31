@@ -3,16 +3,11 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 //setup test framework
-const { expect } = require("chai");
-const sinon = require("sinon");
-const workflowComponent = require("../../../app/core/workflowComponent.js");
-const { _internal } = workflowComponent;
-
-//testee
-const { isLocalComponent, getComponentDefaultName, removeDuplicatedComponent, isInitialComponent, isBehindIfComponent, hasChild, componentFactory } = workflowComponent;
+import { expect } from "chai";
+import sinon from "sinon";
+import { _internal, isLocalComponent, getComponentDefaultName, removeDuplicatedComponent, isInitialComponent, isBehindIfComponent, hasChild, componentFactory } from "../../../app/core/workflowComponent.js";
 
 describe("UT for workflowComponents class", ()=>{
   describe("#isLocalComponent", ()=>{

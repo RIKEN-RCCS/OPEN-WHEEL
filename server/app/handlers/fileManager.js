@@ -3,25 +3,25 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const glob = require("glob");
-const minimatch = require("minimatch");
-const klaw = require("klaw");
+import path from "path";
+import fs from "fs-extra";
+import * as glob from "glob";
+import { minimatch } from "minimatch";
+import klaw from "klaw";
 
-const isPathInside = require("is-path-inside");
-const { gitAdd, gitRm, gitCommit, gitLFSTrack, gitLFSUntrack, isLFS } = require("../core/gitOperator2");
-const { convertPathSep } = require("../core/pathUtils");
-const { getUnusedPath } = require("../core/fileUtils.js");
-const { deliverFile } = require("../core/deliverFile.js");
-const { escapeRegExp } = require("../lib/utility");
-const fileBrowser = require("../core/fileBrowser");
-const { getLogger } = require("../logSettings");
-const { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir, remoteHost } = require("../db/db");
-const { emitAll } = require("./commUtils.js");
-const { getTempd, createTempd } = require("../core/tempd.js");
-const { getSsh } = require("../core/sshManager.js");
+import isPathInside from "is-path-inside";
+import { gitAdd, gitRm, gitCommit, gitLFSTrack, gitLFSUntrack, isLFS } from "../core/gitOperator2.js";
+import { convertPathSep } from "../core/pathUtils.js";
+import { getUnusedPath } from "../core/fileUtils.js";
+import { deliverFile } from "../core/deliverFile.js";
+import { escapeRegExp } from "../lib/utility.js";
+import fileBrowser from "../core/fileBrowser.js";
+import { getLogger } from "../logSettings.js";
+import { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir, remoteHost } from "../db/db.js";
+import { emitAll } from "./commUtils.js";
+import { getTempd, createTempd } from "../core/tempd.js";
+import { getSsh } from "../core/sshManager.js";
+import { zip } from "zip-a-folder";
 
 const oldProjectJsonFilename = "swf.prj.json";
 const noDotFiles = /^[^.].*$/;
@@ -37,7 +37,7 @@ const projectJsonFileOnly = new RegExp(`^.*(?:${escapeRegExp(projectJsonFilename
  * @param {string} msg.mode - mode flag. it must be one of dir, dirWithProjectJson, underComponent, SND
  * @param {Function} cb - call back function
  */
-async function onGetFileList(projectRootDir, msg, cb) {
+export async function onGetFileList(projectRootDir, msg, cb) {
   const target = msg.path ? path.normalize(convertPathSep(msg.path)) : rootDir;
   const request = target;
 
@@ -81,7 +81,7 @@ async function onGetFileList(projectRootDir, msg, cb) {
  * @param {boolean} isDir - requset directory or not
  * @param {Function} cb - call back function
  */
-async function onGetSNDContents(projectRootDir, requestDir, pattern, isDir, cb) {
+export async function onGetSNDContents(projectRootDir, requestDir, pattern, isDir, cb) {
   const modifiedRequestDir = path.normalize(convertPathSep(requestDir));
   getLogger(projectRootDir).debug(projectRootDir, "getSNDContents in", modifiedRequestDir);
 
@@ -110,7 +110,7 @@ async function onGetSNDContents(projectRootDir, requestDir, pattern, isDir, cb) 
  * @param {string} argFilename - filename
  * @param {Function} cb - call back function
  */
-async function onCreateNewFile(projectRootDir, argFilename, cb) {
+export async function onCreateNewFile(projectRootDir, argFilename, cb) {
   const filename = convertPathSep(argFilename);
   try {
     await fs.writeFile(filename, "");
@@ -131,7 +131,7 @@ async function onCreateNewFile(projectRootDir, argFilename, cb) {
  * @param {string} argDirname - directory name
  * @param {Function} cb - call back function
  */
-async function onCreateNewDir(projectRootDir, argDirname, cb) {
+export async function onCreateNewDir(projectRootDir, argDirname, cb) {
   const dirname = convertPathSep(argDirname);
   try {
     await fs.mkdir(dirname);
@@ -153,7 +153,7 @@ async function onCreateNewDir(projectRootDir, argDirname, cb) {
  * @param {string} target - file or directory name to be removed
  * @param {Function} cb - call back function
  */
-async function onRemoveFile(projectRootDir, target, cb) {
+export async function onRemoveFile(projectRootDir, target, cb) {
   try {
     if (isPathInside(target, projectRootDir)) {
       await gitRm(projectRootDir, target);
@@ -175,7 +175,7 @@ async function onRemoveFile(projectRootDir, target, cb) {
  * @param {string} argNewName - new name
  * @param {Function} cb - call back function
  */
-async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, cb) {
+export async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, cb) {
   const oldName = path.resolve(parentDir, argOldName);
   const newName = path.resolve(parentDir, argNewName);
   if (oldName === newName) {
@@ -230,7 +230,7 @@ async function onRenameFile(projectRootDir, parentDir, argOldName, argNewName, c
  * each object in files array should have name and status property
  * status prop should be one of "new", "modified", "deleted", or "renamed"
  */
-async function onCommitFiles(projectRootDir, files, cb) {
+export async function onCommitFiles(projectRootDir, files, cb) {
   getLogger(projectRootDir).trace("save files", files
     .map((file)=>{ return file.name; })
   );
@@ -252,7 +252,7 @@ async function onCommitFiles(projectRootDir, files, cb) {
  * handler function which will be called when upload file is saved
  * @param {object} event - event object from socket-io-fileupload
  */
-async function onUploadFileSaved(event) {
+export async function onUploadFileSaved(event) {
   const projectRootDir = event.file.meta.projectRootDir;
   if (!event.file.success) {
     getLogger(projectRootDir).error("file upload failed", event.file.name);
@@ -303,10 +303,9 @@ async function onUploadFileSaved(event) {
  * @param {string} target - file or directory name to be downloaded
  * @param {Function} cb - call back function
  */
-async function onDownload(projectRootDir, target, cb) {
+export async function onDownload(projectRootDir, target, cb) {
   const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
   const tmpDir = await fs.mkdtemp(`${dir}/`);
-  const { zip } = await import("zip-a-folder");
 
   let downloadZip = false;
   let targetBasename = "";
@@ -338,23 +337,10 @@ async function onDownload(projectRootDir, target, cb) {
  * @param {string} URL - download file's URL
  * @param {Function} cb - call back function
  */
-async function onRemoveDownloadFile(projectRootDir, URL, cb) {
+export async function onRemoveDownloadFile(projectRootDir, URL, cb) {
   const dir = await getTempd(projectRootDir, "download");
   const target = path.join(dir, path.basename(path.dirname(URL)));
   getLogger(projectRootDir).debug(`remove ${target}`);
   await fs.remove(target);
   cb(true);
-};
-
-module.exports = {
-  onGetFileList,
-  onGetSNDContents,
-  onCreateNewFile,
-  onCreateNewDir,
-  onRemoveFile,
-  onRenameFile,
-  onCommitFiles,
-  onUploadFileSaved,
-  onDownload,
-  onRemoveDownloadFile
 };

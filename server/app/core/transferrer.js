@@ -3,15 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { addX, replaceCRLF } = require("./fileUtils.js");
-const { setTaskState, needDownload, makeDownloadRecipe } = require("./execUtils");
-const { getSshHostinfo, getSsh } = require("./sshManager.js");
-const { getLogger } = require("../logSettings.js");
-const { register } = require("./transferManager.js");
+import path from "path";
+import { addX, replaceCRLF } from "./fileUtils.js";
+import { setTaskState, needDownload, makeDownloadRecipe } from "./execUtils.js";
+import { getSshHostinfo, getSsh } from "./sshManager.js";
+import { getLogger } from "../logSettings.js";
+import { register } from "./transferManager.js";
 
-const _internal = {
+export const _internal = {
   addX,
   replaceCRLF,
   setTaskState,
@@ -28,7 +27,7 @@ const _internal = {
  * @param {object} task - component to be executed on remotehost
  * @returns {Promise} - resolved after preparation done
  */
-async function stageIn(task) {
+export async function stageIn(task) {
   await _internal.setTaskState(task, "stage-in");
   const hostinfo = _internal.getSshHostinfo(task.projectRootDir, task.remotehostID);
 
@@ -48,7 +47,7 @@ async function stageIn(task) {
  * @param {object} task - component which have been executed on remotehost
  * @returns {Promise} - resolved after file transfer done
  */
-async function stageOut(task) {
+export async function stageOut(task) {
   const taskState = task.state;
   if (taskState !== "finished") {
     return;
@@ -119,13 +118,4 @@ async function stageOut(task) {
     }
   }
   await _internal.setTaskState(task, taskState);
-}
-
-module.exports = {
-  stageIn,
-  stageOut
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
 }

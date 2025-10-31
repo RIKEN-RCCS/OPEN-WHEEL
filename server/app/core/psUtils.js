@@ -3,20 +3,18 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
-const { promisify } = require("util");
-const glob = require("glob");
-const nunjucks = require("nunjucks");
-const { getParamSpacev2 } = require("./parameterParser");
-const { overwriteByRsync } = require("./rsync.js");
+import fs from "fs-extra";
+import path from "path";
+import { glob } from "glob";
+import nunjucks from "nunjucks";
+import { getParamSpacev2 } from "./parameterParser.js";
+import { overwriteByRsync } from "./rsync.js";
 
-const _internal = {
+export const _internal = {
   fs,
+  glob,
   nunjucks,
-  overwriteByRsync,
-  promisify
+  overwriteByRsync
 };
 
 /**
@@ -25,14 +23,14 @@ const _internal = {
  * @param {object} paramSettings - parameter space definition
  * @returns {string []} - array of scatterd filenames
  */
-async function getScatterFilesV2(templateRoot, paramSettings) {
+export async function getScatterFilesV2(templateRoot, paramSettings) {
   if (!(Object.prototype.hasOwnProperty.call(paramSettings, "scatter") && Array.isArray(paramSettings.scatter))) {
     return [];
   }
   const srcNames = await Promise.all(
     paramSettings.scatter
       .map((e)=>{
-        return _internal.promisify(glob)(e.srcName, { cwd: templateRoot });
+        return _internal.glob(e.srcName, { cwd: templateRoot });
       })
   );
   return Array.prototype.concat.apply([], srcNames);
@@ -46,7 +44,7 @@ async function getScatterFilesV2(templateRoot, paramSettings) {
  * @param {object} params - parameters for this instance directory
  * @returns {Promise} - resolved when all target files are rewirted
  */
-async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params) {
+export async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params) {
   return Promise.all(
     targetFiles.map(async (targetFile)=>{
       const template = (await _internal.fs.readFile(path.resolve(templateRoot, targetFile))).toString();
@@ -66,11 +64,11 @@ async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles, params
  * @param {boolean} useRsync - use rsync or fs.copy
  * @returns {Promise} - resolved when all scattering process is done
  */
-async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, logger, useRsync) {
+export async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params, logger, useRsync) {
   const p = [];
   for (const recipe of scatterRecipe) {
     const srcName = _internal.nunjucks.renderString(recipe.srcName, params);
-    const srces = await _internal.promisify(glob)(srcName, { cwd: templateRoot });
+    const srces = await _internal.glob(srcName, { cwd: templateRoot });
     const dstDir = Object.prototype.hasOwnProperty.call(recipe, "dstNode") ? path.join(instanceRoot, recipe.dstNode) : instanceRoot;
     const dstName = _internal.nunjucks.renderString(recipe.dstName, params);
     for (const src of srces) {
@@ -101,12 +99,12 @@ async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, params,
  * @param {object} logger - log4js object
  * @returns {Promise} - resolved when all gathering process is done
  */
-async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, logger) {
+export async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, logger) {
   const p = [];
   for (const recipe of gatherRecipe) {
     const srcDir = Object.prototype.hasOwnProperty.call(recipe, "srcNode") ? path.join(instanceRoot, recipe.srcNode) : instanceRoot;
     const srcName = _internal.nunjucks.renderString(recipe.srcName, params);
-    const srces = await _internal.promisify(glob)(srcName, { cwd: srcDir });
+    const srces = await _internal.glob(srcName, { cwd: srcDir });
     const dstName = _internal.nunjucks.renderString(recipe.dstName, params);
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(templateRoot, dstName.slice(0, -1), src) : path.join(templateRoot, dstName);
@@ -128,22 +126,10 @@ async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, l
  * @param {object} paramSettings - parameter space definition
  * @returns {Function[]} - functions for PS version 2
  */
-function makeCmd(paramSettings) {
+export function makeCmd(paramSettings) {
   const params = Object.prototype.hasOwnProperty.call(paramSettings, "params") ? paramSettings.params : paramSettings.target_param;
   if (paramSettings.version === 2) {
     return [getParamSpacev2.bind(null, params), getScatterFilesV2, scatterFilesV2, gatherFilesV2, replaceByNunjucks];
   }
   throw new Error ("PS version 1 is no longer supported");
-}
-
-module.exports = {
-  makeCmd,
-  getScatterFilesV2,
-  scatterFilesV2,
-  gatherFilesV2,
-  replaceByNunjucks
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
 }

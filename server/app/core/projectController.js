@@ -3,20 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { readJsonGreedy } = require("../core/fileUtils");
-const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
-const { removeSsh } = require("./sshManager");
-const { removeExecuters } = require("./executerManager.js");
-const { removeTransferrers } = require("./transferManager.js");
-const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { setProjectState } = require("../core/projectFilesOperator");
-const { writeComponentJson } = require("./componentJsonIO.js");
-const Dispatcher = require("./dispatcher");
-const { getDateString } = require("../lib/utility");
-const { getLogger } = require("../logSettings.js");
-const { eventEmitters } = require("./global.js");
+import path from "path";
+import { readJsonGreedy } from "../core/fileUtils.js";
+import { gitResetHEAD, gitClean } from "../core/gitOperator2.js";
+import { removeSsh } from "./sshManager.js";
+import { removeExecuters } from "./executerManager.js";
+import { removeTransferrers } from "./transferManager.js";
+import { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } from "../db/db.js";
+import { setProjectState } from "../core/projectFilesOperator.js";
+import { writeComponentJson } from "./componentJsonIO.js";
+import Dispatcher from "./dispatcher.js";
+import { getDateString } from "../lib/utility.js";
+import { getLogger } from "../logSettings.js";
+import { eventEmitters } from "./global.js";
 
 const _internal = {
   rootDispatchers: new Map(),
@@ -120,13 +119,4 @@ async function runProject(projectRootDir) {
   return rootWF.state;
 }
 
-module.exports = {
-  cleanProject,
-  runProject,
-  stopProject,
-  updateProjectState
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export { cleanProject, runProject, stopProject, updateProjectState, _internal };

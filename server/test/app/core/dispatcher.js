@@ -3,30 +3,30 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const SshClientWrapper = require("ssh-client-wrapper");
+import path from "path";
+import fs from "fs-extra";
+import SshClientWrapper from "ssh-client-wrapper";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
-const Ajv = require("ajv");
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 //testee
-const Dispatcher = require("../../../app/core/dispatcher");
-const { eventEmitters } = require("../../../app/core/global.js");
+import Dispatcher, { replaceByNunjucksForBulkjob, writeParameterSetFile } from "../../../app/core/dispatcher.js";
+import { eventEmitters } from "../../../app/core/global.js";
 
 //helper functions
-const { projectJsonFilename, componentJsonFilename } = require("../../../app/db/db.js");
-const { createNewProject, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, renameOutputFile } = require("../../../app/core/projectFilesOperator.js");
-const { scriptName, pwdCmd, scriptHeader } = require("../../testScript.js");
+import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
+import { createNewProject, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, renameOutputFile } from "../../../app/core/projectFilesOperator.js";
+import { scriptName, pwdCmd, scriptHeader } from "../../testScript.js";
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 const wait = ()=>{
   return new Promise((resolve)=>{
@@ -34,8 +34,8 @@ const wait = ()=>{
   });
 };
 
-const { remoteHost } = require("../../../app/db/db.js");
-const { addSsh } = require("../../../app/core/sshManager.js");
+import { remoteHost } from "../../../app/db/db.js";
+import { addSsh } from "../../../app/core/sshManager.js";
 
 describe("UT for Dispatcher class", function () {
   this.timeout(0);
@@ -78,7 +78,7 @@ describe("UT for Dispatcher class", function () {
       await fs.remove(testDirRoot);
     });
     it("should replace target files and save with new filenames", async function () {
-      await Dispatcher.replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber);
+      await replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, bulkNumber);
       const newFile1 = path.resolve(templateRoot, `${bulkNumber}.template1.txt`);
       const newFile2 = path.resolve(templateRoot, `${bulkNumber}.template2.txt`);
       expect(fs.statSync(newFile1).isFile()).to.be.true;
@@ -89,7 +89,7 @@ describe("UT for Dispatcher class", function () {
     it("should throw an error if a target file does not exist", async function () {
       const invalidFiles = ["template1.txt", "nonexistent.txt"];
       try {
-        await Dispatcher.replaceByNunjucksForBulkjob(templateRoot, invalidFiles, params, bulkNumber);
+        await replaceByNunjucksForBulkjob(templateRoot, invalidFiles, params, bulkNumber);
       } catch (err) {
         expect(err).to.be.an.instanceof(Error);
         return;
@@ -97,7 +97,7 @@ describe("UT for Dispatcher class", function () {
       expect.fail("should have thrown an error");
     });
     it("should handle empty targetFiles gracefully", async function () {
-      await Dispatcher.replaceByNunjucksForBulkjob(templateRoot, [], params, bulkNumber);
+      await replaceByNunjucksForBulkjob(templateRoot, [], params, bulkNumber);
       //ファイルが作成されていないことを確認
       const files = await fs.readdir(templateRoot);
       expect(files).to.have.members(Object.keys(templates));
@@ -121,7 +121,7 @@ describe("UT for Dispatcher class", function () {
     });
     it("should write parameters to parameterSet.wheel.txt", async function () {
       const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
-      await Dispatcher.writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
+      await writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
       expect(fs.statSync(parameterSetFilePath).isFile()).to.be.true;
       const expectedContent = [
         `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
@@ -136,13 +136,13 @@ describe("UT for Dispatcher class", function () {
     });
     it("should handle empty targetFiles gracefully", async function () {
       const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
-      await Dispatcher.writeParameterSetFile(templateRoot, [], {}, bulkNumber);
+      await writeParameterSetFile(templateRoot, [], {}, bulkNumber);
       expect(fs.existsSync(parameterSetFilePath)).to.be.false;
     });
     it("should append parameters to an existing file", async function () {
       const parameterSetFilePath = path.resolve(templateRoot, "parameterSet.wheel.txt");
       await fs.outputFile(parameterSetFilePath, "Initial content\n");
-      await Dispatcher.writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
+      await writeParameterSetFile(templateRoot, targetFiles, params, bulkNumber);
       const expectedContent = [
         `BULKNUM_${bulkNumber}_TARGETNUM_0_FILE="./file1.txt"`,
         `BULKNUM_${bulkNumber}_TARGETNUM_0_KEY="key1"`,
@@ -160,7 +160,7 @@ describe("UT for Dispatcher class", function () {
       await fs.chmod(nonWritableDir, 0o400); //読み取り専用に設定
       const invalidTemplateRoot = path.join(nonWritableDir, "templates");
       try {
-        await Dispatcher.writeParameterSetFile(invalidTemplateRoot, targetFiles, params, bulkNumber);
+        await writeParameterSetFile(invalidTemplateRoot, targetFiles, params, bulkNumber);
       } catch (err) {
         expect(err).to.be.an.instanceof(Error);
         return;

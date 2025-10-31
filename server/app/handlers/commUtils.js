@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { getSio } = require("../core/global.js");
+import { getSio } from "../core/global.js";
 
 /**
  * promised version of socketIO.emit()
@@ -34,7 +34,7 @@ async function emitAll(room, eventName, ...args) {
   }
 }
 
-module.exports = {
+export {
   emitWithPromise,
   emitAll
 };

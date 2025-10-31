@@ -38,28 +38,27 @@ Cypress.Commands.add("waitProjectAppear", (projectName, timeout = 20000)=>{
     .should("be.visible");
 });
 
-//remove a project
+//remove a project by name
+Cypress.Commands.add("removeProject", (projectName)=>{
+  cy.get("[data-cy=\"home-project_name-btn\"]").contains(projectName).parents("tr").find("[type=\"checkbox\"]").check();
+  cy.get("[data-cy=\"home-remove-btn\"]").click();
+  cy.get("[data-cy=\"buttons-remove-btn\"]").click();
+  return cy.contains(projectName).should("not.be.visible");
+});
+
+const projectListFilename = "wheel_config/projectList.json";
+const containerName = "test-wheel_release_test-1";
+
 Cypress.Commands.add("removeAllProjects", ()=>{
-  cy.visit("/");
-  cy.waitProjectList();
-  cy.get("body").then(($body)=>{
-    if ($body.find("[data-cy=\"home-project_name-btn\"]").length > 0) {
-      cy.get("[data-cy=\"home-batch_mode-btn\"]")
-        .should("be.visible")
-        .click();
-      cy.get("[data-cy=\"home-project_list-data_table\"]")
-        .find("thead tr th")
-        .first()
-        .find("input[type=\"checkbox\"]")
-        .check();
-      cy.get("[data-cy=\"home-remove-btn\"]")
-        .should("be.visible")
-        .click();
-      cy.get("[data-cy=\"buttons-remove-btn\"]")
-        .should("be.visible")
-        .click();
-      return cy.get("[data-cy=\"home-project_list-data_table\"]")
-        .should("contain.text", "No data available");
+  cy.task("readJson", projectListFilename).then((projects)=>{
+    if (!projects) {
+      return;
     }
+    projects.forEach((project)=>{
+      cy.exec(`docker exec ${containerName} rm -fr ${project.path}`);
+    });
   });
+  cy.writeFile(projectListFilename, "[]");
+  //Wait for file system to sync
+  cy.wait(300);
 });

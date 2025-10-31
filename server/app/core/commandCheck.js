@@ -4,8 +4,8 @@
  * See License.txt the project root for the license information.
  */
 "use strict";
-const { exec } = require("child_process");
-const { getLogger } = require("../logSettings");
+import { exec } from "child_process";
+import { getLogger } from "../logSettings.js";
 
 const commands = [
   "ssh",
@@ -54,10 +54,8 @@ async function checkAllCommands() {
   return true;
 }
 
-module.exports = checkAllCommands;
+export default checkAllCommands;
 
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = {
-    commands
-  };
-}
+export const _internal = {
+  commands
+};

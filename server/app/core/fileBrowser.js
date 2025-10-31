@@ -3,10 +3,9 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
-const { isComponentDir } = require("./projectFilesOperator");
+import fs from "fs-extra";
+import path from "path";
+import { isComponentDir } from "./projectFilesOperator.js";
 
 const _internal = {
   fs,
@@ -135,7 +134,7 @@ async function ls(targetDir, options = {}) {
     let stats;
     try {
       stats = await _internal.fs.lstat(absoluteFilename);
-    } catch (err) {
+    } catch {
       //just ignore error
       return;
     }
@@ -187,10 +186,6 @@ async function ls(targetDir, options = {}) {
   }
   return dirList.sort(compare).concat(fileList.sort(compare));
 }
-module.exports = ls;
-module.exports.getSNDs = getSNDs;
-module.exports.bundleSNDFiles = bundleSNDFiles;
 
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export default ls;
+export { getSNDs, bundleSNDFiles, _internal };

@@ -85,7 +85,7 @@ Cypress.Commands.add("setClipboardPermission", ()=>{
     command: "Browser.grantPermissions",
     params: {
       permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"],
-      origin: window.location.origin
+      origin: global.location.origin
     }
   }));
 });
@@ -132,9 +132,7 @@ Cypress.Commands.add("taskMake", (taskName)=>{
 
 //drag&drop task
 Cypress.Commands.add("dragAndDropTask", (x, y, taskName)=>{
-  cy.wait(animationWaitTime).then(()=>{
-    cy.get("#task");
-  });
+  cy.get("#task", { timeout: animationWaitTime + 4000 });
   cy.get("#task")
     .trigger("dragstart", { offsetX: 100, offsetY: 100 })
     .trigger("dragend", { clientX: x, clientY: y })
@@ -490,9 +488,7 @@ Cypress.Commands.add("scriptEdit", (scriptName, script)=>{
     .type(script, { force: true });
   cy.get("button").contains("button", "save all files")
     .click();
-  //wait for saving and commiting file
-  cy.wait(500);
-  cy.get("[href=\"/graph\"]").click()
+  cy.get("[href=\"/graph\"]", { timeout: 5500 }).click()
     .wait(animationWaitTime);
 });
 
@@ -639,4 +635,14 @@ Cypress.Commands.add("sendCommand", (hostname, port, user, password)=>{
     sshconn: configObj,
     command: "dirs=`ls -tF | grep / | head -1`; ls -t ${dirs} | grep -v / | wc -l;"
   });
+});
+
+Cypress.Commands.add("backupFile", (filePath, backupName) => {
+  const dest = `cypress/fixtures/${backupName}.json`;
+  cy.task('backupFile', { src: filePath, dest });
+});
+
+Cypress.Commands.add("restoreFile", (backupName, filePath) => {
+  const src = `cypress/fixtures/${backupName}.json`;
+  cy.task('restoreFile', { src, dest: filePath });
 });

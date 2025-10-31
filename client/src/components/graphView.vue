@@ -36,7 +36,7 @@ export default {
     useHotkey({
       "ctrl+c": this.onCopy,
       "ctrl+x": this.onCut,
-      "ctrl+v": this.onPaste,
+      "ctrl+v": this.onPaste
     });
   },
   beforeUnmount: function () {
@@ -47,7 +47,7 @@ export default {
       {
         commitCanvasWidth: "canvasWidth",
         commitCanvasHeight: "canvasHeight",
-        setCopyInfo: "setCopyInfo"
+        setCopyInfo: "copyInfo"
       }),
     ...mapActions(["pasteComponent"]),
     fit: function () {
@@ -74,8 +74,8 @@ export default {
       this.setCopyInfo({ type: "cut", ID: this.selectedComponent.ID });
     },
     onPaste() {
-      this.pasteComponent(() => {});
-    },
+      this.pasteComponent(()=>{});
+    }
   }
 };
 </script>

@@ -1,4 +1,3 @@
-
 Cypress.Commands.add("login", ()=>{
   cy.visit("/login");
   cy.get("[data-cy=username]").type("user");
@@ -18,6 +17,7 @@ Cypress.Commands.add("openProject", (projectName)=>{
     .click({ force: true });
 });
 
+//eslint-disable-next-line no-unused-vars
 Cypress.Commands.add("removeProject", (projectName)=>{
   cy.visit("/");
   cy.waitProjectList();
@@ -44,3 +44,28 @@ Cypress.Commands.add("selectComponent", (componentName)=>{
   cy.get("[data-cy=\"graph-component-row\"]").contains(componentName)
     .click();
 });
+
+// Get the Vue store directly from window
+Cypress.Commands.add("getVueStore", ()=>{
+  return cy.window().then((win)=>{
+    const appElement = win.document.querySelector("#app");
+    if (appElement && appElement.__vue_app__) {
+      const app = appElement.__vue_app__;
+      const store = app.config.globalProperties.$store;
+      return store;
+    }
+    return null;
+  });
+});
+
+// Setup Vue app alias for accessing store in e2e tests
+Cypress.Commands.add("setupVueAlias", ()=>{
+  cy.getVueStore().then((store)=>{
+    if (store) {
+      cy.wrap(store).as("vueStore");
+    }
+  });
+});
+
+
+

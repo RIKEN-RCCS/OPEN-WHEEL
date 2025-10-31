@@ -3,13 +3,12 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
-const { getLogger } = require("../logSettings.js");
-const { rsyncExcludeOptionOfWheelSystemFiles } = require("../db/db");
-const { getSsh, getSshHostinfo } = require("./sshManager.js");
-const { gfpcopy, gfptarExtract } = require("./gfarmOperator.js");
+import fs from "fs-extra";
+import path from "path";
+import { getLogger } from "../logSettings.js";
+import { rsyncExcludeOptionOfWheelSystemFiles } from "../db/db.js";
+import { getSsh, getSshHostinfo } from "./sshManager.js";
+import { gfpcopy, gfptarExtract } from "./gfarmOperator.js";
 
 const _internal = {
   fs,
@@ -126,13 +125,10 @@ async function deliverFilesFromHPCISS(recipe) {
   return result;
 }
 
-module.exports = {
+export {
   deliverFile,
   deliverFilesOnRemote,
   deliverFilesFromRemote,
-  deliverFilesFromHPCISS
+  deliverFilesFromHPCISS,
+  _internal
 };
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}

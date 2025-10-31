@@ -3,16 +3,11 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const { expect } = require("chai");
-const { describe, it, beforeEach, afterEach } = require("mocha");
-const sinon = require("sinon");
-const transferrer = require("../../../app/core/transferrer.js");
-const { _internal } = transferrer;
-
+import { expect } from "chai";
+import sinon from "sinon";
+import { stageIn, stageOut, _internal } from "../../../app/core/transferrer.js";
 describe("#stageIn", ()=>{
-  let stageIn;
   let setTaskStateStub;
   let getSshHostinfoStub;
   let replaceCRLFStub;
@@ -20,7 +15,6 @@ describe("#stageIn", ()=>{
   let registerStub;
 
   beforeEach(()=>{
-    stageIn = transferrer.stageIn;
     setTaskStateStub = sinon.stub(_internal, "setTaskState").resolves();
     getSshHostinfoStub = sinon.stub(_internal, "getSshHostinfo").returns({ host: "mock-host" });
     replaceCRLFStub = sinon.stub(_internal, "replaceCRLF").resolves();
@@ -59,7 +53,6 @@ describe("#stageIn", ()=>{
 });
 
 describe("#stageOut", ()=>{
-  let stageOut;
   let setTaskStateStub;
   let getSshHostinfoStub;
   let needDownloadStub;
@@ -67,13 +60,13 @@ describe("#stageOut", ()=>{
   let registerStub;
   let getSshStub;
   let sshExecStub;
+  //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let loggerDebugStub;
   let loggerTraceStub;
   let loggerWarnStub;
 
   beforeEach(()=>{
-    stageOut = transferrer.stageOut;
     setTaskStateStub = sinon.stub(_internal, "setTaskState");
     getSshHostinfoStub = sinon.stub(_internal, "getSshHostinfo");
     needDownloadStub = sinon.stub(_internal, "needDownload");

@@ -3,31 +3,31 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
+import path from "path";
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
-const Ajv = require("ajv");
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
 
 //testee
-const { runProject } = require("../../../app/core/projectController");
+import { runProject } from "../../../app/core/projectController.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
-const { eventEmitters } = require("../../../app/core/global.js");
+import { eventEmitters } from "../../../app/core/global.js";
 
 //helper functions
-const { readComponentJson } = require("../../../app/core/componentJsonIO.js");
-const { addLink, replaceEnv, updateComponent, createNewComponent, createNewProject } = require("../../../app/core/projectFilesOperator");
-const { componentJsonFilename, statusFilename } = require("../../../app/db/db");
-const { scriptName, scriptHeader } = require("../../testScript");
+import { readComponentJson } from "../../../app/core/componentJsonIO.js";
+import { addLink, replaceEnv, updateComponent, createNewComponent, createNewProject } from "../../../app/core/projectFilesOperator.js";
+import { componentJsonFilename, statusFilename } from "../../../app/db/db.js";
+import { scriptName, scriptHeader } from "../../testScript.js";
 const logfilename = "env.log";
 const scriptEcho = `${scriptHeader}
 {
@@ -189,7 +189,7 @@ describe("UT for environment variables", function () {
   it("should hvae USER_DEFINED_VALUE", async ()=>{
     const logfile = path.join(projectRootDir, "task0", logfilename);
     expect(fs.existsSync(logfile)).to.be.true;
-    const contents = await fs.readFile(logfile, 'utf-8');
+    const contents = await fs.readFile(logfile, "utf-8");
     expect(contents).to.match(/^USER_DEFINED_VALUE=hoge$/m);
   });
   it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under for component", async ()=>{
@@ -219,7 +219,7 @@ describe("UT for environment variables", function () {
   it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner for component", async ()=>{
     const logfile = path.join(projectRootDir, "for0_2", "for0_3", "task0", logfilename);
     expect(fs.existsSync(logfile)).to.be.true;
-    const log = await fs.readFile(logfile, 'utf-8');
+    const log = await fs.readFile(logfile, "utf-8");
     expect(log).to.match(/^WHEEL_FOR_START=5$/m);
     expect(log).to.match(/^WHEEL_FOR_END=1$/m);
     expect(log).to.match(/^WHEEL_FOR_STEP=-2$/m);
@@ -230,7 +230,7 @@ describe("UT for environment variables", function () {
   it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner while component", async ()=>{
     const logfile = path.join(projectRootDir, "for0_2", "while0_1", "task0", logfilename);
     expect(fs.existsSync(logfile)).to.be.true;
-    const log = await fs.readFile(logfile, 'utf-8');
+    const log = await fs.readFile(logfile, "utf-8");
     expect(log).to.match(/^WHEEL_FOR_START=0$/m);
     expect(log).to.match(/^WHEEL_FOR_END=3$/m);
     expect(log).to.match(/^WHEEL_FOR_STEP=2$/m);
@@ -241,7 +241,7 @@ describe("UT for environment variables", function () {
   it("should have WHEEL_CURRENT_INDEX, WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner foreach component", async ()=>{
     const logfile = path.join(projectRootDir, "for0_2", "foreach0_bar", "task0", logfilename);
     expect(fs.existsSync(logfile)).to.be.true;
-    const log = await fs.readFile(logfile, 'utf-8');
+    const log = await fs.readFile(logfile, "utf-8");
     expect(log).to.match(/^WHEEL_FOR_START=0$/m);
     expect(log).to.match(/^WHEEL_FOR_END=3$/m);
     expect(log).to.match(/^WHEEL_FOR_STEP=2$/m);
@@ -253,7 +253,7 @@ describe("UT for environment variables", function () {
   it("should have WHEEL_CURRENT_INDEX, WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner for component", async ()=>{
     const logfile = path.join(projectRootDir, "PS0_KEYWORD1_2", "for0_3", "task0", logfilename);
     expect(fs.existsSync(logfile)).to.be.true;
-    const log = await fs.readFile(logfile, 'utf-8');
+    const log = await fs.readFile(logfile, "utf-8");
     expect(log).to.match(/^WHEEL_FOR_START=5$/m);
     expect(log).to.match(/^WHEEL_FOR_END=1$/m);
     expect(log).to.match(/^WHEEL_FOR_STEP=-2$/m);
@@ -265,7 +265,7 @@ describe("UT for environment variables", function () {
   it("should have WHEEL_CURRENT_INDEX, WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner while component", async ()=>{
     const logfile = path.join(projectRootDir, "PS0_KEYWORD1_2", "while0_1", "task0", logfilename);
     expect(fs.existsSync(logfile)).to.be.true;
-    const log = await fs.readFile(logfile, 'utf-8');
+    const log = await fs.readFile(logfile, "utf-8");
     expect(log).to.match(/^WHEEL_FOR_START=$/m);
     expect(log).to.match(/^WHEEL_FOR_END=$/m);
     expect(log).to.match(/^WHEEL_FOR_STEP=$/m);
@@ -277,7 +277,7 @@ describe("UT for environment variables", function () {
   it("should have WHEEL_CURRENT_INDEX , WHEEL_PREV_INDEX, WHEEL_NEXT_INDEX, WHEEL_FOR_START, WHEEL_FOR_END, and WHEEL_FOR_STEP in task under inner foreach component", async ()=>{
     const logfile = path.join(projectRootDir, "PS0_KEYWORD1_2", "foreach0_bar", "task0", logfilename);
     expect(fs.existsSync(logfile)).to.be.true;
-    const log = await fs.readFile(logfile, 'utf-8');
+    const log = await fs.readFile(logfile, "utf-8");
     expect(log).to.match(/^WHEEL_FOR_START=$/m);
     expect(log).to.match(/^WHEEL_FOR_END=$/m);
     expect(log).to.match(/^WHEEL_FOR_STEP=$/m);

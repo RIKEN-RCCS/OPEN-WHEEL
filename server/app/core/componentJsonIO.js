@@ -3,12 +3,11 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const { componentJsonFilename, projectJsonFilename } = require("../db/db");
-const { gitAdd } = require("./gitOperator2");
-const { readJsonGreedy } = require("./fileUtils");
+import path from "path";
+import fs from "fs-extra";
+import { componentJsonFilename, projectJsonFilename } from "../db/db.js";
+import { gitAdd } from "./gitOperator2.js";
+import { readJsonGreedy } from "./fileUtils.js";
 
 const _internal = {
   fs,
@@ -117,16 +116,13 @@ async function readComponentJsonByID(projectRootDir, ID) {
   return _internal.readComponentJson(componentDir);
 }
 
-module.exports = {
+export {
   getComponentDir,
   getComponentRelativePathFromAnotherComponent,
   writeComponentJson,
   writeComponentJsonByID,
   readComponentJson,
   readComponentJsonByID,
-  componentJsonReplacer
+  componentJsonReplacer,
+  _internal
 };
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}

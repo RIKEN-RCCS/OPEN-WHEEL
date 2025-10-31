@@ -3,18 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const chai = require("chai");
+import * as chai from "chai";
 const { expect } = chai;
-chai.use(require("chai-as-promised"));
-const { describe, it } = require("mocha");
-const sinon = require("sinon");
-const path = require("path");
-const { promisify } = require("util");
-const glob = require("glob");
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinon from "sinon";
+import path from "path";
+//eslint-disable-next-line no-unused-vars
+import { promisify } from "util";
+//eslint-disable-next-line no-unused-vars
+import * as glob from "glob";
 
 //testee
-const {
+import {
   _internal,
   isSurrounded,
   trimSurrounded,
@@ -52,7 +53,6 @@ const {
   removeFileLinkFromParent,
   removeFileLinkBetweenSiblings,
   makeDir,
-  getChildren,
   checkRemoteStoragePathWritePermission,
   recursiveGetHosts,
   getHosts,
@@ -79,7 +79,7 @@ const {
   isComponentDir,
   getComponentTree,
   createNewProject
-} = require("../../../app/core/projectFilesOperator.js");
+} from "../../../app/core/projectFilesOperator.js";
 
 describe("#isSurrounded", ()=>{
   it("should return true if the string is surrounded by curly braces", ()=>{
@@ -1177,7 +1177,8 @@ describe("#checkRunningJobs", ()=>{
       warn: sinon.spy()
     };
 
-    sinon.stub(_internal, "promisify").returns(globStub);
+    globStub = sinon.stub();
+    sinon.stub(_internal, "glob").callsFake(globStub);
     fsReadJsonStub = sinon.stub(_internal.fs, "readJson");
     sinon.stub(_internal, "getLogger").returns(getLoggerStub);
   });
@@ -1250,6 +1251,7 @@ describe("#checkRunningJobs", ()=>{
 });
 
 describe("#rewriteIncludeExclude", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let readJsonGreedyMock; let writeComponentJsonMock; let glob2ArrayMock;
   const mockProjectRootDir = "/mock/project/root";
   const mockFilename = `${mockProjectRootDir}/component.json`;
@@ -1343,7 +1345,7 @@ describe("#rewriteAllIncludeExcludeProperty", ()=>{
     rewriteIncludeExcludeMock = sinon.stub(_internal, "rewriteIncludeExclude");
 
     globMock = sinon.stub();
-    sinon.stub(_internal, "promisify").callsFake((fn)=>{ return fn === glob ? globMock : promisify(fn); });
+    sinon.stub(_internal, "glob").callsFake(globMock);
   });
 
   afterEach(()=>{
@@ -1413,9 +1415,13 @@ describe("#rewriteAllIncludeExcludeProperty", ()=>{
 });
 
 describe("#readProject", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let getProjectJsonMock; let rewriteAllIncludeExcludePropertyMock; let writeProjectJsonMock;
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let setProjectStateMock; let setComponentStateRMock;
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let gitInitMock; let gitAddMock; let gitCommitMock;
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let fsPathExistsMock; let fsOutputFileMock;
   let projectListQueryStub;
   let projectListUnshiftStub;
@@ -1433,7 +1439,9 @@ describe("#readProject", ()=>{
     projectListUnshiftStub = sinon.stub(_internal.projectList, "unshift");
     fsPathExistsMock = sinon.stub(_internal.fs, "pathExists");
     fsOutputFileMock = sinon.stub(_internal.fs, "outputFile");
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     sinon.stub(_internal.path, "resolve").callsFake((...args)=>{ return args.join("/"); });
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     sinon.stub(_internal.path, "join").callsFake((...args)=>{ return args.join("/"); });
   });
 
@@ -1526,6 +1534,7 @@ describe("#readProject", ()=>{
 });
 
 describe("#setComponentStateR", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let globMock; let readJsonGreedyMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
@@ -1533,7 +1542,7 @@ describe("#setComponentStateR", ()=>{
     readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
     writeComponentJsonMock = sinon.stub(_internal, "writeComponentJson");
 
-    sinon.stub(_internal, "promisify").returns(globMock);
+    sinon.stub(_internal, "glob").callsFake(globMock);
   });
 
   afterEach(()=>{
@@ -1901,11 +1910,13 @@ describe("#addProject", ()=>{
 
 describe("#renameProject", ()=>{
   let isValidNameMock;
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let fsMoveStub; let fsPathExistsStub;
   let readJsonGreedyMock;
   let writeProjectJsonMock;
   let writeComponentJsonMock;
   let gitCommitMock;
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let projectListGetStub; let projectListUpdateStub;
 
   beforeEach(()=>{
@@ -2219,6 +2230,7 @@ describe("#isParent", ()=>{
 });
 
 describe("#removeAllLinkFromComponent", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let readComponentJsonByIDMock; let writeComponentJsonByIDMock;
 
   beforeEach(()=>{
@@ -2358,6 +2370,7 @@ describe("#removeAllLinkFromComponent", ()=>{
 });
 
 describe("#addFileLinkToParent", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
@@ -2536,6 +2549,7 @@ describe("#addFileLinkFromParent", ()=>{
 });
 
 describe("#addFileLinkBetweenSiblings", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
@@ -2651,6 +2665,7 @@ describe("#addFileLinkBetweenSiblings", ()=>{
 });
 
 describe("#removeFileLinkToParent", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
@@ -2768,6 +2783,7 @@ describe("#removeFileLinkToParent", ()=>{
 });
 
 describe("#removeFileLinkFromParent", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
@@ -2857,6 +2873,7 @@ describe("#removeFileLinkFromParent", ()=>{
 });
 
 describe("#removeFileLinkBetweenSiblings", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let getComponentDirMock; let readComponentJsonMock; let writeComponentJsonMock;
 
   beforeEach(()=>{
@@ -2946,6 +2963,7 @@ describe("#removeFileLinkBetweenSiblings", ()=>{
 });
 
 describe("#makeDir", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let fsPathExistsStub; let fsMkdirStub;
 
   beforeEach(()=>{
@@ -3000,59 +3018,6 @@ describe("#makeDir", ()=>{
     }
 
     expect(fsMkdirStub.calledOnceWithExactly("/mock/path0")).to.be.true;
-  });
-});
-
-describe("#getChildren", ()=>{
-  let readJsonGreedyMock; let getComponentDirMock; let globMock;
-
-  beforeEach(()=>{
-    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
-    getComponentDirMock = sinon.stub(_internal, "getComponentDir");
-    globMock = sinon.stub();
-    sinon.stub(_internal, "promisify").returns(globMock);
-  });
-
-  afterEach(()=>{
-    sinon.restore();
-  });
-
-  it("should return an empty array if the directory is not found", async ()=>{
-    getComponentDirMock.resolves(null);
-
-    const result = await getChildren("/mock/project", "invalidID", false);
-
-    expect(result).to.deep.equal([]);
-  });
-
-  it("should return an empty array if no child components are found", async ()=>{
-    getComponentDirMock.resolves("/mock/project/component");
-    globMock.resolves([]);
-
-    const result = await getChildren("/mock/project", "validID", false);
-
-    expect(result).to.deep.equal([]);
-  });
-
-  it("should return an array of child components excluding subComponents", async ()=>{
-    getComponentDirMock.resolves("/mock/project/component");
-    globMock.resolves(["/mock/project/component/child1/cmp.wheel.json", "/mock/project/component/child2/cmp.wheel.json"]);
-
-    readJsonGreedyMock.withArgs("/mock/project/component/child1/cmp.wheel.json").resolves({ ID: "child1", subComponent: false });
-    readJsonGreedyMock.withArgs("/mock/project/component/child2/cmp.wheel.json").resolves({ ID: "child2", subComponent: true });
-
-    const result = await getChildren("/mock/project", "validID", false);
-
-    expect(result).to.deep.equal([{ ID: "child1", subComponent: false }]);
-  });
-
-  it("should handle the case where parentID is a directory path", async ()=>{
-    globMock.resolves(["/mock/project/parent/child/cmp.wheel.json"]);
-    readJsonGreedyMock.resolves({ ID: "child", subComponent: false });
-
-    const result = await getChildren("/mock/project", "/mock/project/parent", true);
-
-    expect(result).to.deep.equal([{ ID: "child", subComponent: false }]);
   });
 });
 
@@ -3111,6 +3076,7 @@ describe("#checkRemoteStoragePathWritePermission", ()=>{
 });
 
 describe("#recursiveGetHosts", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let getChildrenMock; let hasChildMock;
 
   beforeEach(()=>{
@@ -3371,6 +3337,7 @@ describe("#createNewComponent", ()=>{
 });
 
 describe("#renameComponentDir", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let fsMoveStub; let updateComponentPathMock; let gitAddMock; let gitRmMock; let isValidNameMock; let getComponentDirMock;
   const mockProjectRootDir = "/mock/project/root";
   const mockID = "componentID";
@@ -3574,6 +3541,7 @@ describe("#replaceEnv", ()=>{
 });
 
 describe("#replaceWebhook", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let getProjectJsonMock; let writeProjectJsonMock; let diffMock; let diffApplyMock;
 
   beforeEach(()=>{
@@ -3889,6 +3857,7 @@ describe("#updateStepNumber", ()=>{
     const mockTaskB = { ID: "compTaskB", type: "stepjobTask", parent: "compStepjob" };
     const mockOther = { ID: "compOther", type: "storage" };
 
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     getComponentDirMock.callsFake(async (_, id)=>{ return `/mock/dir/${id}`; });
     readComponentJsonMock.callsFake(async (dirPath)=>{
       switch (dirPath) {
@@ -3978,6 +3947,7 @@ describe("#updateStepNumber", ()=>{
     const taskB1 = { ID: "taskB1", type: "stepjobTask", parent: "stepjobB" };
     const taskB2 = { ID: "taskB2", type: "stepjobTask", parent: "stepjobB" };
 
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     getComponentDirMock.callsFake(async (_, id)=>{ return `/mock/dir/${id}`; });
     readComponentJsonMock.callsFake(async (dirPath)=>{
       switch (dirPath) {
@@ -4033,6 +4003,7 @@ describe("#updateStepNumber", ()=>{
   it("should skip tasks if their parent is not a stepjob", async ()=>{
     //stepjobTask だが parent が workflow とか storage とかになっている場合を想定
     getAllComponentIDsMock.resolves(["normalStepjob", "weirdTask1", "weirdTask2"]);
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     readComponentJsonMock.callsFake(async ()=>{ return {}; }); //デフォルトは空
     //normalStepjob は stepjob
     readComponentJsonMock.onCall(0).resolves({ ID: "normalStepjob", type: "stepjob" });
@@ -4111,6 +4082,7 @@ describe("#arrangeComponent", ()=>{
     const result = await arrangeComponent(stepjobGroupArray);
 
     //comp1 -> comp2 -> comp3
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     expect(result.map((c)=>{ return c.ID; })).to.deep.equal(["comp1", "comp2", "comp3"]);
   });
 
@@ -4156,6 +4128,7 @@ describe("#arrangeComponent", ()=>{
 
     const result = await arrangeComponent(stepjobGroupArray);
     //comp3が最後に回される
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     expect(result.map((c)=>{ return c.ID; })).to.deep.equal(["comp1", "comp2", "comp3"]);
   });
 
@@ -4177,6 +4150,7 @@ describe("#arrangeComponent", ()=>{
     //group2 は [g2c2, g2c3, g2c1] の順（g2c1はisolatedで最後に来る）
     //flatにすると [g1c1, g1c2, g2c2, g2c3, g2c1]
     expect(result).to.have.lengthOf(5);
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     expect(result.map((c)=>{ return c.ID; })).to.deep.equal(["g1c1", "g1c2", "g2c2", "g2c3", "g2c1"]);
   });
 
@@ -4599,6 +4573,7 @@ describe("#setUploadOndemandOutputFile", ()=>{
     //例: removeFileLink(projectRootDir, "comp-id", "someOutput2", "dstComp2", "dstFilename2")
     //removeFileLink(projectRootDir, "comp-id", "someOutput2", "dstComp3", "dstFilename3")
     //removeFileLink(projectRootDir, "comp-id", "someOutput3", "dstComp4", "dstFilename4")
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const calls = removeFileLinkMock.getCalls().map((c)=>{ return c.args; });
     expect(calls).to.deep.include(
       [projectRootDir, "comp-id", "someOutput2", "dstComp2", "dstFilename2"]
@@ -5730,16 +5705,13 @@ describe("#removeComponent", ()=>{
 });
 
 describe("#getSourceComponents", ()=>{
-  let promisifyStub;
   let globStub;
   let readJsonGreedyStub;
   const mockProjectRootDir = "/mock/project/root";
 
   beforeEach(()=>{
     globStub = sinon.stub();
-    promisifyStub = sinon.stub(_internal, "promisify").callsFake(()=>{
-      return globStub;
-    });
+    sinon.stub(_internal, "glob").callsFake(globStub);
     readJsonGreedyStub = sinon.stub(_internal, "readJsonGreedy");
   });
 
@@ -5770,7 +5742,6 @@ describe("#getSourceComponents", ()=>{
     const result = await getSourceComponents(mockProjectRootDir);
 
     //Assert
-    expect(promisifyStub.calledOnce).to.be.true;
     expect(globStub.calledOnceWithExactly(
       path.join(mockProjectRootDir, "**", "cmp.wheel.json")
     )).to.be.true;
@@ -5822,6 +5793,7 @@ describe("#getSourceComponents", ()=>{
 });
 
 describe("#isComponentDir", ()=>{
+  //eslint-disable-next-line @stylistic/max-statements-per-line
   let fsLstatStub; let fsPathExistsStub;
 
   beforeEach(()=>{
@@ -5842,6 +5814,7 @@ describe("#isComponentDir", ()=>{
   });
 
   it("should return false if target is not a directory", async ()=>{
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const fakeStats = { isDirectory: ()=>{ return false; } };
     fsLstatStub.resolves(fakeStats);
 
@@ -5852,6 +5825,7 @@ describe("#isComponentDir", ()=>{
   });
 
   it("should return false if target is a directory but cmp.wheel.json does not exist", async ()=>{
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const fakeStats = { isDirectory: ()=>{ return true; } };
     fsLstatStub.resolves(fakeStats);
     fsPathExistsStub.resolves(false);
@@ -5863,6 +5837,7 @@ describe("#isComponentDir", ()=>{
   });
 
   it("should return true if target is a directory and cmp.wheel.json exists", async ()=>{
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const fakeStats = { isDirectory: ()=>{ return true; } };
     fsLstatStub.resolves(fakeStats);
     fsPathExistsStub.resolves(true);
@@ -5914,6 +5889,7 @@ describe("#getComponentTree", ()=>{
 
     //3) path.join("...", "cmp.wheel.json")の戻り値
     //今回はあえて ".//cmp.wheel.json" 等を返す
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     pathJoinMock.callsFake((dir, file)=>{ return `${dir}/${file}`; });
 
     //4) path.dirname(...) が呼ばれたら、すべて "." を返すようにする
@@ -5958,6 +5934,7 @@ describe("#getComponentTree", ()=>{
     pathRelativeMock.returns("./");
 
     //path.join => 同様に "dirname/cmp.wheel.json" みたいに返す
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     pathJoinMock.callsFake((dir, file)=>{ return `${dir}/${file}`; });
 
     //path.dirnameは常に "." を返せば "startStriped" = "." に合致
@@ -5988,6 +5965,7 @@ describe("#getComponentTree", ()=>{
 
     pathIsAbsoluteMock.returns(true);
     pathRelativeMock.returns("./");
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     pathJoinMock.callsFake((dir, file)=>{ return `${dir}/${file}`; });
 
     //dirnameはいつものように "." を返して rootIndex=0 にする
@@ -6020,6 +5998,7 @@ describe("#getComponentTree", ()=>{
 
     pathIsAbsoluteMock.returns(true);
     pathRelativeMock.returns("./");
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     pathJoinMock.callsFake((dir, file)=>{ return `${dir}/${file}`; });
     pathDirnameMock.returns(".");
 

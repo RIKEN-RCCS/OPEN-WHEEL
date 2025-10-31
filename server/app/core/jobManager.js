@@ -3,11 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { addRequest, getRequest, delRequest } = require("rwatchd");
-const { getLogger } = require("../logSettings");
-const { jobScheduler } = require("../db/db");
-const { createBulkStatusFile } = require("./execUtils");
+import { addRequest, getRequest, delRequest } from "rwatchd";
+import { getLogger } from "../logSettings.js";
+import { jobScheduler } from "../db/db.js";
+import { createBulkStatusFile } from "./execUtils.js";
 
 const _internal = {
   addRequest,
@@ -29,7 +28,7 @@ const _internal = {
  * @param {string} outputText - output from batch server
  * @param {RegExp} reCode - regexp to extract value from outputText
  */
-function getFirstCapture(outputText, reCode) {
+export function getFirstCapture(outputText, reCode) {
   const re = new RegExp(reCode, "m");
   const result = re.exec(outputText);
   const rt = result === null || typeof (result[1]) === "undefined" ? null : result[1];
@@ -42,7 +41,7 @@ _internal.getFirstCapture = getFirstCapture;
  * @param {string} outputText - output from batch server
  * @param {RegExp} reSubCode - regexp to extract value from outputText
  */
-function getBulkFirstCapture(outputText, reSubCode) {
+export function getBulkFirstCapture(outputText, reSubCode) {
   const outputs = outputText.split("\n");
   const codeRegex = new RegExp(reSubCode, "m");
   const subJobOutputs = outputs.filter((text)=>{
@@ -68,7 +67,7 @@ _internal.getBulkFirstCapture = getBulkFirstCapture;
  * @param {string} code - job status code get from status check command
  * @returns {boolean} - true means job is failed.
  */
-function isJobFailed(JS, code) {
+export function isJobFailed(JS, code) {
   const statusList = [];
   if (typeof JS.acceptableJobStatus === "undefined") {
     statusList.push("0", 0);
@@ -91,7 +90,7 @@ _internal.isJobFailed = isJobFailed;
  * @param {string} outputText - output from status check command
  * @returns {number} - return code of job
  */
-async function getStatusCode(JS, task, statCmdRt, outputText) {
+export async function getStatusCode(JS, task, statCmdRt, outputText) {
   //for backward compatibility use reJobStatus if JS does not have reJobStatusCode
   const reJobStatusCode = JS.reJobStatusCode || JS.reJobStatus;
   let [jobStatus, jobStatusList] = [0, []];
@@ -147,7 +146,7 @@ _internal.getStatusCode = getStatusCode;
  * @param {object} task - task component instance
  * @param {object} JS - jobScheduler.json info
  */
-function createRequestForWebAPI(hostinfo, task, JS) {
+export function createRequestForWebAPI(hostinfo, task, JS) {
   const baseURL = "https://api.fugaku.r-ccs.riken.jp/queue/computer";
   //TODO curlのオプションをaccessTokenを使うものに変更
   return {
@@ -173,7 +172,7 @@ _internal.createRequestForWebAPI = createRequestForWebAPI;
  * @param {object} task - task component instance
  * @param {object} JS - jobScheduler.json info
  */
-function createRequest(hostinfo, task, JS) {
+export function createRequest(hostinfo, task, JS) {
   return {
     cmd: task.type !== "bulkjobTask" ? JS.stat : JS.bulkstat,
     finishedHook: {
@@ -196,7 +195,7 @@ _internal.createRequest = createRequest;
  * @param {object} hostinfo - target host information object
  * @param {object} task - task component instance
  */
-function registerJob(hostinfo, task) {
+export function registerJob(hostinfo, task) {
   return new Promise((resolve, reject)=>{
     const JS = _internal.jobScheduler[hostinfo.jobScheduler];
     if (!JS) {
@@ -269,16 +268,4 @@ function registerJob(hostinfo, task) {
   });
 }
 
-module.exports = {
-  registerJob,
-  getFirstCapture,
-  getBulkFirstCapture,
-  isJobFailed,
-  getStatusCode,
-  createRequestForWebAPI,
-  createRequest
-};
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}
+export { _internal };

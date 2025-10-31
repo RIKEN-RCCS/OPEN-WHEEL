@@ -3,19 +3,17 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const { expect } = require("chai");
-const { describe, it, beforeEach, afterEach } = require("mocha");
-const sinon = require("sinon");
-const { initialize,
+import { expect } from "chai";
+import sinon from "sinon";
+import { initialize,
   getHashedPassword,
   addUser,
   getUserData,
   isValidUser,
   listUser,
   delUser,
-  _internal } = require("../../../app/core/auth.js");
+  _internal } from "../../../app/core/auth.js";
 
 describe("#initialize", ()=>{
   let openStub;

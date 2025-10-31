@@ -1,21 +1,22 @@
 [
     {
-        "name": "TestLabel",
+        "name": "componentTestLabel",
         "host": "TestHostname",
         "port": 8000,
         "user": "testUser",
-        "queue": "testQueues",
         "numJob": 5,
-        "useBulkjob": false,
-        "useStepjob": false,
+        "jobScheduler": "PBSPro",
+        "useBulkjob": true,
+        "useStepjob": true,
+        "queue": "testQueues",
         "sharedHost": "",
         "sharedPath": "",
         "renewInterval": 0,
         "statusCheckInterval": 60,
         "maxStatusCheckError": 10,
         "rcfile": "/etc/profile",
-        "useGfarm": false,
-        "id": "1c9c5970-acfc-11f0-8b46-cb1d6430e79e"
+        "useGfarm": true,
+        "id": "545dd3e0-b26d-11f0-bbe8-272d67e9e112"
     },
     {
         "name": "testServer",

@@ -3,19 +3,16 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 //setup test framework
-const { expect } = require("chai");
-const { getParamSpacev2 } = require("../../../app/core/parameterParser");
+import { expect } from "chai";
+import { getParamSpacev2 } from "../../../app/core/parameterParser.js";
 
-const sinon = require("sinon");
-const path = require("path");
+import sinon from "sinon";
+import path from "path";
 
 //testee
-const psUtils = require("../../../app/core/psUtils.js");
-const { _internal } = psUtils;
-const { makeCmd, getScatterFilesV2, scatterFilesV2, gatherFilesV2, replaceByNunjucks } = psUtils;
+import { _internal, makeCmd, getScatterFilesV2, scatterFilesV2, gatherFilesV2, replaceByNunjucks } from "../../../app/core/psUtils.js";
 
 describe("UT for psUtils class", function () {
   describe("#makeCmd", ()=>{
@@ -34,6 +31,7 @@ describe("UT for psUtils class", function () {
     });
     it("should throw an error for unsupported PS version", ()=>{
       const paramSettings = { version: 1 };
+      //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return makeCmd(paramSettings); }).to.throw("PS version 1 is no longer supported");
     });
     it("should use 'target_param' if 'params' is not provided", ()=>{
@@ -56,7 +54,7 @@ describe("UT for psUtils class", function () {
       globStub = sinon.stub().resolves(["source.txt"]);
       fsCopyStub = sinon.stub(_internal.fs, "copy").resolves();
       nunjucksRenderStringStub = sinon.stub(_internal.nunjucks, "renderString");
-      sinon.stub(_internal, "promisify").returns(globStub);
+      sinon.stub(_internal, "glob").callsFake(globStub);
     });
 
     afterEach(()=>{
@@ -114,7 +112,7 @@ describe("UT for psUtils class", function () {
       fsCopyStub = sinon.stub(_internal.fs, "copy").resolves();
       rsyncStub = sinon.stub(_internal, "overwriteByRsync").resolves();
       mockLogger = { trace: sinon.stub() };
-      sinon.stub(_internal, "promisify").returns(globStub);
+      sinon.stub(_internal, "glob").callsFake(globStub);
     });
     afterEach(()=>{
       sinon.restore();
@@ -235,8 +233,8 @@ describe("UT for psUtils class", function () {
     let globStub;
 
     beforeEach(()=>{
-      globStub = sinon.stub();
-      sinon.stub(_internal, "promisify").returns(globStub);
+      globStub = sinon.stub().resolves([]);
+      sinon.stub(_internal, "glob").callsFake(globStub);
     });
 
     afterEach(()=>{

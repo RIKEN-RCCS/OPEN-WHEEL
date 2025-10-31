@@ -3,12 +3,11 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
-const { sanitizePath } = require("./pathUtils");
-const { evalCondition } = require("./dispatchUtils");
-const { readComponentJson } = require("./componentJsonIO.js");
+import fs from "fs-extra";
+import path from "path";
+import { sanitizePath } from "./pathUtils.js";
+import { evalCondition } from "./dispatchUtils.js";
+import { readComponentJson } from "./componentJsonIO.js";
 
 const _internal = {
   fs,
@@ -267,7 +266,7 @@ function loopInitialize(component, getTripCount) {
   component.initialized = true;
 }
 
-module.exports = {
+export {
   getPrevIndex,
   getInstanceDirectoryName,
   keepLoopInstance,
@@ -282,9 +281,6 @@ module.exports = {
   foreachTripCount,
   foreachKeepLoopInstance,
   foreachSearchLatestFinishedIndex,
-  loopInitialize
+  loopInitialize,
+  _internal
 };
-
-if (process.env.NODE_ENV === "test") {
-  module.exports._internal = _internal;
-}

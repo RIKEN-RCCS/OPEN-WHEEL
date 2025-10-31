@@ -3,25 +3,27 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const util = require("node:util");
-const exec = util.promisify(require("node:child_process").exec);
-const path = require("node:path");
-const fs = require("fs-extra");
+import { promisify } from "node:util";
+//eslint-disable-next-line camelcase
+import { exec as exec_cb } from "node:child_process";
+const exec = promisify(exec_cb);
+import path from "node:path";
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
+import chaiAsPromised from "chai-as-promised";
 const expect = chai.expect;
-chai.use(require("chai-as-promised"));
+chai.use(chaiAsPromised);
 
 //helper
-const { createNewComponent, createNewProject } = require("../../../app/core/projectFilesOperator");
-const { gitCommit } = require("../../../app/core/gitOperator2.js");
-const { projectJsonFilename, componentJsonFilename } = require("../../../app/db/db.js");
-const { getTempdRoot } = require("../../../app/core/tempd.js");
+import { createNewComponent, createNewProject } from "../../../app/core/projectFilesOperator.js";
+import { gitCommit } from "../../../app/core/gitOperator2.js";
+import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
+import { getTempdRoot } from "../../../app/core/tempd.js";
 
 //testee
-const { exportProject } = require("../../../app/core/exportProject.js");
+import { exportProject } from "../../../app/core/exportProject.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";

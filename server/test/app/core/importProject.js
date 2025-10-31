@@ -4,27 +4,29 @@
  * See License in the project root for the license information.
  */
 
-"use strict";
-const path = require("node:path");
-const util = require("node:util");
-const exec = util.promisify(require("node:child_process").exec);
-const fs = require("fs-extra");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+//eslint-disable-next-line camelcase
+import { exec as exec_cb } from "node:child_process";
+const exec = promisify(exec_cb);
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("chai-as-promised"));
-chai.use(require("sinon-chai"));
-const sinon = require("sinon");
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import sinon from "sinon";
 
 //testee
-const IP = require("../../../app/core/importProject.js");
-const { _internal } = IP;
-const isEmptyDir = IP.isEmptyDir;
-const extractAndReadArchiveMetadata = IP.extractAndReadArchiveMetadata;
-const importProject = IP.importProject;
+import { isEmptyDir, extractAndReadArchiveMetadata, importProject, _internal } from "../../../app/core/importProject.js";
 
 //test data
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const testDirRoot = "WHEEL_TEST_TMP";
 const testArchiveFile = path.resolve(__dirname, "../../testFiles/WHEEL_project_test_project.tgz");
 

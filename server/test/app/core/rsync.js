@@ -3,19 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
+import path from "path";
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
+import chaiAsPromised from "chai-as-promised";
 const expect = chai.expect;
-chai.use(require("chai-as-promised"));
+chai.use(chaiAsPromised);
 
 //testee
-const {
+import {
   overwriteByRsync
-} = require("../../../app/core/rsync");
+} from "../../../app/core/rsync.js";
 
 describe("rsync functions", function () {
   const testRoot = "WHEEL_TEST_TMP";

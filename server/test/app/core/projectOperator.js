@@ -3,19 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
+import fs from "fs-extra";
+import path from "path";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
 
-const { createNewProject } = require("../../../app/core/projectFilesOperator.js");
+import { createNewProject } from "../../../app/core/projectFilesOperator.js";
 //testee
-const { onProjectOperation, _internal } = require("../../../app/handlers/projectController.js");
+import { onProjectOperation, _internal } from "../../../app/handlers/projectController.js";
 
 const onRunProject = sinon.stub();
 const onStopProject = sinon.stub();

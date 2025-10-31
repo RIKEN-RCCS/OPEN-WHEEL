@@ -84,7 +84,10 @@ const state = {
   openDialog: false,
   dialogContent: null,
   dialogQueue: [],
-  readOnly: false
+  readOnly: false,
+  isComponentDragging: false,
+  currentZoom: 1,
+  currentPan: { x: 0, y: 0 }
 };
 
 const mutations = mutationFactory(Object.keys(state));

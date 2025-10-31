@@ -3,19 +3,25 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const { expect } = require("chai");
-const sinon = require("sinon");
-const sshManager = require("../../../app/core/sshManager.js");
-const { _internal } = sshManager;
-
+import { expect } from "chai";
+import sinon from "sinon";
+import {
+  hasEntry,
+  addSsh,
+  getSsh,
+  getSshHostinfo,
+  getSshPW,
+  getSshPH,
+  removeSsh,
+  askPassword,
+  createSsh,
+  _internal
+} from "../../../app/core/sshManager.js";
 describe("#hasEntry", ()=>{
-  let hasEntry;
   let dbMock;
 
   beforeEach(()=>{
-    hasEntry = sshManager.hasEntry;
     dbMock = new Map();
     sinon.stub(_internal, "db").value(dbMock);
   });
@@ -50,11 +56,9 @@ describe("#hasEntry", ()=>{
 });
 
 describe("#addSsh", ()=>{
-  let addSsh;
   let dbMock;
 
   beforeEach(()=>{
-    addSsh = sshManager.addSsh;
     dbMock = new Map();
     sinon.stub(_internal, "db").value(dbMock);
   });
@@ -96,12 +100,10 @@ describe("#addSsh", ()=>{
 });
 
 describe("#getSsh", ()=>{
-  let getSsh;
   let hasEntryStub;
   let dbMock;
 
   beforeEach(()=>{
-    getSsh = sshManager.getSsh;
     hasEntryStub = sinon.stub(_internal, "hasEntry");
     dbMock = new Map();
     sinon.stub(_internal, "db").value(dbMock);
@@ -141,12 +143,10 @@ describe("#getSsh", ()=>{
 });
 
 describe("#getSshHostinfo", ()=>{
-  let getSshHostinfo;
   let hasEntryStub;
   let dbMock;
 
   beforeEach(()=>{
-    getSshHostinfo = sshManager.getSshHostinfo;
     hasEntryStub = sinon.stub(_internal, "hasEntry");
     dbMock = new Map();
     dbMock.set("mockProjectDir", new Map([
@@ -181,12 +181,10 @@ describe("#getSshHostinfo", ()=>{
 });
 
 describe("#getSshPW", ()=>{
-  let getSshPW;
   let hasEntryStub;
   let dbMock;
 
   beforeEach(()=>{
-    getSshPW = sshManager.getSshPW;
     hasEntryStub = sinon.stub(_internal, "hasEntry");
     dbMock = new Map();
     sinon.stub(_internal, "db").value(dbMock);
@@ -218,6 +216,7 @@ describe("#getSshPW", ()=>{
 
   it("should return the password (function) if pw is defined as a function", ()=>{
     hasEntryStub.returns(true);
+    //eslint-disable-next-line @stylistic/max-statements-per-line
     const pwFunc = ()=>{ return "secretFromFunction"; };
     dbMock.set("/path/to/project", new Map([
       ["hostID", { pw: pwFunc }]
@@ -230,12 +229,10 @@ describe("#getSshPW", ()=>{
 });
 
 describe("#getSshPH", ()=>{
-  let getSshPH;
   let hasEntryStub;
   let dbStub;
 
   beforeEach(()=>{
-    getSshPH = sshManager.getSshPH;
     hasEntryStub = sinon.stub(_internal, "hasEntry");
     dbStub = new Map();
     sinon.stub(_internal, "db").value(dbStub);
@@ -277,11 +274,9 @@ describe("#getSshPH", ()=>{
 });
 
 describe("#removeSsh", ()=>{
-  let removeSsh;
   let dbMock;
 
   beforeEach(()=>{
-    removeSsh = sshManager.removeSsh;
     dbMock = new Map();
     sinon.stub(_internal, "db").value(dbMock);
   });
@@ -335,11 +330,9 @@ describe("#removeSsh", ()=>{
 });
 
 describe("#askPassword", ()=>{
-  let askPassword;
   let emitAllStub;
 
   beforeEach(()=>{
-    askPassword = sshManager.askPassword;
     emitAllStub = sinon.stub(_internal, "emitAll");
   });
 
@@ -375,7 +368,6 @@ describe("#askPassword", ()=>{
 });
 
 describe("#createSsh", ()=>{
-  let createSsh;
   let hasEntryStub;
   let getSshStub;
   let addSshStub;
@@ -385,7 +377,6 @@ describe("#createSsh", ()=>{
   let originalWheelVerboseSsh;
 
   beforeEach(()=>{
-    createSsh = sshManager.createSsh;
     hasEntryStub = sinon.stub(_internal, "hasEntry");
     getSshStub = sinon.stub(_internal, "getSsh");
     addSshStub = sinon.stub(_internal, "addSsh");

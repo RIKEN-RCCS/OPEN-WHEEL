@@ -9,6 +9,9 @@
 </template>
 <script>
 "use strict";
+import { mapState } from "vuex";
+import { startDrag, calcDrag } from "../../lib/dragUtils.js";
+
 export default {
   name: "EquilateralTriangle",
   props: {
@@ -48,13 +51,11 @@ export default {
   ],
   data() {
     return {
-      startX: null,
-      startY: null,
-      oldcenter: { x: null, y: null },
-      dragging: false
+      dragState: null
     };
   },
   computed: {
+    ...mapState(["currentZoom"]),
     rotation() {
       if (this.direction === "left") {
         return `rotate(180 ${this.center.x} ${this.center.y})`;
@@ -99,37 +100,27 @@ export default {
   },
   methods: {
     mouseDown(e) {
+      e.stopPropagation();
       if (!this.draggable) {
         return;
       }
-      this.startX = e.screenX;
-      this.startY = e.screenY;
-      this.oldcenter.x = this.center.x;
-      this.oldcenter.y = this.center.y;
-      this.dragging = true;
       this.$emit("dragstart", e);
+      this.dragState = startDrag(e, this.center);
     },
     mouseMove(e) {
-      if (!this.dragging) {
-        return;
-      }
-      const x = this.oldcenter.x + e.screenX - this.startX;
-      const y = this.oldcenter.y + e.screenY - this.startY;
-      this.$emit("drag", { x, y });
+      if (!this.dragState) return;
+      const newPos = calcDrag(e, this.dragState);
+      if (!newPos) return;
+      this.$emit("drag", { x: newPos.newX, y: newPos.newY });
     },
     mouseUp(e) {
-      if (this.startX === null || this.startY === null || !this.dragging) {
-        return;
+      if (!this.dragState) return;
+      const isClick = e.screenX === this.dragState.startScreenX && e.screenY === this.dragState.startScreenY;
+      if (!isClick) {
+        this.$emit("dragend", e);
       }
-      if (e.screenX === this.startX && e.screenY === this.startY) {
-        return;
-      }
-      this.startX = null;
-      this.startY = null;
-      this.dragging = false;
-      this.$emit("dragend", e);
+      this.dragState = null;
     }
   }
-
 };
 </script>

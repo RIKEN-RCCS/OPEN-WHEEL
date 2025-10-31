@@ -3,11 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See Licensethe project root for the license information.
  */
-"use strict";
-const axios = require("axios");
-const querystring = require("querystring");
-const crypto = require("crypto");
-const { credentialFilename } = require("../db/db.js");
+import axios from "axios";
+import querystring from "querystring";
+import crypto from "crypto";
+import { credentialFilename } from "../db/db.js";
 
 const authDB = new Map();
 
@@ -122,7 +121,7 @@ async function getURLtoAcquireCode(remotehostID, redirectURI) {
   return url;
 }
 
-module.exports = {
+export {
   hasEntry,
   hasCode,
   hasRefreshToken,

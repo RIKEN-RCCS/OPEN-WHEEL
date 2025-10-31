@@ -3,25 +3,26 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 //setup test framework
-const { expect } = require("chai");
-const path = require("path");
-const fs = require("fs-extra");
-const sinon = require("sinon");
-const { createHash } = require("crypto");
+import { expect } from "chai";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs-extra";
+import sinon from "sinon";
+import { createHash } from "crypto";
 
 //testee
-const tempd = require("../../../app/core/tempd.js");
-const { _internal } = tempd;
-const { getTempd, removeTempd, createTempd } = tempd;
+import { getTempd, removeTempd, createTempd, _internal } from "../../../app/core/tempd.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe("UT for tempd class", function () {
   describe("#getTempd", ()=>{
     const projectRootDir = "/test/project";
     const prefix = "viewer";
-    const tempdRoot = process.env.WHEEL_TEMPD || path.dirname("__dirname");
+    const tempdRoot = process.env.WHEEL_TEMPD || path.dirname(__dirname);
     beforeEach(()=>{
       sinon.stub(_internal, "tempdRoot").value(tempdRoot);
     });
@@ -68,11 +69,12 @@ describe("UT for tempd class", function () {
     const tempdRoot = process.env.WHEEL_TEMPD || path.dirname(__dirname);
     let tempDirPath;
     let removeStub;
+    //eslint-disable-next-line no-unused-vars
     let getLoggerStub;
     let logDebugStub;
     beforeEach(()=>{
       sinon.stub(_internal, "tempdRoot").value(tempdRoot);
-      const hash = require("crypto").createHash("sha256")
+      const hash = createHash("sha256")
         .update(projectRootDir)
         .digest("hex");
       tempDirPath = path.resolve(tempdRoot, prefix, hash);
@@ -107,10 +109,10 @@ describe("UT for tempd class", function () {
     const projectRootDir = "/test/project";
     const prefix = "viewer";
     let tempDirPath, rootPath;
-    const tempdRoot = process.env.WHEEL_TEMPD || path.dirname("__dirname");
+    const tempdRoot = process.env.WHEEL_TEMPD || path.dirname(__dirname);
 
     beforeEach(()=>{
-      const hash = require("crypto").createHash("sha256")
+      const hash = createHash("sha256")
         .update(projectRootDir)
         .digest("hex");
       sinon.stub(_internal, "tempdRoot").value(tempdRoot);
