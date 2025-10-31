@@ -3,8 +3,7 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { emitAll } = require("../handlers/commUtils.js");
+import { emitAll } from "../handlers/commUtils.js";
 
 /**
  * ask user to fix project and component state
@@ -23,6 +22,5 @@ async function askRewindState(clientID, targets) {
     });
   });
 }
-module.exports = {
-  askRewindState
-};
+
+export { askRewindState };

@@ -3,7 +3,7 @@ import js from "@eslint/js";
 import globals from "globals";
 import stylistic from "@stylistic/eslint-plugin";
 import jsdoc from "eslint-plugin-jsdoc";
-import node from "eslint-plugin-node";
+import n from "eslint-plugin-n";
 import chaiFriendly from "eslint-plugin-chai-friendly";
 import vue from "eslint-plugin-vue";
 import vueParser from "vue-eslint-parser";
@@ -153,9 +153,22 @@ export default [
     }
   },
   {
-    files: ["server/app/**/*.js", "server/bin/*.js", "common/*.cjs"],
+    files: ["server/app/**/*.js", "server/bin/*.js"],
     plugins: {
-      node
+      n
+    },
+    languageOptions: {
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node
+      },
+      sourceType: "module"
+    }
+  },
+  {
+    files: ["common/*.cjs"],
+    plugins: {
+      n
     },
     languageOptions: {
       globals: {
@@ -165,16 +178,31 @@ export default [
       sourceType: "commonjs"
     },
     rules: {
-      "node/exports-style": [
+      "n/exports-style": [
         "error",
         "module.exports"
       ]
     }
   },
   {
-    files: ["server/test/**/*.{cjs,js}"],
+    files: ["server/test/**/*.js"],
     plugins: {
-      node,
+      n,
+      chaiFriendly
+    },
+    languageOptions: {
+      sourceType: "module",
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node,
+        ...globals.mocha
+      }
+    }
+  },
+  {
+    files: ["server/test/**/*.cjs"],
+    plugins: {
+      n,
       chaiFriendly
     },
     languageOptions: {

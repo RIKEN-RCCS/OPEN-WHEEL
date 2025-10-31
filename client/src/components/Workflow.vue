@@ -405,7 +405,7 @@ import versatileDialog from "../components/versatileDialog.vue";
 import SIO from "../lib/socketIOWrapper.js";
 import { readCookie, state2color } from "../lib/utility.js";
 import Debug from "debug";
-import allowedOperations from "../../../common/allowedOperations.cjs";
+import allowedOperations from "../../../common/allowedOperations.js";
 import importWarningDialog from "../components/importWarningDialog.vue";
 
 const debug = Debug("wheel:workflow:main");

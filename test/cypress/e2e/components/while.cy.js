@@ -27,7 +27,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：プロパティが表示されることを確認
    */
   it("04-01-087:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティが表示されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     const DATA_CY_STR = "[data-cy=\"component_property-property-navigation_drawer\"]";
     cy.confirmDisplayInProperty(DATA_CY_STR, true);
   });
@@ -38,7 +38,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：name入力テキストエリアが表示されていることを確認
    */
   it("04-01-088:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-name入力テキストエリアが表示されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     const DATA_CY_STR = "[data-cy=\"component_property-name-text_field\"]";
     cy.confirmDisplayInProperty(DATA_CY_STR, true);
   });
@@ -50,7 +50,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：nameが入力できることを確認
    */
   it("04-01-089:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-name入力-nameが入力できることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
     cy.confirmInputValueReflection(INPUT_OBJ_CY, "-Test_Task", TAG_TYPE_INPUT, "-Test_Task");
   });
@@ -62,7 +62,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：nameが入力できないことを確認
    */
   it("04-01-090:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
     cy.confirmInputValueNotReflection(INPUT_OBJ_CY, "Test*Task", TAG_TYPE_INPUT, WHILE_NAME_0);
   });
@@ -73,7 +73,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：説明入力テキストエリアが表示されていることを確認
    */
   it("04-01-091:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-description入力テキストエリアが表示されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     const DATA_CY_STR = "[data-cy=\"component_property-description-textarea\"]";
     cy.confirmDisplayInProperty(DATA_CY_STR, true);
   });
@@ -85,7 +85,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：descriptionが入力できることを確認
    */
   it("04-01-092:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-description入力-descriptionが入力できることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     const INPUT_OBJ_CY = "[data-cy=\"component_property-description-textarea\"]";
     cy.confirmInputValueReflection(INPUT_OBJ_CY, "descriptionTest", TAG_TYPE_TEXT_AREA, WHILE_NAME_0);
   });
@@ -97,7 +97,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：input files入力テキストエリアが表示されていることを確認
    */
   it("04-01-093:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     const DATA_CY_STR = "[data-cy=\"component_property-input_files-list_form\"]";
     const CLICK_AREA_CY = "[data-cy=\"component_property-in_out_files-panel_title\"]";
     cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
@@ -110,7 +110,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：input filesが入力できることを確認
    */
   it("04-01-094:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-input files入力-input filesが入力できることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, false);
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").find("input")
       .should("have.value", "testInputFile");
@@ -123,7 +123,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：input filesが反映されることを確認
    */
   it("04-01-095:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-input files反映確認-input filesが反映されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
     cy.get("[data-cy=\"graph-component-row\"]").contains("testInputFile")
       .should("exist");
@@ -136,7 +136,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：output files入力テキストエリアが表示されていることを確認
    */
   it("04-01-096:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     const DATA_CY_STR = "[data-cy=\"component_property-output_files-list_form\"]";
     const CLICK_AREA_CY = "[data-cy=\"component_property-in_out_files-panel_title\"]";
     cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
@@ -149,7 +149,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：output filesが入力できることを確認
    */
   it("04-01-097:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-output files入力-output filesが入力できることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, false);
     cy.get("[data-cy=\"component_property-output_files-list_form\"]").find("input")
       .should("have.value", "testOutputFile");
@@ -162,7 +162,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：output filesが反映されることを確認
    */
   it("04-01-099:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-output files反映確認-output filesが反映されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
     cy.get("[data-cy=\"graph-component-row\"]").contains("testOutputFile")
       .should("exist");
@@ -176,7 +176,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：プロパティが表示されていないことを確認
    */
   it("04-01-100:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.closeProperty();
     cy.get("[data-cy=\"component_property-property-navigation_drawer\"]").should("not.exist");
   });
@@ -190,7 +190,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   skip:issue#948
    */
   it.skip("04-01-101:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_FILE, "test-a", true);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
@@ -215,10 +215,12 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：コンポーネントが接続されていることを確認
    */
   it("04-01-102:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_1, 300, 600);
-    cy.connectComponent(WHILE_NAME_1); //コンポーネント同士を接続
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_1, 501, 600);
+    cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+    cy.connectComponentMultiple(WHILE_NAME_0, WHILE_NAME_1); //コンポーネント同士を接続
     cy.checkConnectionLine(WHILE_NAME_0, WHILE_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
   });
 
@@ -230,7 +232,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：削除ボタンが表示されることを確認
    */
   it("04-01-108:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
     cy.get("[data-cy=\"action_row-delete-btn\"]").should("be.visible");
   });
@@ -243,7 +245,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：削除ボタンが表示されることを確認
    */
   it("04-01-109:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
     cy.get("[data-cy=\"action_row-delete-btn\"]").should("be.visible");
   });
@@ -256,7 +258,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：input fileが削除されていることを確認
    */
   it("04-01-110:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
     cy.get("[data-cy=\"action_row-delete-btn\"]").click();
     cy.get("[data-cy=\"graph-component-row\"]").contains("testInputFile")
@@ -271,7 +273,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：output fileが削除されていることを確認
    */
   it("04-01-111:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
     cy.get("[data-cy=\"action_row-delete-btn\"]").click();
     cy.get("[data-cy=\"graph-component-row\"]").contains("testOutputFile")
@@ -286,7 +288,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：ディレクトリが単体表示されることを確認
    */
   it("04-01-112:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_DIR, "test-a", true);
     cy.createDirOrFile(TYPE_DIR, "test-b", false);
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
@@ -303,7 +305,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：ディレクトリが単体表示されることを確認
    */
   it("04-01-113:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_DIR, "test1", true);
     cy.createDirOrFile(TYPE_DIR, "test2", false);
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
@@ -320,7 +322,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：ディレクトリが複数表示されることを確認
    */
   it("04-01-114:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_DIR, "test1", true);
     cy.createDirOrFile(TYPE_DIR, "test2", false);
     cy.closeProperty();
@@ -328,6 +330,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -338,7 +341,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：ファイルが単体表示されることを確認
    */
   it("04-01-115:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_FILE, "test-a", true);
     cy.createDirOrFile(TYPE_FILE, "test-b", false);
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
@@ -355,7 +358,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：ファイルが単体表示されることを確認
    */
   it("04-01-116:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_FILE, "test1", true);
     cy.createDirOrFile(TYPE_FILE, "test2", false);
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
@@ -372,7 +375,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：ファイルが複数表示されることを確認
    */
   it("04-01-117:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_FILE, "test1", true);
     cy.createDirOrFile(TYPE_FILE, "test2", false);
     cy.closeProperty();
@@ -380,6 +383,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -390,7 +394,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
    */
   it("04-01-118:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_DIR, "test-a", true);
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
       .click();
@@ -409,7 +413,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：ディレクトリ内にファイルが作成されることを確認
    */
   it("04-01-119:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_DIR, "test-a", true);
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
       .click();
@@ -426,7 +430,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：コンポーネントが削除されていることを確認
    */
   it("04-01-120:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.deleteComponent(WHILE_NAME_0);
     cy.get("[data-cy=\"graph-component-row\"]").contains(WHILE_NAME_0)
       .should("not.exist");
@@ -440,7 +444,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：シェルスクリプト選択セレクトボックスが表示されていることを確認
    */
   it("04-01-121:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス表示確認-シェルスクリプト選択セレクトボックスが表示されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-autocomplete\"]").find("input")
       .should("exist");
@@ -454,7 +458,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：選択した値が表示されていることを確認
    */
   it("04-01-122:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_FILE, "test-a", true);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]");
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
@@ -476,7 +480,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：選択した値が表示されていることを確認
    */
   it("04-01-123:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_FILE, "test-a", true);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]");
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
@@ -491,6 +495,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-autocomplete\"]").contains("test-a")
       .should("exist");
+      cy.closeProperty();
   });
 
   /**
@@ -501,7 +506,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：javascriptテキストボックスが表示されていることを確認
    */
   it("04-01-124:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス表示確認-javascriptテキストボックスが表示されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-switch\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").should("be.visible");
@@ -515,7 +520,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：入力した値が表示されていることを確認
    */
   it("04-01-125:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス入力確認-入力した値が表示されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-switch\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").type("testJavaScript");
@@ -531,7 +536,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：入力した値が反映されていることを確認
    */
   it("04-01-126:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-プロパティ設定確認-javascriptテキストボックス反映確認-入力した値が反映されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-switch\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").type("testJavaScript");
@@ -540,6 +545,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").find("textarea")
       .should("have.value", "testJavaScript");
+      cy.closeProperty();
   });
 
   /**
@@ -550,7 +556,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：number of instances to keepテキストボックスが表示されていることを確認
    */
   it("04-01-127:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-keep表示確認-keepテキストボックスが表示されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-keep_while-text_field\"]").should("be.visible");
   });
@@ -563,7 +569,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：number of instances to keepテキストボックスが入力できることを確認
    */
   it("04-01-128:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-keep入力確認-keepテキストボックスが入力できることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-keep_while-text_field\"]").type(10);
     cy.get("[data-cy=\"component_property-keep_while-text_field\"]").find("input")
@@ -578,7 +584,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   試験確認内容：number of instances to keepテキストボックスに入力した値が反映されていることを確認
    */
   it("04-01-129:コンポーネントの基本機能動作確認-whileコンポーネント共通機能確認-各コンポーネント特有のプロパティ確認-keep入力反映確認-keepテキストボックスに入力した値が反映されていることを確認", ()=>{
-    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 300, 500);
+    cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-keep_while-text_field\"]").type(10);
     cy.closeProperty();
@@ -586,5 +592,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-keep_while-text_field\"]").find("input")
       .should("have.value", 10);
+      cy.closeProperty();
   });
 });

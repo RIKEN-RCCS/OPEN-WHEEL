@@ -622,7 +622,7 @@ import { propWidth } from "../lib/componentSizes.json";
 import {
   hasRemoteFileBrowser,
   hasGfarmTarBrowser
-} from "../../../common/checkComponent.cjs";
+} from "../../../common/checkComponent.js";
 
 const isNormalObject = (target)=>{
   const type = typeof target;
@@ -785,7 +785,7 @@ export default {
       });
       return currentHostSetting && typeof currentHostSetting.queue === "string"
         ? currentHostSetting.queue.split(",")
-          .map((e)=>{ return e.trim(); })
+            .map((e)=>{ return e.trim(); })
         : [];
     },
     submitCmd() {

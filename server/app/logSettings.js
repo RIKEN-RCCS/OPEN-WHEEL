@@ -3,13 +3,17 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See Licensethe project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { promisify } = require("util");
-const log4js = require("log4js");
+import path from "path";
+import { promisify } from "util";
+import log4js from "log4js";
 const logger = log4js.getLogger();
-const { logFilename, numLogFiles, maxLogSize, compressLogFile } = require("./db/db");
-const { emitAll } = require("./handlers/commUtils.js");
+import { logFilename, numLogFiles, maxLogSize, compressLogFile } from "./db/db.js";
+import { emitAll } from "./handlers/commUtils.js";
+
+export const _internal = {
+  emitAll
+};
+
 function getLoglevel(ignoreEnv = false) {
   const wheelLoglevel = process.env.WHEEL_LOGLEVEL;
   const defaultLevel = "debug";
@@ -36,7 +40,7 @@ function socketIOAppender(layout, timezoneOffset, argEventName) {
     const projectRootDir = loggingEvent.context.projectRootDir;
     if (eventName) {
       //emitAll is async function but we did not wait here
-      emitAll(projectRootDir, eventName, layout(loggingEvent, timezoneOffset));
+      _internal.emitAll(projectRootDir, eventName, layout(loggingEvent, timezoneOffset));
     }
   };
 }
@@ -51,7 +55,7 @@ const socketIO = {
   }
 };
 
-const logSettings = {
+export const logSettings = {
   appenders: {
     console: {
       type: "console"
@@ -116,7 +120,7 @@ const logSettings = {
 //configure with default setting
 log4js.configure(logSettings);
 
-function getLogger(projectRootDir) {
+export function getLogger(projectRootDir) {
   const contextProjectRootDir = typeof projectRootDir === "string" ? projectRootDir : path.dirname(logFilename);
   if (logger.context.projectRootDir === contextProjectRootDir) {
     return logger;
@@ -128,6 +132,6 @@ function getLogger(projectRootDir) {
   return logger;
 }
 
-module.exports = {
-  getLogger
-};
+export function configure(setting) {
+  log4js.configure(setting);
+}

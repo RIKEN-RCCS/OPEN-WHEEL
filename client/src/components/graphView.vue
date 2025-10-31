@@ -17,18 +17,27 @@
 </template>
 
 <script>
-import { mapMutations } from "vuex";
+import { mapMutations, mapState, mapActions } from "vuex";
 import ComponentGraph from "../components/componentGraph/componentGraph.vue";
 import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "../lib/componentSizes.json";
+import { useHotkey } from "vuetify/lib/composables/hotkey/index.mjs";
 
 export default {
   name: "GraphView",
   components: {
     ComponentGraph
   },
+  computed: {
+    ...mapState(["selectedComponent"])
+  },
   mounted: function () {
     this.fit();
     window.addEventListener("resize", this.fit.bind(this));
+    useHotkey({
+      "ctrl+c": this.onCopy,
+      "ctrl+x": this.onCut,
+      "ctrl+v": this.onPaste
+    });
   },
   beforeUnmount: function () {
     window.removeEventListener("resize", this.fit.bind(this));
@@ -37,8 +46,10 @@ export default {
     ...mapMutations(
       {
         commitCanvasWidth: "canvasWidth",
-        commitCanvasHeight: "canvasHeight"
+        commitCanvasHeight: "canvasHeight",
+        setCopyInfo: "copyInfo"
       }),
+    ...mapActions(["pasteComponent"]),
     fit: function () {
       const magicNumberH = 17 + 25;
       const magicNumberW = 24;
@@ -49,6 +60,21 @@ export default {
         this.commitCanvasWidth(width);
         this.commitCanvasHeight(height);
       }
+    },
+    onCopy() {
+      if (this.selectedComponent === null) {
+        return;
+      }
+      this.setCopyInfo({ type: "copy", ID: this.selectedComponent.ID });
+    },
+    onCut() {
+      if (this.selectedComponent === null) {
+        return;
+      }
+      this.setCopyInfo({ type: "cut", ID: this.selectedComponent.ID });
+    },
+    onPaste() {
+      this.pasteComponent(()=>{});
     }
   }
 };

@@ -3,7 +3,6 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 const winHelper = {
   scriptName: "run.bat",
   scriptHeader: "@echo off",
@@ -27,4 +26,7 @@ const posixHelper = {
   }
 };
 
-module.exports = process.platform === "win32" ? winHelper : posixHelper;
+const helper = process.platform === "win32" ? winHelper : posixHelper;
+
+export const { scriptName, scriptHeader, pwdCmd, exit, referenceEnv } = helper;
+export default helper;

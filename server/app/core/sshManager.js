@@ -3,11 +3,18 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const SshClientWrapper = require("ssh-client-wrapper");
-const { emitAll } = require("../handlers/commUtils.js");
+import SshClientWrapper from "ssh-client-wrapper";
+import { emitAll } from "../handlers/commUtils.js";
 
-const db = new Map();
+const _internal = {
+  db: new Map(),
+  SshClientWrapper,
+  addSsh,
+  getSsh,
+  hasEntry,
+  askPassword,
+  emitAll
+};
 
 /**
  * check if db contains ssh object for the project
@@ -16,11 +23,12 @@ const db = new Map();
  * @returns {boolean} -
  */
 function hasEntry(projectRootDir, id) {
-  if (db.has(projectRootDir)) {
-    return db.get(projectRootDir).has(id);
+  if (_internal.db.has(projectRootDir)) {
+    return _internal.db.get(projectRootDir).has(id);
   }
   return false;
 }
+_internal.hasEntry = hasEntry;
 
 /**
  * keep ssh instance and its setting at the time the connection was wstablished
@@ -32,11 +40,12 @@ function hasEntry(projectRootDir, id) {
  * @param {boolean} isStorage - whether this host is also used for remote storage component or not
  */
 function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage) {
-  if (!db.has(projectRootDir)) {
-    db.set(projectRootDir, new Map());
+  if (!_internal.db.has(projectRootDir)) {
+    _internal.db.set(projectRootDir, new Map());
   }
-  db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph, isStorage });
+  _internal.db.get(projectRootDir).set(hostinfo.id, { ssh, hostinfo, pw, ph, isStorage });
 }
+_internal.addSsh = addSsh;
 
 /**
  * get ssh instance from pool
@@ -45,14 +54,15 @@ function addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage) {
  * @returns {object} - ssh instance
  */
 function getSsh(projectRootDir, id) {
-  if (!hasEntry(projectRootDir, id)) {
+  if (!_internal.hasEntry(projectRootDir, id)) {
     const err = new Error("ssh instance is not registerd for the project");
     err.projectRootDir = projectRootDir;
     err.id = id;
     throw err;
   }
-  return db.get(projectRootDir).get(id).ssh;
+  return _internal.db.get(projectRootDir).get(id).ssh;
 }
+_internal.getSsh = getSsh;
 
 /**
  * get ssh setting
@@ -61,13 +71,13 @@ function getSsh(projectRootDir, id) {
  * @returns {object} - hostinfo object for specified ssh connection
  */
 function getSshHostinfo(projectRootDir, id) {
-  if (!hasEntry(projectRootDir, id)) {
+  if (!_internal.hasEntry(projectRootDir, id)) {
     const err = new Error("hostinfo is not registerd for the project");
     err.projectRootDir = projectRootDir;
     err.id = id;
     throw err;
   }
-  return db.get(projectRootDir).get(id).hostinfo;
+  return _internal.db.get(projectRootDir).get(id).hostinfo;
 }
 
 /**
@@ -77,13 +87,13 @@ function getSshHostinfo(projectRootDir, id) {
  * @returns {string | Function} - password or password handler
  */
 function getSshPW(projectRootDir, id) {
-  if (!hasEntry(projectRootDir, id)) {
+  if (!_internal.hasEntry(projectRootDir, id)) {
     const err = new Error("hostinfo is not registerd for the project");
     err.projectRootDir = projectRootDir;
     err.id = id;
     throw err;
   }
-  return db.get(projectRootDir).get(id).pw;
+  return _internal.db.get(projectRootDir).get(id).pw;
 }
 
 /**
@@ -93,13 +103,13 @@ function getSshPW(projectRootDir, id) {
  * @returns {string | Function} - passphrase or passphrase handler
  */
 function getSshPH(projectRootDir, id) {
-  if (!hasEntry(projectRootDir, id)) {
+  if (!_internal.hasEntry(projectRootDir, id)) {
     const err = new Error("hostinfo is not registerd for the project");
     err.projectRootDir = projectRootDir;
     err.id = id;
     throw err;
   }
-  return db.get(projectRootDir).get(id).ph;
+  return _internal.db.get(projectRootDir).get(id).ph;
 }
 
 /**
@@ -107,7 +117,7 @@ function getSshPH(projectRootDir, id) {
  * @param {string} projectRootDir - project's root path
  */
 function removeSsh(projectRootDir) {
-  const target = db.get(projectRootDir);
+  const target = _internal.db.get(projectRootDir);
   if (!target) {
     return;
   }
@@ -120,7 +130,7 @@ function removeSsh(projectRootDir) {
     e.ssh.disconnect();
   }
   if (clearDB) {
-    db.get(projectRootDir).clear();
+    _internal.db.get(projectRootDir).clear();
   }
 }
 
@@ -134,7 +144,7 @@ function removeSsh(projectRootDir) {
  */
 function askPassword(clientID, hostname, mode, JWTServerURL = null) {
   return new Promise((resolve, reject)=>{
-    emitAll(clientID, "askPassword", hostname, mode, JWTServerURL, (data)=>{
+    _internal.emitAll(clientID, "askPassword", hostname, mode, JWTServerURL, (data)=>{
       if (data === null) {
         const err = new Error("user canceled ssh password prompt");
         err.reason = "CANCELED";
@@ -144,6 +154,7 @@ function askPassword(clientID, hostname, mode, JWTServerURL = null) {
     });
   });
 }
+_internal.askPassword = askPassword;
 
 /**
  * create necessary ssh instance
@@ -155,21 +166,21 @@ function askPassword(clientID, hostname, mode, JWTServerURL = null) {
  * @returns {object} - ssh instance
  */
 async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isStorage) {
-  if (hasEntry(projectRootDir, hostinfo.id)) {
-    return getSsh(projectRootDir, hostinfo.id);
+  if (_internal.hasEntry(projectRootDir, hostinfo.id)) {
+    return _internal.getSsh(projectRootDir, hostinfo.id);
   }
 
   let pw;
   if (typeof hostinfo.password !== "string") {
     hostinfo.password = async ()=>{
-      if (hasEntry(projectRootDir, hostinfo.id)) {
+      if (_internal.hasEntry(projectRootDir, hostinfo.id)) {
         pw = getSshPW(projectRootDir, hostinfo.id);
         if (typeof pw === "string") {
           return pw;
         }
       }
       //pw will be used after canConnect
-      pw = await askPassword(clientID, remoteHostName, "password", null);
+      pw = await _internal.askPassword(clientID, remoteHostName, "password", null);
       return pw;
     };
   } else {
@@ -178,13 +189,13 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
 
   let ph;
   hostinfo.passphrase = async ()=>{
-    if (hasEntry(projectRootDir, hostinfo.id)) {
+    if (_internal.hasEntry(projectRootDir, hostinfo.id)) {
       ph = getSshPH(projectRootDir, hostinfo.id);
       if (typeof ph === "string") {
         return ph;
       }
     }
-    ph = await askPassword(clientID, remoteHostName, "passphrase ", null);
+    ph = await _internal.askPassword(clientID, remoteHostName, "passphrase ", null);
     return ph;
   };
   if (hostinfo.renewInterval) {
@@ -206,12 +217,12 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
     hostinfo.rcfile = "/etc/profile";
   }
 
-  const ssh = new SshClientWrapper(hostinfo);
+  const ssh = new _internal.SshClientWrapper(hostinfo);
   const timeout = hostinfo.ConnectTimeout > 120 ? hostinfo.ConnectTimeout : 120;
   try {
     const success = await ssh.canConnect(timeout);
     if (success) {
-      addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
+      _internal.addSsh(projectRootDir, hostinfo, ssh, pw, ph, isStorage);
     }
   } catch (e) {
     if (e.reason === "CANCELED") {
@@ -228,11 +239,15 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   return ssh;
 }
 
-module.exports = {
+export {
   addSsh,
   getSsh,
   getSshHostinfo,
   removeSsh,
   askPassword,
-  createSsh
+  createSsh,
+  hasEntry,
+  getSshPW,
+  getSshPH,
+  _internal
 };

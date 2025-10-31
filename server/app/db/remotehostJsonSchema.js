@@ -44,6 +44,6 @@ const remotehostJsonSchema = {
   required: ["name", "host", "user"]
 };
 
-module.exports = {
+export {
   remotehostJsonSchema
 };

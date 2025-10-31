@@ -3,15 +3,27 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const childProcess = require("child_process");
-const fs = require("fs-extra");
-const { addX, readJsonGreedy } = require("./fileUtils");
-const { getLogger } = require("../logSettings.js");
-const { replacePathsep } = require("./pathUtils");
-const { remoteHost, componentJsonFilename } = require("../db/db");
-const { getSshHostinfo } = require("./sshManager.js");
+import path from "path";
+import childProcess from "child_process";
+import fs from "fs-extra";
+import { addX, readJsonGreedy } from "./fileUtils.js";
+import { getLogger } from "../logSettings.js";
+import { replacePathsep } from "./pathUtils.js";
+import { remoteHost, componentJsonFilename } from "../db/db.js";
+import { getSshHostinfo } from "./sshManager.js";
+import process from "process";
+
+export const _internal = {
+  childProcess,
+  getLogger,
+  fs,
+  addX,
+  remoteHost,
+  getSshHostinfo,
+  replacePathsep,
+  readJsonGreedy,
+  process
+};
 
 /**
  * run script with options via child_process.spawn
@@ -20,26 +32,23 @@ const { getSshHostinfo } = require("./sshManager.js");
  * @param {object} options - option object for child_process.spawn
  * @returns {Promise} - resolved with return value of script if normaly finished. rejected if abnormal termination occurred
  */
-async function pspawn(projectRootDir, script, options) {
+_internal.pspawn = async function (projectRootDir, script, args, options) {
   return new Promise((resolve, reject)=>{
-    const cp = childProcess.spawn(script, options, (err)=>{
-      if (err) {
-        reject(err);
-      }
-    });
+    const cp = _internal.childProcess.spawn(script, args, options);
     cp.on("error", reject);
     cp.on("close", (code)=>{
-      getLogger(projectRootDir).debug("return value of conditional expression = ", code);
+      _internal.getLogger(projectRootDir).debug("return value of conditional expression = ", code);
       resolve(code === 0);
     });
     cp.stdout.on("data", (data)=>{
-      getLogger(projectRootDir).trace(data.toString());
+      _internal.getLogger(projectRootDir).trace(data.toString());
     });
     cp.stderr.on("data", (data)=>{
-      getLogger(projectRootDir).trace(data.toString());
+      _internal.getLogger(projectRootDir).trace(data.toString());
     });
   });
-}
+};
+export const pspawn = _internal.pspawn;
 
 /**
  * evalute condition by executing external command or evalute JS expression
@@ -49,29 +58,29 @@ async function pspawn(projectRootDir, script, options) {
  * @param {object} env - environment variables
  * @returns {Promise | boolean} -
  */
-async function evalCondition(projectRootDir, condition, cwd, env) {
+export async function evalCondition(projectRootDir, condition, cwd, env) {
   //condition is always string for now. but keep following just in case
   if (typeof condition === "boolean") {
     return condition;
   }
   if (typeof condition !== "string") {
-    getLogger(projectRootDir).warn("condition must be string or boolean");
+    _internal.getLogger(projectRootDir).warn("condition must be string or boolean");
     return new Error(`illegal condition specified ${typeof condition} \n${condition}`);
   }
   const script = path.resolve(cwd, condition);
-  if (await fs.pathExists(script)) {
-    getLogger(projectRootDir).debug("execute ", script);
-    await addX(script);
+  if (await _internal.fs.pathExists(script)) {
+    _internal.getLogger(projectRootDir).debug("execute ", script);
+    await _internal.addX(script);
     const dir = path.dirname(script);
     const options = {
-      env: Object.assign({}, process.env, env),
+      env: Object.assign({}, _internal.process.env, env),
       cwd: dir,
       shell: "bash"
     };
 
-    return pspawn(projectRootDir, script, options);
+    return _internal.pspawn(projectRootDir, script, [], options);
   }
-  getLogger(projectRootDir).debug("evalute ", condition);
+  _internal.getLogger(projectRootDir).debug("evalute ", condition);
   let conditionExpression = "";
 
   for (const [key, value] of Object.entries(env)) {
@@ -88,18 +97,19 @@ async function evalCondition(projectRootDir, condition, cwd, env) {
  * @param {object} component - component object
  * @param {boolean} isSharedHost - return as sharedHost path or ordinary remote path
  */
-function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, isSharedHost) {
-  const remotehostID = remoteHost.getID("name", component.host);
+_internal.getRemoteRootWorkingDir = function (projectRootDir, projectStartTime, component, isSharedHost) {
+  const remotehostID = _internal.remoteHost.getID("name", component.host);
   if (typeof remotehostID === "undefined") {
     return null;
   }
-  const hostinfo = getSshHostinfo(projectRootDir, remotehostID);
+  const hostinfo = _internal.getSshHostinfo(projectRootDir, remotehostID);
   let remoteRoot = isSharedHost ? hostinfo.sharedPath : hostinfo.path;
   if (typeof remoteRoot !== "string") {
     remoteRoot = "";
   }
-  return replacePathsep(path.posix.join(remoteRoot, projectStartTime));
-}
+  return _internal.replacePathsep(path.posix.join(remoteRoot, projectStartTime));
+};
+export const getRemoteRootWorkingDir = _internal.getRemoteRootWorkingDir;
 
 /**
  * return comoponent's working directory on remoteshot
@@ -109,8 +119,8 @@ function getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, is
  * @param {object} component - component object
  * @param {boolean} isSharedHost - return as sharedHost path or ordinary remote path
  */
-function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, component, isSharedHost) {
-  const remoteRootWorkingDir = getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, isSharedHost);
+export function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, component, isSharedHost) {
+  const remoteRootWorkingDir = _internal.getRemoteRootWorkingDir(projectRootDir, projectStartTime, component, isSharedHost);
   if (remoteRootWorkingDir === null) {
     return null;
   }
@@ -123,7 +133,7 @@ function getRemoteWorkingDir(projectRootDir, projectStartTime, workingDir, compo
  * @param {string} state - state string
  * @returns {boolean} is finished or not?
  */
-function isFinishedState(state) {
+export function isFinishedState(state) {
   return state === "finished" || state === "failed" || state === "unknown";
 }
 
@@ -132,9 +142,9 @@ function isFinishedState(state) {
  * @param {string} target - path to be investigated
  * @returns {Promise} true if give path is subComponent dir
  */
-async function isSubComponent(target) {
+export async function isSubComponent(target) {
   try {
-    const stats = await fs.stat(target);
+    const stats = await _internal.fs.stat(target);
     if (!stats.isDirectory()) {
       return false;
     }
@@ -148,7 +158,7 @@ async function isSubComponent(target) {
 
   let rt = false;
   try {
-    const componentJson = await readJsonGreedy(path.resolve(target, componentJsonFilename));
+    const componentJson = await _internal.readJsonGreedy(path.resolve(target, componentJsonFilename));
     rt = componentJson.subComponent === true;
   } catch (e) {
     if (e.code === "ENOENT") {
@@ -158,11 +168,3 @@ async function isSubComponent(target) {
   }
   return rt;
 }
-
-module.exports = {
-  evalCondition,
-  getRemoteWorkingDir,
-  getRemoteRootWorkingDir,
-  isFinishedState,
-  isSubComponent
-};

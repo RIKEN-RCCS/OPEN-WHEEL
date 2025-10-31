@@ -1,10 +1,15 @@
 {
   "name": "test",
   "version": "1.0.0",
+  "type": "module",
   "main": "cypress.config.js",
   "scripts": {
     "test": "npx cypress open",
     "test-all": "npx cypress run --browser chrome",
+    "test:e2e": "npm run test:e2e:start && npm run test:e2e:run; npm run test:e2e:stop",
+    "test:e2e:start": "docker compose up -d --wait",
+    "test:e2e:run": "npm run test-all",
+    "test:e2e:stop": "docker compose down",
     "start": "cd ../; npm start",
     "build": "cd ../; npm run build"
   },
@@ -17,6 +22,7 @@
     "chrome": "^0.1.0",
     "cypress": "^13.6.3",
     "cypress-delete-downloads-folder": "^0.0.4",
+    "cypress-real-events": "^1.15.0",
     "cypress-wait-until": "^3.0.2",
     "simple-ssh": "^1.1.1"
   }

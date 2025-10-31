@@ -3,11 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const os = require("os");
-const path = require("path");
-const fs = require("fs-extra");
-const JsonArrayManager = require("./jsonArrayManager");
+import os from "os";
+import path from "path";
+import fs from "fs-extra";
+import JsonArrayManager from "./jsonArrayManager.js";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * check if specified path is exist or not
@@ -105,9 +108,9 @@ function getStringVar(target, alt) {
 /**
  * read default and userdefined config file and merge them
  * @param {string} filename - config file's name
- * @returns {object} -
+ * @returns {Promise<object>} -
  */
-function readAndMergeConfigFile(filename) {
+async function readAndMergeConfigFile(filename) {
   let userConfigFilename;
   try {
     userConfigFilename = getConfigFile(filename, true);
@@ -116,16 +119,17 @@ function readAndMergeConfigFile(filename) {
       throw e;
     }
   }
-  const defaultConfig = require(`./${filename}`);
+  const defaultConfigPath = path.resolve(__dirname, filename);
+  const defaultConfig = JSON.parse(await fs.readFile(defaultConfigPath, "utf-8"));
   if (!userConfigFilename) {
     return defaultConfig;
   }
-  const userConfig = require(userConfigFilename);
+  const userConfig = JSON.parse(await fs.readFile(userConfigFilename, "utf-8"));
   return { ...defaultConfig, ...userConfig };
 }
 
-const config = readAndMergeConfigFile("server.json");
-const jobScheduler = readAndMergeConfigFile("jobScheduler.json");
+const config = await readAndMergeConfigFile("server.json");
+const jobScheduler = await readAndMergeConfigFile("jobScheduler.json");
 const remotehostFilename = getConfigFile(getStringVar(config.remotehostJsonFile, "remotehost.json"));
 const jobScriptTemplateFilename = getConfigFile(getStringVar(config.jobScriptTemplateJsonFile, "jobScriptTemplate.json"));
 const projectListFilename = getConfigFile(getStringVar(config.projectListJsonFile, "projectList.json"));
@@ -133,46 +137,45 @@ const logFilename = getConfigFile(getStringVar(config.logFilename, "wheel.log"))
 const credentialFilename = getConfigFile(getStringVar(config.credentialFilename, "credentials.json"));
 
 //export constants
-module.exports.suffix = ".wheel";
-module.exports.projectJsonFilename = "prj.wheel.json";
-module.exports.componentJsonFilename = "cmp.wheel.json";
-module.exports.statusFilename = "status.wheel.txt";
-module.exports.jobManagerJsonFilename = "jm.wheel.json";
-module.exports.filesJsonFilename = "files.wheel.json";
-module.exports.defaultPSconfigFilename = "parameterSetting.json";
-module.exports.userDBFilename = "user.db";
-module.exports.userDBDir = process.env.WHEEL_USER_DB_DIR || __dirname;
+export const suffix = ".wheel";
+export const projectJsonFilename = "prj.wheel.json";
+export const componentJsonFilename = "cmp.wheel.json";
+export const statusFilename = "status.wheel.txt";
+export const jobManagerJsonFilename = "jm.wheel.json";
+export const filesJsonFilename = "files.wheel.json";
+export const defaultPSconfigFilename = "parameterSetting.json";
+export const userDBFilename = "user.db";
+export const userDBDir = process.env.WHEEL_USER_DB_DIR || __dirname;
 
-if (!process.env.WHEEL_USE_HTTP) {
-  module.exports.keyFilename = getConfigFile("server.key", true);
-  module.exports.certFilename = getConfigFile("server.crt", true);
-}
-module.exports.logFilename = logFilename;
-module.exports.credentialFilename = credentialFilename;
+export const keyFilename = !process.env.WHEEL_USE_HTTP ? getConfigFile("server.key", true) : undefined;
+export const certFilename = !process.env.WHEEL_USE_HTTP ? getConfigFile("server.crt", true) : undefined;
 
-module.exports.rsyncExcludeOptionOfWheelSystemFiles = [
-  `--exclude=**/${module.exports.projectJsonFilename}`,
-  `--exclude=**/${module.exports.componentJsonFilename}`,
-  `--exclude=**/${module.exports.statusFilename}`,
-  `--exclude=**/${module.exports.jobManagerJsonFilename}`,
-  `--exclude=**/${module.exports.filesJsonFilename}`,
-  `--exclude=**/${module.exports.defaultPSconfigFilename}`,
-  `--exclude=**/${module.exports.logFilename}`
+export { logFilename };
+export { credentialFilename };
+
+export const rsyncExcludeOptionOfWheelSystemFiles = [
+  `--exclude=**/${projectJsonFilename}`,
+  `--exclude=**/${componentJsonFilename}`,
+  `--exclude=**/${statusFilename}`,
+  `--exclude=**/${jobManagerJsonFilename}`,
+  `--exclude=**/${filesJsonFilename}`,
+  `--exclude=**/${defaultPSconfigFilename}`,
+  `--exclude=**/${logFilename}`
 ];
 
 //re-export server settings
-module.exports.port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
-module.exports.rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
-module.exports.defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);
-module.exports.numLogFiles = getIntVar(config.numLogFiles, 5);
-module.exports.maxLogSize = getIntVar(config.maxLogSize, 8388608);
-module.exports.compressLogFile = getVar(config.compressLogFile, true);
-module.exports.numJobOnLocal = parseInt(process.env.WHEEL_NUM_LOCAL_JOB, 10) || getIntVar(config.numJobOnLocal, 1);
-module.exports.defaultTaskRetryCount = getIntVar(config.defaultTaskRetryCount, 1);
-module.exports.gitLFSSize = getIntVar(config.gitLFSSize, 200);
+export const port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
+export const rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
+export const defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);
+export const numLogFiles = getIntVar(config.numLogFiles, 5);
+export const maxLogSize = getIntVar(config.maxLogSize, 8388608);
+export const compressLogFile = getVar(config.compressLogFile, true);
+export const numJobOnLocal = parseInt(process.env.WHEEL_NUM_LOCAL_JOB, 10) || getIntVar(config.numJobOnLocal, 1);
+export const defaultTaskRetryCount = getIntVar(config.defaultTaskRetryCount, 1);
+export const gitLFSSize = getIntVar(config.gitLFSSize, 200);
 
 //export setting files
-module.exports.jobScheduler = jobScheduler;
-module.exports.remoteHost = new JsonArrayManager(remotehostFilename);
-module.exports.jobScriptTemplate = new JsonArrayManager(jobScriptTemplateFilename);
-module.exports.projectList = new JsonArrayManager(projectListFilename);
+export { jobScheduler };
+export const remoteHost = new JsonArrayManager(remotehostFilename);
+export const jobScriptTemplate = new JsonArrayManager(jobScriptTemplateFilename);
+export const projectList = new JsonArrayManager(projectListFilename);

@@ -70,8 +70,7 @@ describe.skip("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
     afterEach(()=>{
       cy.clickComponentName("hpciss");
       cy.get("[data-cy=\"component_property-close-btn\"]").click();
-      cy.wait(500);
-      cy.clickComponentName("hpciss");
+      cy.clickComponentName("hpciss", { timeout: 5000 });
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"remote_file_browser-request_remote_connection-btn\"]", { timeout: 3000 }).click();
 
@@ -132,8 +131,7 @@ describe.skip("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
     afterEach(()=>{
       cy.clickComponentName("hpcisstar");
       cy.get("[data-cy=\"component_property-close-btn\"]").click();
-      cy.wait(500);
-      cy.clickComponentName("hpcisstar");
+      cy.clickComponentName("hpcisstar", { timeout: 5000 });
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"gfarm_tar_browser-request_remote_connection-btn\"]", { timeout: 3000 }).click();
 

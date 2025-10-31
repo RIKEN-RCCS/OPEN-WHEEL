@@ -3,14 +3,15 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
+import path from "path";
+import { expect } from "chai";
+import fs from "fs-extra";
+import { fileURLToPath } from "url";
 
-const path = require("path");
-const { expect } = require("chai");
-const { describe, it, beforeEach, afterEach } = require("mocha");
-const fs = require("fs-extra");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const { getFiletype } = require("../../../app/core/viewerUtils.js");
+import { getFiletype } from "../../../app/core/viewerUtils.js";
 
 describe("#getFiletype (Integration Test)", ()=>{
   const testDir = path.join(__dirname, "tempfiletest_viewerUtils");
@@ -65,7 +66,7 @@ describe("#getFiletype (Integration Test)", ()=>{
     let result;
     try {
       result = await getFiletype(missingFilePath);
-    } catch (err) {
+    } catch {
       //ここに入った時点で fs.readFile がエラーを投げている
     }
 

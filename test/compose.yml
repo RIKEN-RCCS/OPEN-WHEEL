@@ -12,6 +12,7 @@ services:
       dockerfile: Dockerfile
       target: exec
     image: wheel_e2e_test
+    container_name: test-wheel_release_test-1
     ports:
       - "8089:8089"
     environment:
@@ -19,6 +20,6 @@ services:
       WHEEL_USE_PORT: 8089
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
-      WHEEL_LOGLEVEL: info
+      WHEEL_LOGLEVEL: OFF
     volumes:
       - "./wheel_config:/root/.wheel"

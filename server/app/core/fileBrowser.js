@@ -3,10 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
-const { isComponentDir } = require("./projectFilesOperator");
+import fs from "fs-extra";
+import path from "path";
+import { isComponentDir } from "./projectFilesOperator.js";
+
+const _internal = {
+  fs,
+  isComponentDir
+};
 
 /**
  * make bundled name of seqential number file
@@ -121,7 +125,7 @@ async function ls(targetDir, options = {}) {
   const fileFilter = options.filter && options.filter.file;
   const dirList = [];
   const fileList = [];
-  const names = await fs.readdir(path.normalize(targetDir));
+  const names = await _internal.fs.readdir(path.normalize(targetDir));
   await Promise.all(names.map(async (name)=>{
     if (allFilter && !allFilter.test(name)) {
       return;
@@ -129,8 +133,8 @@ async function ls(targetDir, options = {}) {
     const absoluteFilename = path.join(targetDir, name);
     let stats;
     try {
-      stats = await fs.lstat(absoluteFilename);
-    } catch (err) {
+      stats = await _internal.fs.lstat(absoluteFilename);
+    } catch {
       //just ignore error
       return;
     }
@@ -138,7 +142,7 @@ async function ls(targetDir, options = {}) {
       if (dirFilter && !dirFilter.test(name)) {
         return;
       }
-      dirList.push({ path: request, name, type: "dir", islink: false, isComponentDir: await isComponentDir(path.resolve(request, name)) });
+      dirList.push({ path: request, name, type: "dir", islink: false, isComponentDir: await _internal.isComponentDir(path.resolve(request, name)) });
     } else if (stats.isFile() && sendFilename) {
       if (fileFilter && !fileFilter.test(name)) {
         return;
@@ -147,12 +151,12 @@ async function ls(targetDir, options = {}) {
     }
     if (stats.isSymbolicLink()) {
       try {
-        const stats2 = await fs.stat(absoluteFilename);
+        const stats2 = await _internal.fs.stat(absoluteFilename);
         if (stats2.isDirectory() && sendDirname) {
           if (dirFilter && !dirFilter.test(name)) {
             return;
           }
-          dirList.push({ path: request, name, type: "dir", islink: true, isComponentDir: await isComponentDir(path.resolve(request, name)) });
+          dirList.push({ path: request, name, type: "dir", islink: true, isComponentDir: await _internal.isComponentDir(path.resolve(request, name)) });
         }
         if (stats2.isFile() && sendFilename) {
           if (fileFilter && !fileFilter.test(name)) {
@@ -182,4 +186,6 @@ async function ls(targetDir, options = {}) {
   }
   return dirList.sort(compare).concat(fileList.sort(compare));
 }
-module.exports = ls;
+
+export default ls;
+export { getSNDs, bundleSNDFiles, _internal };

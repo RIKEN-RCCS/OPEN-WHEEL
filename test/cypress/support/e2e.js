@@ -19,6 +19,8 @@ import "./commands-vuetify";
 import "./commands-home";
 import "./commands-remoteHost";
 import "./commands-workFlow";
+import "./commands-shortcut";
+import "cypress-real-events";
 
 //Alternatively you can use CommonJS syntax:
 //require('./commands')

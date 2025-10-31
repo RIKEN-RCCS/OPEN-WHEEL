@@ -4,11 +4,11 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const SshClientWrapper = require("ssh-client-wrapper");
-const { getLogger } = require("../logSettings");
+import SshClientWrapper from "ssh-client-wrapper";
+import { getLogger } from "../logSettings.js";
 const logger = getLogger();
-const { remoteHost } = require("../db/db");
-const { askPassword } = require("../core/sshManager.js");
+import { remoteHost } from "../db/db.js";
+import { askPassword } from "../core/sshManager.js";
 
 /**
  * try to connect remote host via ssh
@@ -43,7 +43,7 @@ async function onTryToConnectById(clientID, id, cb) {
   await onTryToConnect(clientID, hostInfo, cb);
 }
 
-module.exports = {
+export {
   onTryToConnectById,
   onTryToConnect
 };

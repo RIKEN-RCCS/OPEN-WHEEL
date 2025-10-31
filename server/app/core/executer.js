@@ -4,10 +4,10 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { remoteHost } = require("../db/db");
-const { getRemoteRootWorkingDir, getRemoteWorkingDir } = require("./dispatchUtils");
-const { stageIn, stageOut } = require("./transferrer.js");
-const { register } = require("./executerManager.js");
+import { remoteHost } from "../db/db.js";
+import { getRemoteRootWorkingDir, getRemoteWorkingDir } from "./dispatchUtils.js";
+import { stageIn, stageOut } from "./transferrer.js";
+import { register } from "./executerManager.js";
 
 /**
  * enqueue task
@@ -36,6 +36,6 @@ async function exec(task) {
   }
 }
 
-module.exports = {
+export {
   exec
 };
