@@ -6,6 +6,7 @@ services:
     container_name: wheel_release_test_server
     cap_add:
       - SYS_RESOURCE
+
   wheel_release_test:
     build:
       context: ../

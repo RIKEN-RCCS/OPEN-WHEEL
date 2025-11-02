@@ -564,6 +564,7 @@ async function register(task) {
       executer.setGrpName(grpName);
     }
   } else {
+    _internal.getLogger(task.projectRootDir).debug(`create new executer for ${task.host} ${task.useJobScheduler ? "with" : "without"} job scheduler`);
     executer = _internal.createExecuter(task, hostinfo);
     _internal.executers.set(getExecutersKey(task), executer);
   }

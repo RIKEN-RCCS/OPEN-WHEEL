@@ -40,17 +40,22 @@ Cypress.Commands.add("waitProjectAppear", (projectName, timeout = 20000)=>{
 
 //remove a project by name
 Cypress.Commands.add("removeProject", (projectName)=>{
-  cy.get("[data-cy=\"home-project_name-btn\"]").contains(projectName).parents("tr").find("[type=\"checkbox\"]").check();
+  cy.get("[data-cy=\"home-project_name-btn\"]").contains(projectName)
+    .parents("tr")
+    .find("[type=\"checkbox\"]")
+    .check();
   cy.get("[data-cy=\"home-remove-btn\"]").click();
   cy.get("[data-cy=\"buttons-remove-btn\"]").click();
   return cy.contains(projectName).should("not.be.visible");
 });
 
-const projectListFilename = "wheel_config/projectList.json";
+const projectListFilename = "/root/.wheel/projectList.json";
 const containerName = "test-wheel_release_test-1";
 
 Cypress.Commands.add("removeAllProjects", ()=>{
-  cy.task("readJson", projectListFilename).then((projects)=>{
+  const tmpFilename = `cypress/fixtures/projectList.json`;
+  cy.exec(`docker cp ${containerName}:${projectListFilename} ${tmpFilename}`);
+  cy.task("readJson", tmpFilename).then((projects)=>{
     if (!projects) {
       return;
     }
@@ -58,7 +63,7 @@ Cypress.Commands.add("removeAllProjects", ()=>{
       cy.exec(`docker exec ${containerName} rm -fr ${project.path}`);
     });
   });
-  cy.writeFile(projectListFilename, "[]");
-  //Wait for file system to sync
-  cy.wait(300);
+  //Update the file inside the container only
+  cy.exec(`docker exec ${containerName} sh -c 'echo [] > ${projectListFilename}'`);
+  cy.task("deleteFile", tmpFilename);
 });

@@ -53,7 +53,7 @@ describe("#getBulkFirstCapture", ()=>{
       "yet another line"
     ].join("\n");
 
-    const reSubCode = /CODE=(d+)/;
+    const reSubCode = /CODE=(\d+)/;
     const result = getBulkFirstCapture(outputText, reSubCode);
 
     expect(result).to.deep.equal([1, []]);
@@ -66,7 +66,7 @@ describe("#getBulkFirstCapture", ()=>{
       "last line CODE=2"
     ].join("\n");
 
-    const reSubCode = /CODE=(d+)/;
+    const reSubCode = /CODE=(\d+)/;
     const result = getBulkFirstCapture(outputText, reSubCode);
 
     expect(result).to.deep.equal([0, ["1", "0", "2"]]);
@@ -78,7 +78,7 @@ describe("#getBulkFirstCapture", ()=>{
       "some line CODE=9"
     ].join("\n");
 
-    const reSubCode = /CODE=(d+)/;
+    const reSubCode = /CODE=(\d+)/;
     const result = getBulkFirstCapture(outputText, reSubCode);
 
     expect(result).to.deep.equal([1, ["5", "9"]]);
@@ -90,7 +90,7 @@ describe("#getBulkFirstCapture", ()=>{
       "line2 CODE=123"
     ].join("\n");
 
-    const reSubCode = /CODE=d+/;
+    const reSubCode = /CODE=\d+/;
 
     const result = getBulkFirstCapture(outputText, reSubCode);
 

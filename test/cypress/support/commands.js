@@ -1,4 +1,6 @@
 const animationWaitTime = 500;
+const containerName = "test-wheel_release_test-1";
+
 Cypress.on("uncaught:exception", ()=>{
   return false;
 });
@@ -637,12 +639,8 @@ Cypress.Commands.add("sendCommand", (hostname, port, user, password)=>{
   });
 });
 
-Cypress.Commands.add("backupFile", (filePath, backupName) => {
-  const dest = `cypress/fixtures/${backupName}.json`;
-  cy.task('backupFile', { src: filePath, dest });
-});
-
-Cypress.Commands.add("restoreFile", (backupName, filePath) => {
-  const src = `cypress/fixtures/${backupName}.json`;
-  cy.task('restoreFile', { src, dest: filePath });
+Cypress.Commands.add("restoreFile", (fileName)=>{
+  const src = `wheel_config/${fileName}`;
+  const containerPath = `/root/.wheel/${fileName}`;
+  cy.exec(`docker cp ${src} ${containerName}:${containerPath}`);
 });

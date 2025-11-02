@@ -2,8 +2,7 @@ import { defineConfig } from "cypress";
 import SSH from "simple-ssh";
 import { removeDirectory } from "cypress-delete-downloads-folder";
 import fs from "fs-extra";
-import tar from "tar";
-import path from "path";
+import * as tar from "tar";
 
 export default defineConfig({
   waitForAnimations: true,
@@ -33,8 +32,6 @@ export default defineConfig({
       WHEEL_TEST_USER: "testuser",
       WHEEL_PATH: "/root"
     },
-    numTestsKeptInMemory: 1,
-    experimentalMemoryManagement: true,
     baseUrl: `http://localhost:8089`,
     setupNodeEvents(on) {
       on("task", {
@@ -72,40 +69,22 @@ export default defineConfig({
         async fileExists(filePath) {
           return fs.pathExists(filePath);
         },
-        readJson(filePath) {
-          return fs.readJson(filePath).catch((err)=>{
-            console.error(err);
-            return null;
-          });
-        },
-        backupFile({ src, dest }) {
-          return new Promise((resolve, reject)=>{
-            const destDir = path.dirname(dest);
-            if (!fs.existsSync(destDir)) {
-              fs.mkdirSync(destDir, { recursive: true });
-            }
-            fs.copyFile(src, dest, (err)=>{
-              if (err) {
-                return reject(err);
-              }
-              resolve(null);
+        async readJson(filePath) {
+          return fs.readJson(filePath)
+            .catch((err)=>{
+              console.error(err);
+              return null;
             });
-          });
         },
-        restoreFile({ src, dest }) {
-          return new Promise((resolve, reject)=>{
-            fs.copyFile(src, dest, (err)=>{
-              if (err) {
-                return reject(err);
-              }
-              fs.unlink(src, (err)=>{
-                if (err) {
-                  return reject(err);
-                }
-                resolve(null);
-              });
+        async deleteFile(filePath) {
+          return fs.remove(filePath)
+            .catch((err)=>{
+              console.error(err);
+              return null;
+            })
+            .then(()=>{
+              return true;
             });
-          });
         }
       });
     }

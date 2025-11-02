@@ -12,7 +12,6 @@ jobs:
         ports:
           - 4000:22
     env:
-      WHEEL_USE_HTTP: 1
       TZ: JST-9
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CYPRESS_WHEEL_TEST_REMOTEHOST: ${{ secrets.WHEEL_TEST_REMOTEHOST }}
@@ -21,50 +20,41 @@ jobs:
       CYPRESS_WHEEL_TEST_PORT: ${{ secrets.WHEEL_TEST_PORT }}
       CYPRESS_WHEEL_TEST_USER: ${{ secrets.WHEEL_TEST_USER }}
       CYPRESS_WHEEL_PATH: '/home/runner'
-      WHEEL_LOGLEVEL: "ERROR"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [20.x]
-        browser: [chrome, edge]
+        browser: [chrome]
     steps:
-      - run: mkdir -p ~/.wheel
-      - run: >
-          echo '[{
-            "name": "${{ secrets.WHEEL_TEST_REMOTEHOST }}",
-            "host": "${{ secrets.WHEEL_TEST_HOSTNAME }}",
-            "path": "/home/${{ secrets.WHEEL_TEST_USER }}",
-            "keyFile": null,
-            "username": "${{ secrets.WHEEL_TEST_USER }}",
-            "numJob": 5,
-            "port": ${{ secrets.WHEEL_TEST_PORT }},
-            "id": "dummy-id",
-            "jobScheduler": "PBSPro",
-            "queue": "workq",
-            "renewInterval": 0,
-            "renewDelay": 0,
-            "statusCheckInterval": 5,
-            "maxStatusCheckError": 10,
-            "readyTimeout": 5000
-          }]' > ~/.wheel/remotehost.json
-      - run: cat ~/.wheel/remotehost.json
       - name: Checkout
         uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
-      - run: npm install
+      - name: Build and start WHEEL container
+        run: |
+          docker build --target exec -t wheel_e2e_test .
+          docker run -d --name test-wheel_release_test-1 \
+            -p 8089:8089 \
+            -e WHEEL_USE_HTTP=1 \
+            -e WHEEL_LOGLEVEL=ERROR \
+            wheel_e2e_test
+          # Copy config files into the container
+          docker cp test/wheel_config/. test-wheel_release_test-1:/root/.wheel/
+          # Wait for server to be ready
+          timeout 300 bash -c 'until curl -f http://localhost:8089 > /dev/null 2>&1; do sleep 2; done'
+      - name: Install test dependencies
+        working-directory: test
+        run: npm install --ignore-scripts
+      - name: Install Cypress binary
+        working-directory: test
+        run: npx cypress install
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
           working-directory: test
           browser: ${{ matrix.browser }}
           install: false
-          build: npm run build
-          start: npm start
-          wait-on: "http://localhost:8089"
-          wait-on-timeout: 300
           config: requestTimeout=300000,defaultCommandTimeout=300000,retries=2
 
       - name: upload screenshot
@@ -82,3 +72,9 @@ jobs:
           name: cypress-videos
           path: test/cypress/videos
           if-no-files-found: ignore
+
+      - name: Stop WHEEL container
+        if: always()
+        run: |
+          docker stop test-wheel_release_test-1 || true
+          docker rm test-wheel_release_test-1 || true

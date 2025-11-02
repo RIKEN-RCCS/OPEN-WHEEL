@@ -20,11 +20,8 @@ describe("01:リモートホスト画面基本動作確認", ()=>{
   const EXECUTION_INTERVAL = 6;
   const TIMEOUT_DURING = 7;
 
-  before(()=>{
-    cy.backupFile("wheel_config/remotehost.json", "remotehost");
-  });
   after(()=>{
-    cy.restoreFile("remotehost", "wheel_config/remotehost.json");
+    cy.restoreFile("remotehost.json");
   });
   beforeEach(()=>{
     cy.removeRemoteHost(LABEL);
