@@ -17,12 +17,15 @@ import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 
 //helper
-import { updateComponent, createNewComponent, createNewProject } from "../../../app/core/projectFilesOperator.js";
+import { updateComponent } from "../../../app/core/updateComponent.js";
+import { updateComponentProperty } from "../../testUtil.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
 import { gitAdd, gitRm, gitStatus, gitCommit } from "../../../app/core/gitOperator2.js";
 import { componentJsonFilename, projectJsonFilename } from "../../../app/db/db.js";
 
 //testee
-import { readProject, _internal } from "../../../app/core/projectFilesOperator.js";
+import { readProject, _internal } from "../../../app/core/projectOperations.js";
 
 //test data
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
@@ -69,7 +72,7 @@ describe("readProject UT", function () {
     expect(untracked).to.be.an("array").that.is.empty;
   });
   it("should do nothing if git-controlled and something modified", async ()=>{
-    await updateComponent(projectRootDir, task0.ID, "state", "hoge");
+    await updateComponentProperty(projectRootDir, task0.ID, "state", "hoge");
     await readProject(projectRootDir);
 
     const { added, modified, deleted, renamed, untracked } = await gitStatus(projectRootDir);
@@ -80,8 +83,8 @@ describe("readProject UT", function () {
     expect(untracked).to.be.an("array").that.is.empty;
   });
   it("should convert include or exclude prop is comma separated string", async ()=>{
-    await updateComponent(projectRootDir, task0.ID, "include", "foo,bar,baz");
-    await updateComponent(projectRootDir, task0.ID, "exclude", "hoge,huga,piyo");
+    await updateComponentProperty(projectRootDir, task0.ID, "include", "foo,bar,baz");
+    await updateComponentProperty(projectRootDir, task0.ID, "exclude", "hoge,huga,piyo");
     await gitCommit(projectRootDir);
     await readProject(projectRootDir);
 
@@ -112,7 +115,7 @@ describe("readProject UT", function () {
     expect(fs.readFileSync(ignoreFile, "utf-8")).to.equal("wheel.log");
   });
   it("should set all components and project to 'not-started' and commit everything if project is not git-controlled", async ()=>{
-    await updateComponent(projectRootDir, task0.ID, "state", "hoge");
+    await updateComponentProperty(projectRootDir, task0.ID, "state", "hoge");
     await fs.remove(path.resolve(projectRootDir, ".git"));
     await readProject(projectRootDir);
 

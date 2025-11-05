@@ -5,7 +5,7 @@
  */
 import fs from "fs-extra";
 import path from "path";
-import { isComponentDir } from "./projectFilesOperator.js";
+import { isComponentDir } from "./componentOperations.js";
 
 const _internal = {
   fs,

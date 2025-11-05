@@ -5,7 +5,7 @@
  */
 import path from "path";
 import { projectJsonFilename } from "../db/db.js";
-import { readProject } from "../core/projectFilesOperator.js";
+import { readProject } from "../core/projectOperations.js";
 import { readComponentJson } from "../core/componentJsonIO.js";
 import { fileURLToPath } from "url";
 

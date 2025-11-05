@@ -1,0 +1,103 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
+import fs from "fs-extra";
+import path from "path";
+import Ajv from "ajv";
+import { getLogger } from "../logSettings.js";
+import getSchema from "../db/jsonSchemas.js";
+import { getComponentDir } from "./componentJsonIO.js";
+import { readJsonGreedy } from "./fileUtils.js";
+
+const _internal = {
+  getLogger,
+  getComponentDir,
+  readJsonGreedy
+};
+const logger = _internal.getLogger();
+
+const ajv = new Ajv({
+  allErrors: true,
+  removeAdditional: false,
+  useDefaults: false,
+  coerceTypes: false,
+  logger: {
+    log: logger.debug.bind(logger),
+    warn: logger.warn.bind(logger),
+    error: logger.warn.bind(logger)
+  }
+});
+const schema = getSchema("psSettingFile");
+_internal.validate = ajv.compile(schema);
+
+/**
+ * check if script property has valid value
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
+export async function checkScript(projectRootDir, component) {
+  if (typeof component.script !== "string") {
+    return Promise.reject(new Error("script is not specified"));
+  }
+  const componentDir = await _internal.getComponentDir(projectRootDir, component.ID, true);
+  const filename = path.resolve(componentDir, component.script);
+
+  let stat;
+  try {
+    stat = await fs.stat(filename);
+  } catch (e) {
+    if (e.code !== "ENOENT") {
+      throw e;
+    }
+    return Promise.reject(new Error(`script is not existing file ${filename}`));
+  }
+  if (!stat.isFile()) {
+    return Promise.reject(new Error(`script is not file ${filename}`));
+  }
+  return true;
+}
+
+/**
+ * check if parameterFile property has valid value
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
+export async function checkPSSettingFile(projectRootDir, component) {
+  if (typeof component.parameterFile !== "string") {
+    return Promise.reject(new Error("parameter setting file is not specified"));
+  }
+  const componentDir = await _internal.getComponentDir(projectRootDir, component.ID, true);
+  const filename = path.resolve(componentDir, component.parameterFile);
+  let stat;
+  try {
+    stat = await fs.stat(filename);
+  } catch (e) {
+    if (e.code !== "ENOENT") {
+      throw e;
+    }
+    return Promise.reject(new Error(`parameter setting file is not existing ${filename}`));
+  }
+  if (!stat.isFile()) {
+    return Promise.reject(new Error(`parameter setting file is not file ${filename}`));
+  }
+  try {
+    const retry = process.env.NODE_ENV === "test" ? 0 : undefined;
+    const PSSetting = await _internal.readJsonGreedy(filename, retry);
+    _internal.validate(PSSetting);
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      return Promise.reject(new Error(`parameter setting file is not JSON file ${filename}`));
+    }
+  }
+  if (_internal.validate !== null && Array.isArray(_internal.validate.errors)) {
+    const err = new Error("parameter setting file does not have valid JSON data");
+    logger.debug(`validation error for ${component.name} (${component.ID}) :\n`, _internal.validate.errors);
+    err.errors = _internal.validate.errors;
+    return Promise.reject(err);
+  }
+  return true;
+}
+
+export { _internal };

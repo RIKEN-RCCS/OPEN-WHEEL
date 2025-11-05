@@ -11,10 +11,12 @@ import Ajv from "ajv";
 
 import { gitRm } from "./gitOperator2.js";
 import { isValidName, isValidInputFilename, isValidOutputFilename } from "../lib/utility.js";
-import { updateComponentPath } from "./projectFilesOperator.js";
-import { getComponentDir, readComponentJson, writeComponentJson, writeComponentJsonByID } from "./componentJsonIO.js";
+import { updateComponentPath } from "./componentPathOperations.js";
+import { getComponentDir, readComponentJson, writeComponentJson, writeComponentJsonByID, readComponentJsonByID } from "./componentJsonIO.js";
+import { renameComponentDir } from "./componentOperations.js";
 import getSchema from "../db/jsonSchemas.js";
 import { getLogger } from "../logSettings.js";
+import { setUploadOndemandOutputFile } from "./componentFiles.js";
 
 const _internal = {
   fs,
@@ -22,12 +24,16 @@ const _internal = {
   updateComponentPath,
   getComponentDir,
   readComponentJson,
+  readComponentJsonByID,
   writeComponentJson,
+  writeComponentJsonByID,
   getLogger,
+  renameComponentDir,
   removeInputFileLinkFromParent,
   removeInputFileLinkFromSiblings,
   removeOutputFileLinkToParent,
-  removeOutputFileLinkToSiblings
+  removeOutputFileLinkToSiblings,
+  setUploadOndemandOutputFile
 };
 
 /**
@@ -244,25 +250,6 @@ async function renameOutputFileCounterpart(projectRootDir, componentJson, index,
 }
 
 /**
- * rename component directory and update componentJsonPath
- * @param {string} projectRootDir - project's root path
- * @param {string} ID - component ID
- * @param {string} newName - component's new name
- */
-async function renameComponentDir(projectRootDir, ID, newName) {
-  const oldDir = await _internal.getComponentDir(projectRootDir, ID, true);
-  if (oldDir === projectRootDir) {
-    return Promise.reject(new Error("updateNode can not rename root workflow"));
-  }
-  const newDir = path.resolve(path.dirname(oldDir), newName);
-
-  await _internal.gitRm(projectRootDir, oldDir);
-  await _internal.fs.move(oldDir, newDir);
-  //git add will be issued in updateComponent()
-  return _internal.updateComponentPath(projectRootDir, ID, newDir);
-}
-
-/**
  * update component
  * @param {string} projectRootDir - project's root path
  * @param {string} ID - component ID
@@ -307,6 +294,7 @@ async function updateComponent(projectRootDir, ID, updated) {
   const changeOutputFileNames = [];
   const removeInputFiles = [];
   const removeOutputFiles = [];
+  const promises = [];
 
   //remove next, previous, else, inputFiles, and outputFiles from patch
   //because these props must be changed by dedicated API (ex. addLink)
@@ -345,6 +333,10 @@ async function updateComponent(projectRootDir, ID, updated) {
       }
       return e.path[2] !== "dst";
     }
+    if (e.path[0] === "uploadOnDemand" && e.path[2] === true) {
+      promises.push(_internal.setUploadOndemandOutputFile(projectRootDir, ID));
+      return false;
+    }
     return !["next", "previous", "else"].includes(e.path[0]);
   });
 
@@ -364,8 +356,11 @@ async function updateComponent(projectRootDir, ID, updated) {
   await Promise.all(removeOutputFiles.map((e)=>{
     return removeOutputFileCounterpart(projectRootDir, targetComponent, e.path[1]);
   }));
+  await Promise.all(promises);
+
+  //rename component directory if name is changed
   if (newName !== null) {
-    await renameComponentDir(projectRootDir, ID, newName);
+    await _internal.renameComponentDir(projectRootDir, ID, newName);
   }
 
   diffApply(targetComponent, sanitizedPatch);

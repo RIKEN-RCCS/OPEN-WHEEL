@@ -10,7 +10,7 @@ import { removeSsh } from "./sshManager.js";
 import { removeExecuters } from "./executerManager.js";
 import { removeTransferrers } from "./transferManager.js";
 import { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } from "../db/db.js";
-import { setProjectState } from "../core/projectFilesOperator.js";
+import { setProjectState } from "../core/projectJsonFileOperator.js";
 import { writeComponentJson } from "./componentJsonIO.js";
 import Dispatcher from "./dispatcher.js";
 import { getDateString } from "../lib/utility.js";

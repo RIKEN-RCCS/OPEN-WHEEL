@@ -8,7 +8,7 @@ import fs from "fs-extra";
 import { getLogger } from "../logSettings.js";
 import { projectList, projectJsonFilename } from "../db/db.js";
 import { readJsonGreedy } from "../core/fileUtils.js";
-import { addProject, renameProject } from "../core/projectFilesOperator.js";
+import { addProject, renameProject } from "../core/projectOperations.js";
 import { removeTempd } from "../core/tempd.js";
 
 const getAllProject = async ()=>{

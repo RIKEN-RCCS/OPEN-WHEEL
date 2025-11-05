@@ -13,7 +13,7 @@ import sinon from "sinon";
 import sinonChai from "sinon-chai";
 chai.use(sinonChai);
 
-import { createNewProject } from "../../../app/core/projectFilesOperator.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
 //testee
 import { onProjectOperation, _internal } from "../../../app/handlers/projectController.js";
 

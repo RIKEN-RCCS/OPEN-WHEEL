@@ -27,7 +27,13 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
 import { projectJsonFilename, componentJsonFilename, statusFilename } from "../../../app/db/db.js";
-import { renameOutputFile, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, createNewProject } from "../../../app/core/projectFilesOperator.js";
+import { renameOutputFile } from "../../../app/core/componentFiles.js";
+import { updateComponent } from "../../../app/core/updateComponent.js";
+import { updateComponentProperty } from "../../testUtil.js";
+import { createNewComponent, renameComponentDir } from "../../../app/core/componentOperations.js";
+import { addInputFile, addOutputFile } from "../../../app/core/componentFiles.js";
+import { addLink, addFileLink } from "../../../app/core/componentLinks.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
 import { gitAdd, gitCommit } from "../../../app/core/gitOperator2.js";
 import { eventEmitters as globalEventEmitters } from "../../../app/core/global.js";
 
@@ -67,11 +73,11 @@ describe("project Controller UT", function () {
       let task0;
       beforeEach(async ()=>{
         task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
       });
       it("should retry 2 times and fail", async ()=>{
-        await updateComponent(projectRootDir, task0.ID, "retryTimes", 2);
-        await updateComponent(projectRootDir, task0.ID, "retryCondition", true);
+        await updateComponentProperty(projectRootDir, task0.ID, "retryTimes", 2);
+        await updateComponentProperty(projectRootDir, task0.ID, "retryCondition", true);
         await fs.outputFile(path.join(projectRootDir, "task0", scriptName), `${scriptPwd}\n${exit(10)}`);
         await runProject(projectRootDir);
 
@@ -124,9 +130,9 @@ describe("project Controller UT", function () {
         task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         task2 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
-        await updateComponent(projectRootDir, task1.ID, "script", scriptName);
-        await updateComponent(projectRootDir, task2.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task1.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task2.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "task0", scriptName), scriptPwd);
         await fs.outputFile(path.join(projectRootDir, "task1", scriptName), scriptPwd);
         await fs.outputFile(path.join(projectRootDir, "task2", scriptName), scriptPwd);
@@ -134,7 +140,7 @@ describe("project Controller UT", function () {
         await addLink(projectRootDir, task1.ID, task2.ID);
       });
       it("should not run disable task and its dependent task but project should be successfully finished", async ()=>{
-        await updateComponent(projectRootDir, task1.ID, "disable", true);
+        await updateComponentProperty(projectRootDir, task1.ID, "disable", true);
 
         await runProject(projectRootDir);
 
@@ -181,9 +187,9 @@ describe("project Controller UT", function () {
         task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         task2 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
-        await updateComponent(projectRootDir, task1.ID, "script", scriptName);
-        await updateComponent(projectRootDir, task2.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task1.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task2.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "task0", scriptName), scriptPwd);
         await fs.outputFile(path.join(projectRootDir, "task0", "a"), "a");
         await fs.outputFile(path.join(projectRootDir, "task1", scriptName), scriptPwd);
@@ -199,7 +205,7 @@ describe("project Controller UT", function () {
         await addFileLink(projectRootDir, task1.ID, "b", task2.ID, "c");
       });
       it("should not run disable task and its dependent task but project should be successfully finished", async ()=>{
-        await updateComponent(projectRootDir, task1.ID, "disable", true);
+        await updateComponentProperty(projectRootDir, task1.ID, "disable", true);
 
         await runProject(projectRootDir);
 
@@ -252,11 +258,11 @@ describe("project Controller UT", function () {
       beforeEach(async ()=>{
         wf0 = await createNewComponent(projectRootDir, projectRootDir, "workflow", { x: 10, y: 10 });
         task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "workflow0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "workflow0", "task0", scriptName), scriptPwd);
       });
       it("should not run disable workflow and its sub-component but successfully finished project", async ()=>{
-        await updateComponent(projectRootDir, wf0.ID, "disable", true);
+        await updateComponentProperty(projectRootDir, wf0.ID, "disable", true);
 
         await runProject(projectRootDir);
         const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
@@ -275,7 +281,7 @@ describe("project Controller UT", function () {
         expect(validateNotStarted(task0Json)).to.be.true;
       });
       it("should not run disable task and successfully finished parent sub-workflow", async ()=>{
-        await updateComponent(projectRootDir, task0.ID, "disable", true);
+        await updateComponentProperty(projectRootDir, task0.ID, "disable", true);
 
         await runProject(projectRootDir);
         const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
@@ -310,20 +316,20 @@ describe("project Controller UT", function () {
     describe("file dependency between parent and child", ()=>{
       beforeEach(async ()=>{
         const wf0 = await createNewComponent(projectRootDir, projectRootDir, "workflow", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, wf0.ID, "name", "wf0");
+        await renameComponentDir(projectRootDir, wf0.ID, "wf0");
         const parentTask0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         const parentTask1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, parentTask0.ID, "name", "parentTask0");
-        await updateComponent(projectRootDir, parentTask0.ID, "script", scriptName);
-        await updateComponent(projectRootDir, parentTask1.ID, "name", "parentTask1");
-        await updateComponent(projectRootDir, parentTask1.ID, "script", scriptName);
+        await renameComponentDir(projectRootDir, parentTask0.ID, "parentTask0");
+        await updateComponentProperty(projectRootDir, parentTask0.ID, "script", scriptName);
+        await renameComponentDir(projectRootDir, parentTask1.ID, "parentTask1");
+        await updateComponentProperty(projectRootDir, parentTask1.ID, "script", scriptName);
 
         const childTask0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "wf0"), "task", { x: 10, y: 10 });
         const childTask1 = await createNewComponent(projectRootDir, path.join(projectRootDir, "wf0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, childTask0.ID, "name", "childTask0");
-        await updateComponent(projectRootDir, childTask0.ID, "script", scriptName);
-        await updateComponent(projectRootDir, childTask1.ID, "name", "childTask1");
-        await updateComponent(projectRootDir, childTask1.ID, "script", scriptName);
+        await renameComponentDir(projectRootDir, childTask0.ID, "childTask0");
+        await updateComponentProperty(projectRootDir, childTask0.ID, "script", scriptName);
+        await renameComponentDir(projectRootDir, childTask1.ID, "childTask1");
+        await updateComponentProperty(projectRootDir, childTask1.ID, "script", scriptName);
 
         //add file dependency
         await fs.outputFile(path.join(projectRootDir, "parentTask0", "a"), "a");
@@ -385,12 +391,12 @@ describe("project Controller UT", function () {
         const if3 = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 10, y: 10 });
         const task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         const task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, if0.ID, "condition", scriptName);
-        await updateComponent(projectRootDir, if1.ID, "condition", scriptName);
-        await updateComponent(projectRootDir, if2.ID, "condition", "true");
-        await updateComponent(projectRootDir, if3.ID, "condition", "(()=>{return false})()");
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
-        await updateComponent(projectRootDir, task1.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, if0.ID, "condition", scriptName);
+        await updateComponentProperty(projectRootDir, if1.ID, "condition", scriptName);
+        await updateComponentProperty(projectRootDir, if2.ID, "condition", "true");
+        await updateComponentProperty(projectRootDir, if3.ID, "condition", "(()=>{return false})()");
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task1.ID, "script", scriptName);
         await addLink(projectRootDir, if0.ID, task0.ID);
         await addLink(projectRootDir, if0.ID, task1.ID, true);
         await addLink(projectRootDir, if1.ID, task1.ID);
@@ -436,10 +442,10 @@ describe("project Controller UT", function () {
         const task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         const task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         const task2 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, if0.ID, "condition", scriptName);
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
-        await updateComponent(projectRootDir, task1.ID, "script", scriptName);
-        await updateComponent(projectRootDir, task2.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, if0.ID, "condition", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task1.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task2.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "task0", "a"), "a");
         await addOutputFile(projectRootDir, task0.ID, "a");
         await addInputFile(projectRootDir, if0.ID, "b");
@@ -478,11 +484,11 @@ describe("project Controller UT", function () {
     describe("task in a For component", ()=>{
       beforeEach(async ()=>{
         const for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, for0.ID, "start", 0);
-        await updateComponent(projectRootDir, for0.ID, "end", 2);
-        await updateComponent(projectRootDir, for0.ID, "step", 1);
+        await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+        await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+        await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "for0", "task0", scriptName), scriptPwd);
       });
       it("should run project and successfully finish", async ()=>{
@@ -509,9 +515,9 @@ describe("project Controller UT", function () {
     describe("task in a While component", ()=>{
       beforeEach(async ()=>{
         const while0 = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
+        await updateComponentProperty(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "while0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "while0", "task0", scriptName), scriptPwd);
       });
       it("should run project and successfully finish", async ()=>{
@@ -538,9 +544,9 @@ describe("project Controller UT", function () {
     describe("task in a Foreach component", ()=>{
       beforeEach(async ()=>{
         const foreach0 = await createNewComponent(projectRootDir, projectRootDir, "foreach", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, foreach0.ID, "indexList", ["foo", "bar", "baz", "fizz"]);
+        await updateComponentProperty(projectRootDir, foreach0.ID, "indexList", ["foo", "bar", "baz", "fizz"]);
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "foreach0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "foreach0", "task0", scriptName), scriptPwd);
       });
       it("should run project and successfully finish", async ()=>{
@@ -576,13 +582,13 @@ describe("project Controller UT", function () {
         const for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
         const parentTask0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         const parentTask1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, for0.ID, "start", 0);
-        await updateComponent(projectRootDir, for0.ID, "end", 2);
-        await updateComponent(projectRootDir, for0.ID, "step", 1);
-        await updateComponent(projectRootDir, parentTask0.ID, "name", "parentTask0");
-        await updateComponent(projectRootDir, parentTask1.ID, "name", "parentTask1");
-        await updateComponent(projectRootDir, parentTask0.ID, "script", scriptName);
-        await updateComponent(projectRootDir, parentTask1.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+        await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+        await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+        await renameComponentDir(projectRootDir, parentTask0.ID, "parentTask0");
+        await renameComponentDir(projectRootDir, parentTask1.ID, "parentTask1");
+        await updateComponentProperty(projectRootDir, parentTask0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, parentTask1.ID, "script", scriptName);
 
         await addOutputFile(projectRootDir, parentTask0.ID, "a");
         await addInputFile(projectRootDir, for0.ID, "b");
@@ -592,7 +598,7 @@ describe("project Controller UT", function () {
         await addFileLink(projectRootDir, for0.ID, "e", parentTask1.ID, "f");
 
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await addInputFile(projectRootDir, task0.ID, "c");
         await addOutputFile(projectRootDir, task0.ID, "d");
         await addFileLink(projectRootDir, for0.ID, "b", task0.ID, "c");
@@ -645,7 +651,7 @@ describe("project Controller UT", function () {
     describe("task in PS", ()=>{
       beforeEach(async ()=>{
         const ps0 = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
+        await updateComponentProperty(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
         await fs.outputFile(path.join(projectRootDir, "PS0", "input.txt"), "%%KEYWORD1%%");
         const parameterSetting = {
           version: 2,
@@ -665,7 +671,7 @@ describe("project Controller UT", function () {
         await fs.writeJson(path.join(projectRootDir, "PS0", "input.txt.json"), parameterSetting, { spaces: 4 });
 
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "PS0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "PS0", "task0", scriptName), scriptPwd);
       });
       it("should run project and successfully finish", async ()=>{
@@ -699,9 +705,9 @@ describe("project Controller UT", function () {
     describe("task in PS ver.2", ()=>{
       beforeEach(async ()=>{
         const ps0 = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
+        await updateComponentProperty(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "PS0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
 
         await fs.outputFile(path.join(projectRootDir, "PS0", "input1.txt"), "{{ KEYWORD1 }} {{ KEYWORD3 }}");
         await fs.outputFile(path.join(projectRootDir, "PS0", "non-targetFile.txt"), "{{ filename }} {{ KEYWORD2 }}");
@@ -788,14 +794,14 @@ describe("project Controller UT", function () {
     describe.skip("task in nested PS(does not work for now)", ()=>{
       beforeEach(async ()=>{
         const ps0 = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
+        await updateComponentProperty(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
 
         const ps1 = await createNewComponent(projectRootDir, path.join(projectRootDir, "PS0"), "PS", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, ps1.ID, "name", "PS1");
-        await updateComponent(projectRootDir, ps1.ID, "parameterFile", "input.txt.json");
+        await renameComponentDir(projectRootDir, ps1.ID, "PS1");
+        await updateComponentProperty(projectRootDir, ps1.ID, "parameterFile", "input.txt.json");
 
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "PS0", "PS1"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "PS0", "PS1", "task0", scriptName), scriptPwd);
 
         await fs.outputFile(path.join(projectRootDir, "PS0", "input.txt"), "%%KEYWORD1%%");
@@ -843,18 +849,18 @@ describe("project Controller UT", function () {
     describe("task in nested loop", ()=>{
       beforeEach(async ()=>{
         const for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, for0.ID, "start", 0);
-        await updateComponent(projectRootDir, for0.ID, "end", 1);
-        await updateComponent(projectRootDir, for0.ID, "step", 1);
+        await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+        await updateComponentProperty(projectRootDir, for0.ID, "end", 1);
+        await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
 
         const for1 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "for", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, for1.ID, "name", "for1");
-        await updateComponent(projectRootDir, for1.ID, "start", 0);
-        await updateComponent(projectRootDir, for1.ID, "end", 1);
-        await updateComponent(projectRootDir, for1.ID, "step", 1);
+        await renameComponentDir(projectRootDir, for1.ID, "for1");
+        await updateComponentProperty(projectRootDir, for1.ID, "start", 0);
+        await updateComponentProperty(projectRootDir, for1.ID, "end", 1);
+        await updateComponentProperty(projectRootDir, for1.ID, "step", 1);
 
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "for1"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "for0", "for1", "task0", scriptName), scriptPwd);
       });
       it("should run project and successfully finish", async ()=>{
@@ -891,15 +897,15 @@ describe("project Controller UT", function () {
     describe("check ancestors prop in task component", ()=>{
       beforeEach(async ()=>{
         const for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, for0.ID, "start", 0);
-        await updateComponent(projectRootDir, for0.ID, "end", 1);
-        await updateComponent(projectRootDir, for0.ID, "step", 1);
+        await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+        await updateComponentProperty(projectRootDir, for0.ID, "end", 1);
+        await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
 
         const while0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "while", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
+        await updateComponentProperty(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
         await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "while0"), "workflow", { x: 10, y: 10 });
         const ps0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "while0", "workflow0"), "PS", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
+        await updateComponentProperty(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
         await fs.outputFile(path.join(projectRootDir, "for0", "while0", "workflow0", "PS0", "input.txt"), "%%KEYWORD1%%");
         const parameterSetting = {
           version: 2,
@@ -919,10 +925,10 @@ describe("project Controller UT", function () {
         await fs.writeJson(path.join(projectRootDir, "for0", "while0", "workflow0", "PS0", "input.txt.json"), parameterSetting, { spaces: 4 });
 
         const foreach0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "while0", "workflow0", "PS0"), "foreach", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, foreach0.ID, "indexList", ["foo", "bar"]);
+        await updateComponentProperty(projectRootDir, foreach0.ID, "indexList", ["foo", "bar"]);
 
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "while0", "workflow0", "PS0", "foreach0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "for0", "while0", "workflow0", "PS0", "foreach0", "task0", scriptName), scriptPwd);
       });
       it("should have acestors name and type in task object", async ()=>{
@@ -952,7 +958,7 @@ describe("project Controller UT", function () {
     describe("force overwrite flag in PS", ()=>{
       beforeEach(async ()=>{
         const ps0 = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
+        await updateComponentProperty(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
         await fs.outputFile(path.join(projectRootDir, "PS0", "input.txt"), "%%KEYWORD1%%");
         const parameterSetting = {
           version: 2,
@@ -972,7 +978,7 @@ describe("project Controller UT", function () {
         await fs.writeJson(path.join(projectRootDir, "PS0", "input.txt.json"), parameterSetting, { spaces: 4 });
 
         const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "PS0"), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await fs.outputFile(path.join(projectRootDir, "PS0", "task0", scriptName), `${scriptPwd}\nexit 1\n`);
 
         //1st run
@@ -1007,7 +1013,7 @@ describe("project Controller UT", function () {
       });
       it("should overwrite files and run project ", async ()=>{
         const ps0 = await fs.readJson(path.join(projectRootDir, "PS0", componentJsonFilename));
-        await updateComponent(projectRootDir, ps0.ID, "forceOverwrite", true);
+        await updateComponentProperty(projectRootDir, ps0.ID, "forceOverwrite", true);
         await runProject(projectRootDir);
         const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
         const rootWF = await fs.readJson(path.resolve(projectRootDir, componentJsonFilename));
@@ -1043,13 +1049,13 @@ describe("project Controller UT", function () {
         await renameOutputFile(projectRootDir, source0.ID, 0, "foo");
 
         for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, for0.ID, "start", 0);
-        await updateComponent(projectRootDir, for0.ID, "end", 2);
-        await updateComponent(projectRootDir, for0.ID, "step", 1);
+        await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+        await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+        await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
         await addInputFile(projectRootDir, for0.ID, "foo");
 
         task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "task", { x: 10, y: 10 });
-        await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
         await addInputFile(projectRootDir, task0.ID, "foo");
         await fs.outputFile(path.join(projectRootDir, for0.name, task0.name, scriptName), "echo hoge ${WHEEL_CURRENT_INDEX} > hoge");
         await gitAdd(projectRootDir, path.join(projectRootDir, for0.name, task0.name, scriptName));

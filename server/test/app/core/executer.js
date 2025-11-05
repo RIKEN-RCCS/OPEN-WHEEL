@@ -28,7 +28,10 @@ const remoteHome = "/home/testuser";
 
 //helper functions
 import { componentJsonFilename, statusFilename, jobManagerJsonFilename } from "../../../app/db/db.js";
-import { createNewProject, updateComponent, createNewComponent } from "../../../app/core/projectFilesOperator.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
+import { updateComponent } from "../../../app/core/updateComponent.js";
+import { updateComponentProperty } from "../../testUtil.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { replacePathsep } from "../../../app/core/pathUtils.js";
 
 import { scriptName, pwdCmd, scriptHeader, exit } from "../../testScript.js";
@@ -46,7 +49,7 @@ describe("UT for executer class", function () {
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
     task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
     await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(0)}`);
-    task0 = await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+    task0 = await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
     task0.emitEvent = sinon.stub();
     //copy from Dispatcher._dispatchTask().
     //refactoring needed !!

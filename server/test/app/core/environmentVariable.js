@@ -25,7 +25,12 @@ import { eventEmitters } from "../../../app/core/global.js";
 
 //helper functions
 import { readComponentJson } from "../../../app/core/componentJsonIO.js";
-import { addLink, replaceEnv, updateComponent, createNewComponent, createNewProject } from "../../../app/core/projectFilesOperator.js";
+import { addLink } from "../../../app/core/componentLinks.js";
+import { replaceEnv } from "../../../app/core/environmentVariables.js";
+import { updateComponent } from "../../../app/core/updateComponent.js";
+import { updateComponentProperty } from "../../testUtil.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
 import { componentJsonFilename, statusFilename } from "../../../app/db/db.js";
 import { scriptName, scriptHeader } from "../../testScript.js";
 const logfilename = "env.log";
@@ -75,47 +80,47 @@ describe("UT for environment variables", function () {
     await replaceEnv(projectRootDir, rootWF.ID, { USER_DEFINED_VALUE: "hoge" });
 
     const for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 11, y: 11 });
-    await updateComponent(projectRootDir, for0.ID, "start", 0);
-    await updateComponent(projectRootDir, for0.ID, "end", 3);
-    await updateComponent(projectRootDir, for0.ID, "step", 2);
+    await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+    await updateComponentProperty(projectRootDir, for0.ID, "end", 3);
+    await updateComponentProperty(projectRootDir, for0.ID, "step", 2);
     const forTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, forTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, forTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "for0", "task0", scriptName), scriptEcho);
 
     const forUnderFor = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "for", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, forUnderFor.ID, "start", 5);
-    await updateComponent(projectRootDir, forUnderFor.ID, "end", 1);
-    await updateComponent(projectRootDir, forUnderFor.ID, "step", -2);
+    await updateComponentProperty(projectRootDir, forUnderFor.ID, "start", 5);
+    await updateComponentProperty(projectRootDir, forUnderFor.ID, "end", 1);
+    await updateComponentProperty(projectRootDir, forUnderFor.ID, "step", -2);
     const forUnderForTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "for0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, forUnderForTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, forUnderForTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "for0", "for0", "task0", scriptName), scriptEcho);
 
     const whileUnderFor = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "while", { x: 11, y: 11 });
-    await updateComponent(projectRootDir, whileUnderFor.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
+    await updateComponentProperty(projectRootDir, whileUnderFor.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
     const whileUnderForTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "while0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, whileUnderForTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, whileUnderForTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "for0", "while0", "task0", scriptName), scriptEcho);
 
     const foreachUnderFor = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "foreach", { x: 11, y: 11 });
-    await updateComponent(projectRootDir, foreachUnderFor.ID, "indexList", ["foo", "bar"]);
+    await updateComponentProperty(projectRootDir, foreachUnderFor.ID, "indexList", ["foo", "bar"]);
     const foreachUnderForTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0", "foreach0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, foreachUnderForTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, foreachUnderForTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "for0", "foreach0", "task0", scriptName), scriptEcho);
 
     const while0 = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 11, y: 11 });
-    await updateComponent(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
+    await updateComponentProperty(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
     const whileTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "while0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, whileTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, whileTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "while0", "task0", scriptName), scriptEcho);
 
     const foreach0 = await createNewComponent(projectRootDir, projectRootDir, "foreach", { x: 11, y: 11 });
-    await updateComponent(projectRootDir, foreach0.ID, "indexList", ["foo", "bar"]);
+    await updateComponentProperty(projectRootDir, foreach0.ID, "indexList", ["foo", "bar"]);
     const foreachTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "foreach0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, foreachTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, foreachTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "foreach0", "task0", scriptName), scriptEcho);
 
     const ps0 = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 11, y: 11 });
-    await updateComponent(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
+    await updateComponentProperty(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
     await fs.outputFile(path.join(projectRootDir, "PS0", "input.txt"), "%%KEYWORD1%%");
     const parameterSetting = {
       version: 2,
@@ -134,31 +139,31 @@ describe("UT for environment variables", function () {
     };
     await fs.writeJson(path.join(projectRootDir, "PS0", "input.txt.json"), parameterSetting, { spaces: 4 });
     const psTask = await createNewComponent(projectRootDir, path.join(projectRootDir, "PS0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, psTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, psTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "PS0", "task0", scriptName), scriptEcho);
 
     const task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "task0", scriptName), scriptEcho);
 
     const forUnderPS = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name), "for", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, forUnderPS.ID, "start", 5);
-    await updateComponent(projectRootDir, forUnderPS.ID, "end", 1);
-    await updateComponent(projectRootDir, forUnderPS.ID, "step", -2);
+    await updateComponentProperty(projectRootDir, forUnderPS.ID, "start", 5);
+    await updateComponentProperty(projectRootDir, forUnderPS.ID, "end", 1);
+    await updateComponentProperty(projectRootDir, forUnderPS.ID, "step", -2);
     const forUnderPSTask = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name, "for0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, forUnderPSTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, forUnderPSTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, ps0.name, "for0", "task0", scriptName), scriptEcho);
 
     const whileUnderPS = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name), "while", { x: 11, y: 11 });
-    await updateComponent(projectRootDir, whileUnderPS.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
+    await updateComponentProperty(projectRootDir, whileUnderPS.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
     const whileUnderPSTask = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name, "while0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, whileUnderPSTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, whileUnderPSTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, ps0.name, "while0", "task0", scriptName), scriptEcho);
 
     const foreachUnderPS = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name), "foreach", { x: 11, y: 11 });
-    await updateComponent(projectRootDir, foreachUnderPS.ID, "indexList", ["foo", "bar"]);
+    await updateComponentProperty(projectRootDir, foreachUnderPS.ID, "indexList", ["foo", "bar"]);
     const foreachUnderPSTask = await createNewComponent(projectRootDir, path.join(projectRootDir, ps0.name, "foreach0"), "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, foreachUnderPSTask.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, foreachUnderPSTask.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, ps0.name, "foreach0", "task0", scriptName), scriptEcho);
 
     //components for reproduction test
@@ -168,9 +173,9 @@ describe("UT for environment variables", function () {
 
     await addLink(projectRootDir, ifInsideNestedFor.ID, task1InsideNestedFor.ID);
     await addLink(projectRootDir, ifInsideNestedFor.ID, task2InsideNestedFor.ID, true);
-    await updateComponent(projectRootDir, ifInsideNestedFor.ID, "condition", scriptName);
-    await updateComponent(projectRootDir, task1InsideNestedFor.ID, "script", scriptName);
-    await updateComponent(projectRootDir, task2InsideNestedFor.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, ifInsideNestedFor.ID, "condition", scriptName);
+    await updateComponentProperty(projectRootDir, task1InsideNestedFor.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, task2InsideNestedFor.ID, "script", scriptName);
     await fs.outputFile(path.join(projectRootDir, "for0", "for0", task1InsideNestedFor.name, scriptName), scriptEcho);
     await fs.outputFile(path.join(projectRootDir, "for0", "for0", task2InsideNestedFor.name, scriptName), scriptEcho);
     await fs.outputFile(path.join(projectRootDir, "for0", "for0", ifInsideNestedFor.name, scriptName), "rt=$(( ${WHEEL_CURRENT_INDEX} - 3 ));echo $rt > rt.txt;exit $rt");
