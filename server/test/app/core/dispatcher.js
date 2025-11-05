@@ -25,7 +25,12 @@ import { eventEmitters } from "../../../app/core/global.js";
 
 //helper functions
 import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
-import { createNewProject, updateComponent, createNewComponent, addInputFile, addOutputFile, addLink, addFileLink, renameOutputFile } from "../../../app/core/projectFilesOperator.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
+import { updateComponent } from "../../../app/core/updateComponent.js";
+import { updateComponentProperty } from "../../testUtil.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { addInputFile, addOutputFile, renameOutputFile } from "../../../app/core/componentFiles.js";
+import { addLink, addFileLink } from "../../../app/core/componentLinks.js";
 import { scriptName, pwdCmd, scriptHeader } from "../../testScript.js";
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 const wait = ()=>{
@@ -181,7 +186,7 @@ describe("UT for Dispatcher class", function () {
       previous = await createNewComponent(projectRootDir, projectRootDir, "workflow", { x: 10, y: 10 });
       next = await createNewComponent(projectRootDir, projectRootDir, "workflow", { x: 10, y: 10 });
       storage = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, storage.ID, "storagePath", storageArea);
+      await updateComponentProperty(projectRootDir, storage.ID, "storagePath", storageArea);
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     });
     it("should make link from outputFile to inputFile", async ()=>{
@@ -291,8 +296,8 @@ describe("UT for Dispatcher class", function () {
       describe("[reproduction test] subsequent component can get inputFile from remote storage component", ()=>{
         const remoteStorageArea = `/tmp/${storageArea}`;
         beforeEach(async ()=>{
-          await updateComponent(projectRootDir, storage.ID, "host", remotehostName);
-          await updateComponent(projectRootDir, storage.ID, "storagePath", remoteStorageArea);
+          await updateComponentProperty(projectRootDir, storage.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage.ID, "storagePath", remoteStorageArea);
           await addOutputFile(projectRootDir, storage.ID, "a");
           await addInputFile(projectRootDir, next.ID, "b");
           await addFileLink(projectRootDir, storage.ID, "a", next.ID, "b");
@@ -316,10 +321,10 @@ describe("UT for Dispatcher class", function () {
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
     });
     it("should copy 3 times and delete all component", async ()=>{
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 2);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
-      await updateComponent(projectRootDir, for0.ID, "keep", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "keep", 0);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
@@ -348,9 +353,9 @@ describe("UT for Dispatcher class", function () {
     });
 
     it("should work with negative step number", async ()=>{
-      await updateComponent(projectRootDir, for0.ID, "end", 0);
-      await updateComponent(projectRootDir, for0.ID, "start", 2);
-      await updateComponent(projectRootDir, for0.ID, "step", -1);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", -1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_0`)).isDirectory()).to.be.true;
@@ -377,9 +382,9 @@ describe("UT for Dispatcher class", function () {
       expect(validate(for0Json)).to.be.true;
     });
     it("should work with step number which is greater than 1", async ()=>{
-      await updateComponent(projectRootDir, for0.ID, "start", 1);
-      await updateComponent(projectRootDir, for0.ID, "end", 3);
-      await updateComponent(projectRootDir, for0.ID, "step", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 3);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 2);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_1`)).isDirectory()).to.be.true;
@@ -407,9 +412,9 @@ describe("UT for Dispatcher class", function () {
       expect(validate(for0Json)).to.be.true;
     });
     it("should work beyond 0", async ()=>{
-      await updateComponent(projectRootDir, for0.ID, "start", -1);
-      await updateComponent(projectRootDir, for0.ID, "end", 1);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", -1);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_-1`)).isDirectory()).to.be.true;
@@ -436,9 +441,9 @@ describe("UT for Dispatcher class", function () {
       expect(validate(for0Json)).to.be.true;
     });
     it("should copy 3 times and back to original component", async ()=>{
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 2);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(fs.statSync(path.resolve(projectRootDir, `${for0.name}_0`)).isDirectory()).to.be.true;
@@ -464,10 +469,10 @@ describe("UT for Dispatcher class", function () {
       expect(validate(for0Json)).to.be.true;
     });
     it("should copy 3 times and delete all", async ()=>{
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 2);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
-      await updateComponent(projectRootDir, for0.ID, "keep", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "keep", 0);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_0`))).to.be.false;
@@ -494,10 +499,10 @@ describe("UT for Dispatcher class", function () {
       expect(validate(for0Json)).to.be.true;
     });
     it("should copy 3 times and keep last", async ()=>{
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 2);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
-      await updateComponent(projectRootDir, for0.ID, "keep", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "keep", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_0`))).to.be.false;
@@ -524,10 +529,10 @@ describe("UT for Dispatcher class", function () {
       expect(validate(for0Json)).to.be.true;
     });
     it("should copy 3 times and keep last 2", async ()=>{
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 2);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
-      await updateComponent(projectRootDir, for0.ID, "keep", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "keep", 2);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_0`))).to.be.false;
@@ -559,7 +564,7 @@ describe("UT for Dispatcher class", function () {
     let PS0;
     beforeEach(async ()=>{
       PS0 = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, PS0.ID, "parameterFile", "input.txt.json");
+      await updateComponentProperty(projectRootDir, PS0.ID, "parameterFile", "input.txt.json");
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
       await fs.outputFile(path.join(projectRootDir, "PS0", "input.txt"), "%%KEYWORD1%%");
       const parameterSetting = {
@@ -578,7 +583,7 @@ describe("UT for Dispatcher class", function () {
         ]
       };
       await fs.writeJson(path.join(projectRootDir, "PS0", "input.txt.json"), parameterSetting, { spaces: 4 });
-      await updateComponent(projectRootDir, PS0.ID, "deleteLoopInstance", true);
+      await updateComponentProperty(projectRootDir, PS0.ID, "deleteLoopInstance", true);
     });
     it("should delete all loop instance", async ()=>{
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
@@ -612,10 +617,10 @@ describe("UT for Dispatcher class", function () {
     beforeEach(async ()=>{
       foreach0 = await createNewComponent(projectRootDir, projectRootDir, "foreach", { x: 10, y: 10 });
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
-      await updateComponent(projectRootDir, foreach0.ID, "indexList", ["foo", "bar", "baz", "fizz"]);
+      await updateComponentProperty(projectRootDir, foreach0.ID, "indexList", ["foo", "bar", "baz", "fizz"]);
     });
     it("should copy 3 times and delete all component", async ()=>{
-      await updateComponent(projectRootDir, foreach0.ID, "keep", 0);
+      await updateComponentProperty(projectRootDir, foreach0.ID, "keep", 0);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
@@ -625,7 +630,7 @@ describe("UT for Dispatcher class", function () {
       expect(fs.existsSync(path.resolve(projectRootDir, `${foreach0.name}_fizz`))).to.be.false;
     });
     it("should copy 3 times and keep last component", async ()=>{
-      await updateComponent(projectRootDir, foreach0.ID, "keep", 1);
+      await updateComponentProperty(projectRootDir, foreach0.ID, "keep", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
@@ -635,7 +640,7 @@ describe("UT for Dispatcher class", function () {
       expect(fs.statSync(path.resolve(projectRootDir, `${foreach0.name}_fizz`)).isDirectory()).to.be.true;
     });
     it("should copy 3 times and keep last 2 component", async ()=>{
-      await updateComponent(projectRootDir, foreach0.ID, "keep", 2);
+      await updateComponentProperty(projectRootDir, foreach0.ID, "keep", 2);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
@@ -651,10 +656,10 @@ describe("UT for Dispatcher class", function () {
     beforeEach(async ()=>{
       while0 = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 10, y: 10 });
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
-      await updateComponent(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 3");
+      await updateComponentProperty(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 3");
     });
     it("should copy 3 times and delete all component", async ()=>{
-      await updateComponent(projectRootDir, while0.ID, "keep", 0);
+      await updateComponentProperty(projectRootDir, while0.ID, "keep", 0);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
@@ -664,7 +669,7 @@ describe("UT for Dispatcher class", function () {
       expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_3`))).to.be.false;
     });
     it("should copy 3 times and keep last component", async ()=>{
-      await updateComponent(projectRootDir, while0.ID, "keep", 1);
+      await updateComponentProperty(projectRootDir, while0.ID, "keep", 1);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
@@ -674,7 +679,7 @@ describe("UT for Dispatcher class", function () {
       expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_3`))).to.be.false;
     });
     it("should copy 3 times and keep last 2 component", async ()=>{
-      await updateComponent(projectRootDir, while0.ID, "keep", 2);
+      await updateComponentProperty(projectRootDir, while0.ID, "keep", 2);
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       expect(await DP.start()).to.be.equal("finished");
       await wait();
@@ -691,17 +696,17 @@ describe("UT for Dispatcher class", function () {
     let break0;
     beforeEach(async ()=>{
       for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 3);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 3);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
       task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "task", { x: 10, y: 10 });
       task1 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "task", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, task0.ID, "script", scriptName);
-      await updateComponent(projectRootDir, task1.ID, "script", scriptName);
+      await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+      await updateComponentProperty(projectRootDir, task1.ID, "script", scriptName);
       await fs.outputFile(path.join(projectRootDir, for0.name, task0.name, scriptName), "echo task0 ${WHEEL_CURRENT_INDEX} >hoge");
       await fs.outputFile(path.join(projectRootDir, for0.name, task1.name, scriptName), "echo task1 ${WHEEL_CURRENT_INDEX} >hoge");
       break0 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "break", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, break0.ID, "condition", "WHEEL_CURRENT_INDEX == 2");
+      await updateComponentProperty(projectRootDir, break0.ID, "condition", "WHEEL_CURRENT_INDEX == 2");
       await addLink(projectRootDir, task0.ID, break0.ID);
       await addLink(projectRootDir, break0.ID, task1.ID);
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
@@ -765,17 +770,17 @@ describe("UT for Dispatcher class", function () {
     let continue0;
     beforeEach(async ()=>{
       for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 3);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 3);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
       task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "task", { x: 10, y: 10 });
       task1 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "task", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, task0.ID, "script", scriptName);
-      await updateComponent(projectRootDir, task1.ID, "script", scriptName);
+      await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+      await updateComponentProperty(projectRootDir, task1.ID, "script", scriptName);
       await fs.outputFile(path.join(projectRootDir, for0.name, task0.name, scriptName), "echo task0 ${WHEEL_CURRENT_INDEX} >hoge");
       await fs.outputFile(path.join(projectRootDir, for0.name, task1.name, scriptName), "echo task1 ${WHEEL_CURRENT_INDEX} >hoge");
       continue0 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "continue", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, continue0.ID, "condition", "WHEEL_CURRENT_INDEX == 2");
+      await updateComponentProperty(projectRootDir, continue0.ID, "condition", "WHEEL_CURRENT_INDEX == 2");
       await addLink(projectRootDir, task0.ID, continue0.ID);
       await addLink(projectRootDir, continue0.ID, task1.ID);
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
@@ -840,13 +845,13 @@ describe("UT for Dispatcher class", function () {
       await renameOutputFile(projectRootDir, source0.ID, 0, "foo");
 
       for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 2);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
       await addInputFile(projectRootDir, for0.ID, "foo");
 
       task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, for0.name), "task", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+      await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
       await addInputFile(projectRootDir, task0.ID, "foo");
       await fs.outputFile(path.join(projectRootDir, for0.name, task0.name, scriptName), "echo hoge ${WHEEL_CURRENT_INDEX} > hoge");
 
@@ -868,11 +873,11 @@ describe("UT for Dispatcher class", function () {
   describe("[reproduction test] task with sub directory in a for loop", ()=>{
     beforeEach(async ()=>{
       const for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 2);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
       const task0 = await createNewComponent(projectRootDir, path.join(projectRootDir, "for0"), "task", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+      await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
       await fs.outputFile(path.join(projectRootDir, "for0", "task0", scriptName), scriptPwd);
       await fs.mkdir(path.join(projectRootDir, "for0", "task0", "empty_dir"));
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
@@ -905,12 +910,12 @@ describe("UT for Dispatcher class", function () {
     let task0;
     beforeEach(async ()=>{
       for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, for0.ID, "start", 0);
-      await updateComponent(projectRootDir, for0.ID, "end", 3);
-      await updateComponent(projectRootDir, for0.ID, "step", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 3);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
 
       PS0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, for0.name), "PS", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, PS0.ID, "parameterFile", "input.txt.json");
+      await updateComponentProperty(projectRootDir, PS0.ID, "parameterFile", "input.txt.json");
       await fs.outputFile(path.join(projectRootDir, for0.name, PS0.name, "input.txt"), "%%KEYWORD1%%");
       const parameterSetting = {
         version: 2,
@@ -930,7 +935,7 @@ describe("UT for Dispatcher class", function () {
       await fs.writeJson(path.join(projectRootDir, for0.name, PS0.name, "input.txt.json"), parameterSetting, { spaces: 4 });
 
       task0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, for0.name, PS0.name), "task", { x: 10, y: 10 });
-      await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+      await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
       await fs.outputFile(path.join(projectRootDir, for0.name, PS0.name, task0.name, scriptName), "if [ ${WHEEL_CURRENT_INDEX} -eq 0 ];then echo hoge ${WHEEL_CURRENT_INDEX} > hoge;fi");
 
       projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));

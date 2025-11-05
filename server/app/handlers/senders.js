@@ -8,7 +8,7 @@ import klaw from "klaw";
 
 import { getThreeGenerationFamily } from "../core/workflowUtil.js";
 import { getLogger } from "../logSettings.js";
-import { getComponentTree } from "../core/projectFilesOperator.js";
+import { getComponentTree } from "../core/componentOperations.js";
 import { projectJsonFilename, componentJsonFilename } from "../db/db.js";
 import { readJsonGreedy } from "../core/fileUtils.js";
 import { taskStateFilter } from "../core/taskUtil.js";

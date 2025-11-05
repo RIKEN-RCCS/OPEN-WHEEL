@@ -24,7 +24,12 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 
 //helper functions
 import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
-import { createNewProject, updateComponent, createNewComponent, addInputFile, addFileLink, renameOutputFile } from "../../../app/core/projectFilesOperator.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
+import { updateComponent } from "../../../app/core/updateComponent.js";
+import { updateComponentProperty } from "../../testUtil.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { addInputFile, renameOutputFile } from "../../../app/core/componentFiles.js";
+import { addFileLink } from "../../../app/core/componentLinks.js";
 import { eventEmitters } from "../../../app/core/global.js";
 
 import { scriptName, pwdCmd, scriptHeader } from "../../testScript.js";
@@ -39,7 +44,7 @@ describe("UT for source component", function () {
     await fs.outputFile(path.join(projectRootDir, "source0", "foo"), "foo");
     await renameOutputFile(projectRootDir, source0.ID, 0, "foo");
     const task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
-    await updateComponent(projectRootDir, task0.ID, "script", scriptName);
+    await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
     await addInputFile(projectRootDir, task0.ID, "bar");
     await fs.outputFile(path.join(projectRootDir, "task0", scriptName), scriptPwd);
     await addFileLink(projectRootDir, source0.ID, "foo", task0.ID, "bar");

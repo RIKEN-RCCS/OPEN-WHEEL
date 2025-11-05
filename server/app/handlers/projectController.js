@@ -14,7 +14,11 @@ import { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilena
 import { deliverFile } from "../core/deliverFile.js";
 import { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } from "../core/gitOperator2.js";
 import { getComponentDir } from "../core/componentJsonIO.js";
-import { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR } from "../core/projectFilesOperator.js";
+import { getHosts } from "../core/componentHostOperations.js";
+import { getSourceComponents } from "../core/componentOperations.js";
+import { setComponentStateR } from "../core/componentState.js";
+import { checkRemoteStoragePathWritePermission } from "../core/checkRemoteStoragePathWritePermission.js";
+import { getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus } from "../core/projectJsonFileOperator.js";
 import { createSsh, removeSsh, askPassword } from "../core/sshManager.js";
 import { setJWTServerPassphrase, removeAllJWTServerPassphrase } from "../core/jwtServerPassphraseManager.js";
 import { runProject, cleanProject, stopProject } from "../core/projectController.js";

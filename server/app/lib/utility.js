@@ -3,6 +3,7 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
+import path from "path";
 import fs from "fs-extra";
 
 //DO NOT require any other WHEEL modules in this file
@@ -148,4 +149,84 @@ export function formatSshOutput(outputArray) {
  */
 export function writeJsonWrapper(filename, data) {
   return fs.writeJson(filename, data, { spaces: 4 });
+}
+
+/**
+ * check feather given token is surrounded by { and }
+ * @param {string} token - string to be checked
+ * @returns {boolean} - true if token is surrounded by {}
+ */
+export function isSurrounded(token) {
+  return token.startsWith("{") && token.endsWith("}");
+};
+
+/**
+ * remove heading '{' and trailing '}'
+ * @param {string} token - string to be checked
+ * @returns {string} - trimed token
+ */
+export function trimSurrounded(token) {
+  if (!isSurrounded(token)) {
+    return token;
+  }
+  const rt = /{+(.*)}+/.exec(token);
+  return (Array.isArray(rt) && typeof rt[1] === "string") ? rt[1] : token;
+};
+
+/**
+ * transform grob string to array
+ * @param {string} token - grob pattern
+ * @returns {string[]} -
+ */
+export function glob2Array(token) {
+  return trimSurrounded(token).split(",");
+}
+
+/**
+ * remove trailing path sep from string
+ * @param {string} filename - string possibly with trailing path sep
+ * @returns {string} - string without trailing path sep
+ */
+export function removeTrailingPathSep(filename) {
+  if (filename.endsWith(path.sep)) {
+    return removeTrailingPathSep(filename.slice(0, -1));
+  }
+  return filename;
+};
+
+/**
+ * determine if port number setting means default ssh port
+ * @param {*} port - port number
+ * @returns {boolean} -
+ */
+export function isDefaultPort(port) {
+  return typeof port === "undefined" || port === 22 || port === "22" || port === "";
+}
+
+/**
+ * determine if component is local
+ * @param {object} component - component object
+ * @returns {boolean} -
+ */
+export function isLocal(component) {
+  return typeof component.host === "undefined" || component.host === "localhost";
+}
+
+/**
+ * make directory with non-duplicated name
+ * @param {string} basename - dirname
+ * @param {string} argSuffix -   number
+ * @returns {string} - actual directory name
+ *
+ * makeDir create "basenme+suffix" direcotry. suffix is increased until the dirname is no longer duplicated.
+ */
+export async function makeDir(basename, argSuffix) {
+  let suffix = argSuffix;
+  while (await fs.pathExists(basename + suffix)) {
+    ++suffix;
+  }
+
+  const dirname = basename + suffix;
+  await fs.mkdir(dirname);
+  return dirname;
 }

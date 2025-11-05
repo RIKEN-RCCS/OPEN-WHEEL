@@ -17,7 +17,8 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 //helper
-import { createNewComponent, createNewProject } from "../../../app/core/projectFilesOperator.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
 import { gitCommit } from "../../../app/core/gitOperator2.js";
 import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
 import { getTempdRoot } from "../../../app/core/tempd.js";

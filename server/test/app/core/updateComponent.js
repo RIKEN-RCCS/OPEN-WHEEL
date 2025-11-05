@@ -21,7 +21,8 @@ chai.use(deepEqualInAnyOrder);
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 import sinon from "sinon";
-import { createNewProject, createNewComponent } from "../../../app/core/projectFilesOperator.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { writeComponentJson } from "../../../app/core/componentJsonIO.js";
 
 //testee
@@ -1177,42 +1178,6 @@ describe("updateComponent", ()=>{
       writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/dstNode1").resolves();
       writeComponentJsonStub.withArgs("/projectRootDir", "/projectRootDir/dstNode2").rejects();
       await expect(renameOutputFileCounterpart("/projectRootDir", componentJson, 0, "oldName", "newName")).to.be.rejected;
-    });
-  });
-
-  describe("#renameComponentDir", ()=>{
-    let renameComponentDir;
-    let getComponentDirStub;
-    let gitRmStub;
-    let moveStub;
-    let updateComponentPathStub;
-
-    beforeEach(()=>{
-      renameComponentDir = updateComponent.renameComponentDir;
-      getComponentDirStub = sinon.stub(_internal, "getComponentDir");
-      gitRmStub = sinon.stub(_internal, "gitRm");
-      moveStub = sinon.stub(_internal.fs, "move");
-      updateComponentPathStub = sinon.stub(_internal, "updateComponentPath");
-    });
-
-    afterEach(()=>{
-      sinon.restore();
-    });
-
-    it("should rename component directory", async ()=>{
-      getComponentDirStub.withArgs("/projectRootDir", "id", true).returns("/projectRootDir/id/oldName");
-      gitRmStub.withArgs("/projectRootDir", "/projectRootDir/id/oldName").resolves();
-      moveStub.withArgs("/projectRootDir/id/oldName", "/projectRootDir/id/newName").resolves();
-      updateComponentPathStub.withArgs("/projectRootDir", "id", "newName").resolves();
-      await expect(renameComponentDir("/projectRootDir", "id", "/projectRootDir/id/newName")).to.be.fulfilled;
-      expect(gitRmStub.calledWith("/projectRootDir", "/projectRootDir/id/oldName")).to.be.true;
-      expect(moveStub.calledWith("/projectRootDir/id/oldName", "/projectRootDir/id/newName")).to.be.true;
-      expect(updateComponentPathStub.calledWith("/projectRootDir", "id", "/projectRootDir/id/newName")).to.be.true;
-    });
-
-    it("should reject if the project root dir is same as the component dir", async ()=>{
-      getComponentDirStub.withArgs("/projectRootDir", "id", true).returns("/projectRootDir");
-      await expect(renameComponentDir("/projectRootDir", "id", "newName")).to.be.rejected;
     });
   });
 

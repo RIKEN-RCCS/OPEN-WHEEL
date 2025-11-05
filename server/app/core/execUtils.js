@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs-extra";
 import { statusFilename } from "../db/db.js";
 import { replacePathsep } from "./pathUtils.js";
-import { isSameRemoteHost } from "./projectFilesOperator.js";
+import { isSameRemoteHost } from "./componentHostOperations.js";
 import { writeComponentJson } from "./componentJsonIO.js";
 import { getLogger } from "../logSettings.js";
 import { eventEmitters } from "./global.js";

@@ -10,20 +10,26 @@ import {
   removeInputFile,
   removeOutputFile,
   renameInputFile,
-  renameOutputFile,
+  renameOutputFile
+} from "../core/componentFiles.js";
+import {
   addLink,
   addFileLink,
   removeLink,
   removeAllLink,
   removeFileLink,
-  removeAllFileLink,
+  removeAllFileLink
+} from "../core/componentLinks.js";
+import {
   removeComponent,
-  createNewComponent,
+  createNewComponent
+} from "../core/componentOperations.js";
+import {
   getEnv,
-  replaceEnv,
-  replaceWebhook,
-  getProjectJson
-} from "../core/projectFilesOperator.js";
+  replaceEnv
+} from "../core/environmentVariables.js";
+import { replaceWebhook } from "../core/webhook.js";
+import { getProjectJson } from "../core/projectJsonFileOperator.js";
 import { getComponentDir } from "../core/componentJsonIO.js";
 import { sendWorkflow, sendProjectJson, sendComponentTree } from "./senders.js";
 import { convertPathSep } from "../core/pathUtils.js";
