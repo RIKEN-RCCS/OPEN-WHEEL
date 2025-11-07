@@ -17,7 +17,8 @@
 </template>
 
 <script>
-import { mapMutations, mapState, mapActions } from "vuex";
+import { mapMutations, mapState, mapActions, useStore } from "vuex";
+import { watchEffect } from "vue";
 import ComponentGraph from "../components/componentGraph/componentGraph.vue";
 import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "../lib/componentSizes.json";
 import { useHotkey } from "vuetify/lib/composables/hotkey/index.mjs";
@@ -27,54 +28,74 @@ export default {
   components: {
     ComponentGraph
   },
+  setup() {
+    const store = useStore();
+
+    const onCopy = ()=>{
+      if (store.state.selectedComponent === null) return;
+      store.commit("setCopyInfo", { type: "copy", ID: store.state.selectedComponent.ID });
+    };
+    const onCut = ()=>{
+      if (store.state.selectedComponent === null) return;
+      store.commit("setCopyInfo", { type: "cut", ID: store.state.selectedComponent.ID });
+    };
+    const onPaste = ()=>{
+      store.dispatch("pasteComponent", ()=>{});
+    };
+
+    const hotkeys = [
+      { key: "ctrl+c", handler: onCopy },
+      { key: "ctrl+x", handler: onCut },
+      { key: "ctrl+v", handler: onPaste }
+    ];
+
+    //Use the robust watchEffect pattern for each hotkey
+    hotkeys.forEach(({ key, handler })=>{
+      watchEffect((onCleanup)=>{
+        if (key) {
+          const unregister = useHotkey(key, handler);
+          onCleanup(unregister);
+        }
+      });
+    });
+
+    return {};
+  },
   computed: {
     ...mapState(["selectedComponent"])
   },
   mounted: function () {
     this.fit();
     window.addEventListener("resize", this.fit.bind(this));
-    useHotkey({
-      "ctrl+c": this.onCopy,
-      "ctrl+x": this.onCut,
-      "ctrl+v": this.onPaste
-    });
   },
   beforeUnmount: function () {
     window.removeEventListener("resize", this.fit.bind(this));
   },
   methods: {
-    ...mapMutations(
-      {
-        commitCanvasWidth: "canvasWidth",
-        commitCanvasHeight: "canvasHeight",
-        setCopyInfo: "copyInfo"
-      }),
+    ...mapMutations({
+      commitCanvasWidth: "canvasWidth",
+      commitCanvasHeight: "canvasHeight",
+      setCopyInfo: "copyInfo"
+    }),
     ...mapActions(["pasteComponent"]),
     fit: function () {
       const magicNumberH = 17 + 25;
       const magicNumberW = 24;
-      const baseWidth = window.innerWidth < this.$parent.$parent.$el.clientWidth ? window.innerWidth : this.$parent.$parent.$el.clientWidth;
+      const baseWidth
+        = window.innerWidth < this.$parent.$parent.$el.clientWidth
+          ? window.innerWidth
+          : this.$parent.$parent.$el.clientWidth;
       const width = baseWidth - widthComponentLibrary - magicNumberW;
-      const height = window.innerHeight - heightToolbar - heightDenseToolbar * 2 - heightFooter - magicNumberH;
+      const height
+        = window.innerHeight
+          - heightToolbar
+          - heightDenseToolbar * 2
+          - heightFooter
+          - magicNumberH;
       if (width > 0 && height > 0) {
         this.commitCanvasWidth(width);
         this.commitCanvasHeight(height);
       }
-    },
-    onCopy() {
-      if (this.selectedComponent === null) {
-        return;
-      }
-      this.setCopyInfo({ type: "copy", ID: this.selectedComponent.ID });
-    },
-    onCut() {
-      if (this.selectedComponent === null) {
-        return;
-      }
-      this.setCopyInfo({ type: "cut", ID: this.selectedComponent.ID });
-    },
-    onPaste() {
-      this.pasteComponent(()=>{});
     }
   }
 };
