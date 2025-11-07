@@ -436,11 +436,8 @@ class RemoteTaskExecuter extends Executer {
  */
 function promisifiedSpawn(task, script, options) {
   return new Promise((resolve, reject)=>{
-    const cp = _internal.childProcess.spawn(script, options, (err)=>{
-      if (err) {
-        reject(err);
-      }
-    });
+    const cp = _internal.childProcess.spawn(script, [], options);
+
     cp.stdout.on("data", (data)=>{
       _internal.getLogger(task.projectRootDir).stdout(data.toString());
     });
