@@ -531,6 +531,12 @@ export default {
     this.baseURL = this.$router.options.history.base || ".";
     SIO.init({ projectRootDir }, socketIOPath);
 
+    SIO.onGlobal("WHEEL_LOG", (data)=>{
+      if (this.$refs.logscreen) {
+        this.$refs.logscreen.onWheelLog(data);
+      }
+    });
+
     const ID = readCookie("root");
     this.commitRootComponentID(ID);
 
@@ -614,12 +620,6 @@ export default {
       return;
     });
 
-    //call back for log-screen
-    for (const event of ["logINFO", "logWARN", "logERR", "logStdout", "logStderr", "logSSHout", "logSSHerr"]) {
-      SIO.onGlobal(event, (data)=>{
-        this.$refs.logscreen.logRecieved(event, data);
-      });
-    }
     SIO.onGlobal("requestOIDCAuth", (remotehostID, ack)=>{
       const param = new URLSearchParams({ remotehostID });
       window.location.replace(`${this.baseURL}/webAPIauth?${param.toString()}`);
