@@ -804,7 +804,7 @@ export default {
       this.copySelectedComponent.retryCondition = null;
     },
     "copySelectedComponent.host"(newValue) {
-      if (newValue === "localhost" && !this.isBulkjobTask() && !this.isStepjobTask() && this.isStepjob()) {
+      if (newValue === "localhost" && !this.isBulkjobTask && !this.isStepjobTask && this.isStepjob) {
         this.copySelectedComponent.useJobScheduler = false;
       }
     },
