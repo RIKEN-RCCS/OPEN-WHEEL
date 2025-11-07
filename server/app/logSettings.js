@@ -39,17 +39,35 @@ function socketIOAppender(layout, timezoneOffset, argEventName) {
     const eventName = argEventName || eventNameTable[loggingEvent.level.levelStr];
     const projectRootDir = loggingEvent.context.projectRootDir;
     if (eventName) {
-      //emitAll is async function but we did not wait here
-      _internal.emitAll(projectRootDir, eventName, layout(loggingEvent, timezoneOffset));
+      const message = layout(loggingEvent, timezoneOffset);
+      _internal.emitAll(projectRootDir, "WHEEL_LOG", message);
     }
   };
 }
+
+const getCircularReplacer = ()=>{
+  const seen = new WeakSet();
+  return (key, value)=>{
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) {
+        return; //undefined, property is removed
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
 
 const socketIO = {
   configure: (config, layouts)=>{
     let layout = layouts.basicLayout;
     if (config.layout) {
-      layout = layouts.layout(config.layout.type, config.layout);
+      if (config.layout.type === "json") {
+        const separator = config.layout.separator || ",";
+        layout = (logEvent)=>{ return JSON.stringify(logEvent, getCircularReplacer()) + separator; };
+      } else {
+        layout = layouts.layout(config.layout.type, config.layout);
+      }
     }
     return socketIOAppender(layout, config.timezoneOffset);
   }
@@ -61,7 +79,8 @@ export const logSettings = {
       type: "console"
     },
     socketIO: {
-      type: socketIO
+      type: socketIO,
+      layout: { type: "json", separator: "," }
     },
     multi: {
       type: "multiFile",
