@@ -25,7 +25,13 @@ import { writeComponentJson, readComponentJson, readComponentJsonByID } from "./
 import { isInitialComponent, removeDuplicatedComponent, hasStoragePath, isLocalComponent } from "./workflowComponent.js";
 import { getChildren } from "./workflowUtil.js";
 import { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } from "./dispatchUtils.js";
-import { getLogger } from "../logSettings.js";
+import {
+  logTrace,
+  logDebug,
+  logInfo,
+  logWarn,
+  logError
+} from "../logSettings.js";
 import { cancelDispatchedTasks } from "./taskUtil.js";
 import { eventEmitters } from "./global.js";
 import { createTempd } from "./tempd.js";
@@ -181,7 +187,7 @@ class Dispatcher extends EventEmitter {
   async _dispatchOneComponent(target) {
     try {
       if (target.state === "finished") {
-        getLogger(this.projectRootDir).info(`finished component don't re-run at this time: ${target.name}(${target.ID})`);
+        logInfo(this.projectRootDir, `${this.cwfDir}/${target.name}`, "finished component don't re-run at this time");
       } else {
         await this._cmdFactory(target.type).call(this, target);
       }
@@ -192,7 +198,7 @@ class Dispatcher extends EventEmitter {
     } finally {
       this.setStateFlag(target.state);
       if (isFinishedState(target.state)) {
-        getLogger(this.projectRootDir).info(`finished component: ${target.name}(${target.ID})`);
+        logInfo(this.projectRootDir, `${this.cwfDir}/${target.name}`, "finished component");
       }
       this._reserveDispatch();
     }
@@ -201,7 +207,7 @@ class Dispatcher extends EventEmitter {
 
   async _dispatch() {
     try {
-      getLogger(this.projectRootDir).trace("_dispatch called", this.cwfDir);
+      logTrace(this.projectRootDir, this.cwfDir, "_dispatch called");
       if (this.firstCall) {
         await this._asyncInit();
         const childComponents = await getChildren(this.projectRootDir, this.cwfDir, true);
@@ -217,19 +223,19 @@ class Dispatcher extends EventEmitter {
         this.currentSearchList = initialComponents.filter((e)=>{
           return e !== null;
         });
-        getLogger(this.projectRootDir).debug("initial components: ", this.currentSearchList.map((e)=>{
+        logDebug(this.projectRootDir, this.cwfDir, "initial components:", this.currentSearchList.map((e)=>{
           return e.name;
         }));
         this.firstCall = false;
       }
-      getLogger(this.projectRootDir).trace("currentList:", this.currentSearchList.map((e)=>{
+      logTrace(this.projectRootDir, this.cwfDir, `currentList: ${this.currentSearchList.map((e)=>{
         return e.name;
-      }));
+      })}`);
 
       const promises = [];
       for (const target of this.currentSearchList) {
         if (target.disable) {
-          getLogger(this.projectRootDir).info(`disabled component: ${target.name}(${target.ID})`);
+          logInfo(this.projectRootDir, `${this.cwfDir}/${target.name}`, "disabled component");
           continue;
         }
         if (!await this._isReady(target)) {
@@ -242,7 +248,7 @@ class Dispatcher extends EventEmitter {
       if (promises.length > 0) {
         await Promise.all(promises);
       }
-      getLogger(this.projectRootDir).debug("search next components");
+      logDebug(this.projectRootDir, this.cwfDir, "search next components");
 
       //remove duplicated entry
       this.currentSearchList = removeDuplicatedComponent(this.pendingComponents);
@@ -255,7 +261,7 @@ class Dispatcher extends EventEmitter {
         const state = this._getState();
         this.emit("done", state);
       } else {
-        getLogger(this.projectRootDir).trace("waiting component", this.currentSearchList.map((e)=>{
+        logTrace(this.projectRootDir, this.cwfDir, "waiting component", this.currentSearchList.map((e)=>{
           return e.name;
         }));
 
@@ -263,7 +269,7 @@ class Dispatcher extends EventEmitter {
       }
       if (this.needToRerun) {
         this.needToRerun = false;
-        getLogger(this.projectRootDir).debug("revoke _dispatch()");
+        logTrace(this.projectRootDir, this.cwfDir, "revoke _dispatch()");
         return this._reserveDispatch();
       }
       return true;
@@ -335,7 +341,7 @@ class Dispatcher extends EventEmitter {
   }
 
   _isFinished() {
-    getLogger(this.projectRootDir).trace(`${this.cwfDir} number of running task, waiting component = ${this.runningTasks.length}, ${this.currentSearchList.length}`);
+    logTrace(this.projectRootDir, this.cwfDir, "number of running task, waiting component =", this.runningTasks.length, ",", this.currentSearchList.length);
     return this.runningTasks.length === 0 && this.currentSearchList.length === 0;
   }
 
@@ -365,12 +371,12 @@ class Dispatcher extends EventEmitter {
       };
       //never call this.onDone directly except for _jumpHandler
       this.onDone = (state)=>{
-        getLogger(this.projectRootDir).trace(`dispatcher finished ${this.cwfDir} with ${state}`);
+        logTrace(this.projectRootDir, this.cwfDir, "dispatcher finished with", state);
         onStop();
         resolve(state);
       };
       const onError = (err)=>{
-        getLogger(this.projectRootDir).trace(`dispatcher terminated ${this.cwfDir} with ${err}`);
+        logTrace(this.projectRootDir, this.cwfDir, "dispatcher terminated with", err);
         onStop();
         reject(err);
       };
@@ -485,7 +491,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _dispatchTask(component) {
-    getLogger(this.projectRootDir).trace("_dispatchTask called", component.name);
+    logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_dispatchTask called");
     await this._setComponentState(component, "running");
     component.dispatchedTime = getDateString(true, true);
     component.startTime = "not started"; //to be assigned in executer
@@ -519,8 +525,8 @@ class Dispatcher extends EventEmitter {
     component.parentType = this.cwfJson.type;
 
     exec(component).catch((e)=>{
-      getLogger(this.projectRootDir).warn(`${component.name} failed. rt=${component.rt}`);
-      getLogger(this.projectRootDir).trace(component.workingDir, "failed due to", e);
+      logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "failed. rt=", component.rt);
+      logTrace(this.projectRootDir, component.workingDir, "failed due to", e);
     });
     //exec is async function but dispatcher never wait end of task execution
     //it cause error if cancel taskJobs which is waiting for job submittion limit
@@ -533,18 +539,18 @@ class Dispatcher extends EventEmitter {
   }
 
   async _checkIf(component) {
-    getLogger(this.projectRootDir).debug("_checkIf called", component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_checkIf called");
     await this._setComponentState(component, "running");
     const childDir = path.resolve(this.cwfDir, component.name);
     this.setEnv(component);
     const condition = await evalCondition(this.projectRootDir, component.condition, childDir, component.env);
-    getLogger(this.projectRootDir).debug("condition check result=", condition);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "condition check result=", condition);
     await this._addNextComponent(component, !condition);
     await this._setComponentState(component, "finished");
   }
 
   async _delegate(component, needEventHandler, templateComponent) {
-    getLogger(this.projectRootDir).debug("_delegate called", component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_delegate called");
     const childDir = path.resolve(this.cwfDir, component.name);
     //PS instance component is called in template component's dispatcher.
     //_setComponentState should not be called for PS because it write template component's component JSON file
@@ -562,7 +568,7 @@ class Dispatcher extends EventEmitter {
       this.componentPath, childEnv, ancestorsType);
     if (needEventHandler) {
       child.on("break", async ()=>{
-        getLogger(this.projectRootDir).debug("break event recieved from", child.cwfDir);
+        logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "break event recieved from", child.cwfDir);
         this.forceFinishedLoops.push(templateComponent.ID);
       });
     }
@@ -589,15 +595,15 @@ class Dispatcher extends EventEmitter {
   async _loopFinalize(component, lastDir) {
     const dstDir = path.resolve(this.cwfDir, component.originalName);
     if (lastDir !== dstDir) {
-      getLogger(this.projectRootDir).debug("copy ", lastDir, "to", dstDir);
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy", lastDir, "to", dstDir);
       await fs.copy(lastDir, dstDir, { overwrite: true, dereference: true }); //dst will be overwrite always
     }
     if (component.keep === 0) {
-      getLogger(this.projectRootDir).debug("remove last instance dir because keep is set to 0");
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "remove last instance dir because keep is set to 0");
       await fs.remove(lastDir);
     }
 
-    getLogger(this.projectRootDir).debug("loop finished", component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "loop finished");
     delete component.initialized;
     delete component.currentIndex;
     delete component.prevIndex;
@@ -610,10 +616,10 @@ class Dispatcher extends EventEmitter {
   }
 
   async _loopHandler(getNextIndex, getPrevIndex, isFinished, getTripCount, keepLoopInstance, component) {
-    getLogger(this.projectRootDir).debug("_loopHandler called", component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_loopHandler called");
 
     if (component.initialized && component.currentIndex !== null && component.state === "not-started") {
-      getLogger(this.projectRootDir).debug(`${component.name} is restarting from ${component.currentIndex}`);
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "restarting from", component.currentIndex);
       component.restarting = true;
     }
     if (!component.restarting && component.childLoopRunning) {
@@ -689,11 +695,11 @@ class Dispatcher extends EventEmitter {
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
     try {
-      getLogger(this.projectRootDir).debug(`copy from ${srcDir} to ${dstDir}`);
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy from", srcDir, "to", dstDir);
       await fs.copy(srcDir, dstDir, {
         dereference: true,
         filter: async (target)=>{
-          getLogger(this.projectRootDir).trace("[loopHandler] copy filter on :", target);
+          logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy filter on :", target);
           if (srcDir === target) {
             return true;
           }
@@ -706,11 +712,11 @@ class Dispatcher extends EventEmitter {
       });
       //overwrited only newer files in template component
       if (component.restarting) {
-        getLogger(this.projectRootDir).trace("[loopHandler] overwrite by rsync");
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "overwrite by rsync");
         const { stdout, stderr } = await overwriteByRsync(path.resolve(this.cwfDir, component.name), dstDir);
-        getLogger(this.projectRootDir).trace("output from rsync");
-        getLogger(this.projectRootDir).trace(stdout);
-        getLogger(this.projectRootDir).trace(stderr);
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "output from rsync");
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, stdout);
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, stderr);
         delete component.restarting;
       }
       await setComponentStateR(this.projectRootDir, dstDir, "not-started", true);
@@ -734,11 +740,11 @@ class Dispatcher extends EventEmitter {
       if (typeof e !== "string") {
         e.index = component.currentIndex;
       }
-      getLogger(this.projectRootDir).warn("fatal error occurred during loop child dispatching.", e);
+      logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "fatal error occurred during loop child dispatching.", e);
       throw e;
     }
     if (component.childLoopRunning) {
-      getLogger(this.projectRootDir).debug("finished for index =", component.currentIndex);
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "finished for index =", component.currentIndex);
       component.childLoopRunning = false;
     }
     return Promise.resolve();
@@ -748,10 +754,10 @@ class Dispatcher extends EventEmitter {
     const templateRoot = path.resolve(this.cwfDir, component.name);
     const paramSettingsFilename = path.resolve(templateRoot, component.parameterFile);
     const paramSettings = await readJsonGreedy(paramSettingsFilename).catch((err)=>{
-      getLogger(this.projectRootDir).warn("parameter file read failed", err);
+      logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "parameter file read failed", err);
       throw err;
     });
-    getLogger(this.projectRootDir).debug(`read prameter setting done. version = ${paramSettings.version}`);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "read prameter setting done. version =", paramSettings.version);
     //treat single value as array contains single element
     if (Object.prototype.hasOwnProperty.call(paramSettings, "targetFiles") && typeof paramSettings.targetFiles === "string") {
       paramSettings.targetFiles = [paramSettings.targetFiles];
@@ -778,7 +784,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _PSHandler(component) {
-    getLogger(this.projectRootDir).debug("_PSHandler called", component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_PSHandler called");
     if (component.initialized && component.state === "not-started") {
       component.restarting = true;
     }
@@ -825,7 +831,7 @@ class Dispatcher extends EventEmitter {
     component.numFailed = 0;
     component.numFinished = 0;
 
-    getLogger(this.projectRootDir).debug("start paramSpace loop");
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "start paramSpace loop");
 
     const updateComponentJson = debounce(async ()=>{
       const ee = eventEmitters.get(this.projectRootDir);
@@ -853,17 +859,17 @@ class Dispatcher extends EventEmitter {
       options.filter = function (filename) {
         return !ignoreFiles.includes(filename);
       };
-      getLogger(this.projectRootDir).debug("copy from", templateRoot, "to ", instanceRoot);
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy from", templateRoot, "to", instanceRoot);
       if (!component.restarting) {
         await fs.copy(templateRoot, instanceRoot, options);
       } else {
         const { stdout, stderr } = await overwriteByRsync(templateRoot, instanceRoot, ignoreFiles);
-        getLogger(this.projectRootDir).trace("output from rsync");
-        getLogger(this.projectRootDir).trace(stdout);
-        getLogger(this.projectRootDir).trace(stderr);
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "output from rsync");
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, stdout);
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, stderr);
       }
 
-      getLogger(this.projectRootDir).debug("copy files which is used as parameter");
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy files which is used as parameter");
       await Promise.all(paramVec.filter((e)=>{
         return e.type === "file";
       }).map((e)=>{
@@ -872,13 +878,13 @@ class Dispatcher extends EventEmitter {
         .map((e)=>{
           const src = path.resolve(templateRoot, e);
           const dst = path.resolve(instanceRoot, e);
-          getLogger(this.projectRootDir).debug("parameter: copy from", src, "to ", dst);
+          logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "parameter: copy from", src, "to", dst);
           return fs.copy(src, dst, { overwrite: component.forceOverwrite });
         }));
 
-      getLogger(this.projectRootDir).debug("scatter files");
-      await scatterFiles(templateRoot, instanceRoot, scatterRecipe, params, getLogger(this.projectRootDir), component.restarting);
-      getLogger(this.projectRootDir).debug("rewrite target files");
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "scatter files");
+      await scatterFiles(templateRoot, instanceRoot, scatterRecipe, params, logTrace.bind(null, this.projectRootDir, `${this.cwfDir}/${component.name}`), component.restarting);
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "rewrite target files");
       await rewriteTargetFile(templateRoot, instanceRoot, targetFiles, params);
 
       const newComponent = structuredClone(component);
@@ -903,14 +909,14 @@ class Dispatcher extends EventEmitter {
           } else if (newComponent.state === "failed") {
             ++(component.numFailed);
           } else {
-            getLogger(this.projectRootDir).warn("child state is illegal", newComponent.state);
+            logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "child state is illegal", newComponent.state);
           }
         })
         .then(updateComponentJson);
       promises.push(p);
     }
     await Promise.all(promises);
-    getLogger(this.projectRootDir).debug("gather files");
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "gather files");
 
     //gather from all instance dirs even restarting.
     //this process will be done for first time for all instance
@@ -924,26 +930,26 @@ class Dispatcher extends EventEmitter {
         return `${p}_${e.key}_${e.value}`;
       }, component.name));
       const instanceRoot = path.resolve(this.cwfDir, newName);
-      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params, getLogger(this.projectRootDir)));
+      promiseGather.push(gatherFiles(templateRoot, instanceRoot, gatherRecipe, params, logTrace.bind(null, this.projectRootDir, `${this.cwfDir}/${component.name}`)));
     }
     await Promise.all(promiseGather);
-    getLogger(this.projectRootDir).trace("gather files done");
+    logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "gather files done");
     await this._addNextComponent(component);
-    getLogger(this.projectRootDir).trace("add next component done");
+    logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "add next component done");
     const state = component.numFailed > 0 ? "failed" : "finished";
     delete component.initialized;
     delete component.restarting;
     await this._setComponentState(component, state);
-    getLogger(this.projectRootDir).trace("set component state done");
+    logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "set component state done");
     if (component.deleteLoopInstance) {
-      getLogger(this.projectRootDir).debug("remove instance directories");
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "remove instance directories");
       const promiseDelete = [];
       for (const paramVec of paramVecGenerator(paramSpace)) {
         const deleteComponentName = sanitizePath(paramVec.reduce((p, e)=>{
           return `${p}_${e.key}_${e.value}`;
         }, component.name));
         const deleteDir = path.resolve(this.cwfDir, deleteComponentName);
-        getLogger(this.projectRootDir).trace(`remove ${deleteDir}`);
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "remove", deleteDir);
         promiseDelete.push(fs.remove(deleteDir));
       }
       await Promise.all(promiseDelete);
@@ -951,7 +957,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _viewerHandler(component) {
-    getLogger(this.projectRootDir).debug("_viewerHandler called", component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_viewerHandler called");
     await this._setComponentState(component, "running");
     const { dir, root: viewerURLRoot } = await createTempd(this.projectRootDir, "viewer");
     const files = await Promise.all(component.files.map((e)=>{
@@ -967,7 +973,7 @@ class Dispatcher extends EventEmitter {
           if (viewerSupportedTypes.includes(e.ext)) {
             return e.name;
           }
-          getLogger(this.projectRootDir).warn("unsupported type for viewer", path.basename(e.name));
+          logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "unsupported type for viewer", path.basename(e.name));
           return false;
         })
         .map((e)=>{
@@ -975,7 +981,7 @@ class Dispatcher extends EventEmitter {
         })
     );
 
-    getLogger(this.projectRootDir).info("result files are ready in", dir);
+    logInfo(this.projectRootDir, `${this.cwfDir}/${component.name}`, "result files are ready in", dir);
     const filename = path.join(dir, filesJsonFilename);
     let filesJson = [];
     try {
@@ -1003,7 +1009,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _bulkjobHandler(component) {
-    getLogger(this.projectRootDir).debug("_bulkjobHandler called", component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_bulkjobHandler called");
     const { templateRoot, paramSettings, targetFiles } = await this._getTargetFile(component);
     const paramSpace = await getParamSpacev2(paramSettings.params, templateRoot);
 
@@ -1012,7 +1018,7 @@ class Dispatcher extends EventEmitter {
     component.startBulkNumber = 0;
     let countBulkNum = 0;
 
-    getLogger(this.projectRootDir).debug("start paramSpace loop");
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "start paramSpace loop");
 
     for (const paramVec of paramVecGenerator(paramSpace)) {
       const params = paramVec.reduce((p, c)=>{
@@ -1029,11 +1035,11 @@ class Dispatcher extends EventEmitter {
           //I dont know it's OK or harmful to disable no-loop-func here
           const src = path.resolve(templateRoot, e);
           const dst = path.resolve(templateRoot, `${countBulkNum}.${e}`);
-          getLogger(this.projectRootDir).debug("parameter: copy from", src, "to ", dst);
+          logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "parameter: copy from", src, "to", dst);
           return fs.copy(src, dst);
         }));
 
-      getLogger(this.projectRootDir).debug("rewrite target files");
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "rewrite target files");
       await replaceByNunjucksForBulkjob(templateRoot, targetFiles, params, countBulkNum);
       await writeParameterSetFile(templateRoot, targetFiles, params, countBulkNum);
       countBulkNum++;
@@ -1042,7 +1048,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _storageHandler(component) {
-    getLogger(this.projectRootDir).debug("_storageHandler called", component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_storageHandler called");
     await this._setComponentState(component, "running");
     const storagePath = component.storagePath;
     const currentDir = this._getComponentDir(component.ID);
@@ -1103,7 +1109,7 @@ class Dispatcher extends EventEmitter {
   }
 
   async _hpcissHandler(withTar, component) {
-    getLogger(this.projectRootDir).debug(`_hpcissHandler called with ${component.name} tar=${withTar}`);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_hpcissHandler called with tar=", withTar);
     await this._setComponentState(component, "running");
     const currentDir = this._getComponentDir(component.ID);
 
@@ -1144,7 +1150,7 @@ class Dispatcher extends EventEmitter {
           await gfpcopy(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath, true);
         }
       }
-      getLogger(this.projectRootDir).debug(`remove remote temp dir ${component.remoteTempDir}`);
+      logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "remove remote temp dir", component.remoteTempDir);
       await ssh.exec(`rm -fr ${component.remoteTempDir}`);
     }
 
@@ -1153,19 +1159,19 @@ class Dispatcher extends EventEmitter {
   }
 
   async _sourceHandler(component) {
-    getLogger(this.projectRootDir).debug("_sourceHandler called", component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_sourceHandler called");
     await this._setComponentState(component, "running");
     await this._addNextComponent(component);
     await this._setComponentState(component, "finished");
   }
 
   async _jumpHandler(label, component) {
-    getLogger(this.projectRootDir).debug("_jumpHandler called with", label, component.name);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_jumpHandler called with", label);
     await this._setComponentState(component, "running");
     const childDir = path.resolve(this.cwfDir, component.name);
     this.setEnv(component);
     const condition = await evalCondition(this.projectRootDir, component.condition, childDir, component.env);
-    getLogger(this.projectRootDir).debug("condition check result=", condition);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "condition check result=", condition);
     await this._setComponentState(component, "finished");
     if (!condition) {
       await this._addNextComponent(component);
@@ -1193,9 +1199,9 @@ class Dispatcher extends EventEmitter {
         if (previous.disable) {
           continue;
         }
-        getLogger(this.projectRootDir).trace(`previous component name = ${previous.type}(state:${previous.state})`);
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "previous component name =", `${previous.type}(state:${previous.state})`);
         if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
-          getLogger(this.projectRootDir).trace(`${component.name}(${component.ID}) is not ready because ${previous.name}(${previous.ID}) is not finished`);
+          logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "is not ready because", `${this.cwfDir}${previous.name}`, "is not finished");
           return false;
         }
       }
@@ -1211,7 +1217,7 @@ class Dispatcher extends EventEmitter {
             continue;
           }
           if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
-            getLogger(this.projectRootDir).trace(`${component.name}(${component.ID}) is not ready because ${inputFile} from ${previous.name}(${previous.ID}) is not arrived`);
+            logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "is not ready because", inputFile, "from", `${previous.name}(${previous.ID})`, "is not arrived");
             return false;
           }
         }
@@ -1250,7 +1256,7 @@ class Dispatcher extends EventEmitter {
     if (component.type === "source") {
       return;
     }
-    getLogger(this.projectRootDir).debug(`getInputFiles for ${component.name}`);
+    logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "get InputFiles");
     const promises = [];
     const tmpDeliverRecipes = [];
     for (const inputFile of component.inputFiles) {
@@ -1430,7 +1436,7 @@ class Dispatcher extends EventEmitter {
     }
     const results = await Promise.all(p2);
     for (const result of results) {
-      getLogger(this.projectRootDir).trace(`make ${result.type} from  ${result.src} to ${result.dst}`);
+      logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "make", result.type, "from ", result.src, "to", result.dst);
     }
     if (component.type === "viewer") {
       component.files = results;
@@ -1493,7 +1499,7 @@ class Dispatcher extends EventEmitter {
         cmd = this._hpcissHandler.bind(this, true);
         break;
       default:
-        getLogger(this.projectRootDir).error("illegal type specified", type);
+        logError(this.projectRootDir, this.cwfDir, "illegal type specified", type);
     }
     return cmd;
   }

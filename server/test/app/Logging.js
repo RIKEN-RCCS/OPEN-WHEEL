@@ -79,11 +79,13 @@ describe("Unit test for log4js's helper functions", ()=>{
       expect(emitAll.callCount).to.eql(2);
       const calls = emitAll.getCalls();
       expect(calls[0].args[0]).to.eql(projectRootDir);
-      expect(calls[0].args[1]).to.eql("logINFO");
-      expect(calls[0].args[2]).to.match(/info$/);
+      expect(calls[0].args[1]).to.eql("WHEEL_LOG");
+      const infoLog = JSON.parse(calls[0].args[2].slice(0, -1));
+      expect(infoLog.data[0]).to.equal("info");
       expect(calls[1].args[0]).to.eql(projectRootDir);
-      expect(calls[1].args[1]).to.eql("logERR");
-      expect(calls[1].args[2]).to.match(/error$/);
+      expect(calls[1].args[1]).to.eql("WHEEL_LOG");
+      const errorLog = JSON.parse(calls[1].args[2].slice(0, -1));
+      expect(errorLog.data[0]).to.equal("error");
     });
     it("should write all logs except trace to file", async ()=>{
       logger = getLogger(projectRootDir);

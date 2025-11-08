@@ -60,7 +60,7 @@ export async function replaceByNunjucks(templateRoot, instanceRoot, targetFiles,
  * @param {string} instanceRoot - path of PS component's "instance" directory
  * @param {object} scatterRecipe - "recipe" of scatter file
  * @param {object} params - parameters for this instance directory
- * @param {object} logger - log4js object
+ * @param {function} logger - trace log function
  * @param {boolean} useRsync - use rsync or fs.copy
  * @returns {Promise} - resolved when all scattering process is done
  */
@@ -73,7 +73,7 @@ export async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, 
     const dstName = _internal.nunjucks.renderString(recipe.dstName, params);
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(dstDir, dstName.slice(0, -1), src) : path.join(dstDir, dstName);
-      logger.trace(`scatter copy ${path.join(templateRoot, src)} to ${dst}`);
+      logger(`scatter copy ${path.join(templateRoot, src)} to ${dst}`);
       if (useRsync) {
         p.push(_internal.overwriteByRsync(path.join(templateRoot, src), dst));
       } else {
@@ -82,7 +82,7 @@ export async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, 
     }
   }
   return Promise.all(p).catch((err)=>{
-    logger.trace("error occurred at scatter", err);
+    logger("error occurred at scatter", err);
     if (err.code !== "ENOENT" && err.code !== "EEXIST") {
       return Promise.reject(err);
     }
@@ -96,7 +96,7 @@ export async function scatterFilesV2(templateRoot, instanceRoot, scatterRecipe, 
  * @param {string} instanceRoot - path of PS component's "instance" directory
  * @param {object} gatherRecipe - "recipe" of gather file
  * @param {object} params - parameters for this instance directory
- * @param {object} logger - log4js object
+ * @param {function} logger - trace log function
  * @returns {Promise} - resolved when all gathering process is done
  */
 export async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, logger) {
@@ -108,12 +108,12 @@ export async function gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, pa
     const dstName = _internal.nunjucks.renderString(recipe.dstName, params);
     for (const src of srces) {
       const dst = recipe.dstName.endsWith("/") || recipe.dstName.endsWith("\\") ? path.join(templateRoot, dstName.slice(0, -1), src) : path.join(templateRoot, dstName);
-      logger.trace(`gather copy ${path.join(srcDir, src)} to ${dst}`);
+      logger(`gather copy ${path.join(srcDir, src)} to ${dst}`);
       p.push(_internal.fs.copy(path.join(srcDir, src), dst, { overwrite: true }));
     }
   }
   return Promise.all(p).catch((err)=>{
-    logger.trace("error occurred at gather", err);
+    logger("error occurred at gather", err);
     if (err.code !== "ENOENT" || err.code === "EEXIST") {
       return Promise.reject(err);
     }
