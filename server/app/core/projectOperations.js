@@ -245,7 +245,7 @@ export async function getUnusedProjectDir(projectRootDir, projectName) {
   return projectRootDirCandidate;
 };
 
-// Add exported functions to _internal for testing purposes
+//Add exported functions to _internal for testing purposes
 _internal.getUnusedProjectDir = getUnusedProjectDir;
 _internal.createNewProject = createNewProject;
 

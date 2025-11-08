@@ -29,7 +29,6 @@ const remoteHome = "/home/testuser";
 //helper functions
 import { componentJsonFilename, statusFilename, jobManagerJsonFilename } from "../../../app/db/db.js";
 import { createNewProject } from "../../../app/core/projectOperations.js";
-import { updateComponent } from "../../../app/core/updateComponent.js";
 import { updateComponentProperty } from "../../testUtil.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { replacePathsep } from "../../../app/core/pathUtils.js";

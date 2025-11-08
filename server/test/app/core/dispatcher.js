@@ -26,7 +26,6 @@ import { eventEmitters } from "../../../app/core/global.js";
 //helper functions
 import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
 import { createNewProject } from "../../../app/core/projectOperations.js";
-import { updateComponent } from "../../../app/core/updateComponent.js";
 import { updateComponentProperty } from "../../testUtil.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { addInputFile, addOutputFile, renameOutputFile } from "../../../app/core/componentFiles.js";

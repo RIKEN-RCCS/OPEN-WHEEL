@@ -330,7 +330,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -383,7 +383,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -495,7 +495,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-autocomplete\"]").contains("test-a")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -545,7 +545,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").find("textarea")
       .should("have.value", "testJavaScript");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -592,6 +592,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
     cy.get("[data-cy=\"component_property-keep_while-text_field\"]").find("input")
       .should("have.value", 10);
-      cy.closeProperty();
+    cy.closeProperty();
   });
 });

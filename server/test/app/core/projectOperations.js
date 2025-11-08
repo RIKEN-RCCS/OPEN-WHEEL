@@ -173,14 +173,12 @@ describe("projectOperations tests", ()=>{
   describe("#addProject", ()=>{
     let createNewProjectMock;
     let pathExistsStub;
-    let getProjectJsonMock;
-    let pathIsAbsoluteMock;
 
     beforeEach(()=>{
       createNewProjectMock = sinon.stub(_internal, "createNewProject");
       pathExistsStub = sinon.stub(_internal.fs, "pathExists");
-      getProjectJsonMock = sinon.stub(_internal, "getProjectJson");
-      pathIsAbsoluteMock = sinon.stub(path, "isAbsolute");
+      sinon.stub(_internal, "getProjectJson");
+      sinon.stub(path, "isAbsolute");
     });
 
     afterEach(()=>{
@@ -323,7 +321,7 @@ describe("projectOperations tests", ()=>{
     let getProjectJsonMock, rewriteAllIncludeExcludePropertyMock, writeProjectJsonMock;
     let setProjectStateMock, setComponentStateRMock;
     let gitInitMock, gitAddMock, gitCommitMock;
-    let fsPathExistsMock, fsOutputFileMock;
+    let fsPathExistsMock;
     let projectListQueryStub;
     let projectListUnshiftStub;
 
@@ -339,9 +337,13 @@ describe("projectOperations tests", ()=>{
       projectListQueryStub = sinon.stub(_internal.projectList, "query");
       projectListUnshiftStub = sinon.stub(_internal.projectList, "unshift");
       fsPathExistsMock = sinon.stub(_internal.fs, "pathExists");
-      fsOutputFileMock = sinon.stub(_internal.fs, "outputFile");
-      sinon.stub(path, "resolve").callsFake((...args)=>{ return args.join("/"); });
-      sinon.stub(path, "join").callsFake((...args)=>{ return args.join("/"); });
+      sinon.stub(_internal.fs, "outputFile");
+      sinon.stub(path, "resolve").callsFake((...args)=>{
+        return args.join("/");
+      });
+      sinon.stub(path, "join").callsFake((...args)=>{
+        return args.join("/");
+      });
     });
 
     afterEach(()=>{

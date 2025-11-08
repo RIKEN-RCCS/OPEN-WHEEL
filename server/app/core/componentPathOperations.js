@@ -73,7 +73,7 @@ export async function updateComponentPath(projectRootDir, ID, absPath) {
   return projectJson.componentPath;
 }
 
-// Add exported functions to _internal for testing purposes
+//Add exported functions to _internal for testing purposes
 _internal.updateComponentPath = updateComponentPath;
 
 export { _internal };

@@ -234,7 +234,7 @@ describe("fileValidator UT", function () {
 
       await fs.ensureDir(path.resolve(projectRootDir, ps.name));
 
-      await fs.writeFile(path.resolve(projectRootDir, ps.name, "syntax_error.json"), '{"incomplete": ');
+      await fs.writeFile(path.resolve(projectRootDir, ps.name, "syntax_error.json"), "{\"incomplete\": ");
 
       await expect(checkPSSettingFile(projectRootDir, ps)).to.be.rejectedWith(/parameter setting file is not JSON file/);
     });

@@ -149,20 +149,28 @@ export default {
         .join("");
     },
     systemChildrenSelected() {
-      return this.categories.system.every((item)=>{ return this.selectedCategories.includes(item); }
+      return this.categories.system.every((item)=>{
+        return this.selectedCategories.includes(item);
+      }
       );
     },
     systemChildrenPartiallySelected() {
-      const some = this.categories.system.some((item)=>{ return this.selectedCategories.includes(item); }
+      const some = this.categories.system.some((item)=>{
+        return this.selectedCategories.includes(item);
+      }
       );
       return some && !this.systemChildrenSelected;
     },
     scriptChildrenSelected() {
-      return this.categories.script.every((item)=>{ return this.selectedCategories.includes(item); }
+      return this.categories.script.every((item)=>{
+        return this.selectedCategories.includes(item);
+      }
       );
     },
     scriptChildrenPartiallySelected() {
-      const some = this.categories.script.some((item)=>{ return this.selectedCategories.includes(item); }
+      const some = this.categories.script.some((item)=>{
+        return this.selectedCategories.includes(item);
+      }
       );
       return some && !this.scriptChildrenSelected;
     }

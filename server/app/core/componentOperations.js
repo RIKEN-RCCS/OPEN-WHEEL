@@ -44,7 +44,7 @@ const _internal = {
   setUploadOndemandOutputFile,
   getAllComponentIDs,
   isParent,
-  rewriteIncludeExclude: null  // Will be set after function definition
+  rewriteIncludeExclude: null //Will be set after function definition
 };
 
 /**
@@ -114,12 +114,12 @@ export async function renameComponentDir(projectRootDir, ID, newName) {
     return true;
   }
   const newDir = path.resolve(path.dirname(oldDir), newName);
-  
-  // Update the name property in component JSON before moving
+
+  //Update the name property in component JSON before moving
   const componentJson = await _internal.readComponentJson(oldDir);
   componentJson.name = newName;
   await _internal.writeComponentJson(projectRootDir, oldDir, componentJson);
-  
+
   await _internal.gitRm(projectRootDir, oldDir);
   await _internal.fs.move(oldDir, newDir);
   await _internal.gitAdd(projectRootDir, newDir);
@@ -363,7 +363,7 @@ export async function rewriteIncludeExclude(projectRootDir, filename, changed) {
   }
 };
 
-// Set _internal.rewriteIncludeExclude after function definition to avoid circular reference
+//Set _internal.rewriteIncludeExclude after function definition to avoid circular reference
 _internal.rewriteIncludeExclude = rewriteIncludeExclude;
 
 /**
@@ -379,7 +379,7 @@ export async function rewriteAllIncludeExcludeProperty(projectRootDir, changed) 
   }));
 };
 
-// Add exported functions to _internal for testing purposes
+//Add exported functions to _internal for testing purposes
 _internal.getDescendantsIDs = getDescendantsIDs;
 _internal.renameComponentDir = renameComponentDir;
 _internal.arrangeComponent = arrangeComponent;

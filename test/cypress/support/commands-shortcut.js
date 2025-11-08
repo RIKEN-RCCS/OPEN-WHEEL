@@ -45,7 +45,7 @@ Cypress.Commands.add("selectComponent", (componentName)=>{
     .click();
 });
 
-// Get the Vue store directly from window
+//Get the Vue store directly from window
 Cypress.Commands.add("getVueStore", ()=>{
   return cy.window().then((win)=>{
     const appElement = win.document.querySelector("#app");
@@ -58,7 +58,7 @@ Cypress.Commands.add("getVueStore", ()=>{
   });
 });
 
-// Setup Vue app alias for accessing store in e2e tests
+//Setup Vue app alias for accessing store in e2e tests
 Cypress.Commands.add("setupVueAlias", ()=>{
   cy.getVueStore().then((store)=>{
     if (store) {
@@ -66,6 +66,3 @@ Cypress.Commands.add("setupVueAlias", ()=>{
     }
   });
 });
-
-
-

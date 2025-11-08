@@ -91,7 +91,8 @@ Cypress.Commands.add("createDirOrFile", (type, fileName, clickRun)=>{
   if (type === TYPE_DIR) {
     cy.get("[data-cy=\"file_browser-new_dir-btn\"]").click({ force: true });
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("be.visible");
-    cy.get("[data-cy=\"file_browser-input-text_field\"]").find("input").type(fileName, { force: true });
+    cy.get("[data-cy=\"file_browser-input-text_field\"]").find("input")
+      .type(fileName, { force: true });
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
       .first()
       .click();
@@ -100,7 +101,8 @@ Cypress.Commands.add("createDirOrFile", (type, fileName, clickRun)=>{
   } else if (type === TYPE_FILE) {
     cy.get("[data-cy=\"file_browser-new_file-btn\"]").click({ force: true });
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("be.visible");
-    cy.get("[data-cy=\"file_browser-input-text_field\"]").find("input").type(fileName, { force: true });
+    cy.get("[data-cy=\"file_browser-input-text_field\"]").find("input")
+      .type(fileName, { force: true });
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
       .first()
       .click();

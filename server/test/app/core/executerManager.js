@@ -360,7 +360,6 @@ describe("UT for executerManager class", function () {
     let spawnStub;
     let loggerStdoutStub;
     let loggerStderrStub;
-    let loggerDebugStub;
 
     beforeEach(()=>{
       spawnStub = new EventEmitter();
@@ -370,7 +369,7 @@ describe("UT for executerManager class", function () {
 
       loggerStdoutStub = sinon.stub(loggerWrapper, "logStdout");
       loggerStderrStub = sinon.stub(loggerWrapper, "logStderr");
-      loggerDebugStub = sinon.stub(loggerWrapper, "logDebug");
+      sinon.stub(loggerWrapper, "logDebug");
     });
 
     afterEach(()=>{

@@ -64,7 +64,9 @@ const socketIO = {
     if (config.layout) {
       if (config.layout.type === "json") {
         const separator = config.layout.separator || ",";
-        layout = (logEvent)=>{ return JSON.stringify(logEvent, getCircularReplacer()) + separator; };
+        layout = (logEvent)=>{
+          return JSON.stringify(logEvent, getCircularReplacer()) + separator;
+        };
       } else {
         layout = layouts.layout(config.layout.type, config.layout);
       }

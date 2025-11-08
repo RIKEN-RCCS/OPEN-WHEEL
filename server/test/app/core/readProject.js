@@ -17,7 +17,6 @@ import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 
 //helper
-import { updateComponent } from "../../../app/core/updateComponent.js";
 import { updateComponentProperty } from "../../testUtil.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { createNewProject } from "../../../app/core/projectOperations.js";
