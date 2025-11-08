@@ -96,8 +96,9 @@ export default new Vuex.Store({
   state,
   mutations,
   actions: {
-    pasteComponent: (context, cb)=>{
-      SIO.emitGlobal("pasteComponent", context.state.projectRootDir, context.state.copyInfo, context.state.currentComponent.ID, cb);
+    pasteComponent: (context, payload)=>{
+      const { callback, pos } = payload || {};
+      SIO.emitGlobal("pasteComponent", context.state.projectRootDir, context.state.copyInfo, context.state.currentComponent.ID, pos, callback || (()=>{}));
     },
     selectedComponent: (context, payload)=>{
       const { selectedComponent: selected,

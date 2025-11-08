@@ -5,6 +5,7 @@
  */
 <template>
   <div
+    ref="canvasContainer"
     @dragover.prevent
     @dragenter.prevent
   >
@@ -18,7 +19,7 @@
 
 <script>
 import { mapMutations, mapState, mapActions, useStore } from "vuex";
-import { watchEffect } from "vue";
+import { watchEffect, ref } from "vue";
 import ComponentGraph from "../components/componentGraph/componentGraph.vue";
 import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "../lib/componentSizes.json";
 import { useHotkey } from "vuetify/lib/composables/hotkey/index.mjs";
@@ -30,6 +31,8 @@ export default {
   },
   setup() {
     const store = useStore();
+    const canvasContainer = ref(null);
+    const lastMouseEvent = ref(null);
 
     const onCopy = ()=>{
       if (store.state.selectedComponent === null) return;
@@ -40,7 +43,21 @@ export default {
       store.commit("copyInfo", { type: "cut", ID: store.state.selectedComponent.ID });
     };
     const onPaste = ()=>{
-      store.dispatch("pasteComponent", ()=>{});
+      let pos = { x: 0, y: 0 };
+      
+      // Calculate position only when pasting
+      if (lastMouseEvent.value && canvasContainer.value) {
+        const rect = canvasContainer.value.getBoundingClientRect();
+        pos = {
+          x: lastMouseEvent.value.clientX - rect.left,
+          y: lastMouseEvent.value.clientY - rect.top
+        };
+      }
+      
+      store.dispatch("pasteComponent", { 
+        callback: ()=>{},
+        pos: pos
+      });
     };
 
     // Support both Ctrl (Windows/Linux) and Cmd (macOS)
@@ -63,7 +80,7 @@ export default {
       });
     });
 
-    return {};
+    return { canvasContainer, lastMouseEvent };
   },
   computed: {
     ...mapState(["selectedComponent"])
@@ -71,6 +88,12 @@ export default {
   mounted: function () {
     this.fit();
     window.addEventListener("resize", this.fit.bind(this));
+    // Track mouse movement with simple event listener
+    if (this.canvasContainer) {
+      this.canvasContainer.addEventListener("mousemove", (e) => {
+        this.lastMouseEvent = e;
+      });
+    }
   },
   beforeUnmount: function () {
     window.removeEventListener("resize", this.fit.bind(this));
