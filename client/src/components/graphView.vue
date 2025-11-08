@@ -33,20 +33,24 @@ export default {
 
     const onCopy = ()=>{
       if (store.state.selectedComponent === null) return;
-      store.commit("setCopyInfo", { type: "copy", ID: store.state.selectedComponent.ID });
+      store.commit("copyInfo", { type: "copy", ID: store.state.selectedComponent.ID });
     };
     const onCut = ()=>{
       if (store.state.selectedComponent === null) return;
-      store.commit("setCopyInfo", { type: "cut", ID: store.state.selectedComponent.ID });
+      store.commit("copyInfo", { type: "cut", ID: store.state.selectedComponent.ID });
     };
     const onPaste = ()=>{
       store.dispatch("pasteComponent", ()=>{});
     };
 
+    // Support both Ctrl (Windows/Linux) and Cmd (macOS)
     const hotkeys = [
       { key: "ctrl+c", handler: onCopy },
+      { key: "meta+c", handler: onCopy },
       { key: "ctrl+x", handler: onCut },
-      { key: "ctrl+v", handler: onPaste }
+      { key: "meta+x", handler: onCut },
+      { key: "ctrl+v", handler: onPaste },
+      { key: "meta+v", handler: onPaste }
     ];
 
     //Use the robust watchEffect pattern for each hotkey
