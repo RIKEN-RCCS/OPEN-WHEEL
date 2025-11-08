@@ -154,3 +154,53 @@ export function getLogger(projectRootDir) {
 export function configure(setting) {
   log4js.configure(setting);
 }
+function logWithComponentDir(level, projectRootDir, componentDir, ...messages) {
+  const logger = getLogger(projectRootDir);
+  if (logger[level]) {
+    const message = messages.join(" ");
+    logger[level](`[${componentDir}] ${message}`);
+  }
+}
+
+export function logTrace(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("trace", projectRootDir, componentDir, ...messages);
+}
+export function logDebug(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("debug", projectRootDir, componentDir, ...messages);
+}
+export function logInfo(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("info", projectRootDir, componentDir, ...messages);
+}
+export function logWarn(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("warn", projectRootDir, componentDir, ...messages);
+}
+export function logError(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("error", projectRootDir, componentDir, ...messages);
+}
+export function logFatal(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("fatal", projectRootDir, componentDir, ...messages);
+}
+export function logStdout(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("stdout", projectRootDir, componentDir, ...messages);
+}
+export function logStderr(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("stderr", projectRootDir, componentDir, ...messages);
+}
+export function logSSHout(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("sshout", projectRootDir, componentDir, ...messages);
+}
+export function logSSHerr(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("ssherr", projectRootDir, componentDir, ...messages);
+}
+export const loggerWrapper = {
+  logTrace,
+  logDebug,
+  logInfo,
+  logWarn,
+  logError,
+  logFatal,
+  logStdout,
+  logStderr,
+  logSSHout,
+  logSSHerr
+};

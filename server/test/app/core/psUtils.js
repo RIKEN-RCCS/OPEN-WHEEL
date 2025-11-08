@@ -50,7 +50,7 @@ describe("UT for psUtils class", function () {
     let nunjucksRenderStringStub;
 
     beforeEach(()=>{
-      mockLogger = { trace: sinon.stub() };
+      mockLogger = sinon.stub();
       globStub = sinon.stub().resolves(["source.txt"]);
       fsCopyStub = sinon.stub(_internal.fs, "copy").resolves();
       nunjucksRenderStringStub = sinon.stub(_internal.nunjucks, "renderString");
@@ -85,7 +85,7 @@ describe("UT for psUtils class", function () {
       fsCopyStub.rejects({ code: "ENOENT" });
       const result = await gatherFilesV2(templateRoot, instanceRoot, gatherRecipe, params, mockLogger);
       expect(result).to.equal(true);
-      expect(mockLogger.trace.calledWith("error occurred at gather")).to.be.true;
+      expect(mockLogger.calledWith("error occurred at gather")).to.be.true;
     });
     it("should throw an error for unexpected errors", async ()=>{
       const templateRoot = "/template";
@@ -111,7 +111,7 @@ describe("UT for psUtils class", function () {
       nunjucksRenderStringStub = sinon.stub(_internal.nunjucks, "renderString");
       fsCopyStub = sinon.stub(_internal.fs, "copy").resolves();
       rsyncStub = sinon.stub(_internal, "overwriteByRsync").resolves();
-      mockLogger = { trace: sinon.stub() };
+      mockLogger = sinon.stub();
       sinon.stub(_internal, "glob").callsFake(globStub);
     });
     afterEach(()=>{

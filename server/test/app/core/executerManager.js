@@ -16,6 +16,7 @@ const { expect } = chai;
 import { EventEmitter } from "events";
 
 import { _internal, removeExecuters, isExceededLimit, makeQueueOpt, makeEnv, makeStepOpt, makeBulkOpt, decideFinishState, needsRetry, promisifiedSpawn, getExecutersKey, getMaxNumJob, createExecuter, register, cancel, RemoteJobExecuter, RemoteTaskExecuter, RemoteJobWebAPIExecuter, LocalTaskExecuter } from "../../../app/core/executerManager.js";
+import { loggerWrapper } from "../../../app/logSettings.js";
 const testDirRoot = "WHEEL_TEST_TMP";
 
 describe("UT for executerManager class", function () {
@@ -257,14 +258,11 @@ describe("UT for executerManager class", function () {
       ID: "mockID"
     };
     let evalConditionStub;
-    //eslint-disable-next-line no-unused-vars
-    let getLoggerStub;
     let loggerInfoStub;
 
     beforeEach(()=>{
       evalConditionStub = sinon.stub(_internal, "evalCondition");
-      loggerInfoStub = sinon.stub();
-      getLoggerStub = sinon.stub(_internal, "getLogger").returns({ info: loggerInfoStub });
+      loggerInfoStub = sinon.stub(loggerWrapper, "logInfo");
     });
 
     afterEach(()=>{
@@ -285,7 +283,7 @@ describe("UT for executerManager class", function () {
       evalConditionStub.rejects(new Error("Mock error"));
       const result = await decideFinishState(mockTask);
       expect(result).to.be.false;
-      expect(loggerInfoStub).to.have.been.calledWith(`manualFinishCondition of ${mockTask.name}(${mockTask.ID}) is set but exception occurred while evaluting it.`);
+      expect(loggerInfoStub).to.have.been.calledWith(mockTask.projectRootDir, mockTask.workingDir, "manualFinishCondition is set but exception occurred while evaluting it.");
     });
     it("should handle missing task properties gracefully", async function () {
       const incompleteTask = { projectRootDir: "/mock/project" }; //必須プロパティ不足
@@ -305,14 +303,11 @@ describe("UT for executerManager class", function () {
     };
 
     let evalConditionStub;
-    //eslint-disable-next-line no-unused-vars
-    let getLoggerStub;
     let loggerInfoStub;
 
     beforeEach(()=>{
       evalConditionStub = sinon.stub(_internal, "evalCondition");
-      loggerInfoStub = sinon.stub();
-      getLoggerStub = sinon.stub(_internal, "getLogger").returns({ info: loggerInfoStub });
+      loggerInfoStub = sinon.stub(loggerWrapper, "logInfo");
     });
 
     afterEach(()=>{
@@ -350,21 +345,19 @@ describe("UT for executerManager class", function () {
       const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.false;
-      expect(loggerInfoStub).to.have.been.calledWith(`retryCondition of ${mockTask.name}(${mockTask.ID}) is set but exception occurred while evaluting it. so give up retring`);
+      expect(loggerInfoStub).to.have.been.calledWith(mockTask.projectRootDir, mockTask.workingDir, "retryCondition is set but exception occurred while evaluting it. so give up retring");
     });
     it("should log a message if evalCondition returns true and task is retried", async function () {
       evalConditionStub.resolves(true);
       const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.true;
-      expect(loggerInfoStub).to.have.been.calledWith(`${mockTask.name}(${mockTask.ID}) failed but retring`);
+      expect(loggerInfoStub).to.have.been.calledWith(mockTask.projectRootDir, mockTask.workingDir, "failed but retring");
     });
   });
 
   describe("promisifiedSpawn", function () {
     let spawnStub;
-    //eslint-disable-next-line no-unused-vars
-    let getLoggerStub;
     let loggerStdoutStub;
     let loggerStderrStub;
     let loggerDebugStub;
@@ -375,10 +368,9 @@ describe("UT for executerManager class", function () {
       spawnStub.stderr = new EventEmitter();
       sinon.stub(_internal.childProcess, "spawn").returns(spawnStub);
 
-      loggerStdoutStub = sinon.stub();
-      loggerStderrStub = sinon.stub();
-      loggerDebugStub = sinon.stub();
-      getLoggerStub = sinon.stub(_internal, "getLogger").returns({ stdout: loggerStdoutStub, stderr: loggerStderrStub, debug: loggerDebugStub });
+      loggerStdoutStub = sinon.stub(loggerWrapper, "logStdout");
+      loggerStderrStub = sinon.stub(loggerWrapper, "logStderr");
+      loggerDebugStub = sinon.stub(loggerWrapper, "logDebug");
     });
 
     afterEach(()=>{
@@ -386,7 +378,7 @@ describe("UT for executerManager class", function () {
     });
 
     it("should resolve with the exit code when the script finishes successfully", async function () {
-      const task = { projectRootDir: "/mock/project", name: "mockTask" };
+      const task = { projectRootDir: "/mock/project", name: "mockTask", workingDir: "/mock/workingDir" };
       setTimeout(()=>{
         spawnStub.emit("exit", 0);
       }, 100);
@@ -394,19 +386,25 @@ describe("UT for executerManager class", function () {
       expect(result).to.equal(0);
     });
     it("should log stdout data", function (done) {
-      loggerStdoutStub.callsFake((data)=>{
-        expect(data).to.equal("mock stdout data\n");
+      const task = { projectRootDir: "/mock/project", workingDir: "/mock/workingDir" };
+      loggerStdoutStub.callsFake((proj, dir, msg)=>{
+        expect(proj).to.equal(task.projectRootDir);
+        expect(dir).to.equal(task.workingDir);
+        expect(msg).to.equal("mock stdout data\n");
         done();
       });
-      promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+      promisifiedSpawn(task, "mockScript.sh", {});
       spawnStub.stdout.emit("data", "mock stdout data\n");
     });
     it("should log stderr data", function (done) {
-      loggerStderrStub.callsFake((data)=>{
-        expect(data).to.equal("mock stderr data\n");
+      const task = { projectRootDir: "/mock/project", workingDir: "/mock/workingDir" };
+      loggerStderrStub.callsFake((proj, dir, msg)=>{
+        expect(proj).to.equal(task.projectRootDir);
+        expect(dir).to.equal(task.workingDir);
+        expect(msg).to.equal("mock stderr data\n");
         done();
       });
-      promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
+      promisifiedSpawn(task, "mockScript.sh", {});
       spawnStub.stderr.emit("data", "mock stderr data\n");
     });
     it("should reject the promise if an error occurs", async function () {
@@ -483,16 +481,13 @@ describe("UT for executerManager class", function () {
     });
   });
   describe("createExecuter", function () {
-    //eslint-disable-next-line no-unused-vars
-    let getLoggerStub;
     let loggerDebugStub;
     let loggerErrorStub;
     //eslint-disable-next-line no-unused-vars
     let jobSchedulerStub;
     beforeEach(()=>{
-      loggerDebugStub = sinon.stub();
-      loggerErrorStub = sinon.stub();
-      getLoggerStub = sinon.stub(_internal, "getLogger").returns({ debug: loggerDebugStub, error: loggerErrorStub });
+      loggerDebugStub = sinon.stub(loggerWrapper, "logDebug");
+      loggerErrorStub = sinon.stub(loggerWrapper, "logError");
       jobSchedulerStub = sinon.stub(_internal, "jobScheduler").value({ validScheduler: { submit: "mockSubmitCommand", queueOpt: "--queue=", reJobID: "mockJobIDPattern" } });
     });
     afterEach(()=>{
@@ -503,28 +498,28 @@ describe("UT for executerManager class", function () {
       const hostinfo = null;
       const executer = createExecuter(task, hostinfo);
       expect(executer).to.be.an.instanceof(LocalTaskExecuter);
-      expect(loggerDebugStub).to.have.been.calledWith("create new executer for localhost");
+      expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, "create new executer for localhost");
     });
     it("should create a RemoteTaskExecuter for a remote task without job scheduler", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: false, host: "remoteHost" };
       const hostinfo = { host: "remoteHost", jobScheduler: null };
       const executer = createExecuter(task, hostinfo);
       expect(executer).to.be.an.instanceof(RemoteTaskExecuter);
-      expect(loggerDebugStub).to.have.been.calledWith("create new executer for remoteHost without job scheduler");
+      expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, `create new executer for ${task.host} without job scheduler`);
     });
     it("should create a RemoteJobExecuter for a remote task using a job scheduler", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true, host: "remoteHost" };
       const hostinfo = { host: "remoteHost", jobScheduler: "validScheduler" };
       const executer = createExecuter(task, hostinfo);
       expect(executer).to.be.an.instanceof(RemoteJobExecuter);
-      expect(loggerDebugStub).to.have.been.calledWith("create new executer for remoteHost with job scheduler");
+      expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, `create new executer for ${task.host} with job scheduler`);
     });
     it("should create a RemoteJobWebAPIExecuter for a remote task using web API", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true, host: "remoteHost" };
       const hostinfo = { host: "remoteHost", jobScheduler: "validScheduler", useWebAPI: true };
       const executer = createExecuter(task, hostinfo);
       expect(executer).to.be.an.instanceof(RemoteJobWebAPIExecuter);
-      expect(loggerDebugStub).to.have.been.calledWith("create new executer for remoteHost with web API");
+      expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, `create new executer for ${task.host} with web API`);
     });
     it("should throw an error if an invalid job scheduler is specified", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true };
@@ -532,12 +527,12 @@ describe("UT for executerManager class", function () {
       const hostinfo = { host: "remoteHost", jobScheduler: "invalidScheduler" };
       //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return createExecuter(task, hostinfo); }).to.throw("illegal job Scheduler specifies");
-      expect(loggerErrorStub).to.have.been.calledOnce;
+      expect(loggerErrorStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, sinon.match.instanceOf(Error));
     });
   });
   describe("register", function () {
     //eslint-disable-next-line no-unused-vars
-    let mockExecuter, mockTask, mockHostInfo, getSshHostinfoStub, getLoggerStub, createExecuterStub;
+    let mockExecuter, mockTask, mockHostInfo, getSshHostinfoStub, createExecuterStub;
     beforeEach(()=>{
       mockExecuter = {
         submit: sinon.stub().resolves("submitted"),
@@ -560,7 +555,8 @@ describe("UT for executerManager class", function () {
         grpName: "testGroup"
       };
       getSshHostinfoStub = sinon.stub(_internal, "getSshHostinfo").returns(mockHostInfo);
-      getLoggerStub = sinon.stub(_internal, "getLogger").returns({ debug: sinon.stub(), error: sinon.stub() });
+      sinon.stub(loggerWrapper, "logDebug");
+      sinon.stub(loggerWrapper, "logError");
       createExecuterStub = sinon.stub(_internal, "createExecuter").returns(mockExecuter);
       sinon.stub(_internal, "jobScheduler").value({ validScheduler: {} });
     });
@@ -593,14 +589,11 @@ describe("UT for executerManager class", function () {
     });
   });
   describe("cancel", function () {
-    //eslint-disable-next-line no-unused-vars
-    let getLoggerStub;
     let loggerWarnStub;
     //eslint-disable-next-line no-unused-vars
     let remoteHostGetIDStub;
     beforeEach(()=>{
-      loggerWarnStub = sinon.stub();
-      getLoggerStub = sinon.stub(_internal, "getLogger").returns({ warn: loggerWarnStub });
+      loggerWarnStub = sinon.stub(loggerWrapper, "logWarn");
       remoteHostGetIDStub = sinon.stub(_internal.remoteHost, "getID").returns("localhost");
     });
     afterEach(()=>{
@@ -627,11 +620,9 @@ describe("UT for executerManager class", function () {
       const result = cancel(task);
       expect(result).to.be.false;
       expect(loggerWarnStub).to.have.been.calledWith(
-        "executer for",
-        "localhost",
-        " with job scheduler",
-        true,
-        "is not found"
+        task.projectRootDir,
+        task.workingDir,
+        "executer for localhost with job scheduler is not found"
       );
     });
   });
