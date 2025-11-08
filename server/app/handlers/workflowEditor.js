@@ -22,7 +22,8 @@ import {
 } from "../core/componentLinks.js";
 import {
   removeComponent,
-  createNewComponent
+  createNewComponent,
+  pasteComponent
 } from "../core/componentOperations.js";
 import {
   getEnv,
@@ -127,4 +128,8 @@ export async function onGetWebhook(projectRootDir, ID, cb) {
     getLogger(projectRootDir).error("get webhook failed", e);
     return cb(e);
   }
+}
+
+export async function onPasteComponent(projectRootDir, copyInfo, targetParentID, cb) {
+  return generalHandler(pasteComponent.bind(null, projectRootDir, copyInfo, targetParentID), "pasteComponent", projectRootDir, targetParentID, true, cb);
 }

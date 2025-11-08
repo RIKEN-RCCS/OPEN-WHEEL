@@ -379,9 +379,253 @@ export async function rewriteAllIncludeExcludeProperty(projectRootDir, changed) 
   }));
 };
 
+/**
+ * determine target directory name with suffix if needed
+ * @param {string} parentDir - parent directory path
+ * @param {string} basename - base name for the component
+ * @returns {Promise<string>} - target directory path
+ */
+async function determineTargetDir(parentDir, basename) {
+  const basePath = path.resolve(parentDir, basename);
+  
+  //Check if the base name is available
+  if (!await _internal.fs.pathExists(basePath)) {
+    await _internal.fs.mkdir(basePath);
+    return basePath;
+  }
+  
+  //Name exists, extract the base name and find next available suffix
+  //Check if basename already has a numeric suffix (e.g., task0_1 -> task0, suffix=1)
+  const match = basename.match(/^(.+)_(\d+)$/);
+  let actualBaseName;
+  let startSuffix;
+  
+  if (match) {
+    //basename already has suffix, use its base and start from next number
+    actualBaseName = match[1];
+    startSuffix = parseInt(match[2]) + 1;
+  } else {
+    //No suffix, start from 1
+    actualBaseName = basename;
+    startSuffix = 1;
+  }
+  
+  //Find next available suffix
+  let suffix = startSuffix;
+  const actualBasePath = path.resolve(parentDir, actualBaseName);
+  let attemptPath = `${actualBasePath}_${suffix}`;
+  
+  while (await _internal.fs.pathExists(attemptPath)) {
+    suffix++;
+    attemptPath = `${actualBasePath}_${suffix}`;
+  }
+  
+  await _internal.fs.mkdir(attemptPath);
+  return attemptPath;
+}
+
+/**
+ * paste (copy or move) component to new location
+ * @param {string} projectRootDir - project's root path
+ * @param {object} copyInfo - contains { type: "copy" or "cut", ID: componentID }
+ * @param {string} targetParentID - destination parent component's ID
+ * @returns {Promise<object>} - new component data
+ */
+export async function pasteComponent(projectRootDir, copyInfo, targetParentID) {
+  if (!copyInfo || !copyInfo.ID || !copyInfo.type) {
+    const err = new Error("Invalid copyInfo");
+    err.copyInfo = copyInfo;
+    err.targetParentID = targetParentID;
+    err.projectRootDir = projectRootDir;
+    throw err;
+  }
+
+  const { type, ID: sourceID } = copyInfo;
+
+  if (type !== "copy" && type !== "cut") {
+    const err = new Error(`Invalid paste type: ${type}`);
+    err.copyInfo = copyInfo;
+    err.targetParentID = targetParentID;
+    err.projectRootDir = projectRootDir;
+    throw err;
+  }
+
+  //Get source and target directories
+  const sourceDir = await _internal.getComponentDir(projectRootDir, sourceID, true);
+  const targetParentDir = await _internal.getComponentDir(projectRootDir, targetParentID, true);
+
+  //Check if target is inside source (prevent moving into itself)
+  if (isPathInside(targetParentDir, sourceDir)) {
+    const err = new Error("Cannot paste component into itself or its descendants");
+    err.copyInfo = copyInfo;
+    err.targetParentID = targetParentID;
+    err.projectRootDir = projectRootDir;
+    throw err;
+  }
+
+  //Get source component JSON
+  const sourceJson = await _internal.readComponentJson(sourceDir);
+  const componentBasename = sourceJson.name;
+
+  //Determine target directory name (with suffix if needed to avoid conflicts)
+  let targetDir;
+  let actualComponentName;
+  
+  if (type === "copy") {
+    //For copy, create a new directory with suffix if name exists
+    targetDir = await determineTargetDir(targetParentDir, componentBasename);
+    actualComponentName = path.basename(targetDir);
+    
+    //COPY MODE: Duplicate component directory and regenerate IDs
+    await _internal.fs.copy(sourceDir, targetDir);
+
+    //Regenerate IDs for all components in the copied directory
+    await regenerateComponentIDs(projectRootDir, targetDir, targetParentID);
+
+    //Update the component name to match the directory name (in case suffix was added)
+    const copiedJson = await _internal.readComponentJson(targetDir);
+    copiedJson.name = actualComponentName;
+    await _internal.writeComponentJson(projectRootDir, targetDir, copiedJson);
+  } else if (type === "cut") {
+    //CUT MODE: Move component
+    
+    //Determine target directory name (without creating it yet)
+    //Extract base name and suffix if exists
+    const match = componentBasename.match(/^(.+)_(\d+)$/);
+    let actualBaseName;
+    let startSuffix;
+    
+    if (match) {
+      actualBaseName = match[1];
+      startSuffix = parseInt(match[2]) + 1;
+    } else {
+      actualBaseName = componentBasename;
+      startSuffix = 1;
+    }
+    
+    const baseTargetPath = path.resolve(targetParentDir, actualBaseName);
+    let attemptPath = path.resolve(targetParentDir, componentBasename);
+    
+    //Check if original name is available and it's not the source
+    if (!await _internal.fs.pathExists(attemptPath) || attemptPath === sourceDir) {
+      targetDir = attemptPath;
+    } else {
+      //Find next available suffix
+      let suffix = startSuffix;
+      attemptPath = `${baseTargetPath}_${suffix}`;
+      
+      while (await _internal.fs.pathExists(attemptPath) && attemptPath !== sourceDir) {
+        suffix++;
+        attemptPath = `${baseTargetPath}_${suffix}`;
+      }
+      
+      targetDir = attemptPath;
+    }
+    
+    actualComponentName = path.basename(targetDir);
+
+    //Move the directory
+    await _internal.gitRm(projectRootDir, sourceDir);
+    await _internal.fs.move(sourceDir, targetDir);
+    await _internal.gitAdd(projectRootDir, targetDir);
+
+    //Update component path in projectJson for the moved component and its descendants
+    await _internal.updateComponentPath(projectRootDir, sourceID, targetDir);
+
+    //Update the component name to match the directory name (in case suffix was added)
+    const movedJson = await _internal.readComponentJson(targetDir);
+    movedJson.name = actualComponentName;
+    await _internal.writeComponentJson(projectRootDir, targetDir, movedJson);
+  }
+
+  //Update parent reference and remove links
+  const finalJson = await _internal.readComponentJson(targetDir);
+  finalJson.parent = targetParentID;
+  await _internal.removeAllLinkFromComponent(projectRootDir, finalJson.ID);
+  await _internal.writeComponentJson(projectRootDir, targetDir, finalJson);
+  return finalJson;
+}
+
+/**
+ * regenerate all component IDs in a directory tree (used after copy)
+ * @param {string} projectRootDir - project's root path
+ * @param {string} componentDir - root directory of copied component
+ * @param {string} newParentID - new parent component ID
+ * @returns {Promise} - resolved when all IDs are regenerated
+ */
+async function regenerateComponentIDs(projectRootDir, componentDir, newParentID) {
+  const { v1: uuidv1 } = await import("uuid");
+  //Map old IDs to new IDs
+  const idMap = new Map();
+
+  //Get all component.json files in the directory tree
+  const componentFiles = await _internal.glob(`**/${componentJsonFilename}`, {
+    cwd: componentDir,
+    absolute: true
+  });
+
+  //First pass: generate new IDs and remove links
+  for (const componentFile of componentFiles) {
+    const componentJson = await _internal.readJsonGreedy(componentFile);
+    const oldID = componentJson.ID;
+    const newID = uuidv1();
+
+    idMap.set(oldID, newID);
+
+    //Update ID
+    componentJson.ID = newID;
+
+    //Remove all links and file links
+    componentJson.previous = [];
+    componentJson.next = [];
+    if (componentJson.else) {
+      componentJson.else = [];
+    }
+
+    //Clear file links
+    if (componentJson.inputFiles) {
+      componentJson.inputFiles.forEach((inputFile)=>{
+        inputFile.src = [];
+      });
+    }
+    if (componentJson.outputFiles) {
+      componentJson.outputFiles.forEach((outputFile)=>{
+        outputFile.dst = [];
+      });
+    }
+
+    //Update parent for root component of copied tree
+    const relPath = path.relative(componentDir, path.dirname(componentFile));
+    if (relPath === "") {
+      componentJson.parent = newParentID;
+    }
+
+    await _internal.writeJsonWrapper(componentFile, componentJson);
+  }
+
+  //Second pass: update child component parent references
+  for (const componentFile of componentFiles) {
+    const componentJson = await _internal.readJsonGreedy(componentFile);
+
+    if (componentJson.parent && idMap.has(componentJson.parent)) {
+      componentJson.parent = idMap.get(componentJson.parent);
+      await _internal.writeJsonWrapper(componentFile, componentJson);
+    }
+  }
+
+  //Update component paths in projectJson
+  for (const componentFile of componentFiles) {
+    const componentJson = await _internal.readJsonGreedy(componentFile);
+    const componentAbsDir = path.dirname(componentFile);
+    await _internal.updateComponentPath(projectRootDir, componentJson.ID, componentAbsDir);
+    await _internal.gitAdd(projectRootDir, componentFile);
+  }
+}
+
 //Add exported functions to _internal for testing purposes
 _internal.getDescendantsIDs = getDescendantsIDs;
 _internal.renameComponentDir = renameComponentDir;
 _internal.arrangeComponent = arrangeComponent;
+_internal.regenerateComponentIDs = regenerateComponentIDs;
 
 export { _internal };
