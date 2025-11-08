@@ -156,6 +156,19 @@
             />
           </template>
         </v-tooltip>
+        <v-tooltip
+          text="manage remote hosts"
+          location="bottom"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-server-network"
+              data-cy="workflow-manage_remote_hosts-btn"
+              @click="remoteHostDialog=true"
+            />
+          </template>
+        </v-tooltip>
         <v-spacer />
         <v-card>
           <v-tooltip
@@ -389,6 +402,31 @@
     <import-warning-dialog
       v-model="warnDialog"
     />
+    <v-dialog
+      v-model="remoteHostDialog"
+      max-width="90vw"
+      persistent
+    >
+      <v-card>
+        <v-card-title data-cy="workflow-remote_host_management-title">
+          Remote Host Management
+        </v-card-title>
+        <v-card-text>
+          <remotehost-manager
+            :show-snackbar-func="showSnackbar"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            prepend-icon="mdi-close"
+            text="Close"
+            data-cy="workflow-remote_host_close-btn"
+            @click="remoteHostDialog=false"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -407,6 +445,7 @@ import { readCookie, state2color } from "../lib/utility.js";
 import Debug from "debug";
 import allowedOperations from "../../../common/allowedOperations.js";
 import importWarningDialog from "../components/importWarningDialog.vue";
+import remotehostManager from "../components/remotehost/remotehostManager.vue";
 
 const debug = Debug("wheel:workflow:main");
 const isAllowed = (state, operation)=>{
@@ -426,7 +465,8 @@ export default {
     versatileDialog,
     sourceFileUploadDialog,
     importWarningDialog,
-    passwordDialog
+    passwordDialog,
+    remotehostManager
   },
   data: ()=>{
     return {
@@ -466,7 +506,8 @@ export default {
         { title: "component", value: "name", key: "component" },
         { title: "error", value: "error", key: "error" }
       ],
-      warnDialog: null
+      warnDialog: null,
+      remoteHostDialog: false
     };
   },
   computed: {
