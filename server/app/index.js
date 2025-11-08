@@ -63,7 +63,7 @@ if (process.env.WHEEL_CLEAR_SESSION_DB) {
 const app = express();
 const address = process.env.WHEEL_ACCEPT_ADDRESS;
 
-const server = process.env.WHEEL_USE_HTTP 
+const server = process.env.WHEEL_USE_HTTP
   ? createHTTPServer(app)
   : createHTTPSServer({
       key: fs.readFileSync(keyFilename),

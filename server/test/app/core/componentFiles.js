@@ -20,30 +20,25 @@ import {
 
 describe("componentFiles tests", ()=>{
   let sandbox;
-  let fsStub;
-  let globStub;
-  let getLoggerStub;
   let isValidInputFilenameStub;
   let isValidOutputFilenameStub;
   let getComponentDirStub;
   let readComponentJsonStub;
   let writeComponentJsonStub;
-  let removeFileLinkStub;
-  let renameOutputFileStub;
   let addOutputFileStub;
 
   beforeEach(()=>{
     sandbox = sinon.createSandbox();
-    fsStub = sandbox.stub(_internal, "fs");
-    globStub = sandbox.stub(_internal, "glob");
-    getLoggerStub = sandbox.stub(_internal, "getLogger");
+    sandbox.stub(_internal, "fs");
+    sandbox.stub(_internal, "glob");
+    sandbox.stub(_internal, "getLogger");
     isValidInputFilenameStub = sandbox.stub(_internal, "isValidInputFilename");
     isValidOutputFilenameStub = sandbox.stub(_internal, "isValidOutputFilename");
     getComponentDirStub = sandbox.stub(_internal, "getComponentDir");
     readComponentJsonStub = sandbox.stub(_internal, "readComponentJson");
     writeComponentJsonStub = sandbox.stub(_internal, "writeComponentJson");
-    removeFileLinkStub = sandbox.stub(_internal, "removeFileLink");
-    renameOutputFileStub = sandbox.stub(_internal, "renameOutputFile");
+    sandbox.stub(_internal, "removeFileLink");
+    sandbox.stub(_internal, "renameOutputFile");
     addOutputFileStub = sandbox.stub(_internal, "addOutputFile");
   });
 

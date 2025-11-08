@@ -331,7 +331,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -384,7 +384,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
     cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test*")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -485,7 +485,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-ps-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-parameter_file-autocomplete\"]").contains("test.json")
       .should("exist");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -534,7 +534,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-ps-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-force_overwrite-switch\"]").find("input")
       .should("be.checked");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**
@@ -583,7 +583,7 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
     cy.get("[data-cy=\"component_property-ps-panel_title\"]").click();
     cy.get("[data-cy=\"component_property-delete_all_instances-switch\"]").find("input")
       .should("be.checked");
-      cy.closeProperty();
+    cy.closeProperty();
   });
 
   /**

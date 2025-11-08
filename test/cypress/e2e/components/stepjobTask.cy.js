@@ -12,7 +12,6 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   const STEPJOB_TASK_NAME_1 = "sjTask1";
   const TAG_TYPE_INPUT = "input";
   const TAG_TYPE_TEXT_AREA = "textarea";
-  const TEST_LABEL = "componentTestLabel";
 
   beforeEach(()=>{
     cy.viewport("macbook-16");

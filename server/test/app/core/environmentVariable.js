@@ -27,7 +27,6 @@ import { eventEmitters } from "../../../app/core/global.js";
 import { readComponentJson } from "../../../app/core/componentJsonIO.js";
 import { addLink } from "../../../app/core/componentLinks.js";
 import { replaceEnv } from "../../../app/core/environmentVariables.js";
-import { updateComponent } from "../../../app/core/updateComponent.js";
 import { updateComponentProperty } from "../../testUtil.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { createNewProject } from "../../../app/core/projectOperations.js";

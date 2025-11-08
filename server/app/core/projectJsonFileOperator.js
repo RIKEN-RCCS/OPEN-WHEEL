@@ -5,8 +5,8 @@
  */
 
 import path from "path";
-import { gitInit, gitAdd, gitCommit, gitRm } from "./gitOperator2.js";
-import { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, jobManagerJsonFilename, suffix, remoteHost, defaultPSconfigFilename } from "../db/db.js";
+import { gitAdd } from "./gitOperator2.js";
+import { projectJsonFilename } from "../db/db.js";
 import { readJsonGreedy } from "./fileUtils.js";
 import { getDateString, writeJsonWrapper } from "../lib/utility.js";
 const _internal = {

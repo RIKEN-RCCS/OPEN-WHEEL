@@ -16,7 +16,7 @@ const _internal = {
   getChildren,
   readComponentJsonByID,
   isDefaultPort,
-  recursiveGetHosts: null // Will be set below
+  recursiveGetHosts: null //Will be set below
 };
 
 /**
@@ -91,7 +91,7 @@ export async function recursiveGetHosts(projectRootDir, parentID, hosts, storage
   return Promise.all(promises);
 }
 
-// Set recursiveGetHosts in _internal after it's defined
+//Set recursiveGetHosts in _internal after it's defined
 _internal.recursiveGetHosts = recursiveGetHosts;
 
 /**

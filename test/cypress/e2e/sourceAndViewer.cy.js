@@ -58,7 +58,8 @@ describe("05:Source&Viewerコンポーネント機能正常動作確認", ()=>{
     cy.projectOpen(PROJECT_NAME);
     cy.wait(500); //Wait for project to fully load
 
-    cy.get("[data-cy=\"workflow-open_viewer_screen-btn\"]").should("exist").and("be.disabled");
+    cy.get("[data-cy=\"workflow-open_viewer_screen-btn\"]").should("exist")
+      .and("be.disabled");
     cy.get("[data-cy=\"workflow-viewer_screen-dialog\"]").should("not.exist");
   });
 });

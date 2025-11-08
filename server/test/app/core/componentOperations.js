@@ -224,16 +224,16 @@ describe("componentOperations tests", ()=>{
       gitRmStub.withArgs("/projectRootDir", "/projectRootDir/id/oldName").resolves();
       moveStub.withArgs("/projectRootDir/id/oldName", "/projectRootDir/id/newName").resolves();
       updateComponentPathStub.withArgs("/projectRootDir", "id", "/projectRootDir/id/newName").resolves();
-      
+
       await expect(renameComponentDir("/projectRootDir", "id", "newName")).to.be.fulfilled;
-      
+
       expect(readComponentJsonMock.calledWith("/projectRootDir/id/oldName")).to.be.true;
       expect(writeComponentJsonMock.calledOnce).to.be.true;
       const writeCall = writeComponentJsonMock.getCall(0);
       expect(writeCall.args[0]).to.equal("/projectRootDir");
       expect(writeCall.args[1]).to.equal("/projectRootDir/id/oldName");
       expect(writeCall.args[2].name).to.equal("newName");
-      
+
       expect(gitRmStub.calledWith("/projectRootDir", "/projectRootDir/id/oldName")).to.be.true;
       expect(moveStub.calledWith("/projectRootDir/id/oldName", "/projectRootDir/id/newName")).to.be.true;
       expect(updateComponentPathStub.calledWith("/projectRootDir", "id", "/projectRootDir/id/newName")).to.be.true;

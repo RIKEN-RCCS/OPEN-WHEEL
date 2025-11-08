@@ -25,7 +25,6 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 //helper functions
 import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
 import { createNewProject } from "../../../app/core/projectOperations.js";
-import { updateComponent } from "../../../app/core/updateComponent.js";
 import { updateComponentProperty } from "../../testUtil.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { addInputFile, renameOutputFile } from "../../../app/core/componentFiles.js";

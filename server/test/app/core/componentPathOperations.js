@@ -287,4 +287,3 @@ describe("#updateComponentPath", ()=>{
     expect(result).to.deep.equal({ normalizeTestID: "./normalizedPath" });
   });
 });
-

@@ -8,7 +8,6 @@ const { expect } = chai;
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 import sinon from "sinon";
-import path from "path";
 //eslint-disable-next-line no-unused-vars
 import { promisify } from "util";
 //eslint-disable-next-line no-unused-vars
@@ -251,4 +250,3 @@ describe("#getHosts", ()=>{
     expect(result).to.deep.equal([]);
   });
 });
-

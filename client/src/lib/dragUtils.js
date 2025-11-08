@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
 function getSVGPoint(e, element) {
-  const svg = element.closest('svg');
+  const svg = element.closest("svg");
   if (!svg) return null;
   const CTM = svg.getScreenCTM();
   if (!CTM) return null;
