@@ -32,7 +32,8 @@ import {
   onGetEnv,
   onUpdateEnv,
   onGetWebhook,
-  onUpdateWebhook
+  onUpdateWebhook,
+  onPasteComponent
 } from "./workflowEditor.js";
 import { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } from "./jobScript.js";
 import { onGetResultFiles } from "./resultFiles.js";
@@ -88,6 +89,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("updateComponentPos", onUpdateComponentPos);
   socket.on("updateEnv", onUpdateEnv);
   socket.on("updateWebhook", onUpdateWebhook);
+  socket.on("pasteComponent", onPasteComponent);
   //delete
   socket.on("removeNode", onRemoveNode);
   socket.on("removeInputFile", onRemoveInputFile);
