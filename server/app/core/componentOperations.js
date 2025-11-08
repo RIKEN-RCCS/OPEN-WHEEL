@@ -429,9 +429,10 @@ async function determineTargetDir(parentDir, basename) {
  * @param {string} projectRootDir - project's root path
  * @param {object} copyInfo - contains { type: "copy" or "cut", ID: componentID }
  * @param {string} targetParentID - destination parent component's ID
+ * @param {object} pos - position { x, y } where to place the component
  * @returns {Promise<object>} - new component data
  */
-export async function pasteComponent(projectRootDir, copyInfo, targetParentID) {
+export async function pasteComponent(projectRootDir, copyInfo, targetParentID, pos) {
   if (!copyInfo || !copyInfo.ID || !copyInfo.type) {
     const err = new Error("Invalid copyInfo");
     err.copyInfo = copyInfo;
@@ -541,6 +542,12 @@ export async function pasteComponent(projectRootDir, copyInfo, targetParentID) {
   //Update parent reference and remove links
   const finalJson = await _internal.readComponentJson(targetDir);
   finalJson.parent = targetParentID;
+  
+  //Set position if provided
+  if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+    finalJson.pos = { x: pos.x, y: pos.y };
+  }
+  
   await _internal.removeAllLinkFromComponent(projectRootDir, finalJson.ID);
   await _internal.writeComponentJson(projectRootDir, targetDir, finalJson);
   return finalJson;

@@ -130,6 +130,6 @@ export async function onGetWebhook(projectRootDir, ID, cb) {
   }
 }
 
-export async function onPasteComponent(projectRootDir, copyInfo, targetParentID, cb) {
-  return generalHandler(pasteComponent.bind(null, projectRootDir, copyInfo, targetParentID), "pasteComponent", projectRootDir, targetParentID, true, cb);
+export async function onPasteComponent(projectRootDir, copyInfo, targetParentID, pos, cb) {
+  return generalHandler(pasteComponent.bind(null, projectRootDir, copyInfo, targetParentID, pos), "pasteComponent", projectRootDir, targetParentID, true, cb);
 }
