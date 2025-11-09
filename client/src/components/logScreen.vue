@@ -96,6 +96,12 @@
           </v-list>
         </v-card>
       </v-menu>
+      <v-spacer />
+      <v-btn
+        variant="outlined"
+        text="download debug"
+        @click="downloadDebugLog"
+      />
     </v-toolbar>
     <div
       ref="logContainer"
@@ -261,6 +267,24 @@ export default {
       this.selectedCategories = [];
       SIO.emitGlobal("aboutWheel", this.projectRootDir, ()=>{
         console.log("version info should be on INFO log");
+      });
+    },
+    downloadDebugLog() {
+      SIO.emitGlobal("downloadFullLog", this.projectRootDir, (url)=>{
+        if (url) {
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "";
+          link.click();
+
+          setTimeout(()=>{
+            SIO.emitGlobal("removeDownloadFile", this.projectRootDir, url, ()=>{
+              console.log("Debug log archive removed from server");
+            });
+          }, 5000);
+        } else {
+          console.error("Failed to create debug log archive");
+        }
       });
     },
     scrollToBottom() {

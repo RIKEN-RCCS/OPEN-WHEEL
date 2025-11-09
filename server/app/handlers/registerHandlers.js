@@ -3,7 +3,7 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-import { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onCommitFiles, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } from "./fileManager.js";
+import { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onCommitFiles, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile, onDownloadFullLog } from "./fileManager.js";
 import { onUploadFileSaved2 } from "./fileManager2.js";
 import { onTryToConnect, onTryToConnectById } from "./tryToConnect.js";
 import { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } from "./projectList.js";
@@ -127,6 +127,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getFileList", onGetFileList);
   socket.on("getSNDContents", onGetSNDContents);
   socket.on("download", onDownload);
+  socket.on("downloadFullLog", onDownloadFullLog);
   //update
   socket.on("renameFile", onRenameFile);
   socket.on("commitFiles", onCommitFiles);
