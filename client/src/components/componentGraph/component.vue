@@ -74,7 +74,7 @@
 
 <script>
 "use strict";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapState, mapMutations } from "vuex";
 import { startDrag, calcDrag } from "../../lib/dragUtils.js";
 import ComponentHeader from "./componentHeader.vue";
 import InputOutputFileBox from "./inputOutputFileBox.vue";
@@ -183,9 +183,11 @@ export default {
   },
   methods: {
     ...mapActions({ commitSelectedComponent: "selectedComponent" }),
+    ...mapMutations({ commitIsComponentDragging: "isComponentDragging" }),
     mouseDown(e) {
       e.stopPropagation();
       this.$emit("drag-start");
+      this.commitIsComponentDragging(true);
       this.dragState = startDrag(e, this.center);
     },
     mouseMove(e) {
@@ -198,6 +200,7 @@ export default {
     },
     mouseUp(e) {
       this.$emit("drag-end");
+      this.commitIsComponentDragging(false);
       if (!this.dragState) return;
       const isClick = e.screenX === this.dragState.startScreenX && e.screenY === this.dragState.startScreenY;
       if (!isClick) {

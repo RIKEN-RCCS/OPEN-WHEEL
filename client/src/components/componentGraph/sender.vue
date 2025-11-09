@@ -57,7 +57,8 @@ export default {
     return {
       color: this.elsePlug ? elsePlugColor : plugColor,
       end: { x: this.start.x, y: this.start.y },
-      size: plugSize
+      size: plugSize,
+      isSenderDragging: false
     };
   },
   computed: {
@@ -65,7 +66,7 @@ export default {
   },
   watch: {
     start(v) {
-      if (this.isComponentDragging) {
+      if (this.isSenderDragging) {
         return;
       }
       this.end = v;
@@ -74,9 +75,11 @@ export default {
   methods: {
     ...mapMutations({ commitIsComponentDragging: "isComponentDragging" }),
     onDragStart() {
+      this.isSenderDragging = true;
       this.commitIsComponentDragging(true);
     },
     onDragEnd(event) {
+      this.isSenderDragging = false;
       this.commitIsComponentDragging(false);
       this.end.x = this.start.x;
       this.end.y = this.start.y;
