@@ -25,38 +25,44 @@
       @add="(e)=>{console.log('DEBUG add',e);parameterSetting.targetFiles.push(e)}"
       @del="(e)=>{console.log('DEBUG del',e);removeFromArray(parameterSetting.targetFiles, e, 'targetName')}"
     />
-    <parameter
-      :params="parameterSetting.params"
-      :read-only="readOnly"
-      @new-param-added="newParamAdded"
-      @open-filter-editor="$emit('openFilterEditor')"
-    />
-    <gather-scatter
-      :container="parameterSetting.scatter"
-      :headers="[ { key: 'srcName', title: 'srcName', sortable: false },
-                  { key: 'dstNodeName', title: 'dstNode', sortable: false },
-                  { key: 'dstName', title: 'dstName', sortable: false },
-                  { title: 'Actions', key: 'action', sortable: false }]"
-      :label="'scatter'"
-      :read-only="readOnly"
-      data-cy="parameter_editor-scatter-gather_scatter"
-      @add-new-item="onAddNewItem"
-      @update-item="onUpdateItem"
-      @delete-item="onDeleteItem"
-    />
-    <gather-scatter
-      :container="parameterSetting.gather"
-      :headers="[ { key: 'srcNodeName', title: 'srcNode', sortable: false },
-                  { key: 'srcName', title: 'srcName', sortable: false },
-                  { key: 'dstName', title: 'dstName', sortable: false },
-                  { title: 'Actions', key: 'action', sortable: false }]"
-      :label="'gather'"
-      :read-only="readOnly"
-      data-cy="parameter_editor-gather-gather_scatter"
-      @add-new-item="onAddNewItem"
-      @update-item="onUpdateItem"
-      @delete-item="onDeleteItem"
-    />
+    <div class="border-top">
+      <parameter
+        :params="parameterSetting.params"
+        :read-only="readOnly"
+        @new-param-added="newParamAdded"
+        @open-filter-editor="$emit('openFilterEditor')"
+      />
+    </div>
+    <div class="border-top">
+      <gather-scatter
+        :container="parameterSetting.scatter"
+        :headers="[ { key: 'srcName', title: 'srcName', sortable: false },
+                    { key: 'dstNodeName', title: 'dstNode', sortable: false },
+                    { key: 'dstName', title: 'dstName', sortable: false },
+                    { title: 'Actions', key: 'action', sortable: false }]"
+        :label="'scatter'"
+        :read-only="readOnly"
+        data-cy="parameter_editor-scatter-gather_scatter"
+        @add-new-item="onAddNewItem"
+        @update-item="onUpdateItem"
+        @delete-item="onDeleteItem"
+      />
+    </div>
+    <div class="border-top">
+      <gather-scatter
+        :container="parameterSetting.gather"
+        :headers="[ { key: 'srcNodeName', title: 'srcNode', sortable: false },
+                    { key: 'srcName', title: 'srcName', sortable: false },
+                    { key: 'dstName', title: 'dstName', sortable: false },
+                    { title: 'Actions', key: 'action', sortable: false }]"
+        :label="'gather'"
+        :read-only="readOnly"
+        data-cy="parameter_editor-gather-gather_scatter"
+        @add-new-item="onAddNewItem"
+        @update-item="onUpdateItem"
+        @delete-item="onDeleteItem"
+      />
+    </div>
   </div>
 </template>
 <script>
@@ -188,3 +194,9 @@ export default {
   }
 };
 </script>
+<style scoped>
+.border-top {
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+</style>
+
