@@ -4,10 +4,7 @@
  * See License in the project root for the license information.
  */
 <template>
-  <v-container
-    class="fill-height"
-    fluid
-  >
+  <div class="d-flex flex-column fill-height">
     <v-toolbar
       color="background"
       density="compact"
@@ -49,8 +46,8 @@
         />
       </v-toolbar-items>
     </v-toolbar>
-    <v-row no-gutters>
-      <v-col>
+    <v-row no-gutters class="flex-grow-1 overflow-hidden">
+      <v-col class="fill-height border-top">
         <tab-editor
           ref="text"
           :read-only="readOnly"
@@ -58,7 +55,7 @@
           @jobscript="setIsJobScript"
         />
       </v-col>
-      <v-col v-show="mode === 'PS-config'">
+      <v-col v-show="mode === 'PS-config'" class="fill-height border-top border-left">
         <parameter-editor
           ref="param"
           :read-only="readOnly"
@@ -68,7 +65,7 @@
           @open-filter-editor="openFilterEditor"
         />
       </v-col>
-      <v-col v-show="mode === 'jobScriptEditor'">
+      <v-col v-show="mode === 'jobScriptEditor'" class="fill-height border-top border-left">
         <job-script-editor
           ref="jse"
           :read-only="readOnly"
@@ -90,7 +87,7 @@
       :dialog="showUnsavedFilesDialog"
       @closed="unsavedFilesDialogClosed"
     />
-  </v-container>
+  </div>
 </template>
 <script>
 "use strict";
@@ -105,7 +102,7 @@ import jobScriptEditor from "../components/rapid/jobScriptEditor.vue";
 import SIO from "../lib/socketIOWrapper.js";
 
 export default {
-  name: "Editor",
+  name: "TextEditorManager",
   components: {
     componentButton,
     unsavedFilesDialog,
@@ -114,29 +111,13 @@ export default {
     parameterEditor,
     jobScriptEditor
   },
-  beforeRouteLeave(to, from, next) {
-    if (!this.hasChange()) {
-      next();
-      return;
-    }
-    const changedFilenames = [];
-    if (this.$refs.param.hasChange()) {
-      changedFilenames.push({ name: `${this.projectRootDir}${this.componentPath[this.selectedComponent.ID].slice(1)}/${this.$refs.param.filename}` });
-    }
-    if (this.$refs.text.hasChange()) {
-      changedFilenames.push(...this.$refs.text.getChangedFiles());
-    }
-    this.unsavedFiles.splice(0, this.unsavedFiles.length, ...changedFilenames);
-    this.showUnsavedFilesDialog = true;
-    this.leave = next;
-  },
   data: ()=>{
     return {
       mode: "normal",
       isJobScript: false,
       showUnsavedFilesDialog: false,
       unsavedFiles: [],
-      leave: null,
+      closeCallback: null,
       filterDialog: false,
       placeholders: [],
       readOnlyEditor: false
@@ -210,16 +191,33 @@ export default {
       this.$refs.text.removeSnipet();
     },
     hasChange() {
-      return this.$refs.text.hasChange() || this.$refs.param.hasChange(); //||this.$refs.jse.hasChange();
+      return this.$refs.text.hasChange() || this.$refs.param.hasChange();
     },
     saveAllFiles() {
       this.$refs.text.saveAll();
       this.$refs.param.save();
     },
+    checkUnsavedBeforeClose(callback) {
+      if (!this.hasChange()) {
+        callback();
+        return;
+      }
+      const changedFilenames = [];
+      if (this.$refs.param.hasChange()) {
+        changedFilenames.push({ name: `${this.projectRootDir}${this.componentPath[this.selectedComponent.ID].slice(1)}/${this.$refs.param.filename}` });
+      }
+      if (this.$refs.text.hasChange()) {
+        changedFilenames.push(...this.$refs.text.getChangedFiles());
+      }
+      this.unsavedFiles.splice(0, this.unsavedFiles.length, ...changedFilenames);
+      this.showUnsavedFilesDialog = true;
+      this.closeCallback = callback;
+    },
     unsavedFilesDialogClosed(mode) {
       if (mode === "cancel") {
         this.unsavedFiles.splice(0);
         this.showUnsavedFilesDialog = false;
+        this.closeCallback = null;
         return;
       }
       if (mode === "save") {
@@ -227,7 +225,10 @@ export default {
       }
       this.unsavedFiles.splice(0);
       this.showUnsavedFilesDialog = false;
-      this.leave();
+      if (this.closeCallback) {
+        this.closeCallback();
+        this.closeCallback = null;
+      }
     },
     getAllPlaceholders() {
       return this.$refs.text.getAllPlaceholders();
@@ -248,5 +249,29 @@ export default {
 }
 .v-select__selections input {
   width: 0;
+}
+</style>
+<style scoped>
+/* Make tab editor fill available height */
+:deep(.v-col) #editor {
+  height: 100% !important;
+}
+:deep(.v-col) > div {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+:deep(.v-tabs) {
+  flex-shrink: 0;
+}
+:deep(#editor) {
+  flex: 1 !important;
+  height: auto !important;
+}
+.border-top {
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+.border-left {
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
 }
 </style>

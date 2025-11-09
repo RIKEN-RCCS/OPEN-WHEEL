@@ -100,6 +100,20 @@
           />
         </template>
       </v-tooltip>
+      <v-tooltip
+        location="top"
+        text="edit files"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="isSND"
+            icon="mdi-file-edit-outline"
+            v-bind="props"
+            data-cy="file_browser-edit_files-btn"
+            @click="$emit('open-text-editor')"
+          />
+        </template>
+      </v-tooltip>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"

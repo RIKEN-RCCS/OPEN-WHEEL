@@ -16,7 +16,7 @@
     >
       <component-library />
       <graph-view />
-      <component-property />
+      <component-property @open-text-editor="$emit('open-text-editor')" />
     </v-row>
   </div>
 </template>
@@ -29,6 +29,7 @@ import ComponentTree from "../components/componentTree.vue";
 
 export default {
   name: "Graph",
+  emits: ["open-text-editor"],
   components: {
     GraphView,
     ComponentLibrary,

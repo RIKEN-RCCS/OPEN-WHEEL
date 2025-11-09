@@ -238,7 +238,7 @@
     </application-tool-bar>
     <v-main>
       <v-container fluid>
-        <router-view />
+        <router-view @open-text-editor="openTextEditor" />
       </v-container>
     </v-main>
     <v-footer app>
@@ -427,6 +427,31 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog
+      v-model="textEditorDialog"
+      max-width="95vw"
+      max-height="90vh"
+      persistent
+    >
+      <v-card height="90vh" class="dialog-border">
+        <v-card-title data-cy="workflow-text_editor-title" class="d-flex align-center">
+          <span>Text Editor</span>
+          <v-spacer />
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            data-cy="workflow-text_editor_close-btn"
+            @click="closeTextEditor"
+          />
+        </v-card-title>
+        <v-card-text class="pa-1 overflow-hidden editor-content">
+          <text-editor-manager
+            ref="textEditorManager"
+            class="fill-height"
+          />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -446,6 +471,7 @@ import Debug from "debug";
 import allowedOperations from "../../../common/allowedOperations.js";
 import importWarningDialog from "../components/importWarningDialog.vue";
 import remotehostManager from "../components/remotehost/remotehostManager.vue";
+import textEditorManager from "../components/textEditorManager.vue";
 
 const debug = Debug("wheel:workflow:main");
 const isAllowed = (state, operation)=>{
@@ -466,7 +492,8 @@ export default {
     sourceFileUploadDialog,
     importWarningDialog,
     passwordDialog,
-    remotehostManager
+    remotehostManager,
+    textEditorManager
   },
   data: ()=>{
     return {
@@ -507,7 +534,8 @@ export default {
         { title: "error", value: "error", key: "error" }
       ],
       warnDialog: null,
-      remoteHostDialog: false
+      remoteHostDialog: false,
+      textEditorDialog: false
     };
   },
   computed: {
@@ -744,6 +772,18 @@ export default {
       form.appendChild(input2);
       form.submit();
     },
+    openTextEditor() {
+      this.textEditorDialog = true;
+    },
+    closeTextEditor() {
+      if (this.$refs.textEditorManager?.hasChange()) {
+        this.$refs.textEditorManager.checkUnsavedBeforeClose(() => {
+          this.textEditorDialog = false;
+        });
+      } else {
+        this.textEditorDialog = false;
+      }
+    },
     unsavedFilesDialogClosed(...args) {
       this.cb(args);
       this.unsavedFiles.splice(0);
@@ -812,3 +852,12 @@ export default {
   }
 };
 </script>
+<style scoped>
+.dialog-border {
+  border: 2px solid white;
+}
+.editor-content {
+  height: calc(90vh - 64px);
+}
+</style>
+
