@@ -29,12 +29,12 @@ import ComponentTree from "../components/componentTree.vue";
 
 export default {
   name: "Graph",
-  emits: ["open-text-editor"],
   components: {
     GraphView,
     ComponentLibrary,
     ComponentProperty,
     ComponentTree
-  }
+  },
+  emits: ["open-text-editor"]
 };
 </script>

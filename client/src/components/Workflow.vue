@@ -433,8 +433,14 @@
       max-height="90vh"
       persistent
     >
-      <v-card height="90vh" class="dialog-border">
-        <v-card-title data-cy="workflow-text_editor-title" class="d-flex align-center">
+      <v-card
+        height="90vh"
+        class="dialog-border"
+      >
+        <v-card-title
+          data-cy="workflow-text_editor-title"
+          class="d-flex align-center"
+        >
           <span>Text Editor</span>
           <v-spacer />
           <v-btn
@@ -777,7 +783,7 @@ export default {
     },
     closeTextEditor() {
       if (this.$refs.textEditorManager?.hasChange()) {
-        this.$refs.textEditorManager.checkUnsavedBeforeClose(() => {
+        this.$refs.textEditorManager.checkUnsavedBeforeClose(()=>{
           this.textEditorDialog = false;
         });
       } else {
@@ -860,4 +866,3 @@ export default {
   height: calc(90vh - 64px);
 }
 </style>
-

@@ -387,19 +387,19 @@ export async function rewriteAllIncludeExcludeProperty(projectRootDir, changed) 
  */
 async function determineTargetDir(parentDir, basename) {
   const basePath = path.resolve(parentDir, basename);
-  
+
   //Check if the base name is available
   if (!await _internal.fs.pathExists(basePath)) {
     await _internal.fs.mkdir(basePath);
     return basePath;
   }
-  
+
   //Name exists, extract the base name and find next available suffix
   //Check if basename already has a numeric suffix (e.g., task0_1 -> task0, suffix=1)
   const match = basename.match(/^(.+)_(\d+)$/);
   let actualBaseName;
   let startSuffix;
-  
+
   if (match) {
     //basename already has suffix, use its base and start from next number
     actualBaseName = match[1];
@@ -409,17 +409,17 @@ async function determineTargetDir(parentDir, basename) {
     actualBaseName = basename;
     startSuffix = 1;
   }
-  
+
   //Find next available suffix
   let suffix = startSuffix;
   const actualBasePath = path.resolve(parentDir, actualBaseName);
   let attemptPath = `${actualBasePath}_${suffix}`;
-  
+
   while (await _internal.fs.pathExists(attemptPath)) {
     suffix++;
     attemptPath = `${actualBasePath}_${suffix}`;
   }
-  
+
   await _internal.fs.mkdir(attemptPath);
   return attemptPath;
 }
@@ -471,12 +471,12 @@ export async function pasteComponent(projectRootDir, copyInfo, targetParentID, p
   //Determine target directory name (with suffix if needed to avoid conflicts)
   let targetDir;
   let actualComponentName;
-  
+
   if (type === "copy") {
     //For copy, create a new directory with suffix if name exists
     targetDir = await determineTargetDir(targetParentDir, componentBasename);
     actualComponentName = path.basename(targetDir);
-    
+
     //COPY MODE: Duplicate component directory and regenerate IDs
     await _internal.fs.copy(sourceDir, targetDir);
 
@@ -489,13 +489,13 @@ export async function pasteComponent(projectRootDir, copyInfo, targetParentID, p
     await _internal.writeComponentJson(projectRootDir, targetDir, copiedJson);
   } else if (type === "cut") {
     //CUT MODE: Move component
-    
+
     //Determine target directory name (without creating it yet)
     //Extract base name and suffix if exists
     const match = componentBasename.match(/^(.+)_(\d+)$/);
     let actualBaseName;
     let startSuffix;
-    
+
     if (match) {
       actualBaseName = match[1];
       startSuffix = parseInt(match[2]) + 1;
@@ -503,10 +503,10 @@ export async function pasteComponent(projectRootDir, copyInfo, targetParentID, p
       actualBaseName = componentBasename;
       startSuffix = 1;
     }
-    
+
     const baseTargetPath = path.resolve(targetParentDir, actualBaseName);
     let attemptPath = path.resolve(targetParentDir, componentBasename);
-    
+
     //Check if original name is available and it's not the source
     if (!await _internal.fs.pathExists(attemptPath) || attemptPath === sourceDir) {
       targetDir = attemptPath;
@@ -514,15 +514,15 @@ export async function pasteComponent(projectRootDir, copyInfo, targetParentID, p
       //Find next available suffix
       let suffix = startSuffix;
       attemptPath = `${baseTargetPath}_${suffix}`;
-      
+
       while (await _internal.fs.pathExists(attemptPath) && attemptPath !== sourceDir) {
         suffix++;
         attemptPath = `${baseTargetPath}_${suffix}`;
       }
-      
+
       targetDir = attemptPath;
     }
-    
+
     actualComponentName = path.basename(targetDir);
 
     //Move the directory
@@ -542,12 +542,12 @@ export async function pasteComponent(projectRootDir, copyInfo, targetParentID, p
   //Update parent reference and remove links
   const finalJson = await _internal.readComponentJson(targetDir);
   finalJson.parent = targetParentID;
-  
+
   //Set position if provided
-  if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+  if (pos && typeof pos.x === "number" && typeof pos.y === "number") {
     finalJson.pos = { x: pos.x, y: pos.y };
   }
-  
+
   await _internal.removeAllLinkFromComponent(projectRootDir, finalJson.ID);
   await _internal.writeComponentJson(projectRootDir, targetDir, finalJson);
   return finalJson;

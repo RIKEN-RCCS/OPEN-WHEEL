@@ -44,8 +44,8 @@ export default {
     };
     const onPaste = ()=>{
       let pos = { x: 0, y: 0 };
-      
-      // Calculate position only when pasting
+
+      //Calculate position only when pasting
       if (lastMouseEvent.value && canvasContainer.value) {
         const rect = canvasContainer.value.getBoundingClientRect();
         pos = {
@@ -53,14 +53,14 @@ export default {
           y: lastMouseEvent.value.clientY - rect.top
         };
       }
-      
-      store.dispatch("pasteComponent", { 
+
+      store.dispatch("pasteComponent", {
         callback: ()=>{},
         pos: pos
       });
     };
 
-    // Support both Ctrl (Windows/Linux) and Cmd (macOS)
+    //Support both Ctrl (Windows/Linux) and Cmd (macOS)
     const hotkeys = [
       { key: "ctrl+c", handler: onCopy },
       { key: "meta+c", handler: onCopy },
@@ -88,9 +88,9 @@ export default {
   mounted: function () {
     this.fit();
     window.addEventListener("resize", this.fit.bind(this));
-    // Track mouse movement with simple event listener
+    //Track mouse movement with simple event listener
     if (this.canvasContainer) {
-      this.canvasContainer.addEventListener("mousemove", (e) => {
+      this.canvasContainer.addEventListener("mousemove", (e)=>{
         this.lastMouseEvent = e;
       });
     }

@@ -990,7 +990,7 @@ describe("#pasteComponent", ()=>{
     const copyInfo = { type: "copy", ID: "sourceID" };
     const sourceJson = { name: "workflow1", ID: "sourceID" };
     const copiedJson = { name: "workflow1", ID: "newID", parent: "targetID" };
-    
+
     getComponentDirMock.withArgs("/project", "sourceID", true).resolves("/project/source");
     getComponentDirMock.withArgs("/project", "targetID", true).resolves("/project/target");
     readComponentJsonMock.withArgs("/project/source").resolves(sourceJson);
@@ -1000,8 +1000,8 @@ describe("#pasteComponent", ()=>{
     fsCopyStub.resolves();
     removeAllLinkFromComponentMock.resolves();
     writeComponentJsonMock.resolves();
-    
-    // Mock the internal regenerateComponentIDs to avoid complex UUID generation in test
+
+    //Mock the internal regenerateComponentIDs to avoid complex UUID generation in test
     const regenerateStub = sinon.stub();
     regenerateStub.resolves();
     const originalRegenerate = componentOperations._internal.regenerateComponentIDs;
@@ -1024,7 +1024,7 @@ describe("#pasteComponent", ()=>{
     const copyInfo = { type: "cut", ID: "sourceID" };
     const sourceJson = { name: "workflow1", ID: "sourceID", parent: "oldParent" };
     const movedJson = { name: "workflow1", ID: "sourceID", parent: "targetID" };
-    
+
     getComponentDirMock.withArgs("/project", "sourceID", true).resolves("/project/source");
     getComponentDirMock.withArgs("/project", "targetID", true).resolves("/project/target");
     readComponentJsonMock.withArgs("/project/source").resolves(sourceJson);
@@ -1053,22 +1053,22 @@ describe("#pasteComponent", ()=>{
     const copyInfo = { type: "copy", ID: "sourceID" };
     const sourceJson = { name: "workflow1", ID: "sourceID", parent: "parentID" };
     const copiedJson = { name: "workflow1_1", ID: "newID", parent: "parentID" };
-    
-    // Source and target parent are the same
+
+    //Source and target parent are the same
     getComponentDirMock.withArgs("/project", "sourceID", true).resolves("/project/parent/workflow1");
     getComponentDirMock.withArgs("/project", "parentID", true).resolves("/project/parent");
     readComponentJsonMock.withArgs("/project/parent/workflow1").resolves(sourceJson);
     readComponentJsonMock.withArgs("/project/parent/workflow1_1").resolves(copiedJson);
-    
-    // Simulate that workflow1 exists, so it will try workflow1_1
+
+    //Simulate that workflow1 exists, so it will try workflow1_1
     fsPathExistsStub.withArgs("/project/parent/workflow1").resolves(true);
     fsPathExistsStub.withArgs("/project/parent/workflow1_1").resolves(false);
     fsMkdirStub.resolves();
     fsCopyStub.resolves();
     removeAllLinkFromComponentMock.resolves();
     writeComponentJsonMock.resolves();
-    
-    // Mock the internal regenerateComponentIDs
+
+    //Mock the internal regenerateComponentIDs
     const regenerateStub = sinon.stub();
     regenerateStub.resolves();
     const originalRegenerate = componentOperations._internal.regenerateComponentIDs;
@@ -1079,10 +1079,10 @@ describe("#pasteComponent", ()=>{
 
       expect(fsCopyStub.calledOnceWithExactly("/project/parent/workflow1", "/project/parent/workflow1_1")).to.be.true;
       expect(removeAllLinkFromComponentMock.calledOnce).to.be.true;
-      
-      // Verify writeComponentJson was called multiple times (once for name update, once for parent/link update)
+
+      //Verify writeComponentJson was called multiple times (once for name update, once for parent/link update)
       expect(writeComponentJsonMock.callCount).to.be.at.least(2);
-      
+
       expect(result.ID).to.equal("newID");
       expect(result.parent).to.equal("parentID");
       expect(result.name).to.equal("workflow1_1");
@@ -1095,22 +1095,22 @@ describe("#pasteComponent", ()=>{
     const copyInfo = { type: "copy", ID: "sourceID" };
     const sourceJson = { name: "task0_1", ID: "sourceID", parent: "parentID" };
     const copiedJson = { name: "task0_2", ID: "newID", parent: "parentID" };
-    
-    // Source is task0_1, should create task0_2 (not task0_1_1)
+
+    //Source is task0_1, should create task0_2 (not task0_1_1)
     getComponentDirMock.withArgs("/project", "sourceID", true).resolves("/project/parent/task0_1");
     getComponentDirMock.withArgs("/project", "parentID", true).resolves("/project/parent");
     readComponentJsonMock.withArgs("/project/parent/task0_1").resolves(sourceJson);
     readComponentJsonMock.withArgs("/project/parent/task0_2").resolves(copiedJson);
-    
-    // Simulate: task0, task0_1 exist, task0_2 doesn't
+
+    //Simulate: task0, task0_1 exist, task0_2 doesn't
     fsPathExistsStub.withArgs("/project/parent/task0_1").resolves(true);
     fsPathExistsStub.withArgs("/project/parent/task0_2").resolves(false);
     fsMkdirStub.resolves();
     fsCopyStub.resolves();
     removeAllLinkFromComponentMock.resolves();
     writeComponentJsonMock.resolves();
-    
-    // Mock the internal regenerateComponentIDs
+
+    //Mock the internal regenerateComponentIDs
     const regenerateStub = sinon.stub();
     regenerateStub.resolves();
     const originalRegenerate = componentOperations._internal.regenerateComponentIDs;
@@ -1127,24 +1127,24 @@ describe("#pasteComponent", ()=>{
   });
 
   it("should handle cut to same parent with name conflict", async ()=>{
-    // Note: This is actually an unusual case - cutting to same parent.
-    // In practice, this scenario might not make sense, but we test the behavior anyway.
+    //Note: This is actually an unusual case - cutting to same parent.
+    //In practice, this scenario might not make sense, but we test the behavior anyway.
     const copyInfo = { type: "cut", ID: "sourceID" };
     const sourceJson = { name: "workflow1", ID: "sourceID", parent: "parentID" };
-    // When cut to same parent, if name doesn't conflict, it should keep the same name
+    //When cut to same parent, if name doesn't conflict, it should keep the same name
     const movedJson = { name: "workflow1", ID: "sourceID", parent: "parentID" };
-    
-    // Source and target parent are the same, and it's the same location
+
+    //Source and target parent are the same, and it's the same location
     getComponentDirMock.withArgs("/project", "sourceID", true).resolves("/project/parent/workflow1");
     getComponentDirMock.withArgs("/project", "parentID", true).resolves("/project/parent");
     readComponentJsonMock.withArgs("/project/parent/workflow1").resolves(sourceJson);
-    
-    // Source path exists (it's the source itself)
-    fsPathExistsStub.callsFake((p) => {
+
+    //Source path exists (it's the source itself)
+    fsPathExistsStub.callsFake((p)=>{
       if (p === "/project/parent/workflow1") return Promise.resolve(true);
       return Promise.resolve(false);
     });
-    
+
     gitRmStub.resolves();
     fsMoveStub.resolves();
     gitAddStub.resolves();
@@ -1154,8 +1154,8 @@ describe("#pasteComponent", ()=>{
 
     const result = await componentOperations.pasteComponent("/project", copyInfo, "parentID");
 
-    // When source and target are the same, fs.move should still be called
-    // The path should remain the same since attemptPath === sourceDir
+    //When source and target are the same, fs.move should still be called
+    //The path should remain the same since attemptPath === sourceDir
     expect(result.ID).to.equal("sourceID");
     expect(result.parent).to.equal("parentID");
   });
@@ -1226,25 +1226,25 @@ describe("#regenerateComponentIDs", ()=>{
     readJsonGreedyStub.onCall(6).resolves({ ...mockComponents[0], ID: "newID1" });
     readJsonGreedyStub.onCall(7).resolves({ ...mockComponents[1], ID: "newID2" });
     readJsonGreedyStub.onCall(8).resolves({ ...mockComponents[2], ID: "newID3" });
-    
+
     writeJsonWrapperStub.resolves();
     updateComponentPathMock.resolves();
     gitAddStub.resolves();
 
     await _internal.regenerateComponentIDs("/project", "/project/copied", "newParentID");
 
-    // Should write each component 3 times (first pass, second pass for parent refs, update paths)
+    //Should write each component 3 times (first pass, second pass for parent refs, update paths)
     expect(writeJsonWrapperStub.callCount).to.be.at.least(3);
-    
-    // Check that root component's parent was updated
+
+    //Check that root component's parent was updated
     const firstWrite = writeJsonWrapperStub.getCall(0);
     expect(firstWrite.args[1].previous).to.deep.equal([]);
     expect(firstWrite.args[1].next).to.deep.equal([]);
     expect(firstWrite.args[1].else).to.deep.equal([]);
     expect(firstWrite.args[1].inputFiles[0].src).to.deep.equal([]);
     expect(firstWrite.args[1].outputFiles[0].dst).to.deep.equal([]);
-    
-    // Should update component paths for all components
+
+    //Should update component paths for all components
     expect(updateComponentPathMock.callCount).to.equal(3);
     expect(gitAddStub.callCount).to.equal(3);
   });
@@ -1271,35 +1271,35 @@ describe("#regenerateComponentIDs", ()=>{
     let childNewID;
 
     globStub.resolves(mockComponentFiles);
-    
-    // First pass - read old data
-    readJsonGreedyStub.onCall(0).callsFake(()=> {
+
+    //First pass - read old data
+    readJsonGreedyStub.onCall(0).callsFake(()=>{
       return Promise.resolve({ ...mockParent });
     });
-    readJsonGreedyStub.onCall(1).callsFake(()=> {
+    readJsonGreedyStub.onCall(1).callsFake(()=>{
       return Promise.resolve({ ...mockChild });
     });
-    
-    // Second pass - read updated data with new IDs
-    readJsonGreedyStub.onCall(2).callsFake(()=> {
+
+    //Second pass - read updated data with new IDs
+    readJsonGreedyStub.onCall(2).callsFake(()=>{
       const newParent = { ...mockParent, ID: parentNewID, parent: "targetParentID" };
       return Promise.resolve(newParent);
     });
-    readJsonGreedyStub.onCall(3).callsFake(()=> {
+    readJsonGreedyStub.onCall(3).callsFake(()=>{
       const newChild = { ...mockChild, ID: childNewID, parent: "oldParentID" };
       return Promise.resolve(newChild);
     });
-    
-    // Third pass - read to update component paths
-    readJsonGreedyStub.onCall(4).callsFake(()=> {
+
+    //Third pass - read to update component paths
+    readJsonGreedyStub.onCall(4).callsFake(()=>{
       return Promise.resolve({ ...mockParent, ID: parentNewID });
     });
-    readJsonGreedyStub.onCall(5).callsFake(()=> {
+    readJsonGreedyStub.onCall(5).callsFake(()=>{
       return Promise.resolve({ ...mockChild, ID: childNewID });
     });
-    
-    writeJsonWrapperStub.callsFake((file, json)=> {
-      // Capture the new IDs when they're written
+
+    writeJsonWrapperStub.callsFake((file, json)=>{
+      //Capture the new IDs when they're written
       if (file.includes("/component.json") && !file.includes("/child/")) {
         parentNewID = json.ID;
       } else if (file.includes("/child/component.json")) {
@@ -1307,18 +1307,18 @@ describe("#regenerateComponentIDs", ()=>{
       }
       return Promise.resolve();
     });
-    
+
     updateComponentPathMock.resolves();
     gitAddStub.resolves();
 
     await _internal.regenerateComponentIDs("/project", "/project/copied", "targetParentID");
 
-    // Should have written multiple times
+    //Should have written multiple times
     expect(writeJsonWrapperStub.called).to.be.true;
     expect(updateComponentPathMock.callCount).to.equal(2);
     expect(gitAddStub.callCount).to.equal(2);
-    
-    // Verify new IDs were generated
+
+    //Verify new IDs were generated
     expect(parentNewID).to.not.be.undefined;
     expect(childNewID).to.not.be.undefined;
     expect(parentNewID).to.not.equal("oldParentID");

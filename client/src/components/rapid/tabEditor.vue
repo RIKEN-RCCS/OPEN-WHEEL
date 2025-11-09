@@ -14,44 +14,18 @@
         :key="file.order"
         class="text-none"
       >
-        <v-menu
-          location="bottom"
-          offset-y
-          close-on-content-click
-          close-on-click
-        >
-          <template #activator="{props: menu}">
-            <v-tooltip location="top">
-              <template #activator="{props: tooltip}">
-                <v-btn
-                  variant="plain"
-                  :ripple="false"
-                />
-                <span
-                  v-bind="mergeProps(menu, tooltip)"
-                >
-                  {{ file.filename }} </span>
-              </template>
-              <span>{{ file.absPath }}</span>
-            </v-tooltip>
+        <v-tooltip location="top">
+          <template #activator="{props}">
+            <span v-bind="props">
+              {{ file.filename }}
+            </span>
           </template>
-          <v-list>
-            <v-list-item
-              @click="save(index)"
-            >
-              save
-            </v-list-item>
-            <v-list-item
-              @click="closeTab(index)"
-            >
-              close without save
-            </v-list-item>
-          </v-list>
-        </v-menu>
+          <span>{{ file.absPath }}</span>
+        </v-tooltip>
         <v-btn
           small
           icon="mdi-close"
-          @click.stop="save(index).then(()=>closeTab(index))"
+          @click.stop="confirmClose(index)"
         />
       </v-tab>
       <v-tab @click.stop>
@@ -93,12 +67,40 @@
       grow
       :height="editorHeight"
     />
+    <v-dialog
+      v-model="closeDialog"
+      max-width="500"
+      persistent
+    >
+      <v-card>
+        <v-card-title>Close Tab</v-card-title>
+        <v-card-text>
+          This file is changed. Discard or save?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            text="Cancel"
+            @click="closeDialog = false"
+          />
+          <v-btn
+            text="Discard"
+            color="warning"
+            @click="executeDiscard"
+          />
+          <v-btn
+            text="Save"
+            color="primary"
+            @click="executeSaveAndClose"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script>
 "use strict";
-import { mergeProps } from "vue";
 import { mapActions, mapState, mapGetters, mapMutations } from "vuex";
 import SIO from "../..//lib/socketIOWrapper.js";
 import { isValidInputFilename } from "../..//lib/utility.js";
@@ -114,7 +116,7 @@ export default {
       required: true
     }
   },
-  emits: ["jobscript"],
+  emits: ["jobscript", "content-changed"],
   data: function () {
     return {
       newFilePrompt: false,
@@ -123,7 +125,10 @@ export default {
       files: [],
       editor: null,
       isJobScript: false,
-      editorHeight
+      editorHeight,
+      autoSaveTimer: null,
+      closeDialog: false,
+      pendingCloseIndex: null
     };
   },
   computed: {
@@ -158,6 +163,12 @@ export default {
     this.editor.on("changeSession", ()=>{
       const isJobScript = typeof this.editor.find("#### WHEEL inserted lines ####", { start: { row: 0, column: 0 } }) !== "undefined";
       this.$emit("jobscript", isJobScript);
+
+      //Setup auto-save listener for new session
+      const session = this.editor.getSession();
+      session.on("change", ()=>{
+        this.scheduleAutoSave();
+      });
     });
 
     SIO.onGlobal("file", (file)=>{
@@ -173,6 +184,7 @@ export default {
       //open new tab for arraived file
       file.editorSession = ace.createEditSession(file.content);
       file.absPath = `${file.dirname}${this.pathSep}${file.filename}`;
+      file.initialContent = file.content; //Store initial content for revert
       this.files.push(file);
 
       //select last tab after DOM is updated
@@ -183,6 +195,10 @@ export default {
         this.editor.resize();
         session.selection.on("changeSelection", ()=>{
           this.commitSelectedText(this.editor.getSelectedText());
+        });
+        //Emit content-changed event when editor content changes
+        session.on("change", ()=>{
+          this.$emit("content-changed");
         });
       });
     });
@@ -195,7 +211,6 @@ export default {
     }
   },
   methods: {
-    mergeProps,
     ...mapMutations({ commitSelectedFile: "selectedFile",
       commitSelectedText: "selectedText" }
     ),
@@ -205,6 +220,54 @@ export default {
     isValidName(v) {
       //allow . / - and alphanumeric chars
       return isValidInputFilename(v) || "invalid filename";
+    },
+    confirmClose(index) {
+      const file = this.files[index];
+      const document = file.editorSession.getDocument();
+      const content = document.getValue();
+
+      //If file is not changed, close directly
+      if (file.initialContent === content) {
+        this.closeTab(index);
+      } else {
+        //Show dialog for changed file
+        this.pendingCloseIndex = index;
+        this.closeDialog = true;
+      }
+    },
+    executeDiscard() {
+      if (this.pendingCloseIndex !== null) {
+        const file = this.files[this.pendingCloseIndex];
+        const document = file.editorSession.getDocument();
+        const initialContent = file.initialContent || "";
+
+        //Revert to initial content
+        document.setValue(initialContent);
+
+        //Save reverted content to server
+        SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, initialContent, (rt)=>{
+          if (!rt) {
+            console.log("ERROR: discard/revert failed:", rt);
+            this.showSnackbar(`${file.filename} discard failed`);
+          } else {
+            file.content = initialContent;
+            this.showSnackbar({ message: `${file.filename} discarded`, timeout: 2000 });
+          }
+        });
+
+        //Close the tab
+        this.closeTab(this.pendingCloseIndex);
+        this.pendingCloseIndex = null;
+      }
+      this.closeDialog = false;
+    },
+    executeSaveAndClose() {
+      //Auto-save has already saved the file, so just close the tab
+      if (this.pendingCloseIndex !== null) {
+        this.closeTab(this.pendingCloseIndex);
+        this.pendingCloseIndex = null;
+      }
+      this.closeDialog = false;
     },
     async openNewTab(filename, argDirname) {
       const dirname = argDirname || this.selectedComponentAbsPath;
@@ -296,8 +359,12 @@ export default {
         });
     },
     hasChange() {
-      const changedFiles = this.getChangedFiles();
-      return changedFiles.length > 0;
+      //Check if any file differs from its initial content
+      return this.files.some((file)=>{
+        const document = file.editorSession.getDocument();
+        const content = document.getValue();
+        return file.initialContent !== content;
+      });
     },
     saveAll() {
       let changed = false;
@@ -363,6 +430,63 @@ export default {
       session.selection.on("changeSelection", ()=>{
         this.commitSelectedText(this.editor.getSelectedText());
       });
+    },
+    scheduleAutoSave() {
+      if (this.readOnly) {
+        return;
+      }
+      if (this.autoSaveTimer) {
+        clearTimeout(this.autoSaveTimer);
+      }
+      this.autoSaveTimer = setTimeout(()=>{
+        this.autoSaveAll();
+      }, 2000); //2 seconds client-side debounce
+    },
+    autoSaveAll() {
+      for (const file of this.files) {
+        const document = file.editorSession.getDocument();
+        const content = document.getValue();
+        if (file.content !== content) {
+          this.autoSaveFile(file, content);
+        }
+      }
+    },
+    autoSaveFile(file, content) {
+      SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, content, (rt)=>{
+        if (!rt) {
+          console.log("ERROR: auto-save failed:", rt);
+          this.showSnackbar(`${file.filename} auto-save failed`);
+        } else {
+          file.content = content;
+        }
+      });
+    },
+    async revertAll() {
+      //Revert all files to initial content and save to server
+      const savePromises = [];
+
+      for (const file of this.files) {
+        const document = file.editorSession.getDocument();
+        const initialContent = file.initialContent || "";
+
+        //Set content back to initial
+        document.setValue(initialContent);
+
+        //Save reverted content to server
+        const promise = new Promise((resolve, reject)=>{
+          SIO.emitGlobal("saveFile", this.projectRootDir, file.filename, file.dirname, initialContent, (rt)=>{
+            if (!rt) {
+              reject(new Error(`Failed to save ${file.filename}`));
+            } else {
+              file.content = initialContent;
+              resolve();
+            }
+          });
+        });
+        savePromises.push(promise);
+      }
+
+      await Promise.all(savePromises);
     }
   }
 };

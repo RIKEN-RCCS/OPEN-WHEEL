@@ -39,23 +39,33 @@
           color="primary"
         />
         <v-btn
-          prepend-icon="mdi-content-save-all"
-          text="save all files"
-          data-cy="rapid-save_all_files-btn"
-          @click="saveAllFiles"
-        />
+          v-if="! readOnly"
+          :disabled="!hasChangesComputed || reverting"
+          :loading="reverting"
+          prepend-icon="mdi-restore"
+          @click="confirmRevert"
+        >
+          Revert All
+        </v-btn>
       </v-toolbar-items>
     </v-toolbar>
-    <v-row no-gutters class="flex-grow-1 overflow-hidden">
+    <v-row
+      no-gutters
+      class="flex-grow-1 overflow-hidden"
+    >
       <v-col class="fill-height border-top">
         <tab-editor
           ref="text"
           :read-only="readOnly"
           data-cy="rapid-tab-tab_editor"
           @jobscript="setIsJobScript"
+          @content-changed="onContentChanged"
         />
       </v-col>
-      <v-col v-show="mode === 'PS-config'" class="fill-height border-top border-left">
+      <v-col
+        v-show="mode === 'PS-config'"
+        class="fill-height border-top border-left"
+      >
         <parameter-editor
           ref="param"
           :read-only="readOnly"
@@ -63,9 +73,13 @@
           @open-new-tab="openNewTab"
           @insert-braces="insertBraces"
           @open-filter-editor="openFilterEditor"
+          @content-changed="onContentChanged"
         />
       </v-col>
-      <v-col v-show="mode === 'jobScriptEditor'" class="fill-height border-top border-left">
+      <v-col
+        v-show="mode === 'jobScriptEditor'"
+        class="fill-height border-top border-left"
+      >
         <job-script-editor
           ref="jse"
           :read-only="readOnly"
@@ -87,6 +101,32 @@
       :dialog="showUnsavedFilesDialog"
       @closed="unsavedFilesDialogClosed"
     />
+    <v-dialog
+      v-model="revertDialog"
+      max-width="500"
+      persistent
+    >
+      <v-card>
+        <v-card-title>Confirm Revert</v-card-title>
+        <v-card-text>
+          Are you sure you want to revert all changes? This will restore all files to their original state when you started editing and save them to the server.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            text="Cancel"
+            :disabled="reverting"
+            @click="revertDialog = false"
+          />
+          <v-btn
+            text="Revert"
+            color="error"
+            :loading="reverting"
+            @click="executeRevert"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script>
@@ -120,7 +160,10 @@ export default {
       closeCallback: null,
       filterDialog: false,
       placeholders: [],
-      readOnlyEditor: false
+      readOnlyEditor: false,
+      reverting: false,
+      revertDialog: false,
+      changeTracker: 0
     };
   },
   computed: {
@@ -164,6 +207,11 @@ export default {
         return false;
       }
       return true;
+    },
+    hasChangesComputed() {
+      //Trigger reactivity by accessing changeTracker
+      this.changeTracker;
+      return (this.$refs.text?.hasChange() || false) || (this.$refs.param?.hasChange() || false);
     }
   },
   mounted() {
@@ -175,6 +223,9 @@ export default {
   },
   methods: {
     ...mapActions(["showDialog"]),
+    onContentChanged() {
+      this.changeTracker++;
+    },
     setIsJobScript(v) {
       this.isJobScript = v;
     },
@@ -191,7 +242,7 @@ export default {
       this.$refs.text.removeSnipet();
     },
     hasChange() {
-      return this.$refs.text.hasChange() || this.$refs.param.hasChange();
+      return (this.$refs.text?.hasChange() || false) || (this.$refs.param?.hasChange() || false);
     },
     saveAllFiles() {
       this.$refs.text.saveAll();
@@ -239,6 +290,28 @@ export default {
       this.$nextTick(()=>{
         this.filterDialog = true;
       });
+    },
+    confirmRevert() {
+      this.revertDialog = true;
+    },
+    async executeRevert() {
+      this.reverting = true;
+
+      try {
+        await Promise.all([
+          this.$refs.text.revertAll(),
+          this.$refs.param.revertAll()
+        ]);
+        //Trigger reactivity update after revert
+        this.onContentChanged();
+        this.showDialog({ message: "All files reverted and saved successfully", timeout: 3000 });
+        this.revertDialog = false;
+      } catch (error) {
+        console.error("Revert failed:", error);
+        this.showDialog({ message: `Revert failed: ${error.message}`, timeout: 5000 });
+      } finally {
+        this.reverting = false;
+      }
     }
   }
 };

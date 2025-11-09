@@ -11,12 +11,6 @@
       color="background"
     >
       {{ filename }}
-      <v-spacer />
-      <v-btn
-        prepend-icon="mdi-content-save"
-        text="save PS config"
-        @click="save"
-      />
     </v-toolbar>
     <target-files
       :target-files="parameterSetting.targetFiles"
@@ -90,7 +84,7 @@ export default {
       required: true
     }
   },
-  emits: ["openFilterEditor", "openNewTab", "insertBraces"],
+  emits: ["openFilterEditor", "openNewTab", "insertBraces", "content-changed"],
   data: function () {
     return {
       parameterSetting: {
@@ -107,12 +101,22 @@ export default {
         scatter: [],
         gather: []
       },
-      filename: "parameterSetting.json"
+      filename: "parameterSetting.json",
+      autoSaveTimer: null
     };
   },
   computed: {
     ...mapState(["selectedFile", "projectRootDir", "componentPath"]),
     ...mapGetters(["selectedComponentAbsPath"])
+  },
+  watch: {
+    parameterSetting: {
+      handler() {
+        this.scheduleAutoSave();
+        this.$emit("content-changed");
+      },
+      deep: true
+    }
   },
   mounted() {
     SIO.onGlobal("parameterSettingFile", (file)=>{
@@ -190,6 +194,48 @@ export default {
           debug("new initial PS-setting=", this.initialParameterSetting);
         });
       return true;
+    },
+    scheduleAutoSave() {
+      if (this.readOnly) {
+        return;
+      }
+      if (this.autoSaveTimer) {
+        clearTimeout(this.autoSaveTimer);
+      }
+      this.autoSaveTimer = setTimeout(()=>{
+        this.autoSave();
+      }, 2000); //2 seconds client-side debounce
+    },
+    autoSave() {
+      if (deepEqual(this.initialParameterSetting, this.parameterSetting)) {
+        return;
+      }
+      const payload = JSON.stringify(this.parameterSetting);
+      SIO.emitGlobal("saveFile", this.projectRootDir, this.filename, this.dirname || this.selectedComponentAbsPath,
+        payload, (rt)=>{
+          if (!rt) {
+            debug("ERROR: parameter setting auto-save failed");
+            this.showSnackbar(`parameter setting auto-save failed`);
+          }
+          //Do NOT update initialParameterSetting here - it should only be updated when file is first loaded
+        });
+    },
+    async revertAll() {
+      //Revert to initial parameter setting and save to server
+      this.parameterSetting = JSON.parse(JSON.stringify(this.initialParameterSetting));
+
+      const payload = JSON.stringify(this.parameterSetting);
+
+      return new Promise((resolve, reject)=>{
+        SIO.emitGlobal("saveFile", this.projectRootDir, this.filename, this.dirname || this.selectedComponentAbsPath,
+          payload, (rt)=>{
+            if (!rt) {
+              reject(new Error("Failed to save parameter setting"));
+            } else {
+              resolve();
+            }
+          });
+      });
     }
   }
 };
@@ -199,4 +245,3 @@ export default {
   border-top: 1px solid rgba(255, 255, 255, 0.3);
 }
 </style>
-
