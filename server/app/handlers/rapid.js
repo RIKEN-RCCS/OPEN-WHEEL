@@ -8,6 +8,11 @@ import path from "path";
 import { getLogger } from "../logSettings.js";
 import { openFile, saveFile } from "../core/fileUtils.js";
 import { emitAll } from "./commUtils.js";
+
+//Server-side debounce for file write + git add operations
+const saveFileTimers = new Map();
+const SAVE_FILE_DEBOUNCE_MS = 10000; //10 seconds
+
 const onOpenFile = async (clientID, projectRootDir, filename, forceNormal, cb)=>{
   try {
     const files = await openFile(projectRootDir, filename, forceNormal);
@@ -26,14 +31,39 @@ const onOpenFile = async (clientID, projectRootDir, filename, forceNormal, cb)=>
   }
   return cb(true);
 };
+
 const onSaveFile = async (projectRootDir, filename, dirname, content, cb)=>{
-  try {
-    await saveFile(path.resolve(dirname, filename), content);
-  } catch (err) {
-    getLogger(projectRootDir).warn(projectRootDir, "saveFile event failed", err);
-    return cb(err);
+  const absPath = path.resolve(dirname, filename);
+  const fileKey = `${projectRootDir}:${absPath}`;
+
+  //Clear existing timer for this file
+  if (saveFileTimers.has(fileKey)) {
+    clearTimeout(saveFileTimers.get(fileKey).timer);
   }
-  return cb(true);
+
+  //Store pending save info
+  const pendingSave = {
+    content,
+    callbacks: saveFileTimers.has(fileKey) ? [...saveFileTimers.get(fileKey).callbacks, cb] : [cb],
+    timer: null
+  };
+
+  //Set new timer
+  pendingSave.timer = setTimeout(async ()=>{
+    try {
+      await saveFile(absPath, pendingSave.content);
+      //Call all pending callbacks with success
+      pendingSave.callbacks.forEach((callback)=>{ return callback(true); });
+    } catch (err) {
+      getLogger(projectRootDir).warn(projectRootDir, "saveFile event failed", err);
+      //Call all pending callbacks with error
+      pendingSave.callbacks.forEach((callback)=>{ return callback(err); });
+    } finally {
+      saveFileTimers.delete(fileKey);
+    }
+  }, SAVE_FILE_DEBOUNCE_MS);
+
+  saveFileTimers.set(fileKey, pendingSave);
 };
 
 export {

@@ -152,7 +152,8 @@ export default {
         { label: "remove", icon: "mdi-trash" },
         { label: "cancel", icon: "mdi-close" }
       ],
-      selected: []
+      selected: [],
+      autoUpdateTimer: null
     };
   },
   computed: {
@@ -169,6 +170,15 @@ export default {
         return;
       }
       this.loadedCenterInfo = null;
+    },
+    template: {
+      handler() {
+        //Auto-update job script when template changes
+        if (!this.readOnly && this.isJobScript) {
+          this.scheduleAutoUpdate();
+        }
+      },
+      deep: true
     }
   },
   mounted() {
@@ -214,6 +224,14 @@ export default {
     },
     removeJobScript() {
       this.$emit("remove");
+    },
+    scheduleAutoUpdate() {
+      if (this.autoUpdateTimer) {
+        clearTimeout(this.autoUpdateTimer);
+      }
+      this.autoUpdateTimer = setTimeout(()=>{
+        this.insertJobScript();
+      }, 2000); //2 seconds client-side debounce
     }
   }
 };
