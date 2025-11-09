@@ -17,7 +17,7 @@ import { deliverFile } from "../core/deliverFile.js";
 import { escapeRegExp } from "../lib/utility.js";
 import fileBrowser from "../core/fileBrowser.js";
 import { getLogger } from "../logSettings.js";
-import { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir, remoteHost } from "../db/db.js";
+import { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir, remoteHost, logFilename } from "../db/db.js";
 import { emitAll } from "./commUtils.js";
 import { getTempd, createTempd } from "../core/tempd.js";
 import { getSsh } from "../core/sshManager.js";
@@ -343,4 +343,91 @@ export async function onRemoveDownloadFile(projectRootDir, URL, cb) {
   getLogger(projectRootDir).debug(`remove ${target}`);
   await fs.remove(target);
   cb(true);
+};
+
+/**
+ * collect all log files including rotated ones
+ * @param {string} baseLogPath - base log file path
+ * @returns {Promise<string[]>} - array of log file paths
+ */
+async function collectLogFiles(baseLogPath) {
+  const logFiles = [];
+  const baseDir = path.dirname(baseLogPath);
+  const baseName = path.basename(baseLogPath);
+
+  try {
+    if (await fs.pathExists(baseLogPath)) {
+      logFiles.push(baseLogPath);
+    }
+
+    const files = await fs.readdir(baseDir);
+    const rotatedPattern = new RegExp(`^${escapeRegExp(baseName)}\\.(\\d+)(\\.gz)?$`);
+
+    for (const file of files) {
+      if (rotatedPattern.test(file)) {
+        logFiles.push(path.join(baseDir, file));
+      }
+    }
+  } catch (e) {
+    //directory or files may not exist, return what we have
+  }
+
+  return logFiles;
+}
+
+/**
+ * download full log archive (system log + project log)
+ * @param {string} projectRootDir - project's root path
+ * @param {Function} cb - call back function
+ */
+export async function onDownloadFullLog(projectRootDir, cb) {
+  try {
+    const { dir, root: downloadRootDir } = await createTempd(projectRootDir, "download");
+    const tmpDir = await fs.mkdtemp(`${dir}/`);
+    const timestamp = new Date().toISOString()
+      .replace(/:/g, "-")
+      .replace(/\..+/, "");
+    const archiveName = `debug-logs-${timestamp}`;
+    const archiveDir = path.join(tmpDir, archiveName);
+
+    await fs.mkdir(archiveDir);
+
+    //collect system log files
+    const systemLogDir = path.join(archiveDir, "system");
+    await fs.mkdir(systemLogDir);
+    const systemLogFiles = await collectLogFiles(logFilename);
+    getLogger(projectRootDir).debug(`Found ${systemLogFiles.length} system log files`);
+
+    for (const logFile of systemLogFiles) {
+      const destPath = path.join(systemLogDir, path.basename(logFile));
+      await fs.copy(logFile, destPath);
+    }
+
+    //collect project log files
+    const projectLogPath = path.join(projectRootDir, path.basename(logFilename));
+    const projectLogDir = path.join(archiveDir, "project");
+    await fs.mkdir(projectLogDir);
+    const projectLogFiles = await collectLogFiles(projectLogPath);
+    getLogger(projectRootDir).debug(`Found ${projectLogFiles.length} project log files`);
+
+    for (const logFile of projectLogFiles) {
+      const destPath = path.join(projectLogDir, path.basename(logFile));
+      await fs.copy(logFile, destPath);
+    }
+
+    //create zip archive
+    const zipPath = path.join(tmpDir, `${archiveName}.zip`);
+    await zip(archiveDir, zipPath);
+
+    //remove temporary directory
+    await fs.remove(archiveDir);
+
+    const baseURL = process.env.WHEEL_BASE_URL || "";
+    const url = `${baseURL}/${path.join(path.relative(downloadRootDir, tmpDir), archiveName)}.zip`;
+    getLogger(projectRootDir).info("Debug log archive is ready for download", url);
+    cb(url);
+  } catch (e) {
+    getLogger(projectRootDir).error("Failed to create debug log archive", e);
+    cb(null);
+  }
 };
