@@ -10,12 +10,20 @@
         :href="homeURL"
         data-cy="tool_bar-wheel_logo-logo"
       >
-        <v-img
-          height="72px"
-          width="180px"
-          :src="imgLogo"
-          alt="wheel title logo"
-        />
+        <v-tooltip
+          location="bottom"
+          text="Go to Home Page"
+        >
+          <template #activator="{ props }">
+            <v-img
+              v-bind="props"
+              height="72px"
+              width="180px"
+              :src="imgLogo"
+              alt="wheel title logo"
+            />
+          </template>
+        </v-tooltip>
       </a>
     </template>
     <v-app-bar-title
