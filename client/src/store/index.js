@@ -99,6 +99,7 @@ export default new Vuex.Store({
     pasteComponent: (context, payload)=>{
       const { callback, pos } = payload || {};
       SIO.emitGlobal("pasteComponent", context.state.projectRootDir, context.state.copyInfo, context.state.currentComponent.ID, pos, callback || (()=>{}));
+      context.commit("copyInfo", null);
     },
     selectedComponent: (context, payload)=>{
       const { selectedComponent: selected,
@@ -174,6 +175,12 @@ export default new Vuex.Store({
     }
   },
   getters: {
+    copiedComponentID: (state)=>{
+      return state.copyInfo?.type === "copy" ? state.copyInfo.ID : null;
+    },
+    cutComponentID: (state)=>{
+      return state.copyInfo?.type === "cut" ? state.copyInfo.ID : null;
+    },
     //get selected component's absolute path on server
     selectedComponentAbsPath: (state, getters)=>{
       if (state.selectedComponent === null || typeof state.selectedComponent.ID === "undefined") {

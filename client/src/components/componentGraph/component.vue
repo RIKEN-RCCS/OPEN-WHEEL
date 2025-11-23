@@ -7,7 +7,7 @@
     @click.right.prevent.stop="onRightclick"
   >
     <rect
-      v-if="isSelected || isInvalid"
+      v-if="isSelected || isInvalid || isCopied || isCut"
       :x="componentPos.x-boxWidth/2-borderWidth"
       :y="componentPos.y-textHeight/2-borderWidth"
       :width="boxWidth + borderWidth*2"
@@ -15,6 +15,7 @@
       fill="transparent"
       :stroke="highlightColor"
       :stroke-width="borderWidth"
+      :stroke-dasharray="isCut ? '5,5' : null"
     />
     <component-header
       :center="componentPos"
@@ -105,6 +106,14 @@ export default {
     isSelected: {
       type: Boolean,
       default: false
+    },
+    isCopied: {
+      type: Boolean,
+      default: false
+    },
+    isCut: {
+      type: Boolean,
+      default: false
     }
   },
   emits: [
@@ -133,7 +142,10 @@ export default {
       return this.componentPos;
     },
     highlightColor() {
-      return this.isSelected ? "yellow" : "red";
+      if (this.isCopied || this.isCut) return "red";
+      if (this.isInvalid) return "red";
+      if (this.isSelected) return "yellow";
+      return "red";
     },
     canHaveLink() {
       return !["source", "storage", "hpciss", "hpcisstar"].includes(this.componentData.type);
