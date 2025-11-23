@@ -247,7 +247,7 @@
     </application-tool-bar>
     <v-main>
       <v-container fluid>
-        <router-view @open-text-editor="openTextEditor" />
+        <router-view ref="routerView" @open-text-editor="openTextEditor" />
       </v-container>
     </v-main>
     <v-footer app>
@@ -791,12 +791,21 @@ export default {
       this.textEditorDialog = true;
     },
     closeTextEditor() {
-      if (this.$refs.textEditorManager?.hasChange()) {
-        this.$refs.textEditorManager.checkUnsavedBeforeClose(()=>{
-          this.textEditorDialog = false;
-        });
-      } else {
+      const afterClose = ()=>{
         this.textEditorDialog = false;
+        this.$nextTick(()=>{
+          const routerViewComponent = this.$refs.routerView?.$;
+          const actualComponent = routerViewComponent?.subTree?.component?.exposed || routerViewComponent?.subTree?.component?.proxy;
+          if (actualComponent?.refreshFileList) {
+            actualComponent.refreshFileList();
+          }
+        });
+      };
+
+      if (this.$refs.textEditorManager?.hasChange()) {
+        this.$refs.textEditorManager.checkUnsavedBeforeClose(afterClose);
+      } else {
+        afterClose();
       }
     },
     unsavedFilesDialogClosed(...args) {

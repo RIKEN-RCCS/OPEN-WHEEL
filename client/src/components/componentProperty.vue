@@ -592,6 +592,7 @@
           <v-expansion-panel-text>
             <file-browser
               v-if="hasLocalFileBrowser"
+              ref="fileBrowser"
               :readonly="false"
               @open-text-editor="$emit('open-text-editor')"
             />
@@ -970,6 +971,14 @@ export default {
       return !names.some((name)=>{
         return name === v;
       });
+    },
+    refreshFileList() {
+      if (this.$refs.fileBrowser) {
+        this.$refs.fileBrowser.getComponentDirRootFiles();
+      }
+      if (this.$refs.rfb) {
+        this.$refs.rfb.refresh();
+      }
     }
   }
 };
