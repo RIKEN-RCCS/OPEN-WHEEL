@@ -18,15 +18,15 @@
       <template #append>
         <v-tooltip
           location="bottom"
-          :text="projectJson.description"
-          :disabled="!projectJson.description"
+          :text="projectJson?.description"
+          :disabled="!projectJson?.description"
         >
           <template #activator="{ props }">
             <span
               v-bind="props"
               class="text-decoration-none text-h5 white--text"
               data-cy="workflow-project_name-text"
-              @click="projectDescription=projectJson.description;descriptionDialog=true"
+              @click="projectDescription=projectJson?.description;descriptionDialog=true"
             >
               {{ projectJson !== null ? projectJson.name : "" }}
             </span>
@@ -96,7 +96,7 @@
                 variant="outlined"
                 replace
                 :disabled="selectedComponent === null || selectedFile === null"
-                :to="{name: 'editor' }"
+                :to="selectedComponent !== null && selectedFile !== null ? {name: 'editor' } : undefined"
                 v-bind="props"
                 icon="mdi-file-document-edit-outline"
                 data-cy="workflow-document_edit-btn"
