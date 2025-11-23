@@ -11,7 +11,7 @@
         data-cy="tool_bar-wheel_logo-logo"
       >
         <v-tooltip
-          location="bottom"
+          location="right"
           text="Go to Home Page"
         >
           <template #activator="{ props }">
