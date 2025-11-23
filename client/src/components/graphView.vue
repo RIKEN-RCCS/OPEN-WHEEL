@@ -18,93 +18,110 @@
 </template>
 
 <script>
-import { mapMutations, mapState, mapActions, useStore } from "vuex";
-import { watchEffect, ref } from "vue";
+import { mapMutations, mapState, mapActions } from "vuex";
 import ComponentGraph from "../components/componentGraph/componentGraph.vue";
 import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "../lib/componentSizes.json";
-import { useHotkey } from "vuetify/lib/composables/hotkey/index.mjs";
 
 export default {
   name: "GraphView",
   components: {
     ComponentGraph
   },
-  setup() {
-    const store = useStore();
-    const canvasContainer = ref(null);
-    const lastMouseEvent = ref(null);
-
-    const onCopy = ()=>{
-      if (store.state.selectedComponent === null) return;
-      store.commit("copyInfo", { type: "copy", ID: store.state.selectedComponent.ID });
+  data() {
+    return {
+      lastMouseEvent: null,
+      hotkeyUnregisterFunctions: []
     };
-    const onCut = ()=>{
-      if (store.state.selectedComponent === null) return;
-      store.commit("copyInfo", { type: "cut", ID: store.state.selectedComponent.ID });
-    };
-    const onPaste = ()=>{
-      let pos = { x: 0, y: 0 };
-
-      //Calculate position only when pasting
-      if (lastMouseEvent.value && canvasContainer.value) {
-        const rect = canvasContainer.value.getBoundingClientRect();
-        pos = {
-          x: lastMouseEvent.value.clientX - rect.left,
-          y: lastMouseEvent.value.clientY - rect.top
-        };
-      }
-
-      store.dispatch("pasteComponent", {
-        callback: ()=>{},
-        pos: pos
-      });
-    };
-
-    //Support both Ctrl (Windows/Linux) and Cmd (macOS)
-    const hotkeys = [
-      { key: "ctrl+c", handler: onCopy },
-      { key: "meta+c", handler: onCopy },
-      { key: "ctrl+x", handler: onCut },
-      { key: "meta+x", handler: onCut },
-      { key: "ctrl+v", handler: onPaste },
-      { key: "meta+v", handler: onPaste }
-    ];
-
-    //Use the robust watchEffect pattern for each hotkey
-    hotkeys.forEach(({ key, handler })=>{
-      watchEffect((onCleanup)=>{
-        if (key) {
-          const unregister = useHotkey(key, handler);
-          onCleanup(unregister);
-        }
-      });
-    });
-
-    return { canvasContainer, lastMouseEvent };
   },
   computed: {
     ...mapState(["selectedComponent"])
   },
   mounted: function () {
     this.fit();
-    window.addEventListener("resize", this.fit.bind(this));
+    window.addEventListener("resize", this.fit);
+
     //Track mouse movement with simple event listener
-    if (this.canvasContainer) {
-      this.canvasContainer.addEventListener("mousemove", (e)=>{
+    if (this.$refs.canvasContainer) {
+      this.$refs.canvasContainer.addEventListener("mousemove", (e)=>{
         this.lastMouseEvent = e;
       });
     }
+
+    //Register hotkeys
+    this.registerHotkeys();
   },
   beforeUnmount: function () {
-    window.removeEventListener("resize", this.fit.bind(this));
+    window.removeEventListener("resize", this.fit);
+
+    //Unregister all hotkeys
+    this.hotkeyUnregisterFunctions.forEach((unregister)=>{
+      if (typeof unregister === "function") {
+        unregister();
+      }
+    });
+    this.hotkeyUnregisterFunctions = [];
   },
   methods: {
     ...mapMutations({
       commitCanvasWidth: "canvasWidth",
       commitCanvasHeight: "canvasHeight",
-      setCopyInfo: "copyInfo"
+      commitCopyInfo: "copyInfo"
     }),
-    ...mapActions(["pasteComponent"]),
+    ...mapActions({
+      paste: "pasteComponent",
+      showSnackbar: "showSnackbar"
+    }),
+    onCopy() {
+      if (!this.selectedComponent) return;
+      this.commitCopyInfo({ type: "copy", ID: this.selectedComponent.ID });
+      this.showSnackbar({ message: "Component copied", timeout: 2000 });
+    },
+    onCut() {
+      if (!this.selectedComponent) return;
+      this.commitCopyInfo({ type: "cut", ID: this.selectedComponent.ID });
+      this.showSnackbar({ message: "Component cut", timeout: 2000 });
+    },
+    onPaste() {
+      let pos = { x: 0, y: 0 };
+
+      //Calculate position only when pasting
+      if (this.lastMouseEvent && this.$refs.canvasContainer) {
+        const rect = this.$refs.canvasContainer.getBoundingClientRect();
+        pos = {
+          x: this.lastMouseEvent.clientX - rect.left,
+          y: this.lastMouseEvent.clientY - rect.top
+        };
+      }
+
+      this.paste({
+        callback: ()=>{},
+        pos: pos
+      });
+    },
+    registerHotkeys() {
+      const callback = (e)=>{
+        const isCtrl = e.ctrlKey || e.metaKey;
+        const key = e.key.toLowerCase();
+
+        if (isCtrl && key === "c") {
+          e.preventDefault();
+          this.onCopy();
+        } else if (isCtrl && key === "x") {
+          e.preventDefault();
+          this.onCut();
+        } else if (isCtrl && key === "v") {
+          e.preventDefault();
+          this.onPaste();
+        }
+      };
+
+      document.addEventListener("keydown", callback);
+
+      //Store unregister function
+      this.hotkeyUnregisterFunctions.push(()=>{
+        document.removeEventListener("keydown", callback);
+      });
+    },
     fit: function () {
       const magicNumberH = 17 + 25;
       const magicNumberW = 24;

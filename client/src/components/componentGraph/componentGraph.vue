@@ -49,6 +49,8 @@
             :component-data="componentData"
             :is-selected="selectedComponent !==null && componentData.ID === selectedComponent.ID"
             :is-invalid="componentData.isInvalid || false"
+            :is-copied="copiedComponentID === componentData.ID"
+            :is-cut="cutComponentID === componentData.ID"
             @drag="updatePosition(index, $event)"
             @dragend="commitNewPosition(index, $event)"
             @chdir="onChdir"
@@ -156,7 +158,7 @@
 
 <script>
 "use strict";
-import { mapState, mapActions, mapMutations } from "vuex";
+import { mapState, mapActions, mapMutations, mapGetters } from "vuex";
 import SIO from "../../lib/socketIOWrapper.js";
 import WheelComponent from "../../components/componentGraph/component.vue";
 import InputFileBox from "../../components/componentGraph/inputFileBox.vue";
@@ -207,6 +209,7 @@ export default {
   computed: {
     ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState", "isComponentDragging"]),
     ...mapState({ currentZoomState: "currentZoom", currentPanState: "currentPan" }),
+    ...mapGetters(["copiedComponentID", "cutComponentID"]),
     currentZoom: {
       get() {
         return this.currentZoomState;
