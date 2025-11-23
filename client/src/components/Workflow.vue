@@ -15,13 +15,22 @@
       @nav-icon-click="drawer=!drawer"
     >
       <template #append>
-        <span
-          class="text-decoration-none text-h5 white--text"
-          data-cy="workflow-project_name-text"
-          @click="projectDescription=projectJson.description;descriptionDialog=true"
+        <v-tooltip
+          location="bottom"
+          :text="projectJson.description"
+          :disabled="!projectJson.description"
         >
-          {{ projectJson !== null ? projectJson.name : "" }}
-        </span>
+          <template #activator="{ props }">
+            <span
+              v-bind="props"
+              class="text-decoration-none text-h5 white--text"
+              data-cy="workflow-project_name-text"
+              @click="projectDescription=projectJson.description;descriptionDialog=true"
+            >
+              {{ projectJson !== null ? projectJson.name : "" }}
+            </span>
+          </template>
+        </v-tooltip>
         <v-spacer />
         <v-btn
           rounded
