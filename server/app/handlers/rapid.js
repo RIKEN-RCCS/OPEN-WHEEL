@@ -13,7 +13,7 @@ import { emitAll } from "./commUtils.js";
 const saveFileTimers = new Map();
 const SAVE_FILE_DEBOUNCE_MS = 10000; //10 seconds
 
-const onOpenFile = async (clientID, projectRootDir, filename, forceNormal, cb)=>{
+export async function onOpenFile(clientID, projectRootDir, filename, forceNormal, cb) {
   try {
     const files = await openFile(projectRootDir, filename, forceNormal);
     const promise = [];
@@ -32,7 +32,7 @@ const onOpenFile = async (clientID, projectRootDir, filename, forceNormal, cb)=>
   return cb(true);
 };
 
-const onSaveFile = async (projectRootDir, filename, dirname, content, cb)=>{
+export async function onSaveFile(projectRootDir, filename, dirname, content, cb) {
   const absPath = path.resolve(dirname, filename);
   const fileKey = `${projectRootDir}:${absPath}`;
 
@@ -53,20 +53,19 @@ const onSaveFile = async (projectRootDir, filename, dirname, content, cb)=>{
     try {
       await saveFile(absPath, pendingSave.content);
       //Call all pending callbacks with success
-      pendingSave.callbacks.forEach((callback)=>{ return callback(true); });
+      pendingSave.callbacks.forEach((callback)=>{
+        return callback(true);
+      });
     } catch (err) {
       getLogger(projectRootDir).warn(projectRootDir, "saveFile event failed", err);
       //Call all pending callbacks with error
-      pendingSave.callbacks.forEach((callback)=>{ return callback(err); });
+      pendingSave.callbacks.forEach((callback)=>{
+        return callback(err);
+      });
     } finally {
       saveFileTimers.delete(fileKey);
     }
   }, SAVE_FILE_DEBOUNCE_MS);
 
   saveFileTimers.set(fileKey, pendingSave);
-};
-
-export {
-  onOpenFile,
-  onSaveFile
 };
