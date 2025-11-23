@@ -7,6 +7,7 @@
   <v-app>
     <nav-drawer
       v-model="drawer"
+      :hide-remotehost-button="true"
     />
     <application-tool-bar
       title="remotehost"

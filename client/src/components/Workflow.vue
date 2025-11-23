@@ -8,6 +8,7 @@
     <nav-drawer
       v-model="drawer"
       :base-url="baseURL"
+      @open-remotehost-manager="remoteHostDialog=true"
     />
     <application-tool-bar
       title="workflow"
@@ -162,19 +163,6 @@
               icon="mdi-image-multiple-outline"
               data-cy="workflow-open_viewer_screen-btn"
               @click="openViewerScreen"
-            />
-          </template>
-        </v-tooltip>
-        <v-tooltip
-          text="manage remote hosts"
-          location="bottom"
-        >
-          <template #activator="{ props }">
-            <v-btn
-              v-bind="props"
-              icon="mdi-server-network"
-              data-cy="workflow-manage_remote_hosts-btn"
-              @click="remoteHostDialog=true"
             />
           </template>
         </v-tooltip>

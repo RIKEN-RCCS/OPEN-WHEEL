@@ -7,6 +7,7 @@
   <v-app>
     <nav-drawer
       v-model="drawer"
+      @open-remotehost-manager="remoteHostDialog=true"
     />
     <application-tool-bar
       title="home"
@@ -189,6 +190,29 @@
         </template>
       </v-snackbar>
     </v-main>
+    <v-dialog
+      v-model="remoteHostDialog"
+      max-width="90vw"
+      persistent
+    >
+      <v-card>
+        <v-card-title>
+          Remote Host Management
+        </v-card-title>
+        <v-card-text>
+          <remotehost-manager
+            :show-snackbar-func="showSnackbar"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+            prepend-icon="mdi-close"
+            text="Close"
+            @click="remoteHostDialog=false"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 <script>
@@ -204,6 +228,8 @@ import exportDialog from "../components/exportDialog.vue";
 import importDialog from "../components/importDialog.vue";
 import buttons from "../components/common/buttons.vue";
 import inlineEditor from "./common/inlineEditor.vue";
+import remotehostManager from "../components/remotehost/remotehostManager.vue";
+import versatileDialog from "../components/versatileDialog.vue";
 import { readCookie } from "../lib/utility.js";
 import SIO from "../lib/socketIOWrapper.js";
 import { required } from "../lib/validationRules.js";
@@ -223,7 +249,9 @@ export default {
     removeConfirmDialog,
     exportDialog,
     importDialog,
-    inlineEditor
+    inlineEditor,
+    remotehostManager,
+    versatileDialog
   },
   data: ()=>{
     return {
@@ -234,6 +262,7 @@ export default {
       rmDialog: false,
       exportDialog: false,
       importDialog: false,
+      remoteHostDialog: false,
       removeFromList: false,
       dialogMode: "default",
       selectedInTree: null,
