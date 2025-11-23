@@ -389,12 +389,7 @@ export default {
     }
   },
   methods: {
-    resetPan() {
-      if (!this.currentComponent || this.currentComponent.descendants.length === 0) {
-        this.currentPan = { x: 0, y: 0 };
-        return;
-      }
-
+    panToShowAllComponent() {
       let minX = Infinity;
       let minY = Infinity;
 
@@ -413,6 +408,14 @@ export default {
         x: -minX,
         y: -minY
       };
+    },
+    resetPan() {
+      this.currentZoom = 1.0;
+      if (!this.currentComponent || this.currentComponent.descendants.length === 0) {
+        this.currentPan = { x: 0, y: 0 };
+        return;
+      }
+      this.panToShowAllComponent();
     },
     pan(direction) {
       const panAmount = 50;
