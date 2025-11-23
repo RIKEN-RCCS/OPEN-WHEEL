@@ -26,7 +26,7 @@ const _internal = {
  * @param {string} filename - filename to be read
  * @param {number} retry - max number of retry
  */
-async function readJsonGreedy(filename, retry) {
+export async function readJsonGreedy(filename, retry) {
   const retries = typeof retry === "number" ? retry : 10;
   return _internal.promiseRetry(async (retry)=>{
     const buf = await _internal.fs.readFile(filename)
@@ -63,7 +63,7 @@ _internal.readJsonGreedy = readJsonGreedy;
  * add execute permission to file
  * @param {string} file - filename in absolute path
  */
-async function addX(file) {
+export async function addX(file) {
   const stat = await _internal.fs.stat(file);
   const mode = new _internal.Mode(stat);
   let u = 4;
@@ -106,7 +106,7 @@ async function addX(file) {
  * @param {boolean} forceNormal - if true absFilename is not treated as parameter setting file
  * @returns {File[]} - array of file object which is read
  */
-async function openFile(projectRootDir, argFilename, forceNormal = false) {
+export async function openFile(projectRootDir, argFilename, forceNormal = false) {
   const absFilename = _internal.path.resolve(argFilename);
   let content;
   try {
@@ -115,6 +115,7 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
   } catch (err) {
     if (err.code === "ENOENT") {
       await _internal.fs.ensureFile(absFilename);
+      await _internal.gitAdd(projectRootDir, absFilename);
       return [{ content: "", filename: _internal.path.basename(absFilename), dirname: _internal.path.dirname(absFilename) }];
     }
     throw err;
@@ -185,7 +186,7 @@ async function openFile(projectRootDir, argFilename, forceNormal = false) {
  * @param {*} content - content to write
  * @returns {Promise} -
  */
-async function saveFile(argFilename, content) {
+export async function saveFile(argFilename, content) {
   const absFilename = _internal.path.resolve(argFilename);
   await _internal.fs.writeFile(absFilename, content);
 
@@ -210,7 +211,7 @@ async function saveFile(argFilename, content) {
  * @param {string} name - desired name
  * @returns {string} - file or directory name with suffix
  */
-async function getUnusedPath(parent, name) {
+export async function getUnusedPath(parent, name) {
   const desiredPath = _internal.path.resolve(parent, name);
   if (!await _internal.fs.pathExists(desiredPath)) {
     return desiredPath;
@@ -226,10 +227,10 @@ async function getUnusedPath(parent, name) {
  * replace CRLF to LF
  * @param {string} filename - tareget file name
  */
-async function replaceCRLF(filename) {
+export async function replaceCRLF(filename) {
   let contents = await _internal.fs.readFile(filename);
   contents = contents.toString().replace(/\r\n/g, "\n");
   return _internal.fs.writeFile(filename, contents);
 }
 
-export { readJsonGreedy, addX, openFile, saveFile, getUnusedPath, replaceCRLF, _internal };
+export { _internal };
