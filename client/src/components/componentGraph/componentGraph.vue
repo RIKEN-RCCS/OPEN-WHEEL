@@ -86,6 +86,8 @@
             :x="menuX"
             :y="menuY"
             :items="componentContextMenuItems"
+            @copy="copyComponent"
+            @cut="cutComponent"
             @delete="deleteComponent"
             @clean="cleanComponent"
           />
@@ -228,6 +230,8 @@ export default {
     },
     componentContextMenuItems() {
       const rt = [];
+      rt.push({ label: "copy", event: "copy" });
+      rt.push({ label: "cut", event: "cut" });
       if (this.projectState !== "not-started") {
         rt.push({ label: "clean", event: "clean" });
       } else {
@@ -434,6 +438,20 @@ export default {
       SIO.emitGlobal("cleanComponent", this.projectRootDir, this.targetComponent.ID, SIO.generalCallback);
       this.closeContextMenus();
     },
+    copyComponent() {
+      if (this.targetComponent) {
+        this.commitCopyInfo({ type: "copy", ID: this.targetComponent.ID });
+        this.showSnackbar({ message: "Component copied", timeout: 2000 });
+      }
+      this.closeContextMenus();
+    },
+    cutComponent() {
+      if (this.targetComponent) {
+        this.commitCopyInfo({ type: "cut", ID: this.targetComponent.ID });
+        this.showSnackbar({ message: "Component cut", timeout: 2000 });
+      }
+      this.closeContextMenus();
+    },
     deleteComponent() {
       if (this.readOnly) {
         debug("delete component called but this project is not read-only for now");
@@ -519,8 +537,8 @@ export default {
       this.targetVconnector = item;
       this.openContextMenu(event, "vconnector");
     },
-    ...mapActions({ commitSelectedComponent: "selectedComponent" }),
-    ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan" }),
+    ...mapActions({ commitSelectedComponent: "selectedComponent", showSnackbar: "showSnackbar" }),
+    ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan", commitCopyInfo: "copyInfo" }),
     updatePosition(index, event) {
       this.currentComponent.descendants[index].pos.x = event.newX;
       this.currentComponent.descendants[index].pos.y = event.newY;
