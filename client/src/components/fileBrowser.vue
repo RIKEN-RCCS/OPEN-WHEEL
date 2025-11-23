@@ -41,7 +41,7 @@
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
+            :disabled="!isFileSelected || isSND"
             v-bind="props"
             icon="mdi-file-move-outline"
             @click="openDialog('rename')"
@@ -54,7 +54,7 @@
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
+            :disabled="!isFileSelected || isSND"
             v-bind="props"
             icon="mdi-file-remove-outline"
             data-cy="file_browser-remove_file-btn"
@@ -93,7 +93,7 @@
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
+            :disabled="!isFileSelected || isSND"
             icon="mdi-share-outline"
             v-bind="props"
             @click="openDialog('share')"
@@ -106,7 +106,7 @@
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
+            :disabled="!isFileSelected || isSND"
             icon="mdi-file-edit-outline"
             v-bind="props"
             data-cy="file_browser-edit_files-btn"
@@ -246,6 +246,9 @@ export default {
     },
     isSND() {
       return this.activeItem !== null && this.activeItem.type.startsWith("snd");
+    },
+    isFileSelected() {
+      return this.activeItem !== null;
     },
     needScriptCandidate() {
       return !["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type);
