@@ -473,8 +473,7 @@ export default {
       this.closeContextMenus();
     },
     deleteConnector() {
-      console.log("deleteConnector called", this.targetConnector);
-      if (!this.readOnly) {
+      if (this.readOnly) {
         debug("delete link called but this project is read-only for now");
         return;
       }
@@ -493,8 +492,7 @@ export default {
       this.closeContextMenus();
     },
     deleteVconnector() {
-      console.log("deleteVconnector called", this.targetVconnector);
-      if (!this.readOnly) {
+      if (this.readOnly) {
         debug("delete file link called but this project is read-only for now");
         return;
       }
@@ -513,8 +511,19 @@ export default {
       this.closeContextMenus();
     },
     openContextMenu(event, label) {
-      this.menuX = event.offsetX;
-      this.menuY = event.offsetY;
+      // Get the pannable group element which has the transformations applied
+      const pannableGroup = document.getElementById("pannable-group");
+      const svg = document.getElementById("component-graph-svg");
+      const pt = svg.createSVGPoint();
+      pt.x = event.clientX;
+      pt.y = event.clientY;
+      
+      // Transform screen coordinates to the pannable group's coordinate system
+      const svgP = pt.matrixTransform(pannableGroup.getScreenCTM().inverse());
+      
+      this.menuX = svgP.x;
+      this.menuY = svgP.y;
+      
       if (label === "component") {
         this.openComponentContextMenu = true;
       } else if (label === "connector") {
