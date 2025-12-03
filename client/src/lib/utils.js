@@ -17,6 +17,11 @@ export function getComponentIcon(type, host, useJobScheduler) {
       }
     }
   }
+  if (type === "storage") {
+    if (host && host !== "localhost") {
+      return componentDefinitionObj["remotestorage"].img;
+    }
+  }
   return componentDefinitionObj[type].img;
 }
 export function getColor(type) {
