@@ -736,6 +736,14 @@ class Dispatcher extends EventEmitter {
       } else {
         ++component.numFinished;
       }
+      // Write updated component JSON
+      const templateRoot = path.resolve(this.cwfDir, component.name);
+      await writeComponentJson(this.projectRootDir, templateRoot, component, true);
+      // Emit component state changed for the loop component itself
+      const ee = eventEmitters.get(this.projectRootDir);
+      if (ee) {
+        ee.emit("componentStateChanged", component);
+      }
     } catch (e) {
       if (typeof e !== "string") {
         e.index = component.currentIndex;
@@ -910,6 +918,11 @@ class Dispatcher extends EventEmitter {
             ++(component.numFailed);
           } else {
             logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "child state is illegal", newComponent.state);
+          }
+          // Emit component state changed for the PS/foreach component itself
+          const ee = eventEmitters.get(this.projectRootDir);
+          if (ee) {
+            ee.emit("componentStateChanged", component);
           }
         })
         .then(updateComponentJson);
