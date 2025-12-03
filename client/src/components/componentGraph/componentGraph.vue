@@ -164,6 +164,29 @@
       track-size="10"
     />
   </div>
+  <v-dialog
+    v-model="deleteConfirmDialog"
+    max-width="400px"
+  >
+    <v-card>
+      <v-card-title>Confirm Delete</v-card-title>
+      <v-card-text>
+        Are you sure you want to delete component "{{ targetComponent?.name }}"?
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          text="Cancel"
+          @click="deleteConfirmDialog = false"
+        />
+        <v-btn
+          color="error"
+          text="Delete"
+          @click="confirmDeleteComponent"
+        />
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
@@ -223,7 +246,8 @@ export default {
       ],
       minZoom: 0.01,
       maxZoom: 3,
-      zoomStep: 0.01
+      zoomStep: 0.01,
+      deleteConfirmDialog: false
     };
   },
   computed: {
@@ -479,16 +503,19 @@ export default {
         this.closeContextMenus();
         return;
       }
+      this.deleteConfirmDialog = true;
+      this.closeContextMenus();
+    },
+    confirmDeleteComponent() {
+      this.deleteConfirmDialog = false;
       SIO.emitGlobal("removeNode", this.projectRootDir, this.targetComponent.ID, this.currentComponent.ID, (rt)=>{
         if (!rt) {
-          this.closeContextMenus();
           return;
         }
         this.commitSelectedComponent(null);
         //update componentTree
         SIO.emitGlobal("getComponentTree", this.projectRootDir, this.projectRootDir, SIO.generalCallback);
       });
-      this.closeContextMenus();
     },
     deleteConnector() {
       if (this.readOnly) {
