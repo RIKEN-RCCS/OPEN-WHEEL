@@ -26,7 +26,7 @@ import { logFilename } from "../../app/db/db.js";
 const projectRootDir = path.resolve("hoge");
 
 //testee
-import { getLogger, configure, logSettings, _internal } from "../../app/logSettings.js";
+import { getLogger, configure, logSettings, _internal, logInfo, logDebug, logError } from "../../app/logSettings.js";
 
 describe("Unit test for log4js's helper functions", ()=>{
   let logger;
@@ -108,6 +108,55 @@ describe("Unit test for log4js's helper functions", ()=>{
       expect(log).to.match(/warn/);
       expect(log).to.match(/error/);
       expect(log).to.match(/fatal/);
+    });
+  });
+  describe("#logWithComponentDir", ()=>{
+    beforeEach(async ()=>{
+      await fs.remove(projectRootDir);
+      await fs.mkdir(projectRootDir);
+      emitAll.resetHistory();
+    });
+    afterEach(async ()=>{
+      if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+        await fs.remove(path.resolve(__dirname, logFilename));
+        await fs.remove(projectRootDir);
+      }
+      configure(logSettings);
+    });
+    it("should convert absolute path to relative path", async ()=>{
+      const componentDir = path.join(projectRootDir, "workflow1", "task0");
+      logInfo(projectRootDir, componentDir, "test message");
+      await getLogger(projectRootDir).shutdown();
+
+      const filename = path.resolve(projectRootDir, path.basename(logFilename));
+      const log = await fs.readFile(filename).then((data)=>{
+        return data.toString();
+      });
+      expect(log).to.match(/\[workflow1\/task0\]/);
+      expect(log).to.match(/test message/);
+    });
+    it("should show 'project root' when componentDir equals projectRootDir", async ()=>{
+      logDebug(projectRootDir, projectRootDir, "root message");
+      await getLogger(projectRootDir).shutdown();
+
+      const filename = path.resolve(projectRootDir, path.basename(logFilename));
+      const log = await fs.readFile(filename).then((data)=>{
+        return data.toString();
+      });
+      expect(log).to.match(/\[project root\]/);
+      expect(log).to.match(/root message/);
+    });
+    it("should keep absolute path if not under projectRootDir", async ()=>{
+      const externalPath = "/some/external/path";
+      logError(projectRootDir, externalPath, "external message");
+      await getLogger(projectRootDir).shutdown();
+
+      const filename = path.resolve(projectRootDir, path.basename(logFilename));
+      const log = await fs.readFile(filename).then((data)=>{
+        return data.toString();
+      });
+      expect(log).to.match(/\[\/some\/external\/path\]/);
+      expect(log).to.match(/external message/);
     });
   });
 });
