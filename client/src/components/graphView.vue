@@ -13,6 +13,7 @@
       @component-right-click="onComponentRightClick"
       @connector-right-click="onConnectorRightClick"
       @vconnector-right-click="onVconnectorRightClick"
+      @background-right-click="onBackgroundRightClick"
     />
   </div>
 </template>
@@ -97,6 +98,10 @@ export default {
         callback: ()=>{},
         pos: pos
       });
+    },
+    onBackgroundRightClick(event) {
+      //Store event for position calculation
+      this.lastMouseEvent = event;
     },
     registerHotkeys() {
       const callback = (e)=>{

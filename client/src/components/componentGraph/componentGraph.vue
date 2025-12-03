@@ -21,6 +21,7 @@
         :height="canvasHeight"
         fill="black"
         @click="commitSelectedComponent(null);closeContextMenus();"
+        @contextmenu.prevent="onBackgroundRightClick"
       />
       <g
         id="pannable-group"
@@ -105,6 +106,13 @@
             :items="vconnectorContextMenuItems"
             @delete="deleteVconnector"
           />
+          <context-menu
+            v-if="openBackgroundContextMenu"
+            :x="menuX"
+            :y="menuY"
+            :items="backgroundContextMenuItems"
+            @paste="pasteComponent"
+          />
         </g>
       </g>
     </svg>
@@ -187,6 +195,12 @@ export default {
     ContextMenu,
     VueZoomable
   },
+  emits: [
+    "component-right-click",
+    "connector-right-click",
+    "vconnector-right-click",
+    "background-right-click"
+  ],
   data() {
     return {
       menuX: 0,
@@ -194,6 +208,7 @@ export default {
       openComponentContextMenu: false,
       openConnectorContextMenu: false,
       openVconnectorContextMenu: false,
+      openBackgroundContextMenu: false,
       targetComponent: null,
       targetConnector: null,
       targetVconnector: null,
@@ -203,13 +218,16 @@ export default {
       vconnectorContextMenuItems: [
         { label: "delete", event: "delete" }
       ],
+      backgroundContextMenuItems: [
+        { label: "paste", event: "paste" }
+      ],
       minZoom: 0.01,
       maxZoom: 3,
       zoomStep: 0.01
     };
   },
   computed: {
-    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState", "isComponentDragging"]),
+    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState", "isComponentDragging", "copyInfo"]),
     ...mapState({ currentZoomState: "currentZoom", currentPanState: "currentPan" }),
     ...mapGetters(["copiedComponentID", "cutComponentID"]),
     currentZoom: {
@@ -530,12 +548,15 @@ export default {
         this.openConnectorContextMenu = true;
       } else if (label === "vconnector") {
         this.openVconnectorContextMenu = true;
+      } else if (label === "background") {
+        this.openBackgroundContextMenu = true;
       }
     },
     closeContextMenus() {
       this.openComponentContextMenu = false;
       this.openConnectorContextMenu = false;
       this.openVconnectorContextMenu = false;
+      this.openBackgroundContextMenu = false;
     },
     onComponentRightClick(event, component) {
       this.targetComponent = component;
@@ -548,6 +569,26 @@ export default {
     onVconnectorRightClick(event, item) {
       this.targetVconnector = item;
       this.openContextMenu(event, "vconnector");
+    },
+    onBackgroundRightClick(event) {
+      //Only show menu if there's something to paste
+      if (!this.copyInfo) {
+        return;
+      }
+      this.openContextMenu(event, "background");
+      this.$emit("background-right-click", event);
+    },
+    pasteComponent() {
+      //Get the position where the menu was opened
+      const pos = { x: this.menuX, y: this.menuY };
+
+      //Dispatch paste action through Vuex store
+      this.$store.dispatch("pasteComponent", {
+        callback: ()=>{},
+        pos: pos
+      });
+
+      this.closeContextMenus();
     },
     ...mapActions({ commitSelectedComponent: "selectedComponent", showSnackbar: "showSnackbar" }),
     ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan", commitCopyInfo: "copyInfo" }),
