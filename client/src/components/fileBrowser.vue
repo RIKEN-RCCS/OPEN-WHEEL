@@ -135,6 +135,7 @@
       v-model="dialog.open"
       max-width="40vw"
       :title="dialog.title"
+      :buttons="dialogButtons"
       data-cy="file_browser-dialog-dialog"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
@@ -253,6 +254,13 @@ export default {
     },
     needScriptCandidate() {
       return !["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type);
+    },
+    dialogButtons() {
+      const isInvalid = this.dialog.inputField === "" || !this.noDuplicate(this.dialog.inputField);
+      return [
+        { icon: "mdi-check", label: "ok", disabled: isInvalid },
+        { icon: "mdi-close", label: "cancel" }
+      ];
     }
   },
   watch: {
