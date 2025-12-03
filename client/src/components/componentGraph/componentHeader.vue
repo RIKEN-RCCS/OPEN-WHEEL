@@ -32,6 +32,7 @@
       :center="nameCenter"
       :text="name"
       :color="nameColor"
+      text-type="component"
     />
     <status-icon
       :x="statusIconX"

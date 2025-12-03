@@ -14,16 +14,24 @@
     <template #headers>
       {{ label }}
     </template>
-    <template
-      v-if="allowRenameInline"
-      #item.name="props"
-    >
+    <template #item.name="props">
       <inline-editor
+        v-if="allowRenameInline"
         :current-value="props.item.name"
         data-cy-prefix="list_form_property"
         :additional-rules="[updateItemValidator]"
         @confirmed="saveEditDialog(props.index, $event)"
       />
+      <v-tooltip
+        v-else
+        :text="props.item.name"
+        location="top"
+        :disabled="props.item.name.length <= 10"
+      >
+        <template #activator="{ props: tooltipProps }">
+          <span v-bind="tooltipProps">{{ props.item.name }}</span>
+        </template>
+      </v-tooltip>
     </template>
     <template #item.actions="{ item }">
       <action-row
