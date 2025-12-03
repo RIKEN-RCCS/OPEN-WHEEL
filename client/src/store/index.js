@@ -87,7 +87,8 @@ const state = {
   readOnly: false,
   isComponentDragging: false,
   currentZoom: 1,
-  currentPan: { x: 0, y: 0 }
+  currentPan: { x: 0, y: 0 },
+  textEditorDialog: false
 };
 
 const mutations = mutationFactory(Object.keys(state));
@@ -96,6 +97,9 @@ export default new Vuex.Store({
   state,
   mutations,
   actions: {
+    openTextEditor: (context)=>{
+      context.commit("textEditorDialog", true);
+    },
     pasteComponent: (context, payload)=>{
       const { callback, pos } = payload || {};
       const { copyInfo, currentComponent } = context.state;

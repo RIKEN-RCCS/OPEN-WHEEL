@@ -16,7 +16,7 @@
     >
       <component-library />
       <graph-view />
-      <component-property ref="componentProperty" @open-text-editor="$emit('open-text-editor')" />
+      <component-property ref="componentProperty" />
     </v-row>
   </div>
 </template>
@@ -35,7 +35,6 @@ export default {
     ComponentProperty,
     ComponentTree
   },
-  emits: ["open-text-editor"],
   methods: {
     refreshFileList() {
       if (this.$refs.componentProperty) {

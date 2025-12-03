@@ -110,7 +110,7 @@
             icon="mdi-file-edit-outline"
             v-bind="props"
             data-cy="file_browser-edit_files-btn"
-            @click="$emit('open-text-editor')"
+            @click="openTextEditor"
           />
         </template>
       </v-tooltip>
@@ -198,7 +198,7 @@
 <script>
 import Debug from "debug";
 const debug = Debug("wheel:fileBrowser");
-import { mapState, mapGetters, mapMutations } from "vuex";
+import { mapState, mapGetters, mapMutations, mapActions } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import versatileDialog from "../components/versatileDialog.vue";
 import myTreeview from "../components/common/myTreeview.vue";
@@ -293,6 +293,7 @@ export default {
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
   },
   methods: {
+    ...mapActions(["openTextEditor"]),
     updateScriptCandidate() {
       if (!this.needScriptCandidate) {
         return;
