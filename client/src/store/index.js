@@ -98,7 +98,16 @@ export default new Vuex.Store({
   actions: {
     pasteComponent: (context, payload)=>{
       const { callback, pos } = payload || {};
-      SIO.emitGlobal("pasteComponent", context.state.projectRootDir, context.state.copyInfo, context.state.currentComponent.ID, pos, callback || (()=>{}));
+      const { copyInfo, currentComponent } = context.state;
+
+      //Check if cutting and pasting to the same parent
+      if (copyInfo && copyInfo.type === "cut" && copyInfo.parentID === currentComponent.ID) {
+        context.dispatch("showSnackbar", { message: "paste to same parent is not allowed", timeout: 2000 });
+        context.commit("copyInfo", null);
+        return;
+      }
+
+      SIO.emitGlobal("pasteComponent", context.state.projectRootDir, copyInfo, currentComponent.ID, pos, callback || (()=>{}));
       context.commit("copyInfo", null);
     },
     selectedComponent: (context, payload)=>{

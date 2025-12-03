@@ -78,7 +78,7 @@ export default {
     },
     onCut() {
       if (!this.selectedComponent) return;
-      this.commitCopyInfo({ type: "cut", ID: this.selectedComponent.ID });
+      this.commitCopyInfo({ type: "cut", ID: this.selectedComponent.ID, parentID: this.selectedComponent.parent });
       this.showSnackbar({ message: "Component cut", timeout: 2000 });
     },
     onPaste() {
