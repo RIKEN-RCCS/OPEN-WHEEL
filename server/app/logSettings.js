@@ -160,7 +160,19 @@ function logWithComponentDir(level, projectRootDir, componentDir, ...messages) {
   const logger = getLogger(projectRootDir);
   if (logger[level]) {
     const message = messages.join(" ");
-    logger[level](`[${componentDir}] ${message}`);
+    let displayPath;
+
+    if (componentDir === projectRootDir) {
+      displayPath = "project root";
+    } else if (componentDir.startsWith(projectRootDir)) {
+      //Convert absolute path to relative path
+      displayPath = path.relative(projectRootDir, componentDir);
+    } else {
+      //Keep as-is if not under projectRootDir
+      displayPath = componentDir;
+    }
+
+    logger[level](`[${displayPath}] ${message}`);
   }
 }
 
