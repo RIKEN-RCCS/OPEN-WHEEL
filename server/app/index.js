@@ -178,7 +178,6 @@ if (process.env.WHEEL_ENABLE_WEB_API) {
 const routes = {
   home: await import("./routes/home.js"),
   workflow: await import("./routes/workflow.js"),
-  remotehost: await import("./routes/remotehost.js"),
   login: await import("./routes/login.js"),
   viewer: await import("./routes/viewer.js")
 };
@@ -196,7 +195,6 @@ if (process.env.WHEEL_ENABLE_AUTH) {
 }
 router.get("/", checkLoggedIn, routes.home.default);
 router.get("/home", checkLoggedIn, routes.home.default);
-router.get("/remotehost", checkLoggedIn, routes.remotehost.default);
 router.route("/workflow").get(checkLoggedIn, routes.workflow.get)
   .post(checkLoggedIn, routes.workflow.post);
 router.route("/graph").get(checkLoggedIn, routes.workflow.get)
