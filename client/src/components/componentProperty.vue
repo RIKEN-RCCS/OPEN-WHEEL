@@ -594,7 +594,6 @@
               v-if="hasLocalFileBrowser"
               ref="fileBrowser"
               :readonly="false"
-              @open-text-editor="$emit('open-text-editor')"
             />
             <remote-file-browser
               v-if="hasRemoteFileBrowser"

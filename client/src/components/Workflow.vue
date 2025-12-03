@@ -87,22 +87,6 @@
               />
             </template>
           </v-tooltip>
-          <v-tooltip
-            text="text editor"
-            location="bottom"
-          >
-            <template #activator="{ props }">
-              <v-btn
-                variant="outlined"
-                replace
-                :disabled="selectedComponent === null || selectedFile === null"
-                :to="selectedComponent !== null && selectedFile !== null ? {name: 'editor' } : undefined"
-                v-bind="props"
-                icon="mdi-file-document-edit-outline"
-                data-cy="workflow-document_edit-btn"
-              />
-            </template>
-          </v-tooltip>
         </v-btn-toggle>
         <v-spacer />
         <v-card>
@@ -235,7 +219,7 @@
     </application-tool-bar>
     <v-main>
       <v-container fluid>
-        <router-view ref="routerView" @open-text-editor="openTextEditor" />
+        <router-view />
       </v-container>
     </v-main>
     <v-footer app>
@@ -537,8 +521,7 @@ export default {
         { title: "error", value: "error", key: "error" }
       ],
       warnDialog: null,
-      remoteHostDialog: false,
-      textEditorDialog: false
+      remoteHostDialog: false
     };
   },
   computed: {
@@ -553,7 +536,8 @@ export default {
       "projectRootDir",
       "selectedComponent",
       "selectedFile",
-      "readOnly"
+      "readOnly",
+      "textEditorDialog"
     ]),
     ...mapGetters(["waiting"]),
     isReadOnly() {
@@ -776,24 +760,15 @@ export default {
       form.submit();
     },
     openTextEditor() {
-      this.textEditorDialog = true;
+      this.commitTextEditorDialog(true);
     },
     closeTextEditor() {
-      const afterClose = ()=>{
-        this.textEditorDialog = false;
-        this.$nextTick(()=>{
-          const routerViewComponent = this.$refs.routerView?.$;
-          const actualComponent = routerViewComponent?.subTree?.component?.exposed || routerViewComponent?.subTree?.component?.proxy;
-          if (actualComponent?.refreshFileList) {
-            actualComponent.refreshFileList();
-          }
-        });
-      };
-
       if (this.$refs.textEditorManager?.hasChange()) {
-        this.$refs.textEditorManager.checkUnsavedBeforeClose(afterClose);
+        this.$refs.textEditorManager.checkUnsavedBeforeClose(()=>{
+          this.commitTextEditorDialog(false);
+        });
       } else {
-        afterClose();
+        this.commitTextEditorDialog(false);
       }
     },
     unsavedFilesDialogClosed(...args) {
@@ -812,6 +787,7 @@ export default {
       commitSelectedComponent: "selectedComponent"
     }),
     ...mapMutations({
+      commitTextEditorDialog: "textEditorDialog",
       commitComponentTree: "componentTree",
       commitProjectState: "projectState",
       commitProjectReadOnly: "readOnly",

@@ -25,7 +25,7 @@ export default defineConfig(async ({ mode }) => {
     base: "./",
     plugins,
     define:{
-      __VUE_PROD_DEVTOOLS__: true
+      __VUE_PROD_DEVTOOLS__: false
     },
     root,
     build: {
