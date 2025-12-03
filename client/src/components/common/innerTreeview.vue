@@ -10,22 +10,24 @@
     >
       <template #activator="{ isOpen, props }">
         <v-list-item
-          v-bind="props"
           :key="item[itemKey]"
           :class="{'text-primary': activatable && active !== null && active[itemKey] === item[itemKey]}"
-          @click="onActiveted(item);onClickNodeIcon(item)"
         >
           <template #prepend>
             <v-icon
+              v-bind="props"
               :icon="getNodeIcon(isOpen, item)"
+              @click="onClickNodeIcon(item)"
             />
           </template>
-          <slot
-            name="label"
-            :item="item"
-          >
-            {{ item.name }}
-          </slot>
+          <div @click="(e) => { props.onClick(e); onActiveted(item); onClickNodeIcon(item); }">
+            <slot
+              name="label"
+              :item="item"
+            >
+              {{ item.name }}
+            </slot>
+          </div>
           <template #append>
             <slot
               name="append"

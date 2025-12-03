@@ -81,6 +81,10 @@ export default {
     getLeafIcon: {
       type: Function,
       default: ()=>{ return ""; }
+    },
+    active: {
+      type: [Object, null],
+      default: null
     }
   },
   emits: ["update:active"],
@@ -89,6 +93,11 @@ export default {
       lastActive: null,
       open: []
     };
+  },
+  watch: {
+    active(newValue) {
+      this.lastActive = newValue;
+    }
   },
   mounted() {
     if (this.openAll) {
