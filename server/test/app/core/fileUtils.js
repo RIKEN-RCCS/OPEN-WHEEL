@@ -242,6 +242,7 @@ describe("#openFile", ()=>{
   let readFileStub;
   let ensureFileStub;
   let readJsonGreedyStub;
+  let gitAddStub;
   //eslint-disable-next-line no-unused-vars
   let getLoggerStub;
   let loggerWarnStub;
@@ -251,6 +252,7 @@ describe("#openFile", ()=>{
     readFileStub = sinon.stub(_internal.fs, "readFile");
     ensureFileStub = sinon.stub(_internal.fs, "ensureFile");
     readJsonGreedyStub = sinon.stub(_internal, "readJsonGreedy");
+    gitAddStub = sinon.stub(_internal, "gitAdd").resolves();
     loggerWarnStub = sinon.stub();
     getLoggerStub = sinon.stub(_internal, "getLogger").returns({ warn: loggerWarnStub });
   });
@@ -266,6 +268,7 @@ describe("#openFile", ()=>{
     const result = await openFile(dummyProjectRoot, "notExist.txt");
 
     expect(ensureFileStub.calledOnce).to.be.true;
+    expect(gitAddStub.calledOnce).to.be.true;
     expect(result).to.have.lengthOf(1);
     expect(result[0].content).to.equal("");
     expect(result[0].filename).to.equal("notExist.txt");
