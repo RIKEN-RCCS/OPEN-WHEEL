@@ -817,6 +817,7 @@ export default {
       //closing
       if (newValue === false) {
         this.commitSelectedComponent(null);
+        this.commitSelectedFile(null);
       }
     },
     selectedComponent(newValue, oldValue) {
@@ -867,7 +868,8 @@ export default {
     }),
     ...mapMutations({
       commitScriptCandidates: "scriptCandidates",
-      commitComponentTree: "componentTree"
+      commitComponentTree: "componentTree",
+      commitSelectedFile: "selectedFile"
     }),
     isValidInputFilename,
     isValidOutputFilename,

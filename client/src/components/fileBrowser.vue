@@ -124,6 +124,7 @@
       :items="items"
       :load-children="getChildren"
       activatable
+      :active="activeItem"
       :open="openItems"
       :get-node-icon="getNodeIcon"
       :get-leaf-icon="getLeafIcon"
@@ -351,7 +352,15 @@ export default {
         return;
       }
       this.currentDir = this.activeItem.type === "file" ? this.activeItem.path : this.activeItem.id;
-      this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
+      const newSelectedFile = `${this.currentDir}${this.pathSep}${this.activeItem.name}`;
+
+      //Deselect if clicking the same file again
+      if (this.selectedFile === newSelectedFile) {
+        this.commitSelectedFile(null);
+        this.activeItem = null;
+      } else {
+        this.commitSelectedFile(newSelectedFile);
+      }
     },
     onChoose(event) {
       if (["running", "preparing"].includes(this.projectState)) {

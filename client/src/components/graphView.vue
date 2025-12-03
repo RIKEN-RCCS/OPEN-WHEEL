@@ -35,7 +35,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["selectedComponent"])
+    ...mapState(["selectedComponent", "copyInfo", "selectedFile"])
   },
   mounted: function () {
     this.fit();
@@ -66,7 +66,8 @@ export default {
     ...mapMutations({
       commitCanvasWidth: "canvasWidth",
       commitCanvasHeight: "canvasHeight",
-      commitCopyInfo: "copyInfo"
+      commitCopyInfo: "copyInfo",
+      commitSelectedFile: "selectedFile"
     }),
     ...mapActions({
       paste: "pasteComponent",
@@ -103,6 +104,12 @@ export default {
       //Store event for position calculation
       this.lastMouseEvent = event;
     },
+    onEscape() {
+      //Clear copyInfo (copied/cut component)
+      if (this.copyInfo) {
+        this.commitCopyInfo(null);
+      }
+    },
     registerHotkeys() {
       const callback = (e)=>{
         const isCtrl = e.ctrlKey || e.metaKey;
@@ -117,6 +124,9 @@ export default {
         } else if (isCtrl && key === "v") {
           e.preventDefault();
           this.onPaste();
+        } else if (key === "escape") {
+          e.preventDefault();
+          this.onEscape();
         }
       };
 
