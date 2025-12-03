@@ -450,7 +450,7 @@ export default {
     },
     cutComponent() {
       if (this.targetComponent) {
-        this.commitCopyInfo({ type: "cut", ID: this.targetComponent.ID });
+        this.commitCopyInfo({ type: "cut", ID: this.targetComponent.ID, parentID: this.targetComponent.parent });
         this.showSnackbar({ message: "Component cut", timeout: 2000 });
       }
       this.closeContextMenus();
@@ -511,19 +511,19 @@ export default {
       this.closeContextMenus();
     },
     openContextMenu(event, label) {
-      // Get the pannable group element which has the transformations applied
+      //Get the pannable group element which has the transformations applied
       const pannableGroup = document.getElementById("pannable-group");
       const svg = document.getElementById("component-graph-svg");
       const pt = svg.createSVGPoint();
       pt.x = event.clientX;
       pt.y = event.clientY;
-      
-      // Transform screen coordinates to the pannable group's coordinate system
+
+      //Transform screen coordinates to the pannable group's coordinate system
       const svgP = pt.matrixTransform(pannableGroup.getScreenCTM().inverse());
-      
+
       this.menuX = svgP.x;
       this.menuY = svgP.y;
-      
+
       if (label === "component") {
         this.openComponentContextMenu = true;
       } else if (label === "connector") {
