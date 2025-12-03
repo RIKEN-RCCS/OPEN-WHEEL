@@ -20,16 +20,25 @@
           v-model="validName"
           @submit.prevent
         >
-          <v-text-field
-            v-model="copySelectedComponent.name"
-            label="name"
-            :readonly="readOnly"
-            variant="outlined"
-            class="pt-4"
-            density="compact"
-            :rules="[rules.isValidName, isUniqueName]"
-            data-cy="component_property-name-text_field"
-          />
+          <v-tooltip
+            :text="copySelectedComponent.name"
+            location="top"
+            :disabled="copySelectedComponent.name.length <= 10"
+          >
+            <template #activator="{ props }">
+              <v-text-field
+                v-model="copySelectedComponent.name"
+                v-bind="props"
+                label="name"
+                :readonly="readOnly"
+                variant="outlined"
+                class="pt-4"
+                density="compact"
+                :rules="[rules.isValidName, isUniqueName]"
+                data-cy="component_property-name-text_field"
+              />
+            </template>
+          </v-tooltip>
         </v-form>
       </v-toolbar-title>
       <v-toolbar-items>
