@@ -846,7 +846,22 @@ export default {
               .map((e)=>{
                 return e.name;
               });
-            this.commitScriptCandidates(scriptCandidates);
+            
+            // Add inputFiles (filtered for non-glob expressions)
+            const inputFileCandidates = this.selectedComponent?.inputFiles 
+              ? this.selectedComponent.inputFiles
+                  .map((file)=>{
+                    return typeof file === "string" ? file : file.name;
+                  })
+                  .filter((name)=>{
+                    // Filter out glob expressions (*, ?, [, ])
+                    return name && !name.match(/[*?\[\]]/);
+                  })
+              : [];
+            
+            // Merge and deduplicate
+            const allCandidates = [...new Set([...scriptCandidates, ...inputFileCandidates])];
+            this.commitScriptCandidates(allCandidates);
           }
           if (typeof this.selectedComponent.condition === "string") {
             this.conditionCheckByJS = !this.scriptCandidates.includes(this.selectedComponent.condition);
