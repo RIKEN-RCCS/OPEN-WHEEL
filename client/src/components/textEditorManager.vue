@@ -273,6 +273,10 @@ export default {
       }
       if (mode === "save") {
         this.saveAllFiles();
+      } else if (mode === "discard") {
+        // Revert all changes
+        this.$refs.text.revertAll();
+        this.$refs.param.revertAll();
       }
       this.unsavedFiles.splice(0);
       this.showUnsavedFilesDialog = false;

@@ -27,6 +27,12 @@
         <v-spacer />
         <v-btn
           class="text-capitalize"
+          prepend-icon="mdi-content-save"
+          text="keep changes"
+          @click="keepChanges"
+        />
+        <v-btn
+          class="text-capitalize"
           prepend-icon="mdi-alert-circle-outline"
           text="discard all changes"
           @click="discardChanges"
@@ -72,6 +78,9 @@ export default {
   methods: {
     closeDialog() {
       this.$emit("closed", "cancel");
+    },
+    keepChanges() {
+      this.$emit("closed", "save");
     },
     discardChanges() {
       this.$emit("closed", "discard");

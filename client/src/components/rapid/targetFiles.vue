@@ -57,13 +57,19 @@
           <span class="text-h5">target filename</span>
         </v-card-title>
         <v-card-text>
-          <v-text-field
-            v-model.trim="newTargetFilename"
-            label="filename"
-            :rules="[required, notDupulicated]"
-            data-cy="target_files-target_file_name-text_field"
-          />
+          <div class="text-subtitle-2 mb-2">
+            select component
+          </div>
           <lower-component-tree @selected="targetNodeSelected" />
+          <div class="mt-4">
+            <v-autocomplete
+              v-model.trim="newTargetFilename"
+              label="filename"
+              :items="fileCandidates"
+              :rules="[required, notDupulicated]"
+              data-cy="target_files-target_file_name-text_field"
+            />
+          </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -93,6 +99,7 @@ import { tableFooterProps } from "../../lib/rapid2Util.js";
 import actionRow from "../../components/common/actionRow.vue";
 import lowerComponentTree from "../../components/lowerComponentTree.vue";
 import { required } from "../../lib/validationRules.js";
+import SIO from "../../lib/socketIOWrapper.js";
 
 export default {
   name: "TargetFiles",
@@ -117,7 +124,8 @@ export default {
       newTargetFilename: "",
       newTargetNode: null,
       currentItem: null,
-      tableFooterProps
+      tableFooterProps,
+      fileCandidates: []
     };
   },
   computed: {
@@ -155,6 +163,7 @@ export default {
       }
       this.currentItem = item || null;
       this.targetFileDialog = true;
+      this.loadFileCandidates();
     },
     deleteItem(item) {
       this.$emit("del", item);
@@ -220,6 +229,26 @@ export default {
     },
     targetNodeSelected(targetNode) {
       this.newTargetNode = targetNode;
+      this.loadFileCandidates();
+    },
+    loadFileCandidates() {
+      const targetComponentID = this.newTargetNode?.ID || this.selectedComponent.ID;
+      const path = `${this.projectRootDir}${this.pathSep}${this.componentPath[targetComponentID]}`;
+      const mode = "files";
+
+      SIO.emitGlobal("getFileList", this.projectRootDir, { path, mode }, (fileList)=>{
+        if (fileList === null) {
+          this.fileCandidates = [];
+          return;
+        }
+        this.fileCandidates = fileList
+          .filter((e)=>{
+            return e.type && e.type.startsWith("file");
+          })
+          .map((e)=>{
+            return e.name;
+          });
+      });
     }
   }
 };
