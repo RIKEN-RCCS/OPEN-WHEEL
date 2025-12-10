@@ -55,6 +55,7 @@
               label="disable"
               v-bind="props"
               data-cy="component_property-disable-switch"
+              class="ml-2"
             />
           </template>
         </v-tooltip>
@@ -848,20 +849,20 @@ export default {
               .map((e)=>{
                 return e.name;
               });
-            
-            // Add inputFiles (filtered for non-glob expressions)
+
+            //Add inputFiles (filtered for non-glob expressions)
             const inputFileCandidates = this.copySelectedComponent?.inputFiles
               ? this.copySelectedComponent.inputFiles
                   .map((file)=>{
                     return typeof file === "string" ? file : file.name;
                   })
                   .filter((name)=>{
-                    // Filter out glob expressions (*, ?, [, ]) and directories (ending with / or \)
+                    //Filter out glob expressions (*, ?, [, ]) and directories (ending with / or \)
                     return name && !name.match(/[*?[\]]/) && !name.endsWith("/") && !name.endsWith("\\");
                   })
               : [];
-            
-            // Merge and deduplicate
+
+            //Merge and deduplicate
             const allCandidates = [...new Set([...scriptCandidates, ...inputFileCandidates])];
             this.commitScriptCandidates(allCandidates);
           }
@@ -903,7 +904,7 @@ export default {
       if (!this.selectedComponent || ["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type)) {
         return;
       }
-      
+
       const scriptCandidates = items
         .filter((e)=>{
           return e.type && e.type.startsWith("file");
@@ -911,25 +912,25 @@ export default {
         .map((e)=>{
           return e.name;
         });
-      
-      // Add inputFiles (filtered for non-glob expressions)
+
+      //Add inputFiles (filtered for non-glob expressions)
       const inputFileCandidates = this.copySelectedComponent?.inputFiles
         ? this.copySelectedComponent.inputFiles
             .map((file)=>{
               return typeof file === "string" ? file : file.name;
             })
             .filter((name)=>{
-              // Filter out glob expressions (*, ?, [, ]) and directories (ending with / or \)
+              //Filter out glob expressions (*, ?, [, ]) and directories (ending with / or \)
               return name && !name.match(/[*?[\]]/) && !name.endsWith("/") && !name.endsWith("\\");
             })
         : [];
 
-      // Merge and deduplicate
+      //Merge and deduplicate
       const allCandidates = [...new Set([...scriptCandidates, ...inputFileCandidates])];
       this.commitScriptCandidates(allCandidates);
     },
     updateScriptCandidatesAfterInputFileChange() {
-      // Called when inputFiles are added/updated/removed
+      //Called when inputFiles are added/updated/removed
       const localItems = this.$refs.fileBrowser?.items;
       const remoteItems = this.$refs.rfb?.items;
 
@@ -938,7 +939,7 @@ export default {
       } else if (this.hasRemoteFileBrowser && Array.isArray(remoteItems) && remoteItems.length > 0) {
         this.updateScriptCandidatesFromBrowser(remoteItems);
       } else {
-        // File browser items not available yet, use empty array (will still include inputFiles)
+        //File browser items not available yet, use empty array (will still include inputFiles)
         this.updateScriptCandidatesFromBrowser([]);
       }
     },
