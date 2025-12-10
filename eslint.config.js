@@ -24,6 +24,7 @@ const jsdocRules = {
 
 const styleRules = {
   "arrow-body-style": ["error", "always"],
+  "@stylistic/no-trailing-spaces": "error",
   "@stylistic/arrow-spacing": [
     "error",
     {
