@@ -591,7 +591,7 @@
             </v-radio-group>
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel>
+        <v-expansion-panel eager>
           <v-expansion-panel-title
             :class="{ 'remote': hasRemoteFileBrowser}"
             data-cy="component_property-files-panel_title"
