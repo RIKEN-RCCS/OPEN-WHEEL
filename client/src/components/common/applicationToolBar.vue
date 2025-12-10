@@ -33,6 +33,21 @@
     </v-app-bar-title>
     <slot name="append" />
     <template #append>
+      <v-tooltip
+        location="bottom"
+        :text="connectionStatus"
+      >
+        <template #activator="{ props }">
+          <v-icon
+            v-bind="props"
+            :color="connectionColor"
+            size="small"
+            data-cy="tool_bar-connection-status"
+          >
+            {{ connectionIcon }}
+          </v-icon>
+        </template>
+      </v-tooltip>
       <v-app-bar-nav-icon
         data-cy="tool_bar-navi-icon"
         @click="$emit('navIconClick')"
@@ -46,6 +61,8 @@
 
 <script>
 import imgLogo from "../../assets/wheel_logomark.png";
+import SIO from "../../lib/socketIOWrapper.js";
+
 export default {
   props: {
     title: {
@@ -60,12 +77,49 @@ export default {
   emits: ["navIconClick"],
   data: ()=>{
     return {
-      imgLogo
+      imgLogo,
+      isConnected: false,
+      connectionCheckInterval: null
     };
   },
   computed: {
     homeURL() {
       return `${this.baseUrl}/home`;
+    },
+    connectionIcon() {
+      return this.isConnected ? "mdi-lan-connect" : "mdi-lan-disconnect";
+    },
+    connectionColor() {
+      return this.isConnected ? "success" : "error";
+    },
+    connectionStatus() {
+      return this.isConnected ? "Connected to server" : "Disconnected from server";
+    }
+  },
+  mounted() {
+    // Update connection status immediately and on events
+    const updateConnectionStatus = () => {
+      this.isConnected = SIO.isConnected();
+    };
+    
+    updateConnectionStatus();
+    
+    // Listen for connection events
+    SIO.onConnect(() => {
+      this.isConnected = true;
+    });
+    
+    SIO.onDisconnect(() => {
+      this.isConnected = false;
+    });
+    
+    // Poll connection status every second as a fallback
+    this.connectionCheckInterval = setInterval(updateConnectionStatus, 1000);
+  },
+  beforeUnmount() {
+    // Clean up interval
+    if (this.connectionCheckInterval) {
+      clearInterval(this.connectionCheckInterval);
     }
   }
 };
