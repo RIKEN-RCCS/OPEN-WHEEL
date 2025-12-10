@@ -267,6 +267,7 @@ export default {
   props: {
     readonly: { type: Boolean, default: true }
   },
+  emits: ["items-updated"],
   data: function () {
     return {
       loading: false,
@@ -313,29 +314,8 @@ export default {
       if (["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type)) {
         return;
       }
-      const scriptCandidates = this.items
-        .filter((e)=>{
-          return e.type.startsWith("file");
-        })
-        .map((e)=>{
-          return e.name;
-        });
-      
-      // Add inputFiles (filtered for non-glob expressions)
-      const inputFileCandidates = this.selectedComponent?.inputFiles 
-        ? this.selectedComponent.inputFiles
-            .map((file)=>{
-              return typeof file === "string" ? file : file.name;
-            })
-            .filter((name)=>{
-              // Filter out glob expressions (*, ?, [, ])
-              return name && !name.match(/[*?\[\]]/);
-            })
-        : [];
-      
-      // Merge and deduplicate
-      const allCandidates = [...new Set([...scriptCandidates, ...inputFileCandidates])];
-      this.commitScriptCandidates(allCandidates);
+      // Emit items to parent (componentProperty) to update scriptCandidates
+      this.$emit("items-updated", this.items);
     },
     currentComponent: {
       //edit workflow -> server respond workflow data -> fire this event
@@ -445,7 +425,6 @@ export default {
       this.percentUploaded = (event.bytesLoaded / event.file.size) * 100;
     },
     ...mapMutations({
-      commitScriptCandidates: "scriptCandidates",
       commitSelectedFile: "selectedFile",
       commitWaitingDownload: "waitingDownload"
     }),

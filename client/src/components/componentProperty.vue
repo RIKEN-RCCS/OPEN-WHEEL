@@ -603,11 +603,13 @@
               v-if="hasLocalFileBrowser"
               ref="fileBrowser"
               :readonly="false"
+              @items-updated="updateScriptCandidatesFromBrowser"
             />
             <remote-file-browser
               v-if="hasRemoteFileBrowser"
               ref="rfb"
               :readonly="false"
+              @items-updated="updateScriptCandidatesFromBrowser"
             />
             <gfarm-tar-browser
               v-if="hasGfarmTarBrowser"
@@ -848,14 +850,14 @@ export default {
               });
             
             // Add inputFiles (filtered for non-glob expressions)
-            const inputFileCandidates = this.selectedComponent?.inputFiles 
-              ? this.selectedComponent.inputFiles
+            const inputFileCandidates = this.copySelectedComponent?.inputFiles
+              ? this.copySelectedComponent.inputFiles
                   .map((file)=>{
                     return typeof file === "string" ? file : file.name;
                   })
                   .filter((name)=>{
-                    // Filter out glob expressions (*, ?, [, ])
-                    return name && !name.match(/[*?\[\]]/);
+                    // Filter out glob expressions (*, ?, [, ]) and directories (ending with / or \)
+                    return name && !name.match(/[*?[\]]/) && !name.endsWith("/") && !name.endsWith("\\");
                   })
               : [];
             
@@ -897,6 +899,49 @@ export default {
     }),
     isValidInputFilename,
     isValidOutputFilename,
+    updateScriptCandidatesFromBrowser(items) {
+      if (!this.selectedComponent || ["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type)) {
+        return;
+      }
+      
+      const scriptCandidates = items
+        .filter((e)=>{
+          return e.type && e.type.startsWith("file");
+        })
+        .map((e)=>{
+          return e.name;
+        });
+      
+      // Add inputFiles (filtered for non-glob expressions)
+      const inputFileCandidates = this.copySelectedComponent?.inputFiles
+        ? this.copySelectedComponent.inputFiles
+            .map((file)=>{
+              return typeof file === "string" ? file : file.name;
+            })
+            .filter((name)=>{
+              // Filter out glob expressions (*, ?, [, ]) and directories (ending with / or \)
+              return name && !name.match(/[*?[\]]/) && !name.endsWith("/") && !name.endsWith("\\");
+            })
+        : [];
+
+      // Merge and deduplicate
+      const allCandidates = [...new Set([...scriptCandidates, ...inputFileCandidates])];
+      this.commitScriptCandidates(allCandidates);
+    },
+    updateScriptCandidatesAfterInputFileChange() {
+      // Called when inputFiles are added/updated/removed
+      const localItems = this.$refs.fileBrowser?.items;
+      const remoteItems = this.$refs.rfb?.items;
+
+      if (this.hasLocalFileBrowser && Array.isArray(localItems) && localItems.length > 0) {
+        this.updateScriptCandidatesFromBrowser(localItems);
+      } else if (this.hasRemoteFileBrowser && Array.isArray(remoteItems) && remoteItems.length > 0) {
+        this.updateScriptCandidatesFromBrowser(remoteItems);
+      } else {
+        // File browser items not available yet, use empty array (will still include inputFiles)
+        this.updateScriptCandidatesFromBrowser([]);
+      }
+    },
     closeProperty() {
       this.commitSelectedComponent(null);
       this.open = false;
@@ -926,16 +971,19 @@ export default {
       this.copySelectedComponent.inputFiles.push(v);
       const ID = this.selectedComponent.ID;
       SIO.emitGlobal("addInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID, SIO.generalCallback);
+      this.updateScriptCandidatesAfterInputFileChange();
     },
     updateInputFiles(v, index) {
       this.copySelectedComponent.inputFiles.splice(index, 1, v);
       const ID = this.selectedComponent.ID;
       SIO.emitGlobal("renameInputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID, SIO.generalCallback);
+      this.updateScriptCandidatesAfterInputFileChange();
     },
     removeFromInputFiles(v, index) {
       this.copySelectedComponent.inputFiles.splice(index, 1);
       const ID = this.selectedComponent.ID;
       SIO.emitGlobal("removeInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID, SIO.generalCallback);
+      this.updateScriptCandidatesAfterInputFileChange();
     },
     addToOutputFiles(v) {
       this.copySelectedComponent.outputFiles.push(v);
