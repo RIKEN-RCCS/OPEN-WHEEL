@@ -50,7 +50,8 @@ export async function onGetFileList(projectRootDir, msg, cb) {
     dirWithProjectJson: projectJsonFileOnly,
     underComponent: exceptSystemFiles,
     sourceComponent: exceptSystemFiles,
-    SND: exceptSystemFiles
+    SND: exceptSystemFiles,
+    files: exceptSystemFiles
   };
   const fileFilter = filterTable[msg.mode] || null;
   try {
