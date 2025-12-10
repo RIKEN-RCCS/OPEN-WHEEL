@@ -11,16 +11,16 @@
       <template #activator="{ isOpen, props }">
         <v-list-item
           :key="item[itemKey]"
-          :class="{'text-primary': activatable && active !== null && active[itemKey] === item[itemKey]}"
+          :class="{'text-primary font-weight-bold selected-item': activatable && active !== null && active[itemKey] === item[itemKey]}"
         >
           <template #prepend>
             <v-icon
               v-bind="props"
               :icon="getNodeIcon(isOpen, item)"
-              @click="onClickNodeIcon(item)"
+              @click.stop="props.onClick"
             />
           </template>
-          <div @click="(e) => { props.onClick(e); onActiveted(item); onClickNodeIcon(item); }">
+          <div @click="(e) => { if (!isOpen) { props.onClick(e); } onActiveted(item); }">
             <slot
               name="label"
               :item="item"
@@ -73,7 +73,7 @@
   <template v-else>
     <v-list-item
       :key="item[itemKey]"
-      :class="{'text-primary': activatable && active !== null && active[itemKey] === item[itemKey]}"
+      :class="{'text-primary font-weight-bold selected-item': activatable && active !== null && active[itemKey] === item[itemKey]}"
       @click="onActiveted(item)"
     >
       <template #prepend>
@@ -151,3 +151,9 @@ export default {
   }
 };
 </script>
+<style scoped>
+.selected-item {
+  background-color: rgba(var(--v-theme-primary), 0.12) !important;
+  border-left: 3px solid rgb(var(--v-theme-primary));
+}
+</style>

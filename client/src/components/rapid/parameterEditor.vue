@@ -16,8 +16,8 @@
       :target-files="parameterSetting.targetFiles"
       :read-only="readOnly"
       @open-new-tab="openNewTab"
-      @add="(e)=>{console.log('DEBUG add',e);parameterSetting.targetFiles.push(e)}"
-      @del="(e)=>{console.log('DEBUG del',e);removeFromArray(parameterSetting.targetFiles, e, 'targetName')}"
+      @add="(e)=>{parameterSetting.targetFiles.push(e)}"
+      @del="(e)=>{removeFromArray(parameterSetting.targetFiles, e, 'targetName')}"
     />
     <div class="border-top">
       <parameter
@@ -144,6 +144,7 @@ export default {
     }),
     onAddNewItem(mode, newItem) {
       this.parameterSetting[mode].push(newItem);
+      this.scheduleAutoSave();
     },
     onUpdateItem(mode, target, newItem) {
       target.srcName = newItem.srcName;
@@ -151,6 +152,7 @@ export default {
       if (newItem.dstNode) {
         target.dstNode = newItem.dstNode;
       }
+      this.scheduleAutoSave();
     },
     onDeleteItem(mode, target) {
       this.parameterSetting[mode] = this.parameterSetting[mode].filter((e)=>{
@@ -165,6 +167,7 @@ export default {
         }
         return false;
       });
+      this.scheduleAutoSave();
     },
     openNewTab(...args) {
       this.$emit("openNewTab", ...args);
@@ -216,13 +219,20 @@ export default {
           if (!rt) {
             debug("ERROR: parameter setting auto-save failed");
             this.showSnackbar(`parameter setting auto-save failed`);
+            return;
           }
-          //Do NOT update initialParameterSetting here - it should only be updated when file is first loaded
+          this.initialParameterSetting = JSON.parse(payload);
         });
     },
     async revertAll() {
       //Revert to initial parameter setting and save to server
-      this.parameterSetting = JSON.parse(JSON.stringify(this.initialParameterSetting));
+      const reverted = JSON.parse(JSON.stringify(this.initialParameterSetting));
+      
+      // Update parameterSetting reactively
+      Object.keys(this.parameterSetting).forEach(key => {
+        delete this.parameterSetting[key];
+      });
+      Object.assign(this.parameterSetting, reverted);
 
       const payload = JSON.stringify(this.parameterSetting);
 
