@@ -17,10 +17,10 @@
             <v-icon
               v-bind="props"
               :icon="getNodeIcon(isOpen, item)"
-              @click.stop="props.onClick"
+              @click.stop="(e) => { props.onClick(e); if (!isOpen) { onClickNodeIcon(item); } }"
             />
           </template>
-          <div @click="(e) => { if (!isOpen) { props.onClick(e); } onActiveted(item); }">
+          <div @click="(e) => { if (!isOpen) { props.onClick(e); onClickNodeIcon(item); } onActiveted(item); }">
             <slot
               name="label"
               :item="item"
