@@ -25,7 +25,7 @@
     "UT:teardown": "test/teardown.sh",
     "UT:local": "dotenv -e test/.env -- npm run mocha -- --recursive test/app --unhandled-rejections=strict --ignore '**/gfarmOperator.js'",
     "UT:local-gfarm": "dotenv -e test/.env -- npm run mocha -- --unhandled-rejections=strict '**/gfarmOperator.js'",
-    "UT:docker": "docker compose -f test/compose.yml run --build --env-file test/.env wheel_release_test",
+    "UT:docker": "docker compose --env-file test/.env -f test/compose.yml run --build wheel_release_test",
     "test": "run-s UT:setup UT:local UT:teardown",
     "testDocker": "run-s UT:setupDocker UT:docker UT:teardown",
     "coverage": "nyc --reporter=html --reporter=text npm run UT:local"
