@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 
-import { isInitialComponent, isLocalComponent } from "./workflowComponent.js";
+import { isInitialComponent, isLocal } from "./workflowComponent.js";
 import { remoteHost } from "../db/db.js";
 import { jobScheduler } from "../db/db.js";
 import { checkScript } from "./fileValidator.js";
@@ -26,7 +26,7 @@ export async function validateTask(projectRootDir, component) {
     return Promise.reject(new Error(`illegal path`));
   }
   //if (typeof component.host === "string" && component.host !== "localhost") {
-  if (!isLocalComponent(component)) {
+  if (!isLocal(component)) {
     const hostinfo = _internal.remoteHost.query("name", component.host);
     if (typeof hostinfo === "undefined") {
       //local job is not implemented
@@ -76,7 +76,7 @@ export async function validateStepjob(projectRootDir, component) {
   if (!component.useJobScheduler) {
     return Promise.reject(new Error(`useJobScheduler must be set`));
   }
-  if (isLocalComponent(component)) {
+  if (isLocal(component)) {
     return Promise.reject(new Error("stepjob is only supported on remotehost"));
   }
 
@@ -110,7 +110,7 @@ export async function validateBulkjobTask(projectRootDir, component) {
   if (!component.useJobScheduler) {
     return Promise.reject(new Error(`useJobScheduler must be set`));
   }
-  if (isLocalComponent(component)) {
+  if (isLocal(component)) {
     return Promise.reject(new Error("bulkjobTask is only supported on remotehost"));
   }
   const hostinfo = _internal.remoteHost.query("name", component.host);

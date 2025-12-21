@@ -6,6 +6,7 @@
 import { v1 } from "uuid";
 import { defaultPSconfigFilename } from "../db/db.js";
 import { readComponentJsonByID } from "./componentJsonIO.js";
+import { isLocal } from "../../../common/checkComponent.js";
 
 const _internal = {
   readComponentJsonByID
@@ -576,10 +577,14 @@ export function getComponentDefaultName(type) {
  * return this component run on localhost or not
  * @param {object} component - component object
  * @returns {boolean} - local component or not
+ * @deprecated Use isLocal from common/checkComponent.js instead
  */
 export function isLocalComponent(component) {
-  return typeof component.host === "undefined" || component.host === "localhost";
+  return isLocal(component);
 }
+
+//Re-export isLocal from common for convenience
+export { isLocal };
 
 /**
  * determine if storage-like component or not

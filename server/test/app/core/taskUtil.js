@@ -13,7 +13,7 @@ const expect = chai.expect;
 import { jobScheduler } from "../../../app/db/db.js";
 
 //testee
-import { cancelDispatchedTasks, killTask, killLocalProcess, cancelRemoteJob, _internal } from "../../../app/core/taskUtil.js";
+import { cancelDispatchedTasks, killTask, killLocalProcess, cancelRemoteJob, taskStateFilter, _internal } from "../../../app/core/taskUtil.js";
 
 describe("UT for taskUtil class", function () {
   describe("#cancelDispatchedTasks", ()=>{
@@ -182,6 +182,71 @@ describe("UT for taskUtil class", function () {
       await expect(cancelRemoteJob(task)).to.be.rejectedWith(Error, "SSH execution failed");
       sinon.assert.calledOnce(loggerDebugStub);
       sinon.assert.calledWith(loggerDebugStub, "cancel job: scancel 12345");
+    });
+  });
+  describe("#taskStateFilter", ()=>{
+    it("should filter task properties correctly", ()=>{
+      const task = {
+        name: "testTask",
+        ID: "task123",
+        type: "task",
+        host: "localhost",
+        useJobScheduler: true,
+        workingDir: "/work/dir",
+        description: "Test task",
+        state: "running",
+        parent: "parent123",
+        parentType: "workflow",
+        ancestorsName: "workflow1/task1",
+        ancestorsType: "workflow/task",
+        dispatchedTime: "2023-01-01T00:00:00Z",
+        startTime: "2023-01-01T00:01:00Z",
+        endTime: "2023-01-01T00:02:00Z",
+        preparedTime: "2023-01-01T00:00:30Z",
+        jobSubmittedTime: "2023-01-01T00:00:45Z",
+        jobStartTime: "2023-01-01T00:01:00Z",
+        jobEndTime: "2023-01-01T00:02:00Z",
+        extraProperty: "should be filtered out"
+      };
+      const filtered = taskStateFilter(task);
+      expect(filtered).to.deep.equal({
+        name: "testTask",
+        ID: "task123",
+        type: "task",
+        host: "localhost",
+        useJobScheduler: true,
+        workingDir: "/work/dir",
+        description: "Test task",
+        state: "running",
+        parent: "parent123",
+        parentType: "workflow",
+        ancestorsName: "workflow1/task1",
+        ancestorsType: "workflow/task",
+        dispatchedTime: "2023-01-01T00:00:00Z",
+        startTime: "2023-01-01T00:01:00Z",
+        endTime: "2023-01-01T00:02:00Z",
+        preparedTime: "2023-01-01T00:00:30Z",
+        jobSubmittedTime: "2023-01-01T00:00:45Z",
+        jobStartTime: "2023-01-01T00:01:00Z",
+        jobEndTime: "2023-01-01T00:02:00Z"
+      });
+    });
+    it("should handle task without description", ()=>{
+      const task = {
+        name: "testTask",
+        ID: "task123",
+        type: "task",
+        host: "remotehost",
+        useJobScheduler: false,
+        workingDir: "/work/dir",
+        state: "finished",
+        parent: "parent123",
+        parentType: "workflow",
+        ancestorsName: "workflow1/task1",
+        ancestorsType: "workflow/task"
+      };
+      const filtered = taskStateFilter(task);
+      expect(filtered.description).to.equal("");
     });
   });
 });

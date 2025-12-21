@@ -36,8 +36,18 @@ function isHPCISS(component) {
   return component.type === "hpciss";
 }
 
+/**
+ * determine if component is local
+ * @param {object} component - component object
+ * @returns {boolean} - true if component runs on localhost
+ */
+function isLocal(component) {
+  return typeof component.host === "undefined" || component.host === "localhost";
+}
+
 export {
   hasRemoteFileBrowser,
   hasGfarmTarBrowser,
-  isHPCISS
+  isHPCISS,
+  isLocal
 };

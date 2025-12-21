@@ -237,8 +237,8 @@ export default {
   watch: {
     dialog(newVal) {
       if (newVal && this.label === "scatter") {
-        // Load source file candidates when dialog opens for scatter
-        // (scatter uses current PS component as source, no tree selection needed)
+        //Load source file candidates when dialog opens for scatter
+        //(scatter uses current PS component as source, no tree selection needed)
         this.loadSrcFileCandidates();
       }
     }
@@ -356,21 +356,21 @@ export default {
           this.srcFileCandidates = [];
           return;
         }
-        
+
         let candidates = fileList.map((e)=>{
           return e.name;
         });
-        
-        // For scatter, also add inputFiles (excluding globs and directories)
+
+        //For scatter, also add inputFiles (excluding globs and directories)
         if (this.label === "scatter" && this.selectedComponent.inputFiles) {
           const inputFileNames = this.selectedComponent.inputFiles
-            .map((f)=> f.name)
+            .map((f)=>{ return f.name; })
             .filter((name)=>{
               return !name.includes("*") && !name.includes("?") && !name.endsWith("/") && !name.endsWith("\\");
             });
           candidates = [...new Set([...candidates, ...inputFileNames])];
         }
-        
+
         this.srcFileCandidates = candidates;
       });
     },

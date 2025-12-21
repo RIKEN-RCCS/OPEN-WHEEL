@@ -97,27 +97,27 @@ export default {
     }
   },
   mounted() {
-    // Update connection status immediately and on events
-    const updateConnectionStatus = () => {
+    //Update connection status immediately and on events
+    const updateConnectionStatus = ()=>{
       this.isConnected = SIO.isConnected();
     };
-    
+
     updateConnectionStatus();
-    
-    // Listen for connection events
-    SIO.onConnect(() => {
+
+    //Listen for connection events
+    SIO.onConnect(()=>{
       this.isConnected = true;
     });
-    
-    SIO.onDisconnect(() => {
+
+    SIO.onDisconnect(()=>{
       this.isConnected = false;
     });
-    
-    // Poll connection status every second as a fallback
+
+    //Poll connection status every second as a fallback
     this.connectionCheckInterval = setInterval(updateConnectionStatus, 1000);
   },
   beforeUnmount() {
-    // Clean up interval
+    //Clean up interval
     if (this.connectionCheckInterval) {
       clearInterval(this.connectionCheckInterval);
     }

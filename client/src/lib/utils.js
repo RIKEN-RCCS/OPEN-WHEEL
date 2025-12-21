@@ -2,10 +2,11 @@
 
 import { textHeight, boxWidth, iconSize } from "./constants.json";
 import loadComponentDefinition from "./componentDefinision.js";
+import { isLocal } from "../../../common/checkComponent.js";
 const componentDefinitionObj = loadComponentDefinition();
 export function getComponentIcon(type, host, useJobScheduler) {
   if (type === "task") {
-    if (host === "localhost") {
+    if (isLocal({ host })) {
       if (useJobScheduler === true) {
         return componentDefinitionObj["taskAndUsejobscheluler"].img;
       }

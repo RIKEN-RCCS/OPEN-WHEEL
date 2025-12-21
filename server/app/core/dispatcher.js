@@ -18,11 +18,11 @@ import { sanitizePath, convertPathSep, replacePathsep } from "./pathUtils.js";
 import { readJsonGreedy } from "./fileUtils.js";
 import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS } from "./deliverFile.js";
 import { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } from "./parameterParser.js";
-import { isLocal } from "../lib/utility.js";
+import { isLocal } from "../../../common/checkComponent.js";
 import { isSameRemoteHost } from "./componentHostOperations.js";
 import { setComponentStateR } from "./componentState.js";
 import { writeComponentJson, readComponentJson, readComponentJsonByID } from "./componentJsonIO.js";
-import { isInitialComponent, removeDuplicatedComponent, hasStoragePath, isLocalComponent } from "./workflowComponent.js";
+import { isInitialComponent, removeDuplicatedComponent, hasStoragePath } from "./workflowComponent.js";
 import { getChildren } from "./workflowUtil.js";
 import { evalCondition, getRemoteWorkingDir, isFinishedState, isSubComponent } from "./dispatchUtils.js";
 import {
@@ -736,10 +736,10 @@ class Dispatcher extends EventEmitter {
       } else {
         ++component.numFinished;
       }
-      // Write updated component JSON
+      //Write updated component JSON
       const templateRoot = path.resolve(this.cwfDir, component.name);
       await writeComponentJson(this.projectRootDir, templateRoot, component, true);
-      // Emit component state changed for the loop component itself
+      //Emit component state changed for the loop component itself
       const ee = eventEmitters.get(this.projectRootDir);
       if (ee) {
         ee.emit("componentStateChanged", component);
@@ -919,7 +919,7 @@ class Dispatcher extends EventEmitter {
           } else {
             logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "child state is illegal", newComponent.state);
           }
-          // Emit component state changed for the PS/foreach component itself
+          //Emit component state changed for the PS/foreach component itself
           const ee = eventEmitters.get(this.projectRootDir);
           if (ee) {
             ee.emit("componentStateChanged", component);
@@ -1335,7 +1335,7 @@ class Dispatcher extends EventEmitter {
             fromHPCISS,
             fromHPCISStar
           });
-        } else if (!isLocalComponent(srcComponent) && !["task", "stepjobTask", "bulkjobtask", "hpciss", "hpcisstar"].includes(srcComponent.type)) {
+        } else if (!isLocal(srcComponent) && !["task", "stepjobTask", "bulkjobtask", "hpciss", "hpcisstar"].includes(srcComponent.type)) {
           //memo1: taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼るだけでよいので除外している
           //memo2: この方法だと、接続先が複数あるエントリは複数回rsyncを実行することになるため将来的には全てtaskコンポーネントと同じ方式にする必要がある
 

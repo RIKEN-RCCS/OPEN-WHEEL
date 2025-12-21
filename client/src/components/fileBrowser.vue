@@ -308,7 +308,7 @@ export default {
       if (!this.needScriptCandidate) {
         return;
       }
-      // Emit items to parent (componentProperty) to update scriptCandidates
+      //Emit items to parent (componentProperty) to update scriptCandidates
       this.$emit("items-updated", this.items);
     },
     getNodeIcon(isOpen, item) {
