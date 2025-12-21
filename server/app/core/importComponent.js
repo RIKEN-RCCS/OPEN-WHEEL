@@ -86,9 +86,8 @@ async function regenerateComponentIDsRecursively(projectRootDir, componentDir, p
   //Write updated component JSON
   await fs.writeJson(componentJsonFile, component, { spaces: 4 });
 
-  //Update componentPath
-  const relativePath = path.relative(projectRootDir, componentDir);
-  await updateComponentPath(projectRootDir, newID, relativePath);
+  //Update componentPath - pass absolute path
+  await updateComponentPath(projectRootDir, newID, componentDir);
 
   //Recursively process child components
   const childDirs = await fs.readdir(componentDir);
