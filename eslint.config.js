@@ -249,7 +249,7 @@ export default [
     }
   },
   {
-    files: ["*.js", "**/*.js", "**/*.vue"],
+    files: ["*.js", "**/*.js", "**/*.vue", "**/*.ts", "**/*.json"],
     plugins: {
       "@stylistic": stylistic,
       jsdoc
