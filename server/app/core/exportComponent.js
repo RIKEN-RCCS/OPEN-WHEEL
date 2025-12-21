@@ -10,24 +10,48 @@ import { glob } from "glob";
 import { createTempd } from "./tempd.js";
 import { getComponentDir } from "./componentJsonIO.js";
 import { gitClone } from "./gitOperator2.js";
-import { setComponentStateR } from "./componentState.js";
-import { removeAllLinkFromComponent } from "./componentLinks.js";
 import { componentJsonFilename } from "../db/db.js";
 
 const { create } = tar;
 
 /**
- * get all component IDs under specified directory
- * @param {string} dir - directory path to search
- * @returns {Promise<string[]>} - array of component IDs
+ * reset all component states to "not-started" in a directory (without git operations)
+ * @param {string} dir - directory path
+ * @returns {Promise} - resolved when all states are updated
  */
-async function getAllComponentIDsInDir(dir) {
+async function resetComponentStates(dir) {
   const componentJsonFiles = await glob(path.join(dir, "**", componentJsonFilename));
-  const IDs = await Promise.all(componentJsonFiles.map(async (file)=>{
-    const componentJson = await fs.readJson(file);
-    return componentJson.ID;
+  componentJsonFiles.push(path.join(dir, componentJsonFilename));
+
+  return Promise.all(componentJsonFiles.map(async (file)=>{
+    const component = await fs.readJson(file);
+    component.state = "not-started";
+    await fs.writeJson(file, component, { spaces: 4 });
   }));
-  return IDs;
+}
+
+/**
+ * remove all links from components in a directory (without git operations)
+ * @param {string} dir - directory path
+ * @returns {Promise} - resolved when all links are removed
+ */
+async function removeAllLinks(dir) {
+  const componentJsonFiles = await glob(path.join(dir, "**", componentJsonFilename));
+  componentJsonFiles.push(path.join(dir, componentJsonFilename));
+
+  return Promise.all(componentJsonFiles.map(async (file)=>{
+    const component = await fs.readJson(file);
+    if (component.previous) {
+      component.previous = [];
+    }
+    if (component.next) {
+      component.next = [];
+    }
+    if (component.else) {
+      component.else = [];
+    }
+    await fs.writeJson(file, component, { spaces: 4 });
+  }));
 }
 
 /**
@@ -40,28 +64,34 @@ async function exportComponent(projectRootDir, componentID) {
   const { dir } = await createTempd(projectRootDir, "exportComponent");
   const workDir = await fs.mkdtemp(`${dir}/`);
 
-  //Get component directory and name
-  const componentDir = await getComponentDir(projectRootDir, componentID);
+  //Get component directory (relative to project root)
+  const componentDir = await getComponentDir(projectRootDir, componentID, true);
   const componentBasename = path.basename(componentDir);
+  const relativeComponentPath = path.relative(projectRootDir, componentDir);
 
-  //Clone component directory to exclude uncommitted files
-  const tmpComponentDir = path.join(workDir, componentBasename);
-  await fs.ensureDir(tmpComponentDir);
-  await gitClone(tmpComponentDir, 1, componentDir);
+  //Clone entire project to temp to get only committed files
+  const tmpProjectRootDir = path.join(workDir, "project_tmp");
+  await fs.mkdir(tmpProjectRootDir);
+  await gitClone(tmpProjectRootDir, 1, projectRootDir);
+
+  //Get the component directory in the cloned project
+  const tmpComponentDir = path.join(tmpProjectRootDir, relativeComponentPath);
+
+  //Copy component to final location
+  const finalComponentDir = path.join(workDir, componentBasename);
+  await fs.copy(tmpComponentDir, finalComponentDir);
 
   //Remove .git directory to exclude git metadata
-  await fs.remove(path.join(tmpComponentDir, ".git"));
-
-  //Get all component IDs in the cloned directory
-  const componentIDs = await getAllComponentIDsInDir(tmpComponentDir);
-
-  //Remove all links from components
-  for (const ID of componentIDs) {
-    await removeAllLinkFromComponent(projectRootDir, ID);
+  const gitDir = path.join(finalComponentDir, ".git");
+  if (await fs.pathExists(gitDir)) {
+    await fs.remove(gitDir);
   }
 
+  //Remove all links from components
+  await removeAllLinks(finalComponentDir);
+
   //Reset all component states to "not-started"
-  await setComponentStateR(projectRootDir, tmpComponentDir, "not-started");
+  await resetComponentStates(finalComponentDir);
 
   //Create tar.gz archive with component ID as filename
   const archiveFilename = path.join(dir, `WHEEL_component_${componentID}.tgz`);
