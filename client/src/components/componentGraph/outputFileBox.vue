@@ -4,6 +4,7 @@
       :center="fsenderPos"
       :text="outputFilename"
       text-anchor="end"
+      :truncate-threshold="maxFilenameTextChar"
     />
     <fsender
       v-if="outputFilename"
@@ -19,6 +20,7 @@
 import Fsender from "../../components/componentGraph/fsender.vue";
 import TextBox from "../../components/componentGraph/textBox.vue";
 import { calcFsenderPos } from "../../lib/utils.js";
+import { maxFilenameTextChar } from "../../lib/constants.json";
 
 export default {
   name: "OutputFileBox",
@@ -47,6 +49,11 @@ export default {
       required: true,
       type: Number
     }
+  },
+  data() {
+    return {
+      maxFilenameTextChar
+    };
   },
   computed: {
     fsenderPos() {
