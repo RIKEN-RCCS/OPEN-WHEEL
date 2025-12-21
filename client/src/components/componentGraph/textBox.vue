@@ -15,7 +15,7 @@
 </template>
 <script>
 "use strict";
-import { textLengthLimit, textOffset, maxTextChar } from "../../lib/constants.json";
+import { textLengthLimit, textOffset } from "../../lib/constants.json";
 
 export default {
   name: "TextBox",
@@ -39,6 +39,10 @@ export default {
     textType: {
       type: String,
       default: "file"
+    },
+    truncateThreshold: {
+      type: Number,
+      required: true
     }
   },
   data() {
@@ -46,7 +50,6 @@ export default {
       width: textLengthLimit,
       xoffset: textOffset,
       yoffset: 0,
-      maxTextChar: maxTextChar,
       tooltipVisible: false,
       tooltipX: 0,
       tooltipY: 0,
@@ -54,9 +57,6 @@ export default {
     };
   },
   computed: {
-    truncateThreshold() {
-      return this.textType === "component" ? 15 : maxTextChar;
-    },
     trancatedText() {
       this.calcYOffset();
       if (this.text.length <= this.truncateThreshold) {
