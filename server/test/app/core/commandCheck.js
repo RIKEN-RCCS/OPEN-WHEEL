@@ -50,8 +50,16 @@ describe("commandCheck", ()=>{
   });
 
   after(async ()=>{
-    await fs.remove(serverConfigDir);
-    await fs.remove(appConfigDir);
+    try {
+      await fs.remove(serverConfigDir);
+    } catch (e) {
+      console.log(`Failed to remove ${serverConfigDir}: ${e.message}`);
+    }
+    try {
+      await fs.remove(appConfigDir);
+    } catch (e) {
+      console.log(`Failed to remove ${appConfigDir}: ${e.message}`);
+    }
   });
 
   describe("checkAllCommands", ()=>{
