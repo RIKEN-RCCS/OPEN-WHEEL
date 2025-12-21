@@ -112,6 +112,10 @@ describe("UT for executer class", function () {
         console.log("remote exec test will be done without password because WHEEL_TEST_REMOTE_PASSWORD is not set");
       }
       const hostinfo = remoteHost.query("name", remotehostName);
+      if (!hostinfo) {
+        console.log(`remote exec test will be skipped because host '${remotehostName}' is not found in remoteHost database`);
+        this.skip();
+      }
       hostinfo.password = password;
 
       try {

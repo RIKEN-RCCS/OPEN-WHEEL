@@ -493,10 +493,5 @@ export async function onProjectOperation(clientID, projectRootDir, operation, ac
 }
 
 export const projectOperationQueues = _internal.projectOperationQueues;
-_internal.onRunProject = onRunProject;
-_internal.onStopProject = onStopProject;
-_internal.onCleanProject = onCleanProject;
-_internal.onRevertProject = onRevertProject;
-_internal.onSaveProject = onSaveProject;
 
 export { _internal };

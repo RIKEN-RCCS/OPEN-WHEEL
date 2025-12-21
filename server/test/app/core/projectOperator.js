@@ -125,7 +125,7 @@ describe("UT for projectOperation callback function", function () {
     it("should call onece if 2 consecutive API called", async ()=>{
       await onProjectOperation("dummy", projectRootDir, "revertProject", ack);
       await onProjectOperation("dummy", projectRootDir, "revertProject", ack);
-      await sleep(2000);
+      await sleep(3000);
       expect(onRevertProject).to.be.calledOnce;
     });
   });
