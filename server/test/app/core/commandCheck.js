@@ -11,38 +11,31 @@ import tmp from "tmp-promise";
 describe("commandCheck", ()=>{
   let checkAllCommands;
   let commands;
-  const serverConfigDir = path.resolve(process.cwd(), "config");
-  const appConfigDir = path.resolve(process.cwd(), "app/config");
+  let testConfigDir;
   //eslint-disable-next-line no-unused-vars
   let originalNodeEnv;
+  let originalWheelConfigDir;
 
   before(async ()=>{
-    //for logSettings.js
-    await fs.mkdir(serverConfigDir, { recursive: true });
-    await fs.writeJson(path.resolve(serverConfigDir, "log.json"), {
-      appenders: {
-        stdout: {
-          type: "stdout"
-        }
-      },
-      categories: {
-        default: {
-          appenders: ["stdout"],
-          level: "off"
-        }
-      }
-    });
+    // Create a temporary directory for test configuration
+    const tmpDir = await tmp.dir({ unsafeCleanup: true });
+    testConfigDir = tmpDir.path;
 
-    //for db.js
-    await fs.mkdir(appConfigDir, { recursive: true });
-    await fs.writeJson(path.resolve(appConfigDir, "remotehost.json"), []);
-    await fs.writeJson(path.resolve(appConfigDir, "server.json"), {});
-    await fs.writeJson(path.resolve(appConfigDir, "jobScheduler.json"), {});
-    await fs.writeJson(path.resolve(appConfigDir, "jobScriptTemplate.json"), []);
-    await fs.writeJson(path.resolve(appConfigDir, "projectList.json"), []);
-    await fs.writeJson(path.resolve(appConfigDir, "credentials.json"), {});
-    await fs.writeFile(path.resolve(appConfigDir, "server.key"), "dummy key");
-    await fs.writeFile(path.resolve(appConfigDir, "server.crt"), "dummy crt");
+    // Save original WHEEL_CONFIG_DIR
+    originalWheelConfigDir = process.env.WHEEL_CONFIG_DIR;
+
+    // Set WHEEL_CONFIG_DIR to our test directory
+    process.env.WHEEL_CONFIG_DIR = testConfigDir;
+
+    //for db.js - create config files in test directory
+    await fs.writeJson(path.resolve(testConfigDir, "remotehost.json"), []);
+    await fs.writeJson(path.resolve(testConfigDir, "server.json"), {});
+    await fs.writeJson(path.resolve(testConfigDir, "jobScheduler.json"), {});
+    await fs.writeJson(path.resolve(testConfigDir, "jobScriptTemplate.json"), []);
+    await fs.writeJson(path.resolve(testConfigDir, "projectList.json"), []);
+    await fs.writeJson(path.resolve(testConfigDir, "credentials.json"), {});
+    await fs.writeFile(path.resolve(testConfigDir, "server.key"), "dummy key");
+    await fs.writeFile(path.resolve(testConfigDir, "server.crt"), "dummy crt");
 
     const checkAllCommandsModule = await import("../../../app/core/commandCheck.js");
     checkAllCommands = checkAllCommandsModule.default;
@@ -50,16 +43,15 @@ describe("commandCheck", ()=>{
   });
 
   after(async ()=>{
-    try {
-      await fs.remove(serverConfigDir);
-    } catch (e) {
-      console.log(`Failed to remove ${serverConfigDir}: ${e.message}`);
+    // Restore original WHEEL_CONFIG_DIR
+    if (originalWheelConfigDir === undefined) {
+      delete process.env.WHEEL_CONFIG_DIR;
+    } else {
+      process.env.WHEEL_CONFIG_DIR = originalWheelConfigDir;
     }
-    try {
-      await fs.remove(appConfigDir);
-    } catch (e) {
-      console.log(`Failed to remove ${appConfigDir}: ${e.message}`);
-    }
+
+    // Clean up test config directory
+    await fs.remove(testConfigDir);
   });
 
   describe("checkAllCommands", ()=>{
