@@ -36,27 +36,27 @@ export function path2Array(pathString) {
  * @returns {string|null} - earliest startTime or null if no startTime found
  */
 function getEarliestStartTime(node) {
-  // If this node has startTime, it's a leaf node
+  //If this node has startTime, it's a leaf node
   if (node.startTime) {
     return node.startTime;
   }
-  
-  // If this node has children, find the earliest startTime among them
+
+  //If this node has children, find the earliest startTime among them
   if (Array.isArray(node.children) && node.children.length > 0) {
     const childStartTimes = node.children
-      .map((child) => getEarliestStartTime(child))
-      .filter((time) => time !== null);
-    
+      .map((child)=>{ return getEarliestStartTime(child); })
+      .filter((time)=>{ return time !== null; });
+
     if (childStartTimes.length === 0) {
       return null;
     }
-    
-    // Return the earliest time (minimum value)
-    return childStartTimes.reduce((earliest, current) => {
+
+    //Return the earliest time (minimum value)
+    return childStartTimes.reduce((earliest, current)=>{
       return current < earliest ? current : earliest;
     });
   }
-  
+
   return null;
 }
 
@@ -68,23 +68,23 @@ function sortByStartTime(node) {
   if (!Array.isArray(node.children) || node.children.length === 0) {
     return;
   }
-  
-  // First, recursively sort all children's children
-  node.children.forEach((child) => {
+
+  //First, recursively sort all children's children
+  node.children.forEach((child)=>{
     sortByStartTime(child);
   });
-  
-  // Then sort this level's children
-  node.children.sort((a, b) => {
+
+  //Then sort this level's children
+  node.children.sort((a, b)=>{
     const aTime = getEarliestStartTime(a);
     const bTime = getEarliestStartTime(b);
-    
-    // Nodes without startTime go to the end
+
+    //Nodes without startTime go to the end
     if (aTime === null && bTime === null) return 0;
     if (aTime === null) return 1;
     if (bTime === null) return -1;
-    
-    // Compare timestamps
+
+    //Compare timestamps
     return aTime.localeCompare(bTime);
   });
 }
@@ -167,9 +167,9 @@ export function taskStateList2Tree(taskStatelist, tree) {
       }
     }
   });
-  
-  // Sort the tree by startTime at each level
+
+  //Sort the tree by startTime at each level
   sortByStartTime(tree);
-  
+
   return treeIsChanged;
 }

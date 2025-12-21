@@ -4,14 +4,15 @@
  * See License in the project root for the license information.
  */
 import { remoteHost } from "../db/db.js";
-import { isLocalComponent, hasChild } from "./workflowComponent.js";
+import { isLocal } from "../../../common/checkComponent.js";
+import { hasChild } from "./workflowComponent.js";
 import { getChildren } from "./workflowUtil.js";
 import { readComponentJsonByID } from "./componentJsonIO.js";
 import { isDefaultPort } from "../lib/utility.js";
 
 const _internal = {
   remoteHost,
-  isLocalComponent,
+  isLocal,
   hasChild,
   getChildren,
   readComponentJsonByID,
@@ -32,7 +33,7 @@ export async function isSameRemoteHost(projectRootDir, src, dst) {
   }
   const srcComponent = await _internal.readComponentJsonByID(projectRootDir, src);
   const dstComponent = await _internal.readComponentJsonByID(projectRootDir, dst);
-  if (_internal.isLocalComponent(srcComponent) || _internal.isLocalComponent(dstComponent)) {
+  if (_internal.isLocal(srcComponent) || _internal.isLocal(dstComponent)) {
     return false;
   }
   if (srcComponent.host === dstComponent.host) {

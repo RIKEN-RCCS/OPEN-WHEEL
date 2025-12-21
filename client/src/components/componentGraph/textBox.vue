@@ -104,16 +104,16 @@ export default {
     },
     updateTooltipPosition(event) {
       if (this.text.length > this.truncateThreshold && this.tooltipElement) {
-        const pannableGroup = document.getElementById('pannable-group');
+        const pannableGroup = document.getElementById("pannable-group");
         if (!pannableGroup) return;
-        
+
         const svg = event.target.ownerSVGElement;
         const pt = svg.createSVGPoint();
         pt.x = event.clientX;
         pt.y = event.clientY;
         const svgP = pt.matrixTransform(pannableGroup.getScreenCTM().inverse());
-        this.tooltipElement.setAttribute('x', svgP.x + 10);
-        this.tooltipElement.setAttribute('y', svgP.y - 30);
+        this.tooltipElement.setAttribute("x", svgP.x + 10);
+        this.tooltipElement.setAttribute("y", svgP.y - 30);
       }
     },
     hideTooltip() {
@@ -124,32 +124,32 @@ export default {
       }
     },
     createTooltipElement(event) {
-      const pannableGroup = document.getElementById('pannable-group');
+      const pannableGroup = document.getElementById("pannable-group");
       if (!pannableGroup) return;
-      
-      // Remove existing tooltip if any
+
+      //Remove existing tooltip if any
       if (this.tooltipElement) {
         this.tooltipElement.remove();
       }
-      
-      // Calculate position relative to the pannable group
+
+      //Calculate position relative to the pannable group
       const svg = event.target.ownerSVGElement;
       const pt = svg.createSVGPoint();
       pt.x = event.clientX;
       pt.y = event.clientY;
       const svgP = pt.matrixTransform(pannableGroup.getScreenCTM().inverse());
-      
-      // Create foreignObject element
-      const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
-      foreignObject.setAttribute('x', svgP.x + 10);
-      foreignObject.setAttribute('y', svgP.y - 30);
-      foreignObject.setAttribute('width', '300');
-      foreignObject.setAttribute('height', '100');
-      foreignObject.setAttribute('style', 'pointer-events: none; overflow: visible;');
-      
-      // Create div inside foreignObject
-      const div = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
-      div.setAttribute('style', `
+
+      //Create foreignObject element
+      const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+      foreignObject.setAttribute("x", svgP.x + 10);
+      foreignObject.setAttribute("y", svgP.y - 30);
+      foreignObject.setAttribute("width", "300");
+      foreignObject.setAttribute("height", "100");
+      foreignObject.setAttribute("style", "pointer-events: none; overflow: visible;");
+
+      //Create div inside foreignObject
+      const div = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+      div.setAttribute("style", `
         background-color: rgba(0, 0, 0, 0.85);
         color: white;
         padding: 8px 12px;
@@ -159,10 +159,10 @@ export default {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       `);
       div.textContent = this.text;
-      
+
       foreignObject.appendChild(div);
       pannableGroup.appendChild(foreignObject);
-      
+
       this.tooltipElement = foreignObject;
     }
   }

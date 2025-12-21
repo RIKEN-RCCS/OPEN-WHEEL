@@ -227,9 +227,9 @@ export default {
     async revertAll() {
       //Revert to initial parameter setting and save to server
       const reverted = JSON.parse(JSON.stringify(this.initialParameterSetting));
-      
-      // Update parameterSetting reactively
-      Object.keys(this.parameterSetting).forEach(key => {
+
+      //Update parameterSetting reactively
+      Object.keys(this.parameterSetting).forEach((key)=>{
         delete this.parameterSetting[key];
       });
       Object.assign(this.parameterSetting, reverted);

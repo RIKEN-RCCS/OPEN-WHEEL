@@ -5,7 +5,7 @@
  */
 import fs from "fs-extra";
 import { remoteHost } from "../db/db.js";
-import { isLocalComponent } from "./workflowComponent.js";
+import { isLocal } from "../../../common/checkComponent.js";
 import { checkPSSettingFile } from "./fileValidator.js";
 
 const _internal = {
@@ -54,7 +54,7 @@ export async function validateStorage(component) {
   if (typeof component.storagePath !== "string") {
     return Promise.reject(new Error("storagePath is not set"));
   }
-  if (isLocalComponent(component)) {
+  if (isLocal(component)) {
     try {
       const stats = await fs.stat(component.storagePath);
       if (!stats.isDirectory()) {

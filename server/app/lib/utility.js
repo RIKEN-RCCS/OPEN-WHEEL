@@ -204,15 +204,6 @@ export function isDefaultPort(port) {
 }
 
 /**
- * determine if component is local
- * @param {object} component - component object
- * @returns {boolean} -
- */
-export function isLocal(component) {
-  return typeof component.host === "undefined" || component.host === "localhost";
-}
-
-/**
  * make directory with non-duplicated name
  * @param {string} basename - dirname
  * @param {string} argSuffix -   number

@@ -111,6 +111,9 @@ export function taskStateFilter(task) {
   return {
     name: task.name,
     ID: task.ID,
+    type: task.type,
+    host: task.host,
+    useJobScheduler: task.useJobScheduler,
     workingDir: task.workingDir,
     description: task.description ? task.description : "",
     state: task.state,

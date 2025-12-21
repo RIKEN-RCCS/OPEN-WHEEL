@@ -274,7 +274,7 @@ export default {
       if (mode === "save") {
         this.saveAllFiles();
       } else if (mode === "discard") {
-        // Revert all changes
+        //Revert all changes
         this.$refs.text.revertAll();
         this.$refs.param.revertAll();
       }
