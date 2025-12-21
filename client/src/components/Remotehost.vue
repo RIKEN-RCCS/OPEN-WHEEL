@@ -14,6 +14,7 @@
       density="comfortable"
       data-cy="remotehost-remotehost-title"
       @nav-icon-click="drawer=!drawer"
+      @show-toast="showSnackbar"
     />
     <v-main>
       <remotehost-manager

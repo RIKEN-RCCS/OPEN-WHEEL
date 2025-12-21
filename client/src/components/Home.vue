@@ -14,6 +14,7 @@
       density="comfortable"
       data-cy="home-home-application_tool_bar"
       @nav-icon-click="drawer=!drawer"
+      @show-toast="showSnackbar"
     />
     <v-main>
       <v-toolbar

@@ -8,6 +8,7 @@
     <application-tool-bar
       title="viewer"
       @nav-icon-click="drawer=!drawer"
+      @show-toast="showSnackbar"
     />
     <nav-drawer
       v-model="drawer"
