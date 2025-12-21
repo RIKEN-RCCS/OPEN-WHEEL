@@ -49,8 +49,7 @@
     "vue-eslint-parser": "^10.2.0"
   },
   "lint-staged": {
-    "*.js": "eslint --fix",
-    "*.vue": "eslint --fix"
+    "*.{js,vue,ts,json}": "eslint --fix"
   },
   "dependencies": {
     "@isaacs/fs-minipass": "^4.0.1"
