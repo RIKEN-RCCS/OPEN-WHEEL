@@ -21,13 +21,32 @@ const { create } = tar;
  */
 async function resetComponentStates(dir) {
   const componentJsonFiles = await glob(path.join(dir, "**", componentJsonFilename));
-  componentJsonFiles.push(path.join(dir, componentJsonFilename));
+  //Include root component JSON if it exists
+  const rootComponentJson = path.join(dir, componentJsonFilename);
+  if (await fs.pathExists(rootComponentJson)) {
+    componentJsonFiles.push(rootComponentJson);
+  }
 
-  return Promise.all(componentJsonFiles.map(async (file)=>{
-    const component = await fs.readJson(file);
-    component.state = "not-started";
-    await fs.writeJson(file, component, { spaces: 4 });
+  const results = await Promise.allSettled(componentJsonFiles.map(async (file)=>{
+    const stat = await fs.stat(file);
+    if (stat.isFile()) {
+      try {
+        const component = await fs.readJson(file);
+        component.state = "not-started";
+        await fs.writeJson(file, component, { spaces: 4 });
+      } catch (err) {
+        //Ignore files that can't be read
+        console.warn(`Warning: Could not reset state for ${file}:`, err.message);
+      }
+    }
   }));
+
+  const failures = results.filter((r)=>{
+    return r.status === "rejected";
+  });
+  if (failures.length > 0) {
+    throw new Error(`Failed to reset states for ${failures.length} files`);
+  }
 }
 
 /**
@@ -37,21 +56,40 @@ async function resetComponentStates(dir) {
  */
 async function removeAllLinks(dir) {
   const componentJsonFiles = await glob(path.join(dir, "**", componentJsonFilename));
-  componentJsonFiles.push(path.join(dir, componentJsonFilename));
+  //Include root component JSON if it exists
+  const rootComponentJson = path.join(dir, componentJsonFilename);
+  if (await fs.pathExists(rootComponentJson)) {
+    componentJsonFiles.push(rootComponentJson);
+  }
 
-  return Promise.all(componentJsonFiles.map(async (file)=>{
-    const component = await fs.readJson(file);
-    if (component.previous) {
-      component.previous = [];
+  const results = await Promise.allSettled(componentJsonFiles.map(async (file)=>{
+    const stat = await fs.stat(file);
+    if (stat.isFile()) {
+      try {
+        const component = await fs.readJson(file);
+        if (component.previous) {
+          component.previous = [];
+        }
+        if (component.next) {
+          component.next = [];
+        }
+        if (component.else) {
+          component.else = [];
+        }
+        await fs.writeJson(file, component, { spaces: 4 });
+      } catch (err) {
+        //Ignore files that can't be read
+        console.warn(`Warning: Could not remove links for ${file}:`, err.message);
+      }
     }
-    if (component.next) {
-      component.next = [];
-    }
-    if (component.else) {
-      component.else = [];
-    }
-    await fs.writeJson(file, component, { spaces: 4 });
   }));
+
+  const failures = results.filter((r)=>{
+    return r.status === "rejected";
+  });
+  if (failures.length > 0) {
+    throw new Error(`Failed to remove links for ${failures.length} files`);
+  }
 }
 
 /**
