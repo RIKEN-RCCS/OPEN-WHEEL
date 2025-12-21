@@ -25,3 +25,8 @@ test/            end-to-end test with cypress
 - If you make new functions under server, you have to add unit tests for them.
 - If you make changes that affect user interactions, you have to add end-to-end tests for them.
 - never commit, revert or make any other operations to git repo without explicitly order from user.
+
+## implementation policy
+- always write code in async/await style
+- always use try/catch to handle errors in async functions
+- use debug module for logging (temporarily use console.log for debugging is allowed, but remember to remove them before commit)

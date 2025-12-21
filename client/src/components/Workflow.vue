@@ -14,6 +14,7 @@
       title="workflow"
       :base-url="baseURL"
       @nav-icon-click="drawer=!drawer"
+      @show-toast="showSnackbar"
     >
       <template #append>
         <v-tooltip

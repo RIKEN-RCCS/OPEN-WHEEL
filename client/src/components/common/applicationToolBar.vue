@@ -60,6 +60,8 @@
 </template>
 
 <script>
+import Debug from "debug";
+const debug = Debug("wheel:applicationToolBar");
 import imgLogo from "../../assets/wheel_logomark.png";
 import SIO from "../../lib/socketIOWrapper.js";
 
@@ -74,12 +76,13 @@ export default {
       default: "."
     }
   },
-  emits: ["navIconClick"],
+  emits: ["navIconClick", "showToast"],
   data: ()=>{
     return {
       imgLogo,
       isConnected: false,
-      connectionCheckInterval: null
+      connectionCheckInterval: null,
+      isFirstConnection: true
     };
   },
   computed: {
@@ -104,14 +107,43 @@ export default {
 
     updateConnectionStatus();
 
-    //Listen for connection events
-    SIO.onConnect(()=>{
-      this.isConnected = true;
-    });
+    //Delay registration to ensure socket is initialized
+    const registerConnectionHandlers = ()=>{
+      //Listen for connection events
+      SIO.onConnect(()=>{
+        debug("SIO onConnect fired, isFirstConnection:", this.isFirstConnection);
+        this.isConnected = true;
+        if (!this.isFirstConnection) {
+          //Try to use Vuex store directly
+          if (this.$store) {
+            debug("Using $store to show snackbar");
+            this.$store.dispatch("showSnackbar", { message: "Connected to server", timeout: 3000 });
+          } else {
+            //Fallback to emit event to parent
+            debug("Using $emit to show toast");
+            this.$emit("showToast", { message: "Connected to server", timeout: 3000 });
+          }
+        }
+        this.isFirstConnection = false;
+      });
 
-    SIO.onDisconnect(()=>{
-      this.isConnected = false;
-    });
+      SIO.onDisconnect(()=>{
+        debug("SIO onDisconnect fired");
+        this.isConnected = false;
+        //Try to use Vuex store directly
+        if (this.$store) {
+          debug("Using $store to show snackbar");
+          this.$store.dispatch("showSnackbar", { message: "Disconnected from server", timeout: 3000 });
+        } else {
+          //Fallback to emit event to parent
+          debug("Using $emit to show toast");
+          this.$emit("showToast", { message: "Disconnected from server", timeout: 3000 });
+        }
+      });
+    };
+
+    //Try to register handlers immediately, and retry if socket not ready
+    setTimeout(registerConnectionHandlers, 100);
 
     //Poll connection status every second as a fallback
     this.connectionCheckInterval = setInterval(updateConnectionStatus, 1000);
