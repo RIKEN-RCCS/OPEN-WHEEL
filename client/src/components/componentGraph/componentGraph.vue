@@ -189,6 +189,10 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+  <import-component-dialog
+    v-model="openImportComponentDialog"
+    @imported="onComponentImported"
+  />
 </template>
 
 <script>
@@ -201,6 +205,7 @@ import OutputFileBox from "../../components/componentGraph/outputFileBox.vue";
 import Vconnector from "../../components/componentGraph/vconnector.vue";
 import Connector from "../../components/componentGraph/connector.vue";
 import ContextMenu from "../../components/componentGraph/contextMenu.vue";
+import ImportComponentDialog from "../../components/importComponentDialog.vue";
 import VueZoomable from "vue-zoomable";
 import "vue-zoomable/dist/style.css";
 import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor } from "../../lib/constants.json";
@@ -218,6 +223,7 @@ export default {
     Vconnector,
     Connector,
     ContextMenu,
+    ImportComponentDialog,
     VueZoomable
   },
   emits: [
@@ -247,7 +253,8 @@ export default {
       minZoom: 0.01,
       maxZoom: 3,
       zoomStep: 0.01,
-      deleteConfirmDialog: false
+      deleteConfirmDialog: false,
+      openImportComponentDialog: false
     };
   },
   computed: {
@@ -645,35 +652,11 @@ export default {
       this.closeContextMenus();
     },
     importComponent() {
-      const projectRootDir = this.projectRootDir;
-      const targetParentID = this.currentComponent.ID;
-
-      //Set up event handlers for file selection
-      const onChoose = (event)=>{
-        //Set metadata for the uploaded file
-        for (const file of event.files) {
-          file.meta.projectRootDir = projectRootDir;
-          file.meta.targetParentID = targetParentID;
-          file.meta.clientID = SIO.getID();
-          file.meta.isComponentImport = true;
-        }
-      };
-
-      const onUploadComplete = ()=>{
-        this.showSnackbar({ message: "Component import started", timeout: 2000 });
-        //Clean up event listeners
-        SIO.removeUploaderEvent("choose", onChoose);
-        SIO.removeUploaderEvent("complete", onUploadComplete);
-      };
-
-      //Register event listeners
-      SIO.onUploaderEvent("choose", onChoose);
-      SIO.onUploaderEvent("complete", onUploadComplete);
-
-      //Trigger file selection dialog
-      SIO.prompt();
-
       this.closeContextMenus();
+      this.openImportComponentDialog = true;
+    },
+    onComponentImported() {
+      this.showSnackbar({ message: "Component import started", timeout: 2000 });
     },
     ...mapActions({ commitSelectedComponent: "selectedComponent", showSnackbar: "showSnackbar" }),
     ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan", commitCopyInfo: "copyInfo" }),
