@@ -34,10 +34,14 @@ async function onExportComponent(projectRootDir, componentID, cb) {
 async function onImportComponent(archiveFile, projectRootDir, targetParentID, cb) {
   try {
     const newComponentID = await importComponent(projectRootDir, archiveFile, targetParentID);
-    cb(newComponentID);
+    if (typeof cb === "function") {
+      cb(newComponentID);
+    }
   } catch (e) {
     getLogger(projectRootDir).error("import component failed", e);
-    cb(e);
+    if (typeof cb === "function") {
+      cb(e);
+    }
   }
 }
 
