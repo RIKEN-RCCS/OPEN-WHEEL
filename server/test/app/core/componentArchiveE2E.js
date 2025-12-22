@@ -187,7 +187,7 @@ describe("#component export and import e2e", function () {
     const firstName = path.basename(finalProjectJson.componentPath[firstImportID]);
     const secondName = path.basename(finalProjectJson.componentPath[secondImportID]);
     expect(firstName).not.to.equal(secondName);
-    expect(secondName).to.match(/_\d+$/); //Should have suffix
+    expect(secondName).to.match(/_imported\d*$/); //Should have _imported suffix
   });
 
   it("should export and import nested workflows correctly", async ()=>{

@@ -56,6 +56,10 @@ export default {
     modelValue: {
       type: Boolean,
       required: true
+    },
+    pos: {
+      type: Object,
+      default: null
     }
   },
   emits: [
@@ -104,6 +108,10 @@ export default {
         event.file.meta.targetParentID = targetParentID;
         event.file.meta.clientID = SIO.getID();
         event.file.meta.isComponentImport = true;
+        //Pass position if available
+        if (this.pos) {
+          event.file.meta.pos = this.pos;
+        }
         SIO.removeUploaderEvent("start", startHandler);
       };
 

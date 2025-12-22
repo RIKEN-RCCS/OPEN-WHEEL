@@ -191,6 +191,7 @@
   </v-dialog>
   <import-component-dialog
     v-model="openImportComponentDialog"
+    :pos="importComponentPos"
     @imported="onComponentImported"
   />
 </template>
@@ -254,7 +255,8 @@ export default {
       maxZoom: 3,
       zoomStep: 0.01,
       deleteConfirmDialog: false,
-      openImportComponentDialog: false
+      openImportComponentDialog: false,
+      importComponentPos: null
     };
   },
   computed: {
@@ -652,6 +654,8 @@ export default {
       this.closeContextMenus();
     },
     importComponent() {
+      //Save the menu position for placing the imported component
+      this.importComponentPos = { x: this.menuX, y: this.menuY };
       this.closeContextMenus();
       this.openImportComponentDialog = true;
     },
