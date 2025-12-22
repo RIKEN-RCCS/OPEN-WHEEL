@@ -37,7 +37,7 @@ import {
 } from "./workflowEditor.js";
 import { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } from "./jobScript.js";
 import { onGetResultFiles } from "./resultFiles.js";
-import { sendTaskStateList, sendComponentTree } from "./senders.js";
+import { sendTaskStateList, sendComponentTree, sendWorkflow, sendProjectJson } from "./senders.js";
 import { getLogger } from "../logSettings.js";
 import {
   onCreateNewRemoteFile,
@@ -111,7 +111,7 @@ const registerHandlers = (socket, Siofu)=>{
     const projectRootDir = event.file.meta.projectRootDir;
     getLogger(projectRootDir).debug("upload request recieved", event.file.name);
   });
-  uploader.on("saved", (event)=>{
+  uploader.on("saved", async (event)=>{
     //Handle component import uploads specially
     if (event.file.meta.isComponentImport) {
       if (!event.file.success) {
@@ -120,13 +120,21 @@ const registerHandlers = (socket, Siofu)=>{
       }
       //Call importComponent with the uploaded file path
       const { projectRootDir, targetParentID } = event.file.meta;
-      onImportComponent(event.file.pathName, projectRootDir, targetParentID, (result)=>{
-        if (result instanceof Error) {
-          getLogger(projectRootDir).error("component import failed", result);
-        } else {
-          getLogger(projectRootDir).info("component imported successfully", result);
-        }
-      });
+      try {
+        const newComponentID = await onImportComponent(event.file.pathName, projectRootDir, targetParentID);
+        getLogger(projectRootDir).info("component imported successfully", newComponentID);
+
+        //Send updates to client
+        await sendProjectJson(projectRootDir);
+        await sendComponentTree(projectRootDir, projectRootDir);
+
+        //Get the parent component directory and send workflow update
+        const getComponentDir = (await import("../core/componentJsonIO.js")).getComponentDir;
+        const parentDir = await getComponentDir(projectRootDir, targetParentID, true);
+        await sendWorkflow(null, projectRootDir, parentDir);
+      } catch (e) {
+        getLogger(projectRootDir).error("component import failed", e);
+      }
       return;
     }
     if (typeof event.file.meta.projectRootDir !== "string") {
