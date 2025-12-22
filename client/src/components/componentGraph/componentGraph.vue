@@ -648,31 +648,30 @@ export default {
       const projectRootDir = this.projectRootDir;
       const targetParentID = this.currentComponent.ID;
 
-      //Get the uploader instance
-      const uploader = SIO.getUploader();
-
-      //Set up one-time event listener for upload completion
-      const onUploadComplete = (event)=>{
-        const uploadedFilePath = event.detail;
-
-        SIO.emitGlobal("importComponent", uploadedFilePath, projectRootDir, targetParentID, (result)=>{
-          if (result instanceof Error) {
-            this.showSnackbar({ message: `Import failed: ${result.message}`, timeout: 3000 });
-          } else {
-            this.showSnackbar({ message: "Component imported successfully", timeout: 3000 });
-            //Refresh the workflow to show the imported component
-            this.$emit("component-imported");
-          }
-        });
-
-        //Remove the event listener after handling
-        uploader.removeEventListener("complete", onUploadComplete);
+      //Set up event handlers for file selection
+      const onChoose = (event)=>{
+        //Set metadata for the uploaded file
+        for (const file of event.files) {
+          file.meta.projectRootDir = projectRootDir;
+          file.meta.targetParentID = targetParentID;
+          file.meta.clientID = SIO.getID();
+          file.meta.isComponentImport = true;
+        }
       };
 
-      uploader.addEventListener("complete", onUploadComplete);
+      const onUploadComplete = ()=>{
+        this.showSnackbar({ message: "Component import started", timeout: 2000 });
+        //Clean up event listeners
+        SIO.removeUploaderEvent("choose", onChoose);
+        SIO.removeUploaderEvent("complete", onUploadComplete);
+      };
+
+      //Register event listeners
+      SIO.onUploaderEvent("choose", onChoose);
+      SIO.onUploaderEvent("complete", onUploadComplete);
 
       //Trigger file selection dialog
-      uploader.prompt();
+      SIO.prompt();
 
       this.closeContextMenus();
     },

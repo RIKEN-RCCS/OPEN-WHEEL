@@ -112,6 +112,23 @@ const registerHandlers = (socket, Siofu)=>{
     getLogger(projectRootDir).debug("upload request recieved", event.file.name);
   });
   uploader.on("saved", (event)=>{
+    //Handle component import uploads specially
+    if (event.file.meta.isComponentImport) {
+      if (!event.file.success) {
+        getLogger(event.file.meta.projectRootDir).error("component import upload failed", event.file.name);
+        return;
+      }
+      //Call importComponent with the uploaded file path
+      const { projectRootDir, targetParentID } = event.file.meta;
+      onImportComponent(event.file.pathName, projectRootDir, targetParentID, (result)=>{
+        if (result instanceof Error) {
+          getLogger(projectRootDir).error("component import failed", result);
+        } else {
+          getLogger(projectRootDir).info("component imported successfully", result);
+        }
+      });
+      return;
+    }
     if (typeof event.file.meta.projectRootDir !== "string") {
       return onUploadFileSaved2(event);
     }
