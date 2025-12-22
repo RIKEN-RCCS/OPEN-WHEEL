@@ -56,6 +56,7 @@ import {
 } from "./remoteFileBrowser.js";
 import { aboutWheel } from "../core/versionInfo.js";
 import { onImportProject, onExportProject } from "./projectArchive.js";
+import { onExportComponent, onImportComponent } from "./componentArchive.js";
 import { getTempdRoot } from "../core/tempd.js";
 
 const registerHandlers = (socket, Siofu)=>{
@@ -171,6 +172,8 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getProjectList", onGetProjectList.bind(null, socket));
   socket.on("renameProject", onRenameProject.bind(null, socket));
   socket.on("exportProject", onExportProject);
+  socket.on("exportComponent", onExportComponent);
+  socket.on("importComponent", onImportComponent);
   //update
   socket.on("reorderProjectList", onReorderProjectList.bind(null, socket));
   //delete
