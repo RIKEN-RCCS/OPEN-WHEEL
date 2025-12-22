@@ -89,6 +89,7 @@
             :items="componentContextMenuItems"
             @copy="copyComponent"
             @cut="cutComponent"
+            @export="exportComponent"
             @delete="deleteComponent"
             @clean="cleanComponent"
           />
@@ -112,6 +113,7 @@
             :y="menuY"
             :items="backgroundContextMenuItems"
             @paste="pasteComponent"
+            @import="importComponent"
           />
         </g>
       </g>
@@ -222,7 +224,8 @@ export default {
     "component-right-click",
     "connector-right-click",
     "vconnector-right-click",
-    "background-right-click"
+    "background-right-click",
+    "component-imported"
   ],
   data() {
     return {
@@ -242,7 +245,8 @@ export default {
         { label: "delete", event: "delete" }
       ],
       backgroundContextMenuItems: [
-        { label: "paste", event: "paste" }
+        { label: "paste", event: "paste" },
+        { label: "import", event: "import" }
       ],
       minZoom: 0.01,
       maxZoom: 3,
@@ -274,6 +278,7 @@ export default {
       const rt = [];
       rt.push({ label: "copy", event: "copy" });
       rt.push({ label: "cut", event: "cut" });
+      rt.push({ label: "export", event: "export" });
       if (this.projectState !== "not-started") {
         rt.push({ label: "clean", event: "clean" });
       } else {
@@ -614,6 +619,58 @@ export default {
         callback: ()=>{},
         pos: pos
       });
+
+      this.closeContextMenus();
+    },
+    exportComponent() {
+      if (!this.targetComponent) {
+        return;
+      }
+
+      const projectRootDir = this.projectRootDir;
+      const componentID = this.targetComponent.ID;
+
+      SIO.emitGlobal("exportComponent", projectRootDir, componentID, (result)=>{
+        if (result instanceof Error) {
+          this.showSnackbar({ message: `Export failed: ${result.message}`, timeout: 3000 });
+        } else {
+          //Trigger download
+          window.open(result, "_blank");
+          this.showSnackbar({ message: "Component exported successfully", timeout: 3000 });
+        }
+      });
+
+      this.closeContextMenus();
+    },
+    importComponent() {
+      const projectRootDir = this.projectRootDir;
+      const targetParentID = this.currentComponent.ID;
+
+      //Get the uploader instance
+      const uploader = SIO.getUploader();
+
+      //Set up one-time event listener for upload completion
+      const onUploadComplete = (event)=>{
+        const uploadedFilePath = event.detail;
+
+        SIO.emitGlobal("importComponent", uploadedFilePath, projectRootDir, targetParentID, (result)=>{
+          if (result instanceof Error) {
+            this.showSnackbar({ message: `Import failed: ${result.message}`, timeout: 3000 });
+          } else {
+            this.showSnackbar({ message: "Component imported successfully", timeout: 3000 });
+            //Refresh the workflow to show the imported component
+            this.$emit("component-imported");
+          }
+        });
+
+        //Remove the event listener after handling
+        uploader.removeEventListener("complete", onUploadComplete);
+      };
+
+      uploader.addEventListener("complete", onUploadComplete);
+
+      //Trigger file selection dialog
+      uploader.prompt();
 
       this.closeContextMenus();
     },
