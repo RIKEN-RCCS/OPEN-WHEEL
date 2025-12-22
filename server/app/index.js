@@ -139,6 +139,7 @@ logger.info("DEBUG: About to set up static routes...");
 router.use(express.static(path.resolve(tempdRoot, "viewer"), { index: false }));
 router.use(express.static(path.resolve(tempdRoot, "download"), { index: false }));
 router.use(express.static(path.resolve(tempdRoot, "exportProject"), { index: false }));
+router.use(express.static(path.resolve(tempdRoot, "exportComponent"), { index: false }));
 logger.info("DEBUG: Static routes configured, setting up web API routes...");
 if (process.env.WHEEL_ENABLE_WEB_API) {
   router.use(asyncHandler(async (req, res, next)=>{
