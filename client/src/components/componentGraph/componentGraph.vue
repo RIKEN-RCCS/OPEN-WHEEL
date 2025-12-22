@@ -244,10 +244,6 @@ export default {
       vconnectorContextMenuItems: [
         { label: "delete", event: "delete" }
       ],
-      backgroundContextMenuItems: [
-        { label: "paste", event: "paste" },
-        { label: "import", event: "import" }
-      ],
       minZoom: 0.01,
       maxZoom: 3,
       zoomStep: 0.01,
@@ -284,6 +280,16 @@ export default {
       } else {
         rt.push({ label: "delete", event: "delete" });
       }
+      return rt;
+    },
+    backgroundContextMenuItems() {
+      const rt = [];
+      //Only show paste if something is copied
+      if (this.copyInfo) {
+        rt.push({ label: "paste", event: "paste" });
+      }
+      //Always show import
+      rt.push({ label: "import", event: "import" });
       return rt;
     },
     linkGraph() {
@@ -603,10 +609,6 @@ export default {
       this.openContextMenu(event, "vconnector");
     },
     onBackgroundRightClick(event) {
-      //Only show menu if there's something to paste
-      if (!this.copyInfo) {
-        return;
-      }
       this.openContextMenu(event, "background");
       this.$emit("background-right-click", event);
     },
