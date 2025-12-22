@@ -137,7 +137,7 @@ describe("#import component", function () {
 
     //Names should be different
     expect(firstName).not.to.equal(secondName);
-    expect(secondName).to.match(/_\d+$/); //Should end with _1, _2, etc.
+    expect(secondName).to.match(/_imported\d*$/); //Should end with _imported, _imported2, etc.
   });
 
   it("should regenerate all component IDs", async ()=>{
@@ -189,7 +189,7 @@ describe("#import component", function () {
     }
   });
 
-  it("should add and commit to git", async ()=>{
+  it("should git add imported component", async ()=>{
     const archiveFile = path.join(testDirRoot, "test_task_git.tgz");
     await fs.copy(path.join(testFilesDir, "WHEEL_component_task.tgz"), archiveFile);
 
@@ -198,14 +198,15 @@ describe("#import component", function () {
 
     await importComponent(projectRootDir, archiveFile, rootID);
 
-    //Verify git status is clean (no uncommitted changes)
+    //Verify git add was done (should have staged changes but no unstaged changes)
     const { promisify } = await import("node:util");
     //eslint-disable-next-line camelcase
     const { exec: exec_cb } = await import("node:child_process");
     const exec = promisify(exec_cb);
 
     const { stdout } = await exec(`cd ${projectRootDir} && git status --porcelain`);
-    expect(stdout.trim()).to.equal(""); //Should be empty (clean working directory)
+    //Should have staged changes (lines starting with 'A ')
+    expect(stdout).to.include("A ");
   });
 
   it("should import to different target parents correctly", async ()=>{

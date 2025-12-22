@@ -29,19 +29,23 @@ async function onExportComponent(projectRootDir, componentID, cb) {
  * @param {string} archiveFile - path to uploaded archive file
  * @param {string} projectRootDir - project's root path
  * @param {string} targetParentID - parent component ID where to import
+ * @param {object} pos - position where to place the component {x, y}
  * @param {Function} cb - callback function
+ * @returns {Promise<string>} - new component ID
  */
-async function onImportComponent(archiveFile, projectRootDir, targetParentID, cb) {
+async function onImportComponent(archiveFile, projectRootDir, targetParentID, pos, cb) {
   try {
-    const newComponentID = await importComponent(projectRootDir, archiveFile, targetParentID);
+    const newComponentID = await importComponent(projectRootDir, archiveFile, targetParentID, pos);
     if (typeof cb === "function") {
       cb(newComponentID);
     }
+    return newComponentID;
   } catch (e) {
     getLogger(projectRootDir).error("import component failed", e);
     if (typeof cb === "function") {
       cb(e);
     }
+    throw e;
   }
 }
 

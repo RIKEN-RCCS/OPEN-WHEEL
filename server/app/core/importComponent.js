@@ -6,10 +6,10 @@
 import path from "path";
 import fs from "fs-extra";
 import * as tar from "tar";
-import { v4 as uuidv4 } from "uuid";
+import { v1 as uuidv1 } from "uuid";
 import { createTempd } from "./tempd.js";
 import { getComponentDir, readComponentJson } from "./componentJsonIO.js";
-import { gitAdd, gitCommit } from "./gitOperator2.js";
+import { gitAdd } from "./gitOperator2.js";
 import { updateComponentPath } from "./componentPathOperations.js";
 import { componentJsonFilename } from "../db/db.js";
 
@@ -43,14 +43,22 @@ async function extractComponentArchive(archiveFile) {
  */
 async function determineComponentTargetDir(targetParentDir, componentBasename) {
   let targetDir = path.join(targetParentDir, componentBasename);
-  let suffix = 0;
 
-  while (await fs.pathExists(targetDir)) {
-    suffix++;
-    targetDir = path.join(targetParentDir, `${componentBasename}_${suffix}`);
+  //Check if the original name is available
+  if (!await fs.pathExists(targetDir)) {
+    return targetDir;
   }
 
-  return targetDir;
+  //Use _imported, _imported2, _imported3, etc. to avoid conflict with loop iteration naming (e.g., for0_1)
+  let suffix = 1;
+  while (true) {
+    const newName = suffix === 1 ? `${componentBasename}_imported` : `${componentBasename}_imported${suffix}`;
+    targetDir = path.join(targetParentDir, newName);
+    if (!await fs.pathExists(targetDir)) {
+      return targetDir;
+    }
+    suffix++;
+  }
 }
 
 /**
@@ -69,7 +77,7 @@ async function regenerateComponentIDsRecursively(projectRootDir, componentDir, p
 
   //Generate new ID
   const oldID = component.ID;
-  const newID = uuidv4();
+  const newID = uuidv1();
   idMap.set(oldID, newID);
 
   //Update component with new ID and parent
@@ -112,9 +120,10 @@ async function regenerateComponentIDsRecursively(projectRootDir, componentDir, p
  * @param {string} projectRootDir - project's root path
  * @param {string} archiveFile - path to uploaded archive file
  * @param {string} targetParentID - parent component ID where to import
+ * @param {object} pos - position where to place the component {x, y}
  * @returns {Promise<string>} - new component ID
  */
-async function importComponent(projectRootDir, archiveFile, targetParentID) {
+async function importComponent(projectRootDir, archiveFile, targetParentID, pos = null) {
   let extractedTempDir = null;
 
   try {
@@ -127,9 +136,18 @@ async function importComponent(projectRootDir, archiveFile, targetParentID) {
 
     //Determine target directory name (handle name conflicts)
     const targetDir = await determineComponentTargetDir(targetParentDir, componentBasename);
+    const newComponentName = path.basename(targetDir);
 
     //Copy component to target location
     await fs.copy(componentDir, targetDir);
+
+    //Update component name if it changed due to conflict
+    if (newComponentName !== componentBasename) {
+      const componentJsonFile = path.join(targetDir, componentJsonFilename);
+      const componentJson = await fs.readJson(componentJsonFile);
+      componentJson.name = newComponentName;
+      await fs.writeJson(componentJsonFile, componentJson, { spaces: 4 });
+    }
 
     //Read the imported component to get its ID before regeneration
     const componentJson = await readComponentJson(targetDir);
@@ -141,9 +159,16 @@ async function importComponent(projectRootDir, archiveFile, targetParentID) {
     //Get the new root component ID
     const newRootID = idMap.get(oldRootID);
 
-    //Git add and commit
+    //Update position if provided
+    if (pos && typeof pos.x === "number" && typeof pos.y === "number") {
+      const componentJsonFile = path.join(targetDir, componentJsonFilename);
+      const updatedComponentJson = await fs.readJson(componentJsonFile);
+      updatedComponentJson.pos = { x: pos.x, y: pos.y };
+      await fs.writeJson(componentJsonFile, updatedComponentJson, { spaces: 4 });
+    }
+
+    //Git add only (no commit)
     await gitAdd(projectRootDir, targetDir);
-    await gitCommit(projectRootDir, "import component");
 
     return newRootID;
   } finally {

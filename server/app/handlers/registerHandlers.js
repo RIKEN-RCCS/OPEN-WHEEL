@@ -119,9 +119,9 @@ const registerHandlers = (socket, Siofu)=>{
         return;
       }
       //Call importComponent with the uploaded file path
-      const { projectRootDir, targetParentID } = event.file.meta;
+      const { projectRootDir, targetParentID, pos } = event.file.meta;
       try {
-        const newComponentID = await onImportComponent(event.file.pathName, projectRootDir, targetParentID);
+        const newComponentID = await onImportComponent(event.file.pathName, projectRootDir, targetParentID, pos);
         getLogger(projectRootDir).info("component imported successfully", newComponentID);
 
         //Send updates to client
