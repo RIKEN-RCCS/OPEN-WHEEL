@@ -142,7 +142,9 @@ async function exportComponent(projectRootDir, componentID) {
   );
 
   const baseURL = process.env.WHEEL_BASE_URL || "";
-  const url = `${baseURL}/${path.relative(path.dirname(root), archiveFilename)}`;
+  //Get path relative to tempdRoot, then prepend /exportComponent/
+  const relativePath = path.relative(root, archiveFilename);
+  const url = `${baseURL}/exportComponent/${relativePath}`;
   return url;
 }
 
