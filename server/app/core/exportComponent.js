@@ -99,7 +99,7 @@ async function removeAllLinks(dir) {
  * @returns {Promise<string>} - download URL
  */
 async function exportComponent(projectRootDir, componentID) {
-  const { dir } = await createTempd(projectRootDir, "exportComponent");
+  const { dir, root } = await createTempd(projectRootDir, "exportComponent");
   const workDir = await fs.mkdtemp(`${dir}/`);
 
   //Get component directory (relative to project root)
@@ -142,7 +142,7 @@ async function exportComponent(projectRootDir, componentID) {
   );
 
   const baseURL = process.env.WHEEL_BASE_URL || "";
-  const url = `${baseURL}/${path.join(path.relative(path.dirname(dir), archiveFilename))}`;
+  const url = `${baseURL}/${path.relative(path.dirname(root), archiveFilename)}`;
   return url;
 }
 

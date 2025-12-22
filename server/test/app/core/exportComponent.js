@@ -62,7 +62,7 @@ describe("#export component", function () {
   it("should export a single task component", async ()=>{
     const url = await exportComponent(projectRootDir, task0.ID);
     expect(url).to.be.a("string").and.match(new RegExp(`WHEEL_component_${task0.ID}.tgz`));
-    const archiveFilename = path.join(tmpDir, "exportComponent", url);
+    const archiveFilename = path.join(tmpDir, url);
     expect(fs.statSync(archiveFilename).isFile()).to.be.true;
 
     //Extract and verify
@@ -74,7 +74,7 @@ describe("#export component", function () {
   it("should export a workflow with nested components", async ()=>{
     const url = await exportComponent(projectRootDir, workflow0.ID);
     expect(url).to.be.a("string").and.match(new RegExp(`WHEEL_component_${workflow0.ID}.tgz`));
-    const archiveFilename = path.join(tmpDir, "exportComponent", url);
+    const archiveFilename = path.join(tmpDir, url);
     expect(fs.statSync(archiveFilename).isFile()).to.be.true;
 
     //Extract and verify
@@ -94,7 +94,7 @@ describe("#export component", function () {
     await gitCommit(projectRootDir);
 
     const url = await exportComponent(projectRootDir, workflow0.ID);
-    const archiveFilename = path.join(tmpDir, "exportComponent", url);
+    const archiveFilename = path.join(tmpDir, url);
 
     //Extract and verify
     await fs.ensureDir(extractDir);
@@ -113,7 +113,7 @@ describe("#export component", function () {
     await gitCommit(projectRootDir);
 
     const url = await exportComponent(projectRootDir, workflow0.ID);
-    const archiveFilename = path.join(tmpDir, "exportComponent", url);
+    const archiveFilename = path.join(tmpDir, url);
 
     //Extract and verify
     await fs.ensureDir(extractDir);
@@ -128,7 +128,7 @@ describe("#export component", function () {
 
   it("should not include .git directory in archive", async ()=>{
     const url = await exportComponent(projectRootDir, workflow0.ID);
-    const archiveFilename = path.join(tmpDir, "exportComponent", url);
+    const archiveFilename = path.join(tmpDir, url);
 
     //Extract and verify
     await fs.ensureDir(extractDir);
@@ -142,7 +142,7 @@ describe("#export component", function () {
     await fs.outputFile(path.join(projectRootDir, workflow0.name, "uncommitted.txt"), "test");
 
     const url = await exportComponent(projectRootDir, workflow0.ID);
-    const archiveFilename = path.join(tmpDir, "exportComponent", url);
+    const archiveFilename = path.join(tmpDir, url);
 
     //Extract and verify
     await fs.ensureDir(extractDir);
