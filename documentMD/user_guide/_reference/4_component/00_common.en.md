@@ -18,6 +18,80 @@ The contents of this area differ for each type of component.
 |2|clean button   | Rewind the state of the component (and any subcomponents) to the most recent saved state |
 |3| Details button | Shows or hides property settings for each group |
 
+### Component Right-Click Menu
+Right-clicking a component displays a context menu with the following operations:
+
+- __Copy__: Copies the component
+- __Cut__: Cuts the component
+- __Delete__: Deletes the component (a confirmation dialog will be displayed)
+- __Export__: Exports the component and its subcomponents as an archive file (.tgz)
+- __Clean__: Rewind the component state to the most recent saved state
+
+## Component Import and Export
+
+WHEEL provides the ability to export individual components (and their subcomponents) as archive files and import them into other workflows. This feature is useful for:
+
+- Reusing component configurations across different projects
+- Sharing workflow components with other users
+- Creating a library of commonly used component patterns
+- Backing up specific workflow sections
+
+### Exporting a Component
+
+To export a component:
+
+1. Right-click on the component you want to export in the workflow creation area
+2. Select __Export__ from the context menu
+3. A `.tgz` archive file will be automatically downloaded to your browser's download folder
+   - The file will be named `WHEEL_component_<componentID>.tgz`
+   - The archive contains the component and all its descendant components
+
+__What is Exported__
+- Component configuration (component.json files)
+- All files and directories within the component
+- All descendant (child) components recursively
+- Component states are reset to "not-started"
+- Component links (connections) are removed to ensure the component can be imported into any workflow
+{: .notice--info}
+
+__What is NOT Exported__
+- Git metadata (.git directory)
+- Uncommitted changes (only committed files are included)
+- Link connections to other components
+- Parent-child relationships (these are recreated on import)
+{: .notice--info}
+
+### Importing a Component
+
+To import a component:
+
+1. Open the workflow where you want to import the component
+2. Navigate to the hierarchy level where you want to place the component
+3. Right-click on the background of the workflow creation area (not on a component)
+4. Select __Import__ from the context menu
+5. In the Import Component dialog, select or drop the component archive file (.tgz)
+6. Click __ok__ to import the component
+
+The imported component will be placed at the position where you right-clicked.
+
+__Import Behavior__
+- A new unique ID is generated for the imported component and all its descendants
+- If a component with the same name already exists in the target location, a suffix (_imported, _imported2, etc.) is automatically added to avoid conflicts
+- The component is placed as a child of the currently displayed component
+- Component states are reset to "not-started"
+- You can specify the position of the imported component by the location of the right-click
+- Changes are staged in git but not committed (you need to save the project to commit)
+{: .notice--info}
+
+__Component Name Conflicts__
+When importing a component, if a component with the same name already exists in the target hierarchy, WHEEL automatically renames the imported component by appending a suffix:
+- First conflict: `componentName_imported`
+- Second conflict: `componentName_imported2`
+- Third conflict: `componentName_imported3`, and so on
+
+This ensures that each component has a unique name within its hierarchy.
+{: .notice--info}
+
 
 ## name, description
 All components have the __name__ and __description__ properties in common.
@@ -47,6 +121,7 @@ This feature uses the input files and output files properties.
 Connect the file specified in the output files of one component to the file specified in the input files of another component on the screen.
 Then, the succeeding component first creates a symbolic link to the required file in the preceding component's directory with the file name specified in input files and executes the script.
 Therefore, scripts in the successor component can access the files of the predecessor component.
+In addition, in components inside for, foreach, and while components, the actual files are copied, including the symbolic links created at the time of the next loop processing. For this reason, what these components receive as inputFile will be the copied files and directories, not symbolic links, in the second and subsequent loops.
 
 ![img](./img/input_output_connect.png "connected input and output file")
 

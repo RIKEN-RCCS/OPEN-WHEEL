@@ -33,7 +33,7 @@ state is categorized and displayed as follows:
 | queued | Indicates that the job has been submitted to the batch system and is waiting to start execution |
 | stage-out | Indicates that the remote server has finished processing and is transferring the required files |
 | finished | Indicates that processing has completed |
-| unknown | Indicates a status check that could not be determined whether a Task submitted through the batch system terminated normally or abnormally, for example <br> |
+| unknown | Indicates a state in which it could not be determined whether the task submitted via the batch system terminated normally or abnormally, such as when the status check fails<br> |
 | failed | Indicates an abnormal end of processing |
 
 __About Viewing Components__  

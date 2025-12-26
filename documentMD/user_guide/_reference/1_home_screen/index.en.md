@@ -12,11 +12,13 @@ The Home screen is organized as follows.
 |----------|----------|---------------------------------|
 |1| OPEN button                | Opens an existing project                                                                           |
 |2| NEW button                 | Creates a new project                                                                         |
-|3| REMOVE FROM LIST button    | Deletes the project from the project list area (the entity file remains).                       |
-|4| REMOVE button              | Deletes the project                                                                             |
-|5| BATCH MODE switch        | Switches to mass delete mode for multiple projects. When enabled, multiple projects can be selected |
-|6| Hamburger menu    | Opens a drawer with links to the User Guide, Remote Host Configuration screen                               |
-|7| Project List Area | Lists previously opened projects.                                                         |
+|3| IMPORT button | Imports a project archive |
+|4| REMOVE FROM LIST button    | Deletes the project from the project list area (the entity file remains).                       |
+|5| REMOVE button              | Deletes the project                                                                             |
+|6| EXPORT button | Exports a project archive |
+|7| BATCH MODE switch        | Switches to mass delete mode for multiple projects. When enabled, multiple projects can be selected |
+|8| Hamburger menu    | Opens a drawer with links to the User Guide, Remote Host Configuration screen                               |
+|9| Project List Area | Lists previously opened projects.                                                         |
 
 
 The following items are displayed in the Project List area.
@@ -78,6 +80,101 @@ To delete a project:
 ## Mass Delete Multiple Projects
 Enabling the __BATCH MODE__ switch allows you to select multiple projects.
 In this state, you can delete multiple projects at once by clicking the __REMOVE__ or __REMOVE FROM LIST__ button.
+
+## Export Project
+To export a project:
+
+1. In the Project List area, click to select the check box to the left of the project name you want to export.
+2. Click the __EXPORT__ button to display a dialog for writing metadata to the archive.
+
+![img](./img/export.png "export project")
+
+The following items can be entered in the dialog.
+
+| Item | Content |
+|---|---|
+| name | Name of the project creator |
+| email | Email address of the project creator |
+| memo | A memo about the project |
+
+All items are written to a JSON file in the project. Since WHEEL project files are managed as git repositories, please note that the contents can be restored even if they are deleted later.
+
+This information is used only by the user to verify that the archive file is the intended one when importing.
+
+Even if all the items are blank, it does not affect the operation of the WHEEL system, so please be careful when deciding whether to enter information about the project creator.
+
+Click the __OK__ button to generate a project archive with the file name `WHEEL_project_***.tgz` and save it to the browser's default download destination.
+
+The project name is entered in the `***` part of the file name.
+
+![img](./img/exportProjectDialog.png "export project dialog")
+
+## Import Project
+After clicking the __IMPORT__ button to display the import project dialog, import the project by following these steps.
+
+1. Select the destination directory for the project.
+2. Specify the project archive file to import.
+3. Click the __OK__ button.
+
+![img](./img/importProjectDialog.png "import project dialog")
+
+To import directly from a repository such as github, instead of specifying an archive file, click the `import from git repository` button, enter the URL, and click the __OK__ button.
+
+Importing from a git repository that requires authentication is not supported.
+
+__About Directory Display__
+This screen displays the directory structure under the base directory, similar to when the Open button is pressed. However, to import a project directly under the base directory, `./` is also displayed, which means the current directory. You can click and select `./`, but unlike other directories, the directory tree will not be displayed below it even if you open it.
+{: .notice--info}
+
+After that, a warning screen will be displayed, and if you click the __OK__ button again, the project archive will be extracted under the specified directory.
+
+![img](./img/projectImportWarning.png "project import warning")
+
+### Replacing remote host settings
+If a component that uses a remote host is included in the project to be imported, a screen for mapping host settings as shown below will open.
+
+![img](./img/hostmap1.png "host map")
+
+The remote hosts set in the original project are listed on the left side, and when you click the drop-down list on the right, the list of remote hosts set in the environment where "localhost" and WHEEL are currently running is displayed as follows.
+
+![img](./img/hostmap2.png "host map")
+
+Specify the new host to be set for each remote host and click the __OK__ button to replace the host settings of all components in the project.
+
+Components that were set to the same remote host in the original project will be set to the same remote host, so if you want to change the execution host for each component, open the workflow screen after import and set each one individually.
+
+Clicking the __cancel__ button interrupts the import process and returns to the home screen.
+
+### Changing the status of projects and components
+If the project to be imported is set to read-only or has a status other than "not-started", a confirmation screen will be displayed as shown below to ask if you want to restore these settings.
+
+![img](./img/rewind.png "rewind warning")
+
+When you click the __OK__ button, the read-only setting of the project is deleted, the status is returned to "not-started", and the status of all components is also returned to "not-started".
+
+Clicking the __cancel__ button interrupts the import process and returns to the home screen.
+
+### Notes on imported projects
+Problems may occur due to differences between the execution environment of the imported project and the execution environment of the imported project.
+
+For example, if you try to run a project created in an environment where the program to be executed is placed in `/usr/share/app` in an environment where it is placed in `/opt/share/bin`, it is highly likely that it will not work properly even if the same version of the program is installed.
+
+In addition to not working, there is also the possibility of serious damage.
+
+For example, a user who was using `${HOME}/tmp` as a temporary file storage may have a process in the project that deletes this directory.
+
+If you execute such a project with the necessary files in `${HOME}/tmp`, the files will be lost.
+
+Furthermore, if the project was created by a malicious third party, it could have a serious impact on future system use, such as:
+
+- Changing the user's password to prevent login
+- Deleting all files under ${HOME}
+
+To avoid such damage, be sure to check the processing contents of all scripts before executing the imported project.
+
+In addition to what is set in the `script` of the task component, what is set in the `retry condition` and what is set in the `condition` of the if component and while component are also executed as shell scripts.
+
+Also, since the contents of the scripts of the components under the PS component may be rewritten and executed, please also check the target files and set values of the parameter study.
 
 --------
 [Return to Reference Manual home page]({{site.baseurl}}/reference/)
