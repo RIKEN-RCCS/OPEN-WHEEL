@@ -48,6 +48,9 @@ Each part of the form must have the following information:
 |use stepjob| (Fujitsu TCS sites only) Whether the site can use step jobs |
 |shared host| Label for other remote hosts sharing storage <br/>For more information, see [How to use the shared host](#how-to-use-the-shared-host). |
 |shared path on shared host| Path to access Host work dir on shared host|
+|use gfarm|(Fugaku CSGW only) Whether HPCI shared storage can be accessed using the gfarm command|
+|HPCI-ID|HPCI-ID for OAuth authentication of HPCI shared storage|
+|JWT server URL|URL of the server that stores the JWT-token used for OAuth authentication of the HPCI shared storage|
 
 Click ▽ to the right of `Advanced settings` to open an advanced settings entry form.
 
@@ -93,7 +96,7 @@ Using __shared host__, the file transfer during the execution of the above workf
 
 The following items should be defined as the remote host settings for HostA and HostB:
 
-|項目|Remote host settings for HostA|Remote host settings for HostB|
+|Item|Remote host settings for HostA|Remote host settings for HostB|
 |-----|-----|-----|
 |label|HostA|HostB|
 |Host work dir|/work|/work

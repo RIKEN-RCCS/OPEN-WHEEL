@@ -14,17 +14,25 @@ The graph view screen is organized as follows.
 
 || Component | Description |
 |----------|----------|---------------------------------|
-| 1| Title (WHEEL) button　　　| Go to the Home screen　　　　　　　　　　　　　　　　　　　　　　　　|
-| 2| Project Name Area　　| Displays the name of the project being edited in the workflow.　　　　　　　　　　　|
-| 3| Status display area　　　　　　　| Displays the STATUS (execution status) of the project.　　　　　　　　　　　　　|
-| 4| Edit date and time display area　　　　　| Displays the date and time the project was created and updated.　　　　　　　　　　　　　　|
+| 1| Title (WHEEL) button | Go to the Home screen |
+| 2| Project Name Area | Displays the name of the project being edited in the workflow. |
+| 3| Status display area | Displays the STATUS (execution status) of the project. |
+| 4| Edit date and time display area | Displays the date and time the project was created and updated. |
 | 5| Workflow Screen Switching Button Area | Displays buttons for switching the workflow screen to Graph View, List View, or Text Editor |
-| 6| Project Operation Buttons Area | Displays the Run, Stop, and Clean Project buttons.　　　　　　　　|
-| 7| Save button area           | Validate project, Save Project, Discard Changes button appears.　　　　　　　　　　|
-| 8| Hierarchy display/transition button　　　　| Displays the hierarchy of the currently displayed component　　　　　　　|
-| 9| Environment variable editor display button | Environment variable setting screen is displayed.　　　　　　　　　　　　　　　　　　　　|
-|10| Component Library　　| Palette for adding components that are components of a workflow |
-|11| Log display button　　　　　　　| Displays logs about the creation and execution of the workflow.　　　　　　　　　　|
+| 6| Project Operation Buttons Area | Displays the Run, Stop, and Clean Project buttons. |
+| 7| Save button area           | Validate project, Save Project, Discard Changes button appears. |
+| 8| Hierarchy display/transition button | Displays the hierarchy of the currently displayed component |
+| 9| Environment variable editor display button | Environment variable setting screen is displayed. |
+|10| Component Library | Palette for adding components that are components of a workflow |
+|11| Log display button | Displays logs about the creation and execution of the workflow. |
+
+__About Connection Status Icon__
+Next to the hamburger menu in the upper right corner of the screen, an icon indicates the connection status with the server.
+- Green icon: Connected to server
+- Red icon: Disconnected from server
+
+When the connection status changes, a toast message is displayed.
+{: .notice--info}
 
 The following describes each area and button in detail.
 
@@ -33,19 +41,19 @@ The status display area shows the following statuses depending on the execution 
 
 1. not-started: Before project execution
 ![img](./img/not-started.png "not_started")
-1. preparing  : Preparing for Project Execution
+2. preparing  : Preparing for Project Execution
 ![img](./img/preparing.png "preparing")
-2. running    : Project running
+3. running    : Project running
 ![img](./img/running.png "running")
-1. stopped    : Project execution stopped
+4. stopped    : Project execution stopped
 ![img](./img/stopped.png "stopped")
-1. finished   : Project Finish (Normal Finish)
+5. finished   : Project Finish (Normal Finish)
 ![img](./img/finished.png "finished")
-1. failed     : End Project (Error occurs)
+6. failed     : End Project (Error occurs)
 ![img](./img/failed.png "failed")
-1. holding     : Checking for jobs with unknown execution status
+7. holding     : Checking for jobs with unknown execution status
 ![img](./img/holding.png "holding")
-1. unknown     : Job with unknown execution status
+8. unknown     : Job with unknown execution status
 ![img](./img/unknown.png "unknown")
 
 __About holding__
@@ -66,8 +74,8 @@ This area displays the buttons involved in running the project.
 || Component | Description |
 |----------|----------|---------------------------------|
 |1|run project button      | Start running the project |
-|2|stop project button     | Stops project execution and returns to its previous state |
-|3|cleanup project button  | Deletes files generated during project execution and restores them to their original state before execution started |
+|2|stop project button     | Stops project execution and returns to the state before execution |
+|3|cleanup project button  | Deletes files generated during project execution and returns to the state before execution |
 
 ### Save button area
 This area contains buttons for saving edited projects.
@@ -76,7 +84,7 @@ This area contains buttons for saving edited projects.
 
 || Component | Description |
 |----------|----------|---------------------------------|
-|1|validate project button  | validate project |
+|1|validate project button  | Validate project integrity |
 |2|save project button  | Save project |
 |3|revert project button | Revert project to previous save state |
 
@@ -144,33 +152,55 @@ Double-click a visible component to switch to display its subcomponents.
 
 To switch to a higher component, use the hierarchical display or component tree described above.
 
+#### Copy, Cut, and Paste Components
+You can select a component and use the following keyboard shortcuts to copy, cut, and paste:
 
-### Log display button
-Displays the log that is output when a workflow is created or executed.
+- __Ctrl+C (⌘+C on Mac)__: Copy the selected component
+- __Ctrl+X (⌘+X on Mac)__: Cut the selected component
+- __Ctrl+V (⌘+V on Mac)__: Paste the copied or cut component at the mouse cursor position
+- __Esc__: Clear copy/cut status
+
+Copied or cut components are displayed with a red border. Cut components are displayed with a dashed border.
+
+You can also right-click a component to access copy and cut operations from the context menu.
+
+#### Zoom Feature
+You can adjust the.
+- __ペースト__: 事前にコピーまたはカットしたコンポーネントをカーソル位置にペーストします（コンポーネントがコピー/カットされている場合のみ表示）
+- __インポート__: コンポーネントアーカイブファイル（.tgz）を現在のワークフローにインポートします
+
+
+### ログ表示ボタン
+ワークフローの作成時や実行時等に出力されるログを表示します。
 
 ![img](./img/log_button.png "log_button")
 
-When you click the Log button, the following log display area appears:
+ボタンをクリックすると、次のようなログ表示エリアが表れます。
 
 ![img](./img/log_screen.png "log_screen")
 
-The log display is output to multiple tabs depending on the contents.
+ログ表示エリアには以下の機能があります。
 
-|| Component | Description |
+||構成要素|説明|
 |----------|----------|---------------------------------|
-|1|info tab | Displays critical information such as errors, warnings, and general information about project execution and operations |
-|2|stdout tab | Displays the standard output of tasks executed on the local host |
-|3|stderr tab | Displays standard error output for tasks executed on the local host |
-|4|output(SSH) tab | Displays standard output and standard error output for tasks executed on the remote host |
+|1|clear all log ボタン|それまでに表示された全てのログが消去されます|
+|2|category ボタン|表示するログのカテゴリをフィルタリングできます|
+|3|download debug ボタン|デバッグ用のログファイルをダウンロードします|
 
-The label colors indicate the following meanings:
-- Green: New information, not displayed
-- White: No new information, displayed
+#### カテゴリフィルタ
+__category__ ボタンをクリックすると、表示するログのカテゴリを選択できます。
+カテゴリは以下のように分類されています。
 
-Click the __clear all log__ button to clear all previously displayed logs.
+- __system__: info, warn, error - システムメッセージやプロジェクトの実行状況に関する情報
+- __script__: stdout, stderr, sshout - スクリプトの実行結果
+  - stdout: ローカルホストで実行されたタスクの標準出力
+  - stderr: ローカルホストで実行されたタスクの標準エラー出力
+  - sshout: リモートホストで実行されたタスクの標準出力および標準エラー出力
 
-Click the △ button at the top to collapse the log display area to the bottom.
+各カテゴリのチェックボックスをオン/オフすることで、表示するログをフィルタリングできます。
+
+最上部の△ボタンをクリックすると、ログ表示エリアが下部に折り畳まれます。
 
 
 --------
-[Return to Reference Manual home page]({{site.baseurl}}/reference/)
+[リファレンスマニュアルのトップページに戻る]({{ site.baseurl }}/reference/)
