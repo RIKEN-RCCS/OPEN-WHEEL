@@ -143,7 +143,11 @@ WHEELは、sshでログインした先の計算サーバ上でタスクを実行
 ### バッチシステムがない場合
 まず、WHEELにアクセスし、画面右上のハンバーガーメニューをクリックします。
 
-![img](./img/hamburger_menu.png "hamburger menu")
+{% include annotated-img.html
+   src="./img/hamburger_menu.png"
+   markers="top:20.5,left:80.4,type:rect,width:23.8,height:25.4"
+%}
+
 
 表示されたメニュー内の __Remotehost editor__ をクリックします。リモートホスト設定画面が別タブで表示されます。
 
