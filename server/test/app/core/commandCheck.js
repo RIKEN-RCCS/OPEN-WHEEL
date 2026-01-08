@@ -17,14 +17,14 @@ describe("commandCheck", ()=>{
   let originalWheelConfigDir;
 
   before(async ()=>{
-    // Create a temporary directory for test configuration
+    //Create a temporary directory for test configuration
     const tmpDir = await tmp.dir({ unsafeCleanup: true });
     testConfigDir = tmpDir.path;
 
-    // Save original WHEEL_CONFIG_DIR
+    //Save original WHEEL_CONFIG_DIR
     originalWheelConfigDir = process.env.WHEEL_CONFIG_DIR;
 
-    // Set WHEEL_CONFIG_DIR to our test directory
+    //Set WHEEL_CONFIG_DIR to our test directory
     process.env.WHEEL_CONFIG_DIR = testConfigDir;
 
     //for db.js - create config files in test directory
@@ -43,14 +43,14 @@ describe("commandCheck", ()=>{
   });
 
   after(async ()=>{
-    // Restore original WHEEL_CONFIG_DIR
+    //Restore original WHEEL_CONFIG_DIR
     if (originalWheelConfigDir === undefined) {
       delete process.env.WHEEL_CONFIG_DIR;
     } else {
       process.env.WHEEL_CONFIG_DIR = originalWheelConfigDir;
     }
 
-    // Clean up test config directory
+    //Clean up test config directory
     await fs.remove(testConfigDir);
   });
 

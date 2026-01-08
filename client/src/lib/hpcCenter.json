@@ -1,16 +1,16 @@
 [
   {
-    "name": "Fugaku",
-    "centerName": "Fugaku",
-    "id": "builtin0",
-    "jobScheduler": "Fugaku",
-    "optionValues": [
+    name: "Fugaku",
+    centerName: "Fugaku",
+    id: "builtin0",
+    jobScheduler: "Fugaku",
+    optionValues: [
       {
-        "label": "Resource Group",
-        "type": "select",
-        "prop": "rscgrp",
-        "value": "small",
-        "items": [
+        label: "Resource Group",
+        type: "select",
+        prop: "rscgrp",
+        value: "small",
+        items: [
           "small",
           "small-free",
           "small-s1",
@@ -21,50 +21,50 @@
         ]
       },
       {
-        "label": "Node",
-        "type": "number",
-        "prop": "nodeNum"
+        label: "Node",
+        type: "number",
+        prop: "nodeNum"
       },
       {
-        "label": "Elapsed Time (hh:mm:ss)",
-        "type": "text",
-        "prop": "elapsedTime",
-        "value": "00:00:00"
+        label: "Elapsed Time (hh:mm:ss)",
+        type: "text",
+        prop: "elapsedTime",
+        value: "00:00:00"
       },
       {
-        "label": "Stdout Name",
-        "type": "text",
-        "prop": "stdoutName"
+        label: "Stdout Name",
+        type: "text",
+        prop: "stdoutName"
       },
       {
-        "label": "Stderr Name",
-        "type": "text",
-        "prop": "stderrName"
+        label: "Stderr Name",
+        type: "text",
+        prop: "stderrName"
       },
       {
-        "label": "Job Name",
-        "type": "text",
-        "prop": "jobName"
+        label: "Job Name",
+        type: "text",
+        prop: "jobName"
       },
       {
-        "label": "other command (ex. module load...)",
-        "type": "text",
-        "prop": "other"
+        label: "other command (ex. module load...)",
+        type: "text",
+        prop: "other"
       }
     ]
   },
   {
-    "name": "KYUSHU UNIVERSITY ITO-A",
-    "centerName": "KYUSHU UNIVERSITY ITO-A",
-    "id": "builtin1",
-    "jobScheduler": "TCS",
-    "optionValues": [
+    name: "KYUSHU UNIVERSITY ITO-A",
+    centerName: "KYUSHU UNIVERSITY ITO-A",
+    id: "builtin1",
+    jobScheduler: "TCS",
+    optionValues: [
       {
-        "label": "Resource Group",
-        "type": "select",
-        "prop": "rscgrp",
-        "value": "ito-ss-dbg",
-        "items": [
+        label: "Resource Group",
+        type: "select",
+        prop: "rscgrp",
+        value: "ito-ss-dbg",
+        items: [
           "ito-q-dbg",
           "ito-ss-dbg",
           "ito-s-dbg",
@@ -84,55 +84,55 @@
         ]
       },
       {
-        "label": "Node",
-        "type": "number",
-        "prop": "nodeNum"
+        label: "Node",
+        type: "number",
+        prop: "nodeNum"
       },
       {
-        "label": "Core per node",
-        "type": "number",
-        "prop": "coreNum"
+        label: "Core per node",
+        type: "number",
+        prop: "coreNum"
       },
       {
-        "label": "Elapsed Time (hh:mm:ss)",
-        "type": "text",
-        "prop": "elapsedTime",
-        "value": "00:00:00"
+        label: "Elapsed Time (hh:mm:ss)",
+        type: "text",
+        prop: "elapsedTime",
+        value: "00:00:00"
       },
       {
-        "label": "Stdout Name",
-        "type": "text",
-        "prop": "stdoutName"
+        label: "Stdout Name",
+        type: "text",
+        prop: "stdoutName"
       },
       {
-        "label": "Stderr Name",
-        "type": "text",
-        "prop": "stderrName"
+        label: "Stderr Name",
+        type: "text",
+        prop: "stderrName"
       },
       {
-        "label": "Job Name",
-        "type": "text",
-        "prop": "jobName"
+        label: "Job Name",
+        type: "text",
+        prop: "jobName"
       },
       {
-        "label": "other command (ex. module load...)",
-        "type": "text",
-        "prop": "other"
+        label: "other command (ex. module load...)",
+        type: "text",
+        prop: "other"
       }
     ]
   },
   {
-    "name": "KYUSHU UNIVERSITY ITO-B",
-    "centerName": "KYUSHU UNIVERSITY ITO-B",
-    "id": "builtin2",
-    "jobScheduler": "TCS",
-    "optionValues": [
+    name: "KYUSHU UNIVERSITY ITO-B",
+    centerName: "KYUSHU UNIVERSITY ITO-B",
+    id: "builtin2",
+    jobScheduler: "TCS",
+    optionValues: [
       {
-        "label": "Resource Group",
-        "type": "select",
-        "prop": "rscgrp",
-        "value": "ito-g-1-dbg",
-        "items": [
+        label: "Resource Group",
+        type: "select",
+        prop: "rscgrp",
+        value: "ito-g-1-dbg",
+        items: [
           "ito-g-1-dbg",
           "ito-g-4-dbg",
           "ito-g-16-dbg",
@@ -143,41 +143,41 @@
         ]
       },
       {
-        "label": "Node",
-        "type": "number",
-        "prop": "nodeNum"
+        label: "Node",
+        type: "number",
+        prop: "nodeNum"
       },
       {
-        "label": "Core per node",
-        "type": "number",
-        "prop": "coreNum"
+        label: "Core per node",
+        type: "number",
+        prop: "coreNum"
       },
       {
-        "label": "Elapsed Time (hh:mm:ss)",
-        "type": "text",
-        "prop": "elapsedTime",
-        "value": "00:00:00"
+        label: "Elapsed Time (hh:mm:ss)",
+        type: "text",
+        prop: "elapsedTime",
+        value: "00:00:00"
       },
       {
-        "label": "Stdout Name",
-        "type": "text",
-        "prop": "stdoutName"
+        label: "Stdout Name",
+        type: "text",
+        prop: "stdoutName"
       },
       {
-        "label": "Stderr Name",
-        "type": "text",
-        "prop": "stderrName"
+        label: "Stderr Name",
+        type: "text",
+        prop: "stderrName"
       },
       {
-        "label": "Job Name",
-        "type": "text",
-        "prop": "jobName"
+        label: "Job Name",
+        type: "text",
+        prop: "jobName"
       },
       {
-        "label": "other command (ex. module load...)",
-        "type": "text",
-        "prop": "other"
+        label: "other command (ex. module load...)",
+        type: "text",
+        prop: "other"
       }
     ]
   }
-]
+];
