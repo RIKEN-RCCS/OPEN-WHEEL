@@ -1,30 +1,29 @@
-import { resolve } from 'path'
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
-
+import { resolve } from "path";
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 
 const root = resolve(__dirname, "src");
-const outDir=resolve(__dirname, "../server/app/public");
+const outDir = resolve(__dirname, "../server/app/public");
 
-export default defineConfig(async ({ mode }) => {
+export default defineConfig(async ({ mode })=>{
   const plugins = [
     vue({
       template: { transformAssetUrls }
     }),
-    vuetify(),
+    vuetify()
   ];
 
-  // Only load VueDevTools in development mode
-  if (mode === 'development') {
-    const VueDevTools = (await import('vite-plugin-vue-devtools')).default;
+  //Only load VueDevTools in development mode
+  if (mode === "development") {
+    const VueDevTools = (await import("vite-plugin-vue-devtools")).default;
     plugins.push(VueDevTools());
   }
 
   return {
     base: "./",
     plugins,
-    define:{
+    define: {
       __VUE_PROD_DEVTOOLS__: false
     },
     root,
@@ -34,13 +33,13 @@ export default defineConfig(async ({ mode }) => {
       emptyOutDir: true,
       rollupOptions: {
         input: {
-          workflow: resolve(root, 'workflow.html'),
-          viewer: resolve(root, 'viewer.html'),
-          home: resolve(root, 'home.html'),
-          remotehost: resolve(root, 'remotehost.html'),
-          login: resolve(root, 'login.html'),
-        },
-      },
-    },
+          workflow: resolve(root, "workflow.html"),
+          viewer: resolve(root, "viewer.html"),
+          home: resolve(root, "home.html"),
+          remotehost: resolve(root, "remotehost.html"),
+          login: resolve(root, "login.html")
+        }
+      }
+    }
   };
 });
