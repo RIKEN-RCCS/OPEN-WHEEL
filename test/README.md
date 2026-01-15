@@ -72,9 +72,9 @@ GitHub Actions上でテストを実行する際に前提としている実行環
 リポジトリからコードを取得し、必要なモジュールをインストールします。
 
 ```bash
-$ git clone https://github.com/RIKEN-RCCS/OPEN-WHEEL.git
-$ cd OPEN-WHEEL/test
-$ npm install # Cypressを含めた必要なモジュールがインストールされます。
+git clone https://github.com/RIKEN-RCCS/OPEN-WHEEL.git
+cd OPEN-WHEEL/test
+npm install # Cypressを含めた必要なモジュールがインストールされます。
 ```
 
 なお、google chromeはこの操作ではインストールされないため、テスト環境に別途インストールしてください。
@@ -118,26 +118,26 @@ OpenPBSでのバッチジョブ実行が可能なホストが存在する場合�
 本ドキュメント末尾に記載の [テスト環境のカスタマイズ](#テスト環境のカスタマイズ)
 の章を参照してリモートホスト設定を変更してください。
 
-3. テストUIの起動
+1. テストUIの起動
 OPEN-WHEEL/testフォルダで以下のコマンドを実行してください。
 
    ```bash
    npm run test
    ```
 
-3. cypressが起動すると以下の画面が表示されるので、"E2E Testing"をクリック。
+2. cypressが起動すると以下の画面が表示されるので、"E2E Testing"をクリック。
 
    ![](img/2024-03-29-21-29-55.png)
 
-4. ブラウザ選択画面が表示されるので、"Chrome"を選択して"Start E2E Testing in Chrome"をクリック。(Cypress実行環境にインストールされているブラウザによって画面の内容は異なります。)
+3. ブラウザ選択画面が表示されるので、"Chrome"を選択して"Start E2E Testing in Chrome"をクリック。(Cypress実行環境にインストールされているブラウザによって画面の内容は異なります。)
 
    ![](img/2025-03-13-13-55-00.png)
 
-5. Chromeが起動し、テストファイルの一覧が表示されるので"cypress/e2e/spec.cy.js"をクリック
+4. Chromeが起動し、テストファイルの一覧が表示されるので"cypress/e2e/spec.cy.js"をクリック
 
    ![](img/2024-03-29-21-31-05.png)
 
-6. Chrome上でテストが開始されます。
+5. Chrome上でテストが開始されます。
 
    ![](img/2024-03-29-21-31-49.png)
 
@@ -254,22 +254,25 @@ GitHub Actions のテスト実行おいて、画面表示が不安定になる�
 上記が発生した場合、試験を再実施することで解消される可能性があります。
 
 ## デフォルトでは実行されないテスト
+
 auth.cy.js (パスワードベースのログイン制限機能) および hpciss.cy.js(HPCI-SS, HPCI-SS-tarコンポーネントを使うテスト) はデフォルトでは実行されないように設定しています。
 これらのテストを実行する時は、describe関数に指定しているskipを削除してから実行してください。
 
 ただし、実行時にそれぞれ次の変数を指定して起動する必要があります。
 
 ### auth
+
 - `WHEEL_TEST_LOGIN_PASSWORD` ログインパスワード
 
 ### hpciss
+
 -`WHEEL_TEST_CSGW_HOSTNAME`      CSGWのホスト名
 -`WHEEL_TEST_CSGW_USERNAME`      CSGWへログインするユーザのユーザ名
 -`WHEEL_TEST_JWTServer_USERNAME` JWT tokenを発行したhpci-id
 -`WHEEL_TEST_GROUPNAME`          gfarm領域上で、前項のユーザが所属するグループ
 
-
 これらの変数は次のようにcypressの--envオプションに対して、カンマ区切りで複数の設定を続けて渡して起動してください。
+
 ```
 npm run test -- --env "WHEEL_TEST_CSGW_HOSTNAME=foo,WHEEL_TEST_CSGW_USERNAME=bar"
 ```
@@ -285,10 +288,10 @@ npm run test -- --env "WHEEL_TEST_CSGW_HOSTNAME=foo,WHEEL_TEST_CSGW_USERNAME=bar
 この作業は、コンテナを再起動する度に行なう必要があります。
 
 ## remotehost.jsonについて
+
 コンテナが参照するremotehost.jsonはホスト側に残っているので、
 テストが異常終了した時などは、次のコマンドを実行してremotehost.jsonを初期状態に戻してください。
+
 ```
 git reset HEAD wheel_config/remotehost.json
 ```
-
-
