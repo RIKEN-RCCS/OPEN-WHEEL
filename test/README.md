@@ -17,6 +17,7 @@
   - [テスト実行スキップケースについて](#テスト実行スキップケースについて)
   - [テスト環境のカスタマイズ](#テスト環境のカスタマイズ)
   - [GitHub Actions 実行時に、不具合ではないのに試験結果がNGとなる場合について](#github-actions-実行時に不具合ではないのに試験結果がngとなる場合について)
+  - [実装者向け](#実装者向け)
 
 ## GitHub Actions の実行
 
@@ -294,4 +295,53 @@ npm run test -- --env "WHEEL_TEST_CSGW_HOSTNAME=foo,WHEEL_TEST_CSGW_USERNAME=bar
 
 ```
 git reset HEAD wheel_config/remotehost.json
+```
+
+## 実装者向け
+
+### ディレクトリ構成
+
+次のディレクトリ構成を取ります。
+.
+├── e2e
+│   ├── components # OPEN-WHEELの各コンポーネントにフォーカスしたテストが格納されます。
+|   *.js # OPEN-WHEELの全般的な機能のテストが格納されます。
+└── support # E2Eテストからライブラリ的に呼び出されるコマンドを定義します。
+
+### テスト命名規則
+
+#### describe
+
+試験の大項目を記述します。
+次の値を取ります。
+
+- context
+- auth
+- export project
+- home
+- import project
+- remote host
+- shutcut
+- source and viewer
+- dependency
+contextのみ、describeをネストして使用します。
+
+```js
+describe("Component", ()=>{
+   describe("コンポーネント名", ()=>{
+      // test
+   })
+})
+```
+
+各テストファイル内でdescribeによりテストケースを分離したくなった場合、テストが複雑化している可能性があります。
+Vueコンポーネントテストに分離してのテストを検討してください。
+
+#### it
+
+各テストの内容を記述します。
+例えば次のような内容になります
+
+```js
+it("javascriptテキストボックス入力確認" ()->{});
 ```
