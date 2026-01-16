@@ -7,6 +7,8 @@ import n from "eslint-plugin-n";
 import chaiFriendly from "eslint-plugin-chai-friendly";
 import vue from "eslint-plugin-vue";
 import vueParser from "vue-eslint-parser";
+import jsonc from 'eslint-plugin-jsonc';
+import jsoncParser from 'jsonc-eslint-parser';
 
 const jsdocRules = {
   "jsdoc/require-jsdoc": ["warn", { enableFixer: false }],
@@ -127,6 +129,13 @@ export default [
   jsdoc.configs["flat/recommended"],
   stylistic.configs["disable-legacy"],
   ...vue.configs["flat/recommended"],
+  ...jsonc.configs["flat/recommended-with-json"],
+  {
+    files: ["**/*.json"],
+    languageOptions: {
+      parser: jsoncParser
+    }
+  },
   stylistic.configs.customize({
     indent: 2,
     quotes: "double",
@@ -249,7 +258,7 @@ export default [
     }
   },
   {
-    files: ["*.js", "**/*.js", "**/*.vue", "**/*.ts", "**/*.json"],
+    files: ["*.js", "**/*.js", "**/*.vue", "**/*.ts"],
     plugins: {
       "@stylistic": stylistic,
       jsdoc
