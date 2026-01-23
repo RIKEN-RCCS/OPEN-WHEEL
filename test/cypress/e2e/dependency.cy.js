@@ -1,4 +1,7 @@
-describe("06:ディペンデンシー&データリンク接続状態のワークフロー作成動作確認", ()=>{
+/**
+ * ディペンデンシー&データリンク接続状態のワークフロー作成動作
+ */
+describe("dependency", ()=>{
   const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
   const PROJECT_DESCRIPTION = "TestDescription";
   const DEF_COMPONENT_TASK = "task";
@@ -37,7 +40,7 @@ describe("06:ディペンデンシー&データリンク接続状態のワーク
   Viewer/Source/Storage/StepJobTaskを除く全コンポーネントの接続確認
   試験確認内容：コンポーネントが接続されていることを確認
    */
-  it("06-01-001:ディペンデンシー&データリンク接続状態のワークフロー作成動作確認-ワークフロー作成動作確認-全コンポーネントを接続させたワークフロー作成時の動作確認-Viewer/Source/Storage/StepJobTaskを除く全コンポーネントの接続確認-コンポーネントが接続されていることを確認", ()=>{
+  it("ワークフロー作成動作確認-全コンポーネントを接続させたワークフロー作成時の動作確認-Viewer/Source/Storage/StepJobTaskを除く全コンポーネントの接続確認-コンポーネントが接続されていることを確認", ()=>{
     cy.createComponentNotOpenProperty(DEF_COMPONENT_TASK, TASK_NAME_0, 501, 300);
     cy.createComponentNotOpenProperty(DEF_COMPONENT_IF, IF_NAME_0, 501, 350);
     cy.connectComponentMultiple(TASK_NAME_0, IF_NAME_0); //TASKとIFを接続
