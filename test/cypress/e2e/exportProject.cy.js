@@ -1,6 +1,6 @@
 import "cypress-wait-until";
 import path from "path";
-describe("export project e2e test", ()=>{
+describe("export project", ()=>{
   const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
   const PROJECT_DESCRIPTION = "TestDescription";
   const TEST_NAME = "test name";
