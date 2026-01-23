@@ -1,4 +1,4 @@
-describe("import project e2e test", ()=>{
+describe("import project", ()=>{
   const PROJECT_NAME = "WHEEL_IMPORT_TEST_PROJECT";
   const PROJECT_DESCRIPTION = "TestDescription";
   const PROJECT_PATH = "/root/WHEEL_IMPORT_TEST_PROJECT.wheel";
