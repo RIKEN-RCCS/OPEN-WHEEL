@@ -23,11 +23,6 @@ describe("components", () => {
       return cy.removeAllProjects();
     });
 
-
-
-
-
-
     /**
     コンポーネントの基本機能動作確認
     BulkjobTaskコンポーネント共通機能確認
