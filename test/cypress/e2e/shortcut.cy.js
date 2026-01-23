@@ -3,7 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-describe("test for shortcut key", ()=>{
+/**
+ * ショートカットキーテスト
+ */
+describe("shortcut key", ()=>{
   const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
   const PROJECT_DESCRIPTION = "Test shortcut functionality";
   const TASK_NAME = "task0";
