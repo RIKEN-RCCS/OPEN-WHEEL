@@ -88,5 +88,28 @@ export default defineConfig({
         }
       });
     }
-  }
+  },
+component: {
+  devServer: {
+    framework: "vue",
+    bundler: "vite",
+  },
+  specPattern: "cypress/component/**/*.cy.{js,jsx,ts,tsx}",
+  supportFile: false,   
+
+  setupNodeEvents(on, config) {
+    on('before:browser:launch', (browser, launchOptions) => {
+      // Electron/Chromium 系だけに効かせる
+      if (browser.family === 'chromium') {
+        launchOptions.args.push('--no-sandbox')
+        launchOptions.args.push('--disable-gpu')
+        launchOptions.args.push('--disable-dev-shm-usage')
+        launchOptions.args.push('--disable-software-rasterizer')
+      }
+      return launchOptions
+    })
+    return config
+  },
+},
+
 });
