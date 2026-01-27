@@ -7,22 +7,23 @@
  * ショートカットキーテスト
  */
 describe("shortcut key", ()=>{
-  const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
-  const PROJECT_DESCRIPTION = "Test shortcut functionality";
   const TASK_NAME = "task0";
   const DEF_COMPONENT_TASK = "task";
 
+  before(()=>{
+    return cy.removeAllProjects();
+  });
+
   beforeEach(()=>{
     cy.viewport("macbook-16");
-    cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
-    cy.projectOpen(PROJECT_NAME);
+    cy.createAndOpenProject();
     //Wait for graph view to load
     cy.get("[data-cy=\"component_library-component-avatar\"]", { timeout: 1000 }).should("be.visible");
     cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME, 501, 500);
   });
 
-  afterEach(()=>{
-    cy.removeAllProjects();
+  after(()=>{
+    return cy.removeAllProjects();
   });
 
   it("copy and paste", ()=>{

@@ -2,8 +2,6 @@
  * ディペンデンシー&データリンク接続状態のワークフロー作成動作
  */
 describe("dependency", ()=>{
-  const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
-  const PROJECT_DESCRIPTION = "TestDescription";
   const DEF_COMPONENT_TASK = "task";
   const DEF_COMPONENT_IF = "if";
   const DEF_COMPONENT_FOR = "for";
@@ -23,13 +21,16 @@ describe("dependency", ()=>{
   const STEPJOB_NAME_0 = "stepjob0";
   const BJ_TASK_NAME_0 = "bjTask0";
 
-  beforeEach(()=>{
-    cy.viewport("macbook-16");
-    return cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION)
-      .projectOpen(PROJECT_NAME);
+  before(()=>{
+    return cy.removeAllProjects();
   });
 
-  afterEach(()=>{
+  beforeEach(()=>{
+    cy.viewport("macbook-16");
+    return cy.createAndOpenProject();
+  });
+
+  after(()=>{
     return cy.removeAllProjects();
   });
 

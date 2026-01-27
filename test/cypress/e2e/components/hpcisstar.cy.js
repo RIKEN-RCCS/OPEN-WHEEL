@@ -1,8 +1,6 @@
 describe("components", ()=>{
   describe("hpcisstar", ()=>{
     const wheelPath = Cypress.env("WHEEL_PATH");
-    const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
-    const PROJECT_DESCRIPTION = "TestDescription";
     const TYPE_INPUT = "input";
     const TYPE_OUTPUT = "output";
     const TYPE_DIR = "dir";
@@ -16,13 +14,16 @@ describe("components", ()=>{
     const TAG_TYPE_TEXT_AREA = "textarea";
     const TEST_LABEL = "componentTestLabel";
 
-    beforeEach(()=>{
-      cy.viewport("macbook-16");
-      return cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION)
-        .projectOpen(PROJECT_NAME);
+    before(()=>{
+      return cy.removeAllProjects();
     });
 
-    afterEach(()=>{
+    beforeEach(()=>{
+      cy.viewport("macbook-16");
+      return cy.createAndOpenProject();
+    });
+
+    after(()=>{
       return cy.removeAllProjects();
     });
 
