@@ -12,14 +12,18 @@ describe("source and viewer", ()=>{
   const IF_NAME_0 = "if0";
   const VIEWER_NAME_0 = "viewer0";
 
-  beforeEach(()=>{
-    cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
-    cy.projectOpen(PROJECT_NAME);
-    cy.viewport("macbook-16");
+  before(()=>{
+    return cy.removeAllProjects();
   });
 
-  afterEach(()=>{
-    cy.removeAllProjects();
+  beforeEach(()=>{
+    cy.viewport("macbook-16");
+    cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
+    return cy.createAndOpenProject();
+  });
+
+  after(()=>{
+    return cy.removeAllProjects();
   });
 
   /**

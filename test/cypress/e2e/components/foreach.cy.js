@@ -1,6 +1,4 @@
 describe("04:コンポーネントの基本機能動作確認", ()=>{
-  const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
-  const PROJECT_DESCRIPTION = "TestDescription";
   const TYPE_INPUT = "input";
   const TYPE_OUTPUT = "output";
   const TYPE_DIR = "dir";
@@ -11,13 +9,16 @@ describe("04:コンポーネントの基本機能動作確認", ()=>{
   const TAG_TYPE_INPUT = "input";
   const TAG_TYPE_TEXT_AREA = "textarea";
 
-  beforeEach(()=>{
-    cy.viewport("macbook-16");
-    return cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION)
-      .projectOpen(PROJECT_NAME);
+  before(()=>{
+    return cy.removeAllProjects();
   });
 
-  afterEach(()=>{
+  beforeEach(()=>{
+    cy.viewport("macbook-16");
+    return cy.createAndOpenProject();
+  });
+
+  after(()=>{
     return cy.removeAllProjects();
   });
 

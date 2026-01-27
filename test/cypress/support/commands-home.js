@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
+/**
+ * home画面操作を対象にしたcommand
+ */
 //create a project
 Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
   cy.visit("/");
@@ -12,6 +20,16 @@ Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
     .click();
   cy.waitProjectList();
   return cy.waitProjectAppear(projectName);
+});
+
+/**
+ * プロジェクトファイルを作成後、プロジェクトを開く。プロジェクトファイル名は自動的に設定する。
+ */
+Cypress.Commands.add("createAndOpenProject", ()=>{
+  const randomWord = Math.random().toString(32)
+    .substring(2);
+  const projectName = `WHEEL_TEST_${Date.now().toString()}_${randomWord}`;
+  return cy.createProject(projectName, "TestDescription").projectOpen(projectName);
 });
 
 //create multiple projects
