@@ -1,27 +1,19 @@
-//***********************************************************
-//This example support/component.js is processed and
-//loaded automatically before your test files.
-//
-//This is a great place to put global configuration and
-//behavior that modifies Cypress.
-//
-//You can change the location of this file or turn off
-//automatically serving support files with the
-//'supportFile' configuration option.
-//
-//You can read more here:
-//https://on.cypress.io/configuration
-//***********************************************************
+import './commands'
+import { mount } from 'cypress/vue'
+import vuetify from '../../../client/src/plugins/vuetify.js'
+// 本番 store は一旦使わない：import store from '../../client/src/store/index.js'
+import 'vuetify/styles'
+import '@mdi/font/css/materialdesignicons.css'
+import { createMiniStore } from './mini-store'
 
-//Import commands.js using ES2015 syntax:
-import "./commands";
+export function cyMount (component, options = {}) {
+  return mount(component, {
+    global: {
+      plugins: [createMiniStore(), vuetify],
+      ...(options.global || {}),
+    },
+    ...options,
+  })
+}
 
-//Alternatively you can use CommonJS syntax:
-//require('./commands')
-
-import { mount } from "cypress/vue";
-
-Cypress.Commands.add("mount", mount);
-
-//Example use:
-//cy.mount(MyComponent)
+Cypress.Commands.add('mount', (comp, options) => cyMount(comp, options))

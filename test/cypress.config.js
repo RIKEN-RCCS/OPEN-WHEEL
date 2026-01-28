@@ -1,115 +1,101 @@
-import { defineConfig } from "cypress";
-import SSH from "simple-ssh";
-import { removeDirectory } from "cypress-delete-downloads-folder";
-import fs from "fs-extra";
-import * as tar from "tar";
+import { defineConfig } from 'cypress'
+import vue from '@vitejs/plugin-vue'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname  = path.dirname(__filename)
 
 export default defineConfig({
-  waitForAnimations: true,
-  trashAssetsBeforeRuns: false,
-  requestTimeout: 3000,
-  experimentalMemoryManagement: true,
-  defaultCommandTimeout: 5000,
-  video: false,
-  retries: 0,
-  numTestsKeptInMemory: 0,
   component: {
     devServer: {
-      framework: "vue",
-      bundler: "vite"
-    }
+      framework: 'vue',
+      bundler: 'vite',
+      viteConfig: {
+        plugins: [vue()],  
+        resolve: {
+          alias: {
+            '@': path.resolve(__dirname, '../client/src'),
+          },
+        },
+        server: {
+          fs: {
+            allow: [
+              __dirname,                             // test/
+              path.resolve(__dirname, '..'),         // open-wheel/
+              path.resolve(__dirname, '../client'),  // client/
+            ],
+            strict: false, 
+          },
+        },
+      },
+    },
+    specPattern: 'cypress/component/**/*.cy.{js,ts,jsx,tsx}',
+    supportFile: 'cypress/support/component.js',
+    indexHtmlFile: 'cypress/support/component-index.html',
   },
 
   e2e: {
     env: {
-      browserPermissions: {
-        clipboard: "allow"
-      },
-      WHEEL_TEST_REMOTEHOST: "testServer",
-      WHEEL_TEST_REMOTE_PASSWORD: "passw0rd",
-      WHEEL_TEST_HOSTNAME: "localhost",
+      browserPermissions: { clipboard: 'allow' },
+      WHEEL_TEST_REMOTEHOST: 'testServer',
+      WHEEL_TEST_REMOTE_PASSWORD: 'passw0rd',
+      WHEEL_TEST_HOSTNAME: 'localhost',
       WHEEL_TEST_PORT: 8000,
-      WHEEL_TEST_USER: "testuser",
-      WHEEL_PATH: "/root"
+      WHEEL_TEST_USER: 'testuser',
+      WHEEL_PATH: '/root',
     },
-    baseUrl: `http://localhost:8089`,
+    baseUrl: 'http://localhost:8089',
     setupNodeEvents(on) {
-      on("task", {
+      on('task', {
         removeDirectory,
         log(message) {
-          console.log(message);
-
-          return null;
+          console.log(message)
+          return null
         },
         sshExecuteCmd({ sshconn, command }) {
-          return new Promise((resolve)=>{
-            let ssh = new SSH(sshconn);
-
+          return new Promise((resolve) => {
+            const ssh = new SSH(sshconn)
             ssh.exec(command, {
-              out: function (stdout) {
-                console.log("stdout: " + stdout);
-                resolve(stdout);
+              out(stdout) {
+                console.log('stdout: ' + stdout)
+                resolve(stdout)
               },
-              err: function (stderr) {
-                console.log("stderr: " + stderr);
-                resolve(stderr);
-              }
-            }).on("ready", ()=>{ console.log("READY"); })
-              .on("error", (err)=>{
-                console.log("ERROR");
-                console.log(err);
+              err(stderr) {
+                console.log('stderr: ' + stderr)
+                resolve(stderr)
+              },
+            })
+              .on('ready', () => { console.log('READY') })
+              .on('error', (err) => {
+                console.log('ERROR')
+                console.log(err)
               })
-              .start();
-          });
+              .start()
+          })
         },
         async extractTarArchive({ file, cwd }) {
-          await tar.x({ file, cwd });
-          return fs.readdir(cwd);
+          await tar.x({ file, cwd })
+          return fs.readdir(cwd)
         },
         async fileExists(filePath) {
-          return fs.pathExists(filePath);
+          return fs.pathExists(filePath)
         },
         async readJson(filePath) {
-          return fs.readJson(filePath)
-            .catch((err)=>{
-              console.error(err);
-              return null;
-            });
+          return fs.readJson(filePath).catch((err) => {
+            console.error(err)
+            return null
+          })
         },
         async deleteFile(filePath) {
           return fs.remove(filePath)
-            .catch((err)=>{
-              console.error(err);
-              return null;
+            .catch((err) => {
+              console.error(err)
+              return null
             })
-            .then(()=>{
-              return true;
-            });
-        }
-      });
-    }
+            .then(() => true)
+        },
+      })
+    },
   },
-component: {
-  devServer: {
-    framework: "vue",
-    bundler: "vite",
-  },
-  specPattern: "cypress/component/**/*.cy.{js,jsx,ts,tsx}",
-  supportFile: false,   
-
-  setupNodeEvents(on, config) {
-    on('before:browser:launch', (browser, launchOptions) => {
-      // Electron/Chromium 系だけに効かせる
-      if (browser.family === 'chromium') {
-        launchOptions.args.push('--no-sandbox')
-        launchOptions.args.push('--disable-gpu')
-        launchOptions.args.push('--disable-dev-shm-usage')
-        launchOptions.args.push('--disable-software-rasterizer')
-      }
-      return launchOptions
-    })
-    return config
-  },
-},
-
-});
+})
