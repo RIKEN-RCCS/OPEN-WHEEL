@@ -1,11 +1,20 @@
-// test/cypress/component/componentProperty.smoke.cy.js
-import { cyMount } from '../support/component'
-import ComponentProperty from '@/components/componentProperty.vue'  // ★ @ = client/src
+import ComponentProperty from '@/components/componentProperty.vue'
 
-describe('componentProperty - Smoke', () => {
-  it('見出しが表示される', () => {
-    cyMount(ComponentProperty)
-    cy.get('[data-cy="component_property-in_out_files-panel_title"]').should('exist')
-    cy.get('[data-cy="component_property-files-panel_title"]').should('exist')
+describe('componentProperty smoke', () => {
+  it('最低限の props で描画できる', () => {
+    cy.mount(ComponentProperty, {
+      props: {
+        selectedComponent: { name: 'nodeA', type: 'basic' }, 
+        readOnly: false,
+        rules: {
+          isValidName: (v) => (!!v && String(v).trim().length > 0) || '必須',
+        },
+        isUniqueName: () => true, 
+        onClose: cy.spy().as('close'), 
+      },
+    })
+
+    cy.get('[data-cy="component_property-name-text_field"] input')
+      .should('have.value', 'nodeA')
   })
 })

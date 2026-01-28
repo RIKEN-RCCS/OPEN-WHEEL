@@ -1,15 +1,33 @@
-import './commands'
 import { mount } from 'cypress/vue'
-import vuetify from '../../../client/src/plugins/vuetify.js'
-// 本番 store は一旦使わない：import store from '../../client/src/store/index.js'
+import { defineComponent, h } from 'vue'
+import { VApp, VMain } from 'vuetify/components'
 import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
+
+import vuetify from '@/plugins/vuetify.js'
+
+
 import { createMiniStore } from './mini-store'
 
-export function cyMount (component, options = {}) {
-  return mount(component, {
+export function cyMount(Inner, options = {}) {
+  const Wrapped = defineComponent({
+    name: 'WrappedWithVApp',
+    setup() {
+      return () =>
+       h('div', { id: 'app' }, [
+          h(VApp, null, [
+            h(VMain, null, [ h(Inner) ]),
+          ]),
+        ])
+    },
+  })
+
+  return mount(Wrapped, {
     global: {
-      plugins: [createMiniStore(), vuetify],
+      plugins: [
+        createMiniStore(), 
+        vuetify,       
+      ],
       ...(options.global || {}),
     },
     ...options,
