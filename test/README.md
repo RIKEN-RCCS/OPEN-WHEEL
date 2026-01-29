@@ -321,7 +321,7 @@ git reset HEAD wheel_config/remotehost.json
 - home
 - import project
 - remote host
-- shutcut
+- shutcut key
 - source and viewer
 - dependency
 contextのみ、describeをネストして使用します。

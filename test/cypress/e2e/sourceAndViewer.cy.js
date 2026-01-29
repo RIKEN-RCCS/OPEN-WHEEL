@@ -1,4 +1,8 @@
-describe("05:Source&Viewerコンポーネント機能正常動作確認", ()=>{
+/**
+ * Source&Viewerコンポーネント機能正常動作確認
+ */
+
+describe("source and viewer", ()=>{
   const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
   const PROJECT_DESCRIPTION = "TestDescription";
   const TYPE_OUTPUT = "output";
@@ -25,7 +29,7 @@ describe("05:Source&Viewerコンポーネント機能正常動作確認", ()=>{
   ダイアログ表示確認
   試験確認内容：open viewer screenダイアログが表示されることを確認
    */
-  it("05-01-001:Source&Viewerコンポーネント機能正常動作確認-Viewerコンポーネントの機能確認-Viewerコンポーネントの挙動確認-ダイアログ表示確認-open viewer screenダイアログが表示されることを確認", ()=>{
+  it("Viewerコンポーネントの挙動確認-ダイアログ表示確認-open viewer screenダイアログが表示されることを確認", ()=>{
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_FILE, "test-a", true);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
