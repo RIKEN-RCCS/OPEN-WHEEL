@@ -15,7 +15,7 @@
         prepend-icon="mdi-cog-outline"
         variant="text"
         class="text-capitalize"
-        text="Manage remotehost"
+        text="Remotehost editor"
         data-cy="navigation-manage_remote_host-btn"
         @click="$emit('open-remotehost-manager')"
       />
