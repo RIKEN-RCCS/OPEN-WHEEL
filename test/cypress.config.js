@@ -1,4 +1,8 @@
-import { defineConfig } from 'cypress'
+import { defineConfig } from "cypress";
+import SSH from "simple-ssh";
+import { removeDirectory } from "cypress-delete-downloads-folder";
+import fs from "fs-extra";
+import * as tar from "tar";
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import { fileURLToPath } from 'url'

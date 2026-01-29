@@ -4,13 +4,13 @@
 import { mount } from 'cypress/vue'
 import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
-import vuetify from '@/plugins/vuetify.js'          // ★ @ を使う（client/src/plugins/vuetify.js）
-import { createMiniStore } from './mini-store'      // ★ 下で作る簡易ストア
+import vuetify from '@/plugins/vuetify.js'
+import { createMiniStore } from './mini-store'
 
 export function cyMount (component, options = {}) {
   return mount(component, {
     global: {
-      plugins: [createMiniStore(), vuetify],        // ★ mini-store + Vuetify
+      plugins: [createMiniStore(), vuetify],
       ...(options.global || {}),
     },
     ...options,
