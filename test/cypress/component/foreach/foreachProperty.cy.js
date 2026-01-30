@@ -3,7 +3,6 @@ import ComponentProperty from '@/components/componentProperty.vue'
 describe('Smoke - Drawer & Script Autocomplete', () => {
   it('Drawer 可視化 → Basic 展開 → autocomplete が開く', () => {
     cy.mount(ComponentProperty, {
-      // 必要なら storeOverrides で上書き可能
       storeOverrides: {
         state: {
           selectedComponent: {
