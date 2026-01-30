@@ -1,5 +1,6 @@
 import "./commands";
 import "./commands-workFlow";
+import "./commands-components";
 
 import { mount } from "cypress/vue";
 import { defineComponent, h, onMounted } from "vue";
