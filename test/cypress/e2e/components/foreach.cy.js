@@ -37,23 +37,15 @@ describe("components", ()=>{
     /**
   コンポーネントの基本機能動作確認
   foreachコンポーネント共通機能確認
-  試験確認内容：name入力テキストエリアが表示されていることを確認
-     */
-    it("name入力テキストエリアが表示されていることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
-      const DATA_CY_STR = "[data-cy=\"component_property-name-text_field\"]";
-      cy.confirmDisplayInProperty(DATA_CY_STR, true);
-    });
-
-    /**
-  コンポーネントの基本機能動作確認
-  foreachコンポーネント共通機能確認
   name入力
-  試験確認内容：nameが入力できることを確認
+  試験確認内容：name入力テキストエリアが表示および入力できることを確認
      */
     it("name入力-nameが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
+      //name入力テキストエリアが表示されていることを確認
+      cy.confirmDisplayInProperty(INPUT_OBJ_CY, true);
+      //nameが入力できることを確認
       cy.confirmInputValueReflection(INPUT_OBJ_CY, "-Test_Task", TAG_TYPE_INPUT, "-Test_Task");
     });
 
@@ -72,24 +64,14 @@ describe("components", ()=>{
     /**
   コンポーネントの基本機能動作確認
   foreachコンポーネント共通機能確認
-  試験確認内容：説明入力テキストエリアが表示されていることを確認
-     */
-    it("description入力テキストエリアが表示されていることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
-      const DATA_CY_STR = "[data-cy=\"component_property-description-textarea\"]";
-      cy.confirmDisplayInProperty(DATA_CY_STR, true);
-    });
-
-    /**
-  コンポーネントの基本機能動作確認
-  foreachコンポーネント共通機能確認
   description入力
-  試験確認内容：descriptionが入力できることを確認
+  試験確認内容：説明入力テキストエリアが表示、及び入力できることを確認
      */
     it("description入力-descriptionが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
-      const INPUT_OBJ_CY = "[data-cy=\"component_property-description-textarea\"]";
-      cy.confirmInputValueReflection(INPUT_OBJ_CY, "descriptionTest", TAG_TYPE_TEXT_AREA, FOREACH_NAME_0);
+      const DATA_CY_STR = "[data-cy=\"component_property-description-textarea\"]";
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+      cy.confirmInputValueReflection(DATA_CY_STR, "descriptionTest", TAG_TYPE_TEXT_AREA, FOREACH_NAME_0);
     });
 
     /**
@@ -697,25 +679,15 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   foreachコンポーネント共通機能確認
   各コンポーネント特有のプロパティ確認
-  インデックス値テキストボックス表示確認
-  試験確認内容：インデックス値テキストボックスが表示されていることを確認
-     */
-    it("プロパティ設定確認-インデックス値テキストボックス表示確認-インデックス値テキストボックスが表示されていることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
-      cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").should("be.visible");
-    });
-
-    /**
-  コンポーネントの基本機能動作確認
-  foreachコンポーネント共通機能確認
-  各コンポーネント特有のプロパティ確認
   インデックス値テキストボックス入力確認
-  試験確認内容：インデックス値テキストボックスが入力できることを確認
+  試験確認内容：インデックス値テキストボックスが表示、及び入力できることを確認
      */
     it("プロパティ設定確認-インデックス値テキストボックス入力確認-インデックス値テキストボックスが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
+      //インデックス値テキストボックスが表示されている事を確認
+      cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").should("be.visible");
+      //インデックス値テキストボックスに入力できることを確認
       cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
         .type(10);
       cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
@@ -745,25 +717,15 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   foreachコンポーネント共通機能確認
   各コンポーネント特有のプロパティ確認
-  number of instances to keepテキストボックス表示確認
-  試験確認内容：number of instances to keepテキストボックスが表示されていることを確認
-     */
-    it("プロパティ設定確認-keepテキストボックス表示確認-keepテキストボックスが表示されていることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
-      cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").should("be.visible");
-    });
-
-    /**
-  コンポーネントの基本機能動作確認
-  foreachコンポーネント共通機能確認
-  各コンポーネント特有のプロパティ確認
   number of instances to keepテキストボックス入力確認
-  試験確認内容：number of instances to keepテキストボックスが入力できることを確認
+  試験確認内容：number of instances to keepテキストボックスが表示、及び入力できることを確認
      */
     it("プロパティ設定確認-keepテキストボックス入力確認-keepテキストボックスが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
+      //number of instances to keepテキストボックスが表示されている事を確認
+      cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").should("be.visible");
+      //number of instances to keepテキストボックスに入力できる事を確認
       cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").find("input")
         .type(20);
       cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").find("input")
