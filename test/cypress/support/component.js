@@ -60,4 +60,4 @@ export function cyMount(Inner, options = {}) {
   });
 }
 
-Cypress.Commands.add("mount", (comp, options) => cyMount(comp, options));
+Cypress.Commands.add("mount_comp", (comp, options) => cyMount(comp, options));
