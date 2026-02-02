@@ -1,6 +1,6 @@
 
 import { defineComponent, h, ref } from 'vue'
-import ListForm from '../../../client/src/components/common/listForm.vue'
+import ListForm from '../../../../client/src/components/common/listForm.vue'
 
 describe('ListForm UI 操作', () => {
   it('入力 → 追加 → 表示 → 削除 ができる', () => {

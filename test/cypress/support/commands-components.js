@@ -18,3 +18,14 @@ Cypress.Commands.add("confirmInputValueReflection_comp", (inputObjCy, inputVal, 
   cy.get(inputObjCy).find(tagType)
     .should("have.value", inputVal);
 });
+
+//confirmation of input value not reflection
+Cypress.Commands.add("confirmInputValueNotReflection_comp", (inputObjCy, inputVal, tagType)=>{
+  cy.get(inputObjCy).find("input")
+    .clear();
+  //input
+  cy.get(inputObjCy).type(inputVal);
+
+  //comparison
+  cy.get(inputObjCy).should("have.not.value", inputVal);
+});
