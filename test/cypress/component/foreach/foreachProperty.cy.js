@@ -14,7 +14,7 @@ describe('components', () => {
         const cb = typeof maybeCbOrId === 'function' ? maybeCbOrId : maybeCb;
         if (event === 'getFileList' && typeof cb === 'function') cb([]);
       });
-    cy.mount_comp(ComponentProperty, {
+    cy.mountComponentWithAppShell(ComponentProperty, {
       storeOverrides: {
         state: {
           selectedComponent: {
