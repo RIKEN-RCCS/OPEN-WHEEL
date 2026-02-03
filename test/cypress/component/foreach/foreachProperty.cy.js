@@ -2,10 +2,11 @@ import ComponentProperty from '@/components/componentProperty.vue';
 import SIO from '../../../../client/src/lib/socketIOWrapper.js';
 
 describe('components', () => {
-  const TYPE_INPUT = "input";
-  const TYPE_OUTPUT = "output";
+  const TAG_TYPE_OUTPUT = "output";
   const TAG_TYPE_INPUT = "input";
   const TAG_TYPE_TEXT_AREA = "textarea";
+  const PANEL_INPUT_OUTPUT = "[data-cy=\"component_property-in_out_files-panel_title\"]";
+  const PANEL_CONDITION_SETTING = "[data-cy=\"component_property-condition-setting_title\"]";
 
   beforeEach(() => {
     cy.viewport("macbook-16");
@@ -18,7 +19,9 @@ describe('components', () => {
       storeOverrides: {
         state: {
           selectedComponent: {
+            ID: 'comp-foreach-1',
             type: 'foreach',
+            name: 'foreach0',
           },
         }
       }
@@ -42,8 +45,9 @@ describe('components', () => {
   試験確認内容：nameが入力できることを確認
    */
   it("name入力-nameが入力できることを確認", () => {
+    const INPUT_VAL = "-Test_Task"
     const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
-    cy.confirmInputValueReflection_comp(INPUT_OBJ_CY, "-Test_Task", TAG_TYPE_INPUT, "-Test_Task");
+    cy.confirmInputValueReflection_comp(INPUT_OBJ_CY, INPUT_VAL, TAG_TYPE_INPUT, INPUT_VAL);
   });
 
   /**
@@ -53,8 +57,9 @@ describe('components', () => {
   試験確認内容：nameが入力できないことを確認
    */
   it("name入力（使用可能文字確認）-nameが入力できないことを確認", () => {
+    const INPUT_VAL = "-Test*Task"
     const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
-    cy.confirmInputValueNotReflection_comp(INPUT_OBJ_CY, "Test*Task", TAG_TYPE_INPUT);
+    cy.confirmInputValueNotReflection_comp(INPUT_OBJ_CY, INPUT_VAL, TAG_TYPE_INPUT);
   });
 
 
@@ -75,9 +80,9 @@ describe('components', () => {
   試験確認内容：descriptionが入力できることを確認
    */
   it("description入力-descriptionが入力できることを確認", () => {
-
     const INPUT_OBJ_CY = "[data-cy=\"component_property-description-textarea\"]";
-    cy.confirmInputValueReflection_comp(INPUT_OBJ_CY, "descriptionTest", TAG_TYPE_TEXT_AREA);
+    const INPUT_VAL = "descriptionTest"
+    cy.confirmInputValueReflection_comp(INPUT_OBJ_CY, INPUT_VAL, TAG_TYPE_TEXT_AREA);
   });
 
   /**
@@ -88,8 +93,7 @@ describe('components', () => {
    */
   it("input files表示-input files入力テキストエリアが表示されていることを確認", () => {
     const DATA_CY_STR = "[data-cy=\"component_property-input_files-list_form\"]";
-    const CLICK_AREA_CY = "[data-cy=\"component_property-in_out_files-panel_title\"]";
-    cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, PANEL_INPUT_OUTPUT, null);
   });
 
   /**
@@ -99,9 +103,11 @@ describe('components', () => {
   試験確認内容：input filesが入力できることを確認
    */
   it("input files入力-input filesが入力できることを確認", () => {
-    cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, false);
-    cy.get("[data-cy=\"component_property-input_files-list_form\"]").find("input")
-      .should("have.value", "testInputFile");
+    const DATA_CY_STR = "[data-cy=\"component_property-input_files-list_form\"]";
+    const INPUT_VAL = "testInputFile"
+    cy.enterInputOrOutputFile(TAG_TYPE_INPUT, INPUT_VAL, true, false);
+    cy.get(DATA_CY_STR).find(TAG_TYPE_INPUT)
+      .should("have.value", INPUT_VAL);
   });
 
 
@@ -112,10 +118,8 @@ describe('components', () => {
   試験確認内容：output files入力テキストエリアが表示されていることを確認
    */
   it("output files表示-output files入力テキストエリアが表示されていることを確認", () => {
-
     const DATA_CY_STR = "[data-cy=\"component_property-output_files-list_form\"]";
-    const CLICK_AREA_CY = "[data-cy=\"component_property-in_out_files-panel_title\"]";
-    cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, CLICK_AREA_CY, null);
+    cy.confirmDisplayInPropertyByDetailsArea(DATA_CY_STR, PANEL_INPUT_OUTPUT, null);
   });
 
   /**
@@ -125,10 +129,11 @@ describe('components', () => {
   試験確認内容：output filesが入力できることを確認
    */
   it("output files入力-output filesが入力できることを確認", () => {
-
-    cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, false);
-    cy.get("[data-cy=\"component_property-output_files-list_form\"]").find("input")
-      .should("have.value", "testOutputFile");
+    const DATA_CY_STR = "[data-cy=\"component_property-output_files-list_form\"]";
+    const INPUT_VAL = "testOutputFile"
+    cy.enterInputOrOutputFile(TAG_TYPE_OUTPUT, INPUT_VAL, true, false);
+    cy.get(DATA_CY_STR).find(TAG_TYPE_INPUT)
+      .should("have.value", INPUT_VAL);
   });
 
   /**
@@ -139,9 +144,10 @@ describe('components', () => {
    試験確認内容：削除ボタンが表示されることを確認
     */
   it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", () => {
-
-    cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
-    cy.get("[data-cy=\"action_row-delete-btn\"]").should("be.visible");
+    const INPUT_VAL = "testInputFile"
+    const DELETE_BTN = "[data-cy=\"action_row-delete-btn\"]"
+    cy.enterInputOrOutputFile(TAG_TYPE_INPUT, INPUT_VAL, true, true);
+    cy.get(DELETE_BTN).should("be.visible");
   });
 
   /**
@@ -152,9 +158,10 @@ describe('components', () => {
   試験確認内容：削除ボタンが表示されることを確認
    */
   it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", () => {
-
-    cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-    cy.get("[data-cy=\"action_row-delete-btn\"]").should("be.visible");
+    const INPUT_VAL = "testOutputFile"
+    const DELETE_BTN = "[data-cy=\"action_row-delete-btn\"]"
+    cy.enterInputOrOutputFile(TAG_TYPE_OUTPUT, INPUT_VAL, true, true);
+    cy.get(DELETE_BTN).should("be.visible");
   });
 
   /**
@@ -207,11 +214,11 @@ describe('components', () => {
   試験確認内容：number of instances to keepテキストボックスが入力できることを確認
    */
   it("プロパティ設定確認-keepテキストボックス入力確認-keepテキストボックスが入力できることを確認", () => {
-
+    const INPUT_OBJ_CY = "[data-cy=\"component_property-keep_foreach-text_field\"]";
     cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
-    cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").find("input")
+    cy.get(INPUT_OBJ_CY).find("input")
       .type(20);
-    cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").find("input")
+    cy.get(INPUT_OBJ_CY).find("input")
       .should("have.value", 20);
   });
 });
