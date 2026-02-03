@@ -11,14 +11,14 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export default defineConfig({
-  // waitForAnimations: true,
-  // trashAssetsBeforeRuns: false,
-  // requestTimeout: 3000,
-  // experimentalMemoryManagement: true,
-  // defaultCommandTimeout: 5000,
-  // video: false,
-  // retries: 0,
-  // numTestsKeptInMemory: 0,
+  waitForAnimations: true,
+  trashAssetsBeforeRuns: false,
+  requestTimeout: 3000,
+  experimentalMemoryManagement: true,
+  defaultCommandTimeout: 5000,
+  video: false,
+  retries: 0,
+  numTestsKeptInMemory: 0,
   component: {
     devServer: {
       framework: 'vue',
