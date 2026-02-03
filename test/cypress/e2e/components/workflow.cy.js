@@ -72,23 +72,15 @@ describe("components", ()=>{
     /**
   コンポーネントの基本機能動作確認
   Workflowコンポーネント共通機能確認
-  試験確認内容：説明入力テキストエリアが表示されていることを確認
-     */
-    it("description入力テキストエリアが表示されていることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
-      const DATA_CY_STR = "[data-cy=\"component_property-description-textarea\"]";
-      cy.confirmDisplayInProperty(DATA_CY_STR, true);
-    });
-
-    /**
-  コンポーネントの基本機能動作確認
-  Workflowコンポーネント共通機能確認
   description入力
-  試験確認内容：descriptionが入力できることを確認
+  試験確認内容：descriptionが表示、入力できることを確認
      */
     it("description入力-descriptionが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
       const INPUT_OBJ_CY = "[data-cy=\"component_property-description-textarea\"]";
+      //description部、表示の確認
+      cy.confirmDisplayInProperty(INPUT_OBJ_CY, true);
+      //description部、入力が反映されることの確認
       cy.confirmInputValueReflection(INPUT_OBJ_CY, "descriptionTest", TAG_TYPE_TEXT_AREA, WORKFLOW_NAME_0);
     });
 
@@ -468,10 +460,12 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);
       cy.createDirOrFile(TYPE_DIR, "test-b", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
-        .should("exist");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test-a")
+          .should("exist");
+        cy.wrap($treeview).contains("test-b")
+          .should("exist");
+      });
     });
 
     /**
@@ -485,10 +479,12 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_DIR, "test1", true);
       cy.createDirOrFile(TYPE_DIR, "test2", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
-        .should("exist");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test1")
+          .should("exist");
+        cy.wrap($treeview).contains("test2")
+          .should("exist");
+      });
     });
 
     /**
@@ -521,10 +517,12 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.createDirOrFile(TYPE_FILE, "test-b", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
-        .should("exist");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test-a")
+          .should("exist");
+        cy.wrap($treeview).contains("test-b")
+          .should("exist");
+      });
     });
 
     /**
@@ -538,10 +536,12 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test1", true);
       cy.createDirOrFile(TYPE_FILE, "test2", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
-        .should("exist");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test1")
+          .should("exist");
+        cy.wrap($treeview).contains("test2")
+          .should("exist");
+      });
     });
 
     /**
@@ -576,10 +576,12 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
       cy.createDirOrFile(TYPE_DIR, "test-b", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
-        .should("exist");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test-a")
+          .should("exist");
+        cy.wrap($treeview).contains("test-b")
+          .should("exist");
+      });
     });
 
     /**
