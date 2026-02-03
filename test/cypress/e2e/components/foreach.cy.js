@@ -530,6 +530,7 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);
       cy.createDirOrFile(TYPE_DIR, "test-b", false);
+
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
@@ -547,10 +548,12 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_DIR, "test1", true);
       cy.createDirOrFile(TYPE_DIR, "test2", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
-        .should("exist");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test1")
+          .should("exist");
+        cy.wrap($treeview).contains("test2")
+          .should("exist");
+      });
     });
 
     /**
@@ -583,10 +586,12 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.createDirOrFile(TYPE_FILE, "test-b", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
-        .should("exist");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test-a")
+          .should("exist");
+        cy.wrap($treeview).contains("test-b")
+          .should("exist");
+      });
     });
 
     /**
@@ -600,10 +605,13 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test1", true);
       cy.createDirOrFile(TYPE_FILE, "test2", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
-        .should("exist");
+
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test1")
+          .should("exist");
+        cy.wrap($treeview).contains("test2")
+          .should("exist");
+      });
     });
 
     /**
@@ -638,10 +646,13 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
       cy.createDirOrFile(TYPE_DIR, "test-b", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
-        .should("exist");
+
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test-a")
+          .should("exist");
+        cy.wrap($treeview).contains("test-b")
+          .should("exist");
+      });
     });
 
     /**
@@ -676,22 +687,21 @@ describe("components", ()=>{
     });
 
     /**
-  コンポーネントの基本機能動作確認
-  foreachコンポーネント共通機能確認
-  各コンポーネント特有のプロパティ確認
   インデックス値テキストボックス入力確認
   試験確認内容：インデックス値テキストボックスが表示、及び入力できることを確認
      */
     it("プロパティ設定確認-インデックス値テキストボックス入力確認-インデックス値テキストボックスが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
-      //インデックス値テキストボックスが表示されている事を確認
-      cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").should("be.visible");
-      //インデックス値テキストボックスに入力できることを確認
-      cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
-        .type(10);
-      cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
-        .should("have.value", 10);
+      cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").within(($form)=>{
+        //インデックス値テキストボックスが表示されている事を確認
+        cy.wrap($form).should("be.visible");
+        //インデックス値テキストボックスに入力できることを確認
+        cy.wrap($form).find("input")
+          .type(10);
+        cy.wrap($form).find("input")
+          .should("have.value", 10);
+      });
     });
 
     /**
@@ -723,13 +733,15 @@ describe("components", ()=>{
     it("プロパティ設定確認-keepテキストボックス入力確認-keepテキストボックスが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").click();
-      //number of instances to keepテキストボックスが表示されている事を確認
-      cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").should("be.visible");
-      //number of instances to keepテキストボックスに入力できる事を確認
-      cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").find("input")
-        .type(20);
-      cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").find("input")
-        .should("have.value", 20);
+      cy.get("[data-cy=\"component_property-keep_foreach-text_field\"]").within(($form)=>{
+        //number of instances to keepテキストボックスが表示されている事を確認
+        cy.wrap($form).should("be.visible");
+        //number of instances to keepテキストボックスに入力できる事を確認
+        cy.wrap($form).find("input")
+          .type(20);
+        cy.wrap($form).find("input")
+          .should("have.value", 20);
+      });
     });
 
     /**
