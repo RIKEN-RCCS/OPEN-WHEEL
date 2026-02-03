@@ -21,13 +21,13 @@ import "./commands";
 
 import { mount } from "cypress/vue";
 
-// Cypress.Commands.add("mount", mount);
+Cypress.Commands.add("mount", mount);
 
 //Example use:
 //cy.mount(MyComponent)
 
 import "./commands-workFlow";
-import "./commands-components";
+import "./component_test/commands-components";
 
 import { defineComponent, h, onMounted } from "vue";
 import { VApp, VMain } from "vuetify/components";
@@ -38,7 +38,7 @@ import "@mdi/font/css/materialdesignicons.css";
 import vuetify from "@/plugins/vuetify.js";
 import { createMiniStore } from "./mini-store";
 
-export function cyMount(Inner, options = {}) {
+export function mountComponentWithAppShell(Inner, options = {}) {
   const Wrapped = defineComponent({
     name: "WrappedWithVApp",
     setup() {
@@ -86,4 +86,4 @@ export function cyMount(Inner, options = {}) {
   });
 }
 
-Cypress.Commands.add("mount_comp", (comp, options) => cyMount(comp, options));
+Cypress.Commands.add("mountComponentWithAppShell", (comp, options) => mountComponentWithAppShell(comp, options));
