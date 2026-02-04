@@ -37,23 +37,15 @@ describe("components", ()=>{
     /**
   コンポーネントの基本機能動作確認
   whileコンポーネント共通機能確認
-  試験確認内容：name入力テキストエリアが表示されていることを確認
-     */
-    it("name入力テキストエリアが表示されていることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
-      const DATA_CY_STR = "[data-cy=\"component_property-name-text_field\"]";
-      cy.confirmDisplayInProperty(DATA_CY_STR, true);
-    });
-
-    /**
-  コンポーネントの基本機能動作確認
-  whileコンポーネント共通機能確認
   name入力
   試験確認内容：nameが入力できることを確認
      */
     it("name入力-nameが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
+      //name入力テキストエリアが表示されていることを確認
+      cy.confirmDisplayInProperty(INPUT_OBJ_CY, true);
+      //nameが入力できることを確認
       cy.confirmInputValueReflection(INPUT_OBJ_CY, "-Test_Task", TAG_TYPE_INPUT, "-Test_Task");
     });
 
@@ -72,24 +64,15 @@ describe("components", ()=>{
     /**
   コンポーネントの基本機能動作確認
   whileコンポーネント共通機能確認
-  試験確認内容：説明入力テキストエリアが表示されていることを確認
+  試験確認内容：説明入力テキストエリアが表示、及び入力ができる事を確認
      */
-    it("description入力テキストエリアが表示されていることを確認", ()=>{
+    it("descriptionが入力できることを確認-テキストエリアが表されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       const DATA_CY_STR = "[data-cy=\"component_property-description-textarea\"]";
+      //説明入力テキストエリアが表示されていることを確認
       cy.confirmDisplayInProperty(DATA_CY_STR, true);
-    });
-
-    /**
-  コンポーネントの基本機能動作確認
-  whileコンポーネント共通機能確認
-  description入力
-  試験確認内容：descriptionが入力できることを確認
-     */
-    it("description入力-descriptionが入力できることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
-      const INPUT_OBJ_CY = "[data-cy=\"component_property-description-textarea\"]";
-      cy.confirmInputValueReflection(INPUT_OBJ_CY, "descriptionTest", TAG_TYPE_TEXT_AREA, WHILE_NAME_0);
+      //descriptionが入力できることを確認
+      cy.confirmInputValueReflection(DATA_CY_STR, "descriptionTest", TAG_TYPE_TEXT_AREA, WHILE_NAME_0);
     });
 
     /**
@@ -401,10 +384,12 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
       cy.createDirOrFile(TYPE_DIR, "test-b", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
-        .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
-        .should("exist");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").within(($treeview)=>{
+        cy.wrap($treeview).contains("test-a")
+          .should("exist");
+        cy.wrap($treeview).contains("test-b")
+          .should("exist");
+      });
     });
 
     /**
@@ -462,7 +447,6 @@ describe("components", ()=>{
     it("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"component_property-condition-setting_title\"]");
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
       let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
       cy.get(targetDropBoxCy).find("input")
@@ -504,30 +488,21 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   whileコンポーネント共通機能確認
   プロパティ設定確認
-  javascriptテキストボックス表示確認
-  試験確認内容：javascriptテキストボックスが表示されていることを確認
-     */
-    it("プロパティ設定確認-javascriptテキストボックス表示確認-javascriptテキストボックスが表示されていることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
-      cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
-      cy.get("[data-cy=\"component_property-condition_use_javascript-switch\"]").click();
-      cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").should("be.visible");
-    });
-
-    /**
-  コンポーネントの基本機能動作確認
-  whileコンポーネント共通機能確認
-  プロパティ設定確認
   javascriptテキストボックス入力確認
   試験確認内容：入力した値が表示されていることを確認
      */
-    it("プロパティ設定確認-javascriptテキストボックス入力確認-入力した値が表示されていることを確認", ()=>{
+    it("プロパティ設定確認-javascriptテキストボックス表示、入力確認-入力した値が表示、入力できること確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
       cy.get("[data-cy=\"component_property-condition_use_javascript-switch\"]").click();
-      cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").type("testJavaScript");
-      cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").find("textarea")
-        .should("have.value", "testJavaScript");
+      cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").within(($textarea)=>{
+        //javascriptテキストボックスが表示されていることを確認
+        cy.wrap($textarea).should("be.visible");
+        //入力した値が表示されていることを確認
+        cy.wrap($textarea).type("testJavaScript");
+        cy.wrap($textarea).find("textarea")
+          .should("have.value", "testJavaScript");
+      });
     });
 
     /**
@@ -554,41 +529,22 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   whileコンポーネント共通機能確認
   各コンポーネント特有のプロパティ確認
-  number of instances to keep表示確認
-  試験確認内容：number of instances to keepテキストボックスが表示されていることを確認
-     */
-    it("各コンポーネント特有のプロパティ確認-keep表示確認-keepテキストボックスが表示されていることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
-      cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
-      cy.get("[data-cy=\"component_property-keep_while-text_field\"]").should("be.visible");
-    });
-
-    /**
-  コンポーネントの基本機能動作確認
-  whileコンポーネント共通機能確認
-  各コンポーネント特有のプロパティ確認
   number of instances to keep入力確認
-  試験確認内容：number of instances to keepテキストボックスが入力できることを確認
+  試験確認内容：number of instances to keepテキストボックスが表示、入力できることを確認
      */
-    it("各コンポーネント特有のプロパティ確認-keep入力確認-keepテキストボックスが入力できることを確認", ()=>{
+    it("各コンポーネント特有のプロパティ確認-keep入力確認-keepテキストボックスが表示、入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
-      cy.get("[data-cy=\"component_property-keep_while-text_field\"]").type(10);
-      cy.get("[data-cy=\"component_property-keep_while-text_field\"]").find("input")
-        .should("have.value", 10);
-    });
+      cy.get("[data-cy=\"component_property-keep_while-text_field\"]").within(($textfield)=>{
+        //keepテキストボックスが表示されていることを確認
+        cy.wrap($textfield).should("be.visible");
+        //keepテキストボックスが入力できることを確認
+        cy.wrap($textfield).type(10);
+        cy.wrap($textfield).find("input")
+          .should("have.value", 10);
+      });
 
-    /**
-  コンポーネントの基本機能動作確認
-  whileコンポーネント共通機能確認
-  各コンポーネント特有のプロパティ確認
-  number of instances to keep入力反映確認
-  試験確認内容：number of instances to keepテキストボックスに入力した値が反映されていることを確認
-     */
-    it("各コンポーネント特有のプロパティ確認-keep入力反映確認-keepテキストボックスに入力した値が反映されていることを確認", ()=>{
-      cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
-      cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
-      cy.get("[data-cy=\"component_property-keep_while-text_field\"]").type(10);
+      //プロパティ画面を閉じ、再度開いた時に値が反映されている事を確認する。
       cy.closeProperty();
       cy.clickComponentName(WHILE_NAME_0);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
