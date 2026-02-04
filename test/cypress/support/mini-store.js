@@ -2,49 +2,23 @@
 import { createStore } from 'vuex'
 
 
-export function createMiniStore(overrides = {}) {
+export function createComponentTestStore(overrides = {}) {
   const comp = {
     ID: 1,
     name: 'CompA',
     type: 'task',
-    host: '',
-    useJobScheduler: false,
-    description: '',
-    script: null,
-    queue: '',
-    submitOption: '',
-    storagePath: '',
-    ignoreFailure: false,
-    retry: 0,
-    retryCondition: null,
     indexList: [],
-    keep: null,
-    include: [],
-    exclude: [],
     inputFiles: [],
     outputFiles: [],
-    cleanupFlag: 2,
-    uploadOnDemand: false,
-    parameterFile: null,
-    forceOverwrite: false,
-    deleteLoopInstance: false,
-    useDependency: false,
-    stepnum: 0,
-    dependencyForm: '',
-    usePSSettingFile: false,
-    manualFinishCondition: false,
-    condition: null,
   }
 
   const baseState = {
-    selectedComponent: comp,
-    copySelectedComponent: comp,
+    selectedComponent: structuredClone(comp),
+    copySelectedComponent: structuredClone(comp),
     remoteHost: [{ name: 'localhost', queue: '', jobScheduler: null }],
     currentComponent: { ID: 999, descendants: [] },
     scriptCandidates: ['checkA', 'checkB', 'checkC'],
     projectRootDir: '/proj',
-    jobScheduler: {},
-    readOnly: false,
   }
 
   const state = {
