@@ -484,20 +484,6 @@ describe("components", ()=>{
       cy.closeProperty();
     });
 
-    ///**
-    //コンポーネントの基本機能動作確認
-    //whileコンポーネント共通機能確認
-    //プロパティ設定確認
-    //javascriptテキストボックス表示確認
-    //試験確認内容：javascriptテキストボックスが表示されていることを確認
-    //*/
-    //it("プロパティ設定確認-javascriptテキストボックス表示確認-javascriptテキストボックスが表示されていることを確認", ()=>{
-    //cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
-    //cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
-    //cy.get("[data-cy=\"component_property-condition_use_javascript-switch\"]").click();
-    //cy.get("[data-cy=\"component_property-condition_use_javascript-textarea\"]").should("be.visible");
-    //});
-
     /**
   コンポーネントの基本機能動作確認
   whileコンポーネント共通機能確認
