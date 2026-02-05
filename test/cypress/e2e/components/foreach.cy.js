@@ -9,9 +9,12 @@ describe("components", ()=>{
     const FOREACH_NAME_1 = "foreach1";
     const TAG_TYPE_INPUT = "input";
     const TAG_TYPE_TEXT_AREA = "textarea";
+    const MOCK_PORT = 3101;
 
     before(()=>{
-      return cy.removeAllProjects();
+      cy.removeAllProjects();
+      // socketIOサーバの起動
+      return cy.task("start:mock-server", MOCK_PORT);
     });
 
     beforeEach(()=>{
@@ -20,6 +23,8 @@ describe("components", ()=>{
     });
 
     after(()=>{
+      // socketIOサーバの停止
+      cy.task("stop:mock-server");
       return cy.removeAllProjects();
     });
 
@@ -29,6 +34,9 @@ describe("components", ()=>{
   試験確認内容：プロパティが表示されることを確認
      */
     it("プロパティが表示されることを確認", ()=>{
+      //HTTPモック(mocks-server) 疎通確認として追加
+      cy.request({ url: "/health", failOnStatusCode: false })
+        .then((r)=>{ return cy.log(`mocks-server /health status=${r.status}`); });
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       const DATA_CY_STR = "[data-cy=\"component_property-property-navigation_drawer\"]";
       cy.confirmDisplayInProperty(DATA_CY_STR, true);
@@ -173,7 +181,7 @@ describe("components", ()=>{
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it.skip("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
@@ -678,6 +686,7 @@ describe("components", ()=>{
   各コンポーネントの追加/削除確認
   該当コンポーネント削除確認
   試験確認内容：コンポーネントが削除されていることを確認
+  ※失敗するためスキップ。deleteComponent内で削除ボタンを押下できていないと思われる
      */
     it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);

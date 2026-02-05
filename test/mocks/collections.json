@@ -1,0 +1,19 @@
+
+[
+  {
+    "id": "base",
+    "from": null,
+    "routes": [
+      "get-health:ok",
+      "proxy-all-to-real:to-real"
+    ]
+  },
+  {
+    "id": "failed",
+    "from": null,
+    "routes": [
+      "get-health:down",
+      "proxy-all-to-real:to-real"
+    ]
+  }
+]
