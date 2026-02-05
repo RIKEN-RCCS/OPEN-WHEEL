@@ -41,7 +41,7 @@ import "@mdi/font/css/materialdesignicons.css";
 import vuetify from "@/plugins/vuetify.js";
 
 // テスト向けの簡易 store（状態注入しやすい）を利用する
-import { createComponentTestStore } from "./mini-store";
+import { createComponentTestStore } from "./component_test/mini-store";
 
 
 /**
