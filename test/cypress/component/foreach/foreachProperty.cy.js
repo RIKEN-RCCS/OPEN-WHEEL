@@ -9,7 +9,6 @@ describe("components", ()=>{
   //プロパティパネル内のセクションタイトル要素を指す data-cy。
   const PANEL_INPUT_OUTPUT = "[data-cy=\"component_property-in_out_files-panel_title\"]";
 
-
   beforeEach(()=>{
     //表示崩れ防止のため画面サイズを指定
     cy.viewport("macbook-16");

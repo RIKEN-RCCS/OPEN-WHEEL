@@ -15,7 +15,7 @@ import "../commands-workFlow";
 //テスト向けの簡易 store（状態注入しやすい）を利用する
 import { createComponentTestStore } from "./mini-store";
 
-// stubGlobalFileListEmpty用
+//stubGlobalFileListEmpty用
 import SIO from "../../../../client/src/lib/socketIOWrapper.js";
 
 import { mount } from "cypress/vue";
