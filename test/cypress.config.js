@@ -3,12 +3,12 @@ import SSH from "simple-ssh";
 import { removeDirectory } from "cypress-delete-downloads-folder";
 import fs from "fs-extra";
 import * as tar from "tar";
-import vue from '@vitejs/plugin-vue'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import vue from "@vitejs/plugin-vue";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   waitForAnimations: true,
@@ -21,35 +21,35 @@ export default defineConfig({
   numTestsKeptInMemory: 0,
   component: {
     devServer: {
-      framework: 'vue',
-      bundler: 'vite',
+      framework: "vue",
+      bundler: "vite",
       viteConfig: {
         plugins: [vue()],
         resolve: {
           alias: {
-            '@': path.resolve(__dirname, '../client/src'),
+            "@": path.resolve(__dirname, "../client/src")
           },
-          dedupe: ['vue', 'vuetify'],
+          dedupe: ["vue", "vuetify"]
         },
         optimizeDeps: {
-          include: ['vue', 'vuetify'],
+          include: ["vue", "vuetify"]
         },
         server: {
           fs: {
             allow: [
-              __dirname,                             // test/
-              path.resolve(__dirname, '..'),         // open-wheel/
-              path.resolve(__dirname, '../client'),  // client/
+              __dirname, //test/
+              path.resolve(__dirname, ".."), //open-wheel/
+              path.resolve(__dirname, "../client") //client/
             ],
-            strict: false,
-          },
-        },
-      },
+            strict: false
+          }
+        }
+      }
     },
-    supportFile: 'cypress/support/component.js',
-    indexHtmlFile: 'cypress/support/component-index.html',
-    specPattern: 'cypress/component/**/*.cy.{js,jsx,ts,tsx}',
-    devServerPublicPathRoute: '',
+    supportFile: "cypress/support/component.js",
+    indexHtmlFile: "cypress/support/component-index.html",
+    specPattern: "cypress/component/**/*.cy.{js,jsx,ts,tsx}",
+    devServerPublicPathRoute: ""
   },
 
   e2e: {
@@ -74,7 +74,7 @@ export default defineConfig({
           return null;
         },
         sshExecuteCmd({ sshconn, command }) {
-          return new Promise((resolve) => {
+          return new Promise((resolve)=>{
             let ssh = new SSH(sshconn);
 
             ssh.exec(command, {
@@ -86,8 +86,8 @@ export default defineConfig({
                 console.log("stderr: " + stderr);
                 resolve(stderr);
               }
-            }).on("ready", () => { console.log("READY"); })
-              .on("error", (err) => {
+            }).on("ready", ()=>{ console.log("READY"); })
+              .on("error", (err)=>{
                 console.log("ERROR");
                 console.log(err);
               })
@@ -103,18 +103,18 @@ export default defineConfig({
         },
         async readJson(filePath) {
           return fs.readJson(filePath)
-            .catch((err) => {
+            .catch((err)=>{
               console.error(err);
               return null;
             });
         },
         async deleteFile(filePath) {
           return fs.remove(filePath)
-            .catch((err) => {
+            .catch((err)=>{
               console.error(err);
               return null;
             })
-            .then(() => {
+            .then(()=>{
               return true;
             });
         }

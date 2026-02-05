@@ -1,14 +1,12 @@
-import { createStore } from 'vuex'
+import { createStore } from "vuex";
 
 /**
  * Cypress Component Testing 用の最小 Vuex Storeを生成する。
- *
- *
- * @param {Object} overrides - 既定定義に対する上書き差分
- * @param {Object} [overrides.state] - state の上書き
- * @param {Object} [overrides.getters] - getters の上書き/追加
- * @param {Object} [overrides.mutations] - mutations の上書き/追加
- * @param {Object} [overrides.actions] - actions の上書き/追加
+ * @param {object} overrides - 既定定義に対する上書き差分
+ * @param {object} [overrides.state] - state の上書き
+ * @param {object} [overrides.getters] - getters の上書き/追加
+ * @param {object} [overrides.mutations] - mutations の上書き/追加
+ * @param {object} [overrides.actions] - actions の上書き/追加
  * @returns {import('vuex').Store<any>} Vuex Store インスタンス
  */
 export function createComponentTestStore(overrides = {}) {
@@ -19,12 +17,12 @@ export function createComponentTestStore(overrides = {}) {
    */
   const comp = {
     ID: 1,
-    name: 'CompA',
-    type: 'task',
+    name: "CompA",
+    type: "task",
     indexList: [],
     inputFiles: [],
-    outputFiles: [],
-  }
+    outputFiles: []
+  };
 
   /**
    * Store のデフォルト state。
@@ -36,50 +34,50 @@ export function createComponentTestStore(overrides = {}) {
     selectedComponent: structuredClone(comp),
     copySelectedComponent: structuredClone(comp),
 
-    // プロパティ部分には特にかかわらないので仮の値を設定
-    remoteHost: [{ name: 'localhost', queue: '', jobScheduler: null }],
+    //プロパティ部分には特にかかわらないので仮の値を設定
+    remoteHost: [{ name: "localhost", queue: "", jobScheduler: null }],
     currentComponent: { ID: 999, descendants: [] },
-    scriptCandidates: ['checkA', 'checkB', 'checkC'],
-    projectRootDir: '/proj',
-  }
+    scriptCandidates: ["checkA", "checkB", "checkC"],
+    projectRootDir: "/proj"
+  };
 
   /**
    * テストケース側から state を差分注入できるように
    */
   const state = {
     ...baseState,
-    ...(overrides?.state || {}),
-  }
+    ...(overrides?.state || {})
+  };
 
   /**
    * getters 固定値を返す
    */
   const getters = {
-    selectedComponentAbsPath: () => '/proj/CompA',
-    pathSep: () => '/',
-    ...(overrides?.getters || {}),
-  }
+    selectedComponentAbsPath: ()=>{ return "/proj/CompA"; },
+    pathSep: ()=>{ return "/"; },
+    ...(overrides?.getters || {})
+  };
 
   /**
    * コンポーネントが commit する前提の mutation を最低限用意。
    */
   const mutations = {
-    scriptCandidates(s, payload) { s.scriptCandidates = payload },
-    componentTree(s, payload) { s.componentTree = payload },
-    selectedFile(s, payload) { s.selectedFile = payload },
-    setSelectedComponent(s, payload) { s.selectedComponent = payload },
-    ...(overrides?.mutations || {}),
-  }
+    scriptCandidates(s, payload) { s.scriptCandidates = payload; },
+    componentTree(s, payload) { s.componentTree = payload; },
+    selectedFile(s, payload) { s.selectedFile = payload; },
+    setSelectedComponent(s, payload) { s.selectedComponent = payload; },
+    ...(overrides?.mutations || {})
+  };
 
   /**
    * dispatch される action を最低限用意。
    * UIテストでは副作用は不要なことが多いので showSnackbar は 空実装
    */
   const actions = {
-    selectedComponent({ commit }, payload) { commit('setSelectedComponent', payload) },
+    selectedComponent({ commit }, payload) { commit("setSelectedComponent", payload); },
     showSnackbar() {},
-    ...(overrides?.actions || {}),
-  }
+    ...(overrides?.actions || {})
+  };
 
-  return createStore({ state, getters, mutations, actions })
+  return createStore({ state, getters, mutations, actions });
 }

@@ -1,15 +1,17 @@
+/**
+ * Component テスト実行時に Vue コンポーネントを Vite で解釈・バンドルするための Vite 設定。
+ *
+ */
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import vuetify from "vite-plugin-vuetify";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vuetify from 'vite-plugin-vuetify'
-import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-
-const clientSrc = resolve(__dirname, '../client/src')
+const clientSrc = resolve(__dirname, "../client/src");
 
 export default defineConfig({
   plugins: [
@@ -18,7 +20,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': clientSrc,
+      "@": clientSrc,
     },
   },
   server: {
@@ -26,4 +28,4 @@ export default defineConfig({
     strictPort: true,
   },
 
-})
+});
