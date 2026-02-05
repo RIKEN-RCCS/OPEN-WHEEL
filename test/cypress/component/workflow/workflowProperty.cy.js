@@ -1,19 +1,19 @@
 import ComponentProperty from "@/components/componentProperty.vue";
-import SIO from "../../../../client/src/lib/socketIOWrapper.js";
-
 describe("components", ()=>{
-  const TAG_TYPE_OUTPUT = "output";
-  const TAG_TYPE_INPUT = "input";
-  const TAG_TYPE_TEXT_AREA = "textarea";
+//コンポーネント内の各種入力要素の data-type 識別子。
+  const TAG_TYPE_OUTPUT = "output"; //output file 用の <input> タイプ
+  const TAG_TYPE_INPUT = "input"; //input file 用の <input> タイプ
+  const TAG_TYPE_TEXT_AREA = "textarea"; //description 等の複数行入力対象
+
+  //プロパティパネル内のセクションタイトル要素を指す data-cy。
   const PANEL_INPUT_OUTPUT = "[data-cy=\"component_property-in_out_files-panel_title\"]";
 
   beforeEach(()=>{
+    //表示崩れ防止のため画面サイズを指定
     cy.viewport("macbook-16");
-    cy.stub(SIO, "emitGlobal")
-      .callsFake((event, _root, _payload, maybeCbOrId, maybeCb)=>{
-        const cb = typeof maybeCbOrId === "function" ? maybeCbOrId : maybeCb;
-        if (event === "getFileList" && typeof cb === "function") cb([]);
-      });
+    //プロパティ部分の初期化で getFileList を呼ぶため、外部I/O依存を排除して固定値を返す
+    cy.stubGlobalFileListEmpty();
+    //プロパティ部分をマウントする。
     cy.mountComponentWithAppShell(ComponentProperty, {
       storeOverrides: {
         state: {

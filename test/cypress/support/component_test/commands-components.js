@@ -15,7 +15,29 @@ import "../commands-workFlow";
 //テスト向けの簡易 store（状態注入しやすい）を利用する
 import { createComponentTestStore } from "./mini-store";
 
+// stubGlobalFileListEmpty用
+import SIO from "../../../../client/src/lib/socketIOWrapper.js";
+
 import { mount } from "cypress/vue";
+
+/**
+ * ComponentProperty は初期化処理の一部で SIO.emitGlobal("getFileList", ...) を呼び、
+ * 取得した fileList から scriptCandidates を生成して状態/UIに反映する。
+ *
+ * Component Test ではバックエンド/Socket接続に依存させず、初期化を安定させるために
+ * getFileList のレスポンスのみ固定値（空配列）でスタブする。
+ *
+ */
+Cypress.Commands.add("stubGlobalFileListEmpty", ()=>{
+  cy.stub(SIO, "emitGlobal").callsFake((event, _root, _payload, maybeCbOrId, maybeCb)=>{
+    const cb = typeof maybeCbOrId === "function" ? maybeCbOrId : maybeCb;
+
+    //mount 時などに要求されるファイル一覧を空で返す（外部依存排除）
+    if (event === "getFileList" && typeof cb === "function") {
+      cb([]);
+    }
+  });
+});
 
 /**
  * Vueコンポーネントを「アプリに近い環境（VApp/VMain + plugin）」で mount する。
