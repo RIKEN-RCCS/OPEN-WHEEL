@@ -1,3 +1,8 @@
+/**
+ * Cypress Component Testing 用の最小 Vuex Store 生成ユーティリティ。
+ * 本番Storeを持ち込まず、mount に必要な state/getters/mutations/actions だけを用意する。
+ * テストケース側から overrides で差分注入できる。
+ */
 import { createStore } from "vuex";
 
 /**
