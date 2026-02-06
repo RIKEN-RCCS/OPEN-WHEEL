@@ -1,4 +1,4 @@
-//以下、Vuetify + アプリ殻（App Shell）付きで mount するためのヘルパー
+//以下、Vuetify + App Shell付きで mount するためのヘルパー
 import { defineComponent, h, onMounted } from "vue";
 import { VApp, VMain } from "vuetify/components";
 
@@ -67,7 +67,7 @@ export function mountComponentWithAppShell(Inner, options = {}) {
         document.head.appendChild(style);
       });
 
-      //render 関数でアプリ殻を構築し、その中に Inner を描画する
+      //render 関数でApp Shellを構築し、その中に Inner を描画する
       return ()=>{
         return h("div", { id: "app" }, [
           h(VApp, null, {
