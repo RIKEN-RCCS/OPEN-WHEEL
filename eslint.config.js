@@ -7,8 +7,8 @@ import n from "eslint-plugin-n";
 import chaiFriendly from "eslint-plugin-chai-friendly";
 import vue from "eslint-plugin-vue";
 import vueParser from "vue-eslint-parser";
-import jsonc from 'eslint-plugin-jsonc';
-import jsoncParser from 'jsonc-eslint-parser';
+import jsonc from "eslint-plugin-jsonc";
+import jsoncParser from "jsonc-eslint-parser";
 
 const jsdocRules = {
   "jsdoc/require-jsdoc": ["warn", { enableFixer: false }],
