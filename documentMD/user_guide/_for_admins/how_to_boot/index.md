@@ -143,13 +143,9 @@ WHEELは、sshでログインした先の計算サーバ上でタスクを実行
 ### バッチシステムがない場合
 まず、WHEELにアクセスし、画面右上のハンバーガーメニューをクリックします。
 
-{% include annotated-img.html
-   src="./img/hamburger_menu.png"
-   markers="top:20.5,left:80.4,type:rect,width:23.8,height:25.4"
-%}
+![hamburger menu](img/hamburger_menu.png "hamburger menu")
 
-
-表示されたメニュー内の __Remotehost editor__ をクリックします。リモートホスト設定画面が別タブで表示されます。
+表示されたメニュー内の __Remotehost editor__ をクリックします。リモートホスト設定ダイアログが表示されます。
 
 ![img](./img/remotehost_editor_button.png "リモートホストエディタリンク")
 
@@ -176,6 +172,13 @@ Host work dir
 : リモートホスト内で使用するディレクトリのパス
 
 例えば、 `foo.example.com` ホストに対して、ユーザー `bar` で接続しタスクの実行を `/home/users/bar/baz` ディレクトリ以下で行なう設定を`example` という名前で作成する場合、入力内容は次のようになります。
+
+入力フィールド | 入力値
+--- | ---
+1   | example
+2   | foo.example.com
+3   | bar
+4   | /home/users/bar/baz
 
 ![img](./img/new_remotehost.png "新規ホスト情報設定")
 
@@ -214,24 +217,16 @@ __リモートホストへの接続に公開鍵認証を使用する場合__
 
 ![img](./img/edit_remotehost_setting.png "ホスト情報編集ダイアログ")
 
-リモートホストで使われているバッチシステムの種類を、 __job scheduler__ の欄(1)から選びます。
+リモートホストで使われているバッチシステムの種類を、 __job scheduler__ の欄①から選びます。
 現在設定可能な値は次の6種類です。
 
 - PBSPro
-- PBSProWithoutHistory
 - SLURM
 - Fugaku
-- TCS (Technical Computing Suite)
-- UGE (Univa Grid Engine)
-
-__PBSProWithoutHistoryについて__
-PBSProには、バッチシステムの設定で実行終了したジョブの情報を保存しないものがあります。
-この場合 __PBSPro__ ではなく __PBSProWithoutHistory__ を使用してください。
-{: .notice--info}
 
 __Fugakuについて__
-富岳では、TCSが採用されていますが他サイトとは一部挙動が違うため、富岳専用の設定(Fugaku)を用意しています。
-富岳を使用する場合は、__TCS (Technical Computing Suite)__ ではなく __Fugaku__ を選択してください。
+富岳では、Technical Computing Suite (TCS) 上でジョブ管理が行われています。同じジョブスケジューラを導入している他システムでは
+動作確認を行なっていないため、富岳専用の設定(Fugaku)として用意しています
 {: .notice--info}
 
 __バッチシステムの設定について__
