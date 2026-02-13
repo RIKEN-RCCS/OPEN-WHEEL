@@ -52,10 +52,10 @@ function isExceededLimit(JS, rt, outputText) {
  * @returns {string} - source command string
  */
 function source(task) {
-  if (typeof task.soruceScript === "undefined" || task.soruceScript === null || task.soruceScript.length === 0) {
+  if (typeof task.sourceScript === "undefined" || task.sourceScript === null || task.sourceScript.length === 0) {
     return "";
   }
-  return `&& source ${task.soruceScript}`;
+  return `&& source ${task.sourceScript}`;
 }
 
 /**
