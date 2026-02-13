@@ -151,6 +151,17 @@
               variant="outlined"
               data-cy="component_property-submit_option-text_field"
             />
+            <v-autocomplete
+              v-if="hasScript"
+              v-model="copySelectedComponent.sourceScript"
+              label="source script"
+              :readonly="readOnly"
+              :items="scriptCandidates"
+              :disabled="! copySelectedComponent.useJobScheduler"
+              clearable
+              variant="outlined"
+              data-cy="component_property-source_script-autocomplete"
+            />
             <v-text-field
               v-if="isStorage"
               v-model="copySelectedComponent.storagePath"
