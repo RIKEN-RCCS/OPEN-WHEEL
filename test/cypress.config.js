@@ -3,6 +3,12 @@ import SSH from "simple-ssh";
 import { removeDirectory } from "cypress-delete-downloads-folder";
 import fs from "fs-extra";
 import * as tar from "tar";
+import vue from "@vitejs/plugin-vue";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   waitForAnimations: true,
@@ -16,8 +22,34 @@ export default defineConfig({
   component: {
     devServer: {
       framework: "vue",
-      bundler: "vite"
-    }
+      bundler: "vite",
+      viteConfig: {
+        plugins: [vue()],
+        resolve: {
+          alias: {
+            "@": path.resolve(__dirname, "../client/src")
+          },
+          dedupe: ["vue", "vuetify"]
+        },
+        optimizeDeps: {
+          include: ["vue", "vuetify"]
+        },
+        server: {
+          fs: {
+            allow: [
+              __dirname, //test/
+              path.resolve(__dirname, ".."), //open-wheel/
+              path.resolve(__dirname, "../client") //client/
+            ],
+            strict: false
+          }
+        }
+      }
+    },
+    supportFile: "cypress/support/component.js",
+    indexHtmlFile: "cypress/support/component-index.html",
+    specPattern: "cypress/component/**/*.cy.{js,jsx,ts,tsx}",
+    devServerPublicPathRoute: ""
   },
 
   e2e: {
