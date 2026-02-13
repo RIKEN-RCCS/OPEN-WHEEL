@@ -47,6 +47,18 @@ function isExceededLimit(JS, rt, outputText) {
 }
 
 /**
+ * make source command for remote execution
+ * @param {object} task - task component instance
+ * @returns {string} - source command string
+ */
+function source(task) {
+  if (typeof task.soruceScript === "undefined" || task.soruceScript === null || task.soruceScript.length === 0) {
+    return "";
+  }
+  return `&& source ${task.soruceScript}`;
+}
+
+/**
  * convert env object to cmandline string
  * @param {object} task - task component instance
  * @returns {string} -
@@ -273,7 +285,7 @@ class RemoteJobExecuter extends Executer {
   async exec(task) {
     const hostinfo = _internal.getSshHostinfo(task.projectRootDir, task.remotehostID);
     const submitOpt = task.submitOption ? task.submitOption : "";
-    const submitCmd = `cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
+    const submitCmd = `cd ${task.remoteWorkingDir} ${source(task)} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
     loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "submitting job (remote):", submitCmd);
     await setTaskState(task, "running");
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
