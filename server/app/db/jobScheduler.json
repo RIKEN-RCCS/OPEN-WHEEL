@@ -52,7 +52,7 @@
     "reSubJobStatusCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
     "reExceededLimitError": "PJM 0072 pjsub Job exceeded the accept limit",
     "acceptableJobStatus": [
-      0,6
+      0, 6
     ]
   }
 }
