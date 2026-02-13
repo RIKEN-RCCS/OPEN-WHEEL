@@ -4,6 +4,7 @@ services:
     environment:
       - JEKYLL_UID=${UID}
       - JEKYLL_GID=${GID}
+      - JEKYLL_DISABLE_DISK_CACHE=1
     volumes:
       - .:/srv/jekyll/
     command: >
