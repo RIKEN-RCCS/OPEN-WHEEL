@@ -263,6 +263,7 @@ class BulkjobTaskSchema extends TaskSchema {
     this.properties.endBulkNumber = { type: ["number", "null"], default: null };
     this.properties.manualFinishCondition = { type: "boolean", default: false };
     this.properties.condition = { type: ["string", "null"], default: null };
+    this.properties.sourceScript = { type: ["string", "null"], default: null };
   }
 }
 
