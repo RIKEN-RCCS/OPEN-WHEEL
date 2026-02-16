@@ -1,138 +1,29 @@
 describe("jobExecute", ()=>{
-  const TYPE_INPUT = "input";
-  const TYPE_OUTPUT = "output";
+  /**
+   * エスケープ
+   * @param {string} s - 対象文字列
+   * @returns {string} 修正文字列
+   */
+  function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
 
   //仮実装中なのでコマンドもここに書いておく
-  Cypress.Commands.add(
-    "selectDropdownOptionExactScoped",
-    (targetDropBoxCy, dropBoxNo, selectVal, options = {})=>{
-      const timeout = options.timeout ?? 10000;
-      const index = dropBoxNo ?? 0;
-      const caseSensitive = options.caseSensitive ?? true;
-      const partial = options.partial ?? false;
-      const verifyMode = options.verifyMode ?? "auto";
-      const nthMatch = options.nthMatch ?? 0;
+  Cypress.Commands.add("setupTaskWithScriptAndIO", (scriptName, shellText, inputType, ioFileName, target)=>{
+    const scriptEle = "[data-cy=\"component_property-script-autocomplete\"]";
+    const hostEle = "[data-cy=\"component_property-host-select\"]";
 
-      const norm = (s)=>{ return (s ?? "").replace(/\s+/g, " ").trim(); };
-      const escapeRegExp = (s)=>{ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+    cy.createShellScript(scriptName, shellText);
 
-      const pattern = partial
-        ? new RegExp(escapeRegExp(norm(selectVal)), caseSensitive ? "" : "i")
-        : new RegExp(`^${escapeRegExp(norm(selectVal))}$`, caseSensitive ? "" : "i");
+    //script でシェルファイル選択
+    cy.selectValueFromDropdownList(scriptEle, 3, scriptName);
 
-      //1) 対象外枠を index で 1 件に限定
-      cy.get(targetDropBoxCy, { timeout })
-        .should("have.length.at.least", index + 1)
-        .eq(index)
-        .as("root");
+    //ローカルホスト選択
+    cy.selectValueFromDropdownList(hostEle, 3, target);
 
-      //2) combobox を 1 件に限定して開く（aria-expanded 同期）
-      cy.get("@root")
-        .find("[role=\"combobox\"]", { timeout })
-        .should("have.length.at.least", 1)
-        .first()
-        .as("combo")
-        .click();
-
-      cy.get("@combo")
-        .should("have.attr", "aria-expanded")
-        .and("match", /true/i);
-
-      //3) 自分の listbox を aria-controls から特定（1件化）
-      cy.get("@combo")
-        .invoke("attr", "aria-controls")
-        .then((menuId)=>{
-          expect(menuId, "aria-controls").to.be.a("string").and.not.be.empty;
-          const baseSel = `#${menuId}`;
-          const listboxSel = `${baseSel} [role="listbox"], ${baseSel}[role="listbox"]`;
-
-          cy.get(listboxSel, { timeout })
-            .should("have.length", 1)
-            .as("listbox");
-
-          //4) 完全一致/部分一致で候補を抽出 → .v-list-item をクリック
-          cy.get("@listbox")
-            .find(".v-list-item, [role=\"option\"]", { timeout })
-            .filter((_, el)=>{
-              //テキストは .v-list-item-title 優先、なければ el.textContent
-              const title
-                = el.querySelector(".v-list-item-title")?.textContent
-                  ?? el.textContent;
-              return pattern.test(norm(title));
-            })
-            .should("have.length.at.least", nthMatch + 1)
-            .eq(nthMatch)
-            .scrollIntoView()
-            .should("be.visible")
-            .click();
-
-          //5) メニューが閉じたことを同期（必要なら）
-          cy.get("@combo")
-            .should("have.attr", "aria-expanded")
-            .and("match", /false/i);
-        });
-
-      //6) 選択表示の反映（autocomplete と select の両対応）
-      cy.get("@root").within(()=>{
-        const verifyAuto = ()=>{
-          //a) input[role="combobox"] の value で一致
-          cy.get("input[role=\"combobox\"]", { timeout })
-            .should("have.length.at.least", 1)
-            .first()
-            .invoke("val")
-            .then((val)=>{ return expect(pattern.test(norm(String(val)))).to.be.true; });
-        };
-
-        const verifySelectionText = ()=>{
-          cy.get(".v-autocomplete__selection-text, .v-select__selection-text", { timeout })
-            .should("have.length.at.least", 1)
-            .first()
-            .invoke("text")
-            .then((txt)=>{ return expect(pattern.test(norm(txt))).to.be.true; });
-        };
-
-        if (verifyMode === "input") {
-          verifyAuto();
-        } else if (verifyMode === "selectionText") {
-          verifySelectionText();
-        } else {
-          //auto: どちらでも通るよう二段構え
-          cy.wrap(null).then(()=>{
-            let verified = false;
-            return cy
-              .get("input[role=\"combobox\"]", { timeout })
-              .then(($ins)=>{
-                if ($ins.length) {
-                  const val = ($ins[0]).value;
-                  verified = pattern.test(norm(val));
-                }
-              })
-              .then(()=>{
-                if (!verified) {
-                  return cy
-                    .get(".v-autocomplete__selection-text, .v-select__selection-text", { timeout })
-                    .then(($nodes)=>{
-                      if ($nodes.length) {
-                        const txt = $nodes.eq(0).text();
-                        verified = pattern.test(norm(txt));
-                      }
-                    });
-                }
-              })
-              .then(()=>{
-                expect(
-                  verified,
-                  "selected value reflected either in input value or selection text"
-                ).to.be.true;
-              });
-          });
-        }
-      });
-    }
-  );
-
-  //ヘルパー: 正規表現エスケープ
-  const escapeRegExp = (s)=>{ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+    //インプットファイル指定
+    cy.enterInputOrOutputFile(inputType, ioFileName, true, true);
+  });
 
   Cypress.Commands.add("waitForSnackbar", (messageRe, options = {})=>{
     const timeout = options.timeout ?? 15000;
@@ -144,26 +35,26 @@ describe("jobExecute", ()=>{
   Cypress.Commands.add(
     "createShellScript",
     (filename, text)=>{
-      //シェルファイル作成 - Files展開
+      //シェル作成 - Files展開
       cy.get("[data-cy=\"component_property-files-panel_title\"]")
         .scrollIntoView()
         .click();
-      //シェルファイル作成 - New File クリック
+      //シェル作成 - New File クリック
       cy.get("[data-cy=\"file_browser-new_file-btn\"]")
         .scrollIntoView()
         .click();
-      //シェルファイル作成 - ファイル名入力
+      //シェル作成 - ファイル名入力
       cy.get("[data-cy=\"file_browser-input-text_field\"]").type(filename);
-      //シェルファイル作成 - OK押下
+      //シェル作成 - OK押下
       cy.get("[data-cy=\"versatile_dialog_Create_new_File-ok-btn\"]").click();
-      //シェルファイル作成 - シェルファイル選択
+      //シェル作成 - 選択
       cy.contains(".v-list-item__content", filename)
         .scrollIntoView()
         .should("be.visible")
         .click();
-      //シェルファイル作成 - edit 押下
+      //シェル作成 - edit
       cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
-      //シェルファイル作成 - シェルの実行内容入力
+      //シェル作成 - 実行内容入力
       cy.get("#editor")
         .should("have.class", "ace_editor")
         .click()
@@ -171,9 +62,9 @@ describe("jobExecute", ()=>{
         .should("exist")
         .type("{selectall}{backspace}", { force: true })
         .type(text, { force: true });
-      //シェルファイル作成 - 閉じるボタン押下
+      //シェル作成 - 閉じるボタン
       cy.get("[data-cy=\"workflow-text_editor_close-btn\"]").click();
-      //シェルファイル作成 - 変更内容を保存
+      //シェル作成 - 変更内容を保存
       cy.contains("button", /^keep changes$/i)
         .scrollIntoView()
         .should("be.visible")
@@ -182,12 +73,11 @@ describe("jobExecute", ()=>{
 
       //保存確認
       cy.waitForSnackbar(new RegExp(`${escapeRegExp(filename)}\\s+saved\\s*$`, "i"));
-
-      //待機
-      cy.wait(300);
     }
   );
 
+  const TYPE_INPUT = "input";
+  const TYPE_OUTPUT = "output";
   const DEF_COMPONENT_TASK = "task";
   const TASK_NAME_0 = "task0";
   const TASK_NAME_1 = "task1";
@@ -241,24 +131,21 @@ describe("jobExecute", ()=>{
   });
 
   /**
-        localhostでのタスク実行
-        現状実行完了までを確認
-        ファイルの生成の確認方法を検討中
+   * localhostでのタスク実行
+   * 現状実行完了までを確認
+   * ファイルの生成の確認方法を検討中
    */
   it("localhostでのタスク実行", ()=>{
-    
     const fileNameTask1 = "task1.sh";
     const fileNameTask2 = "task2.sh";
     const codeTask1 = `echo "test" > message.txt`;
     const codeTask2 = `cat message.txt >/dev/null 2>&1`;
-    const scriptEle = "[data-cy=\"component_property-script-autocomplete\"]";
-    const hostEle = "[data-cy=\"component_property-host-select\"]";
 
-    //　foreach作成
+    //foreach作成
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
 
-    // loop設定
-        cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").scrollIntoView()
+    //loop設定
+    cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").scrollIntoView()
       .click();
     cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
       .type(1);
@@ -269,46 +156,29 @@ describe("jobExecute", ()=>{
     //プロパティを閉じる
     cy.closeProperty();
 
-    // foreach作成
+    //foreach作成
     cy.doubleClickComponentName(FOREACH_NAME_0);
 
-    //　task 1つ目
+    //task 1つ目
     cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 501, 500);
 
-    //シェルファイル作成
-    cy.createShellScript(fileNameTask1, codeTask1);
-    
-    //script でシェルファイル選択
-    cy.selectDropdownOptionExactScoped(scriptEle, 0, fileNameTask1);
-
-    //ローカルホスト選択
-    cy.selectDropdownOptionExactScoped(hostEle, 0, "localhost");
-
-    //　ためし
-    cy.enterInputOrOutputFile(TYPE_OUTPUT, "message.txt", true, true);
+    //シェル作成
+    cy.setupTaskWithScriptAndIO(fileNameTask1, codeTask1, TYPE_OUTPUT, "message.txt", "localhost");
 
     //プロパティを閉じる
     cy.closeProperty();
 
-    //　task 2つ目
+    //task 2つ目
     cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 700);
 
-    cy.createShellScript(fileNameTask2, codeTask2);
-
-    //script でシェルファイル選択
-    cy.selectDropdownOptionExactScoped(scriptEle, 0, fileNameTask2);
-
-    //ローカルホスト選択
-    cy.selectDropdownOptionExactScoped(hostEle, 0, "localhost");
-
-    //　ためし
-    cy.enterInputOrOutputFile(TYPE_INPUT, "message.txt", true, true);
+    //シェル作成
+    cy.setupTaskWithScriptAndIO(fileNameTask2, codeTask2, TYPE_INPUT, "message.txt", "localhost");
 
     //プロパティを閉じる
     cy.closeProperty();
-    
+
     //コンポーネント同士を接続
-    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); 
+    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1);
 
     //待機
     cy.wait(300);
