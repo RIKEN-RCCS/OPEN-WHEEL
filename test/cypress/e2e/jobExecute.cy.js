@@ -1,4 +1,7 @@
 describe("jobExecute", ()=>{
+  const TYPE_INPUT = "input";
+  const TYPE_OUTPUT = "output";
+
   //仮実装中なのでコマンドもここに書いておく
   Cypress.Commands.add(
     "selectDropdownOptionExactScoped",
@@ -188,6 +191,8 @@ describe("jobExecute", ()=>{
   const DEF_COMPONENT_TASK = "task";
   const TASK_NAME_0 = "task0";
   const TASK_NAME_1 = "task1";
+  const DEF_COMPONENT_FOREACH = "foreach";
+  const FOREACH_NAME_0 = "foreach0";
 
   before(()=>{
     return cy.removeAllProjects();
@@ -241,41 +246,71 @@ describe("jobExecute", ()=>{
         ファイルの生成の確認方法を検討中
    */
   it("localhostでのタスク実行", ()=>{
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 501, 500);
-
-    //シェルファイル作成
-    const filename = "test.sh";
-    const text = `echo "hello" > ~/test_output_pbs.txt && hostname >> ~/test_output_pbs.txt`;
-
-    cy.createShellScript(filename, text);
-
-    //script でシェルファイル選択
+    
+    const fileNameTask1 = "task1.sh";
+    const fileNameTask2 = "task2.sh";
+    const codeTask1 = `echo "test" > message.txt`;
+    const codeTask2 = `cat message.txt >/dev/null 2>&1`;
     const scriptEle = "[data-cy=\"component_property-script-autocomplete\"]";
-    cy.selectDropdownOptionExactScoped(scriptEle, 0, filename);
-
-    //ローカルホスト選択
     const hostEle = "[data-cy=\"component_property-host-select\"]";
-    cy.selectDropdownOptionExactScoped(hostEle, 0, "localhost");
+
+    //　foreach作成
+    cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
+
+    // loop設定
+        cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").scrollIntoView()
+      .click();
+    cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
+      .type(1);
+    cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
+      .eq(1)
+      .click(); //Add input file button
 
     //プロパティを閉じる
     cy.closeProperty();
 
-    //　2つ目
-    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 700);
+    // foreach作成
+    cy.doubleClickComponentName(FOREACH_NAME_0);
 
-    cy.createShellScript(filename, text);
+    //　task 1つ目
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 501, 500);
 
+    //シェルファイル作成
+    cy.createShellScript(fileNameTask1, codeTask1);
+    
     //script でシェルファイル選択
-    cy.selectDropdownOptionExactScoped(scriptEle, 0, filename);
+    cy.selectDropdownOptionExactScoped(scriptEle, 0, fileNameTask1);
 
     //ローカルホスト選択
     cy.selectDropdownOptionExactScoped(hostEle, 0, "localhost");
 
-    ////プロパティを閉じる
+    //　ためし
+    cy.enterInputOrOutputFile(TYPE_OUTPUT, "message.txt", true, true);
+
+    //プロパティを閉じる
     cy.closeProperty();
 
-    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); //コンポーネント同士を接続
+    //　task 2つ目
+    cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 700);
 
+    cy.createShellScript(fileNameTask2, codeTask2);
+
+    //script でシェルファイル選択
+    cy.selectDropdownOptionExactScoped(scriptEle, 0, fileNameTask2);
+
+    //ローカルホスト選択
+    cy.selectDropdownOptionExactScoped(hostEle, 0, "localhost");
+
+    //　ためし
+    cy.enterInputOrOutputFile(TYPE_INPUT, "message.txt", true, true);
+
+    //プロパティを閉じる
+    cy.closeProperty();
+    
+    //コンポーネント同士を接続
+    cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); 
+
+    //待機
     cy.wait(300);
 
     //タスク実行
