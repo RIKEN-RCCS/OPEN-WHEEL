@@ -20,6 +20,7 @@ import "./commands-home";
 import "./commands-remoteHost";
 import "./commands-workFlow";
 import "./commands-shortcut";
+import "./commands-jobExecute";
 import "cypress-real-events";
 
 //Alternatively you can use CommonJS syntax:
