@@ -15,7 +15,7 @@ Cypress.Commands.add("setupTaskWithScriptAndIO", (scriptName, shellText, inputTy
   const hostEle = "[data-cy=\"component_property-host-select\"]";
 
   //シェル作成
-  cy.scriptMakeFixed(scriptName, shellText);
+  cy.scriptMake(scriptName, shellText);
 
   //script でシェル選択
   cy.selectValueFromDropdownList(scriptEle, 3, scriptName);
@@ -64,38 +64,4 @@ Cypress.Commands.add("setupRemotehost", (label, hostName)=>{
     .should("have.value", label);
   //ダイアログ内のOKボタン
   cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
-});
-
-const animationWaitTime = 500;
-
-//open file editer fixed
-Cypress.Commands.add("clickFileEditerFixed", ()=>{
-  cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click()
-    .wait(animationWaitTime);
-});
-
-//edit script fixed
-Cypress.Commands.add("scriptEditFixed", (scriptName, script)=>{
-  cy.contains(scriptName).click();
-  cy.clickFileEditerFixed();
-  cy.get("#editor").find("textarea")
-    .type(script, { force: true });
-  //閉じるボタン
-  cy.get("[data-cy=\"workflow-text_editor_close-btn\"]").click();
-  //変更内容を保存
-  cy.contains("button", /^keep changes$/i)
-    .scrollIntoView()
-    .should("be.visible")
-    .and("not.be.disabled")
-    .click()
-    .wait(animationWaitTime);
-});
-
-//make script fixed
-Cypress.Commands.add("scriptMakeFixed", (scriptName, script)=>{
-  cy.clickFilesTab();
-  cy.fileFolderMake("file", scriptName);
-
-  cy.scriptEditFixed(scriptName, script);
-  cy.clickFilesTab();
 });
