@@ -8,12 +8,48 @@ describe("jobExecute", ()=>{
     return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  //仮実装中なのでコマンドもここに書いておく
+  const animationWaitTime = 500;
+
+  //open file editer fixed
+  Cypress.Commands.add("clickFileEditerFixed", ()=>{
+    cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click()
+      .wait(animationWaitTime);
+  });
+
+  //edit script fixed
+  Cypress.Commands.add("scriptEditFixed", (scriptName, script)=>{
+    cy.contains(scriptName).click();
+    cy.clickFileEditerFixed();
+    cy.get("#editor").find("textarea")
+      .type(script, { force: true });
+    //閉じるボタン
+    cy.get("[data-cy=\"workflow-text_editor_close-btn\"]").click();
+    //変更内容を保存
+    cy.contains("button", /^keep changes$/i)
+      .scrollIntoView()
+      .should("be.visible")
+      .and("not.be.disabled")
+      .click()
+      .wait(animationWaitTime);
+  });
+
+  //make script fixed
+  Cypress.Commands.add("scriptMakeFixed", (scriptName, script)=>{
+    cy.clickFilesTab();
+    cy.fileFolderMake("file", scriptName);
+
+    cy.scriptEditFixed(scriptName, script);
+    cy.clickFilesTab();
+  });
+
   Cypress.Commands.add("setupTaskWithScriptAndIO", (scriptName, shellText, inputType, ioFileName, target)=>{
     const scriptEle = "[data-cy=\"component_property-script-autocomplete\"]";
     const hostEle = "[data-cy=\"component_property-host-select\"]";
 
-    cy.createShellScript(scriptName, shellText);
+    cy.scriptMakeFixed(scriptName, shellText);
+
+    //保存確認
+    cy.waitForSnackbar(new RegExp(`${escapeRegExp(filename)}\\s+saved\\s*$`, "i"));
 
     //script でシェルファイル選択
     cy.selectValueFromDropdownList(scriptEle, 3, scriptName);
@@ -31,50 +67,6 @@ describe("jobExecute", ()=>{
       .contains("div.v-snackbar__content", messageRe, { timeout })
       .should("be.visible");
   });
-
-  Cypress.Commands.add(
-    "createShellScript",
-    (filename, text)=>{
-      //シェル作成 - Files展開
-      cy.get("[data-cy=\"component_property-files-panel_title\"]")
-        .scrollIntoView()
-        .click();
-      //シェル作成 - New File クリック
-      cy.get("[data-cy=\"file_browser-new_file-btn\"]")
-        .scrollIntoView()
-        .click();
-      //シェル作成 - ファイル名入力
-      cy.get("[data-cy=\"file_browser-input-text_field\"]").type(filename);
-      //シェル作成 - OK押下
-      cy.get("[data-cy=\"versatile_dialog_Create_new_File-ok-btn\"]").click();
-      //シェル作成 - 選択
-      cy.contains(".v-list-item__content", filename)
-        .scrollIntoView()
-        .should("be.visible")
-        .click();
-      //シェル作成 - edit
-      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
-      //シェル作成 - 実行内容入力
-      cy.get("#editor")
-        .should("have.class", "ace_editor")
-        .click()
-        .find("textarea.ace_text-input")
-        .should("exist")
-        .type("{selectall}{backspace}", { force: true })
-        .type(text, { force: true });
-      //シェル作成 - 閉じるボタン
-      cy.get("[data-cy=\"workflow-text_editor_close-btn\"]").click();
-      //シェル作成 - 変更内容を保存
-      cy.contains("button", /^keep changes$/i)
-        .scrollIntoView()
-        .should("be.visible")
-        .and("not.be.disabled")
-        .click();
-
-      //保存確認
-      cy.waitForSnackbar(new RegExp(`${escapeRegExp(filename)}\\s+saved\\s*$`, "i"));
-    }
-  );
 
   const TYPE_INPUT = "input";
   const TYPE_OUTPUT = "output";
