@@ -6,10 +6,11 @@
 function escapeRegExp(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
 /**
  * whileにスクリプトファイルを作成 Conditionにセット
  */
-Cypress.Commands.add("setupWhileWithScriptAndCondition", (scriptName, shellText) => {
+Cypress.Commands.add("setupWhileWithScriptAndCondition", (scriptName, shellText)=>{
   const scriptEle = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
   //シェル作成
   cy.scriptMake(scriptName, shellText);
@@ -24,7 +25,7 @@ Cypress.Commands.add("setupWhileWithScriptAndCondition", (scriptName, shellText)
 /**
  * taskにスクリプトファイルを作成 i/oファイルにセット
  */
-Cypress.Commands.add("setupTaskWithScriptAndIO", (scriptName, shellText, inputType, ioFileName, target) => {
+Cypress.Commands.add("setupTaskWithScriptAndIO", (scriptName, shellText, inputType, ioFileName, target)=>{
   const scriptEle = "[data-cy=\"component_property-script-autocomplete\"]";
   const hostEle = "[data-cy=\"component_property-host-select\"]";
 
@@ -44,7 +45,10 @@ Cypress.Commands.add("setupTaskWithScriptAndIO", (scriptName, shellText, inputTy
   cy.waitForSnackbar(new RegExp(`${escapeRegExp(scriptName)}\\s+saved\\s*$`, "i"));
 });
 
-Cypress.Commands.add("waitForSnackbar", (messageRe, options = {}) => {
+/**
+ * ファイル保存待機
+ */
+Cypress.Commands.add("waitForSnackbar", (messageRe, options = {})=>{
   const timeout = options.timeout ?? 15000;
   return cy
     .contains("div.v-snackbar__content", messageRe, { timeout })
@@ -52,9 +56,25 @@ Cypress.Commands.add("waitForSnackbar", (messageRe, options = {}) => {
 });
 
 /**
+ * foreach 繰り返し設定
+ */
+Cypress.Commands.add("setForeachLoop", (length)=>{
+  cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").scrollIntoView()
+    .click();
+
+  for (let index = 0; index < length; index++) {
+    cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
+      .type(index);
+    cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
+      .eq(1)
+      .click();
+  }
+});
+
+/**
  * テストで使用するremotehost情報の設定
  */
-Cypress.Commands.add("setupRemotehost", (label, hostName) => {
+Cypress.Commands.add("setupRemotehost", (label, hostName)=>{
   const PORT_NUMBER = 22;
   const TEST_USER = "testuser";
 

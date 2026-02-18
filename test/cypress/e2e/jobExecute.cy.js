@@ -1,4 +1,4 @@
-describe("jobExecute", () => {
+describe("jobExecute", ()=>{
   const TYPE_INPUT = "input";
   const TYPE_OUTPUT = "output";
   const DEF_COMPONENT_TASK = "task";
@@ -19,25 +19,25 @@ describe("jobExecute", () => {
 
   const codeTask1 = `echo "test" > message.txt`;
   const codeTask2 = `cat message.txt >/dev/null 2>&1`;
-  const codeWhile = [`set -eu`,`cnt=$(cat counter.txt)`,`if [ "$cnt" -lt 10 ]; then`,`  exit 0`,`else`,`  exit 1`].join('\n');
+  const codeWhile = [`set -eu`, `cnt=$(cat counter.txt)`, `if [ "$cnt" -lt 10 ]; then`, `  exit 0`, `else`, `  exit 1`].join("\n");
 
-  before(() => {
+  before(()=>{
     return cy.removeAllProjects();
   });
 
-  beforeEach(() => {
+  beforeEach(()=>{
     cy.viewport("macbook-16");
     return cy.createAndOpenProject();
   });
 
-  after(() => {
+  after(()=>{
     return cy.removeAllProjects();
   });
 
   /**
    * localhostでのタスク実行
    */
-  it("executeLocalhost", () => {
+  it("executeLocalhost", ()=>{
     //workflow作成
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
     //while 作成
@@ -51,13 +51,7 @@ describe("jobExecute", () => {
 
     //foreach作成
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
-    cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").scrollIntoView()
-      .click();
-    cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
-      .type(1);
-    cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
-      .eq(1)
-      .click();
+    cy.setForeachLoop(2);
     cy.closeProperty();
     //foreach選択
     cy.doubleClickComponentName(FOREACH_NAME_0);
@@ -83,7 +77,7 @@ describe("jobExecute", () => {
   /**
    * remoteHostでのタスク実行
    */
-  it("executeRemoteHost", () => {
+  it("executeRemoteHost", ()=>{
     //workflow作成
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
     //while 作成
@@ -94,16 +88,9 @@ describe("jobExecute", () => {
     cy.connectComponentMultiple(WORKFLOW_NAME_0, WHILE_NAME_0);
     //workflow選択
     cy.doubleClickComponentName(WORKFLOW_NAME_0);
-
     //foreach作成
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
-    cy.get("[data-cy=\"component_property-loop_set_foreach-panel_title\"]").scrollIntoView()
-      .click();
-    cy.get("[data-cy=\"component_property-index_foreach-list_form\"]").find("input")
-      .type(1);
-    cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
-      .eq(1)
-      .click();
+    cy.setForeachLoop(2);
     cy.closeProperty();
     //foreach選択
     cy.doubleClickComponentName(FOREACH_NAME_0);
