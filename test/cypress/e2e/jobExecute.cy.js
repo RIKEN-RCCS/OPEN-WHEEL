@@ -1,3 +1,6 @@
+/**
+ * ジョブ実行テスト
+ */
 describe("jobExecute", ()=>{
   const TYPE_INPUT = "input";
   const TYPE_OUTPUT = "output";
@@ -36,6 +39,8 @@ describe("jobExecute", ()=>{
 
   /**
    * localhostでのタスク実行
+   * 試験確認内容：ローカルホストに対するタスク実行ワークフローが
+   * 　　　　　　　完了(status:finished)となること
    */
   it("executeLocalhost", ()=>{
     //workflow作成
@@ -76,6 +81,8 @@ describe("jobExecute", ()=>{
 
   /**
    * remoteHostでのタスク実行
+   * 試験確認内容：リモートホストに対するタスク実行ワークフローが
+   * 　　　　　　　完了(status:finished)となること
    */
   it("executeRemoteHost", ()=>{
     //workflow作成
