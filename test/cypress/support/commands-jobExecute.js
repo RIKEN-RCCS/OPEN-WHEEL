@@ -6,11 +6,25 @@
 function escapeRegExp(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+/**
+ * whileにスクリプトファイルを作成 Conditionにセット
+ */
+Cypress.Commands.add("setupWhileWithScriptAndCondition", (scriptName, shellText) => {
+  const scriptEle = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
+  //シェル作成
+  cy.scriptMake(scriptName, shellText);
+  //Conditionをクリック
+  cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
+  //Conditionにセット
+  cy.selectValueFromDropdownList(scriptEle, 3, scriptName);
+  //保存確認
+  cy.waitForSnackbar(new RegExp(`${escapeRegExp(scriptName)}\\s+saved\\s*$`, "i"));
+});
 
 /**
- * タスクにスクリプトファイルを作成 i/oファイルにセット
+ * taskにスクリプトファイルを作成 i/oファイルにセット
  */
-Cypress.Commands.add("setupTaskWithScriptAndIO", (scriptName, shellText, inputType, ioFileName, target)=>{
+Cypress.Commands.add("setupTaskWithScriptAndIO", (scriptName, shellText, inputType, ioFileName, target) => {
   const scriptEle = "[data-cy=\"component_property-script-autocomplete\"]";
   const hostEle = "[data-cy=\"component_property-host-select\"]";
 
@@ -30,7 +44,7 @@ Cypress.Commands.add("setupTaskWithScriptAndIO", (scriptName, shellText, inputTy
   cy.waitForSnackbar(new RegExp(`${escapeRegExp(scriptName)}\\s+saved\\s*$`, "i"));
 });
 
-Cypress.Commands.add("waitForSnackbar", (messageRe, options = {})=>{
+Cypress.Commands.add("waitForSnackbar", (messageRe, options = {}) => {
   const timeout = options.timeout ?? 15000;
   return cy
     .contains("div.v-snackbar__content", messageRe, { timeout })
@@ -40,7 +54,7 @@ Cypress.Commands.add("waitForSnackbar", (messageRe, options = {})=>{
 /**
  * テストで使用するremotehost情報の設定
  */
-Cypress.Commands.add("setupRemotehost", (label, hostName)=>{
+Cypress.Commands.add("setupRemotehost", (label, hostName) => {
   const PORT_NUMBER = 22;
   const TEST_USER = "testuser";
 
