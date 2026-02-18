@@ -172,7 +172,6 @@ async function runChecker(task) {
     return rt;
   } else {
     const script = path.resolve(task.workingDir, task.checker);
-    await addX(script);
 
     const options = {
       cwd: task.workingDir,

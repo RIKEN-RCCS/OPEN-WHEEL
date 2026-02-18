@@ -68,6 +68,13 @@ export async function checkChecker(projectRootDir, component) {
   if (typeof component.checker !== "string") {
     return Promise.reject(new Error("checker is not specified"));
   }
+
+  //Checker must be a filename (not absolute path) under component directory
+  if (path.isAbsolute(component.checker)) {
+    return Promise.reject(new Error("checker must be a filename under component directory, not an absolute path"));
+  }
+
+  //Check if file exists in component directory
   const componentDir = await _internal.getComponentDir(projectRootDir, component.ID, true);
   const filename = path.resolve(componentDir, component.checker);
 

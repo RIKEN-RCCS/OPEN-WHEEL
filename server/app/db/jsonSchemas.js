@@ -107,6 +107,7 @@ class TaskSchema extends GeneralWorkflowComponentSchema {
     this.properties.useJobScheduler = { type: "boolean", default: false };
     this.properties.queue = { type: ["string", "null"], default: null };
     this.properties.submitOption = { type: ["string", "null"], default: null };
+    this.properties.sourceScript = { type: ["string", "null"], default: null };
     this.properties.include = stringArraySchema;
     this.properties.exclude = stringArraySchema;
     this.properties.state.enum.push(...["stage-in", "waiting", "queued", "stage-out"]);
@@ -261,7 +262,6 @@ class BulkjobTaskSchema extends TaskSchema {
     this.properties.endBulkNumber = { type: ["number", "null"], default: null };
     this.properties.manualFinishCondition = { type: "boolean", default: false };
     this.properties.condition = { type: ["string", "null"], default: null };
-    this.properties.sourceScript = { type: ["string", "null"], default: null };
   }
 }
 

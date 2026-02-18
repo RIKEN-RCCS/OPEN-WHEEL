@@ -171,6 +171,24 @@ describe("taskValidator UT", function () {
       await fs.writeFile(checkerPath, "#!/bin/bash\nexit 0");
       expect(await validateTask(projectRootDir, testTask)).to.be.true;
     });
+
+    it("should be rejected if checker is an absolute path", async function () {
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      testTask.script = "script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+      testTask.checker = "/usr/local/bin/checker.sh";
+      await expect(validateTask(projectRootDir, testTask)).to.be.rejectedWith(/checker must be a filename under component directory/);
+    });
+
+    it("should be rejected if checker is an absolute path on remote host", async function () {
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      testTask.script = "script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+      testTask.checker = "/home/user/checker.sh";
+      await expect(validateTask(projectRootDir, testTask)).to.be.rejectedWith(/checker must be a filename under component directory/);
+    });
   });
 
   describe("validateStepjobTask", ()=>{
