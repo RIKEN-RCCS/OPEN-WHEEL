@@ -140,6 +140,37 @@ describe("taskValidator UT", function () {
       testTask.submitOption = "-p high -t 10:00";
       expect(await validateTask(projectRootDir, testTask)).to.be.true;
     });
+
+    it("should be rejected if checker is specified but does not exist", async function () {
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      testTask.script = "script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+      testTask.checker = "nonexistent_checker.sh";
+      await expect(validateTask(projectRootDir, testTask)).to.be.rejectedWith(/checker is not existing file/);
+    });
+
+    it("should be rejected if checker is not a file", async function () {
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      testTask.script = "script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+      testTask.checker = "checker_dir";
+      const checkerDirPath = path.resolve(projectRootDir, testTask.name, "checker_dir");
+      await fs.mkdir(checkerDirPath);
+      await expect(validateTask(projectRootDir, testTask)).to.be.rejectedWith(/checker is not file/);
+    });
+
+    it("should be resolved with true if checker is specified and exists", async function () {
+      const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      testTask.script = "script.sh";
+      const scriptPath = path.resolve(projectRootDir, testTask.name, "script.sh");
+      await fs.writeFile(scriptPath, "#!/bin/bash\necho 'Hello'");
+      testTask.checker = "checker.sh";
+      const checkerPath = path.resolve(projectRootDir, testTask.name, "checker.sh");
+      await fs.writeFile(checkerPath, "#!/bin/bash\nexit 0");
+      expect(await validateTask(projectRootDir, testTask)).to.be.true;
+    });
   });
 
   describe("validateStepjobTask", ()=>{

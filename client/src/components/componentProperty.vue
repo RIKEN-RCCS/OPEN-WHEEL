@@ -105,6 +105,16 @@
               variant="outlined"
               data-cy="component_property-script-autocomplete"
             />
+            <v-autocomplete
+              v-if="isTask"
+              v-model="copySelectedComponent.checker"
+              label="checker script"
+              :readonly="readOnly"
+              :items="scriptCandidates"
+              clearable
+              variant="outlined"
+              data-cy="component_property-checker-autocomplete"
+            />
             <v-select
               v-if="hasHost"
               v-model="copySelectedComponent.host"

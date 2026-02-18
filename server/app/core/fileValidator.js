@@ -60,6 +60,33 @@ export async function checkScript(projectRootDir, component) {
 }
 
 /**
+ * check if checker property has valid value
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ */
+export async function checkChecker(projectRootDir, component) {
+  if (typeof component.checker !== "string") {
+    return Promise.reject(new Error("checker is not specified"));
+  }
+  const componentDir = await _internal.getComponentDir(projectRootDir, component.ID, true);
+  const filename = path.resolve(componentDir, component.checker);
+
+  let stat;
+  try {
+    stat = await fs.stat(filename);
+  } catch (e) {
+    if (e.code !== "ENOENT") {
+      throw e;
+    }
+    return Promise.reject(new Error(`checker is not existing file ${filename}`));
+  }
+  if (!stat.isFile()) {
+    return Promise.reject(new Error(`checker is not file ${filename}`));
+  }
+  return true;
+}
+
+/**
  * check if parameterFile property has valid value
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component which will be tested

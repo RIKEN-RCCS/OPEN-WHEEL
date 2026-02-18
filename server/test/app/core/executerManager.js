@@ -625,4 +625,62 @@ describe("UT for executerManager class", function () {
       );
     });
   });
+
+  describe("runChecker", ()=>{
+    it("should return null if checker is not specified", async function () {
+      const { runChecker } = await import("../../../app/core/executerManager.js");
+      const task = {
+        checker: null,
+        remotehostID: "localhost",
+        projectRootDir: "/tmp/test",
+        workingDir: "/tmp/test/task"
+      };
+      const result = await runChecker(task);
+      expect(result).to.be.null;
+    });
+
+    it("should execute local checker and return exit code", async function () {
+      const { runChecker } = await import("../../../app/core/executerManager.js");
+      const testDir = path.resolve(testDirRoot, "checkerTest");
+      await fs.ensureDir(testDir);
+      const checkerScript = path.resolve(testDir, "checker.sh");
+      await fs.writeFile(checkerScript, "#!/bin/bash\nexit 0");
+      await fs.chmod(checkerScript, 0o755);
+
+      const task = {
+        checker: "checker.sh",
+        remotehostID: "localhost",
+        projectRootDir: testDir,
+        workingDir: testDir,
+        env: {}
+      };
+
+      const result = await runChecker(task);
+      expect(result).to.equal(0);
+
+      await fs.remove(testDir);
+    });
+
+    it("should execute local checker and return non-zero exit code on failure", async function () {
+      const { runChecker } = await import("../../../app/core/executerManager.js");
+      const testDir = path.resolve(testDirRoot, "checkerTestFail");
+      await fs.ensureDir(testDir);
+      const checkerScript = path.resolve(testDir, "checker.sh");
+      await fs.writeFile(checkerScript, "#!/bin/bash\nexit 1");
+      await fs.chmod(checkerScript, 0o755);
+
+      const task = {
+        checker: "checker.sh",
+        remotehostID: "localhost",
+        projectRootDir: testDir,
+        workingDir: testDir,
+        env: {}
+      };
+
+      const result = await runChecker(task);
+      expect(result).to.equal(1);
+
+      await fs.remove(testDir);
+    });
+  });
 });

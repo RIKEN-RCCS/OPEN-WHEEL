@@ -149,10 +149,43 @@ async function decideFinishState(task) {
 }
 
 /**
- * determine if task needs to be re-executed
+ * run checker script to determine task state
  * @param {object} task - task component instance
- * @returns {boolean} -
+ * @returns {number} - exit code of checker script
  */
+async function runChecker(task) {
+  if (!task.checker) {
+    return null;
+  }
+
+  const onRemote = task.remotehostID !== "localhost";
+
+  if (onRemote) {
+    const ssh = getSsh(task.projectRootDir, task.remotehostID);
+    const cmd = `cd ${task.remoteWorkingDir} && ./${task.checker}`;
+    loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "exec checker (remote)", cmd);
+
+    const rt = await ssh.exec(cmd, 0, (data)=>{
+      loggerWrapper.logSSHout(task.projectRootDir, task.workingDir, data);
+    });
+    loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "checker (remote) done. rt =", rt);
+    return rt;
+  } else {
+    const script = path.resolve(task.workingDir, task.checker);
+    await addX(script);
+
+    const options = {
+      cwd: task.workingDir,
+      env: Object.assign({}, process.env, task.env),
+      shell: true
+    };
+
+    loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "exec checker (local)", script);
+    const rt = await promisifiedSpawn(task, script, options);
+    loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "checker (local) done. rt =", rt);
+    return rt;
+  }
+}
 async function needsRetry(task) {
   if ((typeof task.retry === "undefined" || task.retryCondition === null)
     && (typeof task.retryCondition === "undefined" || task.retryCondition === null)) {
@@ -202,9 +235,21 @@ class Executer {
         //record job finished time
         task.endTime = getDateString(true, true);
 
+        //run checker script if specified
+        let checkerRt = null;
+        if (task.checker) {
+          try {
+            checkerRt = await runChecker(task);
+          } catch (e) {
+            loggerWrapper.logWarn(task.projectRootDir, task.workingDir, "checker script execution failed", e);
+          }
+        }
+
         //update task status
         let state;
-        if (task.manualFinishCondition) {
+        if (task.checker && checkerRt !== null) {
+          state = checkerRt === 0 ? "finished" : "failed";
+        } else if (task.manualFinishCondition) {
           state = await decideFinishState(task) ? "finished" : "failed";
         } else {
           state = task.rt === 0 ? "finished" : "failed";
@@ -622,6 +667,7 @@ export {
   makeBulkOpt,
   decideFinishState,
   needsRetry,
+  runChecker,
   promisifiedSpawn,
   getExecutersKey,
   getMaxNumJob,
