@@ -40,7 +40,7 @@ describe("jobExecute", ()=>{
   /**
    * localhostでのタスク実行
    * 試験確認内容：ローカルホストに対するタスク実行ワークフローが
-   * 　　　　　　　完了(status:finished)となること
+   * 完了(status:finished)となること
    */
   it("executeLocalhost", ()=>{
     //workflow作成
@@ -70,10 +70,9 @@ describe("jobExecute", ()=>{
     cy.closeProperty();
     //コンポーネント同士を接続
     cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1);
-    cy.wait(300);
 
     //タスク実行
-    cy.get("[data-cy=\"workflow-play-btn\"]").click();
+    cy.get("[data-cy=\"workflow-play-btn\"]", { timeout: 3000 }).click();
 
     //完了まで待機
     cy.checkProjectStatus("finished");
@@ -82,7 +81,7 @@ describe("jobExecute", ()=>{
   /**
    * remoteHostでのタスク実行
    * 試験確認内容：リモートホストに対するタスク実行ワークフローが
-   * 　　　　　　　完了(status:finished)となること
+   * 完了(status:finished)となること
    */
   it("executeRemoteHost", ()=>{
     //workflow作成
@@ -113,13 +112,12 @@ describe("jobExecute", ()=>{
     cy.closeProperty();
     //コンポーネント同士を接続
     cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1);
-    cy.wait(300);
 
     //タスク実行
-    cy.get("[data-cy=\"workflow-play-btn\"]").click();
+    cy.get("[data-cy=\"workflow-play-btn\"]", { timeout: 3000 }).click();
 
     //リモートアクセスパスワード
-    cy.wait(300);
+    cy.get("[data-cy=\"buttons-ok-btn\"]", { timeout: 3000 });
     cy.passwordType("passw0rd");
 
     //完了まで待機
