@@ -1,7 +1,7 @@
 /**
- * エスケープ
+ * 正規表現で使えるようにメタ文字をエスケープする
  * @param {string} s - 対象文字列
- * @returns {string} 修正文字列
+ * @returns {string} エスケープ済み文字列
  */
 function escapeRegExp(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
