@@ -134,39 +134,35 @@
               data-cy="component_property-job_scheduler-switch"
             />
             <v-select
-              v-if="hasJobScheduler"
+              v-if="hasJobScheduler && copySelectedComponent.useJobScheduler"
               v-model="copySelectedComponent.queue"
               label="queue"
               :readonly="readOnly"
               :items="queues"
-              :disabled="! copySelectedComponent.useJobScheduler"
               variant="outlined"
               data-cy="component_property-queue-select"
             />
             <v-text-field
-              v-if="hasJobScheduler"
+              v-if="hasJobScheduler && copySelectedComponent.useJobScheduler"
               v-model="submitCmd"
               :readonly="readOnly"
               label="submit command"
-              :disabled="! copySelectedComponent.useJobScheduler"
               variant="outlined"
               data-cy="component_property-submit_command-text_field"
             />
             <v-text-field
-              v-if="hasJobScheduler"
+              v-if="hasJobScheduler && copySelectedComponent.useJobScheduler"
               v-model="copySelectedComponent.submitOption"
               label="submit option"
               :readonly="readOnly"
-              :disabled="! copySelectedComponent.useJobScheduler"
               variant="outlined"
               data-cy="component_property-submit_option-text_field"
             />
             <v-text-field
-              v-if="hasScript"
+              v-if="hasScript && copySelectedComponent.useJobScheduler"
               v-model="copySelectedComponent.sourceScript"
               label="source script"
               :readonly="readOnly"
-              :disabled="! copySelectedComponent.useJobScheduler"
               clearable
               variant="outlined"
               data-cy="component_property-source_script-text_field"
