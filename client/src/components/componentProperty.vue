@@ -830,15 +830,30 @@ export default {
       }
       const JS = currentHostSetting.jobScheduler;
       return JS ? this.jobScheduler[JS].submit : null;
+    },
+    remoteFileSettingPanelIndex() {
+      //Remote file setting panel only appears for task, bulkjobTask, and stepjobTask
+      //For these component types, it is always at index 3
+      if (this.isTask || this.isBulkjobTask || this.isStepjobTask) {
+        return 3;
+      }
+      return null;
     }
   },
   watch: {
     retryByJS() {
       this.copySelectedComponent.retryCondition = null;
     },
-    "copySelectedComponent.host"(newValue) {
+    "copySelectedComponent.host"(newValue, oldValue) {
       if (newValue === "localhost" && !this.isBulkjobTask && !this.isStepjobTask && this.isStepjob) {
         this.copySelectedComponent.useJobScheduler = false;
+      }
+      //Close remote file setting panel if changing to localhost
+      if (newValue === "localhost") {
+        //Remove remote file setting panel from openPanels
+        this.openPanels = this.openPanels.filter((idx)=>{
+          return idx !== this.remoteFileSettingPanelIndex;
+        });
       }
     },
     open(newValue) {
