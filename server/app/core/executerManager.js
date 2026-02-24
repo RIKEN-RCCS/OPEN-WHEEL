@@ -141,7 +141,7 @@ async function decideFinishState(task) {
   let rt = false;
   try {
     const env = Object.assign({}, task.env || {});
-    // Use checkerRt if available, otherwise use task.rt
+    //Use checkerRt if available, otherwise use task.rt
     const effectiveRt = (task.checkerRt !== null && typeof task.checkerRt !== "undefined") ? task.checkerRt : task.rt;
     env.WHEEL_TASK_RT = effectiveRt;
     env.wheelTaskRT = effectiveRt;
@@ -201,14 +201,14 @@ async function needsRetry(task, checkerRt) {
   }
   try {
     const env = Object.assign({}, task.env || {});
-    
-    // Use checkerRt if available, otherwise use task.rt
+
+    //Use checkerRt if available, otherwise use task.rt
     const actualCheckerRt = checkerRt !== undefined ? checkerRt : task.checkerRt;
     const effectiveRt = (actualCheckerRt !== null && typeof actualCheckerRt !== "undefined") ? actualCheckerRt : task.rt;
-    
+
     env.WHEEL_TASK_RT = effectiveRt;
     env.wheelTaskRT = effectiveRt;
-    
+
     rt = await _internal.evalCondition(task.projectRootDir, task.retryCondition, task.workingDir, env);
   } catch {
     loggerWrapper.logInfo(task.projectRootDir, task.workingDir, "retryCondition is set but exception occurred while evaluting it. so give up retring");

@@ -93,7 +93,7 @@ describe("project Controller UT", function () {
       });
       it("should use WHEEL_TASK_RT in retryCondition shell script", async ()=>{
         await updateComponentProperty(projectRootDir, task0.ID, "retry", 2);
-        // Create a retry condition script that checks if WHEEL_TASK_RT equals 10
+        //Create a retry condition script that checks if WHEEL_TASK_RT equals 10
         const retryScript = "retry.sh";
         const retryConditionContent = `${scriptHeader}\nif [ "${referenceEnv("WHEEL_TASK_RT")}" = "10" ]; then\n  ${exit(0)}\nelse\n  ${exit(1)}\nfi`;
         await fs.outputFile(path.join(projectRootDir, "task0", retryScript), retryConditionContent);
@@ -106,12 +106,12 @@ describe("project Controller UT", function () {
         expect(ajv.validate(projectJsonSchema, projectJson)).to.be.true;
         const task0Json = await fs.readJson(path.resolve(projectRootDir, "task0", componentJsonFilename));
         expect(task0Json.state).to.equal("failed");
-        // Verify retry was attempted (statusFile should exist with rt=10)
+        //Verify retry was attempted (statusFile should exist with rt=10)
         expect(fs.readFileSync(path.resolve(projectRootDir, "task0", statusFilename), "utf-8")).to.equal("failed\n10\nundefined");
       });
       it("should use wheelTaskRT in retryCondition javascript expression", async ()=>{
         await updateComponentProperty(projectRootDir, task0.ID, "retry", 2);
-        // Create a retry condition that checks if wheelTaskRT equals 5
+        //Create a retry condition that checks if wheelTaskRT equals 5
         await updateComponentProperty(projectRootDir, task0.ID, "retryCondition", "wheelTaskRT === 5");
         await fs.outputFile(path.join(projectRootDir, "task0", scriptName), `${scriptPwd}\n${exit(5)}`);
         await runProject(projectRootDir);
