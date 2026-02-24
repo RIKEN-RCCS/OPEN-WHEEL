@@ -292,6 +292,17 @@ describe("UT for executerManager class", function () {
       expect(result).to.be.false;
       expect(loggerInfoStub).to.have.been.called;
     });
+    it("should pass WHEEL_TASK_RT and wheelTaskRT in env to evalCondition", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithRt = { ...mockTask, rt: 42, env: { EXISTING: "value" } };
+      await decideFinishState(taskWithRt);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 42, wheelTaskRT: 42, EXISTING: "value" })
+      );
+    });
   });
   describe("needsRetry", function () {
     const mockTask = {
@@ -353,6 +364,39 @@ describe("UT for executerManager class", function () {
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.true;
       expect(loggerInfoStub).to.have.been.calledWith(mockTask.projectRootDir, mockTask.workingDir, "failed but retring");
+    });
+    it("should pass WHEEL_TASK_RT and wheelTaskRT in env to evalCondition", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition", rt: 42, env: { EXISTING: "value" } };
+      await needsRetry(taskWithCondition);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 42, wheelTaskRT: 42, EXISTING: "value" })
+      );
+    });
+    it("should use checker return value as WHEEL_TASK_RT when checkerRt is provided", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition", rt: 42 };
+      await needsRetry(taskWithCondition, 10);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 10, wheelTaskRT: 10 })
+      );
+    });
+    it("should use task.checkerRt as WHEEL_TASK_RT if checkerRt parameter is undefined", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition", rt: 42, checkerRt: 20 };
+      await needsRetry(taskWithCondition);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 20, wheelTaskRT: 20 })
+      );
     });
   });
 

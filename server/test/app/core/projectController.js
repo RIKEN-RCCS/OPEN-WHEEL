@@ -91,6 +91,38 @@ describe("project Controller UT", function () {
         expect(ajv.validate(task0JsonSchema, task0Json)).to.be.true;
         expect(fs.readFileSync(path.resolve(projectRootDir, "task0", statusFilename), "utf-8")).to.equal("failed\n10\nundefined");
       });
+      it("should use WHEEL_TASK_RT in retryCondition shell script", async ()=>{
+        await updateComponentProperty(projectRootDir, task0.ID, "retry", 2);
+        // Create a retry condition script that checks if WHEEL_TASK_RT equals 10
+        const retryScript = "retry.sh";
+        const retryConditionContent = `${scriptHeader}\nif [ "${referenceEnv("WHEEL_TASK_RT")}" = "10" ]; then\n  ${exit(0)}\nelse\n  ${exit(1)}\nfi`;
+        await fs.outputFile(path.join(projectRootDir, "task0", retryScript), retryConditionContent);
+        await updateComponentProperty(projectRootDir, task0.ID, "retryCondition", retryScript);
+        await fs.outputFile(path.join(projectRootDir, "task0", scriptName), `${scriptPwd}\n${exit(10)}`);
+        await runProject(projectRootDir);
+
+        const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+        const projectJsonSchema = { required: ["state"], properties: { state: { enum: ["failed"] } } };
+        expect(ajv.validate(projectJsonSchema, projectJson)).to.be.true;
+        const task0Json = await fs.readJson(path.resolve(projectRootDir, "task0", componentJsonFilename));
+        expect(task0Json.state).to.equal("failed");
+        // Verify retry was attempted (statusFile should exist with rt=10)
+        expect(fs.readFileSync(path.resolve(projectRootDir, "task0", statusFilename), "utf-8")).to.equal("failed\n10\nundefined");
+      });
+      it("should use wheelTaskRT in retryCondition javascript expression", async ()=>{
+        await updateComponentProperty(projectRootDir, task0.ID, "retry", 2);
+        // Create a retry condition that checks if wheelTaskRT equals 5
+        await updateComponentProperty(projectRootDir, task0.ID, "retryCondition", "wheelTaskRT === 5");
+        await fs.outputFile(path.join(projectRootDir, "task0", scriptName), `${scriptPwd}\n${exit(5)}`);
+        await runProject(projectRootDir);
+
+        const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+        const projectJsonSchema = { required: ["state"], properties: { state: { enum: ["failed"] } } };
+        expect(ajv.validate(projectJsonSchema, projectJson)).to.be.true;
+        const task0Json = await fs.readJson(path.resolve(projectRootDir, "task0", componentJsonFilename));
+        expect(task0Json.state).to.equal("failed");
+        expect(fs.readFileSync(path.resolve(projectRootDir, "task0", statusFilename), "utf-8")).to.equal("failed\n5\nundefined");
+      });
       it("should run project and fail", async ()=>{
         await fs.outputFile(path.join(projectRootDir, "task0", scriptName), `${scriptPwd}\n${exit(10)}`);
         await runProject(projectRootDir);

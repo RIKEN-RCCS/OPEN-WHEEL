@@ -79,6 +79,30 @@ The expression you enter here is evaluated after the Task component has finished
 
 If both the script name and the javascript expression are not set and you set only the number of retry values, repeat the retry until the script terminates normally or reaches the number of retry settings.
 
+__Available Environment Variables__  
+The following environment variables are available in the script or javascript expression used to determine whether to retry:
+- For shell scripts: `WHEEL_TASK_RT`
+- For javascript expressions: `wheelTaskRT`
+
+These variables contain the return value of the script specified in the script property.
+However, if the checker property is set, the return value of the checker script takes precedence.
+
+Example: Retry only if the return value is 10 (shell script)
+```bash
+#!/bin/bash
+if [ "$WHEEL_TASK_RT" = "10" ]; then
+  exit 0
+else
+  exit 1
+fi
+```
+
+Example: Retry only if the return value is less than 5 (javascript expression)
+```javascript
+wheelTaskRT < 5
+```
+{: .notice--info}
+
 ### include, exclude
 
 ![img](./img/include_exclude.png "include, exclude")

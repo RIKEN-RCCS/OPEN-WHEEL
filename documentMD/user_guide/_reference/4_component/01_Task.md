@@ -79,6 +79,30 @@ Taskコンポーネントの成功 / 失敗を判定するのにjavascript式を
 
 スクリプト名、javascript式ともに未設定で、number of retryの値のみを設定していた場合は、スクリプトが正常終了するか、retryに設定した回数に達するまで再実行を繰り返します。
 
+__利用可能な環境変数について__  
+再実行の判定を行うスクリプトやjavascript式では、以下の環境変数を利用できます。
+- シェルスクリプトの場合: `WHEEL_TASK_RT`
+- javascript式の場合: `wheelTaskRT`
+
+これらの変数には、scriptプロパティで指定されたスクリプトの戻り値が設定されます。
+ただし、checkerプロパティが設定されている場合は、checkerスクリプトの戻り値が優先して使用されます。
+
+例: シェルスクリプトで戻り値が10の場合のみ再実行する
+```bash
+#!/bin/bash
+if [ "$WHEEL_TASK_RT" = "10" ]; then
+  exit 0
+else
+  exit 1
+fi
+```
+
+例: javascript式で戻り値が5未満の場合のみ再実行する
+```javascript
+wheelTaskRT < 5
+```
+{: .notice--info}
+
 ### include, exclude
 
 ![img](./img/include_exclude.png "include, exclude")
