@@ -57,6 +57,36 @@ use job schedulerを有効にしたときのみ、次のqueue, submit optionプ�
 ### submit option
 ジョブ投入時に追加で指定するオプションを設定します。
 
+### source script
+リモートホストでスクリプトを実行する前に読み込む環境設定ファイルを指定します。
+ここで指定したスクリプトは`source`コマンドで読み込まれます。
+
+例えば、特定の環境変数を設定したり、モジュールシステム（Environment Modules等）を使用する場合に利用します。
+
+例:
+```bash
+# setup.sh の内容
+module load intel/2021
+export MY_VAR=value
+```
+
+### checker script
+Taskコンポーネントの成功/失敗を判定するための専用スクリプトを指定します。
+checkerスクリプトはTaskコンポーネント実行終了後に実行され、その戻り値（0:成功、0以外:失敗）でTaskの最終的な成否が決定されます。
+
+checkerスクリプトが設定されている場合、scriptプロパティで指定したスクリプトの戻り値は無視され、checkerスクリプトの戻り値が使用されます。
+
+例:
+```bash
+#!/bin/bash
+# 出力ファイルの存在確認
+if [ -f output.dat ]; then
+  exit 0
+else
+  exit 1
+fi
+```
+
 ### number of retry
 Taskコンポーネントの実行に失敗したときに、自動的に再実行する回数を指定します。
 無指定時は再実行しません。

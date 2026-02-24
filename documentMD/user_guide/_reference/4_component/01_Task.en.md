@@ -57,6 +57,36 @@ Therefore, it cannot be changed here.
 ### submit option
 Sets additional options to be specified when the job is submitted.
 
+### source script
+Specifies an environment configuration file to be loaded before executing the script on the remote host.
+The specified script is loaded using the `source` command.
+
+This is useful when you need to set specific environment variables or use module systems (such as Environment Modules).
+
+Example:
+```bash
+# Contents of setup.sh
+module load intel/2021
+export MY_VAR=value
+```
+
+### checker script
+Specifies a dedicated script to determine the success/failure of the Task component.
+The checker script is executed after the Task component finishes, and its return value (0: success, non-zero: failure) determines the final status of the Task.
+
+When a checker script is set, the return value of the script specified in the script property is ignored, and the checker script's return value is used instead.
+
+Example:
+```bash
+#!/bin/bash
+# Check if output file exists
+if [ -f output.dat ]; then
+  exit 0
+else
+  exit 1
+fi
+```
+
 ### number of retry
 Specifies the number of times the Task component automatically reruns if it fails to run.
 If none is specified, the command is not re-executed.
