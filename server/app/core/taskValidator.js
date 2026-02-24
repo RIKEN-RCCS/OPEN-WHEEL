@@ -7,7 +7,7 @@
 import { isInitialComponent, isLocal } from "./workflowComponent.js";
 import { remoteHost } from "../db/db.js";
 import { jobScheduler } from "../db/db.js";
-import { checkScript } from "./fileValidator.js";
+import { checkScript, checkChecker } from "./fileValidator.js";
 import { validateConditionalCheck } from "./componentResourceValidator.js";
 
 const _internal = {
@@ -48,7 +48,11 @@ export async function validateTask(projectRootDir, component) {
       }
     }
   }
-  return checkScript(projectRootDir, component);
+  await checkScript(projectRootDir, component);
+  if (component.checker) {
+    await checkChecker(projectRootDir, component);
+  }
+  return true;
 }
 
 /**

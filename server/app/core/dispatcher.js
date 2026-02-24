@@ -16,6 +16,7 @@ import { exec } from "./executer.js";
 import { getDateString, writeJsonWrapper } from "../lib/utility.js";
 import { sanitizePath, convertPathSep, replacePathsep } from "./pathUtils.js";
 import { readJsonGreedy } from "./fileUtils.js";
+import { addX } from "./fileUtils.js";
 import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS } from "./deliverFile.js";
 import { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } from "./parameterParser.js";
 import { isLocal } from "../../../common/checkComponent.js";
@@ -523,6 +524,14 @@ class Dispatcher extends EventEmitter {
     }
     this.setEnv(component);
     component.parentType = this.cwfJson.type;
+
+    //Add execute permission to script and checker
+    const scriptPath = path.resolve(component.workingDir, component.script);
+    await addX(scriptPath);
+    if (component.checker) {
+      const checkerPath = path.resolve(component.workingDir, component.checker);
+      await addX(checkerPath);
+    }
 
     exec(component).catch((e)=>{
       logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "failed. rt=", component.rt);

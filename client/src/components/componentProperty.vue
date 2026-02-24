@@ -105,6 +105,16 @@
               variant="outlined"
               data-cy="component_property-script-autocomplete"
             />
+            <v-autocomplete
+              v-if="isTask"
+              v-model="copySelectedComponent.checker"
+              label="checker script"
+              :readonly="readOnly"
+              :items="scriptCandidates"
+              clearable
+              variant="outlined"
+              data-cy="component_property-checker-autocomplete"
+            />
             <v-select
               v-if="hasHost"
               v-model="copySelectedComponent.host"
@@ -124,32 +134,38 @@
               data-cy="component_property-job_scheduler-switch"
             />
             <v-select
-              v-if="hasJobScheduler"
+              v-if="hasJobScheduler && copySelectedComponent.useJobScheduler"
               v-model="copySelectedComponent.queue"
               label="queue"
               :readonly="readOnly"
               :items="queues"
-              :disabled="! copySelectedComponent.useJobScheduler"
               variant="outlined"
               data-cy="component_property-queue-select"
             />
             <v-text-field
-              v-if="hasJobScheduler"
+              v-if="hasJobScheduler && copySelectedComponent.useJobScheduler"
               v-model="submitCmd"
               :readonly="readOnly"
               label="submit command"
-              :disabled="! copySelectedComponent.useJobScheduler"
               variant="outlined"
               data-cy="component_property-submit_command-text_field"
             />
             <v-text-field
-              v-if="hasJobScheduler"
+              v-if="hasJobScheduler && copySelectedComponent.useJobScheduler"
               v-model="copySelectedComponent.submitOption"
               label="submit option"
               :readonly="readOnly"
-              :disabled="! copySelectedComponent.useJobScheduler"
               variant="outlined"
               data-cy="component_property-submit_option-text_field"
+            />
+            <v-text-field
+              v-if="hasScript && copySelectedComponent.useJobScheduler"
+              v-model="copySelectedComponent.sourceScript"
+              label="source script"
+              :readonly="readOnly"
+              clearable
+              variant="outlined"
+              data-cy="component_property-source_script-text_field"
             />
             <v-text-field
               v-if="isStorage"
@@ -810,15 +826,30 @@ export default {
       }
       const JS = currentHostSetting.jobScheduler;
       return JS ? this.jobScheduler[JS].submit : null;
+    },
+    remoteFileSettingPanelIndex() {
+      //Remote file setting panel only appears for task, bulkjobTask, and stepjobTask
+      //For these component types, it is always at index 3
+      if (this.isTask || this.isBulkjobTask || this.isStepjobTask) {
+        return 3;
+      }
+      return null;
     }
   },
   watch: {
     retryByJS() {
       this.copySelectedComponent.retryCondition = null;
     },
-    "copySelectedComponent.host"(newValue) {
+    "copySelectedComponent.host"(newValue, oldValue) {
       if (newValue === "localhost" && !this.isBulkjobTask && !this.isStepjobTask && this.isStepjob) {
         this.copySelectedComponent.useJobScheduler = false;
+      }
+      //Close remote file setting panel if changing to localhost
+      if (newValue === "localhost") {
+        //Remove remote file setting panel from openPanels
+        this.openPanels = this.openPanels.filter((idx)=>{
+          return idx !== this.remoteFileSettingPanelIndex;
+        });
       }
     },
     open(newValue) {

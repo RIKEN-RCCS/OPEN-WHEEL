@@ -2,12 +2,13 @@
 The directory structure of this project is organized as follows:
 
 ```
-client/          client js codes
-common/          JS code shared between client and server
-documentMD/      markdown documents
-server/          server js codes
-server/tetst/    server unit test
-test/            end-to-end test with cypress
+client/                  client js codes
+common/                  JS code shared between client and server
+documentMD/              markdown documents
+server/                  server js codes
+server/tetst/            server unit test
+test/cypress/e2e         end-to-end test with cypress
+test/cypress/component   component test with cypress
 ```
 
 ## npm scripts

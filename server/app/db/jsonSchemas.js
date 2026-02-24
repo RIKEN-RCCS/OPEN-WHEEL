@@ -107,12 +107,14 @@ class TaskSchema extends GeneralWorkflowComponentSchema {
     this.properties.useJobScheduler = { type: "boolean", default: false };
     this.properties.queue = { type: ["string", "null"], default: null };
     this.properties.submitOption = { type: ["string", "null"], default: null };
+    this.properties.sourceScript = { type: ["string", "null"], default: null };
     this.properties.include = stringArraySchema;
     this.properties.exclude = stringArraySchema;
     this.properties.state.enum.push(...["stage-in", "waiting", "queued", "stage-out"]);
     this.properties.retryCondition = { type: ["string", "null"], default: null };
     this.properties.retry = { type: ["number", "null"], default: null };
     this.properties.ignoreFailure = { type: "boolean", default: false };
+    this.properties.checker = { type: ["string", "null"], default: null };
   }
 }
 

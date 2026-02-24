@@ -292,6 +292,17 @@ describe("UT for executerManager class", function () {
       expect(result).to.be.false;
       expect(loggerInfoStub).to.have.been.called;
     });
+    it("should pass WHEEL_TASK_RT and wheelTaskRT in env to evalCondition", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithRt = { ...mockTask, rt: 42, env: { EXISTING: "value" } };
+      await decideFinishState(taskWithRt);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 42, wheelTaskRT: 42, EXISTING: "value" })
+      );
+    });
   });
   describe("needsRetry", function () {
     const mockTask = {
@@ -353,6 +364,39 @@ describe("UT for executerManager class", function () {
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.true;
       expect(loggerInfoStub).to.have.been.calledWith(mockTask.projectRootDir, mockTask.workingDir, "failed but retring");
+    });
+    it("should pass WHEEL_TASK_RT and wheelTaskRT in env to evalCondition", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition", rt: 42, env: { EXISTING: "value" } };
+      await needsRetry(taskWithCondition);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 42, wheelTaskRT: 42, EXISTING: "value" })
+      );
+    });
+    it("should use checker return value as WHEEL_TASK_RT when checkerRt is provided", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition", rt: 42 };
+      await needsRetry(taskWithCondition, 10);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 10, wheelTaskRT: 10 })
+      );
+    });
+    it("should use task.checkerRt as WHEEL_TASK_RT if checkerRt parameter is undefined", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition", rt: 42, checkerRt: 20 };
+      await needsRetry(taskWithCondition);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 20, wheelTaskRT: 20 })
+      );
     });
   });
 
@@ -623,6 +667,64 @@ describe("UT for executerManager class", function () {
         task.workingDir,
         "executer for localhost with job scheduler is not found"
       );
+    });
+  });
+
+  describe("runChecker", ()=>{
+    it("should return null if checker is not specified", async function () {
+      const { runChecker } = await import("../../../app/core/executerManager.js");
+      const task = {
+        checker: null,
+        remotehostID: "localhost",
+        projectRootDir: "/tmp/test",
+        workingDir: "/tmp/test/task"
+      };
+      const result = await runChecker(task);
+      expect(result).to.be.null;
+    });
+
+    it("should execute local checker and return exit code", async function () {
+      const { runChecker } = await import("../../../app/core/executerManager.js");
+      const testDir = path.resolve(testDirRoot, "checkerTest");
+      await fs.ensureDir(testDir);
+      const checkerScript = path.resolve(testDir, "checker.sh");
+      await fs.writeFile(checkerScript, "#!/bin/bash\nexit 0");
+      await fs.chmod(checkerScript, 0o755);
+
+      const task = {
+        checker: "checker.sh",
+        remotehostID: "localhost",
+        projectRootDir: testDir,
+        workingDir: testDir,
+        env: {}
+      };
+
+      const result = await runChecker(task);
+      expect(result).to.equal(0);
+
+      await fs.remove(testDir);
+    });
+
+    it("should execute local checker and return non-zero exit code on failure", async function () {
+      const { runChecker } = await import("../../../app/core/executerManager.js");
+      const testDir = path.resolve(testDirRoot, "checkerTestFail");
+      await fs.ensureDir(testDir);
+      const checkerScript = path.resolve(testDir, "checker.sh");
+      await fs.writeFile(checkerScript, "#!/bin/bash\nexit 1");
+      await fs.chmod(checkerScript, 0o755);
+
+      const task = {
+        checker: "checker.sh",
+        remotehostID: "localhost",
+        projectRootDir: testDir,
+        workingDir: testDir,
+        env: {}
+      };
+
+      const result = await runChecker(task);
+      expect(result).to.equal(1);
+
+      await fs.remove(testDir);
     });
   });
 });

@@ -47,6 +47,18 @@ function isExceededLimit(JS, rt, outputText) {
 }
 
 /**
+ * make source command for remote execution
+ * @param {object} task - task component instance
+ * @returns {string} - source command string
+ */
+function source(task) {
+  if (typeof task.sourceScript === "undefined" || task.sourceScript === null || task.sourceScript.length === 0) {
+    return "";
+  }
+  return `&& source ${task.sourceScript}`;
+}
+
+/**
  * convert env object to cmandline string
  * @param {object} task - task component instance
  * @returns {string} -
@@ -128,7 +140,12 @@ function makeBulkOpt(task) {
 async function decideFinishState(task) {
   let rt = false;
   try {
-    rt = await _internal.evalCondition(task.projectRootDir, task.condition, task.workingDir, task.currentIndex);
+    const env = Object.assign({}, task.env || {});
+    //Use checkerRt if available, otherwise use task.rt
+    const effectiveRt = (task.checkerRt !== null && typeof task.checkerRt !== "undefined") ? task.checkerRt : task.rt;
+    env.WHEEL_TASK_RT = effectiveRt;
+    env.wheelTaskRT = effectiveRt;
+    rt = await _internal.evalCondition(task.projectRootDir, task.condition, task.workingDir, env);
   } catch {
     loggerWrapper.logInfo(task.projectRootDir, task.workingDir, "manualFinishCondition is set but exception occurred while evaluting it.");
     return false;
@@ -137,11 +154,43 @@ async function decideFinishState(task) {
 }
 
 /**
- * determine if task needs to be re-executed
+ * run checker script to determine task state
  * @param {object} task - task component instance
- * @returns {boolean} -
+ * @returns {number} - exit code of checker script
  */
-async function needsRetry(task) {
+async function runChecker(task) {
+  if (!task.checker) {
+    return null;
+  }
+
+  const onRemote = task.remotehostID !== "localhost";
+
+  if (onRemote) {
+    const ssh = getSsh(task.projectRootDir, task.remotehostID);
+    const cmd = `cd ${task.remoteWorkingDir} && ./${task.checker}`;
+    loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "exec checker (remote)", cmd);
+
+    const rt = await ssh.exec(cmd, 0, (data)=>{
+      loggerWrapper.logSSHout(task.projectRootDir, task.workingDir, data);
+    });
+    loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "checker (remote) done. rt =", rt);
+    return rt;
+  } else {
+    const script = path.resolve(task.workingDir, task.checker);
+
+    const options = {
+      cwd: task.workingDir,
+      env: Object.assign({}, process.env, task.env),
+      shell: true
+    };
+
+    loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "exec checker (local)", script);
+    const rt = await promisifiedSpawn(task, script, options);
+    loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "checker (local) done. rt =", rt);
+    return rt;
+  }
+}
+async function needsRetry(task, checkerRt) {
   if ((typeof task.retry === "undefined" || task.retryCondition === null)
     && (typeof task.retryCondition === "undefined" || task.retryCondition === null)) {
     return false;
@@ -151,7 +200,16 @@ async function needsRetry(task) {
     return Number.isInteger(task.retry) && task.retry > 0;
   }
   try {
-    rt = await _internal.evalCondition(task.projectRootDir, task.retryCondition, task.workingDir, task.currentIndex);
+    const env = Object.assign({}, task.env || {});
+
+    //Use checkerRt if available, otherwise use task.rt
+    const actualCheckerRt = checkerRt !== undefined ? checkerRt : task.checkerRt;
+    const effectiveRt = (actualCheckerRt !== null && typeof actualCheckerRt !== "undefined") ? actualCheckerRt : task.rt;
+
+    env.WHEEL_TASK_RT = effectiveRt;
+    env.wheelTaskRT = effectiveRt;
+
+    rt = await _internal.evalCondition(task.projectRootDir, task.retryCondition, task.workingDir, env);
   } catch {
     loggerWrapper.logInfo(task.projectRootDir, task.workingDir, "retryCondition is set but exception occurred while evaluting it. so give up retring");
     return false;
@@ -190,9 +248,22 @@ class Executer {
         //record job finished time
         task.endTime = getDateString(true, true);
 
+        //run checker script if specified
+        let checkerRt = null;
+        if (task.checker) {
+          try {
+            checkerRt = await runChecker(task);
+            task.checkerRt = checkerRt;
+          } catch (e) {
+            loggerWrapper.logWarn(task.projectRootDir, task.workingDir, "checker script execution failed", e);
+          }
+        }
+
         //update task status
         let state;
-        if (task.manualFinishCondition) {
+        if (task.checker && checkerRt !== null) {
+          state = checkerRt === 0 ? "finished" : "failed";
+        } else if (task.manualFinishCondition) {
           state = await decideFinishState(task) ? "finished" : "failed";
         } else {
           state = task.rt === 0 ? "finished" : "failed";
@@ -200,7 +271,7 @@ class Executer {
         await setTaskState(task, state);
         //exec useualy returns task.state but to use it in retry function
         //to use task in retry function, exec() will be rejected with task object if failed
-        if (state === "failed" && await needsRetry(task)) {
+        if (state === "failed" && await needsRetry(task, checkerRt)) {
           return Promise.reject(task);
         }
         return state;
@@ -273,7 +344,7 @@ class RemoteJobExecuter extends Executer {
   async exec(task) {
     const hostinfo = _internal.getSshHostinfo(task.projectRootDir, task.remotehostID);
     const submitOpt = task.submitOption ? task.submitOption : "";
-    const submitCmd = `cd ${task.remoteWorkingDir} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
+    const submitCmd = `cd ${task.remoteWorkingDir} ${source(task)} && ${makeEnv(task)} ${this.JS.submit} ${makeQueueOpt(task, this.JS, this.queues)} ${makeStepOpt(task)} ${makeBulkOpt(task)} ${submitOpt} ./${task.script}`;
     loggerWrapper.logDebug(task.projectRootDir, task.workingDir, "submitting job (remote):", submitCmd);
     await setTaskState(task, "running");
     const ssh = getSsh(task.projectRootDir, task.remotehostID);
@@ -610,6 +681,7 @@ export {
   makeBulkOpt,
   decideFinishState,
   needsRetry,
+  runChecker,
   promisifiedSpawn,
   getExecutersKey,
   getMaxNumJob,

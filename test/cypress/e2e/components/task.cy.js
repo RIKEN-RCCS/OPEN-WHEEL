@@ -618,6 +618,68 @@ describe("components", ()=>{
     });
 
     /**
+   Task コンポーネントの基本機能動作確認
+   Taskコンポーネント機能確認
+   プロパティ設定確認
+   checker script表示確認
+   試験確認内容：checker scriptセレクトボックスが表示されていることを確認
+     */
+    it("プロパティ設定確認-checker script表示確認-checker scriptセレクトボックスが表示されていることを確認", ()=>{
+      const DATA_CY_STR = "[data-cy=\"component_property-checker-autocomplete\"]";
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /**
+   Task コンポーネントの基本機能動作確認
+   Taskコンポーネント機能確認
+   プロパティ設定確認
+   checker scriptファイル選択表示確認
+   試験確認内容：checker scriptセレクトボックスで選択したファイルが表示されていることを確認
+     */
+    it("プロパティ設定確認-checker scriptファイル選択表示確認-checker scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
+      cy.createDirOrFile(TYPE_FILE, "test-checker", true);
+      let targetDropBoxCy = "[data-cy=\"component_property-checker-autocomplete\"]";
+      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-checker");
+      cy.get("[data-cy=\"component_property-checker-autocomplete\"]").find("input")
+        .should("have.value", "test-checker");
+    });
+
+    /**
+   Task コンポーネントの基本機能動作確認
+   Taskコンポーネント機能確認
+   プロパティ設定確認
+   source script表示確認
+   試験確認内容：source scriptセレクトボックスが表示されていることを確認
+     */
+    it("プロパティ設定確認-source script表示確認-source scriptセレクトボックスが表示されていることを確認", ()=>{
+      const DATA_CY_STR = "[data-cy=\"component_property-source_script-autocomplete\"]";
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+      cy.get(DATA_CY_STR).find("input")
+        .should("be.disabled");
+    });
+
+    /**
+   Task コンポーネントの基本機能動作確認
+   Taskコンポーネント機能確認
+   プロパティ設定確認
+   source scriptファイル選択表示確認
+   試験確認内容：source scriptセレクトボックスで選択したファイルが表示されていることを確認
+     */
+    it("プロパティ設定確認-source scriptファイル選択表示確認-source scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
+      const SWITCH_CY = "[data-cy=\"component_property-job_scheduler-switch\"]";
+      const FIELD_CY = "[data-cy=\"component_property-source_script-autocomplete\"]";
+      cy.get(SWITCH_CY).click({ force: true });
+      cy.createDirOrFile(TYPE_FILE, "env.sh", true);
+      let targetDropBoxCy = FIELD_CY;
+      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "env.sh");
+      cy.get(FIELD_CY).find("input")
+        .should("have.value", "env.sh");
+      cy.get(SWITCH_CY).click({ force: true });
+      cy.get(FIELD_CY).find("input")
+        .should("be.disabled");
+    });
+
+    /**
   Task コンポーネントの基本機能動作確認
   Taskコンポーネント機能確認
   プロパティ設定確認

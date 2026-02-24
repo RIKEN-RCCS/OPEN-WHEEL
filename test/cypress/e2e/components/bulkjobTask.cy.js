@@ -618,6 +618,19 @@ describe("components", ()=>{
     });
 
     /**
+    BulkjobTask コンポーネントの基本機能動作確認
+    BulkjobTaskコンポーネント機能確認
+    プロパティ設定確認
+    checker script非表示確認
+    試験確認内容：checker scriptセレクトボックスが表示されていないことを確認
+     */
+    it("プロパティ設定確認-checker script非表示確認-checker scriptセレクトボックスが表示されていないことを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
+      const DATA_CY_STR = "[data-cy=\"component_property-checker-autocomplete\"]";
+      cy.get(DATA_CY_STR).should("not.exist");
+    });
+
+    /**
     コンポーネントの基本機能動作確認
     BulkjobTaskコンポーネント共通機能確認
     各コンポーネント特有のプロパティ確認

@@ -179,6 +179,12 @@ class Task extends GeneralComponent {
 
     //if true, project will continue after failing this task.
     this.ignoreFailure = false;
+
+    //checker script to determine task success/failure
+    this.checker = null;
+
+    //source script to be loaded before executing on remote host
+    this.sourceScript = null;
   }
 }
 
