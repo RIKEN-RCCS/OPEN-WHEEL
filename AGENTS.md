@@ -29,7 +29,8 @@ test/cypress/component   component test with cypress
 - do not change "server/app/db/version.json" this file is automatically updated by github workflow.
 - To run e2e and unit tests, you have to run by npm scripts. it invoke docker run for test counter-part.
 - output test results to file and report the filename. You can overwrite the file if you run the test again, unless user ask you to keep it.
-- use only modifier to UT for testing. you do not need to run whole test suite except for final check of your work.
+- Do not use conditional skip in unit tests except for pre-existing ones.
+- use "only" modifier to newly created unit tests and debugging failed tests. remember to remove "only" and run whole test suite as final check before finish your work.
 
 ## implementation policy
 - always write code in async/await style
