@@ -3,6 +3,7 @@ import SSH from "simple-ssh";
 import { removeDirectory } from "cypress-delete-downloads-folder";
 import fs from "fs-extra";
 import * as tar from "tar";
+import vue from "@vitejs/plugin-vue";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -22,30 +23,27 @@ export default defineConfig({
     devServer: {
       framework: "vue",
       bundler: "vite",
-      viteConfig: async ()=>{
-        const { default: vue } = await import("@vitejs/plugin-vue");
-        return {
-          plugins: [vue()],
-          resolve: {
-            alias: {
-              "@": path.resolve(__dirname, "../client/src")
-            },
-            dedupe: ["vue", "vuetify"]
+      viteConfig: {
+        plugins: [vue()],
+        resolve: {
+          alias: {
+            "@": path.resolve(__dirname, "../client/src")
           },
-          optimizeDeps: {
-            include: ["vue", "vuetify"]
-          },
-          server: {
-            fs: {
-              allow: [
-                __dirname, //test/
-                path.resolve(__dirname, ".."), //open-wheel/
-                path.resolve(__dirname, "../client") //client/
-              ],
-              strict: false
-            }
+          dedupe: ["vue", "vuetify"]
+        },
+        optimizeDeps: {
+          include: ["vue", "vuetify"]
+        },
+        server: {
+          fs: {
+            allow: [
+              __dirname, //test/
+              path.resolve(__dirname, ".."), //open-wheel/
+              path.resolve(__dirname, "../client") //client/
+            ],
+            strict: false
           }
-        };
+        }
       }
     },
     supportFile: "cypress/support/component.js",
@@ -81,13 +79,13 @@ export default defineConfig({
 
             ssh.exec(command, {
               out: function (stdout) {
-                  console.log("stdout: " + stdout);
-                  resolve(stdout);
-                },
+                console.log("stdout: " + stdout);
+                resolve(stdout);
+              },
               err: function (stderr) {
-                  console.log("stderr: " + stderr);
-                  resolve(stderr);
-                }
+                console.log("stderr: " + stderr);
+                resolve(stderr);
+              }
             }).on("ready", ()=>{ console.log("READY"); })
               .on("error", (err)=>{
                 console.log("ERROR");
@@ -106,9 +104,9 @@ export default defineConfig({
         async readJson(filePath) {
           return fs.readJson(filePath)
             .catch((err)=>{
-            console.error(err);
-            return null;
-          });
+              console.error(err);
+              return null;
+            });
         },
         async deleteFile(filePath) {
           return fs.remove(filePath)
