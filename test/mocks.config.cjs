@@ -1,9 +1,11 @@
-// test/mocks.config.e2e.cjs
+// test/mocks.config.cjs
 module.exports = {
-  server: { port: 3102 },
+  server: {
+    host: "127.0.0.1",
+    port: 3102,
+  },
   files: { path: "mocks" },
-
-  // 対話CLIを有効
+  // 対話CLI
   plugins: {
     inquirerCli: {
       enabled: false,
@@ -11,9 +13,9 @@ module.exports = {
   },
   mock: {
     collections: {
-      selected: "base", 
+      selected: "base",
     },
   },
   // logレベル
-  log: "debug",
+  log: "silly",
 };

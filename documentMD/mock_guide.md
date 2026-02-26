@@ -24,7 +24,7 @@ open-wheel/
     │   ├── routes/
     │   │   └── health.cjs
     │   └── collections.json
-    ├── mocks.config.e2e.cjs
+    ├── mocks.config.cjs
     ├── ws-gateway.cjs      # Gateway（振り分けプロキシ）
     ├── cypress.config.js
     ├── compose.yml
@@ -75,7 +75,7 @@ Mocks Serverを使用して、UIがアクセスするREST APIをモック化し�
 ここでは `/health` API を例に仕組みを説明します
 
 ### 使用するファイル
-- `mocks.config.e2e.cjs`  
+- `mocks.config.cjs`  
   → Mocks Server の起動ポートや基本設定を定義します。
 - `routes/health.cjs`  
   → `/health` API のルートと、返すレスポンスを定義します。
