@@ -1,6 +1,7 @@
 services:
   wheel_release_test_server:
     image: naoso5/test-openpbs
+    hostname: wheel_release_test_server
     ports:
       - "4000:22"
     container_name: wheel_release_test_server
