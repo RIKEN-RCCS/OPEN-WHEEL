@@ -274,6 +274,16 @@
                 data-cy="component_property-keep_for-text_field"
               />
             </v-form>
+            <list-form
+              :label="'skip copy (glob patterns)'"
+              :readonly="readOnly"
+              :items="skipCopyList"
+              :edit-dialog-min-width="propWidth"
+              data-cy="component_property-skip_copy_for-list_form"
+              @add="addToSkipCopy"
+              @remove="removeFromSkipCopy"
+              @update="updateSkipCopy"
+            />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isForeach">
@@ -297,6 +307,16 @@
               :readonly="readOnly"
               type="number"
               data-cy="component_property-keep_foreach-text_field"
+            />
+            <list-form
+              :label="'skip copy (glob patterns)'"
+              :readonly="readOnly"
+              :items="skipCopyList"
+              :edit-dialog-min-width="propWidth"
+              data-cy="component_property-skip_copy_foreach-list_form"
+              @add="addToSkipCopy"
+              @remove="removeFromSkipCopy"
+              @update="updateSkipCopy"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -528,6 +548,17 @@
               :readonly="readOnly"
               type="number"
               data-cy="component_property-keep_while-text_field"
+            />
+            <list-form
+              v-if="isWhile"
+              :label="'skip copy (glob patterns)'"
+              :readonly="readOnly"
+              :items="skipCopyList"
+              :edit-dialog-min-width="propWidth"
+              data-cy="component_property-skip_copy_while-list_form"
+              @add="addToSkipCopy"
+              @remove="removeFromSkipCopy"
+              @update="updateSkipCopy"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -766,6 +797,9 @@ export default {
     isWhile() {
       return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "while";
     },
+    isLoopComponent() {
+      return this.isFor || this.isForeach || this.isWhile;
+    },
     isSource() {
       return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "source";
     },
@@ -807,6 +841,15 @@ export default {
     },
     indexList: function () {
       return this.copySelectedComponent.indexList
+        .map((e)=>{
+          return { name: e };
+        });
+    },
+    skipCopyList() {
+      if (!Array.isArray(this.copySelectedComponent.skipCopy)) {
+        return [];
+      }
+      return this.copySelectedComponent.skipCopy
         .map((e)=>{
           return { name: e };
         });
@@ -1049,6 +1092,18 @@ export default {
     },
     removeFromIndexList(v, index) {
       this.copySelectedComponent.indexList.splice(index, 1);
+    },
+    addToSkipCopy(v) {
+      if (!Array.isArray(this.copySelectedComponent.skipCopy)) {
+        this.copySelectedComponent.skipCopy = [];
+      }
+      this.copySelectedComponent.skipCopy.push(v.name);
+    },
+    updateSkipCopy(v, index) {
+      this.copySelectedComponent.skipCopy.splice(index, 1, v.name);
+    },
+    removeFromSkipCopy(v, index) {
+      this.copySelectedComponent.skipCopy.splice(index, 1);
     },
     addToIncludeList(v) {
       this.copySelectedComponent.include.push(v.name);

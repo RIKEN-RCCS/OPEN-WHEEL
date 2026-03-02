@@ -1099,4 +1099,122 @@ describe("UT for Dispatcher class", function () {
       expect(fs.existsSync(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_3", task0.name, "hoge"))).to.be.false;
     });
   });
+  describe("skipCopy functionality", ()=>{
+    describe("for component with skipCopy", ()=>{
+      let for0;
+      let task0;
+      beforeEach(async ()=>{
+        for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+        await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+        await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+        await updateComponentProperty(projectRootDir, for0.ID, "skipCopy", ["skip_this.txt", "skip_dir"]);
+
+        task0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, for0.name), "task", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await fs.outputFile(path.join(projectRootDir, for0.name, task0.name, scriptName), scriptPwd);
+        await fs.outputFile(path.join(projectRootDir, for0.name, "keep_this.txt"), "keep");
+        await fs.outputFile(path.join(projectRootDir, for0.name, "skip_this.txt"), "skip");
+        await fs.outputFile(path.join(projectRootDir, for0.name, "skip_dir", "file.txt"), "skip dir content");
+
+        projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      });
+      it("should skip specified files and directories during loop copy", async ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP.start()).to.be.equal("finished");
+
+        //Check that keep_this.txt is copied to all instances
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_0", "keep_this.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_1", "keep_this.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_2", "keep_this.txt"))).to.be.true;
+
+        //Check that skip_this.txt is NOT copied from template to instances
+        expect(fs.existsSync(path.resolve(projectRootDir, for0.name, "skip_this.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_0", "skip_this.txt"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_1", "skip_this.txt"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_2", "skip_this.txt"))).to.be.false;
+
+        //Check that skip_dir is NOT copied
+        expect(fs.existsSync(path.resolve(projectRootDir, for0.name, "skip_dir"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_0", "skip_dir"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_1", "skip_dir"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_2", "skip_dir"))).to.be.false;
+      });
+    });
+    describe("foreach component with skipCopy glob pattern", ()=>{
+      let foreach0;
+      let task0;
+      beforeEach(async ()=>{
+        foreach0 = await createNewComponent(projectRootDir, projectRootDir, "foreach", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, foreach0.ID, "indexList", ["a", "b", "c"]);
+        await updateComponentProperty(projectRootDir, foreach0.ID, "skipCopy", ["*.log", "temp_*"]);
+
+        task0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, foreach0.name), "task", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, task0.name, scriptName), scriptPwd);
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, "data.txt"), "data");
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, "output.log"), "log content");
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, "temp_file.dat"), "temp data");
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, "temp_dir", "info.txt"), "temp info");
+
+        projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      });
+      it("should skip files matching glob patterns during loop copy", async ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP.start()).to.be.equal("finished");
+
+        //Check that data.txt is copied
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_a", "data.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_b", "data.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_c", "data.txt"))).to.be.true;
+
+        //Check that *.log files are NOT copied
+        expect(fs.existsSync(path.resolve(projectRootDir, foreach0.name, "output.log"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_a", "output.log"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_b", "output.log"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_c", "output.log"))).to.be.false;
+
+        //Check that temp_* files and directories are NOT copied
+        expect(fs.existsSync(path.resolve(projectRootDir, foreach0.name, "temp_file.dat"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_a", "temp_file.dat"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_b", "temp_file.dat"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_c", "temp_file.dat"))).to.be.false;
+
+        expect(fs.existsSync(path.resolve(projectRootDir, foreach0.name, "temp_dir"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_a", "temp_dir"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_b", "temp_dir"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_c", "temp_dir"))).to.be.false;
+      });
+    });
+    describe("while component with skipCopy", ()=>{
+      let while0;
+      let task0;
+      beforeEach(async ()=>{
+        while0 = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
+        await updateComponentProperty(projectRootDir, while0.ID, "skipCopy", ["cache.dat"]);
+
+        task0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, while0.name), "task", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await fs.outputFile(path.join(projectRootDir, while0.name, task0.name, scriptName), scriptPwd);
+        await fs.outputFile(path.join(projectRootDir, while0.name, "config.txt"), "config");
+        await fs.outputFile(path.join(projectRootDir, while0.name, "cache.dat"), "cache data");
+
+        projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      });
+      it("should skip specified files during while loop copy", async ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP.start()).to.be.equal("finished");
+
+        //Check that config.txt is copied
+        expect(fs.existsSync(path.resolve(projectRootDir, "while0_0", "config.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "while0_1", "config.txt"))).to.be.true;
+
+        //Check that cache.dat is NOT copied
+        expect(fs.existsSync(path.resolve(projectRootDir, while0.name, "cache.dat"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "while0_0", "cache.dat"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "while0_1", "cache.dat"))).to.be.false;
+      });
+    });
+  });
 });

@@ -158,6 +158,7 @@ class ForSchema extends GeneralWorkflowComponentSchema {
     this.properties.end = { type: ["number", "null"] };
     this.properties.step = { type: ["number", "null"] };
     this.properties.keep = { type: ["number", "null"] };
+    this.properties.skipCopy = { type: "array", items: { type: "string" }, default: [] };
   }
 }
 
@@ -168,6 +169,7 @@ class WhileSchema extends GeneralWorkflowComponentSchema {
     this.required.push("condition", "keep");
     this.properties.condition = { type: ["string", "null"], default: null };
     this.properties.keep = { type: ["number", "null"] };
+    this.properties.skipCopy = { type: "array", items: { type: "string" }, default: [] };
   }
 }
 
@@ -178,6 +180,7 @@ class ForeachSchema extends GeneralWorkflowComponentSchema {
     this.required.push("indexList");
     this.properties.indexList = { type: "array", items: { type: "string" } };
     this.properties.keep = { type: ["number", "null"] };
+    this.properties.skipCopy = { type: "array", items: { type: "string" }, default: [] };
   }
 }
 

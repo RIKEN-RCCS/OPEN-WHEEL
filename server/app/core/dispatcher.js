@@ -73,6 +73,29 @@ const wheelSystemEnv = [
 const taskDB = new Map();
 //private functions
 /**
+ * check if target path matches any skipCopy patterns
+ * @param {string} target - absolute path to check
+ * @param {string} baseDir - base directory path
+ * @param {Array<string>} skipCopyPatterns - array of glob patterns
+ * @returns {boolean} - true if target matches any pattern
+ */
+function shouldSkipCopy(target, baseDir, skipCopyPatterns) {
+  if (!skipCopyPatterns || skipCopyPatterns.length === 0) {
+    return false;
+  }
+  const relativePath = path.relative(baseDir, target);
+  return skipCopyPatterns.some((pattern)=>{
+    if (hasMagic(pattern)) {
+      const matched = glob.sync(pattern, { cwd: baseDir });
+      return matched.some((matchedPath)=>{
+        return relativePath === matchedPath || relativePath.startsWith(`${matchedPath}${path.sep}`);
+      });
+    }
+    return relativePath === pattern || relativePath.startsWith(`${pattern}${path.sep}`);
+  });
+}
+
+/**
  * replace target files in bulkjob by nunjucks
  * @param {string} templateRoot - path of PS component's "template" directory
  * @param {string[]} targetFiles - filenames to be rewritten
@@ -705,6 +728,7 @@ class Dispatcher extends EventEmitter {
 
     try {
       logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy from", srcDir, "to", dstDir);
+      const skipCopyPatterns = component.skipCopy || [];
       await fs.copy(srcDir, dstDir, {
         dereference: true,
         filter: async (target)=>{
@@ -713,6 +737,10 @@ class Dispatcher extends EventEmitter {
             return true;
           }
           if (path.basename(target) === statusFilename) {
+            return false;
+          }
+          if (shouldSkipCopy(target, srcDir, skipCopyPatterns)) {
+            logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "skipping copy due to skipCopy pattern:", target);
             return false;
           }
           const subComponent = await isSubComponent(target);
