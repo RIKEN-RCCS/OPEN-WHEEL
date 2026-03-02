@@ -9,7 +9,7 @@ import path from "path";
 import fs from "fs-extra";
 import os from "os";
 import { rsyncExcludeOptionOfWheelSystemFiles } from "../../../app/db/db.js";
-import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesLocalToRemoteShared, deliverFilesRemoteToLocalShared, _internal } from "../../../app/core/deliverFile.js";
+import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesLocalToRemoteShared, deliverFilesRemoteToLocalShared, deliverFilesBetweenRemotes, _internal } from "../../../app/core/deliverFile.js";
 describe("#deliverFile", ()=>{
   let lstatStub, copyStub, removeStub, ensureSymlinkStub, statsMock;
 
@@ -670,5 +670,78 @@ describe("#deliverFilesRemoteToLocalShared (with real symlink)", ()=>{
 
     const content = await fs.readFile(dstFile, "utf8");
     expect(content).to.equal("test content from remote");
+  });
+});
+
+describe("#deliverFilesBetweenRemotes", ()=>{
+  let getSshStub, mockSsh, mockDstHostinfo, getSshHostinfoStub, getLoggerStub, mockLogger;
+
+  beforeEach(()=>{
+    getSshStub = sinon.stub(_internal, "getSsh");
+    getSshHostinfoStub = sinon.stub(_internal, "getSshHostinfo");
+    getLoggerStub = sinon.stub(_internal, "getLogger");
+
+    mockLogger = {
+      debug: sinon.stub(),
+      warn: sinon.stub(),
+      error: sinon.stub()
+    };
+    mockSsh = {
+      remoteToRemoteCopy: sinon.stub().resolves()
+    };
+    mockDstHostinfo = {
+      host: "remote-dst.example.com",
+      user: "dstuser",
+      port: 22
+    };
+    getSshStub.returns(mockSsh);
+    getSshHostinfoStub.returns(mockDstHostinfo);
+    getLoggerStub.returns(mockLogger);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return null if betweenRemotes flag is not set", async ()=>{
+    const recipe = {
+      betweenRemotes: false,
+      projectRootDir: "/dummy/project"
+    };
+
+    const result = await deliverFilesBetweenRemotes(recipe);
+    expect(result).to.be.null;
+  });
+
+  it("should call remoteToRemoteCopy with correct parameters", async ()=>{
+    const recipe = {
+      betweenRemotes: true,
+      projectRootDir: "/dummy/project",
+      srcRemotehostID: "srchost-id",
+      dstRemotehostID: "dsthost-id",
+      srcRoot: "/remote/src/path",
+      srcName: "file.txt",
+      dstRoot: "/remote/dst/path",
+      dstName: "file.txt"
+    };
+
+    const result = await deliverFilesBetweenRemotes(recipe);
+
+    expect(getSshStub.calledOnceWithExactly(recipe.projectRootDir, recipe.srcRemotehostID)).to.be.true;
+    expect(getSshHostinfoStub.calledOnceWithExactly(recipe.projectRootDir, recipe.dstRemotehostID)).to.be.true;
+    expect(mockSsh.remoteToRemoteCopy.calledOnce).to.be.true;
+
+    const callArgs = mockSsh.remoteToRemoteCopy.getCall(0).args;
+    expect(callArgs[0]).to.deep.equal(["/remote/src/path/file.txt"]);
+    expect(callArgs[1]).to.equal(mockDstHostinfo);
+    expect(callArgs[2]).to.equal("/remote/dst/path/file.txt");
+    expect(callArgs[3]).to.include("-vv");
+    expect(callArgs[3]).to.include.members(rsyncExcludeOptionOfWheelSystemFiles);
+
+    expect(result).to.deep.equal({
+      type: "direct-remote-copy",
+      src: "/remote/src/path/file.txt",
+      dst: "/remote/dst/path/file.txt"
+    });
   });
 });

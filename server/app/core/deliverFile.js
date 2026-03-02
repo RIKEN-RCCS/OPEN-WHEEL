@@ -13,7 +13,8 @@ import { gfpcopy, gfptarExtract } from "./gfarmOperator.js";
 const _internal = {
   fs,
   getLogger,
-  getSsh
+  getSsh,
+  getSshHostinfo
 };
 
 /**
@@ -171,6 +172,32 @@ async function deliverFilesRemoteToLocalShared(recipe) {
   return deliverFile(srcPath, dstPath, recipe.forceCopy);
 }
 
+/**
+ * deliver file directly between different remote hosts using SSH agent forwarding
+ * @param {object} recipe - deliver recipe which has src, destination and more information
+ * @returns {object} - result object
+ */
+async function deliverFilesBetweenRemotes(recipe) {
+  const logger = _internal.getLogger(recipe.projectRootDir);
+  if (!recipe.betweenRemotes) {
+    logger.warn("deliverFilesBetweenRemotes must be called with betweenRemotes flag");
+    return null;
+  }
+  const srcSsh = _internal.getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
+  const dstHostinfo = _internal.getSshHostinfo(recipe.projectRootDir, recipe.dstRemotehostID);
+
+  logger.debug("direct remote to remote copy from", recipe.srcRemotehostID, "to", recipe.dstRemotehostID);
+
+  await srcSsh.remoteToRemoteCopy(
+    [`${recipe.srcRoot}/${recipe.srcName}`],
+    dstHostinfo,
+    `${recipe.dstRoot}/${recipe.dstName}`,
+    ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]
+  );
+
+  return { type: "direct-remote-copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
+}
+
 export {
   deliverFile,
   deliverFilesOnRemote,
@@ -178,5 +205,6 @@ export {
   deliverFilesFromHPCISS,
   deliverFilesLocalToRemoteShared,
   deliverFilesRemoteToLocalShared,
+  deliverFilesBetweenRemotes,
   _internal
 };

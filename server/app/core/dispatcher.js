@@ -17,7 +17,7 @@ import { getDateString, writeJsonWrapper } from "../lib/utility.js";
 import { sanitizePath, convertPathSep, replacePathsep } from "./pathUtils.js";
 import { readJsonGreedy } from "./fileUtils.js";
 import { addX } from "./fileUtils.js";
-import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS, deliverFilesLocalToRemoteShared, deliverFilesRemoteToLocalShared } from "./deliverFile.js";
+import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS, deliverFilesLocalToRemoteShared, deliverFilesRemoteToLocalShared, deliverFilesBetweenRemotes } from "./deliverFile.js";
 import { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } from "./parameterParser.js";
 import { isLocal } from "../../../common/checkComponent.js";
 import { isSameRemoteHost, translateSharedPath } from "./componentHostOperations.js";
@@ -1434,7 +1434,7 @@ class Dispatcher extends EventEmitter {
               fromHPCISStar
             });
           } else {
-            //Remote → Remote (existing logic)
+            //Remote → Remote
             const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
             const dstRoot = hasStoragePath(component) ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
             const srcName = nunjucks.renderString(src.srcName, this.env);
@@ -1445,9 +1445,11 @@ class Dispatcher extends EventEmitter {
               srcRoot,
               srcName,
               onSameRemote,
+              betweenRemotes: !onSameRemote,
               forceCopy,
               projectRootDir: this.projectRootDir,
               srcRemotehostID,
+              dstRemotehostID: remotehostID,
               fromHPCISS,
               fromHPCISStar
             });
@@ -1544,6 +1546,8 @@ class Dispatcher extends EventEmitter {
         p2.push(deliverFilesFromHPCISS(recipe, this.projectRootDir));
       } else if (recipe.onSameRemote) {
         p2.push(deliverFilesOnRemote(recipe));
+      } else if (recipe.betweenRemotes) {
+        p2.push(deliverFilesBetweenRemotes(recipe));
       } else if (recipe.localToRemoteShared) {
         p2.push(deliverFilesLocalToRemoteShared(recipe));
       } else if (recipe.remoteToLocalShared) {
