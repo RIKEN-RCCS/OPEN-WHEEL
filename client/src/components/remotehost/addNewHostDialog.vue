@@ -143,6 +143,33 @@
                       </v-col>
                       <v-col cols="12">
                         <v-checkbox
+                          v-model="host.sharedWithLocalhost"
+                          label="shared with localhost"
+                          data-cy="add_new_host-shared_with_localhost-checkbox"
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.localSharedPath"
+                          :disabled="!host.sharedWithLocalhost"
+                          label="shared storage path on localhost"
+                          placeholder="/mnt/shared"
+                          hint="Path where shared storage is mounted on WHEEL server"
+                          data-cy="add_new_host-local_shared_path-text_field"
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.sharedPath"
+                          :disabled="!host.sharedWithLocalhost && !host.sharedHost"
+                          label="shared storage path on remote"
+                          placeholder="/data"
+                          hint="Path where shared storage is mounted on remote host"
+                          data-cy="add_new_host-shared_path_remote-text_field"
+                        />
+                      </v-col>
+                      <v-col cols="12">
+                        <v-checkbox
                           v-model="host.useGfarm"
                           label="use gfarm"
                           data-cy="add_new_host-use_gfarm-checkbox"

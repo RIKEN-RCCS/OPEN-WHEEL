@@ -29,6 +29,8 @@ const remotehostJsonSchema = {
     useStepjob: { type: "boolean", default: false },
     sharedHost: { type: "string", default: "" },
     sharedPath: { type: "string", default: "" },
+    sharedWithLocalhost: { type: "boolean", default: false },
+    localSharedPath: { type: "string", default: "" },
     renewInterval: { type: "number", default: 0, minimum: 0 },
     statusCheckInterval: { type: "number", default: 60, minimum: 0 },
     maxStatusCheckError: { type: "number", default: 10, minimum: 0 },

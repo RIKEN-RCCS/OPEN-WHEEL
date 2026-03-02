@@ -6,6 +6,8 @@ services:
     container_name: wheel_release_test_server
     cap_add:
       - SYS_RESOURCE
+    volumes:
+      - /tmp/WHEEL_TEST/shared:/data/shared
 
   wheel_release_test:
     build:
@@ -24,3 +26,5 @@ services:
       WHEEL_LOGLEVEL: OFF
     volumes:
       - "./wheel_config:/root/.wheel"
+      - /tmp/WHEEL_TEST/shared:/mnt/shared
+

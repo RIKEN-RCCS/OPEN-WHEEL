@@ -48,6 +48,9 @@ Each part of the form must have the following information:
 |use stepjob| (Fujitsu TCS sites only) Whether the site can use step jobs |
 |shared host| Label for other remote hosts sharing storage <br/>For more information, see [How to use the shared host](#how-to-use-the-shared-host). |
 |shared path on shared host| Path to access Host work dir on shared host|
+|shared with localhost| Whether storage is shared with WHEEL server (localhost) <br/>For more information, see [How to use shared with localhost](#how-to-use-shared-with-localhost). |
+|shared storage path on localhost| Path where shared storage is mounted on WHEEL server <br/> (Set when shared with localhost is enabled)|
+|shared storage path on remote| Path where shared storage is mounted on remote host <br/> (Set when shared with localhost is enabled)|
 |use gfarm|(Fugaku CSGW only) Whether HPCI shared storage can be accessed using the gfarm command|
 |HPCI-ID|HPCI-ID for OAuth authentication of HPCI shared storage|
 |JWT server URL|URL of the server that stores the JWT-token used for OAuth authentication of the HPCI shared storage|
@@ -102,6 +105,51 @@ The following items should be defined as the remote host settings for HostA and 
 |Host work dir|/work|/work
 |shared host||HostA|
 |shared path on shared host||/data|
+
+## How to use shared with localhost
+
+This section describes how to use __shared with localhost__ in the remote host configuration.
+
+When transferring files between the WHEEL server (localhost) and a remote host, you can use __shared with localhost__ to avoid file transfers if shared storage exists.
+
+### If shared storage exists
+
+If you have shared storage that can be accessed from both the WHEEL server (localhost) and the remote host, you can use the remote host setting __shared with localhost__ to skip file transfers.
+
+For example, consider the following configuration:
+- WHEEL server (localhost): shared storage is mounted at `/mnt/shared`
+- RemoteHost: same shared storage is mounted at `/data`
+
+The following items should be defined as the remote host settings:
+
+|Item|Setting|
+|-----|-----|
+|label|RemoteHost|
+|Host work dir|/work or /data/work (recommended)|
+|shared with localhost|✓ (enabled)|
+|shared storage path on localhost|/mnt/shared|
+|shared storage path on remote|/data|
+
+### How it works
+
+When using __shared with localhost__, file transfers work as follows:
+
+- __Localhost → RemoteHost:__
+  - Files created on localhost are placed on shared storage
+  - RemoteHost creates symbolic links to the shared storage
+  - No file upload via rsync occurs
+
+- __RemoteHost → Localhost:__
+  - Files created on remote host are placed on shared storage
+  - Localhost creates symbolic links to the shared storage
+  - No file download via rsync occurs
+
+### Important notes
+
+- When using the __shared with localhost__ feature, it is recommended to create projects on shared storage
+- Ensure that shared storage paths are configured correctly
+- Access permissions to shared storage must be properly configured for both environments
+- For RemoteHost → Localhost transfers, it is recommended to set the RemoteHost __Host work dir__ on shared storage
 
 
 

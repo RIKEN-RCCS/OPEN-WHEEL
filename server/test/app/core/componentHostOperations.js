@@ -18,6 +18,7 @@ import * as glob from "glob";
 //testee
 import {
   isSameRemoteHost,
+  translateSharedPath,
   recursiveGetHosts,
   getHosts,
   _internal
@@ -104,6 +105,79 @@ describe("#isSameRemoteHost", ()=>{
 
     const result = await isSameRemoteHost("/project/root", "componentA", "componentB");
     expect(result).to.be.true;
+  });
+
+  it("should return true if dst is remote with sharedWithLocalhost and src is localhost", async ()=>{
+    readComponentJsonByIDMock
+      .withArgs("/project/root", "componentA").resolves({ host: "localhost" })
+      .withArgs("/project/root", "componentB")
+      .resolves({ host: "host1" });
+    remoteHostMock.query
+      .withArgs("name", "host1").returns({ sharedWithLocalhost: true, localSharedPath: "/mnt/shared" });
+
+    const result = await isSameRemoteHost("/project/root", "componentA", "componentB");
+    expect(result).to.be.true;
+  });
+
+  it("should return true if src is remote with sharedWithLocalhost and dst is localhost", async ()=>{
+    readComponentJsonByIDMock
+      .withArgs("/project/root", "componentA").resolves({ host: "host1" })
+      .withArgs("/project/root", "componentB")
+      .resolves({ host: "localhost" });
+    remoteHostMock.query
+      .withArgs("name", "host1").returns({ sharedWithLocalhost: true, localSharedPath: "/mnt/shared" });
+
+    const result = await isSameRemoteHost("/project/root", "componentA", "componentB");
+    expect(result).to.be.true;
+  });
+
+  it("should return false if sharedWithLocalhost is false for localhost-remote", async ()=>{
+    readComponentJsonByIDMock
+      .withArgs("/project/root", "componentA").resolves({ host: "localhost" })
+      .withArgs("/project/root", "componentB")
+      .resolves({ host: "host1" });
+    remoteHostMock.query
+      .withArgs("name", "host1").returns({ sharedWithLocalhost: false });
+
+    const result = await isSameRemoteHost("/project/root", "componentA", "componentB");
+    expect(result).to.be.false;
+  });
+});
+
+describe("#translateSharedPath", ()=>{
+  it("should translate path from localhost to remote", ()=>{
+    const result = translateSharedPath(
+      "/mnt/shared/project/taskA/output.txt",
+      "/mnt/shared",
+      "/data"
+    );
+    expect(result).to.equal("/data/project/taskA/output.txt");
+  });
+
+  it("should translate path from remote to localhost", ()=>{
+    const result = translateSharedPath(
+      "/data/project/taskA/output.txt",
+      "/data",
+      "/mnt/shared"
+    );
+    expect(result).to.equal("/mnt/shared/project/taskA/output.txt");
+  });
+
+  it("should return original path if not under fromBase", ()=>{
+    const result = translateSharedPath(
+      "/other/path/file.txt",
+      "/mnt/shared",
+      "/data"
+    );
+    expect(result).to.equal("/other/path/file.txt");
+  });
+
+  it("should return original path if fromBase or toBase is empty", ()=>{
+    const result1 = translateSharedPath("/path/file.txt", "", "/data");
+    expect(result1).to.equal("/path/file.txt");
+
+    const result2 = translateSharedPath("/path/file.txt", "/mnt/shared", "");
+    expect(result2).to.equal("/path/file.txt");
   });
 });
 

@@ -315,6 +315,99 @@ describe("UT for Dispatcher class", function () {
           expect(stats.isSymbolicLink()).to.be.false;
         });
       });
+      describe("shared storage between localhost and remote host", function () {
+        const sharedStorageOnRemote = "/data/shared";
+        //Use /mnt/shared in Docker container, /tmp/WHEEL_TEST/shared on native host
+        //Both are mounted to the same host directory via compose.yml
+        const sharedStorageOnLocal = fs.existsSync("/mnt/shared") ? "/mnt/shared" : "/tmp/WHEEL_TEST/shared";
+
+        const storageArea0 = path.resolve(sharedStorageOnLocal, "storage0");
+        const storageArea2 = path.resolve(sharedStorageOnLocal, "storage2");
+        let storage0;
+        let task1;
+        let storage2;
+
+        beforeEach(async ()=>{
+          storage0 = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 0, y: 0 });
+          task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 0 });
+          storage2 = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 20, y: 0 });
+          projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+          await updateComponentProperty(projectRootDir, storage0.ID, "storagePath", storageArea0);
+          await updateComponentProperty(projectRootDir, storage2.ID, "storagePath", storageArea2);
+          //Create script that produces output file
+          const script = `${scriptHeader}\ncat in0.txt > out1.txt`;
+          await fs.outputFile(path.resolve(projectRootDir, task1.name, scriptName), script);
+          await updateComponentProperty(projectRootDir, task1.ID, "script", scriptName);
+          await addOutputFile(projectRootDir, storage0.ID, "out0.txt");
+          await addInputFile(projectRootDir, task1.ID, "in0.txt");
+          await addFileLink(projectRootDir, storage0.ID, "out0.txt", task1.ID, "in0.txt");
+          await addOutputFile(projectRootDir, task1.ID, "out1.txt");
+          await addInputFile(projectRootDir, storage2.ID, "in1.txt");
+          await addFileLink(projectRootDir, task1.ID, "out1.txt", storage2.ID, "in1.txt");
+
+          //Create shared storage directory
+          await fs.ensureDir(sharedStorageOnLocal);
+          await ssh.exec(`mkdir -p ${sharedStorageOnRemote}`);
+
+          //Setup remotehost with sharedWithLocalhost (already configured in remotehost.json)
+          const hostInfo = remoteHost.query("name", remotehostName);
+          hostInfo.sharedWithLocalhost = true;
+          hostInfo.localSharedPath = sharedStorageOnLocal; //Use the actual local path
+          hostInfo.sharedPath = sharedStorageOnRemote;
+        });
+
+        afterEach(async ()=>{
+          await ssh.exec(`rm -rf ${sharedStorageOnRemote}`);
+        });
+
+        it("should deliver files from localhost storage to remote via shared storage", async ()=>{
+          //Setup: storage0 on localhost (shared), task1 on remote, storage2 on remote (shared)
+          await updateComponentProperty(projectRootDir, task1.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage2.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage2.ID, "storagePath", `${sharedStorageOnRemote}/storage2`);
+          await fs.ensureDir(storageArea0);
+          await fs.outputFile(path.resolve(storageArea0, "out0.txt"), "test data from localhost");
+
+          const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy_start_time", projectJson.componentPath, {}, "");
+          expect(await DP.start()).to.be.equal("finished");
+
+          //Verify storage2 received file via shared storage (symlink on remote)
+          const testCmd = `test -f /data/shared/storage2/in1.txt`;
+          const rt = await ssh.exec(testCmd);
+          expect(rt).to.equal(0);
+        });
+
+        it("should deliver files from remote storage to localhost via shared storage", async ()=>{
+          //Setup: storage0 on remote, task1 on localhost, storage2 on localhost
+          await updateComponentProperty(projectRootDir, storage0.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage0.ID, "storagePath", `${sharedStorageOnRemote}/storage0`);
+          await ssh.exec(`mkdir -p ${sharedStorageOnRemote}/storage0 && echo "test data from remote" > ${sharedStorageOnRemote}/storage0/out0.txt`);
+
+          const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy_start_time", projectJson.componentPath, {}, "");
+          expect(await DP.start()).to.be.equal("finished");
+
+          //Verify task1 received file via symlink
+          const task1InputPath = path.resolve(projectRootDir, task1.name, "in0.txt");
+          expect(fs.existsSync(task1InputPath)).to.be.true;
+        });
+
+        it("should handle localhost storage -> remote task -> remote storage chain", async ()=>{
+          //Setup: storage0 localhost (shared), task1 remote, storage2 remote (shared)
+          await updateComponentProperty(projectRootDir, task1.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage2.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage2.ID, "storagePath", `${sharedStorageOnRemote}/storage2`);
+          await fs.ensureDir(storageArea0);
+          await fs.outputFile(path.resolve(storageArea0, "out0.txt"), "chain test");
+
+          const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy_start_time", projectJson.componentPath, {}, "");
+          expect(await DP.start()).to.be.equal("finished");
+
+          //Verify storage2 received file via shared storage (remote to remote symlink)
+          const testCmd = `test -f /data/shared/storage2/in1.txt`;
+          const rt = await ssh.exec(testCmd);
+          expect(rt).to.equal(0);
+        });
+      });
     });
   });
   describe("#For component", ()=>{

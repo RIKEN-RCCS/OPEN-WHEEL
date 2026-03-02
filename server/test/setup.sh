@@ -9,6 +9,7 @@ SETTING_FILE=${1:-"test_setting_local.txt"}
 source ${SETTING_FILE}
 
 docker stop ${TAG_TEST_SERVER} 2>/dev/null
+docker rm ${TAG_TEST_SERVER} 2>/dev/null
 echo "prepareing remotehost"
 {
 echo '[{'
@@ -27,6 +28,11 @@ echo '  "maxStatusCheckError": 10,'
 echo '  "readyTimeout": 5000'
 echo '}]'
 } > ${WHEEL_CONFIG_DIR}/remotehost.json
+
+echo create shared storage directory for localhost-remote shared storage tests
+SHARED_DIR=/tmp/WHEEL_TEST/shared
+echo "Creating directory: ${SHARED_DIR}"
+mkdir -p ${SHARED_DIR}
 
 echo boot up test server
 docker compose up ${TAG_TEST_SERVER} -d --wait --remove-orphans

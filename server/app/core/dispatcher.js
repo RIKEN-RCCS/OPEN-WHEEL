@@ -17,10 +17,10 @@ import { getDateString, writeJsonWrapper } from "../lib/utility.js";
 import { sanitizePath, convertPathSep, replacePathsep } from "./pathUtils.js";
 import { readJsonGreedy } from "./fileUtils.js";
 import { addX } from "./fileUtils.js";
-import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS } from "./deliverFile.js";
+import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS, deliverFilesLocalToRemoteShared, deliverFilesRemoteToLocalShared } from "./deliverFile.js";
 import { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } from "./parameterParser.js";
 import { isLocal } from "../../../common/checkComponent.js";
-import { isSameRemoteHost } from "./componentHostOperations.js";
+import { isSameRemoteHost, translateSharedPath } from "./componentHostOperations.js";
 import { setComponentStateR } from "./componentState.js";
 import { writeComponentJson, readComponentJson, readComponentJsonByID } from "./componentJsonIO.js";
 import { isInitialComponent, removeDuplicatedComponent, hasStoragePath } from "./workflowComponent.js";
@@ -1326,24 +1326,104 @@ class Dispatcher extends EventEmitter {
             });
           }
         } else if (onSameRemote) {
+          const srcIsLocal = isLocal(srcComponent);
+          const dstIsLocal = isLocal(component);
           const remotehostID = remoteHost.getID("name", component.host);
+          let srcRoot, dstRoot, dstRemotehostID, srcRemotehostIDForRecipe;
 
-          const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
-          const dstRoot = hasStoragePath(component) ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
-          const srcName = nunjucks.renderString(src.srcName, this.env);
-          const forceCopy = hasStoragePath(srcComponent);
-          tmpDeliverRecipes.push({
-            dstRoot,
-            dstName,
-            srcRoot,
-            srcName,
-            onSameRemote,
-            forceCopy,
-            projectRootDir: this.projectRootDir,
-            srcRemotehostID,
-            fromHPCISS,
-            fromHPCISStar
-          });
+          if (srcIsLocal && !dstIsLocal) {
+            //Localhost → Remote via shared storage
+            dstRemotehostID = remotehostID;
+            const dstHostInfo = remoteHost.query("name", component.host);
+
+            //Source: localhost path (should be on shared storage)
+            const srcLocalPath = hasStoragePath(srcComponent)
+              ? srcComponent.storagePath
+              : this._getComponentDir(src.srcNode);
+
+            //Translate localhost path to remote path
+            srcRoot = translateSharedPath(
+              srcLocalPath,
+              dstHostInfo.localSharedPath,
+              dstHostInfo.sharedPath
+            );
+
+            //Destination: remote working directory
+            dstRoot = hasStoragePath(component)
+              ? component.storagePath
+              : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime,
+                  path.resolve(this.cwfDir, component.name), component);
+
+            const srcName = nunjucks.renderString(src.srcName, this.env);
+            const forceCopy = hasStoragePath(srcComponent);
+            tmpDeliverRecipes.push({
+              dstRoot,
+              dstName,
+              srcRoot,
+              srcName,
+              localToRemoteShared: true,
+              forceCopy,
+              projectRootDir: this.projectRootDir,
+              dstRemotehostID,
+              fromHPCISS,
+              fromHPCISStar
+            });
+          } else if (!srcIsLocal && dstIsLocal) {
+            //Remote → Localhost via shared storage
+            srcRemotehostIDForRecipe = srcRemotehostID;
+            const srcHostInfo = remoteHost.query("name", srcComponent.host);
+
+            //Source: remote working directory path
+            const srcRemotePath = hasStoragePath(srcComponent)
+              ? srcComponent.storagePath
+              : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime,
+                  path.resolve(this.cwfDir, srcComponent.name), srcComponent);
+
+            //Translate remote path to localhost path
+            srcRoot = translateSharedPath(
+              srcRemotePath,
+              srcHostInfo.sharedPath,
+              srcHostInfo.localSharedPath
+            );
+
+            //Destination: localhost component directory or storagePath
+            dstRoot = hasStoragePath(component)
+              ? component.storagePath
+              : this._getComponentDir(component.ID);
+
+            const srcName = nunjucks.renderString(src.srcName, this.env);
+            const forceCopy = hasStoragePath(srcComponent);
+            tmpDeliverRecipes.push({
+              dstRoot,
+              dstName,
+              srcRoot,
+              srcName,
+              remoteToLocalShared: true,
+              forceCopy,
+              projectRootDir: this.projectRootDir,
+              srcRemotehostID: srcRemotehostIDForRecipe,
+              fromHPCISS,
+              fromHPCISStar
+            });
+          } else {
+            //Remote → Remote (existing logic)
+            const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
+            const dstRoot = hasStoragePath(component) ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
+            const srcName = nunjucks.renderString(src.srcName, this.env);
+            const forceCopy = hasStoragePath(srcComponent);
+            tmpDeliverRecipes.push({
+              dstRoot,
+              dstName,
+              srcRoot,
+              srcName,
+              onSameRemote,
+              forceCopy,
+              projectRootDir: this.projectRootDir,
+              srcRemotehostID,
+              fromHPCISS,
+              fromHPCISStar
+            });
+          }
         } else if (!isLocal(srcComponent) && !["task", "stepjobTask", "bulkjobtask", "hpciss", "hpcisstar"].includes(srcComponent.type)) {
           //memo1: taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼るだけでよいので除外している
           //memo2: この方法だと、接続先が複数あるエントリは複数回rsyncを実行することになるため将来的には全てtaskコンポーネントと同じ方式にする必要がある
@@ -1436,6 +1516,10 @@ class Dispatcher extends EventEmitter {
         p2.push(deliverFilesFromHPCISS(recipe, this.projectRootDir));
       } else if (recipe.onSameRemote) {
         p2.push(deliverFilesOnRemote(recipe));
+      } else if (recipe.localToRemoteShared) {
+        p2.push(deliverFilesLocalToRemoteShared(recipe));
+      } else if (recipe.remoteToLocalShared) {
+        p2.push(deliverFilesRemoteToLocalShared(recipe));
       } else if (recipe.remoteToLocal) {
         p2.push(deliverFilesFromRemote(recipe));
       } else {
