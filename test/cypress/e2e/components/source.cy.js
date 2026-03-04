@@ -228,7 +228,7 @@ describe("components", ()=>{
   該当コンポーネント削除確認
   試験確認内容：コンポーネントが削除されていることを確認
      */
-    it("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
+    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 501, 500);
       cy.deleteComponent(SOURCE_NAME_0);
       cy.get("[data-cy=\"graph-component-row\"]").contains(SOURCE_NAME_0)

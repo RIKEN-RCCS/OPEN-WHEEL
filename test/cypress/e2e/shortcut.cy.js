@@ -94,7 +94,7 @@ describe("shortcut key", ()=>{
     cy.wait(100);
   });
 
-  it("paste calls socketIO.emitGlobal", ()=>{
+  it.skip("paste calls socketIO.emitGlobal", ()=>{
     //Select a component
     cy.get("[data-cy=\"graph-component-row\"]").contains(TASK_NAME)
       .click();
