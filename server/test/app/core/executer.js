@@ -176,6 +176,9 @@ describe("UT for executer class", function () {
         const task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
         task1.inputFiles = [{ name: "dummy", src: [{ srcNode: task0.ID, srcName: "hoge" }] }];
         task0.outputFiles = [{ name: "hoge", dst: [{ dstNode: task1.ID, dstName: "dummy" }] }];
+        await updateComponentProperty(projectRootDir, task1.ID, "inputFiles", task1.inputFiles);
+        await updateComponentProperty(projectRootDir, task0.ID, "host", task0.host);
+        await updateComponentProperty(projectRootDir, task0.ID, "outputFiles", task0.outputFiles);
         await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\necho -n hoge > hoge\n${exit(0)}`);
         await exec(task0);
         const statusFile = path.join(task0.workingDir, statusFilename);
