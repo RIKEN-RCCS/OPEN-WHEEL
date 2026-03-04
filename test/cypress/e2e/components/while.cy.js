@@ -416,7 +416,7 @@ describe("components", ()=>{
   該当コンポーネント削除確認
   試験確認内容：コンポーネントが削除されていることを確認
      */
-    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
+    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.deleteComponent(WHILE_NAME_0);
       cy.get("[data-cy=\"graph-component-row\"]").contains(WHILE_NAME_0)
@@ -444,7 +444,7 @@ describe("components", ()=>{
   シェルスクリプト選択セレクトボックス選択確認
   試験確認内容：選択した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{
+    it.skip("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
@@ -465,7 +465,7 @@ describe("components", ()=>{
   シェルスクリプト選択セレクトボックス選択反映確認
   試験確認内容：選択した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
+    it.skip("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]");
