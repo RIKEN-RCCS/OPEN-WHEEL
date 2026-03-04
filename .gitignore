@@ -8,7 +8,7 @@ projectList.json
 jobScript.json
 .nyc_output
 coverage
-*.log*
+*.log
 errorShots
 logs
 server.crt
