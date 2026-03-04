@@ -380,7 +380,7 @@ describe("components", ()=>{
   該当コンポーネント削除確認
   試験確認内容：コンポーネントが削除されていることを確認
      */
-    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
+    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 501, 500);
       cy.deleteComponent(VIEWER_NAME_0);
       cy.get("[data-cy=\"graph-component-row\"]").contains(VIEWER_NAME_0)
