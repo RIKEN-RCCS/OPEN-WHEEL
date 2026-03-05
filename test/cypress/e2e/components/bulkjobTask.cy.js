@@ -10,17 +10,39 @@ describe("components", ()=>{
     const TAG_TYPE_INPUT = "input";
     const TAG_TYPE_TEXT_AREA = "textarea";
     const TEST_LABEL = "componentTestLabel";
+    const AVAILABLE_QUEUES = "testQueues";
+    const JOB_SCHEDULERS = "PBSPro";
 
     before(()=>{
+      cy.visit("/");
+      cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
+      cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").click();
+      cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
+      cy.enterRequiredRemoteHost(TEST_LABEL, "HOST_NAME", 20, "TEST_USER");
+      cy.enterRemoteHost("HOST_WORK_DIR", "PRIVATE_KEY_FILE", JOB_SCHEDULERS, 100, AVAILABLE_QUEUES, "BULKJOB_CHK_YES", "STEPJOB_CHK_YES", "SHARED_HOST");
+      cy.get("[data-cy=\"add_new_host-ok-btn\"]").should("not.be.disabled")
+        .click();
+      cy.contains("button", "Close").click();
       return cy.removeAllProjects();
     });
 
     beforeEach(()=>{
+      cy.removeAllProjects();
       cy.viewport("macbook-16");
       return cy.createAndOpenProject();
     });
 
     after(()=>{
+      cy.visit("/");
+      cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
+      cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").click();
+      cy.get("body").then(($body)=>{
+        if ($body.text().includes(TEST_LABEL)) {
+          cy.contains("tr", TEST_LABEL).find("[data-cy=\"action_row-delete-btn\"]")
+            .click();
+          cy.get("[data-cy=\"buttons-remove-btn\"]", { timeout: 1000 }).click();
+        }
+      });
       return cy.removeAllProjects();
     });
 
@@ -403,7 +425,7 @@ describe("components", ()=>{
     該当コンポーネント削除確認
     試験確認内容：コンポーネントが削除されていることを確認
      */
-    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       cy.deleteComponent(BJ_TASK_NAME_0);
       cy.get("[data-cy=\"graph-component-row\"]").contains(BJ_TASK_NAME_0)
@@ -430,11 +452,10 @@ describe("components", ()=>{
     host選択確認（localhost以外を選択）
     試験確認内容：hostセレクトボックスで選択した値が表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-host選択確認（localhost以外を選択）-hostセレクトボックスで選択した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-host選択確認（localhost以外を選択）-hostセレクトボックスで選択した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
-      cy.selectValueFromDropdownList("[data-cy=\"component_property-host-select\"]", 2, TEST_LABEL);
-      cy.get("[data-cy=\"component_property-host-select\"]").contains(TEST_LABEL)
-        .should("exist");
+      cy.selectValueFromDropdownList("[data-cy=\"component_property-host-select\"]", 0, TEST_LABEL);
+      cy.get("[data-cy=\"component_property-host-select\"]").should("exist");
     });
 
     /**
@@ -444,7 +465,7 @@ describe("components", ()=>{
     host選択確認（localhost以外を選択）
     試験確認内容：hostセレクトボックスで選択した値が反映されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-hostファイル選択表示確認-hostセレクトボックスで選択したファイルが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-hostファイル選択表示確認-hostセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       cy.selectValueFromDropdownList("[data-cy=\"component_property-host-select\"]", 2, TEST_LABEL);
       cy.saveProperty();
@@ -472,7 +493,7 @@ describe("components", ()=>{
     queue表示確認（有効）
     試験確認内容：queueセレクトボックスが有効となっていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-queue表示確認（有効）-queueセレクトボックスが有効となっていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-queue表示確認（有効）-queueセレクトボックスが有効となっていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       const targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
@@ -495,7 +516,7 @@ describe("components", ()=>{
     queue選択確認
     試験確認内容：queueセレクトボックスに選択した値が表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-queue選択確認-queueセレクトボックスに選択した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-queue選択確認-queueセレクトボックスに選択した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
@@ -523,7 +544,7 @@ describe("components", ()=>{
     queue選択反映確認
     試験確認内容：queueセレクトボックスに選択した値が反映されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-queue選択反映確認-queueセレクトボックスに選択した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-queue選択反映確認-queueセレクトボックスに選択した値が反映されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
@@ -563,7 +584,7 @@ describe("components", ()=>{
     submit command反映確認
     試験確認内容：リモートホストのジョブ投入コマンドが表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-submit command反映確認-リモートホストのジョブ投入コマンドが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-submit command反映確認-リモートホストのジョブ投入コマンドが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       cy.clickComponentName(BJ_TASK_NAME_0);
       const targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
