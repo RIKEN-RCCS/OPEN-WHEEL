@@ -473,7 +473,7 @@ Cypress.Commands.add("swicthUseJavascriptExpressionForConditionCheck", (flg)=>{
 
 //open file editer
 Cypress.Commands.add("clickFileEditer", ()=>{
-  cy.get("[href=\"/editor\"]").click()
+  cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click()
     .wait(animationWaitTime);
 });
 
@@ -488,9 +488,9 @@ Cypress.Commands.add("scriptEdit", (scriptName, script)=>{
   cy.clickFileEditer();
   cy.get("#editor").find("textarea")
     .type(script, { force: true });
-  cy.get("button").contains("button", "save all files")
-    .click();
-  cy.get("[href=\"/graph\"]", { timeout: 5500 }).click()
+  cy.get("[data-cy=\"workflow-text_editor_close-btn\"]").click();
+  cy.get("button").contains(/^keep changes$/i)
+    .click()
     .wait(animationWaitTime);
 });
 
@@ -562,7 +562,7 @@ Cypress.Commands.add("resetProject", ()=>{
 
 //input remotehost password
 Cypress.Commands.add("passwordType", (password)=>{
-  cy.contains("input password or passphrase").parent()
+  cy.contains("input password for").parent()
     .parent()
     .next()
     .find("input")
