@@ -188,6 +188,7 @@ Cypress.Commands.add("deleteComponent", (componentName)=>{
     .rightclick();
   cy.get("[data-cy=\"graph-component-row\"]").contains("delete")
     .click();
+  cy.contains('button', 'Delete').click();
 });
 
 //connecting components together
