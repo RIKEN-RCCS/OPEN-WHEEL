@@ -17,6 +17,7 @@ describe("source and viewer", ()=>{
   });
 
   beforeEach(()=>{
+    cy.removeAllProjects();
     cy.viewport("macbook-16");
     cy.createProject(PROJECT_NAME, PROJECT_DESCRIPTION);
     return cy.createAndOpenProject();
@@ -46,7 +47,7 @@ describe("source and viewer", ()=>{
     cy.checkProjectStatus("finished", 10000);
     cy.contains("open viewer screen").should("exist");
   });
-  it.skip("should not open old viewer component's result after re-creating project with same name (reproduction test of #948)", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+  it("should not open old viewer component's result after re-creating project with same name (reproduction test of #948)", ()=>{
     cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 501, 500);
     cy.createDirOrFile(TYPE_FILE, "test-a", true);
     cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
