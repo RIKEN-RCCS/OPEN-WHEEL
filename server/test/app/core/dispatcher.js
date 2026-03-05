@@ -28,6 +28,8 @@ import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.j
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { updateComponentProperty } from "../../testUtil.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { removeExecuters } from "../../../app/core/executerManager.js";
+import { removeTransferrers } from "../../../app/core/transferManager.js";
 import { addInputFile, addOutputFile, renameOutputFile } from "../../../app/core/componentFiles.js";
 import { addLink, addFileLink } from "../../../app/core/componentLinks.js";
 import { scriptName, pwdCmd, scriptHeader } from "../../testScript.js";
@@ -358,6 +360,18 @@ describe("UT for Dispatcher class", function () {
 
         afterEach(async ()=>{
           await ssh.exec(`rm -rf ${sharedStorageOnRemote}`);
+
+          //Clean up global state to prevent interference with other tests
+          removeExecuters(projectRootDir);
+          removeTransferrers(projectRootDir);
+
+          //Reset hostInfo to clean state
+          const hostInfo = remoteHost.query("name", remotehostName);
+          if (hostInfo) {
+            delete hostInfo.sharedWithLocalhost;
+            delete hostInfo.localSharedPath;
+            delete hostInfo.sharedPath;
+          }
         });
 
         it("should deliver files from localhost storage to remote via shared storage", async ()=>{
