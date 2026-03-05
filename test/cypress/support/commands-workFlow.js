@@ -32,12 +32,7 @@ Cypress.Commands.add("doubleClickComponentName", (componentName)=>{
 //create a stepjob component and double-click it
 Cypress.Commands.add("createStepjobComponentAndDoubleClick", (targetComponentName, componentName, positionX, positionY)=>{
   cy.createComponent(targetComponentName, componentName, positionX, positionY);
-  cy.get("body").then(($body)=>{
-    const $drawer = $body.find("[data-cy=\"component_property-property-navigation_drawer\"]");
-    if ($drawer.length && Cypress.$($drawer).is(":visible")) {
-      cy.closeProperty();
-    }
-  });
+  cy.closeProperty();
   cy.doubleClickComponentName(componentName);
 });
 
