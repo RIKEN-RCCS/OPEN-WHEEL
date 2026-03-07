@@ -12,7 +12,7 @@ import nunjucks from "nunjucks";
 nunjucks.configure({ autoescape: true });
 import { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename, rsyncExcludeOptionOfWheelSystemFiles } from "../db/db.js";
 import { getSsh, getSshHostinfo } from "./sshManager.js";
-import { exec } from "./executer.js";
+import { exec, execStageOut } from "./executer.js";
 import { getDateString, writeJsonWrapper } from "../lib/utility.js";
 import { sanitizePath, convertPathSep, replacePathsep } from "./pathUtils.js";
 import { readJsonGreedy } from "./fileUtils.js";
@@ -516,14 +516,17 @@ class Dispatcher extends EventEmitter {
 
   async _dispatchTask(component) {
     logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_dispatchTask called");
-    await this._setComponentState(component, "running");
-    component.dispatchedTime = getDateString(true, true);
-    component.startTime = "not started"; //to be assigned in executer
-    component.endTime = "not finished"; //to be assigned in executer
-    component.preparedTime = null; //to be assigned in executer
-    component.jobSubmittedTime = null; //to be assigned in executer
-    component.jobStartTime = null; //to be assigned in executer
-    component.jobEndTime = null; //to be assigned in executer
+    const isStageOutResume = component.state === "stage-out";
+    if (!isStageOutResume) {
+      await this._setComponentState(component, "running");
+      component.dispatchedTime = getDateString(true, true);
+      component.startTime = "not started"; //to be assigned in executer
+      component.endTime = "not finished"; //to be assigned in executer
+      component.preparedTime = null; //to be assigned in executer
+      component.jobSubmittedTime = null; //to be assigned in executer
+      component.jobStartTime = null; //to be assigned in executer
+      component.jobEndTime = null; //to be assigned in executer
+    }
     component.projectStartTime = this.projectStartTime;
     component.projectRootDir = this.projectRootDir;
     component.workingDir = path.resolve(this.cwfDir, component.name);
@@ -542,21 +545,24 @@ class Dispatcher extends EventEmitter {
     } else {
       component.doCleanup = component.cleanupFlag === 0;
     }
-    if (component.usePSSettingFile === true) {
-      await this._bulkjobHandler(component);
-    }
-    this.setEnv(component);
-    component.parentType = this.cwfJson.type;
+    if (!isStageOutResume) {
+      if (component.usePSSettingFile === true) {
+        await this._bulkjobHandler(component);
+      }
+      this.setEnv(component);
+      component.parentType = this.cwfJson.type;
 
-    //Add execute permission to script and checker
-    const scriptPath = path.resolve(component.workingDir, component.script);
-    await addX(scriptPath);
-    if (component.checker) {
-      const checkerPath = path.resolve(component.workingDir, component.checker);
-      await addX(checkerPath);
+      //Add execute permission to script and checker
+      const scriptPath = path.resolve(component.workingDir, component.script);
+      await addX(scriptPath);
+      if (component.checker) {
+        const checkerPath = path.resolve(component.workingDir, component.checker);
+        await addX(checkerPath);
+      }
     }
 
-    exec(component).catch((e)=>{
+    const execFn = isStageOutResume ? execStageOut : exec;
+    execFn(component).catch((e)=>{
       logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "failed. rt=", component.rt);
       logTrace(this.projectRootDir, component.workingDir, "failed due to", e);
     });

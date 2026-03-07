@@ -19,7 +19,7 @@ import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
 
 //testee
-import { exec } from "../../../app/core/executer.js";
+import { exec, execStageOut } from "../../../app/core/executer.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -282,6 +282,50 @@ describe("UT for executer class", function () {
         const JS = hostinfo.jobScheduler;
         expect(fs.existsSync(path.resolve(projectRootDir, `${hostname}-${JS}.${jobManagerJsonFilename}`))).to.be.false;
       });
+    });
+  });
+});
+
+describe("UT for execStageOut", function () {
+  this.timeout(0);
+  let task0;
+  const testDirRoot2 = "WHEEL_TEST_TMP_STAGEOOUT";
+  const projectRootDir2 = path.resolve(testDirRoot2, "testProject.wheel");
+
+  beforeEach(async ()=>{
+    await fs.remove(testDirRoot2);
+    await createNewProject(projectRootDir2, "test project for execStageOut", null, "test", "test@example.com");
+    task0 = await createNewComponent(projectRootDir2, projectRootDir2, "task", { x: 10, y: 10 });
+    task0.projectStartTime = "dummy-project-start-time";
+    task0.projectRootDir = projectRootDir2;
+    task0.workingDir = path.resolve(projectRootDir2, task0.name);
+    task0.emitForDispatcher = sinon.stub();
+    task0.outputFiles = [];
+    eventEmitters.set(projectRootDir2, { emit: sinon.stub() });
+  });
+
+  afterEach(()=>{
+    eventEmitters.delete(projectRootDir2);
+    sinon.restore();
+  });
+
+  after(async ()=>{
+    await fs.remove(testDirRoot2);
+  });
+
+  describe("#local execStageOut", ()=>{
+    it("should set task state to 'finished' and emit taskCompleted for local task", async ()=>{
+      task0.state = "stage-out";
+      await execStageOut(task0);
+      expect(task0.state).to.equal("finished");
+      expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "finished");
+    });
+    it("should emit taskCompleted even if task has no host set", async ()=>{
+      task0.state = "stage-out";
+      task0.host = undefined;
+      await execStageOut(task0);
+      expect(task0.remotehostID).to.equal("localhost");
+      expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "finished");
     });
   });
 });
