@@ -216,7 +216,7 @@ describe("#stageOut", ()=>{
     expect(call2[5]).to.deep.equal(["--exclude=*.tmp", "--exclude=*.log"]);
   });
 
-  it("should do remote cleanup if doCleanup is true, ignoring any errors", async ()=>{
+  it("should do full remote cleanup (rm -fr) if doCleanup is true and no symlink target outputs", async ()=>{
     const task = {
       state: "finished",
       projectRootDir: "/proj",
@@ -254,5 +254,51 @@ describe("#stageOut", ()=>{
 
     expect(getSshStub.called).to.be.false;
     expect(sshExecStub.called).to.be.false;
+  });
+
+  it("should do partial cleanup keeping symlink target files when some outputs go to same remote", async ()=>{
+    const task = {
+      state: "finished",
+      projectRootDir: "/proj",
+      remotehostID: "hostB",
+      workingDir: "/local",
+      remoteWorkingDir: "/remote",
+      outputFiles: [{ name: "result.dat", dst: [{ dstNode: "downstream-task-id", dstName: "input.dat" }] }],
+      doCleanup: true,
+      ID: "X002"
+    };
+    getSshHostinfoStub.returns({ host: "dummyHost" });
+    needDownloadStub.resolves(false);
+    sinon.stub(_internal, "getRemoteSymlinkOutputNames").resolves(["result.dat"]);
+    sshExecStub.resolves(0);
+
+    await stageOut(task);
+
+    expect(getSshStub.calledOnceWithExactly("/proj", "hostB")).to.be.true;
+    expect(sshExecStub.calledOnceWithExactly(
+      "find /remote -mindepth 1 -maxdepth 1 ! -name 'result.dat' -exec rm -rf {} +"
+    )).to.be.true;
+  });
+
+  it("should do full cleanup when getRemoteSymlinkOutputNames returns empty array", async ()=>{
+    const task = {
+      state: "finished",
+      projectRootDir: "/proj",
+      remotehostID: "hostB",
+      workingDir: "/local",
+      remoteWorkingDir: "/remote",
+      outputFiles: [{ name: "result.dat", dst: [{ dstNode: "local-task-id", dstName: "input.dat" }] }],
+      doCleanup: true,
+      ID: "X003"
+    };
+    getSshHostinfoStub.returns({ host: "dummyHost" });
+    needDownloadStub.resolves(false);
+    sinon.stub(_internal, "getRemoteSymlinkOutputNames").resolves([]);
+    sshExecStub.resolves(0);
+
+    await stageOut(task);
+
+    expect(getSshStub.calledOnceWithExactly("/proj", "hostB")).to.be.true;
+    expect(sshExecStub.calledOnceWithExactly("rm -fr /remote")).to.be.true;
   });
 });

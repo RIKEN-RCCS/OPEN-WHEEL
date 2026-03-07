@@ -9,6 +9,7 @@ import { setTaskState, needDownload, makeDownloadRecipe } from "./execUtils.js";
 import { getSshHostinfo, getSsh } from "./sshManager.js";
 import { getLogger } from "../logSettings.js";
 import { register } from "./transferManager.js";
+import { isSameRemoteHost } from "./componentHostOperations.js";
 
 export const _internal = {
   addX,
@@ -19,8 +20,37 @@ export const _internal = {
   getSshHostinfo,
   getSsh,
   getLogger,
-  register
+  register,
+  isSameRemoteHost,
+  getRemoteSymlinkOutputNames: null //set below after function definition
 };
+
+/**
+ * get output file names (top-level path component) that will be delivered as symlinks on the remote host
+ * (same remote host or shared storage between remote and localhost)
+ * @param {object} task - task component object
+ * @returns {Promise<string[]>} - deduplicated array of top-level path components used as remote symlink targets
+ */
+export async function getRemoteSymlinkOutputNames(task) {
+  if (!Array.isArray(task.outputFiles) || task.outputFiles.length === 0) {
+    return [];
+  }
+  const names = new Set();
+  for (const outputFile of task.outputFiles) {
+    if (!Array.isArray(outputFile.dst)) {
+      continue;
+    }
+    for (const dst of outputFile.dst) {
+      if (await _internal.isSameRemoteHost(task.projectRootDir, task.ID, dst.dstNode)) {
+        //keep the top-level path component so that subdir/file.dat preserves the whole subdir
+        names.add(outputFile.name.split("/")[0]);
+        break;
+      }
+    }
+  }
+  return Array.from(names);
+}
+_internal.getRemoteSymlinkOutputNames = getRemoteSymlinkOutputNames;
 
 /**
  * prepare task component on remotehost
@@ -107,11 +137,21 @@ export async function stageOut(task) {
   await Promise.all(promises);
   //clean up remote working directory
   if (task.doCleanup && taskState === "finished") {
-    _internal.getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
-
+    const symlinkTargetNames = await _internal.getRemoteSymlinkOutputNames(task);
     try {
       const ssh = _internal.getSsh(task.projectRootDir, task.remotehostID);
-      await ssh.exec(`rm -fr ${task.remoteWorkingDir}`);
+      if (symlinkTargetNames.length === 0) {
+        //no symlink targets: full cleanup
+        _internal.getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
+        await ssh.exec(`rm -fr ${task.remoteWorkingDir}`);
+      } else {
+        //partial cleanup: delete everything except files used as remote symlink targets
+        _internal.getLogger(task.projectRootDir).debug("(remote) partial cleanup, keeping", symlinkTargetNames, "in", task.remoteWorkingDir);
+        const excludes = symlinkTargetNames.map((name)=>{
+          return `! -name '${name}'`;
+        }).join(" ");
+        await ssh.exec(`find ${task.remoteWorkingDir} -mindepth 1 -maxdepth 1 ${excludes} -exec rm -rf {} +`);
+      }
     } catch (e) {
       //just log and ignore error
       _internal.getLogger(task.projectRootDir).warn("remote cleanup failed but ignored", e);
