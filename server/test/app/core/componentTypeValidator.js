@@ -20,6 +20,7 @@ import { createNewComponent } from "../../../app/core/componentOperations.js";
 //testee
 import { _internal, validateForLoop, validateForeach, validateParameterStudy, validateStorage } from "../../../app/core/componentTypeValidator.js";
 import { _internal as fileValidatorInternal } from "../../../app/core/fileValidator.js";
+import { ValidationError } from "../../../app/lib/validationError.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -59,98 +60,134 @@ describe("componentTypeValidator UT", function () {
     beforeEach(async ()=>{
       forComponent = await createNewComponent(projectRootDir, projectRootDir, "foreach", { x: 0, y: 0 });
     });
-    it("should be rejected if start is not number", ()=>{
+    it("should be rejected if start is not number", async ()=>{
       forComponent.start = "hoge";
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("start must be number");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("start must be number");
     });
-    it("should be rejected if start is null", ()=>{
+    it("should be rejected if start is null", async ()=>{
       forComponent.start = null;
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("start must be number");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("start must be number");
     });
-    it("should be rejected if start is undefined", ()=>{
+    it("should be rejected if start is undefined", async ()=>{
       forComponent.start = undefined;
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("start must be number");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("start must be number");
     });
-    it("should be rejected if step is not number", ()=>{
+    it("should be rejected if step is not number", async ()=>{
       forComponent.start = 1;
       forComponent.step = "hoge";
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("step must be number");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("step must be number");
     });
-    it("should be rejected if step is null", ()=>{
+    it("should be rejected if step is null", async ()=>{
       forComponent.start = 1;
       forComponent.step = null;
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("step must be number");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("step must be number");
     });
-    it("should be rejected if step is undefined", ()=>{
+    it("should be rejected if step is undefined", async ()=>{
       forComponent.start = 1;
       forComponent.step = undefined;
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("step must be number");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("step must be number");
     });
-    it("should be rejected if end is not number", ()=>{
+    it("should be rejected if end is not number", async ()=>{
       forComponent.start = 1;
       forComponent.step = 2;
       forComponent.end = "hoge";
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("end must be number");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("end must be number");
     });
-    it("should be rejected if end is null", ()=>{
+    it("should be rejected if end is null", async ()=>{
       forComponent.start = 1;
       forComponent.step = 2;
       forComponent.end = null;
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("end must be number");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("end must be number");
     });
-    it("should be rejected if end is undefined", ()=>{
+    it("should be rejected if end is undefined", async ()=>{
       forComponent.start = 1;
       forComponent.step = 2;
       forComponent.end = undefined;
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("end must be number");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("end must be number");
     });
-    it("should be rejected if step is 0", ()=>{
+    it("should be rejected if step is 0", async ()=>{
       forComponent.start = 1;
       forComponent.step = 0;
       forComponent.end = 3;
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("infinite loop");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("infinite loop");
     });
-    it("should be rejected if step is wrong direction (positive step with start > end)", ()=>{
+    it("should be rejected if step is wrong direction (positive step with start > end)", async ()=>{
       forComponent.start = 5;
       forComponent.step = 1;
       forComponent.end = 3;
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("infinite loop");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("infinite loop");
     });
-    it("should be rejected if step is wrong direction (negative step with start < end)", ()=>{
+    it("should be rejected if step is wrong direction (negative step with start < end)", async ()=>{
       forComponent.start = 1;
       forComponent.step = -1;
       forComponent.end = 3;
-      expect(validateForLoop(forComponent)).to.be.rejectedWith("infinite loop");
+      const errors = await validateForLoop(forComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("infinite loop");
     });
-    it("should be resolved with true for positive step with start < end", async ()=>{
+    it("should be resolved with empty array for positive step with start < end", async ()=>{
       forComponent.start = 1;
       forComponent.step = 2;
       forComponent.end = 10;
-      expect(await validateForLoop(forComponent)).to.be.true;
+      expect(await validateForLoop(forComponent)).to.be.empty;
     });
-    it("should be resolved with true for negative step with start > end", async ()=>{
+    it("should be resolved with empty array for negative step with start > end", async ()=>{
       forComponent.start = 10;
       forComponent.step = -2;
       forComponent.end = 1;
-      expect(await validateForLoop(forComponent)).to.be.true;
+      expect(await validateForLoop(forComponent)).to.be.empty;
     });
-    it("should be resolved with true for decimal values", async ()=>{
+    it("should be resolved with empty array for decimal values", async ()=>{
       forComponent.start = 1.5;
       forComponent.step = 0.5;
       forComponent.end = 3.5;
-      expect(await validateForLoop(forComponent)).to.be.true;
+      expect(await validateForLoop(forComponent)).to.be.empty;
     });
-    it("should be resolved with true for negative values", async ()=>{
+    it("should be resolved with empty array for negative values", async ()=>{
       forComponent.start = -10;
       forComponent.step = 2;
       forComponent.end = -2;
-      expect(await validateForLoop(forComponent)).to.be.true;
+      expect(await validateForLoop(forComponent)).to.be.empty;
     });
-    it("should be resolved with true if start and end are equal", async ()=>{
+    it("should be resolved with empty array if start and end are equal", async ()=>{
       forComponent.start = 5;
       forComponent.step = 1;
       forComponent.end = 5;
-      expect(await validateForLoop(forComponent)).to.be.true;
+      expect(await validateForLoop(forComponent)).to.be.empty;
     });
   });
 
@@ -159,46 +196,58 @@ describe("componentTypeValidator UT", function () {
     beforeEach(async ()=>{
       foreachComponent = await createNewComponent(projectRootDir, projectRootDir, "foreach", { x: 0, y: 0 });
     });
-    it("should be rejected if indexList is not array", ()=>{
+    it("should be rejected if indexList is not array", async ()=>{
       foreachComponent.indexList = "hoge";
-      expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is broken");
+      const errors = await validateForeach(foreachComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("index list is broken");
     });
-    it("should be rejected if indexList is null", ()=>{
+    it("should be rejected if indexList is null", async ()=>{
       foreachComponent.indexList = null;
-      expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is broken");
+      const errors = await validateForeach(foreachComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("index list is broken");
     });
-    it("should be rejected if indexList is undefined", ()=>{
+    it("should be rejected if indexList is undefined", async ()=>{
       foreachComponent.indexList = undefined;
-      expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is broken");
+      const errors = await validateForeach(foreachComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("index list is broken");
     });
-    it("should be rejected if indexList is empty array", ()=>{
-      expect(validateForeach(foreachComponent)).to.be.rejectedWith("index list is empty");
+    it("should be rejected if indexList is empty array", async ()=>{
+      const errors = await validateForeach(foreachComponent);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("index list is empty");
     });
-    it("should be resolved with true if indexList has one string element", async ()=>{
+    it("should be resolved with empty array if indexList has one string element", async ()=>{
       foreachComponent.indexList.push("hoge");
-      expect(await validateForeach(foreachComponent)).to.be.true;
+      expect(await validateForeach(foreachComponent)).to.be.empty;
     });
-    it("should be resolved with true if indexList has multiple string elements", async ()=>{
+    it("should be resolved with empty array if indexList has multiple string elements", async ()=>{
       foreachComponent.indexList.push("item1");
       foreachComponent.indexList.push("item2");
       foreachComponent.indexList.push("item3");
-      expect(await validateForeach(foreachComponent)).to.be.true;
+      expect(await validateForeach(foreachComponent)).to.be.empty;
     });
-    it("should be resolved with true if indexList has number elements", async ()=>{
+    it("should be resolved with empty array if indexList has number elements", async ()=>{
       foreachComponent.indexList.push(1);
       foreachComponent.indexList.push(2);
       foreachComponent.indexList.push(3);
-      expect(await validateForeach(foreachComponent)).to.be.true;
+      expect(await validateForeach(foreachComponent)).to.be.empty;
     });
-    it("should be resolved with true if indexList has mixed type elements", async ()=>{
+    it("should be resolved with empty array if indexList has mixed type elements", async ()=>{
       foreachComponent.indexList.push("item1");
       foreachComponent.indexList.push(2);
       foreachComponent.indexList.push(true);
-      expect(await validateForeach(foreachComponent)).to.be.true;
+      expect(await validateForeach(foreachComponent)).to.be.empty;
     });
-    it("should be resolved with true if indexList has empty string", async ()=>{
+    it("should be resolved with empty array if indexList has empty string", async ()=>{
       foreachComponent.indexList.push("");
-      expect(await validateForeach(foreachComponent)).to.be.true;
+      expect(await validateForeach(foreachComponent)).to.be.empty;
     });
   });
 
@@ -207,21 +256,30 @@ describe("componentTypeValidator UT", function () {
     beforeEach(async ()=>{
       ps = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 0, y: 0 });
     });
-    it("should be rejected if parameterFile is not set", ()=>{
+    it("should be rejected if parameterFile is not set", async ()=>{
       ps.parameterFile = null;
-      expect(validateParameterStudy(projectRootDir, ps)).to.be.rejectedWith("parameter setting file is not specified");
+      const errors = await validateParameterStudy(projectRootDir, ps);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("parameter setting file is not specified");
     });
-    it("should be rejected if parameterFile is not file", ()=>{
+    it("should be rejected if parameterFile is not file", async ()=>{
       ps.parameterFile = "hoge";
       fs.mkdirSync(path.resolve(projectRootDir, ps.name, "hoge"));
-      expect(validateParameterStudy(projectRootDir, ps)).to.be.rejectedWith("parameter setting file is not file");
+      const errors = await validateParameterStudy(projectRootDir, ps);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("parameter setting file is not file");
     });
-    it("should be rejected if parameterFile is not valid JSON file", ()=>{
+    it("should be rejected if parameterFile is not valid JSON file", async ()=>{
       ps.parameterFile = "hoge";
       fs.writeFileSync(path.resolve(projectRootDir, ps.name, "hoge"), "hoge");
-      expect(validateParameterStudy(projectRootDir, ps)).to.be.rejectedWith("parameter setting file is not JSON file");
+      const errors = await validateParameterStudy(projectRootDir, ps);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("parameter setting file is not JSON file");
     });
-    it("should be resolved with true if required prop is set", async ()=>{
+    it("should be resolved with empty array if required prop is set", async ()=>{
       ps.parameterFile = "hoge";
       const params = {
         version: 2,
@@ -234,7 +292,7 @@ describe("componentTypeValidator UT", function () {
       };
 
       fs.writeJsonSync(path.resolve(projectRootDir, ps.name, "hoge"), params);
-      expect(await validateParameterStudy(projectRootDir, ps)).to.be.true;
+      expect(await validateParameterStudy(projectRootDir, ps)).to.be.empty;
     });
 
     it("should be rejected if parameter file is missing required properties", async function () {
@@ -251,7 +309,10 @@ describe("componentTypeValidator UT", function () {
       const validateStub = sinon.stub(fileValidatorInternal, "validate").returns(false);
       validateStub.errors = [{ message: "should have required property 'targetFiles'" }];
 
-      await expect(validateParameterStudy(projectRootDir, testPS)).to.be.rejectedWith("parameter setting file does not have valid JSON data");
+      const errors = await validateParameterStudy(projectRootDir, testPS);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("parameter setting file does not have valid JSON data");
     });
 
     it("should be rejected if parameter file has incorrect property types", async function () {
@@ -270,7 +331,10 @@ describe("componentTypeValidator UT", function () {
       fs.writeJsonSync(path.resolve(projectRootDir, testPS.name, "wrong_types.json"), wrongTypeParams);
       const validateStub = sinon.stub(fileValidatorInternal, "validate").returns(false);
       validateStub.errors = [{ message: "should be number" }];
-      await expect(validateParameterStudy(projectRootDir, testPS)).to.be.rejectedWith("parameter setting file does not have valid JSON data");
+      const errors = await validateParameterStudy(projectRootDir, testPS);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("parameter setting file does not have valid JSON data");
     });
 
     it("should be rejected if parameter file has incorrect version", async function () {
@@ -289,7 +353,10 @@ describe("componentTypeValidator UT", function () {
       fs.writeJsonSync(path.resolve(projectRootDir, testPS.name, "wrong_version.json"), wrongVersionParams);
       const validateStub = sinon.stub(fileValidatorInternal, "validate").returns(false);
       validateStub.errors = [{ message: "should be equal to constant" }];
-      await expect(validateParameterStudy(projectRootDir, testPS)).to.be.rejectedWith("parameter setting file does not have valid JSON data");
+      const errors = await validateParameterStudy(projectRootDir, testPS);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("parameter setting file does not have valid JSON data");
     });
   });
 
@@ -298,61 +365,79 @@ describe("componentTypeValidator UT", function () {
     beforeEach(async ()=>{
       storage = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 0, y: 0 });
     });
-    it("should be rejected if storagePath is not set", ()=>{
+    it("should be rejected if storagePath is not set", async ()=>{
       storage.storagePath = null;
-      expect(validateStorage(storage)).to.be.rejectedWith("storagePath is not set");
+      const errors = await validateStorage(storage);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("storagePath is not set");
     });
-    it("should be rejected if storagePath is empty string", ()=>{
+    it("should be rejected if storagePath is empty string", async ()=>{
       storage.storagePath = "";
-      expect(validateStorage(storage)).to.be.rejectedWith("specified path does not exist on localhost");
+      const errors = await validateStorage(storage);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("specified path does not exist on localhost");
     });
-    it("should be rejected if storagePath is blank", ()=>{
+    it("should be rejected if storagePath is blank", async ()=>{
       storage.storagePath = "   ";
-      expect(validateStorage(storage)).to.be.rejectedWith("specified path does not exist on localhost");
+      const errors = await validateStorage(storage);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("specified path does not exist on localhost");
     });
-    it("should be rejected if storagePath is not existing path", ()=>{
+    it("should be rejected if storagePath is not existing path", async ()=>{
       storage.storagePath = path.resolve(projectRootDir, "hoge");
-      expect(validateStorage(storage)).to.be.rejectedWith("specified path does not exist on localhost");
+      const errors = await validateStorage(storage);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("specified path does not exist on localhost");
     });
-    it("should be rejected if storagePath is existing file", ()=>{
+    it("should be rejected if storagePath is existing file", async ()=>{
       fs.writeFileSync(path.resolve(projectRootDir, "hoge"), "hoge");
       storage.storagePath = path.resolve(projectRootDir, "hoge");
-      expect(validateStorage(storage)).to.be.rejectedWith("specified path is not directory");
+      const errors = await validateStorage(storage);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.include("specified path is not directory");
     });
-    it("should be rejected if invalid host is set", ()=>{
+    it("should be rejected if invalid host is set", async ()=>{
       storage.host = "hoge";
       storage.storagePath = "hoge";
-      expect(validateStorage(storage)).to.be.rejectedWith(/remote host setting for .* not found/);
+      const errors = await validateStorage(storage);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.match(/remote host setting for .* not found/);
     });
-    it("should be resolved with true if storagePath is not existing path but host is set", async ()=>{
+    it("should be resolved with empty array if storagePath is not existing path but host is set", async ()=>{
       storage.storagePath = path.resolve(projectRootDir, "hoge");
       storage.host = "OK";
-      expect(await validateStorage(storage)).to.be.true;
+      expect(await validateStorage(storage)).to.be.empty;
     });
-    it("should be resolved with true if storagePath is existing file but host is set", async ()=>{
+    it("should be resolved with empty array if storagePath is existing file but host is set", async ()=>{
       fs.writeFileSync(path.resolve(projectRootDir, "hoge"), "hoge");
       storage.storagePath = path.resolve(projectRootDir, "hoge");
       storage.host = "OK";
-      expect(await validateStorage(storage)).to.be.true;
+      expect(await validateStorage(storage)).to.be.empty;
     });
-    it("should be resolved with true if storagePath is existing directory", async ()=>{
+    it("should be resolved with empty array if storagePath is existing directory", async ()=>{
       storage.storagePath = projectRootDir;
-      expect(await validateStorage(storage)).to.be.true;
+      expect(await validateStorage(storage)).to.be.empty;
     });
-    it("should be resolved with true if storagePath is existing directory and host is set", async ()=>{
+    it("should be resolved with empty array if storagePath is existing directory and host is set", async ()=>{
       storage.storagePath = projectRootDir;
       storage.host = "OK";
-      expect(await validateStorage(storage)).to.be.true;
+      expect(await validateStorage(storage)).to.be.empty;
     });
-    it("should be resolved with true if storagePath is relative path and host is set", async ()=>{
+    it("should be resolved with empty array if storagePath is relative path and host is set", async ()=>{
       storage.storagePath = "./relative/path";
       storage.host = "OK";
-      expect(await validateStorage(storage)).to.be.true;
+      expect(await validateStorage(storage)).to.be.empty;
     });
-    it("should be resolved with true if storagePath is absolute path and host is set", async ()=>{
+    it("should be resolved with empty array if storagePath is absolute path and host is set", async ()=>{
       storage.storagePath = "/absolute/path";
       storage.host = "OK";
-      expect(await validateStorage(storage)).to.be.true;
+      expect(await validateStorage(storage)).to.be.empty;
     });
   });
 });

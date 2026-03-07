@@ -7,6 +7,7 @@ import fs from "fs-extra";
 import path from "path";
 import { isValidInputFilename, isValidOutputFilename } from "../lib/utility.js";
 import { getComponentDir } from "./componentJsonIO.js";
+import { ValidationError } from "../lib/validationError.js";
 
 const _internal = {
   getComponentDir
@@ -15,63 +16,66 @@ const _internal = {
 /**
  * validate inputFiles
  * @param {object} component - any component object which has inputFiles prop
- * @returns {true|Error} - inputFile is valid or not
+ * @returns {ValidationError[]} - array of validation errors; empty array means valid
  */
 export async function validateInputFiles(component) {
+  const errors = [];
   for (const inputFile of component.inputFiles) {
     const filename = inputFile.name;
     if (!isValidInputFilename(filename)) {
-      return Promise.reject(new Error(`'${filename}' is not allowed as input file.`));
-    }
-    if (inputFile.src.length > 1 && !(filename[filename.length - 1] === "/" || filename[filename.length - 1] === "\\")) {
-      return Promise.reject(new Error(`inputFile '${inputFile.name}' data type is 'file' but it has two or more outputFiles.`));
+      errors.push(new ValidationError(`'${filename}' is not allowed as input file.`));
+    } else if (inputFile.src.length > 1 && !(filename[filename.length - 1] === "/" || filename[filename.length - 1] === "\\")) {
+      errors.push(new ValidationError(`inputFile '${inputFile.name}' data type is 'file' but it has two or more outputFiles.`));
     }
     if (inputFile.mandatory === true && inputFile.src.length === 0) {
-      return Promise.reject(new Error(`mandatory inputFile '${inputFile.name}' is not connected`));
+      errors.push(new ValidationError(`mandatory inputFile '${inputFile.name}' is not connected`));
     }
   }
-  return true;
+  return errors;
 }
 
 /**
  * validate outputFiles
- * @param {object} component - any component object which has putFiles prop
- * @returns {true|Error} - outputFile is valid or not
+ * @param {object} component - any component object which has outputFiles prop
+ * @returns {ValidationError[]} - array of validation errors; empty array means valid
  */
 export async function validateOutputFiles(component) {
+  const errors = [];
   for (const outputFile of component.outputFiles) {
     const filename = outputFile.name;
     if (!isValidOutputFilename(filename)) {
-      return Promise.reject(new Error(`'${filename}' is not allowed as output filename.`));
+      errors.push(new ValidationError(`'${filename}' is not allowed as output filename.`));
     }
   }
-  return true;
+  return errors;
 }
 
 /**
  * check if keep property has valid value
  * @param {object} component - component which will be tested
+ * @returns {ValidationError[]} - array of validation errors; empty array means valid
  */
 export async function validateKeepProp(component) {
   if (Object.prototype.hasOwnProperty.call(component, "keep")) {
     if (component.keep === null || component.keep === "") {
-      return true;
+      return [];
     }
     if (!(Number.isInteger(component.keep) && component.keep >= 0)) {
-      return Promise.reject(new Error(`keep must be positive integer`));
+      return [new ValidationError(`keep must be positive integer`)];
     }
   }
-  return true;
+  return [];
 }
 
 /**
  * check if condition property has valid value
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component which will be tested
+ * @returns {ValidationError[]} - array of validation errors; empty array means valid
  */
 export async function validateConditionalCheck(projectRootDir, component) {
   if (typeof component.condition !== "string") {
-    return Promise.reject(new Error(`condition is not specified`));
+    return [new ValidationError(`condition is not specified`)];
   }
   const componentDir = await _internal.getComponentDir(projectRootDir, component.ID, true);
   let stat;
@@ -83,14 +87,14 @@ export async function validateConditionalCheck(projectRootDir, component) {
       throw e;
     }
   }
-  if (!stat.isFile()) {
+  if (stat && !stat.isFile()) {
     const filename = path.resolve(componentDir, component.condition);
-    return Promise.reject(new Error(`condition is exist but it is not file ${filename}`));
+    return [new ValidationError(`condition is exist but it is not file ${filename}`)];
   }
   //if the file which name is component.condition does not exists
   //component.condition will be eval as expression of javascript
   //so, we can not test the value any more here
 
-  return true;
+  return [];
 }
 export { _internal };

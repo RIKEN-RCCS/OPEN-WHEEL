@@ -22,6 +22,7 @@ import { _internal, validateComponent, checkComponentDependency, recursiveValida
 import { validateBulkjobTask, _internal as taskValidatorInternal } from "../../../app/core/taskValidator.js";
 import { getCycleGraph } from "../../../app/core/dependencyGraphValidator.js";
 import { _internal as fileValidatorInternal } from "../../../app/core/fileValidator.js";
+import { ValidationError } from "../../../app/lib/validationError.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -98,9 +99,9 @@ describe("validateComponents function", function () {
       });
     });
 
-    const error = await validateComponent(projectRootDir, ifComponent);
+    const errors = await validateComponent(projectRootDir, ifComponent);
 
-    expect(error).to.be.null;
+    expect(errors).to.be.empty;
     getNextComponentsStub.restore();
   });
 
@@ -122,7 +123,7 @@ describe("validateComponents function", function () {
 
     const result = await validateBulkjobTask(projectRootDir, bulkjobTask);
 
-    expect(result).to.be.true;
+    expect(result).to.be.empty;
   });
 
   it("should validate component with outputFiles having multiple destinations", async function () {
@@ -158,9 +159,9 @@ describe("validateComponents function", function () {
       });
     });
 
-    const error = await validateComponent(projectRootDir, task);
+    const errors = await validateComponent(projectRootDir, task);
 
-    expect(error).to.be.null;
+    expect(errors).to.be.empty;
     getNextComponentsStub.restore();
   });
 
@@ -207,8 +208,8 @@ describe("validateComponents function", function () {
     const task = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
     task.script = "script.sh";
     fs.writeFileSync(path.resolve(projectRootDir, task.name, "script.sh"), "#!/bin/bash\necho 'Hello'");
-    const error = await validateComponent(projectRootDir, task);
-    expect(error).to.be.null;
+    const errors = await validateComponent(projectRootDir, task);
+    expect(errors).to.be.empty;
   });
   it("should detect invalid component", async function () {
     const task = {
@@ -216,9 +217,9 @@ describe("validateComponents function", function () {
       ID: "test-task",
       name: "test-task"
     };
-    const error = await validateComponent(projectRootDir, task);
-    expect(error).to.not.be.null;
-    expect(error).to.include("script is not specified");
+    const errors = await validateComponent(projectRootDir, task);
+    expect(errors).to.not.be.empty;
+    expect(errors[0].message).to.include("script is not specified");
   });
   it("should detect cycle graph", async function () {
     const cycleComponents = [
@@ -254,8 +255,8 @@ describe("validateComponents function", function () {
     };
     await fs.writeJson(path.resolve(projectRootDir, ps.name, "params.json"), params);
 
-    const error = await validateComponent(projectRootDir, ps);
-    expect(error).to.be.null;
+    const errors = await validateComponent(projectRootDir, ps);
+    expect(errors).to.be.empty;
   });
 
   it("should validate component with inputFiles and outputFiles", async function () {
@@ -272,8 +273,8 @@ describe("validateComponents function", function () {
       { name: "results/", dst: [] }
     ];
 
-    const error = await validateComponent(projectRootDir, task);
-    expect(error).to.be.null;
+    const errors = await validateComponent(projectRootDir, task);
+    expect(errors).to.be.empty;
   });
 
   it("should call validateComponents with startComponentID", async function () {
@@ -333,7 +334,8 @@ describe("recursiveValidateComponents", function () {
     const report = [];
     await recursiveValidateComponents(projectRootDir, "root", report);
     expect(report).to.be.an("array").that.is.not.empty;
-    expect(report[0]).to.have.property("error").that.includes("script is not specified");
+    expect(report[0]).to.have.property("errors");
+    expect(report[0].errors[0].message).to.include("script is not specified");
   });
   it("should detect missing initial component", async function () {
     sinon.stub(_internal, "getChildren").resolves([
@@ -355,7 +357,7 @@ describe("recursiveValidateComponents", function () {
     await recursiveValidateComponents(projectRootDir, "parent", report);
     expect(report).to.be.an("array").that.is.not.empty;
     expect(report.some((item)=>{
-      return item.ID === "parent" && item.error.includes("no initial component in children");
+      return item.ID === "parent" && item.errors[0].message.includes("no initial component in children");
     })).to.be.true;
   });
   it("should validate components recursively", async function () {
@@ -373,7 +375,7 @@ describe("recursiveValidateComponents", function () {
     });
     const isInitialComponentStub = sinon.stub(_internal, "isInitialComponent").resolves(true);
 
-    const validateComponentStub = sinon.stub(_internal, "validateComponent").resolves(null);
+    const validateComponentStub = sinon.stub(_internal, "validateComponent").resolves([]);
 
     const report = [];
     await recursiveValidateComponents(projectRootDir, "root", report);
@@ -398,7 +400,7 @@ describe("recursiveValidateComponents", function () {
     await recursiveValidateComponents(projectRootDir, "root", report);
     expect(report).to.be.an("array").that.is.not.empty;
     expect(report.some((item)=>{
-      return item.error.includes("cycle graph detected");
+      return item.errors[0].message.includes("cycle graph detected");
     })).to.be.true;
     getChildrenStub.restore();
     getComponentFullNameStub.restore();
@@ -590,9 +592,9 @@ describe("validateComponent with component having children", function () {
 
     const validateComponentStub = sinon.stub(_internal, "validateComponent").callsFake(async (projectRootDir, component)=>{
       if (component.ID === "child-task") {
-        return "script is not specified";
+        return [new ValidationError("script is not specified")];
       }
-      return null;
+      return [];
     });
 
     const report = [];
@@ -606,6 +608,7 @@ describe("validateComponent with component having children", function () {
 
     expect(report).to.be.an("array").that.is.not.empty;
     expect(report[0]).to.have.property("ID", "child-task");
-    expect(report[0]).to.have.property("error").that.includes("script is not specified");
+    expect(report[0]).to.have.property("errors");
+    expect(report[0].errors[0].message).to.include("script is not specified");
   });
 });

@@ -360,8 +360,9 @@
       v-model="validationErrorDialog"
       title="validation error detected!"
       max-width="50vw"
-      :buttons="[ { icon: 'mdi-check', label: 'close' }]"
+      :buttons="validationErrorDialogButtons"
       @close="validationErrorDialog=false;validationErrors=[];validationErrorFilter=''"
+      @ignore-all="onIgnoreAllErrors"
     >
       <template #message>
         <v-text-field
@@ -378,7 +379,18 @@
           :headers="validationErrorTableHeader"
           :search="validationErrorFilter"
           density="compact"
-        />
+        >
+          <template #item.errors="{ item }">
+            <ul>
+              <li
+                v-for="(e, i) in item.errors"
+                :key="i"
+              >
+                {{ e.message }}
+              </li>
+            </ul>
+          </template>
+        </v-data-table>
       </template>
     </versatile-dialog>
     <import-warning-dialog
@@ -519,7 +531,7 @@ export default {
       validationErrorFilter: "",
       validationErrorTableHeader: [
         { title: "component", value: "name", key: "component" },
-        { title: "error", value: "error", key: "error" }
+        { title: "errors", value: "errors", key: "errors", sortable: false }
       ],
       warnDialog: null,
       remoteHostDialog: false
@@ -541,6 +553,20 @@ export default {
       "textEditorDialog"
     ]),
     ...mapGetters(["waiting"]),
+    canIgnoreAllErrors() {
+      if (this.validationErrors.length === 0) {
+        return false;
+      }
+      return this.validationErrors.every((entry)=>{
+        return entry.errors.every((e)=>{ return e.ignoreable; });
+      });
+    },
+    validationErrorDialogButtons() {
+      return [
+        { icon: "mdi-check", label: "close" },
+        { icon: "mdi-skip-forward", label: "ignore all errors", event: "ignoreAll", disabled: !this.canIgnoreAllErrors }
+      ];
+    },
     isReadOnly() {
       return this.readOnly ? " - read-only" : "";
     },
@@ -709,6 +735,27 @@ export default {
       });
   },
   methods: {
+    onIgnoreAllErrors() {
+      this.validationErrorDialog = false;
+      this.validationErrors = [];
+      this.validationErrorFilter = "";
+    },
+    showValidationErrorDialog(validationErrors) {
+      this.validationErrors = validationErrors;
+      const errorIDs = validationErrors.map((err)=>{
+        return err.ID;
+      });
+      this.currentComponent.descendants.forEach((child)=>{
+        child.isInvalid = errorIDs.includes(child.ID);
+        if (!child.isInvalid) {
+          const childName = this.componentPath[child.ID].replace(/^./, "");
+          child.isInvalid = this.validationErrors.some((err)=>{
+            return err.name.startsWith(childName);
+          });
+        }
+      });
+      this.validationErrorDialog = true;
+    },
     checkComponents() {
       SIO.emitGlobal("checkComponents", this.projectRootDir, this.currentComponent.ID, (validationErrors)=>{
         if (!Array.isArray(validationErrors)) {
@@ -720,20 +767,7 @@ export default {
           return;
         }
         debug("invalid components", validationErrors);
-        this.validationErrors = validationErrors;
-        const errorIDs = validationErrors.map((err)=>{
-          return err.ID;
-        });
-        this.currentComponent.descendants.forEach((child)=>{
-          child.isInvalid = errorIDs.includes(child.ID);
-          if (!child.isInvalid) {
-            const childName = this.componentPath[child.ID].replace(/^./, "");
-            child.isInvalid = this.validationErrors.some((err)=>{
-              return err.name.startsWith(childName);
-            });
-          }
-        });
-        this.validationErrorDialog = true;
+        this.showValidationErrorDialog(validationErrors);
       });
     },
     makeWritable() {
