@@ -42,6 +42,18 @@
       />
     </template>
     <template
+      v-if="booleanColumns.includes('mandatory')"
+      #item.mandatory="{ item, index }"
+    >
+      <v-checkbox
+        :model-value="item.mandatory"
+        :disabled="readOnly"
+        hide-details
+        density="compact"
+        @update:model-value="$emit('toggle', index, 'mandatory', $event)"
+      />
+    </template>
+    <template
       v-if="inputColumn"
       #bottom
     >
@@ -140,13 +152,18 @@ export default {
     readOnly: {
       type: Boolean,
       default: false
+    },
+    booleanColumns: {
+      type: Array,
+      default: ()=>{ return []; }
     }
   },
   emits: [
     "update:modelValue",
     "add",
     "remove",
-    "update"
+    "update",
+    "toggle"
   ],
   data: function () {
     return {

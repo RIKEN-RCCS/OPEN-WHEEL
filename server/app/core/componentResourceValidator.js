@@ -26,6 +26,9 @@ export async function validateInputFiles(component) {
     if (inputFile.src.length > 1 && !(filename[filename.length - 1] === "/" || filename[filename.length - 1] === "\\")) {
       return Promise.reject(new Error(`inputFile '${inputFile.name}' data type is 'file' but it has two or more outputFiles.`));
     }
+    if (inputFile.mandatory === true && inputFile.src.length === 0) {
+      return Promise.reject(new Error(`mandatory inputFile '${inputFile.name}' is not connected`));
+    }
   }
   return true;
 }

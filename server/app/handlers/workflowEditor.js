@@ -10,7 +10,8 @@ import {
   removeInputFile,
   removeOutputFile,
   renameInputFile,
-  renameOutputFile
+  renameOutputFile,
+  toggleInputFileMandatory
 } from "../core/componentFiles.js";
 import {
   addLink,
@@ -69,6 +70,10 @@ export async function onRemoveOutputFile(projectRootDir, ID, name, parentID, cb)
 
 export async function onRenameInputFile(projectRootDir, ID, index, newName, parentID, cb) {
   return generalHandler(renameInputFile.bind(null, projectRootDir, ID, index, newName), "renameInputFile", projectRootDir, parentID, cb);
+}
+
+export async function onToggleInputFileMandatory(projectRootDir, ID, index, mandatory, parentID, cb) {
+  return generalHandler(toggleInputFileMandatory.bind(null, projectRootDir, ID, index, mandatory), "toggleInputFileMandatory", projectRootDir, parentID, cb);
 }
 
 export async function onRenameOutputFile(projectRootDir, ID, index, newName, parentID, cb) {

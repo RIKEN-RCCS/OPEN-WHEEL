@@ -41,7 +41,8 @@ const inputFileSchema = {
   properties: {
     name: { type: "string" },
     src: { type: "array", items: srcSchema },
-    forwardTo: { type: "array", items: dstSchema }
+    forwardTo: { type: "array", items: dstSchema },
+    mandatory: { type: "boolean" }
   }
 };
 const outputFileSchema = {

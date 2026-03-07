@@ -267,6 +267,11 @@ class Dispatcher extends EventEmitter {
           continue;
         }
         await this._getInputFiles(target);
+        if (!await this._checkMandatoryInputFilesExist(target)) {
+          await this._setComponentState(target, "failed");
+          this.hasFailedComponent = true;
+          continue;
+        }
         promises.push(this._dispatchOneComponent(target));
       }
       if (promises.length > 0) {
@@ -1306,6 +1311,45 @@ class Dispatcher extends EventEmitter {
     await writeComponentJson(this.projectRootDir, componentDir, component, true);
     const ee = eventEmitters.get(this.projectRootDir);
     ee.emit("componentStateChanged", component);
+  }
+
+  /**
+   * check if all mandatory inputFiles exist on the host (local or remote) after file staging
+   * @param {object} component - component to check
+   * @returns {Promise<boolean>} - true if all mandatory inputFiles exist, false if any are missing or have a broken symlink
+   */
+  async _checkMandatoryInputFilesExist(component) {
+    if (!component.inputFiles) {
+      return true;
+    }
+    const componentDir = this._getComponentDir(component.ID);
+    const remotehostID = isLocal(component) ? null : remoteHost.getID("name", component.host);
+    const ssh = remotehostID ? getSsh(this.projectRootDir, remotehostID) : null;
+    const remoteWorkingDir = remotehostID
+      ? getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component)
+      : null;
+
+    for (const inputFile of component.inputFiles) {
+      if (inputFile.mandatory !== true) {
+        continue;
+      }
+      const renderedName = nunjucks.renderString(inputFile.name, this.env);
+      try {
+        if (isLocal(component)) {
+          await fs.stat(path.join(componentDir, renderedName));
+        } else {
+          const rt = await ssh.exec(`test -e ${path.join(remoteWorkingDir, renderedName)}`, 0, logTrace.bind(null, this.projectRootDir, `${this.cwfDir}/${component.name}`));
+          if (rt !== 0) {
+            logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "mandatory inputFile does not exist on remote:", renderedName);
+            return false;
+          }
+        }
+      } catch (e) {
+        logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "mandatory inputFile does not exist:", renderedName, e.message);
+        return false;
+      }
+    }
+    return true;
   }
 
   async _getInputFiles(component) {

@@ -15,7 +15,8 @@ import {
   addInputFile,
   addOutputFile,
   setUploadOndemandOutputFile,
-  renameOutputFile
+  renameOutputFile,
+  toggleInputFileMandatory
 } from "../../../app/core/componentFiles.js";
 
 describe("componentFiles tests", ()=>{
@@ -75,7 +76,7 @@ describe("componentFiles tests", ()=>{
       await addInputFile("/path/to/project", "id123", "input.txt");
 
       expect(componentJson.inputFiles).to.have.lengthOf(1);
-      expect(componentJson.inputFiles[0]).to.deep.equal({ name: "input.txt", src: [] });
+      expect(componentJson.inputFiles[0]).to.deep.equal({ name: "input.txt", src: [], mandatory: false });
       expect(writeComponentJsonStub.calledOnce).to.be.true;
     });
   });
@@ -161,6 +162,54 @@ describe("componentFiles tests", ()=>{
 
       expect(componentJson.outputFiles[0].name).to.equal("new.txt");
       expect(writeComponentJsonStub.calledOnce).to.be.true;
+    });
+  });
+
+  describe("#toggleInputFileMandatory", ()=>{
+    it("should set mandatory to true at specified index", async ()=>{
+      getComponentDirStub.resolves("/path/to/component");
+      const componentJson = {
+        name: "testComponent",
+        inputFiles: [
+          { name: "input.txt", src: [], mandatory: false },
+          { name: "other.txt", src: [], mandatory: false }
+        ]
+      };
+      readComponentJsonStub.resolves(componentJson);
+      writeComponentJsonStub.resolves();
+
+      await toggleInputFileMandatory("/path/to/project", "id123", 0, true);
+
+      expect(componentJson.inputFiles[0].mandatory).to.be.true;
+      expect(componentJson.inputFiles[1].mandatory).to.be.false;
+      expect(writeComponentJsonStub.calledOnce).to.be.true;
+    });
+    it("should set mandatory to false at specified index", async ()=>{
+      getComponentDirStub.resolves("/path/to/component");
+      const componentJson = {
+        name: "testComponent",
+        inputFiles: [
+          { name: "input.txt", src: [], mandatory: true }
+        ]
+      };
+      readComponentJsonStub.resolves(componentJson);
+      writeComponentJsonStub.resolves();
+
+      await toggleInputFileMandatory("/path/to/project", "id123", 0, false);
+
+      expect(componentJson.inputFiles[0].mandatory).to.be.false;
+      expect(writeComponentJsonStub.calledOnce).to.be.true;
+    });
+    it("should reject if index is out of range", async ()=>{
+      getComponentDirStub.resolves("/path/to/component");
+      const componentJson = {
+        name: "testComponent",
+        inputFiles: [{ name: "input.txt", src: [], mandatory: false }]
+      };
+      readComponentJsonStub.resolves(componentJson);
+
+      await expect(toggleInputFileMandatory("/path/to/project", "id123", 5, true))
+        .to.be.rejectedWith("invalid index 5");
     });
   });
 });

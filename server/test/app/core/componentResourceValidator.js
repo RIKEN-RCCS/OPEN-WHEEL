@@ -242,6 +242,22 @@ describe("componentResourceValidator UT", function () {
       component.inputFiles.push({ name: "path/to/file.txt", src: [] });
       expect(await validateInputFiles(component)).to.be.true;
     });
+    it("should be rejected if mandatory inputFile has no connection (src is empty)", ()=>{
+      component.inputFiles.push({ name: "hoge", src: [], mandatory: true });
+      expect(validateInputFiles(component)).to.be.rejectedWith(/mandatory inputFile .* is not connected/);
+    });
+    it("should be resolved with true if mandatory inputFile is connected", async ()=>{
+      component.inputFiles.push({ name: "hoge", src: [{ srcNode: "node1", srcName: "out.txt" }], mandatory: true });
+      expect(await validateInputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if non-mandatory inputFile has no connection", async ()=>{
+      component.inputFiles.push({ name: "hoge", src: [], mandatory: false });
+      expect(await validateInputFiles(component)).to.be.true;
+    });
+    it("should be resolved with true if inputFile without mandatory flag has no connection", async ()=>{
+      component.inputFiles.push({ name: "hoge", src: [] });
+      expect(await validateInputFiles(component)).to.be.true;
+    });
   });
 
   describe("validateOutputFiles", ()=>{

@@ -372,10 +372,13 @@
               :new-item-template="inputFileTemplate"
               :additional-rules="[isValidInputFilename]"
               :edit-dialog-min-width="propWidth"
+              :headers="inputFileHeaders"
+              :boolean-columns="['mandatory']"
               data-cy="component_property-input_files_viewer-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
+              @toggle="toggleInputFileMandatory"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -574,10 +577,13 @@
               :new-item-template="inputFileTemplate"
               :additional-rules="[isValidInputFilename]"
               :edit-dialog-min-width="propWidth"
+              :headers="inputFileHeaders"
+              :boolean-columns="['mandatory']"
               data-cy="component_property-input_files-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
+              @toggle="toggleInputFileMandatory"
             />
             <list-form
               :label="'output files'"
@@ -730,8 +736,13 @@ export default {
       validName: true,
       inputFileTemplate: {
         name: "",
-        src: []
+        src: [],
+        mandatory: false
       },
+      inputFileHeaders: [
+        { key: "name", sortable: false },
+        { key: "mandatory", title: "mandatory", sortable: false }
+      ],
       outputFileTemplate: {
         name: "",
         dst: []
@@ -1068,6 +1079,11 @@ export default {
       const ID = this.selectedComponent.ID;
       SIO.emitGlobal("removeInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID, SIO.generalCallback);
       this.updateScriptCandidatesAfterInputFileChange();
+    },
+    toggleInputFileMandatory(index, key, value) {
+      this.copySelectedComponent.inputFiles[index][key] = value;
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("toggleInputFileMandatory", this.projectRootDir, ID, index, value, this.currentComponent.ID, SIO.generalCallback);
     },
     addToOutputFiles(v) {
       this.copySelectedComponent.outputFiles.push(v);
