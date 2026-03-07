@@ -10,11 +10,16 @@ import { getLogger } from "../logSettings.js";
 import getSchema from "../db/jsonSchemas.js";
 import { getComponentDir } from "./componentJsonIO.js";
 import { readJsonGreedy } from "./fileUtils.js";
+import { remoteHost } from "../db/db.js";
+import { getSsh, hasEntry } from "./sshManager.js";
 
 const _internal = {
   getLogger,
   getComponentDir,
-  readJsonGreedy
+  readJsonGreedy,
+  remoteHost,
+  getSsh,
+  hasEntry
 };
 const logger = _internal.getLogger();
 
@@ -132,6 +137,30 @@ export async function checkPSSettingFile(projectRootDir, component) {
     return Promise.reject(err);
   }
   return true;
+}
+
+/**
+ * check if sourceScript exists on the remote host
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - component which will be tested
+ * @returns {Promise<void>} - resolves if valid or SSH not connected (cannot verify), rejects with Error if file not found
+ */
+export async function checkSourceScript(projectRootDir, component) {
+  if (!component.sourceScript || component.sourceScript.length === 0) {
+    return;
+  }
+  const id = _internal.remoteHost.getID("name", component.host);
+  if (!id) {
+    return Promise.reject(new Error(`remote host ${component.host} not found`));
+  }
+  if (!_internal.hasEntry(projectRootDir, id)) {
+    return;
+  }
+  const ssh = _internal.getSsh(projectRootDir, id);
+  const rt = await ssh.exec(`test -f ${component.sourceScript}`, 0);
+  if (rt !== 0) {
+    return Promise.reject(new Error(`sourceScript '${component.sourceScript}' does not exist on ${component.host}`));
+  }
 }
 
 export { _internal };

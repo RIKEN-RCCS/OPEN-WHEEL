@@ -18,7 +18,7 @@ import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 
 //testee
-import { _internal, checkScript, checkPSSettingFile } from "../../../app/core/fileValidator.js";
+import { _internal, checkScript, checkPSSettingFile, checkSourceScript } from "../../../app/core/fileValidator.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -85,6 +85,58 @@ describe("fileValidator UT", function () {
       const statStub = sinon.stub(fs, "stat").rejects(new Error("Permission denied"));
       await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("Permission denied");
       statStub.restore();
+    });
+  });
+
+  describe("checkSourceScript", ()=>{
+    let component;
+    let mockSsh;
+    beforeEach(async ()=>{
+      component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      component.host = "remoteHost";
+      component.useJobScheduler = true;
+      mockSsh = { exec: sinon.stub() };
+      sinon.stub(_internal.remoteHost, "getID").callsFake((key, value)=>{
+        return value === "remoteHost" ? "mock-host-id" : undefined;
+      });
+      sinon.stub(_internal, "hasEntry").returns(false);
+      sinon.stub(_internal, "getSsh").returns(mockSsh);
+    });
+
+    it("should return without error if sourceScript is not set", async ()=>{
+      await expect(checkSourceScript(projectRootDir, component)).to.be.fulfilled;
+    });
+
+    it("should return without error if sourceScript is empty string", async ()=>{
+      component.sourceScript = "";
+      await expect(checkSourceScript(projectRootDir, component)).to.be.fulfilled;
+    });
+
+    it("should be rejected if remote host is not found", async ()=>{
+      component.host = "unknownHost";
+      component.sourceScript = "/path/to/setup.sh";
+      await expect(checkSourceScript(projectRootDir, component)).to.be.rejectedWith(/remote host unknownHost not found/);
+    });
+
+    it("should return without error if SSH is not connected (skips check)", async ()=>{
+      component.sourceScript = "/path/to/setup.sh";
+      _internal.hasEntry.returns(false);
+      await expect(checkSourceScript(projectRootDir, component)).to.be.fulfilled;
+    });
+
+    it("should be rejected if sourceScript does not exist on remote host", async ()=>{
+      component.sourceScript = "/path/to/nonexistent.sh";
+      _internal.hasEntry.returns(true);
+      mockSsh.exec.resolves(1);
+      await expect(checkSourceScript(projectRootDir, component))
+        .to.be.rejectedWith(/sourceScript.*does not exist on remoteHost/);
+    });
+
+    it("should return without error if sourceScript exists on remote host", async ()=>{
+      component.sourceScript = "/path/to/setup.sh";
+      _internal.hasEntry.returns(true);
+      mockSsh.exec.resolves(0);
+      await expect(checkSourceScript(projectRootDir, component)).to.be.fulfilled;
     });
   });
 

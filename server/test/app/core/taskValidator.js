@@ -19,6 +19,7 @@ import { createNewComponent } from "../../../app/core/componentOperations.js";
 
 //testee
 import { _internal, validateTask, validateStepjobTask, validateStepjob, validateBulkjobTask } from "../../../app/core/taskValidator.js";
+import { _internal as fileValidatorInternal } from "../../../app/core/fileValidator.js";
 import { ValidationError } from "../../../app/lib/validationError.js";
 
 //test data
@@ -222,6 +223,74 @@ describe("taskValidator UT", function () {
       expect(errors).to.not.be.empty;
       expect(errors[0]).to.be.instanceof(ValidationError);
       expect(errors[0].message).to.match(/checker must be a filename under component directory/);
+    });
+
+    describe("sourceScript validation", ()=>{
+      let mockSsh;
+      beforeEach(()=>{
+        mockSsh = { exec: sinon.stub() };
+        sinon.stub(fileValidatorInternal.remoteHost, "getID").callsFake((key, value)=>{
+          return value === "jobOK" ? "mock-host-id" : undefined;
+        });
+        sinon.stub(fileValidatorInternal, "hasEntry").returns(false);
+        sinon.stub(fileValidatorInternal, "getSsh").returns(mockSsh);
+      });
+
+      it("should be resolved with empty array if useJobScheduler is false and sourceScript is set", async ()=>{
+        const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+        testTask.script = "script.sh";
+        await fs.writeFile(path.resolve(projectRootDir, testTask.name, "script.sh"), "#!/bin/bash");
+        testTask.useJobScheduler = false;
+        testTask.sourceScript = "/home/user/setup.sh";
+        expect(await validateTask(projectRootDir, testTask)).to.be.empty;
+      });
+
+      it("should be resolved with empty array if useJobScheduler is true but sourceScript is not set", async ()=>{
+        const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+        testTask.script = "script.sh";
+        await fs.writeFile(path.resolve(projectRootDir, testTask.name, "script.sh"), "#!/bin/bash");
+        testTask.useJobScheduler = true;
+        testTask.host = "jobOK";
+        expect(await validateTask(projectRootDir, testTask)).to.be.empty;
+      });
+
+      it("should be resolved with empty array if sourceScript is set but SSH is not connected", async ()=>{
+        const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+        testTask.script = "script.sh";
+        await fs.writeFile(path.resolve(projectRootDir, testTask.name, "script.sh"), "#!/bin/bash");
+        testTask.useJobScheduler = true;
+        testTask.host = "jobOK";
+        testTask.sourceScript = "/home/user/setup.sh";
+        fileValidatorInternal.hasEntry.returns(false);
+        expect(await validateTask(projectRootDir, testTask)).to.be.empty;
+      });
+
+      it("should be rejected if sourceScript does not exist on remote host", async ()=>{
+        const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+        testTask.script = "script.sh";
+        await fs.writeFile(path.resolve(projectRootDir, testTask.name, "script.sh"), "#!/bin/bash");
+        testTask.useJobScheduler = true;
+        testTask.host = "jobOK";
+        testTask.sourceScript = "/home/user/nonexistent.sh";
+        fileValidatorInternal.hasEntry.returns(true);
+        mockSsh.exec.resolves(1);
+        const errors = await validateTask(projectRootDir, testTask);
+        expect(errors).to.not.be.empty;
+        expect(errors[0]).to.be.instanceof(ValidationError);
+        expect(errors[0].message).to.match(/sourceScript.*does not exist on jobOK/);
+      });
+
+      it("should be resolved with empty array if sourceScript exists on remote host", async ()=>{
+        const testTask = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+        testTask.script = "script.sh";
+        await fs.writeFile(path.resolve(projectRootDir, testTask.name, "script.sh"), "#!/bin/bash");
+        testTask.useJobScheduler = true;
+        testTask.host = "jobOK";
+        testTask.sourceScript = "/home/user/setup.sh";
+        fileValidatorInternal.hasEntry.returns(true);
+        mockSsh.exec.resolves(0);
+        expect(await validateTask(projectRootDir, testTask)).to.be.empty;
+      });
     });
   });
 

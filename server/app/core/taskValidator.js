@@ -7,7 +7,7 @@
 import { isInitialComponent, isLocal } from "./workflowComponent.js";
 import { remoteHost } from "../db/db.js";
 import { jobScheduler } from "../db/db.js";
-import { checkScript, checkChecker } from "./fileValidator.js";
+import { checkScript, checkChecker, checkSourceScript } from "./fileValidator.js";
 import { validateConditionalCheck } from "./componentResourceValidator.js";
 import { ValidationError } from "../lib/validationError.js";
 
@@ -46,6 +46,13 @@ export async function validateTask(projectRootDir, component) {
           errors.push(new ValidationError(`submit option duplicate queue option : ${_internal.jobScheduler[hostinfo.jobScheduler].queueOpt}`));
         }
       }
+    }
+  }
+  if (component.useJobScheduler && component.sourceScript) {
+    try {
+      await checkSourceScript(projectRootDir, component);
+    } catch (err) {
+      errors.push(new ValidationError(err.message));
     }
   }
   try {
