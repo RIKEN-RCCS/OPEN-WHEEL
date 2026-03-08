@@ -9,7 +9,7 @@ import { getComponentFullName } from "./componentOperations.js";
 import { readComponentJson, getComponentDir } from "./componentJsonIO.js";
 import { getChildren } from "./workflowUtil.js";
 import { validateTask, validateStepjobTask, validateStepjob, validateBulkjobTask, _internal as taskValidatorInternal } from "./taskValidator.js";
-import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles } from "./componentResourceValidator.js";
+import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles, validateInputFileOverwrite, validateInputFileRaceCondition } from "./componentResourceValidator.js";
 import { validateForLoop, validateForeach, validateParameterStudy, validateStorage } from "./componentTypeValidator.js";
 import { getCycleGraph, getNextComponents } from "./dependencyGraphValidator.js";
 import { ValidationError } from "../lib/validationError.js";
@@ -71,6 +71,8 @@ export async function validateComponent(projectRootDir, component) {
   //additional test for input and output files
   if (Object.prototype.hasOwnProperty.call(component, "inputFiles")) {
     errors.push(...await validateInputFiles(component));
+    errors.push(...await validateInputFileOverwrite(projectRootDir, component));
+    errors.push(...await validateInputFileRaceCondition(component));
   }
   if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
     errors.push(...await validateOutputFiles(component));

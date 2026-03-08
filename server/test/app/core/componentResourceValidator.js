@@ -18,7 +18,7 @@ import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 
 //testee
-import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles } from "../../../app/core/componentResourceValidator.js";
+import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles, validateInputFileOverwrite, validateInputFileRaceCondition } from "../../../app/core/componentResourceValidator.js";
 import { ValidationError } from "../../../app/lib/validationError.js";
 
 //test data
@@ -374,6 +374,132 @@ describe("componentResourceValidator UT", function () {
     it("should be resolved with empty array if output filename is a directory path", async ()=>{
       component.outputFiles.push({ name: "directory/", dst: [] });
       expect(await validateOutputFiles(component)).to.be.empty;
+    });
+  });
+
+  describe("validateInputFileOverwrite", ()=>{
+    let component;
+    beforeEach(async ()=>{
+      component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      component.inputFiles = [];
+    });
+    it("should be resolved with empty array if no inputFiles", async ()=>{
+      expect(await validateInputFileOverwrite(projectRootDir, component)).to.be.empty;
+    });
+    it("should be resolved with empty array if inputFile has no connection (src empty)", async ()=>{
+      component.inputFiles.push({ name: "localfile.txt", src: [] });
+      await fs.writeFile(path.resolve(projectRootDir, component.name, "localfile.txt"), "content");
+      expect(await validateInputFileOverwrite(projectRootDir, component)).to.be.empty;
+    });
+    it("should be resolved with empty array if connected inputFile has no existing local file", async ()=>{
+      component.inputFiles.push({ name: "incoming.txt", src: [{ srcNode: "node1", srcName: "out.txt" }] });
+      expect(await validateInputFileOverwrite(projectRootDir, component)).to.be.empty;
+    });
+    it("should warn with ignoreable error if connected inputFile would overwrite an existing local file", async ()=>{
+      component.inputFiles.push({ name: "existing.txt", src: [{ srcNode: "node1", srcName: "out.txt" }] });
+      await fs.writeFile(path.resolve(projectRootDir, component.name, "existing.txt"), "old content");
+      const errors = await validateInputFileOverwrite(projectRootDir, component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/inputFile 'existing\.txt' will overwrite an existing local file/);
+    });
+    it("should warn for each connected inputFile that would overwrite an existing local file", async ()=>{
+      component.inputFiles.push({ name: "file1.txt", src: [{ srcNode: "node1", srcName: "out1.txt" }] });
+      component.inputFiles.push({ name: "file2.txt", src: [{ srcNode: "node2", srcName: "out2.txt" }] });
+      await fs.writeFile(path.resolve(projectRootDir, component.name, "file1.txt"), "content1");
+      await fs.writeFile(path.resolve(projectRootDir, component.name, "file2.txt"), "content2");
+      const errors = await validateInputFileOverwrite(projectRootDir, component);
+      expect(errors).to.have.lengthOf(2);
+      expect(errors.every((e)=>{
+        return e.ignoreable;
+      })).to.be.true;
+    });
+  });
+
+  describe("validateInputFileRaceCondition", ()=>{
+    let component;
+    beforeEach(()=>{
+      component = { inputFiles: [] };
+    });
+    it("should be resolved with empty array if no inputFiles", async ()=>{
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should be resolved with empty array if file-type inputFile has single source", async ()=>{
+      component.inputFiles.push({ name: "file.txt", src: [{ srcNode: "A", srcName: "out.txt" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should be resolved with empty array if directory inputFile has single source", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "result.txt" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should be resolved with empty array if directory inputFile has multiple sources with distinct srcNames", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "a.txt" }, { srcNode: "B", srcName: "b.txt" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should warn if directory inputFile has multiple sources with same srcName", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "result.txt" }, { srcNode: "B", srcName: "result.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/race condition possible/);
+    });
+    it("should warn once per conflicting pair across same directory inputFile", async ()=>{
+      component.inputFiles.push({ name: "out/", src: [
+        { srcNode: "A", srcName: "file.txt" },
+        { srcNode: "B", srcName: "file.txt" },
+        { srcNode: "C", srcName: "other.txt" },
+        { srcNode: "D", srcName: "other.txt" }
+      ] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.have.lengthOf(2);
+      expect(errors.every((e)=>{
+        return e.ignoreable;
+      })).to.be.true;
+    });
+    it("should check backslash-terminated directory inputFiles too", async ()=>{
+      component.inputFiles.push({ name: "data\\", src: [{ srcNode: "A", srcName: "result.txt" }, { srcNode: "B", srcName: "result.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].ignoreable).to.be.true;
+    });
+    it("should warn when two file-type inputFiles share the same name (cross-inputFile conflict)", async ()=>{
+      component.inputFiles.push({ name: "result.txt", src: [{ srcNode: "A", srcName: "out.txt" }] });
+      component.inputFiles.push({ name: "result.txt", src: [{ srcNode: "B", srcName: "out.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/race condition possible/);
+    });
+    it("should warn when file-type inputFile name matches destination of directory inputFile (cross-inputFile conflict)", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "result.txt" }] });
+      component.inputFiles.push({ name: "data/result.txt", src: [{ srcNode: "B", srcName: "out.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/race condition possible/);
+    });
+    it("should warn when glob srcName matches a literal srcName in the same directory inputFile", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "*.txt" }, { srcNode: "B", srcName: "result.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/race condition possible/);
+    });
+    it("should warn when two identical glob srcNames are present", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "*.txt" }, { srcNode: "B", srcName: "*.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.have.lengthOf(1);
+      expect(errors[0].ignoreable).to.be.true;
+    });
+    it("should be resolved with empty array if glob srcNames are non-overlapping", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "*.txt" }, { srcNode: "B", srcName: "*.csv" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should be resolved with empty array for single-source directory inputFile with glob", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "*.txt" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
     });
   });
 });
