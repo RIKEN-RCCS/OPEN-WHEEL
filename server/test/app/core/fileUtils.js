@@ -374,11 +374,13 @@ describe("#openFile", ()=>{
 
 describe("#saveFile", ()=>{
   let writeFileStub;
+  let writeJsonStub;
   let pathExistsStub;
   let gitAddStub;
 
   beforeEach(()=>{
     writeFileStub = sinon.stub(_internal.fs, "writeFile").resolves();
+    writeJsonStub = sinon.stub(_internal.fs, "writeJson").resolves();
     pathExistsStub = sinon.stub(_internal.fs, "pathExists");
     sinon.stub(_internal.path, "resolve").returns("/home/user/project/file.txt");
     sinon.stub(_internal.path, "parse").returns({ root: "/home", dir: "/home/user/project", base: "file.txt", name: "file", ext: ".txt" });
@@ -409,7 +411,51 @@ describe("#saveFile", ()=>{
     await saveFile("file.txt", "Hello, world!");
 
     expect(writeFileStub.calledOnceWithExactly("/home/user/project/file.txt", "Hello, world!")).to.be.true;
+    expect(writeJsonStub.notCalled).to.be.true;
     expect(pathExistsStub.calledWith("/home/user/project/.git")).to.be.true; //Check that it was called with the correct path
+    expect(gitAddStub.calledOnceWithExactly("/home/user/project", "/home/user/project/file.txt")).to.be.true;
+  });
+
+  it("should use writeJson with 4-space indent when content is valid JSON object", async ()=>{
+    pathExistsStub.callsFake(async (p)=>{
+      if (p === "/home/user/project/.git") {
+        return true;
+      }
+      return false;
+    });
+    const jsonContent = '{"key":"value"}';
+    await saveFile("file.json", jsonContent);
+
+    expect(writeFileStub.notCalled).to.be.true;
+    expect(writeJsonStub.calledOnceWithExactly("/home/user/project/file.txt", { key: "value" }, { spaces: 4 })).to.be.true;
+    expect(gitAddStub.calledOnceWithExactly("/home/user/project", "/home/user/project/file.txt")).to.be.true;
+  });
+
+  it("should fall back to writeFile when content is not valid JSON", async ()=>{
+    pathExistsStub.callsFake(async (p)=>{
+      if (p === "/home/user/project/.git") {
+        return true;
+      }
+      return false;
+    });
+    await saveFile("file.json", "not valid json");
+
+    expect(writeJsonStub.notCalled).to.be.true;
+    expect(writeFileStub.calledOnceWithExactly("/home/user/project/file.txt", "not valid json")).to.be.true;
+    expect(gitAddStub.calledOnceWithExactly("/home/user/project", "/home/user/project/file.txt")).to.be.true;
+  });
+
+  it("should fall back to writeFile when content is valid JSON but not an object (e.g. a number)", async ()=>{
+    pathExistsStub.callsFake(async (p)=>{
+      if (p === "/home/user/project/.git") {
+        return true;
+      }
+      return false;
+    });
+    await saveFile("file.txt", "42");
+
+    expect(writeJsonStub.notCalled).to.be.true;
+    expect(writeFileStub.calledOnceWithExactly("/home/user/project/file.txt", "42")).to.be.true;
     expect(gitAddStub.calledOnceWithExactly("/home/user/project", "/home/user/project/file.txt")).to.be.true;
   });
 

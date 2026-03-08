@@ -188,7 +188,17 @@ export async function openFile(projectRootDir, argFilename, forceNormal = false)
  */
 export async function saveFile(argFilename, content) {
   const absFilename = _internal.path.resolve(argFilename);
-  await _internal.fs.writeFile(absFilename, content);
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch (_) {
+    parsed = null;
+  }
+  if (parsed !== null && typeof parsed === "object") {
+    await _internal.fs.writeJson(absFilename, parsed, { spaces: 4 });
+  } else {
+    await _internal.fs.writeFile(absFilename, content);
+  }
 
   const { root } = _internal.path.parse(absFilename);
   let repoDir = _internal.path.dirname(absFilename);
