@@ -11,7 +11,8 @@ import {
   removeOutputFile,
   renameInputFile,
   renameOutputFile,
-  toggleInputFileMandatory
+  toggleInputFileMandatory,
+  toggleOutputFileForceCopy
 } from "../core/componentFiles.js";
 import {
   addLink,
@@ -74,6 +75,10 @@ export async function onRenameInputFile(projectRootDir, ID, index, newName, pare
 
 export async function onToggleInputFileMandatory(projectRootDir, ID, index, mandatory, parentID, cb) {
   return generalHandler(toggleInputFileMandatory.bind(null, projectRootDir, ID, index, mandatory), "toggleInputFileMandatory", projectRootDir, parentID, cb);
+}
+
+export async function onToggleOutputFileForceCopy(projectRootDir, ID, srcName, dstNode, dstName, forceCopy, parentID, cb) {
+  return generalHandler(toggleOutputFileForceCopy.bind(null, projectRootDir, ID, srcName, dstNode, dstName, forceCopy), "toggleOutputFileForceCopy", projectRootDir, parentID, cb);
 }
 
 export async function onRenameOutputFile(projectRootDir, ID, index, newName, parentID, cb) {

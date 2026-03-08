@@ -19,7 +19,6 @@ import { createNewComponent } from "../../../app/core/componentOperations.js";
 
 //testee
 import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles, validateInputFileOverwrite, validateInputFileRaceCondition } from "../../../app/core/componentResourceValidator.js";
-import { ValidationError } from "../../../app/lib/validationError.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -56,11 +55,11 @@ describe("componentResourceValidator UT", function () {
     it("should reject if condition is not specified", async ()=>{
       const ifErrors = await validateConditionalCheck(projectRootDir, ifComponent);
       expect(ifErrors).to.have.lengthOf(1);
-      expect(ifErrors[0]).to.be.instanceof(ValidationError);
+      expect(ifErrors[0].message).to.be.a("string");
       expect(ifErrors[0].message).to.include("condition is not specified");
       const whileErrors = await validateConditionalCheck(projectRootDir, whileComponent);
       expect(whileErrors).to.have.lengthOf(1);
-      expect(whileErrors[0]).to.be.instanceof(ValidationError);
+      expect(whileErrors[0].message).to.be.a("string");
       expect(whileErrors[0].message).to.include("condition is not specified");
     });
     it("should reject if condition exists but it is not file", async ()=>{
@@ -70,11 +69,11 @@ describe("componentResourceValidator UT", function () {
       fs.mkdirSync(path.resolve(projectRootDir, whileComponent.name, "hoge"));
       const ifErrors = await validateConditionalCheck(projectRootDir, ifComponent);
       expect(ifErrors).to.have.lengthOf(1);
-      expect(ifErrors[0]).to.be.instanceof(ValidationError);
+      expect(ifErrors[0].message).to.be.a("string");
       expect(ifErrors[0].message).to.match(/condition is exist but it is not file .*/);
       const whileErrors = await validateConditionalCheck(projectRootDir, whileComponent);
       expect(whileErrors).to.have.lengthOf(1);
-      expect(whileErrors[0]).to.be.instanceof(ValidationError);
+      expect(whileErrors[0].message).to.be.a("string");
       expect(whileErrors[0].message).to.match(/condition is exist but it is not file .*/);
     });
 
@@ -120,7 +119,7 @@ describe("componentResourceValidator UT", function () {
       foreachComponent.keep = "hoge";
       const whileErrors = await validateKeepProp(whileComponent);
       expect(whileErrors).to.have.lengthOf(1);
-      expect(whileErrors[0]).to.be.instanceof(ValidationError);
+      expect(whileErrors[0].message).to.be.a("string");
       expect(whileErrors[0].message).to.include("keep must be positive integer");
       const forErrors = await validateKeepProp(forComponent);
       expect(forErrors).to.have.lengthOf(1);
@@ -251,35 +250,35 @@ describe("componentResourceValidator UT", function () {
       component.inputFiles.push({ name: "h*ge", src: [] });
       const errors = await validateInputFiles(component);
       expect(errors.length).to.be.greaterThan(0);
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* is not allowed as input file./);
     });
     it("should be rejected if input filename is null", async ()=>{
       component.inputFiles.push({ name: null, src: [] });
       const errors = await validateInputFiles(component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* is not allowed as input file./);
     });
     it("should be rejected if input filename is empty string", async ()=>{
       component.inputFiles.push({ name: "", src: [] });
       const errors = await validateInputFiles(component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* is not allowed as input file./);
     });
     it("should be rejected if input filename is blank", async ()=>{
       component.inputFiles.push({ name: "   ", src: [] });
       const errors = await validateInputFiles(component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* is not allowed as input file./);
     });
     it("should be rejected if inputFile is file and has 2 or more connection", async ()=>{
       component.inputFiles.push({ name: "hoge", src: [{}, {}] });
       const errors = await validateInputFiles(component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/inputFile .* data type is 'file' but it has two or more outputFiles./);
     });
     it("should be resolved with empty array if inputFile is file and is not connected", async ()=>{
@@ -311,7 +310,7 @@ describe("componentResourceValidator UT", function () {
       component.inputFiles.push({ name: "hoge", src: [], mandatory: true });
       const errors = await validateInputFiles(component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/mandatory inputFile .* is not connected/);
     });
     it("should be resolved with empty array if mandatory inputFile is connected", async ()=>{
@@ -337,7 +336,7 @@ describe("componentResourceValidator UT", function () {
       component.outputFiles.push({ name: "   ", dst: [] });
       const errors = await validateOutputFiles(component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* is not allowed as output filename./);
     });
     it("should be resolved with empty array if output filename contains special characters", async ()=>{
@@ -348,14 +347,14 @@ describe("componentResourceValidator UT", function () {
       component.outputFiles.push({ name: null, dst: [] });
       const errors = await validateOutputFiles(component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* is not allowed as output filename./);
     });
     it("should be rejected if output filename is empty string", async ()=>{
       component.outputFiles.push({ name: "", dst: [] });
       const errors = await validateOutputFiles(component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* is not allowed as output filename./);
     });
     it("should be resolved with empty array if output filename is valid", async ()=>{
@@ -400,7 +399,7 @@ describe("componentResourceValidator UT", function () {
       await fs.writeFile(path.resolve(projectRootDir, component.name, "existing.txt"), "old content");
       const errors = await validateInputFileOverwrite(projectRootDir, component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].ignoreable).to.be.true;
       expect(errors[0].message).to.match(/inputFile 'existing\.txt' will overwrite an existing local file/);
     });
@@ -441,7 +440,7 @@ describe("componentResourceValidator UT", function () {
       component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "result.txt" }, { srcNode: "B", srcName: "result.txt" }] });
       const errors = await validateInputFileRaceCondition(component);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].ignoreable).to.be.true;
       expect(errors[0].message).to.match(/race condition possible/);
     });

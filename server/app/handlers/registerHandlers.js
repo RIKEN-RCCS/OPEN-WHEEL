@@ -22,6 +22,7 @@ import {
   onRenameInputFile,
   onRenameOutputFile,
   onToggleInputFileMandatory,
+  onToggleOutputFileForceCopy,
   onAddLink,
   onAddFileLink,
   onRemoveInputFile,
@@ -88,6 +89,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("renameInputFile", onRenameInputFile);
   socket.on("renameOutputFile", onRenameOutputFile);
   socket.on("toggleInputFileMandatory", onToggleInputFileMandatory);
+  socket.on("toggleOutputFileForceCopy", onToggleOutputFileForceCopy);
   socket.on("updateComponent", onUpdateComponent);
   socket.on("updateComponentPos", onUpdateComponentPos);
   socket.on("updateEnv", onUpdateEnv);

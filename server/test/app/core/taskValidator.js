@@ -20,7 +20,6 @@ import { createNewComponent } from "../../../app/core/componentOperations.js";
 //testee
 import { _internal, validateTask, validateStepjobTask, validateStepjob, validateBulkjobTask } from "../../../app/core/taskValidator.js";
 import { _internal as fileValidatorInternal } from "../../../app/core/fileValidator.js";
-import { ValidationError } from "../../../app/lib/validationError.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -78,14 +77,14 @@ describe("taskValidator UT", function () {
     it("should be rejected with 'no script' error for default component", async ()=>{
       const errors = await validateTask(projectRootDir, task);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("script is not specified");
     });
     it("should be rejected if name is not defined", async ()=>{
       task.name = null;
       const errors = await validateTask(projectRootDir, task);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("illegal path");
     });
     it("should be rejected if not existing remote host is set", async ()=>{
@@ -93,7 +92,7 @@ describe("taskValidator UT", function () {
       task.host = "hoge";
       const errors = await validateTask(projectRootDir, task);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/remote host setting for .* not found/);
     });
     it("should be rejected if not existing jobScheduler is set", async ()=>{
@@ -101,7 +100,7 @@ describe("taskValidator UT", function () {
       task.host = "OK";
       const errors = await validateTask(projectRootDir, task);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/job scheduler for .* is not supported/);
     });
     it("should be rejected if not existing jobScheduler is set", async ()=>{
@@ -110,14 +109,14 @@ describe("taskValidator UT", function () {
       task.submitOption = "-q foo bar -i hoge";
       const errors = await validateTask(projectRootDir, task);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("submit option duplicate queue option");
     });
     it("should be rejected if script is not existing", async ()=>{
       task.script = "hoge";
       const errors = await validateTask(projectRootDir, task);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("script is not existing file");
     });
     it("should be rejected if script is not file", async ()=>{
@@ -125,7 +124,7 @@ describe("taskValidator UT", function () {
       fs.mkdirSync(path.resolve(projectRootDir, task.name, "hoge"));
       const errors = await validateTask(projectRootDir, task);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("script is not file");
     });
     it("should be resolved with empty array if required prop is set", async ()=>{
@@ -172,7 +171,7 @@ describe("taskValidator UT", function () {
       testTask.checker = "nonexistent_checker.sh";
       const errors = await validateTask(projectRootDir, testTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/checker is not existing file/);
     });
 
@@ -186,7 +185,7 @@ describe("taskValidator UT", function () {
       await fs.mkdir(checkerDirPath);
       const errors = await validateTask(projectRootDir, testTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/checker is not file/);
     });
 
@@ -209,7 +208,7 @@ describe("taskValidator UT", function () {
       testTask.checker = "/usr/local/bin/checker.sh";
       const errors = await validateTask(projectRootDir, testTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/checker must be a filename under component directory/);
     });
 
@@ -221,7 +220,7 @@ describe("taskValidator UT", function () {
       testTask.checker = "/home/user/checker.sh";
       const errors = await validateTask(projectRootDir, testTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/checker must be a filename under component directory/);
     });
 
@@ -276,7 +275,7 @@ describe("taskValidator UT", function () {
         mockSsh.exec.resolves(1);
         const errors = await validateTask(projectRootDir, testTask);
         expect(errors).to.not.be.empty;
-        expect(errors[0]).to.be.instanceof(ValidationError);
+        expect(errors[0].message).to.be.a("string");
         expect(errors[0].message).to.match(/sourceScript.*does not exist on jobOK/);
       });
 
@@ -308,7 +307,7 @@ describe("taskValidator UT", function () {
       isInitialComponentStub.resolves(true);
       const errors = await validateStepjobTask(projectRootDir, stepjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("script is not specified");
     });
     it("should be rejected with 'initial stepjobTask cannot specified the Dependency form' if initial stepjob task has dependency form", async ()=>{
@@ -316,7 +315,7 @@ describe("taskValidator UT", function () {
       stepjobTask.useDependency = "hoge";
       const errors = await validateStepjobTask(projectRootDir, stepjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("initial stepjobTask cannot specified the Dependency form");
     });
     it("should be rejected if script file is not existing", async ()=>{
@@ -324,7 +323,7 @@ describe("taskValidator UT", function () {
       stepjobTask.script = "hoge";
       const errors = await validateStepjobTask(projectRootDir, stepjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("script is not existing file");
     });
     it("should be rejected if script is not file", async ()=>{
@@ -333,7 +332,7 @@ describe("taskValidator UT", function () {
       fs.mkdirSync(path.resolve(projectRootDir, stepjobTask.name, "hoge"));
       const errors = await validateStepjobTask(projectRootDir, stepjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("script is not file");
     });
     it("should be resolved with empty array if required prop is set", async ()=>{
@@ -374,41 +373,41 @@ describe("taskValidator UT", function () {
       stepjob.useJobScheduler = false;
       const errors = await validateStepjob(projectRootDir, stepjob);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("useJobScheduler must be set");
     });
     it("should be rejected if host is not set", async ()=>{
       const errors = await validateStepjob(projectRootDir, stepjob);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("stepjob is only supported on remotehost");
     });
     it("should be rejected if host not found", async ()=>{
       stepjob.host = "hoge";
       const errors = await validateStepjob(projectRootDir, stepjob);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/remote host setting for .* not found/);
     });
     it("should be rejected if host is not support job", async ()=>{
       stepjob.host = "OK";
       const errors = await validateStepjob(projectRootDir, stepjob);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/job scheduler for .* is not supported/);
     });
     it("should be rejected if jobscheduler is not support stepjob", async ()=>{
       stepjob.host = "jobOK";
       const errors = await validateStepjob(projectRootDir, stepjob);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/job scheduler .* does not support stepjob/);
     });
     it("should be rejected if host is not set to use stepjob", async ()=>{
       stepjob.host = "stepjobNG";
       const errors = await validateStepjob(projectRootDir, stepjob);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* does not set to use stepjob/);
     });
     it("should be rejected if host supports stepjob but useStepjob is false", async function () {
@@ -417,7 +416,7 @@ describe("taskValidator UT", function () {
       testStepjob.host = "stepjobNG";
       const errors = await validateStepjob(projectRootDir, testStepjob);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* does not set to use stepjob/);
     });
 
@@ -443,55 +442,55 @@ describe("taskValidator UT", function () {
       bulkjobTask.name = null;
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("illegal path");
     });
     it("should be rejected if useJobScheduler is not set", async ()=>{
       bulkjobTask.useJobScheduler = false;
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("useJobScheduler must be set");
     });
     it("should be rejected if host is not set", async ()=>{
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("bulkjobTask is only supported on remotehost");
     });
     it("should be rejected if host not found", async ()=>{
       bulkjobTask.host = "hoge";
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/remote host setting for .* not found/);
     });
     it("should be rejected if host is not support job", async ()=>{
       bulkjobTask.host = "OK";
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/job scheduler for .* is not supported/);
     });
     it("should be rejected if jobscheduler is not support bulkjobTask", async ()=>{
       bulkjobTask.host = "jobOK";
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/job scheduler .* does not support bulkjob/);
     });
     it("should be rejected if host is not set to use bulkjob", async ()=>{
       bulkjobTask.host = "bulkjobNG";
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/.* does not set to use bulkjob/);
     });
     it("should be rejected if usePSSettingFile is set but parameterFile is not set", async ()=>{
       bulkjobTask.host = "bulkjobOK";
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("usePSSettingFile is set but parameter setting file is not specified");
     });
 
@@ -502,7 +501,7 @@ describe("taskValidator UT", function () {
       testBulkjobTask.parameterFile = "nonexistent.json";
       const errors = await validateBulkjobTask(projectRootDir, testBulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/script is not specified/);
     });
 
@@ -514,7 +513,7 @@ describe("taskValidator UT", function () {
       testBulkjobTask.script = "nonexistent.sh";
       const errors = await validateBulkjobTask(projectRootDir, testBulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/script is not existing file/);
     });
 
@@ -528,7 +527,7 @@ describe("taskValidator UT", function () {
       await fs.mkdir(scriptDirPath);
       const errors = await validateBulkjobTask(projectRootDir, testBulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.match(/script is not file/);
     });
 
@@ -537,7 +536,7 @@ describe("taskValidator UT", function () {
       bulkjobTask.usePSSettingFile = false;
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("startBulkNumber must be specified");
     });
     it("should be rejected if usePSSettingFile is not set and startBulkNumber is negative value", async ()=>{
@@ -546,7 +545,7 @@ describe("taskValidator UT", function () {
       bulkjobTask.startBulkNumber = -1;
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("startBulkNumber must be integer and 0 or more");
     });
     it("should be rejected if usePSSettingFile is not set and endBulkNumber is not set", async ()=>{
@@ -555,7 +554,7 @@ describe("taskValidator UT", function () {
       bulkjobTask.startBulkNumber = 1;
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("endBulkNumber must be specified");
     });
     it("should be rejected if endBulkNumber is less or equal startBulkNumber", async ()=>{
@@ -565,7 +564,7 @@ describe("taskValidator UT", function () {
       bulkjobTask.endBulkNumber = 1;
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("endBulkNumber must be integer and greater than startBulkNumber");
     });
     it("should be rejected if manualFinishCondition is set but condition is not specidied", async ()=>{
@@ -576,7 +575,7 @@ describe("taskValidator UT", function () {
       bulkjobTask.manualFinishCondition = true;
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("condition is not specified");
     });
 
@@ -587,7 +586,7 @@ describe("taskValidator UT", function () {
       bulkjobTask.endBulkNumber = 2;
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("script is not specified");
     });
     it("should be rejected if script is not existing", async ()=>{
@@ -598,7 +597,7 @@ describe("taskValidator UT", function () {
       bulkjobTask.script = "hoge";
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("script is not exist");
     });
     it("should be rejected if script is not file", async ()=>{
@@ -610,7 +609,7 @@ describe("taskValidator UT", function () {
       fs.mkdirSync(path.resolve(projectRootDir, bulkjobTask.name, "hoge"));
       const errors = await validateBulkjobTask(projectRootDir, bulkjobTask);
       expect(errors).to.not.be.empty;
-      expect(errors[0]).to.be.instanceof(ValidationError);
+      expect(errors[0].message).to.be.a("string");
       expect(errors[0].message).to.include("script is not file");
     });
     it("should be resolved with empty array", async ()=>{

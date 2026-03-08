@@ -42,6 +42,7 @@
             :start="item.srcPos"
             :end="item.dstPos"
             :box-height="item.boxHeight"
+            :dashed="!item.forceCopy"
             @open-context-menu="(e)=>{onConnectorRightClick(e, item)}"
           />
           <wheel-component
@@ -99,6 +100,7 @@
             :y="menuY"
             :items="connectorContextMenuItems"
             @delete="deleteConnector"
+            @toggle-force-copy="toggleForceCopy"
           />
           <context-menu
             v-if="openVconnectorContextMenu"
@@ -245,9 +247,6 @@ export default {
       targetComponent: null,
       targetConnector: null,
       targetVconnector: null,
-      connectorContextMenuItems: [
-        { label: "delete", event: "delete" }
-      ],
       vconnectorContextMenuItems: [
         { label: "delete", event: "delete" }
       ],
@@ -278,6 +277,13 @@ export default {
       set(value) {
         this.commitCurrentPan(value);
       }
+    },
+    connectorContextMenuItems() {
+      const forceCopy = this.targetConnector?.forceCopy || false;
+      return [
+        { label: forceCopy ? "use symlink" : "use force copy", event: "toggle-force-copy" },
+        { label: "delete", event: "delete" }
+      ];
     },
     componentContextMenuItems() {
       const rt = [];
@@ -376,7 +382,8 @@ export default {
                     dstPos: calcFreceiverPos(dstComponent.pos, dstIndex),
                     color: filePlugColor,
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
-                    boxHeight
+                    boxHeight,
+                    forceCopy: dst.forceCopy || false
                   });
                 }
               } else if (dst.dstNode === "parent" || dst.dstNode === this.currentComponent.ID) {
@@ -399,7 +406,8 @@ export default {
                     dstPos: calcFreceiverPos(this.parentOutputFilePos, dstIndex),
                     color: filePlugColor,
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
-                    boxHeight
+                    boxHeight,
+                    forceCopy: dst.forceCopy || false
                   });
                 }
               }
@@ -431,7 +439,8 @@ export default {
                     dstPos: calcFreceiverPos(dstComponent.pos, dstIndex),
                     color: filePlugColor,
                     key: `${this.currentComponent.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
-                    boxHeight: 0
+                    boxHeight: 0,
+                    forceCopy: false
                   });
                 }
               }
@@ -552,6 +561,27 @@ export default {
         (rt)=>{
           if (!rt) {
             debug("removeFileLink failed", rt);
+          }
+        });
+      this.closeContextMenus();
+    },
+    toggleForceCopy() {
+      if (this.readOnly) {
+        debug("toggle force copy called but this project is read-only for now");
+        return;
+      }
+      const newForceCopy = !this.targetConnector.forceCopy;
+      SIO.emitGlobal("toggleOutputFileForceCopy",
+        this.projectRootDir,
+        this.targetConnector.src,
+        this.targetConnector.srcName,
+        this.targetConnector.dst,
+        this.targetConnector.dstName,
+        newForceCopy,
+        this.currentComponent.ID,
+        (rt)=>{
+          if (!rt) {
+            debug("toggleOutputFileForceCopy failed", rt);
           }
         });
       this.closeContextMenus();

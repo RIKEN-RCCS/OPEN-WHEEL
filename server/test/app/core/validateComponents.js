@@ -22,7 +22,7 @@ import { _internal, validateComponent, checkComponentDependency, recursiveValida
 import { validateBulkjobTask, _internal as taskValidatorInternal } from "../../../app/core/taskValidator.js";
 import { getCycleGraph } from "../../../app/core/dependencyGraphValidator.js";
 import { _internal as fileValidatorInternal } from "../../../app/core/fileValidator.js";
-import { ValidationError } from "../../../app/lib/validationError.js";
+import { createValidationError } from "../../../app/lib/validationError.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -592,7 +592,7 @@ describe("validateComponent with component having children", function () {
 
     const validateComponentStub = sinon.stub(_internal, "validateComponent").callsFake(async (projectRootDir, component)=>{
       if (component.ID === "child-task") {
-        return [new ValidationError("script is not specified")];
+        return [createValidationError("script is not specified")];
       }
       return [];
     });

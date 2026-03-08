@@ -31,7 +31,8 @@ const dstSchema = {
   required: ["dstNode", "dstName"],
   properties: {
     dstNode: { type: "string" },
-    dstName: { type: "string" }
+    dstName: { type: "string" },
+    forceCopy: { type: "boolean" }
   }
 };
 

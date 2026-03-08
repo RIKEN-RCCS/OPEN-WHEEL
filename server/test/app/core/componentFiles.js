@@ -16,7 +16,8 @@ import {
   addOutputFile,
   setUploadOndemandOutputFile,
   renameOutputFile,
-  toggleInputFileMandatory
+  toggleInputFileMandatory,
+  toggleOutputFileForceCopy
 } from "../../../app/core/componentFiles.js";
 
 describe("componentFiles tests", ()=>{
@@ -210,6 +211,72 @@ describe("componentFiles tests", ()=>{
 
       await expect(toggleInputFileMandatory("/path/to/project", "id123", 5, true))
         .to.be.rejectedWith("invalid index 5");
+    });
+  });
+  describe("#toggleOutputFileForceCopy", ()=>{
+    it("should set forceCopy to true on specified dst connection", async ()=>{
+      getComponentDirStub.resolves("/path/to/component");
+      const componentJson = {
+        name: "testComponent",
+        outputFiles: [
+          {
+            name: "output.txt",
+            dst: [
+              { dstNode: "comp1", dstName: "input1.txt", forceCopy: false },
+              { dstNode: "comp2", dstName: "input2.txt", forceCopy: false }
+            ]
+          }
+        ]
+      };
+      readComponentJsonStub.resolves(componentJson);
+      writeComponentJsonStub.resolves();
+
+      await toggleOutputFileForceCopy("/path/to/project", "id123", "output.txt", "comp1", "input1.txt", true);
+
+      expect(componentJson.outputFiles[0].dst[0].forceCopy).to.be.true;
+      expect(componentJson.outputFiles[0].dst[1].forceCopy).to.be.false;
+      expect(writeComponentJsonStub.calledOnce).to.be.true;
+    });
+    it("should set forceCopy to false on specified dst connection", async ()=>{
+      getComponentDirStub.resolves("/path/to/component");
+      const componentJson = {
+        name: "testComponent",
+        outputFiles: [
+          {
+            name: "output.txt",
+            dst: [{ dstNode: "comp1", dstName: "input1.txt", forceCopy: true }]
+          }
+        ]
+      };
+      readComponentJsonStub.resolves(componentJson);
+      writeComponentJsonStub.resolves();
+
+      await toggleOutputFileForceCopy("/path/to/project", "id123", "output.txt", "comp1", "input1.txt", false);
+
+      expect(componentJson.outputFiles[0].dst[0].forceCopy).to.be.false;
+      expect(writeComponentJsonStub.calledOnce).to.be.true;
+    });
+    it("should reject if outputFile is not found", async ()=>{
+      getComponentDirStub.resolves("/path/to/component");
+      const componentJson = {
+        name: "testComponent",
+        outputFiles: [{ name: "output.txt", dst: [] }]
+      };
+      readComponentJsonStub.resolves(componentJson);
+
+      await expect(toggleOutputFileForceCopy("/path/to/project", "id123", "nonexistent.txt", "comp1", "input1.txt", true))
+        .to.be.rejectedWith("outputFile nonexistent.txt not found");
+    });
+    it("should reject if dst connection is not found", async ()=>{
+      getComponentDirStub.resolves("/path/to/component");
+      const componentJson = {
+        name: "testComponent",
+        outputFiles: [{ name: "output.txt", dst: [{ dstNode: "comp1", dstName: "input1.txt", forceCopy: false }] }]
+      };
+      readComponentJsonStub.resolves(componentJson);
+
+      await expect(toggleOutputFileForceCopy("/path/to/project", "id123", "output.txt", "comp2", "input2.txt", true))
+        .to.be.rejectedWith("dst connection to comp2:input2.txt not found");
     });
   });
 });

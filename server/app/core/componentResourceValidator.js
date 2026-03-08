@@ -8,7 +8,7 @@ import path from "path";
 import { minimatch } from "minimatch";
 import { isValidInputFilename, isValidOutputFilename } from "../lib/utility.js";
 import { getComponentDir } from "./componentJsonIO.js";
-import { ValidationError } from "../lib/validationError.js";
+import { createValidationError } from "../lib/validationError.js";
 
 const _internal = {
   getComponentDir,
@@ -18,19 +18,19 @@ const _internal = {
 /**
  * validate inputFiles
  * @param {object} component - any component object which has inputFiles prop
- * @returns {ValidationError[]} - array of validation errors; empty array means valid
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means valid
  */
 export async function validateInputFiles(component) {
   const errors = [];
   for (const inputFile of component.inputFiles) {
     const filename = inputFile.name;
     if (!isValidInputFilename(filename)) {
-      errors.push(new ValidationError(`'${filename}' is not allowed as input file.`));
+      errors.push(createValidationError(`'${filename}' is not allowed as input file.`));
     } else if (inputFile.src.length > 1 && !(filename[filename.length - 1] === "/" || filename[filename.length - 1] === "\\")) {
-      errors.push(new ValidationError(`inputFile '${inputFile.name}' data type is 'file' but it has two or more outputFiles.`));
+      errors.push(createValidationError(`inputFile '${inputFile.name}' data type is 'file' but it has two or more outputFiles.`));
     }
     if (inputFile.mandatory === true && inputFile.src.length === 0) {
-      errors.push(new ValidationError(`mandatory inputFile '${inputFile.name}' is not connected`));
+      errors.push(createValidationError(`mandatory inputFile '${inputFile.name}' is not connected`));
     }
   }
   return errors;
@@ -39,14 +39,14 @@ export async function validateInputFiles(component) {
 /**
  * validate outputFiles
  * @param {object} component - any component object which has outputFiles prop
- * @returns {ValidationError[]} - array of validation errors; empty array means valid
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means valid
  */
 export async function validateOutputFiles(component) {
   const errors = [];
   for (const outputFile of component.outputFiles) {
     const filename = outputFile.name;
     if (!isValidOutputFilename(filename)) {
-      errors.push(new ValidationError(`'${filename}' is not allowed as output filename.`));
+      errors.push(createValidationError(`'${filename}' is not allowed as output filename.`));
     }
   }
   return errors;
@@ -55,7 +55,7 @@ export async function validateOutputFiles(component) {
 /**
  * check if keep property has valid value
  * @param {object} component - component which will be tested
- * @returns {ValidationError[]} - array of validation errors; empty array means valid
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means valid
  */
 export async function validateKeepProp(component) {
   if (Object.prototype.hasOwnProperty.call(component, "keep")) {
@@ -63,7 +63,7 @@ export async function validateKeepProp(component) {
       return [];
     }
     if (!(Number.isInteger(component.keep) && component.keep >= 0)) {
-      return [new ValidationError(`keep must be positive integer`)];
+      return [createValidationError(`keep must be positive integer`)];
     }
   }
   return [];
@@ -73,11 +73,11 @@ export async function validateKeepProp(component) {
  * check if condition property has valid value
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component which will be tested
- * @returns {ValidationError[]} - array of validation errors; empty array means valid
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means valid
  */
 export async function validateConditionalCheck(projectRootDir, component) {
   if (typeof component.condition !== "string") {
-    return [new ValidationError(`condition is not specified`)];
+    return [createValidationError(`condition is not specified`)];
   }
   const componentDir = await _internal.getComponentDir(projectRootDir, component.ID, true);
   let stat;
@@ -91,7 +91,7 @@ export async function validateConditionalCheck(projectRootDir, component) {
   }
   if (stat && !stat.isFile()) {
     const filename = path.resolve(componentDir, component.condition);
-    return [new ValidationError(`condition is exist but it is not file ${filename}`)];
+    return [createValidationError(`condition is exist but it is not file ${filename}`)];
   }
   //if the file which name is component.condition does not exists
   //component.condition will be eval as expression of javascript
@@ -105,7 +105,7 @@ export async function validateConditionalCheck(projectRootDir, component) {
  * This is an ignoreable warning — the user may intentionally want the incoming file to replace a local one.
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component which will be tested
- * @returns {ValidationError[]} - array of ignoreable validation errors; empty array means no conflict
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of ignoreable validation errors; empty array means no conflict
  */
 export async function validateInputFileOverwrite(projectRootDir, component) {
   const errors = [];
@@ -124,7 +124,7 @@ export async function validateInputFileOverwrite(projectRootDir, component) {
       }
     }
     if (stat) {
-      errors.push(new ValidationError(
+      errors.push(createValidationError(
         `inputFile '${inputFile.name}' will overwrite an existing local file`,
         { ignoreable: true }
       ));
@@ -157,7 +157,7 @@ function couldConflict(destA, destB) {
  * detected as potentially conflicting.
  * This is an ignoreable warning — the user may intentionally accept the last-write-wins behaviour.
  * @param {object} component - component which will be tested
- * @returns {ValidationError[]} - array of ignoreable validation errors; empty array means no conflict
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of ignoreable validation errors; empty array means no conflict
  */
 export async function validateInputFileRaceCondition(component) {
   const errors = [];
@@ -183,7 +183,7 @@ export async function validateInputFileRaceCondition(component) {
         const key = `${a.label}|${b.label}`;
         if (!reported.has(key)) {
           reported.add(key);
-          errors.push(new ValidationError(
+          errors.push(createValidationError(
             `incoming file '${a.dest}' from '${a.label}' and '${b.dest}' from '${b.label}' may conflict — race condition possible`,
             { ignoreable: true }
           ));

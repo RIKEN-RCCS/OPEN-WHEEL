@@ -9,7 +9,7 @@ import { remoteHost } from "../db/db.js";
 import { jobScheduler } from "../db/db.js";
 import { checkScript, checkChecker, checkSourceScript } from "./fileValidator.js";
 import { validateConditionalCheck } from "./componentResourceValidator.js";
-import { ValidationError } from "../lib/validationError.js";
+import { createValidationError } from "../lib/validationError.js";
 
 const _internal = {
   isInitialComponent,
@@ -21,21 +21,21 @@ const _internal = {
  * check if task component has valid values
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component which will be tested
- * @returns {ValidationError[]} - array of validation errors; empty array means valid
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means valid
  */
 export async function validateTask(projectRootDir, component) {
   const errors = [];
   if (component.name === null) {
-    errors.push(new ValidationError(`illegal path`));
+    errors.push(createValidationError(`illegal path`));
     return errors;
   }
   if (!isLocal(component)) {
     const hostinfo = _internal.remoteHost.query("name", component.host);
     if (typeof hostinfo === "undefined") {
-      errors.push(new ValidationError(`remote host setting for ${component.host} not found`));
+      errors.push(createValidationError(`remote host setting for ${component.host} not found`));
     } else if (component.useJobScheduler) {
       if (!Object.keys(_internal.jobScheduler).includes(hostinfo.jobScheduler)) {
-        errors.push(new ValidationError(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
+        errors.push(createValidationError(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
       } else if (component.submitOption) {
         const optList = String(_internal.jobScheduler[hostinfo.jobScheduler].queueOpt).split(" ");
         if (optList.map((opt)=>{
@@ -43,7 +43,7 @@ export async function validateTask(projectRootDir, component) {
         }).every((i)=>{
           return i >= 0;
         })) {
-          errors.push(new ValidationError(`submit option duplicate queue option : ${_internal.jobScheduler[hostinfo.jobScheduler].queueOpt}`));
+          errors.push(createValidationError(`submit option duplicate queue option : ${_internal.jobScheduler[hostinfo.jobScheduler].queueOpt}`));
         }
       }
     }
@@ -52,19 +52,19 @@ export async function validateTask(projectRootDir, component) {
     try {
       await checkSourceScript(projectRootDir, component);
     } catch (err) {
-      errors.push(new ValidationError(err.message));
+      errors.push(createValidationError(err.message));
     }
   }
   try {
     await checkScript(projectRootDir, component);
   } catch (err) {
-    errors.push(new ValidationError(err.message));
+    errors.push(createValidationError(err.message));
   }
   if (component.checker) {
     try {
       await checkChecker(projectRootDir, component);
     } catch (err) {
-      errors.push(new ValidationError(err.message));
+      errors.push(createValidationError(err.message));
     }
   }
   return errors;
@@ -74,16 +74,16 @@ export async function validateTask(projectRootDir, component) {
  * check if stepjobTask component has valid values
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component which will be tested
- * @returns {ValidationError[]} - array of validation errors; empty array means valid
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means valid
  */
 export async function validateStepjobTask(projectRootDir, component) {
   const errors = [];
   const isInitial = await _internal.isInitialComponent(projectRootDir, component);
   if (component.name === null) {
-    errors.push(new ValidationError(`illegal path`));
+    errors.push(createValidationError(`illegal path`));
   }
   if (component.useDependency && isInitial) {
-    errors.push(new ValidationError("initial stepjobTask cannot specified the Dependency form"));
+    errors.push(createValidationError("initial stepjobTask cannot specified the Dependency form"));
   }
   if (errors.length > 0) {
     return errors;
@@ -91,7 +91,7 @@ export async function validateStepjobTask(projectRootDir, component) {
   try {
     await checkScript(projectRootDir, component);
   } catch (err) {
-    errors.push(new ValidationError(err.message));
+    errors.push(createValidationError(err.message));
   }
   return errors;
 }
@@ -100,33 +100,33 @@ export async function validateStepjobTask(projectRootDir, component) {
  * check if stepjob component has valid values
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component which will be tested
- * @returns {ValidationError[]} - array of validation errors; empty array means valid
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means valid
  */
 export async function validateStepjob(projectRootDir, component) {
   const errors = [];
   if (!component.useJobScheduler) {
-    errors.push(new ValidationError(`useJobScheduler must be set`));
+    errors.push(createValidationError(`useJobScheduler must be set`));
   }
   if (isLocal(component)) {
-    errors.push(new ValidationError("stepjob is only supported on remotehost"));
+    errors.push(createValidationError("stepjob is only supported on remotehost"));
     return errors;
   }
 
   const hostinfo = _internal.remoteHost.query("name", component.host);
   if (typeof hostinfo === "undefined") {
-    errors.push(new ValidationError(`remote host setting for ${component.host} not found`));
+    errors.push(createValidationError(`remote host setting for ${component.host} not found`));
     return errors;
   }
   if (!Object.keys(_internal.jobScheduler).includes(hostinfo.jobScheduler)) {
-    errors.push(new ValidationError(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
+    errors.push(createValidationError(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
     return errors;
   }
   const setJobScheduler = _internal.jobScheduler[hostinfo.jobScheduler];
   if (!setJobScheduler.supportStepjob) {
-    errors.push(new ValidationError(`job scheduler (${hostinfo.jobScheduler}) does not support stepjob`));
+    errors.push(createValidationError(`job scheduler (${hostinfo.jobScheduler}) does not support stepjob`));
   }
   if (!hostinfo.useStepjob) {
-    errors.push(new ValidationError(`${hostinfo.name} does not set to use stepjob`));
+    errors.push(createValidationError(`${hostinfo.name} does not set to use stepjob`));
   }
   return errors;
 }
@@ -135,53 +135,53 @@ export async function validateStepjob(projectRootDir, component) {
  * check if bulkjobTask component has valid values
  * @param {string} projectRootDir - project's root path
  * @param {object} component - component which will be tested
- * @returns {ValidationError[]} - array of validation errors; empty array means valid
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means valid
  */
 export async function validateBulkjobTask(projectRootDir, component) {
   const errors = [];
   if (component.name === null) {
-    errors.push(new ValidationError(`illegal path`));
+    errors.push(createValidationError(`illegal path`));
     return errors;
   }
   if (!component.useJobScheduler) {
-    errors.push(new ValidationError(`useJobScheduler must be set`));
+    errors.push(createValidationError(`useJobScheduler must be set`));
   }
   if (isLocal(component)) {
-    errors.push(new ValidationError("bulkjobTask is only supported on remotehost"));
+    errors.push(createValidationError("bulkjobTask is only supported on remotehost"));
     return errors;
   }
   const hostinfo = _internal.remoteHost.query("name", component.host);
   if (typeof hostinfo === "undefined") {
-    errors.push(new ValidationError(`remote host setting for ${component.host} not found`));
+    errors.push(createValidationError(`remote host setting for ${component.host} not found`));
     return errors;
   }
   if (!Object.keys(_internal.jobScheduler).includes(hostinfo.jobScheduler)) {
-    errors.push(new ValidationError(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
+    errors.push(createValidationError(`job scheduler for ${hostinfo.name} (${hostinfo.jobScheduler}) is not supported`));
     return errors;
   }
   const setJobScheduler = _internal.jobScheduler[hostinfo.jobScheduler];
   if (!setJobScheduler.supportBulkjob) {
-    errors.push(new ValidationError(`job scheduler (${hostinfo.jobScheduler}) does not support bulkjob`));
+    errors.push(createValidationError(`job scheduler (${hostinfo.jobScheduler}) does not support bulkjob`));
   }
   if (!hostinfo.useBulkjob) {
-    errors.push(new ValidationError(`${hostinfo.name} does not set to use bulkjob`));
+    errors.push(createValidationError(`${hostinfo.name} does not set to use bulkjob`));
   }
 
   if (component.usePSSettingFile === true) {
     if (typeof component.parameterFile !== "string") {
-      errors.push(new ValidationError(`usePSSettingFile is set but parameter setting file is not specified`));
+      errors.push(createValidationError(`usePSSettingFile is set but parameter setting file is not specified`));
     }
   } else {
     if (typeof component.startBulkNumber !== "number") {
-      errors.push(new ValidationError(`startBulkNumber must be specified`));
+      errors.push(createValidationError(`startBulkNumber must be specified`));
     } else if (!(Number.isInteger(component.startBulkNumber) && component.startBulkNumber >= 0)) {
-      errors.push(new ValidationError(`startBulkNumber must be integer and 0 or more`));
+      errors.push(createValidationError(`startBulkNumber must be integer and 0 or more`));
     }
 
     if (typeof component.endBulkNumber !== "number") {
-      errors.push(new ValidationError(`endBulkNumber must be specified`));
+      errors.push(createValidationError(`endBulkNumber must be specified`));
     } else if (!(Number.isInteger(component.endBulkNumber) && component.endBulkNumber > component.startBulkNumber)) {
-      errors.push(new ValidationError(`endBulkNumber must be integer and greater than startBulkNumber`));
+      errors.push(createValidationError(`endBulkNumber must be integer and greater than startBulkNumber`));
     }
   }
 
@@ -192,7 +192,7 @@ export async function validateBulkjobTask(projectRootDir, component) {
   try {
     await checkScript(projectRootDir, component);
   } catch (err) {
-    errors.push(new ValidationError(err.message));
+    errors.push(createValidationError(err.message));
   }
   return errors;
 }

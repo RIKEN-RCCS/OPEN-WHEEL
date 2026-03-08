@@ -215,6 +215,31 @@ export async function toggleInputFileMandatory(projectRootDir, ID, index, mandat
 }
 
 /**
+ * toggle forceCopy flag on a specific outputFile dst connection
+ * @param {string} projectRootDir - project's root path
+ * @param {string} ID - source component ID
+ * @param {string} srcName - outputFile name
+ * @param {string} dstNode - destination component ID
+ * @param {string} dstName - destination inputFile name
+ * @param {boolean} forceCopy - true to use file copy, false to use symlink
+ * @returns {Promise} - resolved when update is done
+ */
+export async function toggleOutputFileForceCopy(projectRootDir, ID, srcName, dstNode, dstName, forceCopy) {
+  const componentDir = await _internal.getComponentDir(projectRootDir, ID, true);
+  const componentJson = await _internal.readComponentJson(componentDir);
+  const outputFile = componentJson.outputFiles.find((o)=>{ return o.name === srcName; });
+  if (!outputFile) {
+    return Promise.reject(new Error(`outputFile ${srcName} not found`));
+  }
+  const dstEntry = outputFile.dst.find((d)=>{ return d.dstNode === dstNode && d.dstName === dstName; });
+  if (!dstEntry) {
+    return Promise.reject(new Error(`dst connection to ${dstNode}:${dstName} not found`));
+  }
+  dstEntry.forceCopy = forceCopy;
+  return _internal.writeComponentJson(projectRootDir, componentDir, componentJson);
+}
+
+/**
  * rename outputFile
  * @param {string} projectRootDir - project's root path
  * @param {string} ID - component ID

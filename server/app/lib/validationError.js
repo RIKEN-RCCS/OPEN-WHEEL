@@ -5,20 +5,14 @@
  */
 
 /**
- * Represents a validation error with an optional ignoreable flag.
- * All validators in WHEEL use this class instead of plain Error objects so that
- * the client can distinguish between hard errors and soft warnings that the user
- * may choose to ignore.
+ * Create a plain validation error object.
+ * Returns a plain JS object so that it serialises correctly over socket.io
+ * (Error subclasses lose their non-enumerable `message` property during JSON serialisation).
+ * @param {string} message - Human-readable description of the validation failure
+ * @param {object} [options] - Additional options
+ * @param {boolean} [options.ignoreable] - Whether the user is allowed to ignore this error and proceed anyway
+ * @returns {{ message: string, ignoreable: boolean }}
  */
-export class ValidationError extends Error {
-  /**
-   * @param {string} message - Human-readable description of the validation failure
-   * @param {object} [options] - Additional options
-   * @param {boolean} [options.ignoreable] - Whether the user is allowed to ignore this error and proceed anyway
-   */
-  constructor(message, { ignoreable = false } = {}) {
-    super(message);
-    this.name = "ValidationError";
-    this.ignoreable = ignoreable;
-  }
+export function createValidationError(message, { ignoreable = false } = {}) {
+  return { message, ignoreable };
 }

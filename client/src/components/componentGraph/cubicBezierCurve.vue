@@ -17,6 +17,7 @@
       :d="cmd"
       :stroke="strokeColor"
       :stroke-width="width"
+      :stroke-dasharray="strokeDasharray"
       fill="transparent"
       data-cy="cubic-bezier-path"
       pointer-events="none"
@@ -51,6 +52,10 @@ export default {
     width: {
       type: [Number, String],
       default: "1px"
+    },
+    strokeDasharray: {
+      type: String,
+      default: ""
     }
   },
   emits: ["contextmenu"],

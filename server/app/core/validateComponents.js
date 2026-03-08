@@ -12,7 +12,7 @@ import { validateTask, validateStepjobTask, validateStepjob, validateBulkjobTask
 import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles, validateInputFileOverwrite, validateInputFileRaceCondition } from "./componentResourceValidator.js";
 import { validateForLoop, validateForeach, validateParameterStudy, validateStorage } from "./componentTypeValidator.js";
 import { getCycleGraph, getNextComponents } from "./dependencyGraphValidator.js";
-import { ValidationError } from "../lib/validationError.js";
+import { createValidationError } from "../lib/validationError.js";
 
 const _internal = {
   getLogger,
@@ -36,9 +36,9 @@ const _internal = {
  * validate component which can be run or not
  * @param {string} projectRootDir - project's root path
  * @param {object} component - target component
- * @returns {ValidationError[]} - array of validation errors; empty array means the component is valid
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means the component is valid
  *
- * please note, all functions which is called from validateComponent, must return ValidationError[]
+ * please note, all functions which is called from validateComponent, must return { message, ignoreable }[]
  * (resolving with an array). Do NOT reject for validation errors - only for unexpected errors.
  */
 export async function validateComponent(projectRootDir, component) {
@@ -136,7 +136,7 @@ export async function recursiveValidateComponents(projectRootDir, parentID, repo
 
   if (!hasInitialNode) {
     const name = await _internal.getComponentFullName(projectRootDir, parentID);
-    report.push({ ID: parentID, name, errors: [new ValidationError("no initial component in children")] });
+    report.push({ ID: parentID, name, errors: [createValidationError("no initial component in children")] });
   }
   const invalidComponentIDs = await checkComponentDependency(projectRootDir, parentID);
 
@@ -144,7 +144,7 @@ export async function recursiveValidateComponents(projectRootDir, parentID, repo
     const tmp = await Promise.all(
       invalidComponentIDs.map(async (ID)=>{
         const name = await _internal.getComponentFullName(projectRootDir, ID);
-        return { ID, name, errors: [new ValidationError("cycle graph detected")] };
+        return { ID, name, errors: [createValidationError("cycle graph detected")] };
       })
     );
     report.push(...tmp);
@@ -157,7 +157,7 @@ export async function recursiveValidateComponents(projectRootDir, parentID, repo
  * validate components under start component
  * @param {string} projectRootDir - project's root path
  * @param {string} startComponentID - ID of start component for recursive search point
- * @returns {object[]} - array of { ID, name, errors: ValidationError[] } for each invalid component
+ * @returns {object[]} - array of { ID, name, errors: Array<{message: string, ignoreable: boolean}> } for each invalid component
  */
 export async function validateComponents(projectRootDir, startComponentID) {
   let parentID;

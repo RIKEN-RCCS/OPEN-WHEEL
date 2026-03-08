@@ -199,7 +199,7 @@ describe("componentLinks tests", ()=>{
 
       await addFileLink("/path/to/project", "src123", "output.txt", "dst123", "input.txt");
 
-      expect(srcJson.outputFiles[0].dst).to.deep.include({ dstNode: "dst123", dstName: "input.txt" });
+      expect(srcJson.outputFiles[0].dst).to.deep.include({ dstNode: "dst123", dstName: "input.txt", forceCopy: false });
       expect(dstJson.inputFiles[0].src).to.deep.include({ srcNode: "src123", srcName: "output.txt" });
     });
   });
@@ -253,7 +253,7 @@ describe("componentLinks tests", ()=>{
 
       await addFileLinkToParent("/path/to/project", "child123", "output.txt", "parent_output.txt");
 
-      expect(componentJson.outputFiles[0].dst).to.deep.include({ dstNode: "parent123", dstName: "parent_output.txt" });
+      expect(componentJson.outputFiles[0].dst).to.deep.include({ dstNode: "parent123", dstName: "parent_output.txt", forceCopy: false });
       expect(parentJson.outputFiles[0].origin).to.deep.include({ srcNode: "child123", srcName: "output.txt" });
     });
   });
@@ -325,7 +325,7 @@ describe("#addFileLinkBetweenSiblings", ()=>{
 
     await addFileLinkBetweenSiblings(projectRootDir, srcNode, srcName, dstNode, dstName);
 
-    expect(srcComponentJson.outputFiles[0].dst).to.deep.include({ dstNode, dstName });
+    expect(srcComponentJson.outputFiles[0].dst).to.deep.include({ dstNode, dstName, forceCopy: false });
 
     expect(dstComponentJson.inputFiles).to.deep.include({ name: dstName, src: [{ srcNode, srcName }] });
 
@@ -343,7 +343,7 @@ describe("#addFileLinkBetweenSiblings", ()=>{
 
     const srcComponentJson = {
       ID: srcNode,
-      outputFiles: [{ name: srcName, dst: [{ dstNode, dstName }] }]
+      outputFiles: [{ name: srcName, dst: [{ dstNode, dstName, forceCopy: false }] }]
     };
 
     const dstComponentJson = {
@@ -360,8 +360,8 @@ describe("#addFileLinkBetweenSiblings", ()=>{
 
     expect(srcComponentJson.outputFiles[0].dst).to.have.length(2);
     expect(srcComponentJson.outputFiles[0].dst).to.deep.equal([
-      { dstNode, dstName },
-      { dstNode, dstName }
+      { dstNode, dstName, forceCopy: false },
+      { dstNode, dstName, forceCopy: false }
     ]);
 
     expect(dstComponentJson.inputFiles).to.have.length(1);
