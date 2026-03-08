@@ -11,8 +11,31 @@
     :show-select="selectable"
     :single-select="true"
   >
-    <template #headers>
+    <template
+      v-if="!showHeaders"
+      #headers
+    >
       {{ label }}
+    </template>
+    <template
+      v-for="header in headersWithTooltip"
+      :key="header.key"
+      #[`header.${header.key}`]
+    >
+      {{ header.title }}
+      <v-tooltip
+        :text="header.tooltip"
+        location="top"
+      >
+        <template #activator="{ props: tooltipProps }">
+          <v-icon
+            v-bind="tooltipProps"
+            size="x-small"
+          >
+            mdi-help-circle-outline
+          </v-icon>
+        </template>
+      </v-tooltip>
     </template>
     <template #item.name="props">
       <inline-editor
@@ -156,6 +179,10 @@ export default {
     booleanColumns: {
       type: Array,
       default: ()=>{ return []; }
+    },
+    showHeaders: {
+      type: Boolean,
+      default: false
     }
   },
   emits: [
@@ -189,6 +216,11 @@ export default {
       rt.push({ key: "actions", title: "", sortable: false });
       rt[0].editable = true;
       return rt;
+    },
+    headersWithTooltip: function () {
+      return this.headers.filter((e)=>{
+        return e.tooltip;
+      });
     },
     editableRows: function () {
       return this.headersWithActions

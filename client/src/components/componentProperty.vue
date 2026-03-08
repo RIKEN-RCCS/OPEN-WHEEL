@@ -374,6 +374,7 @@
               :edit-dialog-min-width="propWidth"
               :headers="inputFileHeaders"
               :boolean-columns="['mandatory']"
+              :show-headers="true"
               data-cy="component_property-input_files_viewer-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
@@ -579,6 +580,7 @@
               :edit-dialog-min-width="propWidth"
               :headers="inputFileHeaders"
               :boolean-columns="['mandatory']"
+              :show-headers="true"
               data-cy="component_property-input_files-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
@@ -741,7 +743,7 @@ export default {
       },
       inputFileHeaders: [
         { key: "name", sortable: false },
-        { key: "mandatory", title: "mandatory", sortable: false }
+        { key: "mandatory", title: "mandatory", sortable: false, tooltip: "fail if missing" }
       ],
       outputFileTemplate: {
         name: "",
