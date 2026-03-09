@@ -432,7 +432,7 @@ describe("components", ()=>{
   該当コンポーネント削除確認
   試験確認内容：コンポーネントが削除されていることを確認
      */
-    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.deleteComponent(PS_NAME_0);
       cy.get("[data-cy=\"graph-component-row\"]").contains(PS_NAME_0)
@@ -595,12 +595,12 @@ describe("components", ()=>{
   targetFiles入力テキストボックス表示確認
   試験確認内容：targetFiles入力テキストボックスが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-targetFiles入力テキストボックス表示確認-targetFiles入力テキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-targetFiles入力テキストボックス表示確認-targetFiles入力テキストボックスが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").should("be.visible");
     });
@@ -612,12 +612,12 @@ describe("components", ()=>{
   targetFiles入力テキストボックス入力確認
   試験確認内容：targetFilesテキストボックスに入力した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-targetFiles入力テキストボックス入力確認-targetFilesテキストボックスに入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-targetFiles入力テキストボックス入力確認-targetFilesテキストボックスに入力した値が表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").find("input")
@@ -636,7 +636,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
       cy.get("[data-cy=\"target_files-ok-btn\"]").click();
@@ -656,7 +656,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
       cy.get("[data-cy=\"target_files-ok-btn\"]").click();
@@ -677,7 +677,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
       cy.get("[data-cy=\"target_files-ok-btn\"]").click();
@@ -698,13 +698,13 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
       cy.get("[data-cy=\"target_files-ok-btn\"]").click();
       cy.get("[data-cy=\"rapid-save_all_files-btn\"]").click(); //保存ボタンクリック
       cy.get("[data-cy=\"workflow-graph_view-btn\"]").click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-data-data_table\"]").contains("run.sh")
         .should("exist");
     });
@@ -716,12 +716,12 @@ describe("components", ()=>{
   parameters->current selected text 表示確認
   試験確認内容：current selected textテキストボックスが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-parameters->current selected text 表示確認-current selected textテキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-parameters->current selected text 表示確認-current selected textテキストボックスが表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"parameter-selected_text-text_field\"]").should("be.visible");
     });
 
@@ -737,7 +737,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
       cy.get("[data-cy=\"target_files-ok-btn\"]").click();
@@ -754,12 +754,12 @@ describe("components", ()=>{
   parameters->+ add new parameter ボタン表示確認
   試験確認内容：parameter設定ダイアログが表示されることを確認
      */
-    it.skip("プロパティ設定確認-parameters->+ add new parameter ボタン表示確認-parameter設定ダイアログが表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-parameters->+ add new parameter ボタン表示確認-parameter設定ダイアログが表示されることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
       cy.get("[data-cy=\"parameter-parameter_setting-select\"]").should("be.visible");
     });
@@ -771,12 +771,12 @@ describe("components", ()=>{
   min-max-step表示確認
   試験確認内容：min-max-step入力フォームが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-min-max-step表示確認-min-max-step入力フォームが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-min-max-step表示確認-min-max-step入力フォームが表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
       cy.get("[data-cy=\"parameter-min-text_field\"]").should("be.visible");
     });
@@ -788,12 +788,12 @@ describe("components", ()=>{
   min-max-step入力確認
   試験確認内容：min-max-step入力フォームに入力した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-min-max-step入力確認-min-max-step入力フォームに入力した値が表示されていることを確認認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-min-max-step入力確認-min-max-step入力フォームに入力した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
       cy.get("[data-cy=\"parameter-min-text_field\"]").clear()
         .type(1)
@@ -821,7 +821,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       //ターゲットファイル設定
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
@@ -849,12 +849,12 @@ describe("components", ()=>{
   list表示確認
   試験確認内容：list入力フォームが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-list表示確認-list入力フォームが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-list表示確認-list入力フォームが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
       let targetDropBoxCy = "[data-cy=\"parameter-parameter_setting-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 1, "list");
@@ -868,12 +868,12 @@ describe("components", ()=>{
   list入力確認
   試験確認内容：list入力フォームに入力した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-list入力確認-list入力フォームに入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-list入力確認-list入力フォームに入力した値が表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
       let targetDropBoxCy = "[data-cy=\"parameter-parameter_setting-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 1, "list");
@@ -894,7 +894,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       //ターゲットファイル設定
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
@@ -918,12 +918,12 @@ describe("components", ()=>{
   files表示確認
   試験確認内容：files入力フォームが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-files表示確認-files入力フォームが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-files表示確認-files入力フォームが表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
       let targetDropBoxCy = "[data-cy=\"parameter-parameter_setting-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 1, "files");
@@ -937,12 +937,12 @@ describe("components", ()=>{
   files入力確認
   試験確認内容：files入力フォームに入力した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-files入力確認-files入力フォームに入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-files入力確認-files入力フォームに入力した値が表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
       let targetDropBoxCy = "[data-cy=\"parameter-parameter_setting-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 1, "files");
@@ -963,7 +963,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       //ターゲットファイル設定
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
@@ -992,7 +992,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(0)
         .click();
       cy.contains("destination node").should("exist");
@@ -1005,12 +1005,12 @@ describe("components", ()=>{
   scatter-> srcName表示確認
   試験確認内容：srcNameテキストボックスが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-scatter-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-scatter-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(0)
         .click();
       cy.get("[data-cy=\"gather_scatter-srcName_text_field\"]").should("be.visible");
@@ -1023,12 +1023,12 @@ describe("components", ()=>{
   scatter->srcName入力確認
   試験確認内容：srcNameテキストボックスに入力した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(0)
         .click();
       cy.get("[data-cy=\"gather_scatter-srcName_text_field\"]").type("testSrcName")
@@ -1043,12 +1043,12 @@ describe("components", ()=>{
   scatter->dstName表示確認
   試験確認内容：dstNameテキストボックスが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-scatter->dstName表示確認-dstNameテキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-scatter->dstName表示確認-dstNameテキストボックスが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(0)
         .click();
       cy.get("[data-cy=\"gather_scatter-dstName_text_field\"]").should("be.visible");
@@ -1061,12 +1061,12 @@ describe("components", ()=>{
   scatter->dstName入力確認
   試験確認内容：dstNameテキストボックスに入力した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-scatter->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-scatter->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(0)
         .click();
       cy.get("[data-cy=\"gather_scatter-dstName_text_field\"]").type("testDstName")
@@ -1086,7 +1086,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(0)
         .click();
       cy.get("[data-cy=\"gather_scatter-srcName_text_field\"]").type("testSrcName");
@@ -1110,7 +1110,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(1)
         .click();
       cy.contains("source node").should("exist");
@@ -1123,12 +1123,12 @@ describe("components", ()=>{
  gather-> srcName表示確認
  試験確認内容：srcNameテキストボックスが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-gather-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-gather-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(1)
         .click();
       cy.get("[data-cy=\"gather_scatter-srcName_text_field\"]").should("be.visible");
@@ -1141,12 +1141,12 @@ describe("components", ()=>{
   gather->srcName入力確認
   試験確認内容：srcNameテキストボックスに入力した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(1)
         .click();
       cy.get("[data-cy=\"gather_scatter-srcName_text_field\"]").type("testSrcName")
@@ -1161,12 +1161,12 @@ describe("components", ()=>{
   gather->dstName表示確認
   試験確認内容：dstNameテキストボックスが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-gather->dstName表示確認-dstNameテキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-gather->dstName表示確認-dstNameテキストボックスが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(1)
         .click();
       cy.get("[data-cy=\"gather_scatter-dstName_text_field\"]").should("be.visible");
@@ -1179,12 +1179,12 @@ describe("components", ()=>{
   gather->dstName入力確認
   試験確認内容：dstNameテキストボックスに入力した値が表示されていることを確認
      */
-    it.skip("プロパティ設定確認-gather->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-gather->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(1)
         .click();
       cy.get("[data-cy=\"gather_scatter-dstName_text_field\"]").type("testDstName")
@@ -1199,12 +1199,12 @@ describe("components", ()=>{
   gather入力反映確認
   試験確認内容：srcName、dstNameテキストボックスに入力した値が反映されていることを確認
      */
-    it.skip("プロパティ設定確認-gather入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-gather入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", ()=>{ 
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
         .click();
-      cy.get("[data-cy=\"workflow-document_edit-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(1)
         .click();
       cy.get("[data-cy=\"gather_scatter-srcName_text_field\"]").type("testSrcName");
