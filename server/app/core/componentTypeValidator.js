@@ -6,7 +6,7 @@
 import fs from "fs-extra";
 import { remoteHost } from "../db/db.js";
 import { isLocal } from "../../../common/checkComponent.js";
-import { checkPSSettingFile } from "./fileValidator.js";
+import { checkPSSettingFile, checkPSNodeReferences } from "./fileValidator.js";
 import { createValidationError } from "../lib/validationError.js";
 
 const _internal = {
@@ -88,10 +88,11 @@ export async function validateStorage(component) {
 export async function validateParameterStudy(projectRootDir, component) {
   try {
     await checkPSSettingFile(projectRootDir, component);
-    return [];
   } catch (err) {
     return [createValidationError(err.message)];
   }
+  const nodeErrors = await checkPSNodeReferences(projectRootDir, component);
+  return nodeErrors;
 }
 
 export { _internal };

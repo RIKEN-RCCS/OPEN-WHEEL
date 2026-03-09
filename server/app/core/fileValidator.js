@@ -12,6 +12,7 @@ import { getComponentDir } from "./componentJsonIO.js";
 import { readJsonGreedy } from "./fileUtils.js";
 import { remoteHost } from "../db/db.js";
 import { getSsh, hasEntry } from "./sshManager.js";
+import { getChildren } from "./workflowUtil.js";
 
 const _internal = {
   getLogger,
@@ -19,7 +20,8 @@ const _internal = {
   readJsonGreedy,
   remoteHost,
   getSsh,
-  hasEntry
+  hasEntry,
+  getChildren
 };
 const logger = _internal.getLogger();
 
@@ -137,6 +139,34 @@ export async function checkPSSettingFile(projectRootDir, component) {
     return Promise.reject(err);
   }
   return true;
+}
+
+/**
+ * check if scatter/gather recipes in PS setting file reference existing child components
+ * @param {string} projectRootDir - project's root path
+ * @param {object} component - PS component which will be tested
+ * @returns {Promise<{ message: string, ignoreable: boolean }[]>} - array of validation errors; empty array means valid
+ */
+export async function checkPSNodeReferences(projectRootDir, component) {
+  const componentDir = await _internal.getComponentDir(projectRootDir, component.ID, true);
+  const filename = path.resolve(componentDir, component.parameterFile);
+  const psSettings = await _internal.readJsonGreedy(filename, 0);
+
+  const children = await _internal.getChildren(projectRootDir, component.ID, false);
+  const childIDs = new Set(children.map((c)=>{ return c.ID; }));
+
+  const errors = [];
+  for (const recipe of (psSettings.scatter || [])) {
+    if (recipe.dstNode && !childIDs.has(recipe.dstNode)) {
+      errors.push({ message: `scatter dstNode '${recipe.dstNode}' is not a child component of ${component.name}`, ignoreable: false });
+    }
+  }
+  for (const recipe of (psSettings.gather || [])) {
+    if (recipe.srcNode && !childIDs.has(recipe.srcNode)) {
+      errors.push({ message: `gather srcNode '${recipe.srcNode}' is not a child component of ${component.name}`, ignoreable: false });
+    }
+  }
+  return errors;
 }
 
 /**

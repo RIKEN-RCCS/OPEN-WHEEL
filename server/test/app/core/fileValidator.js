@@ -19,7 +19,7 @@ import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { setupTestDir } from "../../testUtil.js";
 
 //testee
-import { _internal, checkScript, checkPSSettingFile, checkSourceScript } from "../../../app/core/fileValidator.js";
+import { _internal, checkScript, checkPSSettingFile, checkPSNodeReferences, checkSourceScript } from "../../../app/core/fileValidator.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -290,6 +290,108 @@ describe("fileValidator UT", function () {
       await fs.writeFile(path.resolve(projectRootDir, ps.name, "syntax_error.json"), "{\"incomplete\": ");
 
       await expect(checkPSSettingFile(projectRootDir, ps)).to.be.rejectedWith(/parameter setting file is not JSON file/);
+    });
+  });
+
+  describe("checkPSNodeReferences", function () {
+    const psComponent = {
+      type: "parameterStudy",
+      ID: "ps-id-123",
+      name: "test-ps",
+      parameterFile: "params.json"
+    };
+    const child1 = { ID: "child1-id-abc", name: "task0" };
+    const child2 = { ID: "child2-id-def", name: "task1" };
+
+    beforeEach(function () {
+      sinon.stub(_internal, "getComponentDir").resolves("/fake/path/test-ps");
+      sinon.stub(_internal, "readJsonGreedy");
+      sinon.stub(_internal, "getChildren").resolves([child1, child2]);
+    });
+
+    it("should return empty array when scatter and gather are absent", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.be.an("array").that.is.empty;
+    });
+
+    it("should return empty array when scatter dstNode is a valid child ID", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        scatter: [{ srcName: "input.dat", dstNode: child1.ID, dstName: "input.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.be.an("array").that.is.empty;
+    });
+
+    it("should return error when scatter dstNode is not a valid child ID", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        scatter: [{ srcName: "input.dat", dstNode: "nonexistent-id", dstName: "input.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.have.lengthOf(1);
+      expect(errors[0].message).to.include("scatter dstNode");
+      expect(errors[0].message).to.include("nonexistent-id");
+      expect(errors[0].ignoreable).to.be.false;
+    });
+
+    it("should return empty array when gather srcNode is a valid child ID", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        gather: [{ srcName: "result.dat", srcNode: child2.ID, dstName: "result.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.be.an("array").that.is.empty;
+    });
+
+    it("should return error when gather srcNode is not a valid child ID", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        gather: [{ srcName: "result.dat", srcNode: "bad-node-id", dstName: "result.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.have.lengthOf(1);
+      expect(errors[0].message).to.include("gather srcNode");
+      expect(errors[0].message).to.include("bad-node-id");
+      expect(errors[0].ignoreable).to.be.false;
+    });
+
+    it("should return empty array when gather recipe has no srcNode (gather from PS root)", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        gather: [{ srcName: "result.dat", dstName: "result.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.be.an("array").that.is.empty;
+    });
+
+    it("should return multiple errors when multiple invalid node references exist", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        scatter: [{ srcName: "input.dat", dstNode: "bad-scatter-node", dstName: "input.dat" }],
+        gather: [{ srcName: "result.dat", srcNode: "bad-gather-node", dstName: "result.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.have.lengthOf(2);
+      expect(errors[0].message).to.include("scatter dstNode");
+      expect(errors[1].message).to.include("gather srcNode");
     });
   });
 });
