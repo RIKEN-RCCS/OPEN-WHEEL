@@ -42,7 +42,6 @@
             :start="item.srcPos"
             :end="item.dstPos"
             :box-height="item.boxHeight"
-            :dashed="!item.forceCopy"
             @open-context-menu="(e)=>{onConnectorRightClick(e, item)}"
           />
           <wheel-component
@@ -211,7 +210,7 @@ import ContextMenu from "../../components/componentGraph/contextMenu.vue";
 import ImportComponentDialog from "../../components/importComponentDialog.vue";
 import VueZoomable from "vue-zoomable";
 import "vue-zoomable/dist/style.css";
-import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor } from "../../lib/constants.json";
+import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor, fileLinkCopyColor, fileLinkRemoteSymlinkColor, fileLinkCrossBoundaryColor } from "../../lib/constants.json";
 import { calcBoxHeight, calcRecieverPos, calcSenderPos, calcElseSenderPos, calcFsenderPos, calcFreceiverPos } from "../../lib/utils.js";
 import { isContainer } from "../../lib/utility.js";
 import Debug from "debug";
@@ -259,7 +258,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState", "isComponentDragging", "copyInfo"]),
+    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState", "isComponentDragging", "copyInfo", "remoteHost"]),
     ...mapState({ currentZoomState: "currentZoom", currentPanState: "currentPan" }),
     ...mapGetters(["copiedComponentID", "cutComponentID"]),
     currentZoom: {
@@ -373,6 +372,7 @@ export default {
                   });
                 });
                 if (dstIndex !== -1) {
+                  const forceCopy = dst.forceCopy || false;
                   rt.push({
                     src: component.ID,
                     srcName: outputFile.name,
@@ -380,10 +380,10 @@ export default {
                     dst: dst.dstNode,
                     dstName: dst.dstName,
                     dstPos: calcFreceiverPos(dstComponent.pos, dstIndex),
-                    color: filePlugColor,
+                    color: this.fileLinkColor(forceCopy, component.host, dstComponent.host),
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
                     boxHeight,
-                    forceCopy: dst.forceCopy || false
+                    forceCopy
                   });
                 }
               } else if (dst.dstNode === "parent" || dst.dstNode === this.currentComponent.ID) {
@@ -397,6 +397,7 @@ export default {
                   });
                 });
                 if (dstIndex !== -1) {
+                  const forceCopy = dst.forceCopy || false;
                   rt.push({
                     src: component.ID,
                     srcName: outputFile.name,
@@ -404,10 +405,10 @@ export default {
                     dst: dst.dstNode,
                     dstName: dst.dstName,
                     dstPos: calcFreceiverPos(this.parentOutputFilePos, dstIndex),
-                    color: filePlugColor,
+                    color: this.fileLinkColor(forceCopy, component.host, this.currentComponent.host),
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
                     boxHeight,
-                    forceCopy: dst.forceCopy || false
+                    forceCopy
                   });
                 }
               }
@@ -437,7 +438,7 @@ export default {
                     dst: dst.dstNode,
                     dstName: dst.dstName,
                     dstPos: calcFreceiverPos(dstComponent.pos, dstIndex),
-                    color: filePlugColor,
+                    color: this.fileLinkColor(false, this.currentComponent.host, dstComponent.host),
                     key: `${this.currentComponent.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
                     boxHeight: 0,
                     forceCopy: false
@@ -460,6 +461,62 @@ export default {
     }
   },
   methods: {
+
+    /**
+     * Look up a remote host entry by component host name.
+     * @param {string} hostName - component host value
+     * @returns {object|null} host info object or null
+     */
+    getHostInfo(hostName) {
+      if (!Array.isArray(this.remoteHost) || !hostName || hostName === "localhost") {
+        return null;
+      }
+      return this.remoteHost.find((h)=>{
+        return h.name === hostName;
+      }) || null;
+    },
+
+    /**
+     * Determine the color of a file link connector based on its transfer type.
+     * @param {boolean} forceCopy - whether the link uses force copy
+     * @param {string|undefined} srcHost - host of the source component
+     * @param {string|undefined} dstHost - host of the destination component
+     * @returns {string} hex color string
+     */
+    fileLinkColor(forceCopy, srcHost, dstHost) {
+      const isRemote = (host)=>{
+        return host && host !== "localhost";
+      };
+      if (!isRemote(dstHost)) {
+        if (isRemote(srcHost)) {
+          //src is remote, dst is local → cross-boundary (download)
+          return fileLinkCrossBoundaryColor;
+        }
+        //both local → local symlink or local copy
+        return forceCopy ? fileLinkCopyColor : filePlugColor;
+      }
+      //dst is remote — check if src and dst share storage
+      if (srcHost === dstHost) {
+        //same remote host → share storage → symlink on remote (or remote copy)
+        return fileLinkRemoteSymlinkColor;
+      }
+      if (!isRemote(srcHost)) {
+        //src is localhost: check sharedWithLocalhost on dst host
+        const dstInfo = this.getHostInfo(dstHost);
+        if (dstInfo && dstInfo.sharedWithLocalhost) {
+          return fileLinkRemoteSymlinkColor;
+        }
+      } else {
+        //both remote, different hosts: check sharedHost arrangement
+        const srcInfo = this.getHostInfo(srcHost);
+        const dstInfo = this.getHostInfo(dstHost);
+        if (srcInfo && dstInfo && dstInfo.sharedHost === srcInfo.name) {
+          return fileLinkRemoteSymlinkColor;
+        }
+      }
+      //no shared storage → cross-boundary (upload, inter-remote transfer, or copy across boundary)
+      return fileLinkCrossBoundaryColor;
+    },
     panToShowAllComponent() {
       let minX = Infinity;
       let minY = Infinity;

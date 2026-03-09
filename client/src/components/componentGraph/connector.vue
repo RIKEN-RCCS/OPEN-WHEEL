@@ -3,7 +3,7 @@
     v-if="start.x !== end.x || start.y !== end.y"
     :stroke-color="color"
     :width="2"
-    :stroke-dasharray="dashed ? '8,5' : ''"
+    stroke-dasharray=""
     :start="start"
     :end="end"
     :control1="control[0]"
@@ -37,10 +37,6 @@ export default {
     color: {
       required: true,
       type: String
-    },
-    dashed: {
-      type: Boolean,
-      default: false
     }
   },
   emits: [
