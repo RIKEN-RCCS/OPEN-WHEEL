@@ -612,7 +612,7 @@ describe("components", ()=>{
   targetFiles入力テキストボックス入力確認
   試験確認内容：targetFilesテキストボックスに入力した値が表示されていることを確認
      */
-    it("プロパティ設定確認-targetFiles入力テキストボックス入力確認-targetFilesテキストボックスに入力した値が表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-targetFiles入力テキストボックス入力確認-targetFilesテキストボックスに入力した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -716,7 +716,7 @@ describe("components", ()=>{
   parameters->current selected text 表示確認
   試験確認内容：current selected textテキストボックスが表示されていることを確認
      */
-    it("プロパティ設定確認-parameters->current selected text 表示確認-current selected textテキストボックスが表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-parameters->current selected text 表示確認-current selected textテキストボックスが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -754,7 +754,7 @@ describe("components", ()=>{
   parameters->+ add new parameter ボタン表示確認
   試験確認内容：parameter設定ダイアログが表示されることを確認
      */
-    it("プロパティ設定確認-parameters->+ add new parameter ボタン表示確認-parameter設定ダイアログが表示されることを確認", ()=>{ 
+    it("プロパティ設定確認-parameters->+ add new parameter ボタン表示確認-parameter設定ダイアログが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -771,7 +771,7 @@ describe("components", ()=>{
   min-max-step表示確認
   試験確認内容：min-max-step入力フォームが表示されていることを確認
      */
-    it("プロパティ設定確認-min-max-step表示確認-min-max-step入力フォームが表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-min-max-step表示確認-min-max-step入力フォームが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -868,7 +868,7 @@ describe("components", ()=>{
   list入力確認
   試験確認内容：list入力フォームに入力した値が表示されていることを確認
      */
-    it("プロパティ設定確認-list入力確認-list入力フォームに入力した値が表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-list入力確認-list入力フォームに入力した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -918,7 +918,7 @@ describe("components", ()=>{
   files表示確認
   試験確認内容：files入力フォームが表示されていることを確認
      */
-    it("プロパティ設定確認-files表示確認-files入力フォームが表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-files表示確認-files入力フォームが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -937,7 +937,7 @@ describe("components", ()=>{
   files入力確認
   試験確認内容：files入力フォームに入力した値が表示されていることを確認
      */
-    it("プロパティ設定確認-files入力確認-files入力フォームに入力した値が表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-files入力確認-files入力フォームに入力した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -1005,7 +1005,7 @@ describe("components", ()=>{
   scatter-> srcName表示確認
   試験確認内容：srcNameテキストボックスが表示されていることを確認
      */
-    it("プロパティ設定確認-scatter-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-scatter-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -1023,7 +1023,7 @@ describe("components", ()=>{
   scatter->srcName入力確認
   試験確認内容：srcNameテキストボックスに入力した値が表示されていることを確認
      */
-    it("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -1061,7 +1061,7 @@ describe("components", ()=>{
   scatter->dstName入力確認
   試験確認内容：dstNameテキストボックスに入力した値が表示されていることを確認
      */
-    it("プロパティ設定確認-scatter->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-scatter->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -1123,7 +1123,7 @@ describe("components", ()=>{
  gather-> srcName表示確認
  試験確認内容：srcNameテキストボックスが表示されていることを確認
      */
-    it("プロパティ設定確認-gather-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-gather-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -1141,7 +1141,7 @@ describe("components", ()=>{
   gather->srcName入力確認
   試験確認内容：srcNameテキストボックスに入力した値が表示されていることを確認
      */
-    it("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -1179,7 +1179,7 @@ describe("components", ()=>{
   gather->dstName入力確認
   試験確認内容：dstNameテキストボックスに入力した値が表示されていることを確認
      */
-    it("プロパティ設定確認-gather->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-gather->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -1199,7 +1199,7 @@ describe("components", ()=>{
   gather入力反映確認
   試験確認内容：srcName、dstNameテキストボックスに入力した値が反映されていることを確認
      */
-    it("プロパティ設定確認-gather入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", ()=>{ 
+    it("プロパティ設定確認-gather入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
