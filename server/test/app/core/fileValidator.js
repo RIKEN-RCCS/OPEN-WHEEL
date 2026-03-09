@@ -16,6 +16,7 @@ chai.use(chaiAsPromised);
 import sinon from "sinon";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { setupTestDir } from "../../testUtil.js";
 
 //testee
 import { _internal, checkScript, checkPSSettingFile, checkSourceScript } from "../../../app/core/fileValidator.js";
@@ -27,7 +28,7 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 describe("fileValidator UT", function () {
   beforeEach(async function () {
     this.timeout(10000);
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
@@ -254,7 +255,7 @@ describe("fileValidator UT", function () {
   describe("checkPSSettingFile with invalid JSON", function () {
     beforeEach(async function () {
       this.timeout(10000);
-      await fs.remove(testDirRoot);
+      await setupTestDir(testDirRoot);
 
       try {
         await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");

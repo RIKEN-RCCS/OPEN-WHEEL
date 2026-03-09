@@ -16,6 +16,7 @@ chai.use(chaiAsPromised);
 import sinon from "sinon";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { setupTestDir } from "../../testUtil.js";
 
 //testee
 import { _internal, validateComponent, checkComponentDependency, recursiveValidateComponents } from "../../../app/core/validateComponents.js";
@@ -32,7 +33,7 @@ describe("validateComponents function", function () {
   this.timeout(10000);
   let remoteHostQueryStub;
   beforeEach(async function () {
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
@@ -297,7 +298,7 @@ describe("validateComponents function", function () {
 describe("recursiveValidateComponents", function () {
   this.timeout(10000);
   beforeEach(async function () {
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
@@ -411,7 +412,7 @@ describe("recursiveValidateComponents", function () {
 describe("checkComponentDependency", function () {
   this.timeout(10000);
   beforeEach(async function () {
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
@@ -498,7 +499,7 @@ describe("checkComponentDependency", function () {
 describe("validateComponent with disabled component", function () {
   this.timeout(10000);
   beforeEach(async function () {
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
@@ -541,7 +542,7 @@ describe("validateComponent with disabled component", function () {
 describe("validateComponent with component having children", function () {
   this.timeout(10000);
   beforeEach(async function () {
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");

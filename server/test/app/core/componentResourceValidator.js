@@ -16,6 +16,7 @@ chai.use(chaiAsPromised);
 import sinon from "sinon";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { setupTestDir } from "../../testUtil.js";
 
 //testee
 import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles, validateInputFileOverwrite, validateInputFileRaceCondition } from "../../../app/core/componentResourceValidator.js";
@@ -27,7 +28,7 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 describe("componentResourceValidator UT", function () {
   beforeEach(async function () {
     this.timeout(10000);
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");

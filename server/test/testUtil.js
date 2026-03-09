@@ -3,7 +3,9 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
+import fs from "fs-extra";
 import { getComponentDir, readComponentJson, writeComponentJson } from "../app/core/componentJsonIO.js";
+import { gitInit } from "../app/core/gitOperator2.js";
 
 async function sleep(time) {
   return new Promise((resolve)=>{
@@ -27,7 +29,22 @@ async function updateComponentProperty(projectRootDir, ID, prop, value) {
   return currentComponent;
 }
 
+/**
+ * Create a clean test root directory initialised as its own git repository.
+ * Call this at the start of each beforeEach that creates files on disk so that
+ * WHEEL_TEST_TMP is never a bare (non-git) directory inside the WHEEL source
+ * tree (which would show up as untracked in `git status`).
+ * @param {string} testDirRoot - path to the test root directory (e.g. "WHEEL_TEST_TMP")
+ * @returns {Promise<void>}
+ */
+async function setupTestDir(testDirRoot) {
+  await fs.remove(testDirRoot);
+  await fs.ensureDir(testDirRoot);
+  await gitInit(testDirRoot, "test", "test@example.com");
+}
+
 export {
   sleep,
-  updateComponentProperty
+  updateComponentProperty,
+  setupTestDir
 };

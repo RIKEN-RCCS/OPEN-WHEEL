@@ -16,6 +16,7 @@ chai.use(chaiAsPromised);
 import sinon from "sinon";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { setupTestDir } from "../../testUtil.js";
 
 //testee
 import { _internal, validateForLoop, validateForeach, validateParameterStudy, validateStorage } from "../../../app/core/componentTypeValidator.js";
@@ -29,7 +30,7 @@ describe("componentTypeValidator UT", function () {
   let remoteHostQueryStub;
   beforeEach(async function () {
     this.timeout(10000);
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
