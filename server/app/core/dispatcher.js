@@ -142,6 +142,65 @@ async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumb
 }
 
 /**
+ * For each gather recipe entry that targets a remote child task component,
+ * add the rendered srcName to the task instance's include list and remove it
+ * from exclude (if present), so that stageOut will download those files even
+ * when they are not explicitly listed in outputFiles or include.
+ * @param {string} projectRootDir - project root directory
+ * @param {string} instanceRoot - PS instance root directory
+ * @param {Array} gatherRecipe - gather recipe whose srcNode entries are relative paths from instanceRoot
+ * @param {object} params - current parameter vector values (used for nunjucks rendering)
+ * @param {Function} logger - logging function
+ * @returns {Promise<void>}
+ */
+async function addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger) {
+  for (const recipe of gatherRecipe) {
+    if (!recipe.srcNode) {
+      continue;
+    }
+    const taskDir = path.join(instanceRoot, recipe.srcNode);
+    let taskComponent;
+    try {
+      taskComponent = await readComponentJson(taskDir);
+    } catch (err) {
+      logger(`addGatherFilesToRemoteTasks: failed to read component JSON at ${taskDir}`, err);
+      continue;
+    }
+    if (isLocal(taskComponent)) {
+      continue;
+    }
+    const renderedSrcName = nunjucks.renderString(recipe.srcName, params);
+    if (Array.isArray(taskComponent.outputFiles) && taskComponent.outputFiles.some((f)=>{
+      return f.name === renderedSrcName;
+    })) {
+      continue;
+    }
+    let modified = false;
+    if (Array.isArray(taskComponent.exclude)) {
+      const filtered = taskComponent.exclude.filter((e)=>{
+        return e !== renderedSrcName;
+      });
+      if (filtered.length !== taskComponent.exclude.length) {
+        taskComponent.exclude = filtered;
+        logger(`addGatherFilesToRemoteTasks: removed ${renderedSrcName} from exclude in ${taskDir}`);
+        modified = true;
+      }
+    }
+    if (!Array.isArray(taskComponent.include)) {
+      taskComponent.include = [];
+    }
+    if (!taskComponent.include.includes(renderedSrcName)) {
+      taskComponent.include.push(renderedSrcName);
+      logger(`addGatherFilesToRemoteTasks: added ${renderedSrcName} to include in ${taskDir}`);
+      modified = true;
+    }
+    if (modified) {
+      await writeComponentJson(projectRootDir, taskDir, taskComponent, true);
+    }
+  }
+}
+
+/**
  * parse workflow graph and dispatch ready tasks to executer
  * @param {string} projectRootDir - project's root path
  * @param {string} cwfID -          current dispatching workflow ID
@@ -958,6 +1017,7 @@ class Dispatcher extends EventEmitter {
         const value = params[key];
         newComponent.env[`WHEEL_PS_PARAM_${key}`] = value;
       }
+      await addGatherFilesToRemoteTasks(this.projectRootDir, instanceRoot, gatherRecipe, params, logTrace.bind(null, this.projectRootDir, `${this.cwfDir}/${component.name}`));
       const p = this._delegate(newComponent)
         .then(()=>{
           if (newComponent.state === "finished") {
@@ -1704,5 +1764,6 @@ class Dispatcher extends EventEmitter {
 export default Dispatcher;
 export {
   replaceByNunjucksForBulkjob,
-  writeParameterSetFile
+  writeParameterSetFile,
+  addGatherFilesToRemoteTasks
 };

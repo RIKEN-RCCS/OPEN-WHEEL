@@ -423,7 +423,7 @@ describe("#saveFile", ()=>{
       }
       return false;
     });
-    const jsonContent = '{"key":"value"}';
+    const jsonContent = "{\"key\":\"value\"}";
     await saveFile("file.json", jsonContent);
 
     expect(writeFileStub.notCalled).to.be.true;

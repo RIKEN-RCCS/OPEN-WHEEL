@@ -20,7 +20,7 @@ const ajv = new Ajv({ strict: false });
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 //testee
-import Dispatcher, { replaceByNunjucksForBulkjob, writeParameterSetFile } from "../../../app/core/dispatcher.js";
+import Dispatcher, { replaceByNunjucksForBulkjob, writeParameterSetFile, addGatherFilesToRemoteTasks } from "../../../app/core/dispatcher.js";
 import { eventEmitters } from "../../../app/core/global.js";
 
 //helper functions
@@ -175,6 +175,101 @@ describe("UT for Dispatcher class", function () {
       //権限を元に戻してディレクトリを削除
       await fs.chmod(nonWritableDir, 0o700);
       await fs.remove(nonWritableDir);
+    });
+  });
+
+  describe("addGatherFilesToRemoteTasks test", function () {
+    const instanceRoot = path.resolve(testDirRoot, "instance");
+    const taskRelDir = "task0";
+    const taskDir = path.join(instanceRoot, taskRelDir);
+    const logger = ()=>{};
+
+    beforeEach(async function () {
+      await fs.ensureDir(taskDir);
+    });
+    afterEach(async function () {
+      await fs.remove(testDirRoot);
+    });
+
+    /**
+     * Write a minimal task component JSON to taskDir.
+     * @param {object} overrides - properties to merge into the default task JSON
+     */
+    async function writeTaskJson(overrides = {}) {
+      const base = {
+        type: "task",
+        name: "task0",
+        host: "remoteServer",
+        include: [],
+        exclude: [],
+        outputFiles: []
+      };
+      await fs.writeJson(path.join(taskDir, "cmp.wheel.json"), { ...base, ...overrides });
+    }
+
+    it("should add rendered srcName to include for a remote task", async function () {
+      await writeTaskJson();
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result_{{ N }}", dstName: "out/result_{{ N }}" }];
+      const params = { N: 1 };
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.include("result_1");
+    });
+
+    it("should remove the rendered srcName from exclude if present", async function () {
+      await writeTaskJson({ exclude: ["result_1", "other.dat"] });
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result_{{ N }}", dstName: "out/" }];
+      const params = { N: 1 };
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.exclude).to.not.include("result_1");
+      expect(updated.exclude).to.include("other.dat");
+      expect(updated.include).to.include("result_1");
+    });
+
+    it("should skip entries without srcNode", async function () {
+      await writeTaskJson();
+      const gatherRecipe = [{ srcName: "result.dat", dstName: "out/result.dat" }];
+      const params = {};
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.be.empty;
+    });
+
+    it("should skip local tasks", async function () {
+      await writeTaskJson({ host: "localhost" });
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result.dat", dstName: "out/result.dat" }];
+      const params = {};
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.be.empty;
+    });
+
+    it("should skip if srcName is already in outputFiles", async function () {
+      await writeTaskJson({ outputFiles: [{ name: "result.dat", dst: [] }] });
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result.dat", dstName: "out/result.dat" }];
+      const params = {};
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.be.empty;
+    });
+
+    it("should not duplicate if srcName is already in include", async function () {
+      await writeTaskJson({ include: ["result.dat"] });
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result.dat", dstName: "out/result.dat" }];
+      const params = {};
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include.filter((e)=>{
+        return e === "result.dat";
+      })).to.have.lengthOf(1);
+    });
+
+    it("should handle an empty gatherRecipe without error", async function () {
+      await writeTaskJson();
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, [], {}, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.be.empty;
     });
   });
 
