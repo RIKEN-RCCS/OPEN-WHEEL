@@ -9,6 +9,8 @@
     :control1="control[0]"
     :control2="control[1]"
     @contextmenu="onRightclick"
+    @mousemove="$emit('mousemove', $event)"
+    @mouseleave="$emit('mouseleave', $event)"
   />
 </template>
 <script>
@@ -40,7 +42,9 @@ export default {
     }
   },
   emits: [
-    "openContextMenu"
+    "openContextMenu",
+    "mousemove",
+    "mouseleave"
   ],
   computed: {
     control() {

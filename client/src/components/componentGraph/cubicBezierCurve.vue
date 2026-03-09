@@ -1,6 +1,8 @@
 <template>
   <g
     @click.right.prevent.stop="onRightClick"
+    @mousemove="$emit('mousemove', $event)"
+    @mouseleave="$emit('mouseleave', $event)"
   >
     <!-- Invisible wider path for easier clicking -->
     <path
@@ -58,7 +60,7 @@ export default {
       default: ""
     }
   },
-  emits: ["contextmenu"],
+  emits: ["contextmenu", "mousemove", "mouseleave"],
   computed: {
     cmd() {
       return `M ${this.start.x},${this.start.y}

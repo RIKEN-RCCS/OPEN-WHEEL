@@ -43,6 +43,8 @@
             :end="item.dstPos"
             :box-height="item.boxHeight"
             @open-context-menu="(e)=>{onConnectorRightClick(e, item)}"
+            @mousemove="(e)=>{onConnectorMouseMove(e, item)}"
+            @mouseleave="onConnectorMouseLeave"
           />
           <wheel-component
             v-for="(componentData, index) in currentComponent.descendants"
@@ -195,6 +197,15 @@
     :pos="importComponentPos"
     @imported="onComponentImported"
   />
+  <Teleport to="body">
+    <div
+      v-if="connectorTooltip.show"
+      class="connector-tooltip"
+      :style="{ left: `${connectorTooltip.x}px`, top: `${connectorTooltip.y}px` }"
+    >
+      {{ connectorTooltip.label }}
+    </div>
+  </Teleport>
 </template>
 
 <script>
@@ -237,6 +248,12 @@ export default {
   ],
   data() {
     return {
+      connectorTooltip: {
+        show: false,
+        x: 0,
+        y: 0,
+        label: ""
+      },
       menuX: 0,
       menuY: 0,
       openComponentContextMenu: false,
@@ -381,6 +398,7 @@ export default {
                     dstName: dst.dstName,
                     dstPos: calcFreceiverPos(dstComponent.pos, dstIndex),
                     color: this.fileLinkColor(forceCopy, component.host, dstComponent.host),
+                    label: this.fileLinkLabel(forceCopy, component.host, dstComponent.host),
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
                     boxHeight,
                     forceCopy
@@ -406,6 +424,7 @@ export default {
                     dstName: dst.dstName,
                     dstPos: calcFreceiverPos(this.parentOutputFilePos, dstIndex),
                     color: this.fileLinkColor(forceCopy, component.host, this.currentComponent.host),
+                    label: this.fileLinkLabel(forceCopy, component.host, this.currentComponent.host),
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
                     boxHeight,
                     forceCopy
@@ -439,6 +458,7 @@ export default {
                     dstName: dst.dstName,
                     dstPos: calcFreceiverPos(dstComponent.pos, dstIndex),
                     color: this.fileLinkColor(false, this.currentComponent.host, dstComponent.host),
+                    label: this.fileLinkLabel(false, this.currentComponent.host, dstComponent.host),
                     key: `${this.currentComponent.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
                     boxHeight: 0,
                     forceCopy: false
@@ -516,6 +536,46 @@ export default {
       }
       //no shared storage → cross-boundary (upload, inter-remote transfer, or copy across boundary)
       return fileLinkCrossBoundaryColor;
+    },
+
+    /**
+     * Determine the human-readable label of a file link based on its transfer type.
+     * @param {boolean} forceCopy - whether the link uses force copy
+     * @param {string|undefined} srcHost - host of the source component
+     * @param {string|undefined} dstHost - host of the destination component
+     * @returns {string} label string
+     */
+    fileLinkLabel(forceCopy, srcHost, dstHost) {
+      const color = this.fileLinkColor(forceCopy, srcHost, dstHost);
+      if (color === fileLinkCopyColor) {
+        return "local copy: files are copied within the local filesystem";
+      }
+      if (color === fileLinkRemoteSymlinkColor) {
+        return "remote symlink: files are linked on the shared remote storage";
+      }
+      if (color === fileLinkCrossBoundaryColor) {
+        return "remote copy: files are transferred between different storage locations";
+      }
+      return "local symlink: files are linked within the local filesystem";
+    },
+
+    /**
+     * Show the connector tooltip at the current mouse position.
+     * @param {MouseEvent} event - the mousemove event
+     * @param {object} item - the fileLinkGraph item being hovered
+     */
+    onConnectorMouseMove(event, item) {
+      this.connectorTooltip.show = true;
+      this.connectorTooltip.x = event.clientX + 14;
+      this.connectorTooltip.y = event.clientY - 32;
+      this.connectorTooltip.label = item.label;
+    },
+
+    /**
+     * Hide the connector tooltip.
+     */
+    onConnectorMouseLeave() {
+      this.connectorTooltip.show = false;
     },
     panToShowAllComponent() {
       let minX = Infinity;
@@ -848,5 +908,17 @@ export default {
 .pan-center { grid-area: center; }
 .pan-right { grid-area: right; }
 .pan-down { grid-area: down; }
+.connector-tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  background: rgba(40, 40, 50, 0.92);
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+}
 
 </style>
