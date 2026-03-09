@@ -177,6 +177,19 @@
       </template>
     </versatile-dialog>
     <versatile-dialog
+      v-model="conflictDialog.open"
+      :title="`'${conflictDialog.filename}' already exists`"
+      max-width="40vw"
+      :buttons="conflictDialogButtons"
+      @overwrite="resolveConflict('overwrite')"
+      @rename="resolveConflict('rename')"
+      @skip="resolveConflict('skip')"
+    >
+      <template #message>
+        <span>A file or directory named <strong>{{ conflictDialog.filename }}</strong> already exists at the destination. What would you like to do?</span>
+      </template>
+    </versatile-dialog>
+    <versatile-dialog
       v-model="downloadDialog"
       title="download content ready"
       max-width="30vw"
@@ -235,6 +248,16 @@ export default {
       downloadDialogButton: [
         { icon: "mdi-close", label: "close" }
       ],
+      conflictDialogButtons: [
+        { icon: "mdi-file-replace", label: "overwrite" },
+        { icon: "mdi-file-plus", label: "keep both", event: "rename" },
+        { icon: "mdi-cancel", label: "skip" }
+      ],
+      conflictDialog: {
+        open: false,
+        filename: "",
+        uploadId: null
+      },
       downloadURL: null,
       downloadDialog: false,
       showCopyButtonTooltipText: false,
@@ -295,6 +318,7 @@ export default {
       SIO.onUploaderEvent("choose", this.onChoose);
       SIO.onUploaderEvent("complete", this.onUploadComplete);
       SIO.onUploaderEvent("progress", this.updateProgressBar);
+      SIO.onGlobal("uploadConflict", this.onUploadConflict);
     }
     this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
   },
@@ -302,6 +326,7 @@ export default {
     SIO.removeUploaderEvent("choose", this.onChoose);
     SIO.removeUploaderEvent("complete", this.onUploadComplete);
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
+    SIO.off("uploadConflict", this.onUploadConflict);
   },
   methods: {
     ...mapActions(["openTextEditor"]),
@@ -365,6 +390,15 @@ export default {
       } else {
         this.commitSelectedFile(newSelectedFile);
       }
+    },
+    onUploadConflict({ filename, uploadId }) {
+      this.conflictDialog.filename = filename;
+      this.conflictDialog.uploadId = uploadId;
+      this.conflictDialog.open = true;
+    },
+    resolveConflict(choice) {
+      SIO.emitGlobal("resolveUploadConflict", { uploadId: this.conflictDialog.uploadId, choice }, SIO.generalCallback);
+      this.conflictDialog.open = false;
     },
     onChoose(event) {
       if (["running", "preparing"].includes(this.projectState)) {

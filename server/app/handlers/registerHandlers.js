@@ -144,7 +144,7 @@ const registerHandlers = (socket, Siofu)=>{
     if (typeof event.file.meta.projectRootDir !== "string") {
       return onUploadFileSaved2(event);
     }
-    return onUploadFileSaved(event);
+    return onUploadFileSaved(event, socket);
   });
   uploader.on("error", (event)=>{
     const projectRootDir = event.file.meta.projectRootDir;
