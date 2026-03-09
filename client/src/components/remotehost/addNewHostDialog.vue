@@ -105,10 +105,13 @@
                         />
                       </v-col>
                       <v-col cols="6">
-                        <v-text-field
+                        <v-combobox
                           v-model="host.queue"
                           label="available queues"
-                          data-cy="add_new_host-available_queues-text_field"
+                          multiple
+                          chips
+                          closable-chips
+                          data-cy="add_new_host-available_queues-combobox"
                         />
                       </v-col>
                       <v-col cols="3">

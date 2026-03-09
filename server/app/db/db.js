@@ -177,5 +177,15 @@ export const gitLFSSize = getIntVar(config.gitLFSSize, 200);
 //export setting files
 export { jobScheduler };
 export const remoteHost = new JsonArrayManager(remotehostFilename);
+
+//Migrate old string queue format to array
+for (const host of remoteHost.data) {
+  if (typeof host.queue === "string") {
+    host.queue = host.queue.split(",").map((e)=>{ return e.trim(); })
+      .filter((e)=>{ return e.length > 0; });
+  }
+}
+await remoteHost.write();
+
 export const jobScriptTemplate = new JsonArrayManager(jobScriptTemplateFilename);
 export const projectList = new JsonArrayManager(projectListFilename);

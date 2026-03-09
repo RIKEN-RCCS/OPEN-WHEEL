@@ -24,7 +24,7 @@ const remotehostJsonSchema = {
     path: { type: "string" },
     jobScheduler: { type: "string" },
     numJob: { type: "number", default: 5, minimum: 0 },
-    queue: { type: "string" },
+    queue: { type: "array", items: { type: "string" } },
     useBulkjob: { type: "boolean", default: false },
     useStepjob: { type: "boolean", default: false },
     sharedHost: { type: "string", default: "" },
