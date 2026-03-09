@@ -22,18 +22,12 @@
       :key="header.key"
       #[`header.${header.key}`]
     >
-      {{ header.title }}
       <v-tooltip
         :text="header.tooltip"
         location="top"
       >
         <template #activator="{ props: tooltipProps }">
-          <v-icon
-            v-bind="tooltipProps"
-            size="x-small"
-          >
-            mdi-help-circle-outline
-          </v-icon>
+          <span v-bind="tooltipProps">{{ header.title }}</span>
         </template>
       </v-tooltip>
     </template>

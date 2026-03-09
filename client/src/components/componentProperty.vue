@@ -593,6 +593,8 @@
               :new-item-template="outputFileTemplate"
               :additional-rules="[isValidOutputFilename]"
               :edit-dialog-min-width="propWidth"
+              :headers="outputFileHeaders"
+              :show-headers="true"
               data-cy="component_property-output_files-list_form"
               @add="addToOutputFiles"
               @remove="removeFromOutputFiles"
@@ -741,8 +743,11 @@ export default {
         mandatory: false
       },
       inputFileHeaders: [
-        { key: "name", sortable: false },
+        { key: "name", title: "name", sortable: false },
         { key: "mandatory", title: "mandatory", sortable: false, tooltip: "fail if missing" }
+      ],
+      outputFileHeaders: [
+        { key: "name", title: "name", sortable: false }
       ],
       outputFileTemplate: {
         name: "",
