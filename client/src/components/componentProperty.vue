@@ -105,16 +105,7 @@
               variant="outlined"
               data-cy="component_property-script-autocomplete"
             />
-            <v-autocomplete
-              v-if="isTask"
-              v-model="copySelectedComponent.checker"
-              label="checker script"
-              :readonly="readOnly"
-              :items="scriptCandidates"
-              clearable
-              variant="outlined"
-              data-cy="component_property-checker-autocomplete"
-            />
+
             <v-select
               v-if="hasHost"
               v-model="copySelectedComponent.host"
@@ -184,21 +175,22 @@
               variant="outlined"
               data-cy="component_property-directory_path-text_field"
             />
-            <v-switch
-              v-if="isTask"
-              v-model="copySelectedComponent.ignoreFailure"
-              label="continue project execution after filure"
-              :readonly="readOnly"
-              color="primary"
-              data-cy="component_property-ignore_failure-switch"
-            />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isTask">
-          <v-expansion-panel-title data-cy="component_property-retry-panel_title">
-            retry setting
+          <v-expansion-panel-title data-cy="component_property-advanced-panel_title">
+            advanced
           </v-expansion-panel-title>
           <v-expansion-panel-text>
+            <v-autocomplete
+              v-model="copySelectedComponent.checker"
+              label="checker script"
+              :readonly="readOnly"
+              :items="scriptCandidates"
+              clearable
+              variant="outlined"
+              data-cy="component_property-checker-autocomplete"
+            />
             <v-text-field
               v-model="copySelectedComponent.retry"
               label="number of retry"
@@ -231,6 +223,13 @@
               v-model="copySelectedComponent.retryCondition"
               :readonly="readOnly"
               data-cy="component_property-task_use_javascript-textarea"
+            />
+            <v-switch
+              v-model="copySelectedComponent.ignoreFailure"
+              label="continue project execution after failure"
+              :readonly="readOnly"
+              color="primary"
+              data-cy="component_property-ignore_failure-switch"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
