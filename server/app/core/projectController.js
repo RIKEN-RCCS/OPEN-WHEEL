@@ -9,6 +9,7 @@ import { gitResetHEAD, gitClean } from "../core/gitOperator2.js";
 import { removeSsh } from "./sshManager.js";
 import { removeExecuters } from "./executerManager.js";
 import { removeTransferrers } from "./transferManager.js";
+import { runDeferredCleanups, clearDeferredCleanups } from "./transferrer.js";
 import { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } from "../db/db.js";
 import { setProjectState } from "../core/projectJsonFileOperator.js";
 import { writeComponentJson } from "./componentJsonIO.js";
@@ -76,6 +77,7 @@ async function stopProject(projectRootDir) {
     await rootDispatcher.remove();
     _internal.rootDispatchers.delete(projectRootDir);
   }
+  clearDeferredCleanups(projectRootDir);
   removeExecuters(projectRootDir);
   removeTransferrers(projectRootDir);
   removeSsh(projectRootDir);
@@ -113,6 +115,7 @@ async function runProject(projectRootDir) {
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
   await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
   _internal.rootDispatchers.delete(projectRootDir);
+  await runDeferredCleanups(projectRootDir);
   removeExecuters(projectRootDir);
   removeTransferrers(projectRootDir);
   removeSsh(projectRootDir);

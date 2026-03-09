@@ -6,7 +6,7 @@
 
 import { expect } from "chai";
 import sinon from "sinon";
-import { stageIn, stageOut, _internal } from "../../../app/core/transferrer.js";
+import { stageIn, stageOut, runDeferredCleanups, clearDeferredCleanups, _internal } from "../../../app/core/transferrer.js";
 describe("#stageIn", ()=>{
   let setTaskStateStub;
   let getSshHostinfoStub;
@@ -270,6 +270,7 @@ describe("#stageOut", ()=>{
     getSshHostinfoStub.returns({ host: "dummyHost" });
     needDownloadStub.resolves(false);
     sinon.stub(_internal, "getRemoteSymlinkOutputNames").resolves(["result.dat"]);
+    const addDeferredCleanupStub = sinon.stub(_internal, "addDeferredCleanup");
     sshExecStub.resolves(0);
 
     await stageOut(task);
@@ -278,6 +279,11 @@ describe("#stageOut", ()=>{
     expect(sshExecStub.calledOnceWithExactly(
       "find /remote -mindepth 1 -maxdepth 1 ! -name 'result.dat' -exec rm -rf {} +"
     )).to.be.true;
+    expect(addDeferredCleanupStub.calledOnceWithExactly("/proj", {
+      remoteWorkingDir: "/remote",
+      remotehostID: "hostB",
+      symlinkTargetNames: ["result.dat"]
+    })).to.be.true;
   });
 
   it("should do full cleanup when getRemoteSymlinkOutputNames returns empty array", async ()=>{
@@ -300,5 +306,123 @@ describe("#stageOut", ()=>{
 
     expect(getSshStub.calledOnceWithExactly("/proj", "hostB")).to.be.true;
     expect(sshExecStub.calledOnceWithExactly("rm -fr /remote")).to.be.true;
+  });
+});
+
+describe("#runDeferredCleanups", ()=>{
+  let getSshStub;
+  let sshExecStub;
+  //eslint-disable-next-line no-unused-vars
+  let getLoggerStub;
+  let loggerDebugStub;
+  let loggerWarnStub;
+
+  beforeEach(()=>{
+    sshExecStub = sinon.stub();
+    getSshStub = sinon.stub(_internal, "getSsh").returns({ exec: sshExecStub });
+    loggerDebugStub = sinon.stub();
+    loggerWarnStub = sinon.stub();
+    getLoggerStub = sinon.stub(_internal, "getLogger").returns({ debug: loggerDebugStub, warn: loggerWarnStub });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should do nothing if no deferred cleanups are registered", async ()=>{
+    await runDeferredCleanups("/proj/not-registered");
+
+    expect(getSshStub.called).to.be.false;
+    expect(sshExecStub.called).to.be.false;
+  });
+
+  it("should delete symlink target files and then the working directory", async ()=>{
+    _internal.addDeferredCleanup("/proj/a", {
+      remoteWorkingDir: "/remote/taskA",
+      remotehostID: "hostA",
+      symlinkTargetNames: ["output.dat", "results"]
+    });
+    sshExecStub.resolves(0);
+
+    await runDeferredCleanups("/proj/a");
+
+    expect(getSshStub.calledOnceWithExactly("/proj/a", "hostA")).to.be.true;
+    expect(sshExecStub.callCount).to.equal(3);
+    expect(sshExecStub.getCall(0).args[0]).to.equal("rm -rf /remote/taskA/output.dat");
+    expect(sshExecStub.getCall(1).args[0]).to.equal("rm -rf /remote/taskA/results");
+    expect(sshExecStub.getCall(2).args[0]).to.equal("rm -fr /remote/taskA");
+  });
+
+  it("should process all registered entries for a project", async ()=>{
+    _internal.addDeferredCleanup("/proj/b", {
+      remoteWorkingDir: "/remote/task1",
+      remotehostID: "hostX",
+      symlinkTargetNames: ["file1.dat"]
+    });
+    _internal.addDeferredCleanup("/proj/b", {
+      remoteWorkingDir: "/remote/task2",
+      remotehostID: "hostX",
+      symlinkTargetNames: ["file2.dat"]
+    });
+    sshExecStub.resolves(0);
+
+    await runDeferredCleanups("/proj/b");
+
+    expect(sshExecStub.callCount).to.equal(4); //1 file + 1 dir for each task
+  });
+
+  it("should clear the registry after running cleanups", async ()=>{
+    _internal.addDeferredCleanup("/proj/c", {
+      remoteWorkingDir: "/remote/taskC",
+      remotehostID: "hostC",
+      symlinkTargetNames: ["out.dat"]
+    });
+    sshExecStub.resolves(0);
+
+    await runDeferredCleanups("/proj/c");
+    getSshStub.resetHistory();
+    sshExecStub.resetHistory();
+
+    await runDeferredCleanups("/proj/c");
+
+    expect(getSshStub.called).to.be.false;
+    expect(sshExecStub.called).to.be.false;
+  });
+
+  it("should log warning and continue if SSH exec fails", async ()=>{
+    _internal.addDeferredCleanup("/proj/d", {
+      remoteWorkingDir: "/remote/taskD",
+      remotehostID: "hostD",
+      symlinkTargetNames: ["out.dat"]
+    });
+    sshExecStub.rejects(new Error("SSH error"));
+
+    await runDeferredCleanups("/proj/d");
+
+    expect(loggerWarnStub.calledOnce).to.be.true;
+  });
+});
+
+describe("#clearDeferredCleanups", ()=>{
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should remove all registered entries without running them", async ()=>{
+    const sshExecStub = sinon.stub();
+    const getSshStub = sinon.stub(_internal, "getSsh").returns({ exec: sshExecStub });
+    sinon.stub(_internal, "getLogger").returns({ debug: sinon.stub(), warn: sinon.stub() });
+
+    _internal.addDeferredCleanup("/proj/stop", {
+      remoteWorkingDir: "/remote/task",
+      remotehostID: "hostStop",
+      symlinkTargetNames: ["file.dat"]
+    });
+
+    clearDeferredCleanups("/proj/stop");
+    await runDeferredCleanups("/proj/stop");
+
+    expect(getSshStub.called).to.be.false;
+    expect(sshExecStub.called).to.be.false;
   });
 });
