@@ -356,15 +356,22 @@
         </div>
       </template>
     </versatile-dialog>
-    <versatile-dialog
-      v-model="validationErrorDialog"
-      title="validation error detected!"
-      max-width="50vw"
-      :buttons="validationErrorDialogButtons"
-      @close="validationErrorDialog=false;validationErrors=[];validationErrorFilter=''"
-      @ignore-all="onIgnoreAllErrors"
+    <v-card
+      v-if="validationErrorDialog"
+      class="validation-error-panel"
+      :style="{ left: errorPanelX + 'px', top: errorPanelY + 'px' }"
+      elevation="8"
     >
-      <template #message>
+      <v-card-title
+        class="validation-error-panel-title"
+        @mousedown="startDragErrorPanel"
+      >
+        <v-icon color="warning">
+          mdi-alert
+        </v-icon>
+        validation error detected!
+      </v-card-title>
+      <v-card-text class="validation-error-panel-content">
         <v-text-field
           v-model="validationErrorFilter"
           label="filter"
@@ -391,8 +398,24 @@
             </ul>
           </template>
         </v-data-table>
-      </template>
-    </versatile-dialog>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          :disabled="!canIgnoreAllErrors"
+          prepend-icon="mdi-skip-forward"
+          @click="onIgnoreAllErrors"
+        >
+          ignore all errors
+        </v-btn>
+        <v-btn
+          prepend-icon="mdi-close"
+          @click="closeValidationErrorDialog"
+        >
+          close
+        </v-btn>
+      </v-card-actions>
+    </v-card>
     <import-warning-dialog
       v-model="warnDialog"
     />
@@ -533,6 +556,12 @@ export default {
         { title: "component", value: "name", key: "component" },
         { title: "errors", value: "errors", key: "errors", sortable: false }
       ],
+      validationCheckedComponent: null,
+      errorPanelX: Math.max(0, window.innerWidth / 2 - 300),
+      errorPanelY: 80,
+      errorPanelDragging: false,
+      errorPanelDragOffsetX: 0,
+      errorPanelDragOffsetY: 0,
       warnDialog: null,
       remoteHostDialog: false
     };
@@ -560,12 +589,6 @@ export default {
       return this.validationErrors.every((entry)=>{
         return entry.errors.every((e)=>{ return e.ignoreable; });
       });
-    },
-    validationErrorDialogButtons() {
-      return [
-        { icon: "mdi-check", label: "close" },
-        { icon: "mdi-skip-forward", label: "ignore all errors", event: "ignoreAll", disabled: !this.canIgnoreAllErrors }
-      ];
     },
     isReadOnly() {
       return this.readOnly ? " - read-only" : "";
@@ -735,17 +758,58 @@ export default {
       });
   },
   methods: {
+    closeValidationErrorDialog() {
+      this.validationErrorDialog = false;
+      this.validationErrors = [];
+      this.validationErrorFilter = "";
+      this.validationCheckedComponent = null;
+    },
+
+    /**
+     * Start dragging the validation error panel.
+     * @param {MouseEvent} event - The mousedown event on the panel title bar
+     */
+    startDragErrorPanel(event) {
+      this.errorPanelDragging = true;
+      this.errorPanelDragOffsetX = event.clientX - this.errorPanelX;
+      this.errorPanelDragOffsetY = event.clientY - this.errorPanelY;
+      document.addEventListener("mousemove", this.onDragErrorPanel);
+      document.addEventListener("mouseup", this.stopDragErrorPanel);
+    },
+
+    /**
+     * Update position of the validation error panel while dragging.
+     * @param {MouseEvent} event - The mousemove event
+     */
+    onDragErrorPanel(event) {
+      if (!this.errorPanelDragging) {
+        return;
+      }
+      this.errorPanelX = event.clientX - this.errorPanelDragOffsetX;
+      this.errorPanelY = event.clientY - this.errorPanelDragOffsetY;
+    },
+
+    /**
+     * Stop dragging the validation error panel.
+     */
+    stopDragErrorPanel() {
+      this.errorPanelDragging = false;
+      document.removeEventListener("mousemove", this.onDragErrorPanel);
+      document.removeEventListener("mouseup", this.stopDragErrorPanel);
+    },
     onIgnoreAllErrors() {
       this.validationErrorDialog = false;
       this.validationErrors = [];
       this.validationErrorFilter = "";
+      this.validationCheckedComponent = null;
     },
-    showValidationErrorDialog(validationErrors) {
+    showValidationErrorDialog(validationErrors, targetComponent) {
       this.validationErrors = validationErrors;
+      this.validationCheckedComponent = targetComponent;
       const errorIDs = validationErrors.map((err)=>{
         return err.ID;
       });
-      this.currentComponent.descendants.forEach((child)=>{
+      targetComponent.descendants.forEach((child)=>{
         child.isInvalid = errorIDs.includes(child.ID);
         if (!child.isInvalid) {
           const childName = this.componentPath[child.ID].replace(/^./, "");
@@ -757,17 +821,20 @@ export default {
       this.validationErrorDialog = true;
     },
     checkComponents() {
-      SIO.emitGlobal("checkComponents", this.projectRootDir, this.currentComponent.ID, (validationErrors)=>{
+      const targetComponent = (this.validationErrorDialog && this.validationCheckedComponent)
+        ? this.validationCheckedComponent
+        : this.currentComponent;
+      SIO.emitGlobal("checkComponents", this.projectRootDir, targetComponent.ID, (validationErrors)=>{
         if (!Array.isArray(validationErrors)) {
           debug("checkComponents failed!", validationErrors);
         }
         if (validationErrors.length === 0) {
-          this.showSnackbar(`all components under ${this.currentComponent.name} are valid`);
-          debug(`no invalid components found under ${this.currentComponent.name} (${this.currentComponent.ID})`);
+          this.showSnackbar(`all components under ${targetComponent.name} are valid`);
+          debug(`no invalid components found under ${targetComponent.name} (${targetComponent.ID})`);
           return;
         }
         debug("invalid components", validationErrors);
-        this.showValidationErrorDialog(validationErrors);
+        this.showValidationErrorDialog(validationErrors, targetComponent);
       });
     },
     makeWritable() {
@@ -881,5 +948,22 @@ export default {
 }
 .editor-content {
   height: calc(90vh - 64px);
+}
+.validation-error-panel {
+  position: fixed;
+  z-index: 2000;
+  width: 40vw;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+.validation-error-panel-title {
+  cursor: move;
+  user-select: none;
+  flex-shrink: 0;
+}
+.validation-error-panel-content {
+  overflow-y: auto;
+  flex: 1;
 }
 </style>
