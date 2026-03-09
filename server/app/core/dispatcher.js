@@ -56,7 +56,8 @@ import {
 } from "./loopUtils.js";
 import { makeCmd } from "./psUtils.js";
 import { overwriteByRsync } from "./rsync.js";
-import { gfcp, gfrm, gfpcopy, gfptarCreate } from "./gfarmOperator.js";
+import { gfcp, gfrm, gfpcopy, gfptarCreate, setGfarmXattr } from "./gfarmOperator.js";
+import { gatherComponentMetadata, componentMetadataToXml } from "./projectMetadataExporter.js";
 
 const wheelSystemEnv = [
   "WHEEL_CURRENT_INDEX",
@@ -1258,19 +1259,35 @@ class Dispatcher extends EventEmitter {
       await ssh.send(targetsToCopy, `${component.remoteTempDir}/`, ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]);
 
       const storagePath = component.storagePath;
+      const gfarmTargets = [];
       if (withTar) {
         await gfrm(this.projectRootDir, remotehostID, storagePath);
         await gfptarCreate(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath);
+        gfarmTargets.push(storagePath);
       } else {
         const lsResults = await ssh.ls(component.remoteTempDir, ["-l"]);
         if (lsResults.length === 1 && lsResults[0].startsWith("-")) {
           const tokens = lsResults[0].split(" ");
           const filename = tokens[tokens.length - 1];
           await gfcp(this.projectRootDir, remotehostID, path.join(component.remoteTempDir, filename), path.join(storagePath, filename), true);
+          gfarmTargets.push(path.join(storagePath, filename));
         } else {
           await gfpcopy(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath, true);
+          const enabledInputFiles = component.inputFiles.filter((e, i)=>{
+            return targetFilter[i];
+          });
+          for (const f of enabledInputFiles) {
+            gfarmTargets.push(path.join(storagePath, f.name));
+          }
         }
       }
+
+      const metadata = await gatherComponentMetadata(this.projectRootDir);
+      const xml = componentMetadataToXml(metadata);
+      for (const gfarmPath of gfarmTargets) {
+        await setGfarmXattr(this.projectRootDir, remotehostID, gfarmPath, "wheel.workflow", xml);
+      }
+
       logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "remove remote temp dir", component.remoteTempDir);
       await ssh.exec(`rm -fr ${component.remoteTempDir}`);
     }
