@@ -10,6 +10,8 @@
     "test:e2e:start": "docker compose up -d --wait",
     "test:e2e:run": "npm run test-all",
     "test:e2e:stop": "docker compose down",
+    "test:e2e:gfarm": "npx dotenv -e cypress/e2e/gfarm/gfarm-e2e.env -- npx cypress run --browser chrome --spec 'cypress/e2e/gfarm/**/*.cy.js'",
+    "test:e2e:gfarm:open": "npx dotenv -e cypress/e2e/gfarm/gfarm-e2e.env -- npx cypress open --spec 'cypress/e2e/gfarm/**/*.cy.js'",
     "start": "cd ../; npm start",
     "build": "cd ../; npm run build"
   },

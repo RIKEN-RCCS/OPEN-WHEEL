@@ -149,6 +149,23 @@
           />
         </template>
       </v-tooltip>
+      <v-tooltip
+        v-if="isHPCISS"
+        location="top"
+        text="inspect gfarm attributes"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :rounded="false"
+            :color="iconColor"
+            icon="mdi-database-search"
+            :disabled="!activeItem || activeItem.type !== 'file'"
+            v-bind="props"
+            data-cy="remote_file_browser-inspect_attributes-btn"
+            @click="inspectAttributes"
+          />
+        </template>
+      </v-tooltip>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"
@@ -228,6 +245,11 @@
         </v-row>
       </template>
     </versatile-dialog>
+    <gfarm-attribute-viewer
+      v-model="attrViewerOpen"
+      :xml="attrXml"
+      :filename="attrFilename"
+    />
   </div>
 </template>
 <script>
@@ -237,6 +259,7 @@ import { mapState, mapGetters, mapMutations } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import versatileDialog from "../components/versatileDialog.vue";
 import myTreeview from "../components/common/myTreeview.vue";
+import gfarmAttributeViewer from "../components/gfarmAttributeViewer.vue";
 import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "../components/common/fileTreeUtils.js";
 import { hasRemoteFileBrowser, isHPCISS } from "../../../common/checkComponent.js";
 import loadComponentDefinition from "../lib/componentDefinision.js";
@@ -262,7 +285,8 @@ export default {
   name: "RemoteFileBrowser",
   components: {
     versatileDialog,
-    myTreeview
+    myTreeview,
+    gfarmAttributeViewer
   },
   props: {
     readonly: { type: Boolean, default: true }
@@ -293,7 +317,10 @@ export default {
       downloadURL: null,
       downloadDialog: false,
       API: "getRemoteFileList",
-      iconColor: componentDefinitionObj["storage"].color
+      iconColor: componentDefinitionObj["storage"].color,
+      attrViewerOpen: false,
+      attrXml: null,
+      attrFilename: ""
     };
   },
   computed: {
@@ -594,6 +621,20 @@ export default {
     },
     showUploadDialog() {
       SIO.prompt();
+    },
+
+    /**
+     * Fetch the wheel.workflow gfarm XML attribute for the selected file and open the viewer dialog.
+     */
+    inspectAttributes() {
+      if (!this.activeItem || this.activeItem.type !== "file") {
+        return;
+      }
+      this.attrFilename = this.activeItem.name;
+      SIO.emitGlobal("getGfarmXattr", this.projectRootDir, this.selectedComponent.host, this.activeItem.id, "wheel.workflow", (xml)=>{
+        this.attrXml = xml;
+        this.attrViewerOpen = true;
+      });
     }
   }
 };

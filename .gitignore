@@ -29,3 +29,4 @@ test/cypress/videos/
 test/wheel_config/jobScriptTemplate.json
 test/wheel_config/projectList.json.bak
 .env
+test/cypress/e2e/gfarm/gfarm-e2e.env

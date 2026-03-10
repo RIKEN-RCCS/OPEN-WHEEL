@@ -11,7 +11,7 @@ import { getLogger } from "../logSettings.js";
 import { createSsh, getSsh, askPassword } from "../core/sshManager.js";
 import { createTempd } from "../core/tempd.js";
 import { hasRemoteFileBrowser, hasGfarmTarBrowser } from "../../../common/checkComponent.js";
-import { checkJWTAgent, startJWTAgent, gfls, gfmkdir, gfrm, gfmv, gfptarList } from "../core/gfarmOperator.js";
+import { checkJWTAgent, startJWTAgent, gfls, gfmkdir, gfrm, gfmv, gfptarList, getGfarmXattr } from "../core/gfarmOperator.js";
 import {
   createNewRemoteFile,
   createNewRemoteDir,
@@ -210,6 +210,25 @@ const onCreateNewGfarmDir = gfarmFileUtilWrapper.bind(null, gfmkdir);
 const onRemoveGfarmFile = gfarmFileUtilWrapper.bind(null, gfrm);
 const onRenameGfarmFile = gfarmFileUtilWrapper.bind(null, gfmv);
 
+/**
+ * Get XML extended attribute from a gfarm file and return it to the client.
+ * @param {string} projectRootDir - project's root path
+ * @param {string} host - remote host name
+ * @param {string} gfarmPath - absolute gfarm path to the file
+ * @param {string} attrName - XML attribute name to read (e.g., "wheel.workflow")
+ * @param {Function} cb - callback receiving the XML string, or null on error
+ */
+async function onGetGfarmXattr(projectRootDir, host, gfarmPath, attrName, cb) {
+  try {
+    const id = remoteHost.getID("name", host);
+    const xml = await getGfarmXattr(projectRootDir, id, gfarmPath, attrName);
+    return cb(xml);
+  } catch (e) {
+    getLogger(projectRootDir).error(projectRootDir, "error reading gfarm xattr", e);
+    return cb(null);
+  }
+}
+
 export {
   onRequestRemoteConnection,
   onGetRemoteGfarmFileList,
@@ -223,5 +242,6 @@ export {
   onRenameRemoteFile,
   onCreateNewGfarmDir,
   onRemoveGfarmFile,
-  onRenameGfarmFile
+  onRenameGfarmFile,
+  onGetGfarmXattr
 };

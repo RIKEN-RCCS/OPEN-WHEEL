@@ -241,6 +241,22 @@ async function gfmv(projectRootDir, hostID, target, newName, timeout = 60) {
 }
 
 /**
+ * Get XML extended attribute from a gfarm file using gfxattr.
+ * @param {string} projectRootDir - project's root path
+ * @param {string} hostID - ID of hostinfo which serves gfarm service
+ * @param {string} gfarmPath - absolute path to the target file in gfarm (without gfarm:// prefix)
+ * @param {string} attrName - XML extended attribute name (e.g., "wheel.workflow")
+ * @param {number} timeout - timeout in seconds, must be a positive number
+ * @returns {Promise<string>} - XML string value of the attribute
+ */
+async function getGfarmXattr(projectRootDir, hostID, gfarmPath, attrName, timeout = 60) {
+  await startJWTAgent(projectRootDir, hostID);
+  const pathOnGfarm = formatGfarmURL(gfarmPath);
+  const output = await execOnCSGW(projectRootDir, hostID, timeout, "gfxattr -g -x", pathOnGfarm, attrName);
+  return output.join("\n");
+}
+
+/**
  * Set XML extended attribute on a gfarm file using gfxattr.
  * The XML string is base64-encoded to safely pass it through SSH,
  * written to a temporary file on the CSGW, then applied with gfxattr -s -x.
@@ -275,5 +291,6 @@ export {
   gfmkdir,
   gfmv,
   setGfarmXattr,
+  getGfarmXattr,
   _internal
 };
