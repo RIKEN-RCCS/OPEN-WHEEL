@@ -451,7 +451,7 @@ describe("components", ()=>{
   ※削除ダイアログ表示後にエラー
   分離対象外
      */
-    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.deleteComponent(WHILE_NAME_0);
       cy.get("[data-cy=\"graph-component-row\"]").contains(WHILE_NAME_0)
@@ -483,14 +483,14 @@ describe("components", ()=>{
   分離対象外
      
      */
-    it.skip("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
       let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
       cy.get(targetDropBoxCy).find("input")
         .click();
-      cy.get("[role=\"listbox\"]").eq(3)
+      cy.get("[role=\"listbox\"]").eq(0)
         .contains("test-a")
         .click();
       cy.get("[data-cy=\"component_property-condition_use_javascript-autocomplete\"]").contains("test-a")
@@ -506,7 +506,7 @@ describe("components", ()=>{
   ※test-aの存在確認で失敗。itemの4つ目を確認しているから(?)認
   分離対象外
      */
-    it.skip("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]");
@@ -514,7 +514,7 @@ describe("components", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
       cy.get(targetDropBoxCy).find("input")
         .click();
-      cy.get("[role=\"listbox\"]").eq(3)
+      cy.get("[role=\"listbox\"]").eq(0)
         .contains("test-a")
         .click();
       cy.closeProperty();
