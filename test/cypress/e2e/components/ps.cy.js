@@ -630,6 +630,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   targetFiles追加
   試験確認内容：targetFileが追加されていることを確認
+  不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
     it.skip("プロパティ設定確認-targetFiles追加-targetFileが追加されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
@@ -650,6 +651,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   targetFiles削除
   試験確認内容：targetFilesが削除されていることを確認
+  不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
     it.skip("プロパティ設定確認-targetFiles削除-targetFilesが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
@@ -671,6 +673,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   targetFilesタブエディタ入力確認
   試験確認内容：入力した値が表示されていることを確認
+  不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
     it.skip("プロパティ設定確認-delete all instancesスイッチボタン入力確認-入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
@@ -692,6 +695,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   targetFiles反映確認
   試験確認内容：targetFilesが反映されていることを確認
+  不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
     it.skip("プロパティ設定確認-targetFiles反映確認-targetFilesが反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
@@ -731,6 +735,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   parameters->current selected text 入力確認
   試験確認内容：current selected textテキストボックスにドラッグした値が表示されていることを確認
+  不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
     it.skip("プロパティ設定確認-parameters->current selected text 入力確認-current selected textテキストボックスにドラッグした値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
@@ -815,6 +820,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   min-max-step入力反映確認
   試験確認内容：min-max-step入力フォームに入力した値が反映されていることを確認
+  不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
     it.skip("プロパティ設定確認-min-max-step入力反映確認-min-max-step入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
@@ -888,6 +894,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   list入力反映確認
   試験確認内容：list入力フォームに入力した値が反映されていることを確認
+  不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
     it.skip("プロパティ設定確認-list入力反映確認-list入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
@@ -957,6 +964,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   files入力反映確認
   試験確認内容：files入力フォームに入力した値が反映されていることを確認
+  不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
     it.skip("プロパティ設定確認-files入力反映確認-files入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
@@ -987,7 +995,7 @@ describe("components", ()=>{
   add new scatter settingボタン表示確認
   試験確認内容：scatter設定ダイアログが表示されることを確認
      */
-    it.skip("プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -995,7 +1003,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(0)
         .click();
-      cy.contains("destination node").should("exist");
+      cy.contains("select component").should("exist");
     });
 
     /**
@@ -1080,6 +1088,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   scatter入力反映確認
   試験確認内容：srcName、dstNameテキストボックスに入力した値が反映されていることを確認
+  不具合内容："testSrcName","testDstName"が見つからないため試験に失敗(2-1.)
      */
     it.skip("プロパティ設定確認-scatter入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
@@ -1105,7 +1114,7 @@ describe("components", ()=>{
   add new gather settingボタン表示確認
   試験確認内容：gather設定ダイアログが表示されることを確認
      */
-    it.skip("プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -1113,7 +1122,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"gather_scatter-add_new_setting_btn\"]").eq(1)
         .click();
-      cy.contains("source node").should("exist");
+      cy.contains("select component").should("exist");
     });
 
     /**
