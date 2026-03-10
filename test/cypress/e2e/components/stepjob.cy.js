@@ -475,6 +475,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   queue表示確認（有効）
   試験確認内容：queueセレクトボックスが有効となっていることを確認
+  不具合内容：プロパティのuse job schedulerが非活性のため試験に失敗(3.)
      */
     it.skip("各コンポーネント特有のプロパティ確認-queue表示確認（有効）-queueセレクトボックスが有効となっていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
@@ -488,6 +489,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   queue選択確認
   試験確認内容：queueセレクトボックスに選択した値が表示されていることを確認
+  不具合内容：プロパティのuse job schedulerが非活性のため試験に失敗(3.)
      */
     it.skip("各コンポーネント特有のプロパティ確認-queue選択確認-queueセレクトボックスに選択した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
@@ -505,6 +507,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   queue選択反映確認
   試験確認内容：queueセレクトボックスに選択した値が反映されていることを確認
+  不具合内容：プロパティのuse job schedulerが非活性のため試験に失敗(3.)
      */
     it.skip("各コンポーネント特有のプロパティ確認-queue選択反映確認-queueセレクトボックスに選択した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
@@ -525,6 +528,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   submit command表示確認（有効）
   試験確認内容：submit commandテキストボックスが有効となっていることを確認
+  不具合内容：プロパティのuse job schedulerが非活性のため試験に失敗(3.)
      */
     it.skip("各コンポーネント特有のプロパティ確認-プロパティ設定確認-submit command表示確認（有効）-submit commandテキストボックスが有効となっていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
@@ -538,6 +542,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   submit command反映確認
   試験確認内容：リモートホストのジョブ投入コマンドが表示されていることを確認
+  不具合内容：プロパティのuse job schedulerが非活性のため試験に失敗(3.)
      */
     it.skip("各コンポーネント特有のプロパティ確認-submit command反映確認-リモートホストのジョブ投入コマンドが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
@@ -557,6 +562,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   submit option表示確認（有効）
   試験確認内容：submit optionテキストボックスが有効となっていることを確認
+  不具合内容：プロパティのuse job schedulerが非活性のため試験に失敗(3.)
      */
     it.skip("各コンポーネント特有のプロパティ確認-submit option表示確認（有効）-submit optionテキストボックスが有効となっていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
@@ -570,6 +576,7 @@ describe("components", ()=>{
   各コンポーネント特有のプロパティ確認
   submit option反映確認
   試験確認内容：submit optionテキストボックスに入力した値が設定されていることを確認
+  不具合内容：プロパティのuse job schedulerが非活性のため試験に失敗(3.)
      */
     it.skip("各コンポーネント特有のプロパティ確認-submit option反映確認-submit optionテキストボックスに入力した値が設定されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
