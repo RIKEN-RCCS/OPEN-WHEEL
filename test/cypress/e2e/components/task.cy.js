@@ -220,7 +220,7 @@ describe("components", ()=>{
   試験確認内容：シンポリックリンクが作成されていることを確認
      */
     it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFile、inputFile一致）-シンポリックリンクが作成されていることを確認", ()=>{
-    //task0
+      //task0
       cy.createDirOrFile(TYPE_FILE, "run.sh", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run.sh");
@@ -253,7 +253,7 @@ describe("components", ()=>{
   試験確認内容：シンポリックリンクが作成されていることを確認
      */
     it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが空白）-シンポリックリンクが作成されていることを確認", ()=>{
-    //task0
+      //task0
       cy.createDirOrFile(TYPE_FILE, "run.sh", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run.sh");
@@ -285,7 +285,7 @@ describe("components", ()=>{
   試験確認内容：シンポリックリンクが作成されていることを確認
      */
     it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
-    //task0
+      //task0
       cy.createDirOrFile(TYPE_FILE, "run.sh", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run.sh");
@@ -325,7 +325,7 @@ describe("components", ()=>{
      */
 
     it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileがglob(*や?など)を含むパス、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
-    //task0
+      //task0
       cy.createDirOrFile(TYPE_FILE, "run-a.sh", true);
       cy.createDirOrFile(TYPE_FILE, "run-b.sh", false);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
@@ -370,7 +370,7 @@ describe("components", ()=>{
   試験確認内容：シンポリックリンクが作成されていることを確認
      */
     it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（input filesが’/’で終わる文字列のとき）-シンポリックリンクが作成されていることを確認", ()=>{
-    //task0
+      //task0
       cy.createDirOrFile(TYPE_FILE, "run-a.sh", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "run-a.sh");
@@ -624,7 +624,7 @@ describe("components", ()=>{
    checker script表示確認
    試験確認内容：checker scriptセレクトボックスが表示されていることを確認
      */
-    it("プロパティ設定確認-checker script表示確認-checker scriptセレクトボックスが表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-checker script表示確認-checker scriptセレクトボックスが表示されていることを確認", ()=>{
       const DATA_CY_STR = "[data-cy=\"component_property-checker-autocomplete\"]";
       cy.confirmDisplayInProperty(DATA_CY_STR, true);
     });
@@ -636,7 +636,7 @@ describe("components", ()=>{
    checker scriptファイル選択表示確認
    試験確認内容：checker scriptセレクトボックスで選択したファイルが表示されていることを確認
      */
-    it("プロパティ設定確認-checker scriptファイル選択表示確認-checker scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-checker scriptファイル選択表示確認-checker scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
       cy.createDirOrFile(TYPE_FILE, "test-checker", true);
       let targetDropBoxCy = "[data-cy=\"component_property-checker-autocomplete\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-checker");
@@ -650,9 +650,13 @@ describe("components", ()=>{
    プロパティ設定確認
    source script表示確認
    試験確認内容：source scriptセレクトボックスが表示されていることを確認
+   不具合内容：プロパティのsource scriptテキストボックスが非活性となっていない(4-1.)
      */
     it.skip("プロパティ設定確認-source script表示確認-source scriptセレクトボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
-      const DATA_CY_STR = "[data-cy=\"component_property-source_script-autocomplete\"]";
+      cy.get("[data-cy=\"component_property-job_scheduler-switch\"]")
+        .find("input[type=\"checkbox\"]")
+        .click();
+      const DATA_CY_STR = "[data-cy=\"component_property-source_script-text_field\"]";
       cy.confirmDisplayInProperty(DATA_CY_STR, true);
       cy.get(DATA_CY_STR).find("input")
         .should("be.disabled");
@@ -664,10 +668,11 @@ describe("components", ()=>{
    プロパティ設定確認
    source scriptファイル選択表示確認
    試験確認内容：source scriptセレクトボックスで選択したファイルが表示されていることを確認
+   不具合内容：プロパティのsource scriptテキストボックスがテスト側の想定でリストボックスとなっている(4-3.)
      */
     it.skip("プロパティ設定確認-source scriptファイル選択表示確認-source scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       const SWITCH_CY = "[data-cy=\"component_property-job_scheduler-switch\"]";
-      const FIELD_CY = "[data-cy=\"component_property-source_script-autocomplete\"]";
+      const FIELD_CY = "[data-cy=\"component_property-source_script-text_field\"]";
       cy.get(SWITCH_CY).click({ force: true });
       cy.createDirOrFile(TYPE_FILE, "env.sh", true);
       let targetDropBoxCy = FIELD_CY;
@@ -727,7 +732,7 @@ describe("components", ()=>{
   host選択確認（localhost以外を選択）
   試験確認内容：hostセレクトボックスで選択した値が表示されていることを確認
      */
-    it("プロパティ設定確認-host選択確認（localhost以外を選択）-hostセレクトボックスで選択した値が表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-host選択確認（localhost以外を選択）-hostセレクトボックスで選択した値が表示されていることを確認", ()=>{
       cy.selectValueFromDropdownList("[data-cy=\"component_property-host-select\"]", 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-host-select\"]").contains(COMPONENT_TEST_LABEL)
         .should("exist");
@@ -740,7 +745,7 @@ describe("components", ()=>{
   host選択確認（localhost以外を選択）
   試験確認内容：hostセレクトボックスで選択した値が反映されていることを確認
      */
-    it("プロパティ設定確認-hostファイル選択表示確認-hostセレクトボックスで選択したファイルが表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-hostファイル選択表示確認-hostセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
       cy.selectValueFromDropdownList("[data-cy=\"component_property-host-select\"]", 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-host-select\"]").contains(COMPONENT_TEST_LABEL)
         .should("exist");
@@ -822,7 +827,7 @@ describe("components", ()=>{
   queue選択反映確認
   試験確認内容：queueセレクトボックスに選択した値が反映されていることを確認
      */
-    it("プロパティ設定確認-queue選択反映確認-queueセレクトボックスに選択した値が反映されていることを確認", ()=>{ 
+    it("プロパティ設定確認-queue選択反映確認-queueセレクトボックスに選択した値が反映されていることを確認", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
@@ -867,9 +872,12 @@ describe("components", ()=>{
   submit command反映確認
   試験確認内容：リモートホストのジョブ投入コマンドが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-submit command反映確認-リモートホストのジョブ投入コマンドが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-submit command反映確認-リモートホストのジョブ投入コマンドが表示されていることを確認", ()=>{
       cy.clickComponentName(TASK_NAME_0);
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
+      cy.get("[data-cy=\"component_property-job_scheduler-switch\"]")
+        .find("input[type=\"checkbox\"]")
+        .click();
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.saveProperty();
       cy.get("[data-cy=\"component_property-submit_command-text_field\"]").find("input")
@@ -883,8 +891,12 @@ describe("components", ()=>{
   プロパティ設定確認
   submit option表示確認（無効）
   試験確認内容：submit optionテキストボックスが無効となっていることを確認
+  不具合内容：プロパティのsubmit optionテキストボックスが非活性となっていない(4-2.)
      */
     it.skip("プロパティ設定確認-submit option表示確認（無効）-submit optionテキストボックスが無効となっていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+      cy.get("[data-cy=\"component_property-job_scheduler-switch\"]")
+        .find("input[type=\"checkbox\"]")
+        .click();
       cy.get("[data-cy=\"component_property-submit_option-text_field\"]").find("input")
         .should("be.disabled");
     });
@@ -1002,6 +1014,7 @@ describe("components", ()=>{
   プロパティ設定確認
   シェルスクリプト選択セレクトボックス選択反映確認
   試験確認内容：選択した値が表示されていることを確認
+  不具合調査中:作成したtest-aが認識できず失敗している
      */
     it.skip("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
@@ -1088,7 +1101,7 @@ describe("components", ()=>{
   include表示確認
   試験確認内容：includeテキストボックスが表示されていることを確認
      */
-    it.skip("プロパティ設定確認-include表示確認-includeテキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-include表示確認-includeテキストボックスが表示されていることを確認", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1102,7 +1115,7 @@ describe("components", ()=>{
   include入力確認
   試験確認内容：入力した値が表示されていることを確認
      */
-    it("プロパティ設定確認-include入力確認-入力した値が表示されていることを確認", ()=>{ 
+    it("プロパティ設定確認-include入力確認-入力した値が表示されていることを確認", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1119,7 +1132,7 @@ describe("components", ()=>{
   include入力反映確認
   試験確認内容：入力した値が反映されていることを確認
      */
-    it("プロパティ設定確認-include入力反映確認-入力した値が反映されていることを確認", ()=>{ 
+    it("プロパティ設定確認-include入力反映確認-入力した値が反映されていることを確認", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1213,7 +1226,7 @@ describe("components", ()=>{
   clean up flag入力確認
   試験確認内容：各ラジオボタンが選択できることを確認
      */
-    it("プロパティ設定確認-clean up flag入力確認-各ラジオボタンが選択できることを確認", ()=>{ 
+    it("プロパティ設定確認-clean up flag入力確認-各ラジオボタンが選択できることを確認", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1238,7 +1251,7 @@ describe("components", ()=>{
   clean up flag入力反映確認（remove files）
   試験確認内容：remove filesが設定されていることを確認
      */
-    it("プロパティ設定確認-clean up flag入力反映確認（remove files）-remove filesが設定されていることを確認", ()=>{ 
+    it("プロパティ設定確認-clean up flag入力反映確認（remove files）-remove filesが設定されていることを確認", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1260,7 +1273,7 @@ describe("components", ()=>{
   clean up flag入力反映確認（keep files）
   試験確認内容：keep filesが設定されていることを確認
      */
-    it("プロパティ設定確認-clean up flag入力反映確認（keep files）-keep filesが設定されていることを確認", ()=>{ 
+    it("プロパティ設定確認-clean up flag入力反映確認（keep files）-keep filesが設定されていることを確認", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -1282,7 +1295,7 @@ describe("components", ()=>{
   clean up flag入力反映確認（same as parent）
   試験確認内容：same as parentが設定されていることを確認
      */
-    it("プロパティ設定確認-clean up flag入力反映確認（same as parent）-same as parentが設定されていることを確認", ()=>{ 
+    it("プロパティ設定確認-clean up flag入力反映確認（same as parent）-same as parentが設定されていることを確認", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
