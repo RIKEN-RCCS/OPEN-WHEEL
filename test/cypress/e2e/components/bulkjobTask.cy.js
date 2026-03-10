@@ -17,12 +17,16 @@ describe("components", ()=>{
       cy.visit("/");
       cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
       cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").click();
-      cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
-      cy.enterRequiredRemoteHost(TEST_LABEL, "HOST_NAME", 20, "TEST_USER");
-      cy.enterRemoteHost("HOST_WORK_DIR", "PRIVATE_KEY_FILE", JOB_SCHEDULERS, 100, AVAILABLE_QUEUES, "BULKJOB_CHK_YES", "STEPJOB_CHK_YES", "SHARED_HOST");
-      cy.get("[data-cy=\"add_new_host-ok-btn\"]").should("not.be.disabled")
-        .click();
-      cy.contains("button", "Close").click();
+      cy.get("[data-cy=\"remotehost-items-data_table\"]").then(($body)=>{
+        if (!$body.text().includes(TEST_LABEL)) {
+          cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
+          cy.enterRequiredRemoteHost(TEST_LABEL, "HOST_NAME", 20, "TEST_USER");
+          cy.enterRemoteHost("HOST_WORK_DIR", "PRIVATE_KEY_FILE", JOB_SCHEDULERS, 100, AVAILABLE_QUEUES, "BULKJOB_CHK_YES", "STEPJOB_CHK_YES", "SHARED_HOST");
+          cy.get("[data-cy=\"add_new_host-ok-btn\"]").should("not.be.disabled")
+            .click();
+          cy.contains("button", "Close").click();
+        }
+      });
       return cy.removeAllProjects();
     });
 
