@@ -263,7 +263,7 @@ async function updateComponentPath(projectRootDir, ID, absPath) {
  * @param {boolean} force - force update if already set given state
  * @returns {object|false} - new Project JSON meta data. false means meta data does not updated
  */
-async function setProjectState(projectRootDir, state, force) {
+async function setProjectState(projectRootDir, state, force, doNotAdd = false) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
   const projectJson = await readJsonGreedy(filename);
   if (force || projectJson.state !== state) {
@@ -271,7 +271,9 @@ async function setProjectState(projectRootDir, state, force) {
     const timestamp = getDateString(true);
     projectJson.mtime = timestamp;
     await writeJsonWrapper(filename, projectJson);
-    await gitAdd(projectRootDir, filename);
+    if (!doNotAdd) {
+      await gitAdd(projectRootDir, filename);
+    }
     return projectJson;
   }
   return false;
@@ -1799,7 +1801,6 @@ async function restoreSanitizedJsonFiles(originals) {
     await fs.writeFile(filePath, originalContent, "utf8");
   }
 }
-
 
 module.exports = {
   createNewProject,

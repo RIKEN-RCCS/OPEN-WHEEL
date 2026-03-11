@@ -32,7 +32,7 @@ const allowedOperations = require("../../../common/allowedOperations.cjs");
 
 const projectOperationQueues = new Map();
 async function updateProjectState(projectRootDir, state) {
-  const projectJson = await setProjectState(projectRootDir, state);
+  const projectJson = await setProjectState(projectRootDir, state, false, true);
   if (projectJson) {
     await emitAll(projectRootDir, "projectState", projectJson.state);
   }

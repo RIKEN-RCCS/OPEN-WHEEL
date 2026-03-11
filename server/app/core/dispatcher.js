@@ -653,6 +653,9 @@ class Dispatcher extends EventEmitter {
       component.currentIndex = getNextIndex(component);
     }
     await this._setComponentState(component, "running");
+    //_setComponentState skips writing if state is unchanged (already "running" from prior iterations).
+    //Force-write to always persist loop progress fields (currentIndex, prevIndex, numFinished, etc.)
+    await writeComponentJson(this.projectRootDir, this._getComponentDir(component.ID), component, true);
     component.childLoopRunning = true;
 
     //update env
