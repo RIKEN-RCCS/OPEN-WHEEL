@@ -783,9 +783,8 @@ describe("components", ()=>{
   queue表示確認（無効）
   試験確認内容：queueセレクトボックスが無効となっていることを確認
      */
-    it.skip("プロパティ設定確認-queue表示確認（無効）-queueセレクトボックスが無効となっていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
-      cy.get("[data-cy=\"component_property-queue-select\"]").find("input")
-        .should("be.disabled");
+    it("プロパティ設定確認-queue表示確認（無効）-queueセレクトボックスが無効となっていることを確認", ()=>{
+      cy.get("[data-cy=\"component_property-queue-select\"]").should("not.exist");
     });
 
     /**
@@ -846,9 +845,8 @@ describe("components", ()=>{
   submit command表示確認（無効）
   試験確認内容：submit commandテキストボックスが無効となっていることを確認
      */
-    it.skip("プロパティ設定確認-submit command表示確認（無効）-submit commandテキストボックスが無効となっていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
-      cy.get("[data-cy=\"component_property-submit_command-text_field\"]").find("input")
-        .should("be.disabled");
+    it("プロパティ設定確認-submit command表示確認（無効）-submit commandテキストボックスが無効となっていることを確認", ()=>{
+      cy.get("[data-cy=\"component_property-submit_command-text_field\"]").should("not.exist");
     });
 
     /**
@@ -1014,9 +1012,8 @@ describe("components", ()=>{
   プロパティ設定確認
   シェルスクリプト選択セレクトボックス選択反映確認
   試験確認内容：選択した値が表示されていることを確認
-  不具合調査中:作成したtest-aが認識できず失敗している
      */
-    it.skip("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-files-panel_title\"]")
         .find(".v-expansion-panel-title__overlay")
@@ -1025,12 +1022,8 @@ describe("components", ()=>{
         .find(".v-expansion-panel-title__overlay")
         .click();
       cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"] input").click();
-      cy.get("body")
-        .find(".v-list-item")
-        .contains("test-a")
-        .click();
-
+      const targetDropBox = "[data-cy=\"component_property-task_use_javascript-autocomplete\"] input";
+      cy.selectValueFromDropdownList(targetDropBox, 0, "test-a");
       cy.saveProperty();
       cy.closeProperty();
       cy.clickComponentName(TASK_NAME_0);
