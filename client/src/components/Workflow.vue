@@ -164,7 +164,7 @@
           >
             <template #activator="{ props }">
               <v-btn
-                v-if="readOnly"
+                v-if="forceEditAllowed"
                 icon="mdi-pencil-lock-outline"
                 rounded="0"
                 variant="outlined"
@@ -497,7 +497,10 @@ export default {
       return this.selectedSourceFilenames[0].filename;
     },
     runProjectAllowed() {
-      return isAllowed(this.projectState, "runProject");
+      return isAllowed(this.projectState, "runProject") && !this.readOnly;
+    },
+    forceEditAllowed() {
+      return this.readOnly && ["stopped", "finished", "failed", "unknown"].includes(this.projectState);
     },
     pauseProjectAllowed() {
       return isAllowed(this.projectState, "pauseProject");

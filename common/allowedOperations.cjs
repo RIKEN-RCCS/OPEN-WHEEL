@@ -9,11 +9,11 @@ const allowedOperations = {
   "not-started": ["runProject", "revertProject", "saveProject", "checkProject"],
   "preparing": ["cleanProject"],
   "running": ["stopProject"],
-  "stopped": ["cleanProject"],
-  "finished": ["cleanProject"],
-  "failed": ["cleanProject"],
+  "stopped": ["runProject", "cleanProject"],
+  "finished": ["runProject", "cleanProject"],
+  "failed": ["runProject", "cleanProject"],
   "holding": [],
-  "unknown": ["cleanProject"],
+  "unknown": ["runProject", "cleanProject"],
 };
 
 module.exports = allowedOperations;
