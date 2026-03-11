@@ -16,7 +16,7 @@ const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilenam
 const { deliverFile } = require("../core/fileUtils");
 const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getComponentDir } = require("../core/componentJsonIO.js");
-const { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR } = require("../core/projectFilesOperator");
+const { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR, sanitizeStagedJsonFiles, restoreSanitizedJsonFiles } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
 const { setJWTServerPassphrase, removeAllJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
 const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
@@ -165,7 +165,9 @@ async function onRunProject(clientID, projectRootDir, ack) {
         return false;
       }
 
+      const originals = await sanitizeStagedJsonFiles(projectRootDir);
       await gitCommit(projectRootDir, "auto saved: project starting");
+      await restoreSanitizedJsonFiles(originals);
     } catch (err) {
       getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
       ack(err);
