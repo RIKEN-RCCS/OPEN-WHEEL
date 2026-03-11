@@ -23,15 +23,24 @@
           {{ projectJson !== null ? projectJson.name : "" }}
         </span>
         <v-spacer />
-        <v-btn
-          rounded
-          variant="outlined"
-          :ripple="false"
-          :style="{backgroundColor : stateColor}"
-          data-cy="workflow-project_state-btn"
+        <v-tooltip
+          :disabled="failedTaskPaths.length === 0"
+          location="bottom"
         >
-          status: {{ projectState }}{{ isReadOnly }}
-        </v-btn>
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              rounded
+              variant="outlined"
+              :ripple="false"
+              :style="{backgroundColor : stateColor}"
+              data-cy="workflow-project_state-btn"
+            >
+              status: {{ projectState }}{{ isReadOnly }}
+            </v-btn>
+          </template>
+          <span>Failed tasks:<br>{{ failedTaskPaths.join('\n') }}</span>
+        </v-tooltip>
         <v-spacer />
         <v-btn
           shaped
@@ -488,6 +497,9 @@ export default {
       return this.readOnly ? " - read-only" : "";
     },
     stateColor() {
+      if (this.projectState === "stopped" && this.failedTaskPaths.length > 0) {
+        return "#E60000";
+      }
       return state2color(this.projectState);
     },
     readOnlyColor() {
@@ -519,6 +531,9 @@ export default {
     },
     cleanProjectAllowed() {
       return isAllowed(this.projectState, "cleanProject");
+    },
+    failedTaskPaths() {
+      return this.projectJson?.failedTasks ?? [];
     }
   },
   mounted: function () {

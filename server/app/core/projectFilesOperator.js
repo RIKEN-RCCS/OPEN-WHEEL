@@ -1802,6 +1802,41 @@ async function restoreSanitizedJsonFiles(originals) {
   }
 }
 
+/**
+ * Append a failed task's relative path to prj.wheel.json's failedTasks array.
+ * Does not stage the file (execution-time write).
+ * @param {string} projectRootDir - project's root path
+ * @param {string} taskRelPath - task directory path relative to projectRootDir
+ * @returns {Promise<object>} - updated projectJson
+ */
+async function addFailedTask(projectRootDir, taskRelPath) {
+  const filename = path.resolve(projectRootDir, projectJsonFilename);
+  const projectJson = await readJsonGreedy(filename);
+  if (!Array.isArray(projectJson.failedTasks)) {
+    projectJson.failedTasks = [];
+  }
+  if (!projectJson.failedTasks.includes(taskRelPath)) {
+    projectJson.failedTasks.push(taskRelPath);
+  }
+  await writeJsonWrapper(filename, projectJson);
+  return projectJson;
+}
+
+/**
+ * Clear the failedTasks list from prj.wheel.json.
+ * Does not stage the file.
+ * @param {string} projectRootDir - project's root path
+ * @returns {Promise<void>}
+ */
+async function clearFailedTasks(projectRootDir) {
+  const filename = path.resolve(projectRootDir, projectJsonFilename);
+  const projectJson = await readJsonGreedy(filename);
+  if (projectJson.failedTasks) {
+    delete projectJson.failedTasks;
+    await writeJsonWrapper(filename, projectJson);
+  }
+}
+
 module.exports = {
   createNewProject,
   updateComponentPath,
@@ -1843,5 +1878,7 @@ module.exports = {
   isLocal,
   isSameRemoteHost,
   sanitizeStagedJsonFiles,
-  restoreSanitizedJsonFiles
+  restoreSanitizedJsonFiles,
+  addFailedTask,
+  clearFailedTasks
 };
