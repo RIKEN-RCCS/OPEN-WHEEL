@@ -18,7 +18,7 @@ const { readJsonGreedy } = require("./fileUtils");
  * @returns {string | undefined} -
  */
 function componentJsonReplacer(key, value) {
-  if (["handler", "doCleanup", "sbsID", "childLoopRunning"].includes(key)) {
+  if (["handler", "doCleanup", "sbsID", "childLoopRunning", "restartChecked"].includes(key)) {
     return undefined;
   }
   return value;

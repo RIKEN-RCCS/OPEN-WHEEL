@@ -16,7 +16,7 @@ const { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilenam
 const { deliverFile } = require("../core/fileUtils");
 const { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } = require("../core/gitOperator2");
 const { getComponentDir } = require("../core/componentJsonIO.js");
-const { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR } = require("../core/projectFilesOperator");
+const { getHosts, checkRemoteStoragePathWritePermission, getSourceComponents, getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus, setComponentStateR, sanitizeStagedJsonFiles, restoreSanitizedJsonFiles, addFailedTask, clearFailedTasks } = require("../core/projectFilesOperator");
 const { createSsh, removeSsh, askPassword } = require("../core/sshManager");
 const { setJWTServerPassphrase, removeAllJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
 const { runProject, cleanProject, stopProject } = require("../core/projectController.js");
@@ -32,7 +32,7 @@ const allowedOperations = require("../../../common/allowedOperations.cjs");
 
 const projectOperationQueues = new Map();
 async function updateProjectState(projectRootDir, state) {
-  const projectJson = await setProjectState(projectRootDir, state);
+  const projectJson = await setProjectState(projectRootDir, state, false, true);
   if (projectJson) {
     await emitAll(projectRootDir, "projectState", projectJson.state);
   }
@@ -165,7 +165,9 @@ async function onRunProject(clientID, projectRootDir, ack) {
         return false;
       }
 
+      const originals = await sanitizeStagedJsonFiles(projectRootDir);
       await gitCommit(projectRootDir, "auto saved: project starting");
+      await restoreSanitizedJsonFiles(originals);
     } catch (err) {
       getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
       ack(err);
@@ -173,6 +175,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
     }
     //interactive phase
     try {
+      await clearFailedTasks(projectRootDir);
       await updateProjectState(projectRootDir, "preparing");
 
       //resolve source files
@@ -278,6 +281,9 @@ async function onRunProject(clientID, projectRootDir, ack) {
     ee.on("taskStateChanged", async (task)=>{
       await sendTaskStateList(projectRootDir);
       if (task.ignoreFailure !== true && ["failed", "unknow"].includes(task.state)) {
+        const taskRelPath = path.relative(projectRootDir, task.workingDir);
+        await addFailedTask(projectRootDir, taskRelPath);
+        await sendProjectJson(projectRootDir);
         await stopProject(projectRootDir);
         await updateProjectState(projectRootDir, "stopped");
       }

@@ -6692,3 +6692,209 @@ describe("#getComponentTree", ()=>{
     expect(result.children[0].ID).to.equal("childID");
   });
 });
+
+describe("#sanitizeStagedJsonFiles", ()=>{
+  let rewireProjectFilesOperator;
+  let sanitizeStagedJsonFiles;
+  let gitStatusMock, gitAddMock, writeJsonWrapperMock;
+  let fsReadFileMock, fsWriteFileMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    sanitizeStagedJsonFiles = rewireProjectFilesOperator.__get__("sanitizeStagedJsonFiles");
+
+    gitStatusMock = sinon.stub();
+    gitAddMock = sinon.stub();
+    writeJsonWrapperMock = sinon.stub();
+    fsReadFileMock = sinon.stub();
+    fsWriteFileMock = sinon.stub();
+
+    rewireProjectFilesOperator.__set__({
+      gitStatus: gitStatusMock,
+      gitAdd: gitAddMock,
+      writeJsonWrapper: writeJsonWrapperMock,
+      fs: {
+        readFile: fsReadFileMock,
+        writeFile: fsWriteFileMock
+      },
+      path: {
+        ...path,
+        resolve: sinon.stub().callsFake((...args)=>{
+          return args.join("/");
+        })
+      }
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should sanitize staged wheel.json files by setting state to not-started", async ()=>{
+    const projectRootDir = "/mock/project/root";
+    const componentJson = { name: "task1", state: "running", script: "run.sh" };
+    const originalContent = JSON.stringify(componentJson, null, 4);
+
+    gitStatusMock.resolves({
+      added: ["task1/cmp.wheel.json"],
+      modified: [],
+      deleted: [],
+      renamed: [],
+      untracked: []
+    });
+    fsReadFileMock.resolves(originalContent);
+    writeJsonWrapperMock.resolves();
+    gitAddMock.resolves();
+
+    const result = await sanitizeStagedJsonFiles(projectRootDir);
+
+    expect(result).to.have.lengthOf(1);
+    expect(result[0].originalContent).to.equal(originalContent);
+    expect(writeJsonWrapperMock.calledOnce).to.be.true;
+    const sanitizedJson = writeJsonWrapperMock.firstCall.args[1];
+    expect(sanitizedJson.state).to.equal("not-started");
+    expect(sanitizedJson.script).to.equal("run.sh");
+    expect(gitAddMock.calledOnce).to.be.true;
+  });
+
+  it("should handle both added and modified staged files", async ()=>{
+    const projectRootDir = "/mock/project/root";
+    const json1 = { name: "task1", state: "stopped" };
+    const json2 = { name: "task2", state: "failed" };
+
+    gitStatusMock.resolves({
+      added: ["task1/cmp.wheel.json"],
+      modified: ["task2/cmp.wheel.json"],
+      deleted: [],
+      renamed: [],
+      untracked: []
+    });
+    fsReadFileMock.onFirstCall().resolves(JSON.stringify(json1));
+    fsReadFileMock.onSecondCall().resolves(JSON.stringify(json2));
+    writeJsonWrapperMock.resolves();
+    gitAddMock.resolves();
+
+    const result = await sanitizeStagedJsonFiles(projectRootDir);
+
+    expect(result).to.have.lengthOf(2);
+    expect(writeJsonWrapperMock.callCount).to.equal(2);
+    expect(writeJsonWrapperMock.firstCall.args[1].state).to.equal("not-started");
+    expect(writeJsonWrapperMock.secondCall.args[1].state).to.equal("not-started");
+  });
+
+  it("should skip non-wheel.json staged files", async ()=>{
+    const projectRootDir = "/mock/project/root";
+
+    gitStatusMock.resolves({
+      added: ["task1/run.sh", "task1/cmp.wheel.json"],
+      modified: ["README.md"],
+      deleted: [],
+      renamed: [],
+      untracked: []
+    });
+    fsReadFileMock.resolves(JSON.stringify({ state: "running" }));
+    writeJsonWrapperMock.resolves();
+    gitAddMock.resolves();
+
+    const result = await sanitizeStagedJsonFiles(projectRootDir);
+
+    expect(result).to.have.lengthOf(1);
+    expect(writeJsonWrapperMock.calledOnce).to.be.true;
+    expect(gitAddMock.calledOnce).to.be.true;
+  });
+
+  it("should return empty array when no wheel.json files are staged", async ()=>{
+    const projectRootDir = "/mock/project/root";
+
+    gitStatusMock.resolves({
+      added: [],
+      modified: ["README.md"],
+      deleted: [],
+      renamed: [],
+      untracked: []
+    });
+
+    const result = await sanitizeStagedJsonFiles(projectRootDir);
+
+    expect(result).to.have.lengthOf(0);
+    expect(writeJsonWrapperMock.notCalled).to.be.true;
+    expect(gitAddMock.notCalled).to.be.true;
+  });
+
+  it("should preserve non-state fields including currentIndex and prevIndex", async ()=>{
+    const projectRootDir = "/mock/project/root";
+    const loopJson = {
+      name: "for1",
+      state: "running",
+      currentIndex: 3,
+      prevIndex: 2,
+      initialized: true,
+      script: "run.sh"
+    };
+
+    gitStatusMock.resolves({
+      added: [],
+      modified: ["for1/cmp.wheel.json"],
+      deleted: [],
+      renamed: [],
+      untracked: []
+    });
+    fsReadFileMock.resolves(JSON.stringify(loopJson));
+    writeJsonWrapperMock.resolves();
+    gitAddMock.resolves();
+
+    await sanitizeStagedJsonFiles(projectRootDir);
+
+    const sanitizedJson = writeJsonWrapperMock.firstCall.args[1];
+    expect(sanitizedJson.state).to.equal("not-started");
+    expect(sanitizedJson.currentIndex).to.equal(3);
+    expect(sanitizedJson.prevIndex).to.equal(2);
+    expect(sanitizedJson.initialized).to.be.true;
+    expect(sanitizedJson.script).to.equal("run.sh");
+  });
+});
+
+describe("#restoreSanitizedJsonFiles", ()=>{
+  let rewireProjectFilesOperator;
+  let restoreSanitizedJsonFiles;
+  let fsWriteFileMock;
+
+  beforeEach(()=>{
+    rewireProjectFilesOperator = rewire("../../../app/core/projectFilesOperator.js");
+    restoreSanitizedJsonFiles = rewireProjectFilesOperator.__get__("restoreSanitizedJsonFiles");
+
+    fsWriteFileMock = sinon.stub();
+
+    rewireProjectFilesOperator.__set__({
+      fs: {
+        writeFile: fsWriteFileMock
+      }
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should restore each file with its original content", async ()=>{
+    const originals = [
+      { filePath: "/project/task1/cmp.wheel.json", originalContent: "{\"state\":\"running\"}" },
+      { filePath: "/project/prj.wheel.json", originalContent: "{\"state\":\"stopped\"}" }
+    ];
+    fsWriteFileMock.resolves();
+
+    await restoreSanitizedJsonFiles(originals);
+
+    expect(fsWriteFileMock.callCount).to.equal(2);
+    expect(fsWriteFileMock.firstCall.args).to.deep.equal(["/project/task1/cmp.wheel.json", "{\"state\":\"running\"}", "utf8"]);
+    expect(fsWriteFileMock.secondCall.args).to.deep.equal(["/project/prj.wheel.json", "{\"state\":\"stopped\"}", "utf8"]);
+  });
+
+  it("should do nothing when originals list is empty", async ()=>{
+    fsWriteFileMock.resolves();
+
+    await restoreSanitizedJsonFiles([]);
+
+    expect(fsWriteFileMock.notCalled).to.be.true;
+  });
+});

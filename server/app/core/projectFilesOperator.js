@@ -17,7 +17,7 @@ const { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJso
 const { getDateString, writeJsonWrapper, isValidName, isValidInputFilename, isValidOutputFilename } = require("../lib/utility");
 const { replacePathsep, convertPathSep } = require("./pathUtils");
 const { readJsonGreedy } = require("./fileUtils");
-const { gitInit, gitAdd, gitCommit, gitRm } = require("./gitOperator2");
+const { gitInit, gitAdd, gitCommit, gitRm, gitStatus } = require("./gitOperator2");
 const { hasChild, isLocalComponent } = require("./workflowComponent");
 const { getLogger } = require("../logSettings");
 const { getSsh } = require("./sshManager.js");
@@ -263,7 +263,7 @@ async function updateComponentPath(projectRootDir, ID, absPath) {
  * @param {boolean} force - force update if already set given state
  * @returns {object|false} - new Project JSON meta data. false means meta data does not updated
  */
-async function setProjectState(projectRootDir, state, force) {
+async function setProjectState(projectRootDir, state, force, doNotAdd = false) {
   const filename = path.resolve(projectRootDir, projectJsonFilename);
   const projectJson = await readJsonGreedy(filename);
   if (force || projectJson.state !== state) {
@@ -271,7 +271,9 @@ async function setProjectState(projectRootDir, state, force) {
     const timestamp = getDateString(true);
     projectJson.mtime = timestamp;
     await writeJsonWrapper(filename, projectJson);
-    await gitAdd(projectRootDir, filename);
+    if (!doNotAdd) {
+      await gitAdd(projectRootDir, filename);
+    }
     return projectJson;
   }
   return false;
@@ -1763,6 +1765,78 @@ async function getComponentTree(projectRootDir, rootDir) {
   return root;
 }
 
+/**
+ * Sanitize all staged *.wheel.json files by setting state to "not-started".
+ * Saves original file contents so they can be restored after commit.
+ * @param {string} projectRootDir - project's root path
+ * @returns {Promise<Array<{filePath: string, originalContent: string}>>} - list of sanitized files with their original content
+ */
+async function sanitizeStagedJsonFiles(projectRootDir) {
+  const { added, modified } = await gitStatus(projectRootDir);
+  const stagedFiles = [...added, ...modified];
+  const wheelJsonFiles = stagedFiles.filter((f)=>{
+    return f.endsWith(".wheel.json");
+  });
+
+  const originals = [];
+  for (const relPath of wheelJsonFiles) {
+    const filePath = path.resolve(projectRootDir, relPath);
+    const originalContent = await fs.readFile(filePath, "utf8");
+    const json = JSON.parse(originalContent);
+    json.state = "not-started";
+    await writeJsonWrapper(filePath, json);
+    await gitAdd(projectRootDir, filePath);
+    originals.push({ filePath, originalContent });
+  }
+  return originals;
+}
+
+/**
+ * Restore working-tree files to their original content after a sanitized commit.
+ * @param {Array<{filePath: string, originalContent: string}>} originals - list returned by sanitizeStagedJsonFiles
+ * @returns {Promise<void>}
+ */
+async function restoreSanitizedJsonFiles(originals) {
+  for (const { filePath, originalContent } of originals) {
+    await fs.writeFile(filePath, originalContent, "utf8");
+  }
+}
+
+/**
+ * Append a failed task's relative path to prj.wheel.json's failedTasks array.
+ * Does not stage the file (execution-time write).
+ * @param {string} projectRootDir - project's root path
+ * @param {string} taskRelPath - task directory path relative to projectRootDir
+ * @returns {Promise<object>} - updated projectJson
+ */
+async function addFailedTask(projectRootDir, taskRelPath) {
+  const filename = path.resolve(projectRootDir, projectJsonFilename);
+  const projectJson = await readJsonGreedy(filename);
+  if (!Array.isArray(projectJson.failedTasks)) {
+    projectJson.failedTasks = [];
+  }
+  if (!projectJson.failedTasks.includes(taskRelPath)) {
+    projectJson.failedTasks.push(taskRelPath);
+  }
+  await writeJsonWrapper(filename, projectJson);
+  return projectJson;
+}
+
+/**
+ * Clear the failedTasks list from prj.wheel.json.
+ * Does not stage the file.
+ * @param {string} projectRootDir - project's root path
+ * @returns {Promise<void>}
+ */
+async function clearFailedTasks(projectRootDir) {
+  const filename = path.resolve(projectRootDir, projectJsonFilename);
+  const projectJson = await readJsonGreedy(filename);
+  if (projectJson.failedTasks) {
+    delete projectJson.failedTasks;
+    await writeJsonWrapper(filename, projectJson);
+  }
+}
+
 module.exports = {
   createNewProject,
   updateComponentPath,
@@ -1802,5 +1876,9 @@ module.exports = {
   isComponentDir,
   getComponentTree,
   isLocal,
-  isSameRemoteHost
+  isSameRemoteHost,
+  sanitizeStagedJsonFiles,
+  restoreSanitizedJsonFiles,
+  addFailedTask,
+  clearFailedTasks
 };

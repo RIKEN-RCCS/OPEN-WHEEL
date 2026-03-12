@@ -611,10 +611,11 @@ class Dispatcher extends EventEmitter {
   async _loopHandler(getNextIndex, getPrevIndex, isFinished, getTripCount, keepLoopInstance, component) {
     getLogger(this.projectRootDir).debug("_loopHandler called", component.name);
 
-    if (component.initialized && component.currentIndex !== null && component.state === "not-started") {
+    if (!component.restartChecked && component.initialized && component.currentIndex !== null && (component.state === "not-started" || component.state === "running")) {
       getLogger(this.projectRootDir).debug(`${component.name} is restarting from ${component.currentIndex}`);
       component.restarting = true;
     }
+    component.restartChecked = true;
     if (!component.restarting && component.childLoopRunning) {
       //send back itself to searchList for next loop trip
       this.pendingComponents.push(component);
@@ -626,7 +627,7 @@ class Dispatcher extends EventEmitter {
       loopInitialize(component, getTripCount);
     } else if (component.restarting) {
       let done = false;
-      const currentInstanceDir = path.resolve(this.cwfDir, getInstanceDirectoryName(component, component.prevIndex, component.name));
+      const currentInstanceDir = path.resolve(this.cwfDir, getInstanceDirectoryName(component, component.currentIndex, component.name));
       if (await fs.pathExists(currentInstanceDir)) {
         const { state } = await readComponentJson(currentInstanceDir);
         if (state === "finished") {
@@ -653,6 +654,9 @@ class Dispatcher extends EventEmitter {
       component.currentIndex = getNextIndex(component);
     }
     await this._setComponentState(component, "running");
+    //_setComponentState skips writing if state is unchanged (already "running" from prior iterations).
+    //Force-write to always persist loop progress fields (currentIndex, prevIndex, numFinished, etc.)
+    await writeComponentJson(this.projectRootDir, this._getComponentDir(component.ID), component, true);
     component.childLoopRunning = true;
 
     //update env
@@ -778,7 +782,7 @@ class Dispatcher extends EventEmitter {
 
   async _PSHandler(component) {
     getLogger(this.projectRootDir).debug("_PSHandler called", component.name);
-    if (component.initialized && component.state === "not-started") {
+    if (component.initialized && (component.state === "not-started" || component.state === "running")) {
       component.restarting = true;
     }
     await this._setComponentState(component, "running");
