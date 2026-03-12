@@ -62,7 +62,7 @@
           </div>
           <lower-component-tree @selected="targetNodeSelected" />
           <div class="mt-4">
-            <v-autocomplete
+            <v-combobox
               v-model.trim="newTargetFilename"
               label="filename"
               :items="fileCandidates"
