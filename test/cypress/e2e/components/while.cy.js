@@ -487,12 +487,8 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
-      let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
-      cy.get(targetDropBoxCy).find("input")
-        .click();
-      cy.get("[role=\"listbox\"]").eq(0)
-        .contains("test-a")
-        .click();
+      const targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
+      cy.selectValueFromDropdownList(targetDropBoxCy, null, "test-a");
       cy.get("[data-cy=\"component_property-condition_use_javascript-autocomplete\"]").contains("test-a")
         .should("exist");
     });
@@ -509,14 +505,9 @@ describe("components", ()=>{
     it("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択反映確認-選択した値が反映されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"component_property-condition-setting_title\"]");
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
-      let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
-      cy.get(targetDropBoxCy).find("input")
-        .click();
-      cy.get("[role=\"listbox\"]").eq(0)
-        .contains("test-a")
-        .click();
+      const targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
+      cy.selectValueFromDropdownList(targetDropBoxCy, null, "test-a");
       cy.closeProperty();
       cy.clickComponentName(WHILE_NAME_0);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
