@@ -37,6 +37,7 @@ Cypress.Commands.add("createStepjobComponentAndDoubleClick", (targetComponentNam
 });
 
 //Select a value from the dropdown list
+//TODO:ドロップダウン選択 各itemにdata-cyを振りそこから値をgetする形に改修する
 Cypress.Commands.add("selectValueFromDropdownList", (targetDropBoxCy, dropBoxNo, selectVal)=>{
   cy.get(targetDropBoxCy).click();
   cy.get("[role=\"listbox\"]").should("be.visible");

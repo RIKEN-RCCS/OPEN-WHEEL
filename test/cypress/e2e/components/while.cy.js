@@ -199,7 +199,7 @@ describe("components", ()=>{
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
       let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
-      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
+      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a"); //TODO:ドロップダウン選択 各itemにdata-cyを振りそこから値をgetする形に改修する
       cy.get("[data-cy=\"workflow-play-btn\"]").click();
       cy.clickComponentName(WHILE_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
@@ -488,7 +488,7 @@ describe("components", ()=>{
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
       const targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
-      cy.selectValueFromDropdownList(targetDropBoxCy, null, "test-a");
+      cy.selectValueFromDropdownList(targetDropBoxCy, null, "test-a"); //TODO:ドロップダウン選択 各itemにdata-cyを振りそこから値をgetする形に改修する
       cy.get("[data-cy=\"component_property-condition_use_javascript-autocomplete\"]").contains("test-a")
         .should("exist");
     });
@@ -507,7 +507,7 @@ describe("components", ()=>{
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
       const targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
-      cy.selectValueFromDropdownList(targetDropBoxCy, null, "test-a");
+      cy.selectValueFromDropdownList(targetDropBoxCy, null, "test-a"); //TODO:ドロップダウン選択 各itemにdata-cyを振りそこから値をgetする形に改修する
       cy.closeProperty();
       cy.clickComponentName(WHILE_NAME_0);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
