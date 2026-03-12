@@ -226,7 +226,8 @@ class StepjobSchema extends GeneralWorkflowComponentSchema {
     this.properties.type = { enum: ["stepjob"] };
     this.required.push("host", "useJobScheduler", "queue");
     this.properties.host = { type: "string", default: "localhost" };
-    this.properties.useJobScheduler = { type: "boolean", default: false };
+    //see comment in StepjobTaskSchema
+    this.properties.useJobScheduler = { type: "boolean", default: true };
     this.properties.queue = { type: ["string", "null"], default: null };
     this.properties.submitOption = { type: ["string", "null"], default: null };
   }

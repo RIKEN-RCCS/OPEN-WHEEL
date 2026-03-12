@@ -840,8 +840,8 @@ export default {
     retryByJS() {
       this.copySelectedComponent.retryCondition = null;
     },
-    "copySelectedComponent.host"(newValue, oldValue) {
-      if (newValue === "localhost" && !this.isBulkjobTask && !this.isStepjobTask && this.isStepjob) {
+    "copySelectedComponent.host"(newValue) {
+      if (newValue === "localhost" && this.isTask) {
         this.copySelectedComponent.useJobScheduler = false;
       }
       //Close remote file setting panel if changing to localhost
