@@ -611,10 +611,11 @@ class Dispatcher extends EventEmitter {
   async _loopHandler(getNextIndex, getPrevIndex, isFinished, getTripCount, keepLoopInstance, component) {
     getLogger(this.projectRootDir).debug("_loopHandler called", component.name);
 
-    if (component.initialized && component.currentIndex !== null && (component.state === "not-started" || component.state === "running")) {
+    if (!component.restartChecked && component.initialized && component.currentIndex !== null && (component.state === "not-started" || component.state === "running")) {
       getLogger(this.projectRootDir).debug(`${component.name} is restarting from ${component.currentIndex}`);
       component.restarting = true;
     }
+    component.restartChecked = true;
     if (!component.restarting && component.childLoopRunning) {
       //send back itself to searchList for next loop trip
       this.pendingComponents.push(component);

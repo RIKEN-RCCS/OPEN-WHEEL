@@ -100,16 +100,19 @@ async function runProject(projectRootDir) {
   }
   rootDispatchers.set(projectRootDir, rootDispatcher);
 
-  await updateProjectState(projectRootDir, "running", projectJson);
-  getLogger(projectRootDir).info("project start");
-  rootWF.state = await rootDispatcher.start();
-  getLogger(projectRootDir).info(`project ${rootWF.state}`);
-  await updateProjectState(projectRootDir, rootWF.state, projectJson);
-  await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
-  rootDispatchers.delete(projectRootDir);
-  removeExecuters(projectRootDir);
-  removeTransferrers(projectRootDir);
-  removeSsh(projectRootDir);
+  try {
+    await updateProjectState(projectRootDir, "running", projectJson);
+    getLogger(projectRootDir).info("project start");
+    rootWF.state = await rootDispatcher.start();
+    getLogger(projectRootDir).info(`project ${rootWF.state}`);
+    await updateProjectState(projectRootDir, rootWF.state, projectJson);
+    await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
+  } finally {
+    rootDispatchers.delete(projectRootDir);
+    removeExecuters(projectRootDir);
+    removeTransferrers(projectRootDir);
+    removeSsh(projectRootDir);
+  }
   return rootWF.state;
 }
 

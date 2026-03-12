@@ -47,6 +47,19 @@ describe("restart UT", function () {
     expect(path.resolve(projectRootDir, "for0_2/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/for0_2\/task0/);
     expect(path.resolve(projectRootDir, "for0_3/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/for0_3\/task0/);
   });
+  it("can restart for component from second loop when for component state is running (stopped without save)", async ()=>{
+    await tar.x({
+      file: path.resolve(testFileDir, "restart_for_running_state.tgz"),
+      preserveOwner: false,
+      cwd: projectRootDir
+    });
+    await runProject(projectRootDir);
+
+    expect(path.resolve(projectRootDir, "for0_1/task0/output.txt")).to.be.a.file().with.contents.that.match(/for0_1\/task0/);
+    expect(path.resolve(projectRootDir, "for0_1/task0/hoge.txt")).not.to.be.a.path();
+    expect(path.resolve(projectRootDir, "for0_2/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/for0_2\/task0/);
+    expect(path.resolve(projectRootDir, "for0_3/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/for0_3\/task0/);
+  });
   it("can restart for component from first loop with updated files", async ()=>{
     await tar.x({
       file: path.resolve(testFileDir, "restart_for_stop_at_first_loop.tgz"),
