@@ -668,7 +668,7 @@ describe("components", ()=>{
    プロパティ設定確認
    source scriptファイル選択表示確認
    試験確認内容：source scriptセレクトボックスで選択したファイルが表示されていることを確認
-   不具合内容：プロパティのsource scriptテキストボックスがテスト側の想定でリストボックスとなっている(4-3.)
+   不具合内容：プロパティのsource scriptリストボックスがテキストボックスとして実装されているためNG(4-3.)
      */
     it.skip("プロパティ設定確認-source scriptファイル選択表示確認-source scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       const SWITCH_CY = "[data-cy=\"component_property-job_scheduler-switch\"]";
