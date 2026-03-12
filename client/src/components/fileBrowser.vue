@@ -257,7 +257,8 @@ export default {
       return !["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type);
     },
     dialogButtons() {
-      const isInvalid = this.dialog.inputField === "" || !this.noDuplicate(this.dialog.inputField);
+      const requiresInput = ["createNewDir", "createNewFile", "rename"].includes(this.dialog.submitEvent);
+      const isInvalid = requiresInput && (this.dialog.inputField === "" || !this.noDuplicate(this.dialog.inputField));
       return [
         { icon: "mdi-check", label: "ok", disabled: isInvalid },
         { icon: "mdi-close", label: "cancel" }
