@@ -291,6 +291,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ単体表示
   試験確認内容：ディレクトリが単体表示されることを確認
+  不具合内容:file削除確認ダイアログのOK不備(1.)
      */
     it.skip("ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
@@ -321,6 +322,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ複数表示（リロード前）
   試験確認内容：ディレクトリが単体表示されることを確認
+  不具合内容:file削除確認ダイアログのOK不備(1.)
      */
     it.skip("ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
@@ -351,6 +353,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ複数表示（リロード後）
   試験確認内容：ディレクトリが複数表示されることを確認
+  不具合内容:file削除確認ダイアログのOK不備(1.)
      */
     it.skip("ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
@@ -383,6 +386,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ファイル単体表示
   試験確認内容：ファイルが単体表示されることを確認
+  不具合内容:file削除確認ダイアログのOK不備(1.)
      */
     it.skip("ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
@@ -413,6 +417,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ファイル複数表示（リロード前）
   試験確認内容：ファイルが単体表示されることを確認
+  不具合内容:file削除確認ダイアログのOK不備(1.)
      */
     it.skip("ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
@@ -443,6 +448,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ファイル複数表示（リロード後）
   試験確認内容：ファイルが複数表示されることを確認
+  不具合内容:file削除確認ダイアログのOK不備(1.)
      */
     it.skip("ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
@@ -475,6 +481,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ内ディレクトリ表示
   試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+  不具合内容:file削除確認ダイアログのOK不備(1.)
      */
     it.skip("ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
@@ -506,6 +513,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ内ファイル表示
   試験確認内容：ディレクトリ内にファイルが作成されることを確認
+  不具合内容:file削除確認ダイアログのOK不備(1.)
      */
     it.skip("ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
@@ -530,7 +538,7 @@ describe("components", ()=>{
   該当コンポーネント削除確認
   試験確認内容：コンポーネントが削除されていることを確認
      */
-    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.deleteComponent(HPCISS_NAME_0);
       cy.get("[data-cy=\"graph-component-row\"]").contains(HPCISS_NAME_0)
@@ -557,7 +565,7 @@ describe("components", ()=>{
   host選択確認（localhost以外を選択）
   試験確認内容：hostセレクトボックスで選択した値が表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-host選択確認（localhost以外を選択）-hostセレクトボックスで選択した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-host選択確認（localhost以外を選択）-hostセレクトボックスで選択した値が表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       const targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
@@ -574,7 +582,7 @@ describe("components", ()=>{
   host選択確認（localhost以外を選択）
   試験確認内容：hostセレクトボックスで選択した値が反映されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-hostファイル選択表示確認-hostセレクトボックスで選択したファイルが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-hostファイル選択表示確認-hostセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       const targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
