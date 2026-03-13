@@ -1,8 +1,14 @@
 const ANIMATION_WAIT_TIME = 500;
+//open remote host setting menu
+Cypress.Commands.add("openRemoteHostMenu", ()=>{
+  cy.visit("/").wait(ANIMATION_WAIT_TIME);
+  cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
+  cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").click();
+});
 
 //remove remote host setting
 Cypress.Commands.add("removeRemoteHost", (remotoHostName)=>{
-  cy.visit("/remotehost").wait(ANIMATION_WAIT_TIME);
+  cy.openRemoteHostMenu();
   cy.get("body").then(($body)=>{
     if ($body.text().includes(remotoHostName)) {
       cy.contains("tr", remotoHostName).find("[data-cy=\"action_row-delete-btn\"]")
