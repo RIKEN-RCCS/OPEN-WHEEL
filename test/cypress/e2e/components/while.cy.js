@@ -1,5 +1,8 @@
+const MOCK_URL = Cypress.env("USE_MOCK")
+  ? { baseUrl: "http://localhost:3001" }
+  : {};
 describe("components", ()=>{
-  describe("while", ()=>{
+  describe("while", MOCK_URL, ()=>{
     const TYPE_INPUT = "input";
     const TYPE_OUTPUT = "output";
     const TYPE_DIR = "dir";

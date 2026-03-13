@@ -1,5 +1,9 @@
+const MOCK_URL = Cypress.env("USE_MOCK")
+  ? { baseUrl: "http://localhost:3001" }
+  : {};
+
 describe("components", ()=>{
-  describe("foreach", ()=>{
+  describe("foreach", MOCK_URL, ()=>{
     const TYPE_INPUT = "input";
     const TYPE_OUTPUT = "output";
     const TYPE_DIR = "dir";
@@ -13,7 +17,7 @@ describe("components", ()=>{
 
     before(()=>{
       cy.removeAllProjects();
-      // socketIOサーバの起動
+      //socketIOサーバの起動
       return cy.task("start:mock-server", MOCK_PORT);
     });
 
@@ -23,7 +27,7 @@ describe("components", ()=>{
     });
 
     after(()=>{
-      // socketIOサーバの停止
+      //socketIOサーバの停止
       cy.task("stop:mock-server");
       return cy.removeAllProjects();
     });

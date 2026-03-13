@@ -63,12 +63,10 @@ export default defineConfig({
       WHEEL_TEST_HOSTNAME: "localhost",
       WHEEL_TEST_PORT: 8000,
       WHEEL_TEST_USER: "testuser",
-      WHEEL_PATH: "/root"
+      WHEEL_PATH: "/root",
+      USE_MOCK: true
     },
-    // 通常サーバ
-    // baseUrl: `http://localhost:8089`,
-    // モックサーバ
-    baseUrl: `http://localhost:3001`,
+    baseUrl: `http://localhost:8089`,
     setupNodeEvents(on) {
       on("task", {
         "start:mock-server": (port)=>{

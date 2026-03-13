@@ -30,7 +30,32 @@ let _FILES = new Set();
 let _DIRS = new Set();
 
 /**Socket.IO サーバのインスタンス*/
+
 let io;
+let __startedHere = false; //このプロセスが起動したかどうか
+
+/**
+ * 指定ポートに誰かが LISTEN しているかを同期的に判定（成功: true, 失敗: false）
+ * @param {number} port
+ * @param {string} [host]
+ * @returns {Promise<boolean>}
+ */
+function isPortOpen(port, host = "127.0.0.1") {
+  return new Promise((resolve)=>{
+    const s = new net.Socket();
+    const done = (ret)=>{
+      s.destroy(); ;
+      resolve(ret);
+    };
+    s.once("connect", ()=>{
+      return done(true);
+    });
+    s.once("error", ()=>{
+      return done(false);
+    });
+    s.connect(port, host);
+  });
+}
 
 /*============================================================================
  * ユーティリティ
@@ -483,14 +508,42 @@ function emptyProjectJson() {
  * @param {number} [port] - サーバの待受ポート番号
  * @returns {Promise<null>} 起動完了時に null を解決する Promise を返す
  */
+//async function start(port = 3101) {
+//if (io) {
+//io.close();
+//io = undefined;
+//}
+//io = new Server(port, { cors: { origin: "*", methods: ["GET", "POST"] }, path: "/socket.io/" });
+//console.log(`[MockServer] Starting on port ${port}...`);
+//await waitForPort(port);
+
 async function start(port = 3101) {
-  if (io) {
-    io.close();
-    io = undefined;
+  //既にこのプロセスで起動済みなら no-op
+  if (io && __startedHere) {
+    console.log(`[MockServer] Already started in this process on ${port}, skip.`);
+    return null;
   }
-  io = new Server(port, { cors: { origin: "*", methods: ["GET", "POST"] }, path: "/socket.io/" });
-  console.log(`[MockServer] Starting on port ${port}...`);
-  await waitForPort(port);
+  //すでに他プロセスが LISTEN 中なら、再起動せずに no-op（EADDRINUSEを避ける）
+  if (await isPortOpen(port)) {
+    console.log(`[MockServer] Port ${port} is already in use; assuming mock server is up. Skip starting.`);
+    __startedHere = false;
+    return null;
+  }
+  //新規起動を試みる（万一 EADDRINUSE でも no-op）
+  try {
+    io = new Server(port, { cors: { origin: "*", methods: ["GET", "POST"] }, path: "/socket.io/" });
+    __startedHere = true;
+    console.log(`[MockServer] Starting on port ${port}...`);
+    +await waitForPort(port);
+  } catch (e) {
+    if (e && e.code === "EADDRINUSE") {
+      console.warn(`[MockServer] EADDRINUSE on ${port}; assuming another instance is running. Skip.`);
+      io = undefined;
+      __startedHere = false;
+      return null;
+    }
+    throw e;
+  }
 
   io.on("connection", (socket)=>{
     console.log(`[MockServer] Connected: ${socket.id}`);
@@ -1215,22 +1268,22 @@ async function start(port = 3101) {
                   const srcDir = getDir(from.id);
                   const pat = /[*?]/.test(String(from.name)) ? globToRegExp(from.name) : null;
 
-                if (!pat) {
-                  // ent.name が "/" 終了ならディレクトリに格納、それ以外は単一ファイル
-                  const endsWithSlash = /\/$/.test(String(ent.name));
-                  const baseName = String(ent.name).replace(/\/$/, "");
-                  if (endsWithSlash) {
-                    const destBase = dstDir + "/" + baseName;  
-                    addDir(projectRootDir, destBase); // ディレクトリを作る
-                    // 1件のファイル名（リンク元のベース名）で中身を作る
-                    const srcFileBase = String(from.name).replace(/^.*\//, "");
-                    addFile(projectRootDir, destBase + "/" + srcFileBase);
-                  } else {
-                    // 単一ファイルとして作成
-                    addFile(projectRootDir, dstDir + "/" + baseName);
+                  if (!pat) {
+                  //ent.name が "/" 終了ならディレクトリに格納、それ以外は単一ファイル
+                    const endsWithSlash = /\/$/.test(String(ent.name));
+                    const baseName = String(ent.name).replace(/\/$/, "");
+                    if (endsWithSlash) {
+                      const destBase = dstDir + "/" + baseName;
+                      addDir(projectRootDir, destBase); //ディレクトリを作る
+                      //1件のファイル名（リンク元のベース名）で中身を作る
+                      const srcFileBase = String(from.name).replace(/^.*\//, "");
+                      addFile(projectRootDir, destBase + "/" + srcFileBase);
+                    } else {
+                    //単一ファイルとして作成
+                      addFile(projectRootDir, dstDir + "/" + baseName);
+                    }
+                    continue;
                   }
-                  continue;
-                }
 
                   const baseName = ent.name.replace(/\/$/, "");
                   const destBase = dstDir + "/" + baseName;
@@ -1337,10 +1390,14 @@ async function start(port = 3101) {
  */
 function stop() {
   console.log("[MockServer] stop() called. io is", io ? "alive" : "null");
-  if (io) {
+  //このプロセスが立てたサーバだけ停止（他プロセスのものは閉じない）
+  if (io && __startedHere) {
     io.close();
     io = undefined;
-    console.log("[MockServer] Stopped");
+    __startedHere = false;
+    console.log("[MockServer] Stopped (owned by this process)");
+  } else {
+    console.log("[MockServer] Skip stop: not owner or already down");
   }
   return null;
 }
