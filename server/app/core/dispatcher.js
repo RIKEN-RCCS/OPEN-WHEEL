@@ -181,6 +181,7 @@ class Dispatcher extends EventEmitter {
     try {
       if (target.state === "finished") {
         getLogger(this.projectRootDir).info(`finished component don't re-run at this time: ${target.name}(${target.ID})`);
+        await this._addNextComponent(target);
       } else {
         await this._cmdFactory(target.type).call(this, target);
       }
