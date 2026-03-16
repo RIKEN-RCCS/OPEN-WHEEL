@@ -7,6 +7,7 @@
 const path = require("path");
 const fs = require("fs-extra");
 const tar = require("tar");
+const { EventEmitter } = require("events");
 
 //setup test framework
 const chai = require("chai");
@@ -16,6 +17,8 @@ chai.use(require("chai-fs"));
 
 //testee
 const { runProject } = require("../../../app/core/projectController.js");
+const { statusFilename } = require("../../../app/db/db.js");
+const { eventEmitters } = require("../../../app/core/global.js");
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -158,6 +161,41 @@ describe("restart UT", function () {
     expect(path.resolve(projectRootDir, "PS0_time_20/task0/hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_20\/task0/);
     expect(path.resolve(projectRootDir, "PS0/15_hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_15\/task0/);
     expect(path.resolve(projectRootDir, "PS0/20_hoge.txt")).to.be.a.file().with.contents.that.match(/PS0_time_20\/task0/);
+  });
+  it("can restart and skip already finished component while completing remaining tasks with dependency", async ()=>{
+    await tar.x({
+      file: path.resolve(testFileDir, "restart_with_dependency.tgz"),
+      preserveOwner: false,
+      cwd: projectRootDir
+    });
+    const projectDir = path.resolve(projectRootDir, "restart_with_dependency.wheel");
+
+    const ee = new EventEmitter();
+    eventEmitters.set(projectDir, ee);
+
+    try {
+      await runProject(projectDir);
+    } finally {
+      eventEmitters.delete(projectDir);
+    }
+
+    //task0 must not run again: state stays "finished" and no dispatchedTime is added
+    const task0Json = await fs.readJson(path.resolve(projectDir, "task0/cmp.wheel.json"));
+    expect(task0Json.state).to.equal("finished");
+    expect(task0Json.dispatchedTime).to.be.undefined;
+
+    //task1 must finish
+    const task1Json = await fs.readJson(path.resolve(projectDir, "task1/cmp.wheel.json"));
+    expect(task1Json.state).to.equal("finished");
+
+    //task2 must finish
+    const task2Json = await fs.readJson(path.resolve(projectDir, "task2/cmp.wheel.json"));
+    expect(task2Json.state).to.equal("finished");
+
+    //task2's output: status file must exist and report successful execution
+    expect(path.resolve(projectDir, `task2/${statusFilename}`))
+      .to.be.a.file()
+      .with.contents.that.match(/^finished\n0/);
   });
   it("can restart PS component and re-run only not finished instances", async ()=>{
     await tar.x({
