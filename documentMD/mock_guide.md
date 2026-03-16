@@ -183,7 +183,7 @@ cypressログの中に選択したcollectionと同じステータスが返って
 ---
 # 6. Gateway
 ## 6.1 役割
-Cypress の `baseUrl` を **3001**にし、以下のように **UI / SIO / HTTP** をまとめる
+Cypressのモック有効化フラグを`true`にし、以下のように **UI / SIO / HTTP** をまとめる
 
 ## 6.2 振り分け仕様（抜粋）
 ```
@@ -195,15 +195,15 @@ Cypress の `baseUrl` を **3001**にし、以下のように **UI / SIO / HTTP*
 
 ---
 # 6.3 接続方式：本番環境 / モック環境
- `test/cypress.config.js`内、`baseUrl`を変更することで本番の環境とモック環境を切り替えられます
+ `test/cypress.config.js`内、`USE_MOCK`を変更することでモック対応テストの本番の環境とモック環境を切り替えられます
 
 ## 本番環境：8089 直アクセス
 - 既存環境
-- Cypress `baseUrl`: `http://localhost:8089`
+- Cypress `USE_MOCK`: `true`
 
 ## モック環境：Gateway 集約
 - UI(8089)、SIO(3101)、HTTP(3102) を分離して運用
-- Cypress `baseUrl`: `http://localhost:3001`
+- Cypress `USE_MOCK`: `false`
 
 ---
 # 7. Cypress テスト実行
