@@ -855,26 +855,35 @@ async function start(port = 3101) {
      * @returns {void} 返り値なし ACKとpushで通知します。
      */
     socket.on("updateComponent", (projectRootDir, nodeId, component, rootId, cb)=>{
+      function isValidComponentName(name) {
+        const s = String(name ?? "").trim();
+        if (!s) return false;
+        //少なくとも * を含むようなワイルドカードやパス系は拒否
+        return !(/[\\\/:*?"<>|]/.test(s));
+      }
       const wf = getOrInitWorkflow(projectRootDir, rootId || "root");
       let compObj = component;
-      if (typeof compObj === "string") {
-        compObj = JSON.parse(compObj);
-      }
+      if (typeof compObj === "string") compObj = JSON.parse(compObj);
       if (compObj && typeof compObj === "object") {
         delete compObj.input_files;
         delete compObj.output_files;
+        if ("name" in compObj) {
+          const candidate = String(compObj.name ?? "").trim();
+          if (!isValidComponentName(candidate)) {
+            delete compObj.name; //← 不正名は反映しない
+          } else {
+            const pj = getOrInitProjectJson(projectRootDir, rootId || "root");
+            pj.componentPath[nodeId] = candidate; //← componentPath も同期
+            io.emit("projectJson", pj);
+          }
+        }
       }
       const node = findNodeById(wf, nodeId);
       if (!node) return cb?.(false);
-
-      const merged = { ...node, ...(typeof compObj === "object" && compObj ? compObj : {}), ID: nodeId };
+      const merged = { ...node, ...(compObj || {}), ID: nodeId };
       if (!Array.isArray(merged.descendants)) merged.descendants = [];
-      const idx = wf.descendants.findIndex((n)=>{
-        return n && n.ID === nodeId;
-      });
-      if (idx !== -1) wf.descendants[idx] = merged;
-      else Object.assign(node, merged);
-
+      const idx = wf.descendants.findIndex((n)=>{ return n && n.ID === nodeId; });
+      if (idx !== -1) wf.descendants[idx] = merged; else Object.assign(node, merged);
       cb?.(true);
       reconcileIOFromLinks(wf);
       io.emit("workflow", clone(wf));

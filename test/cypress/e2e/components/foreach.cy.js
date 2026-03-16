@@ -185,7 +185,7 @@ describe("components", ()=>{
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it.skip("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
