@@ -292,7 +292,7 @@ describe("components", ()=>{
   ディレクトリ単体表示
   試験確認内容：ディレクトリが単体表示されることを確認
      */
-    it("ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{ 
+    it("ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);
@@ -321,15 +321,14 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ複数表示（リロード前）
   試験確認内容：ディレクトリが単体表示されることを確認
-  不具合内容:Filesに指定のディレクトリがないため失敗　詳細調査中
      */
-    it.skip("ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
+      cy.closeProperty();
+      cy.clickComponentName(STORAGE_NAME_0);
       cy.createDirOrFile(TYPE_DIR, "test1", true);
       cy.createDirOrFile(TYPE_DIR, "test2", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test")
-        .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
@@ -354,11 +353,12 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ複数表示（リロード後）
   試験確認内容：ディレクトリが複数表示されることを確認
-  不具合内容:Filesに指定のディレクトリがないため失敗　詳細調査中
      */
-    it.skip("ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
+      cy.closeProperty();
+      cy.clickComponentName(STORAGE_NAME_0);
       cy.createDirOrFile(TYPE_DIR, "test1", true);
       cy.createDirOrFile(TYPE_DIR, "test2", false);
       cy.closeProperty();
@@ -392,6 +392,8 @@ describe("components", ()=>{
     it("ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
+      cy.closeProperty();
+      cy.clickComponentName(STORAGE_NAME_0);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.createDirOrFile(TYPE_FILE, "test-b", false);
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
@@ -422,10 +424,10 @@ describe("components", ()=>{
     it("ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
+      cy.closeProperty();
+      cy.clickComponentName(STORAGE_NAME_0);
       cy.createDirOrFile(TYPE_FILE, "test1", true);
       cy.createDirOrFile(TYPE_FILE, "test2", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test")
-        .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
@@ -450,15 +452,14 @@ describe("components", ()=>{
   ファイル操作エリア
   ファイル複数表示（リロード後）
   試験確認内容：ファイルが複数表示されることを確認
-  不具合内容:Filesに指定のディレクトリがないため失敗　詳細調査中
      */
-    it.skip("ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
+      cy.closeProperty();
+      cy.clickComponentName(STORAGE_NAME_0);
       cy.createDirOrFile(TYPE_FILE, "test1", false);
       cy.createDirOrFile(TYPE_FILE, "test2", false);
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test")
-        .click();
       cy.closeProperty();
       cy.clickComponentName(STORAGE_NAME_0);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
@@ -487,7 +488,7 @@ describe("components", ()=>{
   ディレクトリ内ディレクトリ表示
   試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
      */
-    it("ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{ 
+    it("ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);
