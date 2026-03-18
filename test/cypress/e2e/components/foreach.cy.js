@@ -1,5 +1,9 @@
+const MOCK_URL = Cypress.env("USE_MOCK")
+  ? { baseUrl: "http://localhost:3001" }
+  : {};
+
 describe("components", ()=>{
-  describe("foreach", ()=>{
+  describe("foreach", MOCK_URL, ()=>{
     const TYPE_INPUT = "input";
     const TYPE_OUTPUT = "output";
     const TYPE_DIR = "dir";
@@ -9,9 +13,12 @@ describe("components", ()=>{
     const FOREACH_NAME_1 = "foreach1";
     const TAG_TYPE_INPUT = "input";
     const TAG_TYPE_TEXT_AREA = "textarea";
+    const MOCK_PORT = 3101;
 
     before(()=>{
-      return cy.removeAllProjects();
+      cy.removeAllProjects();
+      //socketIOサーバの起動
+      return cy.task("start:mock-server", MOCK_PORT);
     });
 
     beforeEach(()=>{
@@ -20,6 +27,8 @@ describe("components", ()=>{
     });
 
     after(()=>{
+      //socketIOサーバの停止
+      cy.task("stop:mock-server");
       return cy.removeAllProjects();
     });
 
@@ -29,6 +38,9 @@ describe("components", ()=>{
   試験確認内容：プロパティが表示されることを確認
      */
     it("プロパティが表示されることを確認", ()=>{
+      //HTTPモック(mocks-server) 疎通確認として追加
+      cy.request({ url: "/health", failOnStatusCode: false })
+        .then((r)=>{ return cy.log(`mocks-server /health status=${r.status}`); });
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
       const DATA_CY_STR = "[data-cy=\"component_property-property-navigation_drawer\"]";
       cy.confirmDisplayInProperty(DATA_CY_STR, true);
@@ -678,6 +690,7 @@ describe("components", ()=>{
   各コンポーネントの追加/削除確認
   該当コンポーネント削除確認
   試験確認内容：コンポーネントが削除されていることを確認
+  ※失敗するためスキップ。deleteComponent内で削除ボタンを押下できていないと思われる
      */
     it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);

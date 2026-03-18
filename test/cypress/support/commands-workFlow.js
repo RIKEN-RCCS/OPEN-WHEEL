@@ -11,7 +11,8 @@ Cypress.Commands.add("dragAndDropComponent", (x, y, componentName, targetCompone
     .trigger("dragstart", { offsetX: 100, offsetY: 100 })
     .trigger("dragend", { clientX: x, clientY: y })
     .then(()=>{
-      cy.get("svg").contains(componentName);
+      //svgだとforEach0を取得できなかったため、変更。実サーバーでも問題なく動くことを確認
+      cy.get("[data-cy=\"component-component_group-g\"]").contains(componentName);
     });
 });
 

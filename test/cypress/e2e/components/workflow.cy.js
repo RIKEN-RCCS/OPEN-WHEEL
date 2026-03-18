@@ -1,5 +1,8 @@
+const MOCK_URL = Cypress.env("USE_MOCK")
+  ? { baseUrl: "http://localhost:3001" }
+  : {};
 describe("components", ()=>{
-  describe("workflow", ()=>{
+  describe("workflow", MOCK_URL, ()=>{
     const TYPE_INPUT = "input";
     const TYPE_OUTPUT = "output";
     const TYPE_DIR = "dir";
@@ -9,8 +12,11 @@ describe("components", ()=>{
     const WORKFLOW_NAME_1 = "workflow1";
     const TAG_TYPE_INPUT = "input";
     const TAG_TYPE_TEXT_AREA = "textarea";
+    const MOCK_PORT = 3101;
 
     before(()=>{
+      //socketIOサーバの起動
+      cy.task("start:mock-server", MOCK_PORT);
       return cy.removeAllProjects();
     });
 
@@ -20,6 +26,8 @@ describe("components", ()=>{
     });
 
     after(()=>{
+      //socketIOサーバの停止
+      cy.task("stop:mock-server");
       return cy.removeAllProjects();
     });
 
@@ -27,6 +35,7 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   Workflowコンポーネント共通機能確認
   試験確認内容：プロパティが表示されることを確認
+  分離対象外
      */
     it("プロパティが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -38,6 +47,7 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   Workflowコンポーネント共通機能確認
   試験確認内容：name入力テキストエリアが表示されていることを確認
+  分離対象
      */
     it("name入力テキストエリアが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -50,6 +60,7 @@ describe("components", ()=>{
   Workflowコンポーネント共通機能確認
   name入力
   試験確認内容：nameが入力できることを確認
+  分離対象
      */
     it("name入力-nameが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -62,6 +73,7 @@ describe("components", ()=>{
   Workflowコンポーネント共通機能確認
   name入力（使用可能文字確認）
   試験確認内容：nameが入力できないことを確認
+  分離対象
      */
     it("name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -74,6 +86,7 @@ describe("components", ()=>{
   Workflowコンポーネント共通機能確認
   description入力
   試験確認内容：descriptionが表示、入力できることを確認
+  分離対象
      */
     it("description入力-descriptionが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -89,6 +102,7 @@ describe("components", ()=>{
   Workflowコンポーネント共通機能確認
   input files表示
   試験確認内容：input files入力テキストエリアが表示されていることを確認
+  分離対象
      */
     it("input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -102,6 +116,7 @@ describe("components", ()=>{
   Workflowコンポーネント共通機能確認
   input files入力
   試験確認内容：input filesが入力できることを確認
+  分離対象
      */
     it("input files入力-input filesが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -115,6 +130,7 @@ describe("components", ()=>{
   Workflowコンポーネント共通機能確認
   input files反映確認
   試験確認内容：input filesが反映されることを確認
+  分離対象外
      */
     it("input files反映確認-input filesが反映されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -128,6 +144,7 @@ describe("components", ()=>{
   Workflowコンポーネント共通機能確認
   output files表示
   試験確認内容：output files入力テキストエリアが表示されていることを確認
+  分離対象
      */
     it("output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -141,6 +158,7 @@ describe("components", ()=>{
   Workflowコンポーネント共通機能確認
   output files入力
   試験確認内容：output filesが入力できることを確認
+  分離対象
      */
     it("output files入力-output filesが入力できることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -154,6 +172,7 @@ describe("components", ()=>{
   Workflowコンポーネント共通機能確認
   output files反映確認
   試験確認内容：output filesが反映されることを確認
+  分離対象外
      */
     it("output files反映確認-output filesが反映されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -168,6 +187,7 @@ describe("components", ()=>{
   構成要素の機能確認
   closeボタン押下
   試験確認内容：プロパティが表示されていないことを確認
+  分離対象外
      */
     it("構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -181,6 +201,7 @@ describe("components", ()=>{
   構成要素の機能確認
   cleanボタン押下
   試験確認内容：最新の保存状態に戻っていることを確認
+  分離対象外
   skip:issue#948
      */
     it.skip("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
@@ -208,6 +229,7 @@ describe("components", ()=>{
   ファイル転送設定の各パターンの確認
   接続確認
   試験確認内容：コンポーネントが接続されていることを確認
+  分離対象外
      */
     it("ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -225,6 +247,7 @@ describe("components", ()=>{
   ファイル転送設定の各パターンの確認
   シンポリックリンク確認（outputFile、inputFile一致）
   試験確認内容：シンポリックリンクが作成されていることを確認
+  分離対象外
      */
     it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFile、inputFile一致）-シンポリックリンクが作成されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -255,6 +278,7 @@ describe("components", ()=>{
   ファイル転送設定の各パターンの確認
   シンポリックリンク確認（outputFileが通常、inputFileが空白）
   試験確認内容：シンポリックリンクが作成されていることを確認
+  分離対象外
      */
     it("シンポリックリンク確認（outputFileが通常、inputFileが空白）-シンポリックリンクが作成されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -283,6 +307,7 @@ describe("components", ()=>{
   ファイル転送設定の各パターンの確認
   シンポリックリンク確認（outputFileが通常、inputFileが「/」で終わらない文字列）
   試験確認内容：シンポリックリンクが作成されていることを確認
+  分離対象外
      */
     it("シンポリックリンク確認（outputFileが通常、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -318,6 +343,7 @@ describe("components", ()=>{
   ファイル転送設定の各パターンの確認
   シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）
   試験確認内容：シンポリックリンクが作成されていることを確認
+  分離対象外
      */
     //eslint-disable-next-line no-useless-escape
     it("シンポリックリンク確認（outputFileがglob(*や\?など)を含むパス、inputFileが「/」で終わらない文字列）-シンポリックリンクが作成されていることを確認", ()=>{
@@ -361,6 +387,7 @@ describe("components", ()=>{
  ファイル転送設定の各パターンの確認
  シンポリックリンク確認（input filesが’/’で終わる文字列のとき）
  試験確認内容：シンポリックリンクが作成されていることを確認
+ 分離対象外
      */
     it("シンポリックリンク確認（input filesが’/’で終わる文字列のとき）-シンポリックリンクが作成されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -399,6 +426,7 @@ describe("components", ()=>{
   転送対象ファイル・フォルダの設定
   削除ボタン表示確認（input file）
   試験確認内容：削除ボタンが表示されることを確認
+  分離対象
      */
     it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -412,6 +440,7 @@ describe("components", ()=>{
   転送対象ファイル・フォルダの設定
   削除ボタン表示確認（output file）
   試験確認内容：削除ボタンが表示されることを確認
+  分離対象
      */
     it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -425,6 +454,7 @@ describe("components", ()=>{
   転送対象ファイル・フォルダの設定
   削除反映確認（input file）
   試験確認内容：input fileが削除されていることを確認
+  分離対象外
      */
     it("転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -440,6 +470,7 @@ describe("components", ()=>{
   転送対象ファイル・フォルダの設定
   削除反映確認（output file）
   試験確認内容：output fileが削除されていることを確認
+  分離対象外
      */
     it("転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -455,6 +486,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ単体表示
   試験確認内容：ディレクトリが単体表示されることを確認
+  分離対象外
      */
     it("ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -474,6 +506,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ複数表示（リロード前）
   試験確認内容：ディレクトリが単体表示されることを確認
+  分離対象外
      */
     it("ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -493,6 +526,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ複数表示（リロード後）
   試験確認内容：ディレクトリが複数表示されることを確認
+  分離対象外
      */
     it("ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -512,6 +546,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ファイル単体表示
   試験確認内容：ファイルが単体表示されることを確認
+  分離対象外
      */
     it("ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -531,6 +566,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ファイル複数表示（リロード前）
   試験確認内容：ファイルが単体表示されることを確認
+  分離対象外
      */
     it("ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -550,6 +586,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ファイル複数表示（リロード後）
   試験確認内容：ファイルが複数表示されることを確認
+  分離対象外
      */
     it("ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -569,6 +606,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ内ディレクトリ表示
   試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
+  分離対象外
      */
     it("ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -590,6 +628,7 @@ describe("components", ()=>{
   ファイル操作エリア
   ディレクトリ内ファイル表示
   試験確認内容：ディレクトリ内にファイルが作成されることを確認
+  分離対象外
      */
     it("ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
@@ -607,6 +646,8 @@ describe("components", ()=>{
   各コンポーネントの追加/削除確認
   該当コンポーネント削除確認
   試験確認内容：コンポーネントが削除されていることを確認
+  ※削除ダイアログ表示後にエラー
+  分離対象外
      */
     it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
