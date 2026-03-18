@@ -51,12 +51,29 @@ jobs:
         run: npx cypress install
       - name: Cypress run
         uses: cypress-io/github-action@v6
+        env:
+          GW_PORT: "3001"
+          REAL_APP: "http://127.0.0.1:8089"
+          MOCK_SIO: "http://127.0.0.1:3101"
+          MOCK_HTTP: "http://127.0.0.1:3102"
         with:
           working-directory: test
           browser: ${{ matrix.browser }}
           install: false
+          start: |
+            node ./ws-gateway.cjs > gateway.log 2>&1 & echo $! > gateway.pid
+            npx @mocks-server/main > httpmock.log 2>&1 &
+          wait-on: 'npx wait-on --timeout 120000 tcp:127.0.0.1:3001 tcp:127.0.0.1:3102'
           config: requestTimeout=300000,defaultCommandTimeout=300000,retries=2
-
+      - name: upload gateway/mocks logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-mocks-logs
+          path: |
+            test/gateway.log
+            test/httpmock.log
+          if-no-files-found: ignore
       - name: upload screenshot
         uses: actions/upload-artifact@v4
         if: failure()

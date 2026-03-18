@@ -6,6 +6,7 @@
   "scripts": {
     "test": "npx cypress open",
     "test-all": "npx cypress run --browser chrome",
+    "gateway": "GW_PORT=3001 REAL_APP=http://localhost:8089 MOCK_SIO=http://localhost:3101 node ws-gateway.cjs",
     "test:e2e": "npm run test:e2e:start && npm run test:e2e:run; npm run test:e2e:stop",
     "test:e2e:start": "docker compose up -d --wait",
     "test:e2e:run": "npm run test-all",
@@ -13,7 +14,8 @@
     "test:e2e:gfarm": "npx dotenv -e cypress/e2e/gfarm/gfarm-e2e.env -- npx cypress run --browser chrome --spec 'cypress/e2e/gfarm/**/*.cy.js'",
     "test:e2e:gfarm:open": "npx dotenv -e cypress/e2e/gfarm/gfarm-e2e.env -- npx cypress open --spec 'cypress/e2e/gfarm/**/*.cy.js'",
     "start": "cd ../; npm start",
-    "build": "cd ../; npm run build"
+    "build": "cd ../; npm run build",
+    "mocks": "mocks-server --config.fileSearchPlaces=mocks.config.cjs"
   },
   "author": "",
   "license": "ISC",
@@ -21,18 +23,23 @@
   "dependencies": {
     "@cypress/skip-test": "^2.6.1",
     "@cypress/webpack-preprocessor": "^7.0.1",
+    "@mocks-server/main": "^4.1.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/compiler-sfc": "^3.5.18",
     "chrome": "^0.1.0",
     "cypress": "^15.5.0",
     "cypress-delete-downloads-folder": "^0.0.6",
     "cypress-real-events": "^1.15.0",
     "cypress-wait-until": "^3.0.2",
     "fs-extra": "^11.2.0",
+    "graphlib": "^2.1.8",
+    "http-proxy": "^1.18.1",
     "simple-ssh": "^1.1.1",
+    "socket.io": "^4.8.1",
+    "socketio-file-upload": "^0.7.3",
     "tar": "^7.4.3",
-    "vue": "^3.5.22",
-    "vuetify": "^3.10.8",
     "vite": "^7.1.12",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/compiler-sfc": "^3.5.18"
+    "vue": "^3.5.22",
+    "vuetify": "^3.10.8"
   }
 }

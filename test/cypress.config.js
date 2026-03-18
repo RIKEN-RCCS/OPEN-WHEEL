@@ -6,6 +6,7 @@ import * as tar from "tar";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
 import { fileURLToPath } from "url";
+import mockServer from "./mock_server/server.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,11 +63,18 @@ export default defineConfig({
       WHEEL_TEST_HOSTNAME: "localhost",
       WHEEL_TEST_PORT: 8000,
       WHEEL_TEST_USER: "testuser",
-      WHEEL_PATH: "/root"
+      WHEEL_PATH: "/root",
+      USE_MOCK: true
     },
     baseUrl: `http://localhost:8089`,
     setupNodeEvents(on) {
       on("task", {
+        "start:mock-server": (port)=>{
+          return mockServer.start(port);
+        },
+        "stop:mock-server": ()=>{
+          return mockServer.stop();
+        },
         removeDirectory,
         log(message) {
           console.log(message);

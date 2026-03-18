@@ -14,6 +14,11 @@ services:
       context: ../
       dockerfile: Dockerfile
       target: exec
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-}
+
     image: wheel_e2e_test
     container_name: test-wheel_release_test-1
     ports:
