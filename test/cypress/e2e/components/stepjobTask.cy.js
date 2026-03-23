@@ -30,7 +30,7 @@ describe("components", ()=>{
   StepjobTaskコンポーネント共通機能確認
   試験確認内容：プロパティが表示されることを確認
      */
-    it.skip("プロパティが表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティが表示されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       const DATA_CY_STR = "[data-cy=\"component_property-property-navigation_drawer\"]";
@@ -42,7 +42,7 @@ describe("components", ()=>{
   StepjobTaskコンポーネント共通機能確認
   試験確認内容：name入力テキストエリアが表示されていることを確認
      */
-    it.skip("name入力テキストエリアが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("name入力テキストエリアが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       const DATA_CY_STR = "[data-cy=\"component_property-name-text_field\"]";
@@ -55,7 +55,7 @@ describe("components", ()=>{
   name入力
   試験確認内容：nameが入力できることを確認
      */
-    it.skip("name入力-nameが入力できることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("name入力-nameが入力できることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
@@ -75,7 +75,7 @@ describe("components", ()=>{
   name入力（使用可能文字確認）
   試験確認内容：nameが入力できないことを確認
      */
-    it.skip("name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("name入力（使用可能文字確認）-nameが入力できないことを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
@@ -94,7 +94,7 @@ describe("components", ()=>{
   StepjobTaskコンポーネント共通機能確認
   試験確認内容：説明入力テキストエリアが表示されていることを確認
      */
-    it.skip("description入力テキストエリアが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("description入力テキストエリアが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       const DATA_CY_STR = "[data-cy=\"component_property-description-textarea\"]";
@@ -107,7 +107,7 @@ describe("components", ()=>{
   description入力
   試験確認内容：descriptionが入力できることを確認
      */
-    it.skip("description入力-descriptionが入力できることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("description入力-descriptionが入力できることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       const INPUT_OBJ_CY = "[data-cy=\"component_property-description-textarea\"]";
@@ -120,7 +120,7 @@ describe("components", ()=>{
   input files表示
   試験確認内容：input files入力テキストエリアが表示されていることを確認
      */
-    it.skip("input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("input files表示-input files入力テキストエリアが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       const DATA_CY_STR = "[data-cy=\"component_property-input_files-list_form\"]";
@@ -134,7 +134,7 @@ describe("components", ()=>{
   input files入力
   試験確認内容：input filesが入力できることを確認
      */
-    it.skip("input files入力-input filesが入力できることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("input files入力-input filesが入力できることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, false);
@@ -148,7 +148,7 @@ describe("components", ()=>{
   input files反映確認
   試験確認内容：input filesが反映されることを確認
      */
-    it.skip("input files反映確認-input filesが反映されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("input files反映確認-input filesが反映されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
@@ -162,7 +162,7 @@ describe("components", ()=>{
   output files表示
   試験確認内容：output files入力テキストエリアが表示されていることを確認
      */
-    it.skip("output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("output files表示-output files入力テキストエリアが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]").click();
@@ -175,7 +175,7 @@ describe("components", ()=>{
   output files入力
   試験確認内容：output filesが入力できることを確認
      */
-    it.skip("output files入力-output filesが入力できることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("output files入力-output filesが入力できることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, false);
@@ -189,7 +189,7 @@ describe("components", ()=>{
   output files反映確認
   試験確認内容：output filesが反映されることを確認
      */
-    it.skip("output files反映確認-output filesが反映されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("output files反映確認-output filesが反映されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
@@ -204,7 +204,7 @@ describe("components", ()=>{
   closeボタン押下
   試験確認内容：プロパティが表示されていないことを確認
      */
-    it.skip("構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("構成要素の機能確認-closeボタン押下-プロパティが表示されていないことを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.closeProperty();
@@ -218,7 +218,7 @@ describe("components", ()=>{
   接続確認
   試験確認内容：コンポーネントが接続されていることを確認
      */
-    it.skip("ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
@@ -236,7 +236,7 @@ describe("components", ()=>{
   削除ボタン表示確認（input file）
   試験確認内容：削除ボタンが表示されることを確認
      */
-    it.skip("転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
@@ -250,7 +250,7 @@ describe("components", ()=>{
   削除ボタン表示確認（output file）
   試験確認内容：削除ボタンが表示されることを確認
      */
-    it.skip("転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
@@ -296,7 +296,7 @@ describe("components", ()=>{
   ディレクトリ単体表示
   試験確認内容：ディレクトリが単体表示されることを確認
      */
-    it.skip("ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);
@@ -314,7 +314,7 @@ describe("components", ()=>{
   ディレクトリ複数表示（リロード前）
   試験確認内容：ディレクトリが単体表示されることを確認
      */
-    it.skip("ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_DIR, "test1", true);
@@ -332,7 +332,7 @@ describe("components", ()=>{
   ディレクトリ複数表示（リロード後）
   試験確認内容：ディレクトリが複数表示されることを確認
      */
-    it.skip("ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_DIR, "test1", true);
@@ -352,7 +352,7 @@ describe("components", ()=>{
   ファイル単体表示
   試験確認内容：ファイルが単体表示されることを確認
      */
-    it.skip("ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
@@ -370,7 +370,7 @@ describe("components", ()=>{
   ファイル複数表示（リロード前）
   試験確認内容：ファイルが単体表示されることを確認
      */
-    it.skip("ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test1", true);
@@ -388,7 +388,7 @@ describe("components", ()=>{
   ファイル複数表示（リロード後）
   試験確認内容：ファイルが複数表示されることを確認
      */
-    it.skip("ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test1", true);
@@ -408,7 +408,7 @@ describe("components", ()=>{
   ディレクトリ内ディレクトリ表示
   試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
      */
-    it.skip("ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);
@@ -428,7 +428,7 @@ describe("components", ()=>{
   ディレクトリ内ファイル表示
   試験確認内容：ディレクトリ内にファイルが作成されることを確認
      */
-    it.skip("ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);
@@ -446,7 +446,7 @@ describe("components", ()=>{
   該当コンポーネント削除確認
   試験確認内容：コンポーネントが削除されていることを確認
      */
-    it.skip("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネントの追加/削除確認-該当コンポーネント削除確認-コンポーネントが削除されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.deleteComponent(STEPJOB_TASK_NAME_0);
@@ -461,7 +461,7 @@ describe("components", ()=>{
   script表示確認
   試験確認内容：scriptセレクトボックスが表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-script表示確認-scriptセレクトボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-script表示確認-scriptセレクトボックスが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       const DATA_CY_STR = "[data-cy=\"component_property-script-autocomplete\"]";
@@ -475,7 +475,7 @@ describe("components", ()=>{
   checker script非表示確認
   試験確認内容：checker scriptセレクトボックスが表示されていないことを確認
      */
-    it.skip("プロパティ設定確認-checker script非表示確認-checker scriptセレクトボックスが表示されていないことを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-checker script非表示確認-checker scriptセレクトボックスが表示されていないことを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       const DATA_CY_STR = "[data-cy=\"component_property-checker-autocomplete\"]";
@@ -489,7 +489,7 @@ describe("components", ()=>{
   scriptファイル選択表示確認
   試験確認内容：scriptセレクトボックスで選択したファイルが表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-scriptファイル選択表示確認-scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-scriptファイル選択表示確認-scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
@@ -506,7 +506,7 @@ describe("components", ()=>{
   scriptファイル選択反映確認
   試験確認内容：scriptセレクトボックスで選択したファイルが反映されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-scriptファイル選択反映確認-scriptセレクトボックスで選択したファイルが反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-scriptファイル選択反映確認-scriptセレクトボックスで選択したファイルが反映されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
@@ -526,7 +526,7 @@ describe("components", ()=>{
   script表示確認
   試験確認内容：scriptセレクトボックスが表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-script表示確認-scriptセレクトボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-script表示確認-scriptセレクトボックスが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-stepjob_task-panel_title\"]").click();
@@ -569,7 +569,7 @@ describe("components", ()=>{
   dependencyForm表示確認
   試験確認内容：dependencyFormテキストボックスが表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-dependencyForm表示確認-dependencyFormテキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-dependencyForm表示確認-dependencyFormテキストボックスが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-stepjob_task-panel_title\"]").click();
@@ -586,7 +586,7 @@ describe("components", ()=>{
   dependencyForm入力確認
   試験確認内容：dependencyFormテキストボックスが入力できることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-dependencyForm入力確認-dependencyFormテキストボックスが入力できることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-dependencyForm入力確認-dependencyFormテキストボックスが入力できることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-stepjob_task-panel_title\"]").click();
@@ -604,7 +604,7 @@ describe("components", ()=>{
   dependencyForm入力反映確認
   試験確認内容：dependencyFormテキストボックスに入力した値が反映されることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-dependencyForm入力反映確認-dependencyFormテキストボックスに入力した値が反映されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-dependencyForm入力反映確認-dependencyFormテキストボックスに入力した値が反映されることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-stepjob_task-panel_title\"]").click();
@@ -628,7 +628,7 @@ describe("components", ()=>{
   include表示確認
   試験確認内容：includeテキストボックスが表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-include表示確認-includeテキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-include表示確認-includeテキストボックスが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -642,7 +642,7 @@ describe("components", ()=>{
   include入力確認
   試験確認内容：入力した値が表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-include入力確認-入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-include入力確認-入力した値が表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -659,7 +659,7 @@ describe("components", ()=>{
   include入力反映確認
   試験確認内容：入力した値が反映されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-include入力反映確認-入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-include入力反映確認-入力した値が反映されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -680,7 +680,7 @@ describe("components", ()=>{
   exclude表示確認
   試験確認内容：excludeテキストボックスが表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-exclude表示確認-excludeテキストボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-exclude表示確認-excludeテキストボックスが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -694,7 +694,7 @@ describe("components", ()=>{
   exclude入力確認
   試験確認内容：入力した値が表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-exclude入力確認-入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-exclude入力確認-入力した値が表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -711,7 +711,7 @@ describe("components", ()=>{
   exclude入力反映確認
   試験確認内容：入力した値が反映されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-exclude入力反映確認-入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-exclude入力反映確認-入力した値が反映されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -732,7 +732,7 @@ describe("components", ()=>{
   clean up flag表示確認
   試験確認内容：各ラジオボタンが表示されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-clean up flag表示確認-各ラジオボタンが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-clean up flag表示確認-各ラジオボタンが表示されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -751,7 +751,7 @@ describe("components", ()=>{
   clean up flag入力確認
   試験確認内容：各ラジオボタンが選択できることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-clean up flag入力確認-各ラジオボタンが選択できることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-clean up flag入力確認-各ラジオボタンが選択できることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -776,7 +776,7 @@ describe("components", ()=>{
   clean up flag入力反映確認（remove files）
   試験確認内容：remove filesが設定されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-clean up flag入力反映確認（remove files）-remove filesが設定されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-clean up flag入力反映確認（remove files）-remove filesが設定されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -797,7 +797,7 @@ describe("components", ()=>{
   clean up flag入力反映確認（keep files）
   試験確認内容：keep filesが設定されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-clean up flag入力反映確認（keep files）-keep filesが設定されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-clean up flag入力反映確認（keep files）-keep filesが設定されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
@@ -818,7 +818,7 @@ describe("components", ()=>{
   clean up flag入力反映確認（same as parent）
   試験確認内容：same as parentが設定されていることを確認
      */
-    it.skip("各コンポーネント特有のプロパティ確認-clean up flag入力反映確認（same as parent）-same as parentが設定されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("各コンポーネント特有のプロパティ確認-clean up flag入力反映確認（same as parent）-same as parentが設定されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();

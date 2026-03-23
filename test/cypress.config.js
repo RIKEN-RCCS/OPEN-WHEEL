@@ -68,6 +68,8 @@ export default defineConfig({
     },
     baseUrl: `http://localhost:8089`,
     setupNodeEvents(on) {
+      process.env.MOCK_DEBUG = process.env.MOCK_DEBUG ?? "0";
+      process.env.GW_DEBUG = process.env.GW_DEBUG ?? "0";
       on("task", {
         "start:mock-server": (port)=>{
           return mockServer.start(port);

@@ -83,7 +83,7 @@ describe("jobExecute", ()=>{
    * 試験確認内容：リモートホストに対するタスク実行ワークフローが
    * 完了(status:finished)となること
    */
-  it.skip("executeRemoteHost", ()=>{
+  it.skip("executeRemoteHost", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
     //workflow作成
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
     //while 作成
