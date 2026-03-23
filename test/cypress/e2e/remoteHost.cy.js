@@ -2,7 +2,7 @@
  * リモートホスト画面テスト
  */
 
-describe.skip("remote host", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+describe("remote host", ()=>{
   const LABEL = Math.random().toString(36)
     .substring(2, 10);
   const HOST_NAME = "TestHostName";
@@ -25,15 +25,15 @@ describe.skip("remote host", ()=>{ //TODO:テストで失敗しているため�
   const TIMEOUT_DURING = 7;
 
   //cy.visitが失敗するため調査・修正の間 コメントアウト
-  //after(()=>{
-  //cy.restoreFile("remotehost.json");
-  //});
-  //beforeEach(()=>{
-  //cy.removeRemoteHost(LABEL);
-  //});
-  //after(()=>{
-  //cy.removeRemoteHost(LABEL);
-  //});
+  after(()=>{
+    cy.restoreFile("remotehost.json");
+  });
+  beforeEach(()=>{
+    cy.removeRemoteHost(LABEL);
+  });
+  after(()=>{
+    cy.removeRemoteHost(LABEL);
+  });
 
   /**
   リモートホスト設定画面への遷移
@@ -42,9 +42,8 @@ describe.skip("remote host", ()=>{ //TODO:テストで失敗しているため�
   it("リモートホスト設定画面に遷移することを確認", ()=>{
     cy.goToScreen("home");
     cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
-    cy.get("[data-cy=\"navigation-remote_host_editor-btn\"]").invoke("removeAttr", "target")
-      .click();
-    cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").should("be.visible");
+    cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").click();
+    cy.get("[data-cy=\"remotehost-items-data_table\"]").should("be.visible");
   });
 
   /**
@@ -53,6 +52,7 @@ describe.skip("remote host", ()=>{ //TODO:テストで失敗しているため�
   試験確認内容：リモートホスト設定画面に遷移することを確認
    */
   it("構成要素の機能動作確認-ホーム画面が表示されていることを確認", ()=>{
+    cy.goToScreen("home");
     cy.get("[data-cy=\"tool_bar-wheel_logo-logo\"]").click();
     cy.get("[data-cy=\"home-open-btn\"]").should("be.visible");
   });
@@ -234,7 +234,7 @@ describe.skip("remote host", ()=>{ //TODO:テストで失敗しているため�
    */
   it("構成要素の設定入力確認-ファイル選択-「private key path」テキストエリア-選択したファイルのパスが正しく表示されていることを確認", ()=>{
     cy.createProject("testProject", "testDescription");
-    cy.goToScreen("remotehost");
+    cy.openRemoteHostMenu();
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.get("[data-cy=\"add_new_host-browse_btn\"]").click();
     cy.get("[data-cy=\"add_new_host-select_private_key_file-card_text\"]").contains("testProject.wheel")
@@ -342,7 +342,7 @@ describe.skip("remote host", ()=>{ //TODO:テストで失敗しているため�
     cy.get("[data-cy=\"add_new_host-shared_host-select\"]").click();
     cy.get("[data-cy=\"add_new_host-shared_host-select\"]").find("input")
       .should("have.value", LABEL);
-    cy.visit("/remotehost");
+    cy.openRemoteHostMenu();
   });
 
   /**
@@ -521,6 +521,6 @@ describe.skip("remote host", ()=>{ //TODO:テストで失敗しているため�
       .should("have.value", EXECUTION_INTERVAL);
     cy.get("[data-cy=\"add_new_host-timeout_during-text_field\"]").find("input")
       .should("have.value", TIMEOUT_DURING);
-    cy.visit("/remotehost");
+    cy.openRemoteHostMenu();
   });
 });

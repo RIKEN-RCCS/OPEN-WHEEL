@@ -61,9 +61,9 @@ describe("home", ()=>{
   ハンバーガーボタン押下
   試験確認内容：ドロワーが表示されることを確認
    */
-  it.skip("構成要素の機能動作確認-ボタン押下時の確認-ハンバーガーボタン押下-ドロワーが表示されることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+  it("構成要素の機能動作確認-ボタン押下時の確認-ハンバーガーボタン押下-ドロワーが表示されることを確認", ()=>{
     cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
-    cy.get("[data-cy=\"navigation-remote_host_editor-btn\"]").should("be.visible");
+    cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").should("be.visible");
     cy.get("[data-cy=\"navigation-user_guide_editor-btn\"]").should("be.visible");
   });
 
@@ -151,7 +151,7 @@ describe("home", ()=>{
   プロジェクト名チェックボックス押下
   試験確認内容：複数プロジェクトを選択できないことを確認
    */
-  it.skip("機能利用フローの確認-プロジェクトを開く-プロジェクト名チェックボックス押下-複数プロジェクトを選択できないことを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+  it("機能利用フローの確認-プロジェクトを開く-プロジェクト名チェックボックス押下-複数プロジェクトを選択できないことを確認", ()=>{
     cy.createProjectMultiple(PROJECT_NAME, PROJECT_DESCRIPTION, 2);
     cy.get("[data-cy=\"home-project_list-data_table\"]").find("[type=\"checkbox\"]")
       .as("openCheckbox");

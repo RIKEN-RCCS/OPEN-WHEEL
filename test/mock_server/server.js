@@ -2,6 +2,18 @@ const { Server } = require("socket.io");
 const siofu = require("socketio-file-upload");
 const net = require("net");
 
+//MOCK_DEBUG=1 で詳細ログ、未設定/0で静穏化
+const VERBOSE = process.env.MOCK_DEBUG === "1";
+const log = (...a)=>{
+  if (VERBOSE) console.log(...a);
+};
+const warn = (...a)=>{
+  if (VERBOSE) console.warn(...a);
+};
+const err = (...a)=>{
+  return console.error(...a);
+}; //エラーは常に出す
+
 /**
  * STATE: 画面表示に必要な情報を一時的に保持する。
  * - projectList  … Home の一覧の元データ
@@ -520,7 +532,6 @@ function emptyProjectJson() {
 async function start(port = 3101) {
   //既にこのプロセスで起動済みなら no-op
   if (io && __startedHere) {
-    console.log(`[MockServer] Already started in this process on ${port}, skip.`);
     return null;
   }
   //すでに他プロセスが LISTEN 中なら、再起動せずに no-op（EADDRINUSEを避ける）
@@ -533,7 +544,7 @@ async function start(port = 3101) {
   try {
     io = new Server(port, { cors: { origin: "*", methods: ["GET", "POST"] }, path: "/socket.io/" });
     __startedHere = true;
-    console.log(`[MockServer] Starting on port ${port}...`);
+    log(`[MockServer] Starting on port ${port}...`);
     +await waitForPort(port);
   } catch (e) {
     if (e && e.code === "EADDRINUSE") {
@@ -546,7 +557,7 @@ async function start(port = 3101) {
   }
 
   io.on("connection", (socket)=>{
-    console.log(`[MockServer] Connected: ${socket.id}`);
+    log(`[MockServer] Connected: ${socket.id}`);
 
     /**
      * デバッグログ用サニタイザ
@@ -574,28 +585,27 @@ async function start(port = 3101) {
     socket.emit("projectState", "not-started");
 
     //受信イベントログ（先頭引数のみ簡易表示）
-    const _on = socket.on.bind(socket);
-    socket.on = function (evt, handler) {
-      return _on(evt, function () {
-        const first = (arguments.length > 0) ? arguments[0] : null;
-        console.log("[SIO on]", evt, sanitizeArg(first));
-        if (typeof handler === "function") return handler.apply(this, arguments);
+    if (VERBOSE) {
+      const _on = socket.on.bind(socket);
+      socket.on = function (evt, handler) {
+        return _on(evt, function () {
+          const first = (arguments.length > 0) ? arguments[0] : null;
+          log("[SIO on]", evt, sanitizeArg(first));
+          if (typeof handler === "function") return handler.apply(this, arguments);
+        });
+      };
+    }
+    if (VERBOSE) {
+      socket.onAny(function () {
+        const event = arguments[0];
+        const args = Array.prototype.slice.call(arguments, 1).map(sanitizeArg);
+        try {
+          log("[MockServer][onAny]", event, "argsLen=", args.length, "args=", args);
+        } catch (e) {
+          log("[MockServer][onAny]", event, "(log error)", String((e && e.message) || e));
+        }
       });
-    };
-    socket.onAny(function () {
-      const event = arguments[0];
-      const args = Array.prototype.slice.call(arguments, 1).map(sanitizeArg);
-      try {
-        console.log("[MockServer][onAny]", event, "argsLen=", args.length, "args=", args);
-      } catch (e) {
-        console.log(
-          "[MockServer][onAny]",
-          event,
-          "(log error)",
-          String((e && e.message) || e)
-        );
-      }
-    });
+    }
 
     //ファイルアップロード（クライアントエラー回避のためリスンのみ）
     const uploader = new siofu();
@@ -1224,6 +1234,53 @@ async function start(port = 3101) {
         const parent = parentDir(d);
         cb?.([{ dirname: d, parent }]);
       } catch { cb?.(false); }
+    });
+
+    /**
+     * コンポーネント削除
+     * - 更新後の workflow / projectJson を push
+     * @param {string} projectRootDir
+     * @param {string} nodeId
+     * @param {string} rootId
+     * @param {(ok:boolean)=>void} cb
+     * @returns {void}
+     */
+    socket.on("removeNode", (projectRootDir, nodeId, rootId, cb)=>{
+      try {
+        const wf = getOrInitWorkflow(projectRootDir, rootId || "root");
+        if (!wf || !Array.isArray(wf.descendants)) return cb?.(false);
+        //対象ノードを検索
+        const idx = wf.descendants.findIndex((n)=>{
+          return n && n.ID === nodeId;
+        });
+        if (idx === -1) return cb?.(false);
+        //ノード削除
+        const removed = wf.descendants.splice(idx, 1)[0];
+        //リンク（from/to）を削除
+        if (Array.isArray(wf.links)) {
+          wf.links = wf.links.filter((lk)=>{
+            const fId = lk?.from?.id ?? lk?.source?.id;
+            const tId = lk?.to?.id ?? lk?.target?.id;
+            return fId !== nodeId && tId !== nodeId;
+          });
+        } else {
+          wf.links = [];
+        }
+        //互換エイリアス
+        wf.edges = wf.links;
+        wf.connections = wf.links;
+        //projectJson の componentPath からも削除
+        const pj = getOrInitProjectJson(projectRootDir, rootId || "root");
+        if (pj && pj.componentPath && nodeId in pj.componentPath) {
+          delete pj.componentPath[nodeId];
+          io.emit("projectJson", pj);
+        }
+        cb?.(true);
+        io.emit("workflow", clone(wf));
+      } catch (e) {
+        console.warn("[MockServer] removeNode error:", e?.message || e);
+        cb?.(false);
+      }
     });
 
     /*----------------------------------------------------------------------

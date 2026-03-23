@@ -32,10 +32,12 @@ Cypress.Commands.add("doubleClickComponentName", (componentName)=>{
 //create a stepjob component and double-click it
 Cypress.Commands.add("createStepjobComponentAndDoubleClick", (targetComponentName, componentName, positionX, positionY)=>{
   cy.createComponent(targetComponentName, componentName, positionX, positionY);
+  cy.closeProperty();
   cy.doubleClickComponentName(componentName);
 });
 
 //Select a value from the dropdown list
+//TODO:ドロップダウン選択 各itemにdata-cyを振りそこから値をgetする形に改修する
 Cypress.Commands.add("selectValueFromDropdownList", (targetDropBoxCy, dropBoxNo, selectVal)=>{
   cy.get(targetDropBoxCy).click();
   cy.get("[role=\"listbox\"]").should("be.visible");
@@ -188,6 +190,7 @@ Cypress.Commands.add("deleteComponent", (componentName)=>{
     .rightclick();
   cy.get("[data-cy=\"graph-component-row\"]").contains("delete")
     .click();
+  cy.contains("button", "Delete").click();
 });
 
 //connecting components together
