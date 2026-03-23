@@ -1,6 +1,13 @@
 const http = require("http");
 const querystring = require("querystring");
 
+// logging switch
+const GW_VERBOSE = process.env.GW_DEBUG === "1";
+const gwlog = (...a) => {
+  if (GW_VERBOSE) console.log(...a);
+};
+const gwerr = (...a) => console.error(...a);
+
 // http-proxy:HTTPとWebSocket両方を中継できるプロキシ
 const httpProxy = require("http-proxy");
 // Gateway の待受ポート
@@ -21,7 +28,7 @@ const proxy = httpProxy.createProxyServer({
 
 // エラー時に落ちないためのerror handler
 proxy.on("error", (err, req, res) => {
-  console.error("[GW][proxy error]", err.message, "url=", req?.url);
+  gwerr("[GW][proxy error]", err.message, "url=", req?.url);
   // HTTP (res is ServerResponse)
   if (res && typeof res.writeHead === "function") {
     if (!res.headersSent) {
@@ -91,7 +98,7 @@ const server = http.createServer((req, res) => {
   const target = isSocket
     ? MOCK_SIO
     : (isStaticRequest(url) ? REAL_APP : MOCK_HTTP);
-  console.log(`[GW][http] ${req.method} ${url} -> ${target}`);
+  gwlog(`[GW][http] ${req.method} ${url} -> ${target}`);
   proxy.web(req, res, { target });
 });
 
@@ -99,14 +106,14 @@ const server = http.createServer((req, res) => {
 server.on("upgrade", (req, socket, head) => {
   const url = req.url || "";
   const target = url.startsWith("/socket.io") ? MOCK_SIO : REAL_APP;
-  console.log(`[GW][upgrade] ${url} -> ${target}`);
+  gwlog(`[GW][upgrade] ${url} -> ${target}`);
   proxy.ws(req, socket, head, { target });
 });
 
 // 起動ログ：どの経路に流れるかが一目で分かるように出す
 server.listen(GW_PORT, () => {
-  console.log(`[GW] listening on http://localhost:${GW_PORT}`);
-  console.log(`[GW] /socket.io -> ${MOCK_SIO}`);
-  console.log(`[GW] static    -> ${REAL_APP}  (/, *.html, /assets/*)`);
-  console.log(`[GW] http-api  -> ${MOCK_HTTP} (others)`);
+  gwlog(`[GW] listening on http://localhost:${GW_PORT}`);
+  gwlog(`[GW] /socket.io -> ${MOCK_SIO}`);
+  gwlog(`[GW] static -> ${REAL_APP} (/, *.html, /assets/*)`);
+  gwlog(`[GW] http-api -> ${MOCK_HTTP} (others)`);
 });
