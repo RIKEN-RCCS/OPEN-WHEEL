@@ -11,6 +11,11 @@
     "test:e2e:start": "docker compose up -d --wait",
     "test:e2e:run": "npm run test-all",
     "test:e2e:stop": "docker compose down",
+    "test:e2e:mock": "npm run test:e2e:mock:start && npm run test:e2e:mock:run; npm run test:e2e:mock:stop",
+    "test:e2e:mock:start": "npm run test:e2e:start && npx wait-on http://localhost:8089 --timeout 300000 && GW_PORT=3001 REAL_APP=http://localhost:8089 MOCK_SIO=http://localhost:3101 node ws-gateway.cjs > gateway.log 2>&1 & echo $! > gateway.pid && npm run mocks > httpmock.log 2>&1 & echo $! > httpmock.pid && npx wait-on tcp:127.0.0.1:3001 tcp:127.0.0.1:3102 --timeout 120000",
+    "test:e2e:mock:run": "npx cypress run --browser chrome --config requestTimeout=300000,defaultCommandTimeout=300000,retries=2",
+    "test:e2e:mock:stop": "kill $(cat gateway.pid 2>/dev/null) 2>/dev/null; kill $(cat httpmock.pid 2>/dev/null) 2>/dev/null; rm -f gateway.pid httpmock.pid; npm run test:e2e:stop",
+    "test:e2e:qualifying": "npx cypress run --browser chrome --config requestTimeout=300000,defaultCommandTimeout=300000,retries=2 --env USE_MOCK=false",
     "test:e2e:gfarm": "npx dotenv -e cypress/e2e/gfarm/gfarm-e2e.env -- npx cypress run --browser chrome --spec 'cypress/e2e/gfarm/**/*.cy.js'",
     "test:e2e:gfarm:open": "npx dotenv -e cypress/e2e/gfarm/gfarm-e2e.env -- npx cypress open --spec 'cypress/e2e/gfarm/**/*.cy.js'",
     "start": "cd ../; npm start",
@@ -40,6 +45,7 @@
     "tar": "^7.4.3",
     "vite": "^7.1.12",
     "vue": "^3.5.22",
-    "vuetify": "^3.10.8"
+    "vuetify": "^3.10.8",
+    "wait-on": "^9.0.4"
   }
 }

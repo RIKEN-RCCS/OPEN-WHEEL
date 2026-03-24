@@ -9,6 +9,7 @@ jobScript.json
 .nyc_output
 coverage
 *.log
+*.pid
 errorShots
 logs
 server.crt
