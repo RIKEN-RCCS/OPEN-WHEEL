@@ -49,9 +49,17 @@ jobs:
       - name: Install Cypress binary
         working-directory: test
         run: npx cypress install
+      - name: Start mock servers
+        working-directory: test
+        run: |
+          GW_PORT=3001 REAL_APP=http://localhost:8089 MOCK_SIO=http://localhost:3101 node ws-gateway.cjs > gateway.log 2>&1 &
+          echo $! > gateway.pid
+          npm run mocks > httpmock.log 2>&1 &
+          echo $! > httpmock.pid
+          npx wait-on tcp:127.0.0.1:3001 tcp:127.0.0.1:3102 --timeout 60000
       - name: Run E2E tests with mock server
         working-directory: test
-        run: npm run test:e2e:qualifying
+        run: npm run test:e2e:mock:run
       - name: upload gateway/mocks logs
         if: failure()
         uses: actions/upload-artifact@v4
@@ -80,5 +88,7 @@ jobs:
       - name: Stop WHEEL container
         if: always()
         run: |
+          kill $(cat test/gateway.pid 2>/dev/null) 2>/dev/null || true
+          kill $(cat test/httpmock.pid 2>/dev/null) 2>/dev/null || true
           docker stop test-wheel_release_test-1 || true
           docker rm test-wheel_release_test-1 || true
