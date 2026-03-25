@@ -425,6 +425,12 @@ describe("UT for Dispatcher class", function () {
         let storage2;
 
         beforeEach(async ()=>{
+          //Pre-cleanup: ensure clean state even if a previous afterEach failed silently.
+          //Must clean LOCAL shared storage from the host process (has write permission to runner-owned files),
+          //and remote shared storage via SSH (for files created by testuser in the container).
+          await fs.emptyDir(sharedStorageOnLocal);
+          await ssh.exec(`find ${sharedStorageOnRemote} -mindepth 1 -delete 2>/dev/null; rm -rf /home/testuser/dummy_start_time 2>/dev/null`);
+
           storage0 = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 0, y: 0 });
           task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 0 });
           storage2 = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 20, y: 0 });
@@ -454,7 +460,13 @@ describe("UT for Dispatcher class", function () {
         });
 
         afterEach(async ()=>{
-          await ssh.exec(`rm -rf ${sharedStorageOnRemote}`);
+          //Clean up local shared storage from host process (handles runner-owned files that testuser cannot delete).
+          await fs.emptyDir(sharedStorageOnLocal);
+          //Use find -mindepth 1 to remove contents without removing the bind mount point itself (avoids EBUSY).
+          //Also remove the remote task working directory to prevent state pollution between tests.
+          const remoteHostInfo = remoteHost.query("name", remotehostName);
+          const remoteTaskBaseDir = remoteHostInfo ? `${remoteHostInfo.path}/dummy_start_time` : "/home/testuser/dummy_start_time";
+          await ssh.exec(`find ${sharedStorageOnRemote} -mindepth 1 -delete 2>/dev/null; rm -rf ${remoteTaskBaseDir} 2>/dev/null`);
 
           //Clean up global state to prevent interference with other tests
           removeExecuters(projectRootDir);
@@ -475,6 +487,7 @@ describe("UT for Dispatcher class", function () {
           await updateComponentProperty(projectRootDir, storage2.ID, "host", remotehostName);
           await updateComponentProperty(projectRootDir, storage2.ID, "storagePath", `${sharedStorageOnRemote}/storage2`);
           await fs.ensureDir(storageArea0);
+          await fs.chmod(storageArea0, 0o777); //Allow testuser (container) to delete this directory during cleanup
           await fs.outputFile(path.resolve(storageArea0, "out0.txt"), "test data from localhost");
 
           const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy_start_time", projectJson.componentPath, {}, "");
@@ -506,6 +519,7 @@ describe("UT for Dispatcher class", function () {
           await updateComponentProperty(projectRootDir, storage2.ID, "host", remotehostName);
           await updateComponentProperty(projectRootDir, storage2.ID, "storagePath", `${sharedStorageOnRemote}/storage2`);
           await fs.ensureDir(storageArea0);
+          await fs.chmod(storageArea0, 0o777); //Allow testuser (container) to delete this directory during cleanup
           await fs.outputFile(path.resolve(storageArea0, "out0.txt"), "chain test");
 
           const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy_start_time", projectJson.componentPath, {}, "");

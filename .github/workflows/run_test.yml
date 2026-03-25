@@ -27,6 +27,7 @@ jobs:
       matrix:
         node-version: [20.x]
     steps:
+      - run: sudo mkdir -p /tmp/WHEEL_TEST/shared && sudo chmod 777 /tmp/WHEEL_TEST/shared
       - run: mkdir -p ~/.wheel
       - run: >
           echo '[{
