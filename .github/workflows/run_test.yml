@@ -14,6 +14,8 @@ jobs:
         image: naoso5/openpbs
         ports:
           - 4000:22
+        volumes:
+          - /tmp/WHEEL_TEST/shared:/data/shared
     env:
       WHEEL_USE_HTTP: 1
       WHEEL_TEST_REMOTEHOST: testServer

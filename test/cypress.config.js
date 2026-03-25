@@ -3,7 +3,6 @@ import SSH from "simple-ssh";
 import { removeDirectory } from "cypress-delete-downloads-folder";
 import fs from "fs-extra";
 import * as tar from "tar";
-import vue from "@vitejs/plugin-vue";
 import path from "path";
 import { fileURLToPath } from "url";
 import mockServer from "./mock_server/server.js";
@@ -24,27 +23,30 @@ export default defineConfig({
     devServer: {
       framework: "vue",
       bundler: "vite",
-      viteConfig: {
-        plugins: [vue()],
-        resolve: {
-          alias: {
-            "@": path.resolve(__dirname, "../client/src")
+      viteConfig: async ()=>{
+        const { default: vue } = await import("@vitejs/plugin-vue");
+        return {
+          plugins: [vue()],
+          resolve: {
+            alias: {
+              "@": path.resolve(__dirname, "../client/src")
+            },
+            dedupe: ["vue", "vuetify"]
           },
-          dedupe: ["vue", "vuetify"]
-        },
-        optimizeDeps: {
-          include: ["vue", "vuetify"]
-        },
-        server: {
-          fs: {
-            allow: [
-              __dirname, //test/
-              path.resolve(__dirname, ".."), //open-wheel/
-              path.resolve(__dirname, "../client") //client/
-            ],
-            strict: false
+          optimizeDeps: {
+            include: ["vue", "vuetify"]
+          },
+          server: {
+            fs: {
+              allow: [
+                __dirname, //test/
+                path.resolve(__dirname, ".."), //open-wheel/
+                path.resolve(__dirname, "../client") //client/
+              ],
+              strict: false
+            }
           }
-        }
+        };
       }
     },
     supportFile: "cypress/support/component.js",
