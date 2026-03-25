@@ -1,5 +1,5 @@
 const animationWaitTime = 500;
-const containerName = "test-wheel_release_test-1";
+const containerName = "wheel";
 
 Cypress.on("uncaught:exception", ()=>{
   return false;

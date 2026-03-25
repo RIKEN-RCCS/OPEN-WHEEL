@@ -20,7 +20,7 @@ services:
         NO_PROXY: ${NO_PROXY:-}
 
     image: wheel_e2e_test
-    container_name: test-wheel_release_test-1
+    container_name: wheel
     ports:
       - "8089:8089"
     environment:
@@ -33,3 +33,27 @@ services:
       - "./wheel_config:/root/.wheel"
       - /tmp/WHEEL_TEST/shared:/mnt/shared
 
+
+  mock:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    container_name: mock
+    ports:
+      - "3101:3101"
+      - "3102:3102"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: gateway
+    ports:
+      - "3001:3001"
+    environment:
+      REAL_APP: http://wheel_release_test:8089
+      MOCK_SIO: http://mock:3101
+      MOCK_HTTP: http://mock:3102
+    depends_on:
+      - wheel_release_test
+      - mock

@@ -426,10 +426,11 @@ describe("UT for Dispatcher class", function () {
 
         beforeEach(async ()=>{
           //Pre-cleanup: ensure clean state even if a previous afterEach failed silently.
-          //Must clean LOCAL shared storage from the host process (has write permission to runner-owned files),
-          //and remote shared storage via SSH (for files created by testuser in the container).
+          //Must handle cross-ownership: testuser (SSH) creates dirs owned by UID 1000, runner creates dirs owned by UID 1001.
+          //SSH: chmod testuser-owned dirs to 777 so runner can delete their contents, then delete what testuser can.
+          await ssh.exec(`find ${sharedStorageOnRemote} -mindepth 1 -type d -exec chmod 777 {} \\; 2>/dev/null; find ${sharedStorageOnRemote} -mindepth 1 -delete 2>/dev/null; rm -rf /home/testuser/dummy_start_time 2>/dev/null`);
+          //Local: clean up runner-owned files and testuser dirs that are now world-writable.
           await fs.emptyDir(sharedStorageOnLocal);
-          await ssh.exec(`find ${sharedStorageOnRemote} -mindepth 1 -delete 2>/dev/null; rm -rf /home/testuser/dummy_start_time 2>/dev/null`);
 
           storage0 = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 0, y: 0 });
           task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 0 });
@@ -460,13 +461,12 @@ describe("UT for Dispatcher class", function () {
         });
 
         afterEach(async ()=>{
-          //Clean up local shared storage from host process (handles runner-owned files that testuser cannot delete).
-          await fs.emptyDir(sharedStorageOnLocal);
-          //Use find -mindepth 1 to remove contents without removing the bind mount point itself (avoids EBUSY).
-          //Also remove the remote task working directory to prevent state pollution between tests.
+          //Cross-ownership cleanup: chmod testuser-owned dirs to 777 so runner can delete contents,
+          //then SSH delete testuser files, then local delete runner files.
           const remoteHostInfo = remoteHost.query("name", remotehostName);
           const remoteTaskBaseDir = remoteHostInfo ? `${remoteHostInfo.path}/dummy_start_time` : "/home/testuser/dummy_start_time";
-          await ssh.exec(`find ${sharedStorageOnRemote} -mindepth 1 -delete 2>/dev/null; rm -rf ${remoteTaskBaseDir} 2>/dev/null`);
+          await ssh.exec(`find ${sharedStorageOnRemote} -mindepth 1 -type d -exec chmod 777 {} \\; 2>/dev/null; find ${sharedStorageOnRemote} -mindepth 1 -delete 2>/dev/null; rm -rf ${remoteTaskBaseDir} 2>/dev/null`);
+          await fs.emptyDir(sharedStorageOnLocal);
 
           //Clean up global state to prevent interference with other tests
           removeExecuters(projectRootDir);

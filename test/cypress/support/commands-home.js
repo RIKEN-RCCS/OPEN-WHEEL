@@ -68,7 +68,7 @@ Cypress.Commands.add("removeProject", (projectName)=>{
 });
 
 const projectListFilename = "/root/.wheel/projectList.json";
-const containerName = "test-wheel_release_test-1";
+const containerName = "wheel";
 
 Cypress.Commands.add("removeAllProjects", ()=>{
   const tmpFilename = `cypress/fixtures/projectList.json`;

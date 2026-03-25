@@ -144,8 +144,8 @@ npx cypress install
 | モード | コマンド | WHEELサーバー | モック | 主な用途 |
 |--------|----------|--------------|--------|---------|
 | 非モック | `npm run test:e2e` | Docker Compose で起動 | なし | モックなし全体テスト |
-| モックサーバー (デフォルト) | `npm run test:e2e:mock` | Docker Compose で起動 | あり | ローカル開発・標準テスト |
-| Qualifying | `npm run test:e2e:qualifying` | 事前起動済みを使用 | なし | CI / 既存サーバーへの評価テスト |
+| モックサーバー (デフォルト) | `npm run test:e2e:mock` | Docker Compose で起動 | あり (Docker) | ローカル開発・標準テスト |
+| Qualifying | `npm run test:e2e:qualifying` | 事前起動済みを使用 | なし | 既存サーバーへの評価テスト |
 | インタラクティブ | `npm run test` | 手動で起動が必要 | 設定依存 | 開発中のデバッグ |
 
 ### 2.5 モックサーバーモード — ローカルデフォルト
@@ -155,19 +155,19 @@ npm run -w test test:e2e:mock
 ```
 
 **フロー:**
-1. `test:e2e:start` — Docker Composeで WHEELサーバーを起動 (port 8089)
-2. WHEELサーバーの起動完了を待機
-3. Gateway (`ws-gateway.cjs`) をバックグラウンドで起動 (port 3001)
-4. HTTPモックサーバー (`@mocks-server/main`) をバックグラウンドで起動 (port 3102)
-5. Gateway / HTTPモックの起動完了を待機
-6. `test:e2e:mock:run` — Cypress をヘッドレスモードで実行
-7. `test:e2e:mock:stop` — Gateway / HTTPモックを停止し、Docker Composeを停止
+1. `docker compose up -d --build` — WHEEL・Gateway・モックの3コンテナをビルドして起動
+   - `wheel_release_test` (port 8089): WHEELアプリ本体
+   - `mock` (port 3101/3102): Socket.IOモック + HTTPモック
+   - `gateway` (port 3001): WHEELとモックへのリバースプロキシ
+2. 各サービスの起動完了を待機 (`wait-on`)
+3. `test:e2e:mock:run` — Cypress をヘッドレスモードで実行
+4. `test:e2e:mock:stop` — `docker compose down` で全コンテナを停止
 
 **個別スクリプト:**
 ```bash
-npm run test:e2e:mock:start   # WHEEL + モック起動
+npm run test:e2e:mock:start   # 全コンテナ起動 + 起動完了待機
 npm run test:e2e:mock:run     # Cypressのみ実行
-npm run test:e2e:mock:stop    # モック + WHEEL停止
+npm run test:e2e:mock:stop    # 全コンテナ停止
 ```
 
 ### 2.6 Qualifying モード — CI / 評価テスト
@@ -257,12 +257,18 @@ npm run test:e2e:gfarm:open   # インタラクティブ実行
 
 ### 2.10 テスト実行時のログ
 
-失敗時のデバッグ用に以下のログファイルが生成されます:
+失敗時のデバッグ用に以下のコマンドでコンテナログを確認できます:
 
-| ファイル | 内容 |
-|----------|------|
-| `test/gateway.log` | Gateway (ws-gateway.cjs) のログ |
-| `test/httpmock.log` | HTTPモックサーバーのログ |
+```bash
+docker logs gateway   # Gateway (ws-gateway.cjs) のログ
+docker logs mock      # Socket.IO / HTTPモックサーバーのログ
+docker logs wheel     # WHEELアプリのログ
+```
+
+スクリーンショット・動画は以下のディレクトリに出力されます:
+
+| ディレクトリ | 内容 |
+|------------|------|
 | `test/cypress/screenshots/` | 失敗時のスクリーンショット |
 | `test/cypress/videos/` | テスト実行動画 |
 
@@ -270,14 +276,17 @@ npm run test:e2e:gfarm:open   # インタラクティブ実行
 
 #### E2Eテスト (`run_cypress.yml`)
 
-Qualifyingモードで実行します。WHEELサーバーはDockerで手動起動します。
+モックサーバーモードで実行します。WHEEL・Gateway・モックの3コンテナをDockerでビルド・起動します。
 
 ```
 トリガー: master以外の全ブランチへのpush
 SSHテストサーバー: naoso5/openpbs (GitHub Actionsサービス, port 4000:22)
-WHEEL: Dockerfileからビルド後、コンテナとして起動 (port 8089)
-テスト: npm run test:e2e:qualifying (test/)
-失敗時: gateway.log, httpmock.log, スクリーンショット, 動画をアーティファクトとして保存
+Docker ネットワーク: wheel-e2e-net (コンテナ間通信用)
+  wheel    (port 8089): WHEELアプリ本体
+  mock     (port 3101/3102): Socket.IOモック + HTTPモック
+  gateway  (port 3001): リバースプロキシ (WHEELとモックへ振り分け)
+テスト: npm run test:e2e:mock:run (test/)
+失敗時: 各コンテナのログ・スクリーンショット・動画をアーティファクトとして保存
 ```
 
 ---
@@ -329,11 +338,11 @@ curl http://localhost:8089
 
 ### E2E: モックサーバーが起動しない (port が使用中)
 ```bash
-# 残留プロセスを確認・停止
-lsof -i :3001 -i :3102
-# または既存のpidファイルで停止
+# 残留コンテナを停止
 cd test
-npm run test:e2e:qualifying:stop
+docker compose down
+# またはポートを使用しているプロセスを確認
+lsof -i :3001 -i :3101 -i :3102
 ```
 
 ### E2E: Chromeが見つからない
