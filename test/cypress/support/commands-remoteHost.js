@@ -42,8 +42,8 @@ Cypress.Commands.add("enterRemoteHost", (hostWorkDir, privateKyeFile, jobSchedul
 
   cy.get("[data-cy=\"add_new_host-max_number_of_jobs-text_field\"]").find("input")
     .type(maxNumber, { force: true });
-  cy.get("[data-cy=\"add_new_host-available_queues-text_field\"]").find("input")
-    .type(availableQueues, { force: true });
+  cy.get("[data-cy=\"add_new_host-available_queues-combobox\"]").find("input")
+    .type(availableQueues + "{enter}", { force: true });
   if (bulkjobChk) {
     cy.get("[data-cy=\"add_new_host-use_bulkjob-checkbox\"]").find("[type=\"checkbox\"]")
       .check();

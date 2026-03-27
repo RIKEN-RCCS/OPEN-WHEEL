@@ -286,8 +286,8 @@ describe("remote host", ()=>{
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.enterRequiredRemoteHost(LABEL, HOST_NAME, PORT_NUMBER, TEST_USER);
     cy.enterRemoteHost(HOST_WORK_DIR, PRIVATE_KEY_FILE, JOB_SCHEDULERS, MAX_NUMBER, AVAILABLE_QUEUES, BULKJOB_CHK_YES, STEPJOB_CHK_YES, SHARED_HOST);
-    cy.get("[data-cy=\"add_new_host-available_queues-text_field\"]").find("input")
-      .should("have.value", AVAILABLE_QUEUES);
+    cy.get("[data-cy=\"add_new_host-available_queues-combobox\"]")
+      .should("contain.text", AVAILABLE_QUEUES);
   });
 
   /**
@@ -485,8 +485,8 @@ describe("remote host", ()=>{
       .should("have.value", JOB_SCHEDULERS);
     cy.get("[data-cy=\"add_new_host-max_number_of_jobs-text_field\"]").find("input")
       .should("have.value", MAX_NUMBER);
-    cy.get("[data-cy=\"add_new_host-available_queues-text_field\"]").find("input")
-      .should("have.value", AVAILABLE_QUEUES);
+    cy.get("[data-cy=\"add_new_host-available_queues-combobox\"]")
+      .should("contain.text", AVAILABLE_QUEUES);
     cy.get("[data-cy=\"add_new_host-use_bulkjob-checkbox\"]").find("[type=\"checkbox\"]")
       .should("be.checked");
     cy.get("[data-cy=\"add_new_host-use_stepjob-checkbox\"]").find("[type=\"checkbox\"]")

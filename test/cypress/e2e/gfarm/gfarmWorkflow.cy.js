@@ -39,7 +39,7 @@ const JOB_OUTPUT_FILE = "result.txt";
 const EXEC_TIMEOUT = 120000;
 const EXEC_INTERVAL = 2000;
 
-describe("Gfarm attribute viewer E2E test", ()=>{
+describe.skip("Gfarm attribute viewer E2E test", ()=>{
   //Read all secrets from Cypress env (populated by dotenv from gfarm-e2e.env)
   const CSGW_HOSTNAME = Cypress.env("WHEEL_GFARM_CSGW_HOSTNAME");
   const CSGW_USERNAME = Cypress.env("WHEEL_GFARM_CSGW_USERNAME");

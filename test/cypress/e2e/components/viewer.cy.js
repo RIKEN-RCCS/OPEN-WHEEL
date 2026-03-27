@@ -188,7 +188,9 @@ describe("components", ()=>{
     it("ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
+      cy.closeProperty();
       cy.createComponent(DEF_COMPONENT_VIEWER, VIEWER_NAME_0, 501, 700);
+      cy.closeProperty();
       cy.connectComponentMultiple(IF_NAME_0, VIEWER_NAME_0); //コンポーネント同士を接続
       cy.checkConnectionLine(IF_NAME_0, VIEWER_NAME_0); //作成したコンポーネントの座標を取得して接続線の座標と比較
     });

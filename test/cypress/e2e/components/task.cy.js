@@ -625,6 +625,7 @@ describe("components", ()=>{
    試験確認内容：checker scriptセレクトボックスが表示されていることを確認
      */
     it("プロパティ設定確認-checker script表示確認-checker scriptセレクトボックスが表示されていることを確認", ()=>{
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       const DATA_CY_STR = "[data-cy=\"component_property-checker-autocomplete\"]";
       cy.confirmDisplayInProperty(DATA_CY_STR, true);
     });
@@ -637,6 +638,7 @@ describe("components", ()=>{
    試験確認内容：checker scriptセレクトボックスで選択したファイルが表示されていることを確認
      */
     it("プロパティ設定確認-checker scriptファイル選択表示確認-checker scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.createDirOrFile(TYPE_FILE, "test-checker", true);
       let targetDropBoxCy = "[data-cy=\"component_property-checker-autocomplete\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-checker");
@@ -940,7 +942,7 @@ describe("components", ()=>{
   試験確認内容：number of retryテキストボックスが表示されていることを確認
      */
     it("プロパティ設定確認-number of retry表示確認-number of retryテキストボックスが表示されていることを確認", ()=>{
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-number_or_retry-text_field\"]").should("be.visible");
     });
 
@@ -952,7 +954,7 @@ describe("components", ()=>{
   試験確認内容：number of retryテキストボックスに入力した値が表示されていることを確認
      */
     it("プロパティ設定確認-number of retry入力確認-number of retryテキストボックスに入力した値が表示されていることを確認", ()=>{
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-number_or_retry-text_field\"]").type(10);
       cy.get("[data-cy=\"component_property-number_or_retry-text_field\"]").find("input")
         .should("have.value", 10);
@@ -966,12 +968,12 @@ describe("components", ()=>{
   試験確認内容：number of retryテキストボックスに入力した値が反映されていることを確認
      */
     it("プロパティ設定確認-number of retry入力反映確認-number of retryテキストボックスに入力した値が反映されていることを確認", ()=>{
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-number_or_retry-text_field\"]").type(10);
       cy.saveProperty();
       cy.closeProperty();
       cy.clickComponentName(TASK_NAME_0);
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-number_or_retry-text_field\"]").find("input")
         .should("have.value", 10);
       cy.closeProperty();
@@ -985,7 +987,7 @@ describe("components", ()=>{
   試験確認内容：シェルスクリプト選択セレクトボックスが表示されていることを確認
      */
     it("プロパティ設定確認-シェルスクリプト選択セレクトボックス表示確認-シェルスクリプト選択セレクトボックスが表示されていることを確認", ()=>{
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]").find("input")
         .should("be.not.visible");
     });
@@ -999,7 +1001,7 @@ describe("components", ()=>{
      */
     it("プロパティ設定確認-シェルスクリプト選択セレクトボックス選択確認-選択した値が表示されていることを確認", ()=>{
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]").find("input")
         .type("test-a");
       cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]").find("input")
@@ -1021,7 +1023,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-basic-panel_title\"]")
         .find(".v-expansion-panel-title__overlay")
         .click();
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       const targetDropBox = "[data-cy=\"component_property-task_use_javascript-autocomplete\"] input";
       cy.selectValueFromDropdownList(targetDropBox, 0, "test-a");
       cy.saveProperty();
@@ -1030,7 +1032,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-basic-panel_title\"]")
         .find(".v-expansion-panel-title__overlay")
         .click();
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]")
         .invoke("text")
         .then((text)=>{
@@ -1047,7 +1049,7 @@ describe("components", ()=>{
   試験確認内容：javascriptテキストボックスが表示されていることを確認
      */
     it("プロパティ設定確認-javascriptテキストボックス表示確認-javascriptテキストボックスが表示されていることを確認", ()=>{
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-switch\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-textarea\"]").should("be.visible");
     });
@@ -1060,7 +1062,7 @@ describe("components", ()=>{
   試験確認内容：入力した値が表示されていることを確認
      */
     it("プロパティ設定確認-javascriptテキストボックス入力確認-入力した値が表示されていることを確認", ()=>{
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-switch\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-textarea\"]").type("testJavaScript");
       cy.get("[data-cy=\"component_property-task_use_javascript-textarea\"]").find("textarea")
@@ -1075,13 +1077,13 @@ describe("components", ()=>{
   試験確認内容：入力した値が反映されていることを確認
      */
     it("プロパティ設定確認-javascriptテキストボックス反映確認-入力した値が反映されていることを確認", ()=>{
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-switch\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-textarea\"]").type("testJavaScript");
       cy.saveProperty();
       cy.closeProperty();
       cy.clickComponentName(TASK_NAME_0);
-      cy.get("[data-cy=\"component_property-retry-panel_title\"]").click();
+      cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-textarea\"]").find("textarea")
         .should("have.value", "testJavaScript");
       cy.closeProperty();
@@ -1151,7 +1153,7 @@ describe("components", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-exclude-list_form\"]").should("be.not.visible");
+      cy.get("[data-cy=\"component_property-exclude-list_form\"]").should("be.visible");
     });
 
     /**

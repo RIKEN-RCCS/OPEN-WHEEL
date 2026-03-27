@@ -302,7 +302,7 @@ export default {
     },
     selectedComponent() {
       this.getComponentDirRootFiles();
-      this.currentDir = this.selectedComponentAbsPath;
+      this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
     }
   },
   mounted() {

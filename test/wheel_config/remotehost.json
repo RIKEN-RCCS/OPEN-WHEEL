@@ -1,5 +1,24 @@
 [
     {
+        "name": "759yyu6c",
+        "host": "TestHostName",
+        "port": 20,
+        "user": "TestUser",
+        "numJob": 5,
+        "useBulkjob": false,
+        "useStepjob": false,
+        "sharedHost": "",
+        "sharedPath": "",
+        "sharedWithLocalhost": false,
+        "localSharedPath": "",
+        "renewInterval": 0,
+        "statusCheckInterval": 60,
+        "maxStatusCheckError": 10,
+        "rcfile": "/etc/profile",
+        "useGfarm": false,
+        "id": "617c2fb0-28e0-11f1-b9aa-dd88f49db0f6"
+    },
+    {
         "name": "componentTestLabel",
         "host": "TestHostname",
         "port": 8000,
