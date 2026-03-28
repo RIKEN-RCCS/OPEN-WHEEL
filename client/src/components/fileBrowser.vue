@@ -320,9 +320,7 @@ export default {
       SIO.onUploaderEvent("progress", this.updateProgressBar);
       SIO.onGlobal("uploadConflict", this.onUploadConflict);
     }
-    this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
-  },
-  beforeUnmount() {
+    this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
     SIO.removeUploaderEvent("choose", this.onChoose);
     SIO.removeUploaderEvent("complete", this.onUploadComplete);
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
@@ -473,7 +471,7 @@ export default {
           removeItem(this.items, this.activeItem.id);
           this.updateScriptCandidate();
           this.commitSelectedFile(null);
-          this.currentDir = this.selectedComponentAbsPath;
+          this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
           this.activeItem = null;
         });
       } else if (this.dialog.submitEvent === "rename") {

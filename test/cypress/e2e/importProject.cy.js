@@ -1,4 +1,4 @@
-describe.skip("import project", ()=>{ //TODO:テスト実行でクラッシュする場合があるため一時的にskip.修正後復帰すること.
+describe("import project", ()=>{ //TODO:テスト実行でクラッシュする場合があるため一時的にskip.修正後復帰すること.
   const PROJECT_NAME = "WHEEL_IMPORT_TEST_PROJECT";
   const PROJECT_DESCRIPTION = "TestDescription";
   const PROJECT_PATH = "/root/WHEEL_IMPORT_TEST_PROJECT.wheel";

@@ -41,6 +41,12 @@ let projectJsonByRoot = new Map();
 let _FILES = new Set();
 let _DIRS = new Set();
 
+/**コンポーネント作成時の初期状態スナップショット（cleanComponent用）*/
+const _COMPONENT_SNAPSHOTS = new Map();
+
+/**ファイルコンテンツVFS（openFile/saveFile用）- フルパス → 文字列コンテンツ*/
+const _FILE_CONTENTS = new Map();
+
 /**Socket.IO サーバのインスタンス*/
 
 let io;
@@ -841,13 +847,25 @@ async function start(port = 3101) {
         inputFiles: [], outputFiles: [],
         input_files: [], output_files: []
       };
+      //storageコンポーネントはVFS汚染防止のため固有のstoragePath（コンポーネントディレクトリ）を設定
+      if (type === "storage") {
+        node.storagePath = normPath(`${resolveWorkingRoot(projectRootDir)}/${name}`);
+      }
       wf.descendants.push(node);
+      _COMPONENT_SNAPSHOTS.set(newId, JSON.stringify(node));
       cb?.(true);
 
       const pj = getOrInitProjectJson(projectRootDir, rootId);
       pj.componentPath[newId] = `${name}`;
       const workRoot = resolveWorkingRoot(projectRootDir);
       addDir(projectRootDir, `${workRoot}/${name}`);
+
+      //PSコンポーネント作成時はparameterSetting.jsonをVFSに追加
+      if (type === "PS") {
+        const psFilePath = normPath(`${workRoot}/${name}/parameterSetting.json`);
+        addFile(projectRootDir, psFilePath);
+        _FILE_CONTENTS.set(psFilePath, JSON.stringify({ version: 2, targetFiles: [], params: [], scatter: [], gather: [] }));
+      }
 
       socket.emit("projectJson", pj);
       io.emit("workflow", wf);
@@ -1237,6 +1255,71 @@ async function start(port = 3101) {
     });
 
     /**
+     * ファイルを開く（テキストエディタ・PSエディタ用）
+     * - パスが parameterSetting.json の場合は parameterSettingFile イベントを emit。
+     * - その他は file イベントを emit。
+     * - targetFiles に列挙された各ファイルも順に file イベントで emit。
+     * @param {string} projectRootDir - プロジェクトのルートパス
+     * @param {string} filename - 開くファイルのフルパス
+     * @param {boolean} forceNormal - true の場合は必ず file イベントとして扱う
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし ACK と push で通知します。
+     */
+    socket.on("openFile", (projectRootDir, filename, forceNormal, cb)=>{
+      try {
+        const fp = normPath(filename);
+        const content = _FILE_CONTENTS.get(fp) ?? "";
+        const base = basenameNoSlash(fp);
+        const dir = parentDir(fp);
+        let parsed = null;
+        if (!forceNormal) {
+          try {
+            parsed = JSON.parse(content);
+          } catch { /*not JSON */ }
+        }
+        if (!forceNormal && parsed && Array.isArray(parsed.targetFiles)) {
+          socket.emit("parameterSettingFile", { content, filename: base, dirname: dir, isParameterSettingFile: true });
+
+          for (const tf of parsed.targetFiles) {
+            const tfName = typeof tf === "string" ? tf : (tf && tf.targetName);
+            if (!tfName) continue;
+            const tfPath = tfName.startsWith("/") ? normPath(tfName) : normPath(`${dir}/${tfName}`);
+            const tfContent = _FILE_CONTENTS.get(tfPath) ?? "";
+            socket.emit("file", { content: tfContent, filename: basenameNoSlash(tfPath), dirname: parentDir(tfPath) });
+          }
+        } else {
+          socket.emit("file", { content, filename: base, dirname: dir });
+        }
+        cb?.(true);
+      } catch (e) {
+        warn("[MockServer] openFile error:", e?.message || e);
+        cb?.(false);
+      }
+    });
+
+    /**
+     * ファイルを保存（テキストエディタ・PSエディタ用）
+     * - VFS にコンテンツを保存し、ファイルパスを登録する。
+     * @param {string} projectRootDir - プロジェクトのルートパス
+     * @param {string} filename - ファイル名
+     * @param {string} dirname - ディレクトリパス
+     * @param {string} content - 保存するコンテンツ
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし ACK で通知します。
+     */
+    socket.on("saveFile", (projectRootDir, filename, dirname, content, cb)=>{
+      try {
+        const absPath = normPath(`${dirname}/${filename}`);
+        _FILE_CONTENTS.set(absPath, content);
+        addFile(projectRootDir, absPath);
+        cb?.(true);
+      } catch (e) {
+        warn("[MockServer] saveFile error:", e?.message || e);
+        cb?.(false);
+      }
+    });
+
+    /**
      * コンポーネント削除
      * - 更新後の workflow / projectJson を push
      * @param {string} projectRootDir
@@ -1286,6 +1369,35 @@ async function start(port = 3101) {
     /*----------------------------------------------------------------------
      * 実行系（Run/Clean）
      * --------------------------------------------------------------------*/
+
+    /**
+     * Workflow: コンポーネント単体クリーン
+     * - コンポーネントの状態を作成時のスナップショットに戻し、更新workflowをpush。
+     * @param {string} projectRootDir - プロジェクトのルートパス
+     * @param {string} nodeId - クリーン対象のコンポーネントID
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし ACK と push で通知します。
+     */
+    socket.on("cleanComponent", (projectRootDir, nodeId, cb)=>{
+      try {
+        const wf = getOrInitWorkflow(projectRootDir, "root");
+        const snapshot = _COMPONENT_SNAPSHOTS.get(nodeId);
+        if (!snapshot) return cb?.(false);
+        const original = JSON.parse(snapshot);
+        const idx = wf.descendants.findIndex((n)=>{ return n && n.ID === nodeId; });
+        if (idx === -1) return cb?.(false);
+        const current = wf.descendants[idx];
+        wf.descendants[idx] = { ...current, name: original.name };
+        const pj = getOrInitProjectJson(projectRootDir, "root");
+        pj.componentPath[nodeId] = original.name;
+        io.emit("projectJson", pj);
+        cb?.(true);
+        io.emit("workflow", clone(wf));
+      } catch (e) {
+        console.warn("[MockServer] cleanComponent error:", e?.message || e);
+        cb?.(false);
+      }
+    });
 
     /**
      * Workflow: プロジェクト操作（Run/Clean）

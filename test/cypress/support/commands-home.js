@@ -6,10 +6,26 @@
 /**
  * home画面操作を対象にしたcommand
  */
+/**
+ * Navigate to the home page.
+ * If the workflow-editor nav link is present (i.e. we are already inside a project),
+ * click it so the socket.io connection is preserved and the transition is fast.
+ * Otherwise fall back to a full cy.visit("/").
+ */
+Cypress.Commands.add("goHome", ()=>{
+  cy.window().then((win)=>{
+    const homeLink = win.document.querySelector("[href='./home']");
+    if (homeLink) {
+      return cy.wrap(homeLink).click({ force: true });
+    }
+    return cy.visit("/");
+  });
+  return cy.waitProjectList();
+});
+
 //create a project
 Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
-  cy.visit("/");
-  cy.waitProjectList();
+  cy.goHome();
   cy.get("[data-cy=\"home-new-btn\"]")
     .click();
   cy.get("[data-cy=\"home-project_name-text_field\"]")
@@ -18,7 +34,6 @@ Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
     .type(projectDescription);
   cy.get("[data-cy=\"buttons-create-btn\"]")
     .click();
-  cy.waitProjectList();
   return cy.waitProjectAppear(projectName);
 });
 

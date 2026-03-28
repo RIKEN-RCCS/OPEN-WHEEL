@@ -12,6 +12,7 @@
     "test:e2e:run": "npm run test-all",
     "test:e2e:stop": "docker compose down",
     "test:e2e:mock": "npm run test:e2e:mock:start && npm run test:e2e:mock:run; npm run test:e2e:mock:stop",
+    "test:e2e:mock:quick": "npm run test:e2e:mock:start && npm run test:e2e:mock:run:quick; npm run test:e2e:mock:stop",
     "test:e2e:mock:start": "docker compose up -d --build && npx wait-on http://localhost:8089 tcp:127.0.0.1:3001 tcp:127.0.0.1:3101 tcp:127.0.0.1:3102 --timeout 300000",
     "test:e2e:mock:run": "npx cypress run --browser chrome --config requestTimeout=300000,defaultCommandTimeout=300000,retries=2",
     "test:e2e:mock:run:quick": "npx cypress run --browser chrome --config requestTimeout=10000,defaultCommandTimeout=10000,retries=0",

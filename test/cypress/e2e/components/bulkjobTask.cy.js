@@ -1,5 +1,5 @@
 describe("components", ()=>{
-  describe.skip("BulkjobTask", ()=>{ //TODO:テスト実行でクラッシュする場合があるため一時的にskip.修正後復帰すること.
+  describe("BulkjobTask", ()=>{ //TODO:テスト実行でクラッシュする場合があるため一時的にskip.修正後復帰すること.
     const TYPE_INPUT = "input";
     const TYPE_OUTPUT = "output";
     const TYPE_DIR = "dir";
@@ -16,7 +16,6 @@ describe("components", ()=>{
     });
 
     beforeEach(()=>{
-      cy.removeAllProjects();
       cy.viewport("macbook-16");
       return cy.createAndOpenProject();
     });
@@ -476,7 +475,8 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       const targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
-      cy.wait(500); //Wait for host selection to propagate
+      cy.get(targetDropBoxCy).find("input")
+        .should("have.value", TEST_LABEL);
       //Check if job scheduler is already enabled (it should be for TestLabelBulk)
       cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
         .then(($switch)=>{
@@ -499,7 +499,8 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
-      cy.wait(500); //Wait for host selection to propagate
+      cy.get(targetDropBoxCy).find("input")
+        .should("have.value", TEST_LABEL);
       //Check if job scheduler is already enabled
       cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
         .then(($switch)=>{
@@ -507,7 +508,6 @@ describe("components", ()=>{
             cy.wrap($switch).click();
           }
         });
-      cy.wait(500);
       cy.get("[data-cy=\"component_property-queue-select\"]").find("input")
         .should("not.be.disabled");
       targetDropBoxCy = "[data-cy=\"component_property-queue-select\"]";
@@ -527,7 +527,8 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
-      cy.wait(500); //Wait for host selection to propagate
+      cy.get(targetDropBoxCy).find("input")
+        .should("have.value", TEST_LABEL);
       //Check if job scheduler is already enabled
       cy.get("[data-cy=\"component_property-job_scheduler-switch\"]").find("input")
         .then(($switch)=>{

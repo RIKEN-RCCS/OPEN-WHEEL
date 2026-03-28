@@ -182,20 +182,26 @@ describe("components", ()=>{
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it.skip("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
       let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a"); //TODO:ドロップダウン選択 各itemにdata-cyを振りそこから値をgetする形に改修する
       cy.get("[data-cy=\"workflow-play-btn\"]").click();
+      cy.checkProjectStatus("finished");
       cy.clickComponentName(WHILE_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .clear();
       cy.get("[data-cy=\"component_property-name-text_field\"]").type("changeName");
       cy.get("[data-cy=\"component_property-description-textarea\"]").find("textarea")
         .focus();
-      cy.get("[data-cy=\"component_property-clean-btn\"]").click();
+      cy.closeProperty();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("changeName")
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
+        .click();
+      cy.clickComponentName(WHILE_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .should("have.value", WHILE_NAME_0);
     });

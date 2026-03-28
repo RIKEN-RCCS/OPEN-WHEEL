@@ -1,4 +1,3 @@
-const ANIMATION_WAIT_TIME = 500;
 const TYPE_INPUT = "input";
 const TYPE_OUTPUT = "output";
 const TYPE_DIR = "dir";
@@ -6,7 +5,7 @@ const TYPE_FILE = "file";
 
 //drag&drop component
 Cypress.Commands.add("dragAndDropComponent", (x, y, componentName, targetComponentName)=>{
-  cy.get("[data-cy=\"component_library-component-avatar\"]", { timeout: ANIMATION_WAIT_TIME + 4000 }).get("#" + targetComponentName);
+  cy.get("[data-cy=\"component_library-component-avatar\"]", { timeout: 10000 }).get("#" + targetComponentName);
   cy.get("[data-cy=\"component_library-component-avatar\"]").get("#" + targetComponentName)
     .trigger("dragstart", { offsetX: 100, offsetY: 100 })
     .trigger("dragend", { clientX: x, clientY: y })
@@ -42,7 +41,8 @@ Cypress.Commands.add("selectValueFromDropdownList", (targetDropBoxCy, dropBoxNo,
   cy.get(targetDropBoxCy).click();
   cy.get("[role=\"listbox\"]").should("be.visible");
   cy.get("[role=\"listbox\"]").contains(selectVal, { timeout: 10000 })
-    .should("be.visible")
+    .should("be.visible");
+  cy.get("[role=\"listbox\"]").contains(selectVal)
     .click();
 });
 
@@ -68,8 +68,10 @@ Cypress.Commands.add("enterInputOrOutputFile", (type, fileName, clickRun, addBut
       .type(fileName);
     //Click the Add File button
     if (addButtonClickFlag) {
-      cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
-        .eq(1)
+      cy.get("[data-cy=\"component_property-input_files-list_form\"]")
+        .find("[data-cy=\"list_form-add-text_field\"]")
+        .find("[role=\"button\"]")
+        .last()
         .click(); //Add input file button
     }
   } else if (type === TYPE_OUTPUT) {
@@ -77,8 +79,10 @@ Cypress.Commands.add("enterInputOrOutputFile", (type, fileName, clickRun, addBut
       .type(fileName);
     //Click the Add File button
     if (addButtonClickFlag) {
-      cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
-        .eq(3)
+      cy.get("[data-cy=\"component_property-output_files-list_form\"]")
+        .find("[data-cy=\"list_form-add-text_field\"]")
+        .find("[role=\"button\"]")
+        .last()
         .click(); //Add output file button
     }
   }

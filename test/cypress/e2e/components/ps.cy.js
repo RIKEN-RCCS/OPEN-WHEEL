@@ -191,23 +191,25 @@ describe("components", ()=>{
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it.skip("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
-      cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
-      cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
       cy.get("[data-cy=\"workflow-play-btn\"]").click();
+      cy.checkProjectStatus("finished");
       cy.clickComponentName(PS_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .clear();
       cy.get("[data-cy=\"component_property-name-text_field\"]").type("changeName");
       cy.get("[data-cy=\"component_property-description-textarea\"]").find("textarea")
         .focus();
-      cy.get("[data-cy=\"component_property-clean-btn\"]").click();
+      cy.closeProperty();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("changeName")
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
+        .click();
+      cy.clickComponentName(PS_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .should("have.value", "test-a");
+        .should("have.value", PS_NAME_0);
     });
 
     /**
@@ -632,7 +634,7 @@ describe("components", ()=>{
   試験確認内容：targetFileが追加されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it.skip("プロパティ設定確認-targetFiles追加-targetFileが追加されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-targetFiles追加-targetFileが追加されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -653,7 +655,7 @@ describe("components", ()=>{
   試験確認内容：targetFilesが削除されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it.skip("プロパティ設定確認-targetFiles削除-targetFilesが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-targetFiles削除-targetFilesが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -675,7 +677,7 @@ describe("components", ()=>{
   試験確認内容：入力した値が表示されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it.skip("プロパティ設定確認-delete all instancesスイッチボタン入力確認-入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-delete all instancesスイッチボタン入力確認-入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -697,7 +699,7 @@ describe("components", ()=>{
   試験確認内容：targetFilesが反映されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it.skip("プロパティ設定確認-targetFiles反映確認-targetFilesが反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-targetFiles反映確認-targetFilesが反映されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -706,7 +708,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
       cy.get("[data-cy=\"target_files-ok-btn\"]").click();
-      cy.get("[data-cy=\"rapid-save_all_files-btn\"]").click(); //保存ボタンクリック
+      cy.wait(3000); //parameterEditorの自動保存（2秒）を待つ
       cy.get("[data-cy=\"workflow-graph_view-btn\"]").click();
       cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-data-data_table\"]").contains("run.sh")
@@ -737,7 +739,7 @@ describe("components", ()=>{
   試験確認内容：current selected textテキストボックスにドラッグした値が表示されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it.skip("プロパティ設定確認-parameters->current selected text 入力確認-current selected textテキストボックスにドラッグした値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-parameters->current selected text 入力確認-current selected textテキストボックスにドラッグした値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -822,7 +824,7 @@ describe("components", ()=>{
   試験確認内容：min-max-step入力フォームに入力した値が反映されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it.skip("プロパティ設定確認-min-max-step入力反映確認-min-max-step入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-min-max-step入力反映確認-min-max-step入力フォームに入力した値が反映されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -843,7 +845,6 @@ describe("components", ()=>{
       cy.get("[data-cy=\"parameter-step-text_field\"]").clear()
         .type(2);
       cy.get("[data-cy=\"parameter-ok-btn\"]").click();
-      cy.get("[data-cy=\"rapid-save_all_files-btn\"]").click();
       cy.get("[data-cy=\"rapid-tab-tab_editor\"]").contains("VALUE={{ value }}")
         .should("exist");
     });
@@ -896,7 +897,7 @@ describe("components", ()=>{
   試験確認内容：list入力フォームに入力した値が反映されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it.skip("プロパティ設定確認-list入力反映確認-list入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-list入力反映確認-list入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -913,7 +914,6 @@ describe("components", ()=>{
       cy.selectValueFromDropdownList(targetDropBoxCy, 1, "list");
       cy.get("[data-cy=\"parameter-list-list_form\"]").type(10);
       cy.get("[data-cy=\"parameter-ok-btn\"]").click();
-      cy.get("[data-cy=\"rapid-save_all_files-btn\"]").click();
       cy.get("[data-cy=\"rapid-tab-tab_editor\"]").contains("VALUE={{ value }}")
         .should("exist");
     });
@@ -966,7 +966,7 @@ describe("components", ()=>{
   試験確認内容：files入力フォームに入力した値が反映されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it.skip("プロパティ設定確認-files入力反映確認-files入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-files入力反映確認-files入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -983,7 +983,6 @@ describe("components", ()=>{
       cy.selectValueFromDropdownList(targetDropBoxCy, 1, "files");
       cy.get("[data-cy=\"parameter-files-list_form\"]").type(10);
       cy.get("[data-cy=\"parameter-ok-btn\"]").click();
-      cy.get("[data-cy=\"rapid-save_all_files-btn\"]").click();
       cy.get("[data-cy=\"rapid-tab-tab_editor\"]").contains("VALUE={{ value }}")
         .should("exist");
     });
@@ -1090,7 +1089,7 @@ describe("components", ()=>{
   試験確認内容：srcName、dstNameテキストボックスに入力した値が反映されていることを確認
   不具合内容："testSrcName","testDstName"が見つからないため試験に失敗(2-1.)
      */
-    it.skip("プロパティ設定確認-scatter入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-scatter入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")

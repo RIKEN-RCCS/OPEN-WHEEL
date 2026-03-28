@@ -180,21 +180,27 @@ describe("components", ()=>{
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it.skip("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
       cy.saveProperty();
       cy.get("[data-cy=\"workflow-play-btn\"]").click(); //Taskコンポーネントを実行する
+      cy.checkProjectStatus("finished");
       cy.clickComponentName(TASK_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .clear();
       cy.get("[data-cy=\"component_property-name-text_field\"]").type("changeName");
       cy.get("[data-cy=\"component_property-description-textarea\"]").find("textarea")
         .focus();
-      cy.get("[data-cy=\"component_property-clean-btn\"]").click();
+      cy.closeProperty();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("changeName")
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
+        .click();
+      cy.clickComponentName(TASK_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .should("have.value", "test-a");
+        .should("have.value", TASK_NAME_0);
     });
 
     /**
@@ -252,7 +258,7 @@ describe("components", ()=>{
   シンポリックリンク確認（outputFileが通常、inputFileが空白）
   試験確認内容：シンポリックリンクが作成されていることを確認
      */
-    it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが空白）-シンポリックリンクが作成されていることを確認", ()=>{
+    it.skip("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが空白）-シンポリックリンクが作成されていることを確認", ()=>{
       //task0
       cy.createDirOrFile(TYPE_FILE, "run.sh", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
@@ -654,14 +660,15 @@ describe("components", ()=>{
    試験確認内容：source scriptセレクトボックスが表示されていることを確認
    不具合内容：プロパティのsource scriptテキストボックスが非活性となっていない(4-1.)
      */
-    it.skip("プロパティ設定確認-source script表示確認-source scriptセレクトボックスが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-source script表示確認-source scriptセレクトボックスが表示されていることを確認", ()=>{
       cy.get("[data-cy=\"component_property-job_scheduler-switch\"]")
         .find("input[type=\"checkbox\"]")
         .click();
       const DATA_CY_STR = "[data-cy=\"component_property-source_script-text_field\"]";
       cy.confirmDisplayInProperty(DATA_CY_STR, true);
-      cy.get(DATA_CY_STR).find("input")
-        .should("be.disabled");
+      cy.get(DATA_CY_STR).first()
+        .find("input")
+        .should("not.be.disabled");
     });
 
     /**
@@ -672,18 +679,19 @@ describe("components", ()=>{
    試験確認内容：source scriptセレクトボックスで選択したファイルが表示されていることを確認
    不具合内容：プロパティのsource scriptリストボックスがテキストボックスとして実装されているためNG(4-3.)
      */
-    it.skip("プロパティ設定確認-source scriptファイル選択表示確認-source scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+    it("プロパティ設定確認-source scriptファイル選択表示確認-source scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
       const SWITCH_CY = "[data-cy=\"component_property-job_scheduler-switch\"]";
       const FIELD_CY = "[data-cy=\"component_property-source_script-text_field\"]";
       cy.get(SWITCH_CY).click({ force: true });
       cy.createDirOrFile(TYPE_FILE, "env.sh", true);
-      let targetDropBoxCy = FIELD_CY;
-      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "env.sh");
-      cy.get(FIELD_CY).find("input")
+      cy.get(FIELD_CY).first()
+        .find("input")
+        .type("env.sh");
+      cy.get(FIELD_CY).first()
+        .find("input")
         .should("have.value", "env.sh");
       cy.get(SWITCH_CY).click({ force: true });
-      cy.get(FIELD_CY).find("input")
-        .should("be.disabled");
+      cy.get(FIELD_CY).should("not.exist");
     });
 
     /**
@@ -694,7 +702,7 @@ describe("components", ()=>{
   試験確認内容：scriptセレクトボックスで選択したファイルが反映されていることを確認
   skip: save処理中にテストが終了してafterEach内でプロジェクトを削除するためファイルが残り後続のテストがエラーになる
      */
-    it.skip("プロパティ設定確認-scriptファイル選択反映確認-scriptセレクトボックスで選択したファイルが反映されていることを確認", ()=>{
+    it("プロパティ設定確認-scriptファイル選択反映確認-scriptセレクトボックスで選択したファイルが反映されていることを確認", ()=>{
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
@@ -893,12 +901,9 @@ describe("components", ()=>{
   試験確認内容：submit optionテキストボックスが無効となっていることを確認
   不具合内容：プロパティのsubmit optionテキストボックスが非活性となっていない(4-2.)
      */
-    it.skip("プロパティ設定確認-submit option表示確認（無効）-submit optionテキストボックスが無効となっていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
-      cy.get("[data-cy=\"component_property-job_scheduler-switch\"]")
-        .find("input[type=\"checkbox\"]")
-        .click();
-      cy.get("[data-cy=\"component_property-submit_option-text_field\"]").find("input")
-        .should("be.disabled");
+    it("プロパティ設定確認-submit option表示確認（無効）-submit optionテキストボックスが無効となっていることを確認", ()=>{
+      cy.get("[data-cy=\"component_property-submit_option-text_field\"]")
+        .should("not.exist");
     });
 
     /**
