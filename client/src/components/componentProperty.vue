@@ -159,15 +159,6 @@
               data-cy="component_property-source_script-text_field"
             />
             <v-text-field
-              v-if="hasScript && copySelectedComponent.useJobScheduler"
-              v-model="copySelectedComponent.sourceScript"
-              label="source script"
-              :readonly="readOnly"
-              clearable
-              variant="outlined"
-              data-cy="component_property-source_script-text_field"
-            />
-            <v-text-field
               v-if="isStorage"
               v-model="copySelectedComponent.storagePath"
               label="directory path"
