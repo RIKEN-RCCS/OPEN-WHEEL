@@ -1,0 +1,18 @@
+{
+    "parent": "1389d6c0-2b4e-11f1-b5df-853f568c1063",
+    "pos": {
+        "x": 345,
+        "y": 240
+    },
+    "ID": "1481f260-2b4e-11f1-b5df-853f568c1063",
+    "type": "hpciss",
+    "name": "HPCI-SS0",
+    "description": null,
+    "env": {},
+    "disable": false,
+    "state": "finished",
+    "inputFiles": [],
+    "outputFiles": [],
+    "host": null,
+    "storagePath": null
+}
