@@ -66,7 +66,9 @@ export default defineConfig({
       WHEEL_TEST_PORT: 8000,
       WHEEL_TEST_USER: "testuser",
       WHEEL_PATH: "/root",
-      USE_MOCK: true
+      USE_MOCK: true,
+      WHEEL_TEST_AUTH_URL: "http://localhost:8090",
+      WHEEL_TEST_LOGIN_PASSWORD: "WheelTest123!"
     },
     baseUrl: `http://localhost:8089`,
     setupNodeEvents(on) {

@@ -34,6 +34,23 @@ services:
       - /tmp/WHEEL_TEST/shared:/mnt/shared
 
 
+  wheel_auth:
+    image: wheel_e2e_test
+    container_name: wheel_auth
+    ports:
+      - "8090:8089"
+    environment:
+      WHEEL_USE_HTTP: 1
+      WHEEL_USE_PORT: 8089
+      WHEEL_ANONYMOUS_LOGIN: YES
+      WHEEL_ANONYMOUS_PASSWORD: WheelTest123!
+      WHEEL_LOGLEVEL: OFF
+    volumes:
+      - "./wheel_config_auth:/root/.wheel"
+    depends_on:
+      - wheel_release_test
+
+
   mock:
     build:
       context: .

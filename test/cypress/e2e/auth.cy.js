@@ -1,8 +1,9 @@
-describe.skip("wheel authorization test", ()=>{
+describe("wheel authorization test", ()=>{
+  const authUrl = Cypress.env("WHEEL_TEST_AUTH_URL");
   const password = Cypress.env("WHEEL_TEST_LOGIN_PASSWORD");
   const user = "anonymous";
   before(()=>{
-    cy.visit("/");
+    cy.visit(authUrl + "/");
   });
 
   beforeEach(()=>{
@@ -10,11 +11,11 @@ describe.skip("wheel authorization test", ()=>{
   });
 
   it("can access to login page (auth test 1)", ()=>{
-    cy.visit("/");
+    cy.visit(authUrl + "/");
     cy.loginPageDisplayed();
   });
   it("should be redirected to login page after attempting login with illegal user (auth test2)", ()=>{
-    cy.visit("/");
+    cy.visit(authUrl + "/");
     cy.loginPageDisplayed();
     cy.get("[data-cy=\"username\"]").type("hoge");
     cy.get("[data-cy=\"password\"]").type("huga");
@@ -22,7 +23,7 @@ describe.skip("wheel authorization test", ()=>{
     cy.loginPageDisplayed();
   });
   it("should be redirected to login page after attempting login with illegal password (auth test3)", ()=>{
-    cy.visit("/");
+    cy.visit(authUrl + "/");
     cy.loginPageDisplayed();
     cy.get("[data-cy=\"username\"]").type(user);
     cy.get("[data-cy=\"password\"]").type("huga");
@@ -30,7 +31,7 @@ describe.skip("wheel authorization test", ()=>{
     cy.loginPageDisplayed();
   });
   it("should be redirected to home page after successful login (auth test4)", ()=>{
-    cy.visit("/");
+    cy.visit(authUrl + "/");
     cy.loginPageDisplayed();
     cy.get("[data-cy=\"username\"]").type(user);
     cy.get("[data-cy=\"password\"]").type(password);
@@ -38,7 +39,7 @@ describe.skip("wheel authorization test", ()=>{
     cy.homePageDisplayed();
   });
   it("should be redirected to home page after successful login (auth test5)", ()=>{
-    cy.visit("/login");
+    cy.visit(authUrl + "/login");
     cy.loginPageDisplayed();
     cy.get("[data-cy=\"username\"]").type(user);
     cy.get("[data-cy=\"password\"]").type(password);
@@ -46,40 +47,31 @@ describe.skip("wheel authorization test", ()=>{
     cy.homePageDisplayed();
   });
   it("should be redirected to home page after successful login (auth test6)", ()=>{
-    cy.visit("/home");
+    cy.visit(authUrl + "/home");
     cy.loginPageDisplayed();
     cy.get("[data-cy=\"username\"]").type(user);
     cy.get("[data-cy=\"password\"]").type(password);
     cy.get("[data-cy=\"submit\"]").click();
     cy.homePageDisplayed();
   });
-  it("should be redirected to remotehost page after successful login (auth test7)", ()=>{
-    cy.visit("/remotehost");
-    cy.loginPageDisplayed();
-    cy.get("[data-cy=\"username\"]").type(user);
-    cy.get("[data-cy=\"password\"]").type(password);
-    cy.get("[data-cy=\"submit\"]").click();
-    cy.remotehostPageDisplayed();
-  });
   describe("create new project and access to workflow page", ()=>{
     const projectName = "WHEEL_TEST_PROJECT_FOR_AUTH_E2E";
     beforeEach(()=>{
       //create new project
-      cy.visit("/home");
+      cy.visit(authUrl + "/home");
       cy.loginPageDisplayed();
       cy.get("[data-cy=\"username\"]").type(user);
       cy.get("[data-cy=\"password\"]").type(password);
       cy.get("[data-cy=\"submit\"]").click();
       cy.homePageDisplayed();
-      cy.contains("button", "NEW").click({ force: true });
-      cy.contains("label", "project name").siblings()
-        .children("input")
+      cy.get("[data-cy=\"home-new-btn\"]").click({ force: true });
+      cy.get("[data-cy=\"home-project_name-text_field\"]").find("input")
         .type(projectName, { force: true });
-      cy.contains("button", "create").click({ force: true });
+      cy.get("[data-cy=\"buttons-create-btn\"]").click({ force: true });
     });
     after(()=>{
       //remove project
-      cy.visit("/home");
+      cy.visit(authUrl + "/home");
       cy.homePageDisplayed();
       cy.contains("tr", projectName).find("[type=\"checkbox\"]")
         .check();

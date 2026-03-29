@@ -32,3 +32,4 @@ test/wheel_config/projectList.json.bak
 .env
 test/cypress/e2e/gfarm/gfarm-e2e.env
 test/cypress/downloads
+test/wheel_config_auth/

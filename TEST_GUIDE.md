@@ -155,8 +155,9 @@ npm run -w test test:e2e:mock
 ```
 
 **フロー:**
-1. `docker compose up -d --build` — WHEEL・Gateway・モックの3コンテナをビルドして起動
+1. `docker compose up -d --build` — WHEEL・Gateway・モック・認証テスト用サーバーの4コンテナをビルドして起動
    - `wheel_release_test` (port 8089): WHEELアプリ本体
+   - `wheel_auth` (port 8090): 認証機能が有効なWHEEL (認証テスト専用)
    - `mock` (port 3101/3102): Socket.IOモック + HTTPモック
    - `gateway` (port 3001): WHEELとモックへのリバースプロキシ
 2. 各サービスの起動完了を待機 (`wait-on`)
@@ -241,7 +242,70 @@ npm run test:e2e:mock:start   # または test:e2e:qualifying:start
 npm run test       # npx cypress open
 ```
 
-### 2.9 GFarm テスト
+### 2.9 認証テスト (auth.cy.js)
+
+認証テストは、WHEELの認証機能 (ログイン・ログアウト・未認証アクセス時のリダイレクト) を検証します。
+通常のモックサーバーモードとは別に、認証が有効な専用WHEELコンテナ (`wheel_auth`) を使用します。
+
+#### アーキテクチャ
+
+```
+Cypress (認証テスト)
+    ↓ HTTP
+wheel_auth コンテナ (port 8090)
+    - WHEEL_ANONYMOUS_LOGIN=YES  → 認証機能を有効化
+    - WHEEL_ANONYMOUS_PASSWORD   → "anonymous" ユーザーのパスワード
+    - 設定ディレクトリ: test/wheel_config_auth/
+```
+
+`test:e2e:mock:start` でモックサーバーモードのコンテナを起動すると、`wheel_auth` も同時に起動します。
+
+#### 使用する環境変数 (Cypress)
+
+| 変数 | 説明 | デフォルト |
+|------|------|-----------|
+| `WHEEL_TEST_AUTH_URL` | 認証テスト用WHEELサーバーURL | `http://localhost:8090` |
+| `WHEEL_TEST_LOGIN_PASSWORD` | `anonymous` ユーザーのパスワード | `WheelTest123!` |
+
+#### 認証ユーザーの仕組み
+
+`entrypoint.sh` 内で `WHEEL_ANONYMOUS_LOGIN=YES` が設定されると:
+1. `passwordDBTool.js -u anonymous -p "$WHEEL_ANONYMOUS_PASSWORD" -c` を実行してユーザーDBを初期化
+2. `WHEEL_ENABLE_AUTH=YES` をエクスポートし、認証ミドルウェアを有効化
+
+`WHEEL_ANONYMOUS_PASSWORD` を省略した場合は、ランダムパスワードで `anonymous` ユーザーを作成します。
+
+#### テスト内容
+
+| テスト名 | 内容 |
+|---------|------|
+| auth test 1 | `/` へのアクセスでログインページが表示されることを確認 |
+| auth test 2 | 存在しないユーザーでログインするとログインページに戻ることを確認 |
+| auth test 3 | 誤ったパスワードでログインするとログインページに戻ることを確認 |
+| auth test 4 | `/` へのアクセス後にログインするとホームページへリダイレクトされることを確認 |
+| auth test 5 | `/login` へのアクセス後にログインするとホームページへリダイレクトされることを確認 |
+| auth test 6 | `/home` へのアクセス後にログインするとホームページへリダイレクトされることを確認 |
+| auth test 8 | ログイン後、新規プロジェクトを作成してワークフローページへ遷移できることを確認 |
+
+#### ローカルでの個別実行
+
+```bash
+cd test
+# 全コンテナ起動 (wheel_auth を含む)
+npm run test:e2e:mock:start
+
+# auth.cy.js のみ実行
+npx cypress run --browser chrome --spec "cypress/e2e/auth.cy.js"
+
+# 停止
+npm run test:e2e:mock:stop
+```
+
+> **注意**: `test/wheel_config_auth/` ディレクトリは `wheel_auth` コンテナの設定ボリュームとして自動生成されます。ソースコードとしてコミットする必要はありません。
+
+---
+
+### 2.10 GFarm テスト
 
 GFarm連携テストは専用の環境設定が必要です。
 
@@ -255,7 +319,7 @@ npm run test:e2e:gfarm        # ヘッドレス実行
 npm run test:e2e:gfarm:open   # インタラクティブ実行
 ```
 
-### 2.10 テスト実行時のログ
+### 2.11 テスト実行時のログ
 
 失敗時のデバッグ用に以下のコマンドでコンテナログを確認できます:
 
@@ -272,7 +336,7 @@ docker logs wheel     # WHEELアプリのログ
 | `test/cypress/screenshots/` | 失敗時のスクリーンショット |
 | `test/cypress/videos/` | テスト実行動画 |
 
-### 2.11 GitHub Actions (CI)
+### 2.12 GitHub Actions (CI)
 
 #### E2Eテスト (`run_cypress.yml`)
 
