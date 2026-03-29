@@ -385,8 +385,20 @@ export async function onCleanComponent(clientID, projectRootDir, targetComponent
     await gitResetHEAD(projectRootDir, headRelPath);
     await gitPromise(projectRootDir, ["reset", "HEAD", "--", componentDir], projectRootDir);
     await gitClean(projectRootDir, componentDir);
-  } else {
+  } else if (typeof headRelPath === "string") {
+    //No rename: component is at the same path in HEAD, safe to restore from HEAD.
     await cleanProject(projectRootDir, componentDir);
+  } else {
+    //Component not committed yet (headRelPath is null/undefined): just unstage and remove.
+    //Do not call git checkout HEAD since the component was never in HEAD.
+    await gitResetHEAD(projectRootDir, projectJsonFilename);
+
+    try {
+      await gitPromise(projectRootDir, ["reset", "HEAD", "--", componentDir], projectRootDir);
+    } catch {
+      //Component directory may not be in the index; ignore
+    }
+    await gitClean(projectRootDir, componentDir);
   }
 
   await Promise.all([
