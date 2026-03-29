@@ -321,6 +321,8 @@ export default {
       SIO.onGlobal("uploadConflict", this.onUploadConflict);
     }
     this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
+  },
+  beforeUnmount() {
     SIO.removeUploaderEvent("choose", this.onChoose);
     SIO.removeUploaderEvent("complete", this.onUploadComplete);
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
@@ -462,6 +464,11 @@ export default {
       this.showCopyButtonTooltipText = false;
     },
     submitAndCloseDialog() {
+      if (!["remove", "rename", "createNewFile", "createNewDir"].includes(this.dialog.submitEvent)) {
+        console.log("unsupported event", this.dialog.submitEvent);
+        this.clearAndCloseDialog();
+        return;
+      }
       if (this.dialog.submitEvent === "remove") {
         SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
           if (!rt) {
@@ -501,6 +508,7 @@ export default {
         SIO.emitGlobal(this.dialog.submitEvent, this.projectRootDir, fullPath, (rt)=>{
           if (!rt) {
             console.log(rt);
+            this.clearAndCloseDialog();
             return;
           }
           const newItem = { id: fullPath, name, path: this.currentDir, type };
@@ -513,9 +521,9 @@ export default {
             this.openItems.push(this.activeItem.id);
           }
           this.updateScriptCandidate();
+          this.clearAndCloseDialog();
         });
-      } else {
-        console.log("unsupported event", this.dialog.submitEvent);
+        return;
       }
       this.clearAndCloseDialog();
     },
