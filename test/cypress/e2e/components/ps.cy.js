@@ -187,15 +187,14 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   psコンポーネント共通機能確認
   構成要素の機能確認
-  cleanボタン押下
+  clean component実行
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-      cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"workflow-play-btn\"]").click();
-      cy.checkProjectStatus("finished");
+      cy.closeProperty();
+      cy.setComponentStateFinished(PS_NAME_0);
       cy.clickComponentName(PS_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .clear();
@@ -207,6 +206,11 @@ describe("components", ()=>{
         .rightclick();
       cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
         .click();
+      cy.get("body").then(($body)=>{
+        if ($body.find("button").filter(":contains('discard all changes')").length > 0) {
+          cy.contains("button", "discard all changes").click();
+        }
+      });
       cy.clickComponentName(PS_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .should("have.value", PS_NAME_0);

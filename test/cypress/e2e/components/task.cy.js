@@ -176,17 +176,13 @@ describe("components", ()=>{
   Task コンポーネントの基本機能動作確認
   コンポーネント共通機能確認
   構成要素の機能確認
-  cleanボタン押下
+  clean component実行
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
-      cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
-      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
-      cy.saveProperty();
-      cy.get("[data-cy=\"workflow-play-btn\"]").click(); //Taskコンポーネントを実行する
-      cy.checkProjectStatus("finished");
+    it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
+      cy.closeProperty();
+      cy.setComponentStateFinished(TASK_NAME_0);
       cy.clickComponentName(TASK_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .clear();
@@ -198,6 +194,7 @@ describe("components", ()=>{
         .rightclick();
       cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
         .click();
+      cy.contains("discard all changes").click();
       cy.clickComponentName(TASK_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .should("have.value", TASK_NAME_0);
@@ -258,7 +255,7 @@ describe("components", ()=>{
   シンポリックリンク確認（outputFileが通常、inputFileが空白）
   試験確認内容：シンポリックリンクが作成されていることを確認
      */
-    it.skip("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが空白）-シンポリックリンクが作成されていることを確認", ()=>{
+    it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFileが通常、inputFileが空白）-シンポリックリンクが作成されていることを確認", ()=>{
       //task0
       cy.createDirOrFile(TYPE_FILE, "run.sh", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";
@@ -682,7 +679,8 @@ describe("components", ()=>{
     it("プロパティ設定確認-source scriptファイル選択表示確認-source scriptセレクトボックスで選択したファイルが表示されていることを確認", ()=>{
       const SWITCH_CY = "[data-cy=\"component_property-job_scheduler-switch\"]";
       const FIELD_CY = "[data-cy=\"component_property-source_script-text_field\"]";
-      cy.get(SWITCH_CY).click({ force: true });
+      cy.get(SWITCH_CY).find("input")
+        .click({ force: true });
       cy.createDirOrFile(TYPE_FILE, "env.sh", true);
       cy.get(FIELD_CY).first()
         .find("input")
@@ -690,7 +688,8 @@ describe("components", ()=>{
       cy.get(FIELD_CY).first()
         .find("input")
         .should("have.value", "env.sh");
-      cy.get(SWITCH_CY).click({ force: true });
+      cy.get(SWITCH_CY).find("input")
+        .click({ force: true });
       cy.get(FIELD_CY).should("not.exist");
     });
 

@@ -2,6 +2,49 @@ const TYPE_INPUT = "input";
 const TYPE_OUTPUT = "output";
 const TYPE_DIR = "dir";
 const TYPE_FILE = "file";
+const CONTAINER_NAME = "wheel";
+
+/**
+ * Set a component's state to "finished" by directly rewriting prj.wheel.json
+ * and cmp.wheel.json inside the Docker container.
+ * This is used to simulate a completed project run without actually executing it.
+ * @param {string} componentName - the component's directory name (e.g. "HPCI-SS0")
+ */
+Cypress.Commands.add("setComponentStateFinished", (componentName)=>{
+  const tmpPl = "cypress/fixtures/tmp_setstate_pl.json";
+  const tmpPrj = "cypress/fixtures/tmp_setstate_prj.json";
+  const tmpCmp = "cypress/fixtures/tmp_setstate_cmp.json";
+
+  cy.exec(`docker cp ${CONTAINER_NAME}:/root/.wheel/projectList.json ${tmpPl}`);
+  cy.task("readJson", tmpPl).then((projects)=>{
+    const projectPath = projects.at(-1).path;
+
+    cy.exec(`docker cp ${CONTAINER_NAME}:${projectPath}/prj.wheel.json ${tmpPrj}`);
+    cy.task("readJson", tmpPrj).then((prj)=>{
+      const entry = Object.entries(prj.componentPath)
+        .find(([, relPath])=>{ return relPath === componentName || relPath.endsWith(`/${componentName}`); });
+      if (!entry) {
+        throw new Error(`Component "${componentName}" not found in prj.wheel.json`);
+      }
+      const [, componentRelPath] = entry;
+
+      prj.state = "finished";
+      cy.task("writeJson", { filePath: tmpPrj, data: prj });
+      cy.exec(`docker cp ${tmpPrj} ${CONTAINER_NAME}:${projectPath}/prj.wheel.json`);
+
+      const cmpPath = `${projectPath}/${componentRelPath}/cmp.wheel.json`;
+      cy.exec(`docker cp ${CONTAINER_NAME}:${cmpPath} ${tmpCmp}`);
+      cy.task("readJson", tmpCmp).then((cmp)=>{
+        cmp.state = "finished";
+        cy.task("writeJson", { filePath: tmpCmp, data: cmp });
+        cy.exec(`docker cp ${tmpCmp} ${CONTAINER_NAME}:${cmpPath}`);
+        //Commit so that HEAD has this component, enabling rename detection in onCleanComponent
+        cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' add -A`);
+        cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' commit -m "setComponentStateFinished"`);
+      });
+    });
+  });
+});
 
 //drag&drop component
 Cypress.Commands.add("dragAndDropComponent", (x, y, componentName, targetComponentName)=>{
@@ -41,8 +84,7 @@ Cypress.Commands.add("selectValueFromDropdownList", (targetDropBoxCy, dropBoxNo,
   cy.get(targetDropBoxCy).click();
   cy.get("[role=\"listbox\"]").should("be.visible");
   cy.get("[role=\"listbox\"]").contains(selectVal, { timeout: 10000 })
-    .should("be.visible");
-  cy.get("[role=\"listbox\"]").contains(selectVal)
+    .should("be.visible")
     .click();
 });
 
@@ -54,6 +96,7 @@ Cypress.Commands.add("saveProperty", ()=>{
 //close property
 Cypress.Commands.add("closeProperty", ()=>{
   cy.get("[data-cy=\"component_property-close-btn\"]").click();
+  cy.get("[data-cy=\"component_property-property-navigation_drawer\"]").should("not.exist");
 });
 
 //enter the input or output file
@@ -116,6 +159,32 @@ Cypress.Commands.add("createDirOrFile", (type, fileName, clickRun)=>{
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("not.exist");
     cy.wait(200);
   }
+});
+
+/**
+ * Open the files panel and remove the specified items from the file browser treeview
+ * if they exist. Useful for cleaning up leftover files/directories from previous test runs.
+ * The files panel remains open after this command completes.
+ * @param {string[]} names - list of file/directory names to remove if present
+ */
+Cypress.Commands.add("cleanFileBrowserItems", (names)=>{
+  cy.get("[data-cy=\"component_property-files-panel_title\"]", { timeout: 10000 })
+    .scrollIntoView()
+    .click({ force: true });
+  names.forEach((name)=>{
+    cy.get("body").then(($body)=>{
+      const treeview = $body.find("[data-cy='file_browser-treeview-treeview']");
+      if (treeview.length > 0 && treeview.text().includes(name)) {
+        cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains(name)
+          .click();
+        cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+        cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
+          .first()
+          .click();
+        cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("not.exist");
+      }
+    });
+  });
 });
 
 //confirm the display in the property
@@ -241,12 +310,12 @@ Cypress.Commands.add("connectComponentMultiple", (sourceComponentName, targetCom
         .first()
         .should("be.visible")
         .then(($polygon)=>{
-          cy.get("svg").first()
-            .then(($svg)=>{
-              const polygonRect = $polygon[0].getBoundingClientRect();
-              const startX = polygonRect.left + polygonRect.width / 2;
-              const startY = polygonRect.top + polygonRect.height / 2;
+          const polygonRect = $polygon[0].getBoundingClientRect();
+          const startX = polygonRect.left + polygonRect.width / 2;
+          const startY = polygonRect.top + polygonRect.height / 2;
 
+          cy.get("svg#component-graph-svg").first()
+            .then(($svg)=>{
               //Dispatch real events using the browser's event system
               cy.window().then((win)=>{
               //Create and dispatch mousedown
@@ -263,42 +332,36 @@ Cypress.Commands.add("connectComponentMultiple", (sourceComponentName, targetCom
                 });
                 $polygon[0].dispatchEvent(mousedownEvent);
 
-                //Small delay
-                cy.wait(100).then(()=>{
-                //Create and dispatch mousemove
-                  const mousemoveEvent = new win.MouseEvent("mousemove", {
-                    bubbles: true,
-                    cancelable: true,
-                    view: win,
-                    screenX: targetX,
-                    screenY: targetY,
-                    clientX: targetX,
-                    clientY: targetY,
-                    button: 0,
-                    buttons: 1
-                  });
-                  $svg[0].dispatchEvent(mousemoveEvent);
-
-                  //Small delay
-                  cy.wait(100).then(()=>{
-                  //Create and dispatch mouseup
-                    const mouseupEvent = new win.MouseEvent("mouseup", {
-                      bubbles: true,
-                      cancelable: true,
-                      view: win,
-                      screenX: targetX,
-                      screenY: targetY,
-                      clientX: targetX,
-                      clientY: targetY,
-                      button: 0,
-                      buttons: 0
-                    });
-                    $svg[0].dispatchEvent(mouseupEvent);
-
-                    //Wait for connection to be created
-                    cy.wait(500);
-                  });
+                //Create and dispatch mousemove immediately (no wait to avoid Vue re-renders)
+                const mousemoveEvent = new win.MouseEvent("mousemove", {
+                  bubbles: true,
+                  cancelable: true,
+                  view: win,
+                  screenX: targetX,
+                  screenY: targetY,
+                  clientX: targetX,
+                  clientY: targetY,
+                  button: 0,
+                  buttons: 1
                 });
+                $svg[0].dispatchEvent(mousemoveEvent);
+
+                //Create and dispatch mouseup immediately
+                const mouseupEvent = new win.MouseEvent("mouseup", {
+                  bubbles: true,
+                  cancelable: true,
+                  view: win,
+                  screenX: targetX,
+                  screenY: targetY,
+                  clientX: targetX,
+                  clientY: targetY,
+                  button: 0,
+                  buttons: 0
+                });
+                $svg[0].dispatchEvent(mouseupEvent);
+
+                //Wait for connection to be created
+                cy.wait(500);
               });
             });
         });

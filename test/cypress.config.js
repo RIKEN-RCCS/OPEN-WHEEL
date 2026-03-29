@@ -129,6 +129,10 @@ export default defineConfig({
             .then(()=>{
               return true;
             });
+        },
+        async writeJson({ filePath, data }) {
+          await fs.writeJson(filePath, data, { spaces: 4 });
+          return true;
         }
       });
     }

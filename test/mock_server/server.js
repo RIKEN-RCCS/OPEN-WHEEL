@@ -10,9 +10,6 @@ const log = (...a)=>{
 const warn = (...a)=>{
   if (VERBOSE) console.warn(...a);
 };
-const err = (...a)=>{
-  return console.error(...a);
-}; //エラーは常に出す
 
 /**
  * STATE: 画面表示に必要な情報を一時的に保持する。
@@ -887,7 +884,7 @@ async function start(port = 3101) {
         const s = String(name ?? "").trim();
         if (!s) return false;
         //少なくとも * を含むようなワイルドカードやパス系は拒否
-        return !(/[\\\/:*?"<>|]/.test(s));
+        return !(/[\\/:*?"<>|]/.test(s));
       }
       const wf = getOrInitWorkflow(projectRootDir, rootId || "root");
       let compObj = component;
@@ -910,8 +907,14 @@ async function start(port = 3101) {
       if (!node) return cb?.(false);
       const merged = { ...node, ...(compObj || {}), ID: nodeId };
       if (!Array.isArray(merged.descendants)) merged.descendants = [];
-      const idx = wf.descendants.findIndex((n)=>{ return n && n.ID === nodeId; });
-      if (idx !== -1) wf.descendants[idx] = merged; else Object.assign(node, merged);
+      const idx = wf.descendants.findIndex((n)=>{
+        return n && n.ID === nodeId;
+      });
+      if (idx !== -1) {
+        wf.descendants[idx] = merged;
+      } else {
+        Object.assign(node, merged);
+      }
       cb?.(true);
       reconcileIOFromLinks(wf);
       io.emit("workflow", clone(wf));
@@ -1338,7 +1341,7 @@ async function start(port = 3101) {
         });
         if (idx === -1) return cb?.(false);
         //ノード削除
-        const removed = wf.descendants.splice(idx, 1)[0];
+        wf.descendants.splice(idx, 1);
         //リンク（from/to）を削除
         if (Array.isArray(wf.links)) {
           wf.links = wf.links.filter((lk)=>{
@@ -1384,7 +1387,9 @@ async function start(port = 3101) {
         const snapshot = _COMPONENT_SNAPSHOTS.get(nodeId);
         if (!snapshot) return cb?.(false);
         const original = JSON.parse(snapshot);
-        const idx = wf.descendants.findIndex((n)=>{ return n && n.ID === nodeId; });
+        const idx = wf.descendants.findIndex((n)=>{
+          return n && n.ID === nodeId;
+        });
         if (idx === -1) return cb?.(false);
         const current = wf.descendants[idx];
         wf.descendants[idx] = { ...current, name: original.name };

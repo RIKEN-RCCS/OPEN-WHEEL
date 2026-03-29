@@ -189,15 +189,14 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   Storageコンポーネント共通機能確認
   構成要素の機能確認
-  cleanボタン押下
+  clean component実行
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
-      cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"workflow-play-btn\"]").click();
-      cy.checkProjectStatus("finished");
+      cy.closeProperty();
+      cy.setComponentStateFinished(STORAGE_NAME_0);
       cy.clickComponentName(STORAGE_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .clear();
@@ -297,7 +296,8 @@ describe("components", ()=>{
     it("ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
-      cy.createDirOrFile(TYPE_DIR, "test-a", true);
+      cy.cleanFileBrowserItems(["test-a", "test-b"]);
+      cy.createDirOrFile(TYPE_DIR, "test-a", false);
       cy.createDirOrFile(TYPE_DIR, "test-b", false);
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .should("exist");
@@ -493,7 +493,8 @@ describe("components", ()=>{
     it("ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
-      cy.createDirOrFile(TYPE_DIR, "test-a", true);
+      cy.cleanFileBrowserItems(["test-a"]);
+      cy.createDirOrFile(TYPE_DIR, "test-a", false);
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
       cy.createDirOrFile(TYPE_DIR, "test-b", false);
@@ -524,7 +525,8 @@ describe("components", ()=>{
     it("ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
-      cy.createDirOrFile(TYPE_DIR, "test-a", true);
+      cy.cleanFileBrowserItems(["test-a"]);
+      cy.createDirOrFile(TYPE_DIR, "test-a", false);
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
       cy.createDirOrFile(TYPE_FILE, "test.txt", false);

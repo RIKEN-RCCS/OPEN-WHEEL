@@ -191,15 +191,14 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   HPCISS-tarコンポーネント共通機能確認
   構成要素の機能確認
-  cleanボタン押下
+  clean component実行
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it("tarコンポーネント共通機能確認-構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
-      cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"workflow-play-btn\"]").click();
-      cy.checkProjectStatus("finished");
+      cy.closeProperty();
+      cy.setComponentStateFinished(HPCISS_NAME_0);
       cy.clickComponentName(HPCISS_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .clear();
@@ -229,6 +228,7 @@ describe("components", ()=>{
       cy.confirmInputValueReflection(INPUT_OBJ_CY, HPCISS_NAME_1, TAG_TYPE_INPUT, HPCISS_NAME_1);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 600);
+      cy.closeProperty();
       cy.connectComponentMultiple(HPCISS_NAME_1, HPCISS_NAME_0); //コンポーネント同士を接続
       cy.checkConnectionLine(HPCISS_NAME_1, HPCISS_NAME_0); //作成したコンポーネントの座標を取得して接続線の座標と比較
     });

@@ -187,19 +187,14 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   ifコンポーネント共通機能確認
   構成要素の機能確認
-  cleanボタン押下
+  clean component実行
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 501, 500);
-      cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
-      let targetDropBoxCy = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
-      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
-      cy.saveProperty();
-      cy.get("[data-cy=\"workflow-play-btn\"]").click();
-      cy.checkProjectStatus("finished");
+      cy.closeProperty();
+      cy.setComponentStateFinished(IF_NAME_0);
       cy.clickComponentName(IF_NAME_0);
       cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
         .clear();
