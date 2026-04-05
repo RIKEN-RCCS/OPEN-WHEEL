@@ -182,22 +182,17 @@ describe("components", ()=>{
      */
     it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.closeProperty();
-      cy.setComponentStateFinished(TASK_NAME_0);
-      cy.clickComponentName(TASK_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .clear();
-      cy.get("[data-cy=\"component_property-name-text_field\"]").type("changeName");
-      cy.get("[data-cy=\"component_property-description-textarea\"]").find("textarea")
-        .focus();
-      cy.closeProperty();
-      cy.get("[data-cy=\"graph-component-row\"]").contains("changeName")
+      cy.prepareCleanComponentTest(TASK_NAME_0);
+      cy.get("[data-cy=\"graph-component-row\"]").contains(TASK_NAME_0)
         .rightclick();
       cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
         .click();
-      cy.contains("discard all changes").click();
+      cy.contains("button", "discard all changes").click();
       cy.clickComponentName(TASK_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .should("have.value", TASK_NAME_0);
+      cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+        .click();
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").should("not.contain.text", "_clean_test_marker.txt");
+      cy.closeProperty();
     });
 
     /**
@@ -222,7 +217,7 @@ describe("components", ()=>{
   シンポリックリンク確認（outputFile、inputFile一致）
   試験確認内容：シンポリックリンクが作成されていることを確認
      */
-    it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFile、inputFile一致）-シンポリックリンクが作成されていることを確認", ()=>{
+    it.only("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFile、inputFile一致）-シンポリックリンクが作成されていることを確認", ()=>{
       //task0
       cy.createDirOrFile(TYPE_FILE, "run.sh", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";

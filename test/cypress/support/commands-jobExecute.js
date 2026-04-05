@@ -9,13 +9,22 @@ function escapeRegExp(s) {
 
 /**
  * whileにスクリプトファイルを作成 Conditionにセット
+ * @param {string} scriptName - 作成するスクリプトファイル名
+ * @param {string} shellText - スクリプトの内容
+ * @param {string} whileComponentName - whileコンポーネントの名前（プロパティ再オープン用）
  */
-Cypress.Commands.add("setupWhileWithScriptAndCondition", (scriptName, shellText)=>{
+Cypress.Commands.add("setupWhileWithScriptAndCondition", (scriptName, shellText, whileComponentName)=>{
   const scriptEle = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
   //シェル作成
   cy.scriptMake(scriptName, shellText);
+  //スクリプト候補を更新するためプロパティを閉じて再オープン
+  cy.closeProperty();
+  cy.clickComponentName(whileComponentName);
   //Conditionをクリック
   cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
+  //v-comboboxの準備完了を待機
+  cy.get(scriptEle).find("[role=\"combobox\"]", { timeout: 10000 })
+    .should("exist");
   //Conditionにセット
   cy.selectValueFromDropdownList(scriptEle, 3, scriptName);
   //保存確認

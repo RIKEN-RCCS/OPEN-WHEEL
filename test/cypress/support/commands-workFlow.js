@@ -41,12 +41,72 @@ Cypress.Commands.add("setComponentStateFinished", (componentName)=>{
         //Commit so that HEAD has this component, enabling rename detection in onCleanComponent
         cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' add -A`);
         cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' commit -m "setComponentStateFinished"`);
+        //Reload the workflow page so the client picks up the updated projectState via socket.io
+        cy.reload();
+        cy.checkProjectStatus("finished");
       });
     });
   });
 });
 
-//drag&drop component
+/**
+ * Prepare a clean component test by setting project state to "finished",
+ * adding a marker file, and staging it.
+ * - Mock mode: uses the mock server's setupCleanComponentTest helper.
+ * - Real server mode: writes prj/cmp.wheel.json, commits, creates marker file, git-adds it.
+ * @param {string} componentName - the component's directory name (or partial name for hpcisstar)
+ */
+Cypress.Commands.add("prepareCleanComponentTest", (componentName)=>{
+  const isMock = Cypress.config("baseUrl").includes("3001");
+  if (isMock) {
+    cy.task("setupMockCleanTest", componentName).should("equal", true);
+    cy.checkProjectStatus("finished");
+  } else {
+    const tmpPl = "cypress/fixtures/tmp_clean_pl.json";
+    const tmpPrj = "cypress/fixtures/tmp_clean_prj.json";
+    const tmpCmp = "cypress/fixtures/tmp_clean_cmp.json";
+
+    cy.exec(`docker cp ${CONTAINER_NAME}:/root/.wheel/projectList.json ${tmpPl}`);
+    cy.task("readJson", tmpPl).then((projects)=>{
+      const projectPath = projects.at(-1).path;
+
+      cy.exec(`docker cp ${CONTAINER_NAME}:${projectPath}/prj.wheel.json ${tmpPrj}`);
+      cy.task("readJson", tmpPrj).then((prj)=>{
+        const entry = Object.entries(prj.componentPath)
+          .find(([, relPath])=>{
+            return relPath === componentName
+              || relPath.endsWith(`/${componentName}`)
+              || String(relPath).replace(/^\.\//u, "").startsWith(componentName);
+          });
+        if (!entry) {
+          throw new Error(`Component "${componentName}" not found in prj.wheel.json`);
+        }
+        const [, componentRelPath] = entry;
+
+        prj.state = "finished";
+        cy.task("writeJson", { filePath: tmpPrj, data: prj });
+        cy.exec(`docker cp ${tmpPrj} ${CONTAINER_NAME}:${projectPath}/prj.wheel.json`);
+
+        const cmpPath = `${projectPath}/${componentRelPath}/cmp.wheel.json`;
+        cy.exec(`docker cp ${CONTAINER_NAME}:${cmpPath} ${tmpCmp}`);
+        cy.task("readJson", tmpCmp).then((cmp)=>{
+          cmp.state = "finished";
+          cy.task("writeJson", { filePath: tmpCmp, data: cmp });
+          cy.exec(`docker cp ${tmpCmp} ${CONTAINER_NAME}:${cmpPath}`);
+          //Commit the state change so HEAD includes this component cleanly
+          cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' add -A`);
+          cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' commit -m "prepareCleanComponentTest"`);
+          //Create and stage the marker file so cleanComponent detects it as unsavedFiles
+          const markerPath = `${projectPath}/${componentRelPath}/_clean_test_marker.txt`;
+          cy.exec(`docker exec ${CONTAINER_NAME} sh -c "echo test > '${markerPath}'"`);
+          cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' add '${markerPath}'`);
+          cy.reload();
+          cy.checkProjectStatus("finished");
+        });
+      });
+    });
+  }
+});
 Cypress.Commands.add("dragAndDropComponent", (x, y, componentName, targetComponentName)=>{
   cy.get("[data-cy=\"component_library-component-avatar\"]", { timeout: 10000 }).get("#" + targetComponentName);
   cy.get("[data-cy=\"component_library-component-avatar\"]").get("#" + targetComponentName)

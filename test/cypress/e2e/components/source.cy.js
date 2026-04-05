@@ -115,26 +115,17 @@ describe("components", ()=>{
     it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 501, 500);
       cy.closeProperty();
-      cy.setComponentStateFinished(SOURCE_NAME_0);
-      cy.clickComponentName(SOURCE_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .clear();
-      cy.get("[data-cy=\"component_property-name-text_field\"]").type("changeName");
-      cy.get("[data-cy=\"component_property-description-textarea\"]").find("textarea")
-        .focus();
-      cy.closeProperty();
-      cy.get("[data-cy=\"graph-component-row\"]").contains("changeName")
+      cy.prepareCleanComponentTest(SOURCE_NAME_0);
+      cy.get("[data-cy=\"graph-component-row\"]").contains(SOURCE_NAME_0)
         .rightclick();
       cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
         .click();
-      cy.get("body").then(($body)=>{
-        if ($body.find("button").filter(":contains('discard all changes')").length > 0) {
-          cy.contains("button", "discard all changes").click();
-        }
-      });
+      cy.contains("button", "discard all changes").click();
       cy.clickComponentName(SOURCE_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .should("have.value", SOURCE_NAME_0);
+      cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+        .click();
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").should("not.contain.text", "_clean_test_marker.txt");
+      cy.closeProperty();
     });
 
     /**
@@ -149,8 +140,10 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").scrollIntoView()
         .click();
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      let targetDropBoxCy = "[data-cy=\"component_property-source_file_name-autocomplete\"]";
-      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
+      let targetDropBoxCy = "[data-cy=\"component_property-source_file_name-text_field\"]";
+      cy.get(targetDropBoxCy).find("input")
+        .clear()
+        .type("test-a");
       cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 501, 700);
       cy.closeProperty();
       cy.connectComponentMultiple(SOURCE_NAME_0, TASK_NAME_0); //コンポーネント同士を接続
@@ -267,7 +260,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-upload_on_demand-switch\"]").find("input")
         .click();
-      cy.get("[data-cy=\"component_property-source_file_name-autocomplete\"]").should("not.exist");
+      cy.get("[data-cy=\"component_property-source_file_name-text_field\"]").should("not.exist");
     });
 
     /**
@@ -280,7 +273,7 @@ describe("components", ()=>{
     it("各コンポーネント特有のプロパティ確認-source file name表示確認-source file nameテキストボックスが表示されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").click();
-      const DATA_CY_STR = "[data-cy=\"component_property-source_file_name-autocomplete\"]";
+      const DATA_CY_STR = "[data-cy=\"component_property-source_file_name-text_field\"]";
       cy.confirmDisplayInProperty(DATA_CY_STR, true);
     });
 
@@ -295,9 +288,11 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").click();
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      let targetDropBoxCy = "[data-cy=\"component_property-source_file_name-autocomplete\"]";
-      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
-      cy.get("[data-cy=\"component_property-source_file_name-autocomplete\"]").find("input")
+      let targetDropBoxCy = "[data-cy=\"component_property-source_file_name-text_field\"]";
+      cy.get(targetDropBoxCy).find("input")
+        .clear()
+        .type("test-a");
+      cy.get("[data-cy=\"component_property-source_file_name-text_field\"]").find("input")
         .should("have.value", "test-a");
     });
 
@@ -312,13 +307,15 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_SOURCE, SOURCE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").click();
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      let targetDropBoxCy = "[data-cy=\"component_property-source_file_name-autocomplete\"]";
-      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-a");
+      let targetDropBoxCy = "[data-cy=\"component_property-source_file_name-text_field\"]";
+      cy.get(targetDropBoxCy).find("input")
+        .clear()
+        .type("test-a");
       cy.closeProperty();
       cy.clickComponentName(SOURCE_NAME_0);
       cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-source_file_name-autocomplete\"]").contains("test-a")
-        .should("exist");
+      cy.get("[data-cy=\"component_property-source_file_name-text_field\"]").find("input")
+        .should("have.value", "test-a");
       cy.closeProperty();
     });
   });

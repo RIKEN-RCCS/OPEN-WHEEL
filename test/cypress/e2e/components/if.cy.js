@@ -194,21 +194,17 @@ describe("components", ()=>{
     it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_IF, IF_NAME_0, 501, 500);
       cy.closeProperty();
-      cy.setComponentStateFinished(IF_NAME_0);
-      cy.clickComponentName(IF_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .clear();
-      cy.get("[data-cy=\"component_property-name-text_field\"]").type("changeName");
-      cy.get("[data-cy=\"component_property-description-textarea\"]").find("textarea")
-        .focus();
-      cy.closeProperty();
-      cy.get("[data-cy=\"graph-component-row\"]").contains("changeName")
+      cy.prepareCleanComponentTest(IF_NAME_0);
+      cy.get("[data-cy=\"graph-component-row\"]").contains(IF_NAME_0)
         .rightclick();
       cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
         .click();
+      cy.contains("button", "discard all changes").click();
       cy.clickComponentName(IF_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .should("have.value", IF_NAME_0);
+      cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+        .click();
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").should("not.contain.text", "_clean_test_marker.txt");
+      cy.closeProperty();
     });
 
     /**

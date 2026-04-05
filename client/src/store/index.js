@@ -88,7 +88,8 @@ const state = {
   isComponentDragging: false,
   currentZoom: 1,
   currentPan: { x: 0, y: 0 },
-  textEditorDialog: false
+  textEditorDialog: false,
+  pendingNavigation: null
 };
 
 const mutations = mutationFactory(Object.keys(state));
@@ -119,7 +120,7 @@ export default new Vuex.Store({
         copySelectedComponent: copied,
         projectRootDir,
         currentComponent } = context.state;
-      if (copied !== null) {
+      if (copied !== null && selected !== null) {
         const difference = diff(selected, copied);
         const changedProps = difference.filter((e)=>{
           return e.path[0] !== "pos";

@@ -41,6 +41,9 @@ let _DIRS = new Set();
 /**コンポーネント作成時の初期状態スナップショット（cleanComponent用）*/
 const _COMPONENT_SNAPSHOTS = new Map();
 
+/**コンポーネント作成時のVFSファイル集合スナップショット（cleanComponent unsavedFiles検出用）*/
+const _COMPONENT_FILE_SNAPSHOTS = new Map();
+
 /**ファイルコンテンツVFS（openFile/saveFile用）- フルパス → 文字列コンテンツ*/
 const _FILE_CONTENTS = new Map();
 
@@ -850,6 +853,7 @@ async function start(port = 3101) {
       }
       wf.descendants.push(node);
       _COMPONENT_SNAPSHOTS.set(newId, JSON.stringify(node));
+      _COMPONENT_FILE_SNAPSHOTS.set(newId, new Set());
       cb?.(true);
 
       const pj = getOrInitProjectJson(projectRootDir, rootId);
@@ -1391,13 +1395,48 @@ async function start(port = 3101) {
           return n && n.ID === nodeId;
         });
         if (idx === -1) return cb?.(false);
-        const current = wf.descendants[idx];
-        wf.descendants[idx] = { ...current, name: original.name };
+
         const pj = getOrInitProjectJson(projectRootDir, "root");
-        pj.componentPath[nodeId] = original.name;
-        io.emit("projectJson", pj);
-        cb?.(true);
-        io.emit("workflow", clone(wf));
+        const workRoot = resolveWorkingRoot(projectRootDir);
+        const compDirRel = pj.componentPath[nodeId];
+        const compDirFull = compDirRel ? normPath(`${workRoot}/${compDirRel}`) : null;
+        const snapshotFiles = _COMPONENT_FILE_SNAPSHOTS.get(nodeId) || new Set();
+        const addedFiles = compDirFull
+          ? Array.from(_FILES).filter((f)=>{
+              const nf = normPath(f);
+              return (nf.startsWith(compDirFull + "/") || nf === compDirFull) && !snapshotFiles.has(nf);
+            })
+          : [];
+
+        const doClean = ()=>{
+          const current = wf.descendants[idx];
+          wf.descendants[idx] = { ...current, name: original.name };
+          pj.componentPath[nodeId] = original.name;
+          io.emit("projectJson", pj);
+          cb?.(true);
+          io.emit("workflow", clone(wf));
+        };
+
+        if (addedFiles.length > 0) {
+          const fileList = addedFiles.map((f)=>{
+            return { status: "new", name: f };
+          });
+          socket.emit("unsavedFiles", fileList, (response)=>{
+            const mode = Array.isArray(response) ? response[0] : response;
+            if (mode === "cancel") {
+              cb?.(false);
+              return;
+            }
+            if (mode === "discard") {
+              for (const f of addedFiles) {
+                removeFileFromVFS(projectRootDir, f);
+              }
+            }
+            doClean();
+          });
+        } else {
+          doClean();
+        }
       } catch (e) {
         console.warn("[MockServer] cleanComponent error:", e?.message || e);
         cb?.(false);
@@ -1557,6 +1596,17 @@ async function start(port = 3101) {
         return JSON.parse(JSON.stringify(obj));
       } catch { return obj; }
     }
+
+    /**
+     * テスト専用: clean component テストの事前準備をブラウザ以外のクライアントから要求する
+     * @param {string} componentName - コンポーネント名（部分一致可）
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし ACK で通知します。
+     */
+    socket.on("__testSetupCleanComponent", (componentName, cb)=>{
+      const result = setupCleanComponentTest(componentName);
+      cb?.(result);
+    });
   });
 
   console.log(`[MockServer] Listening on port ${port}`);
@@ -1621,4 +1671,35 @@ function emitProjectList(socket) {
   socket.emit("projectList", STATE.projectList);
 }
 
-module.exports = { start, stop };
+/**
+ * テスト用セットアップ: clean component テストの事前準備
+ * - プロジェクト状態を "finished" に変更し、コンポーネントディレクトリにテストファイルを追加する。
+ * - スナップショットには追加しないため cleanComponent 実行時に unsavedFiles として検出される。
+ * @param {string} componentName - コンポーネント名（部分一致可）
+ * @returns {boolean} セットアップ成功時は true、対象が見つからない場合は false
+ */
+function setupCleanComponentTest(componentName) {
+  if (!io) return false;
+  let projectKey = null;
+  for (const key of projectJsonByRoot.keys()) {
+    projectKey = key;
+  }
+  if (!projectKey) return false;
+  const pj = projectJsonByRoot.get(projectKey);
+  if (!pj) return false;
+  const projectRootDir = projectKey.replace(/__default__$/, "");
+  const nodeEntry = Object.entries(pj.componentPath).find(([, rel])=>{
+    return rel === componentName || String(rel).includes(componentName);
+  });
+  if (!nodeEntry) return false;
+  const [, componentRelPath] = nodeEntry;
+  pj.state = "finished";
+  const workRoot = resolveWorkingRoot(projectRootDir);
+  const testFilePath = normPath(`${workRoot}/${componentRelPath}/_clean_test_marker.txt`);
+  addFile(projectRootDir, testFilePath);
+  io.emit("projectState", "finished");
+  io.emit("projectJson", pj);
+  return true;
+}
+
+module.exports = { start, stop, setupCleanComponentTest };

@@ -810,7 +810,7 @@ export default {
       this.showSnackbar({ message: "Component import started", timeout: 2000 });
     },
     ...mapActions({ commitSelectedComponent: "selectedComponent", showSnackbar: "showSnackbar" }),
-    ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan", commitCopyInfo: "copyInfo" }),
+    ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan", commitCopyInfo: "copyInfo", commitPendingNavigation: "pendingNavigation" }),
     updatePosition(index, event) {
       this.currentComponent.descendants[index].pos.x = event.newX;
       this.currentComponent.descendants[index].pos.y = event.newY;
@@ -828,6 +828,7 @@ export default {
       if (!isContainer(componentType)) {
         return;
       }
+      this.commitPendingNavigation(componentID);
       SIO.emitGlobal("getWorkflow", this.projectRootDir, componentID, SIO.generalCallback);
     },
     onAddFileLinkToParent(srcNode, srcName, inputFilename) {

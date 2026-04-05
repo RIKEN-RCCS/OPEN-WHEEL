@@ -19,6 +19,7 @@ _user_guide
 **/_site
 tmp.*
 tmp_config.*
+test/cypress/fixtures/tmp_*.json
 session.db
 user.db
 server/app/public

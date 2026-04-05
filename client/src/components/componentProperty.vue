@@ -95,7 +95,7 @@
               variant="outlined"
               data-cy="component_property-description-textarea"
             />
-            <v-autocomplete
+            <v-combobox
               v-if="hasScript"
               v-model="copySelectedComponent.script"
               label="script"
@@ -173,7 +173,7 @@
             advanced
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            <v-autocomplete
+            <v-combobox
               v-model="copySelectedComponent.checker"
               label="checker script"
               :readonly="readOnly"
@@ -199,7 +199,7 @@
               :readonly="readOnly"
               data-cy="component_property-task_use_javascript-switch"
             />
-            <v-autocomplete
+            <v-combobox
               v-if="!retryByJS"
               v-model="copySelectedComponent.retryCondition"
               label="script name for condition check"
@@ -324,16 +324,15 @@
             />
             <v-row>
               <v-col>
-                <v-autocomplete
+                <v-text-field
                   v-if="!copySelectedComponent.uploadOnDemand"
                   v-model="sourceOutputFile"
                   label="source file name"
                   :readonly="readOnly"
-                  :items="scriptCandidates"
                   clearable
                   variant="outlined"
-                  data-cy="component_property-source_file_name-autocomplete"
-                  @update:model-value="updateSourceOutputFile"
+                  data-cy="component_property-source_file_name-text_field"
+                  @input="updateSourceOutputFile"
                 />
               </v-col>
               <v-col
@@ -378,7 +377,7 @@
             PS setting
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            <v-autocomplete
+            <v-combobox
               v-model="copySelectedComponent.parameterFile"
               label="parameterFile"
               :readonly="readOnly"
@@ -444,7 +443,7 @@
               :readonly="readOnly"
               data-cy="component_property-bulk_number-switch"
             />
-            <v-autocomplete
+            <v-combobox
               v-if="copySelectedComponent.usePSSettingFile"
               v-model="copySelectedComponent.parameterFile"
               label="parameter file"
@@ -488,7 +487,7 @@
                 :readonly="readOnly"
                 data-cy="component_property-balkjob_use_javascript-switch"
               />
-              <v-autocomplete
+              <v-combobox
                 v-if="!conditionCheckByJS"
                 v-model="copySelectedComponent.condition"
                 label="script name for condition check"
@@ -519,7 +518,7 @@
               :readonly="readOnly"
               data-cy="component_property-condition_use_javascript-switch"
             />
-            <v-autocomplete
+            <v-combobox
               v-if="!conditionCheckByJS"
               v-model="copySelectedComponent.condition"
               label="script name for condition check"
@@ -694,8 +693,7 @@ import {
 } from "../../../common/checkComponent.js";
 
 const isNormalObject = (target)=>{
-  const type = typeof target;
-  return type !== "undefined" && type !== "null";
+  return target !== null && target !== undefined;
 };
 
 const isZeroOrMore = (v)=>{
@@ -921,13 +919,13 @@ export default {
       }
     },
     selectedComponent(newValue, oldValue) {
-      if (this.selectedComponent === null || (newValue !== null && oldValue !== null && newValue.ID === oldValue.ID)) {
+      if (!this.selectedComponent || (newValue !== null && oldValue !== null && newValue.ID === oldValue.ID)) {
         return;
       }
       this.sourceOutputFile = Array.isArray(this.selectedComponent.outputFiles) && this.selectedComponent.outputFiles[0] ? this.selectedComponent.outputFiles[0].name : null;
       //get script candidate
-      if (!["for", "foreach", "workflow", "storage", "viewer", "hpciss", "hpcisstar"].includes(this.selectedComponent.type)) {
-        const mode = this.selectedComponent.type === "source" ? "sourceComponent" : "underComponent";
+      if (!this.selectedComponent || !["for", "foreach", "workflow", "storage", "viewer", "hpciss", "hpcisstar"].includes(this.selectedComponent.type)) {
+        const mode = this.selectedComponent?.type === "source" ? "sourceComponent" : "underComponent";
         SIO.emitGlobal("getFileList", this.projectRootDir, { path: this.selectedComponentAbsPath, mode }, (fileList)=>{
           if (Array.isArray(fileList)) {
             const scriptCandidates = fileList
@@ -953,6 +951,9 @@ export default {
             //Merge and deduplicate
             const allCandidates = [...new Set([...scriptCandidates, ...inputFileCandidates])];
             this.commitScriptCandidates(allCandidates);
+          }
+          if (!this.selectedComponent) {
+            return;
           }
           if (typeof this.selectedComponent.condition === "string") {
             this.conditionCheckByJS = !this.scriptCandidates.includes(this.selectedComponent.condition);

@@ -8,6 +8,9 @@ services:
       - SYS_RESOURCE
     volumes:
       - /tmp/WHEEL_TEST/shared:/data/shared
+    post_start:
+      - command: /bin/sh -c "until /opt/pbs/bin/qmgr -c 'print server' >/dev/null 2>&1; do sleep 3; done && /opt/pbs/bin/qmgr -c 'set server job_history_enable = True'"
+        user: root
 
   wheel_release_test:
     build:

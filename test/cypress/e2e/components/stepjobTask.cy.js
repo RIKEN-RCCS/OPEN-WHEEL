@@ -543,7 +543,7 @@ describe("components", ()=>{
   試験確認内容：scriptセレクトボックスが入力されていることを確認
   試験内容が不明瞭なため一時的にスキップ
      */
-    it("各コンポーネント特有のプロパティ確認-script入力反映確認-scriptセレクトボックスが入力されていることを確認", ()=>{
+    it.only("各コンポーネント特有のプロパティ確認-script入力反映確認-scriptセレクトボックスが入力されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);

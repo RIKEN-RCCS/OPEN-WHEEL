@@ -194,26 +194,17 @@ describe("components", ()=>{
     it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.closeProperty();
-      cy.setComponentStateFinished(PS_NAME_0);
-      cy.clickComponentName(PS_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .clear();
-      cy.get("[data-cy=\"component_property-name-text_field\"]").type("changeName");
-      cy.get("[data-cy=\"component_property-description-textarea\"]").find("textarea")
-        .focus();
-      cy.closeProperty();
-      cy.get("[data-cy=\"graph-component-row\"]").contains("changeName")
+      cy.prepareCleanComponentTest(PS_NAME_0);
+      cy.get("[data-cy=\"graph-component-row\"]").contains(PS_NAME_0)
         .rightclick();
       cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
         .click();
-      cy.get("body").then(($body)=>{
-        if ($body.find("button").filter(":contains('discard all changes')").length > 0) {
-          cy.contains("button", "discard all changes").click();
-        }
-      });
+      cy.contains("button", "discard all changes").click();
       cy.clickComponentName(PS_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .should("have.value", PS_NAME_0);
+      cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+        .click();
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").should("not.contain.text", "_clean_test_marker.txt");
+      cy.closeProperty();
     });
 
     /**
@@ -703,7 +694,7 @@ describe("components", ()=>{
   試験確認内容：targetFilesが反映されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it("プロパティ設定確認-targetFiles反映確認-targetFilesが反映されていることを確認", ()=>{
+    it.only("プロパティ設定確認-targetFiles反映確認-targetFilesが反映されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")

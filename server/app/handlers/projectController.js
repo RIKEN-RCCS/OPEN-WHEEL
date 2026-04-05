@@ -178,9 +178,10 @@ async function onRunProject(clientID, projectRootDir, ack) {
   //validation check
     try {
       const report = await validateComponents(projectRootDir);
-      if (report.length > 0) {
+      const nonIgnoreableErrors = report.filter((entry)=>{ return entry.errors.some((e)=>{ return !e.ignoreable; }); });
+      if (nonIgnoreableErrors.length > 0) {
         getLogger(projectRootDir).error("invalid component found:");
-        ack(report);
+        ack(nonIgnoreableErrors);
         return false;
       }
 

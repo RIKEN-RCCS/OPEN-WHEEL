@@ -338,7 +338,7 @@ export default {
   },
   watch: {
     items() {
-      if (["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type)) {
+      if (["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent?.type)) {
         return;
       }
       //Emit items to parent (componentProperty) to update scriptCandidates
@@ -348,7 +348,7 @@ export default {
       //edit workflow -> server respond workflow data -> fire this event
       handler(nv) {
         if (nv.descendants.some((e)=>{
-          return e.ID === this.selectedComponent.ID;
+          return e.ID === this.selectedComponent?.ID;
         })) {
           this.getComponentDirRootFiles();
         }
@@ -372,8 +372,8 @@ export default {
       SIO.onUploaderEvent("complete", this.onUploadComplete);
       SIO.onUploaderEvent("progress", this.updateProgressBar);
     }
-    this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
-    this.getFileListAPI = this.selectedComponent.type === "hpciss" ? "getRemoteGfarmFileList" : "getRemoteFileList";
+    this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
+    this.getFileListAPI = this.selectedComponent?.type === "hpciss" ? "getRemoteGfarmFileList" : "getRemoteFileList";
   },
   beforeUnmount() {
     SIO.removeUploaderEvent("choose", this.onChoose);
@@ -404,8 +404,11 @@ export default {
       return _getActiveItem(this.items, key);
     },
     getComponentDirRootFiles() {
+      if (!this.selectedComponent) {
+        return;
+      }
       const cb = (fileList)=>{
-        if (fileList === null) {
+        if (fileList === null || !this.selectedComponent) {
           return;
         }
         this.items = fileList

@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState, mapMutations } from "vuex";
 import getNodeAndPath from "../lib/getNodeAndPath.js";
 import { isContainer } from "../lib/utility.js";
 import componentButton from "../components/common/componentButton.vue";
@@ -91,8 +91,10 @@ export default {
     }
   },
   methods: {
+    ...mapMutations({ commitPendingNavigation: "pendingNavigation" }),
     goto: function (item) {
       const requestID = isContainer(item) ? item.ID : item.parent;
+      this.commitPendingNavigation(requestID);
       SIO.emitGlobal("getWorkflow", this.projectRootDir, requestID, SIO.generalCallback);
       this.showComponentTree = false;
     }

@@ -277,6 +277,9 @@ export default {
       return this.activeItem !== null;
     },
     needScriptCandidate() {
+      if (!this.selectedComponent) {
+        return false;
+      }
       return !["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type);
     },
     dialogButtons() {
@@ -293,7 +296,7 @@ export default {
       //edit workflow -> server respond workflow data -> fire this event
       handler(nv) {
         if (nv.descendants.some((e)=>{
-          return e.ID === this.selectedComponent.ID;
+          return e.ID === this.selectedComponent?.ID;
         })) {
           this.getComponentDirRootFiles();
         }
@@ -357,7 +360,7 @@ export default {
         return;
       }
       const cb = (fileList)=>{
-        if (fileList === null) {
+        if (fileList === null || !this.selectedComponent) {
           return;
         }
         this.items = fileList

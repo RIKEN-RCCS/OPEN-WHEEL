@@ -579,7 +579,8 @@ export default {
       "selectedComponent",
       "selectedFile",
       "readOnly",
-      "textEditorDialog"
+      "textEditorDialog",
+      "pendingNavigation"
     ]),
     ...mapGetters(["waiting"]),
     canIgnoreAllErrors() {
@@ -692,11 +693,21 @@ export default {
       }
     });
     SIO.onGlobal("workflow", (wf)=>{
-      if (this.currentComponent !== null && wf.ID !== this.currentComponent.ID) {
-        this.commitSelectedComponent(null);
+      if (this.pendingNavigation !== null && wf.ID === this.pendingNavigation) {
+        //Navigation response matching the pending request
+        this.commitPendingNavigation(null);
+        //Use direct mutations to clear selection during navigation
+        //bypasses the action's diff/updateComponent which can throw
+        this.commitSelectedComponentMutation(null);
+        this.commitCopySelectedComponentMutation(null);
+        this.commitCurrentComponent(wf);
+      } else if (this.pendingNavigation !== null) {
+        //Stale event during navigation — ignore to prevent revert
+      } else if (this.currentComponent === null || wf.ID === this.currentComponent.ID) {
+        //Update for the current component
+        this.commitCurrentComponent(wf);
       }
-      this.commitCurrentComponent(wf);
-      if (this.selectedComponent) {
+      if (this.selectedComponent && Array.isArray(wf.descendants)) {
         const update = wf.descendants.find((e)=>{
           return e.ID === this.selectedComponent.ID;
         });
@@ -900,7 +911,10 @@ export default {
       commitRemoteHost: "remoteHost",
       commitJobScheduler: "jobScheduler",
       commitWaitingProjectJson: "waitingProjectJson",
-      commitWaitingWorkflow: "waitingWorkflow"
+      commitWaitingWorkflow: "waitingWorkflow",
+      commitPendingNavigation: "pendingNavigation",
+      commitSelectedComponentMutation: "selectedComponent",
+      commitCopySelectedComponentMutation: "copySelectedComponent"
     }),
     emitProjectOperation(operation) {
       if (operation === "runProject") {

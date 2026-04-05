@@ -9,7 +9,7 @@ import router from "./router";
 import store from "./store";
 import vuetify from "./plugins/vuetify";
 
-createApp(Workflow).use(vuetify)
+const app = createApp(Workflow).use(vuetify)
   .use(store)
-  .use(router)
-  .mount("#app");
+  .use(router);
+app.mount("#app");

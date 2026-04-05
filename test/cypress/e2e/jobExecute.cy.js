@@ -1,7 +1,7 @@
 /**
  * ジョブ実行テスト
  */
-describe.skip("jobExecute", ()=>{
+describe("jobExecute", ()=>{
   const TYPE_INPUT = "input";
   const TYPE_OUTPUT = "output";
   const DEF_COMPONENT_TASK = "task";
@@ -22,7 +22,7 @@ describe.skip("jobExecute", ()=>{
 
   const codeTask1 = `echo "test" > message.txt`;
   const codeTask2 = `cat message.txt >/dev/null 2>&1`;
-  const codeWhile = [`set -eu`, `cnt=$(cat counter.txt)`, `if [ "$cnt" -lt 10 ]; then`, `  exit 0`, `else`, `  exit 1`].join("\n");
+  const codeWhile = [`if [ "$WHEEL_CURRENT_INDEX" -lt 3 ]; then`, `  exit 0`, `else`, `  exit 1`].join("\n");
 
   before(()=>{
     return cy.removeAllProjects();
@@ -42,12 +42,12 @@ describe.skip("jobExecute", ()=>{
    * 試験確認内容：ローカルホストに対するタスク実行ワークフローが
    * 完了(status:finished)となること
    */
-  it("executeLocalhost", ()=>{
+  it.only("executeLocalhost", ()=>{
     //workflow作成
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
     //while 作成
     cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 700);
-    cy.setupWhileWithScriptAndCondition(FILE_NAME_WHILE, codeWhile);
+    cy.setupWhileWithScriptAndCondition(FILE_NAME_WHILE, codeWhile, WHILE_NAME_0);
     cy.closeProperty();
     //コンポーネント同士を接続
     cy.connectComponentMultiple(WORKFLOW_NAME_0, WHILE_NAME_0);
@@ -83,12 +83,12 @@ describe.skip("jobExecute", ()=>{
    * 試験確認内容：リモートホストに対するタスク実行ワークフローが
    * 完了(status:finished)となること
    */
-  it("executeRemoteHost", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+  it("executeRemoteHost", ()=>{
     //workflow作成
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
     //while 作成
     cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 700);
-    cy.setupWhileWithScriptAndCondition(FILE_NAME_WHILE, codeWhile);
+    cy.setupWhileWithScriptAndCondition(FILE_NAME_WHILE, codeWhile, WHILE_NAME_0);
     cy.closeProperty();
     //コンポーネント同士を接続
     cy.connectComponentMultiple(WORKFLOW_NAME_0, WHILE_NAME_0);

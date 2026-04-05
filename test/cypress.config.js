@@ -5,8 +5,10 @@ import fs from "fs-extra";
 import * as tar from "tar";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 import mockServer from "./mock_server/server.js";
 
+const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -80,6 +82,31 @@ export default defineConfig({
         },
         "stop:mock-server": ()=>{
           return mockServer.stop();
+        },
+        "setupMockCleanTest": (componentName)=>{
+          const result = mockServer.setupCleanComponentTest(componentName);
+          if (result !== false) return result;
+          //Local mock server not running; connect via socket.io-client to Docker mock
+          return new Promise((resolve, reject)=>{
+            const { io: sioClient } = require("socket.io-client");
+            const client = sioClient("http://localhost:3101", { path: "/socket.io/", transports: ["websocket"] });
+            const timeoutId = setTimeout(()=>{
+              client.disconnect();
+              reject(new Error("setupMockCleanTest: connection timeout"));
+            }, 5000);
+            client.on("connect", ()=>{
+              client.emit("__testSetupCleanComponent", componentName, (ok)=>{
+                clearTimeout(timeoutId);
+                client.disconnect();
+                resolve(ok);
+              });
+            });
+            client.on("connect_error", (err)=>{
+              clearTimeout(timeoutId);
+              client.disconnect();
+              reject(err);
+            });
+          });
         },
         removeDirectory,
         log(message) {
