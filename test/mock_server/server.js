@@ -785,7 +785,7 @@ async function start(port = 3101) {
       try {
         const pj = getOrInitProjectJson(projectRootDir);
         io.emit("projectJson", pj);
-        io.emit("projectState", "not-started");
+        io.emit("projectState", pj.state || "not-started");
         cb?.(pj);
       } catch { cb?.(null); }
     });

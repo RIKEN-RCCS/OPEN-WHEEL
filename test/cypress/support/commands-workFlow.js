@@ -60,6 +60,7 @@ Cypress.Commands.add("prepareCleanComponentTest", (componentName)=>{
   const isMock = Cypress.config("baseUrl").includes("3001");
   if (isMock) {
     cy.task("setupMockCleanTest", componentName).should("equal", true);
+    cy.reload();
     cy.checkProjectStatus("finished");
   } else {
     const tmpPl = "cypress/fixtures/tmp_clean_pl.json";
@@ -68,7 +69,7 @@ Cypress.Commands.add("prepareCleanComponentTest", (componentName)=>{
 
     cy.exec(`docker cp ${CONTAINER_NAME}:/root/.wheel/projectList.json ${tmpPl}`);
     cy.task("readJson", tmpPl).then((projects)=>{
-      const projectPath = projects.at(-1).path;
+      const projectPath = projects[0].path;
 
       cy.exec(`docker cp ${CONTAINER_NAME}:${projectPath}/prj.wheel.json ${tmpPrj}`);
       cy.task("readJson", tmpPrj).then((prj)=>{
