@@ -543,16 +543,14 @@ describe("components", ()=>{
   試験確認内容：scriptセレクトボックスが入力されていることを確認
   試験内容が不明瞭なため一時的にスキップ
      */
-    it.only("各コンポーネント特有のプロパティ確認-script入力反映確認-scriptセレクトボックスが入力されていることを確認", ()=>{
+    it("各コンポーネント特有のプロパティ確認-script入力反映確認-scriptセレクトボックスが入力されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
-      cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-      cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
+      cy.closeProperty();
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_1, 501, 700);
-      cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+      cy.closeProperty();
       cy.connectComponentMultiple(STEPJOB_TASK_NAME_0, STEPJOB_TASK_NAME_1); //コンポーネント同士を接続
       cy.clickComponentName(STEPJOB_TASK_NAME_1);
-      cy.enterInputOrOutputFile(TYPE_INPUT, "testOutputFile", true, true);
       cy.get("[data-cy=\"component_property-stepjob_task-panel_title\"]").scrollIntoView()
         .click();
       cy.get("[data-cy=\"component_property-use_dependency-switch\"]").find("input")
