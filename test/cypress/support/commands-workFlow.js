@@ -76,7 +76,8 @@ Cypress.Commands.add("prepareCleanComponentTest", (componentName)=>{
           .find(([, relPath])=>{
             return relPath === componentName
               || relPath.endsWith(`/${componentName}`)
-              || String(relPath).replace(/^\.\//u, "").startsWith(componentName);
+              || String(relPath).replace(/^\.\//u, "")
+                .startsWith(componentName);
           });
         if (!entry) {
           throw new Error(`Component "${componentName}" not found in prj.wheel.json`);

@@ -42,7 +42,7 @@ describe("jobExecute", ()=>{
    * 試験確認内容：ローカルホストに対するタスク実行ワークフローが
    * 完了(status:finished)となること
    */
-  it.only("executeLocalhost", ()=>{
+  it("executeLocalhost", ()=>{
     //workflow作成
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
     //while 作成
