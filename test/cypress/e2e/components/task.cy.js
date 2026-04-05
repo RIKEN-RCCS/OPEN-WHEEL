@@ -217,7 +217,7 @@ describe("components", ()=>{
   シンポリックリンク確認（outputFile、inputFile一致）
   試験確認内容：シンポリックリンクが作成されていることを確認
      */
-    it.only("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFile、inputFile一致）-シンポリックリンクが作成されていることを確認", ()=>{
+    it("ファイル転送設定の各パターンの確認-シンポリックリンク確認（outputFile、inputFile一致）-シンポリックリンクが作成されていることを確認", ()=>{
       //task0
       cy.createDirOrFile(TYPE_FILE, "run.sh", true);
       let targetDropBoxCy = "[data-cy=\"component_property-script-autocomplete\"]";

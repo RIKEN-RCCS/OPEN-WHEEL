@@ -218,7 +218,7 @@ describe("components", ()=>{
   接続確認
   試験確認内容：コンポーネントが接続されていることを確認
      */
-    it.only("tarコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-ファイル転送設定の各パターンの確認-接続確認-コンポーネントが接続されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
       cy.confirmInputValueReflection(INPUT_OBJ_CY, HPCISS_NAME_1, TAG_TYPE_INPUT, HPCISS_NAME_1);
