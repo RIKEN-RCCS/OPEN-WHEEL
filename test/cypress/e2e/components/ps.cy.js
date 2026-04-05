@@ -694,7 +694,7 @@ describe("components", ()=>{
   試験確認内容：targetFilesが反映されていることを確認
   不具合内容：run.shファイルが見つからないため試験に失敗(2-1.)
      */
-    it.only("プロパティ設定確認-targetFiles反映確認-targetFilesが反映されていることを確認", ()=>{
+    it("プロパティ設定確認-targetFiles反映確認-targetFilesが反映されていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("parameterSetting.json")
@@ -703,9 +703,6 @@ describe("components", ()=>{
       cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
       cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type("run.sh");
       cy.get("[data-cy=\"target_files-ok-btn\"]").click();
-      cy.wait(3000); //parameterEditorの自動保存（2秒）を待つ
-      cy.get("[data-cy=\"workflow-graph_view-btn\"]").click();
-      cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
       cy.get("[data-cy=\"target_files-data-data_table\"]").contains("run.sh")
         .should("exist");
     });
