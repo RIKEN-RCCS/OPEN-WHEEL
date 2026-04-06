@@ -332,7 +332,8 @@
                   clearable
                   variant="outlined"
                   data-cy="component_property-source_file_name-text_field"
-                  @input="updateSourceOutputFile"
+                  @change="updateSourceOutputFile"
+                  @click:clear="updateSourceOutputFile"
                 />
               </v-col>
               <v-col
@@ -1038,7 +1039,7 @@ export default {
     },
     updateSourceOutputFile() {
       const name = this.sourceOutputFile;
-      if (name === null) {
+      if (!name) {
         this.deleteSourceOutputFile();
         return;
       }
