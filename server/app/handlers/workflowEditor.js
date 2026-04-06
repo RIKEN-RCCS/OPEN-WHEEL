@@ -38,20 +38,45 @@ import { sendWorkflow, sendProjectJson, sendComponentTree } from "./senders.js";
 import { convertPathSep } from "../core/pathUtils.js";
 import { updateComponent, updateComponentPos } from "../core/updateComponent.js";
 
-async function generalHandler(func, funcname, projectRootDir, parentID, needSendProjectJson, cb) {
-  try {
-    const rt = await func();
-    const parentDir = await getComponentDir(projectRootDir, parentID, true);
-    await sendWorkflow(cb, projectRootDir, parentDir);
-    if (rt === true || needSendProjectJson) {
-      await sendProjectJson(projectRootDir);
-      await sendComponentTree(projectRootDir, projectRootDir);
+/**@type {Map<string, Promise<void>>} */
+const projectQueues = new Map();
+
+/**
+ * Enqueue an async operation for a project, ensuring serial execution per project.
+ * This prevents concurrent read-modify-write races on component JSON files.
+ * @param {string} projectRootDir - unique key identifying the project
+ * @param {function(): Promise<void>} fn - async function to execute in the queue
+ * @returns {Promise} resolves or rejects with the result of fn
+ */
+function enqueueProjectOperation(projectRootDir, fn) {
+  const prev = (projectQueues.get(projectRootDir) ?? Promise.resolve()).catch(()=>{});
+  const next = prev.then(fn);
+  const stored = next.catch(()=>{});
+  projectQueues.set(projectRootDir, stored);
+  stored.then(()=>{
+    if (projectQueues.get(projectRootDir) === stored) {
+      projectQueues.delete(projectRootDir);
     }
-  } catch (e) {
-    getLogger(projectRootDir).error(`${funcname} failed`, e);
-    cb(e);
-    return;
-  }
+  });
+  return next;
+}
+export { enqueueProjectOperation };
+
+async function generalHandler(func, funcname, projectRootDir, parentID, needSendProjectJson, cb) {
+  return enqueueProjectOperation(projectRootDir, async ()=>{
+    try {
+      const rt = await func();
+      const parentDir = await getComponentDir(projectRootDir, parentID, true);
+      await sendWorkflow(cb, projectRootDir, parentDir);
+      if (rt === true || needSendProjectJson) {
+        await sendProjectJson(projectRootDir);
+        await sendComponentTree(projectRootDir, projectRootDir);
+      }
+    } catch (e) {
+      getLogger(projectRootDir).error(`${funcname} failed`, e);
+      cb(e);
+    }
+  });
 }
 export async function onAddInputFile(projectRootDir, ID, name, parentID, cb) {
   return generalHandler(addInputFile.bind(null, projectRootDir, ID, name), "addInputFile", projectRootDir, parentID, cb);
