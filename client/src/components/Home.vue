@@ -342,20 +342,18 @@ export default {
     const baseURL = readCookie("socketIOPath");
     debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
-    SIO.onGlobal("projectList", (data)=>{
-      this.loading = false;
-      this.projectList.splice(0, this.projectList.length, ...data);
-    });
+    SIO.onGlobal("projectList", this.onProjectList);
     this.forceUpdateProjectList();
-    SIO.onGlobal("logERR", (message)=>{
-      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
-      const output = rt ? rt[1] || rt[0] : message;
-      this.showSnackbar(output);
-    });
+    SIO.onGlobal("logERR", this.onLogErr);
     SIO.onGlobal("hostList", this.commitRemoteHost);
     SIO.emitGlobal("getHostList", (hostList)=>{
       this.commitRemoteHost(hostList);
     });
+  },
+  beforeUnmount() {
+    SIO.off("projectList", this.onProjectList);
+    SIO.off("logERR", this.onLogErr);
+    SIO.off("hostList", this.commitRemoteHost);
   },
   methods: {
     ...mapMutations({
@@ -365,6 +363,25 @@ export default {
       showSnackbar: "showSnackbar",
       closeSnackbar: "closeSnackbar"
     }),
+
+    /**
+     * Handle incoming project list from server.
+     * @param {Array} data - Array of project objects
+     */
+    onProjectList(data) {
+      this.loading = false;
+      this.projectList.splice(0, this.projectList.length, ...data);
+    },
+
+    /**
+     * Handle error log message from server.
+     * @param {string} message - Error message string
+     */
+    onLogErr(message) {
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      this.showSnackbar(output);
+    },
     required,
     isValidName,
     forceUpdateProjectList() {

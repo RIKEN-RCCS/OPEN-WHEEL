@@ -208,7 +208,8 @@ export default {
         return e.key !== "actions";
       });
       rt.push({ key: "actions", title: "", sortable: false });
-      rt[0].editable = true;
+      //Create a copy to avoid mutating the reactive prop object, which would cause an infinite re-render loop
+      rt[0] = { ...rt[0], editable: true };
       return rt;
     },
     headersWithTooltip: function () {

@@ -31,7 +31,8 @@ export default {
   data() {
     return {
       lastMouseEvent: null,
-      hotkeyUnregisterFunctions: []
+      hotkeyUnregisterFunctions: [],
+      mouseMoveHandler: null
     };
   },
   computed: {
@@ -43,9 +44,10 @@ export default {
 
     //Track mouse movement with simple event listener
     if (this.$refs.canvasContainer) {
-      this.$refs.canvasContainer.addEventListener("mousemove", (e)=>{
+      this.mouseMoveHandler = (e)=>{
         this.lastMouseEvent = e;
-      });
+      };
+      this.$refs.canvasContainer.addEventListener("mousemove", this.mouseMoveHandler);
     }
 
     //Register hotkeys
@@ -53,6 +55,11 @@ export default {
   },
   beforeUnmount: function () {
     window.removeEventListener("resize", this.fit);
+
+    //Unregister mousemove listener
+    if (this.$refs.canvasContainer && this.mouseMoveHandler) {
+      this.$refs.canvasContainer.removeEventListener("mousemove", this.mouseMoveHandler);
+    }
 
     //Unregister all hotkeys
     this.hotkeyUnregisterFunctions.forEach((unregister)=>{

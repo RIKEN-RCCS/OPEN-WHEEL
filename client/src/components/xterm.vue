@@ -48,7 +48,8 @@ export default {
     term.loadAddon(fitAddon);
     return {
       term,
-      fitAddon
+      fitAddon,
+      resizeHandler: null
     };
   },
   computed: {
@@ -73,10 +74,12 @@ export default {
       this.fit();
       unwatch();
     });
-    window.addEventListener("resize", this.fit.bind(this));
+    this.resizeHandler = this.fit.bind(this);
+    window.addEventListener("resize", this.resizeHandler);
   },
   beforeUnmount() {
-    window.removeEventListener("resize", this.fit.bind(this));
+    window.removeEventListener("resize", this.resizeHandler);
+    this.term.dispose();
   },
   methods: {
     fit() {

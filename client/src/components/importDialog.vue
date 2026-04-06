@@ -166,6 +166,10 @@ export default {
       }
     }
   },
+  beforeUnmount() {
+    SIO.off("askHostMap", this.onAskHostMap);
+    SIO.off("askRewindState", this.onAskRewindState);
+  },
   methods: {
     async importProject() {
       this.openWarning;
@@ -186,21 +190,14 @@ export default {
       }
 
       const archiveFile = isURL ? this.archiveURL : filename;
+      //Re-register listeners (off first to avoid accumulation on repeated imports)
+      SIO.off("askHostMap", this.onAskHostMap);
+      SIO.off("askRewindState", this.onAskRewindState);
+      SIO.onGlobal("askHostMap", this.onAskHostMap);
+      SIO.onGlobal("askRewindState", this.onAskRewindState);
       SIO.emitGlobal("importProject", archiveFile, parentDir, isURL, ()=>{
         this.$emit("imported");
         this.closeDialog();
-      });
-      SIO.onGlobal("askHostMap", (hosts, cb)=>{
-        this.hosts.splice(0, this.hosts.length);
-        this.hosts.push(...hosts);
-        this.hostMapCB = cb;
-        this.openHostMapDialog = true;
-      });
-      SIO.onGlobal("askRewindState", (targets, cb)=>{
-        this.rewindTargets.splice(0, this.rewindTargets.length);
-        this.rewindTargets.push(...targets);
-        this.rewindStateCB = cb;
-        this.openRewindDialog = true;
       });
     },
     commitHostMap(hostMap) {
@@ -227,6 +224,30 @@ export default {
       this.selectedInTree = null;
       this.tab = "file";
       this.openDialog = false;
+    },
+
+    /**
+     * Handle askHostMap event from server during import.
+     * @param {string[]} hosts - List of hosts to map
+     * @param {Function} cb - Callback to invoke with host map result
+     */
+    onAskHostMap(hosts, cb) {
+      this.hosts.splice(0, this.hosts.length);
+      this.hosts.push(...hosts);
+      this.hostMapCB = cb;
+      this.openHostMapDialog = true;
+    },
+
+    /**
+     * Handle askRewindState event from server during import.
+     * @param {string[]} targets - List of rewind targets
+     * @param {Function} cb - Callback to invoke with rewind state result
+     */
+    onAskRewindState(targets, cb) {
+      this.rewindTargets.splice(0, this.rewindTargets.length);
+      this.rewindTargets.push(...targets);
+      this.rewindStateCB = cb;
+      this.openRewindDialog = true;
     }
   }
 };

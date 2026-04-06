@@ -281,6 +281,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
       cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
       cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
+      cy.closeProperty();
       cy.clickComponentName(FOR_NAME_1);
       cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
       cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
@@ -313,6 +314,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
       cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
       cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
+      cy.closeProperty();
       cy.clickComponentName(FOR_NAME_1);
       cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
       cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
@@ -358,6 +360,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-start_for-text_field\"]").type(1);
       cy.get("[data-cy=\"component_property-end_for-text_field\"]").type(5);
       cy.get("[data-cy=\"component_property-step_for-text_field\"]").type(5);
+      cy.closeProperty();
       cy.clickComponentName(FOR_NAME_1);
       cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
       cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較

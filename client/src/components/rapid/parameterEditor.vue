@@ -120,7 +120,20 @@ export default {
     }
   },
   mounted() {
-    SIO.onGlobal("parameterSettingFile", (file)=>{
+    SIO.onGlobal("parameterSettingFile", this.onParameterSettingFile);
+  },
+  beforeUnmount() {
+    SIO.off("parameterSettingFile", this.onParameterSettingFile);
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
+  },
+  methods: {
+    removeFromArray,
+    ...mapActions({
+      showSnackbar: "showSnackbar"
+    }),
+    onParameterSettingFile(file) {
       if (!file.isParameterSettingFile) {
         debug("ERROR: illegal parameter setting file data", file);
         return;
@@ -136,13 +149,7 @@ export default {
       });
       this.filename = file.filename;
       this.dirname = file.dirname;
-    });
-  },
-  methods: {
-    removeFromArray,
-    ...mapActions({
-      showSnackbar: "showSnackbar"
-    }),
+    },
     onAddNewItem(mode, newItem) {
       this.parameterSetting[mode].push(newItem);
       this.scheduleAutoSave();

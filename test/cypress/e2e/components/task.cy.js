@@ -21,6 +21,10 @@ describe("components", ()=>{
         .createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 501, 500);
     });
 
+    afterEach(()=>{
+      return cy.goHome();
+    });
+
     after(()=>{
       return cy.removeAllProjects();
     });
@@ -228,8 +232,10 @@ describe("components", ()=>{
       cy.closeProperty();
       cy.clickComponentName(TASK_NAME_1);
       cy.createDirOrFile(TYPE_FILE, "test-b", true);
-      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
+        .should("exist");
       cy.enterInputOrOutputFile(TYPE_INPUT, "run.sh", true, true);
+      cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b");
       cy.closeProperty();
       cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); //コンポーネント同士を接続
       cy.checkConnectionLine(TASK_NAME_0, TASK_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
@@ -261,6 +267,8 @@ describe("components", ()=>{
       cy.closeProperty();
       cy.clickComponentName(TASK_NAME_1);
       cy.createDirOrFile(TYPE_FILE, "test-b", true);
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
+        .should("exist");
       cy.selectValueFromDropdownList(targetDropBoxCy, 3, "test-b");
       cy.closeProperty();
       cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1); //コンポーネント同士を接続
@@ -423,7 +431,8 @@ describe("components", ()=>{
      */
     it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-      cy.get("[data-cy=\"action_row-delete-btn\"]").should("be.visible");
+      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView()
+        .should("be.visible");
     });
 
     /**

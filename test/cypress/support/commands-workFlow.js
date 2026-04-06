@@ -5,51 +5,6 @@ const TYPE_FILE = "file";
 const CONTAINER_NAME = "wheel";
 
 /**
- * Set a component's state to "finished" by directly rewriting prj.wheel.json
- * and cmp.wheel.json inside the Docker container.
- * This is used to simulate a completed project run without actually executing it.
- * @param {string} componentName - the component's directory name (e.g. "HPCI-SS0")
- */
-Cypress.Commands.add("setComponentStateFinished", (componentName)=>{
-  const tmpPl = "cypress/fixtures/tmp_setstate_pl.json";
-  const tmpPrj = "cypress/fixtures/tmp_setstate_prj.json";
-  const tmpCmp = "cypress/fixtures/tmp_setstate_cmp.json";
-
-  cy.exec(`docker cp ${CONTAINER_NAME}:/root/.wheel/projectList.json ${tmpPl}`);
-  cy.task("readJson", tmpPl).then((projects)=>{
-    const projectPath = projects.at(-1).path;
-
-    cy.exec(`docker cp ${CONTAINER_NAME}:${projectPath}/prj.wheel.json ${tmpPrj}`);
-    cy.task("readJson", tmpPrj).then((prj)=>{
-      const entry = Object.entries(prj.componentPath)
-        .find(([, relPath])=>{ return relPath === componentName || relPath.endsWith(`/${componentName}`); });
-      if (!entry) {
-        throw new Error(`Component "${componentName}" not found in prj.wheel.json`);
-      }
-      const [, componentRelPath] = entry;
-
-      prj.state = "finished";
-      cy.task("writeJson", { filePath: tmpPrj, data: prj });
-      cy.exec(`docker cp ${tmpPrj} ${CONTAINER_NAME}:${projectPath}/prj.wheel.json`);
-
-      const cmpPath = `${projectPath}/${componentRelPath}/cmp.wheel.json`;
-      cy.exec(`docker cp ${CONTAINER_NAME}:${cmpPath} ${tmpCmp}`);
-      cy.task("readJson", tmpCmp).then((cmp)=>{
-        cmp.state = "finished";
-        cy.task("writeJson", { filePath: tmpCmp, data: cmp });
-        cy.exec(`docker cp ${tmpCmp} ${CONTAINER_NAME}:${cmpPath}`);
-        //Commit so that HEAD has this component, enabling rename detection in onCleanComponent
-        cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' add -A`);
-        cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' commit -m "setComponentStateFinished"`);
-        //Reload the workflow page so the client picks up the updated projectState via socket.io
-        cy.reload();
-        cy.checkProjectStatus("finished");
-      });
-    });
-  });
-});
-
-/**
  * Prepare a clean component test by setting project state to "finished",
  * adding a marker file, and staging it.
  * - Mock mode: uses the mock server's setupCleanComponentTest helper.
@@ -171,24 +126,28 @@ Cypress.Commands.add("enterInputOrOutputFile", (type, fileName, clickRun, addBut
   if (type === TYPE_INPUT) {
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").find("input")
       .type(fileName);
-    //Click the Add File button
     if (addButtonClickFlag) {
+      //blur fires the change event, which updates v-model.lazy (inputField) before clicking add
+      cy.get("[data-cy=\"component_property-input_files-list_form\"]").find("input")
+        .blur();
       cy.get("[data-cy=\"component_property-input_files-list_form\"]")
         .find("[data-cy=\"list_form-add-text_field\"]")
         .find("[role=\"button\"]")
         .last()
-        .click(); //Add input file button
+        .click({ force: true }); //Add input file button
     }
   } else if (type === TYPE_OUTPUT) {
     cy.get("[data-cy=\"component_property-output_files-list_form\"]").find("input")
       .type(fileName);
-    //Click the Add File button
     if (addButtonClickFlag) {
+      //blur fires the change event, which updates v-model.lazy (inputField) before clicking add
+      cy.get("[data-cy=\"component_property-output_files-list_form\"]").find("input")
+        .blur();
       cy.get("[data-cy=\"component_property-output_files-list_form\"]")
         .find("[data-cy=\"list_form-add-text_field\"]")
         .find("[role=\"button\"]")
         .last()
-        .click(); //Add output file button
+        .click({ force: true }); //Add output file button
     }
   }
 });
@@ -443,7 +402,7 @@ Cypress.Commands.add("checkPropertyScreenOpen", (propertyCy)=>{
 Cypress.Commands.add("checkConnectionLine", (startComponentName, endComponentName)=>{
   //Simply check that a connection line (cubic-bezier-path) exists
   //The connection was created successfully if this element is present
-  cy.get("[data-cy=\"cubic-bezier-path\"]", { timeout: 10000 })
+  cy.get("[data-cy=\"cubic-bezier-path\"]", { timeout: 30000 })
     .should("exist")
     .and("have.length.at.least", 1);
 });

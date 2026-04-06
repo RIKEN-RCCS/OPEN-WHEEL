@@ -268,6 +268,7 @@ describe("components", ()=>{
     it("転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
       cy.get("[data-cy=\"action_row-delete-btn\"]").click();
       cy.get("[data-cy=\"graph-component-row\"]").contains("testInputFile")
         .should("not.exist");
@@ -284,6 +285,7 @@ describe("components", ()=>{
     it("転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
       cy.get("[data-cy=\"action_row-delete-btn\"]").click();
       cy.get("[data-cy=\"graph-component-row\"]").contains("testOutputFile")
         .should("not.exist");

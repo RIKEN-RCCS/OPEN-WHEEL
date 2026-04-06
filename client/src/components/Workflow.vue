@@ -520,6 +520,7 @@ export default {
   },
   data: ()=>{
     return {
+      sioListeners: [],
       projectJson: null,
       drawer: false,
       mode: 0,
@@ -638,7 +639,13 @@ export default {
     this.baseURL = this.$router.options.history.base || ".";
     SIO.init({ projectRootDir }, socketIOPath);
 
-    SIO.onGlobal("WHEEL_LOG", (data)=>{
+    //Helper to register and track SIO listeners for cleanup in beforeUnmount
+    const onSIO = (event, cb)=>{
+      SIO.onGlobal(event, cb);
+      this.sioListeners.push([event, cb]);
+    };
+
+    onSIO("WHEEL_LOG", (data)=>{
       if (this.$refs.logscreen) {
         this.$refs.logscreen.onWheelLog(data);
       }
@@ -647,7 +654,7 @@ export default {
     const ID = readCookie("root");
     this.commitRootComponentID(ID);
 
-    SIO.onGlobal("askPassword", (hostname, mode, jwtServerURL, cb)=>{
+    onSIO("askPassword", (hostname, mode, jwtServerURL, cb)=>{
       console.log("DEBUG: ", hostname, mode, jwtServerURL);
       this.pwCallback = (pw)=>{
         cb(pw);
@@ -657,7 +664,7 @@ export default {
       this.pwJwtServerURL = jwtServerURL;
       this.pwDialog = true;
     });
-    SIO.onGlobal("askSourceFilename", (ID, name, description, candidates, cb)=>{
+    onSIO("askSourceFilename", (ID, name, description, candidates, cb)=>{
       this.selectSourceFileDialogTitle = `select source file for ${name}`;
       this.sourceFileCandidates = candidates.map((filename)=>{
         return { filename };
@@ -670,19 +677,19 @@ export default {
       };
       this.selectSourceFileDialog = true;
     });
-    SIO.onGlobal("componentTree", (componentTree)=>{
+    onSIO("componentTree", (componentTree)=>{
       this.commitComponentTree(componentTree);
     });
-    SIO.onGlobal("showMessage", this.showSnackbar);
-    SIO.onGlobal("logERR", (message)=>{
+    onSIO("showMessage", this.showSnackbar);
+    onSIO("logERR", (message)=>{
       const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
       const output = rt ? rt[1] || rt[0] : message;
       this.showSnackbar(output);
     });
-    SIO.onGlobal("projectState", (state)=>{
+    onSIO("projectState", (state)=>{
       this.commitProjectState(state.toLowerCase());
     });
-    SIO.onGlobal("projectJson", (projectJson)=>{
+    onSIO("projectJson", (projectJson)=>{
       this.projectJson = projectJson;
       this.commitProjectState(projectJson.state.toLowerCase());
       this.commitProjectReadOnly(projectJson.readOnly);
@@ -692,7 +699,7 @@ export default {
         this.warnDialog = true;
       }
     });
-    SIO.onGlobal("workflow", (wf)=>{
+    onSIO("workflow", (wf)=>{
       if (this.pendingNavigation !== null && wf.ID === this.pendingNavigation) {
         //Navigation response matching the pending request
         this.commitPendingNavigation(null);
@@ -717,7 +724,7 @@ export default {
       }
       this.commitWaitingWorkflow(false);
     });
-    SIO.onGlobal("unsavedFiles", (unsavedFiles, cb)=>{
+    onSIO("unsavedFiles", (unsavedFiles, cb)=>{
       if (unsavedFiles.length === 0) {
         this.showUnsavedFilesDialog = false;
         this.unsavedFiles.splice(0, this.unsavedFiles.length);
@@ -728,20 +735,19 @@ export default {
       this.unsavedFiles.splice(0, this.unsavedFiles.length, ...unsavedFiles);
       this.showUnsavedFilesDialog = true;
     });
-    SIO.onGlobal("resultFilesReady", (dir)=>{
+    onSIO("resultFilesReady", (dir)=>{
       this.viewerDataDir = dir;
       if (!this.firstViewDataAlived) {
         this.viewerScreenDialog = true;
         this.firstViewDataAlived = true;
       }
-      return;
     });
-
-    SIO.onGlobal("requestOIDCAuth", (remotehostID, ack)=>{
+    onSIO("requestOIDCAuth", (remotehostID, ack)=>{
       const param = new URLSearchParams({ remotehostID });
       window.location.replace(`${this.baseURL}/webAPIauth?${param.toString()}`);
       ack(true);
     });
+    onSIO("hostList", this.commitRemoteHost);
 
     SIO.emitGlobal("getJobSchedulerList", (JSList)=>{
       this.commitJobScheduler(JSList);
@@ -756,7 +762,6 @@ export default {
     SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
       debug("getWorkflow done", rt);
     });
-    SIO.onGlobal("hostList", this.commitRemoteHost);
     SIO.emitGlobal("getHostList", (hostList)=>{
       this.commitRemoteHost(hostList);
     });
@@ -767,6 +772,16 @@ export default {
         }
         throw err;
       });
+  },
+  beforeUnmount() {
+    //Reset textEditorDialog so the next Workflow mount starts with a closed editor,
+    //preventing stale Vuex state from causing the Ace editor to mount unnecessarily.
+    this.commitTextEditorDialog(false);
+
+    for (const [event, cb] of this.sioListeners) {
+      SIO.off(event, cb);
+    }
+    this.sioListeners = [];
   },
   methods: {
     closeValidationErrorDialog() {

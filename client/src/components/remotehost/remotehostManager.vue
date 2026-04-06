@@ -122,6 +122,10 @@ export default {
     this.setupSocketHandlers();
     this.fetchData();
   },
+  beforeUnmount() {
+    SIO.off("askPassword", this.onAskPassword);
+    SIO.off("logERR", this.onLogErr);
+  },
   methods: {
     fetchData() {
       SIO.emitGlobal("getJobSchedulerLabelList", (data)=>{
@@ -137,22 +141,36 @@ export default {
       });
     },
     setupSocketHandlers() {
-      SIO.onGlobal("askPassword", (hostname, mode, jwtServerURL, cb)=>{
-        this.pwCallback = (pw)=>{
-          cb(pw);
-        };
+      SIO.onGlobal("askPassword", this.onAskPassword);
+      SIO.onGlobal("logERR", this.onLogErr);
+    },
 
-        this.pwMode = mode;
-        this.pwHostname = hostname;
-        this.pwDialog = true;
-      });
-      SIO.onGlobal("logERR", (message)=>{
-        const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
-        const output = rt ? rt[1] || rt[0] : message;
-        if (this.showSnackbarFunc) {
-          this.showSnackbarFunc(output);
-        }
-      });
+    /**
+     * Handle askPassword event from server.
+     * @param {string} hostname - Remote host name
+     * @param {string} mode - Authentication mode
+     * @param {string} jwtServerURL - JWT server URL
+     * @param {Function} cb - Callback to invoke with entered password
+     */
+    onAskPassword(hostname, mode, jwtServerURL, cb) {
+      this.pwCallback = (pw)=>{
+        cb(pw);
+      };
+      this.pwMode = mode;
+      this.pwHostname = hostname;
+      this.pwDialog = true;
+    },
+
+    /**
+     * Handle error log message from server.
+     * @param {string} message - Error message string
+     */
+    onLogErr(message) {
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      if (this.showSnackbarFunc) {
+        this.showSnackbarFunc(output);
+      }
     },
     openEditDialog(item) {
       this.currentSetting = item || {};
