@@ -576,12 +576,10 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       const targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, TEST_LABEL);
-      cy.clickComponentName(HPCISS_NAME_0);
-      cy.get("[data-cy=\"component_property-host-select\"]").type(TEST_LABEL);
-      cy.focused().blur();
       cy.saveProperty();
-      cy.get("[data-cy=\"component_property-host-select\"]").contains(TEST_LABEL)
-        .should("exist");
+      cy.clickComponentName(HPCISS_NAME_0);
+      cy.get("[data-cy=\"component_property-host-select\"]").find("input")
+        .should("have.value", TEST_LABEL);
     });
 
     /**

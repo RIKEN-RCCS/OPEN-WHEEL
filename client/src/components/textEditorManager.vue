@@ -215,14 +215,23 @@ export default {
     }
   },
   mounted() {
-    SIO.onGlobal("parameterSettingFile", (file)=>{
-      if (file.isParameterSettingFile) {
-        this.mode = "PS-config";
-      }
-    });
+    SIO.onGlobal("parameterSettingFile", this.onParameterSettingFile);
+  },
+  beforeUnmount() {
+    SIO.off("parameterSettingFile", this.onParameterSettingFile);
   },
   methods: {
     ...mapActions(["showDialog"]),
+
+    /**
+     * Handle parameterSettingFile event to switch editor mode.
+     * @param {object} file - File data object from server
+     */
+    onParameterSettingFile(file) {
+      if (file.isParameterSettingFile) {
+        this.mode = "PS-config";
+      }
+    },
     onContentChanged() {
       this.changeTracker++;
     },

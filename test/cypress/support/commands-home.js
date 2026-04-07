@@ -10,6 +10,7 @@
  * Navigate to the home page.
  * If the workflow-editor nav link is present (i.e. we are already inside a project),
  * click it so the socket.io connection is preserved and the transition is fast.
+ * If already on the home page (home-new-btn exists), skip navigation entirely.
  * Otherwise fall back to a full cy.visit("/").
  */
 Cypress.Commands.add("goHome", ()=>{
@@ -17,6 +18,9 @@ Cypress.Commands.add("goHome", ()=>{
     const homeLink = win.document.querySelector("[href='./home']");
     if (homeLink) {
       return cy.wrap(homeLink).click({ force: true });
+    }
+    if (win.document.querySelector("[data-cy=\"home-new-btn\"]")) {
+      return; //Already on home page — no navigation needed
     }
     return cy.visit("/");
   });
