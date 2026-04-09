@@ -1,12 +1,12 @@
 /**
  * ホーム画面テスト
  */
-describe("home", ()=>{
+describe("home", {testIsolation: false}, ()=>{
   const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
   const PROJECT_DESCRIPTION = "TestDescription";
   const EXTENSION = ".wheel";
 
-  beforeEach(()=>{
+  before(()=>{
     return cy.goToScreen("home");
   });
 
@@ -24,6 +24,7 @@ describe("home", ()=>{
     cy.contains("workflow").should("exist");
     cy.get("[data-cy=\"workflow-project_name-text\"]").should("have.text", PROJECT_NAME);
     cy.removeAllProjects();
+    cy.goHome(); //Navigate back to home for subsequent tests
   });
 
   /**
@@ -34,6 +35,7 @@ describe("home", ()=>{
   it("構成要素の機能動作確認-ボタン押下時の確認-NEWボタン押下-新規プロジェクト作成ダイアログが表示されることを確認", ()=>{
     cy.get("[data-cy=\"home-new-btn\"]").click();
     cy.get("[data-cy=\"home-create_new_project-title\"]").should("have.text", "create new project");
+    cy.get("[data-cy=\"buttons-cancel-btn\"]").click(); //Close dialog so subsequent tests start clean
   });
 
   /**
@@ -54,10 +56,12 @@ describe("home", ()=>{
       .check()
       .should("be.checked");
     cy.removeAllProjects();
+    cy.get("[data-cy=\"home-batch_mode-btn\"]").click(); //Disable batch mode for subsequent tests
   });
 
   /**
   構成要素の機能動作確認
+  ボタン押下時の確認
   ハンバーガーボタン押下
   試験確認内容：ドロワーが表示されることを確認
    */
@@ -65,6 +69,7 @@ describe("home", ()=>{
     cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
     cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").should("be.visible");
     cy.get("[data-cy=\"navigation-user_guide_editor-btn\"]").should("be.visible");
+    cy.get("body").click(0, 0); //Close the nav drawer for subsequent tests
   });
 
   /**
@@ -78,6 +83,7 @@ describe("home", ()=>{
     cy.get("[data-cy=\"home-project_name-btn\"]").click();
     cy.get("[data-cy=\"home-project_name-text_field\"]").should("be.visible");
     cy.removeAllProjects();
+    cy.goToScreen("home"); //Inline editor still open; navigate to reset state
   });
 
   /**
@@ -99,6 +105,7 @@ describe("home", ()=>{
       .contains("prj.wheel.json")
       .should("exist");
     cy.removeAllProjects();
+    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
   });
 
   /**
@@ -112,6 +119,7 @@ describe("home", ()=>{
     cy.get("[data-cy=\"home-project_name-text_field\"]").type(PROJECT_NAME);
     cy.get("[data-cy=\"home-project_name-text_field\"]").find("input")
       .should("have.value", PROJECT_NAME);
+    cy.get("[data-cy=\"buttons-cancel-btn\"]").click(); //Close dialog so subsequent tests start clean
   });
 
   /**
@@ -125,6 +133,7 @@ describe("home", ()=>{
     cy.get("[data-cy=\"home-project_description-textarea\"]").type(PROJECT_DESCRIPTION);
     cy.get("[data-cy=\"home-project_description-textarea\"]").find("textarea")
       .should("have.value", PROJECT_DESCRIPTION);
+    cy.get("[data-cy=\"buttons-cancel-btn\"]").click(); //Close dialog so subsequent tests start clean
   });
 
   /**
@@ -288,6 +297,7 @@ describe("home", ()=>{
     cy.get("[data-cy=\"home-new-btn\"]").click();
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains(PROJECT_NAME + EXTENSION)
       .should("not.exist");
+    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
   });
 
   /**
@@ -310,6 +320,7 @@ describe("home", ()=>{
     cy.get("[data-cy=\"home-new-btn\"]").click();
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains(PROJECT_NAME_RANDOM + EXTENSION)
       .should("exist");
+    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
   });
 
   /**
@@ -333,6 +344,7 @@ describe("home", ()=>{
     cy.get("[data-cy=\"home-new-btn\"]").click();
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains(PROJECT_NAME + EXTENSION)
       .should("not.exist");
+    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
   });
 
   /**
@@ -358,5 +370,6 @@ describe("home", ()=>{
     cy.get("[data-cy=\"home-new-btn\"]").click();
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains(PROJECT_NAME_RANDOM + EXTENSION)
       .should("exist");
+    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
   });
 });
