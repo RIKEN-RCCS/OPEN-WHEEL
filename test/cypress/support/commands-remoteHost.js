@@ -18,7 +18,21 @@ Cypress.Commands.add("removeRemoteHost", (remotoHostName)=>{
   });
 });
 
-//enter required fields on the remote host screen
+/**
+ * Remove a remote host entry from the current remote host settings page
+ * without navigating away. Use this in afterEach to avoid extra page loads.
+ * @param {string} remotoHostName - label of the remote host to remove
+ */
+Cypress.Commands.add("removeRemoteHostInPlace", (remotoHostName)=>{
+  cy.get("body").then(($body)=>{
+    if ($body.text().includes(remotoHostName)) {
+      cy.contains("tr", remotoHostName).find("[data-cy=\"action_row-delete-btn\"]")
+        .click();
+      cy.get("[data-cy=\"buttons-remove-btn\"]", { timeout: 1000 }).click();
+    }
+  });
+});
+
 Cypress.Commands.add("enterRequiredRemoteHost", (label, hostname, portNumber, testUser)=>{
   cy.get("[data-cy=\"add_new_host-label-text_field\"]").find("input")
     .type(label, { force: true });
@@ -64,7 +78,13 @@ Cypress.Commands.add("enterRemoteHost", (hostWorkDir, privateKyeFile, jobSchedul
 
 //enter advanced settings for the remote host screen
 Cypress.Commands.add("enterAdvancedRemoteHost", (intervalMin, statusCheckSec, hostMaxNumber, executionInterval, timeoutDuring)=>{
-  cy.get("[data-cy=\"add_new_host-advanced_settings-title\"]").click();
+  //Only open the Advanced settings panel if it's not already open
+  cy.get("body").then(($body)=>{
+    if (!$body.find("[data-cy=\"add_new_host-connection_renewal-text_field\"]").is(":visible")) {
+      cy.get("[data-cy=\"add_new_host-advanced_settings-title\"]").click();
+      cy.get("[data-cy=\"add_new_host-connection_renewal-text_field\"]").should("be.visible");
+    }
+  });
   cy.get("[data-cy=\"add_new_host-connection_renewal-text_field\"]").find("input")
     .type(intervalMin, { force: true });
   cy.get("[data-cy=\"add_new_host-status_check-text_field\"]").find("input")
