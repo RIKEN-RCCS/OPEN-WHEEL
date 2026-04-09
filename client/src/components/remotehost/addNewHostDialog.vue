@@ -200,7 +200,7 @@
                   </v-container>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-              <v-expansion-panel>
+              <v-expansion-panel eager>
                 <v-expansion-panel-title data-cy="add_new_host-advanced_settings-title">
                   Advanced settings
                 </v-expansion-panel-title>
@@ -270,6 +270,7 @@
           <v-btn
             prepend-icon="mdi-close"
             text="cancel"
+            data-cy="add_new_host-cancel-btn"
             @click="cancelDialog"
           />
         </v-card-actions>
@@ -392,6 +393,7 @@ export default {
     closeDialog() {
       this.host = { JWTServerURL: "https://elpis.hpci.nii.ac.jp/" };
       this.$refs.form.reset();
+      this.openPanel = [0];
       this.openDialog = false;
     }
   }

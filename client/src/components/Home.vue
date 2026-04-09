@@ -209,6 +209,7 @@
           <v-btn
             prepend-icon="mdi-close"
             text="Close"
+            data-cy="home-remote_host_close-btn"
             @click="remoteHostDialog=false"
           />
         </v-card-actions>
