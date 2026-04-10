@@ -782,6 +782,10 @@ export default {
       SIO.off(event, cb);
     }
     this.sioListeners = [];
+
+    //Remove drag listeners in case the component is unmounted while a drag is in progress.
+    document.removeEventListener("mousemove", this.onDragErrorPanel);
+    document.removeEventListener("mouseup", this.stopDragErrorPanel);
   },
   methods: {
     closeValidationErrorDialog() {

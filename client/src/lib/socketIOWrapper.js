@@ -62,6 +62,7 @@ const close = ()=>{
     socket.close();
     socket = null;
   }
+  initialized = false;
 };
 const listenOnDrop = (...args)=>{
   if (!initialized) {
