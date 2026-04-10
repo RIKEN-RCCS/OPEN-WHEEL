@@ -1,7 +1,7 @@
 /**
  * ホーム画面テスト
  */
-describe("home", {testIsolation: false}, ()=>{
+describe("home", { testIsolation: false }, ()=>{
   const PROJECT_NAME = `WHEEL_TEST_${Date.now().toString()}`;
   const PROJECT_DESCRIPTION = "TestDescription";
   const EXTENSION = ".wheel";
@@ -82,8 +82,7 @@ describe("home", {testIsolation: false}, ()=>{
     cy.waitProjectList();
     cy.get("[data-cy=\"home-project_name-btn\"]").click();
     cy.get("[data-cy=\"home-project_name-text_field\"]").should("be.visible");
-    cy.removeAllProjects();
-    cy.goToScreen("home"); //Inline editor still open; navigate to reset state
+    cy.removeAllProjects(); //removeAllProjects calls goHome internally; editor is gone with the project
   });
 
   /**
@@ -105,7 +104,7 @@ describe("home", {testIsolation: false}, ()=>{
       .contains("prj.wheel.json")
       .should("exist");
     cy.removeAllProjects();
-    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
+    cy.get("[data-cy=\"buttons-cancel-btn\"]").click(); //Close NEW dialog without page reload
   });
 
   /**
@@ -297,7 +296,7 @@ describe("home", {testIsolation: false}, ()=>{
     cy.get("[data-cy=\"home-new-btn\"]").click();
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains(PROJECT_NAME + EXTENSION)
       .should("not.exist");
-    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
+    cy.get("[data-cy=\"buttons-cancel-btn\"]").click(); //Close NEW dialog without page reload
   });
 
   /**
@@ -320,7 +319,7 @@ describe("home", {testIsolation: false}, ()=>{
     cy.get("[data-cy=\"home-new-btn\"]").click();
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains(PROJECT_NAME_RANDOM + EXTENSION)
       .should("exist");
-    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
+    cy.get("[data-cy=\"buttons-cancel-btn\"]").click(); //Close NEW dialog without page reload
   });
 
   /**
@@ -344,7 +343,7 @@ describe("home", {testIsolation: false}, ()=>{
     cy.get("[data-cy=\"home-new-btn\"]").click();
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains(PROJECT_NAME + EXTENSION)
       .should("not.exist");
-    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
+    cy.get("[data-cy=\"buttons-cancel-btn\"]").click(); //Close NEW dialog without page reload
   });
 
   /**
@@ -370,6 +369,6 @@ describe("home", {testIsolation: false}, ()=>{
     cy.get("[data-cy=\"home-new-btn\"]").click();
     cy.get("[data-cy=\"home-file_browser-file_browser\"]").contains(PROJECT_NAME_RANDOM + EXTENSION)
       .should("exist");
-    cy.goToScreen("home"); //NEW dialog still open; navigate to reset state
+    cy.get("[data-cy=\"buttons-cancel-btn\"]").click(); //Close NEW dialog without page reload
   });
 });
