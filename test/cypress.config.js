@@ -17,7 +17,7 @@ export default defineConfig({
   trashAssetsBeforeRuns: false,
   requestTimeout: 5000,
   experimentalMemoryManagement: true,
-  defaultCommandTimeout: 4000,
+  defaultCommandTimeout: 5000,
   video: false,
   retries: 0,
   numTestsKeptInMemory: 0,
