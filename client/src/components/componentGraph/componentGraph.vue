@@ -306,7 +306,7 @@ export default {
       rt.push({ label: "copy", event: "copy" });
       rt.push({ label: "cut", event: "cut" });
       rt.push({ label: "export", event: "export" });
-      if (this.projectState !== "not-started") {
+      if (this.targetComponent?.state !== "not-started") {
         rt.push({ label: "clean", event: "clean" });
       } else {
         rt.push({ label: "delete", event: "delete" });

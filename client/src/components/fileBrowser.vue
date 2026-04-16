@@ -261,7 +261,8 @@ export default {
       downloadURL: null,
       downloadDialog: false,
       showCopyButtonTooltipText: false,
-      copyButtonTooltipText: "copy file path"
+      copyButtonTooltipText: "copy file path",
+      fileListSeq: 0
     };
   },
   computed: {
@@ -303,7 +304,14 @@ export default {
       },
       deep: true
     },
-    selectedComponent() {
+    selectedComponent(newVal, oldVal) {
+      //Clear stale file selection when switching to a different component (or clearing selection).
+      //Without this, clicking the same filename in the new component triggers a deselect
+      //(because selectedFile still holds the old component's file path).
+      if (!newVal || !oldVal || newVal.ID !== oldVal.ID) {
+        this.activeItem = null;
+        this.commitSelectedFile(null);
+      }
       this.getComponentDirRootFiles();
       this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
     }
@@ -359,8 +367,10 @@ export default {
       if (!this.selectedComponent) {
         return;
       }
+      this.fileListSeq++;
+      const seq = this.fileListSeq;
       const cb = (fileList)=>{
-        if (fileList === null || !this.selectedComponent) {
+        if (seq !== this.fileListSeq || fileList === null || !this.selectedComponent) {
           return;
         }
         this.items = fileList
@@ -508,6 +518,8 @@ export default {
           return;
         }
         const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir";
+        //Invalidate any in-flight getFileList so its stale response won't overwrite the new item.
+        this.fileListSeq++;
         SIO.emitGlobal(this.dialog.submitEvent, this.projectRootDir, fullPath, (rt)=>{
           if (!rt) {
             console.log(rt);

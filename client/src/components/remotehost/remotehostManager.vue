@@ -17,6 +17,7 @@
     <v-data-table
       :items="hosts"
       :headers="headers"
+      :loading="!isLoaded"
       data-cy="remotehost-items-data_table"
     >
       <template #item.connectionTest="{ item, index }">
@@ -63,6 +64,7 @@
 </template>
 <script>
 "use strict";
+import { nextTick } from "vue";
 import Debug from "debug";
 const debug = Debug("wheel:remotehost:manager");
 import SIO from "../../lib/socketIOWrapper.js";
@@ -104,6 +106,9 @@ export default {
       ],
       hosts: [],
       jobSchedulerNames: [],
+      isLoaded: false,
+      jobSchedulerLabelListLoaded: false,
+      hostListLoaded: false,
       removeConfirmMessage: "",
       currentSetting: {},
       testing: null
@@ -128,8 +133,20 @@ export default {
   },
   methods: {
     fetchData() {
+      this.isLoaded = false;
+      this.jobSchedulerLabelListLoaded = false;
+      this.hostListLoaded = false;
+      const checkLoaded = ()=>{
+        if (this.jobSchedulerLabelListLoaded && this.hostListLoaded) {
+          nextTick(()=>{
+            this.isLoaded = true;
+          });
+        }
+      };
       SIO.emitGlobal("getJobSchedulerLabelList", (data)=>{
         this.jobSchedulerNames.splice(0, this.jobSchedulerNames.length, ...data);
+        this.jobSchedulerLabelListLoaded = true;
+        checkLoaded();
       });
       SIO.emitGlobal("getHostList", (data)=>{
         data.forEach((e)=>{
@@ -138,6 +155,8 @@ export default {
           e.testResult = "background";
         });
         this.hosts.splice(0, this.hosts.length, ...data);
+        this.hostListLoaded = true;
+        checkLoaded();
       });
     },
     setupSocketHandlers() {
