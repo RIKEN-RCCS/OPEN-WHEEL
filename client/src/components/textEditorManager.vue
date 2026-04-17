@@ -131,7 +131,7 @@
 </template>
 <script>
 "use strict";
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapGetters } from "vuex";
 import getNodeAndPath from "../lib/getNodeAndPath.js";
 import unsavedFilesDialog from "../components/rapid/unsavedFilesDialog.vue";
 import componentButton from "../components/common/componentButton.vue";
@@ -174,6 +174,7 @@ export default {
       "currentComponent",
       "componentTree",
       "readOnly"]),
+    ...mapGetters(["pathSep"]),
     pathToCurrentComponent: function () {
       const rt = [];
       if (this.currentComponent !== null) {
@@ -212,6 +213,31 @@ export default {
       //Trigger reactivity by accessing changeTracker
       this.changeTracker;
       return (this.$refs.text?.hasChange() || false) || (this.$refs.param?.hasChange() || false);
+    }
+  },
+  watch: {
+
+    /**
+     * Ensure the file is opened whenever selectedFile changes (or on initial mount).
+     * Acts as a fallback for cases where tabEditor.mounted() ran before selectedFile was set.
+     * Uses immediate:true so the handler fires synchronously on component creation,
+     * and $nextTick to defer until children (tabEditor) are fully mounted.
+     * @param {string|null} nv - new selectedFile value
+     */
+    selectedFile: {
+      handler(nv) {
+        if (typeof nv !== "string") {
+          return;
+        }
+        this.$nextTick(()=>{
+          const sep = this.pathSep;
+          const parts = nv.split(sep);
+          const fname = parts[parts.length - 1];
+          const dir = parts.slice(0, -1).join(sep);
+          this.$refs.text?.openNewTab(fname, dir);
+        });
+      },
+      immediate: true
     }
   },
   mounted() {
