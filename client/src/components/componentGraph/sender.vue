@@ -1,5 +1,5 @@
 <template>
-  <g>
+  <g :data-cy="elsePlug ? `${componentId}-else-sender` : `${componentId}-sender`">
     <equilateral-triangle
       :color="color"
       :center="end"

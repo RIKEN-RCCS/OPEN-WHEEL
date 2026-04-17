@@ -12,6 +12,7 @@
       :box-height="boxHeight"
       :component-id="componentId"
       :output-filename="outputFilename"
+      :index="index"
     />
   </g>
 </template>
