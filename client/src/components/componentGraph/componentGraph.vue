@@ -306,7 +306,11 @@ export default {
       rt.push({ label: "copy", event: "copy" });
       rt.push({ label: "cut", event: "cut" });
       rt.push({ label: "export", event: "export" });
-      if (this.targetComponent?.state !== "not-started") {
+      const liveComponent = this.currentComponent?.descendants?.find((c)=>{
+        return c.ID === this.targetComponent?.ID;
+      });
+      const currentState = liveComponent?.state ?? this.targetComponent?.state;
+      if (currentState !== "not-started") {
         rt.push({ label: "clean", event: "clean" });
       } else {
         rt.push({ label: "delete", event: "delete" });
