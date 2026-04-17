@@ -355,7 +355,12 @@ export default {
       },
       deep: true
     },
-    selectedComponent() {
+    selectedComponent(newVal, oldVal) {
+      //Clear stale file list so noDuplicate() never returns false based on old data
+      //while the new component's file list is being fetched asynchronously.
+      if (!newVal || !oldVal || newVal.ID !== oldVal.ID) {
+        this.items = [];
+      }
       this.getComponentDirRootFiles();
       this.currentDir = this.selectedComponentAbsPath;
     },

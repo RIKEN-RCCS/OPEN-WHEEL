@@ -304,6 +304,7 @@ export default {
       },
       deep: true
     },
+
     selectedComponent(newVal, oldVal) {
       //Clear stale file selection when switching to a different component (or clearing selection).
       //Without this, clicking the same filename in the new component triggers a deselect
@@ -311,6 +312,9 @@ export default {
       if (!newVal || !oldVal || newVal.ID !== oldVal.ID) {
         this.activeItem = null;
         this.commitSelectedFile(null);
+        //Clear stale file list so noDuplicate() never returns false based on old data
+        //while the new component's file list is being fetched asynchronously.
+        this.items = [];
       }
       this.getComponentDirRootFiles();
       this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
