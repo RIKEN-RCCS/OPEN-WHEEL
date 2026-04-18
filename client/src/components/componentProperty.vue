@@ -5,8 +5,7 @@
  */
 <template>
   <v-navigation-drawer
-    v-if="selectedComponent !== null"
-    v-model="open"
+    v-if="drawerVisible"
     location="right"
     absolute
     :width="propWidth"
@@ -224,7 +223,10 @@
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel v-if="isFor">
+        <v-expansion-panel
+          v-if="isFor"
+          eager
+        >
           <v-expansion-panel-title data-cy="component_property-loop_set_for-panel_title">
             loop setting
           </v-expansion-panel-title>
@@ -276,7 +278,10 @@
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel v-if="isForeach">
+        <v-expansion-panel
+          v-if="isForeach"
+          eager
+        >
           <v-expansion-panel-title data-cy="component_property-loop_set_foreach-panel_title">
             loop setting
           </v-expansion-panel-title>
@@ -744,11 +749,10 @@ export default {
         dst: []
       },
       propWidth,
+      drawerVisible: false,
       openPanels: [0],
       retryByJS: false,
       conditionCheckByJS: false,
-      open: false,
-      reopening: false,
       sourceOutputFile: null,
       rules: {
         isValidName,
@@ -908,18 +912,10 @@ export default {
         });
       }
     },
-    open(newValue) {
-      //another component is selected while componentProperty is open
-      if (this.reopening || this.open) {
-        return;
-      }
-      //closing
-      if (newValue === false) {
-        this.commitSelectedComponent(null);
-        this.commitSelectedFile(null);
-      }
-    },
     selectedComponent(newValue, oldValue) {
+      if (newValue !== null) {
+        this.drawerVisible = true;
+      }
       if (!this.selectedComponent || (newValue !== null && oldValue !== null && newValue.ID === oldValue.ID)) {
         return;
       }
@@ -964,18 +960,7 @@ export default {
           }
         });
       }
-      this.reopening = true;
       this.openPanels = [0];
-      this.open = false;
-      setTimeout(()=>{
-        this.open = true;
-        this.reopening = false;
-      }, 200);
-    }
-  },
-  mounted() {
-    if (this.selectedComponent !== null) {
-      this.open = true;
     }
   },
   methods: {
@@ -990,6 +975,15 @@ export default {
     }),
     isValidInputFilename,
     isValidOutputFilename,
+
+    /**
+     * Close the property panel by clearing the selected component.
+     */
+    closeProperty() {
+      this.drawerVisible = false;
+      this.commitSelectedComponent(null);
+      this.commitSelectedFile(null);
+    },
     updateScriptCandidatesFromBrowser(items) {
       if (!this.selectedComponent || ["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type)) {
         return;
@@ -1033,21 +1027,12 @@ export default {
         this.updateScriptCandidatesFromBrowser([]);
       }
     },
-    closeProperty() {
-      this.commitSelectedComponent(null);
-      this.open = false;
-    },
     updateSourceOutputFile() {
-      const name = this.sourceOutputFile;
-      if (!name) {
-        this.deleteSourceOutputFile();
+      if (!this.isValidOutputFilename(this.sourceOutputFile)) {
+        this.commitShowSnackbar(`${this.sourceOutputFile} is not valid output filename`);
         return;
       }
-      if (!this.isValidOutputFilename(name)) {
-        this.commitShowSnackbar(`${name} is not valid output filename`);
-        return;
-      }
-      const outputFile = { name, dst: [] };
+      const outputFile = { name: this.sourceOutputFile, dst: [] };
       if (typeof this.selectedComponent.outputFiles[0] === "undefined") {
         this.addToOutputFiles(outputFile);
         return;

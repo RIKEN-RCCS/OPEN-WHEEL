@@ -127,16 +127,66 @@ export default new Vuex.Store({
       //would send updateComponent with an intermediate copySelectedComponent value, potentially
       //overwriting the final renameOutputFile result on the server.
       const isSameComponent = copied !== null && payload !== null && copied.ID === payload.ID;
-      if (!isSameComponent && copied !== null && selected !== null) {
-        const difference = diff(selected, copied);
-        const changedProps = difference.filter((e)=>{
-          return e.path[0] !== "pos";
-        });
-        if (changedProps.length > 0) {
-          SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID, (rt)=>{
-            console.log("compoent update done", rt);
+      try {
+        if (!isSameComponent && copied !== null && selected !== null) {
+          const difference = diff(selected, copied);
+          const changedProps = difference.filter((e)=>{
+            return e.path[0] !== "pos";
           });
+          if (changedProps.length > 0) {
+            //Snapshot both the previous server value and what we are sending,
+            //so the denial callback can revert precisely even if state changes later.
+            const sentCopy = structuredClone(toRaw(copied));
+            const prevSelected = structuredClone(toRaw(selected));
+            SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID, (rt)=>{
+              if (rt !== true) {
+                //Server denied the update: notify the user and undo all optimistic changes.
+                context.dispatch("showSnackbar", "component update failed");
+                //Revert the optimistic update in currentComponent.descendants.
+                const revertedDescendants = context.state.currentComponent.descendants.map((d)=>{
+                  return d.ID === sentCopy.ID ? { ...prevSelected } : d;
+                });
+                context.commit("currentComponent", { ...toRaw(context.state.currentComponent), descendants: revertedDescendants });
+                //Revert selectedComponent (diff baseline) so subsequent edits diff against the true server value.
+                if (context.state.selectedComponent?.ID === sentCopy.ID) {
+                  context.commit("selectedComponent", structuredClone(prevSelected));
+                }
+                //Per-prop selective revert of copySelectedComponent:
+                //- props the user hasn't touched since we sent → revert to prevSelected value
+                //- props the user changed again after sending → keep user's newer value
+                const currentCopied = context.state.copySelectedComponent;
+                if (currentCopied?.ID === sentCopy.ID) {
+                  const revertedCopy = structuredClone(toRaw(currentCopied));
+                  for (const key of Object.keys(sentCopy)) {
+                    if (key === "ID" || key === "pos") {
+                      continue;
+                    }
+                    if (JSON.stringify(sentCopy[key]) !== JSON.stringify(prevSelected[key])) {
+                      //This prop was changed in our (denied) update.
+                      if (JSON.stringify(revertedCopy[key]) === JSON.stringify(sentCopy[key])) {
+                        //User hasn't changed it again → revert to server value.
+                        revertedCopy[key] = prevSelected[key];
+                      }
+                      //else: user already changed it → keep user's value.
+                    }
+                  }
+                  context.commit("copySelectedComponent", revertedCopy);
+                }
+              }
+            });
+            //Optimistic update: reflect the new component data in currentComponent immediately,
+            //before the server's workflow response arrives. This prevents a race where
+            //commitSelectedComponent (e.g. from clickComponentName) reads stale descendants
+            //and sets copySelectedComponent with outdated values (e.g. old storagePath).
+            //The server's workflow event will overwrite this with the authoritative final values.
+            const updatedDescendants = currentComponent.descendants.map((d)=>{
+              return d.ID === copied.ID ? { ...toRaw(copied) } : d;
+            });
+            context.commit("currentComponent", { ...toRaw(currentComponent), descendants: updatedDescendants });
+          }
         }
+      } catch (e) {
+        debug("selectedComponent action: error during updateComponent logic:", e);
       }
       if (payload === null) {
         context.commit("selectedComponent", null);
