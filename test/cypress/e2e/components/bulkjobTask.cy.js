@@ -210,7 +210,8 @@ describe("components", ()=>{
     it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
-      cy.get("[data-cy=\"action_row-delete-btn\"]").should("be.visible");
+      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView()
+        .should("be.visible");
     });
 
     /**
@@ -223,7 +224,8 @@ describe("components", ()=>{
     it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_BJ_TASK, BJ_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-      cy.get("[data-cy=\"action_row-delete-btn\"]").should("be.visible");
+      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView()
+        .should("be.visible");
     });
 
     /**

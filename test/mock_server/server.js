@@ -47,6 +47,20 @@ const _COMPONENT_FILE_SNAPSHOTS = new Map();
 /**ファイルコンテンツVFS（openFile/saveFile用）- フルパス → 文字列コンテンツ*/
 const _FILE_CONTENTS = new Map();
 
+/**リモートホストリスト（addHost/getHostListで共有）*/
+const _HOST_LIST = [
+  { name: "componentTestLabel", hostname: "TestHostname", port: 8000, user: "testUser", numJob: 5, jobScheduler: "PBSPro", useBulkjob: true, useStepjob: true, queue: ["testQueues"], id: 0 },
+  { name: "wheel_release_test_server", hostname: "127.0.0.1", port: 22, user: "testuser", id: 1 }
+];
+
+const _JOB_SCHEDULER = {
+  PBSPro: { submit: "qsub", queueOpt: "-q", stat: "qstat -xf", del: "qdel" },
+  SLURM: { submit: "sbatch", queueOpt: "-p", stat: "sacct -P --delimiter=, -o JobID,State -n -j ", del: "scancel" },
+  FX10: { submit: "pjsub", queueOpt: "-L rscgrp=", stat: "pjstat", del: "pjdel" },
+  K: { submit: "pjsub", queueOpt: "-L rscgrp=", stat: "pjstat", del: "pjdel" },
+  FUJITSU_TCS: { submit: "pjsub", queueOpt: "-L rscgrp=", stat: "pjstat", del: "pjdel" }
+};
+
 /**Socket.IO サーバのインスタンス*/
 
 let io;
@@ -100,19 +114,49 @@ function getOrInitProjectJson(projectRootDir, rootId = "root") {
 }
 
 /**
+ * descendants 配列を再帰的に検索し、指定IDのノードを返す
+ * @param {any[]} descendants - 検索対象の descendants 配列
+ * @param {string} id - 検索するコンポーネントID
+ * @returns {any|null} 見つかったノード、または null
+ */
+function findDescendantById(descendants, id) {
+  if (!Array.isArray(descendants)) return null;
+
+  for (const d of descendants) {
+    if (d && d.ID === id) return d;
+    const found = findDescendantById(d?.descendants, id);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
  * workflow をルートごとに初期化/取得
  * @param {string} projectRootDir - プロジェクトのルートパス（.wheel でも可）
  * @param {string} rootId - ルートコンポーネントのID
- * @returns {{ID:string,name:string,type:"workflow",typeof:"workflow",state:string,descendants:any[],links:any[],edges?:any[],connections?:any[]}} 取得,生成したworkflowを返す
+ * @returns {{ID:string,name:string,type:string,typeof:string,state:string,descendants:any[],links:any[],edges?:any[],connections?:any[]}} 取得,生成したworkflowを返す
  */
 function getOrInitWorkflow(projectRootDir, rootId) {
-  const key = projectRootDir + "__default__";
+  const effectiveRootId = rootId || "root";
+  const key = `${projectRootDir}::${effectiveRootId}`;
   if (!workflowsByRoot.has(key)) {
+    let type = "workflow";
+    let name = effectiveRootId === "root" ? "root" : effectiveRootId;
+    if (effectiveRootId !== "root") {
+      //Look up the component in the root workflow to get its type/name
+      const rootKey = `${projectRootDir}::root`;
+      const rootWf = workflowsByRoot.get(rootKey);
+      const found = rootWf ? findDescendantById(rootWf.descendants, effectiveRootId) : null;
+      if (found) {
+        type = found.type || "workflow";
+        name = found.name || effectiveRootId;
+      }
+    }
     workflowsByRoot.set(key, {
-      ID: rootId || "root",
-      name: "root",
-      type: "workflow",
-      typeof: "workflow",
+      ID: effectiveRootId,
+      name,
+      type,
+      typeof: type,
       state: "not-started",
       descendants: [],
       links: []
@@ -464,6 +508,45 @@ function summarizeNumericFiles(base, items) {
 }
 
 /**
+ * stepjob サブワークフロー内の全 stepjobTask の stepnum を更新する
+ * - next/previous リンクを辿ってトポロジカル順に番号を振る
+ * @param {any[]} descendants - stepjob サブワークフローの descendants 配列
+ * @returns {void} 返り値なし
+ */
+function updateStepNumInWorkflow(descendants) {
+  const tasks = descendants.filter((n)=>{
+    return n && n.type === "stepjobTask";
+  });
+  if (tasks.length === 0) return;
+  //Topological sort: BFS from roots (no previous)
+  const idToTask = new Map(tasks.map((t)=>{
+    return [t.ID, t];
+  }));
+  const visited = new Set();
+  const queue = tasks.filter((t)=>{
+    return !Array.isArray(t.previous) || t.previous.length === 0 || t.previous.every((p)=>{
+      return !idToTask.has(p);
+    });
+  });
+  let stepnum = 0;
+  while (queue.length > 0) {
+    const task = queue.shift();
+    if (visited.has(task.ID)) continue;
+    visited.add(task.ID);
+    task.stepnum = stepnum++;
+
+    for (const nextId of (task.next || [])) {
+      const nextTask = idToTask.get(nextId);
+      if (nextTask && !visited.has(nextId)) queue.push(nextTask);
+    }
+  }
+  //Assign remaining (disconnected) tasks
+  for (const task of tasks) {
+    if (!visited.has(task.ID)) task.stepnum = stepnum++;
+  }
+}
+
+/**
  * .wheel ルートへ正規化
  * @param {string} p - 元のパス
  * @returns {string} .wheel を付与したパスを返す
@@ -650,18 +733,17 @@ async function start(port = 3101) {
         const workRoot = toWorkingRoot(projectRootDir);
         const name = basenameNoSlash(projectRootDir);
 
-        //全クリア（VFS + キャッシュ + STATE）
+        //VFSとキャッシュをクリア（projectListは保持する）
         STATE.files.clear();
         STATE.dirs.clear();
         STATE.workflows.clear();
         STATE.projectJsons.clear();
-        STATE.projectList = [];
         _FILES.clear();
         _DIRS.clear();
         workflowsByRoot.clear();
         projectJsonByRoot.clear();
 
-        //projectList に 1 件だけ掲載
+        //projectList に追加
         const rec = {
           id: `mock-${Date.now()}`, name,
           description: description || "", state: "planning",
@@ -676,7 +758,7 @@ async function start(port = 3101) {
         //空の WF/PJ を先にキャッシュしておく（初回 push の安定化）
         STATE.workflows.set(workRoot, emptyWorkflow());
         STATE.projectJsons.set(workRoot, emptyProjectJson());
-        workflowsByRoot.set(workRoot + "__default__", emptyWorkflow());
+        workflowsByRoot.set(`${workRoot}::root`, emptyWorkflow());
         projectJsonByRoot.set(workRoot + "__default__", emptyProjectJson());
 
         io.emit("projectList", STATE.projectList);
@@ -837,20 +919,47 @@ async function start(port = 3101) {
       const sameTypeCount = wf.descendants.filter((n)=>{
         return (n.typeof || n.type) === type;
       }).length;
-      const name = `${type}${sameTypeCount}`;
+      const componentDefaultNames = {
+        stepjobTask: "sjTask",
+        bulkjobTask: "bjTask",
+        hpciss: "HPCI-SS",
+        hpcisstar: "HPCI-SS-tar"
+      };
+      const namePrefix = componentDefaultNames[type] || type;
+      const name = `${namePrefix}${sameTypeCount}`;
       const newId = `n-${Date.now()}`;
       const pos = nodeInfo.pos || { x: 0, y: 0 };
       const node = {
         ID: newId, name, typeof: type, type,
+        state: "not-started",
         pos, position: pos, x: pos.x, y: pos.y,
         descendants: [], indexList: [],
         inputFiles: [], outputFiles: [],
         input_files: [], output_files: []
       };
-      //storageコンポーネントはVFS汚染防止のため固有のstoragePath（コンポーネントディレクトリ）を設定
-      if (type === "storage") {
-        node.storagePath = normPath(`${resolveWorkingRoot(projectRootDir)}/${name}`);
+      if (type === "task" || type === "stepjobTask") {
+        node.host = "localhost";
+        node.useJobScheduler = false;
+        node.script = null;
+        node.include = [];
+        node.exclude = [];
       }
+      if (type === "bulkjobTask") {
+        node.host = "localhost";
+        node.useJobScheduler = true;
+        node.script = null;
+        node.include = [];
+        node.exclude = [];
+        node.usePSSettingFile = true;
+      }
+      if (type === "for") {
+        node.start = null;
+        node.end = null;
+        node.step = null;
+        node.keep = null;
+        node.skipCopy = [];
+      }
+
       wf.descendants.push(node);
       _COMPONENT_SNAPSHOTS.set(newId, JSON.stringify(node));
       _COMPONENT_FILE_SNAPSHOTS.set(newId, new Set());
@@ -974,14 +1083,6 @@ async function start(port = 3101) {
         node.outputFiles.push({ name: fileName, dst: [] });
       node.output_files = node.outputFiles;
 
-      const pj = getOrInitProjectJson(projectRootDir, rootId || "root");
-      const compRel = pj && pj.componentPath && pj.componentPath[nodeId];
-      const workRoot = resolveWorkingRoot(projectRootDir);
-      const compName = compRel
-        ? String(compRel).replace(/^\.\?\//, "")
-        : (findNodeById(getOrInitWorkflow(projectRootDir, rootId || "root"), nodeId)?.name || "component");
-      addFile(projectRootDir, workRoot + "/" + compName + "/" + fileName);
-
       cb?.(true);
       io.emit("workflow", clone(wf));
     });
@@ -1020,6 +1121,48 @@ async function start(port = 3101) {
           wf.links.forEach((lk)=>{
             if (lk?.to?.id === nodeId && lk?.to?.name === oldName) lk.to.name = nextName;
             if (lk?.target?.id === nodeId && lk?.target?.name === oldName) lk.target.name = nextName;
+          });
+        }
+        reconcileIOFromLinks(wf);
+        cb?.(true);
+        io.emit("workflow", clone(wf));
+      } catch { cb?.(false); }
+    });
+
+    /**
+     * Workflow（プロパティ／入出力）: 出力ファイル名の改名
+     * - outputFiles[i].name を変更し、links 側のラベルも追随。
+     * @param {string} projectRootDir - プロジェクトのルートパス
+     * @param {string} nodeId - 対象ノードID
+     * @param {number} index - 変更対象の行インデックス
+     * @param {string} newName - 新しい名前
+     * @param {string} rootId - ルートID
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし ACK と push で通知します。
+     */
+    socket.on("renameOutputFile", (projectRootDir, nodeId, index, newName, rootId, cb)=>{
+      try {
+        const wf = getOrInitWorkflow(projectRootDir, rootId || "root");
+        const node = findNodeById(wf, nodeId);
+        if (!node) return cb?.(false);
+
+        node.outputFiles = Array.isArray(node.outputFiles) ? node.outputFiles : [];
+        const i = Number(index);
+        if (!Number.isInteger(i) || i < 0 || i >= node.outputFiles.length) return cb?.(false);
+
+        const oldName = node.outputFiles[i]?.name || "";
+        const nextName = String(newName || "");
+        const current = node.outputFiles[i] || {};
+        node.outputFiles[i] = { name: nextName, dst: Array.isArray(current.dst) ? current.dst : [] };
+        node.outputFiles = node.outputFiles.filter((ent, idx)=>{
+          return (idx === i) || (ent && ent.name !== oldName);
+        });
+        node.output_files = node.outputFiles;
+
+        if (Array.isArray(wf.links)) {
+          wf.links.forEach((lk)=>{
+            if (lk?.from?.id === nodeId && lk?.from?.name === oldName) lk.from.name = nextName;
+            if (lk?.source?.id === nodeId && lk?.source?.name === oldName) lk.source.name = nextName;
           });
         }
         reconcileIOFromLinks(wf);
@@ -1359,9 +1502,21 @@ async function start(port = 3101) {
         //互換エイリアス
         wf.edges = wf.links;
         wf.connections = wf.links;
-        //projectJson の componentPath からも削除
+        //projectJson の componentPath からも削除、VFS も清掃
         const pj = getOrInitProjectJson(projectRootDir, rootId || "root");
         if (pj && pj.componentPath && nodeId in pj.componentPath) {
+          const relPath = pj.componentPath[nodeId];
+          if (relPath) {
+            const workRoot = resolveWorkingRoot(projectRootDir);
+            const compDir = normPath(`${workRoot}/${relPath}`);
+            //コンポーネントディレクトリ以下の VFS エントリを削除
+            for (const f of [..._FILES]) {
+              if (f === compDir || f.startsWith(compDir + "/")) _FILES.delete(f);
+            }
+            for (const d of [..._DIRS]) {
+              if (d === compDir || d.startsWith(compDir + "/")) _DIRS.delete(d);
+            }
+          }
           delete pj.componentPath[nodeId];
           io.emit("projectJson", pj);
         }
@@ -1410,11 +1565,14 @@ async function start(port = 3101) {
 
         const doClean = ()=>{
           const current = wf.descendants[idx];
-          wf.descendants[idx] = { ...current, name: original.name };
+          wf.descendants[idx] = { ...current, name: original.name, state: original.state };
           pj.componentPath[nodeId] = original.name;
-          io.emit("projectJson", pj);
+          //Reset project to editable state so subsequent tests can delete components.
+          pj.state = "not-started";
+          socket.emit("projectJson", pj);
+          socket.emit("projectState", "not-started");
           cb?.(true);
-          io.emit("workflow", clone(wf));
+          socket.emit("workflow", clone(wf));
         };
 
         if (addedFiles.length > 0) {
@@ -1463,77 +1621,112 @@ async function start(port = 3101) {
         io.emit("projectJson", pj);
         io.emit("projectState", "running");
 
-        setTimeout(()=>{
-          try {
-            const wf = getOrInitWorkflow(projectRootDir, "root");
-            const pj = getOrInitProjectJson(projectRootDir, "root");
-            const nodes = Array.isArray(wf.descendants) ? wf.descendants : [];
+        /**
+         * 全ノードを再帰的に収集する
+         * @param {any} w - ワークフロー or ノード
+         * @returns {any[]} 全ノードの配列
+         */
+        function collectAllNodes(w) {
+          const result = [];
+          const stack = Array.isArray(w.descendants) ? [...w.descendants] : [];
+          while (stack.length) {
+            const n = stack.shift();
+            if (!n) continue;
+            result.push(n);
+            if (Array.isArray(n.descendants)) stack.push(...n.descendants);
+          }
+          return result;
+        }
 
-            const getDir = (nodeId)=>{
-              return getComponentDir(projectRootDir, wf, pj, nodeId).replace(/\/+$/, "");
-            };
-            const { files } = ensureSets(projectRootDir);
+        /**
+         * プロジェクト実行シミュレーション（I/Oファイル生成 + finished 通知）
+         * @returns {void} 返り値なし
+         */
+        function runSimulation() {
+          setTimeout(()=>{
+            try {
+              const wf = getOrInitWorkflow(projectRootDir, "root");
+              const pj = getOrInitProjectJson(projectRootDir, "root");
+              const nodes = Array.isArray(wf.descendants) ? wf.descendants : [];
 
-            for (const dstNode of nodes) {
-              const inputs = Array.isArray(dstNode.inputFiles) ? dstNode.inputFiles : [];
-              const dstDir = getDir(dstNode.ID);
-              for (const ent of inputs) {
-                if (!ent || !ent.name) continue;
-                const froms = (wf.links || [])
-                  .filter((lk)=>{ return lk?.to?.id === dstNode.ID && lk?.to?.name === ent.name; })
-                  .map((lk)=>{ return lk.from; });
-                if (froms.length === 0) {
-                  addFile(projectRootDir, dstDir + "/" + ent.name.replace(/\/$/, ""));
-                  continue;
-                }
-                for (const from of froms) {
-                  const srcDir = getDir(from.id);
-                  const pat = /[*?]/.test(String(from.name)) ? globToRegExp(from.name) : null;
+              const getDir = (nodeId)=>{
+                return getComponentDir(projectRootDir, wf, pj, nodeId).replace(/\/+$/, "");
+              };
+              const { files } = ensureSets(projectRootDir);
 
-                  if (!pat) {
-                  //ent.name が "/" 終了ならディレクトリに格納、それ以外は単一ファイル
-                    const endsWithSlash = /\/$/.test(String(ent.name));
-                    const baseName = String(ent.name).replace(/\/$/, "");
-                    if (endsWithSlash) {
-                      const destBase = dstDir + "/" + baseName;
-                      addDir(projectRootDir, destBase); //ディレクトリを作る
-                      //1件のファイル名（リンク元のベース名）で中身を作る
-                      const srcFileBase = String(from.name).replace(/^.*\//, "");
-                      addFile(projectRootDir, destBase + "/" + srcFileBase);
-                    } else {
-                    //単一ファイルとして作成
-                      addFile(projectRootDir, dstDir + "/" + baseName);
-                    }
+              for (const dstNode of nodes) {
+                const inputs = Array.isArray(dstNode.inputFiles) ? dstNode.inputFiles : [];
+                const dstDir = getDir(dstNode.ID);
+                for (const ent of inputs) {
+                  if (!ent || !ent.name) continue;
+                  const froms = (wf.links || [])
+                    .filter((lk)=>{ return lk?.to?.id === dstNode.ID && lk?.to?.name === ent.name; })
+                    .map((lk)=>{ return lk.from; });
+                  if (froms.length === 0) {
+                    addFile(projectRootDir, dstDir + "/" + ent.name.replace(/\/$/, ""));
                     continue;
                   }
+                  for (const from of froms) {
+                    const srcDir = getDir(from.id);
+                    const pat = /[*?]/.test(String(from.name)) ? globToRegExp(from.name) : null;
 
-                  const baseName = ent.name.replace(/\/$/, "");
-                  const destBase = dstDir + "/" + baseName;
-                  addDir(projectRootDir, destBase);
+                    if (!pat) {
+                    //ent.name が "/" 終了ならディレクトリに格納、それ以外は単一ファイル
+                      const endsWithSlash = /\/$/.test(String(ent.name));
+                      const baseName = String(ent.name).replace(/\/$/, "");
+                      if (endsWithSlash) {
+                        const destBase = dstDir + "/" + baseName;
+                        addDir(projectRootDir, destBase); //ディレクトリを作る
+                        //1件のファイル名（リンク元のベース名）で中身を作る
+                        const srcFileBase = String(from.name).replace(/^.*\//, "");
+                        addFile(projectRootDir, destBase + "/" + srcFileBase);
+                      } else {
+                      //単一ファイルとして作成
+                        addFile(projectRootDir, dstDir + "/" + baseName);
+                      }
+                      continue;
+                    }
 
-                  for (const f of files) {
-                    if (!f.startsWith(srcDir + "/")) continue;
-                    const rel = f.slice(srcDir.length + 1);
-                    if (!rel || rel.includes("/")) continue;
-                    if (!pat.test(rel)) continue;
-                    addFile(projectRootDir, destBase + "/" + rel);
+                    const baseName = ent.name.replace(/\/$/, "");
+                    const destBase = dstDir + "/" + baseName;
+                    addDir(projectRootDir, destBase);
+
+                    for (const f of files) {
+                      if (!f.startsWith(srcDir + "/")) continue;
+                      const rel = f.slice(srcDir.length + 1);
+                      if (!rel || rel.includes("/")) continue;
+                      if (!pat.test(rel)) continue;
+                      addFile(projectRootDir, destBase + "/" + rel);
+                    }
                   }
                 }
               }
+            } catch (e) {
+              console.log("[MockServer] simulate outputs error:", e && e.message);
             }
-          } catch (e) {
-            console.log("[MockServer] simulate outputs error:", e && e.message);
-          }
 
-          //終了：ロック解除
+            //終了：ロック解除
+            const pj = getOrInitProjectJson(projectRootDir, "root");
+            pj.state = "finished";
+            pj.readOnly = false;
+            io.emit("projectJson", pj);
+            io.emit("projectState", "finished");
+          }, 200);
+        }
 
-          const pj = getOrInitProjectJson(projectRootDir, "root");
-          pj.state = "finished";
-          pj.readOnly = false;
-          io.emit("projectJson", pj);
-
-          io.emit("projectState", "finished");
-        }, 200);
+        //リモートホストを持つノードがあればパスワード要求ダイアログを表示する
+        const wfRoot = getOrInitWorkflow(projectRootDir, "root");
+        const allNodes = collectAllNodes(wfRoot);
+        const remoteNode = allNodes.find((n)=>{
+          return n.host && n.host !== "localhost";
+        });
+        if (remoteNode) {
+          socket.emit("askPassword", remoteNode.host, "password", null, ()=>{
+            runSimulation();
+          });
+        } else {
+          runSimulation();
+        }
       }
 
       if (operation === "cleanProject") {
@@ -1550,21 +1743,58 @@ async function start(port = 3101) {
      * --------------------------------------------------------------------*/
 
     /**
-     * Host リスト取得（スタブ）
+     * Host リスト取得
      * @param {(list:any[])=>void} cb - 取得コールバック
-     * @returns {void} 返り値なし cbで空配列を返す
+     * @returns {void} 返り値なし cbでホストリストを返す
      */
     socket.on("getHostList", (cb)=>{
-      return cb?.([]);
+      return cb?.([..._HOST_LIST]);
+    });
+
+    /**
+     * ホスト追加
+     * @param {object} newHost - 追加するホスト情報
+     * @param {(id:number|boolean)=>void} cb - ACKコールバック
+     * @returns {void} 返り値なし
+     */
+    socket.on("addHost", (newHost, cb)=>{
+      const id = _HOST_LIST.reduce((max, h)=>{ return Math.max(max, h.id); }, -1) + 1;
+      _HOST_LIST.push({ ...newHost, id });
+      io.emit("hostList", [..._HOST_LIST]);
+      return cb?.(id);
+    });
+
+    /**
+     * ホスト削除
+     * @param {number} id - 削除するホストのid
+     * @param {(ok:boolean)=>void} cb - ACKコールバック
+     * @returns {void} 返り値なし
+     */
+    socket.on("removeHost", (id, cb)=>{
+      const idx = _HOST_LIST.findIndex((h)=>{
+        return h.id === id;
+      });
+      if (idx !== -1) _HOST_LIST.splice(idx, 1);
+      io.emit("hostList", [..._HOST_LIST]);
+      return cb?.(true);
     });
 
     /**
      * ジョブスケジューラリスト取得（スタブ）
-     * @param {(list:any[])=>void} cb - 取得コールバック
-     * @returns {void} 返り値なし cbで空配列を返す
+     * @param {(list:object)=>void} cb - 取得コールバック
+     * @returns {void} 返り値なし cbでジョブスケジューラ設定を返す
      */
     socket.on("getJobSchedulerList", (cb)=>{
-      return cb?.([]);
+      return cb?.(_JOB_SCHEDULER);
+    });
+
+    /**
+     * ジョブスケジューララベルリスト取得（スタブ）
+     * @param {(list:string[])=>void} cb - 取得コールバック
+     * @returns {void} 返り値なし cbでラベルリストを返す
+     */
+    socket.on("getJobSchedulerLabelList", (cb)=>{
+      return cb?.(Object.keys(_JOB_SCHEDULER));
     });
 
     /**
@@ -1596,6 +1826,209 @@ async function start(port = 3101) {
         return JSON.parse(JSON.stringify(obj));
       } catch { return obj; }
     }
+
+    /**
+     * Workflow: コントロールフローリンク追加
+     * - src の next (または else) に dst を追加し、dst の previous に src を追加。
+     * @param {string} projectRootDir - プロジェクトのルートパス
+     * @param {string} src - リンク元コンポーネントID
+     * @param {string} dst - リンク先コンポーネントID
+     * @param {boolean} isElse - else コネクタへの接続か
+     * @param {string} rootId - ルートワークフローID
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし ACK と push で通知します。
+     */
+    socket.on("addLink", (projectRootDir, src, dst, isElse, rootId, cb)=>{
+      try {
+        const wf = getOrInitWorkflow(projectRootDir, rootId || "root");
+        const srcNode = (wf.descendants || []).find((n)=>{
+          return n && n.ID === src;
+        });
+        const dstNode = (wf.descendants || []).find((n)=>{
+          return n && n.ID === dst;
+        });
+        if (srcNode) {
+          if (isElse) {
+            srcNode.else = Array.isArray(srcNode.else) ? srcNode.else : [];
+            if (!srcNode.else.includes(dst)) srcNode.else.push(dst);
+          } else {
+            srcNode.next = Array.isArray(srcNode.next) ? srcNode.next : [];
+            if (!srcNode.next.includes(dst)) srcNode.next.push(dst);
+          }
+        }
+        if (dstNode) {
+          dstNode.previous = Array.isArray(dstNode.previous) ? dstNode.previous : [];
+          if (!dstNode.previous.includes(src)) dstNode.previous.push(src);
+        }
+        cb?.(true);
+        //Update stepnum for stepjobTask components if inside a stepjob
+        if (wf.type === "stepjob") {
+          updateStepNumInWorkflow(wf.descendants);
+        }
+        io.emit("workflow", clone(wf));
+      } catch (e) {
+        console.warn("[MockServer] addLink error:", e?.message || e);
+        cb?.(false);
+      }
+    });
+
+    /**
+     * Workflow: コントロールフローリンク全削除
+     * - componentID に関連する全リンク (next/else/previous) を除去。
+     * @param {string} projectRootDir - プロジェクトのルートパス
+     * @param {string} componentID - 対象コンポーネントID
+     * @param {string} rootId - ルートワークフローID
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし ACK と push で通知します。
+     */
+    socket.on("removeAllLink", (projectRootDir, componentID, rootId, cb)=>{
+      try {
+        const wf = getOrInitWorkflow(projectRootDir, rootId || "root");
+        for (const n of (wf.descendants || [])) {
+          if (!n) continue;
+          if (Array.isArray(n.next)) n.next = n.next.filter((id)=>{
+            return id !== componentID;
+          });
+          if (Array.isArray(n.else)) n.else = n.else.filter((id)=>{
+            return id !== componentID;
+          });
+          if (Array.isArray(n.previous)) n.previous = n.previous.filter((id)=>{
+            return id !== componentID;
+          });
+          if (n.ID === componentID) {
+            n.next = [];
+            n.else = [];
+            n.previous = [];
+          }
+        }
+        cb?.(true);
+        io.emit("workflow", clone(wf));
+      } catch (e) {
+        console.warn("[MockServer] removeAllLink error:", e?.message || e);
+        cb?.(false);
+      }
+    });
+
+    /**
+     * Workflow: ファイルリンク削除（特定リンク1件）
+     * - wf.links から指定の src→dst ファイルリンクを除去し IO を再同期。
+     * @param {string} projectRootDir - プロジェクトのルートパス
+     * @param {string} srcNode - リンク元コンポーネントID
+     * @param {string} srcName - 出力ファイル名
+     * @param {string} dstNode - リンク先コンポーネントID
+     * @param {string} dstName - 入力ファイル名
+     * @param {string} rootId - ルートワークフローID
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし ACK と push で通知します。
+     */
+    socket.on("removeFileLink", (projectRootDir, srcNode, srcName, dstNode, dstName, rootId, cb)=>{
+      try {
+        const wf = getOrInitWorkflow(projectRootDir, rootId || "root");
+        wf.links = (wf.links || []).filter((lk)=>{
+          if (!lk || !lk.from || !lk.to) return true;
+          return !(lk.from.id === srcNode && lk.from.name === srcName
+            && lk.to.id === dstNode && lk.to.name === dstName);
+        });
+        wf.edges = wf.links;
+        wf.connections = wf.links;
+        const src = (wf.descendants || []).find((n)=>{
+          return n && n.ID === srcNode;
+        });
+        const dst = (wf.descendants || []).find((n)=>{
+          return n && n.ID === dstNode;
+        });
+        if (src && Array.isArray(src.outputFiles)) {
+          const of = src.outputFiles.find((f)=>{
+            return f && f.name === srcName;
+          });
+          if (of && Array.isArray(of.dst)) {
+            of.dst = of.dst.filter((r)=>{
+              return !(r && r.dstNode === dstNode && r.dstName === dstName);
+            });
+          }
+        }
+        if (dst && Array.isArray(dst.inputFiles)) {
+          const inf = dst.inputFiles.find((f)=>{
+            return f && f.name === dstName;
+          });
+          if (inf && Array.isArray(inf.src)) {
+            inf.src = inf.src.filter((r)=>{
+              return !(r && r.srcNode === srcNode && r.srcName === srcName);
+            });
+          }
+        }
+        cb?.(true);
+        io.emit("workflow", clone(wf));
+      } catch (e) {
+        console.warn("[MockServer] removeFileLink error:", e?.message || e);
+        cb?.(false);
+      }
+    });
+
+    /**
+     * Workflow: 入力ファイルに紐づく全ファイルリンク削除
+     * - componentID の inputFileName に関連する全リンクを除去し IO を再同期。
+     * @param {string} projectRootDir - プロジェクトのルートパス
+     * @param {string} componentID - 対象コンポーネントID
+     * @param {string} inputFileName - 入力ファイル名
+     * @param {boolean} fromChildren - 子コンポーネントからのリンクか（未使用、互換用）
+     * @param {string} rootId - ルートワークフローID
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし ACK と push で通知します。
+     */
+    socket.on("removeAllFileLink", (projectRootDir, componentID, inputFileName, fromChildren, rootId, cb)=>{
+      try {
+        const wf = getOrInitWorkflow(projectRootDir, rootId || "root");
+        const removedLinks = (wf.links || []).filter((lk)=>{
+          return lk && lk.to && lk.to.id === componentID && lk.to.name === inputFileName;
+        });
+        wf.links = (wf.links || []).filter((lk)=>{
+          return !(lk && lk.to && lk.to.id === componentID && lk.to.name === inputFileName);
+        });
+        wf.edges = wf.links;
+        wf.connections = wf.links;
+
+        for (const lk of removedLinks) {
+          if (!lk.from) continue;
+          const srcNode = (wf.descendants || []).find((n)=>{
+            return n && n.ID === lk.from.id;
+          });
+          if (srcNode && Array.isArray(srcNode.outputFiles)) {
+            const of = srcNode.outputFiles.find((f)=>{
+              return f && f.name === lk.from.name;
+            });
+            if (of && Array.isArray(of.dst)) {
+              of.dst = of.dst.filter((r)=>{
+                return !(r && r.dstNode === componentID && r.dstName === inputFileName);
+              });
+            }
+          }
+        }
+        const dst = (wf.descendants || []).find((n)=>{
+          return n && n.ID === componentID;
+        });
+        if (dst && Array.isArray(dst.inputFiles)) {
+          dst.inputFiles = dst.inputFiles.filter((f)=>{
+            return !(f && f.name === inputFileName);
+          });
+        }
+        cb?.(true);
+        io.emit("workflow", clone(wf));
+      } catch (e) {
+        console.warn("[MockServer] removeAllFileLink error:", e?.message || e);
+        cb?.(false);
+      }
+    });
+
+    /**
+     * テスト専用: mock server の projectList をリセット
+     * @param {(ok:boolean)=>void} cb - ACK
+     * @returns {void} 返り値なし
+     */
+    socket.on("__testResetProjectList", (cb)=>{
+      STATE.projectList = [];
+      cb?.(true);
+    });
 
     /**
      * テスト専用: clean component テストの事前準備をブラウザ以外のクライアントから要求する
@@ -1692,13 +2125,21 @@ function setupCleanComponentTest(componentName) {
     return rel === componentName || String(rel).includes(componentName);
   });
   if (!nodeEntry) return false;
-  const [, componentRelPath] = nodeEntry;
+  const [nodeId, componentRelPath] = nodeEntry;
   pj.state = "finished";
   const workRoot = resolveWorkingRoot(projectRootDir);
   const testFilePath = normPath(`${workRoot}/${componentRelPath}/_clean_test_marker.txt`);
   addFile(projectRootDir, testFilePath);
+  const wf = getOrInitWorkflow(projectRootDir, "root");
+  const compIdx = wf.descendants.findIndex((n)=>{
+    return n && n.ID === nodeId;
+  });
+  if (compIdx !== -1) {
+    wf.descendants[compIdx].state = "finished";
+  }
   io.emit("projectState", "finished");
   io.emit("projectJson", pj);
+  io.emit("workflow", JSON.parse(JSON.stringify(wf)));
   return true;
 }
 

@@ -12,7 +12,7 @@ const CONTAINER_NAME = "wheel";
  * @param {string} componentName - the component's directory name (or partial name for hpcisstar)
  */
 Cypress.Commands.add("prepareCleanComponentTest", (componentName)=>{
-  const isMock = Cypress.config("baseUrl").includes("3001");
+  const isMock = Cypress.env("USE_MOCK");
   if (isMock) {
     cy.task("setupMockCleanTest", componentName).should("equal", true);
     cy.reload();
@@ -40,25 +40,21 @@ Cypress.Commands.add("prepareCleanComponentTest", (componentName)=>{
         }
         const [, componentRelPath] = entry;
 
-        prj.state = "finished";
-        cy.task("writeJson", { filePath: tmpPrj, data: prj });
-        cy.exec(`docker cp ${tmpPrj} ${CONTAINER_NAME}:${projectPath}/prj.wheel.json`);
-
         const cmpPath = `${projectPath}/${componentRelPath}/cmp.wheel.json`;
+        //Commit any staged files so the component is in HEAD before clean test
+        cy.exec(`docker exec ${CONTAINER_NAME} sh -c "git -C '${projectPath}' commit -m 'test-setup' 2>&1 || true"`);
         cy.exec(`docker cp ${CONTAINER_NAME}:${cmpPath} ${tmpCmp}`);
         cy.task("readJson", tmpCmp).then((cmp)=>{
           cmp.state = "finished";
           cy.task("writeJson", { filePath: tmpCmp, data: cmp });
           cy.exec(`docker cp ${tmpCmp} ${CONTAINER_NAME}:${cmpPath}`);
-          //Commit the state change so HEAD includes this component cleanly
-          cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' add -A`);
-          cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' commit -m "prepareCleanComponentTest"`);
           //Create and stage the marker file so cleanComponent detects it as unsavedFiles
           const markerPath = `${projectPath}/${componentRelPath}/_clean_test_marker.txt`;
           cy.exec(`docker exec ${CONTAINER_NAME} sh -c "echo test > '${markerPath}'"`);
           cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' add '${markerPath}'`);
           cy.reload();
-          cy.checkProjectStatus("finished");
+          cy.get("[data-cy=\"graph-component-row\"]").contains(componentName, { timeout: 20000 })
+            .should("be.visible");
         });
       });
     });
@@ -166,6 +162,7 @@ Cypress.Commands.add("createDirOrFile", (type, fileName, clickRun)=>{
       .type(fileName, { force: true });
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
       .first()
+      .should("not.be.disabled")
       .click();
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("not.exist");
     cy.wait(200);
@@ -176,6 +173,7 @@ Cypress.Commands.add("createDirOrFile", (type, fileName, clickRun)=>{
       .type(fileName, { force: true });
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
       .first()
+      .should("not.be.disabled")
       .click();
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("not.exist");
     cy.wait(200);
@@ -219,11 +217,22 @@ Cypress.Commands.add("confirmDisplayInProperty", (dataCyStr, visibleFlg)=>{
 
 //confirm the display in the property by details area
 Cypress.Commands.add("confirmDisplayInPropertyByDetailsArea", (dataCyStr, clickAreaName, tagType)=>{
-  cy.get(clickAreaName).click();
+  cy.get(clickAreaName).scrollIntoView()
+    .click();
   if (tagType === null) {
-    cy.get(dataCyStr).should("be.visible");
+    //The expansion-panel enter animation applies overflow:hidden inline style while running.
+    //scrollIntoView called mid-animation may scroll to an intermediate position that becomes
+    //stale once the panel reaches full height.  Wrapping both the scroll and the visibility
+    //check inside a single .should() callback causes Cypress to retry the entire pair on each
+    //attempt, so the element is re-scrolled into view on every retry until the animation
+    //completes and Cypress.dom.isVisible passes.
+    cy.get(dataCyStr).should(($el)=>{
+      $el[0].scrollIntoView({ behavior: "instant" });
+      expect(Cypress.dom.isVisible($el[0]), "element should be visible after scroll").to.be.true;
+    });
   } else {
     cy.get(dataCyStr).find(tagType)
+      .scrollIntoView()
       .should("be.visible");
   }
 });
@@ -281,9 +290,9 @@ Cypress.Commands.add("createComponentNotOpenProperty", (targetComponentName, com
 //delete a component
 Cypress.Commands.add("deleteComponent", (componentName)=>{
   cy.get("[data-cy=\"graph-component-row\"]").contains(componentName)
-    .rightclick();
+    .rightclick({ force: true });
   cy.get("[data-cy=\"graph-component-row\"]").contains("delete")
-    .click();
+    .click({ force: true });
   cy.contains("button", "Delete").click();
 });
 
@@ -464,4 +473,15 @@ Cypress.Commands.add("checkConnectionLineMultiple", (startComponentName, endComp
       });
     });
   });
+});
+
+/**
+ * Click an item inside a treeview, waiting for the item to be present first.
+ * This avoids DOM detachment errors caused by async treeview re-renders.
+ * @param {string} treeviewCy - the data-cy selector of the treeview root element
+ * @param {string} text - the visible text of the item to click
+ */
+Cypress.Commands.add("clickTreeviewItem", (treeviewCy, text)=>{
+  cy.get(treeviewCy).should("contain.text", text);
+  cy.contains(treeviewCy, text).click();
 });

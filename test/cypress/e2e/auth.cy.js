@@ -68,6 +68,7 @@ describe("wheel authorization test", ()=>{
       cy.get("[data-cy=\"home-project_name-text_field\"]").find("input")
         .type(projectName, { force: true });
       cy.get("[data-cy=\"buttons-create-btn\"]").click({ force: true });
+      cy.contains("tr", projectName, { timeout: 10000 }).should("exist");
     });
     after(()=>{
       //remove project

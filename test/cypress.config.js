@@ -83,6 +83,29 @@ export default defineConfig({
         "stop:mock-server": ()=>{
           return mockServer.stop();
         },
+        "resetMockProjectList": ()=>{
+          //Connect to Docker mock via socket.io-client and reset project list
+          return new Promise((resolve, reject)=>{
+            const { io: sioClient } = require("socket.io-client");
+            const client = sioClient("http://localhost:3101", { path: "/socket.io/", transports: ["websocket"] });
+            const timeoutId = setTimeout(()=>{
+              client.disconnect();
+              reject(new Error("resetMockProjectList: connection timeout"));
+            }, 5000);
+            client.on("connect", ()=>{
+              client.emit("__testResetProjectList", (ok)=>{
+                clearTimeout(timeoutId);
+                client.disconnect();
+                resolve(ok);
+              });
+            });
+            client.on("connect_error", (err)=>{
+              clearTimeout(timeoutId);
+              client.disconnect();
+              reject(err);
+            });
+          });
+        },
         "setupMockCleanTest": (componentName)=>{
           const result = mockServer.setupCleanComponentTest(componentName);
           if (result !== false) return result;

@@ -126,6 +126,11 @@ describe("components", ()=>{
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").should("not.contain.text", "_clean_test_marker.txt");
       cy.closeProperty();
+      cy.get("[data-cy=\"graph-component-row\"]").contains(SOURCE_NAME_0)
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("delete")
+        .should("be.visible");
+      cy.get("body").type("{esc}");
     });
 
     /**
@@ -310,7 +315,8 @@ describe("components", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-source_file_name-text_field\"]";
       cy.get(targetDropBoxCy).find("input")
         .clear()
-        .type("test-a");
+        .type("test-a")
+        .blur(); //trigger @change on the field before closing the property
       cy.closeProperty();
       cy.clickComponentName(SOURCE_NAME_0);
       cy.get("[data-cy=\"component_property-upload_setting-panel_title\"]").click();

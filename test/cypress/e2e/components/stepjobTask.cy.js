@@ -552,6 +552,10 @@ describe("components", ()=>{
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_1, 501, 700);
       cy.closeProperty();
       cy.connectComponentMultiple(STEPJOB_TASK_NAME_0, STEPJOB_TASK_NAME_1); //コンポーネント同士を接続
+      //Wait for the connection to be reflected in the DOM (cubic-bezier-path exists only after the
+      //server processes addLink, runs updateStepNumber, and sends back the workflow event).
+      //This ensures componentData.stepnum is already updated before we open the property panel.
+      cy.checkConnectionLine(STEPJOB_TASK_NAME_0, STEPJOB_TASK_NAME_1);
       cy.clickComponentName(STEPJOB_TASK_NAME_1);
       cy.get("[data-cy=\"component_property-stepjob_task-panel_title\"]").scrollIntoView()
         .click();

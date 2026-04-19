@@ -59,6 +59,7 @@ function isStaticRequest(url) {
   // query付きでも判定できるようにする
   const path = url.split("?")[0];
   if (path === "/") return true;
+  if (path === "/home") return true;
   if (path.startsWith("/assets/")) return true;
   if (path.startsWith("/siofu/")) return true;
   if (path.endsWith(".html")) return true;

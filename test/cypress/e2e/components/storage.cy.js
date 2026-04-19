@@ -207,6 +207,11 @@ describe("components", ()=>{
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").should("not.contain.text", "_clean_test_marker.txt");
       cy.closeProperty();
+      cy.get("[data-cy=\"graph-component-row\"]").contains(STORAGE_NAME_0)
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]", { timeout: 15000 }).contains("delete")
+        .should("be.visible");
+      cy.get("body").type("{esc}");
     });
 
     /**

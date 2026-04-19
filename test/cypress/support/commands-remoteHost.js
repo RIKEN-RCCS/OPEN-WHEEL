@@ -4,6 +4,15 @@ Cypress.Commands.add("openRemoteHostMenu", ()=>{
   cy.visit("/").wait(ANIMATION_WAIT_TIME);
   cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
   cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").click();
+  //Wait for both socket responses (getHostList + getJobSchedulerLabelList) to complete.
+  //When both are done, isLoaded becomes true and Vuetify removes the v-data-table--loading class.
+  //This ensures all Vue re-renders triggered by the data updates have finished before we proceed.
+  cy.get("[data-cy=\"remotehost-items-data_table\"]").should("not.have.class", "v-data-table--loading");
+  //Wait for VDialogTransition opening animation to complete.
+  //VDialogTransition.onBeforeEnter sets pointer-events:none on .v-overlay__content and
+  //only removes it in onAfterEnter (after ~225ms animation). If we click while pointer-events
+  //is still none, Cypress waits for actionability and a concurrent Vue re-render detaches the button.
+  cy.get(".v-overlay--active .v-overlay__content").should("not.have.css", "pointer-events", "none");
 });
 
 //remove remote host setting
