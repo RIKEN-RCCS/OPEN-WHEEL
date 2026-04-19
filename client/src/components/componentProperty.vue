@@ -913,9 +913,7 @@ export default {
       }
     },
     selectedComponent(newValue, oldValue) {
-      if (newValue !== null) {
-        this.drawerVisible = true;
-      }
+      this.drawerVisible = newValue !== null;
       if (!this.selectedComponent || (newValue !== null && oldValue !== null && newValue.ID === oldValue.ID)) {
         return;
       }
