@@ -47,7 +47,9 @@ describe("remote host", ()=>{
         if ($body.find("[data-cy=\"add_new_host-cancel-btn\"]").length) {
           cy.get("[data-cy=\"add_new_host-cancel-btn\"]").click({ force: true });
         }
-        if (!$body.find("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").length) {
+        //Check the data table (not the button) to determine if the dialog is open.
+        //The button can briefly detach during Vue re-renders while the dialog stays open.
+        if (!$body.find("[data-cy=\"remotehost-items-data_table\"]").length) {
           cy.openRemoteHostMenu();
         }
       });
@@ -81,7 +83,17 @@ describe("remote host", ()=>{
   試験確認内容：リモートホスト設定作成ダイアログが表示されていることを確認
      */
     it("構成要素の機能動作確認-「NEW REMOTE HOST SETTINGS」ボタン押下-リモートホスト設定作成ダイアログが表示されていることを確認", ()=>{
-      cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
+      //Re-open the remote host dialog if Vuetify's overlay management closed it between
+      //afterEach and this test. openRemoteHostMenu() skips the nav icon click when the
+      //navigation drawer is already open to avoid toggling it closed accidentally.
+      cy.openRemoteHostMenu();
+      //Use native DOM .click() via .then() to bypass Cypress's synthetic pointer-event chain.
+      //cy.click() fires pointerover/mouseenter which triggers Vuetify's ripple (reactive),
+      //causing the button to repeatedly detach/re-attach and fail actionability checks.
+      cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]")
+        .then(($btn)=>{
+          $btn.get(0).click();
+        });
       cy.get("[data-cy=\"add_new_host-add_new_host-card_title\"]").should("be.visible");
     });
 

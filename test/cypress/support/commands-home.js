@@ -70,8 +70,7 @@ Cypress.Commands.add("waitProjectList", (timeout = 20000)=>{
 });
 
 Cypress.Commands.add("waitProjectAppear", (projectName, timeout = 20000)=>{
-  return cy.get("[data-cy=\"home-project_name-btn\"]", { timeout })
-    .contains(projectName)
+  return cy.contains("[data-cy=\"home-project_name-btn\"]", projectName, { timeout })
     .should("be.visible");
 });
 

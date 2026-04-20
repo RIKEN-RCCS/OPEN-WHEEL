@@ -545,7 +545,7 @@ Cypress.Commands.add("execProject", ()=>{
 });
 
 //Project status check
-Cypress.Commands.add("checkProjectStatus", (status, timeout = 300000)=>{
+Cypress.Commands.add("checkProjectStatus", (status, timeout = 10000)=>{
   return cy.get("[data-cy=\"workflow-project_state-btn\"]", { timeout })
     .should("contain.text", status);
 });

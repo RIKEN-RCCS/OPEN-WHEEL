@@ -1,18 +1,48 @@
 const ANIMATION_WAIT_TIME = 500;
 //open remote host setting menu
 Cypress.Commands.add("openRemoteHostMenu", ()=>{
-  cy.visit("/").wait(ANIMATION_WAIT_TIME);
-  cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
-  cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").click();
+  //Only reload the home page if we are not already there.
+  //Skipping cy.visit() when already on home avoids a socket reconnect that can
+  //cause the remote host dialog to close before the next test starts.
+  cy.url().then((url)=>{
+    if (!url.match(/^http:\/\/localhost:8089\/?$/)) {
+      cy.visit("/");
+      cy.wait(ANIMATION_WAIT_TIME);
+    }
+  });
+  //If the remote host dialog is already fully open (button visible = data loaded + animation done),
+  //skip navigation entirely to avoid the nav icon click race condition.
+  //We check the NEW button visibility rather than the data table because:
+  //- data table can briefly remain in DOM while the dialog is CLOSING (lazy unmount),
+  //and Vuetify removes v-overlay--active immediately when modelValue becomes false.
+  //- the NEW button being visible confirms the dialog is truly open AND data has loaded.
+  cy.get("body").then(($body)=>{
+    if ($body.find("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").is(":visible")) {
+      return;
+    }
+    //Wait for any in-progress nav drawer animation to settle before checking state.
+    //A body snapshot taken during animation may show the button as invisible even
+    //though the drawer is open, causing a spurious nav icon click that toggles it closed.
+    cy.wait(ANIMATION_WAIT_TIME);
+    //Check nav drawer state AFTER animation settled via cy.get().then() (live DOM, not snapshot).
+    //Only click nav icon when the button is confirmed not visible post-animation.
+    cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").then(($btn)=>{
+      if (!$btn.is(":visible")) {
+        cy.get("[data-cy=\"tool_bar-navi-icon\"]").click();
+        cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").should("be.visible");
+      }
+      cy.get("[data-cy=\"navigation-manage_remote_host-btn\"]").click();
+    });
+  });
   //Wait for both socket responses (getHostList + getJobSchedulerLabelList) to complete.
   //When both are done, isLoaded becomes true and Vuetify removes the v-data-table--loading class.
-  //This ensures all Vue re-renders triggered by the data updates have finished before we proceed.
   cy.get("[data-cy=\"remotehost-items-data_table\"]").should("not.have.class", "v-data-table--loading");
-  //Wait for VDialogTransition opening animation to complete.
-  //VDialogTransition.onBeforeEnter sets pointer-events:none on .v-overlay__content and
-  //only removes it in onAfterEnter (after ~225ms animation). If we click while pointer-events
-  //is still none, Cypress waits for actionability and a concurrent Vue re-render detaches the button.
-  cy.get(".v-overlay--active .v-overlay__content").should("not.have.css", "pointer-events", "none");
+  //Wait for the NEW button to be visible (confirms dialog animation complete and data loaded).
+  //The .v-overlay--active .v-overlay__content pointer-events check was removed because:
+  //- test 3 uses native DOM click ($btn.get(0).click()), which bypasses pointer-events checks.
+  //- checking v-overlay--active fails when the command runs during a dialog close animation
+  //(Vuetify removes v-overlay--active immediately on modelValue=false, before lazy-unmount).
+  cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").should("be.visible");
 });
 
 //remove remote host setting

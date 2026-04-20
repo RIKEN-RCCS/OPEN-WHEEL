@@ -12,7 +12,7 @@ const CONTAINER_NAME = "wheel";
  * @param {string} componentName - the component's directory name (or partial name for hpcisstar)
  */
 Cypress.Commands.add("prepareCleanComponentTest", (componentName)=>{
-  const isMock = Cypress.env("USE_MOCK");
+  const isMock = Cypress.config("baseUrl").includes("3001");
   if (isMock) {
     cy.task("setupMockCleanTest", componentName).should("equal", true);
     cy.reload();
@@ -411,7 +411,7 @@ Cypress.Commands.add("checkPropertyScreenOpen", (propertyCy)=>{
 Cypress.Commands.add("checkConnectionLine", (startComponentName, endComponentName)=>{
   //Simply check that a connection line (cubic-bezier-path) exists
   //The connection was created successfully if this element is present
-  cy.get("[data-cy=\"cubic-bezier-path\"]", { timeout: 30000 })
+  cy.get("[data-cy=\"cubic-bezier-path\"]", { timeout: 10000 })
     .should("exist")
     .and("have.length.at.least", 1);
 });
