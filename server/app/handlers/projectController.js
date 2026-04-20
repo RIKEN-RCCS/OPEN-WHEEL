@@ -28,6 +28,7 @@ import { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, s
 import { emitAll, emitWithPromise } from "./commUtils.js";
 import { removeTempd, getTempd } from "../core/tempd.js";
 import { validateComponents } from "../core/validateComponents.js";
+import { stopProjectEdits, startProjectEdits, clearProjectEdits } from "./workflowEditor.js";
 import { writeJsonWrapper } from "../lib/utility.js";
 import { checkJWTAgent, startJWTAgent } from "../core/gfarmOperator.js";
 import allowedOperations from "../../../common/allowedOperations.js";
@@ -177,6 +178,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
   if (projectState !== "paused") {
   //validation check
     try {
+      await stopProjectEdits(projectRootDir);
       const report = await validateComponents(projectRootDir);
       const nonIgnoreableErrors = report.filter((entry)=>{ return entry.errors.some((e)=>{ return !e.ignoreable; }); });
       if (nonIgnoreableErrors.length > 0) {
@@ -190,6 +192,8 @@ async function onRunProject(clientID, projectRootDir, ack) {
       getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
       ack(err);
       return false;
+    } finally {
+      startProjectEdits(projectRootDir);
     }
     //interactive phase
     try {
@@ -418,11 +422,16 @@ async function onCleanProject(clientID, projectRootDir) {
     }
     throw err;
   }
-  await Promise.all([
-    cleanProject(projectRootDir),
-    removeTempd(projectRootDir, "viewer"),
-    removeTempd(projectRootDir, "download")
-  ]);
+  try {
+    await clearProjectEdits(projectRootDir);
+    await Promise.all([
+      cleanProject(projectRootDir),
+      removeTempd(projectRootDir, "viewer"),
+      removeTempd(projectRootDir, "download")
+    ]);
+  } finally {
+    startProjectEdits(projectRootDir);
+  }
 }
 _internal.onCleanProject = onCleanProject;
 

@@ -3,6 +3,7 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
+import SBS from "simple-batch-system";
 import { getLogger } from "../logSettings.js";
 import {
   addInputFile,
@@ -38,8 +39,20 @@ import { sendWorkflow, sendProjectJson, sendComponentTree } from "./senders.js";
 import { convertPathSep } from "../core/pathUtils.js";
 import { updateComponent, updateComponentPos } from "../core/updateComponent.js";
 
-/**@type {Map<string, Promise<void>>} */
-const projectQueues = new Map();
+/**@type {Map<string, SBS>} */
+const projectEditQueues = new Map();
+
+/**
+ * Get or create the SBS edit queue for a project.
+ * @param {string} projectRootDir - unique key identifying the project
+ * @returns {SBS} the SBS instance for this project
+ */
+function getProjectEditQueue(projectRootDir) {
+  if (!projectEditQueues.has(projectRootDir)) {
+    projectEditQueues.set(projectRootDir, new SBS({ maxConcurrent: 1, name: `projectEdit:${projectRootDir}` }));
+  }
+  return projectEditQueues.get(projectRootDir);
+}
 
 /**
  * Enqueue an async operation for a project, ensuring serial execution per project.
@@ -49,18 +62,52 @@ const projectQueues = new Map();
  * @returns {Promise} resolves or rejects with the result of fn
  */
 function enqueueProjectOperation(projectRootDir, fn) {
-  const prev = (projectQueues.get(projectRootDir) ?? Promise.resolve()).catch(()=>{});
-  const next = prev.then(fn);
-  const stored = next.catch(()=>{});
-  projectQueues.set(projectRootDir, stored);
-  stored.then(()=>{
-    if (projectQueues.get(projectRootDir) === stored) {
-      projectQueues.delete(projectRootDir);
-    }
-  });
-  return next;
+  return getProjectEditQueue(projectRootDir).qsubAndWait({ exec: fn });
 }
 export { enqueueProjectOperation };
+
+/**
+ * Stop accepting new edit operations and wait for any in-flight operation to
+ * complete.  Call startProjectEdits() when done to re-enable edits.
+ * Intended for the validation phase of runProject so that validateComponents
+ * reads component JSON only after all pending writes are flushed to disk.
+ * @param {string} projectRootDir - project's root directory
+ * @returns {Promise<void>} resolves once all in-flight operations have finished
+ */
+export async function stopProjectEdits(projectRootDir) {
+  const queue = getProjectEditQueue(projectRootDir);
+  queue.stop();
+  const runningIds = queue.getRunning();
+  await Promise.all(runningIds.map((id)=>{
+    return queue.qwait(id).catch(()=>{});
+  }));
+}
+
+/**
+ * Re-enable edit operations after a stopProjectEdits() call.
+ * @param {string} projectRootDir - project's root directory
+ */
+export function startProjectEdits(projectRootDir) {
+  getProjectEditQueue(projectRootDir).start();
+}
+
+/**
+ * Remove all waiting edit operations and wait for any in-flight operation to
+ * complete.  Intended for cleanProject, which resets files to git HEAD — any
+ * stale writes queued before the clean must not execute afterwards.
+ * Call startProjectEdits() afterwards to re-enable edits.
+ * @param {string} projectRootDir - project's root directory
+ * @returns {Promise<void>} resolves once all in-flight operations have finished
+ */
+export async function clearProjectEdits(projectRootDir) {
+  const queue = getProjectEditQueue(projectRootDir);
+  queue.stop();
+  const runningIds = queue.getRunning();
+  queue.clear();
+  await Promise.all(runningIds.map((id)=>{
+    return queue.qwait(id).catch(()=>{});
+  }));
+}
 
 async function generalHandler(func, funcname, projectRootDir, parentID, needSendProjectJson, cb) {
   return enqueueProjectOperation(projectRootDir, async ()=>{
