@@ -1064,6 +1064,7 @@ export default {
       const ID = this.selectedComponent.ID;
       SIO.emitGlobal("toggleInputFileMandatory", this.projectRootDir, ID, index, value, this.currentComponent.ID, SIO.generalCallback);
     },
+
     addToOutputFiles(v) {
       this.copySelectedComponent.outputFiles.push(v);
       const ID = this.selectedComponent.ID;
