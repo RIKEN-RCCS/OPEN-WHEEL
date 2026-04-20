@@ -76,11 +76,11 @@ export { enqueueProjectOperation };
  */
 export async function stopProjectEdits(projectRootDir) {
   const queue = getProjectEditQueue(projectRootDir);
+  //Submit a no-op sentinel to the END of the serial queue (maxConcurrent:1).
+  //It can only run after ALL preceding edit ops complete, so awaiting it
+  //guarantees all pending writes are flushed before validateComponents reads them.
+  await queue.qsubAndWait({ exec: async ()=>{} }).catch(()=>{});
   queue.stop();
-  const runningIds = queue.getRunning();
-  await Promise.all(runningIds.map((id)=>{
-    return queue.qwait(id).catch(()=>{});
-  }));
 }
 
 /**

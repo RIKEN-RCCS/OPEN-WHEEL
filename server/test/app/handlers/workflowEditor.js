@@ -21,12 +21,16 @@ describe("workflowEditor UT", ()=>{
 
       const op1 = enqueueProjectOperation(project, async ()=>{
         order.push("op1-start");
-        await new Promise((resolve)=>{ return setTimeout(resolve, 20); });
+        await new Promise((resolve)=>{
+          return setTimeout(resolve, 20);
+        });
         order.push("op1-end");
       });
       const op2 = enqueueProjectOperation(project, async ()=>{
         order.push("op2-start");
-        await new Promise((resolve)=>{ return setTimeout(resolve, 10); });
+        await new Promise((resolve)=>{
+          return setTimeout(resolve, 10);
+        });
         order.push("op2-end");
       });
 
@@ -42,12 +46,16 @@ describe("workflowEditor UT", ()=>{
 
       const opA = enqueueProjectOperation(projectA, async ()=>{
         order.push("A-start");
-        await new Promise((resolve)=>{ return setTimeout(resolve, 30); });
+        await new Promise((resolve)=>{
+          return setTimeout(resolve, 30);
+        });
         order.push("A-end");
       });
       const opB = enqueueProjectOperation(projectB, async ()=>{
         order.push("B-start");
-        await new Promise((resolve)=>{ return setTimeout(resolve, 10); });
+        await new Promise((resolve)=>{
+          return setTimeout(resolve, 10);
+        });
         order.push("B-end");
       });
 
@@ -80,9 +88,13 @@ describe("workflowEditor UT", ()=>{
       const project = "/test/project-cleanup";
       let count = 0;
 
-      await enqueueProjectOperation(project, async ()=>{ count++; });
+      await enqueueProjectOperation(project, async ()=>{
+        count++;
+      });
       //queue should be empty now; a new enqueue must still work
-      await enqueueProjectOperation(project, async ()=>{ count++; });
+      await enqueueProjectOperation(project, async ()=>{
+        count++;
+      });
       expect(count).to.equal(2);
     });
   });
@@ -103,9 +115,6 @@ describe("workflowEditor UT", ()=>{
         });
         opCompleted = true;
       }).catch(()=>{});
-
-      //Let SBS's internal setTimeout(0) fire so the op enters "running" state.
-      await new Promise((resolve)=>{ setTimeout(resolve, 0); });
 
       await stopProjectEdits(project);
       expect(opCompleted).to.be.true;
@@ -158,7 +167,9 @@ describe("workflowEditor UT", ()=>{
       }).catch(()=>{});
 
       //Let SBS's internal setTimeout(0) fire so the op enters "running" state.
-      await new Promise((resolve)=>{ setTimeout(resolve, 0); });
+      await new Promise((resolve)=>{
+        setTimeout(resolve, 0);
+      });
 
       await clearProjectEdits(project);
       expect(opCompleted).to.be.true;
@@ -182,7 +193,9 @@ describe("workflowEditor UT", ()=>{
 
       //Let SBS's internal setTimeout(0) fire so op1 enters "running" state
       //and op2 stays in the waiting queue.
-      await new Promise((resolve)=>{ setTimeout(resolve, 0); });
+      await new Promise((resolve)=>{
+        setTimeout(resolve, 0);
+      });
 
       await clearProjectEdits(project);
       //op1 was running so it completes; op2 was waiting and should be discarded
