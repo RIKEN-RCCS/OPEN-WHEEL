@@ -22,6 +22,7 @@ describe("components", ()=>{
 
     beforeEach(()=>{
       cy.viewport("macbook-16");
+      cy.task("resetMockProjectList");
       return cy.createAndOpenProject();
     });
 
