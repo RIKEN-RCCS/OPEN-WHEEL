@@ -45,6 +45,14 @@ jobs:
             -e WHEEL_LOGLEVEL=ERROR \
             wheel_e2e_test
           docker cp test/wheel_config/. wheel:/root/.wheel/
+          docker run -d --name wheel_auth --network wheel-e2e-net \
+            -p 8090:8089 \
+            -e WHEEL_USE_HTTP=1 \
+            -e WHEEL_ANONYMOUS_LOGIN=YES \
+            -e WHEEL_ANONYMOUS_PASSWORD=WheelTest123! \
+            -e WHEEL_LOGLEVEL=ERROR \
+            wheel_e2e_test
+          docker cp test/wheel_config_auth/. wheel_auth:/root/.wheel/
           docker run -d --name mock --network wheel-e2e-net \
             -p 3101:3101 \
             -p 3102:3102 \
@@ -65,6 +73,7 @@ jobs:
         working-directory: test
         run: |
           timeout 300 bash -c 'until curl -sf http://localhost:8089 > /dev/null 2>&1; do sleep 2; done'
+          timeout 300 bash -c 'until curl -sf http://localhost:8090 > /dev/null 2>&1; do sleep 2; done'
           npx wait-on tcp:127.0.0.1:3001 tcp:127.0.0.1:3101 tcp:127.0.0.1:3102 --timeout 60000
       - name: Run E2E tests with mock server
         working-directory: test
@@ -75,6 +84,7 @@ jobs:
           docker logs gateway > /tmp/gateway.log 2>&1 || true
           docker logs mock > /tmp/mock.log 2>&1 || true
           docker logs wheel > /tmp/wheel.log 2>&1 || true
+          docker logs wheel_auth > /tmp/wheel_auth.log 2>&1 || true
       - name: Upload container logs
         if: failure()
         uses: actions/upload-artifact@v4
@@ -101,6 +111,6 @@ jobs:
       - name: Stop all containers and cleanup
         if: always()
         run: |
-          docker stop gateway mock wheel || true
-          docker rm gateway mock wheel || true
+          docker stop gateway mock wheel wheel_auth || true
+          docker rm gateway mock wheel wheel_auth || true
           docker network rm wheel-e2e-net || true

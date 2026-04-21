@@ -39,6 +39,7 @@
     "http-proxy": "^1.18.1",
     "simple-ssh": "^1.1.1",
     "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "socketio-file-upload": "^0.7.3",
     "tar": "^7.4.3",
     "vite": "^7.1.12",
