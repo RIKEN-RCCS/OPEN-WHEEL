@@ -98,7 +98,7 @@ Cypress.Commands.add("selectValueFromDropdownList", (targetDropBoxCy, dropBoxNo,
   cy.get("[role=\"listbox\"]").should("be.visible");
   cy.get("[role=\"listbox\"]").contains(selectVal, { timeout: 10000 })
     .should("be.visible")
-    .click();
+    .click({ force: true });
 });
 
 //save property

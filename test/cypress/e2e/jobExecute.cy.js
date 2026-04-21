@@ -53,7 +53,6 @@ describe("jobExecute", ()=>{
     cy.connectComponentMultiple(WORKFLOW_NAME_0, WHILE_NAME_0);
     //workflow選択
     cy.doubleClickComponentName(WORKFLOW_NAME_0);
-
     //foreach作成
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
     cy.setForeachLoop(2);
