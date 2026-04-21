@@ -30,6 +30,7 @@
           v-model="mode"
           class="mt-n1"
           :items="modes"
+          :menu-props="{ transition: false }"
         />
         <v-switch
           v-if="! readOnly"

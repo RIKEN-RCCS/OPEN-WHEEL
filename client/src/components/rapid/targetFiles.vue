@@ -67,6 +67,7 @@
               label="filename"
               :items="fileCandidates"
               :rules="[required, notDupulicated]"
+              :menu-props="{ transition: false }"
               data-cy="target_files-target_file_name-text_field"
             />
           </div>

@@ -100,6 +100,7 @@
               label="script"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-script-autocomplete"
@@ -111,6 +112,7 @@
               label="host"
               :readonly="readOnly"
               :items="hostCandidates"
+              :menu-props="{ transition: false }"
               variant="outlined"
               data-cy="component_property-host-select"
             />
@@ -129,6 +131,7 @@
               label="queue"
               :readonly="readOnly"
               :items="queues"
+              :menu-props="{ transition: false }"
               variant="outlined"
               data-cy="component_property-queue-select"
             />
@@ -177,6 +180,7 @@
               label="checker script"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-checker-autocomplete"
@@ -204,6 +208,7 @@
               label="script name for condition check"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-task_use_javascript-autocomplete"
@@ -388,6 +393,7 @@
               label="parameterFile"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-parameter_file-autocomplete"
@@ -455,6 +461,7 @@
               label="parameter file"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-parameter_file_bulkjob-autocomplete"
@@ -499,6 +506,7 @@
                 label="script name for condition check"
                 :readonly="readOnly"
                 :items="scriptCandidates"
+                :menu-props="{ transition: false }"
                 clearable
                 variant="outlined"
                 data-cy="component_property-balkjob_use_javascript-autocomplete"
@@ -530,6 +538,7 @@
               label="script name for condition check"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-condition_use_javascript-autocomplete"

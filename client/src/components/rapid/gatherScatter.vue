@@ -102,6 +102,7 @@
                   label="filename"
                   :items="srcFileCandidates"
                   :rules="[required, notDupulicated]"
+                  :menu-props="{ transition: false }"
                   data-cy="gather_scatter-srcName_text_field"
                 />
               </div>

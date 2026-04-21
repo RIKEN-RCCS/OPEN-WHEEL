@@ -34,6 +34,7 @@
         v-model="center"
         label="HPC center"
         :items="centerNames"
+        :menu-props="{ transition: false }"
       />
       <div v-if="template !== null">
         <div
@@ -45,6 +46,7 @@
             v-model="v.value"
             :label="v.label"
             :items="v.items"
+            :menu-props="{ transition: false }"
           />
           <v-text-field
             v-else-if="v.type==='number'"

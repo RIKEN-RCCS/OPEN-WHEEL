@@ -94,6 +94,7 @@
                           v-model="host.jobScheduler"
                           :items="availableJobSchedulers"
                           label="job scheduler"
+                          :menu-props="{ transition: false }"
                           data-cy="add_new_host-job_schedulers-select"
                         />
                       </v-col>
@@ -111,6 +112,7 @@
                           multiple
                           chips
                           closable-chips
+                          :menu-props="{ transition: false }"
                           data-cy="add_new_host-available_queues-combobox"
                         />
                       </v-col>
@@ -133,6 +135,7 @@
                           v-model="host.sharedHost"
                           :items="hostNames"
                           label="shared host"
+                          :menu-props="{ transition: false }"
                           data-cy="add_new_host-shared_host-select"
                           clearable
                         />

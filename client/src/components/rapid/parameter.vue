@@ -68,6 +68,7 @@
             v-model="newItem.type"
             variant="outlined"
             :items="['min-max-step', 'list', 'files']"
+            :menu-props="{ transition: false }"
             data-cy="parameter-parameter_setting-select"
           />
           <v-row v-if="newItem.type==='min-max-step'">
