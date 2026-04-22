@@ -76,6 +76,13 @@ export default defineConfig({
     setupNodeEvents(on) {
       process.env.MOCK_DEBUG = process.env.MOCK_DEBUG ?? "0";
       process.env.GW_DEBUG = process.env.GW_DEBUG ?? "0";
+      on("before:browser:launch", (browser, launchOptions)=>{
+        if (browser.family === "chromium" && process.env.CI) {
+          //Prevent Chrome renderer crash in CI (GitHub Actions /dev/shm is only 64MB)
+          launchOptions.args.push("--disable-dev-shm-usage");
+        }
+        return launchOptions;
+      });
       on("task", {
         "start:mock-server": (port)=>{
           return mockServer.start(port);

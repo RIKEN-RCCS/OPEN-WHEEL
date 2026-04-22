@@ -15,6 +15,10 @@
  */
 Cypress.Commands.add("goHome", ()=>{
   cy.window().then((win)=>{
+    // If the current page is not on the expected baseUrl server, navigate there directly.
+    if (!win.location.href.startsWith(Cypress.config("baseUrl"))) {
+      return cy.visit("/");
+    }
     const homeLink = win.document.querySelector("[href='./home']");
     if (homeLink) {
       return cy.wrap(homeLink).click({ force: true });
