@@ -75,6 +75,8 @@ jobs:
           timeout 300 bash -c 'until curl -sf http://localhost:8089 > /dev/null 2>&1; do sleep 2; done'
           timeout 300 bash -c 'until curl -sf http://localhost:8090 > /dev/null 2>&1; do sleep 2; done'
           npx wait-on tcp:127.0.0.1:3001 tcp:127.0.0.1:3101 tcp:127.0.0.1:3102 --timeout 60000
+      - name: Increase /dev/shm size for Chrome
+        run: sudo mount -t tmpfs -o size=512m tmpfs /dev/shm
       - name: Run E2E tests with mock server
         working-directory: test
         run: npm run test:e2e:mock:run
