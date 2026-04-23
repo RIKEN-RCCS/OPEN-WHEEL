@@ -306,13 +306,15 @@ describe("components", ()=>{
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -338,13 +340,15 @@ describe("components", ()=>{
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -372,13 +376,15 @@ describe("components", ()=>{
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -405,13 +411,15 @@ describe("components", ()=>{
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -437,13 +445,15 @@ describe("components", ()=>{
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -471,13 +481,15 @@ describe("components", ()=>{
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -504,13 +516,15 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
         .should("exist")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -536,7 +550,8 @@ describe("components", ()=>{
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();

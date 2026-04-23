@@ -76,6 +76,10 @@ Cypress.Commands.add("clickComponentName", (componentName)=>{
   cy.get("[data-cy=\"graph-component-row\"]").contains(componentName)
     .click();
   cy.get("[data-cy=\"component_property-property-navigation_drawer\"]", { timeout: 5000 }).should("be.visible");
+  //Reset window scroll after the panel opens: clicking the SVG component name
+  //can scroll the window down, which would put the absolute-positioned navigation
+  //drawer's elements at negative y-coordinates (outside the viewport).
+  cy.scrollTo(0, 0);
 });
 
 //double click component
@@ -196,7 +200,8 @@ Cypress.Commands.add("cleanFileBrowserItems", (names)=>{
       if (treeview.length > 0 && treeview.text().includes(name)) {
         cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains(name)
           .click();
-        cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+        cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+          .click();
         cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
           .first()
           .click();
@@ -483,5 +488,6 @@ Cypress.Commands.add("checkConnectionLineMultiple", (startComponentName, endComp
  */
 Cypress.Commands.add("clickTreeviewItem", (treeviewCy, text)=>{
   cy.get(treeviewCy).should("contain.text", text);
-  cy.contains(treeviewCy, text).click();
+  cy.get(treeviewCy).contains(text)
+    .click({ force: true });
 });

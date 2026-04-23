@@ -1002,7 +1002,7 @@ describe("components", ()=>{
     it("プロパティ設定確認-シェルスクリプト選択セレクトボックス表示確認-シェルスクリプト選択セレクトボックスが表示されていることを確認", ()=>{
       cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]").find("input")
-        .should("be.not.visible");
+        .should("be.visible");
     });
 
     /**
