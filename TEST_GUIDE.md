@@ -145,7 +145,7 @@ npx cypress install
 |--------|----------|--------------|--------|---------|
 | 非モック | `npm run test:e2e` | Docker Compose で起動 | なし | モックなし全体テスト |
 | モックサーバー (デフォルト) | `npm run test:e2e:mock` | Docker Compose で起動 | あり (Docker) | ローカル開発・標準テスト |
-| Qualifying | `npm run test:e2e:qualifying` | 事前起動済みを使用 | なし | 既存サーバーへの評価テスト |
+| リモート | `npm run test:e2e:remote` | 事前起動済みを使用 | なし | 既存サーバーへの評価テスト |
 | インタラクティブ | `npm run test` | 手動で起動が必要 | 設定依存 | 開発中のデバッグ |
 
 ### 2.5 モックサーバーモード — ローカルデフォルト
@@ -171,52 +171,49 @@ npm run test:e2e:mock:run     # Cypressのみ実行
 npm run test:e2e:mock:stop    # 全コンテナ停止
 ```
 
-### 2.6 Qualifying モード — CI / 評価テスト
+### 2.6 リモートモード — 既存サーバーへのテスト
 
 WHEELサーバーがすでに起動済みの場合に、モックを使わず実サーバーに対してそのままCypressを実行します。
 `--env USE_MOCK=false` を渡すことで、Cypressが Gateway (port 3001) を経由せず、WHEELサーバーに直接接続します。
 
 ```bash
 cd test
-npm run test:e2e:qualifying
+WHEEL_URL=http://localhost:8089 npm run test:e2e:remote
 ```
 
 **フロー:**
-1. Cypress をヘッドレスモードで実行 (`baseUrl: http://localhost:8089` に直接接続、モックなし)
+1. Cypress をヘッドレスモードで実行 (`WHEEL_URL` で指定したサーバーに直接接続、モックなし)
 
 > **注意**: WHEELサーバーが起動していない場合、Cypressの接続確認でタイムアウトします。
 
-#### WHEELサーバーのアドレス・ポートを変更する
-
-デフォルトの接続先は `http://localhost:8089` です。
-別のホストやポートで動作するWHEELに対してテストする場合は、`CYPRESS_BASE_URL` 環境変数で上書きできます。
+#### 接続先URLを変更する
 
 ```bash
 cd test
 
 # 別ポートで動作するWHEELへのテスト
-CYPRESS_BASE_URL=http://localhost:8090 npm run test:e2e:qualifying
+WHEEL_URL=http://localhost:8090 npm run test:e2e:remote
 
 # 別のホストで動作するWHEELへのテスト
-CYPRESS_BASE_URL=http://your-wheel-server:8089 npm run test:e2e:qualifying
+WHEEL_URL=http://your-wheel-server:8089 npm run test:e2e:remote
 ```
 
 #### HTTPSで動作するWHEELに対してテストする
 
-**有効な証明書 (Let's Encrypt等) の場合:** `CYPRESS_BASE_URL` をhttpsスキームで指定するだけで動作します。
+**有効な証明書 (Let's Encrypt等) の場合:** `WHEEL_URL` をhttpsスキームで指定するだけで動作します。
 
 ```bash
 cd test
-CYPRESS_BASE_URL=https://your-wheel-server:8089 npm run test:e2e:qualifying
+WHEEL_URL=https://your-wheel-server:8089 npm run test:e2e:remote
 ```
 
 **自己署名証明書の場合:** ChromeがSSL証明書を拒否するため、`chromeWebSecurity=false` を追加する必要があります。
 
 ```bash
 cd test
-CYPRESS_BASE_URL=https://your-wheel-server:8089 \
+WHEEL_URL=https://your-wheel-server:8089 \
   npx cypress run --browser chrome \
-    --config "requestTimeout=300000,defaultCommandTimeout=300000,retries=2,chromeWebSecurity=false" \
+    --config "baseUrl=https://your-wheel-server:8089,requestTimeout=300000,defaultCommandTimeout=300000,retries=1,chromeWebSecurity=false" \
     --env USE_MOCK=false
 ```
 
@@ -301,7 +298,7 @@ npx cypress run --browser chrome --spec "cypress/e2e/auth.cy.js"
 npm run test:e2e:mock:stop
 ```
 
-> **注意**: `test/wheel_config_auth/` ディレクトリは `wheel_auth` コンテナの設定ボリュームとして自動生成されます。ソースコードとしてコミットする必要はありません。
+> **注意**: `test/wheel_config_auth/` ディレクトリはリポジトリにコミットされており、`wheel_auth` コンテナの起動時にそのまま使用されます。
 
 ---
 
@@ -340,17 +337,30 @@ docker logs wheel     # WHEELアプリのログ
 
 #### E2Eテスト (`run_cypress.yml`)
 
-モックサーバーモードで実行します。WHEEL・Gateway・モックの3コンテナをDockerでビルド・起動します。
+モックサーバーモードで実行します。専用Dockerイメージをビルドし、4コンテナを `wheel-e2e-net` ネットワーク上で起動します。
 
 ```
 トリガー: master以外の全ブランチへのpush
 SSHテストサーバー: naoso5/openpbs (GitHub Actionsサービス, port 4000:22)
-Docker ネットワーク: wheel-e2e-net (コンテナ間通信用)
-  wheel    (port 8089): WHEELアプリ本体
-  mock     (port 3101/3102): Socket.IOモック + HTTPモック
-  gateway  (port 3001): リバースプロキシ (WHEELとモックへ振り分け)
+
+Dockerイメージ (3種):
+  wheel_e2e_test    : WHEELアプリ本体 (Dockerfile --target exec)
+  wheel_e2e_gateway : Gateway (test/Dockerfile.gateway)
+  wheel_e2e_mock    : Socket.IO/HTTPモック (test/Dockerfile.mock)
+
+Dockerコンテナ (4台, ネットワーク: wheel-e2e-net):
+  wheel      (port 8089): WHEELアプリ本体
+  wheel_auth (port 8090): 認証機能が有効なWHEEL (認証テスト専用)
+  mock       (port 3101/3102): Socket.IOモック + HTTPモック
+  gateway    (port 3001): リバースプロキシ (WHEELとモックへ振り分け)
+
+Chromeクラッシュ対策: /dev/shm を 512MB に拡張
 テスト: npm run test:e2e:mock:run (test/)
-失敗時: 各コンテナのログ・スクリーンショット・動画をアーティファクトとして保存
+
+失敗時のアーティファクト:
+  container-logs    : gateway/mock/wheel/wheel_auth のコンテナログ
+  cypress-screenshots: 失敗時スクリーンショット
+  cypress-videos    : テスト実行動画
 ```
 
 ---
