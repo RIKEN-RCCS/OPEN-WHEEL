@@ -8,4 +8,4 @@ To run lint use following command
 npm run lint
 ```
 
-This command use eslint to check and force code style. It calls eslint woth --fix option, so after calling this command, all fixable lint errors will be fixed automatically. You have to fix all remaining lint errors manually before you finish your work.
+This command use eslint to check and force code style. It calls eslint with --fix option, so after calling this command, all fixable lint errors will be fixed automatically. You have to fix all remaining lint errors manually before you finish your work.
