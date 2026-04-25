@@ -10,7 +10,7 @@ import { diffApply } from "just-diff-apply";
 import Ajv from "ajv";
 
 import { gitRm } from "./gitOperator2.js";
-import { isValidName, isValidInputFilename, isValidOutputFilename } from "../lib/utility.js";
+import { isValidName } from "../lib/utility.js";
 import { updateComponentPath } from "./componentPathOperations.js";
 import { getComponentDir, readComponentJson, writeComponentJson, writeComponentJsonByID, readComponentJsonByID } from "./componentJsonIO.js";
 import { renameComponentDir } from "./componentOperations.js";
@@ -290,14 +290,10 @@ async function updateComponent(projectRootDir, ID, updated) {
 
   const patch = diff(targetComponent, updated);
   let newName = null;
-  const changeInputFileNames = [];
-  const changeOutputFileNames = [];
-  const removeInputFiles = [];
-  const removeOutputFiles = [];
   const promises = [];
 
   //remove next, previous, else, inputFiles, and outputFiles from patch
-  //because these props must be changed by dedicated API (ex. addLink)
+  //because these props must be changed by dedicated API (ex. addLink, addInputFile, addOutputFile)
   const sanitizedPatch = patch.filter((e)=>{
     if (e.path[0] === "name") {
       if (!isValidName(e.value)) {
@@ -305,57 +301,13 @@ async function updateComponent(projectRootDir, ID, updated) {
       }
       newName = e.value;
     }
-    if (e.path[0] === "inputFiles") {
-      if (e.path[2] === "name") {
-        if (!isValidInputFilename(e.value)) {
-          return false;
-        }
-        e.oldName = targetComponent.inputFiles[e.path[1]].name;
-        changeInputFileNames.push(e);
-        return true;
-      }
-      if (e.op === "remove" && e.path[2] !== "src") {
-        removeInputFiles.push(e);
-      }
-      return e.path[2] !== "src";
-    }
-    if (e.path[0] === "outputFiles") {
-      if (e.path[2] === "name") {
-        if (!isValidOutputFilename(e.value)) {
-          return false;
-        }
-        e.oldName = targetComponent.outputFiles[e.path[1]].name;
-        changeOutputFileNames.push(e);
-        return true;
-      }
-      if (e.op === "remove" && e.path[2] !== "dst") {
-        removeOutputFiles.push(e);
-      }
-      return e.path[2] !== "dst";
-    }
     if (e.path[0] === "uploadOnDemand" && e.path[2] === true) {
       promises.push(_internal.setUploadOndemandOutputFile(projectRootDir, ID));
       return false;
     }
-    return !["next", "previous", "else"].includes(e.path[0]);
+    return !["next", "previous", "else", "inputFiles", "outputFiles"].includes(e.path[0]);
   });
 
-  await Promise.all(changeInputFileNames.map((e)=>{
-    const oldName = e.oldName;
-    delete e.oldName;
-    return renameInputFileCounterpart(projectRootDir, targetComponent, e.path[1], oldName, e.value);
-  }));
-  await Promise.all(changeOutputFileNames.map((e)=>{
-    const oldName = e.oldName;
-    delete e.oldName;
-    return renameOutputFileCounterpart(projectRootDir, targetComponent, e.path[1], oldName, e.value);
-  }));
-  await Promise.all(removeInputFiles.map((e)=>{
-    return removeInputFileCounterpart(projectRootDir, targetComponent, e.path[1]);
-  }));
-  await Promise.all(removeOutputFiles.map((e)=>{
-    return removeOutputFileCounterpart(projectRootDir, targetComponent, e.path[1]);
-  }));
   await Promise.all(promises);
 
   //rename component directory if name is changed

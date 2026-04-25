@@ -252,8 +252,9 @@ export async function onCommitFiles(projectRootDir, files, cb) {
 /**
  * handler function which will be called when upload file is saved
  * @param {object} event - event object from socket-io-fileupload
+ * @param {object} socket - socket.io socket for the uploading client
  */
-export async function onUploadFileSaved(event) {
+export async function onUploadFileSaved(event, socket) {
   const projectRootDir = event.file.meta.projectRootDir;
   if (!event.file.success) {
     getLogger(projectRootDir).error("file upload failed", event.file.name);
@@ -261,8 +262,37 @@ export async function onUploadFileSaved(event) {
   }
   const uploadDir = path.resolve(projectRootDir, event.file.meta.currentDir);
   const uploadClient = event.file.meta.clientID;
+  const destPath = path.resolve(uploadDir, event.file.meta.orgName);
+
+  //If overwrite not explicitly requested, check whether destination already exists
+  if (event.file.meta.overwrite !== true && await fs.pathExists(destPath)) {
+    const choice = await new Promise((resolve)=>{
+      const uploadId = event.file.id;
+      const timeoutId = setTimeout(()=>{
+        socket.off("resolveUploadConflict", handler);
+        resolve("rename");
+      }, 60000);
+      const handler = (response)=>{
+        if (response.uploadId === uploadId) {
+          clearTimeout(timeoutId);
+          socket.off("resolveUploadConflict", handler);
+          resolve(response.choice);
+        }
+      };
+      socket.on("resolveUploadConflict", handler);
+      socket.emit("uploadConflict", { filename: event.file.meta.orgName, uploadId });
+    });
+
+    if (choice === "skip") {
+      await fs.remove(event.file.pathName);
+      getLogger(projectRootDir).info(`upload skipped (user chose skip): ${destPath}`);
+      return;
+    }
+    event.file.meta.overwrite = choice === "overwrite";
+  }
+
   const absFilename = event.file.meta.overwrite
-    ? path.resolve(uploadDir, event.file.meta.orgName)
+    ? destPath
     : await getUnusedPath(uploadDir, event.file.meta.orgName);
   if (event.file.meta.overwrite) {
     await fs.remove(absFilename);

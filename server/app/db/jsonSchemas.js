@@ -31,7 +31,8 @@ const dstSchema = {
   required: ["dstNode", "dstName"],
   properties: {
     dstNode: { type: "string" },
-    dstName: { type: "string" }
+    dstName: { type: "string" },
+    forceCopy: { type: "boolean" }
   }
 };
 
@@ -41,7 +42,8 @@ const inputFileSchema = {
   properties: {
     name: { type: "string" },
     src: { type: "array", items: srcSchema },
-    forwardTo: { type: "array", items: dstSchema }
+    forwardTo: { type: "array", items: dstSchema },
+    mandatory: { type: "boolean" }
   }
 };
 const outputFileSchema = {
@@ -158,6 +160,7 @@ class ForSchema extends GeneralWorkflowComponentSchema {
     this.properties.end = { type: ["number", "null"] };
     this.properties.step = { type: ["number", "null"] };
     this.properties.keep = { type: ["number", "null"] };
+    this.properties.skipCopy = { type: "array", items: { type: "string" }, default: [] };
   }
 }
 
@@ -168,6 +171,7 @@ class WhileSchema extends GeneralWorkflowComponentSchema {
     this.required.push("condition", "keep");
     this.properties.condition = { type: ["string", "null"], default: null };
     this.properties.keep = { type: ["number", "null"] };
+    this.properties.skipCopy = { type: "array", items: { type: "string" }, default: [] };
   }
 }
 
@@ -178,6 +182,7 @@ class ForeachSchema extends GeneralWorkflowComponentSchema {
     this.required.push("indexList");
     this.properties.indexList = { type: "array", items: { type: "string" } };
     this.properties.keep = { type: ["number", "null"] };
+    this.properties.skipCopy = { type: "array", items: { type: "string" }, default: [] };
   }
 }
 

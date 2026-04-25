@@ -177,6 +177,19 @@
       </template>
     </versatile-dialog>
     <versatile-dialog
+      v-model="conflictDialog.open"
+      :title="`'${conflictDialog.filename}' already exists`"
+      max-width="40vw"
+      :buttons="conflictDialogButtons"
+      @overwrite="resolveConflict('overwrite')"
+      @rename="resolveConflict('rename')"
+      @skip="resolveConflict('skip')"
+    >
+      <template #message>
+        <span>A file or directory named <strong>{{ conflictDialog.filename }}</strong> already exists at the destination. What would you like to do?</span>
+      </template>
+    </versatile-dialog>
+    <versatile-dialog
       v-model="downloadDialog"
       title="download content ready"
       max-width="30vw"
@@ -235,10 +248,21 @@ export default {
       downloadDialogButton: [
         { icon: "mdi-close", label: "close" }
       ],
+      conflictDialogButtons: [
+        { icon: "mdi-file-replace", label: "overwrite" },
+        { icon: "mdi-file-plus", label: "keep both", event: "rename" },
+        { icon: "mdi-cancel", label: "skip" }
+      ],
+      conflictDialog: {
+        open: false,
+        filename: "",
+        uploadId: null
+      },
       downloadURL: null,
       downloadDialog: false,
       showCopyButtonTooltipText: false,
-      copyButtonTooltipText: "copy file path"
+      copyButtonTooltipText: "copy file path",
+      fileListSeq: 0
     };
   },
   computed: {
@@ -254,6 +278,9 @@ export default {
       return this.activeItem !== null;
     },
     needScriptCandidate() {
+      if (!this.selectedComponent) {
+        return false;
+      }
       return !["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type);
     },
     dialogButtons() {
@@ -270,16 +297,27 @@ export default {
       //edit workflow -> server respond workflow data -> fire this event
       handler(nv) {
         if (nv.descendants.some((e)=>{
-          return e.ID === this.selectedComponent.ID;
+          return e.ID === this.selectedComponent?.ID;
         })) {
           this.getComponentDirRootFiles();
         }
       },
       deep: true
     },
-    selectedComponent() {
+
+    selectedComponent(newVal, oldVal) {
+      //Clear stale file selection when switching to a different component (or clearing selection).
+      //Without this, clicking the same filename in the new component triggers a deselect
+      //(because selectedFile still holds the old component's file path).
+      if (!newVal || !oldVal || newVal.ID !== oldVal.ID) {
+        this.activeItem = null;
+        this.commitSelectedFile(null);
+        //Clear stale file list so noDuplicate() never returns false based on old data
+        //while the new component's file list is being fetched asynchronously.
+        this.items = [];
+      }
       this.getComponentDirRootFiles();
-      this.currentDir = this.selectedComponentAbsPath;
+      this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
     }
   },
   mounted() {
@@ -295,13 +333,15 @@ export default {
       SIO.onUploaderEvent("choose", this.onChoose);
       SIO.onUploaderEvent("complete", this.onUploadComplete);
       SIO.onUploaderEvent("progress", this.updateProgressBar);
+      SIO.onGlobal("uploadConflict", this.onUploadConflict);
     }
-    this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
+    this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
   },
   beforeUnmount() {
     SIO.removeUploaderEvent("choose", this.onChoose);
     SIO.removeUploaderEvent("complete", this.onUploadComplete);
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
+    SIO.off("uploadConflict", this.onUploadConflict);
   },
   methods: {
     ...mapActions(["openTextEditor"]),
@@ -331,8 +371,10 @@ export default {
       if (!this.selectedComponent) {
         return;
       }
+      this.fileListSeq++;
+      const seq = this.fileListSeq;
       const cb = (fileList)=>{
-        if (fileList === null) {
+        if (seq !== this.fileListSeq || fileList === null || !this.selectedComponent) {
           return;
         }
         this.items = fileList
@@ -365,6 +407,15 @@ export default {
       } else {
         this.commitSelectedFile(newSelectedFile);
       }
+    },
+    onUploadConflict({ filename, uploadId }) {
+      this.conflictDialog.filename = filename;
+      this.conflictDialog.uploadId = uploadId;
+      this.conflictDialog.open = true;
+    },
+    resolveConflict(choice) {
+      SIO.emitGlobal("resolveUploadConflict", { uploadId: this.conflictDialog.uploadId, choice }, SIO.generalCallback);
+      this.conflictDialog.open = false;
     },
     onChoose(event) {
       if (["running", "preparing"].includes(this.projectState)) {
@@ -430,6 +481,11 @@ export default {
       this.showCopyButtonTooltipText = false;
     },
     submitAndCloseDialog() {
+      if (!["remove", "rename", "createNewFile", "createNewDir"].includes(this.dialog.submitEvent)) {
+        console.log("unsupported event", this.dialog.submitEvent);
+        this.clearAndCloseDialog();
+        return;
+      }
       if (this.dialog.submitEvent === "remove") {
         SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
           if (!rt) {
@@ -439,7 +495,7 @@ export default {
           removeItem(this.items, this.activeItem.id);
           this.updateScriptCandidate();
           this.commitSelectedFile(null);
-          this.currentDir = this.selectedComponentAbsPath;
+          this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
           this.activeItem = null;
         });
       } else if (this.dialog.submitEvent === "rename") {
@@ -466,9 +522,12 @@ export default {
           return;
         }
         const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir";
+        //Invalidate any in-flight getFileList so its stale response won't overwrite the new item.
+        this.fileListSeq++;
         SIO.emitGlobal(this.dialog.submitEvent, this.projectRootDir, fullPath, (rt)=>{
           if (!rt) {
             console.log(rt);
+            this.clearAndCloseDialog();
             return;
           }
           const newItem = { id: fullPath, name, path: this.currentDir, type };
@@ -481,9 +540,9 @@ export default {
             this.openItems.push(this.activeItem.id);
           }
           this.updateScriptCandidate();
+          this.clearAndCloseDialog();
         });
-      } else {
-        console.log("unsupported event", this.dialog.submitEvent);
+        return;
       }
       this.clearAndCloseDialog();
     },

@@ -31,48 +31,68 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Build and start WHEEL container
+      - name: Build Docker images
         run: |
           docker build --target exec -t wheel_e2e_test .
-          docker run -d --name test-wheel_release_test-1 \
+          docker build -f test/Dockerfile.gateway -t wheel_e2e_gateway test/
+          docker build -f test/Dockerfile.mock -t wheel_e2e_mock test/
+      - name: Create network and start containers
+        run: |
+          docker network create wheel-e2e-net
+          docker run -d --name wheel --network wheel-e2e-net \
             -p 8089:8089 \
             -e WHEEL_USE_HTTP=1 \
             -e WHEEL_LOGLEVEL=ERROR \
             wheel_e2e_test
-          # Copy config files into the container
-          docker cp test/wheel_config/. test-wheel_release_test-1:/root/.wheel/
-          # Wait for server to be ready
-          timeout 300 bash -c 'until curl -f http://localhost:8089 > /dev/null 2>&1; do sleep 2; done'
+          docker cp test/wheel_config/. wheel:/root/.wheel/
+          docker run -d --name wheel_auth --network wheel-e2e-net \
+            -p 8090:8089 \
+            -e WHEEL_USE_HTTP=1 \
+            -e WHEEL_ANONYMOUS_LOGIN=YES \
+            -e WHEEL_ANONYMOUS_PASSWORD=WheelTest123! \
+            -e WHEEL_LOGLEVEL=ERROR \
+            wheel_e2e_test
+          docker cp test/wheel_config_auth/. wheel_auth:/root/.wheel/
+          docker run -d --name mock --network wheel-e2e-net \
+            -p 3101:3101 \
+            -p 3102:3102 \
+            wheel_e2e_mock
+          docker run -d --name gateway --network wheel-e2e-net \
+            -p 3001:3001 \
+            -e REAL_APP=http://wheel:8089 \
+            -e MOCK_SIO=http://mock:3101 \
+            -e MOCK_HTTP=http://mock:3102 \
+            wheel_e2e_gateway
       - name: Install test dependencies
         working-directory: test
         run: npm install --ignore-scripts
       - name: Install Cypress binary
         working-directory: test
         run: npx cypress install
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
-        env:
-          GW_PORT: "3001"
-          REAL_APP: "http://127.0.0.1:8089"
-          MOCK_SIO: "http://127.0.0.1:3101"
-          MOCK_HTTP: "http://127.0.0.1:3102"
-        with:
-          working-directory: test
-          browser: ${{ matrix.browser }}
-          install: false
-          start: |
-            node ./ws-gateway.cjs > gateway.log 2>&1 & echo $! > gateway.pid
-            npx @mocks-server/main > httpmock.log 2>&1 &
-          wait-on: 'npx wait-on --timeout 120000 tcp:127.0.0.1:3001 tcp:127.0.0.1:3102'
-          config: requestTimeout=300000,defaultCommandTimeout=300000,retries=2
-      - name: upload gateway/mocks logs
+      - name: Wait for containers to be ready
+        working-directory: test
+        run: |
+          timeout 300 bash -c 'until curl -sf http://localhost:8089 > /dev/null 2>&1; do sleep 2; done'
+          timeout 300 bash -c 'until curl -sf http://localhost:8090 > /dev/null 2>&1; do sleep 2; done'
+          npx wait-on tcp:127.0.0.1:3001 tcp:127.0.0.1:3101 tcp:127.0.0.1:3102 --timeout 60000
+      - name: Increase /dev/shm size for Chrome
+        run: sudo mount -t tmpfs -o size=512m tmpfs /dev/shm
+      - name: Run E2E tests with mock server
+        working-directory: test
+        run: npm run test:e2e:mock:run
+      - name: Collect container logs on failure
+        if: failure()
+        run: |
+          docker logs gateway > /tmp/gateway.log 2>&1 || true
+          docker logs mock > /tmp/mock.log 2>&1 || true
+          docker logs wheel > /tmp/wheel.log 2>&1 || true
+          docker logs wheel_auth > /tmp/wheel_auth.log 2>&1 || true
+      - name: Upload container logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: gateway-mocks-logs
-          path: |
-            test/gateway.log
-            test/httpmock.log
+          name: container-logs
+          path: /tmp/*.log
           if-no-files-found: ignore
       - name: upload screenshot
         uses: actions/upload-artifact@v4
@@ -90,8 +110,9 @@ jobs:
           path: test/cypress/videos
           if-no-files-found: ignore
 
-      - name: Stop WHEEL container
+      - name: Stop all containers and cleanup
         if: always()
         run: |
-          docker stop test-wheel_release_test-1 || true
-          docker rm test-wheel_release_test-1 || true
+          docker stop gateway mock wheel wheel_auth || true
+          docker rm gateway mock wheel wheel_auth || true
+          docker network rm wheel-e2e-net || true

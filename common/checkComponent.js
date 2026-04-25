@@ -11,7 +11,8 @@
  * @returns {boolean} - true if component should have remote file browser
  */
 function hasRemoteFileBrowser(component) {
-  return ["storage", "hpciss"].includes(component.type)
+  return component != null
+    && ["storage", "hpciss"].includes(component.type)
     && typeof component.host === "string"
     && component.host !== "localhost";
 }
@@ -22,7 +23,8 @@ function hasRemoteFileBrowser(component) {
  * @returns {boolean} - true if component should have gfarm tar browser
  */
 function hasGfarmTarBrowser(component) {
-  return component.type === "hpcisstar"
+  return component != null
+    && component.type === "hpcisstar"
     && typeof component.host === "string"
     && component.host !== "localhost";
 }
@@ -33,7 +35,7 @@ function hasGfarmTarBrowser(component) {
  * @returns {boolean} - true if component is HPCI-SS
  */
 function isHPCISS(component) {
-  return component.type === "hpciss";
+  return component != null && component.type === "hpciss";
 }
 
 /**

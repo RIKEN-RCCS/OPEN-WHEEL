@@ -102,6 +102,7 @@
 <script>
 "use strict";
 import { mapActions, mapState, mapGetters, mapMutations } from "vuex";
+import { markRaw } from "vue";
 import SIO from "../..//lib/socketIOWrapper.js";
 import { isValidInputFilename } from "../..//lib/utility.js";
 import { editorHeight } from "../..//lib/constants.json";
@@ -128,7 +129,9 @@ export default {
       editorHeight,
       autoSaveTimer: null,
       closeDialog: false,
-      pendingCloseIndex: null
+      pendingCloseIndex: null,
+      sessionResizeHandler: null,
+      sessionJobscriptHandler: null
     };
   },
   computed: {
@@ -142,7 +145,9 @@ export default {
   },
   watch: {
     readOnly() {
-      this.editor.setReadOnly(this.readOnly);
+      if (this.editor) {
+        this.editor.setReadOnly(this.readOnly);
+      }
     },
     activeTab(nv, ov) {
       if (nv >= this.files.length) {
@@ -151,7 +156,7 @@ export default {
     }
   },
   mounted: function () {
-    this.editor = ace.edit("editor");
+    this.editor = markRaw(ace.edit("editor"));
     this.editor.setOptions({
       theme: "ace/theme/idle_fingers",
       autoScrollEditorIntoView: true,
@@ -159,55 +164,39 @@ export default {
       highlightActiveLine: true,
       readOnly: this.readOnly
     });
-    this.editor.on("changeSession", this.editor.resize.bind(this.editor));
-    this.editor.on("changeSession", ()=>{
+    this.sessionResizeHandler = this.editor.resize.bind(this.editor);
+    this.sessionJobscriptHandler = ()=>{
       const isJobScript = typeof this.editor.find("#### WHEEL inserted lines ####", { start: { row: 0, column: 0 } }) !== "undefined";
       this.$emit("jobscript", isJobScript);
+    };
+    this.editor.on("changeSession", this.sessionResizeHandler);
+    this.editor.on("changeSession", this.sessionJobscriptHandler);
 
-      //Setup auto-save listener for new session
-      const session = this.editor.getSession();
-      session.on("change", ()=>{
-        this.scheduleAutoSave();
-      });
-    });
-
-    SIO.onGlobal("file", (file)=>{
-      //check arraived file is already opened or not
-      const existingTab = this.files.findIndex((e)=>{
-        return e.filename === file.filename && e.dirname === file.dirname;
-      });
-        //just switch tab if arraived file is already opened
-      if (existingTab !== -1) {
-        this.activeTab = existingTab;
-        return;
-      }
-      //open new tab for arraived file
-      file.editorSession = ace.createEditSession(file.content);
-      file.absPath = `${file.dirname}${this.pathSep}${file.filename}`;
-      file.initialContent = file.content; //Store initial content for revert
-      this.files.push(file);
-
-      //select last tab after DOM is updated
-      this.$nextTick(function () {
-        this.activeTab = this.files.length - 1;
-        const session = this.files[this.activeTab].editorSession;
-        this.editor.setSession(session);
-        this.editor.resize();
-        session.selection.on("changeSelection", ()=>{
-          this.commitSelectedText(this.editor.getSelectedText());
-        });
-        //Emit content-changed event when editor content changes
-        session.on("change", ()=>{
-          this.$emit("content-changed");
-        });
-      });
-    });
+    SIO.onGlobal("file", this.onFile);
     if (typeof this.selectedFile === "string") {
       SIO.emitGlobal("openFile", this.projectRootDir, this.selectedFile, false, (rt)=>{
         if (rt instanceof Error) {
           console.log(rt);
         }
       });
+    }
+  },
+  beforeUnmount() {
+    SIO.off("file", this.onFile);
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
+    for (const file of this.files) {
+      this.cleanupSession(file);
+    }
+    this.files = [];
+    if (this.editor) {
+      this.editor.off("changeSession", this.sessionResizeHandler);
+      this.editor.off("changeSession", this.sessionJobscriptHandler);
+      this.sessionResizeHandler = null;
+      this.sessionJobscriptHandler = null;
+      this.editor.destroy();
+      this.editor = null;
     }
   },
   methods: {
@@ -217,6 +206,52 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar"
     }),
+
+    /**
+     * Handle incoming file data from socket and open it in a new tab.
+     * @param {object} file - File data object from server
+     */
+    onFile(file) {
+      //check arraived file is already opened or not
+      const existingTab = this.files.findIndex((e)=>{
+        return e.filename === file.filename && e.dirname === file.dirname;
+      });
+      //just switch tab if arraived file is already opened
+      if (existingTab !== -1) {
+        this.activeTab = existingTab;
+        return;
+      }
+      //open new tab for arraived file
+      file.editorSession = markRaw(ace.createEditSession(file.content));
+      file.absPath = `${file.dirname}${this.pathSep}${file.filename}`;
+      file.initialContent = file.content; //Store initial content for revert
+      file.changeSelectionHandler = ()=>{
+        this.commitSelectedText(this.editor.getSelectedText());
+      };
+      file.contentChangedHandler = ()=>{
+        this.$emit("content-changed");
+      };
+      file.autoSaveHandler = ()=>{
+        this.scheduleAutoSave();
+      };
+      this.files.push(file);
+
+      //select last tab after DOM is updated
+      this.$nextTick(function () {
+        if (!this.editor) {
+          return;
+        }
+        this.activeTab = this.files.length - 1;
+        const session = this.files[this.activeTab].editorSession;
+        this.editor.setSession(session);
+        this.editor.resize();
+        session.selection.on("changeSelection", file.changeSelectionHandler);
+        //Emit content-changed event when editor content changes
+        session.on("change", file.contentChangedHandler);
+        //Schedule auto-save when session content changes
+        session.on("change", file.autoSaveHandler);
+      });
+    },
     isValidName(v) {
       //allow . / - and alphanumeric chars
       return isValidInputFilename(v) || "invalid filename";
@@ -407,12 +442,37 @@ export default {
       }
       return placeholders;
     },
+
+    /**
+     * Remove all tracked event listeners from an editor session to prevent memory leaks.
+     * @param {object} file - File object with editorSession and named listener references
+     */
+    cleanupSession(file) {
+      if (!file.editorSession) {
+        return;
+      }
+      if (file.changeSelectionHandler) {
+        file.editorSession.selection.off("changeSelection", file.changeSelectionHandler);
+        file.changeSelectionHandler = null;
+      }
+      if (file.contentChangedHandler) {
+        file.editorSession.off("change", file.contentChangedHandler);
+        file.contentChangedHandler = null;
+      }
+      if (file.autoSaveHandler) {
+        file.editorSession.off("change", file.autoSaveHandler);
+        file.autoSaveHandler = null;
+      }
+      file.editorSession.destroy();
+      file.editorSession = null;
+    },
     closeTab(index) {
       const file = this.files[index];
       if (index === 0) {
         const document = file.editorSession.getDocument();
         document.setValue("");
       }
+      this.cleanupSession(file);
       this.files.splice(index, 1);
       if (file.absPath === this.selectedFile) {
         this.commitSelectedFile(null);
@@ -427,9 +487,6 @@ export default {
       const session = this.files[index].editorSession;
       this.editor.setSession(session);
       this.commitSelectedText("");
-      session.selection.on("changeSelection", ()=>{
-        this.commitSelectedText(this.editor.getSelectedText());
-      });
     },
     scheduleAutoSave() {
       if (this.readOnly) {

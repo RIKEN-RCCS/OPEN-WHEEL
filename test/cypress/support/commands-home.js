@@ -6,10 +6,34 @@
 /**
  * home画面操作を対象にしたcommand
  */
+/**
+ * Navigate to the home page.
+ * If the workflow-editor nav link is present (i.e. we are already inside a project),
+ * click it so the socket.io connection is preserved and the transition is fast.
+ * If already on the home page (home-new-btn exists), skip navigation entirely.
+ * Otherwise fall back to a full cy.visit("/").
+ */
+Cypress.Commands.add("goHome", ()=>{
+  cy.window().then((win)=>{
+    //If the current page is not on the expected baseUrl server, navigate there directly.
+    if (!win.location.href.startsWith(Cypress.config("baseUrl"))) {
+      return cy.visit("/");
+    }
+    const homeLink = win.document.querySelector("[href='./home']");
+    if (homeLink) {
+      return cy.wrap(homeLink).click({ force: true });
+    }
+    if (win.document.querySelector("[data-cy=\"home-new-btn\"]")) {
+      return; //Already on home page — no navigation needed
+    }
+    return cy.visit("/");
+  });
+  return cy.waitProjectList();
+});
+
 //create a project
 Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
-  cy.visit("/");
-  cy.waitProjectList();
+  cy.goHome();
   cy.get("[data-cy=\"home-new-btn\"]")
     .click();
   cy.get("[data-cy=\"home-project_name-text_field\"]")
@@ -18,7 +42,6 @@ Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
     .type(projectDescription);
   cy.get("[data-cy=\"buttons-create-btn\"]")
     .click();
-  cy.waitProjectList();
   return cy.waitProjectAppear(projectName);
 });
 
@@ -51,8 +74,7 @@ Cypress.Commands.add("waitProjectList", (timeout = 20000)=>{
 });
 
 Cypress.Commands.add("waitProjectAppear", (projectName, timeout = 20000)=>{
-  return cy.get("[data-cy=\"home-project_name-btn\"]", { timeout })
-    .contains(projectName)
+  return cy.contains("[data-cy=\"home-project_name-btn\"]", projectName, { timeout })
     .should("be.visible");
 });
 
@@ -68,7 +90,7 @@ Cypress.Commands.add("removeProject", (projectName)=>{
 });
 
 const projectListFilename = "/root/.wheel/projectList.json";
-const containerName = "test-wheel_release_test-1";
+const containerName = "wheel";
 
 Cypress.Commands.add("removeAllProjects", ()=>{
   const tmpFilename = `cypress/fixtures/projectList.json`;

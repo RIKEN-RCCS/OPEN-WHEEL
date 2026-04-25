@@ -1,11 +1,16 @@
 services:
   wheel_release_test_server:
     image: naoso5/test-openpbs
+    privileged: true
+    hostname: wheel_release_test_server
     ports:
       - "4000:22"
     container_name: wheel_release_test_server
     cap_add:
       - SYS_RESOURCE
+    volumes:
+      - /tmp/WHEEL_TEST/shared:/data/shared
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
 
   wheel_release_test:
     build:

@@ -42,7 +42,7 @@ export async function addInputFile(projectRootDir, ID, name) {
     err.component = componentJson;
     return Promise.reject(err);
   }
-  componentJson.inputFiles.push({ name, src: [] });
+  componentJson.inputFiles.push({ name, src: [], mandatory: false });
   return _internal.writeComponentJson(projectRootDir, componentDir, componentJson);
 };
 
@@ -194,6 +194,49 @@ export async function renameInputFile(projectRootDir, ID, index, newName) {
     p.push(_internal.writeComponentJson(projectRootDir, counterpartDir, counterpartJson));
   }
   return Promise.all(p);
+}
+
+/**
+ * toggle mandatory flag of inputFile
+ * @param {string} projectRootDir - project's root path
+ * @param {string} ID - component ID
+ * @param {number} index - index number of inputFile to update
+ * @param {boolean} mandatory - new mandatory flag value
+ * @returns {Promise} - resolved when update is done
+ */
+export async function toggleInputFileMandatory(projectRootDir, ID, index, mandatory) {
+  const componentDir = await _internal.getComponentDir(projectRootDir, ID, true);
+  const componentJson = await _internal.readComponentJson(componentDir);
+  if (index < 0 || componentJson.inputFiles.length - 1 < index) {
+    return Promise.reject(new Error(`invalid index ${index}`));
+  }
+  componentJson.inputFiles[index].mandatory = mandatory;
+  return _internal.writeComponentJson(projectRootDir, componentDir, componentJson);
+}
+
+/**
+ * toggle forceCopy flag on a specific outputFile dst connection
+ * @param {string} projectRootDir - project's root path
+ * @param {string} ID - source component ID
+ * @param {string} srcName - outputFile name
+ * @param {string} dstNode - destination component ID
+ * @param {string} dstName - destination inputFile name
+ * @param {boolean} forceCopy - true to use file copy, false to use symlink
+ * @returns {Promise} - resolved when update is done
+ */
+export async function toggleOutputFileForceCopy(projectRootDir, ID, srcName, dstNode, dstName, forceCopy) {
+  const componentDir = await _internal.getComponentDir(projectRootDir, ID, true);
+  const componentJson = await _internal.readComponentJson(componentDir);
+  const outputFile = componentJson.outputFiles.find((o)=>{ return o.name === srcName; });
+  if (!outputFile) {
+    return Promise.reject(new Error(`outputFile ${srcName} not found`));
+  }
+  const dstEntry = outputFile.dst.find((d)=>{ return d.dstNode === dstNode && d.dstName === dstName; });
+  if (!dstEntry) {
+    return Promise.reject(new Error(`dst connection to ${dstNode}:${dstName} not found`));
+  }
+  dstEntry.forceCopy = forceCopy;
+  return _internal.writeComponentJson(projectRootDir, componentDir, componentJson);
 }
 
 /**

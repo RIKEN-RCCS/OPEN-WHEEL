@@ -16,9 +16,10 @@ chai.use(chaiAsPromised);
 import sinon from "sinon";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { setupTestDir } from "../../testUtil.js";
 
 //testee
-import { _internal, checkScript, checkPSSettingFile } from "../../../app/core/fileValidator.js";
+import { _internal, checkScript, checkPSSettingFile, checkPSNodeReferences, checkSourceScript } from "../../../app/core/fileValidator.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -27,7 +28,7 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 describe("fileValidator UT", function () {
   beforeEach(async function () {
     this.timeout(10000);
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
@@ -85,6 +86,58 @@ describe("fileValidator UT", function () {
       const statStub = sinon.stub(fs, "stat").rejects(new Error("Permission denied"));
       await expect(checkScript(projectRootDir, component)).to.be.rejectedWith("Permission denied");
       statStub.restore();
+    });
+  });
+
+  describe("checkSourceScript", ()=>{
+    let component;
+    let mockSsh;
+    beforeEach(async ()=>{
+      component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      component.host = "remoteHost";
+      component.useJobScheduler = true;
+      mockSsh = { exec: sinon.stub() };
+      sinon.stub(_internal.remoteHost, "getID").callsFake((key, value)=>{
+        return value === "remoteHost" ? "mock-host-id" : undefined;
+      });
+      sinon.stub(_internal, "hasEntry").returns(false);
+      sinon.stub(_internal, "getSsh").returns(mockSsh);
+    });
+
+    it("should return without error if sourceScript is not set", async ()=>{
+      await expect(checkSourceScript(projectRootDir, component)).to.be.fulfilled;
+    });
+
+    it("should return without error if sourceScript is empty string", async ()=>{
+      component.sourceScript = "";
+      await expect(checkSourceScript(projectRootDir, component)).to.be.fulfilled;
+    });
+
+    it("should be rejected if remote host is not found", async ()=>{
+      component.host = "unknownHost";
+      component.sourceScript = "/path/to/setup.sh";
+      await expect(checkSourceScript(projectRootDir, component)).to.be.rejectedWith(/remote host unknownHost not found/);
+    });
+
+    it("should return without error if SSH is not connected (skips check)", async ()=>{
+      component.sourceScript = "/path/to/setup.sh";
+      _internal.hasEntry.returns(false);
+      await expect(checkSourceScript(projectRootDir, component)).to.be.fulfilled;
+    });
+
+    it("should be rejected if sourceScript does not exist on remote host", async ()=>{
+      component.sourceScript = "/path/to/nonexistent.sh";
+      _internal.hasEntry.returns(true);
+      mockSsh.exec.resolves(1);
+      await expect(checkSourceScript(projectRootDir, component))
+        .to.be.rejectedWith(/sourceScript.*does not exist on remoteHost/);
+    });
+
+    it("should return without error if sourceScript exists on remote host", async ()=>{
+      component.sourceScript = "/path/to/setup.sh";
+      _internal.hasEntry.returns(true);
+      mockSsh.exec.resolves(0);
+      await expect(checkSourceScript(projectRootDir, component)).to.be.fulfilled;
     });
   });
 
@@ -202,7 +255,7 @@ describe("fileValidator UT", function () {
   describe("checkPSSettingFile with invalid JSON", function () {
     beforeEach(async function () {
       this.timeout(10000);
-      await fs.remove(testDirRoot);
+      await setupTestDir(testDirRoot);
 
       try {
         await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
@@ -237,6 +290,108 @@ describe("fileValidator UT", function () {
       await fs.writeFile(path.resolve(projectRootDir, ps.name, "syntax_error.json"), "{\"incomplete\": ");
 
       await expect(checkPSSettingFile(projectRootDir, ps)).to.be.rejectedWith(/parameter setting file is not JSON file/);
+    });
+  });
+
+  describe("checkPSNodeReferences", function () {
+    const psComponent = {
+      type: "parameterStudy",
+      ID: "ps-id-123",
+      name: "test-ps",
+      parameterFile: "params.json"
+    };
+    const child1 = { ID: "child1-id-abc", name: "task0" };
+    const child2 = { ID: "child2-id-def", name: "task1" };
+
+    beforeEach(function () {
+      sinon.stub(_internal, "getComponentDir").resolves("/fake/path/test-ps");
+      sinon.stub(_internal, "readJsonGreedy");
+      sinon.stub(_internal, "getChildren").resolves([child1, child2]);
+    });
+
+    it("should return empty array when scatter and gather are absent", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.be.an("array").that.is.empty;
+    });
+
+    it("should return empty array when scatter dstNode is a valid child ID", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        scatter: [{ srcName: "input.dat", dstNode: child1.ID, dstName: "input.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.be.an("array").that.is.empty;
+    });
+
+    it("should return error when scatter dstNode is not a valid child ID", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        scatter: [{ srcName: "input.dat", dstNode: "nonexistent-id", dstName: "input.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.have.lengthOf(1);
+      expect(errors[0].message).to.include("scatter dstNode");
+      expect(errors[0].message).to.include("nonexistent-id");
+      expect(errors[0].ignoreable).to.be.false;
+    });
+
+    it("should return empty array when gather srcNode is a valid child ID", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        gather: [{ srcName: "result.dat", srcNode: child2.ID, dstName: "result.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.be.an("array").that.is.empty;
+    });
+
+    it("should return error when gather srcNode is not a valid child ID", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        gather: [{ srcName: "result.dat", srcNode: "bad-node-id", dstName: "result.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.have.lengthOf(1);
+      expect(errors[0].message).to.include("gather srcNode");
+      expect(errors[0].message).to.include("bad-node-id");
+      expect(errors[0].ignoreable).to.be.false;
+    });
+
+    it("should return empty array when gather recipe has no srcNode (gather from PS root)", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        gather: [{ srcName: "result.dat", dstName: "result.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.be.an("array").that.is.empty;
+    });
+
+    it("should return multiple errors when multiple invalid node references exist", async function () {
+      _internal.readJsonGreedy.resolves({
+        version: 2,
+        targetFiles: [{ targetName: "foo" }],
+        params: [{ keyword: "v", type: "list", list: ["1", "2"] }],
+        scatter: [{ srcName: "input.dat", dstNode: "bad-scatter-node", dstName: "input.dat" }],
+        gather: [{ srcName: "result.dat", srcNode: "bad-gather-node", dstName: "result.dat" }]
+      });
+      const errors = await checkPSNodeReferences(projectRootDir, psComponent);
+      expect(errors).to.have.lengthOf(2);
+      expect(errors[0].message).to.include("scatter dstNode");
+      expect(errors[1].message).to.include("gather srcNode");
     });
   });
 });

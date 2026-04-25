@@ -20,7 +20,7 @@ const ajv = new Ajv({ strict: false });
 const testDirRoot = "WHEEL_TEST_TMP";
 const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 //testee
-import Dispatcher, { replaceByNunjucksForBulkjob, writeParameterSetFile } from "../../../app/core/dispatcher.js";
+import Dispatcher, { replaceByNunjucksForBulkjob, writeParameterSetFile, addGatherFilesToRemoteTasks } from "../../../app/core/dispatcher.js";
 import { eventEmitters } from "../../../app/core/global.js";
 
 //helper functions
@@ -28,6 +28,8 @@ import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.j
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { updateComponentProperty } from "../../testUtil.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { removeExecuters } from "../../../app/core/executerManager.js";
+import { removeTransferrers } from "../../../app/core/transferManager.js";
 import { addInputFile, addOutputFile, renameOutputFile } from "../../../app/core/componentFiles.js";
 import { addLink, addFileLink } from "../../../app/core/componentLinks.js";
 import { scriptName, pwdCmd, scriptHeader } from "../../testScript.js";
@@ -176,6 +178,101 @@ describe("UT for Dispatcher class", function () {
     });
   });
 
+  describe("addGatherFilesToRemoteTasks test", function () {
+    const instanceRoot = path.resolve(testDirRoot, "instance");
+    const taskRelDir = "task0";
+    const taskDir = path.join(instanceRoot, taskRelDir);
+    const logger = ()=>{};
+
+    beforeEach(async function () {
+      await fs.ensureDir(taskDir);
+    });
+    afterEach(async function () {
+      await fs.remove(testDirRoot);
+    });
+
+    /**
+     * Write a minimal task component JSON to taskDir.
+     * @param {object} overrides - properties to merge into the default task JSON
+     */
+    async function writeTaskJson(overrides = {}) {
+      const base = {
+        type: "task",
+        name: "task0",
+        host: "remoteServer",
+        include: [],
+        exclude: [],
+        outputFiles: []
+      };
+      await fs.writeJson(path.join(taskDir, "cmp.wheel.json"), { ...base, ...overrides });
+    }
+
+    it("should add rendered srcName to include for a remote task", async function () {
+      await writeTaskJson();
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result_{{ N }}", dstName: "out/result_{{ N }}" }];
+      const params = { N: 1 };
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.include("result_1");
+    });
+
+    it("should remove the rendered srcName from exclude if present", async function () {
+      await writeTaskJson({ exclude: ["result_1", "other.dat"] });
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result_{{ N }}", dstName: "out/" }];
+      const params = { N: 1 };
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.exclude).to.not.include("result_1");
+      expect(updated.exclude).to.include("other.dat");
+      expect(updated.include).to.include("result_1");
+    });
+
+    it("should skip entries without srcNode", async function () {
+      await writeTaskJson();
+      const gatherRecipe = [{ srcName: "result.dat", dstName: "out/result.dat" }];
+      const params = {};
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.be.empty;
+    });
+
+    it("should skip local tasks", async function () {
+      await writeTaskJson({ host: "localhost" });
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result.dat", dstName: "out/result.dat" }];
+      const params = {};
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.be.empty;
+    });
+
+    it("should skip if srcName is already in outputFiles", async function () {
+      await writeTaskJson({ outputFiles: [{ name: "result.dat", dst: [] }] });
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result.dat", dstName: "out/result.dat" }];
+      const params = {};
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.be.empty;
+    });
+
+    it("should not duplicate if srcName is already in include", async function () {
+      await writeTaskJson({ include: ["result.dat"] });
+      const gatherRecipe = [{ srcNode: taskRelDir, srcName: "result.dat", dstName: "out/result.dat" }];
+      const params = {};
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include.filter((e)=>{
+        return e === "result.dat";
+      })).to.have.lengthOf(1);
+    });
+
+    it("should handle an empty gatherRecipe without error", async function () {
+      await writeTaskJson();
+      await addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, [], {}, logger);
+      const updated = await fs.readJson(path.join(taskDir, "cmp.wheel.json"));
+      expect(updated.include).to.be.empty;
+    });
+  });
+
   describe("#outputFile delivery functionality", async ()=>{
     let previous;
     let next;
@@ -313,6 +410,125 @@ describe("UT for Dispatcher class", function () {
           expect(fs.statSync(path.resolve(projectRootDir, next.name, "b")).isFile()).to.be.true;
           const stats = await fs.lstat(path.resolve(projectRootDir, next.name, "b"));
           expect(stats.isSymbolicLink()).to.be.false;
+        });
+      });
+      describe("shared storage between localhost and remote host", function () {
+        const sharedStorageOnRemote = "/data/shared";
+        //Use /mnt/shared in Docker container, /tmp/WHEEL_TEST/shared on native host
+        //Both are mounted to the same host directory via compose.yml
+        const sharedStorageOnLocal = fs.existsSync("/mnt/shared") ? "/mnt/shared" : "/tmp/WHEEL_TEST/shared";
+
+        const storageArea0 = path.resolve(sharedStorageOnLocal, "storage0");
+        const storageArea2 = path.resolve(sharedStorageOnLocal, "storage2");
+        let storage0;
+        let task1;
+        let storage2;
+
+        beforeEach(async ()=>{
+          //Pre-cleanup: ensure clean state even if a previous afterEach failed silently.
+          //Must handle cross-ownership: testuser (SSH) creates dirs owned by UID 1000, runner creates dirs owned by UID 1001.
+          //SSH: chmod testuser-owned dirs to 777 so runner can delete their contents, then delete what testuser can.
+          await ssh.exec(`find ${sharedStorageOnRemote} -mindepth 1 -type d -exec chmod 777 {} \\; 2>/dev/null; find ${sharedStorageOnRemote} -mindepth 1 -delete 2>/dev/null; rm -rf /home/testuser/dummy_start_time 2>/dev/null`);
+          //Local: clean up runner-owned files and testuser dirs that are now world-writable.
+          await fs.emptyDir(sharedStorageOnLocal);
+
+          storage0 = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 0, y: 0 });
+          task1 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 0 });
+          storage2 = await createNewComponent(projectRootDir, projectRootDir, "storage", { x: 20, y: 0 });
+          projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+          await updateComponentProperty(projectRootDir, storage0.ID, "storagePath", storageArea0);
+          await updateComponentProperty(projectRootDir, storage2.ID, "storagePath", storageArea2);
+          //Create script that produces output file
+          const script = `${scriptHeader}\ncat in0.txt > out1.txt`;
+          await fs.outputFile(path.resolve(projectRootDir, task1.name, scriptName), script);
+          await updateComponentProperty(projectRootDir, task1.ID, "script", scriptName);
+          await addOutputFile(projectRootDir, storage0.ID, "out0.txt");
+          await addInputFile(projectRootDir, task1.ID, "in0.txt");
+          await addFileLink(projectRootDir, storage0.ID, "out0.txt", task1.ID, "in0.txt");
+          await addOutputFile(projectRootDir, task1.ID, "out1.txt");
+          await addInputFile(projectRootDir, storage2.ID, "in1.txt");
+          await addFileLink(projectRootDir, task1.ID, "out1.txt", storage2.ID, "in1.txt");
+
+          //Create shared storage directory
+          await fs.ensureDir(sharedStorageOnLocal);
+          await ssh.exec(`mkdir -p ${sharedStorageOnRemote}`);
+
+          //Setup remotehost with sharedWithLocalhost (already configured in remotehost.json)
+          const hostInfo = remoteHost.query("name", remotehostName);
+          hostInfo.sharedWithLocalhost = true;
+          hostInfo.localSharedPath = sharedStorageOnLocal; //Use the actual local path
+          hostInfo.sharedPath = sharedStorageOnRemote;
+        });
+
+        afterEach(async ()=>{
+          //Cross-ownership cleanup: chmod testuser-owned dirs to 777 so runner can delete contents,
+          //then SSH delete testuser files, then local delete runner files.
+          const remoteHostInfo = remoteHost.query("name", remotehostName);
+          const remoteTaskBaseDir = remoteHostInfo ? `${remoteHostInfo.path}/dummy_start_time` : "/home/testuser/dummy_start_time";
+          await ssh.exec(`find ${sharedStorageOnRemote} -mindepth 1 -type d -exec chmod 777 {} \\; 2>/dev/null; find ${sharedStorageOnRemote} -mindepth 1 -delete 2>/dev/null; rm -rf ${remoteTaskBaseDir} 2>/dev/null`);
+          await fs.emptyDir(sharedStorageOnLocal);
+
+          //Clean up global state to prevent interference with other tests
+          removeExecuters(projectRootDir);
+          removeTransferrers(projectRootDir);
+
+          //Reset hostInfo to clean state
+          const hostInfo = remoteHost.query("name", remotehostName);
+          if (hostInfo) {
+            delete hostInfo.sharedWithLocalhost;
+            delete hostInfo.localSharedPath;
+            delete hostInfo.sharedPath;
+          }
+        });
+
+        it("should deliver files from localhost storage to remote via shared storage", async ()=>{
+          //Setup: storage0 on localhost (shared), task1 on remote, storage2 on remote (shared)
+          await updateComponentProperty(projectRootDir, task1.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage2.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage2.ID, "storagePath", `${sharedStorageOnRemote}/storage2`);
+          await fs.ensureDir(storageArea0);
+          await fs.chmod(storageArea0, 0o777); //Allow testuser (container) to delete this directory during cleanup
+          await fs.outputFile(path.resolve(storageArea0, "out0.txt"), "test data from localhost");
+
+          const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy_start_time", projectJson.componentPath, {}, "");
+          expect(await DP.start()).to.be.equal("finished");
+
+          //Verify storage2 received file via shared storage (symlink on remote)
+          const testCmd = `test -f /data/shared/storage2/in1.txt`;
+          const rt = await ssh.exec(testCmd);
+          expect(rt).to.equal(0);
+        });
+
+        it("should deliver files from remote storage to localhost via shared storage", async ()=>{
+          //Setup: storage0 on remote, task1 on localhost, storage2 on localhost
+          await updateComponentProperty(projectRootDir, storage0.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage0.ID, "storagePath", `${sharedStorageOnRemote}/storage0`);
+          await ssh.exec(`mkdir -p ${sharedStorageOnRemote}/storage0 && echo "test data from remote" > ${sharedStorageOnRemote}/storage0/out0.txt`);
+
+          const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy_start_time", projectJson.componentPath, {}, "");
+          expect(await DP.start()).to.be.equal("finished");
+
+          //Verify task1 received file via symlink
+          const task1InputPath = path.resolve(projectRootDir, task1.name, "in0.txt");
+          expect(fs.existsSync(task1InputPath)).to.be.true;
+        });
+
+        it("should handle localhost storage -> remote task -> remote storage chain", async ()=>{
+          //Setup: storage0 localhost (shared), task1 remote, storage2 remote (shared)
+          await updateComponentProperty(projectRootDir, task1.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage2.ID, "host", remotehostName);
+          await updateComponentProperty(projectRootDir, storage2.ID, "storagePath", `${sharedStorageOnRemote}/storage2`);
+          await fs.ensureDir(storageArea0);
+          await fs.chmod(storageArea0, 0o777); //Allow testuser (container) to delete this directory during cleanup
+          await fs.outputFile(path.resolve(storageArea0, "out0.txt"), "chain test");
+
+          const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy_start_time", projectJson.componentPath, {}, "");
+          expect(await DP.start()).to.be.equal("finished");
+
+          //Verify storage2 received file via shared storage (remote to remote symlink)
+          const testCmd = `test -f /data/shared/storage2/in1.txt`;
+          const rt = await ssh.exec(testCmd);
+          expect(rt).to.equal(0);
         });
       });
     });
@@ -1004,6 +1220,124 @@ describe("UT for Dispatcher class", function () {
       expect(fs.existsSync(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_1", task0.name, "hoge"))).to.be.false;
       expect(fs.existsSync(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_2", task0.name, "hoge"))).to.be.false;
       expect(fs.existsSync(path.resolve(projectRootDir, "for0_3", "PS0_KEYWORD1_3", task0.name, "hoge"))).to.be.false;
+    });
+  });
+  describe("skipCopy functionality", ()=>{
+    describe("for component with skipCopy", ()=>{
+      let for0;
+      let task0;
+      beforeEach(async ()=>{
+        for0 = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+        await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+        await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+        await updateComponentProperty(projectRootDir, for0.ID, "skipCopy", ["skip_this.txt", "skip_dir"]);
+
+        task0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, for0.name), "task", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await fs.outputFile(path.join(projectRootDir, for0.name, task0.name, scriptName), scriptPwd);
+        await fs.outputFile(path.join(projectRootDir, for0.name, "keep_this.txt"), "keep");
+        await fs.outputFile(path.join(projectRootDir, for0.name, "skip_this.txt"), "skip");
+        await fs.outputFile(path.join(projectRootDir, for0.name, "skip_dir", "file.txt"), "skip dir content");
+
+        projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      });
+      it("should skip specified files and directories during loop copy", async ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP.start()).to.be.equal("finished");
+
+        //Check that keep_this.txt is copied to all instances
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_0", "keep_this.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_1", "keep_this.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_2", "keep_this.txt"))).to.be.true;
+
+        //Check that skip_this.txt is NOT copied from template to instances
+        expect(fs.existsSync(path.resolve(projectRootDir, for0.name, "skip_this.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_0", "skip_this.txt"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_1", "skip_this.txt"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_2", "skip_this.txt"))).to.be.false;
+
+        //Check that skip_dir is NOT copied
+        expect(fs.existsSync(path.resolve(projectRootDir, for0.name, "skip_dir"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_0", "skip_dir"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_1", "skip_dir"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "for0_2", "skip_dir"))).to.be.false;
+      });
+    });
+    describe("foreach component with skipCopy glob pattern", ()=>{
+      let foreach0;
+      let task0;
+      beforeEach(async ()=>{
+        foreach0 = await createNewComponent(projectRootDir, projectRootDir, "foreach", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, foreach0.ID, "indexList", ["a", "b", "c"]);
+        await updateComponentProperty(projectRootDir, foreach0.ID, "skipCopy", ["*.log", "temp_*"]);
+
+        task0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, foreach0.name), "task", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, task0.name, scriptName), scriptPwd);
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, "data.txt"), "data");
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, "output.log"), "log content");
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, "temp_file.dat"), "temp data");
+        await fs.outputFile(path.join(projectRootDir, foreach0.name, "temp_dir", "info.txt"), "temp info");
+
+        projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      });
+      it("should skip files matching glob patterns during loop copy", async ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP.start()).to.be.equal("finished");
+
+        //Check that data.txt is copied
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_a", "data.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_b", "data.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_c", "data.txt"))).to.be.true;
+
+        //Check that *.log files are NOT copied
+        expect(fs.existsSync(path.resolve(projectRootDir, foreach0.name, "output.log"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_a", "output.log"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_b", "output.log"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_c", "output.log"))).to.be.false;
+
+        //Check that temp_* files and directories are NOT copied
+        expect(fs.existsSync(path.resolve(projectRootDir, foreach0.name, "temp_file.dat"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_a", "temp_file.dat"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_b", "temp_file.dat"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_c", "temp_file.dat"))).to.be.false;
+
+        expect(fs.existsSync(path.resolve(projectRootDir, foreach0.name, "temp_dir"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_a", "temp_dir"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_b", "temp_dir"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "foreach0_c", "temp_dir"))).to.be.false;
+      });
+    });
+    describe("while component with skipCopy", ()=>{
+      let while0;
+      let task0;
+      beforeEach(async ()=>{
+        while0 = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 2");
+        await updateComponentProperty(projectRootDir, while0.ID, "skipCopy", ["cache.dat"]);
+
+        task0 = await createNewComponent(projectRootDir, path.resolve(projectRootDir, while0.name), "task", { x: 10, y: 10 });
+        await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+        await fs.outputFile(path.join(projectRootDir, while0.name, task0.name, scriptName), scriptPwd);
+        await fs.outputFile(path.join(projectRootDir, while0.name, "config.txt"), "config");
+        await fs.outputFile(path.join(projectRootDir, while0.name, "cache.dat"), "cache data");
+
+        projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      });
+      it("should skip specified files during while loop copy", async ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP.start()).to.be.equal("finished");
+
+        //Check that config.txt is copied
+        expect(fs.existsSync(path.resolve(projectRootDir, "while0_0", "config.txt"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "while0_1", "config.txt"))).to.be.true;
+
+        //Check that cache.dat is NOT copied
+        expect(fs.existsSync(path.resolve(projectRootDir, while0.name, "cache.dat"))).to.be.true;
+        expect(fs.existsSync(path.resolve(projectRootDir, "while0_0", "cache.dat"))).to.be.false;
+        expect(fs.existsSync(path.resolve(projectRootDir, "while0_1", "cache.dat"))).to.be.false;
+      });
     });
   });
 });

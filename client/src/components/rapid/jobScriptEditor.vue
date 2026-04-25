@@ -34,6 +34,7 @@
         v-model="center"
         label="HPC center"
         :items="centerNames"
+        :menu-props="{ transition: false }"
       />
       <div v-if="template !== null">
         <div
@@ -45,6 +46,7 @@
             v-model="v.value"
             :label="v.label"
             :items="v.items"
+            :menu-props="{ transition: false }"
           />
           <v-text-field
             v-else-if="v.type==='number'"
@@ -183,12 +185,21 @@ export default {
   },
   mounted() {
     this.center = this.centerNames[0];
-    SIO.onGlobal("jobScriptTemplateList", (data)=>{
-      this.jobScriptList = data;
-    });
+    SIO.onGlobal("jobScriptTemplateList", this.onJobScriptTemplateList);
     SIO.emitGlobal("getJobscriptTemplates", SIO.generalCallback);
   },
+  beforeUnmount() {
+    SIO.off("jobScriptTemplateList", this.onJobScriptTemplateList);
+  },
   methods: {
+
+    /**
+     * Handle incoming job script template list from server.
+     * @param {Array} data - List of job script templates
+     */
+    onJobScriptTemplateList(data) {
+      this.jobScriptList = data;
+    },
     cancelSaveDialog() {
       this.newTemplateName = "";
       this.saveDialog = false;

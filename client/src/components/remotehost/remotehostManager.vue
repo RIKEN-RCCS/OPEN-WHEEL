@@ -17,6 +17,7 @@
     <v-data-table
       :items="hosts"
       :headers="headers"
+      :loading="!isLoaded"
       data-cy="remotehost-items-data_table"
     >
       <template #item.connectionTest="{ item, index }">
@@ -63,6 +64,7 @@
 </template>
 <script>
 "use strict";
+import { nextTick } from "vue";
 import Debug from "debug";
 const debug = Debug("wheel:remotehost:manager");
 import SIO from "../../lib/socketIOWrapper.js";
@@ -104,6 +106,9 @@ export default {
       ],
       hosts: [],
       jobSchedulerNames: [],
+      isLoaded: false,
+      jobSchedulerLabelListLoaded: false,
+      hostListLoaded: false,
       removeConfirmMessage: "",
       currentSetting: {},
       testing: null
@@ -122,10 +127,26 @@ export default {
     this.setupSocketHandlers();
     this.fetchData();
   },
+  beforeUnmount() {
+    SIO.off("askPassword", this.onAskPassword);
+    SIO.off("logERR", this.onLogErr);
+  },
   methods: {
     fetchData() {
+      this.isLoaded = false;
+      this.jobSchedulerLabelListLoaded = false;
+      this.hostListLoaded = false;
+      const checkLoaded = ()=>{
+        if (this.jobSchedulerLabelListLoaded && this.hostListLoaded) {
+          nextTick(()=>{
+            this.isLoaded = true;
+          });
+        }
+      };
       SIO.emitGlobal("getJobSchedulerLabelList", (data)=>{
         this.jobSchedulerNames.splice(0, this.jobSchedulerNames.length, ...data);
+        this.jobSchedulerLabelListLoaded = true;
+        checkLoaded();
       });
       SIO.emitGlobal("getHostList", (data)=>{
         data.forEach((e)=>{
@@ -134,25 +155,41 @@ export default {
           e.testResult = "background";
         });
         this.hosts.splice(0, this.hosts.length, ...data);
+        this.hostListLoaded = true;
+        checkLoaded();
       });
     },
     setupSocketHandlers() {
-      SIO.onGlobal("askPassword", (hostname, mode, jwtServerURL, cb)=>{
-        this.pwCallback = (pw)=>{
-          cb(pw);
-        };
+      SIO.onGlobal("askPassword", this.onAskPassword);
+      SIO.onGlobal("logERR", this.onLogErr);
+    },
 
-        this.pwMode = mode;
-        this.pwHostname = hostname;
-        this.pwDialog = true;
-      });
-      SIO.onGlobal("logERR", (message)=>{
-        const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
-        const output = rt ? rt[1] || rt[0] : message;
-        if (this.showSnackbarFunc) {
-          this.showSnackbarFunc(output);
-        }
-      });
+    /**
+     * Handle askPassword event from server.
+     * @param {string} hostname - Remote host name
+     * @param {string} mode - Authentication mode
+     * @param {string} jwtServerURL - JWT server URL
+     * @param {Function} cb - Callback to invoke with entered password
+     */
+    onAskPassword(hostname, mode, jwtServerURL, cb) {
+      this.pwCallback = (pw)=>{
+        cb(pw);
+      };
+      this.pwMode = mode;
+      this.pwHostname = hostname;
+      this.pwDialog = true;
+    },
+
+    /**
+     * Handle error log message from server.
+     * @param {string} message - Error message string
+     */
+    onLogErr(message) {
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      if (this.showSnackbarFunc) {
+        this.showSnackbarFunc(output);
+      }
     },
     openEditDialog(item) {
       this.currentSetting = item || {};

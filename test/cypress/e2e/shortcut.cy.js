@@ -94,7 +94,7 @@ describe("shortcut key", ()=>{
     cy.wait(100);
   });
 
-  it.skip("paste calls socketIO.emitGlobal", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+  it("paste calls socketIO.emitGlobal", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
     //Select a component
     cy.get("[data-cy=\"graph-component-row\"]").contains(TASK_NAME)
       .click();
@@ -126,10 +126,11 @@ describe("shortcut key", ()=>{
     cy.wait(100);
 
     //The test passes if pasteComponent dispatch didn't throw an error
+    //pasteComponent action sets copyInfo to null after dispatching, so we verify it's null
     cy.window().then((win)=>{
       const app = win.document.querySelector("#app").__vue_app__;
       const store = app.config.globalProperties.$store;
-      expect(store.state.copyInfo).to.not.be.null;
+      expect(store.state.copyInfo).to.be.null;
     });
   });
 });

@@ -242,6 +242,7 @@ class For extends GeneralComponent {
     this.start = null;
     this.end = null;
     this.step = null;
+    this.skipCopy = [];
     this.keep = null;
   }
 }
@@ -251,6 +252,7 @@ class While extends GeneralComponent {
     super(...args);
     this.type = "while";
     this.condition = null;
+    this.skipCopy = [];
     this.keep = null;
   }
 }
@@ -263,6 +265,7 @@ class Foreach extends GeneralComponent {
     super(...args);
     this.type = "foreach";
     this.indexList = [];
+    this.skipCopy = [];
     this.keep = null;
   }
 }

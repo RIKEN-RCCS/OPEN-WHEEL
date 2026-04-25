@@ -16,9 +16,10 @@ chai.use(chaiAsPromised);
 import sinon from "sinon";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { setupTestDir } from "../../testUtil.js";
 
 //testee
-import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles } from "../../../app/core/componentResourceValidator.js";
+import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles, validateInputFileOverwrite, validateInputFileRaceCondition } from "../../../app/core/componentResourceValidator.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -27,7 +28,7 @@ const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
 describe("componentResourceValidator UT", function () {
   beforeEach(async function () {
     this.timeout(10000);
-    await fs.remove(testDirRoot);
+    await setupTestDir(testDirRoot);
 
     try {
       await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
@@ -52,20 +53,32 @@ describe("componentResourceValidator UT", function () {
       ifComponent = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 0, y: 0 });
       whileComponent = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 0, y: 0 });
     });
-    it("should reject if condition is not specified", ()=>{
-      expect(validateConditionalCheck(projectRootDir, ifComponent)).to.be.rejectedWith("condition is not specified");
-      expect(validateConditionalCheck(projectRootDir, whileComponent)).to.be.rejectedWith("condition is not specified");
+    it("should reject if condition is not specified", async ()=>{
+      const ifErrors = await validateConditionalCheck(projectRootDir, ifComponent);
+      expect(ifErrors).to.have.lengthOf(1);
+      expect(ifErrors[0].message).to.be.a("string");
+      expect(ifErrors[0].message).to.include("condition is not specified");
+      const whileErrors = await validateConditionalCheck(projectRootDir, whileComponent);
+      expect(whileErrors).to.have.lengthOf(1);
+      expect(whileErrors[0].message).to.be.a("string");
+      expect(whileErrors[0].message).to.include("condition is not specified");
     });
-    it("should reject if condition exists but it is not file", ()=>{
+    it("should reject if condition exists but it is not file", async ()=>{
       ifComponent.condition = "hoge";
       fs.mkdirSync(path.resolve(projectRootDir, ifComponent.name, "hoge"));
       whileComponent.condition = "hoge";
       fs.mkdirSync(path.resolve(projectRootDir, whileComponent.name, "hoge"));
-      expect(validateConditionalCheck(projectRootDir, ifComponent)).to.be.rejectedWith(/condition is exist but it is not file .*/);
-      expect(validateConditionalCheck(projectRootDir, whileComponent)).to.be.rejectedWith(/condition is exist but it is not file .*/);
+      const ifErrors = await validateConditionalCheck(projectRootDir, ifComponent);
+      expect(ifErrors).to.have.lengthOf(1);
+      expect(ifErrors[0].message).to.be.a("string");
+      expect(ifErrors[0].message).to.match(/condition is exist but it is not file .*/);
+      const whileErrors = await validateConditionalCheck(projectRootDir, whileComponent);
+      expect(whileErrors).to.have.lengthOf(1);
+      expect(whileErrors[0].message).to.be.a("string");
+      expect(whileErrors[0].message).to.match(/condition is exist but it is not file .*/);
     });
 
-    it("should be resolved with true if condition is a valid file", async function () {
+    it("should be resolved with empty array if condition is a valid file", async function () {
       const testIfComponent = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 0, y: 0 });
       const testWhileComponent = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 0, y: 0 });
       testIfComponent.condition = "valid_condition.js";
@@ -74,11 +87,11 @@ describe("componentResourceValidator UT", function () {
       const whileConditionPath = path.resolve(projectRootDir, testWhileComponent.name, "valid_condition.js");
       await fs.writeFile(ifConditionPath, "module.exports = function() { return true; }");
       await fs.writeFile(whileConditionPath, "module.exports = function() { return true; }");
-      expect(await validateConditionalCheck(projectRootDir, testIfComponent)).to.be.true;
-      expect(await validateConditionalCheck(projectRootDir, testWhileComponent)).to.be.true;
+      expect(await validateConditionalCheck(projectRootDir, testIfComponent)).to.be.empty;
+      expect(await validateConditionalCheck(projectRootDir, testWhileComponent)).to.be.empty;
     });
 
-    it("should be resolved with true if condition is a JavaScript expression", async function () {
+    it("should be resolved with empty array if condition is a JavaScript expression", async function () {
       const testIfComponent = await createNewComponent(projectRootDir, projectRootDir, "if", { x: 0, y: 0 });
       const testWhileComponent = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 0, y: 0 });
       testIfComponent.condition = "js_expression.js";
@@ -87,8 +100,8 @@ describe("componentResourceValidator UT", function () {
       const whileConditionPath = path.resolve(projectRootDir, testWhileComponent.name, "js_expression.js");
       await fs.writeFile(ifConditionPath, "module.exports = function() { return true; }");
       await fs.writeFile(whileConditionPath, "module.exports = function() { return 1 < 2; }");
-      expect(await validateConditionalCheck(projectRootDir, testIfComponent)).to.be.true;
-      expect(await validateConditionalCheck(projectRootDir, testWhileComponent)).to.be.true;
+      expect(await validateConditionalCheck(projectRootDir, testIfComponent)).to.be.empty;
+      expect(await validateConditionalCheck(projectRootDir, testWhileComponent)).to.be.empty;
     });
   });
 
@@ -101,93 +114,130 @@ describe("componentResourceValidator UT", function () {
       foreachComponent = await createNewComponent(projectRootDir, projectRootDir, "foreach", { x: 0, y: 0 });
       whileComponent = await createNewComponent(projectRootDir, projectRootDir, "while", { x: 0, y: 0 });
     });
-    it("should be rejected if keep is non-empty string", ()=>{
+    it("should be rejected if keep is non-empty string", async ()=>{
       whileComponent.keep = "hoge";
       forComponent.keep = "hoge";
       foreachComponent.keep = "hoge";
-      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+      const whileErrors = await validateKeepProp(whileComponent);
+      expect(whileErrors).to.have.lengthOf(1);
+      expect(whileErrors[0].message).to.be.a("string");
+      expect(whileErrors[0].message).to.include("keep must be positive integer");
+      const forErrors = await validateKeepProp(forComponent);
+      expect(forErrors).to.have.lengthOf(1);
+      expect(forErrors[0].message).to.include("keep must be positive integer");
+      const foreachErrors = await validateKeepProp(foreachComponent);
+      expect(foreachErrors).to.have.lengthOf(1);
+      expect(foreachErrors[0].message).to.include("keep must be positive integer");
     });
-    it("should be rejected if keep is a string that looks like a number", ()=>{
+    it("should be rejected if keep is a string that looks like a number", async ()=>{
       whileComponent.keep = "5";
       forComponent.keep = "5";
       foreachComponent.keep = "5";
-      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+      const whileErrors = await validateKeepProp(whileComponent);
+      expect(whileErrors).to.have.lengthOf(1);
+      expect(whileErrors[0].message).to.include("keep must be positive integer");
+      const forErrors = await validateKeepProp(forComponent);
+      expect(forErrors).to.have.lengthOf(1);
+      expect(forErrors[0].message).to.include("keep must be positive integer");
+      const foreachErrors = await validateKeepProp(foreachComponent);
+      expect(foreachErrors).to.have.lengthOf(1);
+      expect(foreachErrors[0].message).to.include("keep must be positive integer");
     });
-    it("should be rejected if keep is real number", ()=>{
+    it("should be rejected if keep is real number", async ()=>{
       whileComponent.keep = 3.1;
       forComponent.keep = 3.1;
       foreachComponent.keep = 3.1;
-      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+      const whileErrors = await validateKeepProp(whileComponent);
+      expect(whileErrors).to.have.lengthOf(1);
+      expect(whileErrors[0].message).to.include("keep must be positive integer");
+      const forErrors = await validateKeepProp(forComponent);
+      expect(forErrors).to.have.lengthOf(1);
+      expect(forErrors[0].message).to.include("keep must be positive integer");
+      const foreachErrors = await validateKeepProp(foreachComponent);
+      expect(foreachErrors).to.have.lengthOf(1);
+      expect(foreachErrors[0].message).to.include("keep must be positive integer");
     });
-    it("should be rejected if keep is negative integer", ()=>{
+    it("should be rejected if keep is negative integer", async ()=>{
       whileComponent.keep = -1;
       forComponent.keep = -1;
       foreachComponent.keep = -1;
-      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+      const whileErrors = await validateKeepProp(whileComponent);
+      expect(whileErrors).to.have.lengthOf(1);
+      expect(whileErrors[0].message).to.include("keep must be positive integer");
+      const forErrors = await validateKeepProp(forComponent);
+      expect(forErrors).to.have.lengthOf(1);
+      expect(forErrors[0].message).to.include("keep must be positive integer");
+      const foreachErrors = await validateKeepProp(foreachComponent);
+      expect(foreachErrors).to.have.lengthOf(1);
+      expect(foreachErrors[0].message).to.include("keep must be positive integer");
     });
-    it("should be rejected if keep is boolean", ()=>{
+    it("should be rejected if keep is boolean", async ()=>{
       whileComponent.keep = true;
       forComponent.keep = true;
       foreachComponent.keep = true;
-      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+      const whileErrors = await validateKeepProp(whileComponent);
+      expect(whileErrors).to.have.lengthOf(1);
+      expect(whileErrors[0].message).to.include("keep must be positive integer");
+      const forErrors = await validateKeepProp(forComponent);
+      expect(forErrors).to.have.lengthOf(1);
+      expect(forErrors[0].message).to.include("keep must be positive integer");
+      const foreachErrors = await validateKeepProp(foreachComponent);
+      expect(foreachErrors).to.have.lengthOf(1);
+      expect(foreachErrors[0].message).to.include("keep must be positive integer");
     });
-    it("should be resolved with true if keep is empty string", async ()=>{
+    it("should be resolved with empty array if keep is empty string", async ()=>{
       whileComponent.keep = "";
       forComponent.keep = "";
       foreachComponent.keep = "";
-      expect(await validateKeepProp(whileComponent)).to.be.true;
-      expect(await validateKeepProp(forComponent)).to.be.true;
-      expect(await validateKeepProp(foreachComponent)).to.be.true;
+      expect(await validateKeepProp(whileComponent)).to.be.empty;
+      expect(await validateKeepProp(forComponent)).to.be.empty;
+      expect(await validateKeepProp(foreachComponent)).to.be.empty;
     });
-    it("should be resolved with true if keep is null", async ()=>{
+    it("should be resolved with empty array if keep is null", async ()=>{
       whileComponent.keep = null;
       forComponent.keep = null;
       foreachComponent.keep = null;
-      expect(await validateKeepProp(whileComponent)).to.be.true;
-      expect(await validateKeepProp(forComponent)).to.be.true;
-      expect(await validateKeepProp(foreachComponent)).to.be.true;
+      expect(await validateKeepProp(whileComponent)).to.be.empty;
+      expect(await validateKeepProp(forComponent)).to.be.empty;
+      expect(await validateKeepProp(foreachComponent)).to.be.empty;
     });
-    it("should be rejected if keep is undefined", ()=>{
+    it("should be rejected if keep is undefined", async ()=>{
       whileComponent.keep = undefined;
       forComponent.keep = undefined;
       foreachComponent.keep = undefined;
-      expect(validateKeepProp(whileComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(forComponent)).to.be.rejectedWith("keep must be positive integer");
-      expect(validateKeepProp(foreachComponent)).to.be.rejectedWith("keep must be positive integer");
+      const whileErrors = await validateKeepProp(whileComponent);
+      expect(whileErrors).to.have.lengthOf(1);
+      expect(whileErrors[0].message).to.include("keep must be positive integer");
+      const forErrors = await validateKeepProp(forComponent);
+      expect(forErrors).to.have.lengthOf(1);
+      expect(forErrors[0].message).to.include("keep must be positive integer");
+      const foreachErrors = await validateKeepProp(foreachComponent);
+      expect(foreachErrors).to.have.lengthOf(1);
+      expect(foreachErrors[0].message).to.include("keep must be positive integer");
     });
-    it("should be resolved with true if keep is 0", async ()=>{
+    it("should be resolved with empty array if keep is 0", async ()=>{
       whileComponent.keep = 0;
       forComponent.keep = 0;
       foreachComponent.keep = 0;
-      expect(await validateKeepProp(whileComponent)).to.be.true;
-      expect(await validateKeepProp(forComponent)).to.be.true;
-      expect(await validateKeepProp(foreachComponent)).to.be.true;
+      expect(await validateKeepProp(whileComponent)).to.be.empty;
+      expect(await validateKeepProp(forComponent)).to.be.empty;
+      expect(await validateKeepProp(foreachComponent)).to.be.empty;
     });
-    it("should be resolved with true if keep is positive integer", async ()=>{
+    it("should be resolved with empty array if keep is positive integer", async ()=>{
       whileComponent.keep = 5;
       forComponent.keep = 5;
       foreachComponent.keep = 5;
-      expect(await validateKeepProp(whileComponent)).to.be.true;
-      expect(await validateKeepProp(forComponent)).to.be.true;
-      expect(await validateKeepProp(foreachComponent)).to.be.true;
+      expect(await validateKeepProp(whileComponent)).to.be.empty;
+      expect(await validateKeepProp(forComponent)).to.be.empty;
+      expect(await validateKeepProp(foreachComponent)).to.be.empty;
     });
-    it("should be resolved with true if keep is large positive integer", async ()=>{
+    it("should be resolved with empty array if keep is large positive integer", async ()=>{
       whileComponent.keep = 1000000;
       forComponent.keep = 1000000;
       foreachComponent.keep = 1000000;
-      expect(await validateKeepProp(whileComponent)).to.be.true;
-      expect(await validateKeepProp(forComponent)).to.be.true;
-      expect(await validateKeepProp(foreachComponent)).to.be.true;
+      expect(await validateKeepProp(whileComponent)).to.be.empty;
+      expect(await validateKeepProp(forComponent)).to.be.empty;
+      expect(await validateKeepProp(foreachComponent)).to.be.empty;
     });
   });
 
@@ -196,51 +246,85 @@ describe("componentResourceValidator UT", function () {
     beforeEach(()=>{
       component = { inputFiles: [] };
     });
-    it("should be rejected if one of input filename is invalid", ()=>{
+    it("should be rejected if one of input filename is invalid", async ()=>{
       component.inputFiles.push({ name: "hoge", src: [] });
       component.inputFiles.push({ name: "h*ge", src: [] });
-      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+      const errors = await validateInputFiles(component);
+      expect(errors.length).to.be.greaterThan(0);
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.match(/.* is not allowed as input file./);
     });
-    it("should be rejected if input filename is null", ()=>{
+    it("should be rejected if input filename is null", async ()=>{
       component.inputFiles.push({ name: null, src: [] });
-      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+      const errors = await validateInputFiles(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.match(/.* is not allowed as input file./);
     });
-    it("should be rejected if input filename is empty string", ()=>{
+    it("should be rejected if input filename is empty string", async ()=>{
       component.inputFiles.push({ name: "", src: [] });
-      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+      const errors = await validateInputFiles(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.match(/.* is not allowed as input file./);
     });
-    it("should be rejected if input filename is blank", ()=>{
+    it("should be rejected if input filename is blank", async ()=>{
       component.inputFiles.push({ name: "   ", src: [] });
-      expect(validateInputFiles(component)).to.be.rejectedWith(/.* is not allowed as input file./);
+      const errors = await validateInputFiles(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.match(/.* is not allowed as input file./);
     });
-    it("should be rejected if inputFile is file and has 2 or more connection", ()=>{
+    it("should be rejected if inputFile is file and has 2 or more connection", async ()=>{
       component.inputFiles.push({ name: "hoge", src: [{}, {}] });
-      expect(validateInputFiles(component)).to.be.rejectedWith(/inputFile .* data type is 'file' but it has two or more outputFiles./);
+      const errors = await validateInputFiles(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.match(/inputFile .* data type is 'file' but it has two or more outputFiles./);
     });
-    it("should be resolved with true if inputFile is file and is not connected", async ()=>{
+    it("should be resolved with empty array if inputFile is file and is not connected", async ()=>{
       component.inputFiles.push({ name: "hoge", src: [] });
-      expect(await validateInputFiles(component)).to.be.true;
+      expect(await validateInputFiles(component)).to.be.empty;
     });
-    it("should be resolved with true if inputFile is file and has only 1 connection", async ()=>{
+    it("should be resolved with empty array if inputFile is file and has only 1 connection", async ()=>{
       component.inputFiles.push({ name: "hoge", src: [{}] });
-      expect(await validateInputFiles(component)).to.be.true;
+      expect(await validateInputFiles(component)).to.be.empty;
     });
-    it("should be resolved with true if inputFile is directory and has 2 or more connection", async ()=>{
+    it("should be resolved with empty array if inputFile is directory and has 2 or more connection", async ()=>{
       component.inputFiles.push({ name: "hoge/", src: [{}, {}] });
-      expect(await validateInputFiles(component)).to.be.true;
+      expect(await validateInputFiles(component)).to.be.empty;
     });
-    it("should be resolved with true if multiple valid inputFiles", async ()=>{
+    it("should be resolved with empty array if multiple valid inputFiles", async ()=>{
       component.inputFiles.push({ name: "file1.txt", src: [] });
       component.inputFiles.push({ name: "file2.txt", src: [] });
       component.inputFiles.push({ name: "directory/", src: [] });
-      expect(await validateInputFiles(component)).to.be.true;
+      expect(await validateInputFiles(component)).to.be.empty;
     });
-    it("should be resolved with true if no inputFiles", async ()=>{
-      expect(await validateInputFiles(component)).to.be.true;
+    it("should be resolved with empty array if no inputFiles", async ()=>{
+      expect(await validateInputFiles(component)).to.be.empty;
     });
-    it("should be resolved with true if inputFile has valid path format", async ()=>{
+    it("should be resolved with empty array if inputFile has valid path format", async ()=>{
       component.inputFiles.push({ name: "path/to/file.txt", src: [] });
-      expect(await validateInputFiles(component)).to.be.true;
+      expect(await validateInputFiles(component)).to.be.empty;
+    });
+    it("should be rejected if mandatory inputFile has no connection (src is empty)", async ()=>{
+      component.inputFiles.push({ name: "hoge", src: [], mandatory: true });
+      const errors = await validateInputFiles(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.match(/mandatory inputFile .* is not connected/);
+    });
+    it("should be resolved with empty array if mandatory inputFile is connected", async ()=>{
+      component.inputFiles.push({ name: "hoge", src: [{ srcNode: "node1", srcName: "out.txt" }], mandatory: true });
+      expect(await validateInputFiles(component)).to.be.empty;
+    });
+    it("should be resolved with empty array if non-mandatory inputFile has no connection", async ()=>{
+      component.inputFiles.push({ name: "hoge", src: [], mandatory: false });
+      expect(await validateInputFiles(component)).to.be.empty;
+    });
+    it("should be resolved with empty array if inputFile without mandatory flag has no connection", async ()=>{
+      component.inputFiles.push({ name: "hoge", src: [] });
+      expect(await validateInputFiles(component)).to.be.empty;
     });
   });
 
@@ -249,38 +333,173 @@ describe("componentResourceValidator UT", function () {
     beforeEach(()=>{
       component = { outputFiles: [] };
     });
-    it("should be rejected if output filename is blank", ()=>{
+    it("should be rejected if output filename is blank", async ()=>{
       component.outputFiles.push({ name: "   ", dst: [] });
-      expect(validateOutputFiles(component)).to.be.rejectedWith(/.* is not allowed as output filename./);
+      const errors = await validateOutputFiles(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.match(/.* is not allowed as output filename./);
     });
-    it("should be resolved with true if output filename contains special characters", async ()=>{
+    it("should be resolved with empty array if output filename contains special characters", async ()=>{
       component.outputFiles.push({ name: "file*name", dst: [] });
-      expect(await validateOutputFiles(component)).to.be.true;
+      expect(await validateOutputFiles(component)).to.be.empty;
     });
-    it("should be rejected if output filename is null", ()=>{
+    it("should be rejected if output filename is null", async ()=>{
       component.outputFiles.push({ name: null, dst: [] });
-      expect(validateOutputFiles(component)).to.be.rejectedWith(/.* is not allowed as output filename./);
+      const errors = await validateOutputFiles(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.match(/.* is not allowed as output filename./);
     });
-    it("should be rejected if output filename is empty string", ()=>{
+    it("should be rejected if output filename is empty string", async ()=>{
       component.outputFiles.push({ name: "", dst: [] });
-      expect(validateOutputFiles(component)).to.be.rejectedWith(/.* is not allowed as output filename./);
+      const errors = await validateOutputFiles(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.match(/.* is not allowed as output filename./);
     });
-    it("should be resolved with true if output filename is valid", async ()=>{
+    it("should be resolved with empty array if output filename is valid", async ()=>{
       component.outputFiles.push({ name: "validfile.txt", dst: [] });
-      expect(await validateOutputFiles(component)).to.be.true;
+      expect(await validateOutputFiles(component)).to.be.empty;
     });
-    it("should be resolved with true if multiple output files with valid names", async ()=>{
+    it("should be resolved with empty array if multiple output files with valid names", async ()=>{
       component.outputFiles.push({ name: "file1.txt", dst: [] });
       component.outputFiles.push({ name: "file2.txt", dst: [] });
       component.outputFiles.push({ name: "file3.txt", dst: [] });
-      expect(await validateOutputFiles(component)).to.be.true;
+      expect(await validateOutputFiles(component)).to.be.empty;
     });
-    it("should be resolved with true if no output files", async ()=>{
-      expect(await validateOutputFiles(component)).to.be.true;
+    it("should be resolved with empty array if no output files", async ()=>{
+      expect(await validateOutputFiles(component)).to.be.empty;
     });
-    it("should be resolved with true if output filename is a directory path", async ()=>{
+    it("should be resolved with empty array if output filename is a directory path", async ()=>{
       component.outputFiles.push({ name: "directory/", dst: [] });
-      expect(await validateOutputFiles(component)).to.be.true;
+      expect(await validateOutputFiles(component)).to.be.empty;
+    });
+  });
+
+  describe("validateInputFileOverwrite", ()=>{
+    let component;
+    beforeEach(async ()=>{
+      component = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      component.inputFiles = [];
+    });
+    it("should be resolved with empty array if no inputFiles", async ()=>{
+      expect(await validateInputFileOverwrite(projectRootDir, component)).to.be.empty;
+    });
+    it("should be resolved with empty array if inputFile has no connection (src empty)", async ()=>{
+      component.inputFiles.push({ name: "localfile.txt", src: [] });
+      await fs.writeFile(path.resolve(projectRootDir, component.name, "localfile.txt"), "content");
+      expect(await validateInputFileOverwrite(projectRootDir, component)).to.be.empty;
+    });
+    it("should be resolved with empty array if connected inputFile has no existing local file", async ()=>{
+      component.inputFiles.push({ name: "incoming.txt", src: [{ srcNode: "node1", srcName: "out.txt" }] });
+      expect(await validateInputFileOverwrite(projectRootDir, component)).to.be.empty;
+    });
+    it("should warn with ignoreable error if connected inputFile would overwrite an existing local file", async ()=>{
+      component.inputFiles.push({ name: "existing.txt", src: [{ srcNode: "node1", srcName: "out.txt" }] });
+      await fs.writeFile(path.resolve(projectRootDir, component.name, "existing.txt"), "old content");
+      const errors = await validateInputFileOverwrite(projectRootDir, component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/inputFile 'existing\.txt' will overwrite an existing local file/);
+    });
+    it("should warn for each connected inputFile that would overwrite an existing local file", async ()=>{
+      component.inputFiles.push({ name: "file1.txt", src: [{ srcNode: "node1", srcName: "out1.txt" }] });
+      component.inputFiles.push({ name: "file2.txt", src: [{ srcNode: "node2", srcName: "out2.txt" }] });
+      await fs.writeFile(path.resolve(projectRootDir, component.name, "file1.txt"), "content1");
+      await fs.writeFile(path.resolve(projectRootDir, component.name, "file2.txt"), "content2");
+      const errors = await validateInputFileOverwrite(projectRootDir, component);
+      expect(errors).to.have.lengthOf(2);
+      expect(errors.every((e)=>{
+        return e.ignoreable;
+      })).to.be.true;
+    });
+  });
+
+  describe("validateInputFileRaceCondition", ()=>{
+    let component;
+    beforeEach(()=>{
+      component = { inputFiles: [] };
+    });
+    it("should be resolved with empty array if no inputFiles", async ()=>{
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should be resolved with empty array if file-type inputFile has single source", async ()=>{
+      component.inputFiles.push({ name: "file.txt", src: [{ srcNode: "A", srcName: "out.txt" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should be resolved with empty array if directory inputFile has single source", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "result.txt" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should be resolved with empty array if directory inputFile has multiple sources with distinct srcNames", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "a.txt" }, { srcNode: "B", srcName: "b.txt" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should warn if directory inputFile has multiple sources with same srcName", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "result.txt" }, { srcNode: "B", srcName: "result.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/race condition possible/);
+    });
+    it("should warn once per conflicting pair across same directory inputFile", async ()=>{
+      component.inputFiles.push({ name: "out/", src: [
+        { srcNode: "A", srcName: "file.txt" },
+        { srcNode: "B", srcName: "file.txt" },
+        { srcNode: "C", srcName: "other.txt" },
+        { srcNode: "D", srcName: "other.txt" }
+      ] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.have.lengthOf(2);
+      expect(errors.every((e)=>{
+        return e.ignoreable;
+      })).to.be.true;
+    });
+    it("should check backslash-terminated directory inputFiles too", async ()=>{
+      component.inputFiles.push({ name: "data\\", src: [{ srcNode: "A", srcName: "result.txt" }, { srcNode: "B", srcName: "result.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].ignoreable).to.be.true;
+    });
+    it("should warn when two file-type inputFiles share the same name (cross-inputFile conflict)", async ()=>{
+      component.inputFiles.push({ name: "result.txt", src: [{ srcNode: "A", srcName: "out.txt" }] });
+      component.inputFiles.push({ name: "result.txt", src: [{ srcNode: "B", srcName: "out.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/race condition possible/);
+    });
+    it("should warn when file-type inputFile name matches destination of directory inputFile (cross-inputFile conflict)", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "result.txt" }] });
+      component.inputFiles.push({ name: "data/result.txt", src: [{ srcNode: "B", srcName: "out.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/race condition possible/);
+    });
+    it("should warn when glob srcName matches a literal srcName in the same directory inputFile", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "*.txt" }, { srcNode: "B", srcName: "result.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].ignoreable).to.be.true;
+      expect(errors[0].message).to.match(/race condition possible/);
+    });
+    it("should warn when two identical glob srcNames are present", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "*.txt" }, { srcNode: "B", srcName: "*.txt" }] });
+      const errors = await validateInputFileRaceCondition(component);
+      expect(errors).to.have.lengthOf(1);
+      expect(errors[0].ignoreable).to.be.true;
+    });
+    it("should be resolved with empty array if glob srcNames are non-overlapping", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "*.txt" }, { srcNode: "B", srcName: "*.csv" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
+    });
+    it("should be resolved with empty array for single-source directory inputFile with glob", async ()=>{
+      component.inputFiles.push({ name: "data/", src: [{ srcNode: "A", srcName: "*.txt" }] });
+      expect(await validateInputFileRaceCondition(component)).to.be.empty;
     });
   });
 });

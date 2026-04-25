@@ -1,12 +1,67 @@
-const ANIMATION_WAIT_TIME = 500;
 const TYPE_INPUT = "input";
 const TYPE_OUTPUT = "output";
 const TYPE_DIR = "dir";
 const TYPE_FILE = "file";
+const CONTAINER_NAME = "wheel";
 
-//drag&drop component
+/**
+ * Prepare a clean component test by setting project state to "finished",
+ * adding a marker file, and staging it.
+ * - Mock mode: uses the mock server's setupCleanComponentTest helper.
+ * - Real server mode: writes prj/cmp.wheel.json, commits, creates marker file, git-adds it.
+ * @param {string} componentName - the component's directory name (or partial name for hpcisstar)
+ */
+Cypress.Commands.add("prepareCleanComponentTest", (componentName)=>{
+  const isMock = Cypress.config("baseUrl").includes("3001");
+  if (isMock) {
+    cy.task("setupMockCleanTest", componentName).should("equal", true);
+    cy.reload();
+    cy.checkProjectStatus("finished");
+  } else {
+    const tmpPl = "cypress/fixtures/tmp_clean_pl.json";
+    const tmpPrj = "cypress/fixtures/tmp_clean_prj.json";
+    const tmpCmp = "cypress/fixtures/tmp_clean_cmp.json";
+
+    cy.exec(`docker cp ${CONTAINER_NAME}:/root/.wheel/projectList.json ${tmpPl}`);
+    cy.task("readJson", tmpPl).then((projects)=>{
+      const projectPath = projects[0].path;
+
+      cy.exec(`docker cp ${CONTAINER_NAME}:${projectPath}/prj.wheel.json ${tmpPrj}`);
+      cy.task("readJson", tmpPrj).then((prj)=>{
+        const entry = Object.entries(prj.componentPath)
+          .find(([, relPath])=>{
+            return relPath === componentName
+              || relPath.endsWith(`/${componentName}`)
+              || String(relPath).replace(/^\.\//u, "")
+                .startsWith(componentName);
+          });
+        if (!entry) {
+          throw new Error(`Component "${componentName}" not found in prj.wheel.json`);
+        }
+        const [, componentRelPath] = entry;
+
+        const cmpPath = `${projectPath}/${componentRelPath}/cmp.wheel.json`;
+        //Commit any staged files so the component is in HEAD before clean test
+        cy.exec(`docker exec ${CONTAINER_NAME} sh -c "git -C '${projectPath}' commit -m 'test-setup' 2>&1 || true"`);
+        cy.exec(`docker cp ${CONTAINER_NAME}:${cmpPath} ${tmpCmp}`);
+        cy.task("readJson", tmpCmp).then((cmp)=>{
+          cmp.state = "finished";
+          cy.task("writeJson", { filePath: tmpCmp, data: cmp });
+          cy.exec(`docker cp ${tmpCmp} ${CONTAINER_NAME}:${cmpPath}`);
+          //Create and stage the marker file so cleanComponent detects it as unsavedFiles
+          const markerPath = `${projectPath}/${componentRelPath}/_clean_test_marker.txt`;
+          cy.exec(`docker exec ${CONTAINER_NAME} sh -c "echo test > '${markerPath}'"`);
+          cy.exec(`docker exec ${CONTAINER_NAME} git -C '${projectPath}' add '${markerPath}'`);
+          cy.reload();
+          cy.get("[data-cy=\"graph-component-row\"]").contains(componentName, { timeout: 20000 })
+            .should("be.visible");
+        });
+      });
+    });
+  }
+});
 Cypress.Commands.add("dragAndDropComponent", (x, y, componentName, targetComponentName)=>{
-  cy.get("[data-cy=\"component_library-component-avatar\"]", { timeout: ANIMATION_WAIT_TIME + 4000 }).get("#" + targetComponentName);
+  cy.get("[data-cy=\"component_library-component-avatar\"]", { timeout: 10000 }).get("#" + targetComponentName);
   cy.get("[data-cy=\"component_library-component-avatar\"]").get("#" + targetComponentName)
     .trigger("dragstart", { offsetX: 100, offsetY: 100 })
     .trigger("dragend", { clientX: x, clientY: y })
@@ -21,6 +76,10 @@ Cypress.Commands.add("clickComponentName", (componentName)=>{
   cy.get("[data-cy=\"graph-component-row\"]").contains(componentName)
     .click();
   cy.get("[data-cy=\"component_property-property-navigation_drawer\"]", { timeout: 5000 }).should("be.visible");
+  //Reset window scroll after the panel opens: clicking the SVG component name
+  //can scroll the window down, which would put the absolute-positioned navigation
+  //drawer's elements at negative y-coordinates (outside the viewport).
+  cy.scrollTo(0, 0);
 });
 
 //double click component
@@ -43,7 +102,7 @@ Cypress.Commands.add("selectValueFromDropdownList", (targetDropBoxCy, dropBoxNo,
   cy.get("[role=\"listbox\"]").should("be.visible");
   cy.get("[role=\"listbox\"]").contains(selectVal, { timeout: 10000 })
     .should("be.visible")
-    .click();
+    .click({ force: true });
 });
 
 //save property
@@ -54,6 +113,7 @@ Cypress.Commands.add("saveProperty", ()=>{
 //close property
 Cypress.Commands.add("closeProperty", ()=>{
   cy.get("[data-cy=\"component_property-close-btn\"]").click();
+  cy.get("[data-cy=\"component_property-property-navigation_drawer\"]").should("not.exist");
 });
 
 //enter the input or output file
@@ -66,20 +126,28 @@ Cypress.Commands.add("enterInputOrOutputFile", (type, fileName, clickRun, addBut
   if (type === TYPE_INPUT) {
     cy.get("[data-cy=\"component_property-input_files-list_form\"]").find("input")
       .type(fileName);
-    //Click the Add File button
     if (addButtonClickFlag) {
-      cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
-        .eq(1)
-        .click(); //Add input file button
+      //blur fires the change event, which updates v-model.lazy (inputField) before clicking add
+      cy.get("[data-cy=\"component_property-input_files-list_form\"]").find("input")
+        .blur();
+      cy.get("[data-cy=\"component_property-input_files-list_form\"]")
+        .find("[data-cy=\"list_form-add-text_field\"]")
+        .find("[role=\"button\"]")
+        .last()
+        .click({ force: true }); //Add input file button
     }
   } else if (type === TYPE_OUTPUT) {
     cy.get("[data-cy=\"component_property-output_files-list_form\"]").find("input")
       .type(fileName);
-    //Click the Add File button
     if (addButtonClickFlag) {
-      cy.get("[data-cy=\"list_form-add-text_field\"]").find("[role=\"button\"]")
-        .eq(3)
-        .click(); //Add output file button
+      //blur fires the change event, which updates v-model.lazy (inputField) before clicking add
+      cy.get("[data-cy=\"component_property-output_files-list_form\"]").find("input")
+        .blur();
+      cy.get("[data-cy=\"component_property-output_files-list_form\"]")
+        .find("[data-cy=\"list_form-add-text_field\"]")
+        .find("[role=\"button\"]")
+        .last()
+        .click({ force: true }); //Add output file button
     }
   }
 });
@@ -98,6 +166,7 @@ Cypress.Commands.add("createDirOrFile", (type, fileName, clickRun)=>{
       .type(fileName, { force: true });
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
       .first()
+      .should("not.be.disabled")
       .click();
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("not.exist");
     cy.wait(200);
@@ -108,10 +177,38 @@ Cypress.Commands.add("createDirOrFile", (type, fileName, clickRun)=>{
       .type(fileName, { force: true });
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
       .first()
+      .should("not.be.disabled")
       .click();
     cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("not.exist");
     cy.wait(200);
   }
+});
+
+/**
+ * Open the files panel and remove the specified items from the file browser treeview
+ * if they exist. Useful for cleaning up leftover files/directories from previous test runs.
+ * The files panel remains open after this command completes.
+ * @param {string[]} names - list of file/directory names to remove if present
+ */
+Cypress.Commands.add("cleanFileBrowserItems", (names)=>{
+  cy.get("[data-cy=\"component_property-files-panel_title\"]", { timeout: 10000 })
+    .scrollIntoView()
+    .click({ force: true });
+  names.forEach((name)=>{
+    cy.get("body").then(($body)=>{
+      const treeview = $body.find("[data-cy='file_browser-treeview-treeview']");
+      if (treeview.length > 0 && treeview.text().includes(name)) {
+        cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains(name)
+          .click();
+        cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+          .click();
+        cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
+          .first()
+          .click();
+        cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("not.exist");
+      }
+    });
+  });
 });
 
 //confirm the display in the property
@@ -125,11 +222,22 @@ Cypress.Commands.add("confirmDisplayInProperty", (dataCyStr, visibleFlg)=>{
 
 //confirm the display in the property by details area
 Cypress.Commands.add("confirmDisplayInPropertyByDetailsArea", (dataCyStr, clickAreaName, tagType)=>{
-  cy.get(clickAreaName).click();
+  cy.get(clickAreaName).scrollIntoView()
+    .click();
   if (tagType === null) {
-    cy.get(dataCyStr).should("be.visible");
+    //The expansion-panel enter animation applies overflow:hidden inline style while running.
+    //scrollIntoView called mid-animation may scroll to an intermediate position that becomes
+    //stale once the panel reaches full height.  Wrapping both the scroll and the visibility
+    //check inside a single .should() callback causes Cypress to retry the entire pair on each
+    //attempt, so the element is re-scrolled into view on every retry until the animation
+    //completes and Cypress.dom.isVisible passes.
+    cy.get(dataCyStr).should(($el)=>{
+      $el[0].scrollIntoView({ behavior: "instant" });
+      expect(Cypress.dom.isVisible($el[0]), "element should be visible after scroll").to.be.true;
+    });
   } else {
     cy.get(dataCyStr).find(tagType)
+      .scrollIntoView()
       .should("be.visible");
   }
 });
@@ -187,9 +295,9 @@ Cypress.Commands.add("createComponentNotOpenProperty", (targetComponentName, com
 //delete a component
 Cypress.Commands.add("deleteComponent", (componentName)=>{
   cy.get("[data-cy=\"graph-component-row\"]").contains(componentName)
-    .rightclick();
+    .rightclick({ force: true });
   cy.get("[data-cy=\"graph-component-row\"]").contains("delete")
-    .click();
+    .click({ force: true });
   cy.contains("button", "Delete").click();
 });
 
@@ -237,12 +345,12 @@ Cypress.Commands.add("connectComponentMultiple", (sourceComponentName, targetCom
         .first()
         .should("be.visible")
         .then(($polygon)=>{
-          cy.get("svg").first()
-            .then(($svg)=>{
-              const polygonRect = $polygon[0].getBoundingClientRect();
-              const startX = polygonRect.left + polygonRect.width / 2;
-              const startY = polygonRect.top + polygonRect.height / 2;
+          const polygonRect = $polygon[0].getBoundingClientRect();
+          const startX = polygonRect.left + polygonRect.width / 2;
+          const startY = polygonRect.top + polygonRect.height / 2;
 
+          cy.get("svg#component-graph-svg").first()
+            .then(($svg)=>{
               //Dispatch real events using the browser's event system
               cy.window().then((win)=>{
               //Create and dispatch mousedown
@@ -259,42 +367,36 @@ Cypress.Commands.add("connectComponentMultiple", (sourceComponentName, targetCom
                 });
                 $polygon[0].dispatchEvent(mousedownEvent);
 
-                //Small delay
-                cy.wait(100).then(()=>{
-                //Create and dispatch mousemove
-                  const mousemoveEvent = new win.MouseEvent("mousemove", {
-                    bubbles: true,
-                    cancelable: true,
-                    view: win,
-                    screenX: targetX,
-                    screenY: targetY,
-                    clientX: targetX,
-                    clientY: targetY,
-                    button: 0,
-                    buttons: 1
-                  });
-                  $svg[0].dispatchEvent(mousemoveEvent);
-
-                  //Small delay
-                  cy.wait(100).then(()=>{
-                  //Create and dispatch mouseup
-                    const mouseupEvent = new win.MouseEvent("mouseup", {
-                      bubbles: true,
-                      cancelable: true,
-                      view: win,
-                      screenX: targetX,
-                      screenY: targetY,
-                      clientX: targetX,
-                      clientY: targetY,
-                      button: 0,
-                      buttons: 0
-                    });
-                    $svg[0].dispatchEvent(mouseupEvent);
-
-                    //Wait for connection to be created
-                    cy.wait(500);
-                  });
+                //Create and dispatch mousemove immediately (no wait to avoid Vue re-renders)
+                const mousemoveEvent = new win.MouseEvent("mousemove", {
+                  bubbles: true,
+                  cancelable: true,
+                  view: win,
+                  screenX: targetX,
+                  screenY: targetY,
+                  clientX: targetX,
+                  clientY: targetY,
+                  button: 0,
+                  buttons: 1
                 });
+                $svg[0].dispatchEvent(mousemoveEvent);
+
+                //Create and dispatch mouseup immediately
+                const mouseupEvent = new win.MouseEvent("mouseup", {
+                  bubbles: true,
+                  cancelable: true,
+                  view: win,
+                  screenX: targetX,
+                  screenY: targetY,
+                  clientX: targetX,
+                  clientY: targetY,
+                  button: 0,
+                  buttons: 0
+                });
+                $svg[0].dispatchEvent(mouseupEvent);
+
+                //Wait for connection to be created
+                cy.wait(500);
               });
             });
         });
@@ -376,4 +478,16 @@ Cypress.Commands.add("checkConnectionLineMultiple", (startComponentName, endComp
       });
     });
   });
+});
+
+/**
+ * Click an item inside a treeview, waiting for the item to be present first.
+ * This avoids DOM detachment errors caused by async treeview re-renders.
+ * @param {string} treeviewCy - the data-cy selector of the treeview root element
+ * @param {string} text - the visible text of the item to click
+ */
+Cypress.Commands.add("clickTreeviewItem", (treeviewCy, text)=>{
+  cy.get(treeviewCy).should("contain.text", text);
+  cy.get(treeviewCy).contains(text)
+    .click({ force: true });
 });

@@ -1,6 +1,8 @@
 <template>
   <g
     @click.right.prevent.stop="onRightClick"
+    @mousemove="$emit('mousemove', $event)"
+    @mouseleave="$emit('mouseleave', $event)"
   >
     <!-- Invisible wider path for easier clicking -->
     <path
@@ -17,6 +19,7 @@
       :d="cmd"
       :stroke="strokeColor"
       :stroke-width="width"
+      :stroke-dasharray="strokeDasharray"
       fill="transparent"
       data-cy="cubic-bezier-path"
       pointer-events="none"
@@ -51,9 +54,13 @@ export default {
     width: {
       type: [Number, String],
       default: "1px"
+    },
+    strokeDasharray: {
+      type: String,
+      default: ""
     }
   },
-  emits: ["contextmenu"],
+  emits: ["contextmenu", "mousemove", "mouseleave"],
   computed: {
     cmd() {
       return `M ${this.start.x},${this.start.y}

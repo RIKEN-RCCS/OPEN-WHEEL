@@ -143,7 +143,7 @@ export default [
     arrowParens: true
   }),
   {
-    ignores: ["node_modules/", "server/app/public/", "documentMD/"]
+    ignores: ["node_modules/", "server/app/public/", "documentMD/", "server/app/db/version.json"]
   },
   {
     files: ["client/**/*.js", "client/**/*.vue"],

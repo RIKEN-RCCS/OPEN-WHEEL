@@ -9,6 +9,8 @@ import { hasChild } from "./workflowComponent.js";
 import { getChildren } from "./workflowUtil.js";
 import { readComponentJsonByID } from "./componentJsonIO.js";
 import { isDefaultPort } from "../lib/utility.js";
+import { replacePathsep } from "./pathUtils.js";
+import path from "path";
 
 const _internal = {
   remoteHost,
@@ -17,6 +19,8 @@ const _internal = {
   getChildren,
   readComponentJsonByID,
   isDefaultPort,
+  replacePathsep,
+  path,
   recursiveGetHosts: null //Will be set below
 };
 
@@ -33,7 +37,26 @@ export async function isSameRemoteHost(projectRootDir, src, dst) {
   }
   const srcComponent = await _internal.readComponentJsonByID(projectRootDir, src);
   const dstComponent = await _internal.readComponentJsonByID(projectRootDir, dst);
-  if (_internal.isLocal(srcComponent) || _internal.isLocal(dstComponent)) {
+
+  const srcIsLocal = _internal.isLocal(srcComponent);
+  const dstIsLocal = _internal.isLocal(dstComponent);
+
+  //Check localhost-remote shared storage
+  if (srcIsLocal && !dstIsLocal) {
+    const dstHostInfo = _internal.remoteHost.query("name", dstComponent.host);
+    if (dstHostInfo && dstHostInfo.sharedWithLocalhost) {
+      return true;
+    }
+  }
+
+  if (!srcIsLocal && dstIsLocal) {
+    const srcHostInfo = _internal.remoteHost.query("name", srcComponent.host);
+    if (srcHostInfo && srcHostInfo.sharedWithLocalhost) {
+      return true;
+    }
+  }
+
+  if (srcIsLocal || dstIsLocal) {
     return false;
   }
   if (srcComponent.host === dstComponent.host) {
@@ -56,6 +79,30 @@ export async function isSameRemoteHost(projectRootDir, src, dst) {
   const srcHostPort = _internal.isDefaultPort(srcHostInfo.port) ? 22 : srcHostInfo.port;
   const dstHostPort = _internal.isDefaultPort(dstHostInfo.port) ? 22 : dstHostInfo.port;
   return srcHostPort === dstHostPort;
+}
+
+/**
+ * translate path between localhost and remotehost for shared storage
+ * @param {string} sourcePath - path to translate
+ * @param {string} fromBase - base path in source environment
+ * @param {string} toBase - base path in target environment
+ * @returns {string} - translated path
+ */
+export function translateSharedPath(sourcePath, fromBase, toBase) {
+  if (!fromBase || !toBase) {
+    return sourcePath;
+  }
+
+  const normalizedSrc = _internal.replacePathsep(sourcePath);
+  const normalizedFrom = _internal.replacePathsep(fromBase);
+  const normalizedTo = _internal.replacePathsep(toBase);
+
+  if (normalizedSrc.startsWith(normalizedFrom)) {
+    const relativePath = _internal.path.relative(normalizedFrom, normalizedSrc);
+    return _internal.replacePathsep(_internal.path.posix.join(normalizedTo, relativePath));
+  }
+
+  return sourcePath;
 }
 
 /**

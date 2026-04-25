@@ -77,24 +77,17 @@ function makeEnv(task) {
  * make part of submit command line about queue argument
  * @param {object} task - task component instance
  * @param {object} JS - Jobscheduler.json's entry
- * @param {string} queues - comma separated queue name list
+ * @param {string[]} queues - array of available queue names
  * @returns {string} -
  */
 function makeQueueOpt(task, JS, queues) {
-  if (typeof queues !== "string") {
-    return "";
-  }
-  const queueList = queues.split(",")
-    .map((e)=>{ return e.trim(); });
-  if (queueList.length === 0) {
+  if (!Array.isArray(queues) || queues.length === 0) {
     return "";
   }
 
-  let queue = queueList.find((e)=>{
-    return task.queue === e;
-  });
+  let queue = queues.find((e)=>{ return task.queue === e; });
   if (typeof queue === "undefined") {
-    queue = queueList[0];
+    queue = queues[0];
   }
 
   //queue can be empty string "", we do not use queue opt in such case

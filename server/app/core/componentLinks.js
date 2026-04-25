@@ -243,7 +243,7 @@ export async function addFileLinkToParent(projectRootDir, srcNode, srcName, dstN
     return e.name === srcName;
   });
   if (!srcOutputFile.dst.includes({ dstNode: parentID, dstName })) {
-    srcOutputFile.dst.push({ dstNode: parentID, dstName });
+    srcOutputFile.dst.push({ dstNode: parentID, dstName, forceCopy: false });
   }
   const p = _internal.writeComponentJson(projectRootDir, srcDir, srcJson);
 
@@ -314,7 +314,7 @@ export async function addFileLinkBetweenSiblings(projectRootDir, srcNode, srcNam
     return e.name === srcName;
   });
   if (!srcOutputFile.dst.includes({ dstNode, dstName })) {
-    srcOutputFile.dst.push({ dstNode, dstName });
+    srcOutputFile.dst.push({ dstNode, dstName, forceCopy: false });
   }
   const p1 = _internal.writeComponentJson(projectRootDir, srcDir, srcJson);
 

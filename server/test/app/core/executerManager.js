@@ -135,31 +135,27 @@ describe("UT for executerManager class", function () {
   });
   describe("makeQueueOpt", function () {
     const JS = { queueOpt: "-q " };
-    it("should return an empty string if queues is not a string", function () {
+    it("should return an empty string if queues is not an array", function () {
       const task = { queue: "default" };
       expect(makeQueueOpt(task, JS, undefined)).to.equal("");
       expect(makeQueueOpt(task, JS, null)).to.equal("");
-      expect(makeQueueOpt(task, JS, 123)).to.equal("");
+      expect(makeQueueOpt(task, JS, "low,high,medium")).to.equal("");
     });
-    it("should return an empty string if queues is an empty string", function () {
+    it("should return an empty string if queues is an empty array", function () {
       const task = { queue: "default" };
-      expect(makeQueueOpt(task, JS, "")).to.equal("");
+      expect(makeQueueOpt(task, JS, [])).to.equal("");
     });
     it("should return the correct queue option if task.queue matches a queue in the list", function () {
       const task = { queue: "high" };
-      expect(makeQueueOpt(task, JS, "low,high,medium")).to.equal(" -q high");
+      expect(makeQueueOpt(task, JS, ["low", "high", "medium"])).to.equal(" -q high");
     });
     it("should use the first queue in the list if task.queue does not match any queue", function () {
       const task = { queue: "nonexistent" };
-      expect(makeQueueOpt(task, JS, "low,high,medium")).to.equal(" -q low");
-    });
-    it("should trim spaces in the queue list", function () {
-      const task = { queue: "high" };
-      expect(makeQueueOpt(task, JS, "  low ,  high , medium ")).to.equal(" -q high");
+      expect(makeQueueOpt(task, JS, ["low", "high", "medium"])).to.equal(" -q low");
     });
     it("should return an empty string if the selected queue is an empty string", function () {
       const task = { queue: "" };
-      expect(makeQueueOpt(task, JS, " , , ,")).to.equal("");
+      expect(makeQueueOpt(task, JS, ["", "", ""])).to.equal("");
     });
   });
   describe("makeStepOpt", function () {

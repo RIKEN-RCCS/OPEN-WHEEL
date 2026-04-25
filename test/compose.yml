@@ -6,6 +6,11 @@ services:
     container_name: wheel_release_test_server
     cap_add:
       - SYS_RESOURCE
+    volumes:
+      - /tmp/WHEEL_TEST/shared:/data/shared
+    post_start:
+      - command: /bin/sh -c "until /opt/pbs/bin/qmgr -c 'print server' >/dev/null 2>&1; do sleep 3; done && /opt/pbs/bin/qmgr -c 'set server job_history_enable = True'"
+        user: root
 
   wheel_release_test:
     build:
@@ -18,7 +23,7 @@ services:
         NO_PROXY: ${NO_PROXY:-}
 
     image: wheel_e2e_test
-    container_name: test-wheel_release_test-1
+    container_name: wheel
     ports:
       - "8089:8089"
     environment:
@@ -29,3 +34,46 @@ services:
       WHEEL_LOGLEVEL: OFF
     volumes:
       - "./wheel_config:/root/.wheel"
+      - /tmp/WHEEL_TEST/shared:/mnt/shared
+
+
+  wheel_auth:
+    image: wheel_e2e_test
+    container_name: wheel_auth
+    ports:
+      - "8090:8089"
+    environment:
+      WHEEL_USE_HTTP: 1
+      WHEEL_USE_PORT: 8089
+      WHEEL_ANONYMOUS_LOGIN: YES
+      WHEEL_ANONYMOUS_PASSWORD: WheelTest123!
+      WHEEL_LOGLEVEL: OFF
+    volumes:
+      - "./wheel_config_auth:/root/.wheel"
+    depends_on:
+      - wheel_release_test
+
+
+  mock:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    container_name: mock
+    ports:
+      - "3101:3101"
+      - "3102:3102"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: gateway
+    ports:
+      - "3001:3001"
+    environment:
+      REAL_APP: http://wheel_release_test:8089
+      MOCK_SIO: http://mock:3101
+      MOCK_HTTP: http://mock:3102
+    depends_on:
+      - wheel_release_test
+      - mock

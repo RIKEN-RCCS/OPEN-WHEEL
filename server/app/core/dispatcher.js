@@ -12,15 +12,15 @@ import nunjucks from "nunjucks";
 nunjucks.configure({ autoescape: true });
 import { remoteHost, componentJsonFilename, filesJsonFilename, statusFilename, rsyncExcludeOptionOfWheelSystemFiles } from "../db/db.js";
 import { getSsh, getSshHostinfo } from "./sshManager.js";
-import { exec } from "./executer.js";
+import { exec, execStageOut } from "./executer.js";
 import { getDateString, writeJsonWrapper } from "../lib/utility.js";
 import { sanitizePath, convertPathSep, replacePathsep } from "./pathUtils.js";
 import { readJsonGreedy } from "./fileUtils.js";
 import { addX } from "./fileUtils.js";
-import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS } from "./deliverFile.js";
+import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesFromHPCISS, deliverFilesLocalToRemoteShared, deliverFilesRemoteToLocalShared, deliverFilesBetweenRemotes } from "./deliverFile.js";
 import { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } from "./parameterParser.js";
 import { isLocal } from "../../../common/checkComponent.js";
-import { isSameRemoteHost } from "./componentHostOperations.js";
+import { isSameRemoteHost, translateSharedPath } from "./componentHostOperations.js";
 import { setComponentStateR } from "./componentState.js";
 import { writeComponentJson, readComponentJson, readComponentJsonByID } from "./componentJsonIO.js";
 import { isInitialComponent, removeDuplicatedComponent, hasStoragePath } from "./workflowComponent.js";
@@ -56,7 +56,8 @@ import {
 } from "./loopUtils.js";
 import { makeCmd } from "./psUtils.js";
 import { overwriteByRsync } from "./rsync.js";
-import { gfcp, gfrm, gfpcopy, gfptarCreate } from "./gfarmOperator.js";
+import { gfcp, gfrm, gfpcopy, gfptarCreate, setGfarmXattr } from "./gfarmOperator.js";
+import { gatherComponentMetadata, componentMetadataToXml } from "./projectMetadataExporter.js";
 
 const wheelSystemEnv = [
   "WHEEL_CURRENT_INDEX",
@@ -72,6 +73,29 @@ const wheelSystemEnv = [
 
 const taskDB = new Map();
 //private functions
+/**
+ * check if target path matches any skipCopy patterns
+ * @param {string} target - absolute path to check
+ * @param {string} baseDir - base directory path
+ * @param {Array<string>} skipCopyPatterns - array of glob patterns
+ * @returns {boolean} - true if target matches any pattern
+ */
+function shouldSkipCopy(target, baseDir, skipCopyPatterns) {
+  if (!skipCopyPatterns || skipCopyPatterns.length === 0) {
+    return false;
+  }
+  const relativePath = path.relative(baseDir, target);
+  return skipCopyPatterns.some((pattern)=>{
+    if (hasMagic(pattern)) {
+      const matched = glob.sync(pattern, { cwd: baseDir });
+      return matched.some((matchedPath)=>{
+        return relativePath === matchedPath || relativePath.startsWith(`${matchedPath}${path.sep}`);
+      });
+    }
+    return relativePath === pattern || relativePath.startsWith(`${pattern}${path.sep}`);
+  });
+}
+
 /**
  * replace target files in bulkjob by nunjucks
  * @param {string} templateRoot - path of PS component's "template" directory
@@ -115,6 +139,65 @@ async function writeParameterSetFile(templateRoot, targetFiles, params, bulkNumb
   });
   if (data !== "") {
     await fs.writeFile(path.resolve(templateRoot, "parameterSet.wheel.txt"), data);
+  }
+}
+
+/**
+ * For each gather recipe entry that targets a remote child task component,
+ * add the rendered srcName to the task instance's include list and remove it
+ * from exclude (if present), so that stageOut will download those files even
+ * when they are not explicitly listed in outputFiles or include.
+ * @param {string} projectRootDir - project root directory
+ * @param {string} instanceRoot - PS instance root directory
+ * @param {Array} gatherRecipe - gather recipe whose srcNode entries are relative paths from instanceRoot
+ * @param {object} params - current parameter vector values (used for nunjucks rendering)
+ * @param {Function} logger - logging function
+ * @returns {Promise<void>}
+ */
+async function addGatherFilesToRemoteTasks(projectRootDir, instanceRoot, gatherRecipe, params, logger) {
+  for (const recipe of gatherRecipe) {
+    if (!recipe.srcNode) {
+      continue;
+    }
+    const taskDir = path.join(instanceRoot, recipe.srcNode);
+    let taskComponent;
+    try {
+      taskComponent = await readComponentJson(taskDir);
+    } catch (err) {
+      logger(`addGatherFilesToRemoteTasks: failed to read component JSON at ${taskDir}`, err);
+      continue;
+    }
+    if (isLocal(taskComponent)) {
+      continue;
+    }
+    const renderedSrcName = nunjucks.renderString(recipe.srcName, params);
+    if (Array.isArray(taskComponent.outputFiles) && taskComponent.outputFiles.some((f)=>{
+      return f.name === renderedSrcName;
+    })) {
+      continue;
+    }
+    let modified = false;
+    if (Array.isArray(taskComponent.exclude)) {
+      const filtered = taskComponent.exclude.filter((e)=>{
+        return e !== renderedSrcName;
+      });
+      if (filtered.length !== taskComponent.exclude.length) {
+        taskComponent.exclude = filtered;
+        logger(`addGatherFilesToRemoteTasks: removed ${renderedSrcName} from exclude in ${taskDir}`);
+        modified = true;
+      }
+    }
+    if (!Array.isArray(taskComponent.include)) {
+      taskComponent.include = [];
+    }
+    if (!taskComponent.include.includes(renderedSrcName)) {
+      taskComponent.include.push(renderedSrcName);
+      logger(`addGatherFilesToRemoteTasks: added ${renderedSrcName} to include in ${taskDir}`);
+      modified = true;
+    }
+    if (modified) {
+      await writeComponentJson(projectRootDir, taskDir, taskComponent, true);
+    }
   }
 }
 
@@ -244,6 +327,11 @@ class Dispatcher extends EventEmitter {
           continue;
         }
         await this._getInputFiles(target);
+        if (!await this._checkMandatoryInputFilesExist(target)) {
+          await this._setComponentState(target, "failed");
+          this.hasFailedComponent = true;
+          continue;
+        }
         promises.push(this._dispatchOneComponent(target));
       }
       if (promises.length > 0) {
@@ -493,14 +581,17 @@ class Dispatcher extends EventEmitter {
 
   async _dispatchTask(component) {
     logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "_dispatchTask called");
-    await this._setComponentState(component, "running");
-    component.dispatchedTime = getDateString(true, true);
-    component.startTime = "not started"; //to be assigned in executer
-    component.endTime = "not finished"; //to be assigned in executer
-    component.preparedTime = null; //to be assigned in executer
-    component.jobSubmittedTime = null; //to be assigned in executer
-    component.jobStartTime = null; //to be assigned in executer
-    component.jobEndTime = null; //to be assigned in executer
+    const isStageOutResume = component.state === "stage-out";
+    if (!isStageOutResume) {
+      await this._setComponentState(component, "running");
+      component.dispatchedTime = getDateString(true, true);
+      component.startTime = "not started"; //to be assigned in executer
+      component.endTime = "not finished"; //to be assigned in executer
+      component.preparedTime = null; //to be assigned in executer
+      component.jobSubmittedTime = null; //to be assigned in executer
+      component.jobStartTime = null; //to be assigned in executer
+      component.jobEndTime = null; //to be assigned in executer
+    }
     component.projectStartTime = this.projectStartTime;
     component.projectRootDir = this.projectRootDir;
     component.workingDir = path.resolve(this.cwfDir, component.name);
@@ -519,21 +610,24 @@ class Dispatcher extends EventEmitter {
     } else {
       component.doCleanup = component.cleanupFlag === 0;
     }
-    if (component.usePSSettingFile === true) {
-      await this._bulkjobHandler(component);
-    }
-    this.setEnv(component);
-    component.parentType = this.cwfJson.type;
+    if (!isStageOutResume) {
+      if (component.usePSSettingFile === true) {
+        await this._bulkjobHandler(component);
+      }
+      this.setEnv(component);
+      component.parentType = this.cwfJson.type;
 
-    //Add execute permission to script and checker
-    const scriptPath = path.resolve(component.workingDir, component.script);
-    await addX(scriptPath);
-    if (component.checker) {
-      const checkerPath = path.resolve(component.workingDir, component.checker);
-      await addX(checkerPath);
+      //Add execute permission to script and checker
+      const scriptPath = path.resolve(component.workingDir, component.script);
+      await addX(scriptPath);
+      if (component.checker) {
+        const checkerPath = path.resolve(component.workingDir, component.checker);
+        await addX(checkerPath);
+      }
     }
 
-    exec(component).catch((e)=>{
+    const execFn = isStageOutResume ? execStageOut : exec;
+    execFn(component).catch((e)=>{
       logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "failed. rt=", component.rt);
       logTrace(this.projectRootDir, component.workingDir, "failed due to", e);
     });
@@ -705,6 +799,7 @@ class Dispatcher extends EventEmitter {
 
     try {
       logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy from", srcDir, "to", dstDir);
+      const skipCopyPatterns = component.skipCopy || [];
       await fs.copy(srcDir, dstDir, {
         dereference: true,
         filter: async (target)=>{
@@ -713,6 +808,10 @@ class Dispatcher extends EventEmitter {
             return true;
           }
           if (path.basename(target) === statusFilename) {
+            return false;
+          }
+          if (shouldSkipCopy(target, srcDir, skipCopyPatterns)) {
+            logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "skipping copy due to skipCopy pattern:", target);
             return false;
           }
           const subComponent = await isSubComponent(target);
@@ -919,6 +1018,7 @@ class Dispatcher extends EventEmitter {
         const value = params[key];
         newComponent.env[`WHEEL_PS_PARAM_${key}`] = value;
       }
+      await addGatherFilesToRemoteTasks(this.projectRootDir, instanceRoot, gatherRecipe, params, logTrace.bind(null, this.projectRootDir, `${this.cwfDir}/${component.name}`));
       const p = this._delegate(newComponent)
         .then(()=>{
           if (newComponent.state === "finished") {
@@ -1159,19 +1259,35 @@ class Dispatcher extends EventEmitter {
       await ssh.send(targetsToCopy, `${component.remoteTempDir}/`, ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]);
 
       const storagePath = component.storagePath;
+      const gfarmTargets = [];
       if (withTar) {
         await gfrm(this.projectRootDir, remotehostID, storagePath);
         await gfptarCreate(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath);
+        gfarmTargets.push(storagePath);
       } else {
         const lsResults = await ssh.ls(component.remoteTempDir, ["-l"]);
         if (lsResults.length === 1 && lsResults[0].startsWith("-")) {
           const tokens = lsResults[0].split(" ");
           const filename = tokens[tokens.length - 1];
           await gfcp(this.projectRootDir, remotehostID, path.join(component.remoteTempDir, filename), path.join(storagePath, filename), true);
+          gfarmTargets.push(path.join(storagePath, filename));
         } else {
           await gfpcopy(this.projectRootDir, remotehostID, component.remoteTempDir, storagePath, true);
+          const enabledInputFiles = component.inputFiles.filter((e, i)=>{
+            return targetFilter[i];
+          });
+          for (const f of enabledInputFiles) {
+            gfarmTargets.push(path.join(storagePath, f.name));
+          }
         }
       }
+
+      const metadata = await gatherComponentMetadata(this.projectRootDir);
+      const xml = componentMetadataToXml(metadata);
+      for (const gfarmPath of gfarmTargets) {
+        await setGfarmXattr(this.projectRootDir, remotehostID, gfarmPath, "wheel.workflow", xml);
+      }
+
       logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "remove remote temp dir", component.remoteTempDir);
       await ssh.exec(`rm -fr ${component.remoteTempDir}`);
     }
@@ -1274,6 +1390,45 @@ class Dispatcher extends EventEmitter {
     ee.emit("componentStateChanged", component);
   }
 
+  /**
+   * check if all mandatory inputFiles exist on the host (local or remote) after file staging
+   * @param {object} component - component to check
+   * @returns {Promise<boolean>} - true if all mandatory inputFiles exist, false if any are missing or have a broken symlink
+   */
+  async _checkMandatoryInputFilesExist(component) {
+    if (!component.inputFiles) {
+      return true;
+    }
+    const componentDir = this._getComponentDir(component.ID);
+    const remotehostID = isLocal(component) ? null : remoteHost.getID("name", component.host);
+    const ssh = remotehostID ? getSsh(this.projectRootDir, remotehostID) : null;
+    const remoteWorkingDir = remotehostID
+      ? getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component)
+      : null;
+
+    for (const inputFile of component.inputFiles) {
+      if (inputFile.mandatory !== true) {
+        continue;
+      }
+      const renderedName = nunjucks.renderString(inputFile.name, this.env);
+      try {
+        if (isLocal(component)) {
+          await fs.stat(path.join(componentDir, renderedName));
+        } else {
+          const rt = await ssh.exec(`test -e ${path.join(remoteWorkingDir, renderedName)}`, 0, logTrace.bind(null, this.projectRootDir, `${this.cwfDir}/${component.name}`));
+          if (rt !== 0) {
+            logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "mandatory inputFile does not exist on remote:", renderedName);
+            return false;
+          }
+        }
+      } catch (e) {
+        logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "mandatory inputFile does not exist:", renderedName, e.message);
+        return false;
+      }
+    }
+    return true;
+  }
+
   async _getInputFiles(component) {
     if (component.type === "source") {
       return;
@@ -1326,24 +1481,112 @@ class Dispatcher extends EventEmitter {
             });
           }
         } else if (onSameRemote) {
+          const srcIsLocal = isLocal(srcComponent);
+          const dstIsLocal = isLocal(component);
           const remotehostID = remoteHost.getID("name", component.host);
+          let srcRoot, dstRoot, dstRemotehostID, srcRemotehostIDForRecipe;
 
-          const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
-          const dstRoot = hasStoragePath(component) ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
-          const srcName = nunjucks.renderString(src.srcName, this.env);
-          const forceCopy = hasStoragePath(srcComponent);
-          tmpDeliverRecipes.push({
-            dstRoot,
-            dstName,
-            srcRoot,
-            srcName,
-            onSameRemote,
-            forceCopy,
-            projectRootDir: this.projectRootDir,
-            srcRemotehostID,
-            fromHPCISS,
-            fromHPCISStar
-          });
+          if (srcIsLocal && !dstIsLocal) {
+            //Localhost → Remote via shared storage
+            dstRemotehostID = remotehostID;
+            const dstHostInfo = remoteHost.query("name", component.host);
+
+            //Source: localhost path (should be on shared storage)
+            const srcLocalPath = hasStoragePath(srcComponent)
+              ? srcComponent.storagePath
+              : this._getComponentDir(src.srcNode);
+
+            //Translate localhost path to remote path
+            srcRoot = translateSharedPath(
+              srcLocalPath,
+              dstHostInfo.localSharedPath,
+              dstHostInfo.sharedPath
+            );
+
+            //Destination: remote working directory
+            dstRoot = hasStoragePath(component)
+              ? component.storagePath
+              : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime,
+                  path.resolve(this.cwfDir, component.name), component);
+
+            const srcName = nunjucks.renderString(src.srcName, this.env);
+            const srcOutputFile = srcComponent.outputFiles.find((o)=>{ return o.name === src.srcName; });
+            const dstEntry = srcOutputFile?.dst.find((d)=>{ return d.dstNode === component.ID && d.dstName === inputFile.name; });
+            const forceCopy = hasStoragePath(srcComponent) || (dstEntry?.forceCopy === true);
+            tmpDeliverRecipes.push({
+              dstRoot,
+              dstName,
+              srcRoot,
+              srcName,
+              localToRemoteShared: true,
+              forceCopy,
+              projectRootDir: this.projectRootDir,
+              dstRemotehostID,
+              fromHPCISS,
+              fromHPCISStar
+            });
+          } else if (!srcIsLocal && dstIsLocal) {
+            //Remote → Localhost via shared storage
+            srcRemotehostIDForRecipe = srcRemotehostID;
+            const srcHostInfo = remoteHost.query("name", srcComponent.host);
+
+            //Source: remote working directory path
+            const srcRemotePath = hasStoragePath(srcComponent)
+              ? srcComponent.storagePath
+              : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime,
+                  path.resolve(this.cwfDir, srcComponent.name), srcComponent);
+
+            //Translate remote path to localhost path
+            srcRoot = translateSharedPath(
+              srcRemotePath,
+              srcHostInfo.sharedPath,
+              srcHostInfo.localSharedPath
+            );
+
+            //Destination: localhost component directory or storagePath
+            dstRoot = hasStoragePath(component)
+              ? component.storagePath
+              : this._getComponentDir(component.ID);
+
+            const srcName = nunjucks.renderString(src.srcName, this.env);
+            const srcOutputFile = srcComponent.outputFiles.find((o)=>{ return o.name === src.srcName; });
+            const dstEntry = srcOutputFile?.dst.find((d)=>{ return d.dstNode === component.ID && d.dstName === inputFile.name; });
+            const forceCopy = hasStoragePath(srcComponent) || (dstEntry?.forceCopy === true);
+            tmpDeliverRecipes.push({
+              dstRoot,
+              dstName,
+              srcRoot,
+              srcName,
+              remoteToLocalShared: true,
+              forceCopy,
+              projectRootDir: this.projectRootDir,
+              srcRemotehostID: srcRemotehostIDForRecipe,
+              fromHPCISS,
+              fromHPCISStar
+            });
+          } else {
+            //Remote → Remote
+            const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
+            const dstRoot = hasStoragePath(component) ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
+            const srcName = nunjucks.renderString(src.srcName, this.env);
+            const srcOutputFile = srcComponent.outputFiles.find((o)=>{ return o.name === src.srcName; });
+            const dstEntry = srcOutputFile?.dst.find((d)=>{ return d.dstNode === component.ID && d.dstName === inputFile.name; });
+            const forceCopy = hasStoragePath(srcComponent) || (dstEntry?.forceCopy === true);
+            tmpDeliverRecipes.push({
+              dstRoot,
+              dstName,
+              srcRoot,
+              srcName,
+              onSameRemote,
+              betweenRemotes: !onSameRemote,
+              forceCopy,
+              projectRootDir: this.projectRootDir,
+              srcRemotehostID,
+              dstRemotehostID: remotehostID,
+              fromHPCISS,
+              fromHPCISStar
+            });
+          }
         } else if (!isLocal(srcComponent) && !["task", "stepjobTask", "bulkjobtask", "hpciss", "hpcisstar"].includes(srcComponent.type)) {
           //memo1: taskコンポーネントのoutputFileは一旦ダウンロードされるためlocal to localでsymlinkを貼るだけでよいので除外している
           //memo2: この方法だと、接続先が複数あるエントリは複数回rsyncを実行することになるため将来的には全てtaskコンポーネントと同じ方式にする必要がある
@@ -1396,7 +1639,9 @@ class Dispatcher extends EventEmitter {
                   }
                 } else {
                   const srcName = nunjucks.renderString(src.srcName, this.env);
-                  const forceCopy = hasStoragePath(srcComponent);
+                  const srcOutputFile2 = srcComponent.outputFiles.find((o)=>{ return o.name === src.srcName; });
+                  const dstEntry2 = srcOutputFile2?.dst.find((d)=>{ return d.dstNode === component.ID && d.dstName === inputFile.name; });
+                  const forceCopy = hasStoragePath(srcComponent) || (dstEntry2?.forceCopy === true);
                   const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : this._getComponentDir(src.srcNode);
                   tmpDeliverRecipes.push({
                     dstRoot,
@@ -1436,6 +1681,12 @@ class Dispatcher extends EventEmitter {
         p2.push(deliverFilesFromHPCISS(recipe, this.projectRootDir));
       } else if (recipe.onSameRemote) {
         p2.push(deliverFilesOnRemote(recipe));
+      } else if (recipe.betweenRemotes) {
+        p2.push(deliverFilesBetweenRemotes(recipe));
+      } else if (recipe.localToRemoteShared) {
+        p2.push(deliverFilesLocalToRemoteShared(recipe));
+      } else if (recipe.remoteToLocalShared) {
+        p2.push(deliverFilesRemoteToLocalShared(recipe));
       } else if (recipe.remoteToLocal) {
         p2.push(deliverFilesFromRemote(recipe));
       } else {
@@ -1530,5 +1781,6 @@ class Dispatcher extends EventEmitter {
 export default Dispatcher;
 export {
   replaceByNunjucksForBulkjob,
-  writeParameterSetFile
+  writeParameterSetFile,
+  addGatherFilesToRemoteTasks
 };

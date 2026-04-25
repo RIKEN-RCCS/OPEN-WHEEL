@@ -10,6 +10,30 @@ import { stageIn, stageOut } from "./transferrer.js";
 import { register } from "./executerManager.js";
 
 /**
+ * transfer files from remote host when task is already in stage-out phase
+ * @param {object} task - task component object that is already in stage-out state
+ * @returns {Promise} - resolved after file transfer done
+ */
+async function execStageOut(task) {
+  task.remotehostID = remoteHost.getID("name", task.host) || "localhost";
+  const onRemote = task.remotehostID !== "localhost";
+  if (onRemote) {
+    task.remoteWorkingDir = getRemoteWorkingDir(task.projectRootDir, task.projectStartTime, task.workingDir, task);
+    task.remoteRootWorkingDir = getRemoteRootWorkingDir(task.projectRootDir, task.projectStartTime, task);
+  }
+  //stageOut() requires state to be "finished" to proceed
+  task.state = "finished";
+
+  try {
+    if (onRemote) {
+      await stageOut(task);
+    }
+  } finally {
+    task.emitForDispatcher("taskCompleted", task.state);
+  }
+}
+
+/**
  * enqueue task
  * @param {object} task - task component object
  * task component is defined in workflowComponent.js
@@ -37,5 +61,6 @@ async function exec(task) {
 }
 
 export {
-  exec
+  exec,
+  execStageOut
 };

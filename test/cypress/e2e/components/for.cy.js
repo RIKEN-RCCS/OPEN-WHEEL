@@ -187,27 +187,29 @@ describe("components", ()=>{
     コンポーネントの基本機能動作確認
     forコンポーネント共通機能確認
     構成要素の機能確認
-    cleanボタン押下
+    clean component実行
     試験確認内容：最新の保存状態に戻っていることを確認
     skip:issue#948
      */
-    it.skip("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_FOR, FOR_NAME_0, 501, 500);
-      cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
-      cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
-      cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
-      cy.get("[data-cy=\"workflow-play-btn\"]").click();
+      cy.closeProperty();
+      cy.prepareCleanComponentTest(FOR_NAME_0);
+      cy.get("[data-cy=\"graph-component-row\"]").contains(FOR_NAME_0)
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
+        .click();
+      cy.contains("button", "discard all changes").click();
       cy.clickComponentName(FOR_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .clear();
-      cy.get("[data-cy=\"component_property-name-text_field\"]").type("changeName");
-      cy.get("[data-cy=\"component_property-description-textarea\"]").find("textarea")
-        .focus();
-      cy.get("[data-cy=\"component_property-clean-btn\"]").click();
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .should("have.value", "test-a");
+      cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+        .click();
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").should("not.contain.text", "_clean_test_marker.txt");
+      cy.closeProperty();
+      cy.get("[data-cy=\"graph-component-row\"]").contains(FOR_NAME_0)
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("delete")
+        .should("be.visible");
+      cy.get("body").type("{esc}");
     });
 
     /**
@@ -284,6 +286,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
       cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
       cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
+      cy.closeProperty();
       cy.clickComponentName(FOR_NAME_1);
       cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
       cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
@@ -316,6 +319,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
       cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
       cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
+      cy.closeProperty();
       cy.clickComponentName(FOR_NAME_1);
       cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
       cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較
@@ -361,6 +365,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"component_property-start_for-text_field\"]").type(1);
       cy.get("[data-cy=\"component_property-end_for-text_field\"]").type(5);
       cy.get("[data-cy=\"component_property-step_for-text_field\"]").type(5);
+      cy.closeProperty();
       cy.clickComponentName(FOR_NAME_1);
       cy.connectComponentMultiple(FOR_NAME_0, FOR_NAME_1); //コンポーネント同士を接続
       cy.checkConnectionLine(FOR_NAME_0, FOR_NAME_1); //作成したコンポーネントの座標を取得して接続線の座標と比較

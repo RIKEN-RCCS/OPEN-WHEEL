@@ -54,6 +54,7 @@
     "*.{js,vue,ts,json}": "eslint --fix"
   },
   "dependencies": {
-    "@isaacs/fs-minipass": "^4.0.1"
+    "@isaacs/fs-minipass": "^4.0.1",
+    "ssh-client-wrapper": "^2.15.0"
   }
 }

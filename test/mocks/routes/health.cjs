@@ -17,7 +17,7 @@ module.exports = [
         type: "json",
         options: {
           status: 500,
-          body: { ok: false }, 
+          body: { ok: false },
         },
       },
     ],

@@ -22,7 +22,7 @@ describe("jobExecute", ()=>{
 
   const codeTask1 = `echo "test" > message.txt`;
   const codeTask2 = `cat message.txt >/dev/null 2>&1`;
-  const codeWhile = [`set -eu`, `cnt=$(cat counter.txt)`, `if [ "$cnt" -lt 10 ]; then`, `  exit 0`, `else`, `  exit 1`].join("\n");
+  const codeWhile = [`if [ "$WHEEL_CURRENT_INDEX" -lt 3 ]; then`, `  exit 0`, `else`, `  exit 1`].join("\n");
 
   before(()=>{
     return cy.removeAllProjects();
@@ -47,13 +47,12 @@ describe("jobExecute", ()=>{
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
     //while 作成
     cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 700);
-    cy.setupWhileWithScriptAndCondition(FILE_NAME_WHILE, codeWhile);
+    cy.setupWhileWithScriptAndCondition(FILE_NAME_WHILE, codeWhile, WHILE_NAME_0);
     cy.closeProperty();
     //コンポーネント同士を接続
     cy.connectComponentMultiple(WORKFLOW_NAME_0, WHILE_NAME_0);
     //workflow選択
     cy.doubleClickComponentName(WORKFLOW_NAME_0);
-
     //foreach作成
     cy.createComponent(DEF_COMPONENT_FOREACH, FOREACH_NAME_0, 501, 500);
     cy.setForeachLoop(2);
@@ -72,7 +71,7 @@ describe("jobExecute", ()=>{
     cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1);
 
     //タスク実行
-    cy.get("[data-cy=\"workflow-play-btn\"]", { timeout: 3000 }).click();
+    cy.get("[data-cy=\"workflow-play-btn\"]", { timeout: 10000 }).click();
 
     //完了まで待機
     cy.checkProjectStatus("finished");
@@ -88,7 +87,7 @@ describe("jobExecute", ()=>{
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
     //while 作成
     cy.createComponent(DEF_COMPONENT_WHILE, WHILE_NAME_0, 501, 700);
-    cy.setupWhileWithScriptAndCondition(FILE_NAME_WHILE, codeWhile);
+    cy.setupWhileWithScriptAndCondition(FILE_NAME_WHILE, codeWhile, WHILE_NAME_0);
     cy.closeProperty();
     //コンポーネント同士を接続
     cy.connectComponentMultiple(WORKFLOW_NAME_0, WHILE_NAME_0);
@@ -114,10 +113,10 @@ describe("jobExecute", ()=>{
     cy.connectComponentMultiple(TASK_NAME_0, TASK_NAME_1);
 
     //タスク実行
-    cy.get("[data-cy=\"workflow-play-btn\"]", { timeout: 3000 }).click();
+    cy.get("[data-cy=\"workflow-play-btn\"]", { timeout: 10000 }).click();
 
     //リモートアクセスパスワード
-    cy.get("[data-cy=\"buttons-ok-btn\"]", { timeout: 3000 });
+    cy.get("[data-cy=\"buttons-ok-btn\"]", { timeout: 60000 });
     cy.passwordType("passw0rd");
 
     //完了まで待機

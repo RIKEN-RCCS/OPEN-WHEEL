@@ -356,14 +356,22 @@
         </div>
       </template>
     </versatile-dialog>
-    <versatile-dialog
-      v-model="validationErrorDialog"
-      title="validation error detected!"
-      max-width="50vw"
-      :buttons="[ { icon: 'mdi-check', label: 'close' }]"
-      @close="validationErrorDialog=false;validationErrors=[];validationErrorFilter=''"
+    <v-card
+      v-if="validationErrorDialog"
+      class="validation-error-panel"
+      :style="{ left: errorPanelX + 'px', top: errorPanelY + 'px' }"
+      elevation="8"
     >
-      <template #message>
+      <v-card-title
+        class="validation-error-panel-title"
+        @mousedown="startDragErrorPanel"
+      >
+        <v-icon color="warning">
+          mdi-alert
+        </v-icon>
+        validation error detected!
+      </v-card-title>
+      <v-card-text class="validation-error-panel-content">
         <v-text-field
           v-model="validationErrorFilter"
           label="filter"
@@ -378,9 +386,36 @@
           :headers="validationErrorTableHeader"
           :search="validationErrorFilter"
           density="compact"
-        />
-      </template>
-    </versatile-dialog>
+        >
+          <template #item.errors="{ item }">
+            <ul>
+              <li
+                v-for="(e, i) in item.errors"
+                :key="i"
+              >
+                {{ e.message }}
+              </li>
+            </ul>
+          </template>
+        </v-data-table>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          :disabled="!canIgnoreAllErrors"
+          prepend-icon="mdi-skip-forward"
+          @click="onIgnoreAllErrors"
+        >
+          ignore all errors
+        </v-btn>
+        <v-btn
+          prepend-icon="mdi-close"
+          @click="closeValidationErrorDialog"
+        >
+          close
+        </v-btn>
+      </v-card-actions>
+    </v-card>
     <import-warning-dialog
       v-model="warnDialog"
     />
@@ -485,6 +520,7 @@ export default {
   },
   data: ()=>{
     return {
+      sioListeners: [],
       projectJson: null,
       drawer: false,
       mode: 0,
@@ -519,8 +555,14 @@ export default {
       validationErrorFilter: "",
       validationErrorTableHeader: [
         { title: "component", value: "name", key: "component" },
-        { title: "error", value: "error", key: "error" }
+        { title: "errors", value: "errors", key: "errors", sortable: false }
       ],
+      validationCheckedComponent: null,
+      errorPanelX: Math.max(0, window.innerWidth / 2 - 300),
+      errorPanelY: 80,
+      errorPanelDragging: false,
+      errorPanelDragOffsetX: 0,
+      errorPanelDragOffsetY: 0,
       warnDialog: null,
       remoteHostDialog: false
     };
@@ -538,9 +580,18 @@ export default {
       "selectedComponent",
       "selectedFile",
       "readOnly",
-      "textEditorDialog"
+      "textEditorDialog",
+      "pendingNavigation"
     ]),
     ...mapGetters(["waiting"]),
+    canIgnoreAllErrors() {
+      if (this.validationErrors.length === 0) {
+        return false;
+      }
+      return this.validationErrors.every((entry)=>{
+        return entry.errors.every((e)=>{ return e.ignoreable; });
+      });
+    },
     isReadOnly() {
       return this.readOnly ? " - read-only" : "";
     },
@@ -588,7 +639,13 @@ export default {
     this.baseURL = this.$router.options.history.base || ".";
     SIO.init({ projectRootDir }, socketIOPath);
 
-    SIO.onGlobal("WHEEL_LOG", (data)=>{
+    //Helper to register and track SIO listeners for cleanup in beforeUnmount
+    const onSIO = (event, cb)=>{
+      SIO.onGlobal(event, cb);
+      this.sioListeners.push([event, cb]);
+    };
+
+    onSIO("WHEEL_LOG", (data)=>{
       if (this.$refs.logscreen) {
         this.$refs.logscreen.onWheelLog(data);
       }
@@ -597,7 +654,7 @@ export default {
     const ID = readCookie("root");
     this.commitRootComponentID(ID);
 
-    SIO.onGlobal("askPassword", (hostname, mode, jwtServerURL, cb)=>{
+    onSIO("askPassword", (hostname, mode, jwtServerURL, cb)=>{
       console.log("DEBUG: ", hostname, mode, jwtServerURL);
       this.pwCallback = (pw)=>{
         cb(pw);
@@ -607,7 +664,7 @@ export default {
       this.pwJwtServerURL = jwtServerURL;
       this.pwDialog = true;
     });
-    SIO.onGlobal("askSourceFilename", (ID, name, description, candidates, cb)=>{
+    onSIO("askSourceFilename", (ID, name, description, candidates, cb)=>{
       this.selectSourceFileDialogTitle = `select source file for ${name}`;
       this.sourceFileCandidates = candidates.map((filename)=>{
         return { filename };
@@ -620,19 +677,19 @@ export default {
       };
       this.selectSourceFileDialog = true;
     });
-    SIO.onGlobal("componentTree", (componentTree)=>{
+    onSIO("componentTree", (componentTree)=>{
       this.commitComponentTree(componentTree);
     });
-    SIO.onGlobal("showMessage", this.showSnackbar);
-    SIO.onGlobal("logERR", (message)=>{
+    onSIO("showMessage", this.showSnackbar);
+    onSIO("logERR", (message)=>{
       const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
       const output = rt ? rt[1] || rt[0] : message;
       this.showSnackbar(output);
     });
-    SIO.onGlobal("projectState", (state)=>{
+    onSIO("projectState", (state)=>{
       this.commitProjectState(state.toLowerCase());
     });
-    SIO.onGlobal("projectJson", (projectJson)=>{
+    onSIO("projectJson", (projectJson)=>{
       this.projectJson = projectJson;
       this.commitProjectState(projectJson.state.toLowerCase());
       this.commitProjectReadOnly(projectJson.readOnly);
@@ -642,12 +699,22 @@ export default {
         this.warnDialog = true;
       }
     });
-    SIO.onGlobal("workflow", (wf)=>{
-      if (this.currentComponent !== null && wf.ID !== this.currentComponent.ID) {
-        this.commitSelectedComponent(null);
+    onSIO("workflow", (wf)=>{
+      if (this.pendingNavigation !== null && wf.ID === this.pendingNavigation) {
+        //Navigation response matching the pending request
+        this.commitPendingNavigation(null);
+        //Use direct mutations to clear selection during navigation
+        //bypasses the action's diff/updateComponent which can throw
+        this.commitSelectedComponentMutation(null);
+        this.commitCopySelectedComponentMutation(null);
+        this.commitCurrentComponent(wf);
+      } else if (this.pendingNavigation !== null) {
+        //Stale event during navigation — ignore to prevent revert
+      } else if (this.currentComponent === null || wf.ID === this.currentComponent.ID) {
+        //Update for the current component
+        this.commitCurrentComponent(wf);
       }
-      this.commitCurrentComponent(wf);
-      if (this.selectedComponent) {
+      if (this.selectedComponent && Array.isArray(wf.descendants)) {
         const update = wf.descendants.find((e)=>{
           return e.ID === this.selectedComponent.ID;
         });
@@ -657,7 +724,7 @@ export default {
       }
       this.commitWaitingWorkflow(false);
     });
-    SIO.onGlobal("unsavedFiles", (unsavedFiles, cb)=>{
+    onSIO("unsavedFiles", (unsavedFiles, cb)=>{
       if (unsavedFiles.length === 0) {
         this.showUnsavedFilesDialog = false;
         this.unsavedFiles.splice(0, this.unsavedFiles.length);
@@ -668,20 +735,19 @@ export default {
       this.unsavedFiles.splice(0, this.unsavedFiles.length, ...unsavedFiles);
       this.showUnsavedFilesDialog = true;
     });
-    SIO.onGlobal("resultFilesReady", (dir)=>{
+    onSIO("resultFilesReady", (dir)=>{
       this.viewerDataDir = dir;
       if (!this.firstViewDataAlived) {
         this.viewerScreenDialog = true;
         this.firstViewDataAlived = true;
       }
-      return;
     });
-
-    SIO.onGlobal("requestOIDCAuth", (remotehostID, ack)=>{
+    onSIO("requestOIDCAuth", (remotehostID, ack)=>{
       const param = new URLSearchParams({ remotehostID });
       window.location.replace(`${this.baseURL}/webAPIauth?${param.toString()}`);
       ack(true);
     });
+    onSIO("hostList", this.commitRemoteHost);
 
     SIO.emitGlobal("getJobSchedulerList", (JSList)=>{
       this.commitJobScheduler(JSList);
@@ -696,7 +762,6 @@ export default {
     SIO.emitGlobal("getWorkflow", projectRootDir, ID, (rt)=>{
       debug("getWorkflow done", rt);
     });
-    SIO.onGlobal("hostList", this.commitRemoteHost);
     SIO.emitGlobal("getHostList", (hostList)=>{
       this.commitRemoteHost(hostList);
     });
@@ -708,32 +773,98 @@ export default {
         throw err;
       });
   },
+  beforeUnmount() {
+    //Reset textEditorDialog so the next Workflow mount starts with a closed editor,
+    //preventing stale Vuex state from causing the Ace editor to mount unnecessarily.
+    this.commitTextEditorDialog(false);
+
+    for (const [event, cb] of this.sioListeners) {
+      SIO.off(event, cb);
+    }
+    this.sioListeners = [];
+
+    //Remove drag listeners in case the component is unmounted while a drag is in progress.
+    document.removeEventListener("mousemove", this.onDragErrorPanel);
+    document.removeEventListener("mouseup", this.stopDragErrorPanel);
+  },
   methods: {
+    closeValidationErrorDialog() {
+      this.validationErrorDialog = false;
+      this.validationErrors = [];
+      this.validationErrorFilter = "";
+      this.validationCheckedComponent = null;
+    },
+
+    /**
+     * Start dragging the validation error panel.
+     * @param {MouseEvent} event - The mousedown event on the panel title bar
+     */
+    startDragErrorPanel(event) {
+      this.errorPanelDragging = true;
+      this.errorPanelDragOffsetX = event.clientX - this.errorPanelX;
+      this.errorPanelDragOffsetY = event.clientY - this.errorPanelY;
+      document.addEventListener("mousemove", this.onDragErrorPanel);
+      document.addEventListener("mouseup", this.stopDragErrorPanel);
+    },
+
+    /**
+     * Update position of the validation error panel while dragging.
+     * @param {MouseEvent} event - The mousemove event
+     */
+    onDragErrorPanel(event) {
+      if (!this.errorPanelDragging) {
+        return;
+      }
+      this.errorPanelX = event.clientX - this.errorPanelDragOffsetX;
+      this.errorPanelY = event.clientY - this.errorPanelDragOffsetY;
+    },
+
+    /**
+     * Stop dragging the validation error panel.
+     */
+    stopDragErrorPanel() {
+      this.errorPanelDragging = false;
+      document.removeEventListener("mousemove", this.onDragErrorPanel);
+      document.removeEventListener("mouseup", this.stopDragErrorPanel);
+    },
+    onIgnoreAllErrors() {
+      this.validationErrorDialog = false;
+      this.validationErrors = [];
+      this.validationErrorFilter = "";
+      this.validationCheckedComponent = null;
+    },
+    showValidationErrorDialog(validationErrors, targetComponent) {
+      this.validationErrors = validationErrors;
+      this.validationCheckedComponent = targetComponent;
+      const errorIDs = validationErrors.map((err)=>{
+        return err.ID;
+      });
+      targetComponent.descendants.forEach((child)=>{
+        child.isInvalid = errorIDs.includes(child.ID);
+        if (!child.isInvalid) {
+          const childName = this.componentPath[child.ID].replace(/^./, "");
+          child.isInvalid = this.validationErrors.some((err)=>{
+            return err.name.startsWith(childName);
+          });
+        }
+      });
+      this.validationErrorDialog = true;
+    },
     checkComponents() {
-      SIO.emitGlobal("checkComponents", this.projectRootDir, this.currentComponent.ID, (validationErrors)=>{
+      const targetComponent = (this.validationErrorDialog && this.validationCheckedComponent)
+        ? this.validationCheckedComponent
+        : this.currentComponent;
+      SIO.emitGlobal("checkComponents", this.projectRootDir, targetComponent.ID, (validationErrors)=>{
         if (!Array.isArray(validationErrors)) {
           debug("checkComponents failed!", validationErrors);
         }
         if (validationErrors.length === 0) {
-          this.showSnackbar(`all components under ${this.currentComponent.name} are valid`);
-          debug(`no invalid components found under ${this.currentComponent.name} (${this.currentComponent.ID})`);
+          this.showSnackbar(`all components under ${targetComponent.name} are valid`);
+          debug(`no invalid components found under ${targetComponent.name} (${targetComponent.ID})`);
           return;
         }
         debug("invalid components", validationErrors);
-        this.validationErrors = validationErrors;
-        const errorIDs = validationErrors.map((err)=>{
-          return err.ID;
-        });
-        this.currentComponent.descendants.forEach((child)=>{
-          child.isInvalid = errorIDs.includes(child.ID);
-          if (!child.isInvalid) {
-            const childName = this.componentPath[child.ID].replace(/^./, "");
-            child.isInvalid = this.validationErrors.some((err)=>{
-              return err.name.startsWith(childName);
-            });
-          }
-        });
-        this.validationErrorDialog = true;
+        this.showValidationErrorDialog(validationErrors, targetComponent);
       });
     },
     makeWritable() {
@@ -799,7 +930,10 @@ export default {
       commitRemoteHost: "remoteHost",
       commitJobScheduler: "jobScheduler",
       commitWaitingProjectJson: "waitingProjectJson",
-      commitWaitingWorkflow: "waitingWorkflow"
+      commitWaitingWorkflow: "waitingWorkflow",
+      commitPendingNavigation: "pendingNavigation",
+      commitSelectedComponentMutation: "selectedComponent",
+      commitCopySelectedComponentMutation: "copySelectedComponent"
     }),
     emitProjectOperation(operation) {
       if (operation === "runProject") {
@@ -847,5 +981,22 @@ export default {
 }
 .editor-content {
   height: calc(90vh - 64px);
+}
+.validation-error-panel {
+  position: fixed;
+  z-index: 2000;
+  width: 40vw;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+.validation-error-panel-title {
+  cursor: move;
+  user-select: none;
+  flex-shrink: 0;
+}
+.validation-error-panel-content {
+  overflow-y: auto;
+  flex: 1;
 }
 </style>

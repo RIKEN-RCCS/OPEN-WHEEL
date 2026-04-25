@@ -13,7 +13,8 @@ import { gfpcopy, gfptarExtract } from "./gfarmOperator.js";
 const _internal = {
   fs,
   getLogger,
-  getSsh
+  getSsh,
+  getSshHostinfo
 };
 
 /**
@@ -125,10 +126,85 @@ async function deliverFilesFromHPCISS(recipe) {
   return result;
 }
 
+/**
+ * deliver file from localhost to remotehost via shared storage
+ * @param {object} recipe - deliver recipe which has src, dstination and more information
+ * @returns {object} - result object
+ */
+async function deliverFilesLocalToRemoteShared(recipe) {
+  const logger = _internal.getLogger(recipe.projectRootDir);
+  if (!recipe.localToRemoteShared) {
+    logger.warn("deliverFilesLocalToRemoteShared must be called with localToRemoteShared flag");
+    return null;
+  }
+  if (recipe.dstName.endsWith("/")) {
+    recipe.dstRoot = path.join(recipe.dstRoot, recipe.dstName);
+    recipe.dstName = "./";
+  }
+  const ssh = _internal.getSsh(recipe.projectRootDir, recipe.dstRemotehostID);
+  const cmd = recipe.forceCopy ? "cp -r " : "ln -sf";
+  const sshCmd = `bash -O failglob -c 'mkdir -p ${recipe.dstRoot} 2>/dev/null; (cd ${recipe.dstRoot} && for i in ${path.join(recipe.srcRoot, recipe.srcName)}; do ${cmd} \${i} ${recipe.dstName} ;done)'`;
+  logger.debug("execute on remote (localhost to remote via shared storage)", sshCmd);
+  const rt = await ssh.exec(sshCmd, 0, logger.debug.bind(logger));
+  if (rt !== 0) {
+    logger.warn("deliver file from localhost to remote via shared storage failed", rt);
+    const err = new Error("deliver file from localhost to remote via shared storage failed");
+    err.rt = rt;
+    return Promise.reject(err);
+  }
+  return { type: "link-via-shared", src: path.join(recipe.srcRoot, recipe.srcName), dst: path.join(recipe.dstRoot, recipe.dstName) };
+}
+
+/**
+ * deliver file from remotehost to localhost via shared storage
+ * @param {object} recipe - deliver recipe which has src, dstination and more information
+ * @returns {object} - result object
+ */
+async function deliverFilesRemoteToLocalShared(recipe) {
+  const logger = _internal.getLogger(recipe.projectRootDir);
+  if (!recipe.remoteToLocalShared) {
+    logger.warn("deliverFilesRemoteToLocalShared must be called with remoteToLocalShared flag");
+    return null;
+  }
+  const srcPath = path.join(recipe.srcRoot, recipe.srcName);
+  const dstPath = path.join(recipe.dstRoot, recipe.dstName);
+  logger.debug("create symlink on localhost (remote to localhost via shared storage)", srcPath, "->", dstPath);
+  return deliverFile(srcPath, dstPath, recipe.forceCopy);
+}
+
+/**
+ * deliver file directly between different remote hosts using SSH agent forwarding
+ * @param {object} recipe - deliver recipe which has src, destination and more information
+ * @returns {object} - result object
+ */
+async function deliverFilesBetweenRemotes(recipe) {
+  const logger = _internal.getLogger(recipe.projectRootDir);
+  if (!recipe.betweenRemotes) {
+    logger.warn("deliverFilesBetweenRemotes must be called with betweenRemotes flag");
+    return null;
+  }
+  const srcSsh = _internal.getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
+  const dstHostinfo = _internal.getSshHostinfo(recipe.projectRootDir, recipe.dstRemotehostID);
+
+  logger.debug("direct remote to remote copy from", recipe.srcRemotehostID, "to", recipe.dstRemotehostID);
+
+  await srcSsh.remoteToRemoteCopy(
+    [`${recipe.srcRoot}/${recipe.srcName}`],
+    dstHostinfo,
+    `${recipe.dstRoot}/${recipe.dstName}`,
+    ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]
+  );
+
+  return { type: "direct-remote-copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
+}
+
 export {
   deliverFile,
   deliverFilesOnRemote,
   deliverFilesFromRemote,
   deliverFilesFromHPCISS,
+  deliverFilesLocalToRemoteShared,
+  deliverFilesRemoteToLocalShared,
+  deliverFilesBetweenRemotes,
   _internal
 };

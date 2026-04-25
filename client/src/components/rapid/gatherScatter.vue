@@ -96,12 +96,13 @@
                   :rules="[required, notDupulicated]"
                   data-cy="gather_scatter-srcName_text_field"
                 />
-                <v-autocomplete
+                <v-combobox
                   v-else
                   v-model.trim.lazy="newItem.srcName"
                   label="filename"
                   :items="srcFileCandidates"
                   :rules="[required, notDupulicated]"
+                  :menu-props="{ transition: false }"
                   data-cy="gather_scatter-srcName_text_field"
                 />
               </div>

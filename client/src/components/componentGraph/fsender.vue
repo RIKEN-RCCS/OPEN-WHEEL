@@ -1,5 +1,5 @@
 <template>
-  <g>
+  <g :data-cy="`${componentId}-fsender-${index}`">
     <equilateral-triangle
       :color="color"
       :center="end"
@@ -52,6 +52,10 @@ export default {
     outputFilename: {
       required: true,
       type: String
+    },
+    index: {
+      required: true,
+      type: Number
     }
   },
   data() {

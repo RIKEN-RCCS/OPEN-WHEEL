@@ -12,7 +12,7 @@ import SBS from "simple-batch-system";
 import { getLogger } from "../logSettings.js";
 import { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } from "../db/db.js";
 import { deliverFile } from "../core/deliverFile.js";
-import { gitAdd, gitCommit, gitResetHEAD, getUnsavedFiles } from "../core/gitOperator2.js";
+import { gitAdd, gitCommit, gitResetHEAD, gitClean, gitPromise, getUnsavedFiles } from "../core/gitOperator2.js";
 import { getComponentDir } from "../core/componentJsonIO.js";
 import { getHosts } from "../core/componentHostOperations.js";
 import { getSourceComponents } from "../core/componentOperations.js";
@@ -28,6 +28,7 @@ import { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, s
 import { emitAll, emitWithPromise } from "./commUtils.js";
 import { removeTempd, getTempd } from "../core/tempd.js";
 import { validateComponents } from "../core/validateComponents.js";
+import { stopProjectEdits, startProjectEdits, clearProjectEdits } from "./workflowEditor.js";
 import { writeJsonWrapper } from "../lib/utility.js";
 import { checkJWTAgent, startJWTAgent } from "../core/gfarmOperator.js";
 import allowedOperations from "../../../common/allowedOperations.js";
@@ -59,10 +60,11 @@ async function askUnsavedFiles(clientID, projectRootDir, targetDir) {
   const logger = getLogger(projectRootDir);
   const unsavedFiles = await getUnsavedFiles(projectRootDir, targetDir);
   const filterdUnsavedFiles = unsavedFiles.filter((e)=>{
-    return !(e.name === componentJsonFilename || e.name === projectJsonFilename);
+    const baseName = path.basename(e.name);
+    return !(baseName === componentJsonFilename || baseName === projectJsonFilename);
   });
   if (filterdUnsavedFiles.length === 0) {
-    return emitWithPromise(emitAll.bind(null, clientID), "unsavedFiles", []);
+    return;
   }
   const [mode] = await emitWithPromise(emitAll.bind(null, clientID), "unsavedFiles", filterdUnsavedFiles);
   if (mode === "cancel") {
@@ -176,10 +178,12 @@ async function onRunProject(clientID, projectRootDir, ack) {
   if (projectState !== "paused") {
   //validation check
     try {
+      await stopProjectEdits(projectRootDir);
       const report = await validateComponents(projectRootDir);
-      if (report.length > 0) {
+      const nonIgnoreableErrors = report.filter((entry)=>{ return entry.errors.some((e)=>{ return !e.ignoreable; }); });
+      if (nonIgnoreableErrors.length > 0) {
         getLogger(projectRootDir).error("invalid component found:");
-        ack(report);
+        ack(nonIgnoreableErrors);
         return false;
       }
 
@@ -188,6 +192,8 @@ async function onRunProject(clientID, projectRootDir, ack) {
       getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
       ack(err);
       return false;
+    } finally {
+      startProjectEdits(projectRootDir);
     }
     //interactive phase
     try {
@@ -346,6 +352,14 @@ async function onStopProject(projectRootDir) {
 }
 _internal.onStopProject = onStopProject;
 
+/**
+ * Restore a single component to its last committed state.
+ * Handles the case where the component was renamed since the last commit by
+ * reading the original path from HEAD's prj.wheel.json.
+ * @param {string} clientID
+ * @param {string} projectRootDir
+ * @param {string} targetComponentID
+ */
 export async function onCleanComponent(clientID, projectRootDir, targetComponentID) {
   const componentDir = await getComponentDir(projectRootDir, targetComponentID);
   try {
@@ -356,7 +370,42 @@ export async function onCleanComponent(clientID, projectRootDir, targetComponent
     }
     throw err;
   }
-  await cleanProject(projectRootDir, componentDir);
+
+  //Detect if the component was renamed since the last commit.
+  //If so, restore the original directory from HEAD instead of running cleanProject,
+  //which would fail because git checkout HEAD cannot find the renamed path.
+  let headRelPath = null;
+  try {
+    const headPrjJsonStr = await gitPromise(projectRootDir, ["show", `HEAD:${projectJsonFilename}`], projectRootDir);
+    const headPrjJson = JSON.parse(headPrjJsonStr);
+    headRelPath = headPrjJson.componentPath[targetComponentID];
+  } catch {
+    //HEAD does not exist or component was not in HEAD; fall through to cleanProject
+  }
+
+  if (headRelPath && headRelPath !== componentDir) {
+    //Component was renamed: restore prj.wheel.json and original dir from HEAD,
+    //then unstage the renamed working-tree directory before removing it.
+    await gitResetHEAD(projectRootDir, projectJsonFilename);
+    await gitResetHEAD(projectRootDir, headRelPath);
+    await gitPromise(projectRootDir, ["reset", "HEAD", "--", componentDir], projectRootDir);
+    await gitClean(projectRootDir, componentDir);
+  } else if (typeof headRelPath === "string") {
+    //No rename: component is at the same path in HEAD, safe to restore from HEAD.
+    await cleanProject(projectRootDir, componentDir);
+  } else {
+    //Component not committed yet (headRelPath is null/undefined): just unstage and remove.
+    //Do not call git checkout HEAD since the component was never in HEAD.
+    await gitResetHEAD(projectRootDir, projectJsonFilename);
+
+    try {
+      await gitPromise(projectRootDir, ["reset", "HEAD", "--", componentDir], projectRootDir);
+    } catch {
+      //Component directory may not be in the index; ignore
+    }
+    await gitClean(projectRootDir, componentDir);
+  }
+
   await Promise.all([
     _internal.sendWorkflow(null, projectRootDir),
     _internal.sendTaskStateList(projectRootDir),
@@ -373,11 +422,16 @@ async function onCleanProject(clientID, projectRootDir) {
     }
     throw err;
   }
-  await Promise.all([
-    cleanProject(projectRootDir),
-    removeTempd(projectRootDir, "viewer"),
-    removeTempd(projectRootDir, "download")
-  ]);
+  try {
+    await clearProjectEdits(projectRootDir);
+    await Promise.all([
+      cleanProject(projectRootDir),
+      removeTempd(projectRootDir, "viewer"),
+      removeTempd(projectRootDir, "download")
+    ]);
+  } finally {
+    startProjectEdits(projectRootDir);
+  }
 }
 _internal.onCleanProject = onCleanProject;
 

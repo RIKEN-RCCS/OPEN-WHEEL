@@ -9,9 +9,10 @@ import { getComponentFullName } from "./componentOperations.js";
 import { readComponentJson, getComponentDir } from "./componentJsonIO.js";
 import { getChildren } from "./workflowUtil.js";
 import { validateTask, validateStepjobTask, validateStepjob, validateBulkjobTask, _internal as taskValidatorInternal } from "./taskValidator.js";
-import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles } from "./componentResourceValidator.js";
+import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles, validateInputFileOverwrite, validateInputFileRaceCondition } from "./componentResourceValidator.js";
 import { validateForLoop, validateForeach, validateParameterStudy, validateStorage } from "./componentTypeValidator.js";
 import { getCycleGraph, getNextComponents } from "./dependencyGraphValidator.js";
+import { createValidationError } from "../lib/validationError.js";
 
 const _internal = {
   getLogger,
@@ -35,62 +36,49 @@ const _internal = {
  * validate component which can be run or not
  * @param {string} projectRootDir - project's root path
  * @param {object} component - target component
- * @returns {null|string} - return null if component is valid, or error messages
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means the component is valid
  *
- * please note, all functions which is called from validateComponent, must return Promise.reject
- * if validation error detected. Do NOT throw exception if error is not unexpected one.
+ * please note, all functions which is called from validateComponent, must return { message, ignoreable }[]
+ * (resolving with an array). Do NOT reject for validation errors - only for unexpected errors.
  */
 export async function validateComponent(projectRootDir, component) {
-  const errorMessages = [];
+  let errors = [];
 
   if (component.type === "task") {
-    await validateTask(projectRootDir, component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateTask(projectRootDir, component));
   } else if (component.type === "stepjobTask") {
-    await validateStepjobTask(projectRootDir, component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateStepjobTask(projectRootDir, component));
   } else if (component.type === "stepjob") {
-    await validateStepjob(projectRootDir, component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateStepjob(projectRootDir, component));
   } else if (component.type === "bulkjobTask") {
-    await validateBulkjobTask(projectRootDir, component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateBulkjobTask(projectRootDir, component));
   } else if (component.type === "if") {
-    await validateConditionalCheck(projectRootDir, component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateConditionalCheck(projectRootDir, component));
   } else if (component.type === "while") {
-    await validateConditionalCheck(projectRootDir, component)
-      .catch((err)=>{ errorMessages.push(err.message); });
-    await validateKeepProp(component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateConditionalCheck(projectRootDir, component));
+    errors.push(...await validateKeepProp(component));
   } else if (component.type === "for") {
-    await validateForLoop(component)
-      .catch((err)=>{ errorMessages.push(err.message); });
-    await validateKeepProp(component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateForLoop(component));
+    errors.push(...await validateKeepProp(component));
   } else if (component.type === "parameterStudy") {
-    await validateParameterStudy(projectRootDir, component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateParameterStudy(projectRootDir, component));
   } else if (component.type === "foreach") {
-    await validateForeach(component)
-      .catch((err)=>{ errorMessages.push(err.message); });
-    await validateKeepProp(component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateForeach(component));
+    errors.push(...await validateKeepProp(component));
   } else if (component.type === "storage") {
-    await validateStorage(component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateStorage(component));
   }
   //additional test for input and output files
   if (Object.prototype.hasOwnProperty.call(component, "inputFiles")) {
-    await validateInputFiles(component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateInputFiles(component));
+    errors.push(...await validateInputFileOverwrite(projectRootDir, component));
+    errors.push(...await validateInputFileRaceCondition(component));
   }
   if (Object.prototype.hasOwnProperty.call(component, "outputFiles")) {
-    await validateOutputFiles(component)
-      .catch((err)=>{ errorMessages.push(err.message); });
+    errors.push(...await validateOutputFiles(component));
   }
 
-  return errorMessages.length === 0 ? null : errorMessages.join("\n");
+  return errors;
 }
 _internal.validateComponent = validateComponent;
 
@@ -114,8 +102,8 @@ export async function checkComponentDependency(projectRootDir, parentComponentID
  * validate components under specified component
  * @param {string} projectRootDir - project's root path
  * @param {string} parentID - parent component's ID string
- * @param {object[]} report - to be stored invalid component IDs
- * @returns {string []} - array of invalid component's ID
+ * @param {object[]} report - to be stored invalid component report entries
+ * @returns {Promise<void>}
  */
 export async function recursiveValidateComponents(projectRootDir, parentID, report) {
   const children = await _internal.getChildren(projectRootDir, parentID);
@@ -127,10 +115,10 @@ export async function recursiveValidateComponents(projectRootDir, parentID, repo
     if (component.disable) {
       continue;
     }
-    const error = await _internal.validateComponent(projectRootDir, component);
-    if (error !== null) {
+    const errors = await _internal.validateComponent(projectRootDir, component);
+    if (errors.length > 0) {
       const name = await _internal.getComponentFullName(projectRootDir, component.ID);
-      report.push({ ID: component.ID, name, error });
+      report.push({ ID: component.ID, name, errors });
     }
     if (_internal.hasChild(component)) {
       promises.push(recursiveValidateComponents(projectRootDir, component.ID, report));
@@ -148,7 +136,7 @@ export async function recursiveValidateComponents(projectRootDir, parentID, repo
 
   if (!hasInitialNode) {
     const name = await _internal.getComponentFullName(projectRootDir, parentID);
-    report.push({ ID: parentID, name, error: "no initial component in children" });
+    report.push({ ID: parentID, name, errors: [createValidationError("no initial component in children")] });
   }
   const invalidComponentIDs = await checkComponentDependency(projectRootDir, parentID);
 
@@ -156,7 +144,7 @@ export async function recursiveValidateComponents(projectRootDir, parentID, repo
     const tmp = await Promise.all(
       invalidComponentIDs.map(async (ID)=>{
         const name = await _internal.getComponentFullName(projectRootDir, ID);
-        return { ID, name, error: "cycle graph detected" };
+        return { ID, name, errors: [createValidationError("cycle graph detected")] };
       })
     );
     report.push(...tmp);
@@ -169,7 +157,7 @@ export async function recursiveValidateComponents(projectRootDir, parentID, repo
  * validate components under start component
  * @param {string} projectRootDir - project's root path
  * @param {string} startComponentID - ID of start component for recursive search point
- * @returns {object[]} - invalid component's ID, name and error message
+ * @returns {object[]} - array of { ID, name, errors: Array<{message: string, ignoreable: boolean}> } for each invalid component
  */
 export async function validateComponents(projectRootDir, startComponentID) {
   let parentID;
@@ -183,7 +171,7 @@ export async function validateComponents(projectRootDir, startComponentID) {
   const report = [];
   await recursiveValidateComponents(projectRootDir, parentID, report);
   if (report.length > 0) {
-    _internal.getLogger(projectRootDir).info("validation error detected\n", report);
+    _internal.getLogger(projectRootDir).info(`validation error detected\n${JSON.stringify(report, null, 2)}`);
   }
   return report;
 }

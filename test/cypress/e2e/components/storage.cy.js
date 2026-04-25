@@ -189,27 +189,29 @@ describe("components", ()=>{
   コンポーネントの基本機能動作確認
   Storageコンポーネント共通機能確認
   構成要素の機能確認
-  cleanボタン押下
+  clean component実行
   試験確認内容：最新の保存状態に戻っていることを確認
   skip:issue#948
      */
-    it.skip("構成要素の機能確認-cleanボタン押下-最新の保存状態に戻っていることを確認", ()=>{
+    it("構成要素の機能確認-clean component実行-最新の保存状態に戻っていることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
-      cy.createDirOrFile(TYPE_FILE, "test-a", true);
-      cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-start_for-text_field\"]").type("1");
-      cy.get("[data-cy=\"component_property-end_for-text_field\"]").type("5");
-      cy.get("[data-cy=\"component_property-step_for-text_field\"]").type("5");
-      cy.get("[data-cy=\"workflow-play-btn\"]").click();
+      cy.closeProperty();
+      cy.prepareCleanComponentTest(STORAGE_NAME_0);
+      cy.get("[data-cy=\"graph-component-row\"]").contains(STORAGE_NAME_0)
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
+        .click();
+      cy.contains("button", "discard all changes").click();
       cy.clickComponentName(STORAGE_NAME_0);
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .clear();
-      cy.get("[data-cy=\"component_property-name-text_field\"]").type("changeName");
-      cy.get("[data-cy=\"component_property-description-textarea\"]").find("textarea")
-        .focus();
-      cy.get("[data-cy=\"component_property-clean-btn\"]").click();
-      cy.get("[data-cy=\"component_property-name-text_field\"]").find("input")
-        .should("have.value", "test-a");
+      cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+        .click();
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").should("not.contain.text", "_clean_test_marker.txt");
+      cy.closeProperty();
+      cy.get("[data-cy=\"graph-component-row\"]").contains(STORAGE_NAME_0)
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]", { timeout: 15000 }).contains("delete")
+        .should("be.visible");
+      cy.get("body").type("{esc}");
     });
 
     /**
@@ -295,7 +297,8 @@ describe("components", ()=>{
     it("ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
-      cy.createDirOrFile(TYPE_DIR, "test-a", true);
+      cy.cleanFileBrowserItems(["test-a", "test-b"]);
+      cy.createDirOrFile(TYPE_DIR, "test-a", false);
       cy.createDirOrFile(TYPE_DIR, "test-b", false);
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .should("exist");
@@ -303,13 +306,15 @@ describe("components", ()=>{
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -335,13 +340,15 @@ describe("components", ()=>{
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -369,13 +376,15 @@ describe("components", ()=>{
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -402,13 +411,15 @@ describe("components", ()=>{
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -434,13 +445,15 @@ describe("components", ()=>{
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -468,13 +481,15 @@ describe("components", ()=>{
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test1")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test2")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -491,7 +506,8 @@ describe("components", ()=>{
     it("ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
-      cy.createDirOrFile(TYPE_DIR, "test-a", true);
+      cy.cleanFileBrowserItems(["test-a"]);
+      cy.createDirOrFile(TYPE_DIR, "test-a", false);
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
       cy.createDirOrFile(TYPE_DIR, "test-b", false);
@@ -500,13 +516,15 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
         .should("exist")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
@@ -522,7 +540,8 @@ describe("components", ()=>{
     it("ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
-      cy.createDirOrFile(TYPE_DIR, "test-a", true);
+      cy.cleanFileBrowserItems(["test-a"]);
+      cy.createDirOrFile(TYPE_DIR, "test-a", false);
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
       cy.createDirOrFile(TYPE_FILE, "test.txt", false);
@@ -531,7 +550,8 @@ describe("components", ()=>{
         .click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
         .click();
-      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").click();
+      cy.get("[data-cy=\"file_browser-remove_file-btn\"]").should("not.be.disabled")
+        .click();
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();

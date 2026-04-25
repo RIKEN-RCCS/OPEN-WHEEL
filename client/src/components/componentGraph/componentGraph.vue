@@ -43,6 +43,8 @@
             :end="item.dstPos"
             :box-height="item.boxHeight"
             @open-context-menu="(e)=>{onConnectorRightClick(e, item)}"
+            @mousemove="(e)=>{onConnectorMouseMove(e, item)}"
+            @mouseleave="onConnectorMouseLeave"
           />
           <wheel-component
             v-for="(componentData, index) in currentComponent.descendants"
@@ -99,6 +101,7 @@
             :y="menuY"
             :items="connectorContextMenuItems"
             @delete="deleteConnector"
+            @toggle-force-copy="toggleForceCopy"
           />
           <context-menu
             v-if="openVconnectorContextMenu"
@@ -194,6 +197,15 @@
     :pos="importComponentPos"
     @imported="onComponentImported"
   />
+  <Teleport to="body">
+    <div
+      v-if="connectorTooltip.show"
+      class="connector-tooltip"
+      :style="{ left: `${connectorTooltip.x}px`, top: `${connectorTooltip.y}px` }"
+    >
+      {{ connectorTooltip.label }}
+    </div>
+  </Teleport>
 </template>
 
 <script>
@@ -209,7 +221,7 @@ import ContextMenu from "../../components/componentGraph/contextMenu.vue";
 import ImportComponentDialog from "../../components/importComponentDialog.vue";
 import VueZoomable from "vue-zoomable";
 import "vue-zoomable/dist/style.css";
-import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor } from "../../lib/constants.json";
+import { textHeight, boxWidth, plugColor, elsePlugColor, filePlugColor, fileLinkCopyColor, fileLinkRemoteSymlinkColor, fileLinkCrossBoundaryColor } from "../../lib/constants.json";
 import { calcBoxHeight, calcRecieverPos, calcSenderPos, calcElseSenderPos, calcFsenderPos, calcFreceiverPos } from "../../lib/utils.js";
 import { isContainer } from "../../lib/utility.js";
 import Debug from "debug";
@@ -236,6 +248,12 @@ export default {
   ],
   data() {
     return {
+      connectorTooltip: {
+        show: false,
+        x: 0,
+        y: 0,
+        label: ""
+      },
       menuX: 0,
       menuY: 0,
       openComponentContextMenu: false,
@@ -245,9 +263,6 @@ export default {
       targetComponent: null,
       targetConnector: null,
       targetVconnector: null,
-      connectorContextMenuItems: [
-        { label: "delete", event: "delete" }
-      ],
       vconnectorContextMenuItems: [
         { label: "delete", event: "delete" }
       ],
@@ -260,7 +275,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState", "isComponentDragging", "copyInfo"]),
+    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState", "isComponentDragging", "copyInfo", "remoteHost"]),
     ...mapState({ currentZoomState: "currentZoom", currentPanState: "currentPan" }),
     ...mapGetters(["copiedComponentID", "cutComponentID"]),
     currentZoom: {
@@ -279,12 +294,23 @@ export default {
         this.commitCurrentPan(value);
       }
     },
+    connectorContextMenuItems() {
+      const forceCopy = this.targetConnector?.forceCopy || false;
+      return [
+        { label: forceCopy ? "use symlink" : "use force copy", event: "toggle-force-copy" },
+        { label: "delete", event: "delete" }
+      ];
+    },
     componentContextMenuItems() {
       const rt = [];
       rt.push({ label: "copy", event: "copy" });
       rt.push({ label: "cut", event: "cut" });
       rt.push({ label: "export", event: "export" });
-      if (this.projectState !== "not-started") {
+      const liveComponent = this.currentComponent?.descendants?.find((c)=>{
+        return c.ID === this.targetComponent?.ID;
+      });
+      const currentState = liveComponent?.state ?? this.targetComponent?.state;
+      if (currentState !== "not-started") {
         rt.push({ label: "clean", event: "clean" });
       } else {
         rt.push({ label: "delete", event: "delete" });
@@ -367,6 +393,7 @@ export default {
                   });
                 });
                 if (dstIndex !== -1) {
+                  const forceCopy = dst.forceCopy || false;
                   rt.push({
                     src: component.ID,
                     srcName: outputFile.name,
@@ -374,9 +401,11 @@ export default {
                     dst: dst.dstNode,
                     dstName: dst.dstName,
                     dstPos: calcFreceiverPos(dstComponent.pos, dstIndex),
-                    color: filePlugColor,
+                    color: this.fileLinkColor(forceCopy, component.host, dstComponent.host),
+                    label: this.fileLinkLabel(forceCopy, component.host, dstComponent.host),
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
-                    boxHeight
+                    boxHeight,
+                    forceCopy
                   });
                 }
               } else if (dst.dstNode === "parent" || dst.dstNode === this.currentComponent.ID) {
@@ -390,6 +419,7 @@ export default {
                   });
                 });
                 if (dstIndex !== -1) {
+                  const forceCopy = dst.forceCopy || false;
                   rt.push({
                     src: component.ID,
                     srcName: outputFile.name,
@@ -397,9 +427,11 @@ export default {
                     dst: dst.dstNode,
                     dstName: dst.dstName,
                     dstPos: calcFreceiverPos(this.parentOutputFilePos, dstIndex),
-                    color: filePlugColor,
+                    color: this.fileLinkColor(forceCopy, component.host, this.currentComponent.host),
+                    label: this.fileLinkLabel(forceCopy, component.host, this.currentComponent.host),
                     key: `${component.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
-                    boxHeight
+                    boxHeight,
+                    forceCopy
                   });
                 }
               }
@@ -429,9 +461,11 @@ export default {
                     dst: dst.dstNode,
                     dstName: dst.dstName,
                     dstPos: calcFreceiverPos(dstComponent.pos, dstIndex),
-                    color: filePlugColor,
+                    color: this.fileLinkColor(false, this.currentComponent.host, dstComponent.host),
+                    label: this.fileLinkLabel(false, this.currentComponent.host, dstComponent.host),
                     key: `${this.currentComponent.ID}${srcIndex}${dst.dstNode}${dstIndex}`,
-                    boxHeight: 0
+                    boxHeight: 0,
+                    forceCopy: false
                   });
                 }
               }
@@ -451,6 +485,102 @@ export default {
     }
   },
   methods: {
+
+    /**
+     * Look up a remote host entry by component host name.
+     * @param {string} hostName - component host value
+     * @returns {object|null} host info object or null
+     */
+    getHostInfo(hostName) {
+      if (!Array.isArray(this.remoteHost) || !hostName || hostName === "localhost") {
+        return null;
+      }
+      return this.remoteHost.find((h)=>{
+        return h.name === hostName;
+      }) || null;
+    },
+
+    /**
+     * Determine the color of a file link connector based on its transfer type.
+     * @param {boolean} forceCopy - whether the link uses force copy
+     * @param {string|undefined} srcHost - host of the source component
+     * @param {string|undefined} dstHost - host of the destination component
+     * @returns {string} hex color string
+     */
+    fileLinkColor(forceCopy, srcHost, dstHost) {
+      const isRemote = (host)=>{
+        return host && host !== "localhost";
+      };
+      if (!isRemote(dstHost)) {
+        if (isRemote(srcHost)) {
+          //src is remote, dst is local → cross-boundary (download)
+          return fileLinkCrossBoundaryColor;
+        }
+        //both local → local symlink or local copy
+        return forceCopy ? fileLinkCopyColor : filePlugColor;
+      }
+      //dst is remote — check if src and dst share storage
+      if (srcHost === dstHost) {
+        //same remote host → share storage → symlink on remote (or remote copy)
+        return fileLinkRemoteSymlinkColor;
+      }
+      if (!isRemote(srcHost)) {
+        //src is localhost: check sharedWithLocalhost on dst host
+        const dstInfo = this.getHostInfo(dstHost);
+        if (dstInfo && dstInfo.sharedWithLocalhost) {
+          return fileLinkRemoteSymlinkColor;
+        }
+      } else {
+        //both remote, different hosts: check sharedHost arrangement
+        const srcInfo = this.getHostInfo(srcHost);
+        const dstInfo = this.getHostInfo(dstHost);
+        if (srcInfo && dstInfo && dstInfo.sharedHost === srcInfo.name) {
+          return fileLinkRemoteSymlinkColor;
+        }
+      }
+      //no shared storage → cross-boundary (upload, inter-remote transfer, or copy across boundary)
+      return fileLinkCrossBoundaryColor;
+    },
+
+    /**
+     * Determine the human-readable label of a file link based on its transfer type.
+     * @param {boolean} forceCopy - whether the link uses force copy
+     * @param {string|undefined} srcHost - host of the source component
+     * @param {string|undefined} dstHost - host of the destination component
+     * @returns {string} label string
+     */
+    fileLinkLabel(forceCopy, srcHost, dstHost) {
+      const color = this.fileLinkColor(forceCopy, srcHost, dstHost);
+      if (color === fileLinkCopyColor) {
+        return "local copy: files are copied within the local filesystem";
+      }
+      if (color === fileLinkRemoteSymlinkColor) {
+        return "remote symlink: files are linked on the shared remote storage";
+      }
+      if (color === fileLinkCrossBoundaryColor) {
+        return "remote copy: files are transferred between different storage locations";
+      }
+      return "local symlink: files are linked within the local filesystem";
+    },
+
+    /**
+     * Show the connector tooltip at the current mouse position.
+     * @param {MouseEvent} event - the mousemove event
+     * @param {object} item - the fileLinkGraph item being hovered
+     */
+    onConnectorMouseMove(event, item) {
+      this.connectorTooltip.show = true;
+      this.connectorTooltip.x = event.clientX + 14;
+      this.connectorTooltip.y = event.clientY - 32;
+      this.connectorTooltip.label = item.label;
+    },
+
+    /**
+     * Hide the connector tooltip.
+     */
+    onConnectorMouseLeave() {
+      this.connectorTooltip.show = false;
+    },
     panToShowAllComponent() {
       let minX = Infinity;
       let minY = Infinity;
@@ -552,6 +682,27 @@ export default {
         (rt)=>{
           if (!rt) {
             debug("removeFileLink failed", rt);
+          }
+        });
+      this.closeContextMenus();
+    },
+    toggleForceCopy() {
+      if (this.readOnly) {
+        debug("toggle force copy called but this project is read-only for now");
+        return;
+      }
+      const newForceCopy = !this.targetConnector.forceCopy;
+      SIO.emitGlobal("toggleOutputFileForceCopy",
+        this.projectRootDir,
+        this.targetConnector.src,
+        this.targetConnector.srcName,
+        this.targetConnector.dst,
+        this.targetConnector.dstName,
+        newForceCopy,
+        this.currentComponent.ID,
+        (rt)=>{
+          if (!rt) {
+            debug("toggleOutputFileForceCopy failed", rt);
           }
         });
       this.closeContextMenus();
@@ -663,7 +814,7 @@ export default {
       this.showSnackbar({ message: "Component import started", timeout: 2000 });
     },
     ...mapActions({ commitSelectedComponent: "selectedComponent", showSnackbar: "showSnackbar" }),
-    ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan", commitCopyInfo: "copyInfo" }),
+    ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan", commitCopyInfo: "copyInfo", commitPendingNavigation: "pendingNavigation" }),
     updatePosition(index, event) {
       this.currentComponent.descendants[index].pos.x = event.newX;
       this.currentComponent.descendants[index].pos.y = event.newY;
@@ -681,6 +832,7 @@ export default {
       if (!isContainer(componentType)) {
         return;
       }
+      this.commitPendingNavigation(componentID);
       SIO.emitGlobal("getWorkflow", this.projectRootDir, componentID, SIO.generalCallback);
     },
     onAddFileLinkToParent(srcNode, srcName, inputFilename) {
@@ -761,5 +913,17 @@ export default {
 .pan-center { grid-area: center; }
 .pan-right { grid-area: right; }
 .pan-down { grid-area: down; }
+.connector-tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  background: rgba(40, 40, 50, 0.92);
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+}
 
 </style>

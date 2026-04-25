@@ -21,6 +21,8 @@ import {
   onAddOutputFile,
   onRenameInputFile,
   onRenameOutputFile,
+  onToggleInputFileMandatory,
+  onToggleOutputFileForceCopy,
   onAddLink,
   onAddFileLink,
   onRemoveInputFile,
@@ -52,7 +54,8 @@ import {
   onCreateNewGfarmDir,
   onRemoveGfarmFile,
   onRenameGfarmFile,
-  onGetRemoteGfarmTarFileList
+  onGetRemoteGfarmTarFileList,
+  onGetGfarmXattr
 } from "./remoteFileBrowser.js";
 import { aboutWheel } from "../core/versionInfo.js";
 import { onImportProject, onExportProject } from "./projectArchive.js";
@@ -86,6 +89,8 @@ const registerHandlers = (socket, Siofu)=>{
   //update
   socket.on("renameInputFile", onRenameInputFile);
   socket.on("renameOutputFile", onRenameOutputFile);
+  socket.on("toggleInputFileMandatory", onToggleInputFileMandatory);
+  socket.on("toggleOutputFileForceCopy", onToggleOutputFileForceCopy);
   socket.on("updateComponent", onUpdateComponent);
   socket.on("updateComponentPos", onUpdateComponentPos);
   socket.on("updateEnv", onUpdateEnv);
@@ -140,7 +145,7 @@ const registerHandlers = (socket, Siofu)=>{
     if (typeof event.file.meta.projectRootDir !== "string") {
       return onUploadFileSaved2(event);
     }
-    return onUploadFileSaved(event);
+    return onUploadFileSaved(event, socket);
   });
   uploader.on("error", (event)=>{
     const projectRootDir = event.file.meta.projectRootDir;
@@ -180,6 +185,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getRemoteSNDContents", onGetRemoteSNDContents);
   socket.on("downloadRemote", onRemoteDownload);
   socket.on("getRemoteGfarmTarFileList", onGetRemoteGfarmTarFileList);
+  socket.on("getGfarmXattr", onGetGfarmXattr);
   //update
   socket.on("renameRemoteFile", onRenameRemoteFile);
   socket.on("renameGfarmFile", onRenameGfarmFile);

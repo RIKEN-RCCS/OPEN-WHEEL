@@ -94,6 +94,7 @@
                           v-model="host.jobScheduler"
                           :items="availableJobSchedulers"
                           label="job scheduler"
+                          :menu-props="{ transition: false }"
                           data-cy="add_new_host-job_schedulers-select"
                         />
                       </v-col>
@@ -105,10 +106,14 @@
                         />
                       </v-col>
                       <v-col cols="6">
-                        <v-text-field
+                        <v-combobox
                           v-model="host.queue"
                           label="available queues"
-                          data-cy="add_new_host-available_queues-text_field"
+                          multiple
+                          chips
+                          closable-chips
+                          :menu-props="{ transition: false }"
+                          data-cy="add_new_host-available_queues-combobox"
                         />
                       </v-col>
                       <v-col cols="3">
@@ -130,6 +135,7 @@
                           v-model="host.sharedHost"
                           :items="hostNames"
                           label="shared host"
+                          :menu-props="{ transition: false }"
                           data-cy="add_new_host-shared_host-select"
                           clearable
                         />
@@ -139,6 +145,33 @@
                           v-model="host.sharedPath"
                           label="shared path on shared host"
                           data-cy="add_new_host-shared_path_on_shared_host-text_field"
+                        />
+                      </v-col>
+                      <v-col cols="12">
+                        <v-checkbox
+                          v-model="host.sharedWithLocalhost"
+                          label="shared with localhost"
+                          data-cy="add_new_host-shared_with_localhost-checkbox"
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.localSharedPath"
+                          :disabled="!host.sharedWithLocalhost"
+                          label="shared storage path on localhost"
+                          placeholder="/mnt/shared"
+                          hint="Path where shared storage is mounted on WHEEL server"
+                          data-cy="add_new_host-local_shared_path-text_field"
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.sharedPath"
+                          :disabled="!host.sharedWithLocalhost && !host.sharedHost"
+                          label="shared storage path on remote"
+                          placeholder="/data"
+                          hint="Path where shared storage is mounted on remote host"
+                          data-cy="add_new_host-shared_path_remote-text_field"
                         />
                       </v-col>
                       <v-col cols="12">
@@ -170,7 +203,7 @@
                   </v-container>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-              <v-expansion-panel>
+              <v-expansion-panel eager>
                 <v-expansion-panel-title data-cy="add_new_host-advanced_settings-title">
                   Advanced settings
                 </v-expansion-panel-title>
@@ -240,6 +273,7 @@
           <v-btn
             prepend-icon="mdi-close"
             text="cancel"
+            data-cy="add_new_host-cancel-btn"
             @click="cancelDialog"
           />
         </v-card-actions>
@@ -362,6 +396,7 @@ export default {
     closeDialog() {
       this.host = { JWTServerURL: "https://elpis.hpci.nii.ac.jp/" };
       this.$refs.form.reset();
+      this.openPanel = [0];
       this.openDialog = false;
     }
   }

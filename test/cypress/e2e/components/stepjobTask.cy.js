@@ -265,9 +265,10 @@ describe("components", ()=>{
   試験確認内容：input fileが削除されていることを確認
   試験内容が不明瞭なため一時的にスキップ
      */
-    it.skip("転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
+    it("転送対象ファイル・フォルダの設定-削除反映確認（input file）-input fileが削除されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
+      cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
       cy.get("[data-cy=\"action_row-delete-btn\"]").click();
       cy.get("[data-cy=\"graph-component-row\"]").contains("testInputFile")
         .should("not.exist");
@@ -281,9 +282,10 @@ describe("components", ()=>{
   試験確認内容：output fileが削除されていることを確認
   試験内容が不明瞭なため一時的にスキップ
      */
-    it.skip("転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
+    it("転送対象ファイル・フォルダの設定-削除反映確認（output file）-output fileが削除されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
+      cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
       cy.get("[data-cy=\"action_row-delete-btn\"]").click();
       cy.get("[data-cy=\"graph-component-row\"]").contains("testOutputFile")
         .should("not.exist");
@@ -543,16 +545,18 @@ describe("components", ()=>{
   試験確認内容：scriptセレクトボックスが入力されていることを確認
   試験内容が不明瞭なため一時的にスキップ
      */
-    it.skip("各コンポーネント特有のプロパティ確認-script入力反映確認-scriptセレクトボックスが入力されていることを確認", ()=>{
+    it("各コンポーネント特有のプロパティ確認-script入力反映確認-scriptセレクトボックスが入力されていることを確認", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
-      cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-      cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close property panel
+      cy.closeProperty();
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_1, 501, 700);
-      cy.get("[data-cy=\"component_property-close-btn\"]").click(); //Close second component property panel
+      cy.closeProperty();
       cy.connectComponentMultiple(STEPJOB_TASK_NAME_0, STEPJOB_TASK_NAME_1); //コンポーネント同士を接続
+      //Wait for the connection to be reflected in the DOM (cubic-bezier-path exists only after the
+      //server processes addLink, runs updateStepNumber, and sends back the workflow event).
+      //This ensures componentData.stepnum is already updated before we open the property panel.
+      cy.checkConnectionLine(STEPJOB_TASK_NAME_0, STEPJOB_TASK_NAME_1);
       cy.clickComponentName(STEPJOB_TASK_NAME_1);
-      cy.enterInputOrOutputFile(TYPE_INPUT, "testOutputFile", true, true);
       cy.get("[data-cy=\"component_property-stepjob_task-panel_title\"]").scrollIntoView()
         .click();
       cy.get("[data-cy=\"component_property-use_dependency-switch\"]").find("input")

@@ -7,7 +7,7 @@
     "del": "qdel",
     "grpName": "",
     "reJobID": "^(\\d+).*",
-    "reRunning": "<JOB_Id>{{ JOBID }}.*job_state\\=(R|H|Q|T|W)$",
+    "reRunning": "job_state \\= (R|H|Q|T|W)",
     "reReturnCode": "Exit_status \\= (\\d+)$",
     "reJobStatusCode": "substate \\= (\\d+)$",
     "acceptableJobStatus": [

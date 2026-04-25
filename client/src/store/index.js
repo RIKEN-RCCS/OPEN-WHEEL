@@ -88,7 +88,8 @@ const state = {
   isComponentDragging: false,
   currentZoom: 1,
   currentPan: { x: 0, y: 0 },
-  textEditorDialog: false
+  textEditorDialog: false,
+  pendingNavigation: null
 };
 
 const mutations = mutationFactory(Object.keys(state));
@@ -119,15 +120,22 @@ export default new Vuex.Store({
         copySelectedComponent: copied,
         projectRootDir,
         currentComponent } = context.state;
-      if (copied !== null) {
+      //Only send updateComponent when switching to a different component or closing (payload===null).
+      //Do NOT send it for same-component workflow events to prevent cascade overwrites:
+      //e.g., when the user types chars rapidly, each renameOutputFile call triggers a workflow event
+      //which would call this action with the same component ID. Without this guard, each such call
+      //would send updateComponent with an intermediate copySelectedComponent value, potentially
+      //overwriting the final renameOutputFile result on the server.
+      const isSameComponent = copied !== null && payload !== null && copied.ID === payload.ID;
+      if (!isSameComponent && copied !== null && selected !== null) {
         const difference = diff(selected, copied);
         const changedProps = difference.filter((e)=>{
-          return e.path[0] !== "pos";
+          return !["pos", "outputFiles", "inputFiles"].includes(e.path[0]);
         });
         if (changedProps.length > 0) {
-          SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID, (rt)=>{
-            console.log("compoent update done", rt);
-          });
+          //Use server's outputFiles/inputFiles to prevent data corruption
+          const sendPayload = { ...toRaw(copied), outputFiles: toRaw(selected).outputFiles, inputFiles: toRaw(selected).inputFiles };
+          SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, sendPayload, currentComponent.ID, SIO.generalCallback);
         }
       }
       if (payload === null) {
@@ -137,8 +145,31 @@ export default new Vuex.Store({
       }
 
       context.commit("selectedComponent", payload);
-      const dup = structuredClone(toRaw(payload));
-      context.commit("copySelectedComponent", dup);
+      //When switching to a different component, always reset the working copy.
+      //When the same component is updated by an incoming workflow event,
+      //only update the working copy if the user has no in-progress edits.
+      //This prevents stale copySelectedComponent from diverging from selectedComponent
+      //and causing spurious updateComponent calls when subsequent workflow events arrive.
+      if (isSameComponent) {
+        const hasEdits = selected !== null && diff(selected, copied).some((e)=>{
+          return !["pos", "outputFiles", "inputFiles"].includes(e.path[0]);
+        });
+        if (!hasEdits) {
+          context.commit("copySelectedComponent", structuredClone(toRaw(payload)));
+        } else {
+          //Keep user's edits but sync outputFiles/inputFiles with server's latest value
+          const updatedCopy = structuredClone(toRaw(copied));
+          if (payload.outputFiles !== undefined) {
+            updatedCopy.outputFiles = structuredClone(toRaw(payload.outputFiles));
+          }
+          if (payload.inputFiles !== undefined) {
+            updatedCopy.inputFiles = structuredClone(toRaw(payload.inputFiles));
+          }
+          context.commit("copySelectedComponent", updatedCopy);
+        }
+      } else {
+        context.commit("copySelectedComponent", structuredClone(toRaw(payload)));
+      }
     },
     showSnackbar: (context, payload)=>{
       if (typeof payload === "string") {

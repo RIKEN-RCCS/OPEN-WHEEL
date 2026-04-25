@@ -34,7 +34,7 @@
             :text="item.label"
             :disabled="item.disabled"
             :data-cy="`versatile_dialog_${title.replace(/ /g,'_')}-${item.label}-btn`"
-            @click="$emit(item.label)"
+            @click="$emit(item.event || item.label)"
           />
         </div>
       </v-card-actions>
