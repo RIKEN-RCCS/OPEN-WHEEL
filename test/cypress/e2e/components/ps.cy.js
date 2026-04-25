@@ -603,8 +603,11 @@ describe("components", ()=>{
     describe("tests with ace we have to close editor dialog after each test case", { testIsolation: false }, ()=>{
       before(()=>{
         cy.removeAllProjects();
-        cy.viewport("macbook-16");
         return cy.createAndOpenProject();
+      });
+
+      beforeEach(()=>{
+        cy.viewport("macbook-16");
       });
 
       after(()=>{
@@ -615,9 +618,11 @@ describe("components", ()=>{
         cy.get("body").then(($body)=>{
           if ($body.find("[data-cy=\"target_files-cancel-btn\"]").length) {
             cy.get("[data-cy=\"target_files-cancel-btn\"]").click({ force: true });
+            cy.get("[data-cy=\"target_files-cancel-btn\"]").should("not.exist");
           }
           if ($body.find("[data-cy=\"parameter-cancel-btn\"]").length) {
             cy.get("[data-cy=\"parameter-cancel-btn\"]").click({ force: true });
+            cy.get("[data-cy=\"parameter-cancel-btn\"]").should("not.exist");
           }
           if ($body.find("[data-cy=\"gather_scatter-cancel-btn\"]").length) {
             cy.get("[data-cy=\"gather_scatter-cancel-btn\"]").click({ force: true });
@@ -648,9 +653,12 @@ describe("components", ()=>{
         //Close property panel if open
         cy.get("body").then(($body)=>{
           if ($body.find("[data-cy=\"component_property-close-btn\"]").length) {
-            cy.get("[data-cy=\"component_property-close-btn\"]").click();
+            cy.get("[data-cy=\"component_property-close-btn\"]").scrollIntoView()
+              .click();
           }
         });
+        //Reset window scroll so the next test starts with the navigation drawer in viewport.
+        cy.scrollTo(0, 0);
         //Delete PS0 to reset for the next test, then wait until deletion is reflected in the DOM.
         //Without this wait, the next test's createComponent may race against the deletion re-render.
         cy.deleteComponent(PS_NAME_0);
@@ -667,7 +675,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-targetFiles入力テキストボックス表示確認-targetFiles入力テキストボックスが表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
@@ -683,7 +692,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-targetFiles入力テキストボックス入力確認-targetFilesテキストボックスに入力した値が表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
@@ -702,7 +712,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-targetFiles追加-targetFileが追加されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
@@ -722,7 +733,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-targetFiles削除-targetFilesが削除されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
@@ -743,7 +755,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-delete all instancesスイッチボタン入力確認-入力した値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
@@ -764,7 +777,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-targetFiles反映確認-targetFilesが反映されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
@@ -783,7 +797,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-parameters->current selected text 表示確認-current selected textテキストボックスが表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"parameter-selected_text-text_field\"]").should("be.visible");
@@ -799,7 +814,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-parameters->current selected text 入力確認-current selected textテキストボックスにドラッグした値が表示されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
@@ -820,7 +836,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-parameters->+ add new parameter ボタン表示確認-parameter設定ダイアログが表示されることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
@@ -836,7 +853,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-min-max-step表示確認-min-max-step入力フォームが表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
@@ -852,7 +870,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-min-max-step入力確認-min-max-step入力フォームに入力した値が表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
@@ -880,7 +899,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-min-max-step入力反映確認-min-max-step入力フォームに入力した値が反映されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         //ターゲットファイル設定
@@ -911,7 +931,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-list表示確認-list入力フォームが表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
@@ -929,7 +950,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-list入力確認-list入力フォームに入力した値が表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
@@ -950,7 +972,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-list入力反映確認-list入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         //ターゲットファイル設定
@@ -977,7 +1000,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-files表示確認-files入力フォームが表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
@@ -995,7 +1019,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-files入力確認-files入力フォームに入力した値が表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
@@ -1016,7 +1041,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-files入力反映確認-files入力フォームに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         //ターゲットファイル設定
@@ -1043,7 +1069,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1061,7 +1088,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-scatter-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1079,7 +1107,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1099,7 +1128,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-scatter->dstName表示確認-dstNameテキストボックスが表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1117,7 +1147,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-scatter->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1138,7 +1169,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-scatter入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1162,7 +1194,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-add new scatter settingボタン表示確認-scatter設定ダイアログが表示されることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1180,7 +1213,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-gather-> srcName表示確認-srcNameテキストボックスが表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1198,7 +1232,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-scatter->srcName入力確認-srcNameテキストボックスに入力した値が表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1218,7 +1253,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-gather->dstName表示確認-dstNameテキストボックスが表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1236,7 +1272,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-gather->dstName入力確認-dstNameテキストボックスに入力した値が表示されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
@@ -1256,7 +1293,8 @@ describe("components", ()=>{
        */
       it("プロパティ設定確認-gather入力反映確認-srcName、dstNameテキストボックスに入力した値が反映されていることを確認", ()=>{
         cy.createComponent(DEF_COMPONENT_PS, PS_NAME_0, 501, 500);
-        cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
+        cy.get("[data-cy=\"component_property-files-panel_title\"]").scrollIntoView()
+          .click();
         cy.clickTreeviewItem("[data-cy=\"file_browser-treeview-treeview\"]", "parameterSetting.json");
         cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click();
         cy.get("[data-cy=\"rapid-parameter-parameter_editor\"]").should("be.visible");
