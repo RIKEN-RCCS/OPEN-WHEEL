@@ -687,7 +687,7 @@ describe("#deliverFilesBetweenRemotes", ()=>{
       error: sinon.stub()
     };
     mockSsh = {
-      remoteToRemoteCopy: sinon.stub().resolves()
+      remoteToRemoteCopy: sinon.stub().resolves(0)
     };
     mockDstHostinfo = {
       host: "remote-dst.example.com",
@@ -743,5 +743,27 @@ describe("#deliverFilesBetweenRemotes", ()=>{
       src: "/remote/src/path/file.txt",
       dst: "/remote/dst/path/file.txt"
     });
+  });
+
+  it("should reject if remoteToRemoteCopy returns non-zero exit code", async ()=>{
+    mockSsh.remoteToRemoteCopy = sinon.stub().resolves(1);
+    const recipe = {
+      betweenRemotes: true,
+      projectRootDir: "/dummy/project",
+      srcRemotehostID: "srchost-id",
+      dstRemotehostID: "dsthost-id",
+      srcRoot: "/remote/src/path",
+      srcName: "file.txt",
+      dstRoot: "/remote/dst/path",
+      dstName: "file.txt"
+    };
+
+    try {
+      await deliverFilesBetweenRemotes(recipe);
+      expect.fail("Expected deliverFilesBetweenRemotes to reject, but it resolved");
+    } catch (err) {
+      expect(err.message).to.match(/exit code 1/);
+      expect(err.rt).to.equal(1);
+    }
   });
 });
