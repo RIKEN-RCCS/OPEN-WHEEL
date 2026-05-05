@@ -11,7 +11,7 @@
   >
     <v-card>
       <v-card-title class="text-h5">
-        Discard following changes and exit text editor?
+        Do you want to keep or discard the changes you made?
       </v-card-title>
       <v-card-text>
         <v-data-table
@@ -28,19 +28,19 @@
         <v-btn
           class="text-capitalize"
           prepend-icon="mdi-content-save"
-          text="keep changes"
+          text="Keep changes and exit"
           @click="keepChanges"
         />
         <v-btn
           class="text-capitalize"
           prepend-icon="mdi-alert-circle-outline"
-          text="discard all changes"
+          text="Discard changes and exit"
           @click="discardChanges"
         />
         <v-btn
           class="text-capitalize"
           prepend-icon="mdi-close"
-          text="cancel"
+          text="Continue editing"
           @click="closeDialog"
         />
       </v-card-actions>
