@@ -204,6 +204,16 @@ export default new Vuex.Store({
         context.dispatch("showSnackbar");
       }
     },
+
+    /**
+     * Clear all pending snackbar messages from the queue and dismiss any currently visible toast.
+     * @param {object} context - Vuex action context
+     */
+    clearSnackbarQueue: (context)=>{
+      context.state.snackbarQueue.splice(0);
+      context.commit("snackbarMessage", "");
+      context.commit("openSnackbar", false);
+    },
     showDialog: (context, payload)=>{
       //ignore if dialog is already opend
       //we have to use dialog queue for this case
