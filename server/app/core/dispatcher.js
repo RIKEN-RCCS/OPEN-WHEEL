@@ -31,7 +31,8 @@ import {
   logDebug,
   logInfo,
   logWarn,
-  logError
+  logError,
+  _internal
 } from "../logSettings.js";
 import { cancelDispatchedTasks } from "./taskUtil.js";
 import { eventEmitters } from "./global.js";
@@ -327,6 +328,7 @@ class Dispatcher extends EventEmitter {
           continue;
         }
         await this._getInputFiles(target);
+        await this._warnMissingInputFiles(target);
         if (!await this._checkMandatoryInputFilesExist(target)) {
           await this._setComponentState(target, "failed");
           this.hasFailedComponent = true;
@@ -1388,6 +1390,49 @@ class Dispatcher extends EventEmitter {
     await writeComponentJson(this.projectRootDir, componentDir, component, true);
     const ee = eventEmitters.get(this.projectRootDir);
     ee.emit("componentStateChanged", component);
+  }
+
+  /**
+   * Check non-mandatory inputFiles and warn if any are missing after file staging.
+   * Unlike mandatory inputFiles, missing non-mandatory files do not fail the component —
+   * a warning is logged and a toast message is sent to the client.
+   * @param {object} component - component to check
+   * @returns {Promise<void>}
+   */
+  async _warnMissingInputFiles(component) {
+    if (!component.inputFiles) {
+      return;
+    }
+    const componentDir = this._getComponentDir(component.ID);
+    const remotehostID = isLocal(component) ? null : remoteHost.getID("name", component.host);
+    const ssh = remotehostID ? getSsh(this.projectRootDir, remotehostID) : null;
+    const remoteWorkingDir = remotehostID
+      ? getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component)
+      : null;
+
+    for (const inputFile of component.inputFiles) {
+      if (inputFile.mandatory === true) {
+        continue;
+      }
+      const renderedName = nunjucks.renderString(inputFile.name, this.env);
+      let missing = false;
+      try {
+        if (isLocal(component)) {
+          await fs.stat(path.join(componentDir, renderedName));
+        } else {
+          const rt = await ssh.exec(`test -e ${path.join(remoteWorkingDir, renderedName)}`, 0, logTrace.bind(null, this.projectRootDir, `${this.cwfDir}/${component.name}`));
+          if (rt !== 0) {
+            missing = true;
+          }
+        }
+      } catch (e) {
+        missing = true;
+      }
+      if (missing) {
+        logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "inputFile not found:", renderedName);
+        await _internal.emitAll(this.projectRootDir, "showMessage", `[${component.name}] inputFile not found: ${renderedName}`);
+      }
+    }
   }
 
   /**

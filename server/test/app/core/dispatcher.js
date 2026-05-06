@@ -30,7 +30,7 @@ import { updateComponentProperty } from "../../testUtil.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { removeExecuters } from "../../../app/core/executerManager.js";
 import { removeTransferrers } from "../../../app/core/transferManager.js";
-import { addInputFile, addOutputFile, renameOutputFile } from "../../../app/core/componentFiles.js";
+import { addInputFile, addOutputFile, renameOutputFile, toggleInputFileMandatory } from "../../../app/core/componentFiles.js";
 import { addLink, addFileLink } from "../../../app/core/componentLinks.js";
 import { scriptName, pwdCmd, scriptHeader } from "../../testScript.js";
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
@@ -42,6 +42,7 @@ const wait = ()=>{
 
 import { remoteHost } from "../../../app/db/db.js";
 import { addSsh } from "../../../app/core/sshManager.js";
+import { _internal } from "../../../app/logSettings.js";
 
 describe("UT for Dispatcher class", function () {
   this.timeout(0);
@@ -1338,6 +1339,59 @@ describe("UT for Dispatcher class", function () {
         expect(fs.existsSync(path.resolve(projectRootDir, "while0_0", "cache.dat"))).to.be.false;
         expect(fs.existsSync(path.resolve(projectRootDir, "while0_1", "cache.dat"))).to.be.false;
       });
+    });
+  });
+  describe("#_warnMissingInputFiles", ()=>{
+    let task;
+    let emitAllStub;
+    beforeEach(async ()=>{
+      emitAllStub = sinon.stub(_internal, "emitAll").resolves();
+      task = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+    });
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should emit showMessage when non-mandatory inputFile is missing", async ()=>{
+      await addInputFile(projectRootDir, task.ID, "missing.txt");
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      await DP._warnMissingInputFiles(updatedTask);
+      expect(emitAllStub).to.have.been.calledOnce;
+      expect(emitAllStub).to.have.been.calledWith(projectRootDir, "showMessage", sinon.match(/missing\.txt/));
+    });
+    it("should not emit showMessage when non-mandatory inputFile exists", async ()=>{
+      await addInputFile(projectRootDir, task.ID, "present.txt");
+      await fs.outputFile(path.resolve(projectRootDir, task.name, "present.txt"), "content");
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      await DP._warnMissingInputFiles(updatedTask);
+      expect(emitAllStub).to.not.have.been.called;
+    });
+    it("should not emit showMessage for mandatory inputFile even if missing", async ()=>{
+      await addInputFile(projectRootDir, task.ID, "mandatory.txt");
+      await toggleInputFileMandatory(projectRootDir, task.ID, 0, true);
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      await DP._warnMissingInputFiles(updatedTask);
+      expect(emitAllStub).to.not.have.been.called;
+    });
+    it("should do nothing when component has no inputFiles", async ()=>{
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      updatedTask.inputFiles = null;
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      await DP._warnMissingInputFiles(updatedTask);
+      expect(emitAllStub).to.not.have.been.called;
+    });
+    it("should emit showMessage for each missing non-mandatory inputFile", async ()=>{
+      await addInputFile(projectRootDir, task.ID, "fileA.txt");
+      await addInputFile(projectRootDir, task.ID, "fileB.txt");
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      await DP._warnMissingInputFiles(updatedTask);
+      expect(emitAllStub).to.have.been.calledTwice;
+      expect(emitAllStub).to.have.been.calledWith(projectRootDir, "showMessage", sinon.match(/fileA\.txt/));
+      expect(emitAllStub).to.have.been.calledWith(projectRootDir, "showMessage", sinon.match(/fileB\.txt/));
     });
   });
 });
