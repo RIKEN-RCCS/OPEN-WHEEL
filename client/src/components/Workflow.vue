@@ -956,6 +956,12 @@ export default {
         if (operation === "cleanProject") {
           this.viewerDataDir = null;
         }
+        const label = operation.replace("Project", " project");
+        if (rt) {
+          this.showSnackbar({ message: `${label} accepted`, timeout: 3000 });
+        } else {
+          this.showSnackbar({ message: `${label} failed`, timeout: -1 });
+        }
       });
     },
     openProjectOperationComfirmationDialog(operation) {
