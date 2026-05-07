@@ -11,7 +11,7 @@ import * as chai from "chai";
 const expect = chai.expect;
 
 import { _internal } from "../../../app/db/db.js";
-const { loadWheelConfig } = _internal;
+const { loadWheelConfig, coerce } = _internal;
 
 /**
  * Write a JSON file to a temp path and return the path.
@@ -176,5 +176,32 @@ describe("loadWheelConfig", function () {
         await fs.remove(dotWheelConfig);
       }
     }
+  });
+});
+
+describe("coerce", function () {
+  it("should return true for string 'true'", function () {
+    expect(coerce("true")).to.equal(true);
+  });
+  it("should return false for string 'false'", function () {
+    expect(coerce("false")).to.equal(false);
+  });
+  it("should return a number for a numeric string", function () {
+    expect(coerce("8089")).to.equal(8089);
+  });
+  it("should return 0 for string '0'", function () {
+    expect(coerce("0")).to.equal(0);
+  });
+  it("should return undefined for an empty string", function () {
+    expect(coerce("")).to.be.undefined;
+  });
+  it("should return undefined for a whitespace-only string", function () {
+    expect(coerce("   ")).to.be.undefined;
+  });
+  it("should return the original string for a non-boolean, non-numeric string", function () {
+    expect(coerce("hello")).to.equal("hello");
+  });
+  it("should return a number for a string with leading/trailing spaces", function () {
+    expect(coerce("  42  ")).to.equal(42);
   });
 });

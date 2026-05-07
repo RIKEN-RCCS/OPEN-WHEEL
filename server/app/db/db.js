@@ -89,9 +89,11 @@ function toCamelCase(str) {
 }
 
 /**
- * coerce a string value to boolean, number, or string as appropriate
+ * coerce a string value to boolean, number, string, or undefined as appropriate.
+ * Returns undefined for empty or whitespace-only strings so that callers can
+ * fall back to configured defaults instead of overriding them with an empty value.
  * @param {string} value - string value from environment variable
- * @returns {boolean|number|string} - coerced value
+ * @returns {boolean|number|string|undefined} - coerced value, or undefined for blank strings
  */
 function coerce(value) {
   if (value === "true") {
@@ -100,8 +102,12 @@ function coerce(value) {
   if (value === "false") {
     return false;
   }
-  if (value.trim() !== "" && !Number.isNaN(Number(value))) {
-    return Number(value);
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    return undefined;
+  }
+  if (!Number.isNaN(Number(trimmed))) {
+    return Number(trimmed);
   }
   return value;
 }
@@ -285,4 +291,4 @@ export const jobScriptTemplate = new JsonArrayManager(jobScriptTemplateFilename)
 export const projectList = new JsonArrayManager(projectListFilename);
 
 /**@internal exported for unit testing only */
-export const _internal = { loadWheelConfig, extractWheelEnvOverrides };
+export const _internal = { loadWheelConfig, extractWheelEnvOverrides, coerce };
