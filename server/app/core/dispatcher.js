@@ -1474,6 +1474,13 @@ class Dispatcher extends EventEmitter {
     return true;
   }
 
+  /**
+   * Fetch all inputFiles for a component, delivering them from their sources.
+   * Non-mandatory transfer failures are logged as warnings and ignored.
+   * Mandatory transfer failures cause all remaining transfers to complete before the component is failed.
+   * @param {object} component - the component whose inputFiles should be fetched
+   * @returns {Promise<object[]>} - array of delivery results from successful transfers
+   */
   async _getInputFiles(component) {
     if (component.type === "source") {
       return;
@@ -1483,6 +1490,7 @@ class Dispatcher extends EventEmitter {
     const tmpDeliverRecipes = [];
     for (const inputFile of component.inputFiles) {
       const dstName = nunjucks.renderString(inputFile.name, this.env);
+      const mandatory = inputFile.mandatory === true;
       //resolve real src
       for (const src of inputFile.src) {
         const srcComponent = await this._getComponent(src.srcNode);
@@ -1522,7 +1530,8 @@ class Dispatcher extends EventEmitter {
               projectRootDir: this.projectRootDir,
               srcRemotehostID,
               fromHPCISS,
-              fromHPCISStar
+              fromHPCISStar,
+              mandatory
             });
           }
         } else if (onSameRemote) {
@@ -1568,7 +1577,8 @@ class Dispatcher extends EventEmitter {
               projectRootDir: this.projectRootDir,
               dstRemotehostID,
               fromHPCISS,
-              fromHPCISStar
+              fromHPCISStar,
+              mandatory
             });
           } else if (!srcIsLocal && dstIsLocal) {
             //Remote → Localhost via shared storage
@@ -1607,7 +1617,8 @@ class Dispatcher extends EventEmitter {
               projectRootDir: this.projectRootDir,
               srcRemotehostID: srcRemotehostIDForRecipe,
               fromHPCISS,
-              fromHPCISStar
+              fromHPCISStar,
+              mandatory
             });
           } else {
             //Remote → Remote
@@ -1629,7 +1640,8 @@ class Dispatcher extends EventEmitter {
               srcRemotehostID,
               dstRemotehostID: remotehostID,
               fromHPCISS,
-              fromHPCISStar
+              fromHPCISStar,
+              mandatory
             });
           }
         } else if (!isLocal(srcComponent) && !["task", "stepjobTask", "bulkjobtask", "hpciss", "hpcisstar"].includes(srcComponent.type)) {
@@ -1648,7 +1660,8 @@ class Dispatcher extends EventEmitter {
             projectRootDir: this.projectRootDir,
             srcRemotehostID,
             fromHPCISS,
-            fromHPCISStar
+            fromHPCISStar,
+            mandatory
           });
         } else {
           //deliver files under component directory even if destination component is storage
@@ -1679,7 +1692,8 @@ class Dispatcher extends EventEmitter {
                       projectRootDir: this.projectRootDir,
                       srcRemotehostID,
                       fromHPCISS,
-                      fromHPCISStar
+                      fromHPCISStar,
+                      mandatory
                     });
                   }
                 } else {
@@ -1698,7 +1712,8 @@ class Dispatcher extends EventEmitter {
                     projectRootDir: this.projectRootDir,
                     srcRemotehostID,
                     fromHPCISS,
-                    fromHPCISStar
+                    fromHPCISStar,
+                    mandatory
                   });
                 }
               })
@@ -1709,13 +1724,17 @@ class Dispatcher extends EventEmitter {
     await Promise.all(promises);
     const deliverRecipes = [];
     for (const recipe of tmpDeliverRecipes) {
-      if (!deliverRecipes.some((e)=>{
+      const existingIdx = deliverRecipes.findIndex((e)=>{
         return e.dstRoot === recipe.dstRoot
           && e.dstName === recipe.dstName
           && e.srcRoot === recipe.srcRoot
           && e.srcName === recipe.srcName;
-      })) {
+      });
+      if (existingIdx === -1) {
         deliverRecipes.push(recipe);
+      } else if (recipe.mandatory) {
+        //if any source marks this transfer as mandatory, keep it mandatory
+        deliverRecipes[existingIdx].mandatory = true;
       }
     }
 
@@ -1723,17 +1742,17 @@ class Dispatcher extends EventEmitter {
     const p2 = [];
     for (const recipe of deliverRecipes) {
       if (recipe.fromHPCISS || recipe.fromHPCISStar) {
-        p2.push(deliverFilesFromHPCISS(recipe, this.projectRootDir));
+        p2.push({ promise: deliverFilesFromHPCISS(recipe, this.projectRootDir), mandatory: recipe.mandatory });
       } else if (recipe.onSameRemote) {
-        p2.push(deliverFilesOnRemote(recipe));
+        p2.push({ promise: deliverFilesOnRemote(recipe), mandatory: recipe.mandatory });
       } else if (recipe.betweenRemotes) {
-        p2.push(deliverFilesBetweenRemotes(recipe));
+        p2.push({ promise: deliverFilesBetweenRemotes(recipe), mandatory: recipe.mandatory });
       } else if (recipe.localToRemoteShared) {
-        p2.push(deliverFilesLocalToRemoteShared(recipe));
+        p2.push({ promise: deliverFilesLocalToRemoteShared(recipe), mandatory: recipe.mandatory });
       } else if (recipe.remoteToLocalShared) {
-        p2.push(deliverFilesRemoteToLocalShared(recipe));
+        p2.push({ promise: deliverFilesRemoteToLocalShared(recipe), mandatory: recipe.mandatory });
       } else if (recipe.remoteToLocal) {
-        p2.push(deliverFilesFromRemote(recipe));
+        p2.push({ promise: deliverFilesFromRemote(recipe), mandatory: recipe.mandatory });
       } else {
         const srces = await glob(recipe.srcName, { cwd: recipe.srcRoot });
         const hasGlob = hasMagic(recipe.srcName);
@@ -1748,13 +1767,30 @@ class Dispatcher extends EventEmitter {
           if (hasGlob || recipe.dstName.endsWith(path.posix.sep) || recipe.dstName.endsWith(path.win32.sep)) {
             newPath = path.resolve(newPath, srcFile);
           }
-          p2.push(deliverFile(oldPath, newPath, recipe.forceCopy));
+          p2.push({ promise: deliverFile(oldPath, newPath, recipe.forceCopy), mandatory: recipe.mandatory });
         }
       }
     }
-    const results = await Promise.all(p2);
-    for (const result of results) {
-      logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "make", result.type, "from ", result.src, "to", result.dst);
+    const settled = await Promise.allSettled(p2.map((e)=>{
+      return e.promise;
+    }));
+    const results = [];
+    const mandatoryErrors = [];
+    for (const [i, outcome] of settled.entries()) {
+      if (outcome.status === "fulfilled") {
+        logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "make", outcome.value.type, "from ", outcome.value.src, "to", outcome.value.dst);
+        results.push(outcome.value);
+      } else if (p2[i].mandatory) {
+        logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "mandatory inputFile transfer failed:", outcome.reason);
+        mandatoryErrors.push(outcome.reason);
+      } else {
+        logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "non-mandatory inputFile transfer failed (ignored):", outcome.reason);
+      }
+    }
+    if (mandatoryErrors.length > 0) {
+      throw new Error(`mandatory inputFile transfer failed: ${mandatoryErrors.map((e)=>{
+        return e.message;
+      }).join(", ")}`);
     }
     if (component.type === "viewer") {
       component.files = results;

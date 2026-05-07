@@ -13,6 +13,8 @@ const expect = chai.expect;
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 chai.use(sinonChai);
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
 import Ajv from "ajv";
 const ajv = new Ajv({ strict: false });
 
@@ -43,6 +45,7 @@ const wait = ()=>{
 import { remoteHost } from "../../../app/db/db.js";
 import { addSsh } from "../../../app/core/sshManager.js";
 import { _internal } from "../../../app/logSettings.js";
+import { _internal as deliverFileInternal } from "../../../app/core/deliverFile.js";
 
 describe("UT for Dispatcher class", function () {
   this.timeout(0);
@@ -1392,6 +1395,90 @@ describe("UT for Dispatcher class", function () {
       expect(emitAllStub).to.have.been.calledTwice;
       expect(emitAllStub).to.have.been.calledWith(projectRootDir, "showMessage", sinon.match(/fileA\.txt/));
       expect(emitAllStub).to.have.been.calledWith(projectRootDir, "showMessage", sinon.match(/fileB\.txt/));
+    });
+  });
+
+  describe("#_getInputFiles mandatory-aware error handling", ()=>{
+    let previous;
+    let next;
+    let ensureSymlinkStub;
+
+    beforeEach(async ()=>{
+      previous = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      next = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 100, y: 0 });
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+    });
+
+    afterEach(()=>{
+      if (ensureSymlinkStub) {
+        ensureSymlinkStub.restore();
+        ensureSymlinkStub = null;
+      }
+    });
+
+    it("should succeed when all mandatory inputFiles are delivered", async ()=>{
+      await addOutputFile(projectRootDir, previous.ID, "out.txt");
+      await addInputFile(projectRootDir, next.ID, "out.txt");
+      await toggleInputFileMandatory(projectRootDir, next.ID, 0, true);
+      await addFileLink(projectRootDir, previous.ID, "out.txt", next.ID, "out.txt");
+      const srcFile = path.resolve(projectRootDir, previous.name, "out.txt");
+      await fs.outputFile(srcFile, "content");
+      const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      await DP._getInputFiles(updatedNext);
+      const delivered = path.resolve(projectRootDir, next.name, "out.txt");
+      expect(await fs.pathExists(delivered)).to.be.true;
+    });
+
+    it("should not throw when non-mandatory inputFile delivery fails", async ()=>{
+      await addOutputFile(projectRootDir, previous.ID, "out.txt");
+      await addInputFile(projectRootDir, next.ID, "out.txt");
+      await addFileLink(projectRootDir, previous.ID, "out.txt", next.ID, "out.txt");
+      const srcFile = path.resolve(projectRootDir, previous.name, "out.txt");
+      await fs.outputFile(srcFile, "content");
+      const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      //Stub ensureSymlink to force delivery failure without corrupting the component directory
+      ensureSymlinkStub = sinon.stub(deliverFileInternal.fs, "ensureSymlink").rejects(new Error("forced delivery failure"));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      //non-mandatory (default): should NOT throw
+      await DP._getInputFiles(updatedNext);
+    });
+
+    it("should throw when mandatory inputFile delivery fails", async ()=>{
+      await addOutputFile(projectRootDir, previous.ID, "out.txt");
+      await addInputFile(projectRootDir, next.ID, "out.txt");
+      await toggleInputFileMandatory(projectRootDir, next.ID, 0, true);
+      await addFileLink(projectRootDir, previous.ID, "out.txt", next.ID, "out.txt");
+      const srcFile = path.resolve(projectRootDir, previous.name, "out.txt");
+      await fs.outputFile(srcFile, "content");
+      const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      //Stub ensureSymlink to force delivery failure without corrupting the component directory
+      ensureSymlinkStub = sinon.stub(deliverFileInternal.fs, "ensureSymlink").rejects(new Error("forced delivery failure"));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      //mandatory: should throw
+      await expect(DP._getInputFiles(updatedNext)).to.be.rejectedWith(/mandatory inputFile transfer failed/);
+    });
+
+    it("should throw only due to mandatory failures when both mandatory and non-mandatory deliveries fail", async ()=>{
+      await addOutputFile(projectRootDir, previous.ID, "mand.txt");
+      await addOutputFile(projectRootDir, previous.ID, "opt.txt");
+      await addInputFile(projectRootDir, next.ID, "mand.txt");
+      await addInputFile(projectRootDir, next.ID, "opt.txt");
+      await toggleInputFileMandatory(projectRootDir, next.ID, 0, true);
+      await addFileLink(projectRootDir, previous.ID, "mand.txt", next.ID, "mand.txt");
+      await addFileLink(projectRootDir, previous.ID, "opt.txt", next.ID, "opt.txt");
+      await fs.outputFile(path.resolve(projectRootDir, previous.name, "mand.txt"), "mandatory content");
+      await fs.outputFile(path.resolve(projectRootDir, previous.name, "opt.txt"), "optional content");
+      const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      //Stub ensureSymlink to force both deliveries to fail
+      ensureSymlinkStub = sinon.stub(deliverFileInternal.fs, "ensureSymlink").rejects(new Error("forced delivery failure"));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      //Should throw (because mandatory failed), not silent
+      await expect(DP._getInputFiles(updatedNext)).to.be.rejectedWith(/mandatory inputFile transfer failed/);
     });
   });
 });
