@@ -6,6 +6,7 @@
 import os from "os";
 import path from "path";
 import fs from "fs-extra";
+import { loadConfig } from "c12";
 import JsonArrayManager from "./jsonArrayManager.js";
 import { fileURLToPath } from "url";
 
@@ -106,30 +107,53 @@ function getStringVar(target, alt) {
 }
 
 /**
- * read default and userdefined config file and merge them
- * @param {string} filename - config file's name
- * @returns {Promise<object>} -
+ * load a WHEEL config file using c12.
+ * Priority (highest to lowest):
+ *   1. WHEEL_CONFIG_DIR/{filename}  (env-based override)
+ *   2. ~/.wheel/{filename}          (user home directory)
+ *   3. server/app/db/{filename}     (package defaults)
+ * @param {string} filename - config file's name (e.g. "server.json")
+ * @returns {Promise<object>} merged config
  */
-async function readAndMergeConfigFile(filename) {
-  let userConfigFilename;
+async function loadWheelConfig(filename) {
+  const packageDefaults = JSON.parse(await fs.readFile(path.resolve(__dirname, filename), "utf-8"));
+
+  //load ~/.wheel/{filename} as user defaults
+  const dotWheelConfigPath = path.resolve(os.homedir(), ".wheel", filename);
+  let dotWheelConfig = {};
   try {
-    userConfigFilename = getConfigFile(filename, true);
+    dotWheelConfig = JSON.parse(await fs.readFile(dotWheelConfigPath, "utf-8"));
   } catch (e) {
-    if (e.message !== "file not found") {
+    if (e.code !== "ENOENT") {
       throw e;
     }
   }
-  const defaultConfigPath = path.resolve(__dirname, filename);
-  const defaultConfig = JSON.parse(await fs.readFile(defaultConfigPath, "utf-8"));
-  if (!userConfigFilename) {
-    return defaultConfig;
+
+  //load WHEEL_CONFIG_DIR/{filename} as highest-priority overrides
+  let envDirConfig = {};
+  if (typeof process.env.WHEEL_CONFIG_DIR === "string") {
+    const envConfigPath = path.resolve(process.env.WHEEL_CONFIG_DIR, filename);
+    try {
+      envDirConfig = JSON.parse(await fs.readFile(envConfigPath, "utf-8"));
+    } catch (e) {
+      if (e.code !== "ENOENT") {
+        throw e;
+      }
+    }
   }
-  const userConfig = JSON.parse(await fs.readFile(userConfigFilename, "utf-8"));
-  return { ...defaultConfig, ...userConfig };
+
+  const { config } = await loadConfig({
+    name: "wheel",
+    rcFile: false,
+    globalRc: false,
+    defaults: { ...packageDefaults, ...dotWheelConfig },
+    overrides: envDirConfig
+  });
+  return config;
 }
 
-const config = await readAndMergeConfigFile("server.json");
-const jobScheduler = await readAndMergeConfigFile("jobScheduler.json");
+const config = await loadWheelConfig("server.json");
+const jobScheduler = await loadWheelConfig("jobScheduler.json");
 const remotehostFilename = getConfigFile(getStringVar(config.remotehostJsonFile, "remotehost.json"));
 const jobScriptTemplateFilename = getConfigFile(getStringVar(config.jobScriptTemplateJsonFile, "jobScriptTemplate.json"));
 const projectListFilename = getConfigFile(getStringVar(config.projectListJsonFile, "projectList.json"));
@@ -189,3 +213,6 @@ await remoteHost.write();
 
 export const jobScriptTemplate = new JsonArrayManager(jobScriptTemplateFilename);
 export const projectList = new JsonArrayManager(projectListFilename);
+
+/**@internal exported for unit testing only */
+export const _internal = { loadWheelConfig };

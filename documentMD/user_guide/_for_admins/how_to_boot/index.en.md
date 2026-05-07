@@ -243,3 +243,46 @@ However, the number of jobs submitted without using WHEEL is not counted. Theref
 
 --------
 [Return to home page]({{ site.baseurl }}/)
+
+## Customizing server settings
+
+WHEEL loads all its config files (`server.json`, `jobScheduler.json`) using the same priority order (highest first):
+
+1. **Environment variables** (e.g. `WHEEL_PORT`) — overrides all config files
+2. **`WHEEL_CONFIG_DIR/{file}`** — set `WHEEL_CONFIG_DIR` env var to point at a directory
+3. **`~/.wheel/{file}`** — the easy way: place files in your home directory, no env var needed
+4. Built-in package defaults
+
+### Using ~/.wheel/ (recommended)
+
+Create files under `~/.wheel/` and set only the values you want to override. WHEEL will deep-merge them with the built-in defaults automatically, so you only need to specify the values that differ.
+
+For example, to change the port number, create `~/.wheel/server.json`:
+
+```json
+{ "port": 9000 }
+```
+
+To override a single field in a batch scheduler, create `~/.wheel/jobScheduler.json`:
+
+```json
+{ "PBSPro": { "submit": "my-qsub" } }
+```
+
+#### Docker users
+
+If you start WHEEL with Docker using the standard command, `${HOME}` on the host is already mounted to `/root` inside the container:
+
+```
+docker run -d -v ${HOME}:/root ...
+```
+
+This means `~/.wheel/` inside the container is `${HOME}/.wheel/` on the host. No extra volume mounts are needed — just create the files on the host and WHEEL will pick them up automatically.
+
+### Available server.json settings
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `port` | `8089` | Port number WHEEL listens on |
+| `numLogFiles` | `5` | Number of log files to keep |
+| `withLogin` | `false` | Require login (use `WHEEL_ENABLE_AUTH` env var instead) |

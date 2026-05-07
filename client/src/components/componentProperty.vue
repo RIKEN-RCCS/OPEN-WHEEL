@@ -14,50 +14,25 @@
     <v-toolbar
       color="background"
     >
-      <v-toolbar-title>
-        <v-form
-          v-model="validName"
-          @submit.prevent
-        >
-          <v-tooltip
-            :text="copySelectedComponent.name"
-            location="top"
-            :disabled="copySelectedComponent.name.length <= 10"
-          >
-            <template #activator="{ props }">
-              <v-text-field
-                v-model="copySelectedComponent.name"
-                v-bind="props"
-                label="name"
-                :readonly="readOnly"
-                variant="outlined"
-                class="pt-4"
-                density="compact"
-                :rules="[rules.isValidName, isUniqueName]"
-                data-cy="component_property-name-text_field"
-              />
-            </template>
-          </v-tooltip>
-        </v-form>
-      </v-toolbar-title>
       <v-toolbar-items>
-        <v-tooltip
-          location="bottom"
-          text="disable"
-        >
-          <template #activator="{ props}">
-            <v-switch
-              v-model="copySelectedComponent.disable"
-              :readonly="readOnly"
-              hide-details
-              color="error"
-              label="disable"
-              v-bind="props"
-              data-cy="component_property-disable-switch"
-              class="ml-2"
-            />
-          </template>
-        </v-tooltip>
+        <div class="d-flex align-center ml-2">
+          <span
+            class="text-caption"
+            :class="!copySelectedComponent.disable ? 'text-primary font-weight-bold' : 'text-disabled'"
+          >enable</span>
+          <v-switch
+            v-model="copySelectedComponent.disable"
+            :readonly="readOnly"
+            hide-details
+            :color="copySelectedComponent.disable ? 'error' : 'primary'"
+            data-cy="component_property-disable-switch"
+            class="mx-1"
+          />
+          <span
+            class="text-caption"
+            :class="copySelectedComponent.disable ? 'text-error font-weight-bold' : 'text-disabled'"
+          >disable</span>
+        </div>
         <v-tooltip
           location="bottom"
           text="close"
@@ -73,6 +48,30 @@
         </v-tooltip>
       </v-toolbar-items>
     </v-toolbar>
+    <v-form
+      v-model="validName"
+      @submit.prevent
+    >
+      <v-tooltip
+        :text="copySelectedComponent.name"
+        location="top"
+        :disabled="copySelectedComponent.name.length <= 10"
+      >
+        <template #activator="{ props }">
+          <v-text-field
+            v-model="copySelectedComponent.name"
+            v-bind="props"
+            label="name"
+            :readonly="readOnly"
+            variant="outlined"
+            class="px-4 pt-3"
+            density="compact"
+            :rules="[rules.isValidName, isUniqueName]"
+            data-cy="component_property-name-text_field"
+          />
+        </template>
+      </v-tooltip>
+    </v-form>
     <v-form
       v-model="valid"
       @submit.prevent
