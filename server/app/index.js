@@ -18,7 +18,7 @@ import Siofu from "socketio-file-upload";
 import { createServer as createHTTPServer } from "http";
 import { createServer as createHTTPSServer } from "https";
 import { Server as SocketIOServer } from "socket.io";
-import { port, projectList, keyFilename, certFilename } from "./db/db.js";
+import { port, projectList, keyFilename, certFilename, useHttp, acceptAddress, enableAuth, enableWebApi } from "./db/db.js";
 import { setProjectState } from "./core/projectJsonFileOperator.js";
 import { checkRunningJobs } from "./core/checkRunningJobs.js";
 import { getLogger } from "./logSettings.js";
@@ -61,9 +61,9 @@ if (process.env.WHEEL_CLEAR_SESSION_DB) {
  */
 
 const app = express();
-const address = process.env.WHEEL_ACCEPT_ADDRESS;
+const address = acceptAddress;
 
-const server = process.env.WHEEL_USE_HTTP
+const server = useHttp
   ? createHTTPServer(app)
   : createHTTPSServer({
       key: fs.readFileSync(keyFilename),
@@ -79,7 +79,7 @@ setSio(sio);
 aboutWheel();
 
 //port number
-const defaultPort = process.env.WHEEL_USE_HTTP ? 80 : 443;
+const defaultPort = useHttp ? 80 : 443;
 let portNumber = port || defaultPort;
 portNumber = portNumber > 0 ? portNumber : defaultPort;
 //middlewares
@@ -100,7 +100,7 @@ app.use(session({
   store: new SQLiteStore({ db: sessionDBFilename, dir: sessionDBDir })
 }));
 
-if (process.env.WHEEL_ENABLE_AUTH) {
+if (enableAuth) {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(passport.authenticate("session"));
@@ -141,7 +141,7 @@ router.use(express.static(path.resolve(tempdRoot, "download"), { index: false })
 router.use(express.static(path.resolve(tempdRoot, "exportProject"), { index: false }));
 router.use("/exportComponent", express.static(path.resolve(tempdRoot, "exportComponent"), { index: false }));
 logger.info("DEBUG: Static routes configured, setting up web API routes...");
-if (process.env.WHEEL_ENABLE_WEB_API) {
+if (enableWebApi) {
   router.use(asyncHandler(async (req, res, next)=>{
     if (!req.query.code) {
       if (req.query.error) {
@@ -189,7 +189,7 @@ let checkLoggedIn = (req, res, next)=>{
   next();
 };
 
-if (process.env.WHEEL_ENABLE_AUTH) {
+if (enableAuth) {
   checkLoggedIn = ensureLoggedIn ("/login");
   router.route("/login").get(routes.login.get)
     .post(routes.login.post);
@@ -207,7 +207,7 @@ router.route("/editor").get(checkLoggedIn, routes.workflow.get)
 router.route("/viewer").get(checkLoggedIn, routes.viewer.get)
   .post(checkLoggedIn, routes.viewer.post);
 
-if (process.env.WHEEL_ENABLE_WEB_API) {
+if (enableWebApi) {
   router.get("/webAPIauth", asyncHandler(async (req, res)=>{
     const projectRootDir = req.cookies.rootDir;
     if (!projectRootDir) {

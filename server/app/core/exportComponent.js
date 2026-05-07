@@ -11,6 +11,7 @@ import { createTempd } from "./tempd.js";
 import { getComponentDir } from "./componentJsonIO.js";
 import { gitClone } from "./gitOperator2.js";
 import { componentJsonFilename } from "../db/db.js";
+import { baseURL } from "./global.js";
 
 const { create } = tar;
 
@@ -141,7 +142,6 @@ async function exportComponent(projectRootDir, componentID) {
   [componentBasename]
   );
 
-  const baseURL = process.env.WHEEL_BASE_URL || "";
   //Get path relative to tempdRoot, then prepend /exportComponent/
   const relativePath = path.relative(root, archiveFilename);
   const url = `${baseURL}/exportComponent/${relativePath}`;

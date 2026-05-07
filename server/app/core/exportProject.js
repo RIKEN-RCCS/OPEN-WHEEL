@@ -9,6 +9,7 @@ import * as tar from "tar";
 import { createTempd } from "./tempd.js";
 import { readJsonGreedy } from "./fileUtils.js";
 import { projectJsonFilename } from "../db/db.js";
+import { baseURL } from "./global.js";
 import { gitAdd, gitClone, gitCommit, gitConfig, gitRemoveOrigin } from "./gitOperator2.js";
 import { setComponentStateR } from "./componentState.js";
 
@@ -77,7 +78,6 @@ async function exportProject(projectRootDir, name = null, mail = null, memo = nu
   [`${projectJson.name}.wheel`]
   );
 
-  const baseURL = process.env.WHEEL_BASE_URL || "";
   const url = `${baseURL}/${path.join(path.relative(path.dirname(dir), archiveFilename))}`;
   return url;
 }

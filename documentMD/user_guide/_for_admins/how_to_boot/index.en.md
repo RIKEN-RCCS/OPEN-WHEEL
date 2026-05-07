@@ -281,8 +281,36 @@ This means `~/.wheel/` inside the container is `${HOME}/.wheel/` on the host. No
 
 ### Available server.json settings
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `port` | `8089` | Port number WHEEL listens on |
-| `numLogFiles` | `5` | Number of log files to keep |
-| `withLogin` | `false` | Require login (use `WHEEL_ENABLE_AUTH` env var instead) |
+| Key | Default | Env var | Description |
+|-----|---------|---------|-------------|
+| `port` | `8089` | `WHEEL_PORT` | Port number WHEEL listens on |
+| `numLogFiles` | `5` | — | Number of log files to keep |
+| `withLogin` | `false` | — | Require login (use `WHEEL_ENABLE_AUTH` env var instead) |
+| `numLocalJob` | `1` | `WHEEL_NUM_LOCAL_JOB` | Max concurrent local task executions |
+| `baseURL` | `""` | `WHEEL_BASE_URL` | Base URL when WHEEL is behind a reverse proxy |
+| `useHttp` | `false` | `WHEEL_USE_HTTP` | Disable TLS and serve over plain HTTP |
+| `acceptAddress` | `null` | `WHEEL_ACCEPT_ADDRESS` | Allowed client IP address (`null` = allow all) |
+| `logLevel` | `"debug"` | `WHEEL_LOG_LEVEL` | Log level (`trace`/`debug`/`info`/`warn`/`error`/`fatal`) |
+| `verboseSsh` | `false` | `WHEEL_VERBOSE_SSH` | Enable SSH verbose logging (`-vvv` flag) |
+| `enableWebApi` | `false` | `WHEEL_ENABLE_WEB_API` | Enable Web API endpoints |
+| `enableAuth` | `false` | `WHEEL_ENABLE_AUTH` | Enable the authentication mechanism |
+
+> **Note:** `WHEEL_LOGLEVEL` was renamed to `WHEEL_LOG_LEVEL`. If you have an existing configuration using the old name, please update it.
+
+## Configuration migration
+
+When WHEEL starts, it automatically checks user configuration files (`~/.wheel/server.json` and `$WHEEL_CONFIG_DIR/server.json`) and rewrites any old property names to their new equivalents. If a rewrite occurs, a warning is printed to the console at startup.
+
+### Automatically migrated property names
+
+| Old property name | New property name |
+|-------------------|-------------------|
+| `numJobOnLocal` | `numLocalJob` |
+
+### Deprecated environment variables
+
+| Deprecated variable | Replacement |
+|---------------------|-------------|
+| `WHEEL_LOGLEVEL` | `WHEEL_LOG_LEVEL` |
+
+If a deprecated environment variable is detected at startup, WHEEL will print a `console.warn` message. The deprecated variable has no effect — it will not map to any configuration property, so your intended setting will be silently ignored unless you update to the new name.

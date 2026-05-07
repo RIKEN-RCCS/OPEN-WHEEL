@@ -283,8 +283,36 @@ docker run -d -v ${HOME}:/root ...
 
 ### server.json の設定項目
 
-| キー | デフォルト値 | 説明 |
-|------|------------|------|
-| `port` | `8089` | WHEELが待ち受けるポート番号 |
-| `numLogFiles` | `5` | 保持するログファイルの数 |
-| `withLogin` | `false` | ログイン必須にする（代わりに `WHEEL_ENABLE_AUTH` 環境変数を使用してください） |
+| キー | デフォルト値 | 対応する環境変数 | 説明 |
+|------|------------|-----------------|------|
+| `port` | `8089` | `WHEEL_PORT` | WHEELが待ち受けるポート番号 |
+| `numLogFiles` | `5` | — | 保持するログファイルの数 |
+| `withLogin` | `false` | — | ログイン必須にする（代わりに `WHEEL_ENABLE_AUTH` 環境変数を使用してください） |
+| `numLocalJob` | `1` | `WHEEL_NUM_LOCAL_JOB` | localhostで実行するtaskの同時実行本数 |
+| `baseURL` | `""` | `WHEEL_BASE_URL` | WHEELのベースURL（リバースプロキシ配下で使用） |
+| `useHttp` | `false` | `WHEEL_USE_HTTP` | TLSを無効にしてHTTPで起動する |
+| `acceptAddress` | `null` | `WHEEL_ACCEPT_ADDRESS` | 接続を許可するクライアントのIPアドレス（nullは全て許可） |
+| `logLevel` | `"debug"` | `WHEEL_LOG_LEVEL` | ログレベル（`trace`/`debug`/`info`/`warn`/`error`/`fatal`） |
+| `verboseSsh` | `false` | `WHEEL_VERBOSE_SSH` | SSH接続時に詳細ログを出力する（`-vvv`オプション） |
+| `enableWebApi` | `false` | `WHEEL_ENABLE_WEB_API` | Web APIエンドポイントを有効にする |
+| `enableAuth` | `false` | `WHEEL_ENABLE_AUTH` | 認証機構を有効にする |
+
+> **注意:** `WHEEL_LOGLEVEL` は `WHEEL_LOG_LEVEL` に名称変更されました。既存の設定をお使いの場合は更新が必要です。
+
+## 設定の移行（マイグレーション）
+
+WHEELは起動時に、ユーザーの設定ファイル（`~/.wheel/server.json`、`$WHEEL_CONFIG_DIR/server.json`）を自動的に確認し、古いプロパティ名を新しい名前に書き換えます。書き換えが発生した場合は、起動時に `console.warn` メッセージが表示されます。
+
+### 自動変換されるプロパティ名
+
+| 旧プロパティ名 | 新プロパティ名 |
+|--------------|--------------|
+| `numJobOnLocal` | `numLocalJob` |
+
+### 廃止された環境変数
+
+| 廃止された環境変数 | 代替の環境変数 |
+|------------------|--------------|
+| `WHEEL_LOGLEVEL` | `WHEEL_LOG_LEVEL` |
+
+廃止された環境変数が設定されている場合、WHEELは起動時に警告を表示します。廃止された環境変数は設定値として認識されないため、意図した設定が有効にならない場合があります。古い名前から新しい名前への更新をお願いします。

@@ -9,6 +9,7 @@ import fs from "fs-extra";
 import { loadConfig } from "c12";
 import JsonArrayManager from "./jsonArrayManager.js";
 import { fileURLToPath } from "url";
+import { runMigrations } from "../core/migrationHelper.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -77,7 +78,65 @@ function getConfigFile(filename, failIfNotFound) {
 }
 
 /**
- * return value or alternate value if it is nudefined
+ * convert UPPER_SNAKE_CASE string to camelCase
+ * @param {string} str - UPPER_SNAKE_CASE string
+ * @returns {string} - camelCase string
+ */
+function toCamelCase(str) {
+  return str.toLowerCase().replace(/_([a-z])/g, (_, c)=>{
+    return c.toUpperCase();
+  });
+}
+
+/**
+ * coerce a string value to boolean, number, or string as appropriate
+ * @param {string} value - string value from environment variable
+ * @returns {boolean|number|string} - coerced value
+ */
+function coerce(value) {
+  if (value === "true") {
+    return true;
+  }
+  if (value === "false") {
+    return false;
+  }
+  if (value.trim() !== "" && !Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return value;
+}
+
+/**
+ * env vars excluded from auto-mapping (infrastructure/path settings needed before config loads,
+ * or vars that conflict with existing TLS cert export names)
+ */
+const INFRASTRUCTURE_ENV_VARS = new Set([
+  "WHEEL_CONFIG_DIR",
+  "WHEEL_TEMPD",
+  "WHEEL_USER_DB_DIR",
+  "WHEEL_SESSION_DB_DIR",
+  "WHEEL_CLEAR_SESSION_DB",
+  "WHEEL_CERT_FILENAME",
+  "WHEEL_CERT_PASSPHRASE"
+]);
+
+/**
+ * extract WHEEL_ prefixed environment variables and map them to camelCase config overrides.
+ * UPPER_SNAKE_CASE after stripping WHEEL_ prefix is converted to camelCase.
+ * String values are auto-coerced to boolean or number where appropriate.
+ * @returns {object} - config overrides from environment variables
+ */
+function extractWheelEnvOverrides() {
+  const overrides = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith("WHEEL_") && !INFRASTRUCTURE_ENV_VARS.has(key)) {
+      overrides[toCamelCase(key.slice(6))] = coerce(value);
+    }
+  }
+  return overrides;
+}
+
+/**
  * @param {*} target - variable to be checked
  * @param {*} alt - alternate value
  * @returns {*} -
@@ -147,11 +206,12 @@ async function loadWheelConfig(filename) {
     rcFile: false,
     globalRc: false,
     defaults: { ...packageDefaults, ...dotWheelConfig },
-    overrides: envDirConfig
+    overrides: { ...envDirConfig, ...extractWheelEnvOverrides() }
   });
   return config;
 }
 
+await runMigrations();
 const config = await loadWheelConfig("server.json");
 const jobScheduler = await loadWheelConfig("jobScheduler.json");
 const remotehostFilename = getConfigFile(getStringVar(config.remotehostJsonFile, "remotehost.json"));
@@ -171,8 +231,8 @@ export const defaultPSconfigFilename = "parameterSetting.json";
 export const userDBFilename = "user.db";
 export const userDBDir = process.env.WHEEL_USER_DB_DIR || __dirname;
 
-export const keyFilename = !process.env.WHEEL_USE_HTTP ? getConfigFile("server.key", true) : undefined;
-export const certFilename = !process.env.WHEEL_USE_HTTP ? getConfigFile("server.crt", true) : undefined;
+export const keyFilename = !config.useHttp ? getConfigFile("server.key", true) : undefined;
+export const certFilename = !config.useHttp ? getConfigFile("server.crt", true) : undefined;
 
 export { logFilename };
 export { credentialFilename };
@@ -188,15 +248,25 @@ export const rsyncExcludeOptionOfWheelSystemFiles = [
 ];
 
 //re-export server settings
-export const port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
+export const port = getIntVar(config.port, 8089);
 export const rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
 export const defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);
 export const numLogFiles = getIntVar(config.numLogFiles, 5);
 export const maxLogSize = getIntVar(config.maxLogSize, 8388608);
 export const compressLogFile = getVar(config.compressLogFile, true);
-export const numJobOnLocal = parseInt(process.env.WHEEL_NUM_LOCAL_JOB, 10) || getIntVar(config.numJobOnLocal, 1);
+export const numLocalJob = getIntVar(config.numLocalJob, 1);
 export const defaultTaskRetryCount = getIntVar(config.defaultTaskRetryCount, 1);
 export const gitLFSSize = getIntVar(config.gitLFSSize, 200);
+export const baseURL = getStringVar(config.baseURL, "/");
+export const useHttp = Boolean(config.useHttp);
+export const acceptAddress = config.acceptAddress || null;
+const VALID_LOG_LEVELS = ["ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "MARK", "OFF"];
+export const logLevel = VALID_LOG_LEVELS.includes(String(config.logLevel).toUpperCase())
+  ? String(config.logLevel).toUpperCase()
+  : "DEBUG";
+export const verboseSsh = Boolean(config.verboseSsh);
+export const enableWebApi = Boolean(config.enableWebApi);
+export const enableAuth = Boolean(config.enableAuth);
 
 //export setting files
 export { jobScheduler };
@@ -215,4 +285,4 @@ export const jobScriptTemplate = new JsonArrayManager(jobScriptTemplateFilename)
 export const projectList = new JsonArrayManager(projectListFilename);
 
 /**@internal exported for unit testing only */
-export const _internal = { loadWheelConfig };
+export const _internal = { loadWheelConfig, extractWheelEnvOverrides };

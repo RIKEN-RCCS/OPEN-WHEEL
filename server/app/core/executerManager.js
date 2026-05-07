@@ -8,7 +8,7 @@ import childProcess from "child_process";
 import axios from "axios";
 import { getAccessToken } from "./webAPI.js";
 import SBS from "simple-batch-system";
-import { remoteHost, jobScheduler, numJobOnLocal, defaultTaskRetryCount } from "../db/db.js";
+import { remoteHost, jobScheduler, numLocalJob, defaultTaskRetryCount } from "../db/db.js";
 import { addX } from "./fileUtils.js";
 import { evalCondition } from "./dispatchUtils.js";
 import { getDateString } from "../lib/utility.js";
@@ -24,7 +24,7 @@ const _internal = {
   executers: new Map(),
   getSshHostinfo,
   jobScheduler,
-  numJobOnLocal,
+  numLocalJob,
   remoteHost
 };
 
@@ -553,7 +553,7 @@ function getExecutersKey(task) {
  */
 function getMaxNumJob(hostinfo) {
   if (hostinfo === null) {
-    return _internal.numJobOnLocal;
+    return _internal.numLocalJob;
   }
   if (!Number.isNaN(parseInt(hostinfo.numJob, 10))) {
     return Math.max(parseInt(hostinfo.numJob, 10), 1);
@@ -686,4 +686,4 @@ export {
   _internal
 };
 
-export { numJobOnLocal };
+export { numLocalJob };

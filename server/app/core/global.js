@@ -6,7 +6,7 @@
 "use strict";
 import debugLib from "debug";
 const debug = debugLib("wheel");
-const baseURL = process.env.WHEEL_BASE_URL || "/";
+export { baseURL } from "../db/db.js";
 const parentDirs = new Map(); //workflow path which is displayed on graphview
 const eventEmitters = new Map(); //event emitter object which is used to communicate while running project
 const watchers = new Map(); //result file watcher
@@ -38,6 +38,5 @@ export {
   watchers,
   checkWritePermissions,
   setSio,
-  getSio,
-  baseURL
+  getSio
 };

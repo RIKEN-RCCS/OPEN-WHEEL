@@ -7,7 +7,7 @@
 import SshClientWrapper from "ssh-client-wrapper";
 import { getLogger } from "../logSettings.js";
 const logger = getLogger();
-import { remoteHost } from "../db/db.js";
+import { remoteHost, verboseSsh } from "../db/db.js";
 import { askPassword } from "../core/sshManager.js";
 
 /**
@@ -19,7 +19,7 @@ import { askPassword } from "../core/sshManager.js";
 async function onTryToConnect(clientID, hostInfo, cb) {
   hostInfo.password = askPassword.bind(null, clientID, hostInfo.name, "password", null);
   hostInfo.passphrase = askPassword.bind(null, clientID, hostInfo.name, "passphrase", null);
-  if (process.env.WHEEL_VERBOSE_SSH) {
+  if (verboseSsh) {
     hostInfo.sshOpt = ["-vvv"];
   }
   const ssh = new SshClientWrapper(hostInfo);

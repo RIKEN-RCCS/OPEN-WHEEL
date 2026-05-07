@@ -6,6 +6,7 @@
 import versionData from "../db/version.json" with { type: "json" };
 const { version } = versionData;
 import { getLogger } from "../logSettings.js";
+import { port, baseURL, useHttp, acceptAddress, logLevel, verboseSsh, numLocalJob, enableWebApi, enableAuth } from "../db/db.js";
 
 /**
  * print version and environment variables
@@ -13,22 +14,21 @@ import { getLogger } from "../logSettings.js";
  */
 function aboutWheel(projectRootDir) {
   const logger = getLogger(projectRootDir);
-  const baseURL = process.env.WHEEL_BASE_URL || "/";
 
   logger.info(`starting WHEEL server (version ${version})`);
   logger.info("base URL = ", baseURL);
-  logger.info("environment variables");
+  logger.info("effective configuration");
   logger.info(`WHEEL_TEMPD = ${process.env.WHEEL_TEMPD}`);
   logger.info(`WHEEL_CONFIG_DIR = ${process.env.WHEEL_CONFIG_DIR}`);
-  logger.info(`WHEEL_BASE_URL= ${process.env.WHEEL_USE_HTTP}`);
-  logger.info(`WHEEL_USE_HTTP = ${process.env.WHEEL_USE_HTTP}`);
-  logger.info(`WHEEL_PORT = ${process.env.WHEEL_PORT}`);
-  logger.info(`WHEEL_ACCEPT_ADDRESS = ${process.env.WHEEL_ACCEPT_ADDRESS}`);
-  logger.info(`WHEEL_LOGLEVEL = ${process.env.WHEEL_LOGLEVEL}`);
-  logger.info(`WHEEL_VERBOSE_SSH = ${process.env.WHEEL_VERBOSE_SSH}`);
-  logger.info(`WHEEL_INTERVAL = ${process.env.WHEEL_INTERVAL}`);
-  logger.info(`WHEEL_NUM_LOCAL_JOB = ${process.env.WHEEL_NUM_LOCAL_JOB}`);
-  logger.info(`WHEEL_ENABLE_WEB_API = ${process.env.WHEEL_ENABLE_WEB_API}`);
+  logger.info(`WHEEL_BASE_URL = ${baseURL}`);
+  logger.info(`WHEEL_USE_HTTP = ${useHttp}`);
+  logger.info(`WHEEL_PORT = ${port}`);
+  logger.info(`WHEEL_ACCEPT_ADDRESS = ${acceptAddress}`);
+  logger.info(`WHEEL_LOG_LEVEL = ${logLevel}`);
+  logger.info(`WHEEL_VERBOSE_SSH = ${verboseSsh}`);
+  logger.info(`WHEEL_NUM_LOCAL_JOB = ${numLocalJob}`);
+  logger.info(`WHEEL_ENABLE_WEB_API = ${enableWebApi}`);
+  logger.info(`WHEEL_ENABLE_AUTH = ${enableAuth}`);
 }
 
 export {

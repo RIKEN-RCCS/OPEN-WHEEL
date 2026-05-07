@@ -70,7 +70,7 @@ server.jsonの既定値
     "numLogFiles": 5,
     "maxLogSize": 8388608,
     "compressLogFile": true,
-    "numJobOnLocal": 2,
+    "numLocalJob": 2,
     "defaultTaskRetryCount": 1,
     "shutdownDelay": 0,
     "rootDir": undefined,
@@ -111,7 +111,7 @@ app/configディレクトリからの相対パスで指定します。
 #### compressLogFile (真偽値)
 ログファイルのローテーションを行なった時に古いファイルを圧縮するかどうかを指定します。
 
-#### numJobOnLocal (整数)
+#### numLocalJob (整数)
 localhostで実行するtaskの同時実行本数を指定します。
 
 #### defaultTaskRetryCount (整数)

@@ -22,11 +22,11 @@ services:
       - "8089:8089"
     environment:
       WHEEL_USE_HTTP: 1
-      WHEEL_USE_PORT: 8089
+      WHEEL_PORT: 8089
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
       WHEEL_RUNNING_TEST: 1
-      WHEEL_LOGLEVEL: OFF
+      WHEEL_LOG_LEVEL: OFF
       NODE_ENV: test
 
     volumes:

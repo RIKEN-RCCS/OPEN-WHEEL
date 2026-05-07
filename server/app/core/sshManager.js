@@ -5,6 +5,7 @@
  */
 import SshClientWrapper from "ssh-client-wrapper";
 import { emitAll } from "../handlers/commUtils.js";
+import { verboseSsh } from "../db/db.js";
 
 const _internal = {
   db: new Map(),
@@ -204,7 +205,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   if (hostinfo.readyTimeout) {
     hostinfo.ConnectTimeout = Math.floor(hostinfo.readyTimeout / 1000);
   }
-  if (process.env.WHEEL_VERBOSE_SSH) {
+  if (verboseSsh) {
     hostinfo.sshOpt = ["-vvv"];
   }
   if (hostinfo.username) {

@@ -7,21 +7,12 @@ import path from "path";
 import { promisify } from "util";
 import log4js from "log4js";
 const logger = log4js.getLogger();
-import { logFilename, numLogFiles, maxLogSize, compressLogFile } from "./db/db.js";
+import { logFilename, numLogFiles, maxLogSize, compressLogFile, logLevel } from "./db/db.js";
 import { emitAll } from "./handlers/commUtils.js";
 
 export const _internal = {
   emitAll
 };
-
-function getLoglevel(ignoreEnv = false) {
-  const wheelLoglevel = process.env.WHEEL_LOGLEVEL;
-  const defaultLevel = "debug";
-  if (ignoreEnv || typeof wheelLoglevel !== "string") {
-    return defaultLevel;
-  }
-  return ["ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "MARK", "OFF"].includes(wheelLoglevel.toUpperCase()) ? wheelLoglevel.toUpperCase() : defaultLevel;
-}
 
 const eventNameTable = {
   DEBUG: null,
@@ -96,17 +87,17 @@ export const logSettings = {
     filterdConsole: {
       type: "logLevelFilter",
       appender: "console",
-      level: getLoglevel()
+      level: logLevel
     },
     filterdFile: {
       type: "logLevelFilter",
       appender: "multi",
-      level: getLoglevel()
+      level: logLevel
     },
     log2client: {
       type: "logLevelFilter",
       appender: "socketIO",
-      level: getLoglevel()
+      level: logLevel
     }
   },
   categories: {
