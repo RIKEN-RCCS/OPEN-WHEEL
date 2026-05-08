@@ -79,22 +79,26 @@ const taskDB = new Map();
  * @param {string} target - absolute path to check
  * @param {string} baseDir - base directory path
  * @param {Array<string>} skipCopyPatterns - array of glob patterns
- * @returns {boolean} - true if target matches any pattern
+ * @returns {Promise<boolean>} - true if target matches any pattern
  */
-function shouldSkipCopy(target, baseDir, skipCopyPatterns) {
+async function shouldSkipCopy(target, baseDir, skipCopyPatterns) {
   if (!skipCopyPatterns || skipCopyPatterns.length === 0) {
     return false;
   }
   const relativePath = path.relative(baseDir, target);
-  return skipCopyPatterns.some((pattern)=>{
+  for (const pattern of skipCopyPatterns) {
     if (hasMagic(pattern)) {
-      const matched = glob.sync(pattern, { cwd: baseDir });
-      return matched.some((matchedPath)=>{
+      const matched = await glob(pattern, { cwd: baseDir });
+      if (matched.some((matchedPath)=>{
         return relativePath === matchedPath || relativePath.startsWith(`${matchedPath}${path.sep}`);
-      });
+      })) {
+        return true;
+      }
+    } else if (relativePath === pattern || relativePath.startsWith(`${pattern}${path.sep}`)) {
+      return true;
     }
-    return relativePath === pattern || relativePath.startsWith(`${pattern}${path.sep}`);
-  });
+  }
+  return false;
 }
 
 /**
@@ -812,7 +816,7 @@ class Dispatcher extends EventEmitter {
           if (path.basename(target) === statusFilename) {
             return false;
           }
-          if (shouldSkipCopy(target, srcDir, skipCopyPatterns)) {
+          if (await shouldSkipCopy(target, srcDir, skipCopyPatterns)) {
             logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "skipping copy due to skipCopy pattern:", target);
             return false;
           }

@@ -30,6 +30,16 @@ If unspecified, all directories are saved.
 
 For details, see [While Component Run-time Behavior](#while-component-run-time-behavior) below.
 
+### skip copy
+
+Sets the list of files, directories, or glob patterns to exclude from the copy operation between loop iterations.
+
+Files and directories matching the specified patterns are not copied when WHEEL creates a new iteration directory from the previous one.
+This is useful for excluding large output files or temporary files generated during previous iterations.
+
+Enter the desired pattern in the input field and click the + button to add it.
+Glob patterns (e.g., `*.log`, `output_*`, `results/`) are supported.
+
 ### While Component Run-time Behavior
 The While component behaves similarly to the For component, but uses a zero-based number at the end of the directory name instead of an index value.
 
