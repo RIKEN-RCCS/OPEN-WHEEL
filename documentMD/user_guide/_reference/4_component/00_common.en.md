@@ -7,6 +7,7 @@ This section describes the specifications common to all components.
 
 ## Viewing Properties
 When you single-click a component displayed in the workflow creation area, an area for editing the settings (properties) of that component appears.
+Settings are saved when the area is closed, except for some items.
 
 The contents of this area differ for each type of component.
 
@@ -14,8 +15,8 @@ The contents of this area differ for each type of component.
 
 || Component | Description |
 |----------|----------|---------------------------------|
-|1|close button   | Closes the property display |
-|2|clean button   | Rewind the state of the component (and any subcomponents) to the most recent saved state |
+|1|close button   | Discards changes and closes the property display |
+|2|disable switch | Disables the component (and subcomponents if any) |
 |3| Details button | Shows or hides property settings for each group |
 
 ### Component Right-Click Menu
@@ -47,7 +48,7 @@ To export a component:
    - The archive contains the component and all its descendant components
 
 __What is Exported__
-- Component configuration (component.json files)
+- Component configuration (component.wheel.json files)
 - All files and directories within the component
 - All descendant (child) components recursively
 - Component states are reset to "not-started"
@@ -196,6 +197,7 @@ At the top of the file operation area are buttons for file operations.
 |5|upload file button | Uploads a file to the displayed hierarchy |
 |6| Download button | Downloads the selected file or directory |
 |7|share file button | Displays the path of the currently selected file or directory |
+|8|edit file button  | Opens the selected file in a text editor |
 
 __About buttons for working with files and directories during selection__
 If the selected file or directory is not supported, the button is disabled.
