@@ -10,6 +10,8 @@ permalink: /reference/
 
 [2. リモートホスト設定画面](2_remotehost_screen/)
 
+ * [SSH認証の設定](2_remotehost_screen/ssh_auth/)
+
 __3. ワークフロー画面__
 
  * [グラフビュー](3_workflow_screen/1_graphview.html)
