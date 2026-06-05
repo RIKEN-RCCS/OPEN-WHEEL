@@ -489,7 +489,7 @@ Cypress.Commands.add("scriptEdit", (scriptName, script)=>{
   cy.get("#editor").find("textarea")
     .type(script, { force: true });
   cy.get("[data-cy=\"workflow-text_editor_close-btn\"]").click();
-  cy.get("button").contains(/^keep changes$/i)
+  cy.get("button").contains(/Keep changes/i)
     .click()
     .wait(animationWaitTime);
 });

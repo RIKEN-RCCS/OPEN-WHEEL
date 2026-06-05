@@ -17,6 +17,7 @@
           <template #activator="{ props }">
             <v-img
               v-bind="props"
+              eager
               height="72px"
               width="180px"
               :src="imgLogo"

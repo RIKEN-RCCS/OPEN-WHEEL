@@ -637,15 +637,15 @@ describe("components", ()=>{
             cy.get("body").should(($b)=>{
               const editorGone = $b.find("[data-cy=\"workflow-text_editor_close-btn\"]").length === 0;
               const discardShown = $b.find("button").filter((i, el)=>{
-                return /discard all changes/i.test(el.textContent);
+                return /Discard changes/i.test(el.textContent);
               }).length > 0;
               expect(editorGone || discardShown, "editor closed or discard appeared").to.be.true;
             })
               .then(($b)=>{
                 if ($b.find("button").filter((i, el)=>{
-                  return /discard all changes/i.test(el.textContent);
+                  return /Discard changes/i.test(el.textContent);
                 }).length) {
-                  cy.contains("button", /discard all changes/i).click();
+                  cy.contains("button", /Discard changes/i).click();
                 }
               });
           }
