@@ -488,14 +488,14 @@ describe("UT for executerManager class", function () {
   });
   describe("getMaxNumJob", function () {
     //eslint-disable-next-line no-unused-vars
-    let numJobOnLocalStub;
+    let numLocalJobStub;
     beforeEach(()=>{
-      numJobOnLocalStub = sinon.stub(_internal, "numJobOnLocal").value(5);
+      numLocalJobStub = sinon.stub(_internal, "numLocalJob").value(5);
     });
     afterEach(()=>{
       sinon.restore();
     });
-    it("should return numJobOnLocal if hostinfo is null", function () {
+    it("should return numLocalJob if hostinfo is null", function () {
       const result = getMaxNumJob(null);
       expect(result).to.equal(5);
     });

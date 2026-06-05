@@ -188,12 +188,17 @@ async function deliverFilesBetweenRemotes(recipe) {
 
   logger.debug("direct remote to remote copy from", recipe.srcRemotehostID, "to", recipe.dstRemotehostID);
 
-  await srcSsh.remoteToRemoteCopy(
+  const rt = await srcSsh.remoteToRemoteCopy(
     [`${recipe.srcRoot}/${recipe.srcName}`],
     dstHostinfo,
     `${recipe.dstRoot}/${recipe.dstName}`,
     ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]
   );
+  if (rt !== 0) {
+    const err = new Error(`direct remote to remote copy failed with exit code ${rt}`);
+    err.rt = rt;
+    return Promise.reject(err);
+  }
 
   return { type: "direct-remote-copy", src: `${recipe.srcRoot}/${recipe.srcName}`, dst: `${recipe.dstRoot}/${recipe.dstName}` };
 }

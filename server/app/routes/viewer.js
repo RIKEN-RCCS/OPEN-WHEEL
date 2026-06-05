@@ -5,6 +5,7 @@
  */
 import path from "path";
 import fs from "fs-extra";
+import { baseURL } from "../core/global.js";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,7 +24,6 @@ export async function post(req, res) {
   if (!await fs.pathExists(dir)) {
     return;
   }
-  const baseURL = process.env.WHEEL_BASE_URL || "/";
   res.cookie("socketIOPath", baseURL);
   res.cookie("dir", dir);
   res.cookie("rootDir", projectRootDir);

@@ -5,5 +5,13 @@
     "numLogFiles": 5,
     "withLogin": false,
     "userid": null,
-    "enablePassword": true
+    "enablePassword": true,
+    "numLocalJob": 1,
+    "baseURL": "",
+    "useHttp": false,
+    "acceptAddress": null,
+    "logLevel": "debug",
+    "verboseSsh": false,
+    "enableWebApi": false,
+    "enableAuth": false
 }

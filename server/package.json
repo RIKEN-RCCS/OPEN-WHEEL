@@ -40,6 +40,7 @@
     "ajv-formats": "^3.0.1",
     "axios": "^1.13.1",
     "body-parser": "^2.2.0",
+    "c12": "^3.3.4",
     "connect-ensure-login": "^0.1.1",
     "connect-sqlite3": "^0.9.15",
     "cookie-parser": "^1.4.7",

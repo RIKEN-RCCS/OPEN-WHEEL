@@ -129,6 +129,7 @@
                 variant="outlined"
                 icon="mdi-restore"
                 :disabled="! cleanProjectAllowed"
+                data-cy="workflow-cleanup_project-btn"
                 v-bind="props"
                 @click="openProjectOperationComfirmationDialog('cleanProject')"
               />
@@ -916,6 +917,7 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
       closeSnackbar: "closeSnackbar",
+      clearSnackbarQueue: "clearSnackbarQueue",
       commitSelectedComponent: "selectedComponent"
     }),
     ...mapMutations({
@@ -941,6 +943,7 @@ export default {
       }
       if (operation === "cleanProject") {
         this.firstViewDataAlived = false;
+        this.clearSnackbarQueue();
       }
       if (operation === "stopProject" || operation === "cleanProject") {
         this.commitWaitingWorkflow(true);
@@ -952,6 +955,12 @@ export default {
         }
         if (operation === "cleanProject") {
           this.viewerDataDir = null;
+        }
+        const label = operation.replace("Project", " project");
+        if (rt) {
+          this.showSnackbar({ message: `${label} accepted`, timeout: 3000 });
+        } else {
+          this.showSnackbar({ message: `${label} failed`, timeout: -1 });
         }
       });
     },

@@ -17,7 +17,7 @@
         class="text-capitalize"
         text="Remotehost editor"
         data-cy="navigation-manage_remote_host-btn"
-        @click="$emit('open-remotehost-manager')"
+        @click="openRemotehostManager"
       />
       <v-btn
         prepend-icon="mdi-help-circle-outline"
@@ -27,6 +27,7 @@
         class="text-capitalize"
         text="User guide"
         data-cy="navigation-user_guide_editor-btn"
+        @click="drawer = false"
       />
     </v-list>
   </v-navigation-drawer>
@@ -63,6 +64,16 @@ export default {
       set(value) {
         this.$emit("update:modelValue", value);
       }
+    }
+  },
+  methods: {
+
+    /**
+     * Close the drawer and emit the open-remotehost-manager event.
+     */
+    openRemotehostManager() {
+      this.drawer = false;
+      this.$emit("open-remotehost-manager");
     }
   }
 };

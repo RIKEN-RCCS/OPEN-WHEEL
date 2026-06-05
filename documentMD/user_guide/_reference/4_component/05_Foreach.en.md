@@ -27,6 +27,16 @@ If unspecified, all directories are saved.
 For details, see [Foreach Component Run-time Behavior](#foreach-component-run-time-behavior) below.
 
 
+### skip copy
+
+Sets the list of files, directories, or glob patterns to exclude from the copy operation between loop iterations.
+
+Files and directories matching the specified patterns are not copied when WHEEL creates a new iteration directory from the previous one.
+This is useful for excluding large output files or temporary files generated during previous iterations.
+
+Enter the desired pattern in the input field and click the + button to add it.
+Glob patterns (e.g., `*.log`, `output_*`, `results/`) are supported.
+
 ### Foreach Component Run-time Behavior
 The Foreach component behaves the same way as the For component, but the index value is not calculated; instead, the values set in indexList are used starting from the beginning of the list.
 Terminates execution of the entire component when it reaches the end of the list.

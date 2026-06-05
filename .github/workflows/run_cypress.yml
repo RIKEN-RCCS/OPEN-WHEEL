@@ -42,7 +42,7 @@ jobs:
           docker run -d --name wheel --network wheel-e2e-net \
             -p 8089:8089 \
             -e WHEEL_USE_HTTP=1 \
-            -e WHEEL_LOGLEVEL=ERROR \
+            -e WHEEL_LOG_LEVEL=ERROR \
             wheel_e2e_test
           docker cp test/wheel_config/. wheel:/root/.wheel/
           docker run -d --name wheel_auth --network wheel-e2e-net \
@@ -50,7 +50,7 @@ jobs:
             -e WHEEL_USE_HTTP=1 \
             -e WHEEL_ANONYMOUS_LOGIN=YES \
             -e WHEEL_ANONYMOUS_PASSWORD=WheelTest123! \
-            -e WHEEL_LOGLEVEL=ERROR \
+            -e WHEEL_LOG_LEVEL=ERROR \
             wheel_e2e_test
           docker cp test/wheel_config_auth/. wheel_auth:/root/.wheel/
           docker run -d --name mock --network wheel-e2e-net \

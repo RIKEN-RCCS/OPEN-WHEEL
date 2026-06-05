@@ -153,4 +153,6 @@ __shared with localhost__ を使用すると、ファイル転送は以下のよ
 
 
 --------
+[SSH認証の詳細設定]({{ site.baseurl }}/reference/2_remotehost_screen/ssh_auth/)
+
 [リファレンスマニュアルのトップページに戻る]({{ site.baseurl }}/reference/)

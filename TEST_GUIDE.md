@@ -375,7 +375,7 @@ Chromeクラッシュ対策: /dev/shm を 512MB に拡張
 | `WHEEL_TEST_REMOTE_PASSWORD` | リモートホストパスワード | `passw0rd` |
 | `WHEEL_CONFIG_DIR` | WHEEL設定ディレクトリパス | (setup.shが自動生成) |
 | `NODE_ENV` | Node環境 | `test` |
-| `WHEEL_LOGLEVEL` | ログレベル | `OFF` |
+| `WHEEL_LOG_LEVEL` | ログレベル | `OFF` |
 
 ### E2Eテスト
 

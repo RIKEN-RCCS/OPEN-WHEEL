@@ -41,6 +41,9 @@ refs:
     url: /reference/1_home_screen/
   - title: 2. Remote host settings screen
     url: /reference/2_remotehost_screen/
+    children:
+      - title: SSH Authentication
+        url: /reference/2_remotehost_screen/ssh_auth/
   - title: 3. Workflow Screen
     children:
       - title: Graph View

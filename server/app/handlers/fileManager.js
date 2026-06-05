@@ -18,6 +18,7 @@ import { escapeRegExp } from "../lib/utility.js";
 import fileBrowser from "../core/fileBrowser.js";
 import { getLogger } from "../logSettings.js";
 import { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir, remoteHost, logFilename } from "../db/db.js";
+import { baseURL } from "../core/global.js";
 import { emitAll } from "./commUtils.js";
 import { getTempd, createTempd } from "../core/tempd.js";
 import { getSsh } from "../core/sshManager.js";
@@ -356,7 +357,6 @@ export async function onDownload(projectRootDir, target, cb) {
   }
 
   const ext = downloadZip ? ".zip" : "";
-  const baseURL = process.env.WHEEL_BASE_URL || "";
   const url = `${baseURL}/${path.join(path.relative(downloadRootDir, tmpDir), targetBasename)}${ext}`;
   getLogger(projectRootDir).debug("Download url is ready", url);
   cb(url);
@@ -453,7 +453,6 @@ export async function onDownloadFullLog(projectRootDir, cb) {
     //remove temporary directory
     await fs.remove(archiveDir);
 
-    const baseURL = process.env.WHEEL_BASE_URL || "";
     const url = `${baseURL}/${path.join(path.relative(downloadRootDir, tmpDir), archiveName)}.zip`;
     getLogger(projectRootDir).info("Debug log archive is ready for download", url);
     cb(url);

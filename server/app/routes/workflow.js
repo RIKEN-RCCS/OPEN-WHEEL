@@ -7,6 +7,7 @@ import path from "path";
 import { projectJsonFilename } from "../db/db.js";
 import { readProject } from "../core/projectOperations.js";
 import { readComponentJson } from "../core/componentJsonIO.js";
+import { baseURL } from "../core/global.js";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,7 +18,6 @@ export async function get(req, res) {
   if (!req.cookies || !req.cookies.rootDir) {
     return;
   }
-  const baseURL = process.env.WHEEL_BASE_URL || "/";
   res.cookie("socketIOPath", baseURL);
   res.sendFile(path.resolve(__dirname, "../public/workflow.html"));
 }
@@ -31,7 +31,6 @@ export async function post(req, res) {
   res.cookie("root", ID);
   res.cookie("rootDir", newProjectRootDir);
   res.cookie("project", path.resolve(newProjectRootDir, projectJsonFilename));
-  const baseURL = process.env.WHEEL_BASE_URL || "/";
   res.cookie("socketIOPath", baseURL);
   res.sendFile(path.resolve(__dirname, "../public/workflow.html"));
 }
