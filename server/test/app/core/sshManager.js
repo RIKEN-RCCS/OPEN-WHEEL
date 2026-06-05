@@ -325,7 +325,9 @@ describe("#getSshPW", ()=>{
     hasEntryMock.returns(true);
 
     //パスワードが関数の場合も想定してテスト
-    const pwFunc = ()=>"secretFromFunction";
+    const pwFunc = ()=>{
+      return "secretFromFunction";
+    };
     dbMock.set("/path/to/project", new Map([
       ["hostID", { pw: pwFunc }]
     ]));
@@ -680,7 +682,9 @@ describe("#createSsh", ()=>{
     //ここでは askPasswordMock が呼ばれていない可能性もあります。
     //(シナリオによっては、askPasswordMock を実際に呼ばせるには canConnect 内部実装が必要)
     //ここでは、"あとで必要になったとき呼ばれる" 想定なので、call回数は 0 のままでも問題なし
-    expect(askPasswordMock.callCount).to.satisfy((count)=>count === 0 || count === 1);
+    expect(askPasswordMock.callCount).to.satisfy((count)=>{
+      return count === 0 || count === 1;
+    });
 
     expect(result).to.be.ok;
   });
@@ -745,6 +749,18 @@ describe("#createSsh", ()=>{
 
     expect(hostinfo).to.have.property("sshOpt");
     expect(hostinfo.sshOpt).to.deep.equal(["-vvv"]);
+    expect(addSshMock.calledOnce).to.be.true;
+  });
+
+  it("should not set sshOpt when WHEEL_VERBOSE_SSH is false-like", async ()=>{
+    process.env.WHEEL_VERBOSE_SSH = "false";
+    hasEntryMock.returns(false);
+    canConnectMock.resolves(true);
+
+    const hostinfo = { id: "verboseFalseTest" };
+    await createSsh("/vProj", "vHost", hostinfo, "cl-v", false);
+
+    expect(hostinfo).to.not.have.property("sshOpt");
     expect(addSshMock.calledOnce).to.be.true;
   });
 
