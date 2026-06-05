@@ -247,5 +247,6 @@ module.exports = {
   getSshHostinfo,
   removeSsh,
   askPassword,
-  createSsh
+  createSsh,
+  isVerboseSshEnabled
 };

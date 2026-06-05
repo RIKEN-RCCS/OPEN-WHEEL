@@ -8,7 +8,7 @@ const SshClientWrapper = require("ssh-client-wrapper");
 const { getLogger } = require("../logSettings");
 const logger = getLogger();
 const { remoteHost } = require("../db/db");
-const { askPassword } = require("../core/sshManager.js");
+const { askPassword, isVerboseSshEnabled } = require("../core/sshManager.js");
 
 /**
  * try to connect remote host via ssh
@@ -19,7 +19,7 @@ const { askPassword } = require("../core/sshManager.js");
 async function onTryToConnect(clientID, hostInfo, cb) {
   hostInfo.password = askPassword.bind(null, clientID, hostInfo.name, "password", null);
   hostInfo.passphrase = askPassword.bind(null, clientID, hostInfo.name, "passphrase", null);
-  if (process.env.WHEEL_VERBOSE_SSH) {
+  if (isVerboseSshEnabled()) {
     hostInfo.sshOpt = ["-vvv"];
   }
   const ssh = new SshClientWrapper(hostInfo);
