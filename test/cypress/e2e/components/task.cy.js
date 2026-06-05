@@ -1167,7 +1167,7 @@ describe("components", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-exclude-list_form\"]").scrollIntoView().should("be.visible");
+      cy.get("[data-cy=\"component_property-exclude-list_form\"]").find("input").first().scrollIntoView().should("be.visible");
     });
 
     /**
