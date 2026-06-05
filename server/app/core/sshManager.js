@@ -10,19 +10,6 @@ const { emitAll } = require("../handlers/commUtils.js");
 const db = new Map();
 
 /**
- * check whether verbose ssh logging is enabled via environment variable
- * @returns {boolean} - true when enabled
- */
-function isVerboseSshEnabled() {
-  const value = process.env.WHEEL_VERBOSE_SSH;
-  if (typeof value !== "string") {
-    return false;
-  }
-  const normalized = value.trim().toLowerCase();
-  return normalized !== "" && normalized !== "0" && normalized !== "false";
-}
-
-/**
  * check if db contains ssh object for the project
  * @param {string} projectRootDir - project's root path
  * @param {string} id - key string
@@ -206,7 +193,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   if (hostinfo.readyTimeout) {
     hostinfo.ConnectTimeout = Math.floor(hostinfo.readyTimeout / 1000);
   }
-  if (isVerboseSshEnabled()) {
+  if (process.env.WHEEL_VERBOSE_SSH) {
     hostinfo.sshOpt = ["-vvv"];
   }
   if (hostinfo.username) {
