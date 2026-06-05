@@ -4,10 +4,34 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const { remoteHost } = require("../db/db");
-const { getRemoteRootWorkingDir, getRemoteWorkingDir } = require("./dispatchUtils");
-const { stageIn, stageOut } = require("./transferrer.js");
-const { register } = require("./executerManager.js");
+import { remoteHost } from "../db/db.js";
+import { getRemoteRootWorkingDir, getRemoteWorkingDir } from "./dispatchUtils.js";
+import { stageIn, stageOut } from "./transferrer.js";
+import { register } from "./executerManager.js";
+
+/**
+ * transfer files from remote host when task is already in stage-out phase
+ * @param {object} task - task component object that is already in stage-out state
+ * @returns {Promise} - resolved after file transfer done
+ */
+async function execStageOut(task) {
+  task.remotehostID = remoteHost.getID("name", task.host) || "localhost";
+  const onRemote = task.remotehostID !== "localhost";
+  if (onRemote) {
+    task.remoteWorkingDir = getRemoteWorkingDir(task.projectRootDir, task.projectStartTime, task.workingDir, task);
+    task.remoteRootWorkingDir = getRemoteRootWorkingDir(task.projectRootDir, task.projectStartTime, task);
+  }
+  //stageOut() requires state to be "finished" to proceed
+  task.state = "finished";
+
+  try {
+    if (onRemote) {
+      await stageOut(task);
+    }
+  } finally {
+    task.emitForDispatcher("taskCompleted", task.state);
+  }
+}
 
 /**
  * enqueue task
@@ -36,6 +60,7 @@ async function exec(task) {
   }
 }
 
-module.exports = {
-  exec
+export {
+  exec,
+  execStageOut
 };

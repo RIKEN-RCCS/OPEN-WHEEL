@@ -3,17 +3,16 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onCommitFiles, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile } = require("./fileManager.js");
-const { onUploadFileSaved2 } = require("./fileManager2.js");
-const { onTryToConnect, onTryToConnectById } = require("./tryToConnect.js");
-const { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } = require("./projectList.js");
-const { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription, onUpdateProjectROStatus, onCleanComponent } = require("./projectController.js");
-const { onSaveFile, onOpenFile } = require("./rapid.js");
-const { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } = require("./remoteHost.js");
-const { onGetJobSchedulerList, onGetJobSchedulerLabelList } = require("./jobScheduler.js");
-const { validateComponents } = require("../core/validateComponents.js");
-const {
+import { onCreateNewFile, onCreateNewDir, onGetFileList, onGetSNDContents, onRenameFile, onCommitFiles, onRemoveFile, onUploadFileSaved, onDownload, onRemoveDownloadFile, onDownloadFullLog } from "./fileManager.js";
+import { onUploadFileSaved2 } from "./fileManager2.js";
+import { onTryToConnect, onTryToConnectById } from "./tryToConnect.js";
+import { onAddProject, onGetProjectList, onRenameProject, onReorderProjectList, onRemoveProjectsFromList, onRemoveProjects } from "./projectList.js";
+import { onGetProjectJson, onGetWorkflow, onProjectOperation, onUpdateProjectDescription, onUpdateProjectROStatus, onCleanComponent } from "./projectController.js";
+import { onSaveFile, onOpenFile } from "./rapid.js";
+import { onAddHost, onCopyHost, onGetHostList, onUpdateHost, onRemoveHost } from "./remoteHost.js";
+import { onGetJobSchedulerList, onGetJobSchedulerLabelList } from "./jobScheduler.js";
+import { validateComponents } from "../core/validateComponents.js";
+import {
   onCreateNode,
   onUpdateComponent,
   onUpdateComponentPos,
@@ -22,6 +21,8 @@ const {
   onAddOutputFile,
   onRenameInputFile,
   onRenameOutputFile,
+  onToggleInputFileMandatory,
+  onToggleOutputFileForceCopy,
   onAddLink,
   onAddFileLink,
   onRemoveInputFile,
@@ -33,13 +34,14 @@ const {
   onGetEnv,
   onUpdateEnv,
   onGetWebhook,
-  onUpdateWebhook
-} = require("./workflowEditor.js");
-const { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } = require("./jobScript.js");
-const { onGetResultFiles } = require("./resultFiles.js");
-const { sendTaskStateList, sendComponentTree } = require("./senders.js");
-const { getLogger } = require("../logSettings");
-const {
+  onUpdateWebhook,
+  onPasteComponent
+} from "./workflowEditor.js";
+import { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } from "./jobScript.js";
+import { onGetResultFiles } from "./resultFiles.js";
+import { sendTaskStateList, sendComponentTree, sendWorkflow, sendProjectJson } from "./senders.js";
+import { getLogger } from "../logSettings.js";
+import {
   onCreateNewRemoteFile,
   onCreateNewRemoteDir,
   onRequestRemoteConnection,
@@ -52,11 +54,13 @@ const {
   onCreateNewGfarmDir,
   onRemoveGfarmFile,
   onRenameGfarmFile,
-  onGetRemoteGfarmTarFileList
-} = require("./remoteFileBrowser.js");
-const { aboutWheel } = require("../core/versionInfo.js");
-const { onImportProject, onExportProject } = require("./projectArchive.js");
-const { getTempdRoot } = require("../core/tempd.js");
+  onGetRemoteGfarmTarFileList,
+  onGetGfarmXattr
+} from "./remoteFileBrowser.js";
+import { aboutWheel } from "../core/versionInfo.js";
+import { onImportProject, onExportProject } from "./projectArchive.js";
+import { onExportComponent, onImportComponent } from "./componentArchive.js";
+import { getTempdRoot } from "../core/tempd.js";
 
 const registerHandlers = (socket, Siofu)=>{
   //
@@ -85,10 +89,13 @@ const registerHandlers = (socket, Siofu)=>{
   //update
   socket.on("renameInputFile", onRenameInputFile);
   socket.on("renameOutputFile", onRenameOutputFile);
+  socket.on("toggleInputFileMandatory", onToggleInputFileMandatory);
+  socket.on("toggleOutputFileForceCopy", onToggleOutputFileForceCopy);
   socket.on("updateComponent", onUpdateComponent);
   socket.on("updateComponentPos", onUpdateComponentPos);
   socket.on("updateEnv", onUpdateEnv);
   socket.on("updateWebhook", onUpdateWebhook);
+  socket.on("pasteComponent", onPasteComponent);
   //delete
   socket.on("removeNode", onRemoveNode);
   socket.on("removeInputFile", onRemoveInputFile);
@@ -109,11 +116,36 @@ const registerHandlers = (socket, Siofu)=>{
     const projectRootDir = event.file.meta.projectRootDir;
     getLogger(projectRootDir).debug("upload request recieved", event.file.name);
   });
-  uploader.on("saved", (event)=>{
+  uploader.on("saved", async (event)=>{
+    //Handle component import uploads specially
+    if (event.file.meta.isComponentImport) {
+      if (!event.file.success) {
+        getLogger(event.file.meta.projectRootDir).error("component import upload failed", event.file.name);
+        return;
+      }
+      //Call importComponent with the uploaded file path
+      const { projectRootDir, targetParentID, pos } = event.file.meta;
+      try {
+        const newComponentID = await onImportComponent(event.file.pathName, projectRootDir, targetParentID, pos);
+        getLogger(projectRootDir).info("component imported successfully", newComponentID);
+
+        //Send updates to client
+        await sendProjectJson(projectRootDir);
+        await sendComponentTree(projectRootDir, projectRootDir);
+
+        //Get the parent component directory and send workflow update
+        const getComponentDir = (await import("../core/componentJsonIO.js")).getComponentDir;
+        const parentDir = await getComponentDir(projectRootDir, targetParentID, true);
+        await sendWorkflow(null, projectRootDir, parentDir);
+      } catch (e) {
+        getLogger(projectRootDir).error("component import failed", e);
+      }
+      return;
+    }
     if (typeof event.file.meta.projectRootDir !== "string") {
       return onUploadFileSaved2(event);
     }
-    return onUploadFileSaved(event);
+    return onUploadFileSaved(event, socket);
   });
   uploader.on("error", (event)=>{
     const projectRootDir = event.file.meta.projectRootDir;
@@ -126,6 +158,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getFileList", onGetFileList);
   socket.on("getSNDContents", onGetSNDContents);
   socket.on("download", onDownload);
+  socket.on("downloadFullLog", onDownloadFullLog);
   //update
   socket.on("renameFile", onRenameFile);
   socket.on("commitFiles", onCommitFiles);
@@ -152,6 +185,7 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getRemoteSNDContents", onGetRemoteSNDContents);
   socket.on("downloadRemote", onRemoteDownload);
   socket.on("getRemoteGfarmTarFileList", onGetRemoteGfarmTarFileList);
+  socket.on("getGfarmXattr", onGetGfarmXattr);
   //update
   socket.on("renameRemoteFile", onRenameRemoteFile);
   socket.on("renameGfarmFile", onRenameGfarmFile);
@@ -169,6 +203,8 @@ const registerHandlers = (socket, Siofu)=>{
   socket.on("getProjectList", onGetProjectList.bind(null, socket));
   socket.on("renameProject", onRenameProject.bind(null, socket));
   socket.on("exportProject", onExportProject);
+  socket.on("exportComponent", onExportComponent);
+  socket.on("importComponent", onImportComponent);
   //update
   socket.on("reorderProjectList", onReorderProjectList.bind(null, socket));
   //delete
@@ -257,6 +293,6 @@ const registerHandlers = (socket, Siofu)=>{
   });
 };
 
-module.exports = {
+export {
   registerHandlers
 };

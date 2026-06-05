@@ -3,17 +3,23 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { getLogger } = require("../logSettings");
-const { getSsh, getSshHostinfo } = require("./sshManager.js");
-const { getJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
+import path from "path";
+import { getLogger } from "../logSettings.js";
+import { getSsh, getSshHostinfo } from "./sshManager.js";
+import { getJWTServerPassphrase } from "../core/jwtServerPassphraseManager.js";
+
+const _internal = {
+  getSsh,
+  getSshHostinfo,
+  getJWTServerPassphrase
+};
 
 async function execOnCSGW(projectRootDir, hostID, timeout, cmd, ...args) {
-  const ssh = await getSsh(projectRootDir, hostID);
+  const ssh = await _internal.getSsh(projectRootDir, hostID);
   const cmdline = args.reduce((a, c)=>{
     return `${a} ${c}`;
-  }, cmd);
+  },
+  cmd);
 
   const { rt, output } = await ssh.execAndGetOutput(cmdline, timeout);
   if (rt !== 0) {
@@ -42,7 +48,7 @@ function formatGfarmURL(target) {
 }
 
 async function checkJWTAgent(projectRootDir, hostID) {
-  const ssh = await getSsh(projectRootDir, hostID);
+  const ssh = await _internal.getSsh(projectRootDir, hostID);
   let result = false;
   await ssh.exec("jwt-agent --status", 60, (data)=>{
     if (/^jwt-agent.* is running/.exec(data)) {
@@ -59,9 +65,9 @@ async function startJWTAgent(projectRootDir, hostID, passphrase) {
   if (await checkJWTAgent(projectRootDir, hostID)) {
     return false;
   }
-  const ssh = await getSsh(projectRootDir, hostID);
-  const { JWTServerUser, JWTServerURL } = await getSshHostinfo(projectRootDir, hostID);
-  const JWTServerPassphrase = passphrase || await getJWTServerPassphrase(projectRootDir, hostID);
+  const ssh = await _internal.getSsh(projectRootDir, hostID);
+  const { JWTServerUser, JWTServerURL } = await _internal.getSshHostinfo(projectRootDir, hostID);
+  const JWTServerPassphrase = passphrase || await _internal.getJWTServerPassphrase(projectRootDir, hostID);
   return ssh.expect(`jwt-agent -s ${JWTServerURL} -l ${JWTServerUser}`, [
     { expect: "Passphrase", send: JWTServerPassphrase }
   ], null, 60);
@@ -234,7 +240,44 @@ async function gfmv(projectRootDir, hostID, target, newName, timeout = 60) {
   return execOnCSGW(projectRootDir, hostID, timeout, "gfmv -f", src, dst);
 }
 
-module.exports = {
+/**
+ * Get XML extended attribute from a gfarm file using gfxattr.
+ * @param {string} projectRootDir - project's root path
+ * @param {string} hostID - ID of hostinfo which serves gfarm service
+ * @param {string} gfarmPath - absolute path to the target file in gfarm (without gfarm:// prefix)
+ * @param {string} attrName - XML extended attribute name (e.g., "wheel.workflow")
+ * @param {number} timeout - timeout in seconds, must be a positive number
+ * @returns {Promise<string>} - XML string value of the attribute
+ */
+async function getGfarmXattr(projectRootDir, hostID, gfarmPath, attrName, timeout = 60) {
+  await startJWTAgent(projectRootDir, hostID);
+  const pathOnGfarm = formatGfarmURL(gfarmPath);
+  const output = await execOnCSGW(projectRootDir, hostID, timeout, "gfxattr -g -x", pathOnGfarm, attrName);
+  return output.join("\n");
+}
+
+/**
+ * Set XML extended attribute on a gfarm file using gfxattr.
+ * The XML string is base64-encoded to safely pass it through SSH,
+ * written to a temporary file on the CSGW, then applied with gfxattr -s -x.
+ * @param {string} projectRootDir - project's root path
+ * @param {string} hostID - ID of hostinfo which serves gfarm service
+ * @param {string} gfarmPath - absolute path to the target file in gfarm (without gfarm:// prefix)
+ * @param {string} attrName - XML extended attribute name (e.g., "wheel.workflow")
+ * @param {string} xmlString - XML content to store as the attribute value
+ * @param {number} timeout - timeout in seconds, must be a positive number
+ * @returns {Promise<string[]>} - output from gfxattr command
+ */
+async function setGfarmXattr(projectRootDir, hostID, gfarmPath, attrName, xmlString, timeout = 60) {
+  await startJWTAgent(projectRootDir, hostID);
+  const pathOnGfarm = formatGfarmURL(gfarmPath);
+  const base64Xml = Buffer.from(xmlString).toString("base64");
+  const tmpFile = `/tmp/wheel_xattr_${Date.now()}.xml`;
+  const cmd = `echo '${base64Xml}' | base64 -d > ${tmpFile} && gfxattr -s -x -f ${tmpFile} ${pathOnGfarm} ${attrName} && rm -f ${tmpFile}`;
+  return execOnCSGW(projectRootDir, hostID, timeout, cmd);
+}
+
+export {
   checkJWTAgent,
   startJWTAgent,
   stopJWTAgent,
@@ -246,5 +289,8 @@ module.exports = {
   gfls,
   gfrm,
   gfmkdir,
-  gfmv
+  gfmv,
+  setGfarmXattr,
+  getGfarmXattr,
+  _internal
 };

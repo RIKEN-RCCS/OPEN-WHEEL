@@ -1,12 +1,13 @@
 <template>
   <g
     data-cy="component-component_group-g"
+    :data-component-id="componentData.ID"
     @click.stop="onClick"
     @dblclick.stop="onDblclick"
     @click.right.prevent.stop="onRightclick"
   >
     <rect
-      v-if="isSelected || isInvalid"
+      v-if="isSelected || isInvalid || isCopied || isCut"
       :x="componentPos.x-boxWidth/2-borderWidth"
       :y="componentPos.y-textHeight/2-borderWidth"
       :width="boxWidth + borderWidth*2"
@@ -14,6 +15,7 @@
       fill="transparent"
       :stroke="highlightColor"
       :stroke-width="borderWidth"
+      :stroke-dasharray="isCut ? '5,5' : null"
     />
     <component-header
       :center="componentPos"
@@ -73,7 +75,8 @@
 
 <script>
 "use strict";
-import { mapActions } from "vuex";
+import { mapActions, mapState, mapMutations } from "vuex";
+import { startDrag, calcDrag } from "../../lib/dragUtils.js";
 import ComponentHeader from "./componentHeader.vue";
 import InputOutputFileBox from "./inputOutputFileBox.vue";
 import SubGraph from "./subgraph.vue";
@@ -103,6 +106,14 @@ export default {
     isSelected: {
       type: Boolean,
       default: false
+    },
+    isCopied: {
+      type: Boolean,
+      default: false
+    },
+    isCut: {
+      type: Boolean,
+      default: false
     }
   },
   emits: [
@@ -113,22 +124,28 @@ export default {
     "addLink",
     "removeLink",
     "chdir",
-    "openContextMenu"
+    "openContextMenu",
+    "drag-start",
+    "drag-end"
   ],
   data() {
     return {
-      startX: null,
-      startY: null,
-      oldcenter: { x: null, y: null },
-      dragging: false,
+      dragState: null,
       boxWidth,
       textHeight,
       borderWidth
     };
   },
   computed: {
+    ...mapState(["currentZoom"]),
+    center() {
+      return this.componentPos;
+    },
     highlightColor() {
-      return this.isSelected ? "yellow" : "red";
+      if (this.isCopied || this.isCut) return "red";
+      if (this.isInvalid) return "red";
+      if (this.isSelected) return "yellow";
+      return "red";
     },
     canHaveLink() {
       return !["source", "storage", "hpciss", "hpcisstar"].includes(this.componentData.type);
@@ -178,36 +195,32 @@ export default {
   },
   methods: {
     ...mapActions({ commitSelectedComponent: "selectedComponent" }),
+    ...mapMutations({ commitIsComponentDragging: "isComponentDragging" }),
     mouseDown(e) {
-      this.startX = e.screenX;
-      this.startY = e.screenY;
-      this.oldcenter.x = this.componentPos.x;
-      this.oldcenter.y = this.componentPos.y;
-      this.dragging = true;
+      e.stopPropagation();
+      this.$emit("drag-start");
+      this.commitIsComponentDragging(true);
+      this.dragState = startDrag(e, this.center);
     },
     mouseMove(e) {
-      if (!this.dragging) {
-        return;
-      }
-      const dx = e.screenX - this.startX;
-      const dy = e.screenY - this.startY;
-      e.newX = this.oldcenter.x + dx;
-      e.newY = this.oldcenter.y + dy;
+      if (!this.dragState) return;
+      const newPos = calcDrag(e, this.dragState);
+      if (!newPos) return;
+      e.newX = newPos.newX;
+      e.newY = newPos.newY;
       this.$emit("drag", e);
     },
     mouseUp(e) {
-      if (this.startX === null || this.startY === null || !this.dragging) {
-        return;
+      this.$emit("drag-end");
+      this.commitIsComponentDragging(false);
+      if (!this.dragState) return;
+      const isClick = e.screenX === this.dragState.startScreenX && e.screenY === this.dragState.startScreenY;
+      if (!isClick) {
+        this.$emit("dragend", e);
       }
-      if (e.screenX === this.startX && e.screenY === this.startY) {
-        this.dragging = false;
-        return;
-      }
-      this.startX = null;
-      this.startY = null;
-      this.dragging = false;
-      this.$emit("dragend", e);
+      this.dragState = null;
     },
+
     onAddFileLink(srcNode, srcName, inputFilename) {
       this.$emit("addFileLink", srcNode, srcName, this.componentData.ID, inputFilename);
     },

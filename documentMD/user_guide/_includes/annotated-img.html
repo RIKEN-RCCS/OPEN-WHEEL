@@ -1,0 +1,57 @@
+<div class="annotated-container" style="position: relative; display: inline-block;">
+  <img src="{{ include.src }}" style="display: block; max-width: 100%; height: auto;">
+
+  {% assign markers = include.markers | split: "|" %}
+  {% for marker in markers %}
+    {% assign top="" %}{% assign left="" %}{% assign width="" %}{% assign height="" %}{% assign val="" %}{% assign pos="center" %}
+
+    {% assign props = marker | split: "," %}
+    {% for prop in props %}
+      {% if prop contains "top:" %}{% assign top = prop | remove: "top:" %}{% endif %}
+      {% if prop contains "left:" %}{% assign left = prop | remove: "left:" %}{% endif %}
+      {% if prop contains "width:" %}{% assign width = prop | remove: "width:" %}{% endif %}
+      {% if prop contains "height:" %}{% assign height = prop | remove: "height:" %}{% endif %}
+      {% if prop contains "val:" %}{% assign val = prop | remove: "val:" %}{% endif %}
+      {% if prop contains "pos:" %}{% assign pos = prop | remove: "pos:" %}{% endif %}
+    {% endfor %}
+
+    <div class="marker-box" style="
+      position: absolute;
+      top: {{ top }}%; left: {{ left }}%;
+      width: {{ width }}%; height: {{ height }}%;
+      transform: translate(-50%, -50%);
+      pointer-events: none; box-sizing: border-box;
+      border: 3px solid rgba(255,0,0,0.9);
+      background-color: transparent;
+    ">
+      {% if val != "" %}
+        <div class="marker-number" style="
+          position: absolute;
+          width: 26px; height: 26px;
+          background-color: transparent; /* 背景100%透過 */
+          color: rgba(255,0,0,1);      /* 赤文字 */
+          border-radius: 50%;
+          border: 2px solid rgba(255,0,0,1); /* 赤枠 */
+          display: flex; justify-content: center; align-items: center;
+          font-size: 14px; font-weight: bold;
+          box-sizing: border-box;
+
+          /* 配置場所の制御（枠の大きさを基準にする） */
+          {% if pos == 'center' %}
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+          {% elsif pos == 'top' %}
+            bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+          {% elsif pos == 'bottom' %}
+            top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+          {% elsif pos == 'left' %}
+            right: calc(100% + 6px); top: 50%; transform: translateY(-50%);
+          {% elsif pos == 'right' %}
+            left: calc(100% + 6px); top: 50%; transform: translateY(-50%);
+          {% endif %}
+        ">
+          {{ val }}
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>

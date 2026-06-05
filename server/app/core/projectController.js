@@ -3,21 +3,28 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { readJsonGreedy } = require("../core/fileUtils");
-const { gitResetHEAD, gitClean } = require("../core/gitOperator2");
-const { removeSsh } = require("./sshManager");
-const { removeExecuters } = require("./executerManager.js");
-const { removeTransferrers } = require("./transferManager.js");
-const { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { setProjectState } = require("../core/projectFilesOperator");
-const { writeComponentJson } = require("./componentJsonIO.js");
-const Dispatcher = require("./dispatcher");
-const { getDateString } = require("../lib/utility");
-const { getLogger } = require("../logSettings.js");
-const { eventEmitters } = require("./global.js");
-const rootDispatchers = new Map();
+import path from "path";
+import { readJsonGreedy } from "../core/fileUtils.js";
+import { gitResetHEAD, gitClean } from "../core/gitOperator2.js";
+import { removeSsh } from "./sshManager.js";
+import { removeExecuters } from "./executerManager.js";
+import { removeTransferrers } from "./transferManager.js";
+import { runDeferredCleanups, clearDeferredCleanups } from "./transferrer.js";
+import { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } from "../db/db.js";
+import { setProjectState } from "../core/projectJsonFileOperator.js";
+import { writeComponentJson } from "./componentJsonIO.js";
+import Dispatcher from "./dispatcher.js";
+import { getDateString } from "../lib/utility.js";
+import { getLogger } from "../logSettings.js";
+import { eventEmitters } from "./global.js";
+
+const _internal = {
+  rootDispatchers: new Map(),
+  eventEmitters,
+  gitClean,
+  gitResetHEAD,
+  setProjectState
+};
 
 /**
  * @event projectStateChanged
@@ -39,9 +46,9 @@ const rootDispatchers = new Map();
  * @param {string} state - status
  */
 async function updateProjectState(projectRootDir, state) {
-  const projectJson = await setProjectState(projectRootDir, state);
+  const projectJson = await _internal.setProjectState(projectRootDir, state);
   if (projectJson) {
-    const ee = eventEmitters.get(projectRootDir);
+    const ee = _internal.eventEmitters.get(projectRootDir);
     if (ee) {
       ee.emit("projectStateChanged", projectJson);
     }
@@ -54,8 +61,8 @@ async function updateProjectState(projectRootDir, state) {
  * @param {string} targetDir - If this argument is specified, limit git clean operations to under this directory
  */
 async function cleanProject(projectRootDir, targetDir) {
-  await gitResetHEAD(projectRootDir, targetDir);
-  await gitClean(projectRootDir, targetDir);
+  await _internal.gitResetHEAD(projectRootDir, targetDir);
+  await _internal.gitClean(projectRootDir, targetDir);
   //project state must be updated by onCleanProject()
   //temp dirs also removed by onCleanProject()
 };
@@ -65,11 +72,12 @@ async function cleanProject(projectRootDir, targetDir) {
  * @param {string} projectRootDir - project's root path
  */
 async function stopProject(projectRootDir) {
-  const rootDispatcher = rootDispatchers.get(projectRootDir);
+  const rootDispatcher = _internal.rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
     await rootDispatcher.remove();
-    rootDispatchers.delete(projectRootDir);
+    _internal.rootDispatchers.delete(projectRootDir);
   }
+  clearDeferredCleanups(projectRootDir);
   removeExecuters(projectRootDir);
   removeTransferrers(projectRootDir);
   removeSsh(projectRootDir);
@@ -82,7 +90,7 @@ async function stopProject(projectRootDir) {
  * @returns {string} - project status after run
  */
 async function runProject(projectRootDir) {
-  if (rootDispatchers.has(projectRootDir)) {
+  if (_internal.rootDispatchers.has(projectRootDir)) {
     return new Error(`project is already running ${projectRootDir}`);
   }
 
@@ -98,26 +106,20 @@ async function runProject(projectRootDir) {
   if (rootWF.cleanupFlag === "2") {
     rootDispatcher.doCleanup = defaultCleanupRemoteRoot;
   }
-  rootDispatchers.set(projectRootDir, rootDispatcher);
+  _internal.rootDispatchers.set(projectRootDir, rootDispatcher);
 
-  try {
-    await updateProjectState(projectRootDir, "running", projectJson);
-    getLogger(projectRootDir).info("project start");
-    rootWF.state = await rootDispatcher.start();
-    getLogger(projectRootDir).info(`project ${rootWF.state}`);
-    await updateProjectState(projectRootDir, rootWF.state, projectJson);
-    await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
-  } finally {
-    rootDispatchers.delete(projectRootDir);
-    removeExecuters(projectRootDir);
-    removeTransferrers(projectRootDir);
-    removeSsh(projectRootDir);
-  }
+  await updateProjectState(projectRootDir, "running", projectJson);
+  getLogger(projectRootDir).info("project start");
+  rootWF.state = await rootDispatcher.start();
+  getLogger(projectRootDir).info(`project ${rootWF.state}`);
+  await updateProjectState(projectRootDir, rootWF.state, projectJson);
+  await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
+  _internal.rootDispatchers.delete(projectRootDir);
+  await runDeferredCleanups(projectRootDir);
+  removeExecuters(projectRootDir);
+  removeTransferrers(projectRootDir);
+  removeSsh(projectRootDir);
   return rootWF.state;
 }
 
-module.exports = {
-  cleanProject,
-  runProject,
-  stopProject
-};
+export { cleanProject, runProject, stopProject, updateProjectState, _internal };

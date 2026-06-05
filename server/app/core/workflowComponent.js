@@ -3,10 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const uuid = require("uuid");
-const { defaultPSconfigFilename } = require("../db/db.js");
-const { readComponentJsonByID } = require("./componentJsonIO.js");
+import { v1 } from "uuid";
+import { defaultPSconfigFilename } from "../db/db.js";
+import { readComponentJsonByID } from "./componentJsonIO.js";
+import { isLocal } from "../../../common/checkComponent.js";
+
+const _internal = {
+  readComponentJsonByID
+};
 
 class BaseWorkflowComponent {
   constructor(pos, parent) {
@@ -18,7 +22,7 @@ class BaseWorkflowComponent {
      */
     this.pos = pos;
 
-    this.ID = uuid.v1();
+    this.ID = v1();
     this.type = null;
     this.name = null;
     this.description = null;
@@ -175,6 +179,12 @@ class Task extends GeneralComponent {
 
     //if true, project will continue after failing this task.
     this.ignoreFailure = false;
+
+    //checker script to determine task success/failure
+    this.checker = null;
+
+    //source script to be loaded before executing on remote host
+    this.sourceScript = null;
   }
 }
 
@@ -232,6 +242,7 @@ class For extends GeneralComponent {
     this.start = null;
     this.end = null;
     this.step = null;
+    this.skipCopy = [];
     this.keep = null;
   }
 }
@@ -241,6 +252,7 @@ class While extends GeneralComponent {
     super(...args);
     this.type = "while";
     this.condition = null;
+    this.skipCopy = [];
     this.keep = null;
   }
 }
@@ -253,6 +265,7 @@ class Foreach extends GeneralComponent {
     super(...args);
     this.type = "foreach";
     this.indexList = [];
+    this.skipCopy = [];
     this.keep = null;
   }
 }
@@ -346,7 +359,7 @@ class Continue extends GeneralComponent {
  * @param {...any} args - argument for constructor
  * @returns {*} - component object
  */
-function componentFactory(type, ...args) {
+export function componentFactory(type, ...args) {
   let component;
   switch (type) {
     case "task":
@@ -413,7 +426,7 @@ function componentFactory(type, ...args) {
  * @param {object} component - Component object
  * @returns  {boolean} -
  */
-function hasChild(component) {
+export function hasChild(component) {
   return component.type === "workflow" || component.type === "parameterStudy" || component.type === "for" || component.type === "while" || component.type === "foreach" || component.type === "stepjob";
 }
 
@@ -423,7 +436,11 @@ function hasChild(component) {
  * @param {object} component - Component object
  * @returns  {boolean} -
  */
-async function isBehindIfComponent(projectRootDir, component) {
+_internal.isBehindIfComponent = async function (projectRootDir, component, visited = new Set()) {
+  if (visited.has(component.ID)) {
+    return false; //circular dependency detected
+  }
+
   const hasPrevious = Array.isArray(component.previous) && component.previous.length > 0;
   const hasConnectedInputFiles = Array.isArray(component.inputFiles) && component.inputFiles.some((inputFile)=>{
     return inputFile.src.length > 0;
@@ -433,14 +450,16 @@ async function isBehindIfComponent(projectRootDir, component) {
     return false;
   }
 
+  visited.add(component.ID);
+
   if (hasPrevious) {
     for (const previous of component.previous) {
-      const previousComponent = await readComponentJsonByID(projectRootDir, previous);
+      const previousComponent = await _internal.readComponentJsonByID(projectRootDir, previous);
 
       if (previousComponent.type === "if") {
         return true;
       }
-      const rt = await isBehindIfComponent(projectRootDir, previousComponent);
+      const rt = await _internal.isBehindIfComponent(projectRootDir, previousComponent, visited);
 
       if (rt) {
         return true;
@@ -451,12 +470,12 @@ async function isBehindIfComponent(projectRootDir, component) {
   if (hasConnectedInputFiles) {
     for (const inputFile of component.inputFiles) {
       for (const src of inputFile.src) {
-        const srcComponent = await readComponentJsonByID(projectRootDir, src.srcNode);
+        const srcComponent = await _internal.readComponentJsonByID(projectRootDir, src.srcNode);
 
         if (srcComponent.type === "if") {
           return true;
         }
-        const rt = await isBehindIfComponent(projectRootDir, srcComponent);
+        const rt = await _internal.isBehindIfComponent(projectRootDir, srcComponent, visited);
 
         if (rt) {
           return true;
@@ -465,14 +484,14 @@ async function isBehindIfComponent(projectRootDir, component) {
     }
   }
   return false;
-}
+};
 
 /**
  * determine if component has outputfile which will be used by other components
  * @param {object} component - Component object
  * @returns  {boolean} -
  */
-function hasNeededOutputFiles(component) {
+export function hasNeededOutputFiles(component) {
   return component.outputFiles.some((outputFile)=>{
     return outputFile.dst.length > 0;
   });
@@ -501,8 +520,8 @@ async function hasConnecteddInputFiles(projectRootDir, component) {
  * @param {object} component - Component object
  * @returns  {boolean} -
  */
-async function isInitialComponent(projectRootDir, component) {
-  if (await isBehindIfComponent(projectRootDir, component)) {
+export async function isInitialComponent(projectRootDir, component) {
+  if (await _internal.isBehindIfComponent(projectRootDir, component)) {
     return false;
   }
   if (["storage", "hpciss", "hpcisstar"].includes(component.type)) {
@@ -530,7 +549,7 @@ async function isInitialComponent(projectRootDir, component) {
  * @param {object[]} components - array of component
  * @returns {object[]} - unique components
  */
-function removeDuplicatedComponent(components) {
+export function removeDuplicatedComponent(components) {
   const IDs = components.map((component)=>{
     return component.ID;
   });
@@ -547,7 +566,7 @@ function removeDuplicatedComponent(components) {
  * @param {string} type - component type
  * @returns {string} - component's basename
  */
-function getComponentDefaultName(type) {
+export function getComponentDefaultName(type) {
   if (type === "stepjobTask") {
     return "sjTask";
   }
@@ -567,27 +586,23 @@ function getComponentDefaultName(type) {
  * return this component run on localhost or not
  * @param {object} component - component object
  * @returns {boolean} - local component or not
+ * @deprecated Use isLocal from common/checkComponent.js instead
  */
-function isLocalComponent(component) {
-  return typeof component.host === "undefined" || component.host === "localhost";
+export function isLocalComponent(component) {
+  return isLocal(component);
 }
+
+//Re-export isLocal from common for convenience
+export { isLocal };
 
 /**
  * determine if storage-like component or not
  * @param {object} component - component object
  * @returns {boolean} - local component or not
  */
-function hasStoragePath(component) {
+export function hasStoragePath(component) {
   return ["storage", "hpciss", "hpcisstar"].includes(component.type);
 }
 
-module.exports = {
-  componentFactory,
-  hasChild,
-  isInitialComponent,
-  isLocalComponent,
-  removeDuplicatedComponent,
-  getComponentDefaultName,
-  hasNeededOutputFiles,
-  hasStoragePath
-};
+export const isBehindIfComponent = _internal.isBehindIfComponent;
+export { _internal };

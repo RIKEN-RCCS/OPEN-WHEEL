@@ -34,6 +34,7 @@
         v-model="center"
         label="HPC center"
         :items="centerNames"
+        :menu-props="{ transition: false }"
       />
       <div v-if="template !== null">
         <div
@@ -45,6 +46,7 @@
             v-model="v.value"
             :label="v.label"
             :items="v.items"
+            :menu-props="{ transition: false }"
           />
           <v-text-field
             v-else-if="v.type==='number'"
@@ -152,7 +154,8 @@ export default {
         { label: "remove", icon: "mdi-trash" },
         { label: "cancel", icon: "mdi-close" }
       ],
-      selected: []
+      selected: [],
+      autoUpdateTimer: null
     };
   },
   computed: {
@@ -169,16 +172,34 @@ export default {
         return;
       }
       this.loadedCenterInfo = null;
+    },
+    template: {
+      handler() {
+        //Auto-update job script when template changes
+        if (!this.readOnly && this.isJobScript) {
+          this.scheduleAutoUpdate();
+        }
+      },
+      deep: true
     }
   },
   mounted() {
     this.center = this.centerNames[0];
-    SIO.onGlobal("jobScriptTemplateList", (data)=>{
-      this.jobScriptList = data;
-    });
+    SIO.onGlobal("jobScriptTemplateList", this.onJobScriptTemplateList);
     SIO.emitGlobal("getJobscriptTemplates", SIO.generalCallback);
   },
+  beforeUnmount() {
+    SIO.off("jobScriptTemplateList", this.onJobScriptTemplateList);
+  },
   methods: {
+
+    /**
+     * Handle incoming job script template list from server.
+     * @param {Array} data - List of job script templates
+     */
+    onJobScriptTemplateList(data) {
+      this.jobScriptList = data;
+    },
     cancelSaveDialog() {
       this.newTemplateName = "";
       this.saveDialog = false;
@@ -214,6 +235,14 @@ export default {
     },
     removeJobScript() {
       this.$emit("remove");
+    },
+    scheduleAutoUpdate() {
+      if (this.autoUpdateTimer) {
+        clearTimeout(this.autoUpdateTimer);
+      }
+      this.autoUpdateTimer = setTimeout(()=>{
+        this.insertJobScript();
+      }, 2000); //2 seconds client-side debounce
     }
   }
 };

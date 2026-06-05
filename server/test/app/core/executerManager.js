@@ -3,36 +3,21 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const chai = require("chai");
-chai.use(require("sinon-chai"));
-chai.use(require("chai-as-promised"));
-const path = require("path");
-const sinon = require("sinon");
-const fs = require("fs-extra");
-const { expect } = require("chai");
-const rewire = require("rewire");
-const { EventEmitter } = require("events");
+import * as chai from "chai";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import path from "path";
+import sinon from "sinon";
+import fs from "fs-extra";
+const { expect } = chai;
+import { EventEmitter } from "events";
 
-const executerManager = rewire("../../../app/core/executerManager");
-const executers = executerManager.__get__("executers");
-const removeExecuters = executerManager.__get__("removeExecuters");
-const isExceededLimit = executerManager.__get__("isExceededLimit");
-const makeQueueOpt = executerManager.__get__("makeQueueOpt");
-const makeEnv = executerManager.__get__("makeEnv");
-const makeStepOpt = executerManager.__get__("makeStepOpt");
-const makeBulkOpt = executerManager.__get__("makeBulkOpt");
-const decideFinishState = executerManager.__get__("decideFinishState");
-const needsRetry = executerManager.__get__("needsRetry");
-const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
-const getExecutersKey = executerManager.__get__("getExecutersKey");
-const getMaxNumJob = executerManager.__get__("getMaxNumJob");
-const createExecuter = executerManager.__get__("createExecuter");
-const register = executerManager.__get__("register");
+import { _internal, removeExecuters, isExceededLimit, makeQueueOpt, makeEnv, makeStepOpt, makeBulkOpt, decideFinishState, needsRetry, promisifiedSpawn, getExecutersKey, getMaxNumJob, createExecuter, register, cancel, RemoteJobExecuter, RemoteTaskExecuter, RemoteJobWebAPIExecuter, LocalTaskExecuter } from "../../../app/core/executerManager.js";
+import { loggerWrapper } from "../../../app/logSettings.js";
 const testDirRoot = "WHEEL_TEST_TMP";
-let evalConditionMock;
-let loggerMock;
 
 describe("UT for executerManager class", function () {
   describe("removeExecuters", async ()=>{
@@ -45,11 +30,15 @@ describe("UT for executerManager class", function () {
         stop: sinon.stub(),
         start: sinon.stub()
       };
-      executers.set(`${mockProjectRootDir}-localhost-false`, executerMock);
-      executers.set(`${mockProjectRootDir}-remoteHost-true`, executerMock);
-      executers.set(`${otherProjectRootDir}-localhost-false`, executerMock);
+      _internal.executers.set(`${mockProjectRootDir}-localhost-false`, executerMock);
+      _internal.executers.set(`${mockProjectRootDir}-remoteHost-true`, executerMock);
+      _internal.executers.set(`${otherProjectRootDir}-localhost-false`, executerMock);
 
-      expect(executers.size).to.be.greaterThan(0); //事前確認
+      expect(_internal.executers.size).to.be.greaterThan(0); //事前確認
+    });
+    afterEach(()=>{
+      _internal.executers.clear();
+      sinon.restore();
     });
     after(async ()=>{
       if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
@@ -59,21 +48,22 @@ describe("UT for executerManager class", function () {
 
     it("should remove all executers associated with a given projectRootDir", async function () {
       removeExecuters(mockProjectRootDir);
-      expect(executers.has(`${mockProjectRootDir}-localhost-false`)).to.be.false;
-      expect(executers.has(`${mockProjectRootDir}-remoteHost-true`)).to.be.false;
-      expect(executers.size).to.equal(1);
+      expect(_internal.executers.has(`${mockProjectRootDir}-localhost-false`)).to.be.false;
+      expect(_internal.executers.has(`${mockProjectRootDir}-remoteHost-true`)).to.be.false;
+      expect(_internal.executers.size).to.equal(1);
     });
 
     it("should not remove executers from other projects", function () {
       removeExecuters(mockProjectRootDir);
-      expect(executers.has(`${otherProjectRootDir}-localhost-false`)).to.be.true;
+      expect(_internal.executers.has(`${otherProjectRootDir}-localhost-false`)).to.be.true;
     });
 
     it("should not throw an error if no matching executers exist", function () {
-      executers.clear();
+      _internal.executers.clear();
 
-      expect(()=>removeExecuters(mockProjectRootDir)).to.not.throw();
-      expect(executers.size).to.equal(0);
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return removeExecuters(mockProjectRootDir); }).to.not.throw();
+      expect(_internal.executers.size).to.equal(0);
     });
   });
   describe("isExceededLimit", function () {
@@ -134,7 +124,8 @@ describe("UT for executerManager class", function () {
       const task = { env: { KEY1: "value1", KEY2: "value2" } };
       const result = makeEnv(task);
       //`result` 内の変数順序が一定でない可能性があるため、複数のパターンを考慮
-      expect(result).to.satisfy((str)=>str === "env KEY1=value1 KEY2=value2" || str === "env KEY2=value2 KEY1=value1"
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(result).to.satisfy((str)=>{ return str === "env KEY1=value1 KEY2=value2" || str === "env KEY2=value2 KEY1=value1"; }
       );
     });
     it("should handle environment variables with special characters", function () {
@@ -144,31 +135,27 @@ describe("UT for executerManager class", function () {
   });
   describe("makeQueueOpt", function () {
     const JS = { queueOpt: "-q " };
-    it("should return an empty string if queues is not a string", function () {
+    it("should return an empty string if queues is not an array", function () {
       const task = { queue: "default" };
       expect(makeQueueOpt(task, JS, undefined)).to.equal("");
       expect(makeQueueOpt(task, JS, null)).to.equal("");
-      expect(makeQueueOpt(task, JS, 123)).to.equal("");
+      expect(makeQueueOpt(task, JS, "low,high,medium")).to.equal("");
     });
-    it("should return an empty string if queues is an empty string", function () {
+    it("should return an empty string if queues is an empty array", function () {
       const task = { queue: "default" };
-      expect(makeQueueOpt(task, JS, "")).to.equal("");
+      expect(makeQueueOpt(task, JS, [])).to.equal("");
     });
     it("should return the correct queue option if task.queue matches a queue in the list", function () {
       const task = { queue: "high" };
-      expect(makeQueueOpt(task, JS, "low,high,medium")).to.equal(" -q high");
+      expect(makeQueueOpt(task, JS, ["low", "high", "medium"])).to.equal(" -q high");
     });
     it("should use the first queue in the list if task.queue does not match any queue", function () {
       const task = { queue: "nonexistent" };
-      expect(makeQueueOpt(task, JS, "low,high,medium")).to.equal(" -q low");
-    });
-    it("should trim spaces in the queue list", function () {
-      const task = { queue: "high" };
-      expect(makeQueueOpt(task, JS, "  low ,  high , medium ")).to.equal(" -q high");
+      expect(makeQueueOpt(task, JS, ["low", "high", "medium"])).to.equal(" -q low");
     });
     it("should return an empty string if the selected queue is an empty string", function () {
       const task = { queue: "" };
-      expect(makeQueueOpt(task, JS, " , , ,")).to.equal("");
+      expect(makeQueueOpt(task, JS, ["", "", ""])).to.equal("");
     });
   });
   describe("makeStepOpt", function () {
@@ -266,59 +253,51 @@ describe("UT for executerManager class", function () {
       name: "mockTask",
       ID: "mockID"
     };
+    let evalConditionStub;
+    let loggerInfoStub;
+
     beforeEach(()=>{
-      //`evalCondition` モックを設定
-      evalConditionMock = async ()=>true;
-      executerManager.__set__("evalCondition", evalConditionMock);
-      //`getLogger` モックを設定
-      loggerMock = {
-        info: ()=>{}
-      };
-      executerManager.__set__("getLogger", ()=>loggerMock);
+      evalConditionStub = sinon.stub(_internal, "evalCondition");
+      loggerInfoStub = sinon.stub(loggerWrapper, "logInfo");
     });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
     it("should return true if evalCondition returns true", async function () {
-      evalConditionMock = async ()=>true; //evalCondition が true を返す
-      executerManager.__set__("evalCondition", evalConditionMock);
+      evalConditionStub.resolves(true);
       const result = await decideFinishState(mockTask);
       expect(result).to.be.true;
     });
     it("should return false if evalCondition returns false", async function () {
-      evalConditionMock = async ()=>false; //evalCondition が false を返す
-      executerManager.__set__("evalCondition", evalConditionMock);
+      evalConditionStub.resolves(false);
       const result = await decideFinishState(mockTask);
       expect(result).to.be.false;
     });
     it("should return false if evalCondition throws an error", async function () {
-      let logCalled = false;
-      //evalCondition がエラーをスロー
-      evalConditionMock = async ()=>{
-        throw new Error("Mock error");
-      };
-      executerManager.__set__("evalCondition", evalConditionMock);
-      //loggerMock の info メソッドを監視
-      loggerMock.info = (message)=>{
-        logCalled = true;
-        expect(message).to.include(`manualFinishCondition of ${mockTask.name}(${mockTask.ID}) is set but exception occurred while evaluting it.`);
-      };
-      executerManager.__set__("getLogger", ()=>loggerMock);
+      evalConditionStub.rejects(new Error("Mock error"));
       const result = await decideFinishState(mockTask);
       expect(result).to.be.false;
-      expect(logCalled).to.be.true;
+      expect(loggerInfoStub).to.have.been.calledWith(mockTask.projectRootDir, mockTask.workingDir, "manualFinishCondition is set but exception occurred while evaluting it.");
     });
     it("should handle missing task properties gracefully", async function () {
       const incompleteTask = { projectRootDir: "/mock/project" }; //必須プロパティ不足
-      evalConditionMock = async ()=>{
-        throw new Error("Mock error");
-      };
-      executerManager.__set__("evalCondition", evalConditionMock);
-      let logCalled = false;
-      loggerMock.info = ()=>{
-        logCalled = true;
-      };
-      executerManager.__set__("getLogger", ()=>loggerMock);
+      evalConditionStub.rejects(new Error("Mock error"));
       const result = await decideFinishState(incompleteTask);
       expect(result).to.be.false;
-      expect(logCalled).to.be.true;
+      expect(loggerInfoStub).to.have.been.called;
+    });
+    it("should pass WHEEL_TASK_RT and wheelTaskRT in env to evalCondition", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithRt = { ...mockTask, rt: 42, env: { EXISTING: "value" } };
+      await decideFinishState(taskWithRt);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 42, wheelTaskRT: 42, EXISTING: "value" })
+      );
     });
   });
   describe("needsRetry", function () {
@@ -329,15 +308,19 @@ describe("UT for executerManager class", function () {
       name: "mockTask",
       ID: "mockID"
     };
+
+    let evalConditionStub;
+    let loggerInfoStub;
+
     beforeEach(()=>{
-      //`evalCondition` と `getLogger` のモックを初期化
-      evalConditionMock = async ()=>false;
-      executerManager.__set__("evalCondition", evalConditionMock);
-      loggerMock = {
-        info: ()=>{}
-      };
-      executerManager.__set__("getLogger", ()=>loggerMock);
+      evalConditionStub = sinon.stub(_internal, "evalCondition");
+      loggerInfoStub = sinon.stub(loggerWrapper, "logInfo");
     });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
     it("should return false if neither retry nor retryCondition is defined", async function () {
       const result = await needsRetry(mockTask);
       expect(result).to.be.false;
@@ -353,111 +336,119 @@ describe("UT for executerManager class", function () {
       expect(result).to.be.false;
     });
     it("should return true if retryCondition is defined and evalCondition returns true", async function () {
-      evalConditionMock = async ()=>true;
-      executerManager.__set__("evalCondition", evalConditionMock);
+      evalConditionStub.resolves(true);
       const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.true;
     });
     it("should return false if retryCondition is defined and evalCondition returns false", async function () {
-      evalConditionMock = async ()=>false;
-      executerManager.__set__("evalCondition", evalConditionMock);
+      evalConditionStub.resolves(false);
       const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.false;
     });
     it("should return false and log an error if evalCondition throws an error", async function () {
-      let logCalled = false;
-      evalConditionMock = async ()=>{
-        throw new Error("Mock error");
-      };
-      executerManager.__set__("evalCondition", evalConditionMock);
-      loggerMock.info = (message)=>{
-        logCalled = true;
-        expect(message).to.include(`retryCondition of ${mockTask.name}(${mockTask.ID}) is set but exception occurred while evaluting it. so give up retring`);
-      };
-      executerManager.__set__("getLogger", ()=>loggerMock);
+      evalConditionStub.rejects(new Error("Mock error"));
       const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.false;
-      expect(logCalled).to.be.true;
+      expect(loggerInfoStub).to.have.been.calledWith(mockTask.projectRootDir, mockTask.workingDir, "retryCondition is set but exception occurred while evaluting it. so give up retring");
     });
     it("should log a message if evalCondition returns true and task is retried", async function () {
-      let logCalled = false;
-      evalConditionMock = async ()=>true;
-      executerManager.__set__("evalCondition", evalConditionMock);
-      loggerMock.info = (message)=>{
-        logCalled = true;
-        expect(message).to.include(`${mockTask.name}(${mockTask.ID}) failed but retring`);
-      };
-      executerManager.__set__("getLogger", ()=>loggerMock);
+      evalConditionStub.resolves(true);
       const taskWithCondition = { ...mockTask, retryCondition: "mock condition" };
       const result = await needsRetry(taskWithCondition);
       expect(result).to.be.true;
-      expect(logCalled).to.be.true;
+      expect(loggerInfoStub).to.have.been.calledWith(mockTask.projectRootDir, mockTask.workingDir, "failed but retring");
+    });
+    it("should pass WHEEL_TASK_RT and wheelTaskRT in env to evalCondition", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition", rt: 42, env: { EXISTING: "value" } };
+      await needsRetry(taskWithCondition);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 42, wheelTaskRT: 42, EXISTING: "value" })
+      );
+    });
+    it("should use checker return value as WHEEL_TASK_RT when checkerRt is provided", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition", rt: 42 };
+      await needsRetry(taskWithCondition, 10);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 10, wheelTaskRT: 10 })
+      );
+    });
+    it("should use task.checkerRt as WHEEL_TASK_RT if checkerRt parameter is undefined", async function () {
+      evalConditionStub.resolves(true);
+      const taskWithCondition = { ...mockTask, retryCondition: "mock condition", rt: 42, checkerRt: 20 };
+      await needsRetry(taskWithCondition);
+      expect(evalConditionStub).to.have.been.calledWith(
+        mockTask.projectRootDir,
+        "mock condition",
+        mockTask.workingDir,
+        sinon.match({ WHEEL_TASK_RT: 20, wheelTaskRT: 20 })
+      );
     });
   });
-  describe("promisifiedSpawn", function () {
-    let spawnMock;
-    let loggerMock;
-    beforeEach(()=>{
-      spawnMock = new EventEmitter();
-      spawnMock.stdout = new EventEmitter();
-      spawnMock.stderr = new EventEmitter();
 
-      executerManager.__set__("childProcess", {
-        spawn: ()=>spawnMock
-      });
-      loggerMock = {
-        stdout: ()=>{},
-        stderr: ()=>{},
-        debug: ()=>{}
-      };
-      executerManager.__set__("getLogger", ()=>loggerMock);
+  describe("promisifiedSpawn", function () {
+    let spawnStub;
+    let loggerStdoutStub;
+    let loggerStderrStub;
+
+    beforeEach(()=>{
+      spawnStub = new EventEmitter();
+      spawnStub.stdout = new EventEmitter();
+      spawnStub.stderr = new EventEmitter();
+      sinon.stub(_internal.childProcess, "spawn").returns(spawnStub);
+
+      loggerStdoutStub = sinon.stub(loggerWrapper, "logStdout");
+      loggerStderrStub = sinon.stub(loggerWrapper, "logStderr");
+      sinon.stub(loggerWrapper, "logDebug");
     });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
     it("should resolve with the exit code when the script finishes successfully", async function () {
-      const task = { projectRootDir: "/mock/project", name: "mockTask" };
+      const task = { projectRootDir: "/mock/project", name: "mockTask", workingDir: "/mock/workingDir" };
       setTimeout(()=>{
-        spawnMock.emit("exit", 0);
+        spawnStub.emit("exit", 0);
       }, 100);
       const result = await promisifiedSpawn(task, "mockScript.sh", {});
       expect(result).to.equal(0);
     });
     it("should log stdout data", function (done) {
-      loggerMock.stdout = (data)=>{
-        expect(data).to.equal("mock stdout data\n");
+      const task = { projectRootDir: "/mock/project", workingDir: "/mock/workingDir" };
+      loggerStdoutStub.callsFake((proj, dir, msg)=>{
+        expect(proj).to.equal(task.projectRootDir);
+        expect(dir).to.equal(task.workingDir);
+        expect(msg).to.equal("mock stdout data\n");
         done();
-      };
-      executerManager.__set__("getLogger", ()=>loggerMock);
-      promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
-      spawnMock.stdout.emit("data", "mock stdout data\n");
+      });
+      promisifiedSpawn(task, "mockScript.sh", {});
+      spawnStub.stdout.emit("data", "mock stdout data\n");
     });
     it("should log stderr data", function (done) {
-      loggerMock.stderr = (data)=>{
-        expect(data).to.equal("mock stderr data\n");
+      const task = { projectRootDir: "/mock/project", workingDir: "/mock/workingDir" };
+      loggerStderrStub.callsFake((proj, dir, msg)=>{
+        expect(proj).to.equal(task.projectRootDir);
+        expect(dir).to.equal(task.workingDir);
+        expect(msg).to.equal("mock stderr data\n");
         done();
-      };
-      executerManager.__set__("getLogger", ()=>loggerMock);
-      promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
-      spawnMock.stderr.emit("data", "mock stderr data\n");
+      });
+      promisifiedSpawn(task, "mockScript.sh", {});
+      spawnStub.stderr.emit("data", "mock stderr data\n");
     });
     it("should reject the promise if an error occurs", async function () {
-      const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
       setTimeout(()=>{
-        spawnMock.emit("error", new Error("Mock error"));
-      }, 100);
-
-      try {
-        await promisifiedSpawn({ projectRootDir: "/mock/project" }, "mockScript.sh", {});
-        throw new Error("Expected promise to be rejected");
-      } catch (err) {
-        expect(err.message).to.equal("Mock error");
-      }
-    });
-    it("should reject the promise if the process emits an error event", async function () {
-      const promisifiedSpawn = executerManager.__get__("promisifiedSpawn");
-      setTimeout(()=>{
-        spawnMock.emit("error", new Error("Mock error"));
+        spawnStub.emit("error", new Error("Mock error"));
       }, 100);
 
       try {
@@ -496,15 +487,15 @@ describe("UT for executerManager class", function () {
     });
   });
   describe("getMaxNumJob", function () {
-    let originalNumJobOnLocal;
+    //eslint-disable-next-line no-unused-vars
+    let numLocalJobStub;
     beforeEach(()=>{
-      originalNumJobOnLocal = executerManager.__get__("numJobOnLocal");
-      executerManager.__set__("numJobOnLocal", 5);
+      numLocalJobStub = sinon.stub(_internal, "numLocalJob").value(5);
     });
     afterEach(()=>{
-      executerManager.__set__("numJobOnLocal", originalNumJobOnLocal);
+      sinon.restore();
     });
-    it("should return numJobOnLocal if hostinfo is null", function () {
+    it("should return numLocalJob if hostinfo is null", function () {
       const result = getMaxNumJob(null);
       expect(result).to.equal(5);
     });
@@ -524,74 +515,63 @@ describe("UT for executerManager class", function () {
       expect(result).to.equal(1);
       const negativeHostinfo = { numJob: "-5" };
       const negativeResult = getMaxNumJob(negativeHostinfo);
+
       expect(negativeResult).to.equal(1);
     });
   });
   describe("createExecuter", function () {
-    let RemoteJobExecuter, RemoteTaskExecuter, RemoteJobWebAPIExecuter, LocalTaskExecuter;
-    let mockLogger;
-    let jobSchedulerMock;
+    let loggerDebugStub;
+    let loggerErrorStub;
+    //eslint-disable-next-line no-unused-vars
+    let jobSchedulerStub;
     beforeEach(()=>{
-      mockLogger = {
-        debug: sinon.stub(),
-        error: sinon.stub()
-      };
-      executerManager.__set__("getLogger", ()=>mockLogger);
-      jobSchedulerMock = {
-        validScheduler: {
-          submit: "mockSubmitCommand",
-          queueOpt: "--queue=",
-          reJobID: "mockJobIDPattern"
-        }
-      };
-      executerManager.__set__("jobScheduler", jobSchedulerMock);
-      RemoteJobExecuter = executerManager.__get__("RemoteJobExecuter");
-      RemoteTaskExecuter = executerManager.__get__("RemoteTaskExecuter");
-      RemoteJobWebAPIExecuter = executerManager.__get__("RemoteJobWebAPIExecuter");
-      LocalTaskExecuter = executerManager.__get__("LocalTaskExecuter");
+      loggerDebugStub = sinon.stub(loggerWrapper, "logDebug");
+      loggerErrorStub = sinon.stub(loggerWrapper, "logError");
+      jobSchedulerStub = sinon.stub(_internal, "jobScheduler").value({ validScheduler: { submit: "mockSubmitCommand", queueOpt: "--queue=", reJobID: "mockJobIDPattern" } });
     });
-    after(()=>{
-      jobSchedulerMock = {
-      };
-      executerManager.__set__("jobScheduler", jobSchedulerMock);
+    afterEach(()=>{
+      sinon.restore();
     });
     it("should create a LocalTaskExecuter for a local task", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "localhost", useJobScheduler: false };
       const hostinfo = null;
       const executer = createExecuter(task, hostinfo);
       expect(executer).to.be.an.instanceof(LocalTaskExecuter);
-      expect(mockLogger.debug).to.have.been.calledWith("create new executer for localhost");
+      expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, "create new executer for localhost");
     });
     it("should create a RemoteTaskExecuter for a remote task without job scheduler", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: false, host: "remoteHost" };
       const hostinfo = { host: "remoteHost", jobScheduler: null };
       const executer = createExecuter(task, hostinfo);
       expect(executer).to.be.an.instanceof(RemoteTaskExecuter);
-      expect(mockLogger.debug).to.have.been.calledWith("create new executer for remoteHost without job scheduler");
+      expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, `create new executer for ${task.host} without job scheduler`);
     });
     it("should create a RemoteJobExecuter for a remote task using a job scheduler", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true, host: "remoteHost" };
       const hostinfo = { host: "remoteHost", jobScheduler: "validScheduler" };
       const executer = createExecuter(task, hostinfo);
       expect(executer).to.be.an.instanceof(RemoteJobExecuter);
-      expect(mockLogger.debug).to.have.been.calledWith("create new executer for remoteHost with job scheduler");
+      expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, `create new executer for ${task.host} with job scheduler`);
     });
     it("should create a RemoteJobWebAPIExecuter for a remote task using web API", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true, host: "remoteHost" };
       const hostinfo = { host: "remoteHost", jobScheduler: "validScheduler", useWebAPI: true };
       const executer = createExecuter(task, hostinfo);
       expect(executer).to.be.an.instanceof(RemoteJobWebAPIExecuter);
-      expect(mockLogger.debug).to.have.been.calledWith("create new executer for remoteHost with web API");
+      expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, `create new executer for ${task.host} with web API`);
     });
     it("should throw an error if an invalid job scheduler is specified", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true };
+
       const hostinfo = { host: "remoteHost", jobScheduler: "invalidScheduler" };
-      expect(()=>createExecuter(task, hostinfo)).to.throw("illegal job Scheduler specifies");
-      expect(mockLogger.error).to.have.been.calledOnce;
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return createExecuter(task, hostinfo); }).to.throw("illegal job Scheduler specifies");
+      expect(loggerErrorStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, sinon.match.instanceOf(Error));
     });
   });
   describe("register", function () {
-    let mockExecuter, mockTask, mockHostInfo, jobSchedulerMock, mockExecuters, mockLogger;
+    //eslint-disable-next-line no-unused-vars
+    let mockExecuter, mockTask, mockHostInfo, getSshHostinfoStub, createExecuterStub;
     beforeEach(()=>{
       mockExecuter = {
         submit: sinon.stub().resolves("submitted"),
@@ -613,33 +593,25 @@ describe("UT for executerManager class", function () {
         queue: "default",
         grpName: "testGroup"
       };
-      mockLogger = {
-        debug: sinon.stub(),
-        error: sinon.stub()
-      };
-      jobSchedulerMock = {
-        validScheduler: {
-          submit: "mockSubmitCommand",
-          queueOpt: "--queue=",
-          reJobID: "mockJobIDPattern"
-        }
-      };
-      mockExecuters = new Map();
-      executerManager.__set__("executers", mockExecuters);
-      executerManager.__set__("jobScheduler", jobSchedulerMock);
-      executerManager.__set__("getSshHostinfo", sinon.stub().returns(mockHostInfo));
-      executerManager.__set__("getLogger", sinon.stub().returns(mockLogger));
-      executerManager.__set__("createExecuter", sinon.stub().returns(mockExecuter));
+      getSshHostinfoStub = sinon.stub(_internal, "getSshHostinfo").returns(mockHostInfo);
+      sinon.stub(loggerWrapper, "logDebug");
+      sinon.stub(loggerWrapper, "logError");
+      createExecuterStub = sinon.stub(_internal, "createExecuter").returns(mockExecuter);
+      sinon.stub(_internal, "jobScheduler").value({ validScheduler: {} });
+    });
+    afterEach(()=>{
+      sinon.restore();
+      _internal.executers.clear();
     });
     it("should create a new executer and submit the task", async function () {
       const result = await register(mockTask);
       expect(result).to.equal("submitted");
-      expect(mockExecuters.size).to.equal(1);
-      expect(mockExecuters.get(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`)).to.equal(mockExecuter);
+      expect(_internal.executers.size).to.equal(1);
+      expect(_internal.executers.get(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`)).to.equal(mockExecuter);
       expect(mockExecuter.submit).to.have.been.calledOnceWith(mockTask);
     });
     it("should reuse existing executer and submit the task", async function () {
-      mockExecuters.set(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`, mockExecuter);
+      _internal.executers.set(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`, mockExecuter);
       const result = await register(mockTask);
       expect(result).to.equal("submitted");
       expect(mockExecuter.submit).to.have.been.calledOnceWith(mockTask);
@@ -648,30 +620,24 @@ describe("UT for executerManager class", function () {
       expect(mockExecuter.setQueues).to.have.been.calledOnceWith(mockHostInfo.queue);
       expect(mockExecuter.setGrpName).to.have.been.calledOnceWith(mockHostInfo.grpName);
     });
+
     it("should throw an error if an invalid job scheduler is specified", async function () {
-      mockExecuters.set(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`, mockExecuter);
-      executerManager.__set__("getSshHostinfo", ()=>({ jobScheduler: "invalidScheduler" }));
+      _internal.executers.set(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`, mockExecuter);
+      getSshHostinfoStub.returns({ jobScheduler: "invalidScheduler" });
       await expect(register(mockTask)).to.be.rejectedWith(Error, "illegal job scheduler");
     });
   });
   describe("cancel", function () {
-    let mockExecuters;
-    let mockLogger;
-    let remoteHostMock;
+    let loggerWarnStub;
+    //eslint-disable-next-line no-unused-vars
+    let remoteHostGetIDStub;
     beforeEach(()=>{
-      mockExecuters = new Map();
-      executerManager.__set__("executers", mockExecuters);
-      mockLogger = {
-        warn: sinon.stub()
-      };
-      executerManager.__set__("getLogger", ()=>mockLogger);
-      remoteHostMock = {
-        getID: sinon.stub().returns("localhost")
-      };
-      executerManager.__set__("remoteHost", remoteHostMock);
+      loggerWarnStub = sinon.stub(loggerWrapper, "logWarn");
+      remoteHostGetIDStub = sinon.stub(_internal.remoteHost, "getID").returns("localhost");
     });
     afterEach(()=>{
-      mockExecuters.clear();
+      sinon.restore();
+      _internal.executers.clear();
     });
     it("should return false if task does not have sbsID", function () {
       const task = {
@@ -679,7 +645,7 @@ describe("UT for executerManager class", function () {
         remotehostID: "localhost",
         useJobScheduler: false
       };
-      const result = executerManager.cancel(task);
+      const result = cancel(task);
       expect(result).to.be.false;
     });
     it("should return false if executer is not found", function () {
@@ -690,15 +656,71 @@ describe("UT for executerManager class", function () {
         sbsID: "12345",
         host: "nonexistent"
       };
-      const result = executerManager.cancel(task);
+      const result = cancel(task);
       expect(result).to.be.false;
-      expect(mockLogger.warn).to.have.been.calledWith(
-        "executer for",
-        "localhost",
-        " with job scheduler",
-        true,
-        "is not found"
+      expect(loggerWarnStub).to.have.been.calledWith(
+        task.projectRootDir,
+        task.workingDir,
+        "executer for localhost with job scheduler is not found"
       );
+    });
+  });
+
+  describe("runChecker", ()=>{
+    it("should return null if checker is not specified", async function () {
+      const { runChecker } = await import("../../../app/core/executerManager.js");
+      const task = {
+        checker: null,
+        remotehostID: "localhost",
+        projectRootDir: "/tmp/test",
+        workingDir: "/tmp/test/task"
+      };
+      const result = await runChecker(task);
+      expect(result).to.be.null;
+    });
+
+    it("should execute local checker and return exit code", async function () {
+      const { runChecker } = await import("../../../app/core/executerManager.js");
+      const testDir = path.resolve(testDirRoot, "checkerTest");
+      await fs.ensureDir(testDir);
+      const checkerScript = path.resolve(testDir, "checker.sh");
+      await fs.writeFile(checkerScript, "#!/bin/bash\nexit 0");
+      await fs.chmod(checkerScript, 0o755);
+
+      const task = {
+        checker: "checker.sh",
+        remotehostID: "localhost",
+        projectRootDir: testDir,
+        workingDir: testDir,
+        env: {}
+      };
+
+      const result = await runChecker(task);
+      expect(result).to.equal(0);
+
+      await fs.remove(testDir);
+    });
+
+    it("should execute local checker and return non-zero exit code on failure", async function () {
+      const { runChecker } = await import("../../../app/core/executerManager.js");
+      const testDir = path.resolve(testDirRoot, "checkerTestFail");
+      await fs.ensureDir(testDir);
+      const checkerScript = path.resolve(testDir, "checker.sh");
+      await fs.writeFile(checkerScript, "#!/bin/bash\nexit 1");
+      await fs.chmod(checkerScript, 0o755);
+
+      const task = {
+        checker: "checker.sh",
+        remotehostID: "localhost",
+        projectRootDir: testDir,
+        workingDir: testDir,
+        env: {}
+      };
+
+      const result = await runChecker(task);
+      expect(result).to.equal(1);
+
+      await fs.remove(testDir);
     });
   });
 });

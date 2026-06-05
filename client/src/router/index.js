@@ -6,7 +6,6 @@
 import { createRouter, createMemoryHistory } from "vue-router";
 import Graph from "../views/graph.vue";
 import List from "../views/taskList.vue";
-import Editor from "../views/rapid.vue";
 
 const routes = [
   {
@@ -18,11 +17,6 @@ const routes = [
     path: "/list",
     name: "list",
     component: List
-  },
-  {
-    path: "/editor",
-    name: "editor",
-    component: Editor
   }
 ];
 

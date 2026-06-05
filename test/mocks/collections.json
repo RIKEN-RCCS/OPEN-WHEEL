@@ -1,0 +1,16 @@
+[
+  {
+    "id": "base",
+    "from": null,
+    "routes": [
+      "get-health:ok"
+    ]
+  },
+  {
+    "id": "failed",
+    "from": null,
+    "routes": [
+      "get-health:down"
+    ]
+  }
+]

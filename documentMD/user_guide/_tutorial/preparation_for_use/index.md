@@ -6,7 +6,7 @@ lang: ja
 
 WHEELの利用開始前に、初期設定として行われたリモートホスト設定の内容が正しいことを確認します。
 
-__WHEELの起動について__  
+__WHEELの起動について__
 リモートホスト設定の確認時には、事前にWHEELサーバが起動されている必要があります。
 WHEELサーバの起動方法については、[起動方法]({{ site.baseurl }}/for_admins/how_to_boot/#起動方法) をご参照ください。
 {: .notice--info}
@@ -16,7 +16,7 @@ WHEELにアクセスし、画面右上のハンバーガーメニューをクリ
 
 ![hamburger menu](img/hamburger_menu.png "hamburger menu")
 
-表示されたメニュー内の __Remotehost editor__ をクリックします。リモートホスト設定画面が別タブで表示されます。
+表示されたメニュー内の __Remotehost editor__ をクリックします。リモートホスト設定ダイアログが表示されます。
 
 !["Remotehost editor"](img/remotehost_editor_button.png "Remotehost editor")
 
@@ -26,7 +26,7 @@ WHEELにアクセスし、画面右上のハンバーガーメニューをクリ
 
 設定内容が正しいことを確認します。
 
-!["設定内容の確認"](img/add_new_host.png "設定内容の確認")
+!["設定内容の確認"](img/add_newhost.png "設定内容の確認")
 
 Hostname
 : 接続先のホスト名またはIPアドレス
@@ -43,15 +43,15 @@ __OK__ ボタンをクリックして、ダイアログを閉じます。
 ### リモートホストへの接続確認
 続いて、WHEELからリモートホストに接続できることを確認します。
 
-リモートホスト設定画面を表示します。
-
-!["リモートホスト一覧"](img/remotehost_list.png "リモートホスト一覧")
-
-__connection test__ 列に表示された __TEST__ ボタンをクリックし、リモートホストへの接続テストを行います。
+リモートホスト設定ダイアログに戻り、__connection test__ 列に表示された __TEST__ ボタンをクリックして、リモートホストへの接続テストを行います。
 
 !["connection test"](img/connection_test.png "connection test")
 
 パスワード入力ダイアログが表示されます。リモートホストに接続するためのパスワードを入力し、 __OK__ ボタンをクリックします。
+この例では、"input __passphrase__ for test" と表示されていますが、これは公開鍵認証を行なうための秘密鍵のパスフレーズを入力する時の表示です。
+パスワード認証を行う場合は、"input __password__ for test" と表示されます。また、最後の __test__ の部分は、
+リモートホスト設定で指定したラベル名が表示されます。
+
 
 !["Input password"](img/input_password.png "Input password")
 
@@ -62,7 +62,7 @@ __connection test__ 列に表示された __TEST__ ボタンをクリックし�
 
 !["Result ok"](img/result_ok.png "Result ok")
 
-リモートホストへの接続が失敗した場合は、 __FAILED__ ボタン表示になります。  
+リモートホストへの接続が失敗した場合は、 __FAILED__ ボタン表示になります。
 [リモートホスト設定の確認](#リモートホスト設定の確認)に従い、設定内容を見直してください。
 
 !["Result failed"](img/result_failed.png "Result failed")

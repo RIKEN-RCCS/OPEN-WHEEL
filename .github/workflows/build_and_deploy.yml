@@ -1,6 +1,8 @@
 name: build and deploy container
 on:
   pull_request_target:
+    branches:
+      - master
     types:
       - closed
 jobs:

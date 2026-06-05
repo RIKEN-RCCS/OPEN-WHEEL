@@ -3,9 +3,8 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { pathseps, reWin32ReservedNames, metaCharactors, escapeRegExp } = require("../lib/utility");
+import path from "path";
+import { pathseps, reWin32ReservedNames, metaCharactors, escapeRegExp } from "../lib/utility.js";
 
 /**
  * replace path separator by native path separator
@@ -47,8 +46,4 @@ function sanitizePath(target, replacer = "_") {
   return sanitized;
 }
 
-module.exports = {
-  convertPathSep,
-  replacePathsep,
-  sanitizePath
-};
+export { convertPathSep, replacePathsep, sanitizePath };

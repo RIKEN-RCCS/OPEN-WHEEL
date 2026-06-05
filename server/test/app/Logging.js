@@ -3,47 +3,49 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
+import fs from "fs-extra";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 //setup test framework
-const chai = require("chai");
-const { expect } = require("chai");
-chai.use(require("chai-fs"));
-const sinon = require("sinon");
-chai.use(require("sinon-chai"));
+import { expect } from "chai";
+import * as chai from "chai";
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
 chai.use((_chai, _)=>{
   _chai.Assertion.addMethod("withMessage", function (msg) {
     _.flag(this, "message", msg);
   });
 });
-const rewire = require("rewire");
 
-const { logFilename } = require("../../app/db/db.js");
+import { logFilename } from "../../app/db/db.js";
 const projectRootDir = path.resolve("hoge");
 
 //testee
-const LOG = rewire("../../app/logSettings.js");
-const getLogger = LOG.__get__("getLogger");
-
-//stubs
-const emitAll = sinon.stub();
-LOG.__set__("emitAll", emitAll);
+import { getLogger, configure, logSettings, _internal, logInfo, logDebug, logError } from "../../app/logSettings.js";
 
 describe("Unit test for log4js's helper functions", ()=>{
   let logger;
-  const log4js = LOG.__get__("log4js");
-  const settings = LOG.__get__("logSettings");
+  let emitAll;
+  let originalLog2clientLevel;
+  let originalFilterdFileLevel;
   before(async ()=>{
-    settings.appenders.log2client.level = "debug";
-    settings.appenders.filterdFile.level = "trace";
-    log4js.configure(settings);
+    originalLog2clientLevel = logSettings.appenders.log2client.level;
+    originalFilterdFileLevel = logSettings.appenders.filterdFile.level;
+    logSettings.appenders.log2client.level = "debug";
+    logSettings.appenders.filterdFile.level = "trace";
+    configure(logSettings);
+    emitAll = sinon.stub(_internal, "emitAll");
   });
   after(async ()=>{
-    settings.appenders.log2client.level = process.env.WHEEL_LOGLEVEL;
-    settings.appenders.filterdFile.level = process.env.WHEEL_LOGLEVEL;
-    log4js.configure(settings);
+    sinon.restore();
+    logSettings.appenders.log2client.level = originalLog2clientLevel;
+    logSettings.appenders.filterdFile.level = originalFilterdFileLevel;
+    configure(logSettings);
   });
   describe("#getLogger", ()=>{
     it("return log4js instance with default projectRootDir", ()=>{
@@ -66,7 +68,7 @@ describe("Unit test for log4js's helper functions", ()=>{
         await fs.remove(path.resolve(__dirname, logFilename));
         await fs.remove(projectRootDir);
       }
-      log4js.configure(settings);
+      configure(logSettings);
     });
     it("should send info, warn and error log to client", ()=>{
       logger = getLogger(projectRootDir);
@@ -77,11 +79,13 @@ describe("Unit test for log4js's helper functions", ()=>{
       expect(emitAll.callCount).to.eql(2);
       const calls = emitAll.getCalls();
       expect(calls[0].args[0]).to.eql(projectRootDir);
-      expect(calls[0].args[1]).to.eql("logINFO");
-      expect(calls[0].args[2]).to.match(/info$/);
+      expect(calls[0].args[1]).to.eql("WHEEL_LOG");
+      const infoLog = JSON.parse(calls[0].args[2].slice(0, -1));
+      expect(infoLog.data[0]).to.equal("info");
       expect(calls[1].args[0]).to.eql(projectRootDir);
-      expect(calls[1].args[1]).to.eql("logERR");
-      expect(calls[1].args[2]).to.match(/error$/);
+      expect(calls[1].args[1]).to.eql("WHEEL_LOG");
+      const errorLog = JSON.parse(calls[1].args[2].slice(0, -1));
+      expect(errorLog.data[0]).to.equal("error");
     });
     it("should write all logs except trace to file", async ()=>{
       logger = getLogger(projectRootDir);
@@ -94,7 +98,7 @@ describe("Unit test for log4js's helper functions", ()=>{
       await logger.shutdown();
 
       const filename = path.resolve(projectRootDir, path.basename(logFilename));
-      expect(filename).to.be.a.file();
+      expect(fs.statSync(filename).isFile()).to.be.true;
       const log = await fs.readFile(filename).then((data)=>{
         return data.toString();
       });
@@ -104,6 +108,55 @@ describe("Unit test for log4js's helper functions", ()=>{
       expect(log).to.match(/warn/);
       expect(log).to.match(/error/);
       expect(log).to.match(/fatal/);
+    });
+  });
+  describe("#logWithComponentDir", ()=>{
+    beforeEach(async ()=>{
+      await fs.remove(projectRootDir);
+      await fs.mkdir(projectRootDir);
+      emitAll.resetHistory();
+    });
+    afterEach(async ()=>{
+      if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+        await fs.remove(path.resolve(__dirname, logFilename));
+        await fs.remove(projectRootDir);
+      }
+      configure(logSettings);
+    });
+    it("should convert absolute path to relative path", async ()=>{
+      const componentDir = path.join(projectRootDir, "workflow1", "task0");
+      logInfo(projectRootDir, componentDir, "test message");
+      await getLogger(projectRootDir).shutdown();
+
+      const filename = path.resolve(projectRootDir, path.basename(logFilename));
+      const log = await fs.readFile(filename).then((data)=>{
+        return data.toString();
+      });
+      expect(log).to.match(/\[workflow1\/task0\]/);
+      expect(log).to.match(/test message/);
+    });
+    it("should show 'project root' when componentDir equals projectRootDir", async ()=>{
+      logDebug(projectRootDir, projectRootDir, "root message");
+      await getLogger(projectRootDir).shutdown();
+
+      const filename = path.resolve(projectRootDir, path.basename(logFilename));
+      const log = await fs.readFile(filename).then((data)=>{
+        return data.toString();
+      });
+      expect(log).to.match(/\[project root\]/);
+      expect(log).to.match(/root message/);
+    });
+    it("should keep absolute path if not under projectRootDir", async ()=>{
+      const externalPath = "/some/external/path";
+      logError(projectRootDir, externalPath, "external message");
+      await getLogger(projectRootDir).shutdown();
+
+      const filename = path.resolve(projectRootDir, path.basename(logFilename));
+      const log = await fs.readFile(filename).then((data)=>{
+        return data.toString();
+      });
+      expect(log).to.match(/\[\/some\/external\/path\]/);
+      expect(log).to.match(/external message/);
     });
   });
 });

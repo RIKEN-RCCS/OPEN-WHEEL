@@ -3,44 +3,28 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
-const { promisify } = require("util");
-const { execFile } = require("child_process");
+import fs from "fs-extra";
+import path from "path";
+import { promisify } from "util";
+import { execFile } from "child_process";
 const asyncExecFile = promisify(execFile);
-const rewire = require("rewire");
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("chai-fs"));
-chai.use(require("chai-as-promised"));
+import sinon from "sinon";
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
 
 //helper
-const { updateComponent, createNewComponent, createNewProject } = require("../../../app/core/projectFilesOperator.js");
-const { gitAdd, gitRm, gitStatus, gitCommit } = require("../../../app/core/gitOperator2.js");
-const { componentJsonFilename, projectJsonFilename } = require("../../../app/db/db.js");
+import { updateComponentProperty } from "../../testUtil.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { createNewProject } from "../../../app/core/projectOperations.js";
+import { gitAdd, gitRm, gitStatus, gitCommit } from "../../../app/core/gitOperator2.js";
+import { componentJsonFilename, projectJsonFilename } from "../../../app/db/db.js";
 
 //testee
-const PFO = rewire("../../../app/core/projectFilesOperator.js");
-const readProject = PFO.__get__("readProject");
-
-let onList = false;
-const projectList = PFO.__get__("projectList");
-projectList.query = ()=>{
-  return onList;
-};
-projectList.write = ()=>{};
-PFO.__set__("projectList", projectList);
-////for debug
-//PFO.__set__("getLogger", ()=>{return {
-//trace: console.log.bind(console),
-//debug: console.log.bind(console),
-//info: console.log.bind(console),
-//warn: console.log.bind(console),
-//error: console.log.bind(console)
-//}})
+import { readProject, _internal } from "../../../app/core/projectOperations.js";
 
 //test data
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
@@ -49,13 +33,27 @@ const projectRootDir = path.resolve(testDirRoot, "test_project.wheel");
 describe("readProject UT", function () {
   this.timeout(10000);
   let task0;
+  let projectListQueryStub;
+  let projectListWriteStub;
+
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
+
+    //Set up stubs for projectList
+    if (projectListQueryStub) projectListQueryStub.restore();
+    if (projectListWriteStub) projectListWriteStub.restore();
+    projectListQueryStub = sinon.stub(_internal.projectList, "query").returns(false);
+    projectListWriteStub = sinon.stub(_internal.projectList, "write");
+
     await createNewProject(projectRootDir, "test_project", null, "test", "test@example.com");
     task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
     await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
     await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
     await gitCommit(projectRootDir);
+  });
+  afterEach(()=>{
+    if (projectListQueryStub) projectListQueryStub.restore();
+    if (projectListWriteStub) projectListWriteStub.restore();
   });
   after(async ()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
@@ -73,7 +71,7 @@ describe("readProject UT", function () {
     expect(untracked).to.be.an("array").that.is.empty;
   });
   it("should do nothing if git-controlled and something modified", async ()=>{
-    await updateComponent(projectRootDir, task0.ID, "state", "hoge");
+    await updateComponentProperty(projectRootDir, task0.ID, "state", "hoge");
     await readProject(projectRootDir);
 
     const { added, modified, deleted, renamed, untracked } = await gitStatus(projectRootDir);
@@ -84,8 +82,8 @@ describe("readProject UT", function () {
     expect(untracked).to.be.an("array").that.is.empty;
   });
   it("should convert include or exclude prop is comma separated string", async ()=>{
-    await updateComponent(projectRootDir, task0.ID, "include", "foo,bar,baz");
-    await updateComponent(projectRootDir, task0.ID, "exclude", "hoge,huga,piyo");
+    await updateComponentProperty(projectRootDir, task0.ID, "include", "foo,bar,baz");
+    await updateComponentProperty(projectRootDir, task0.ID, "exclude", "hoge,huga,piyo");
     await gitCommit(projectRootDir);
     await readProject(projectRootDir);
 
@@ -113,10 +111,10 @@ describe("readProject UT", function () {
     expect(deleted).to.be.an("array").that.is.empty;
     expect(renamed).to.be.an("array").that.is.empty;
     expect(untracked).to.be.an("array").that.is.empty;
-    expect(ignoreFile).to.be.a.file().with.content("wheel.log");
+    expect(fs.readFileSync(ignoreFile, "utf-8")).to.equal("wheel.log");
   });
   it("should set all components and project to 'not-started' and commit everything if project is not git-controlled", async ()=>{
-    await updateComponent(projectRootDir, task0.ID, "state", "hoge");
+    await updateComponentProperty(projectRootDir, task0.ID, "state", "hoge");
     await fs.remove(path.resolve(projectRootDir, ".git"));
     await readProject(projectRootDir);
 

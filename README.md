@@ -84,7 +84,7 @@ run following commands
 2. npm run build (install dependent modules for server and client code)
 3. cd test; npm install (install e2e test modules)
 
-please read test/README.md for E2E test preparation
+please read [TEST_GUIDE.md](TEST_GUIDE.md) for test execution guide (UT and E2E)
 
 
 ### CI/CD process

@@ -1,0 +1,8 @@
+FROM node:20-slim
+WORKDIR /app
+COPY package.json ./
+RUN npm install --ignore-scripts
+COPY ws-gateway.cjs ./
+ENV GW_PORT=3001
+EXPOSE 3001
+CMD ["node", "ws-gateway.cjs"]

@@ -124,6 +124,7 @@ export function getDateString(humanReadable = false, withMilliseconds = false) {
  * @returns {boolean} - if true, specified component can have children
  */
 export function isContainer(target) {
+  if (!target) return false;
   const type = typeof target === "string" ? target : target.type;
   return ["workflow", "parameterStudy", "for", "while", "foreach", "stepjob"].includes(type);
 }

@@ -1,0 +1,64 @@
+name: run UT on windows
+on:
+  push:
+    branches:
+      - '**'
+      - '!master'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: wsl-bash {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup WSL with Ubuntu
+        uses: Vampire/setup-wsl@v6
+        id: wsl
+        with:
+          distribution: 'Ubuntu-22.04'
+          update: 'true'
+          additional-packages: >
+            apt-transport-https
+            ca-certificates
+            curl
+            gnupg
+            lsb-release
+
+      - name: Install Docker Engine in WSL
+        run: |
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+      - name: Run tests
+        run: |
+          sudo service docker start
+          cd server/test
+          export WHEEL_CONFIG_DIR=$(mktemp -d tmp.XXXXXXXXXX)
+          {
+          echo '[{'
+          echo '  "name": "testServer",'
+          echo '  "host": "wheel_release_test_server",'
+          echo '  "path": "/home/testuser",'
+          echo '  "username": "testuser",'
+          echo '  "numJob": 1,'
+          echo '  "port": 22,'
+          echo '  "id": "dummy-id",'
+          echo '  "jobScheduler": "PBSPro",'
+          echo '  "renewInterval": 0,'
+          echo '  "renewDelay": 0,'
+          echo '  "statusCheckInterval": 10,'
+          echo '  "maxStatusCheckError": 10,'
+          echo '  "readyTimeout": 5000'
+          echo '}]'
+          } > ${WHEEL_CONFIG_DIR}/remotehost.json
+          sudo docker compose run --build wheel_release_test

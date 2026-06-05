@@ -3,20 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const klaw = require("klaw");
+import path from "path";
+import klaw from "klaw";
 
-const { getThreeGenerationFamily } = require("../core/workflowUtil.js");
-const { getLogger } = require("../logSettings");
-const { getComponentTree } = require("../core/projectFilesOperator");
-const { projectJsonFilename, componentJsonFilename } = require("../db/db");
-const { readJsonGreedy } = require("../core/fileUtils");
-const { taskStateFilter } = require("../core/taskUtil");
-const { parentDirs } = require("../core/global.js");
-const { emitAll } = require("./commUtils.js");
+import { getThreeGenerationFamily } from "../core/workflowUtil.js";
+import { getLogger } from "../logSettings.js";
+import { getComponentTree } from "../core/componentOperations.js";
+import { projectJsonFilename, componentJsonFilename } from "../db/db.js";
+import { readJsonGreedy } from "../core/fileUtils.js";
+import { taskStateFilter } from "../core/taskUtil.js";
+import { parentDirs } from "../core/global.js";
+import { emitAll } from "./commUtils.js";
 //read and send current workflow and its child and grandson
-async function sendWorkflow(cb, projectRootDir, parentComponentDir = "", clientID = null) {
+export async function sendWorkflow(cb, projectRootDir, parentComponentDir = "", clientID = null) {
   if (typeof projectRootDir !== "string") {
     getLogger(projectRootDir).error("sendWorkflow called without projectRootDir!!");
   }
@@ -38,7 +37,7 @@ async function sendWorkflow(cb, projectRootDir, parentComponentDir = "", clientI
     cb(true);
   }
 }
-async function sendComponentTree(projectRootDir, rootDir) {
+export async function sendComponentTree(projectRootDir, rootDir) {
   try {
     const targetDir = path.isAbsolute(rootDir) ? rootDir : path.resolve(projectRootDir, rootDir);
     const rt = await getComponentTree(projectRootDir, targetDir);
@@ -50,7 +49,7 @@ async function sendComponentTree(projectRootDir, rootDir) {
   }
 }
 //read and send projectJson
-async function sendProjectJson(projectRootDir, argProjectJson) {
+export async function sendProjectJson(projectRootDir, argProjectJson) {
   getLogger(projectRootDir).trace("projectState: sendProjectJson", projectRootDir, argProjectJson);
   let projectJson = argProjectJson;
   if (!argProjectJson) {
@@ -61,7 +60,7 @@ async function sendProjectJson(projectRootDir, argProjectJson) {
   await emitAll(projectRootDir, "projectJson", projectJson);
 }
 //recursive read component meta data and send task state tree data as list
-async function sendTaskStateList(projectRootDir) {
+export async function sendTaskStateList(projectRootDir) {
   const p = [];
   klaw(projectRootDir)
     .on("data", (item)=>{
@@ -80,14 +79,6 @@ async function sendTaskStateList(projectRootDir) {
       await emitAll(projectRootDir, "taskStateList", data);
     });
 }
-async function sendResultsFileDir(projectRootDir, dir) {
+export async function sendResultsFileDir(projectRootDir, dir) {
   await emitAll(projectRootDir, "resultFilesReady", dir);
 }
-
-module.exports = {
-  sendWorkflow,
-  sendComponentTree,
-  sendProjectJson,
-  sendTaskStateList,
-  sendResultsFileDir
-};

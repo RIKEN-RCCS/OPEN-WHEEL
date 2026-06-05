@@ -11,8 +11,8 @@
     @click="$emit('clicked')"
   >
     <img
-      :src="componentDefinition[type].img"
-      :alt="componentDefinition[type].type"
+      :src="iconSrc"
+      :alt="type"
     >
     {{ name }}
   </v-btn>
@@ -20,6 +20,7 @@
 <script>
 "use strict";
 import loadComponentDefinition from "../../lib/componentDefinision.js";
+import { getComponentIcon } from "../../lib/utils.js";
 export default {
   name: "ComponentButton",
   props: {
@@ -30,6 +31,14 @@ export default {
     name: {
       type: String,
       required: true
+    },
+    host: {
+      type: String,
+      default: undefined
+    },
+    useJobScheduler: {
+      type: Boolean,
+      default: undefined
     }
   },
   emits: ["clicked"],
@@ -37,6 +46,11 @@ export default {
     return {
       componentDefinition: loadComponentDefinition()
     };
+  },
+  computed: {
+    iconSrc() {
+      return getComponentIcon(this.type, this.host, this.useJobScheduler);
+    }
   }
 
 };

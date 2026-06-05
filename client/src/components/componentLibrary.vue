@@ -32,6 +32,10 @@
               @click="envDialog=true"
             />
             <v-list-item
+              title="cleanup settings"
+              @click="cleanupDialog=true"
+            />
+            <v-list-item
               title="webhook"
               @click="webhookDialog=true"
             />
@@ -68,6 +72,9 @@
     v-model="envDialog"
     class="mb-16"
   />
+  <cleanup-setting-dialog
+    v-model="cleanupDialog"
+  />
   <webhook-setting-dialog
     v-model="webhookDialog"
     class="mb-16"
@@ -77,6 +84,7 @@
 import Debug from "debug";
 import { mergeProps } from "vue";
 import envSettingDialog from "../components/envSettingDialog.vue";
+import cleanupSettingDialog from "../components/cleanupSettingDialog.vue";
 import webhookSettingDialog from "../components/webhookSettingDialog.vue";
 import { mapState, mapMutations, mapGetters } from "vuex";
 import { widthComponentLibrary, heightToolbar, heightDenseToolbar } from "../lib/componentSizes.json";
@@ -89,6 +97,7 @@ export default {
   name: "ComponentLibrary",
   components: {
     envSettingDialog,
+    cleanupSettingDialog,
     webhookSettingDialog
   },
   data: ()=>{
@@ -103,6 +112,7 @@ export default {
       offsetY: null,
       widthComponentLibrary,
       envDialog: false,
+      cleanupDialog: false,
       webhookDialog: false
     };
   },

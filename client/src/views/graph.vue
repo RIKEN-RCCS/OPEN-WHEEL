@@ -16,7 +16,7 @@
     >
       <component-library />
       <graph-view />
-      <component-property />
+      <component-property ref="componentProperty" />
     </v-row>
   </div>
 </template>
@@ -34,6 +34,13 @@ export default {
     ComponentLibrary,
     ComponentProperty,
     ComponentTree
+  },
+  methods: {
+    refreshFileList() {
+      if (this.$refs.componentProperty) {
+        this.$refs.componentProperty.refreshFileList();
+      }
+    }
   }
 };
 </script>

@@ -14,8 +14,8 @@
       @click.stop="onClick(menu.event)"
     />
     <text
-      :x="x"
-      :y="y+index*height+height/2"
+      :x="x + 5"
+      :y="y+index*height+height/2 + 3"
       fill="black"
       :text-anchor="start"
       @click.stop="onClick(menu.event)"

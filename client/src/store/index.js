@@ -58,6 +58,7 @@ const state = {
   currentComponent: null,
   selectedComponent: null,
   copySelectedComponent: null,
+  copyInfo: null,
   projectState: null,
   projectRootDir: null,
   rootComponentID: null,
@@ -83,7 +84,12 @@ const state = {
   openDialog: false,
   dialogContent: null,
   dialogQueue: [],
-  readOnly: false
+  readOnly: false,
+  isComponentDragging: false,
+  currentZoom: 1,
+  currentPan: { x: 0, y: 0 },
+  textEditorDialog: false,
+  pendingNavigation: null
 };
 
 const mutations = mutationFactory(Object.keys(state));
@@ -92,20 +98,44 @@ export default new Vuex.Store({
   state,
   mutations,
   actions: {
+    openTextEditor: (context)=>{
+      context.commit("textEditorDialog", true);
+    },
+    pasteComponent: (context, payload)=>{
+      const { callback, pos } = payload || {};
+      const { copyInfo, currentComponent } = context.state;
+
+      //Check if cutting and pasting to the same parent
+      if (copyInfo && copyInfo.type === "cut" && copyInfo.parentID === currentComponent.ID) {
+        context.dispatch("showSnackbar", { message: "paste to same parent is not allowed", timeout: 2000 });
+        context.commit("copyInfo", null);
+        return;
+      }
+
+      SIO.emitGlobal("pasteComponent", context.state.projectRootDir, copyInfo, currentComponent.ID, pos, callback || (()=>{}));
+      context.commit("copyInfo", null);
+    },
     selectedComponent: (context, payload)=>{
       const { selectedComponent: selected,
         copySelectedComponent: copied,
         projectRootDir,
         currentComponent } = context.state;
-      if (copied !== null) {
+      //Only send updateComponent when switching to a different component or closing (payload===null).
+      //Do NOT send it for same-component workflow events to prevent cascade overwrites:
+      //e.g., when the user types chars rapidly, each renameOutputFile call triggers a workflow event
+      //which would call this action with the same component ID. Without this guard, each such call
+      //would send updateComponent with an intermediate copySelectedComponent value, potentially
+      //overwriting the final renameOutputFile result on the server.
+      const isSameComponent = copied !== null && payload !== null && copied.ID === payload.ID;
+      if (!isSameComponent && copied !== null && selected !== null) {
         const difference = diff(selected, copied);
         const changedProps = difference.filter((e)=>{
-          return e.path[0] !== "pos";
+          return !["pos", "outputFiles", "inputFiles"].includes(e.path[0]);
         });
         if (changedProps.length > 0) {
-          SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, copied, currentComponent.ID, (rt)=>{
-            console.log("compoent update done", rt);
-          });
+          //Use server's outputFiles/inputFiles to prevent data corruption
+          const sendPayload = { ...toRaw(copied), outputFiles: toRaw(selected).outputFiles, inputFiles: toRaw(selected).inputFiles };
+          SIO.emitGlobal("updateComponent", projectRootDir, copied.ID, sendPayload, currentComponent.ID, SIO.generalCallback);
         }
       }
       if (payload === null) {
@@ -115,8 +145,31 @@ export default new Vuex.Store({
       }
 
       context.commit("selectedComponent", payload);
-      const dup = structuredClone(toRaw(payload));
-      context.commit("copySelectedComponent", dup);
+      //When switching to a different component, always reset the working copy.
+      //When the same component is updated by an incoming workflow event,
+      //only update the working copy if the user has no in-progress edits.
+      //This prevents stale copySelectedComponent from diverging from selectedComponent
+      //and causing spurious updateComponent calls when subsequent workflow events arrive.
+      if (isSameComponent) {
+        const hasEdits = selected !== null && diff(selected, copied).some((e)=>{
+          return !["pos", "outputFiles", "inputFiles"].includes(e.path[0]);
+        });
+        if (!hasEdits) {
+          context.commit("copySelectedComponent", structuredClone(toRaw(payload)));
+        } else {
+          //Keep user's edits but sync outputFiles/inputFiles with server's latest value
+          const updatedCopy = structuredClone(toRaw(copied));
+          if (payload.outputFiles !== undefined) {
+            updatedCopy.outputFiles = structuredClone(toRaw(payload.outputFiles));
+          }
+          if (payload.inputFiles !== undefined) {
+            updatedCopy.inputFiles = structuredClone(toRaw(payload.inputFiles));
+          }
+          context.commit("copySelectedComponent", updatedCopy);
+        }
+      } else {
+        context.commit("copySelectedComponent", structuredClone(toRaw(payload)));
+      }
     },
     showSnackbar: (context, payload)=>{
       if (typeof payload === "string") {
@@ -137,8 +190,8 @@ export default new Vuex.Store({
           if (context.state.snackbarQueue.length > 0) {
             context.dispatch("showSnackbar");
           }
-        }
-        , timeout);
+        },
+        timeout);
       }
       context.commit("snackbarMessage", message);
       context.commit("snackbarTimeout", timeout);
@@ -150,6 +203,16 @@ export default new Vuex.Store({
       if (context.state.snackbarQueue.length > 0) {
         context.dispatch("showSnackbar");
       }
+    },
+
+    /**
+     * Clear all pending snackbar messages from the queue and dismiss any currently visible toast.
+     * @param {object} context - Vuex action context
+     */
+    clearSnackbarQueue: (context)=>{
+      context.state.snackbarQueue.splice(0);
+      context.commit("snackbarMessage", "");
+      context.commit("openSnackbar", false);
     },
     showDialog: (context, payload)=>{
       //ignore if dialog is already opend
@@ -166,6 +229,12 @@ export default new Vuex.Store({
     }
   },
   getters: {
+    copiedComponentID: (state)=>{
+      return state.copyInfo?.type === "copy" ? state.copyInfo.ID : null;
+    },
+    cutComponentID: (state)=>{
+      return state.copyInfo?.type === "cut" ? state.copyInfo.ID : null;
+    },
     //get selected component's absolute path on server
     selectedComponentAbsPath: (state, getters)=>{
       if (state.selectedComponent === null || typeof state.selectedComponent.ID === "undefined") {

@@ -3,14 +3,13 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const { getLogger } = require("../logSettings");
-const { projectList, projectJsonFilename } = require("../db/db.js");
-const { readJsonGreedy } = require("../core/fileUtils");
-const { addProject, renameProject } = require("../core/projectFilesOperator.js");
-const { removeTempd } = require("../core/tempd.js");
+import path from "path";
+import fs from "fs-extra";
+import { getLogger } from "../logSettings.js";
+import { projectList, projectJsonFilename } from "../db/db.js";
+import { readJsonGreedy } from "../core/fileUtils.js";
+import { addProject, renameProject } from "../core/projectOperations.js";
+import { removeTempd } from "../core/tempd.js";
 
 const getAllProject = async ()=>{
   const pj = await Promise.all(projectList.getAll().map(async (v)=>{
@@ -18,7 +17,7 @@ const getAllProject = async ()=>{
     try {
       const projectJson = await readJsonGreedy(path.join(v.path, projectJsonFilename));
       rt = Object.assign(projectJson, v);
-    } catch (err) {
+    } catch {
       getLogger().warn(v, "read failed remove from the list");
       projectList.remove(v.id);
       rt = null;
@@ -36,7 +35,7 @@ const sendProjectListIfExists = async (socket, cb)=>{
     if (pjList) {
       socket.emit("projectList", pjList);
     }
-  } catch (e) {
+  } catch {
     cb(false);
     return;
   }
@@ -52,20 +51,20 @@ const projectListAdaptor = async (socket, cb, asyncFunc)=>{
   await sendProjectListIfExists(socket, cb);
 };
 //return projectlist via call back routine
-const onGetProjectList = async (socket, cb)=>{
+export const onGetProjectList = async (socket, cb)=>{
   const pjList = await getAllProject();
   if (!pjList) {
     return cb(false);
   }
   return cb(pjList);
 };
-const onReorderProjectList = async (socket, orderList, cb)=>{
+export const onReorderProjectList = async (socket, orderList, cb)=>{
   await projectListAdaptor(socket, cb, projectList.reorder.bind(projectList, orderList));
 };
-const onRemoveProjectsFromList = async (socket, ids, cb)=>{
+export const onRemoveProjectsFromList = async (socket, ids, cb)=>{
   await projectListAdaptor(socket, cb, projectList.removeMany.bind(projectList, ids));
 };
-const onRemoveProjects = async (socket, ids, cb)=>{
+export const onRemoveProjects = async (socket, ids, cb)=>{
   await projectListAdaptor(socket, cb, async ()=>{
     await Promise.all(
       ids.map((id)=>{
@@ -80,18 +79,9 @@ const onRemoveProjects = async (socket, ids, cb)=>{
     await projectList.removeMany(ids);
   });
 };
-const onAddProject = async (socket, projectDir, description, cb)=>{
+export const onAddProject = async (socket, projectDir, description, cb)=>{
   await projectListAdaptor(socket, cb, addProject.bind(null, projectDir, description));
 };
-const onRenameProject = async (socket, id, newName, oldDir, cb)=>{
+export const onRenameProject = async (socket, id, newName, oldDir, cb)=>{
   await projectListAdaptor(socket, cb, renameProject.bind(null, id, newName, oldDir));
-};
-
-module.exports = {
-  onAddProject,
-  onRenameProject,
-  onGetProjectList,
-  onReorderProjectList,
-  onRemoveProjectsFromList,
-  onRemoveProjects
 };

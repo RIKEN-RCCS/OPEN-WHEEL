@@ -4,30 +4,29 @@
  * See License in the project root for the license information.
  */
 
-"use strict";
-const path = require("node:path");
-const util = require("node:util");
-const exec = util.promisify(require("node:child_process").exec);
-const fs = require("fs-extra");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+//eslint-disable-next-line camelcase
+import { exec as exec_cb } from "node:child_process";
+const exec = promisify(exec_cb);
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("chai-fs"));
-chai.use(require("chai-as-promised"));
-const rewire = require("rewire");
-const sinon = require("sinon");
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import sinon from "sinon";
 
 //testee
-const IP = rewire("../../../app/core/importProject.js");
-const isEmptyDir = IP.__get__("isEmptyDir");
-const extractAndReadArchiveMetadata = IP.__get__("extractAndReadArchiveMetadata");
-const importProject = IP.__get__("importProject");
-
-const dummyProjectList = [];
-IP.__set__("projectList", dummyProjectList);
+import { isEmptyDir, extractAndReadArchiveMetadata, importProject, _internal } from "../../../app/core/importProject.js";
 
 //test data
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const testDirRoot = "WHEEL_TEST_TMP";
 const testArchiveFile = path.resolve(__dirname, "../../testFiles/WHEEL_project_test_project.tgz");
 
@@ -66,43 +65,38 @@ describe("import project UT", function () {
     });
   });
   describe("#importProject", ()=>{
-    const getHosts = sinon.stub();
-    const askHostMap = sinon.stub();
-    const rewriteHosts = sinon.stub();
-    IP.__set__("getHosts", getHosts);
-    IP.__set__("askHostMap", askHostMap);
-    IP.__set__("rewriteHosts", rewriteHosts);
+    let getHostsStub;
+    let askHostMapStub;
+    let rewriteHostsStub;
     beforeEach(async ()=>{
-      getHosts.resetHistory();
-      askHostMap.resetHistory();
-      rewriteHosts.resetHistory();
+      getHostsStub = sinon.stub(_internal, "getHosts");
+      askHostMapStub = sinon.stub(_internal, "askHostMap");
+      rewriteHostsStub = sinon.stub(_internal, "rewriteHosts");
       await exec(`cp ${testArchiveFile} ${testArchiveFile}.bak`);
     });
     afterEach(async ()=>{
-      await exec(`cp ${testArchiveFile}.bak ${testArchiveFile}`);
-    });
-    after(async ()=>{
-      await exec(`rm ${testArchiveFile}.bak`);
+      sinon.restore();
+      await exec(`mv ${testArchiveFile}.bak ${testArchiveFile}`);
     });
     it("should import project and add it to projectList", async ()=>{
-      getHosts.onCall(0).returns([]);
+      getHostsStub.onCall(0).returns([]);
       expect(await importProject("dummyClientID", testArchiveFile, testDirRoot)).to.be.a("string");
-      expect(getHosts).to.be.calledOnce;
-      expect(askHostMap).not.to.be.called;
-      expect(rewriteHosts).not.to.be.called;
-      expect(dummyProjectList[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
+      expect(getHostsStub).to.be.calledOnce;
+      expect(askHostMapStub).not.to.be.called;
+      expect(rewriteHostsStub).not.to.be.called;
+      expect(_internal.projectList.data[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
     });
     it("should import project and add it to projectList with host modification", async ()=>{
       const hosts = ["hoge"];
       const hostMap = { hoge: "huga" };
-      getHosts.onCall(0).returns(hosts);
-      askHostMap.onCall(0).returns(hostMap);
+      getHostsStub.onCall(0).returns(hosts);
+      askHostMapStub.onCall(0).returns(hostMap);
       expect(await importProject("dummyClientID", testArchiveFile, testDirRoot)).to.be.a("string");
-      expect(getHosts).to.be.calledOnce;
-      expect(askHostMap).to.be.calledWith("dummyClientID", hosts);
-      expect(rewriteHosts).to.be.calledOnce;
-      expect(rewriteHosts.getCall(0).args[1]).to.deep.equal(hostMap);
-      expect(dummyProjectList[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
+      expect(getHostsStub).to.be.calledOnce;
+      expect(askHostMapStub).to.be.calledWith("dummyClientID", hosts);
+      expect(rewriteHostsStub).to.be.calledOnce;
+      expect(rewriteHostsStub.getCall(0).args[1]).to.deep.equal(hostMap);
+      expect(_internal.projectList.data[0].path).to.equal(path.resolve(testDirRoot, "new_project.wheel"));
     });
   });
 });

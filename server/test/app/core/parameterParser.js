@@ -3,27 +3,25 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-const chai = require("chai");
-const { expect } = require("chai");
-const chaiIterator = require("chai-iterator");
+import * as chai from "chai";
+const { expect } = chai;
+import chaiIterator from "chai-iterator";
 chai.use(chaiIterator);
-const fs = require("fs-extra");
-const path = require("path");
-const rewire = require("rewire");
+import fs from "fs-extra";
+import path from "path";
 
 //testee
-const { paramVecGenerator } = require("../../../app/core/parameterParser");
-const { getParamSpacev2 } = require("../../../app/core/parameterParser");
-const { getFilenames } = require("../../../app/core/parameterParser");
-const { getParamSize } = require("../../../app/core/parameterParser");
-const rewParameterParser = rewire("../../../app/core/parameterParser");
-const getNthParamVec = rewParameterParser.__get__("getNthParamVec");
-const getNthValue = rewParameterParser.__get__("getNthValue");
-const getDigitsAfterTheDecimalPoint = rewParameterParser.__get__("getDigitsAfterTheDecimalPoint ");
-const getParamAxisSize = rewParameterParser.__get__("getParamAxisSize");
-const calcParamAxisSize = rewParameterParser.__get__("calcParamAxisSize");
-const isValidParamAxis = rewParameterParser.__get__("isValidParamAxis");
-const expandArrayOfGlob = rewParameterParser.__get__("expandArrayOfGlob");
+import { getParamSize,
+  getFilenames,
+  paramVecGenerator,
+  getParamSpacev2,
+  getNthParamVec,
+  getNthValue,
+  getDigitsAfterTheDecimalPoint,
+  getParamAxisSize,
+  calcParamAxisSize,
+  isValidParamAxis,
+  expandArrayOfGlob } from "../../../app/core/parameterParser.js";
 const testRoot = "WHEEL_TEST_TMP"; ;
 var testDir;
 
@@ -120,8 +118,10 @@ describe("UT for parameterParser", ()=>{
         [{ key: "KEYWORD1", value: "baz", type: "string" }]]);
     });
     it("throws an error when ParamSpace is null", ()=>{
-      expect(()=>[...paramVecGenerator(null)]).to.throw();
-      expect(()=>[...paramVecGenerator({})]).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return [...paramVecGenerator(null)]; }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return [...paramVecGenerator({})]; }).to.throw();
     });
   });
   describe("#getParamSpacev2", function () {
@@ -227,14 +227,17 @@ describe("UT for parameterParser", ()=>{
       expect(getParamSize(paramSpace)).to.equal(11); //(1000000,1000100,...,1001000) → 11個
     });
     it("throws an error when ParamSpace is null", ()=>{
-      expect(()=>getParamSize(null)).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return getParamSize(null); }).to.throw();
     });
     it("throws an error when ParamSpace is undefined", ()=>{
-      expect(()=>getParamSize(undefined)).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return getParamSize(undefined); }).to.throw();
     });
     it("throws an error when a parameter object is missing required properties", ()=>{
       const paramSpace = [{ foo: 3 }];
-      expect(()=>getParamSize(paramSpace)).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return getParamSize(paramSpace); }).to.throw();
     });
   });
   describe("#getNthParamVec", ()=>{
@@ -391,22 +394,28 @@ describe("UT for parameterParser", ()=>{
       expect(getParamAxisSize({ min: 1, max: 5, step: 1 })).to.equal(5); //(1,2,3,4,5)
     });
     it("throws an error when axis.type is unknown", ()=>{
-      expect(()=>getParamAxisSize({ type: "unknown" })).to.throw("unknown axis.type");
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return getParamAxisSize({ type: "unknown" }); }).to.throw("unknown axis.type");
     });
     it("throws an error when axis does not have valid properties", ()=>{
-      expect(()=>getParamAxisSize({})).to.throw();
-      expect(()=>getParamAxisSize(null)).to.throw();
-      expect(()=>getParamAxisSize(undefined)).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return getParamAxisSize({}); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return getParamAxisSize(null); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return getParamAxisSize(undefined); }).to.throw();
     });
     it("string type with null", ()=>{
       //Array.isArray(axis.list)を通過せずswitch - case "string" を通すためのnull
       const axis = { type: "string", list: null };
-      expect(()=>getParamAxisSize(axis)).to.throw(TypeError);
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return getParamAxisSize(axis); }).to.throw(TypeError);
     });
     it("file type with null", ()=>{
       //Array.isArray(axis.list)を通過せずswitch - case "file" を通すためのnull
       const axis = { type: "file", list: null };
-      expect(()=>getParamAxisSize(axis)).to.throw(TypeError);
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return getParamAxisSize(axis); }).to.throw(TypeError);
     });
   });
 

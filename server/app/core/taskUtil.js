@@ -3,85 +3,99 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { getSsh, getSshHostinfo } = require("./sshManager");
-const { cancel } = require("./executerManager.js");
-const { jobScheduler } = require("../db/db");
-const { getLogger } = require("../logSettings.js");
+import { getSsh, getSshHostinfo } from "./sshManager.js";
+import { cancel } from "./executerManager.js";
+import { jobScheduler } from "../db/db.js";
+import { getLogger } from "../logSettings.js";
+
+const _internal = {
+  getSsh,
+  getSshHostinfo,
+  cancel,
+  getLogger,
+  killTask: null,
+  killLocalProcess: null,
+  cancelRemoteJob: null,
+  cancelLocalJob: null
+};
 
 /**
  * cancel job on remotehost
  * @param {object} task - task component
  */
-async function cancelRemoteJob(task) {
+export async function cancelRemoteJob(task) {
   if (!task.jobID) {
-    getLogger(task.projectRootDir).debug(`try to cancel ${task.name} but it have not been submitted.`);
+    _internal.getLogger(task.projectRootDir).debug(`try to cancel ${task.name} but it have not been submitted.`);
     return;
   }
-  const ssh = getSsh(task.projectRootDir, task.remotehostID);
-  const hostinfo = getSshHostinfo(task.projectRootDir, task.remotehostID);
+  const ssh = _internal.getSsh(task.projectRootDir, task.remotehostID);
+  const hostinfo = _internal.getSshHostinfo(task.projectRootDir, task.remotehostID);
   const JS = jobScheduler[hostinfo.jobScheduler];
   const cancelCmd = `${JS.del} ${task.jobID}`;
-  getLogger(task.projectRootDir).debug(`cancel job: ${cancelCmd}`);
+  _internal.getLogger(task.projectRootDir).debug(`cancel job: ${cancelCmd}`);
   const output = [];
   await ssh.exec(cancelCmd, 60, (data)=>{
     output.push(data);
   });
-  getLogger(task.projectRootDir).debug("cacnel done", output.join());
+  _internal.getLogger(task.projectRootDir).debug("cacnel done", output.join());
 }
+_internal.cancelRemoteJob = cancelRemoteJob;
 
 /**
  * cancel job on localhost but not implemented
  */
-async function cancelLocalJob() {
+export async function cancelLocalJob() {
   console.log("not implimented yet!!");
 }
+_internal.cancelLocalJob = cancelLocalJob;
 
 /**
  * kill process which was invoked from specified task
  * @param {object} task - task component
  */
-async function killLocalProcess(task) {
+export async function killLocalProcess(task) {
   if (task.handler && task.handler.killed === false) {
     task.handler.kill();
   }
 }
+_internal.killLocalProcess = killLocalProcess;
 
 /**
  * cancel dispatched task
  * @param {object} task - task component
  */
-async function killTask(task) {
+export async function killTask(task) {
   if (task.remotehostID !== "localhost") {
     if (task.useJobScheduler) {
-      await cancelRemoteJob(task);
+      await _internal.cancelRemoteJob(task);
     } else {
 
       //do nothing for remoteExec at this time
     }
   } else {
     if (task.useJobScheduler) {
-      await cancelLocalJob(task);
+      await _internal.cancelLocalJob(task);
     } else {
-      await killLocalProcess(task);
+      await _internal.killLocalProcess(task);
     }
   }
 }
+_internal.killTask = killTask;
 
 /**
  * cancel dispatched tasks
  * @param {object[]} tasks - array of task components
  * @returns {Promise} - resolved when all tasks are canceled
  */
-async function cancelDispatchedTasks(tasks) {
+export async function cancelDispatchedTasks(tasks) {
   const p = [];
   for (const task of tasks) {
     if (task.state === "finished" || task.state === "failed") {
       continue;
     }
-    const canceled = cancel(task);
+    const canceled = _internal.cancel(task);
     if (!canceled) {
-      p.push(killTask(task));
+      p.push(_internal.killTask(task));
     }
     task.state = "not-started";
   }
@@ -93,10 +107,13 @@ async function cancelDispatchedTasks(tasks) {
  * @param {object} task - task component
  * @returns {object} - reduced task component
  */
-function taskStateFilter(task) {
+export function taskStateFilter(task) {
   return {
     name: task.name,
     ID: task.ID,
+    type: task.type,
+    host: task.host,
+    useJobScheduler: task.useJobScheduler,
     workingDir: task.workingDir,
     description: task.description ? task.description : "",
     state: task.state,
@@ -114,7 +131,4 @@ function taskStateFilter(task) {
   };
 }
 
-module.exports = {
-  cancelDispatchedTasks,
-  taskStateFilter
-};
+export { _internal };

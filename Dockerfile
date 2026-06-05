@@ -15,6 +15,9 @@ RUN mkdir server client
 COPY server/package.json server/package.json
 COPY client/package.json client/package.json
 RUN npm install
+RUN npm install --no-save @rollup/rollup-linux-x64-gnu
+# Ensure tar v7 dependencies are available
+RUN cd server && npm install @isaacs/fs-minipass --no-save
 
 #build client
 FROM run_base AS builder
@@ -37,7 +40,7 @@ FROM run_base AS exec
 WORKDIR /usr/src
 COPY common common
 COPY server server
-RUN npm prune --production
+# Don't prune - keep all dependencies to avoid ESM resolution issues
 COPY --from=builder /usr/src/server/app/public /usr/src/server/app/public
 COPY entrypoint.sh /usr/src/server/
 RUN rm -fr client server/app/config/* server/test

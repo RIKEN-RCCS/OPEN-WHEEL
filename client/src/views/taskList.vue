@@ -15,6 +15,8 @@
         <component-button
           :type="item.type"
           :name="item.name"
+          :host="item.host"
+          :use-job-scheduler="item.useJobScheduler"
         />
       </div>
       <div v-else>
