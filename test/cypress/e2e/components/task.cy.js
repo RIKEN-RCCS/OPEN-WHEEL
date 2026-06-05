@@ -1002,6 +1002,7 @@ describe("components", ()=>{
     it("プロパティ設定確認-シェルスクリプト選択セレクトボックス表示確認-シェルスクリプト選択セレクトボックスが表示されていることを確認", ()=>{
       cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]").find("input")
+        .scrollIntoView()
         .should("be.visible");
     });
 
@@ -1166,7 +1167,7 @@ describe("components", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-exclude-list_form\"]").should("be.visible");
+      cy.get("[data-cy=\"component_property-exclude-list_form\"]").scrollIntoView().should("be.visible");
     });
 
     /**
