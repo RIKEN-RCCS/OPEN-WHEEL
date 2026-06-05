@@ -15,6 +15,7 @@ const { askPassword, isVerboseSshEnabled } = require("../core/sshManager.js");
  * @param {string} clientID - socketIO client's ID string
  * @param {object} hostInfo - target host's information
  * @param {Function} cb - call back function called with string "success" or "error"
+ * @returns {Promise<void>}
  */
 async function onTryToConnect(clientID, hostInfo, cb) {
   hostInfo.password = askPassword.bind(null, clientID, hostInfo.name, "password", null);
@@ -38,6 +39,14 @@ async function onTryToConnect(clientID, hostInfo, cb) {
   ssh.disconnect();
   return cb("success");
 }
+
+/**
+ * try to connect remote host via ssh with host id
+ * @param {string} clientID - socketIO client's ID string
+ * @param {string} id - remote host id
+ * @param {Function} cb - call back function called with string "success" or "error"
+ * @returns {Promise<void>}
+ */
 async function onTryToConnectById(clientID, id, cb) {
   const hostInfo = remoteHost.get(id);
   await onTryToConnect(clientID, hostInfo, cb);
