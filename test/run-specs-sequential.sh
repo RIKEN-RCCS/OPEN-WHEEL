@@ -13,7 +13,10 @@ done
 
 FAILED_SPECS=()
 
-mapfile -t SPECS < <(find cypress/e2e -name "*.cy.js" -not -path "*/gfarm/*" | sort)
+SPECS=()
+while IFS= read -r line; do
+  SPECS+=("$line")
+done < <(find cypress/e2e -name "*.cy.js" -not -path "*/gfarm/*" | sort)
 
 echo "Running ${#SPECS[@]} spec files sequentially... (bail=$BAIL)"
 
