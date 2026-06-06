@@ -78,7 +78,7 @@ async function exportProject(projectRootDir, name = null, mail = null, memo = nu
   [`${projectJson.name}.wheel`]
   );
 
-  const url = `${baseURL}/${path.join(path.relative(path.dirname(dir), archiveFilename))}`;
+  const url = `${baseURL.replace(/\/$/, "")}/${path.join(path.relative(path.dirname(dir), archiveFilename))}`;
   return url;
 }
 
