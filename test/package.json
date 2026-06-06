@@ -7,7 +7,7 @@
     "test": "npx cypress open",
     "gateway": "GW_PORT=3001 REAL_APP=http://localhost:8089 MOCK_SIO=http://localhost:3101 node ws-gateway.cjs",
     "test:e2e:mock": "npm run test:e2e:mock:start && npx cypress run --browser chrome; npm run test:e2e:mock:stop",
-    "test:e2e:mock:start": "docker compose up -d --build && npx wait-on http://localhost:8089 http://localhost:8090 tcp:127.0.0.1:3001 tcp:127.0.0.1:3101 tcp:127.0.0.1:3102 --timeout 300000",
+    "test:e2e:mock:start": "docker compose up -d --build && npx wait-on http://localhost:8089 http://localhost:8090 tcp:127.0.0.1:3001 tcp:127.0.0.1:3101 tcp:127.0.0.1:3102 --timeout 600000",
     "test:e2e:mock:stop": "docker compose down",
     "test:e2e:mock:run": "npx cypress run --browser chrome",
     "test:e2e:mock:run:sequential": "bash run-specs-sequential.sh",

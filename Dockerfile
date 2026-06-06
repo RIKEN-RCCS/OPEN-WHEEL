@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG PLATFORM=${BUILDPLATFORM}
+ARG PLATFORM=linux/amd64
 FROM --platform=${PLATFORM} node:22-slim AS base
 RUN apt-get update && apt -y install curl git rsync openssh-server bzip2 python3 g++ build-essential&&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
