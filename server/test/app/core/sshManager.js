@@ -374,8 +374,6 @@ describe("#createSsh", ()=>{
   let askPasswordStub;
   let SshClientWrapperStub;
   let canConnectStub;
-  let originalWheelVerboseSsh;
-
   beforeEach(()=>{
     hasEntryStub = sinon.stub(_internal, "hasEntry");
     getSshStub = sinon.stub(_internal, "getSsh");
@@ -387,17 +385,11 @@ describe("#createSsh", ()=>{
         canConnect: canConnectStub
       };
     });
-    originalWheelVerboseSsh = process.env.WHEEL_VERBOSE_SSH;
-    delete process.env.WHEEL_VERBOSE_SSH;
+    sinon.stub(_internal, "verboseSsh").value(false);
   });
 
   afterEach(()=>{
     sinon.restore();
-    if (originalWheelVerboseSsh !== undefined) {
-      process.env.WHEEL_VERBOSE_SSH = originalWheelVerboseSsh;
-    } else {
-      delete process.env.WHEEL_VERBOSE_SSH;
-    }
   });
 
   it("should return an existing ssh instance if hasEntry is true", async ()=>{
@@ -509,7 +501,7 @@ describe("#createSsh", ()=>{
   });
 
   it("should set sshOpt=['-vvv'] if WHEEL_VERBOSE_SSH is truthy", async ()=>{
-    process.env.WHEEL_VERBOSE_SSH = "true";
+    sinon.stub(_internal, "verboseSsh").value(true);
     hasEntryStub.returns(false);
     canConnectStub.resolves(true);
 
