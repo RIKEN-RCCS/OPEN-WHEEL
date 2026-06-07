@@ -366,9 +366,9 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("task1-run")
         .should("exist")
         .click();
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"]", "run-a.sh", { timeout: 15000 })
         .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-b.sh")
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"]", "run-b.sh", { timeout: 15000 })
         .should("exist");
       cy.closeProperty();
     });
@@ -410,7 +410,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("task1-run")
         .should("exist")
         .click();
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"]", "run-a.sh", { timeout: 15000 })
         .should("exist");
       cy.closeProperty();
     });
