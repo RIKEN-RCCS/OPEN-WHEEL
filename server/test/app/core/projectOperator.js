@@ -44,11 +44,6 @@ describe("UT for projectOperation callback function", function () {
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
-    const sbs = _internal.projectOperationQueues.get(projectRootDir);
-    if (sbs) {
-      sbs.clear();
-    }
-    _internal.projectOperationQueues.clear();
     sinon.stub(_internal, "onRunProject").value(onRunProject);
     sinon.stub(_internal, "onStopProject").value(onStopProject);
     sinon.stub(_internal, "onCleanProject").value(onCleanProject);
@@ -64,7 +59,15 @@ describe("UT for projectOperation callback function", function () {
     onRevertProject.reset();
     onSaveProject.reset();
   });
-  afterEach(()=>{
+  afterEach(async ()=>{
+    const sbs = _internal.projectOperationQueues.get(projectRootDir);
+    if (sbs) {
+      sbs.clear();
+      while (sbs.running.size > 0) {
+        await sleep(10);
+      }
+    }
+    _internal.projectOperationQueues.clear();
     sinon.restore();
   });
   after(async ()=>{

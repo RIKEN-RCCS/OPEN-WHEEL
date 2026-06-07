@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG PLATFORM=linux/amd64
+ARG PLATFORM=${BUILDPLATFORM}
 FROM --platform=${PLATFORM} node:22-slim AS base
 RUN apt-get update && apt -y install curl git rsync openssh-server bzip2 python3 g++ build-essential&&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
@@ -15,7 +15,10 @@ RUN mkdir server client
 COPY server/package.json server/package.json
 COPY client/package.json client/package.json
 RUN npm install
-RUN npm install --no-save @rollup/rollup-linux-x64-gnu
+RUN arch=$(uname -m) && \
+    if [ "$arch" = "x86_64" ]; then npm install --no-save @rollup/rollup-linux-x64-gnu; \
+    elif [ "$arch" = "aarch64" ]; then npm install --no-save @rollup/rollup-linux-arm64-gnu; \
+    fi
 # Ensure tar v7 dependencies are available
 RUN cd server && npm install @isaacs/fs-minipass --no-save
 

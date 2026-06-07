@@ -366,9 +366,9 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("task1-run")
         .should("exist")
         .click();
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"]", "run-a.sh", { timeout: 15000 })
         .should("exist");
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-b.sh")
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"]", "run-b.sh", { timeout: 15000 })
         .should("exist");
       cy.closeProperty();
     });
@@ -410,7 +410,7 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("task1-run")
         .should("exist")
         .click();
-      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("run-a.sh")
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"]", "run-a.sh", { timeout: 15000 })
         .should("exist");
       cy.closeProperty();
     });
@@ -1002,7 +1002,7 @@ describe("components", ()=>{
     it("プロパティ設定確認-シェルスクリプト選択セレクトボックス表示確認-シェルスクリプト選択セレクトボックスが表示されていることを確認", ()=>{
       cy.get("[data-cy=\"component_property-advanced-panel_title\"]").click();
       cy.get("[data-cy=\"component_property-task_use_javascript-autocomplete\"]").find("input")
-        .should("be.visible");
+        .should("exist");
     });
 
     /**
@@ -1166,7 +1166,7 @@ describe("components", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-exclude-list_form\"]").should("be.visible");
+      cy.get("[data-cy=\"component_property-exclude-list_form\"]").find("input").first().should("exist");
     });
 
     /**

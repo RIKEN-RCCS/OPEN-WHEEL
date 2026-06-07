@@ -14,7 +14,8 @@ const _internal = {
   getSsh,
   hasEntry,
   askPassword,
-  emitAll
+  emitAll,
+  verboseSsh
 };
 
 /**
@@ -205,7 +206,7 @@ async function createSsh(projectRootDir, remoteHostName, hostinfo, clientID, isS
   if (hostinfo.readyTimeout) {
     hostinfo.ConnectTimeout = Math.floor(hostinfo.readyTimeout / 1000);
   }
-  if (verboseSsh) {
+  if (_internal.verboseSsh) {
     hostinfo.sshOpt = ["-vvv"];
   }
   if (hostinfo.username) {

@@ -168,7 +168,7 @@ function getIntVar(target, alt) {
  * @returns {string} -
  */
 function getStringVar(target, alt) {
-  return typeof target === "string" ? target : alt;
+  return (typeof target === "string" && target !== "") ? target : alt;
 }
 
 /**

@@ -144,7 +144,7 @@ async function exportComponent(projectRootDir, componentID) {
 
   //Get path relative to tempdRoot, then prepend /exportComponent/
   const relativePath = path.relative(root, archiveFilename);
-  const url = `${baseURL}/exportComponent/${relativePath}`;
+  const url = `${baseURL.replace(/\/$/, "")}/exportComponent/${relativePath}`;
   return url;
 }
 

@@ -48,6 +48,8 @@ services:
       WHEEL_ANONYMOUS_LOGIN: YES
       WHEEL_ANONYMOUS_PASSWORD: WheelTest123!
       WHEEL_LOG_LEVEL: OFF
+    volumes:
+      - "./wheel_config_auth:/root/.wheel"
     depends_on:
       - wheel_release_test
 

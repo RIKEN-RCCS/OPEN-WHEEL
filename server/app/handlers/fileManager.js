@@ -357,7 +357,7 @@ export async function onDownload(projectRootDir, target, cb) {
   }
 
   const ext = downloadZip ? ".zip" : "";
-  const url = `${baseURL}/${path.join(path.relative(downloadRootDir, tmpDir), targetBasename)}${ext}`;
+  const url = `${baseURL.replace(/\/$/, "")}/${path.join(path.relative(downloadRootDir, tmpDir), targetBasename)}${ext}`;
   getLogger(projectRootDir).debug("Download url is ready", url);
   cb(url);
 };
@@ -453,7 +453,7 @@ export async function onDownloadFullLog(projectRootDir, cb) {
     //remove temporary directory
     await fs.remove(archiveDir);
 
-    const url = `${baseURL}/${path.join(path.relative(downloadRootDir, tmpDir), archiveName)}.zip`;
+    const url = `${baseURL.replace(/\/$/, "")}/${path.join(path.relative(downloadRootDir, tmpDir), archiveName)}.zip`;
     getLogger(projectRootDir).info("Debug log archive is ready for download", url);
     cb(url);
   } catch (e) {

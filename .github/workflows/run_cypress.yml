@@ -79,7 +79,7 @@ jobs:
         run: sudo mount -t tmpfs -o size=512m tmpfs /dev/shm
       - name: Run E2E tests with mock server
         working-directory: test
-        run: npm run test:e2e:mock:run
+        run: npm run test:e2e:mock:run:sequential
       - name: Collect container logs on failure
         if: failure()
         run: |

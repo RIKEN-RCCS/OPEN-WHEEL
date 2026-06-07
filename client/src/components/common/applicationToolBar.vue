@@ -6,25 +6,26 @@
 <template>
   <v-app-bar>
     <template #prepend>
-      <a
-        :href="homeURL"
-        data-cy="tool_bar-wheel_logo-logo"
+      <v-tooltip
+        location="right"
+        text="Go to Home Page"
       >
-        <v-tooltip
-          location="right"
-          text="Go to Home Page"
-        >
-          <template #activator="{ props }">
+        <template #activator="{ props }">
+          <a
+            v-bind="props"
+            :href="homeURL"
+            data-cy="tool_bar-wheel_logo-logo"
+          >
             <v-img
-              v-bind="props"
+              eager
               height="72px"
               width="180px"
               :src="imgLogo"
               alt="wheel title logo"
             />
-          </template>
-        </v-tooltip>
-      </a>
+          </a>
+        </template>
+      </v-tooltip>
     </template>
     <v-app-bar-title
       class="text-lowercase text-decoration-none text-h5 white--text"

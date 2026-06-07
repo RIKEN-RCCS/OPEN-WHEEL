@@ -166,10 +166,18 @@ npm run -w test test:e2e:mock
 
 **個別スクリプト:**
 ```bash
-npm run test:e2e:mock:start   # 全コンテナ起動 + 起動完了待機
-npm run test:e2e:mock:run     # Cypressのみ実行
-npm run test:e2e:mock:stop    # 全コンテナ停止
+npm run test:e2e:mock:start              # 全コンテナ起動 + 起動完了待機
+npm run test:e2e:mock:run                # Cypressのみ実行 (全スペックを1プロセスで)
+npm run test:e2e:mock:run:sequential     # スペックを1ファイルずつ順番に実行 (Chrome OOM回避)
+npm run test:e2e:mock:run:sequential:bail # 最初の失敗で即停止 (開発時のfail-fast用)
+npm run test:e2e:mock:stop               # 全コンテナ停止
 ```
+
+#### シーケンシャル実行について
+
+`test:e2e:mock:run:sequential` は `test/run-specs-sequential.sh` を呼び出し、gfarm以外の全スペックファイルを1つずつ別々の `cypress run` プロセスで実行します。各スペックが独立したChromeレンダラーを持つため、全スペックを1プロセスで実行した際に起きるChrome OOMクラッシュを防げます。失敗したスペックの一覧を実行後にまとめて表示します。
+
+`--bail` フラグを指定する `test:e2e:mock:run:sequential:bail` は最初の失敗が出た時点で残りのスペックをスキップします。開発中に素早く失敗箇所を特定したい場合に便利です。
 
 ### 2.6 リモートモード — 既存サーバーへのテスト
 
@@ -354,8 +362,8 @@ Dockerコンテナ (4台, ネットワーク: wheel-e2e-net):
   mock       (port 3101/3102): Socket.IOモック + HTTPモック
   gateway    (port 3001): リバースプロキシ (WHEELとモックへ振り分け)
 
-Chromeクラッシュ対策: /dev/shm を 512MB に拡張
-テスト: npm run test:e2e:mock:run (test/)
+Chromeクラッシュ対策: /dev/shm を 512MB に拡張 + スペックを1ファイルずつ順番に実行
+テスト: npm run test:e2e:mock:run:sequential (test/)
 
 失敗時のアーティファクト:
   container-logs    : gateway/mock/wheel/wheel_auth のコンテナログ
