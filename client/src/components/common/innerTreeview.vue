@@ -17,7 +17,7 @@
             <v-icon
               v-bind="props"
               :icon="getNodeIcon(isOpen, item)"
-              @click.stop="(e) => { props.onClick(e); if (!isOpen) { onClickNodeIcon(item); } }"
+              @click.stop="() => { if (!isOpen) { onClickNodeIcon(item); } }"
             />
           </template>
           <div @click="(e) => { if (!isOpen) { props.onClick(e); onClickNodeIcon(item); } onActiveted(item); }">
