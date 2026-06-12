@@ -1,13 +1,10 @@
 name: build and deploy container
 on:
-  pull_request_target:
+  push:
     branches:
       - master
-    types:
-      - closed
 jobs:
   build_and_deploy:
-    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'master'
     env:
       DOCKER_USER_NAME: ${{ vars.DOCKER_USER_NAME }}
       DOCKER_CONTAINER_NAME: ${{ vars.DOCKER_CONTAINER_NAME }}
@@ -19,11 +16,14 @@ jobs:
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}
+      - run: docker save ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:latest | gzip > wheel_docker.tar.gz
       - run: apptainer build wheel.sif docker-daemon://${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:latest
       - name: create release and upload artifact
         uses: softprops/action-gh-release@v1
         with:
-          files: wheel.sif
+          files: |
+            wheel.sif
+            wheel_docker.tar.gz
           tag_name: ${{ github.run_id }}
           body: "release for ${{ github.sha }}"
         env:
