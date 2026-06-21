@@ -1289,7 +1289,7 @@ class Dispatcher extends EventEmitter {
       }
 
       const metadata = await gatherComponentMetadata(this.projectRootDir);
-      const xml = componentMetadataToXml(metadata);
+      const xml = await componentMetadataToXml(metadata);
       for (const gfarmPath of gfarmTargets) {
         await setGfarmXattr(this.projectRootDir, remotehostID, gfarmPath, "wheel.workflow", xml);
       }

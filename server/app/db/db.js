@@ -273,6 +273,8 @@ export const logLevel = VALID_LOG_LEVELS.includes(String(config.logLevel).toUppe
 export const verboseSsh = Boolean(config.verboseSsh);
 export const enableWebApi = Boolean(config.enableWebApi);
 export const enableAuth = Boolean(config.enableAuth);
+export const debugMetadataJson = getStringVar(config.debugMetadataJson, null);
+export const debugMetadataXml = getStringVar(config.debugMetadataXml, null);
 
 //export setting files
 export { jobScheduler };
