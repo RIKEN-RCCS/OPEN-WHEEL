@@ -8,7 +8,7 @@
 |--------|-----------|------|
 | Node.js | 20.x 以上 | サーバー・クライアント実行 |
 | npm | 9.x 以上 | パッケージ管理（ワークスペース） |
-| Docker | 最新安定版 | テスト用コンテナ |
+| Docker | 最新安定版 | テスト用・開発用コンテナ |
 | rsync | - | ファイル転送（必須コマンド） |
 | git | - | バージョン管理 |
 
@@ -46,6 +46,33 @@ npm start -w server
 # または HTTP モードで起動（証明書不要）
 WHEEL_USE_HTTP=true npm start -w server
 ```
+
+### Docker を使った開発（オプション）
+
+証明書の用意やローカル Node 環境のセットアップなしに、Docker だけで開発サーバーを起動できる。
+`server/app` と `client/src` はホストとコンテナ間でバインドマウントされるため、編集内容は即座にコンテナ内へ反映される。
+
+```bash
+# ビルド + 起動（初回・Dockerfile/依存関係変更後）
+npm run docker:dev
+
+# サーバーコードを変更した後（server/app, server/bin）→ 再起動のみでOK
+npm run docker:dev:restart-server
+
+# クライアントコードを変更した後（client/src）→ コンテナ内でビルド
+# （サーバー再起動は不要、ブラウザをリロードすれば反映される）
+npm run docker:dev:rebuild-client
+
+# ログの確認
+npm run docker:dev:logs
+
+# 停止
+npm run docker:dev:down
+```
+
+デフォルトで `http://localhost:8089` で HTTP 待受（`WHEEL_USE_HTTP=1`）。
+`${HOME}` がコンテナの `/root` にマウントされるため、`~/.wheel/` の設定がそのまま使われる。
+`package.json` の依存関係や `Dockerfile` を変更した場合は `npm run docker:dev:rebuild-server` でイメージを再ビルドする。
 
 ## 2. プロジェクト構造
 

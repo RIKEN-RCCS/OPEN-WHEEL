@@ -30,6 +30,18 @@ COPY client client
 WORKDIR /usr/src/client
 RUN npm run build
 
+# dev image: full source (server incl. test, client) + prebuilt client, for compose.dev.yml
+FROM run_base AS dev
+WORKDIR /usr/src
+COPY common common
+COPY client client
+COPY server server
+WORKDIR /usr/src/client
+RUN npm run build
+COPY entrypoint.sh /usr/src/server/
+WORKDIR /usr/src/server
+ENTRYPOINT ["./entrypoint.sh"]
+
 # run UT
 FROM run_base AS ut
 WORKDIR /usr/src/
