@@ -23,6 +23,7 @@
   - [テスト実行スキップケースについて](#テスト実行スキップケースについて)
   - [テスト環境のカスタマイズ](#テスト環境のカスタマイズ)
   - [GitHub Actions 実行時に、不具合ではないのに試験結果がNGとなる場合について](#github-actions-実行時に不具合ではないのに試験結果がngとなる場合について)
+  - [チュートリアルデモテストについて](#チュートリアルデモテストについて)
   - [実装者向け](#実装者向け)
 
 ## GitHub Actions の実行
@@ -320,6 +321,107 @@ npm run test -- --env "WHEEL_TEST_CSGW_HOSTNAME=foo,WHEEL_TEST_CSGW_USERNAME=bar
 
 この作業は、コンテナを再起動する度に行なう必要があります。
 
+## チュートリアルデモテストについて
+
+`documentMD/user_guide/_tutorial` 配下のBasic/Advancedチュートリアルの操作手順をそのまま再現するE2Eスペック群です。
+「候補ユーザへのライブデモ」「デモ動画の収録」「実装後の動作確認(GUI run-through)」の3用途を1つのスペックコードで兼ねます。
+いずれもheadlessの`cypress run`単体では意図した動作をしません(後述のDEMO_MODEを参照)。
+
+### 対象ファイル
+
+いずれも`test/cypress/e2e/tutorial/`配下にまとめて配置しています。
+
+- `tutorialBasic.cy.js`: 1_basic_tutorialのPart1〜3を再現します。Part2(リモートホスト+ジョブスケジューラ実行)のスクリプトは先頭で`cd $PBS_O_WORKDIR`しています(PBS Proはジョブを投入者の`$HOME`で実行するため、相対パスの出力ファイルを扱うには必須)。
+- `tutorialAdvancedIf.cy.js` / `tutorialAdvancedLoop.cy.js` / `tutorialAdvancedParameterStudy.cy.js` / `tutorialAdvancedSource.cy.js` / `tutorialAdvancedViewer.cy.js` / `tutorialAdvancedStorage.cy.js`: 2_advanced_tutorialの各セクション(条件分岐/ループ/パラメータスタディ/入力ファイル/結果表示/ファイル保存)にそれぞれ対応します。1ファイルにまとめず分割しているのは、実サーバに対して複数の`it()`を1つのspecファイル内で連続実行すると、Chromeレンダラプロセスがメモリクラッシュする事象を確認したためです(モックサーバに対する既存specでは発生しません)。
+- `tutorialAdvancedJobScheduler.cy.js`: Bulk Job/Step Jobを再現します。他のtutorialAdvanced*.cy.jsと異なり**mockサーバ専用**です。テスト用リモートホストが素のOpenPBSであり、Fujitsu TCS系のbulk/stepjobに対応していないため、モックの`componentTestLabel`ホスト(useBulkjob/useStepjob: true)を使ってUI操作フローのみを実演します。
+
+### 実行対象サーバと起動手順
+
+`tutorialBasic.cy.js`と`tutorialAdvanced*.cy.js`(job schedulerを除く)は、スクリプトの実行・条件分岐・ループ・パラメータスタディのファンアウトが本当に行われることを検証するため、**実サーバ**(cypress.config.jsのデフォルトbaseUrl:8089)に対して実行してください。`tutorialAdvancedJobScheduler.cy.js`のみ、上記の理由から**モックサーバ**に対して実行してください。
+どちらも[テスト環境のセットアップ](#テスト環境のセットアップ)で`npm install`済みであることが前提です。
+
+#### 実サーバでの起動手順 (tutorialBasic.cy.js / tutorialAdvancedIf.cy.js / tutorialAdvancedLoop.cy.js / tutorialAdvancedParameterStudy.cy.js / tutorialAdvancedSource.cy.js / tutorialAdvancedViewer.cy.js / tutorialAdvancedStorage.cy.js)
+
+1. `wheel`コンテナ(ローカルのソースからビルド)と`wheel_release_test_server`(仮想リモート計算サーバ)を起動します。
+
+   ```bash
+   cd OPEN-WHEEL/test
+   npm run test:e2e:start
+   ```
+
+   内部的には `docker compose up -d --build wheel_release_test_server wheel_release_test` を実行し、`http://localhost:8089`が応答するまで待機します。
+
+2. (リモートホスト+ジョブスケジューラ関連のテストを実行する場合のみ) OpenPBSのヒストリ機能を有効にします。現状これを使う`tutorialBasic.cy.js`のPart2はskip中のため、通常は省略できます。
+
+   ```bash
+   docker exec wheel_release_test_server /opt/pbs/bin/qmgr -c 'set server job_history_enable=True'
+   ```
+
+3. Cypressを起動します。ライブデモ・デモ動画収録・動作確認のいずれで開くかは、この節の後にある「DEMO_MODE」を参照してください。最も単純な動作確認の場合は次の通りです。
+
+   ```bash
+   npx cypress open
+   ```
+
+   "E2E Testing" → ブラウザ選択(Chrome) → 実行したいスペック(例: `tutorialBasic.cy.js`)をクリックしてください。
+
+4. テストが終わったらコンテナを停止します。
+
+   ```bash
+   npm run test:e2e:stop
+   ```
+
+#### モックサーバでの起動手順 (tutorialAdvancedJobScheduler.cy.js のみ)
+
+1. モック関連コンテナ(`wheel`はモック用ビルド、`mock`、`gateway`など)を起動します。
+
+   ```bash
+   cd OPEN-WHEEL/test
+   npm run test:e2e:mock:start
+   ```
+
+   内部的には `docker compose up -d --build` を実行し、`http://localhost:8089`、`http://localhost:8090`、gateway/mockの各ポートが応答するまで待機します。
+
+2. Cypressを起動します。
+
+   ```bash
+   npx cypress open
+   ```
+
+   "E2E Testing" → ブラウザ選択(Chrome) → `tutorialAdvancedJobScheduler.cy.js`をクリックしてください。
+
+3. テストが終わったらコンテナを停止します。
+
+   ```bash
+   npm run test:e2e:mock:stop
+   ```
+
+### DEMO_MODE (--env DEMO_MODE=...)
+
+各スペック内の主要な操作は`cy.demoStep(label)`(`test/cypress/support/commands-demo.js`)を経由しており、`--env DEMO_MODE=...`の値で挙動が切り替わります。
+
+| DEMO_MODE | 用途 | 挙動 |
+|---|---|---|
+| `pause` | プレゼンターによるライブデモ | 各ステップで`cy.pause()`により一時停止。Cypress Test RunnerでNextをクリックして進行 |
+| `video` | デモ動画の収録 | 各ステップ後に`cy.wait()`。`cy.demoMoveTo`/`cy.demoClick`によりカーソルが可視的に(`cypress-real-events`使用)目的の要素まで移動してからクリックする |
+| (未指定) | GUI動作確認 | 待機・カーソル移動なしで最速実行 |
+
+```bash
+# ライブデモ (要 cypress open)
+npx cypress open --env DEMO_MODE=pause
+
+# デモ動画収録
+npx cypress run --headed --config video=true --env DEMO_MODE=video --spec cypress/e2e/tutorial/tutorialBasic.cy.js
+
+# 動作確認 (DEMO_MODE未指定)
+npx cypress open
+```
+
+### 既知の問題
+
+- `tutorialAdvancedParameterStudy.cy.js`は、環境によってはPS0コンポーネントが`numTotal: 1`のまま(本来は3のはず)即座に`failed`となることがあります。`parameterSetting.json`とtarget scriptの内容自体は正しく保存されていることを確認済みですが、根本原因は未特定です(保存タイミングに関連する可能性を調査しましたが再現しないケースもあり、断定できていません)。再現した場合は再実行してください。
+- `tutorialBasic.cy.js`のPart2(リモートホスト+ジョブスケジューラ実行)は、以前は失敗していましたが解消し、現在は`it.skip`せず有効化されています。原因はWHEEL側ではなくPBS Proの標準的な挙動でした: `qsub`実行前に`cd <remoteWorkingDir>`していても、それは**qsubを呼び出すシェルのカレントディレクトリを変えるだけ**で、ジョブ自体の実行ディレクトリには反映されません(`qsub`に`-d <path>`を渡すか、スクリプト自身が`cd $PBS_O_WORKDIR`しない限り、ジョブは投入者の`$HOME`で実行されます)。そのため、テストのスクリプトの先頭に`cd $PBS_O_WORKDIR`を追加することで解消しました。同様に相対パスの出力ファイルを扱うリモートホスト+ジョブスケジューラ向けのスクリプトを新規に書く場合は、先頭に`cd $PBS_O_WORKDIR`を入れることを推奨します。
+
 ## remotehost.jsonについて
 
 コンテナが参照するremotehost.jsonはホスト側に残っているので、
@@ -337,6 +439,7 @@ git reset HEAD wheel_config/remotehost.json
 .
 ├── e2e
 │   ├── components # OPEN-WHEELの各コンポーネントにフォーカスしたテストが格納されます。
+│   ├── tutorial # documentMD/user_guide/_tutorialのBasic/Advancedチュートリアルを再現するデモ用テストが格納されます。
 |   *.js # OPEN-WHEELの全般的な機能のテストが格納されます。
 └── support # E2Eテストからライブラリ的に呼び出されるコマンドを定義します。
 

@@ -403,6 +403,89 @@ Cypress.Commands.add("connectComponentMultiple", (sourceComponentName, targetCom
     });
 });
 
+//connecting an if component's else (purple) output to a target component.
+//Mirrors connectComponentMultiple but grabs the second polygon (the elseSender,
+//only rendered when componentData.type === "if") instead of the default first
+//polygon (the if/green sender) that connectComponentMultiple always uses.
+Cypress.Commands.add("connectComponentElse", (sourceComponentName, targetComponentName)=>{
+  cy.get("[data-cy=\"component-component_group-g\"]", { timeout: 5000 });
+  cy.get("[data-cy=\"component-component_group-g\"]").contains(sourceComponentName)
+    .should("be.visible");
+  cy.get("[data-cy=\"component-component_group-g\"]").contains(targetComponentName)
+    .should("be.visible");
+
+  cy.get("[data-cy=\"component-component_group-g\"]", { timeout: 5500 });
+  cy.get("[data-cy=\"component-component_group-g\"]").contains(targetComponentName)
+    .parents("[data-cy=\"component-component_group-g\"]")
+    .first()
+    .find("[data-cy=\"component_header-rect_rect\"]")
+    .should("be.visible")
+    .then(($target)=>{
+      const targetRect = $target[0].getBoundingClientRect();
+      const targetX = targetRect.left + targetRect.width / 2;
+      const targetY = targetRect.top + targetRect.height / 2;
+
+      cy.get("[data-cy=\"component-component_group-g\"]");
+      cy.get("[data-cy=\"component-component_group-g\"]").contains(sourceComponentName)
+        .parents("[data-cy=\"component-component_group-g\"]")
+        .first()
+        .find("polygon")
+        .eq(1)
+        .should("be.visible")
+        .then(($polygon)=>{
+          const polygonRect = $polygon[0].getBoundingClientRect();
+          const startX = polygonRect.left + polygonRect.width / 2;
+          const startY = polygonRect.top + polygonRect.height / 2;
+
+          cy.get("svg#component-graph-svg").first()
+            .then(($svg)=>{
+              cy.window().then((win)=>{
+                const mousedownEvent = new win.MouseEvent("mousedown", {
+                  bubbles: true,
+                  cancelable: true,
+                  view: win,
+                  screenX: startX,
+                  screenY: startY,
+                  clientX: startX,
+                  clientY: startY,
+                  button: 0,
+                  buttons: 1
+                });
+                $polygon[0].dispatchEvent(mousedownEvent);
+
+                const mousemoveEvent = new win.MouseEvent("mousemove", {
+                  bubbles: true,
+                  cancelable: true,
+                  view: win,
+                  screenX: targetX,
+                  screenY: targetY,
+                  clientX: targetX,
+                  clientY: targetY,
+                  button: 0,
+                  buttons: 1
+                });
+                $svg[0].dispatchEvent(mousemoveEvent);
+
+                const mouseupEvent = new win.MouseEvent("mouseup", {
+                  bubbles: true,
+                  cancelable: true,
+                  view: win,
+                  screenX: targetX,
+                  screenY: targetY,
+                  clientX: targetX,
+                  clientY: targetY,
+                  button: 0,
+                  buttons: 0
+                });
+                $svg[0].dispatchEvent(mouseupEvent);
+
+                cy.wait(500);
+              });
+            });
+        });
+    });
+});
+
 //Project status check
 Cypress.Commands.add("checkPropertyScreenOpen", (propertyCy)=>{
   cy.contains(propertyCy)
