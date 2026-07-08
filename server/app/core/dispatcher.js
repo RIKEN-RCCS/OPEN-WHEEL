@@ -1184,7 +1184,10 @@ class Dispatcher extends EventEmitter {
     if (component.inputFiles.length > 0) {
       if (isLocal(component)) {
         if (currentDir !== storagePath) {
-          await fs.mkdir(storagePath);
+          //storagePath is required to already exist (componentTypeValidator.js
+          //validateStorage rejects the project otherwise), so this must be
+          //idempotent - fs.mkdir() throws EEXIST on a path that's already there.
+          await fs.ensureDir(storagePath);
           await Promise.all(
             component.inputFiles
               .filter((e)=>{
