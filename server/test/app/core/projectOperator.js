@@ -63,6 +63,7 @@ describe("UT for projectOperation callback function", function () {
     const sbs = _internal.projectOperationQueues.get(projectRootDir);
     if (sbs) {
       sbs.clear();
+
       while (sbs.running.size > 0) {
         await sleep(10);
       }

@@ -459,8 +459,8 @@ export default {
           const children = fileList
             .filter((e)=>{ return !e.isComponentDir; })
             .map(fileListModifier.bind(null, this.pathSep));
-          // Re-look up the item at callback time: this.items may have been replaced
-          // by a getComponentDirRootFiles() refresh while the socket request was in flight.
+          //Re-look up the item at callback time: this.items may have been replaced
+          //by a getComponentDirRootFiles() refresh while the socket request was in flight.
           const currentItem = this.getActiveItem(item.id);
           (currentItem || item).children = children;
           resolve();

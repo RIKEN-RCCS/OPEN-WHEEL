@@ -257,7 +257,8 @@ describe("components", ()=>{
     it("tarコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView().should("be.visible");
+      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView()
+        .should("be.visible");
     });
 
     /**
