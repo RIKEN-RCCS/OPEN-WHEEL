@@ -822,7 +822,7 @@ describe("project Controller UT", function () {
         expect(validateFinished(ps0Json)).to.be.true;
       });
     });
-    describe.skip("task in nested PS(does not work for now)", ()=>{
+    describe("task in nested PS", ()=>{
       beforeEach(async ()=>{
         const ps0 = await createNewComponent(projectRootDir, projectRootDir, "PS", { x: 10, y: 10 });
         await updateComponentProperty(projectRootDir, ps0.ID, "parameterFile", "input.txt.json");
@@ -860,16 +860,21 @@ describe("project Controller UT", function () {
         const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
         const rootWF = await fs.readJson(path.resolve(projectRootDir, componentJsonFilename));
         const ps0Json = await fs.readJson(path.resolve(projectRootDir, "PS0", componentJsonFilename));
-        const ps1Json = await fs.readJson(path.resolve(projectRootDir, "PS0", "PS1", componentJsonFilename));
         const finishedSchema = { required: ["state"], properties: { state: { enum: ["finished"] } } };
         const validateFinished = ajv.compile(finishedSchema);
 
         expect(validateFinished(projectJson)).to.be.true;
         expect(validateFinished(rootWF)).to.be.true;
         expect(validateFinished(ps0Json)).to.be.true;
-        expect(validateFinished(ps1Json)).to.be.true;
 
+        //PS0/PS1 is only the template that gets copied per KEYWORD1 value - it
+        //never runs itself, so check the expanded PS0_KEYWORD1_i/PS1 instances
+        //(same reasoning as the "task in nested loop" test below, which checks
+        //for0_0/for1/task0 rather than the unexpanded for0/for1/task0).
         for (let i = 1; i <= 3; i++) {
+          const ps1Json = await fs.readJson(path.resolve(projectRootDir, `PS0_KEYWORD1_${i}`, "PS1", componentJsonFilename));
+          expect(validateFinished(ps1Json)).to.be.true;
+
           for (let j = 1; j <= 3; j++) {
             const taskJson = await fs.readJson(path.resolve(projectRootDir, `PS0_KEYWORD1_${i}`, `PS1_KEYWORD1_${j}`, "task0", componentJsonFilename));
             expect(validateFinished(taskJson)).to.be.true;
