@@ -22,7 +22,7 @@ TOTAL_SKIPPED=0
 SPECS=()
 while IFS= read -r line; do
   SPECS+=("$line")
-done < <(find cypress/e2e -name "*.cy.js" -not -path "*/gfarm/*" | sort)
+done < <(find cypress/e2e -name "*.cy.js" -not -path "*/gfarm/*" -not -path "*/tutorial/*" | sort)
 
 echo "Running ${#SPECS[@]} spec files sequentially... (bail=$BAIL)"
 
@@ -75,6 +75,7 @@ fi
 #write a Markdown summary to the GitHub Actions job summary page when running
 #in CI, so pass/fail is visible at a glance without opening the raw log. Local
 #runs (GITHUB_STEP_SUMMARY unset) are unaffected.
+echo "DEBUG: GITHUB_STEP_SUMMARY=${GITHUB_STEP_SUMMARY:-<unset>}"
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   {
     echo "## E2E test results"
@@ -94,6 +95,8 @@ if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
       done
     fi
   } >> "$GITHUB_STEP_SUMMARY"
+  WRITE_STATUS=$?
+  echo "DEBUG: step summary write exit code: $WRITE_STATUS, file now has $(wc -l < "$GITHUB_STEP_SUMMARY") lines"
 fi
 
 if [ ${#FAILED_SPECS[@]} -gt 0 ]; then

@@ -62,7 +62,9 @@ jobs:
         if: always()
         run: |
           LOG=/tmp/ut-output.log
+          echo "DEBUG: GITHUB_STEP_SUMMARY=${GITHUB_STEP_SUMMARY:-<unset>}"
           if [ ! -f "$LOG" ]; then
+            echo "DEBUG: $LOG not found, nothing to summarize"
             exit 0
           fi
           #mocha's default reporter omits the pending/failing line entirely when
@@ -71,6 +73,7 @@ jobs:
           pending=$(grep -oE "[0-9]+ pending" "$LOG" | tail -1 | grep -oE "[0-9]+" || true)
           failing=$(grep -oE "[0-9]+ failing" "$LOG" | tail -1 | grep -oE "[0-9]+" || true)
           passing=${passing:-0}; pending=${pending:-0}; failing=${failing:-0}
+          echo "DEBUG: parsed passing=$passing failing=$failing pending=$pending"
           {
             echo "## Server UT results"
             echo ""
@@ -87,6 +90,7 @@ jobs:
               echo '```'
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+          echo "DEBUG: step summary write exit code: $?, file now has $(wc -l < "$GITHUB_STEP_SUMMARY") lines"
       - run: echo "VERSION_NUMBER=`date '+%Y-%m%d-%H%M%S'`" >>$GITHUB_ENV
       - run: cat  server/app/db/version.json
       - name: update version.json

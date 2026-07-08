@@ -340,6 +340,8 @@ npm run test -- --env "WHEEL_TEST_CSGW_HOSTNAME=foo,WHEEL_TEST_CSGW_USERNAME=bar
 `tutorialBasic.cy.js`と`tutorialAdvanced*.cy.js`(job schedulerを除く)は、スクリプトの実行・条件分岐・ループ・パラメータスタディのファンアウトが本当に行われることを検証するため、**実サーバ**(cypress.config.jsのデフォルトbaseUrl:8089)に対して実行してください。`tutorialAdvancedJobScheduler.cy.js`のみ、上記の理由から**モックサーバ**に対して実行してください。
 どちらも[テスト環境のセットアップ](#テスト環境のセットアップ)で`npm install`済みであることが前提です。
 
+`tutorialBasic.cy.js`のPart2はホスト名`wheel_release_test_server`への接続を必要としますが、これはローカルの`docker compose`ネットワーク内でのみ解決可能なホスト名です。GitHub Actions側の`run_cypress.yml`は同名のコンテナ/ホストを用意していない(`testbed`サービスは別のネットワークモデルで動作する)ため、`test/run-specs-sequential.sh`はデフォルトの実行対象から`tutorial/`ディレクトリ全体を除外しています(`gfarm/`と同様の扱い)。tutorialディレクトリのテストはこのREADMEの手順に従い、手元の環境で個別に実行してください。
+
 #### 実サーバでの起動手順 (tutorialBasic.cy.js / tutorialAdvancedIf.cy.js / tutorialAdvancedLoop.cy.js / tutorialAdvancedParameterStudy.cy.js / tutorialAdvancedSource.cy.js / tutorialAdvancedViewer.cy.js / tutorialAdvancedStorage.cy.js)
 
 1. `wheel`コンテナ(ローカルのソースからビルド)と`wheel_release_test_server`(仮想リモート計算サーバ)を起動します。
