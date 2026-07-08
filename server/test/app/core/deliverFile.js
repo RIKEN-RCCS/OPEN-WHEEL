@@ -8,8 +8,24 @@ import sinon from "sinon";
 import path from "path";
 import fs from "fs-extra";
 import os from "os";
+import { exec as execCb } from "child_process";
 import { rsyncExcludeOptionOfWheelSystemFiles } from "../../../app/db/db.js";
 import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesLocalToRemoteShared, deliverFilesRemoteToLocalShared, deliverFilesBetweenRemotes, _internal } from "../../../app/core/deliverFile.js";
+
+/**
+ * run a shell command locally (standing in for what would run over ssh.exec on the
+ * remote host) and resolve with its exit code instead of rejecting on non-zero
+ * @param {string} cmd - command to run
+ * @param {string} cwd - directory to run it in, standing in for the ssh session's landing directory
+ * @returns {Promise<number>} - process exit code
+ */
+function runShellForExitCode(cmd, cwd) {
+  return new Promise((resolve)=>{
+    execCb(cmd, { cwd }, (err)=>{
+      resolve(err ? (typeof err.code === "number" ? err.code : 1) : 0);
+    });
+  });
+}
 describe("#deliverFile", ()=>{
   let lstatStub, copyStub, removeStub, ensureSymlinkStub, statsMock;
 
@@ -670,6 +686,159 @@ describe("#deliverFilesRemoteToLocalShared (with real symlink)", ()=>{
 
     const content = await fs.readFile(dstFile, "utf8");
     expect(content).to.equal("test content from remote");
+  });
+});
+
+describe("#deliverFilesOnRemote (executed for real, relative srcRoot/dstRoot of different depth)", ()=>{
+  //this reproduces the real bug shape: srcRoot/dstRoot are RELATIVE paths (as
+  //getRemoteWorkingDir() produces whenever remotehost.json has no absolute "path"
+  //override) and srcRoot/dstRoot differ in depth, exactly like two task components
+  //(task0/task1) under the same foreach iteration on the same remote host.
+  let tempDir, landingDir;
+
+  beforeEach(async ()=>{
+    sinon.stub(_internal, "getLogger").returns({ warn: sinon.stub(), debug: sinon.stub() });
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "wheel-deliverOnRemote-test-"));
+    landingDir = tempDir;
+    await fs.ensureDir(path.join(landingDir, "proj/foreach0_0/task0"));
+    await fs.ensureDir(path.join(landingDir, "proj/foreach0_0/task1"));
+  });
+
+  afterEach(async ()=>{
+    sinon.restore();
+    if (tempDir) {
+      await fs.remove(tempDir);
+    }
+  });
+
+  it("should create a symlink that actually resolves for a single literal filename", async ()=>{
+    await fs.writeFile(path.join(landingDir, "proj/foreach0_0/task0/message.txt"), "hello from task0");
+    const execStub = sinon.stub().callsFake((cmd)=>{
+      return runShellForExitCode(cmd, landingDir);
+    });
+    sinon.stub(_internal, "getSsh").returns({ exec: execStub });
+
+    const recipe = {
+      onSameRemote: true,
+      forceCopy: false,
+      projectRootDir: "/dummy",
+      srcRemotehostID: "host",
+      srcRoot: "proj/foreach0_0/task0",
+      srcName: "message.txt",
+      dstRoot: "proj/foreach0_0/task1",
+      dstName: "message.txt"
+    };
+
+    await deliverFilesOnRemote(recipe);
+
+    const linkPath = path.join(landingDir, "proj/foreach0_0/task1/message.txt");
+    const stats = await fs.lstat(linkPath);
+    expect(stats.isSymbolicLink()).to.be.true;
+    const content = await fs.readFile(linkPath, "utf8");
+    expect(content).to.equal("hello from task0");
+  });
+
+  it("should deliver every file matched by a glob pattern evaluated inside srcRoot", async ()=>{
+    await fs.writeFile(path.join(landingDir, "proj/foreach0_0/task0/a.txt"), "content-a");
+    await fs.writeFile(path.join(landingDir, "proj/foreach0_0/task0/b.txt"), "content-b");
+    const execStub = sinon.stub().callsFake((cmd)=>{
+      return runShellForExitCode(cmd, landingDir);
+    });
+    sinon.stub(_internal, "getSsh").returns({ exec: execStub });
+
+    const recipe = {
+      onSameRemote: true,
+      forceCopy: false,
+      projectRootDir: "/dummy",
+      srcRemotehostID: "host",
+      srcRoot: "proj/foreach0_0/task0",
+      srcName: "*.txt",
+      dstRoot: "proj/foreach0_0/task1",
+      dstName: "./"
+    };
+
+    await deliverFilesOnRemote(recipe);
+
+    for (const [name, expected] of [["a.txt", "content-a"], ["b.txt", "content-b"]]) {
+      const linkPath = path.join(landingDir, "proj/foreach0_0/task1", name);
+      const stats = await fs.lstat(linkPath);
+      expect(stats.isSymbolicLink(), `${name} should be a symlink`).to.be.true;
+      const content = await fs.readFile(linkPath, "utf8");
+      expect(content).to.equal(expected);
+    }
+  });
+
+  it("should reject when the glob pattern matches nothing in srcRoot (failglob)", async ()=>{
+    //deliberately no files created under task0, so *.dat matches nothing
+    const execStub = sinon.stub().callsFake((cmd)=>{
+      return runShellForExitCode(cmd, landingDir);
+    });
+    sinon.stub(_internal, "getSsh").returns({ exec: execStub });
+
+    const recipe = {
+      onSameRemote: true,
+      forceCopy: false,
+      projectRootDir: "/dummy",
+      srcRemotehostID: "host",
+      srcRoot: "proj/foreach0_0/task0",
+      srcName: "*.dat",
+      dstRoot: "proj/foreach0_0/task1",
+      dstName: "./"
+    };
+
+    try {
+      await deliverFilesOnRemote(recipe);
+      expect.fail("Expected deliverFilesOnRemote to reject when the glob matches nothing");
+    } catch (err) {
+      expect(err.message).to.equal("deliver file on remote failed");
+      expect(err.rt).to.not.equal(0);
+    }
+  });
+});
+
+describe("#deliverFilesLocalToRemoteShared (executed for real, relative srcRoot/dstRoot of different depth)", ()=>{
+  let tempDir, landingDir;
+
+  beforeEach(async ()=>{
+    sinon.stub(_internal, "getLogger").returns({ warn: sinon.stub(), debug: sinon.stub() });
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "wheel-deliverLocalToRemote-test-"));
+    landingDir = tempDir;
+    await fs.ensureDir(path.join(landingDir, "shared/task0"));
+    await fs.ensureDir(path.join(landingDir, "work/task1"));
+  });
+
+  afterEach(async ()=>{
+    sinon.restore();
+    if (tempDir) {
+      await fs.remove(tempDir);
+    }
+  });
+
+  it("should create a symlink that actually resolves when srcRoot/dstRoot are relative and differ in depth", async ()=>{
+    await fs.writeFile(path.join(landingDir, "shared/task0/output.txt"), "hello from shared storage");
+    const execStub = sinon.stub().callsFake((cmd)=>{
+      return runShellForExitCode(cmd, landingDir);
+    });
+    sinon.stub(_internal, "getSsh").returns({ exec: execStub });
+
+    const recipe = {
+      localToRemoteShared: true,
+      forceCopy: false,
+      projectRootDir: "/dummy",
+      dstRemotehostID: "host",
+      srcRoot: "shared/task0",
+      srcName: "output.txt",
+      dstRoot: "work/task1",
+      dstName: "input.txt"
+    };
+
+    await deliverFilesLocalToRemoteShared(recipe);
+
+    const linkPath = path.join(landingDir, "work/task1/input.txt");
+    const stats = await fs.lstat(linkPath);
+    expect(stats.isSymbolicLink()).to.be.true;
+    const content = await fs.readFile(linkPath, "utf8");
+    expect(content).to.equal("hello from shared storage");
   });
 });
 
