@@ -12,6 +12,12 @@ for arg in "$@"; do
 done
 
 FAILED_SPECS=()
+SUMMARY_ROWS=()
+TOTAL_TESTS=0
+TOTAL_PASSING=0
+TOTAL_FAILING=0
+TOTAL_PENDING=0
+TOTAL_SKIPPED=0
 
 SPECS=()
 while IFS= read -r line; do
@@ -20,15 +26,39 @@ done < <(find cypress/e2e -name "*.cy.js" -not -path "*/gfarm/*" | sort)
 
 echo "Running ${#SPECS[@]} spec files sequentially... (bail=$BAIL)"
 
-for spec in "${SPECS[@]}"; do
+for spec in "${SPECS[@]+"${SPECS[@]}"}"; do
   echo ""
   echo "=== Running: $spec ==="
-  if ! npx cypress run --browser chrome --spec "$spec"; then
+  SPEC_LOG="$(mktemp)"
+  SPEC_STATUS=0
+  npx cypress run --browser chrome --spec "$spec" 2>&1 | tee "$SPEC_LOG" || SPEC_STATUS=$?
+
+  #cypress prints a "(Results)" box with these fields at the end of every run,
+  #even on a crashed/failed spec - parse it for the step summary table.
+  tests=$(grep -oE "Tests:[[:space:]]+[0-9]+" "$SPEC_LOG" | tail -1 | grep -oE "[0-9]+" || true)
+  passing=$(grep -oE "Passing:[[:space:]]+[0-9]+" "$SPEC_LOG" | tail -1 | grep -oE "[0-9]+" || true)
+  failing=$(grep -oE "Failing:[[:space:]]+[0-9]+" "$SPEC_LOG" | tail -1 | grep -oE "[0-9]+" || true)
+  pending=$(grep -oE "Pending:[[:space:]]+[0-9]+" "$SPEC_LOG" | tail -1 | grep -oE "[0-9]+" || true)
+  skipped=$(grep -oE "Skipped:[[:space:]]+[0-9]+" "$SPEC_LOG" | tail -1 | grep -oE "[0-9]+" || true)
+  rm -f "$SPEC_LOG"
+  tests=${tests:-0}; passing=${passing:-0}; failing=${failing:-0}; pending=${pending:-0}; skipped=${skipped:-0}
+
+  TOTAL_TESTS=$((TOTAL_TESTS + tests))
+  TOTAL_PASSING=$((TOTAL_PASSING + passing))
+  TOTAL_FAILING=$((TOTAL_FAILING + failing))
+  TOTAL_PENDING=$((TOTAL_PENDING + pending))
+  TOTAL_SKIPPED=$((TOTAL_SKIPPED + skipped))
+
+  status_icon="✅"
+  if [ "$SPEC_STATUS" -ne 0 ]; then
+    status_icon="❌"
     FAILED_SPECS+=("$spec")
-    if [ "$BAIL" = true ]; then
-      echo "=== Bail: stopping after first failure ==="
-      exit 1
-    fi
+  fi
+  SUMMARY_ROWS+=("| $status_icon $spec | $tests | $passing | $failing | $pending | $skipped |")
+
+  if [ "$SPEC_STATUS" -ne 0 ] && [ "$BAIL" = true ]; then
+    echo "=== Bail: stopping after first failure ==="
+    break
   fi
 done
 
@@ -37,9 +67,36 @@ echo "=== Summary: ${#FAILED_SPECS[@]} of ${#SPECS[@]} specs failed ==="
 
 if [ ${#FAILED_SPECS[@]} -gt 0 ]; then
   echo "Failed specs:"
-  for s in "${FAILED_SPECS[@]}"; do
+  for s in "${FAILED_SPECS[@]+"${FAILED_SPECS[@]}"}"; do
     echo "  - $s"
   done
+fi
+
+#write a Markdown summary to the GitHub Actions job summary page when running
+#in CI, so pass/fail is visible at a glance without opening the raw log. Local
+#runs (GITHUB_STEP_SUMMARY unset) are unaffected.
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+  {
+    echo "## E2E test results"
+    echo ""
+    echo "**${TOTAL_PASSING}/${TOTAL_TESTS} passing** across ${#SPECS[@]} spec files (${TOTAL_FAILING} failing, ${TOTAL_PENDING} pending, ${TOTAL_SKIPPED} skipped)"
+    echo ""
+    echo "| Spec | Tests | Passing | Failing | Pending | Skipped |"
+    echo "|---|---|---|---|---|---|"
+    for row in "${SUMMARY_ROWS[@]+"${SUMMARY_ROWS[@]}"}"; do
+      echo "$row"
+    done
+    if [ ${#FAILED_SPECS[@]} -gt 0 ]; then
+      echo ""
+      echo "### Failed specs"
+      for s in "${FAILED_SPECS[@]+"${FAILED_SPECS[@]}"}"; do
+        echo "- \`$s\`"
+      done
+    fi
+  } >> "$GITHUB_STEP_SUMMARY"
+fi
+
+if [ ${#FAILED_SPECS[@]} -gt 0 ]; then
   exit 1
 fi
 
