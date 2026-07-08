@@ -140,20 +140,6 @@ describe("UT for executer class", function () {
       }
     });
 
-    describe.skip("#gatherFiles to be moved into stageOut UT", ()=>{
-      beforeEach(async ()=>{
-        await ssh.exec(`mkdir -p ${task0.remoteWorkingDir}`);
-        await ssh.exec(`echo -n foo > ${task0.remoteWorkingDir}/foo`);
-        await ssh.exec(`echo -n bar > ${task0.remoteWorkingDir}/bar`);
-        await ssh.exec(`echo -n baz > ${task0.remoteWorkingDir}/baz`);
-      });
-      it("issue 462", async ()=>{
-        task0.outputFiles = [{ name: "hu/ga", dst: [] }, { name: "ho/ge", dst: [] }];
-        //await gatherFiles(task0, ssh);
-        expect(fs.existsSync(path.join(task0.workingDir, "hu/ga"))).to.be.false;
-        expect(fs.existsSync(path.join(task0.workingDir, "ho/ge"))).to.be.false;
-      });
-    });
     describe("#remote exec", ()=>{
       it("run shell script which returns 0 and status should be Finished", async ()=>{
         await exec(task0);

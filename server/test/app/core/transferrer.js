@@ -162,6 +162,29 @@ describe("#stageOut", ()=>{
     expect(registerArgs[4]).to.equal("/local/workingDir");
   });
 
+  it("should skip nested-path outputFiles with no destination without downloading them (issue 462)", async ()=>{
+    const task = {
+      state: "finished",
+      projectRootDir: "/project",
+      remotehostID: "hostA",
+      workingDir: "/local/workingDir",
+      remoteWorkingDir: "/remote/workingDir",
+      outputFiles: [
+        { name: "hu/ga", dst: [] },
+        { name: "ho/ge", dst: [] }
+      ],
+      ID: "taskID"
+    };
+    getSshHostinfoStub.returns({ host: "dummyHost" });
+    needDownloadStub.resolves(false);
+
+    await stageOut(task);
+
+    expect(needDownloadStub.calledTwice).to.be.true;
+    expect(makeDownloadRecipeStub.called).to.be.false;
+    expect(registerStub.called).to.be.false;
+  });
+
   it("should handle multiple files with the same dst as one register call", async ()=>{
     const task = {
       state: "finished",
