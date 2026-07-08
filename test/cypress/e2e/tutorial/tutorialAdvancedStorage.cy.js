@@ -33,6 +33,11 @@ describe("tutorial advanced - 6. File Save (storage)", ()=>{
 
   it("task output accumulates into a storage directory across runs", ()=>{
     const storagePath = `/tmp/wheel_tutorial_storage_${Date.now()}`;
+    //WHEEL's storage component validates that storagePath already exists on the
+    //server before it will let a project run (componentTypeValidator.js
+    //validateStorage - "specified path does not exist on localhost") - it never
+    //auto-creates it. Create it directly in the container first.
+    cy.exec(`docker exec wheel mkdir -p ${storagePath}`);
 
     cy.demoStep("Create task0 that writes foo.txt");
     cy.createComponent("task", "task0", 501, 500);
