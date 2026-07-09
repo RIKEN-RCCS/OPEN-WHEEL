@@ -6,11 +6,6 @@ on:
       - '!master'
 jobs:
   cypress-run:
-    services:
-      testbed:
-        image: naoso5/openpbs
-        ports:
-          - 4000:22
     env:
       TZ: JST-9
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -31,38 +26,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Build Docker images
+      - name: Prepare shared directory
+        run: sudo mkdir -p /tmp/WHEEL_TEST/shared && sudo chmod 777 /tmp/WHEEL_TEST/shared
+      - name: Start containers via docker compose
+        working-directory: test
         run: |
-          docker build --target exec -t wheel_e2e_test .
-          docker build -f test/Dockerfile.gateway -t wheel_e2e_gateway test/
-          docker build -f test/Dockerfile.mock -t wheel_e2e_mock test/
-      - name: Create network and start containers
-        run: |
-          docker network create wheel-e2e-net
-          docker run -d --name wheel --network wheel-e2e-net \
-            -p 8089:8089 \
-            -e WHEEL_USE_HTTP=1 \
-            -e WHEEL_LOG_LEVEL=ERROR \
-            wheel_e2e_test
-          docker cp test/wheel_config/. wheel:/root/.wheel/
-          docker run -d --name wheel_auth --network wheel-e2e-net \
-            -p 8090:8089 \
-            -e WHEEL_USE_HTTP=1 \
-            -e WHEEL_ANONYMOUS_LOGIN=YES \
-            -e WHEEL_ANONYMOUS_PASSWORD=WheelTest123! \
-            -e WHEEL_LOG_LEVEL=ERROR \
-            wheel_e2e_test
-          docker cp test/wheel_config_auth/. wheel_auth:/root/.wheel/
-          docker run -d --name mock --network wheel-e2e-net \
-            -p 3101:3101 \
-            -p 3102:3102 \
-            wheel_e2e_mock
-          docker run -d --name gateway --network wheel-e2e-net \
-            -p 3001:3001 \
-            -e REAL_APP=http://wheel:8089 \
-            -e MOCK_SIO=http://mock:3101 \
-            -e MOCK_HTTP=http://mock:3102 \
-            wheel_e2e_gateway
+          docker compose up -d --build
+          docker compose ps
       - name: Install test dependencies
         working-directory: test
         run: npm install --ignore-scripts
@@ -87,6 +57,7 @@ jobs:
           docker logs mock > /tmp/mock.log 2>&1 || true
           docker logs wheel > /tmp/wheel.log 2>&1 || true
           docker logs wheel_auth > /tmp/wheel_auth.log 2>&1 || true
+          docker logs wheel_release_test_server > /tmp/wheel_release_test_server.log 2>&1 || true
       - name: Upload container logs
         if: failure()
         uses: actions/upload-artifact@v4
@@ -112,7 +83,5 @@ jobs:
 
       - name: Stop all containers and cleanup
         if: always()
-        run: |
-          docker stop gateway mock wheel wheel_auth || true
-          docker rm gateway mock wheel wheel_auth || true
-          docker network rm wheel-e2e-net || true
+        working-directory: test
+        run: docker compose down || true

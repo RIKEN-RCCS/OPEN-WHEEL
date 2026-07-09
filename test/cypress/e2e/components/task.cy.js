@@ -361,6 +361,11 @@ describe("components", ()=>{
       cy.closeProperty();
       cy.get("[data-cy=\"workflow-play-btn\"]").click(); //Taskコンポーネントを実行する
       cy.checkProjectStatus("finished");
+      //Force a fresh fetch of the component's file listing: the file browser
+      //only refetches on (re)mount or when the workflow's descendant tree
+      //changes, not simply because a script/symlink wrote a new file.
+      cy.reload();
+      cy.checkProjectStatus("finished");
       cy.clickComponentName(TASK_NAME_1);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("task1-run")
