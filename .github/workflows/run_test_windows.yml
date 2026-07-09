@@ -86,6 +86,10 @@ jobs:
           failing=$(grep -oE "[0-9]+ failing" "$LOG" | tail -1 | grep -oE "[0-9]+" || true)
           passing=${passing:-0}; pending=${pending:-0}; failing=${failing:-0}
           echo "DEBUG: parsed passing=$passing failing=$failing pending=$pending"
+          if [ -z "${GITHUB_STEP_SUMMARY:-}" ]; then
+            echo "DEBUG: GITHUB_STEP_SUMMARY is not set in this shell, skipping summary write"
+            exit 0
+          fi
           {
             echo "## Server UT results (Windows/WSL)"
             echo ""
