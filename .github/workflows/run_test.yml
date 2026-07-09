@@ -67,6 +67,13 @@ jobs:
             echo "DEBUG: $LOG not found, nothing to summarize"
             exit 0
           fi
+          #mocha keeps ANSI color codes even though stdout is piped, because it
+          #detects the CI env var GitHub Actions sets - strip all ANSI CSI
+          #sequences before parsing so the regexes below match reliably (same
+          #issue found with cypress's output in run-specs-sequential.sh).
+          CLEAN_LOG="$(mktemp)"
+          sed -E $'s/\x1b\\[[0-9;]*[A-Za-z]//g' "$LOG" > "$CLEAN_LOG"
+          mv "$CLEAN_LOG" "$LOG"
           #mocha's default reporter omits the pending/failing line entirely when
           #that count is 0, so a missing match correctly means 0, not an error.
           passing=$(grep -oE "[0-9]+ passing" "$LOG" | tail -1 | grep -oE "[0-9]+" || true)

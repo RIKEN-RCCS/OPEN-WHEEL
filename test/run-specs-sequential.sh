@@ -33,6 +33,16 @@ for spec in "${SPECS[@]+"${SPECS[@]}"}"; do
   SPEC_STATUS=0
   npx cypress run --browser chrome --spec "$spec" 2>&1 | tee "$SPEC_LOG" || SPEC_STATUS=$?
 
+  #cypress keeps ANSI color codes even though stdout is piped, because it
+  #detects the CI env var GitHub Actions sets and assumes ANSI rendering
+  #support - e.g. "Tests:" is followed by a color-reset escape sequence
+  #before the whitespace/number, not by the whitespace directly. Strip all
+  #ANSI CSI sequences before parsing so the label/number regexes below can
+  #actually match.
+  CLEAN_LOG="$(mktemp)"
+  sed -E $'s/\x1b\\[[0-9;]*[A-Za-z]//g' "$SPEC_LOG" > "$CLEAN_LOG"
+  mv "$CLEAN_LOG" "$SPEC_LOG"
+
   #cypress prints a "(Results)" box with these fields at the end of every run,
   #even on a crashed/failed spec - parse it for the step summary table.
   tests=$(grep -oE "Tests:[[:space:]]+[0-9]+" "$SPEC_LOG" | tail -1 | grep -oE "[0-9]+" || true)
