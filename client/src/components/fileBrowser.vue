@@ -96,6 +96,7 @@
             :disabled="!isFileSelected || isSND"
             icon="mdi-share-outline"
             v-bind="props"
+            data-cy="file_browser-share_file-btn"
             @click="openDialog('share')"
           />
         </template>
@@ -157,6 +158,7 @@
           v-model="dialog.inputField"
           readonly
           :label="dialog.inputFieldLabel"
+          data-cy="file_browser-share_path-text_field"
         >
           <template #append>
             <v-tooltip
@@ -168,6 +170,7 @@
                 <v-btn
                   icon="mdi-content-copy"
                   v-bind="props"
+                  data-cy="file_browser-share_path_copy-btn"
                   @click="copyToClipboard"
                 />
               </template>
@@ -539,7 +542,12 @@ export default {
           if (this.dialog.submitEvent === "createNewDir") {
             newItem.children = [];
           }
-          const container = this.activeItem ? this.activeItem.children : this.items;
+          //activeItem can be a file (no .children array) rather than a
+          //directory - e.g. after selecting a file to open it in the editor,
+          //without navigating into a directory afterward. Only nest the new
+          //item under activeItem when it actually has a children array;
+          //otherwise it belongs at the root alongside activeItem.
+          const container = Array.isArray(this.activeItem?.children) ? this.activeItem.children : this.items;
           container.push(newItem);
           if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
             this.openItems.push(this.activeItem.id);
