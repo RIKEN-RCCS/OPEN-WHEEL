@@ -1481,4 +1481,95 @@ describe("UT for Dispatcher class", function () {
       await expect(DP._getInputFiles(updatedNext)).to.be.rejectedWith(/mandatory inputFile transfer failed/);
     });
   });
+
+  describe("stage-out stuck resume (issue: stage-out failure used to hang the dispatcher forever)", ()=>{
+    let previous;
+    let next;
+
+    beforeEach(async ()=>{
+      previous = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      next = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 100, y: 0 });
+      await addOutputFile(projectRootDir, previous.ID, "out.txt");
+      await addInputFile(projectRootDir, next.ID, "out.txt");
+      await addFileLink(projectRootDir, previous.ID, "out.txt", next.ID, "out.txt");
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+    });
+
+    describe("_isStuckStageOut / _isReady", ()=>{
+      it("does not block downstream forever when the predecessor is stuck at stage-out with no live retry", async ()=>{
+        const updatedPrevious = await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(DP._isStuckStageOut(updatedPrevious)).to.be.true;
+        expect(await DP._isReady(updatedNext)).to.be.true;
+      });
+
+      it("still blocks downstream while the predecessor's stage-out is actively being retried", async ()=>{
+        const updatedPrevious = await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        DP.runningTasks = [{ ID: previous.ID, state: "stage-out" }];
+        expect(DP._isStuckStageOut(updatedPrevious)).to.be.false;
+        expect(await DP._isReady(updatedNext)).to.be.false;
+      });
+
+      it("marks downstream as failed once unblocked if its mandatory input was never actually delivered", async ()=>{
+        await toggleInputFileMandatory(projectRootDir, next.ID, 0, true);
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP._isReady(updatedNext)).to.be.true;
+        //out.txt was never produced locally since the predecessor's stage-out never completed
+        expect(await DP._checkMandatoryInputFilesExist(updatedNext)).to.be.false;
+      });
+
+      it("lets downstream proceed (with only a warning) if the never-delivered input is non-mandatory", async ()=>{
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP._isReady(updatedNext)).to.be.true;
+        expect(await DP._checkMandatoryInputFilesExist(updatedNext)).to.be.true;
+      });
+    });
+
+    describe("\"taskCompleted\" event handling", ()=>{
+      it("removes the task from runningTasks by reference and flags hasFailedComponent when it ends still at stage-out", ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        const task = { ID: previous.ID, state: "stage-out" };
+        DP.runningTasks = [task];
+        DP.emit("taskCompleted", "stage-out", task);
+        expect(DP.runningTasks).to.not.include(task);
+        expect(DP.hasFailedComponent).to.be.true;
+      });
+
+      it("removes the task from runningTasks without flagging failure when it finishes successfully", ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        const task = { ID: previous.ID, state: "finished" };
+        DP.runningTasks = [task];
+        DP.emit("taskCompleted", "finished", task);
+        expect(DP.runningTasks).to.not.include(task);
+        expect(DP.hasFailedComponent).to.be.false;
+      });
+
+      it("leaves other running tasks untouched when a different task completes", ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        const stuckTask = { ID: previous.ID, state: "stage-out" };
+        const otherTask = { ID: next.ID, state: "running" };
+        DP.runningTasks = [stuckTask, otherTask];
+        DP.emit("taskCompleted", "stage-out", stuckTask);
+        expect(DP.runningTasks).to.deep.equal([otherTask]);
+      });
+    });
+
+    describe("_dispatchOneComponent finished-skip propagation", ()=>{
+      it("still queues successors via _addNextComponent when skipping an already-finished component", async ()=>{
+        const updatedPrevious = await updateComponentProperty(projectRootDir, previous.ID, "state", "finished");
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        await DP._dispatchOneComponent(updatedPrevious);
+        expect(DP.pendingComponents.map((c)=>{
+          return c.ID;
+        })).to.include(next.ID);
+      });
+    });
+  });
 });

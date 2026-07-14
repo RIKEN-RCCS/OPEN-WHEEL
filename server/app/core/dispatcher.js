@@ -239,8 +239,19 @@ class Dispatcher extends EventEmitter {
     this.hasFailedComponent = false;
     this.hasUnknownComponent = false;
     this.firstCall = true;
-    this.on("taskCompleted", (state)=>{
+    this.on("taskCompleted", (state, task)=>{
       this.setStateFlag(state);
+      if (state === "stage-out") {
+        //task's own job already succeeded but the transfer did not complete this run
+        this.hasFailedComponent = true;
+      }
+      if (task) {
+        //remove by reference regardless of state: this event firing means the task's
+        //execution attempt has concluded, even if it ends up stuck at "stage-out"
+        this.runningTasks = this.runningTasks.filter((t)=>{
+          return t !== task;
+        });
+      }
       this._reserveDispatch();
     });
   }
@@ -277,6 +288,7 @@ class Dispatcher extends EventEmitter {
     try {
       if (target.state === "finished") {
         logInfo(this.projectRootDir, `${this.cwfDir}/${target.name}`, "finished component don't re-run at this time");
+        await this._addNextComponent(target);
       } else {
         await this._cmdFactory(target.type).call(this, target);
       }
@@ -1336,6 +1348,14 @@ class Dispatcher extends EventEmitter {
     return;
   }
 
+  //true if component is stuck at "stage-out" (its own job already succeeded but the
+  //transfer did not complete) and is not currently being retried by this dispatcher
+  _isStuckStageOut(component) {
+    return component.state === "stage-out" && !this.runningTasks.some((t)=>{
+      return t.ID === component.ID;
+    });
+  }
+
   async _isReady(component) {
     if (component.type === "source") {
       return true;
@@ -1347,7 +1367,7 @@ class Dispatcher extends EventEmitter {
           continue;
         }
         logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "previous component name =", `${previous.type}(state:${previous.state})`);
-        if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
+        if (!isFinishedState(previous.state) && previous.type !== "stepjobTask" && !this._isStuckStageOut(previous)) {
           logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "is not ready because", `${this.cwfDir}${previous.name}`, "is not finished");
           return false;
         }
@@ -1363,7 +1383,7 @@ class Dispatcher extends EventEmitter {
           if (previous.disable) {
             continue;
           }
-          if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
+          if (!isFinishedState(previous.state) && previous.type !== "stepjobTask" && !this._isStuckStageOut(previous)) {
             logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "is not ready because", inputFile, "from", `${previous.name}(${previous.ID})`, "is not arrived");
             return false;
           }
