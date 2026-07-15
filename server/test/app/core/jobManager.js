@@ -834,16 +834,13 @@ describe("#registerJob", ()=>{
   });
 });
 
-describe("[reproduction test] #registerJob does not falsely fail a still-running PBS Pro job checked immediately after submission (issue #994)", ()=>{
+describe("#registerJob rechecks an ambiguous still-running PBS Pro status instead of failing immediately (issue #994)", ()=>{
   //NOTE: unlike the #registerJob describe block above, getStatusCode and
   //isJobFailed are intentionally left unstubbed here so the real PBS Pro
-  //regexes from server/app/db/jobScheduler.json exercise the actual defect:
-  //registerJob's "finished" handler only retries when the after-command
-  //output is completely EMPTY (see the reEmpty check in jobManager.js). A
+  //regexes from server/app/db/jobScheduler.json exercise the fix: a
   //genuinely non-empty but ambiguous output - e.g. a real "qstat -xf"
   //response for a job that is still running and simply has no Exit_status
-  //line yet - is never retried, so getStatusCode's "get return code failed"
-  //fallback (-2) flows straight through to the caller as if the job failed.
+  //line yet - must be rechecked once instead of being trusted as a failure.
   let addRequestStub;
   let getRequestStub;
   let createRequestStub;
@@ -885,16 +882,30 @@ describe("[reproduction test] #registerJob does not falsely fail a still-running
     sinon.restore();
   });
 
-  it("should not resolve with a failing return code when 'qstat -xf' output has a valid substate but no Exit_status line yet", async ()=>{
-    const eventEmitter = new EventEmitter();
-    const requestObj = {
+  it("should recheck once and resolve with the real return code when the first check has a valid substate but no Exit_status line yet", async ()=>{
+    const firstEmitter = new EventEmitter();
+    const firstRequestObj = {
       argument: "12345",
       hostInfo: { host: "dummyHost" },
-      event: eventEmitter
+      event: firstEmitter
     };
-    createRequestStub.returns(requestObj);
-    addRequestStub.returns("req-994");
-    getRequestStub.returns(requestObj);
+    createRequestStub.returns(firstRequestObj);
+
+    let addRequestCallCount = 0;
+    addRequestStub.callsFake(()=>{
+      addRequestCallCount++;
+      return addRequestCallCount === 1 ? "req-994" : "req-994-recheck";
+    });
+
+    const secondEmitter = new EventEmitter();
+    const secondRequestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: secondEmitter
+    };
+    getRequestStub.callsFake((id)=>{
+      return id === "req-994" ? firstRequestObj : secondRequestObj;
+    });
 
     const p = registerJob(hostinfo, task);
 
@@ -907,7 +918,7 @@ describe("[reproduction test] #registerJob does not falsely fail a still-running
       "    substate = 42"
     ].join("\n");
 
-    eventEmitter.emit("finished", {
+    firstEmitter.emit("finished", {
       argument: "12345",
       hostInfo: { host: "dummyHost" },
       finishedHook: {
@@ -917,7 +928,38 @@ describe("[reproduction test] #registerJob does not falsely fail a still-running
       }
     });
 
+    //let the pending "await getStatusCode(...)" microtask resolve so the
+    //handler reaches recheck() and registers its listener on secondEmitter
+    //before we emit on it
+    await new Promise((resolve)=>{
+      setImmediate(resolve);
+    });
+
+    //by the time the recheck fires, the job has actually finished and
+    //qstat now reports a real exit status. the recheck() listener reads
+    //rt/lastOutput directly off the request object returned by getRequest
+    //(mirroring rwatchd's real behavior), not off the emitted payload
+    const finishedOutput = [
+      "Job Id: 12345.pbshost",
+      "    job_state = F",
+      "    substate = 92",
+      "    Exit_status = 0"
+    ].join("\n");
+    secondRequestObj.rt = 0;
+    secondRequestObj.lastOutput = finishedOutput;
+
+    secondEmitter.emit("finished", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      finishedHook: {
+        rt: 0,
+        output: finishedOutput,
+        cmd: "qstat -xf 12345"
+      }
+    });
+
     const result = await p;
-    expect(result).to.not.equal(-2);
+    expect(result).to.equal(0);
+    expect(addRequestStub.callCount).to.equal(2);
   });
 });
