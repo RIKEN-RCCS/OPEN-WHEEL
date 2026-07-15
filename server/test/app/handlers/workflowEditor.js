@@ -9,9 +9,16 @@ import * as chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
+import path from "path";
+import fs from "fs-extra";
 
 //testee
-import { enqueueProjectOperation, stopProjectEdits, startProjectEdits, clearProjectEdits } from "../../../app/handlers/workflowEditor.js";
+import { enqueueProjectOperation, stopProjectEdits, startProjectEdits, clearProjectEdits, onUpdateComponentPos } from "../../../app/handlers/workflowEditor.js";
+
+//helper functions
+import { createNewProject } from "../../../app/core/projectOperations.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
 
 describe("workflowEditor UT", ()=>{
   describe("enqueueProjectOperation", ()=>{
@@ -212,6 +219,42 @@ describe("workflowEditor UT", ()=>{
 
       await expect(clearProjectEdits(project)).to.be.fulfilled;
       startProjectEdits(project);
+    });
+  });
+
+  describe("generalHandler clears the imported-project 'not changed' flag on edit", ()=>{
+    const testDirRoot = "WHEEL_TEST_TMP_WORKFLOWEDITOR";
+    const projectRootDir = path.resolve(testDirRoot, "testProject.wheel");
+    let task;
+    let rootWF;
+
+    beforeEach(async ()=>{
+      await fs.remove(testDirRoot);
+      await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
+      rootWF = await fs.readJson(path.resolve(projectRootDir, componentJsonFilename));
+      task = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      projectJson.exportInfo = { notChanged: true };
+      await fs.writeJson(path.resolve(projectRootDir, projectJsonFilename), projectJson);
+    });
+    after(async ()=>{
+      await fs.remove(testDirRoot);
+    });
+
+    it("clears exportInfo.notChanged after a component edit (e.g. moving a node)", async ()=>{
+      await new Promise((resolve, reject)=>{
+        onUpdateComponentPos(projectRootDir, task.ID, { x: 50, y: 50 }, rootWF.ID, (rt)=>{
+          if (rt instanceof Error) {
+            reject(rt);
+          } else {
+            resolve(rt);
+          }
+        });
+      });
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      expect(projectJson.exportInfo.notChanged).to.be.false;
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      expect(updatedTask.pos).to.deep.equal({ x: 50, y: 50 });
     });
   });
 });

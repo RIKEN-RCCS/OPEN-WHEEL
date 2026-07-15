@@ -7,6 +7,8 @@
 import path from "path";
 import { getLogger } from "../logSettings.js";
 import { openFile, saveFile } from "../core/fileUtils.js";
+import { clearImportNotChangedFlag } from "../core/projectJsonFileOperator.js";
+import { sendProjectJson } from "./senders.js";
 import { emitAll } from "./commUtils.js";
 
 //Server-side debounce for file write + git add operations
@@ -52,6 +54,11 @@ export async function onSaveFile(projectRootDir, filename, dirname, content, cb)
   pendingSave.timer = setTimeout(async ()=>{
     try {
       await saveFile(absPath, pendingSave.content);
+      //this save may be the first edit since the project was imported - if so, the
+      //imported-project warning must not keep reappearing on every subsequent load
+      if (await clearImportNotChangedFlag(projectRootDir)) {
+        await sendProjectJson(projectRootDir);
+      }
       //Call all pending callbacks with success
       pendingSave.callbacks.forEach((callback)=>{
         return callback(true);

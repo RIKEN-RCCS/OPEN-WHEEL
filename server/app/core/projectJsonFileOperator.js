@@ -81,6 +81,25 @@ export async function updateProjectDescription(projectRootDir, description) {
 }
 
 /**
+ * clear the "not changed since import" flag the first time a real edit happens.
+ * saveProject already clears this, but most edits (script/file saves, component
+ * property changes, graph edits) persist immediately without going through
+ * saveProject, so the imported-project warning must be cleared here too or it
+ * keeps reappearing forever even after the project has clearly been modified
+ * @param {string} projectRootDir - project's root path
+ * @returns {Promise<boolean>} - true if the flag was actually cleared
+ */
+export async function clearImportNotChangedFlag(projectRootDir) {
+  const projectJson = await getProjectJson(projectRootDir);
+  if (!projectJson.exportInfo || !projectJson.exportInfo.notChanged) {
+    return false;
+  }
+  projectJson.exportInfo.notChanged = false;
+  await writeProjectJson(projectRootDir, projectJson);
+  return true;
+}
+
+/**
  * get project's status string
  * @param {string} projectRootDir - project's root path
  * @returns {string} -

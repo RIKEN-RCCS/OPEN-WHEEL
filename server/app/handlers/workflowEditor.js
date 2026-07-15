@@ -33,7 +33,7 @@ import {
   replaceEnv
 } from "../core/environmentVariables.js";
 import { replaceWebhook } from "../core/webhook.js";
-import { getProjectJson } from "../core/projectJsonFileOperator.js";
+import { getProjectJson, clearImportNotChangedFlag } from "../core/projectJsonFileOperator.js";
 import { getComponentDir } from "../core/componentJsonIO.js";
 import { sendWorkflow, sendProjectJson, sendComponentTree } from "./senders.js";
 import { convertPathSep } from "../core/pathUtils.js";
@@ -113,9 +113,12 @@ async function generalHandler(func, funcname, projectRootDir, parentID, needSend
   return enqueueProjectOperation(projectRootDir, async ()=>{
     try {
       const rt = await func();
+      //this edit may be the first one since the project was imported - if so, the
+      //imported-project warning must not keep reappearing on every subsequent load
+      const justUnflaggedImport = await clearImportNotChangedFlag(projectRootDir);
       const parentDir = await getComponentDir(projectRootDir, parentID, true);
       await sendWorkflow(cb, projectRootDir, parentDir);
-      if (rt === true || needSendProjectJson) {
+      if (rt === true || needSendProjectJson || justUnflaggedImport) {
         await sendProjectJson(projectRootDir);
         await sendComponentTree(projectRootDir, projectRootDir);
       }
