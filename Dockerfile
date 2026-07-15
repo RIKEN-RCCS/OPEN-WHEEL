@@ -1,7 +1,12 @@
 # syntax=docker/dockerfile:1
 ARG PLATFORM=${BUILDPLATFORM}
 FROM --platform=${PLATFORM} node:22-slim AS base
-RUN apt-get update && apt -y install curl git rsync openssh-server bzip2 python3 g++ build-essential&&\
+# tzdata's postinstall script needs a TZ value available at build time to
+# configure /usr/share/zoneinfo correctly; without one (even non-interactively)
+# it leaves corrupted/stub zoneinfo files. This is only a build-time default -
+# entrypoint.sh determines the real, per-container TZ at runtime.
+ENV TZ=Etc/UTC
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt -y install curl git rsync openssh-server bzip2 python3 g++ build-essential tzdata&&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
     apt -y install git-lfs &&\
     apt-get clean  &&\
