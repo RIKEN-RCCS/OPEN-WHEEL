@@ -273,6 +273,8 @@ describe("components", ()=>{
       cy.get("[data-cy=\"action_row-delete-btn\"]").click();
       cy.get("[data-cy=\"graph-component-row\"]").contains("testInputFile")
         .should("not.exist");
+      //evidence for issue#967 (test 04-01-469): input file deletion is reflected
+      cy.screenshot("issue967-input-file-deleted");
     });
 
     /**
@@ -290,6 +292,8 @@ describe("components", ()=>{
       cy.get("[data-cy=\"action_row-delete-btn\"]").click();
       cy.get("[data-cy=\"graph-component-row\"]").contains("testOutputFile")
         .should("not.exist");
+      //evidence for issue#967 (test 04-01-470): output file deletion is reflected
+      cy.screenshot("issue967-output-file-deleted");
     });
 
     /**

@@ -29,7 +29,7 @@ import { eventEmitters } from "../../../app/core/global.js";
 import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { updateComponentProperty } from "../../testUtil.js";
-import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { createNewComponent, renameComponentDir } from "../../../app/core/componentOperations.js";
 import { removeExecuters } from "../../../app/core/executerManager.js";
 import { removeTransferrers } from "../../../app/core/transferManager.js";
 import { addInputFile, addOutputFile, renameOutputFile, toggleInputFileMandatory } from "../../../app/core/componentFiles.js";
@@ -780,6 +780,41 @@ describe("UT for Dispatcher class", function () {
       };
       const validate = ajv.compile(schema);
       expect(validate(for0Json)).to.be.true;
+    });
+
+    it("[reproduction test] should not overwrite an existing sibling component whose name collides with a loop instance directory (issue #971)", async ()=>{
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+
+      //create a real sibling component whose name collides with the instance
+      //directory name the loop will archive index 1 into (i.e. "for0_1") -
+      //with 3 iterations (0,1,2) index 1 gets archived while index 2 remains as "for0" itself
+      const collidingComponent = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
+      await updateComponentProperty(projectRootDir, collidingComponent.ID, "script", scriptName);
+      await fs.outputFile(path.join(projectRootDir, collidingComponent.name, scriptName), scriptPwd);
+      await renameComponentDir(projectRootDir, collidingComponent.ID, `${for0.name}_1`);
+      //mark it subComponent:true so the dispatcher's directory-scan-based
+      //getChildren() (workflowUtil.js) does not ALSO independently dispatch
+      //it as a sibling task - that would race with the loop's own write to
+      //the same path and make the outcome nondeterministic. This isolates
+      //the exact defect under test: _loopHandler's unconditional overwrite
+      //of whatever already sits at the instance directory path.
+      const collidingComponentPath = path.resolve(projectRootDir, `${for0.name}_1`, componentJsonFilename);
+      const collidingComponentJson = await fs.readJson(collidingComponentPath);
+      collidingComponentJson.subComponent = true;
+      await fs.writeJson(collidingComponentPath, collidingComponentJson, { spaces: 4 });
+
+      const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      //the pre-existing sibling component's own cmp.wheel.json identity must
+      //survive the loop's instance-directory creation for index 1, instead of
+      //being silently overwritten by the loop's synthetic instance component
+      const afterJson = await fs.readJson(path.resolve(projectRootDir, `${for0.name}_1`, componentJsonFilename));
+      expect(afterJson.ID).to.equal(collidingComponent.ID);
     });
   });
 

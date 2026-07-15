@@ -70,5 +70,8 @@ describe("source and viewer", ()=>{
     cy.get("[data-cy=\"workflow-open_viewer_screen-btn\"]").should("exist")
       .and("be.disabled");
     cy.get("[data-cy=\"workflow-viewer_screen-dialog\"]").should("not.exist");
+    //evidence for issue#949: viewer button disabled and no stale dialog after
+    //deleting and recreating a project with the same name
+    cy.screenshot("issue949-no-stale-viewer-dialog");
   });
 });
