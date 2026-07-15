@@ -782,7 +782,7 @@ describe("UT for Dispatcher class", function () {
       expect(validate(for0Json)).to.be.true;
     });
 
-    it("[reproduction test] should not overwrite an existing sibling component whose name collides with a loop instance directory (issue #971)", async ()=>{
+    it("should refuse to overwrite an existing sibling component whose name collides with a loop instance directory (issue #971)", async ()=>{
       await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
       await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
       await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
@@ -798,8 +798,8 @@ describe("UT for Dispatcher class", function () {
       //getChildren() (workflowUtil.js) does not ALSO independently dispatch
       //it as a sibling task - that would race with the loop's own write to
       //the same path and make the outcome nondeterministic. This isolates
-      //the exact defect under test: _loopHandler's unconditional overwrite
-      //of whatever already sits at the instance directory path.
+      //the exact defect under test: _loopHandler's collision check on
+      //whatever already sits at the instance directory path.
       const collidingComponentPath = path.resolve(projectRootDir, `${for0.name}_1`, componentJsonFilename);
       const collidingComponentJson = await fs.readJson(collidingComponentPath);
       collidingComponentJson.subComponent = true;
@@ -807,7 +807,7 @@ describe("UT for Dispatcher class", function () {
 
       const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
-      expect(await DP.start()).to.be.equal("finished");
+      await expect(DP.start()).to.be.rejectedWith(/instance directory name collision/);
       await wait();
 
       //the pre-existing sibling component's own cmp.wheel.json identity must

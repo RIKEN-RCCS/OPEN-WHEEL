@@ -816,6 +816,17 @@ class Dispatcher extends EventEmitter {
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
     try {
+      //a loop's own previous instance directory always shares the loop
+      //template's ID (structuredClone never regenerates it), so only a
+      //directory belonging to a genuinely different, unrelated component
+      //should ever collide here - refuse to clobber it instead of silently
+      //overwriting/erasing the user's own component (issue #971)
+      if (await fs.pathExists(dstDir)) {
+        const existingJson = await readComponentJson(dstDir).catch(()=>null);
+        if (existingJson !== null && existingJson.ID !== component.ID) {
+          throw new Error(`instance directory name collision: "${newComponent.name}" already exists as a different component and would be overwritten by loop component "${component.originalName}"`);
+        }
+      }
       logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy from", srcDir, "to", dstDir);
       const skipCopyPatterns = component.skipCopy || [];
       await fs.copy(srcDir, dstDir, {
