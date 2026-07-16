@@ -45,6 +45,8 @@ The While component behaves similarly to the For component, but uses a zero-base
 
 Also, the termination decision is not calculated by the index value, but by the return value of the configured shell script or the evaluation result of the javascript expression.
 
+The separator escalation (`_` -> `__` -> `___`) that happens when an instance directory name collides with an existing component, file, or directory works the same way as for the For component. See [For Component Run-time Behavior]({{site.baseurl}}/reference/4_component/03_For.html#for-component-run-time-behavior) for details.
+
 --------
 [Return to Component Details]({{site.baseurl}}/reference/4_component/)
 
