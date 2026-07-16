@@ -327,9 +327,9 @@ describe("components", ()=>{
   ファイル操作エリア
   新規ディレクトリ作成時のバリデーション
   試験確認内容：不正な名前を入力した場合にOKボタンが非活性のままであることを確認
-  [reproduction test] issue#972
+  issue#972
      */
-    it("[reproduction test] ファイル操作エリア-新規ディレクトリ作成-不正な名前ではOKボタンが非活性のままであることを確認(issue#972)", ()=>{
+    it("ファイル操作エリア-新規ディレクトリ作成-不正な名前ではOKボタンが非活性のままであることを確認(issue#972)", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.get("[data-cy=\"file_browser-new_dir-btn\"]").click({ force: true });

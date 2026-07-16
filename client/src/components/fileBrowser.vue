@@ -149,7 +149,7 @@
           v-if="['createNewDir','createNewFile','rename'].includes(dialog.submitEvent)"
           v-model="dialog.inputField"
           :label="dialog.inputFieldLabel"
-          :rules="[noDuplicate]"
+          :rules="[isValidInputFilename, noDuplicate]"
           variant="outlined"
           data-cy="file_browser-input-text_field"
         />
@@ -221,6 +221,7 @@ import SIO from "../lib/socketIOWrapper.js";
 import versatileDialog from "../components/versatileDialog.vue";
 import myTreeview from "../components/common/myTreeview.vue";
 import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "../components/common/fileTreeUtils.js";
+import { isValidInputFilename } from "../lib/utility.js";
 
 export default {
   name: "FileBrowser",
@@ -288,7 +289,7 @@ export default {
     },
     dialogButtons() {
       const requiresInput = ["createNewDir", "createNewFile", "rename"].includes(this.dialog.submitEvent);
-      const isInvalid = requiresInput && (this.dialog.inputField === "" || !this.noDuplicate(this.dialog.inputField));
+      const isInvalid = requiresInput && (this.dialog.inputField === "" || !isValidInputFilename(this.dialog.inputField) || !this.noDuplicate(this.dialog.inputField));
       return [
         { icon: "mdi-check", label: "ok", disabled: isInvalid },
         { icon: "mdi-close", label: "cancel" }
@@ -348,6 +349,7 @@ export default {
   },
   methods: {
     ...mapActions(["openTextEditor"]),
+    isValidInputFilename,
     updateScriptCandidate() {
       if (!this.needScriptCandidate) {
         return;
