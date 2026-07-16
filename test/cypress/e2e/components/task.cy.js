@@ -210,9 +210,9 @@ describe("components", ()=>{
   構成要素の機能確認
   プロパティ画面を開いたまま未保存の変更がある状態でclean component実行
   試験確認内容：プロパティ画面を閉じずに未保存の変更をしたままclean実行しても最新の保存状態に戻ることを確認
-  [reproduction test] issue#948
+  issue#948
      */
-    it("[reproduction test] 構成要素の機能確認-プロパティ画面を開いたまま未保存の変更がある状態でclean component実行-最新の保存状態に戻ることを確認(issue#948)", ()=>{
+    it("構成要素の機能確認-プロパティ画面を開いたまま未保存の変更がある状態でclean component実行-最新の保存状態に戻ることを確認(issue#948)", ()=>{
       const DESCRIPTION_CY = "[data-cy=\"component_property-description-textarea\"]";
       const SAVED_DESCRIPTION = "saved-description";
       const UNSAVED_DESCRIPTION = "unsaved-edit-should-be-discarded";

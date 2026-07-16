@@ -275,7 +275,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState", "isComponentDragging", "copyInfo", "remoteHost"]),
+    ...mapState(["currentComponent", "canvasWidth", "canvasHeight", "projectRootDir", "selectedComponent", "readOnly", "projectState", "isComponentDragging", "copyInfo", "remoteHost", "cleaningComponentID"]),
     ...mapState({ currentZoomState: "currentZoom", currentPanState: "currentPan" }),
     ...mapGetters(["copiedComponentID", "cutComponentID"]),
     currentZoom: {
@@ -630,7 +630,18 @@ export default {
       }
     },
     cleanComponent() {
-      SIO.emitGlobal("cleanComponent", this.projectRootDir, this.targetComponent.ID, SIO.generalCallback);
+      const cleanedID = this.targetComponent.ID;
+      this.commitCleaningComponentID(cleanedID);
+      SIO.emitGlobal("cleanComponent", this.projectRootDir, cleanedID, (rt)=>{
+        SIO.generalCallback(rt);
+        //Safety net: if the server returned without ever sending a matching
+        //workflow update (e.g. the user canceled the unsaved-files prompt),
+        //clear the flag here so it doesn't linger and affect a later,
+        //unrelated edit to the same component.
+        if (this.cleaningComponentID === cleanedID) {
+          this.commitCleaningComponentID(null);
+        }
+      });
       this.closeContextMenus();
     },
     copyComponent() {
@@ -814,7 +825,7 @@ export default {
       this.showSnackbar({ message: "Component import started", timeout: 2000 });
     },
     ...mapActions({ commitSelectedComponent: "selectedComponent", showSnackbar: "showSnackbar" }),
-    ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan", commitCopyInfo: "copyInfo", commitPendingNavigation: "pendingNavigation" }),
+    ...mapMutations({ commitIsComponentDragging: "isComponentDragging", commitCurrentZoom: "currentZoom", commitCurrentPan: "currentPan", commitCopyInfo: "copyInfo", commitPendingNavigation: "pendingNavigation", commitCleaningComponentID: "cleaningComponentID" }),
     updatePosition(index, event) {
       this.currentComponent.descendants[index].pos.x = event.newX;
       this.currentComponent.descendants[index].pos.y = event.newY;
