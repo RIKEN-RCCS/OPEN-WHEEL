@@ -751,7 +751,7 @@ class Dispatcher extends EventEmitter {
 
     //set current loop index
     if (!component.initialized) {
-      loopInitialize(component, getTripCount);
+      await loopInitialize(component, getTripCount, this.cwfDir);
     } else if (component.restarting) {
       let done = false;
       const currentInstanceDir = path.resolve(this.cwfDir, getInstanceDirectoryName(component, component.prevIndex, component.name));
@@ -791,7 +791,7 @@ class Dispatcher extends EventEmitter {
 
     let srcDirName = component.name;
     if (getPrevIndex(component) !== null) {
-      srcDirName = `${component.originalName}_${sanitizePath(component.prevIndex)}`;
+      srcDirName = getInstanceDirectoryName(component, component.prevIndex, component.originalName);
     }
     const srcDir = path.resolve(this.cwfDir, srcDirName);
 
@@ -806,7 +806,7 @@ class Dispatcher extends EventEmitter {
     this.pendingComponents.push(component);
 
     const newComponent = structuredClone(component);
-    newComponent.name = `${component.originalName}_${sanitizePath(component.currentIndex)}`;
+    newComponent.name = getInstanceDirectoryName(component, component.currentIndex, component.originalName);
     newComponent.subComponent = true;
     newComponent.env = Object.assign({}, this.env, component.env);
     if (!newComponent.env) {
@@ -816,17 +816,19 @@ class Dispatcher extends EventEmitter {
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
     try {
-      //a loop's own previous instance directory always shares the loop
-      //template's ID (structuredClone never regenerates it), so only a
-      //directory belonging to a genuinely different, unrelated component
-      //should ever collide here - refuse to clobber it instead of silently
-      //overwriting/erasing the user's own component (issue #971)
+      //loopInitialize() already picked an instanceDirSeparator that should
+      //avoid any collision up front - this is just a defensive fallback in
+      //case the filesystem changed after loop start. A loop's own previous
+      //instance directory always shares the loop template's ID
+      //(structuredClone never regenerates it); anything else at this path -
+      //including a non-component file/directory - is a real collision and
+      //must not be silently overwritten/erased (issue #971)
       if (await fs.pathExists(dstDir)) {
         const existingJson = await readComponentJson(dstDir).catch(()=>{
           return null;
         });
-        if (existingJson !== null && existingJson.ID !== component.ID) {
-          throw new Error(`instance directory name collision: "${newComponent.name}" already exists as a different component and would be overwritten by loop component "${component.originalName}"`);
+        if (existingJson === null || existingJson.ID !== component.ID) {
+          throw new Error(`instance directory name collision: "${newComponent.name}" already exists and would be overwritten by loop component "${component.originalName}"`);
         }
       }
       logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy from", srcDir, "to", dstDir);

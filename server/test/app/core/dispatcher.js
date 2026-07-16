@@ -782,24 +782,21 @@ describe("UT for Dispatcher class", function () {
       expect(validate(for0Json)).to.be.true;
     });
 
-    it("should refuse to overwrite an existing sibling component whose name collides with a loop instance directory (issue #971)", async ()=>{
+    it("should auto-escalate the instance directory separator to \"__\" instead of overwriting an existing sibling component (issue #971)", async ()=>{
       await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
       await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
       await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
 
       //create a real sibling component whose name collides with the instance
-      //directory name the loop will archive index 1 into (i.e. "for0_1") -
-      //with 3 iterations (0,1,2) index 1 gets archived while index 2 remains as "for0" itself
+      //directory name the loop would otherwise use for index 1 (i.e. "for0_1")
       const collidingComponent = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
       await updateComponentProperty(projectRootDir, collidingComponent.ID, "script", scriptName);
       await fs.outputFile(path.join(projectRootDir, collidingComponent.name, scriptName), scriptPwd);
       await renameComponentDir(projectRootDir, collidingComponent.ID, `${for0.name}_1`);
       //mark it subComponent:true so the dispatcher's directory-scan-based
       //getChildren() (workflowUtil.js) does not ALSO independently dispatch
-      //it as a sibling task - that would race with the loop's own write to
-      //the same path and make the outcome nondeterministic. This isolates
-      //the exact defect under test: _loopHandler's collision check on
-      //whatever already sits at the instance directory path.
+      //it as a sibling task - unrelated to the naming-collision defect
+      //under test here.
       const collidingComponentPath = path.resolve(projectRootDir, `${for0.name}_1`, componentJsonFilename);
       const collidingComponentJson = await fs.readJson(collidingComponentPath);
       collidingComponentJson.subComponent = true;
@@ -807,14 +804,75 @@ describe("UT for Dispatcher class", function () {
 
       const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
-      await expect(DP.start()).to.be.rejectedWith(/instance directory name collision/);
+      expect(await DP.start()).to.be.equal("finished");
       await wait();
 
-      //the pre-existing sibling component's own cmp.wheel.json identity must
-      //survive the loop's instance-directory creation for index 1, instead of
-      //being silently overwritten by the loop's synthetic instance component
-      const afterJson = await fs.readJson(path.resolve(projectRootDir, `${for0.name}_1`, componentJsonFilename));
+      //the pre-existing sibling component must be left completely untouched...
+      const afterJson = await fs.readJson(collidingComponentPath);
       expect(afterJson.ID).to.equal(collidingComponent.ID);
+      expect(afterJson.type).to.equal("task");
+      //...because the loop switched to "__" for ALL of its own instances instead
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__0`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__1`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__2`))).to.be.true;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      expect(for0Json.instanceDirSeparator).to.equal("__");
+    });
+
+    it("should also escalate when a plain, non-component directory collides with an instance directory name", async ()=>{
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+
+      //a plain directory with no cmp.wheel.json at all, sitting where the
+      //loop would otherwise create its "for0_1" instance directory
+      await fs.ensureDir(path.resolve(projectRootDir, `${for0.name}_1`));
+      await fs.outputFile(path.resolve(projectRootDir, `${for0.name}_1`, "not_a_component.txt"), "leave me alone");
+
+      const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      //the plain directory must be left untouched and never turned into a component...
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_1`, "not_a_component.txt"), "utf-8")).to.equal("leave me alone");
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_1`, componentJsonFilename))).to.be.false;
+      //...because the loop switched to "__" for its own instance
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__0`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__1`))).to.be.true;
+    });
+
+    it("should escalate past \"__\" to \"___\" when both are already taken", async ()=>{
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+
+      await fs.ensureDir(path.resolve(projectRootDir, `${for0.name}_1`));
+      await fs.ensureDir(path.resolve(projectRootDir, `${for0.name}__1`));
+
+      const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}___0`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}___1`))).to.be.true;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      expect(for0Json.instanceDirSeparator).to.equal("___");
+    });
+
+    it("should keep the plain \"_\" separator when there is no collision", async ()=>{
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+
+      const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      expect(for0Json.instanceDirSeparator).to.equal("_");
     });
   });
 
@@ -945,6 +1003,22 @@ describe("UT for Dispatcher class", function () {
       expect(fs.statSync(path.resolve(projectRootDir, `${while0.name}_1`)).isDirectory()).to.be.true;
       expect(fs.statSync(path.resolve(projectRootDir, `${while0.name}_2`)).isDirectory()).to.be.true;
       expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_3`))).to.be.false;
+    });
+    it("should escalate the separator when a plain directory collides, even though while's trip count is unbounded upfront", async ()=>{
+      //while has no fixed trip count at loop start (getTripCount is null for
+      //it), so this exercises the prefix-scan fallback rather than exact
+      //index enumeration
+      await fs.ensureDir(path.resolve(projectRootDir, `${while0.name}_0`));
+      await fs.outputFile(path.resolve(projectRootDir, `${while0.name}_0`, "not_a_component.txt"), "leave me alone");
+
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${while0.name}_0`, "not_a_component.txt"), "utf-8")).to.equal("leave me alone");
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}__0`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}__1`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}__2`))).to.be.true;
     });
   });
   describe("#Break", ()=>{
