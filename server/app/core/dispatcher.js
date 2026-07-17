@@ -32,6 +32,7 @@ import {
   logInfo,
   logWarn,
   logError,
+  logFatal,
   _internal
 } from "../logSettings.js";
 import { cancelDispatchedTasks } from "./taskUtil.js";
@@ -364,7 +365,29 @@ class Dispatcher extends EventEmitter {
       this.runningTasks = this.runningTasks.filter((task)=>{
         return !isFinishedState(task.state);
       });
-      if (this._isFinished()) {
+      //nothing is running and nothing left waiting can ever become ready (each is blocked on an
+      //inputFile from a predecessor whose stage-out permanently failed) - conclude now instead of
+      //registering another "dispatch" listener that would never fire again
+      let permanentlyBlocked = false;
+      if (this.runningTasks.length === 0 && this.currentSearchList.length > 0) {
+        const stuckPairs = await Promise.all(this.currentSearchList.map(async (component)=>{
+          return { component, stuck: await this._findStuckPredecessor(component) };
+        }));
+        permanentlyBlocked = stuckPairs.every(({ stuck })=>{
+          return stuck !== null;
+        });
+        if (permanentlyBlocked) {
+          const blockedNames = stuckPairs.map(({ component })=>{
+            return component.name;
+          }).join(", ");
+          const stuckNames = Array.from(new Set(stuckPairs.map(({ stuck })=>{
+            return stuck.name;
+          }))).join(", ");
+          logFatal(this.projectRootDir, this.cwfDir,
+            `project failed: ${blockedNames} can never start because required input file(s) from ${stuckNames} were never delivered (stage-out stuck). Resolve the transfer and re-run to continue.`);
+        }
+      }
+      if (permanentlyBlocked || this._isFinished()) {
         const state = this._getState();
         this.emit("done", state);
       } else {
@@ -1398,7 +1421,10 @@ class Dispatcher extends EventEmitter {
           if (previous.disable) {
             continue;
           }
-          if (!isFinishedState(previous.state) && previous.type !== "stepjobTask" && !this._isStuckStageOut(previous)) {
+          //note: unlike the "previous" loop above, a predecessor stuck at "stage-out" must NOT
+          //be treated as ready here - its job succeeded but the file this component actually
+          //needs never arrived, so proceeding would run against missing/stale data
+          if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
             logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "is not ready because", inputFile, "from", `${previous.name}(${previous.ID})`, "is not arrived");
             return false;
           }
@@ -1406,6 +1432,25 @@ class Dispatcher extends EventEmitter {
       }
     }
     return true;
+  }
+
+  //find the first inputFile source component that is permanently stuck at "stage-out", if any
+  async _findStuckPredecessor(component) {
+    for (const inputFile of component.inputFiles || []) {
+      for (const src of inputFile.src) {
+        if (src.srcNode === component.parent) {
+          continue;
+        }
+        const previous = await this._getComponent(src.srcNode);
+        if (previous.disable) {
+          continue;
+        }
+        if (this._isStuckStageOut(previous)) {
+          return previous;
+        }
+      }
+    }
+    return null;
   }
 
   _getComponentDir(id) {

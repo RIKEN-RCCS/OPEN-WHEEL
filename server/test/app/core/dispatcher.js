@@ -1605,12 +1605,20 @@ describe("UT for Dispatcher class", function () {
     });
 
     describe("_isStuckStageOut / _isReady", ()=>{
-      it("does not block downstream forever when the predecessor is stuck at stage-out with no live retry", async ()=>{
-        const updatedPrevious = await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+      it("never treats a stuck-stage-out predecessor as ready for a downstream component that needs its actual output file, regardless of the mandatory flag (issue: downstream must not start before the file arrives)", async ()=>{
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
         const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
         const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
-        expect(DP._isStuckStageOut(updatedPrevious)).to.be.true;
-        expect(await DP._isReady(updatedNext)).to.be.true;
+        expect(DP._isStuckStageOut(await DP._getComponent(previous.ID))).to.be.true;
+        expect(await DP._isReady(updatedNext)).to.be.false;
+      });
+
+      it("never treats a stuck-stage-out predecessor as ready even when the input file it feeds is mandatory", async ()=>{
+        await toggleInputFileMandatory(projectRootDir, next.ID, 0, true);
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP._isReady(updatedNext)).to.be.false;
       });
 
       it("still blocks downstream while the predecessor's stage-out is actively being retried", async ()=>{
@@ -1622,22 +1630,60 @@ describe("UT for Dispatcher class", function () {
         expect(await DP._isReady(updatedNext)).to.be.false;
       });
 
-      it("marks downstream as failed once unblocked if its mandatory input was never actually delivered", async ()=>{
-        await toggleInputFileMandatory(projectRootDir, next.ID, 0, true);
+      it("does not block a downstream component that only depends on the stuck predecessor via control-flow ordering (previous), not via inputFiles", async ()=>{
+        const ctrlOnly = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 200, y: 0 });
+        await addLink(projectRootDir, previous.ID, ctrlOnly.ID);
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedCtrlOnly = await fs.readJson(path.resolve(projectRootDir, ctrlOnly.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP._isReady(updatedCtrlOnly)).to.be.true;
+      });
+    });
+
+    describe("_findStuckPredecessor", ()=>{
+      it("returns the inputFile source component when it is stuck at stage-out", async ()=>{
         await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
         const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
         const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
-        expect(await DP._isReady(updatedNext)).to.be.true;
-        //out.txt was never produced locally since the predecessor's stage-out never completed
-        expect(await DP._checkMandatoryInputFilesExist(updatedNext)).to.be.false;
+        const stuck = await DP._findStuckPredecessor(updatedNext);
+        expect(stuck).to.not.be.null;
+        expect(stuck.ID).to.equal(previous.ID);
       });
 
-      it("lets downstream proceed (with only a warning) if the never-delivered input is non-mandatory", async ()=>{
+      it("returns null when the inputFile source finished normally", async ()=>{
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "finished");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP._findStuckPredecessor(updatedNext)).to.be.null;
+      });
+
+      it("returns null when the stuck predecessor's stage-out is actively being retried", async ()=>{
         await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
         const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
         const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
-        expect(await DP._isReady(updatedNext)).to.be.true;
-        expect(await DP._checkMandatoryInputFilesExist(updatedNext)).to.be.true;
+        DP.runningTasks = [{ ID: previous.ID, state: "stage-out" }];
+        expect(await DP._findStuckPredecessor(updatedNext)).to.be.null;
+      });
+    });
+
+    describe("_dispatch permanently-blocked conclusion", ()=>{
+      it("concludes the project run as failed, without ever touching the blocked downstream component's own state, once nothing is running and everything pending is unreachable due to a stuck stage-out predecessor", async ()=>{
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const nextStateBefore = updatedNext.state;
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        DP.firstCall = false;
+        DP.currentSearchList = [updatedNext];
+        DP.runningTasks = [];
+        DP.hasFailedComponent = true; //already set by previous's own "taskCompleted" event in real usage
+        const donePromise = new Promise((resolve)=>{
+          DP.once("done", resolve);
+        });
+        await DP._dispatch();
+        const state = await donePromise;
+        expect(state).to.equal("failed");
+        const nextOnDisk = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        expect(nextOnDisk.state).to.equal(nextStateBefore);
       });
     });
 
