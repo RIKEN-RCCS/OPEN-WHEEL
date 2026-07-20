@@ -64,6 +64,6 @@
   },
   "dependencies": {
     "@isaacs/fs-minipass": "^4.0.1",
-    "ssh-client-wrapper": "^2.15.0"
+    "ssh-client-wrapper": "^2.17.1"
   }
 }

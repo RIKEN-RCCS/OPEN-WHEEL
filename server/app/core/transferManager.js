@@ -16,6 +16,12 @@ export const _internal = {
   transferrers: new Map()
 };
 
+//rsync exit codes ssh-client-wrapper's built-in retry (10-14) doesn't cover, but which are
+//frequently transient right after an HPC job finishes (output still being flushed/becoming
+//visible on a shared filesystem): 23 = partial transfer due to error, 24 = some files vanished
+//before they could be transferred
+export const stageOutRetryableExitCodes = [23, 24];
+
 /**
  * create ID string from task's property
  * @param {object} task - task component
@@ -45,7 +51,7 @@ export async function register(hostinfo, task, direction, src, dst, opt) {
           task.preparedTime = _internal.getDateString(true, true);
           _internal.getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} finished`);
         } else if (direction === "recv") {
-          await ssh.recv(src, dst, opt);
+          await ssh.recv(src, dst, opt, undefined, stageOutRetryableExitCodes);
         } else {
           const err = new Error("invalid direction");
           err.direction = direction;
