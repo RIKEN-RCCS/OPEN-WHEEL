@@ -19,6 +19,13 @@ TOTAL_FAILING=0
 TOTAL_PENDING=0
 TOTAL_SKIPPED=0
 
+#chrome's renderer process occasionally crashes for infra reasons unrelated to the
+#test itself (see https://on.cypress.io/renderer-process-crashed). cypress already
+#fails just that spec and lets this script move on to the next one, so it never
+#hangs - but a crash isn't a real test failure, so retry the whole spec a few times
+#before accepting it as one.
+MAX_CRASH_RETRIES=2
+
 SPECS=()
 while IFS= read -r line; do
   SPECS+=("$line")
@@ -29,19 +36,34 @@ echo "Running ${#SPECS[@]} spec files sequentially... (bail=$BAIL)"
 for spec in "${SPECS[@]+"${SPECS[@]}"}"; do
   echo ""
   echo "=== Running: $spec ==="
-  SPEC_LOG="$(mktemp)"
-  SPEC_STATUS=0
-  npx cypress run --browser chrome --spec "$spec" 2>&1 | tee "$SPEC_LOG" || SPEC_STATUS=$?
 
-  #cypress keeps ANSI color codes even though stdout is piped, because it
-  #detects the CI env var GitHub Actions sets and assumes ANSI rendering
-  #support - e.g. "Tests:" is followed by a color-reset escape sequence
-  #before the whitespace/number, not by the whitespace directly. Strip all
-  #ANSI CSI sequences before parsing so the label/number regexes below can
-  #actually match.
-  CLEAN_LOG="$(mktemp)"
-  sed -E $'s/\x1b\\[[0-9;]*[A-Za-z]//g' "$SPEC_LOG" > "$CLEAN_LOG"
-  mv "$CLEAN_LOG" "$SPEC_LOG"
+  attempt=0
+  while true; do
+    attempt=$((attempt + 1))
+    SPEC_LOG="$(mktemp)"
+    SPEC_STATUS=0
+    npx cypress run --browser chrome --spec "$spec" 2>&1 | tee "$SPEC_LOG" || SPEC_STATUS=$?
+
+    #cypress keeps ANSI color codes even though stdout is piped, because it
+    #detects the CI env var GitHub Actions sets and assumes ANSI rendering
+    #support - e.g. "Tests:" is followed by a color-reset escape sequence
+    #before the whitespace/number, not by the whitespace directly. Strip all
+    #ANSI CSI sequences before parsing so the label/number regexes below can
+    #actually match.
+    CLEAN_LOG="$(mktemp)"
+    sed -E $'s/\x1b\\[[0-9;]*[A-Za-z]//g' "$SPEC_LOG" > "$CLEAN_LOG"
+    mv "$CLEAN_LOG" "$SPEC_LOG"
+
+    if [ "$SPEC_STATUS" -ne 0 ] && [ "$attempt" -le "$MAX_CRASH_RETRIES" ] && grep -q "Chrome Renderer process just crashed" "$SPEC_LOG"; then
+      echo "=== $spec: Chrome renderer crashed (attempt $attempt/$((MAX_CRASH_RETRIES + 1))) - exiting and rerunning this spec ==="
+      rm -f "$SPEC_LOG"
+      continue
+    fi
+    break
+  done
+  if [ "$attempt" -gt 1 ]; then
+    echo "=== $spec: finished after $attempt attempts ==="
+  fi
 
   #cypress prints a "(Results)" box with these fields at the end of every run,
   #even on a crashed/failed spec - parse it for the step summary table.
