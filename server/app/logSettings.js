@@ -49,6 +49,30 @@ const getCircularReplacer = ()=>{
   };
 };
 
+//log4js only concatenates message parts with String() coercion (used by our own multiFile line
+//builder and by socketIO's json layout below), so a bare Error/Map/Set/plain object would render
+//as the useless literal "[object Object]". Serialize non-primitive values ourselves before that
+//happens so the actual content shows up in logs.
+function formatLogArg(value) {
+  if (value instanceof Error) {
+    return value.stack || `${value.name}: ${value.message}`;
+  }
+  if (value instanceof Map) {
+    return JSON.stringify(Object.fromEntries(value), getCircularReplacer());
+  }
+  if (value instanceof Set) {
+    return JSON.stringify(Array.from(value), getCircularReplacer());
+  }
+  if (value !== null && typeof value === "object") {
+    try {
+      return JSON.stringify(value, getCircularReplacer());
+    } catch {
+      return String(value);
+    }
+  }
+  return value;
+}
+
 const socketIO = {
   configure: (config, layouts)=>{
     let layout = layouts.basicLayout;
@@ -56,7 +80,8 @@ const socketIO = {
       if (config.layout.type === "json") {
         const separator = config.layout.separator || ",";
         layout = (logEvent)=>{
-          return JSON.stringify(logEvent, getCircularReplacer()) + separator;
+          const data = Array.isArray(logEvent.data) ? logEvent.data.map(formatLogArg) : logEvent.data;
+          return JSON.stringify({ ...logEvent, data }, getCircularReplacer()) + separator;
         };
       } else {
         layout = layouts.layout(config.layout.type, config.layout);
@@ -150,7 +175,7 @@ export function configure(setting) {
 function logWithComponentDir(level, projectRootDir, componentDir, ...messages) {
   const logger = getLogger(projectRootDir);
   if (logger[level]) {
-    const message = messages.join(" ");
+    const message = messages.map(formatLogArg).join(" ");
     let displayPath;
 
     if (componentDir === projectRootDir) {
