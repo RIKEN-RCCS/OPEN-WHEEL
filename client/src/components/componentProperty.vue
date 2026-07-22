@@ -574,6 +574,12 @@
             input/output files
           </v-expansion-panel-title>
           <v-expansion-panel-text>
+            <div
+              class="text-caption"
+              data-cy="component_property-input_files-label"
+            >
+              input files
+            </div>
             <list-form
               :label="'input files'"
               :readonly="readOnly"
@@ -590,6 +596,12 @@
               @update="updateInputFiles"
               @toggle="toggleInputFileMandatory"
             />
+            <div
+              class="text-caption mt-4"
+              data-cy="component_property-output_files-label"
+            >
+              output files
+            </div>
             <list-form
               :label="'output files'"
               :readonly="readOnly"

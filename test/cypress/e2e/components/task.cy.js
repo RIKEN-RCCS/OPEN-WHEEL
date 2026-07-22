@@ -167,6 +167,32 @@ describe("components", ()=>{
     /**
   Task コンポーネントの基本機能動作確認
   コンポーネント共通機能確認
+  input/outputラベル表示
+  試験確認内容：input filesとoutput filesにそれぞれ見分けられるラベルが表示されていることを確認
+     */
+    it("input/outputラベル表示-input filesとoutput filesのラベルがそれぞれ表示されることを確認", ()=>{
+      const CLICK_AREA_CY = "[data-cy=\"component_property-in_out_files-panel_title\"]";
+      const INPUT_LABEL_CY = "[data-cy=\"component_property-input_files-label\"]";
+      const OUTPUT_LABEL_CY = "[data-cy=\"component_property-output_files-label\"]";
+      cy.get(CLICK_AREA_CY).scrollIntoView()
+        .click();
+      //the expansion-panel enter animation applies overflow:hidden while running,
+      //so retry the scroll+visibility check together until the animation settles
+      cy.get(INPUT_LABEL_CY).should(($el)=>{
+        $el[0].scrollIntoView({ behavior: "instant" });
+        expect(Cypress.dom.isVisible($el[0]), "input files label should be visible after scroll").to.be.true;
+      });
+      cy.get(INPUT_LABEL_CY).should("contain.text", "input file");
+      cy.get(OUTPUT_LABEL_CY).should(($el)=>{
+        $el[0].scrollIntoView({ behavior: "instant" });
+        expect(Cypress.dom.isVisible($el[0]), "output files label should be visible after scroll").to.be.true;
+      });
+      cy.get(OUTPUT_LABEL_CY).should("contain.text", "output file");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
   構成要素の機能確認
   closeボタン押下
   試験確認内容：プロパティが表示されていないことを確認
