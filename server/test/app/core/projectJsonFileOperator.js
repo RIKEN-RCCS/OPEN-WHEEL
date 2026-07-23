@@ -277,6 +277,75 @@ describe("#setProjectState", ()=>{
     }
   });
 
+  it("should not overwrite an already-concluded (terminal) state with another terminal state", async ()=>{
+    //reproduction for the bug where a task failure causes the project to naturally conclude as
+    //"failed", but a redundant/stale "project stopped" transition (fired from the taskStateChanged
+    //handler after the project already concluded) used to overwrite it and re-stage prj.wheel.json
+    const mockProjectRootDir = "/mock/project/root";
+    const mockMetadata = {
+      state: "failed",
+      mtime: "20240101-000000"
+    };
+
+    readJsonGreedyMock.resolves(mockMetadata);
+
+    const result = await setProjectState(mockProjectRootDir, "stopped", false);
+
+    expect(result).to.be.false;
+    expect(writeJsonWrapperMock.notCalled).to.be.true;
+    expect(gitAddMock.notCalled).to.be.true;
+  });
+
+  it("should force overwrite an already-concluded (terminal) state with another terminal state when force is true", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockMetadata = {
+      state: "failed",
+      mtime: "20240101-000000"
+    };
+
+    readJsonGreedyMock.resolves(mockMetadata);
+
+    const updatedMetadata = {
+      ...mockMetadata,
+      state: "stopped",
+      mtime: "20250101-123456"
+    };
+
+    const result = await setProjectState(mockProjectRootDir, "stopped", true);
+
+    expect(result).to.deep.equal(updatedMetadata);
+    expect(writeJsonWrapperMock.calledOnceWithExactly(
+      `${mockProjectRootDir}/prj.wheel.json`,
+      updatedMetadata
+    )).to.be.true;
+    expect(gitAddMock.calledOnceWithExactly(mockProjectRootDir, `${mockProjectRootDir}/prj.wheel.json`)).to.be.true;
+  });
+
+  it("should still allow leaving a terminal state for a non-terminal one (e.g. re-running the project)", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockMetadata = {
+      state: "failed",
+      mtime: "20240101-000000"
+    };
+
+    readJsonGreedyMock.resolves(mockMetadata);
+
+    const updatedMetadata = {
+      ...mockMetadata,
+      state: "preparing",
+      mtime: "20250101-123456"
+    };
+
+    const result = await setProjectState(mockProjectRootDir, "preparing", false);
+
+    expect(result).to.deep.equal(updatedMetadata);
+    expect(writeJsonWrapperMock.calledOnceWithExactly(
+      `${mockProjectRootDir}/prj.wheel.json`,
+      updatedMetadata
+    )).to.be.true;
+    expect(gitAddMock.calledOnceWithExactly(mockProjectRootDir, `${mockProjectRootDir}/prj.wheel.json`)).to.be.true;
+  });
+
   it("should throw an error if writeJsonWrapper fails", async ()=>{
     const mockProjectRootDir = "/mock/project/root";
     const mockState = "running";

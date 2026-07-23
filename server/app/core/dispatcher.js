@@ -456,24 +456,34 @@ class Dispatcher extends EventEmitter {
           })
           .catch((e)=>{ this.onError(e); });
       }
-      const onStop = ()=>{
+      const removeSettleListeners = ()=>{
         this.removeListener("dispatch", this._dispatch);
         /*eslint-disable no-use-before-define */
         this.removeListener("error", onError);
         this.removeListener("done", this.onDone);
-        /*eslint-enable no-use-before-define */
         this.removeListener("stop", onStop);
+        /*eslint-enable no-use-before-define */
       };
       //never call this.onDone directly except for _jumpHandler
       this.onDone = (state)=>{
         logTrace(this.projectRootDir, this.cwfDir, "dispatcher finished with", state);
-        onStop();
+        removeSettleListeners();
         resolve(state);
       };
       const onError = (err)=>{
         logTrace(this.projectRootDir, this.cwfDir, "dispatcher terminated with", err);
-        onStop();
+        removeSettleListeners();
         reject(err);
+      };
+      const onStop = ()=>{
+        logTrace(this.projectRootDir, this.cwfDir, "dispatcher stopped externally");
+        removeSettleListeners();
+        //the dispatcher was stopped from outside the normal dispatch loop (e.g. the whole
+        //project being aborted because a task failed, or a manual "stop project"). settle
+        //start()'s promise with the current outcome instead of leaving it pending forever -
+        //otherwise the caller (runProject()) hangs indefinitely and never reaches its own
+        //state update/cleanup, which in turn leaves the project stuck instead of concluding.
+        resolve(this._getState());
       };
       this.once("done", this.onDone);
       this.once("error", onError);

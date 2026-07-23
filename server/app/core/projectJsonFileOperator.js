@@ -13,6 +13,13 @@ const _internal = {
   readJsonGreedy, gitAdd, writeJsonWrapper, getDateString
 };
 
+//project states which represent a concluded run. once a project reaches one of these states,
+//it must not be silently overwritten by another terminal state unless explicitly forced.
+//this prevents a stale/late-arriving state transition (e.g. a redundant "project stopped"
+//notification which arrives after the project has already naturally concluded as "failed")
+//from clobbering the already-settled state and re-staging prj.wheel.json for no reason.
+const terminalProjectStates = ["finished", "failed", "unknown", "stopped"];
+
 /**
  * get project JSON
  * @param {string} projectRootDir - project's root path
@@ -100,6 +107,12 @@ export async function getProjectState(projectRootDir) {
 export async function setProjectState(projectRootDir, state, force) {
   const currentState = await getProjectState(projectRootDir);
   if (currentState === state && !force) {
+    return false;
+  }
+  //once the project has already concluded (reached a terminal state), do not let another
+  //terminal state overwrite it unless explicitly forced. transitioning out of a terminal
+  //state to a non-terminal one (e.g. re-running the project) is still allowed.
+  if (!force && terminalProjectStates.includes(currentState) && terminalProjectStates.includes(state)) {
     return false;
   }
   const mtime = _internal.getDateString(true);

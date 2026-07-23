@@ -70,10 +70,18 @@ async function cleanProject(projectRootDir, targetDir) {
 /**
  * stop project run
  * @param {string} projectRootDir - project's root path
+ * @param {string} reasonState - state of the component which caused this stop ("failed" or
+ * "unknown"), if any. when given, it is recorded on the root dispatcher before it is torn
+ * down so that the outcome it hands back to runProject() correctly reflects why the project
+ * was stopped, instead of racing against the (asynchronously, sometimes later-arriving)
+ * "taskCompleted" event that would normally record it.
  */
-async function stopProject(projectRootDir) {
+async function stopProject(projectRootDir, reasonState) {
   const rootDispatcher = _internal.rootDispatchers.get(projectRootDir);
   if (rootDispatcher) {
+    if (reasonState) {
+      rootDispatcher.setStateFlag(reasonState);
+    }
     await rootDispatcher.remove();
     _internal.rootDispatchers.delete(projectRootDir);
   }
