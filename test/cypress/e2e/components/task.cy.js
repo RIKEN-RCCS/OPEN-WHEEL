@@ -651,6 +651,33 @@ describe("components", ()=>{
 
     /**
   Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリの展開アイコン表示
+  試験確認内容：格納オブジェクトの有無に関わらずディレクトリアイコンの横に▶アイコンが表示されることを確認(issue#941)
+     */
+    it("ファイル操作エリア-ディレクトリの展開アイコン表示-ディレクトリアイコンの横に▶アイコンが表示されることを確認", ()=>{
+      cy.createDirOrFile(TYPE_DIR, "test-a", true);
+      //directory has no contents yet: the ▶(closed) expand icon must still be shown next to the directory icon
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"] .v-list-item", "test-a")
+        .find("[data-cy=\"inner_treeview-expand-icon\"]")
+        .scrollIntoView()
+        .should("be.visible")
+        .and("have.class", "mdi-menu-right");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
+        .click();
+      cy.createDirOrFile(TYPE_FILE, "test.txt", false);
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test.txt")
+        .should("exist");
+      //directory now has a file inside it: the expand icon must still be shown next to the directory icon
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"] .v-list-item", "test-a")
+        .find("[data-cy=\"inner_treeview-expand-icon\"]")
+        .scrollIntoView()
+        .should("be.visible");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
   Taskコンポーネント機能確認
   プロパティ設定確認
   script表示確認
