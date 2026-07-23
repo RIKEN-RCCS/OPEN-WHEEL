@@ -148,6 +148,7 @@
         <v-text-field
           v-if="['createNewDir','createNewFile','rename'].includes(dialog.submitEvent)"
           v-model="dialog.inputField"
+          autofocus
           :label="dialog.inputFieldLabel"
           :rules="[noDuplicate]"
           variant="outlined"

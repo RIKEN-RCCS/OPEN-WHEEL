@@ -107,6 +107,22 @@ describe("components", ()=>{
     /**
   Task コンポーネントの基本機能動作確認
   コンポーネント共通機能確認
+  input files表示
+  試験確認内容：input/output filesパネルを開いた時にinput filesの入力欄にフォーカスが当たっていることを確認
+     */
+    it("input files表示-input filesの入力欄に自動でフォーカスが当たっていることを確認", ()=>{
+      cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]", { timeout: 10000 })
+        .scrollIntoView()
+        .click({ force: true });
+      cy.get("[data-cy=\"component_property-input_files-list_form\"]")
+        .find("[data-cy=\"list_form-add-text_field\"]")
+        .find("input")
+        .should("be.focused");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
   input files入力
   試験確認内容：input filesが入力できることを確認
      */
@@ -508,6 +524,23 @@ describe("components", ()=>{
         .should("exist");
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-b")
         .should("exist");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル操作エリア
+  新規ファイル作成ダイアログ表示
+  試験確認内容：新規ファイル名の入力欄に自動でフォーカスが当たっていることを確認
+     */
+    it("ファイル操作エリア-新規ファイル作成ダイアログ表示-ファイル名入力欄に自動でフォーカスが当たっていることを確認", ()=>{
+      cy.get("[data-cy=\"component_property-files-panel_title\"]", { timeout: 10000 })
+        .scrollIntoView()
+        .click({ force: true });
+      cy.get("[data-cy=\"file_browser-new_file-btn\"]").click({ force: true });
+      cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("be.visible");
+      cy.get("[data-cy=\"file_browser-input-text_field\"]").find("input")
+        .should("be.focused");
     });
 
     /**

@@ -374,6 +374,7 @@
               :headers="inputFileHeaders"
               :boolean-columns="['mandatory']"
               :show-headers="true"
+              autofocus
               data-cy="component_property-input_files_viewer-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
@@ -590,6 +591,7 @@
               :headers="inputFileHeaders"
               :boolean-columns="['mandatory']"
               :show-headers="true"
+              autofocus
               data-cy="component_property-input_files-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
