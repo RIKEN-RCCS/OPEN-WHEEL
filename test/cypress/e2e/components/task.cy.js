@@ -630,6 +630,27 @@ describe("components", ()=>{
 
     /**
   Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル操作エリア
+  アップロードしたファイルの即時表示
+  試験確認内容：アップロード完了後、パネルを開き直さなくてもファイルがツリーに表示されることを確認
+     */
+    it("ファイル操作エリア-アップロードしたファイルの即時表示-アップロード完了後パネルを開き直さなくてもファイルがツリーに表示されることを確認", ()=>{
+      const UPLOAD_FILENAME = "cypress/fixtures/uploadTestFile.txt";
+      cy.get("[data-cy=\"component_property-files-panel_title\"]", { timeout: 10000 })
+        .scrollIntoView()
+        .click({ force: true });
+      cy.get("[data-cy=\"file_browser-upload-btn\"]").click({ force: true });
+      cy.get("input[type=\"file\"]").last()
+        .selectFile(UPLOAD_FILENAME, { force: true });
+      //Do NOT close/reopen the properties panel here: this test asserts that the
+      //uploaded file shows up on its own once the upload finishes.
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]", { timeout: 10000 }).contains("uploadTestFile.txt")
+        .should("exist");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
   Taskコンポーネント機能確認
   プロパティ設定確認
   script表示確認
@@ -1192,7 +1213,9 @@ describe("components", ()=>{
       let targetDropBoxCy = "[data-cy=\"component_property-host-select\"]";
       cy.selectValueFromDropdownList(targetDropBoxCy, 2, COMPONENT_TEST_LABEL);
       cy.get("[data-cy=\"component_property-remote_file-panel_title\"]").click();
-      cy.get("[data-cy=\"component_property-exclude-list_form\"]").find("input").first().should("exist");
+      cy.get("[data-cy=\"component_property-exclude-list_form\"]").find("input")
+        .first()
+        .should("exist");
     });
 
     /**
