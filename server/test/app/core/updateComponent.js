@@ -72,6 +72,40 @@ describe("updateComponent UT", function () {
       expect(readFromFile.description).to.equal("hoge");
       expect(readFromFile.script).to.equal("run.sh");
     });
+    it("should not revert pos updated by updateComponentPos when updateComponent() is called afterward with a stale pos (issue #910)", async ()=>{
+      //Reproduces GitLab issue #910:
+      //"if a component's properties panel is open, moving the component doesn't get persisted"
+      //
+      //Scenario this mimics:
+      //1. user opens the properties panel for task0. the client keeps a local
+      //working copy of task0 (Vuex `copySelectedComponent`) to back the panel's form fields.
+      //2. while the panel is open, the user drags task0 on the graph. the client
+      //sends ONLY `updateComponentPos` (position-only), which is written to
+      //disk immediately and does not touch the working copy of the panel's
+      //other fields (only "pos" is excluded from the panel's diff/update logic).
+      //3. the user edits another field in the still-open panel and commits it,
+      //which triggers `updateComponent()`. this call carries the panel's stale
+      //working copy, whose `pos` still holds the pre-drag value because the
+      //panel's local copy is only kept in sync for non-pos fields.
+      //
+      //Expected: the position written by updateComponentPos() in step 2 must survive
+      //the later updateComponent() call in step 3; only "description" should change.
+      const staleCopy = structuredClone(task0);
+
+      const newPos = { x: 123, y: 456 };
+      await updateComponent.updateComponentPos(projectRootDir, task0.ID, newPos);
+
+      let readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
+      expect(readFromFile.pos).to.deep.equal(newPos);
+
+      //staleCopy.pos still holds the original (pre-drag) position
+      staleCopy.description = "hoge";
+      await updateComponent.updateComponent(projectRootDir, task0.ID, staleCopy);
+
+      readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
+      expect(readFromFile.description).to.equal("hoge");
+      expect(readFromFile.pos).to.deep.equal(newPos);
+    });
     it("should change to default value if some property is dropped", async ()=>{
       const updated = structuredClone(task0);
       updated.description = "hoge";

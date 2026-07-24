@@ -292,8 +292,12 @@ async function updateComponent(projectRootDir, ID, updated) {
   let newName = null;
   const promises = [];
 
-  //remove next, previous, else, inputFiles, and outputFiles from patch
-  //because these props must be changed by dedicated API (ex. addLink, addInputFile, addOutputFile)
+  //remove next, previous, else, inputFiles, outputFiles, and pos from patch
+  //because these props must be changed by dedicated API (ex. addLink, addInputFile, addOutputFile,
+  //updateComponentPos). pos in particular is excluded because the caller's "updated" object is
+  //often a client-side working copy (e.g. the properties panel) that does not track pos changes
+  //made concurrently by dragging the component on the graph (issue #910) - applying pos from such
+  //a stale patch would silently revert a drag-move that already landed on disk.
   const sanitizedPatch = patch.filter((e)=>{
     if (e.path[0] === "name") {
       if (!isValidName(e.value)) {
@@ -305,7 +309,7 @@ async function updateComponent(projectRootDir, ID, updated) {
       promises.push(_internal.setUploadOndemandOutputFile(projectRootDir, ID));
       return false;
     }
-    return !["next", "previous", "else", "inputFiles", "outputFiles"].includes(e.path[0]);
+    return !["next", "previous", "else", "inputFiles", "outputFiles", "pos"].includes(e.path[0]);
   });
 
   await Promise.all(promises);
