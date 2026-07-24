@@ -21,7 +21,7 @@ import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFiles
 import { paramVecGenerator, getParamSize, getFilenames, getParamSpacev2 } from "./parameterParser.js";
 import { isLocal } from "../../../common/checkComponent.js";
 import { isSameRemoteHost, translateSharedPath } from "./componentHostOperations.js";
-import { setComponentStateR } from "./componentState.js";
+import { setComponentStateR, syncComponentStateFrom } from "./componentState.js";
 import { writeComponentJson, readComponentJson, readComponentJsonByID } from "./componentJsonIO.js";
 import { isInitialComponent, removeDuplicatedComponent, hasStoragePath } from "./workflowComponent.js";
 import { getChildren } from "./workflowUtil.js";
@@ -970,6 +970,12 @@ class Dispatcher extends EventEmitter {
       ee.emit("componentStateChanged", component);
       return writeComponentJson(this.projectRootDir, templateRoot, component, true);
     });
+    //templateRoot's descendants (e.g. the task shown when navigating into this PS component)
+    //are only ever copied FROM to create each parameter instance and are never themselves
+    //executed, so pick one instance to sync their post-run state back from once the run
+    //finishes (issue #935). prefer a failed instance so a failure is visible there too.
+    let representativeInstanceRoot = null;
+    let representativeIsFailure = false;
     for (const paramVec of paramVecGenerator(paramSpace)) {
       const params = paramVec.reduce((p, c)=>{
         p[c.key] = c.value;
@@ -1044,6 +1050,10 @@ class Dispatcher extends EventEmitter {
           } else {
             logWarn(this.projectRootDir, `${this.cwfDir}/${component.name}`, "child state is illegal", newComponent.state);
           }
+          if (representativeInstanceRoot === null || (newComponent.state === "failed" && !representativeIsFailure)) {
+            representativeInstanceRoot = instanceRoot;
+            representativeIsFailure = newComponent.state === "failed";
+          }
           //Emit component state changed for the PS/foreach component itself
           const ee = eventEmitters.get(this.projectRootDir);
           if (ee) {
@@ -1054,6 +1064,9 @@ class Dispatcher extends EventEmitter {
       promises.push(p);
     }
     await Promise.all(promises);
+    if (representativeInstanceRoot !== null) {
+      await syncComponentStateFrom(this.projectRootDir, representativeInstanceRoot, templateRoot);
+    }
     logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "gather files");
 
     //gather from all instance dirs even restarting.
