@@ -15,10 +15,10 @@ For this reason, unlike the HPCI-SS component, you cannot delete or rename files
 The properties you can set for the HPCI-SS-tar component are as follows.
 
 ### host
-You can set the host where files are actually stored.
-However, only hosts that have the `use gfarm` option checked in the remotehost settings can be set as the host.
+Set host to the host that runs the gfptar command used to transfer files to HPCI shared storage.
+The files themselves are stored on HPCI shared storage, not on the host itself.
 
-Additionally, only hosts that can transfer files to HPCI shared storage using the gfptar command are available.
+However, only hosts that have the `use gfarm` option checked in the remotehost settings can be set as the host.
 
 ### directory path
 ![img](./img/storage_path.png "storage_path")
