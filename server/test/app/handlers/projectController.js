@@ -24,6 +24,7 @@ import { getProjectState, getProjectJson } from "../../../app/core/projectJsonFi
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { addLink } from "../../../app/core/componentLinks.js";
+import { updateComponentPos } from "../../../app/core/updateComponent.js";
 import { getComponentDir, readComponentJson } from "../../../app/core/componentJsonIO.js";
 import { updateComponentProperty } from "../../testUtil.js";
 import { eventEmitters } from "../../../app/core/global.js";
@@ -152,6 +153,59 @@ describe("project Controller handler UT", function () {
       expect(updateResult).to.not.be.an.instanceof(Error);
       const task1JsonAfterEdit = await readComponentJson(task1Dir);
       expect(task1JsonAfterEdit.description).to.equal("edited after cleanup");
+    });
+  });
+
+  describe("[reproduction] issue #978 - project can not be reverted after moving a component post-run and clean", ()=>{
+    let task0;
+    let originalPos;
+    beforeEach(async ()=>{
+      task0 = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
+      originalPos = { ...task0.pos };
+      await updateComponentProperty(projectRootDir, task0.ID, "script", scriptName);
+      await fs.outputFile(path.join(projectRootDir, task0.name, scriptName), `${scriptPwd}\n${exit(0)}`);
+    });
+
+    it("should end up 'not-started' and NOT readOnly after cleanProject, even though a component was moved after the run finished, and saveProject must succeed afterwards", async ()=>{
+      const clientID = "test-client-id";
+      const runAck = sinon.stub();
+
+      //1. run the project to completion ("finished")
+      await _internal.onRunProject(clientID, projectRootDir, runAck);
+      let projectJson = await getProjectJson(projectRootDir);
+      expect(projectJson.state).to.equal("finished");
+      expect(projectJson.readOnly).to.equal(false);
+
+      //2. move the task component (position change only) after the run has finished
+      await updateComponentPos(projectRootDir, task0.ID, { x: 999, y: 999 });
+      const componentDir = await getComponentDir(projectRootDir, task0.ID, true);
+      const movedComponent = await readComponentJson(componentDir);
+      expect(movedComponent.pos).to.deep.equal({ x: 999, y: 999 });
+
+      //3. click "cleanup project"
+      await _internal.onCleanProject(clientID, projectRootDir);
+
+      //4. project must be back to a fully editable "not-started" state, and the position
+      //change from step 2 must have been discarded. NOTE: readOnly is checked for falsiness
+      //(not strict `false`) because cleanProject reverts prj.wheel.json to the pre-run git
+      //commit, which (on a project's first run) never had a "readOnly" key staged into it at
+      //all - so the reverted file legitimately has readOnly === undefined rather than false.
+      //Both are treated as "not read-only" by onSaveProject's `if (readOnly)` check and by the
+      //client, so undefined is an acceptable - if slightly untidy - outcome here.
+      projectJson = await getProjectJson(projectRootDir);
+      expect(projectJson.state).to.equal("not-started");
+      expect(projectJson.readOnly).to.not.equal(true);
+      const revertedComponent = await readComponentJson(componentDir);
+      expect(revertedComponent.pos).to.deep.equal(originalPos);
+
+      //5. saving after clean must succeed - it must NOT be rejected as read-only
+      const saveAck = sinon.stub();
+      await _internal.onSaveProject(projectRootDir, saveAck);
+      expect(saveAck).to.not.have.been.calledWith(sinon.match.instanceOf(Error));
+
+      projectJson = await getProjectJson(projectRootDir);
+      expect(projectJson.state).to.equal("not-started");
+      expect(projectJson.readOnly).to.not.equal(true);
     });
   });
 });
