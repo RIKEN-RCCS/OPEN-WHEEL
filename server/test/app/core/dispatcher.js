@@ -34,6 +34,7 @@ import { removeExecuters } from "../../../app/core/executerManager.js";
 import { removeTransferrers } from "../../../app/core/transferManager.js";
 import { addInputFile, addOutputFile, renameOutputFile, toggleInputFileMandatory } from "../../../app/core/componentFiles.js";
 import { addLink, addFileLink } from "../../../app/core/componentLinks.js";
+import { validateComponents } from "../../../app/core/validateComponents.js";
 import { scriptName, pwdCmd, scriptHeader } from "../../testScript.js";
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 const wait = ()=>{
@@ -908,6 +909,40 @@ describe("UT for Dispatcher class", function () {
       await wait();
       expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_0`))).to.be.false;
       expect(fs.statSync(path.resolve(projectRootDir, `${while0.name}_1`)).isDirectory()).to.be.true;
+      expect(fs.statSync(path.resolve(projectRootDir, `${while0.name}_2`)).isDirectory()).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_3`))).to.be.false;
+    });
+    //reproduction test for issue #976
+    //"whileコンポーネントのloop条件が機能しない" (while component's loop condition set by
+    //a JavaScript expression does not work)
+    //repro steps: 1. set while component's loop condition with a JavaScript expression
+    //2. try to run the project
+    //this test follows the exact repro steps: it first runs validateComponents() (which is
+    //what the server calls when the user tries to run a project, see onRunProject in
+    //projectController.js) to confirm the JS expression condition does not get rejected as an
+    //invalid condition, and then actually executes the project via Dispatcher to confirm the
+    //while loop honors the JavaScript condition instead of e.g. looping forever, not looping at
+    //all, or being (mis)treated as a script file path.
+    it("should accept and honor a JavaScript expression as the loop condition when the project is run", async ()=>{
+      //condition intentionally re-set here (beforeEach already sets "WHEEL_CURRENT_INDEX < 3")
+      //to make this test self-contained and explicit about what is being reproduced
+      await updateComponentProperty(projectRootDir, while0.ID, "condition", "WHEEL_CURRENT_INDEX < 3");
+      await updateComponentProperty(projectRootDir, while0.ID, "keep", 1);
+
+      //step 2 of the repro: "try to run the project" - the real server code path validates
+      //the whole project first (see onRunProject() -> validateComponents())
+      const report = await validateComponents(projectRootDir);
+      expect(report).to.be.an("array").that.is.empty;
+
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      //if the JS expression condition were not honored (e.g. always treated as false, or the
+      //loop ran unboundedly) these directories would not match a 3-iteration while loop that
+      //keeps only the last instance
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_0`))).to.be.false;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_1`))).to.be.false;
       expect(fs.statSync(path.resolve(projectRootDir, `${while0.name}_2`)).isDirectory()).to.be.true;
       expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_3`))).to.be.false;
     });
