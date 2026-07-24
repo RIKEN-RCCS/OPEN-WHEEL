@@ -17,6 +17,7 @@ chai.use(chaiAsPromised);
 
 //testee
 import { _internal } from "../../../app/handlers/projectController.js";
+import { onSaveFile } from "../../../app/handlers/rapid.js";
 
 //helper functions
 import { _internal as coreProjectControllerInternal } from "../../../app/core/projectController.js";
@@ -30,6 +31,7 @@ import { updateComponentProperty } from "../../testUtil.js";
 import { eventEmitters } from "../../../app/core/global.js";
 import { scriptName, scriptHeader, pwdCmd, exit } from "../../testScript.js";
 import { onUpdateComponent } from "../../../app/handlers/workflowEditor.js";
+import { gitAdd, gitCommit, gitPromise } from "../../../app/core/gitOperator2.js";
 
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
@@ -206,6 +208,37 @@ describe("project Controller handler UT", function () {
       projectJson = await getProjectJson(projectRootDir);
       expect(projectJson.state).to.equal("not-started");
       expect(projectJson.readOnly).to.not.equal(true);
+    });
+  });
+
+  describe("[reproduction] issue #999 - a text-editor save that is still in flight when the project starts", ()=>{
+    const targetFilename = "editedByTextEditor.txt";
+    const initialContent = "initial content written before the project starts\n";
+    const editedContent = "content edited via the in-app text editor\n";
+
+    beforeEach(async ()=>{
+      //simulate a file that already exists in the project and is tracked by git,
+      //as if it had been created and committed on a previous occasion
+      await fs.outputFile(path.join(projectRootDir, targetFilename), initialContent);
+      await gitAdd(projectRootDir, targetFilename);
+      await gitCommit(projectRootDir, "add file to be edited later");
+    });
+
+    it("should include the text-editor's edited content in the 'auto saved: project starting' commit even when onRunProject is triggered immediately after saving (no await)", async ()=>{
+      const saveFileCb = sinon.stub();
+
+      //this reproduces a real client interaction: the text editor's "saveFile" socket event is
+      //fired, but rapid.js#onSaveFile debounces the actual write+gitAdd by SAVE_FILE_DEBOUNCE_MS
+      //(10 seconds) internally and only resolves its callback once that timer fires. The client
+      //does not (and, realistically, often will not) wait for that ack before letting the user
+      //immediately click "run project" - so intentionally do NOT await/settle saveFileCb here.
+      onSaveFile(projectRootDir, targetFilename, projectRootDir, editedContent, saveFileCb);
+
+      const ack = sinon.stub();
+      await _internal.onRunProject("test-client-id", projectRootDir, ack);
+
+      const committedContent = await gitPromise(projectRootDir, ["show", `HEAD:${targetFilename}`], projectRootDir);
+      expect(committedContent).to.equal(editedContent);
     });
   });
 });
