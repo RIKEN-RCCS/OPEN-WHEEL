@@ -75,6 +75,7 @@
       #bottom
     >
       <v-text-field
+        ref="addField"
         v-model.lazy="inputField"
         :rules="newItemValidator"
         :disabled="disabled"
@@ -139,6 +140,10 @@ export default {
     inputColumn: {
       type: Boolean,
       default: true
+    },
+    autofocus: {
+      type: Boolean,
+      default: false
     },
     selectable: {
       type: Boolean,
@@ -239,6 +244,14 @@ export default {
     if (this.additionalRules.length > 0) {
       this.updateItemValidator.push(...this.additionalRules);
       this.newItemValidator.push(...this.additionalRules);
+    }
+    if (this.autofocus) {
+      //Focus once, right after mount, instead of vuetify's built-in intersection-based
+      //autofocus: that fires on an animation frame, which can race with a sibling
+      //list-form (e.g. output files) also being interacted with while this panel opens.
+      this.$nextTick().then(()=>{
+        this.$refs.addField?.focus();
+      });
     }
   },
   methods: {

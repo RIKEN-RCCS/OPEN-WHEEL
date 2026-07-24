@@ -107,6 +107,22 @@ describe("components", ()=>{
     /**
   Task コンポーネントの基本機能動作確認
   コンポーネント共通機能確認
+  input files表示
+  試験確認内容：input/output filesパネルを開いた時にinput filesの入力欄にフォーカスが当たっていることを確認
+     */
+    it("input files表示-input filesの入力欄に自動でフォーカスが当たっていることを確認", ()=>{
+      cy.get("[data-cy=\"component_property-in_out_files-panel_title\"]", { timeout: 10000 })
+        .scrollIntoView()
+        .click({ force: true });
+      cy.get("[data-cy=\"component_property-input_files-list_form\"]")
+        .find("[data-cy=\"list_form-add-text_field\"]")
+        .find("input")
+        .should("be.focused");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
   input files入力
   試験確認内容：input filesが入力できることを確認
      */
@@ -162,6 +178,32 @@ describe("components", ()=>{
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
       cy.get("[data-cy=\"graph-component-row\"]").contains("testOutputFile")
         .should("exist");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  input/outputラベル表示
+  試験確認内容：input filesとoutput filesにそれぞれ見分けられるラベルが表示されていることを確認
+     */
+    it("input/outputラベル表示-input filesとoutput filesのラベルがそれぞれ表示されることを確認", ()=>{
+      const CLICK_AREA_CY = "[data-cy=\"component_property-in_out_files-panel_title\"]";
+      const INPUT_LABEL_CY = "[data-cy=\"component_property-input_files-label\"]";
+      const OUTPUT_LABEL_CY = "[data-cy=\"component_property-output_files-label\"]";
+      cy.get(CLICK_AREA_CY).scrollIntoView()
+        .click();
+      //the expansion-panel enter animation applies overflow:hidden while running,
+      //so retry the scroll+visibility check together until the animation settles
+      cy.get(INPUT_LABEL_CY).should(($el)=>{
+        $el[0].scrollIntoView({ behavior: "instant" });
+        expect(Cypress.dom.isVisible($el[0]), "input files label should be visible after scroll").to.be.true;
+      });
+      cy.get(INPUT_LABEL_CY).should("contain.text", "input file");
+      cy.get(OUTPUT_LABEL_CY).should(($el)=>{
+        $el[0].scrollIntoView({ behavior: "instant" });
+        expect(Cypress.dom.isVisible($el[0]), "output files label should be visible after scroll").to.be.true;
+      });
+      cy.get(OUTPUT_LABEL_CY).should("contain.text", "output file");
     });
 
     /**
@@ -537,6 +579,23 @@ describe("components", ()=>{
   Task コンポーネントの基本機能動作確認
   コンポーネント共通機能確認
   ファイル操作エリア
+  新規ファイル作成ダイアログ表示
+  試験確認内容：新規ファイル名の入力欄に自動でフォーカスが当たっていることを確認
+     */
+    it("ファイル操作エリア-新規ファイル作成ダイアログ表示-ファイル名入力欄に自動でフォーカスが当たっていることを確認", ()=>{
+      cy.get("[data-cy=\"component_property-files-panel_title\"]", { timeout: 10000 })
+        .scrollIntoView()
+        .click({ force: true });
+      cy.get("[data-cy=\"file_browser-new_file-btn\"]").click({ force: true });
+      cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("be.visible");
+      cy.get("[data-cy=\"file_browser-input-text_field\"]").find("input")
+        .should("be.focused");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル操作エリア
   ディレクトリ複数表示（リロード前）
   試験確認内容：ディレクトリが単体表示されることを確認
      */
@@ -649,6 +708,54 @@ describe("components", ()=>{
       cy.createDirOrFile(TYPE_FILE, "test.txt", false);
       cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test.txt")
         .should("exist");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル操作エリア
+  アップロードしたファイルの即時表示
+  試験確認内容：アップロード完了後、パネルを開き直さなくてもファイルがツリーに表示されることを確認
+     */
+    it("ファイル操作エリア-アップロードしたファイルの即時表示-アップロード完了後パネルを開き直さなくてもファイルがツリーに表示されることを確認", ()=>{
+      const UPLOAD_FILENAME = "cypress/fixtures/uploadTestFile.txt";
+      cy.get("[data-cy=\"component_property-files-panel_title\"]", { timeout: 10000 })
+        .scrollIntoView()
+        .click({ force: true });
+      cy.get("[data-cy=\"file_browser-upload-btn\"]").click({ force: true });
+      cy.get("input[type=\"file\"]").last()
+        .selectFile(UPLOAD_FILENAME, { force: true });
+      //Do NOT close/reopen the properties panel here: this test asserts that the
+      //uploaded file shows up on its own once the upload finishes.
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]", { timeout: 10000 }).contains("uploadTestFile.txt")
+        .should("exist");
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
+  ファイル操作エリア
+  ディレクトリの展開アイコン表示
+  試験確認内容：格納オブジェクトの有無に関わらずディレクトリアイコンの横に▶アイコンが表示されることを確認(issue#941)
+     */
+    it("ファイル操作エリア-ディレクトリの展開アイコン表示-ディレクトリアイコンの横に▶アイコンが表示されることを確認", ()=>{
+      cy.createDirOrFile(TYPE_DIR, "test-a", true);
+      //directory has no contents yet: the ▶(closed) expand icon must still be shown next to the directory icon
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"] .v-list-item", "test-a")
+        .find("[data-cy=\"inner_treeview-expand-icon\"]")
+        .scrollIntoView()
+        .should("be.visible")
+        .and("have.class", "mdi-menu-right");
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test-a")
+        .click();
+      cy.createDirOrFile(TYPE_FILE, "test.txt", false);
+      cy.get("[data-cy=\"file_browser-treeview-treeview\"]").contains("test.txt")
+        .should("exist");
+      //directory now has a file inside it: the expand icon must still be shown next to the directory icon
+      cy.contains("[data-cy=\"file_browser-treeview-treeview\"] .v-list-item", "test-a")
+        .find("[data-cy=\"inner_treeview-expand-icon\"]")
+        .scrollIntoView()
+        .should("be.visible");
     });
 
     /**

@@ -39,12 +39,12 @@
       <template #divider>
         <v-icon icon="mdi-forward" />
       </template>
-      <template #item="{ item, index }">
+      <template #item="{ item }">
         <v-breadcrumbs-item>
           <component-button
             :type="item.type"
             :name="item.name"
-            v-bind="index === pathToCurrentComponent.length - 1 ? { style: 'pointer-events: none' } : {}"
+            :style="item.ID === currentComponent.ID ? 'pointer-events: none' : ''"
             @clicked="goto(item)"
           />
         </v-breadcrumbs-item>

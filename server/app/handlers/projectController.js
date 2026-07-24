@@ -53,8 +53,8 @@ const _internal = {
   rootDispatchers: new Map()
 };
 
-async function updateProjectState(projectRootDir, state) {
-  const projectJson = await _internal.setProjectState(projectRootDir, state);
+async function updateProjectState(projectRootDir, state, force) {
+  const projectJson = await _internal.setProjectState(projectRootDir, state, force);
   if (projectJson) {
     await emitAll(projectRootDir, "projectState", projectJson.state);
   }
@@ -333,6 +333,9 @@ async function runDispatcher(clientID, projectRootDir, ack) {
   }
 
   //actual run
+  //serializes any project-wide abort triggered by a failing task, so it can be awaited below
+  //instead of being left as a dangling, unawaited event-listener promise.
+  let stopOnFailure = Promise.resolve();
   try {
     const ee = new EventEmitter();
     _internal.eventEmitters.set(projectRootDir, ee);
@@ -343,12 +346,24 @@ async function runDispatcher(clientID, projectRootDir, ack) {
     ee.on("projectStateChanged", _internal.sendProjectJson.bind(null, projectRootDir));
     ee.on("taskDispatched", _internal.sendTaskStateList.bind(null, projectRootDir));
     ee.on("taskCompleted", _internal.sendTaskStateList.bind(null, projectRootDir));
-    ee.on("taskStateChanged", async (task)=>{
-      await _internal.sendTaskStateList(projectRootDir);
-      if (task.ignoreFailure !== true && ["failed", "unknow"].includes(task.state)) {
-        await stopProject(projectRootDir);
-        await updateProjectState(projectRootDir, "stopped");
-      }
+    ee.on("taskStateChanged", (task)=>{
+      stopOnFailure = stopOnFailure.then(async ()=>{
+        await _internal.sendTaskStateList(projectRootDir);
+        if (task.ignoreFailure !== true && ["failed", "unknow"].includes(task.state)) {
+          //abort the rest of the project immediately (other running/pending branches).
+          //do NOT force the project state to "stopped" here: the dispatcher's own natural
+          //completion (unblocked by stopProject()) already concludes and stages the correct,
+          //more specific outcome ("failed"/"unknown"). Forcing "stopped" here used to race
+          //with and clobber that correct state, leaving prj.wheel.json incorrectly staged
+          //(issue #1000). pass the failing task's state through so the dispatcher records it
+          //before being torn down, instead of racing the "taskCompleted" event for it.
+          await stopProject(projectRootDir, task.state);
+        }
+      }).catch((err)=>{
+        //never let this chain reject - it is awaited from the finally block below purely to
+        //ensure it has settled, not to propagate its outcome.
+        getLogger(projectRootDir).warn("error while aborting project on task failure", err);
+      });
     });
     ee.on("resultFilesReady", sendResultsFileDir.bind(null, projectRootDir));
 
@@ -380,6 +395,9 @@ async function runDispatcher(clientID, projectRootDir, ack) {
     await updateProjectState(projectRootDir, "failed");
     ack(err);
   } finally {
+    //make sure any in-flight abort-on-failure work has fully settled before this handler
+    //returns and its per-run event emitter/listeners get torn down below.
+    await stopOnFailure;
     emitAll(projectRootDir, "projectJson", await getProjectJson(projectRootDir));
     await _internal.sendWorkflow(ack, projectRootDir);
     _internal.eventEmitters.delete(projectRootDir);
@@ -423,7 +441,10 @@ _internal.onContinueProject = onContinueProject;
 
 async function onStopProject(projectRootDir) {
   await stopProject(projectRootDir);
-  await updateProjectState(projectRootDir, "stopped");
+  //manual "stop project" must always win regardless of how it interleaves with the
+  //dispatcher's own natural completion (which may also be concluding concurrently once
+  //stopped) - force it so it is never silently dropped by the terminal-state guard.
+  await updateProjectState(projectRootDir, "stopped", true);
   //explicitly lock editing until force-edit is clicked, rather than relying on
   //readOnly happening to already be true from before the run started
   await updateProjectROStatus(projectRootDir, true);

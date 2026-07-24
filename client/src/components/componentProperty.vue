@@ -374,6 +374,7 @@
               :headers="inputFileHeaders"
               :boolean-columns="['mandatory']"
               :show-headers="true"
+              autofocus
               data-cy="component_property-input_files_viewer-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
@@ -574,6 +575,12 @@
             input/output files
           </v-expansion-panel-title>
           <v-expansion-panel-text>
+            <div
+              class="text-caption"
+              data-cy="component_property-input_files-label"
+            >
+              input files
+            </div>
             <list-form
               :label="'input files'"
               :readonly="readOnly"
@@ -584,12 +591,19 @@
               :headers="inputFileHeaders"
               :boolean-columns="['mandatory']"
               :show-headers="true"
+              autofocus
               data-cy="component_property-input_files-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
               @toggle="toggleInputFileMandatory"
             />
+            <div
+              class="text-caption mt-4"
+              data-cy="component_property-output_files-label"
+            >
+              output files
+            </div>
             <list-form
               :label="'output files'"
               :readonly="readOnly"

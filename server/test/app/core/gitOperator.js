@@ -41,8 +41,10 @@ import {
   gitResetHEAD,
   gitLFSTrack,
   gitLFSUntrack,
-  isLFS
+  isLFS,
+  getUnsavedFiles
 } from "../../../app/core/gitOperator2.js";
+import { addX } from "../../../app/core/fileUtils.js";
 
 //test data
 const testDirRoot = path.resolve("./", "WHEEL_TEST_TMP");
@@ -649,6 +651,58 @@ describe("git operator UT", function () {
       it("should return false if specified file is not large file", async ()=>{
         await gitLFSUntrack(testDirRoot, "foo");
         expect(await isLFS(testDirRoot, "foo")).to.be.false;
+      });
+    });
+    describe("#getUnsavedFiles (issue #998 - script execute permission)", ()=>{
+      it("should not report a task's script as unsaved when WHEEL only added the execute permission before running it", async ()=>{
+        const scriptFile = path.resolve(testDirRoot, "script.sh");
+        await fs.outputFile(scriptFile, "#!/bin/bash\necho hello\n");
+        await asyncExecFile("git", ["add", "."], { cwd: testDirRoot }).catch((e)=>{
+          console.log("ERROR:\n", e);
+        });
+        await asyncExecFile("git", ["commit", "-m", "add script"], { cwd: testDirRoot }).catch((e)=>{
+          console.log("ERROR:\n", e);
+        });
+
+        //simulate what dispatcher.js does just before running the task: add execute permission to the script
+        await addX(scriptFile);
+
+        const unsavedFiles = await getUnsavedFiles(testDirRoot);
+        expect(unsavedFiles).to.deep.equal([]);
+      });
+
+      it("should still report a script as unsaved when its content was actually changed", async ()=>{
+        const scriptFile = path.resolve(testDirRoot, "script2.sh");
+        await fs.outputFile(scriptFile, "#!/bin/bash\necho hello\n");
+        await asyncExecFile("git", ["add", "."], { cwd: testDirRoot }).catch((e)=>{
+          console.log("ERROR:\n", e);
+        });
+        await asyncExecFile("git", ["commit", "-m", "add script2"], { cwd: testDirRoot }).catch((e)=>{
+          console.log("ERROR:\n", e);
+        });
+
+        //content change, no permission change
+        await fs.outputFile(scriptFile, "#!/bin/bash\necho changed\n");
+
+        const unsavedFiles = await getUnsavedFiles(testDirRoot);
+        expect(unsavedFiles).to.deep.equal([{ status: "modified", name: "script2.sh" }]);
+      });
+
+      it("should still report a script as unsaved when both its content and permission were changed", async ()=>{
+        const scriptFile = path.resolve(testDirRoot, "script3.sh");
+        await fs.outputFile(scriptFile, "#!/bin/bash\necho hello\n");
+        await asyncExecFile("git", ["add", "."], { cwd: testDirRoot }).catch((e)=>{
+          console.log("ERROR:\n", e);
+        });
+        await asyncExecFile("git", ["commit", "-m", "add script3"], { cwd: testDirRoot }).catch((e)=>{
+          console.log("ERROR:\n", e);
+        });
+
+        await fs.outputFile(scriptFile, "#!/bin/bash\necho changed\n");
+        await addX(scriptFile);
+
+        const unsavedFiles = await getUnsavedFiles(testDirRoot);
+        expect(unsavedFiles).to.deep.equal([{ status: "modified", name: "script3.sh" }]);
       });
     });
   });

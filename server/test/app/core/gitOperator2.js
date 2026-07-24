@@ -733,11 +733,13 @@ describe("gitOperator2", ()=>{
 
   describe("#getUnsavedFiles", ()=>{
     let gitStatusStub;
+    let getModeOnlyModifiedFilesStub;
 
     const rootDir = "/repo";
 
     beforeEach(()=>{
       gitStatusStub = sinon.stub(_internal, "gitStatus");
+      getModeOnlyModifiedFilesStub = sinon.stub(_internal, "getModeOnlyModifiedFiles").resolves([]);
     });
 
     afterEach(()=>{
@@ -785,6 +787,60 @@ describe("gitOperator2", ()=>{
       await getUnsavedFiles(rootDir);
 
       sinon.assert.calledWith(gitStatusStub, rootDir);
+    });
+
+    it("should exclude modified files which are reported as mode-only changes", async function () {
+      gitStatusStub.resolves({
+        added: [],
+        modified: ["script.sh", "realChange.txt"],
+        deleted: [],
+        renamed: [],
+        untracked: []
+      });
+      getModeOnlyModifiedFilesStub.resolves(["script.sh"]);
+
+      const result = await getUnsavedFiles(rootDir);
+
+      expect(result).to.deep.equal([
+        { status: "modified", name: "realChange.txt" }
+      ]);
+    });
+  });
+
+  describe("#getModeOnlyModifiedFiles", ()=>{
+    let gitPromiseStub;
+
+    const rootDir = "/repo";
+
+    beforeEach(()=>{
+      gitPromiseStub = sinon.stub(_internal, "gitPromise");
+    });
+
+    afterEach(()=>{
+      sinon.restore();
+    });
+
+    it("should return an empty array without calling git if modifiedFiles is empty", async ()=>{
+      const result = await _internal.getModeOnlyModifiedFiles(rootDir, []);
+      expect(result).to.deep.equal([]);
+      sinon.assert.notCalled(gitPromiseStub);
+    });
+
+    it("should treat files with 0 insertions and 0 deletions as mode-only changes", async ()=>{
+      gitPromiseStub.resolves("0\t0\tscript.sh\n3\t1\treal.txt\n");
+      const result = await _internal.getModeOnlyModifiedFiles(rootDir, ["script.sh", "real.txt"]);
+      expect(result).to.deep.equal(["script.sh"]);
+    });
+
+    it("should call gitPromise with diff --numstat and the given pathspec", async ()=>{
+      gitPromiseStub.resolves("");
+      await _internal.getModeOnlyModifiedFiles(rootDir, ["script.sh"], "some/dir");
+      sinon.assert.calledWith(
+        gitPromiseStub,
+        rootDir,
+        ["diff", "--numstat", "--", "some/dir"],
+        rootDir
+      );
     });
   });
 

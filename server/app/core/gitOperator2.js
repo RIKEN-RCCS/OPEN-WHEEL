@@ -237,30 +237,32 @@ _internal.gitStatus = async function (rootDir, pathspec) {
   const output = await _internal.gitPromise(rootDir, opt, rootDir);
   const rt = { added: [], modified: [], deleted: [], renamed: [], untracked: [] };
   //parse output from git
-  for (const token of output.split(/\n/)) {
-    const splitedToken = token.split(" ");
-    const filename = splitedToken[splitedToken.length - 1];
-    if (typeof splitedToken[0][0] === "undefined") {
+  //each line is in "XY PATH" or "XY ORIG_PATH -> PATH" format, where X is the index status and
+  //Y is the worktree status. X and Y are always 2 fixed-width columns (a space means "no change"
+  //in that column), so a change which is not staged yet (eg. a script's execute permission that
+  //WHEEL itself sets just before running it) is reported with a *leading space*, eg. " M script.sh".
+  //naively splitting the line by a single space breaks on that leading space, so the status code
+  //and the path must be sliced off by fixed width instead.
+  for (const line of output.split(/\n/)) {
+    if (line.length === 0) {
       continue;
     }
-    switch (splitedToken[0][0]) {
-      case "A":
-        rt.added.push(filename);
-        break;
-      case "M":
-        rt.modified.push(filename);
-        break;
-      case "D":
-        rt.deleted.push(filename);
-        break;
-      case "R":
-        rt.renamed.push(filename);
-        break;
-      case "?":
-        rt.untracked.push(filename);
-        break;
-      default:
-        throw new Error("unkonw output from git status --short");
+    const statusCode = line.slice(0, 2);
+    let filename = line.slice(3);
+    if (statusCode.includes("R")) {
+      const renameToken = filename.split(" -> ");
+      filename = renameToken[renameToken.length - 1];
+      rt.renamed.push(filename);
+    } else if (statusCode.includes("A")) {
+      rt.added.push(filename);
+    } else if (statusCode.includes("D")) {
+      rt.deleted.push(filename);
+    } else if (statusCode.includes("M")) {
+      rt.modified.push(filename);
+    } else if (statusCode === "??") {
+      rt.untracked.push(filename);
+    } else {
+      throw new Error("unkonw output from git status --short");
     }
   }
   return rt;
@@ -403,6 +405,42 @@ async function gitLFSUntrack(rootDir, filename) {
 }
 
 /**
+ * determine which of the given modified files only had their file mode (eg. execute permission)
+ * changed, without any actual content change.
+ * WHEEL adds the execute permission to a task's script (and checker) just before it is run, which
+ * makes git report the script as "modified" even though its content is unchanged. such mode-only
+ * changes carry no risk of data loss and must not be treated as unsaved work.
+ * @param {string} rootDir - repo's root dir
+ * @param {string[]} modifiedFiles - filenames reported as modified by gitStatus
+ * @param {string} pathspec - file pattern to limit diff command
+ * @returns {string[]} - filenames which only have a mode change (no content change)
+ */
+_internal.getModeOnlyModifiedFiles = async function (rootDir, modifiedFiles, pathspec) {
+  if (!Array.isArray(modifiedFiles) || modifiedFiles.length === 0) {
+    return [];
+  }
+  const opt = ["diff", "--numstat"];
+  if (typeof pathspec === "string") {
+    opt.push("--");
+    opt.push(pathspec);
+  }
+  const output = await _internal.gitPromise(rootDir, opt, rootDir);
+  const modeOnly = [];
+  for (const line of output.split("\n")) {
+    if (line.trim().length === 0) {
+      continue;
+    }
+    const [insertions, deletions, ...rest] = line.split("\t");
+    const filename = rest.join("\t");
+    //numstat reports "0  0" for a file whose content is unchanged, ie. only its mode was changed
+    if (insertions === "0" && deletions === "0") {
+      modeOnly.push(filename);
+    }
+  }
+  return modeOnly;
+};
+
+/**
  * @typedef {object} unsavedFile
  * @property {string} status - unsaved file's status which is one of ["new", "modified", "deleted","renamed"]
  * @property {string} name - unsaved file's name
@@ -414,11 +452,15 @@ async function gitLFSUntrack(rootDir, filename) {
  */
 async function getUnsavedFiles(rootDir, pathspec) {
   const { added, modified, deleted, renamed } = await _internal.gitStatus(rootDir, pathspec);
+  const modeOnlyModified = await _internal.getModeOnlyModifiedFiles(rootDir, modified, pathspec);
   const unsavedFiles = [];
   for (const e of added) {
     unsavedFiles.push({ status: "new", name: e });
   }
   for (const e of modified) {
+    if (modeOnlyModified.includes(e)) {
+      continue;
+    }
     unsavedFiles.push({ status: "modified", name: e });
   }
   for (const e of deleted) {

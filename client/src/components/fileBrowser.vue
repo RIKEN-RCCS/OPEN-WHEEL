@@ -71,6 +71,7 @@
             :disabled="isSND"
             v-bind="props"
             icon="mdi-upload"
+            data-cy="file_browser-upload-btn"
             @click="showUploadDialog"
           />
         </template>
@@ -148,6 +149,7 @@
         <v-text-field
           v-if="['createNewDir','createNewFile','rename'].includes(dialog.submitEvent)"
           v-model="dialog.inputField"
+          autofocus
           :label="dialog.inputFieldLabel"
           :rules="[isValidInputFilename, noDuplicate]"
           variant="outlined"
@@ -338,6 +340,7 @@ export default {
       SIO.onUploaderEvent("complete", this.onUploadComplete);
       SIO.onUploaderEvent("progress", this.updateProgressBar);
       SIO.onGlobal("uploadConflict", this.onUploadConflict);
+      SIO.onGlobal("fileList", this.onFileListSaved);
     }
     this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
   },
@@ -346,6 +349,7 @@ export default {
     SIO.removeUploaderEvent("complete", this.onUploadComplete);
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
     SIO.off("uploadConflict", this.onUploadConflict);
+    SIO.off("fileList", this.onFileListSaved);
   },
   methods: {
     ...mapActions(["openTextEditor"]),
@@ -442,6 +446,17 @@ export default {
         return;
       }
       this.uploading = false;
+      this.getComponentDirRootFiles();
+    },
+    onFileListSaved() {
+      //The uploader's "complete" event (onUploadComplete) fires as soon as the bytes are
+      //received, but the server still needs to move the file into place and "git add" it
+      //asynchronously afterwards (see onUploadFileSaved on the server side). The server
+      //emits "fileList" once that work is actually finished, so refresh again here to
+      //pick up the newly uploaded file without requiring the panel to be closed and reopened.
+      if (["running", "preparing"].includes(this.projectState)) {
+        return;
+      }
       this.getComponentDirRootFiles();
     },
     updateProgressBar(event) {
