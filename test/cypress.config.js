@@ -76,6 +76,22 @@ export default defineConfig({
     setupNodeEvents(on) {
       process.env.MOCK_DEBUG = process.env.MOCK_DEBUG ?? "0";
       process.env.GW_DEBUG = process.env.GW_DEBUG ?? "0";
+
+      /*
+       * Prevent Chrome renderer OOM crashes on memory-intensive test suites.
+       * --disable-dev-shm-usage: use file-backed shared memory instead of /dev/shm
+       *   (prevents exhaustion of the 64MB /dev/shm limit in Docker containers on Linux).
+       * --js-flags=--max-old-space-size=4096: increase V8 heap to 4 GB so the renderer
+       *   does not OOM after running the memory-intensive home.cy.js suite (20 tests,
+       *   testIsolation:false, cytoscape.js graph navigation) before importProject.cy.js.
+       */
+      on("before:browser:launch", (browser, launchOptions)=>{
+        if (browser.name === "chrome") {
+          launchOptions.args.push("--disable-dev-shm-usage");
+          launchOptions.args.push("--js-flags=--max-old-space-size=4096");
+        }
+        return launchOptions;
+      });
       on("task", {
         "start:mock-server": (port)=>{
           return mockServer.start(port);
