@@ -54,6 +54,8 @@ export async function validateComponent(projectRootDir, component) {
     errors.push(...await validateBulkjobTask(projectRootDir, component));
   } else if (component.type === "if") {
     errors.push(...await validateConditionalCheck(projectRootDir, component));
+  } else if (component.type === "continue" || component.type === "break") {
+    errors.push(...await validateConditionalCheck(projectRootDir, component));
   } else if (component.type === "while") {
     errors.push(...await validateConditionalCheck(projectRootDir, component));
     errors.push(...await validateKeepProp(component));
