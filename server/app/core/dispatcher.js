@@ -32,6 +32,7 @@ import {
   logInfo,
   logWarn,
   logError,
+  logFatal,
   _internal
 } from "../logSettings.js";
 import { cancelDispatchedTasks } from "./taskUtil.js";
@@ -239,8 +240,19 @@ class Dispatcher extends EventEmitter {
     this.hasFailedComponent = false;
     this.hasUnknownComponent = false;
     this.firstCall = true;
-    this.on("taskCompleted", (state)=>{
+    this.on("taskCompleted", (state, task)=>{
       this.setStateFlag(state);
+      if (state === "stage-out") {
+        //task's own job already succeeded but the transfer did not complete this run
+        this.hasFailedComponent = true;
+      }
+      if (task) {
+        //remove by reference regardless of state: this event firing means the task's
+        //execution attempt has concluded, even if it ends up stuck at "stage-out"
+        this.runningTasks = this.runningTasks.filter((t)=>{
+          return t !== task;
+        });
+      }
       this._reserveDispatch();
     });
   }
@@ -277,6 +289,7 @@ class Dispatcher extends EventEmitter {
     try {
       if (target.state === "finished") {
         logInfo(this.projectRootDir, `${this.cwfDir}/${target.name}`, "finished component don't re-run at this time");
+        await this._addNextComponent(target);
       } else {
         await this._cmdFactory(target.type).call(this, target);
       }
@@ -352,7 +365,29 @@ class Dispatcher extends EventEmitter {
       this.runningTasks = this.runningTasks.filter((task)=>{
         return !isFinishedState(task.state);
       });
-      if (this._isFinished()) {
+      //nothing is running and nothing left waiting can ever become ready (each is blocked on an
+      //inputFile from a predecessor whose stage-out permanently failed) - conclude now instead of
+      //registering another "dispatch" listener that would never fire again
+      let permanentlyBlocked = false;
+      if (this.runningTasks.length === 0 && this.currentSearchList.length > 0) {
+        const stuckPairs = await Promise.all(this.currentSearchList.map(async (component)=>{
+          return { component, stuck: await this._findStuckPredecessor(component) };
+        }));
+        permanentlyBlocked = stuckPairs.every(({ stuck })=>{
+          return stuck !== null;
+        });
+        if (permanentlyBlocked) {
+          const blockedNames = stuckPairs.map(({ component })=>{
+            return component.name;
+          }).join(", ");
+          const stuckNames = Array.from(new Set(stuckPairs.map(({ stuck })=>{
+            return stuck.name;
+          }))).join(", ");
+          logFatal(this.projectRootDir, this.cwfDir,
+            `project failed: ${blockedNames} can never start because required input file(s) from ${stuckNames} were never delivered (stage-out stuck). Resolve the transfer and re-run to continue.`);
+        }
+      }
+      if (permanentlyBlocked || this._isFinished()) {
         const state = this._getState();
         this.emit("done", state);
       } else {
@@ -749,7 +784,7 @@ class Dispatcher extends EventEmitter {
 
     //set current loop index
     if (!component.initialized) {
-      loopInitialize(component, getTripCount);
+      await loopInitialize(component, getTripCount, this.cwfDir);
     } else if (component.restarting) {
       let done = false;
       const currentInstanceDir = path.resolve(this.cwfDir, getInstanceDirectoryName(component, component.prevIndex, component.name));
@@ -789,7 +824,7 @@ class Dispatcher extends EventEmitter {
 
     let srcDirName = component.name;
     if (getPrevIndex(component) !== null) {
-      srcDirName = `${component.originalName}_${sanitizePath(component.prevIndex)}`;
+      srcDirName = getInstanceDirectoryName(component, component.prevIndex, component.originalName);
     }
     const srcDir = path.resolve(this.cwfDir, srcDirName);
 
@@ -804,7 +839,7 @@ class Dispatcher extends EventEmitter {
     this.pendingComponents.push(component);
 
     const newComponent = structuredClone(component);
-    newComponent.name = `${component.originalName}_${sanitizePath(component.currentIndex)}`;
+    newComponent.name = getInstanceDirectoryName(component, component.currentIndex, component.originalName);
     newComponent.subComponent = true;
     newComponent.env = Object.assign({}, this.env, component.env);
     if (!newComponent.env) {
@@ -814,6 +849,21 @@ class Dispatcher extends EventEmitter {
     const dstDir = path.resolve(this.cwfDir, newComponent.name);
 
     try {
+      //loopInitialize() already picked an instanceDirSeparator that should
+      //avoid any collision up front - this is just a defensive fallback in
+      //case the filesystem changed after loop start. A loop's own previous
+      //instance directory always shares the loop template's ID
+      //(structuredClone never regenerates it); anything else at this path -
+      //including a non-component file/directory - is a real collision and
+      //must not be silently overwritten/erased (issue #971)
+      if (await fs.pathExists(dstDir)) {
+        const existingJson = await readComponentJson(dstDir).catch(()=>{
+          return null;
+        });
+        if (existingJson === null || existingJson.ID !== component.ID) {
+          throw new Error(`instance directory name collision: "${newComponent.name}" already exists and would be overwritten by loop component "${component.originalName}"`);
+        }
+      }
       logDebug(this.projectRootDir, `${this.cwfDir}/${component.name}`, "copy from", srcDir, "to", dstDir);
       const skipCopyPatterns = component.skipCopy || [];
       await fs.copy(srcDir, dstDir, {
@@ -1207,7 +1257,10 @@ class Dispatcher extends EventEmitter {
     if (component.inputFiles.length > 0) {
       if (isLocal(component)) {
         if (currentDir !== storagePath) {
-          await fs.mkdir(storagePath);
+          //storagePath is required to already exist (componentTypeValidator.js
+          //validateStorage rejects the project otherwise), so this must be
+          //idempotent - fs.mkdir() throws EEXIST on a path that's already there.
+          await fs.ensureDir(storagePath);
           await Promise.all(
             component.inputFiles
               .filter((e)=>{
@@ -1312,7 +1365,7 @@ class Dispatcher extends EventEmitter {
       }
 
       const metadata = await gatherComponentMetadata(this.projectRootDir);
-      const xml = componentMetadataToXml(metadata);
+      const xml = await componentMetadataToXml(metadata);
       for (const gfarmPath of gfarmTargets) {
         await setGfarmXattr(this.projectRootDir, remotehostID, gfarmPath, "wheel.workflow", xml);
       }
@@ -1356,6 +1409,14 @@ class Dispatcher extends EventEmitter {
     return;
   }
 
+  //true if component is stuck at "stage-out" (its own job already succeeded but the
+  //transfer did not complete) and is not currently being retried by this dispatcher
+  _isStuckStageOut(component) {
+    return component.state === "stage-out" && !this.runningTasks.some((t)=>{
+      return t.ID === component.ID;
+    });
+  }
+
   async _isReady(component) {
     if (component.type === "source") {
       return true;
@@ -1367,7 +1428,7 @@ class Dispatcher extends EventEmitter {
           continue;
         }
         logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "previous component name =", `${previous.type}(state:${previous.state})`);
-        if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
+        if (!isFinishedState(previous.state) && previous.type !== "stepjobTask" && !this._isStuckStageOut(previous)) {
           logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "is not ready because", `${this.cwfDir}${previous.name}`, "is not finished");
           return false;
         }
@@ -1383,6 +1444,9 @@ class Dispatcher extends EventEmitter {
           if (previous.disable) {
             continue;
           }
+          //note: unlike the "previous" loop above, a predecessor stuck at "stage-out" must NOT
+          //be treated as ready here - its job succeeded but the file this component actually
+          //needs never arrived, so proceeding would run against missing/stale data
           if (!isFinishedState(previous.state) && previous.type !== "stepjobTask") {
             logTrace(this.projectRootDir, `${this.cwfDir}/${component.name}`, "is not ready because", inputFile, "from", `${previous.name}(${previous.ID})`, "is not arrived");
             return false;
@@ -1391,6 +1455,25 @@ class Dispatcher extends EventEmitter {
       }
     }
     return true;
+  }
+
+  //find the first inputFile source component that is permanently stuck at "stage-out", if any
+  async _findStuckPredecessor(component) {
+    for (const inputFile of component.inputFiles || []) {
+      for (const src of inputFile.src) {
+        if (src.srcNode === component.parent) {
+          continue;
+        }
+        const previous = await this._getComponent(src.srcNode);
+        if (previous.disable) {
+          continue;
+        }
+        if (this._isStuckStageOut(previous)) {
+          return previous;
+        }
+      }
+    }
+    return null;
   }
 
   _getComponentDir(id) {

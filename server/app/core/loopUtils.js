@@ -26,9 +26,53 @@ const _internal = {
 function getInstanceDirectoryName(component, index, originalName) {
   const suffix = typeof index !== "undefined" ? index : component.currentIndex;
   const name = typeof originalName === "string" ? originalName : component.originalName;
-  return `${name}_${sanitizePath(suffix)}`;
+  const separator = component.instanceDirSeparator || "_";
+  return `${name}${separator}${sanitizePath(suffix)}`;
 }
 _internal.getInstanceDirectoryName = getInstanceDirectoryName;
+
+const maxInstanceDirSeparatorEscalation = 5;
+
+/**
+ * decide a name-to-index separator ("_", "__", "___", ...) for this loop's
+ * instance directories that does not collide with anything already sitting
+ * next to the loop template - including plain files/directories and
+ * unrelated components, not just this loop's own previous instances
+ * @param {object} component - component object (component.name must already be the template name)
+ * @param {string} cwfDir - current workflow directory
+ * @returns {Promise<string>} - separator to use for every instance directory of this loop
+ */
+async function chooseInstanceDirSeparator(component, cwfDir) {
+  const entries = await _internal.fs.readdir(cwfDir).catch(()=>{
+    return [];
+  });
+  let separator = "_";
+  for (let attempt = 0; attempt < maxInstanceDirSeparatorEscalation; attempt++) {
+    const prefix = `${component.name}${separator}`;
+    let conflict = false;
+    for (const entry of entries) {
+      if (!entry.startsWith(prefix)) {
+        continue;
+      }
+      const entryJson = await _internal.readComponentJson(path.resolve(cwfDir, entry)).catch(()=>{
+        return null;
+      });
+      //a legitimate previous instance of THIS loop always shares its ID
+      //(see getInstanceDirectoryName callers in dispatcher.js) - anything
+      //else, including non-component entries, is a real collision
+      if (entryJson === null || entryJson.ID !== component.ID) {
+        conflict = true;
+        break;
+      }
+    }
+    if (!conflict) {
+      return separator;
+    }
+    separator += "_";
+  }
+  throw new Error(`unable to find a non-colliding instance directory naming scheme for component "${component.name}" after ${maxInstanceDirSeparatorEscalation} attempts`);
+}
+_internal.chooseInstanceDirSeparator = chooseInstanceDirSeparator;
 
 /**
  * return previous index
@@ -230,8 +274,9 @@ async function foreachSearchLatestFinishedIndex(component, cwfDir) {
  * initialize for/foreach/while component
  * @param {object} component - component object
  * @param {Function} getTripCount - getTripCount function for specified component
+ * @param {string} cwfDir - current workflow directory
  */
-function loopInitialize(component, getTripCount) {
+async function loopInitialize(component, getTripCount, cwfDir) {
   component.numFinished = 0;
   component.numFailed = 0;
   component.currentIndex = 0;
@@ -241,6 +286,7 @@ function loopInitialize(component, getTripCount) {
     component.currentIndex = component.start;
   }
   component.originalName = component.name;
+  component.instanceDirSeparator = await _internal.chooseInstanceDirSeparator(component, cwfDir);
   //getTripCount is null if component.type is "while"
   if (typeof getTripCount === "function") {
     component.numTotal = getTripCount(component);
@@ -269,6 +315,7 @@ function loopInitialize(component, getTripCount) {
 export {
   getPrevIndex,
   getInstanceDirectoryName,
+  chooseInstanceDirSeparator,
   keepLoopInstance,
   forGetNextIndex,
   forIsFinished,

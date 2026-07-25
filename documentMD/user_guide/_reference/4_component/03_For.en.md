@@ -61,5 +61,13 @@ For example, a `for` component with start=1, end=3, step=2 is processed as follo
 
 If the number of instance to keep value is set to nonzero, delete the old directories (such as `for_1` and `for_3`) that exceed the number set after the 4, 7 operation.
 
+### When the instance directory name collides
+
+If the directory name with the index value appended (e.g. `for_1`) would collide with an already-existing component, file, or directory of that same name, WHEEL automatically escalates the separator used between the name and the index.
+
+For example, if a directory or component already named `for_1` exists, the For component uses `for__1` (two underscores) instead. If that also collides, it continues to `for___1` (three underscores), and so on until the collision is resolved.
+
+Once decided, the same separator is used consistently for the rest of that loop's run (and reused if the run is resumed).
+
 --------
 [Return to Component Details]({{site.baseurl}}/reference/4_component/)

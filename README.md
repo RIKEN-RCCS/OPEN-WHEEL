@@ -34,7 +34,7 @@ this preparation required only once.
 3. type following command
 
 ```
-> docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
+> docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -e TZ=$(readlink /etc/localtime | sed 's#.*/zoneinfo/##') -p 8089:8089 tmkawanabe/wheel:latest
 ```
 
 `CONFIG_DIR` must be absolute path in host machine.
@@ -43,6 +43,7 @@ above command line, we specify following options
 
 - project files will be create under ${HOME}
 - port 8089 is used for WHEEL
+- the `-e TZ=...` part makes the container's clock match your host's local timezone (skip it and the container defaults to UTC). to force a specific timezone instead of following the host, replace it with e.g. `-e TZ=Asia/Tokyo`
 
 if you would like to use http instead of https add following option to `docker run`.
 you do not need to put certification and key file into `CONFIG_DIR` in this case

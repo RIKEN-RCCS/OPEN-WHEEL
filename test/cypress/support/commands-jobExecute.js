@@ -77,6 +77,100 @@ Cypress.Commands.add("setForeachLoop", (length)=>{
 });
 
 /**
+ * ifにスクリプトファイルを作成 condition setting にセット
+ * (hasCondition パネルは if/while で共有されているため setupWhileWithScriptAndCondition と同一実装)
+ * @param {string} scriptName - 作成するスクリプトファイル名
+ * @param {string} shellText - スクリプトの内容
+ */
+Cypress.Commands.add("setupIfWithConditionScript", (scriptName, shellText)=>{
+  const scriptEle = "[data-cy=\"component_property-condition_use_javascript-autocomplete\"]";
+  cy.scriptMake(scriptName, shellText);
+  cy.waitForSnackbar(new RegExp(`${escapeRegExp(scriptName)}\\s+saved\\s*$`, "i"));
+  cy.get("[data-cy=\"component_property-condition-setting_title\"]").click();
+  cy.get(scriptEle).find("[role=\"combobox\"]", { timeout: 10000 })
+    .should("exist");
+  cy.selectValueFromDropdownList(scriptEle, 3, scriptName);
+});
+
+/**
+ * for 繰り返し設定 (start/end/step)
+ */
+Cypress.Commands.add("setForLoop", (start, end, step)=>{
+  cy.get("[data-cy=\"component_property-loop_set_for-panel_title\"]").scrollIntoView()
+    .click();
+  cy.get("[data-cy=\"component_property-start_for-text_field\"]").type(start);
+  cy.get("[data-cy=\"component_property-end_for-text_field\"]").type(end);
+  cy.get("[data-cy=\"component_property-step_for-text_field\"]").type(step);
+});
+
+/**
+ * ParameterStudy component's "add new target file" dialog: select the nested
+ * component in the tree (so the file is associated with it, not with PS itself),
+ * type the filename, and confirm.
+ * @param {string} componentNameInTree - name of the nested component that owns the file
+ * @param {string} filename - target file name (e.g. "run.sh")
+ */
+Cypress.Commands.add("addTargetFileToPs", (componentNameInTree, filename)=>{
+  cy.get("[data-cy=\"target_files-add_target_file-btn\"]").click();
+  cy.get(".v-overlay__content").contains("button", componentNameInTree)
+    .click({ force: true });
+  cy.get("[data-cy=\"target_files-target_file_name-text_field\"]").type(filename);
+  cy.get("[data-cy=\"target_files-ok-btn\"]").click();
+});
+
+/**
+ * Selects `word` inside the target file's text editor tab and adds it as a
+ * "list" type PS parameter with the given values.
+ * @param {string} word - the literal word already present in the target file to templatize
+ * @param {string[]} values - list of values to add for this parameter
+ */
+Cypress.Commands.add("addListParameter", (word, values)=>{
+  //Ace renders each line as one oversized (~1,000,000px wide) .ace_line div with
+  //pointer-events:none on its text layer, so neither a plain contains(word).dblclick()
+  //(lands on the disabled text layer) nor proportional width math (the line's
+  //reported width is bogus) will target the word correctly. Measure the word's
+  //real on-screen rect via a DOM Range instead, then dblclick those coordinates
+  //without {force:true} so Cypress's real elementFromPoint hit-testing resolves
+  //past the disabled text layer to the interactive layer beneath - a raw/forced
+  //synthetic dispatch was observed to crash the Ace renderer entirely.
+  cy.get("[data-cy=\"rapid-tab-tab_editor\"]").then(($editor)=>{
+    cy.window().then((win)=>{
+      const editorRect = $editor[0].getBoundingClientRect();
+      const lines = [...$editor[0].querySelectorAll(".ace_line")];
+      const line = lines.find(($l)=>{
+        return $l.textContent.includes(word);
+      });
+      const textNode = [...line.childNodes].find((n)=>{
+        return n.nodeType === win.Node.TEXT_NODE && n.textContent.includes(word);
+      });
+      const text = textNode.textContent;
+      const idx = text.indexOf(word);
+      const range = win.document.createRange();
+      range.setStart(textNode, idx);
+      range.setEnd(textNode, idx + word.length);
+      const wordRect = range.getBoundingClientRect();
+      const relX = (wordRect.left - editorRect.left) + wordRect.width / 2;
+      const relY = (wordRect.top - editorRect.top) + wordRect.height / 2;
+      cy.wrap($editor).dblclick(relX, relY);
+    });
+  });
+  cy.get("[data-cy=\"parameter-selected_text-text_field\"]").find("input")
+    .should("have.value", word);
+  cy.get("[data-cy=\"parameter-add_new_parameter_btn\"]").click();
+  cy.selectValueFromDropdownList("[data-cy=\"parameter-parameter_setting-select\"]", 1, "list");
+  values.forEach((value)=>{
+    cy.get("[data-cy=\"parameter-list-list_form\"]").find("input")
+      .type(value);
+    cy.get("[data-cy=\"parameter-list-list_form\"]")
+      .find("[data-cy=\"list_form-add-text_field\"]")
+      .find("[role=\"button\"]")
+      .last()
+      .click({ force: true });
+  });
+  cy.get("[data-cy=\"parameter-ok-btn\"]").click();
+});
+
+/**
  * テストで使用するremotehost情報の設定
  */
 Cypress.Commands.add("setupRemotehost", (label, hostName)=>{

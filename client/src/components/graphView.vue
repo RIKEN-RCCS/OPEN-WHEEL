@@ -22,6 +22,7 @@
 import { mapMutations, mapState, mapActions } from "vuex";
 import ComponentGraph from "../components/componentGraph/componentGraph.vue";
 import { widthComponentLibrary, heightToolbar, heightDenseToolbar, heightFooter } from "../lib/componentSizes.json";
+import { isEditableTarget } from "../lib/clientUtility.js";
 
 export default {
   name: "GraphView",
@@ -119,6 +120,9 @@ export default {
     },
     registerHotkeys() {
       const callback = (e)=>{
+        if (isEditableTarget(e.target)) {
+          return;
+        }
         const isCtrl = e.ctrlKey || e.metaKey;
         const key = e.key.toLowerCase();
 

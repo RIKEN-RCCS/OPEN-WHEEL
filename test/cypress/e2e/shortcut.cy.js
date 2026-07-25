@@ -133,4 +133,68 @@ describe("shortcut key", ()=>{
       expect(store.state.copyInfo).to.be.null;
     });
   });
+
+  it("does not hijack Ctrl+C/X/V while editing the name text field", ()=>{
+    const INPUT_OBJ_CY = "[data-cy=\"component_property-name-text_field\"]";
+
+    cy.clickComponentName(TASK_NAME);
+    cy.get(INPUT_OBJ_CY).find("input")
+      .type("{selectall}");
+
+    //none of these keystrokes should be treated as a component copy/cut/paste
+    //while the name field has focus
+    cy.realPress(["Control", "c"]);
+    cy.window().then((win)=>{
+      const app = win.document.querySelector("#app").__vue_app__;
+      const store = app.config.globalProperties.$store;
+      expect(store.state.copyInfo).to.be.null;
+    });
+
+    cy.realPress(["Control", "x"]);
+    cy.window().then((win)=>{
+      const app = win.document.querySelector("#app").__vue_app__;
+      const store = app.config.globalProperties.$store;
+      expect(store.state.copyInfo).to.be.null;
+    });
+
+    cy.realPress(["Control", "v"]);
+    //no component-paste action was triggered: no extra component appears on the canvas
+    cy.get("[data-cy=\"graph-component-row\"]").should("have.length", 1);
+    cy.window().then((win)=>{
+      const app = win.document.querySelector("#app").__vue_app__;
+      const store = app.config.globalProperties.$store;
+      expect(store.state.copyInfo).to.be.null;
+    });
+  });
+
+  it("does not hijack Ctrl+C/X/V while editing the description textarea", ()=>{
+    const INPUT_OBJ_CY = "[data-cy=\"component_property-description-textarea\"]";
+
+    cy.clickComponentName(TASK_NAME);
+    cy.get(INPUT_OBJ_CY).find("textarea")
+      .type("editing-description")
+      .type("{selectall}");
+
+    cy.realPress(["Control", "c"]);
+    cy.window().then((win)=>{
+      const app = win.document.querySelector("#app").__vue_app__;
+      const store = app.config.globalProperties.$store;
+      expect(store.state.copyInfo).to.be.null;
+    });
+
+    cy.realPress(["Control", "x"]);
+    cy.window().then((win)=>{
+      const app = win.document.querySelector("#app").__vue_app__;
+      const store = app.config.globalProperties.$store;
+      expect(store.state.copyInfo).to.be.null;
+    });
+
+    cy.realPress(["Control", "v"]);
+    cy.get("[data-cy=\"graph-component-row\"]").should("have.length", 1);
+    cy.window().then((win)=>{
+      const app = win.document.querySelector("#app").__vue_app__;
+      const store = app.config.globalProperties.$store;
+      expect(store.state.copyInfo).to.be.null;
+    });
+  });
 });

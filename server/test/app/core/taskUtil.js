@@ -26,16 +26,18 @@ describe("UT for taskUtil class", function () {
     afterEach(()=>{
       sinon.restore();
     });
-    it("should not cancel tasks that are finished or failed", async ()=>{
+    it("should not cancel tasks that are finished, failed, or stuck at stage-out", async ()=>{
       const tasks = [
         { state: "finished" },
-        { state: "failed" }
+        { state: "failed" },
+        { state: "stage-out" }
       ];
       await cancelDispatchedTasks(tasks);
       sinon.assert.notCalled(cancelStub);
       sinon.assert.notCalled(killTaskStub);
       expect(tasks[0].state).to.equal("finished");
       expect(tasks[1].state).to.equal("failed");
+      expect(tasks[2].state).to.equal("stage-out");
     });
     it("should cancel tasks that are not finished or failed", async ()=>{
       const tasks = [

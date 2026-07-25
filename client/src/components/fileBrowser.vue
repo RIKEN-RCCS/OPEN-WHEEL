@@ -97,6 +97,7 @@
             :disabled="!isFileSelected || isSND"
             icon="mdi-share-outline"
             v-bind="props"
+            data-cy="file_browser-share_file-btn"
             @click="openDialog('share')"
           />
         </template>
@@ -150,7 +151,7 @@
           v-model="dialog.inputField"
           autofocus
           :label="dialog.inputFieldLabel"
-          :rules="[noDuplicate]"
+          :rules="[isValidInputFilename, noDuplicate]"
           variant="outlined"
           data-cy="file_browser-input-text_field"
         />
@@ -159,6 +160,7 @@
           v-model="dialog.inputField"
           readonly
           :label="dialog.inputFieldLabel"
+          data-cy="file_browser-share_path-text_field"
         >
           <template #append>
             <v-tooltip
@@ -170,6 +172,7 @@
                 <v-btn
                   icon="mdi-content-copy"
                   v-bind="props"
+                  data-cy="file_browser-share_path_copy-btn"
                   @click="copyToClipboard"
                 />
               </template>
@@ -220,6 +223,7 @@ import SIO from "../lib/socketIOWrapper.js";
 import versatileDialog from "../components/versatileDialog.vue";
 import myTreeview from "../components/common/myTreeview.vue";
 import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "../components/common/fileTreeUtils.js";
+import { isValidInputFilename } from "../lib/utility.js";
 
 export default {
   name: "FileBrowser",
@@ -287,7 +291,7 @@ export default {
     },
     dialogButtons() {
       const requiresInput = ["createNewDir", "createNewFile", "rename"].includes(this.dialog.submitEvent);
-      const isInvalid = requiresInput && (this.dialog.inputField === "" || !this.noDuplicate(this.dialog.inputField));
+      const isInvalid = requiresInput && (this.dialog.inputField === "" || !isValidInputFilename(this.dialog.inputField) || !this.noDuplicate(this.dialog.inputField));
       return [
         { icon: "mdi-check", label: "ok", disabled: isInvalid },
         { icon: "mdi-close", label: "cancel" }
@@ -349,6 +353,7 @@ export default {
   },
   methods: {
     ...mapActions(["openTextEditor"]),
+    isValidInputFilename,
     updateScriptCandidate() {
       if (!this.needScriptCandidate) {
         return;
@@ -554,7 +559,12 @@ export default {
           if (this.dialog.submitEvent === "createNewDir") {
             newItem.children = [];
           }
-          const container = this.activeItem ? this.activeItem.children : this.items;
+          //activeItem can be a file (no .children array) rather than a
+          //directory - e.g. after selecting a file to open it in the editor,
+          //without navigating into a directory afterward. Only nest the new
+          //item under activeItem when it actually has a children array;
+          //otherwise it belongs at the root alongside activeItem.
+          const container = Array.isArray(this.activeItem?.children) ? this.activeItem.children : this.items;
           container.push(newItem);
           if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
             this.openItems.push(this.activeItem.id);

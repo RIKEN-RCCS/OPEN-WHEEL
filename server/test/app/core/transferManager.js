@@ -6,7 +6,7 @@
 
 import { expect } from "chai";
 import sinon from "sinon";
-import { getKey, register, removeTransferrers, _internal } from "../../../app/core/transferManager.js";
+import { getKey, register, removeTransferrers, stageOutRetryableExitCodes, _internal } from "../../../app/core/transferManager.js";
 describe("#getKey", ()=>{
   beforeEach(()=>{
   });
@@ -167,6 +167,7 @@ describe("#register", ()=>{
     await sbsOpts.exec({ direction, src, dst, task });
 
     expect(sshRecvStub.calledWith(src, dst, opt)).to.be.true;
+    expect(sshRecvStub.args[0][4]).to.deep.equal(stageOutRetryableExitCodes);
     expect(task.preparedTime).to.be.undefined;
     expect(loggerDebugStub.notCalled).to.be.true;
   });

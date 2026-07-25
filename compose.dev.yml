@@ -1,0 +1,27 @@
+services:
+  wheel_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    image: wheel_dev
+    container_name: wheel_dev
+    ports:
+      - "8089:8089"
+    environment:
+      WHEEL_USE_HTTP: 1
+      WHEEL_PORT: 8089
+      WHEEL_LOG_LEVEL: debug
+      SSH_CONTROL_PERSIST_DIR: /tmp
+      TZ: ${TZ:-}
+    volumes:
+      - ${HOME}:/root
+      - ./common:/usr/src/common
+      - ./server/app:/usr/src/server/app
+      - wheel_dev_public:/usr/src/server/app/public
+      - ./server/bin:/usr/src/server/bin
+      - ./client/src:/usr/src/client/src
+      - ./client/vite.config.ts:/usr/src/client/vite.config.ts
+
+volumes:
+  wheel_dev_public:

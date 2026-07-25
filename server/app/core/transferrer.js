@@ -86,7 +86,13 @@ export async function stageIn(task) {
   await _internal.addX(localScriptPath);
 
   //register send request
-  return _internal.register(hostinfo, task, "send", [task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
+  try {
+    return await _internal.register(hostinfo, task, "send", [task.workingDir], `${path.posix.dirname(task.remoteWorkingDir)}/`);
+  } catch (e) {
+    //task.state must not be left on the non-terminal "stage-in" state or the dispatcher will wait forever
+    await _internal.setTaskState(task, "failed");
+    throw e;
+  }
 }
 
 /**
@@ -104,77 +110,84 @@ export async function stageOut(task) {
 
   _internal.getLogger(task.projectRootDir).debug("start to get files from remote server if specified");
 
-  const downloadRecipe = [];
-  for (const outputFile of task.outputFiles) {
-    if (!await _internal.needDownload(task.projectRootDir, task.ID, outputFile)) {
-      _internal.getLogger(task.projectRootDir).trace(`${outputFile.name} will NOT be downloaded`);
-      continue;
+  try {
+    const downloadRecipe = [];
+    for (const outputFile of task.outputFiles) {
+      if (!await _internal.needDownload(task.projectRootDir, task.ID, outputFile)) {
+        _internal.getLogger(task.projectRootDir).trace(`${outputFile.name} will NOT be downloaded`);
+        continue;
+      }
+      downloadRecipe.push(_internal.makeDownloadRecipe(task.projectRootDir, outputFile.name, task.remoteWorkingDir, task.workingDir));
     }
-    downloadRecipe.push(_internal.makeDownloadRecipe(task.projectRootDir, outputFile.name, task.remoteWorkingDir, task.workingDir));
-  }
 
-  const promises = [];
+    const promises = [];
 
-  const dsts = Array.from(new Set(downloadRecipe.map((e)=>{
-    return e.dst;
-  })));
-
-  for (const dst of dsts) {
-    const srces = downloadRecipe.filter((e)=>{
-      return e.dst === dst;
-    }).map((e)=>{
-      return e.src;
-    });
-    promises.push(_internal.register(hostinfo, task, "recv", srces, dst));
-  }
-  let opt;
-  if (Array.isArray(task.exclude)) {
-    opt = task.exclude.map((e)=>{
-      return `--exclude=${e}`;
-    });
-  }
-  //get files which match include filter
-  if (Array.isArray(task.include) && task.include.length > 0) {
-    const downloadRecipe2 = task.include.map((e)=>{
-      return _internal.makeDownloadRecipe(task.projectRootDir, e, task.remoteWorkingDir, task.workingDir);
-    });
-    const dsts2 = Array.from(new Set(downloadRecipe2.map((e)=>{
+    const dsts = Array.from(new Set(downloadRecipe.map((e)=>{
       return e.dst;
     })));
-    for (const dst of dsts2) {
-      const srces = downloadRecipe2.filter((e)=>{
+
+    for (const dst of dsts) {
+      const srces = downloadRecipe.filter((e)=>{
         return e.dst === dst;
       }).map((e)=>{
         return e.src;
       });
-      promises.push(_internal.register(hostinfo, task, "recv", srces, dst, opt));
+      promises.push(_internal.register(hostinfo, task, "recv", srces, dst));
     }
-  }
-
-  await Promise.all(promises);
-  //clean up remote working directory
-  if (task.doCleanup && taskState === "finished") {
-    const symlinkTargetNames = await _internal.getRemoteSymlinkOutputNames(task);
-    try {
-      const ssh = _internal.getSsh(task.projectRootDir, task.remotehostID);
-      if (symlinkTargetNames.length === 0) {
-        //no symlink targets: full cleanup
-        _internal.getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
-        await ssh.exec(`rm -fr ${task.remoteWorkingDir}`);
-      } else {
-        //partial cleanup: delete everything except files used as remote symlink targets
-        _internal.getLogger(task.projectRootDir).debug("(remote) partial cleanup, keeping", symlinkTargetNames, "in", task.remoteWorkingDir);
-        const excludes = symlinkTargetNames.map((name)=>{
-          return `! -name '${name}'`;
-        }).join(" ");
-        await ssh.exec(`find ${task.remoteWorkingDir} -mindepth 1 -maxdepth 1 ${excludes} -exec rm -rf {} +`);
-        //register symlink targets for cleanup after project execution finishes
-        _internal.addDeferredCleanup(task.projectRootDir, { remoteWorkingDir: task.remoteWorkingDir, remotehostID: task.remotehostID, symlinkTargetNames });
+    let opt;
+    if (Array.isArray(task.exclude)) {
+      opt = task.exclude.map((e)=>{
+        return `--exclude=${e}`;
+      });
+    }
+    //get files which match include filter
+    if (Array.isArray(task.include) && task.include.length > 0) {
+      const downloadRecipe2 = task.include.map((e)=>{
+        return _internal.makeDownloadRecipe(task.projectRootDir, e, task.remoteWorkingDir, task.workingDir);
+      });
+      const dsts2 = Array.from(new Set(downloadRecipe2.map((e)=>{
+        return e.dst;
+      })));
+      for (const dst of dsts2) {
+        const srces = downloadRecipe2.filter((e)=>{
+          return e.dst === dst;
+        }).map((e)=>{
+          return e.src;
+        });
+        promises.push(_internal.register(hostinfo, task, "recv", srces, dst, opt));
       }
-    } catch (e) {
-      //just log and ignore error
-      _internal.getLogger(task.projectRootDir).warn("remote cleanup failed but ignored", e);
     }
+
+    await Promise.all(promises);
+    //clean up remote working directory
+    if (task.doCleanup && taskState === "finished") {
+      const symlinkTargetNames = await _internal.getRemoteSymlinkOutputNames(task);
+      try {
+        const ssh = _internal.getSsh(task.projectRootDir, task.remotehostID);
+        if (symlinkTargetNames.length === 0) {
+          //no symlink targets: full cleanup
+          _internal.getLogger(task.projectRootDir).debug("(remote) rm -fr", task.remoteWorkingDir);
+          await ssh.exec(`rm -fr ${task.remoteWorkingDir}`);
+        } else {
+          //partial cleanup: delete everything except files used as remote symlink targets
+          _internal.getLogger(task.projectRootDir).debug("(remote) partial cleanup, keeping", symlinkTargetNames, "in", task.remoteWorkingDir);
+          const excludes = symlinkTargetNames.map((name)=>{
+            return `! -name '${name}'`;
+          }).join(" ");
+          await ssh.exec(`find ${task.remoteWorkingDir} -mindepth 1 -maxdepth 1 ${excludes} -exec rm -rf {} +`);
+          //register symlink targets for cleanup after project execution finishes
+          _internal.addDeferredCleanup(task.projectRootDir, { remoteWorkingDir: task.remoteWorkingDir, remotehostID: task.remotehostID, symlinkTargetNames });
+        }
+      } catch (e) {
+        //just log and ignore error
+        _internal.getLogger(task.projectRootDir).warn("remote cleanup failed but ignored", e);
+      }
+    }
+  } catch (e) {
+    //leave task.state at "stage-out" (set above): the task itself already succeeded,
+    //only the transfer failed, so a future run can retry stage-out without resubmitting the job
+    _internal.getLogger(task.projectRootDir).warn("stage-out failed, will retry stage-out only on next run", e);
+    throw e;
   }
   await _internal.setTaskState(task, taskState);
 }

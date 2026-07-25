@@ -29,7 +29,7 @@ async function execStageOut(task) {
       await stageOut(task);
     }
   } finally {
-    task.emitForDispatcher("taskCompleted", task.state);
+    task.emitForDispatcher("taskCompleted", task.state, task);
   }
 }
 
@@ -56,7 +56,7 @@ async function exec(task) {
       await stageOut(task);
     }
   } finally {
-    task.emitForDispatcher("taskCompleted", task.state);
+    task.emitForDispatcher("taskCompleted", task.state, task);
   }
 }
 

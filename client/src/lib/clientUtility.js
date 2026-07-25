@@ -83,6 +83,27 @@ export function isValidOutputFilename(name) {
 }
 
 /**
+ * determine whether the target is a text-editable context
+ * (native input/textarea, contenteditable, or ACE editor) so that
+ * global hotkey handlers should not hijack native clipboard behavior
+ * @param {EventTarget} target - event.target
+ * @returns {boolean} - true if target accepts native text editing/clipboard ops
+ */
+export function isEditableTarget(target) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+    return true;
+  }
+  if (target.isContentEditable) {
+    return true;
+  }
+  //ACE editor captures keystrokes via a hidden textarea (.ace_text-input) inside .ace_editor
+  return target.closest(".ace_text-input, .ace_editor") !== null;
+}
+
+/**
  * remove one entry from array
  * @param {object[] | string[]} array - target array
  * @param {object | string} target - element to be removed

@@ -19,6 +19,7 @@ import {
   getProjectState,
   updateProjectROStatus,
   updateProjectDescription,
+  clearImportNotChangedFlag,
   _internal
 } from "../../../app/core/projectJsonFileOperator.js";
 
@@ -605,5 +606,59 @@ describe("#updateProjectDescription", ()=>{
     expect(readJsonGreedyMock.calledOnce).to.be.true;
     expect(writeJsonWrapperMock.calledOnce).to.be.true;
     expect(gitAddMock.calledOnce).to.be.true;
+  });
+});
+
+describe("#clearImportNotChangedFlag", ()=>{
+  let readJsonGreedyMock;
+  let writeJsonWrapperMock;
+  let gitAddMock;
+
+  beforeEach(()=>{
+    readJsonGreedyMock = sinon.stub(_internal, "readJsonGreedy");
+    writeJsonWrapperMock = sinon.stub(_internal, "writeJsonWrapper");
+    gitAddMock = sinon.stub(_internal, "gitAdd");
+    writeJsonWrapperMock.resolves();
+    gitAddMock.resolves();
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("clears notChanged to false and writes the project JSON when it was true", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = { name: "test_project", exportInfo: { notChanged: true } };
+    readJsonGreedyMock.resolves(mockProjectJson);
+
+    const result = await clearImportNotChangedFlag(mockProjectRootDir);
+
+    expect(result).to.be.true;
+    expect(writeJsonWrapperMock.calledOnceWithExactly(
+      path.resolve(mockProjectRootDir, "prj.wheel.json"),
+      { name: "test_project", exportInfo: { notChanged: false } }
+    )).to.be.true;
+  });
+
+  it("does nothing and returns false when notChanged is already false", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = { name: "test_project", exportInfo: { notChanged: false } };
+    readJsonGreedyMock.resolves(mockProjectJson);
+
+    const result = await clearImportNotChangedFlag(mockProjectRootDir);
+
+    expect(result).to.be.false;
+    expect(writeJsonWrapperMock.called).to.be.false;
+  });
+
+  it("does nothing and returns false when the project has no exportInfo (never imported)", async ()=>{
+    const mockProjectRootDir = "/mock/project/root";
+    const mockProjectJson = { name: "test_project" };
+    readJsonGreedyMock.resolves(mockProjectJson);
+
+    const result = await clearImportNotChangedFlag(mockProjectRootDir);
+
+    expect(result).to.be.false;
+    expect(writeJsonWrapperMock.called).to.be.false;
   });
 });

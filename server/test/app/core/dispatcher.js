@@ -29,7 +29,7 @@ import { eventEmitters } from "../../../app/core/global.js";
 import { projectJsonFilename, componentJsonFilename } from "../../../app/db/db.js";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { updateComponentProperty } from "../../testUtil.js";
-import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { createNewComponent, renameComponentDir } from "../../../app/core/componentOperations.js";
 import { removeExecuters } from "../../../app/core/executerManager.js";
 import { removeTransferrers } from "../../../app/core/transferManager.js";
 import { addInputFile, addOutputFile, renameOutputFile, toggleInputFileMandatory } from "../../../app/core/componentFiles.js";
@@ -782,6 +782,99 @@ describe("UT for Dispatcher class", function () {
       const validate = ajv.compile(schema);
       expect(validate(for0Json)).to.be.true;
     });
+
+    it("should auto-escalate the instance directory separator to \"__\" instead of overwriting an existing sibling component (issue #971)", async ()=>{
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 2);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+
+      //create a real sibling component whose name collides with the instance
+      //directory name the loop would otherwise use for index 1 (i.e. "for0_1")
+      const collidingComponent = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
+      await updateComponentProperty(projectRootDir, collidingComponent.ID, "script", scriptName);
+      await fs.outputFile(path.join(projectRootDir, collidingComponent.name, scriptName), scriptPwd);
+      await renameComponentDir(projectRootDir, collidingComponent.ID, `${for0.name}_1`);
+      //mark it subComponent:true so the dispatcher's directory-scan-based
+      //getChildren() (workflowUtil.js) does not ALSO independently dispatch
+      //it as a sibling task - unrelated to the naming-collision defect
+      //under test here.
+      const collidingComponentPath = path.resolve(projectRootDir, `${for0.name}_1`, componentJsonFilename);
+      const collidingComponentJson = await fs.readJson(collidingComponentPath);
+      collidingComponentJson.subComponent = true;
+      await fs.writeJson(collidingComponentPath, collidingComponentJson, { spaces: 4 });
+
+      const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      //the pre-existing sibling component must be left completely untouched...
+      const afterJson = await fs.readJson(collidingComponentPath);
+      expect(afterJson.ID).to.equal(collidingComponent.ID);
+      expect(afterJson.type).to.equal("task");
+      //...because the loop switched to "__" for ALL of its own instances instead
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__0`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__1`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__2`))).to.be.true;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      expect(for0Json.instanceDirSeparator).to.equal("__");
+    });
+
+    it("should also escalate when a plain, non-component directory collides with an instance directory name", async ()=>{
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+
+      //a plain directory with no cmp.wheel.json at all, sitting where the
+      //loop would otherwise create its "for0_1" instance directory
+      await fs.ensureDir(path.resolve(projectRootDir, `${for0.name}_1`));
+      await fs.outputFile(path.resolve(projectRootDir, `${for0.name}_1`, "not_a_component.txt"), "leave me alone");
+
+      const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      //the plain directory must be left untouched and never turned into a component...
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${for0.name}_1`, "not_a_component.txt"), "utf-8")).to.equal("leave me alone");
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}_1`, componentJsonFilename))).to.be.false;
+      //...because the loop switched to "__" for its own instance
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__0`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}__1`))).to.be.true;
+    });
+
+    it("should escalate past \"__\" to \"___\" when both are already taken", async ()=>{
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+
+      await fs.ensureDir(path.resolve(projectRootDir, `${for0.name}_1`));
+      await fs.ensureDir(path.resolve(projectRootDir, `${for0.name}__1`));
+
+      const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}___0`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${for0.name}___1`))).to.be.true;
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      expect(for0Json.instanceDirSeparator).to.equal("___");
+    });
+
+    it("should keep the plain \"_\" separator when there is no collision", async ()=>{
+      await updateComponentProperty(projectRootDir, for0.ID, "start", 0);
+      await updateComponentProperty(projectRootDir, for0.ID, "end", 1);
+      await updateComponentProperty(projectRootDir, for0.ID, "step", 1);
+
+      const projectJsonAfterSetup = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJsonAfterSetup.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      const for0Json = await fs.readJson(path.resolve(projectRootDir, for0.name, componentJsonFilename));
+      expect(for0Json.instanceDirSeparator).to.equal("_");
+    });
   });
 
   describe("#Parameter Study", ()=>{
@@ -945,6 +1038,22 @@ describe("UT for Dispatcher class", function () {
       expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_1`))).to.be.false;
       expect(fs.statSync(path.resolve(projectRootDir, `${while0.name}_2`)).isDirectory()).to.be.true;
       expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}_3`))).to.be.false;
+    });
+    it("should escalate the separator when a plain directory collides, even though while's trip count is unbounded upfront", async ()=>{
+      //while has no fixed trip count at loop start (getTripCount is null for
+      //it), so this exercises the prefix-scan fallback rather than exact
+      //index enumeration
+      await fs.ensureDir(path.resolve(projectRootDir, `${while0.name}_0`));
+      await fs.outputFile(path.resolve(projectRootDir, `${while0.name}_0`, "not_a_component.txt"), "leave me alone");
+
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP.start()).to.be.equal("finished");
+      await wait();
+
+      expect(fs.readFileSync(path.resolve(projectRootDir, `${while0.name}_0`, "not_a_component.txt"), "utf-8")).to.equal("leave me alone");
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}__0`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}__1`))).to.be.true;
+      expect(fs.existsSync(path.resolve(projectRootDir, `${while0.name}__2`))).to.be.true;
     });
   });
   describe("#Break", ()=>{
@@ -1514,6 +1623,143 @@ describe("UT for Dispatcher class", function () {
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       //Should throw (because mandatory failed), not silent
       await expect(DP._getInputFiles(updatedNext)).to.be.rejectedWith(/mandatory inputFile transfer failed/);
+    });
+  });
+
+  describe("stage-out stuck resume (issue: stage-out failure used to hang the dispatcher forever)", ()=>{
+    let previous;
+    let next;
+
+    beforeEach(async ()=>{
+      previous = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 0, y: 0 });
+      next = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 100, y: 0 });
+      await addOutputFile(projectRootDir, previous.ID, "out.txt");
+      await addInputFile(projectRootDir, next.ID, "out.txt");
+      await addFileLink(projectRootDir, previous.ID, "out.txt", next.ID, "out.txt");
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+    });
+
+    describe("_isStuckStageOut / _isReady", ()=>{
+      it("never treats a stuck-stage-out predecessor as ready for a downstream component that needs its actual output file, regardless of the mandatory flag (issue: downstream must not start before the file arrives)", async ()=>{
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(DP._isStuckStageOut(await DP._getComponent(previous.ID))).to.be.true;
+        expect(await DP._isReady(updatedNext)).to.be.false;
+      });
+
+      it("never treats a stuck-stage-out predecessor as ready even when the input file it feeds is mandatory", async ()=>{
+        await toggleInputFileMandatory(projectRootDir, next.ID, 0, true);
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP._isReady(updatedNext)).to.be.false;
+      });
+
+      it("still blocks downstream while the predecessor's stage-out is actively being retried", async ()=>{
+        const updatedPrevious = await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        DP.runningTasks = [{ ID: previous.ID, state: "stage-out" }];
+        expect(DP._isStuckStageOut(updatedPrevious)).to.be.false;
+        expect(await DP._isReady(updatedNext)).to.be.false;
+      });
+
+      it("does not block a downstream component that only depends on the stuck predecessor via control-flow ordering (previous), not via inputFiles", async ()=>{
+        const ctrlOnly = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 200, y: 0 });
+        await addLink(projectRootDir, previous.ID, ctrlOnly.ID);
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedCtrlOnly = await fs.readJson(path.resolve(projectRootDir, ctrlOnly.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP._isReady(updatedCtrlOnly)).to.be.true;
+      });
+    });
+
+    describe("_findStuckPredecessor", ()=>{
+      it("returns the inputFile source component when it is stuck at stage-out", async ()=>{
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        const stuck = await DP._findStuckPredecessor(updatedNext);
+        expect(stuck).to.not.be.null;
+        expect(stuck.ID).to.equal(previous.ID);
+      });
+
+      it("returns null when the inputFile source finished normally", async ()=>{
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "finished");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        expect(await DP._findStuckPredecessor(updatedNext)).to.be.null;
+      });
+
+      it("returns null when the stuck predecessor's stage-out is actively being retried", async ()=>{
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        DP.runningTasks = [{ ID: previous.ID, state: "stage-out" }];
+        expect(await DP._findStuckPredecessor(updatedNext)).to.be.null;
+      });
+    });
+
+    describe("_dispatch permanently-blocked conclusion", ()=>{
+      it("concludes the project run as failed, without ever touching the blocked downstream component's own state, once nothing is running and everything pending is unreachable due to a stuck stage-out predecessor", async ()=>{
+        await updateComponentProperty(projectRootDir, previous.ID, "state", "stage-out");
+        const updatedNext = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        const nextStateBefore = updatedNext.state;
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        DP.firstCall = false;
+        DP.currentSearchList = [updatedNext];
+        DP.runningTasks = [];
+        DP.hasFailedComponent = true; //already set by previous's own "taskCompleted" event in real usage
+        const donePromise = new Promise((resolve)=>{
+          DP.once("done", resolve);
+        });
+        await DP._dispatch();
+        const state = await donePromise;
+        expect(state).to.equal("failed");
+        const nextOnDisk = await fs.readJson(path.resolve(projectRootDir, next.name, componentJsonFilename));
+        expect(nextOnDisk.state).to.equal(nextStateBefore);
+      });
+    });
+
+    describe("\"taskCompleted\" event handling", ()=>{
+      it("removes the task from runningTasks by reference and flags hasFailedComponent when it ends still at stage-out", ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        const task = { ID: previous.ID, state: "stage-out" };
+        DP.runningTasks = [task];
+        DP.emit("taskCompleted", "stage-out", task);
+        expect(DP.runningTasks).to.not.include(task);
+        expect(DP.hasFailedComponent).to.be.true;
+      });
+
+      it("removes the task from runningTasks without flagging failure when it finishes successfully", ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        const task = { ID: previous.ID, state: "finished" };
+        DP.runningTasks = [task];
+        DP.emit("taskCompleted", "finished", task);
+        expect(DP.runningTasks).to.not.include(task);
+        expect(DP.hasFailedComponent).to.be.false;
+      });
+
+      it("leaves other running tasks untouched when a different task completes", ()=>{
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        const stuckTask = { ID: previous.ID, state: "stage-out" };
+        const otherTask = { ID: next.ID, state: "running" };
+        DP.runningTasks = [stuckTask, otherTask];
+        DP.emit("taskCompleted", "stage-out", stuckTask);
+        expect(DP.runningTasks).to.deep.equal([otherTask]);
+      });
+    });
+
+    describe("_dispatchOneComponent finished-skip propagation", ()=>{
+      it("still queues successors via _addNextComponent when skipping an already-finished component", async ()=>{
+        const updatedPrevious = await updateComponentProperty(projectRootDir, previous.ID, "state", "finished");
+        const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+        await DP._dispatchOneComponent(updatedPrevious);
+        expect(DP.pendingComponents.map((c)=>{
+          return c.ID;
+        })).to.include(next.ID);
+      });
     });
   });
 });

@@ -1,12 +1,21 @@
+/**
+ * HPCI-SS and HPCI-SS-tar E2E test.
+ *
+ * Lives under gfarm/ and shares gfarm/gfarm-e2e.env's CSGW/JWT settings -
+ * HPCI-SS is built on the same Gfarm/CSGW/JWT infrastructure as the
+ * gfarmWorkflow test, so it needs the same environment variables. See
+ * gfarm-e2e.env.example for what to fill in and test/package.json's
+ * test:e2e:gfarm* scripts for how to run it.
+ */
 import "cypress-wait-until";
-describe.skip("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
-  const LABEL = "WHEEL_TEST_CSGW";
-  const HOST_NAME = Cypress.env("WHEEL_TEST_CSGW_HOSTNAME");
-  const TEST_USER = Cypress.env("WHEEL_TEST_CSGW_USERNAME");
-  const PORT_NUMBER = 22;
-  const JWT_SERVER_USERNAME = Cypress.env("WHEEL_TEST_JWTServer_USERNAME");
-  const HPCI_GROUP_NAME = Cypress.env("WHEEL_TEST_GROUPNAME");
-  const GFARM_TEST_ROOT = `/home/${HPCI_GROUP_NAME}/${JWT_SERVER_USERNAME}/WHEEL_E2E_TEST`;
+describe("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
+  const LABEL = "CSGW";
+  const HOST_NAME = Cypress.env("WHEEL_GFARM_CSGW_HOSTNAME");
+  const TEST_USER = Cypress.env("WHEEL_GFARM_CSGW_USERNAME");
+  const PORT_NUMBER = Cypress.env("WHEEL_GFARM_CSGW_PORT") || 22;
+  const JWT_USERNAME = Cypress.env("WHEEL_GFARM_JWT_USERNAME");
+  const JWT_URL = Cypress.env("WHEEL_GFARM_JWT_URL") || "";
+  const GFARM_TEST_ROOT = `${Cypress.env("WHEEL_GFARM_STORAGE_ROOT")}/WHEEL_E2E_HPCISS_TEST`;
   const ARCHIVE_FILENAME = "cypress/fixtures/hpcissE2Etest.tgz";
   const PROJECT_NAME = "WHEEL_HPCISS_TEST_PROJECT";
 
@@ -14,18 +23,25 @@ describe.skip("HPCI-SS and HPCI-SS-tar E2E test", ()=>{
     cy.viewport("macbook-16");
     //CSGWのリモートホスト設定を作成
     cy.goToScreen("remotehost");
-    //cy.removeRemoteHost(LABEL); //removeRemoteHostで存在しない時に何もしないように変更したらコメントアウトを外す
     cy.get("[data-cy=\"remotehost-new_remote_host_setting-btn\"]").click();
     cy.get("[data-cy=\"add_new_host-add_new_host-card_title\"]").should("be.visible");
-    cy.get("[data-cy=\"add_new_host-label-text_field\"]").type(LABEL);
-    cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").type(HOST_NAME);
-    cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").type(PORT_NUMBER);
-    cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").type(TEST_USER);
+    cy.get("[data-cy=\"add_new_host-label-text_field\"]").find("input")
+      .type(LABEL);
+    cy.get("[data-cy=\"add_new_host-hostname-text_field\"]").find("input")
+      .type(HOST_NAME);
+    cy.get("[data-cy=\"add_new_host-port_number_label-text_field\"]").find("input")
+      .clear()
+      .type(PORT_NUMBER.toString());
+    cy.get("[data-cy=\"add_new_host-user_id-text_field\"]").find("input")
+      .type(TEST_USER);
     cy.get("[data-cy=\"add_new_host-use_gfarm-checkbox\"]").find("[type=\"checkbox\"]")
       .check();
-    cy.get("[data-cy=\"add_new_host-JWT_server_user-text_field\"]").type(JWT_SERVER_USERNAME);
-    //do not type JWT_SERVER_URL because nii's server is default value for now
-    //cy.get("[data-cy=\"add_new_host-JWT_server_URL-text_field\"]").type(JWT_SERVER_URL);
+    cy.get("[data-cy=\"add_new_host-JWT_server_user-text_field\"]").find("input")
+      .type(JWT_USERNAME);
+    if (JWT_URL) {
+      cy.get("[data-cy=\"add_new_host-JWT_server_URL-text_field\"]").find("input")
+        .type(JWT_URL);
+    }
     return cy.get("[data-cy=\"add_new_host-ok-btn\"]").click();
   });
   beforeEach(()=>{

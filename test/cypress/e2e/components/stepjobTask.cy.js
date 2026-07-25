@@ -254,7 +254,8 @@ describe("components", ()=>{
       cy.createStepjobComponentAndDoubleClick(DEF_COMPONENT_STEPJOB, STEPJOB_NAME_0, 501, 500);
       cy.createComponent(DEF_COMPONENT_STEPJOB_TASK, STEPJOB_TASK_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView().should("be.visible");
+      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView()
+        .should("be.visible");
     });
 
     /**

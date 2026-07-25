@@ -21,6 +21,7 @@ import "./commands-remoteHost";
 import "./commands-workFlow";
 import "./commands-shortcut";
 import "./commands-jobExecute";
+import "./commands-demo";
 import "cypress-real-events";
 
 //Alternatively you can use CommonJS syntax:

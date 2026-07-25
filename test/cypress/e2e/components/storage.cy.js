@@ -254,7 +254,8 @@ describe("components", ()=>{
     it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView().should("be.visible");
+      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView()
+        .should("be.visible");
     });
 
     /**
@@ -318,6 +319,26 @@ describe("components", ()=>{
       cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
         .first()
         .click();
+    });
+
+    /**
+  コンポーネントの基本機能動作確認
+  Storageコンポーネント共通機能確認
+  ファイル操作エリア
+  新規ディレクトリ作成時のバリデーション
+  試験確認内容：不正な名前を入力した場合にOKボタンが非活性のままであることを確認
+  issue#972
+     */
+    it("ファイル操作エリア-新規ディレクトリ作成-不正な名前ではOKボタンが非活性のままであることを確認(issue#972)", ()=>{
+      cy.createComponent(DEF_COMPONENT_STORAGE, STORAGE_NAME_0, 501, 500);
+      cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
+      cy.get("[data-cy=\"file_browser-new_dir-btn\"]").click({ force: true });
+      cy.get("[data-cy=\"file_browser-dialog-dialog\"]").should("be.visible");
+      cy.get("[data-cy=\"file_browser-input-text_field\"]").find("input")
+        .type("invalid name", { force: true });
+      cy.get("[data-cy=\"file_browser-dialog-dialog\"]").find("button")
+        .first()
+        .should("be.disabled");
     });
 
     /**

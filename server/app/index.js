@@ -19,8 +19,7 @@ import { createServer as createHTTPServer } from "http";
 import { createServer as createHTTPSServer } from "https";
 import { Server as SocketIOServer } from "socket.io";
 import { port, projectList, keyFilename, certFilename, useHttp, acceptAddress, enableAuth, enableWebApi } from "./db/db.js";
-import { setProjectState } from "./core/projectJsonFileOperator.js";
-import { checkRunningJobs } from "./core/checkRunningJobs.js";
+import { reconcileProjectStates } from "./core/startupReconciliation.js";
 import { getLogger } from "./logSettings.js";
 import { registerHandlers } from "./handlers/registerHandlers.js";
 import { baseURL, setSio } from "./core/global.js";
@@ -255,15 +254,9 @@ app.use((err, req, res, next)=>{
 });
 
 logger.info("DEBUG: Error handlers configured, checking projects...");
-//check each project has running job or not
+//check each project has running job or not, and reconcile stale states left by a previous process
 logger.info("About to check projects for running jobs...");
-await Promise.all(projectList.getAll()
-  .map(async (pj)=>{
-    const { jmFiles } = await checkRunningJobs(pj.path);
-    if (jmFiles.length > 0) {
-      setProjectState(pj.path, "holding");
-    }
-  }));
+await reconcileProjectStates(projectList);
 
 logger.info("Projects checked, about to start server...");
 //Listen on provided port, on all network interfaces.
