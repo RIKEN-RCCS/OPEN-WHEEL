@@ -38,6 +38,7 @@ import { getComponentDir } from "../core/componentJsonIO.js";
 import { sendWorkflow, sendProjectJson, sendComponentTree } from "./senders.js";
 import { convertPathSep } from "../core/pathUtils.js";
 import { updateComponent, updateComponentPos } from "../core/updateComponent.js";
+import { flushPendingSaves } from "./rapid.js";
 
 /**@type {Map<string, SBS>} */
 const projectEditQueues = new Map();
@@ -81,6 +82,10 @@ export async function stopProjectEdits(projectRootDir) {
   //guarantees all pending writes are flushed before validateComponents reads them.
   await queue.qsubAndWait({ exec: async ()=>{} }).catch(()=>{});
   queue.stop();
+  //the in-app text editor's saveFile is debounced independently of this queue (see
+  //rapid.js#onSaveFile), so a save that is still pending when the project starts would
+  //otherwise be missed by the auto-commit taken right after this call returns
+  await flushPendingSaves(projectRootDir);
 }
 
 /**

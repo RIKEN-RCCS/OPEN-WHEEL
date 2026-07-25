@@ -46,4 +46,37 @@ export async function setComponentStateR(projectRootDir, dir, state, doNotAdd = 
   return Promise.all(p);
 };
 
+/**
+ * copy each descendant component's state from srcDir into the matching descendant under dstDir
+ * intended for parameterStudy: its "template" directory (dstDir) is only ever copied FROM to
+ * create each parameter instance and is never itself executed, so its descendants' component
+ * JSON files are left permanently "not-started" unless explicitly synced from one of the
+ * executed instance directories (srcDir) after the run finishes
+ * @param {string} projectRootDir - project's root path
+ * @param {string} srcDir - directory to read state from (e.g. an executed parameterStudy instance)
+ * @param {string} dstDir - directory to write state into (e.g. the parameterStudy template)
+ * @returns {Promise} - resolved when all matching componentJSON files are updated
+ */
+export async function syncComponentStateFrom(projectRootDir, srcDir, dstDir) {
+  const filenames = await _internal.glob(path.join(srcDir, "**", componentJsonFilename));
+  const p = filenames.map(async (filename)=>{
+    const relativePath = path.relative(srcDir, filename);
+    const dstFilename = path.join(dstDir, relativePath);
+    if (!await _internal.fs.pathExists(dstFilename)) {
+      return null;
+    }
+    const [srcComponent, dstComponent] = await Promise.all([
+      _internal.readJsonGreedy(filename),
+      _internal.readJsonGreedy(dstFilename)
+    ]);
+    if (dstComponent.state === srcComponent.state) {
+      return null;
+    }
+    dstComponent.state = srcComponent.state;
+    const dstComponentDir = path.dirname(dstFilename);
+    return _internal.writeComponentJson(projectRootDir, dstComponentDir, dstComponent, true);
+  });
+  return Promise.all(p);
+}
+
 export { _internal };

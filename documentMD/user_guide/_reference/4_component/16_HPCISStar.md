@@ -16,11 +16,11 @@ HPCI-SS-tarコンポーネントは、HPCI-SSコンポーネントと違い、�
 HPCI-SS-tarコンポーネントに設定できるプロパティは以下のとおりです。
 
 ### host
-hostには実際にファイルを保存するホストを設定できます。
+hostには、gfptarコマンドを実行してHPCI共用ストレージへファイルの転送を行うホストを設定します。
+ファイルの実体が保存されるのはHPCI共用ストレージであり、host自体にファイルが保存されるわけではありません。
+
 ただし、hostとして設定できるのはremotehost設定で `use gfarm` にチェックをつけたもの
 だけです。
-
-また、gfptarコマンドを用いてHPCI共用ストレージにファイルの転送を行うことができるホストのみが利用できます。
 
 ### directory path
 ![img](./img/storage_path.png "storage_path")

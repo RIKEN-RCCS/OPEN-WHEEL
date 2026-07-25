@@ -293,6 +293,41 @@ describe("validateComponents function", function () {
     const report = await validateComponentsFunc(projectRootDir);
     expect(report).to.be.an("array");
   });
+
+  //reproduction test for issue #977
+  //continue/break components with no condition configured (the default state right after
+  //being created from the palette) must be reported as invalid by validateComponent, just like
+  //"if"/"while" components are via validateConditionalCheck. Currently, validateComponent's
+  //type switch has no branch for "continue"/"break", so they are silently treated as always-valid.
+  it("should detect underconfigured continue component (no condition set) - issue #977", async function () {
+    const forComponent = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 0, y: 0 });
+    forComponent.start = 0;
+    forComponent.end = 10;
+    forComponent.step = 1;
+
+    const continueComponent = await createNewComponent(projectRootDir, path.resolve(projectRootDir, forComponent.name), "continue", { x: 0, y: 0 });
+
+    //condition must default to null right after creation (nothing configured by the user yet)
+    expect(continueComponent.condition).to.be.null;
+
+    const errors = await validateComponent(projectRootDir, continueComponent);
+    expect(errors).to.not.be.empty;
+  });
+
+  it("should detect underconfigured break component (no condition set) - issue #977", async function () {
+    const forComponent = await createNewComponent(projectRootDir, projectRootDir, "for", { x: 0, y: 0 });
+    forComponent.start = 0;
+    forComponent.end = 10;
+    forComponent.step = 1;
+
+    const breakComponent = await createNewComponent(projectRootDir, path.resolve(projectRootDir, forComponent.name), "break", { x: 0, y: 0 });
+
+    //condition must default to null right after creation (nothing configured by the user yet)
+    expect(breakComponent.condition).to.be.null;
+
+    const errors = await validateComponent(projectRootDir, breakComponent);
+    expect(errors).to.not.be.empty;
+  });
 });
 
 describe("recursiveValidateComponents", function () {
