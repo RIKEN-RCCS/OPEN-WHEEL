@@ -90,7 +90,7 @@ _internal.killTask = killTask;
 export async function cancelDispatchedTasks(tasks) {
   const p = [];
   for (const task of tasks) {
-    if (task.state === "finished" || task.state === "failed") {
+    if (task.state === "finished" || task.state === "failed" || task.state === "stage-out") {
       continue;
     }
     const canceled = _internal.cancel(task);

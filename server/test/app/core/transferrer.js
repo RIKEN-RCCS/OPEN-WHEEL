@@ -4,7 +4,10 @@
  * See License in the project root for the license information.
  */
 
-import { expect } from "chai";
+import * as chai from "chai";
+const expect = chai.expect;
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
 import sinon from "sinon";
 import { stageIn, stageOut, runDeferredCleanups, clearDeferredCleanups, _internal } from "../../../app/core/transferrer.js";
 describe("#stageIn", ()=>{
@@ -162,6 +165,29 @@ describe("#stageOut", ()=>{
     expect(registerArgs[4]).to.equal("/local/workingDir");
   });
 
+  it("should skip nested-path outputFiles with no destination without downloading them (issue 462)", async ()=>{
+    const task = {
+      state: "finished",
+      projectRootDir: "/project",
+      remotehostID: "hostA",
+      workingDir: "/local/workingDir",
+      remoteWorkingDir: "/remote/workingDir",
+      outputFiles: [
+        { name: "hu/ga", dst: [] },
+        { name: "ho/ge", dst: [] }
+      ],
+      ID: "taskID"
+    };
+    getSshHostinfoStub.returns({ host: "dummyHost" });
+    needDownloadStub.resolves(false);
+
+    await stageOut(task);
+
+    expect(needDownloadStub.calledTwice).to.be.true;
+    expect(makeDownloadRecipeStub.called).to.be.false;
+    expect(registerStub.called).to.be.false;
+  });
+
   it("should handle multiple files with the same dst as one register call", async ()=>{
     const task = {
       state: "finished",
@@ -284,6 +310,31 @@ describe("#stageOut", ()=>{
       remotehostID: "hostB",
       symlinkTargetNames: ["result.dat"]
     })).to.be.true;
+  });
+
+  it("should leave task state at 'stage-out' and rethrow if downloading files throws (resumable stage-out-only retry)", async ()=>{
+    const task = {
+      state: "finished",
+      projectRootDir: "/project",
+      remotehostID: "hostA",
+      workingDir: "/local/workingDir",
+      remoteWorkingDir: "/remote/workingDir",
+      outputFiles: [
+        { name: "file1.txt" }
+      ],
+      ID: "taskID"
+    };
+    getSshHostinfoStub.returns({ host: "dummyHost" });
+    needDownloadStub.resolves(true);
+    makeDownloadRecipeStub.returns({ src: "/remote/workingDir/file1.txt", dst: "/local/workingDir" });
+    const downloadError = new Error("recv failed");
+    registerStub.rejects(downloadError);
+
+    await expect(stageOut(task)).to.be.rejectedWith(downloadError);
+
+    expect(setTaskStateStub.callCount).to.equal(1);
+    expect(setTaskStateStub.firstCall.args).to.deep.equal([task, "stage-out"]);
+    expect(loggerWarnStub.calledOnce).to.be.true;
   });
 
   it("should do full cleanup when getRemoteSymlinkOutputNames returns empty array", async ()=>{

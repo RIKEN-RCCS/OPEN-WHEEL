@@ -257,7 +257,8 @@ describe("components", ()=>{
     it("tarコンポーネント共通機能確認-転送対象ファイル・フォルダの設定-削除ボタン表示確認（output file）-削除ボタンが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_OUTPUT, "testOutputFile", true, true);
-      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView().should("be.visible");
+      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView()
+        .should("be.visible");
     });
 
     /**
@@ -297,7 +298,7 @@ describe("components", ()=>{
   ディレクトリ単体表示
   試験確認内容：ディレクトリが単体表示されることを確認
      */
-    it.skip("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ単体表示-ディレクトリが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);
@@ -327,7 +328,7 @@ describe("components", ()=>{
   ディレクトリ複数表示（リロード前）
   試験確認内容：ディレクトリが単体表示されることを確認
      */
-    it.skip("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード前）-ディレクトリが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_DIR, "test1", true);
@@ -357,7 +358,7 @@ describe("components", ()=>{
   ディレクトリ複数表示（リロード後）
   試験確認内容：ディレクトリが複数表示されることを確認
      */
-    it.skip("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ複数表示（リロード後）-ディレクトリが複数表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_DIR, "test1", true);
@@ -389,7 +390,7 @@ describe("components", ()=>{
   ファイル単体表示
   試験確認内容：ファイルが単体表示されることを確認
      */
-    it.skip("tarコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-ファイル操作エリア-ファイル単体表示-ファイルが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_FILE, "test-a", true);
@@ -419,7 +420,7 @@ describe("components", ()=>{
   ファイル複数表示（リロード前）
   試験確認内容：ファイルが単体表示されることを確認
      */
-    it.skip("tarコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード前）-ファイルが単体表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_FILE, "test1", true);
@@ -449,7 +450,7 @@ describe("components", ()=>{
   ファイル複数表示（リロード後）
   試験確認内容：ファイルが複数表示されることを確認
      */
-    it.skip("tarコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-ファイル操作エリア-ファイル複数表示（リロード後）-ファイルが複数表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_FILE, "test1", true);
@@ -481,7 +482,7 @@ describe("components", ()=>{
   ディレクトリ内ディレクトリ表示
   試験確認内容：ディレクトリ内にディレクトリが作成されることを確認
      */
-    it.skip("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ディレクトリ表示-ディレクトリ内にディレクトリが作成されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);
@@ -512,7 +513,7 @@ describe("components", ()=>{
   ディレクトリ内ファイル表示
   試験確認内容：ディレクトリ内にファイルが作成されることを確認
      */
-    it.skip("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
+    it("tarコンポーネント共通機能確認-ファイル操作エリア-ディレクトリ内ファイル表示-ディレクトリ内にファイルが作成されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").type(wheelPath);
       cy.createDirOrFile(TYPE_DIR, "test-a", true);

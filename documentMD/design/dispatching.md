@@ -115,11 +115,19 @@ isLocal(component) ?
 For / While / Foreach コンポーネントを処理する汎用ループハンドラ。
 引数として渡される関数群（`getNextIndex`, `isFinished` 等）でループ条件を抽象化している。
 
+初回実行時（`loopInitialize`）に、インスタンスディレクトリ名（`<name>_<index>`）が既存のコンポーネントや
+ファイル・ディレクトリと衝突しないか `chooseInstanceDirSeparator`（loopUtils.js）で事前チェックする。
+衝突する場合は区切り文字を `_` → `__` → `___` とエスカレーションし、そのループの全インスタンスに
+一貫して適用する。選択した区切り文字は `component.instanceDirSeparator` としてコンポーネントJSONに
+永続化されるため、再開時も同じ区切り文字が使われる。
+
 ```
 _loopHandler(getNextIndex, getPrevIndex, isFinished, getTripCount, keepLoopInstance, component)
 
 1. テンプレートディレクトリを最初のインスタンスディレクトリへコピー
    - skipCopy パターンに一致するファイルは除外
+   - コピー先が既存の別コンポーネント等と衝突していないか防御的に再チェックし、
+     衝突していればエラーとする（通常は初回の事前チェックで回避される想定の保険）
 2. 子Dispatcherを生成して _delegate() でサブワークフローとして実行
 3. サブワークフロー完了後、isFinished() でループ終了判定
    - 終了の場合: クリーンアップしてループ完了

@@ -140,20 +140,6 @@ describe("UT for executer class", function () {
       }
     });
 
-    describe.skip("#gatherFiles to be moved into stageOut UT", ()=>{
-      beforeEach(async ()=>{
-        await ssh.exec(`mkdir -p ${task0.remoteWorkingDir}`);
-        await ssh.exec(`echo -n foo > ${task0.remoteWorkingDir}/foo`);
-        await ssh.exec(`echo -n bar > ${task0.remoteWorkingDir}/bar`);
-        await ssh.exec(`echo -n baz > ${task0.remoteWorkingDir}/baz`);
-      });
-      it("issue 462", async ()=>{
-        task0.outputFiles = [{ name: "hu/ga", dst: [] }, { name: "ho/ge", dst: [] }];
-        //await gatherFiles(task0, ssh);
-        expect(fs.existsSync(path.join(task0.workingDir, "hu/ga"))).to.be.false;
-        expect(fs.existsSync(path.join(task0.workingDir, "ho/ge"))).to.be.false;
-      });
-    });
     describe("#remote exec", ()=>{
       it("run shell script which returns 0 and status should be Finished", async ()=>{
         await exec(task0);
@@ -318,14 +304,66 @@ describe("UT for execStageOut", function () {
       task0.state = "stage-out";
       await execStageOut(task0);
       expect(task0.state).to.equal("finished");
-      expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "finished");
+      expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "finished", task0);
     });
     it("should emit taskCompleted even if task has no host set", async ()=>{
       task0.state = "stage-out";
       task0.host = undefined;
       await execStageOut(task0);
       expect(task0.remotehostID).to.equal("localhost");
-      expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "finished");
+      expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "finished", task0);
+    });
+  });
+
+  describe("run on remote host", ()=>{
+    let ssh;
+    const remotehostName = process.env.WHEEL_TEST_REMOTEHOST;
+    const password = process.env.WHEEL_TEST_REMOTE_PASSWORD;
+    before(async function () {
+      if (!remotehostName) {
+        console.log("remote execStageOut test will be skipped because WHEEL_TEST_REMOTEHOST is not set");
+        this.skip();
+      }
+      if (!password) {
+        console.log("remote execStageOut test will be done without password because WHEEL_TEST_REMOTE_PASSWORD is not set");
+      }
+      const hostinfo = remoteHost.query("name", remotehostName);
+      if (!hostinfo) {
+        console.log(`remote execStageOut test will be skipped because host '${remotehostName}' is not found in remoteHost database`);
+        this.skip();
+      }
+      hostinfo.password = password;
+
+      try {
+        ssh = await createSsh(projectRootDir2, remotehostName, hostinfo, "dummy-clientID");
+      } catch (e) {
+        console.log(`ssh connection failed to ${remotehostName} due to "${e}" so remote execStageOut test is skipped`);
+        this.skip();
+      }
+    });
+    beforeEach(async ()=>{
+      task0.host = remotehostName;
+      task0.remotehostID = remoteHost.getID("name", task0.host) || "localhost";
+      task0.remoteWorkingDir = path.posix.join(remoteHome, task0.projectStartTime, task0.name);
+      await ssh.exec(`mkdir -p ${task0.remoteWorkingDir}`);
+    });
+    afterEach(async ()=>{
+      await ssh.exec(`rm -fr ${path.posix.join(remoteHome, task0.projectStartTime)}`);
+    });
+    after(async ()=>{
+      if (ssh) {
+        await ssh.disconnect();
+      }
+    });
+
+    it("should download outputFiles and emit taskCompleted with the task instance for a remote task", async ()=>{
+      task0.state = "stage-out";
+      task0.doCleanup = false;
+      task0.include = [];
+      task0.exclude = [];
+      await execStageOut(task0);
+      expect(task0.state).to.equal("finished");
+      expect(task0.emitForDispatcher).to.be.calledOnceWith("taskCompleted", "finished", task0);
     });
   });
 });

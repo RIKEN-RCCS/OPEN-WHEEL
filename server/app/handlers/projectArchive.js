@@ -24,8 +24,13 @@ async function onImportProject(clientID, target, parentDir, isURL, cb) {
 }
 
 async function onExportProject(projectRootDir, name, mail, memo, cb) {
-  const url = await exportProject(projectRootDir, name, mail, memo);
-  cb(url);
+  try {
+    const url = await exportProject(projectRootDir, name, mail, memo);
+    cb(url);
+  } catch (e) {
+    getLogger("default").error("export project failed:", e);
+    cb(false);
+  }
 }
 
 export {

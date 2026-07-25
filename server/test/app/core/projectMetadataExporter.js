@@ -112,33 +112,33 @@ describe("#gatherComponentMetadata", ()=>{
 });
 
 describe("#componentMetadataToXml", ()=>{
-  it("should produce XML with declaration and workflow root element", ()=>{
+  it("should produce XML with declaration and workflow root element", async ()=>{
     const metadata = { components: [] };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.include("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     expect(xml).to.include("<workflow>");
     expect(xml).to.include("</workflow>");
   });
 
-  it("should render component element with type, name, and id attributes", ()=>{
+  it("should render component element with type, name, and id attributes", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "myTask", "this is root")]
     };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.include("<component type=\"task\" name=\"myTask\" id=\"id-1\">");
     expect(xml).to.include("</component>");
   });
 
-  it("should escape XML special characters in field values", ()=>{
+  it("should escape XML special characters in field values", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "a&b<c>d", "this is root", { description: "\"quoted' & <escaped>" })]
     };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.include("name=\"a&amp;b&lt;c&gt;d\"");
     expect(xml).to.include("&quot;quoted&apos; &amp; &lt;escaped&gt;");
   });
 
-  it("should render inputFiles with mandatory attribute", ()=>{
+  it("should render inputFiles with mandatory attribute", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", {
         inputFiles: [
@@ -147,39 +147,39 @@ describe("#componentMetadataToXml", ()=>{
         ]
       })]
     };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.include("<inputFile name=\"required.dat\" mandatory=\"true\"");
     expect(xml).to.include("<inputFile name=\"optional.dat\" mandatory=\"false\"");
   });
 
-  it("should render outputFiles element", ()=>{
+  it("should render outputFiles element", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", {
         outputFiles: [{ name: "result.dat", dst: [] }]
       })]
     };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.include("<outputFile name=\"result.dat\"");
   });
 
-  it("should render env variables", ()=>{
+  it("should render env variables", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", {
         env: { MY_VAR: "hello", OTHER: "world" }
       })]
     };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.include("<variable name=\"MY_VAR\">hello</variable>");
     expect(xml).to.include("<variable name=\"OTHER\">world</variable>");
   });
 
-  it("should nest child components inside <children> element", ()=>{
+  it("should nest child components inside <children> element", async ()=>{
     const child = makeComponent("child-1", "task", "childTask", "parent-1");
     const parent = makeComponent("parent-1", "workflow", "parentWf", "this is root", {
       children: [child]
     });
     const metadata = { components: [parent] };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.include("<children>");
     expect(xml).to.include("</children>");
     expect(xml).to.include("name=\"childTask\"");
@@ -191,29 +191,29 @@ describe("#componentMetadataToXml", ()=>{
     expect(childStart).to.be.lessThan(childrenEnd);
   });
 
-  it("should render src elements inside inputFile when src is non-empty", ()=>{
+  it("should render src elements inside inputFile when src is non-empty", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", {
         inputFiles: [{ name: "in.dat", mandatory: false, src: [{ srcNode: "node-A", srcName: "out.dat" }] }]
       })]
     };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.include("<src srcNode=\"node-A\" srcName=\"out.dat\"");
   });
 
-  it("should render script field when present", ()=>{
+  it("should render script field when present", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", { script: "run.sh" })]
     };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.include("<script>run.sh</script>");
   });
 
-  it("should not render null or undefined scalar fields", ()=>{
+  it("should not render null or undefined scalar fields", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", { script: null, checker: undefined })]
     };
-    const xml = componentMetadataToXml(metadata);
+    const xml = await componentMetadataToXml(metadata);
     expect(xml).to.not.include("<script>");
     expect(xml).to.not.include("<checker>");
   });

@@ -36,6 +36,7 @@ import allowedOperations from "../../../common/allowedOperations.js";
 const _internal = {
   projectOperationQueues: new Map(),
   onRunProject,
+  onContinueProject,
   onStopProject,
   onCleanProject,
   onRevertProject,
@@ -47,6 +48,8 @@ const _internal = {
   eventEmitters,
   gitResetHEAD,
   setProjectState,
+  selectRunHandler,
+  unlockIfFinished,
   rootDispatchers: new Map()
 };
 
@@ -54,6 +57,31 @@ async function updateProjectState(projectRootDir, state, force) {
   const projectJson = await _internal.setProjectState(projectRootDir, state, force);
   if (projectJson) {
     await emitAll(projectRootDir, "projectState", projectJson.state);
+  }
+}
+
+/**
+ * pick which handler should service a "runProject" operation: a fresh start
+ * (project state "not-started") always uses onRunProject, anything else
+ * (stopped/failed/unknown) resumes via onContinueProject instead
+ * @param {string} projectState - project's current state
+ * @returns {Function} - onRunProject or onContinueProject
+ */
+function selectRunHandler(projectState) {
+  return projectState === "not-started" ? _internal.onRunProject : _internal.onContinueProject;
+}
+
+/**
+ * unlock a project for editing only if the run just completed fully successfully -
+ * a "failed"/"unknown" outcome (including a task stuck at "stage-out") stays locked
+ * until the user explicitly force-edits it
+ * @param {string} projectRootDir - project's root path
+ * @returns {Promise<void>}
+ */
+async function unlockIfFinished(projectRootDir) {
+  const finalState = await getProjectState(projectRootDir);
+  if (finalState === "finished") {
+    await updateProjectROStatus(projectRootDir, false);
   }
 }
 async function askUnsavedFiles(clientID, projectRootDir, targetDir) {
@@ -172,120 +200,136 @@ export async function onUpdateProjectROStatus(projectRootDir, isRO, ack) {
   onGetProjectJson(projectRootDir, ack);
 }
 
-async function onRunProject(clientID, projectRootDir, ack) {
+/**
+ * validate components, commit current state, and prepare for editing to resume
+ * shared by onRunProject (fresh start) and onContinueProject (resume)
+ * @param {string} projectRootDir - project's root path
+ * @param {Function} ack - socket.io ack callback
+ * @param {string} commitMessage - git commit message for this run's starting checkpoint
+ * @returns {Promise<boolean>} - true if validation succeeded and it is safe to proceed
+ */
+async function runValidationPhase(projectRootDir, ack, commitMessage) {
+  try {
+    await stopProjectEdits(projectRootDir);
+    const report = await validateComponents(projectRootDir);
+    const nonIgnoreableErrors = report.filter((entry)=>{ return entry.errors.some((e)=>{ return !e.ignoreable; }); });
+    if (nonIgnoreableErrors.length > 0) {
+      getLogger(projectRootDir).error("invalid component found:");
+      ack(nonIgnoreableErrors);
+      return false;
+    }
+    await gitCommit(projectRootDir, commitMessage);
+    return true;
+  } catch (err) {
+    getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
+    ack(err);
+    return false;
+  } finally {
+    startProjectEdits(projectRootDir);
+  }
+}
+
+/**
+ * resolve source files, prepare remote host connections, and run the workflow
+ * shared by onRunProject (fresh start) and onContinueProject (resume) -
+ * it does not need to know or care which case it was invoked from
+ * @param {string} clientID - client's socket.io ID
+ * @param {string} projectRootDir - project's root path
+ * @param {Function} ack - socket.io ack callback
+ * @returns {Promise<boolean|undefined>} - false if preparation failed before the run could start
+ */
+async function runDispatcher(clientID, projectRootDir, ack) {
   const logger = getLogger(projectRootDir);
-  const projectState = await getProjectState(projectRootDir);
-  if (projectState !== "paused") {
-  //validation check
-    try {
-      await stopProjectEdits(projectRootDir);
-      const report = await validateComponents(projectRootDir);
-      const nonIgnoreableErrors = report.filter((entry)=>{ return entry.errors.some((e)=>{ return !e.ignoreable; }); });
-      if (nonIgnoreableErrors.length > 0) {
-        getLogger(projectRootDir).error("invalid component found:");
-        ack(nonIgnoreableErrors);
-        return false;
+  //interactive phase
+  try {
+    await updateProjectState(projectRootDir, "preparing");
+
+    //resolve source files
+    const sourceComponents = await getSourceComponents(projectRootDir);
+    for (const component of sourceComponents) {
+      if (component.disable) {
+        getLogger(projectRootDir).debug(`disabled component: ${component.name}(${component.ID})`);
+        continue;
       }
+      //ask to user if needed
+      const filename = await getSourceFilename(projectRootDir, component, clientID);
+      const componentDir = await getComponentDir(projectRootDir, component.ID);
+      const outputFilenames = component.outputFiles.map((e)=>{
+        return e.name;
+      });
+      getLogger(projectRootDir).trace("sourceFile:", filename, "will be used as", outputFilenames);
 
-      await gitCommit(projectRootDir, "auto saved: project starting");
-    } catch (err) {
-      getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
-      ack(err);
-      return false;
-    } finally {
-      startProjectEdits(projectRootDir);
-    }
-    //interactive phase
-    try {
-      await updateProjectState(projectRootDir, "preparing");
-
-      //resolve source files
-      const sourceComponents = await getSourceComponents(projectRootDir);
-      for (const component of sourceComponents) {
-        if (component.disable) {
-          getLogger(projectRootDir).debug(`disabled component: ${component.name}(${component.ID})`);
-          continue;
-        }
-        //ask to user if needed
-        const filename = await getSourceFilename(projectRootDir, component, clientID);
-        const componentDir = await getComponentDir(projectRootDir, component.ID);
-        const outputFilenames = component.outputFiles.map((e)=>{
-          return e.name;
-        });
-        getLogger(projectRootDir).trace("sourceFile:", filename, "will be used as", outputFilenames);
-
-        await Promise.all(
-          outputFilenames.map((outputFile)=>{
-            if (filename !== outputFile) {
-              return deliverFile(path.resolve(projectRootDir, componentDir, filename), path.resolve(projectRootDir, componentDir, outputFile));
-            }
-            return Promise.resolve(true);
-          })
-        );
-      }
-
-      //create remotehost connection
-      const hosts = await getHosts(projectRootDir, null);
-
-      for (const host of hosts) {
-        const id = remoteHost.getID("name", host.hostname);
-        const hostinfo = remoteHost.get(id);
-        if (!hostinfo) {
-          throw new Error(`illegal remote host specified ${hostinfo.name}`);
-        }
-        if (hostinfo.type === "aws") {
-          throw new Error(`aws type remotehost is no longer supported ${hostinfo.name}`);
-        }
-        getLogger(projectRootDir).debug(`make ssh connection to ${hostinfo.name}`);
-        await createSsh(projectRootDir, hostinfo.name, hostinfo, clientID, host.isStorage);
-        if (hostinfo.useWebAPI) {
-          getLogger(projectRootDir).debug(`start OIDC authorization for ${hostinfo.name}`);
-          await makeOIDCAuth(clientID, id);
-        }
-        if (hostinfo.useGfarm && host.isGfarm) {
-          if (await checkJWTAgent(projectRootDir, hostinfo.id)) {
-            getLogger(projectRootDir).debug(`jwt-agent is already running on ${hostinfo.name}`);
-          } else {
-            getLogger(projectRootDir).debug(`get jwt-server passphrase for ${hostinfo.name}`);
-            const phGfarm = await askPassword(clientID, hostinfo.name, "passphrase", hostinfo.JWTServerURL);
-            getLogger(projectRootDir).debug(`start jwt-agent on ${hostinfo.name}`);
-            await startJWTAgent(projectRootDir, hostinfo.id, phGfarm);
-            const result = await checkJWTAgent(projectRootDir, hostinfo.id);
-            if (!result) {
-              const err = new Error(`start jwt-agent failed on ${hostinfo.name}`);
-              err.hostinfo = hostinfo;
-              throw err;
-            }
-            getLogger(projectRootDir).debug(`store jwt-server's passphrase ${hostinfo.name}`);
-            setJWTServerPassphrase(projectRootDir, hostinfo.id, phGfarm);
+      await Promise.all(
+        outputFilenames.map((outputFile)=>{
+          if (filename !== outputFile) {
+            return deliverFile(path.resolve(projectRootDir, componentDir, filename), path.resolve(projectRootDir, componentDir, outputFile));
           }
-        }
-        if (!checkWritePermissions.has(projectRootDir)) {
-          checkWritePermissions.set(projectRootDir, []);
-        }
-        const checkWritePermission = checkWritePermissions.get(projectRootDir);
-
-        if (checkWritePermission.length > 0) {
-          await Promise.all(checkWritePermission.map((e)=>{
-            return checkRemoteStoragePathWritePermission(projectRootDir, e);
-          }));
-          checkWritePermission.splice(0);
-        }
-      }
-    } catch (err) {
-      await updateProjectState(projectRootDir, "not-started");
-      if (err.reason === "CANCELED") {
-        getLogger(projectRootDir).debug(err.message);
-      } else if (err.reason === "invalidRemoteStorage") {
-        getLogger(projectRootDir).error(`you do not have write permission to ${err.storagePath} on ${err.host}`);
-      } else {
-        getLogger(projectRootDir).error("fatal error occurred while preparing phase:", err);
-      }
-      removeSsh(projectRootDir);
-      removeAllJWTServerPassphrase(projectRootDir);
-      ack(err);
-      return false;
+          return Promise.resolve(true);
+        })
+      );
     }
+
+    //create remotehost connection
+    const hosts = await getHosts(projectRootDir, null);
+
+    for (const host of hosts) {
+      const id = remoteHost.getID("name", host.hostname);
+      const hostinfo = remoteHost.get(id);
+      if (!hostinfo) {
+        throw new Error(`illegal remote host specified ${hostinfo.name}`);
+      }
+      if (hostinfo.type === "aws") {
+        throw new Error(`aws type remotehost is no longer supported ${hostinfo.name}`);
+      }
+      getLogger(projectRootDir).debug(`make ssh connection to ${hostinfo.name}`);
+      await createSsh(projectRootDir, hostinfo.name, hostinfo, clientID, host.isStorage);
+      if (hostinfo.useWebAPI) {
+        getLogger(projectRootDir).debug(`start OIDC authorization for ${hostinfo.name}`);
+        await makeOIDCAuth(clientID, id);
+      }
+      if (hostinfo.useGfarm && host.isGfarm) {
+        if (await checkJWTAgent(projectRootDir, hostinfo.id)) {
+          getLogger(projectRootDir).debug(`jwt-agent is already running on ${hostinfo.name}`);
+        } else {
+          getLogger(projectRootDir).debug(`get jwt-server passphrase for ${hostinfo.name}`);
+          const phGfarm = await askPassword(clientID, hostinfo.name, "passphrase", hostinfo.JWTServerURL);
+          getLogger(projectRootDir).debug(`start jwt-agent on ${hostinfo.name}`);
+          await startJWTAgent(projectRootDir, hostinfo.id, phGfarm);
+          const result = await checkJWTAgent(projectRootDir, hostinfo.id);
+          if (!result) {
+            const err = new Error(`start jwt-agent failed on ${hostinfo.name}`);
+            err.hostinfo = hostinfo;
+            throw err;
+          }
+          getLogger(projectRootDir).debug(`store jwt-server's passphrase ${hostinfo.name}`);
+          setJWTServerPassphrase(projectRootDir, hostinfo.id, phGfarm);
+        }
+      }
+      if (!checkWritePermissions.has(projectRootDir)) {
+        checkWritePermissions.set(projectRootDir, []);
+      }
+      const checkWritePermission = checkWritePermissions.get(projectRootDir);
+
+      if (checkWritePermission.length > 0) {
+        await Promise.all(checkWritePermission.map((e)=>{
+          return checkRemoteStoragePathWritePermission(projectRootDir, e);
+        }));
+        checkWritePermission.splice(0);
+      }
+    }
+  } catch (err) {
+    await updateProjectState(projectRootDir, "not-started");
+    if (err.reason === "CANCELED") {
+      getLogger(projectRootDir).debug(err.message);
+    } else if (err.reason === "invalidRemoteStorage") {
+      getLogger(projectRootDir).error(`you do not have write permission to ${err.storagePath} on ${err.host}`);
+    } else {
+      getLogger(projectRootDir).error("fatal error occurred while preparing phase:", err);
+    }
+    removeSsh(projectRootDir);
+    removeAllJWTServerPassphrase(projectRootDir);
+    ack(err);
+    return false;
   }
 
   //actual run
@@ -324,7 +368,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
     ee.on("resultFilesReady", sendResultsFileDir.bind(null, projectRootDir));
 
     const { webhook } = await getProjectJson(projectRootDir);
-    logger.trace(`webhook setting for ${projectRootDir} 
+    logger.trace(`webhook setting for ${projectRootDir}
 `, webhook);
     if (typeof webhook !== "undefined" && typeof webhook.URL === "string") {
       if (webhook.project) {
@@ -345,7 +389,7 @@ async function onRunProject(clientID, projectRootDir, ack) {
 
     await updateProjectROStatus(projectRootDir, true);
     await runProject(projectRootDir);
-    await updateProjectROStatus(projectRootDir, false);
+    await _internal.unlockIfFinished(projectRootDir);
   } catch (err) {
     getLogger(projectRootDir).error("fatal error occurred while parsing workflow:", err);
     await updateProjectState(projectRootDir, "failed");
@@ -362,7 +406,38 @@ async function onRunProject(clientID, projectRootDir, ack) {
   }
   return;
 }
+
+/**
+ * start a project from scratch (project state is "not-started")
+ * @param {string} clientID - client's socket.io ID
+ * @param {string} projectRootDir - project's root path
+ * @param {Function} ack - socket.io ack callback
+ * @returns {Promise<boolean|undefined>} - false if validation or preparation failed
+ */
+async function onRunProject(clientID, projectRootDir, ack) {
+  if (!await runValidationPhase(projectRootDir, ack, "auto saved: project starting")) {
+    return false;
+  }
+  return runDispatcher(clientID, projectRootDir, ack);
+}
 _internal.onRunProject = onRunProject;
+
+/**
+ * resume a project left in "stopped"/"failed"/"unknown" state without discarding progress -
+ * already-finished components are skipped and a task stuck at "stage-out" only retries
+ * the file transfer, never resubmitting its job (see Dispatcher's isStageOutResume)
+ * @param {string} clientID - client's socket.io ID
+ * @param {string} projectRootDir - project's root path
+ * @param {Function} ack - socket.io ack callback
+ * @returns {Promise<boolean|undefined>} - false if validation or preparation failed
+ */
+async function onContinueProject(clientID, projectRootDir, ack) {
+  if (!await runValidationPhase(projectRootDir, ack, "auto saved: project continuing")) {
+    return false;
+  }
+  return runDispatcher(clientID, projectRootDir, ack);
+}
+_internal.onContinueProject = onContinueProject;
 
 async function onStopProject(projectRootDir) {
   await stopProject(projectRootDir);
@@ -370,6 +445,9 @@ async function onStopProject(projectRootDir) {
   //dispatcher's own natural completion (which may also be concluding concurrently once
   //stopped) - force it so it is never silently dropped by the terminal-state guard.
   await updateProjectState(projectRootDir, "stopped", true);
+  //explicitly lock editing until force-edit is clicked, rather than relying on
+  //readOnly happening to already be true from before the run started
+  await updateProjectROStatus(projectRootDir, true);
 }
 _internal.onStopProject = onStopProject;
 
@@ -507,8 +585,8 @@ async function projectOperator({ clientID, projectRootDir, ack, operation }) {
   try {
     switch (operation) {
       case "runProject":
-        //do not wait onRunProject
-        _internal.onRunProject(clientID, projectRootDir, ack);
+        //do not wait onRunProject/onContinueProject
+        _internal.selectRunHandler(projectState)(clientID, projectRootDir, ack);
         break;
       case "stopProject":
         await _internal.onStopProject(projectRootDir, ack);

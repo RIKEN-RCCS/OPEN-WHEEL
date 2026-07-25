@@ -8,6 +8,8 @@ services:
     container_name: wheel_release_test_server
     cap_add:
       - SYS_RESOURCE
+    environment:
+      TZ: JST-9
     volumes:
       - /tmp/WHEEL_TEST/shared:/data/shared
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
@@ -22,12 +24,12 @@ services:
       - "8089:8089"
     environment:
       WHEEL_USE_HTTP: 1
-      WHEEL_PORT: 8089
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
       WHEEL_RUNNING_TEST: 1
       WHEEL_LOG_LEVEL: OFF
       NODE_ENV: test
+      TZ: JST-9
 
     volumes:
       - "./${WHEEL_CONFIG_DIR}:/usr/src/server/app/config"

@@ -249,6 +249,50 @@ describe("components", ()=>{
     /**
   Task コンポーネントの基本機能動作確認
   コンポーネント共通機能確認
+  構成要素の機能確認
+  プロパティ画面を開いたまま未保存の変更がある状態でclean component実行
+  試験確認内容：プロパティ画面を閉じずに未保存の変更をしたままclean実行しても最新の保存状態に戻ることを確認
+  issue#948
+     */
+    it("構成要素の機能確認-プロパティ画面を開いたまま未保存の変更がある状態でclean component実行-最新の保存状態に戻ることを確認(issue#948)", ()=>{
+      const DESCRIPTION_CY = "[data-cy=\"component_property-description-textarea\"]";
+      const SAVED_DESCRIPTION = "saved-description";
+      const UNSAVED_DESCRIPTION = "unsaved-edit-should-be-discarded";
+
+      //establish a known, saved baseline value for description
+      cy.get(DESCRIPTION_CY).find(TAG_TYPE_TEXT_AREA)
+        .clear()
+        .type(SAVED_DESCRIPTION);
+      cy.closeProperty();
+      cy.clickComponentName(TASK_NAME_0);
+      cy.get(DESCRIPTION_CY).find(TAG_TYPE_TEXT_AREA)
+        .should("have.value", SAVED_DESCRIPTION);
+      cy.closeProperty();
+
+      cy.prepareCleanComponentTest(TASK_NAME_0);
+
+      //reopen the property panel and make an UNSAVED edit, keeping the panel open
+      cy.clickComponentName(TASK_NAME_0);
+      cy.get(DESCRIPTION_CY).find(TAG_TYPE_TEXT_AREA)
+        .clear()
+        .type(UNSAVED_DESCRIPTION);
+
+      //trigger clean via right-click context menu WITHOUT closing the property panel first
+      cy.get("[data-cy=\"graph-component-row\"]").contains(TASK_NAME_0)
+        .rightclick();
+      cy.get("[data-cy=\"graph-component-row\"]").contains("clean")
+        .click();
+      cy.contains("button", "discard all changes").click();
+
+      //the still-open property panel's description field must revert to the
+      //last-SAVED value, not keep the unsaved edit
+      cy.get(DESCRIPTION_CY).find(TAG_TYPE_TEXT_AREA)
+        .should("have.value", SAVED_DESCRIPTION);
+    });
+
+    /**
+  Task コンポーネントの基本機能動作確認
+  コンポーネント共通機能確認
   ファイル転送設定の各パターンの確認
   接続確認
   試験確認内容：コンポーネントが接続されていることを確認
@@ -402,6 +446,11 @@ describe("components", ()=>{
         .type("task1-run{enter}"); //inputFileの値を変更
       cy.closeProperty();
       cy.get("[data-cy=\"workflow-play-btn\"]").click(); //Taskコンポーネントを実行する
+      cy.checkProjectStatus("finished");
+      //Force a fresh fetch of the component's file listing: the file browser
+      //only refetches on (re)mount or when the workflow's descendant tree
+      //changes, not simply because a script/symlink wrote a new file.
+      cy.reload();
       cy.checkProjectStatus("finished");
       cy.clickComponentName(TASK_NAME_1);
       cy.get("[data-cy=\"component_property-files-panel_title\"]").click();

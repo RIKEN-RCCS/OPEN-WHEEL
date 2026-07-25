@@ -3,8 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
+import { writeFile } from "node:fs/promises";
 import { getAllComponentIDs } from "./projectJsonFileOperator.js";
 import { readComponentJsonByID } from "./componentJsonIO.js";
+import { debugMetadataJson, debugMetadataXml } from "../db/db.js";
 
 const _internal = {
   getAllComponentIDs,
@@ -150,6 +152,9 @@ export async function gatherComponentMetadata(projectRootDir) {
   }
 
   const rootComponents = buildSubtree("this is root");
+  if (debugMetadataJson) {
+    await writeFile(debugMetadataJson, JSON.stringify({ components: rootComponents }, null, 2));
+  }
   return { components: rootComponents };
 }
 
@@ -160,12 +165,15 @@ export async function gatherComponentMetadata(projectRootDir) {
  * @param {object} metadata - nested component metadata from gatherComponentMetadata
  * @returns {string} - XML string with XML declaration
  */
-export function componentMetadataToXml(metadata) {
+export async function componentMetadataToXml(metadata) {
   let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<workflow>\n";
   for (const component of metadata.components) {
     xml += componentToXml(component);
   }
   xml += "</workflow>\n";
+  if (debugMetadataXml) {
+    await writeFile(debugMetadataXml, xml);
+  }
   return xml;
 }
 

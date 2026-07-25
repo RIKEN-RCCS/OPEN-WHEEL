@@ -46,7 +46,7 @@ HTTP communication should be used only in environments where there are no securi
 1. Start Terminal and enter the following command:
 
     ```
-    > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
+    > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -e TZ=$(readlink /etc/localtime | sed 's#.*/zoneinfo/##') -p 8089:8089 tmkawanabe/wheel:latest
     ```
 
     where `CONFIG_DIR` must be the absolute path on the host machine.
@@ -63,6 +63,7 @@ HTTP communication should be used only in environments where there are no securi
       - jobScheduler.json : Batch system settings. For more information, see [Configuring the Batch System](../job_scheduler/).
       - server.crt/server.key : Server certificate/key file
     - WHHEL port number is specified as 8089.
+    - The `-e TZ=...` part reads your host's configured timezone and passes it into the container, so its clock matches your local time instead of defaulting to UTC. To force a specific timezone instead of following the host, replace it with e.g. `-e TZ=Asia/Tokyo`.
 
 1. When the WHEEL server starts, open a web browser on the host machine and access `http(s)://localhost:8089`.
 

@@ -118,7 +118,110 @@ gfarm:///path/to/project/output  # プロジェクト配下
 - プロジェクトを複数回実行する場合は、事前にアーカイブパスを削除するか、
   別のパスを設定する必要がある（コンポーネントの "remove storage directory" ボタンで削除可能）
 
-## 8. タイムアウト設定
+## 8. GFarm拡張属性（gfxattr）によるメタデータ付与
+
+### 概要
+
+`hpciss` / `hpcisstar` コンポーネントへのファイル転送時、GFarmの拡張属性機能（`gfxattr`）を使って
+ワークフロー全体のコンポーネント情報をXML形式でファイルに埋め込む。
+
+- **属性名**：`wheel.workflow`
+- **目的**：GFarm上に保存されたファイルの来歴（プロビナンス）追跡
+
+### 処理フロー
+
+`dispatcher.js` の `_hpcissHandler()` がファイル転送後に以下を実行する。
+
+```
+1. gatherComponentMetadata(projectRootDir)
+      → プロジェクト内の全コンポーネントをJSONツリーとして収集
+        （server/app/core/projectMetadataExporter.js）
+
+2. componentMetadataToXml(metadata)
+      → JSONツリーをXML文字列に変換
+        （server/app/core/projectMetadataExporter.js）
+
+3. setGfarmXattr(projectRootDir, hostID, gfarmPath, "wheel.workflow", xml)
+      → GFarm上のファイルに属性として書き込み
+        （server/app/core/gfarmOperator.js）
+```
+
+### gfxattr操作関数
+
+| 関数 | 使用コマンド | 説明 |
+|------|------------|------|
+| `setGfarmXattr(projectRootDir, hostID, path, attrName, xmlString)` | `gfxattr -s -x -f` | GFarmファイルにXML拡張属性を書き込む |
+| `getGfarmXattr(projectRootDir, hostID, path, attrName)` | `gfxattr -g -x` | GFarmファイルからXML拡張属性を読み取る |
+
+`setGfarmXattr` の内部処理：
+1. XML文字列をBase64エンコード
+2. CSGW上の一時ファイル（`/tmp/wheel_xattr_<timestamp>.xml`）に書き込み
+3. `gfxattr -s -x -f <tmpfile> <gfarm_path> <attrName>` で属性をセット
+4. 一時ファイルを削除
+
+### XMLデータ構造
+
+`<workflow>` をルートとし、各コンポーネントを `<component>` 要素で表現する。
+子コンポーネントは `<children>` 要素にネストされ、階層構造を反映する。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow>
+  <component type="workflow" name="root" id="wf-uuid">
+    <children>
+      <component type="task" name="myTask" id="task-uuid">
+        <script>run.sh</script>
+        <outputFiles>
+          <outputFile name="result.dat"/>
+        </outputFiles>
+      </component>
+      <component type="hpciss" name="storage" id="hpciss-uuid">
+        <host>csgw.example.ac.jp</host>
+        <storagePath>/home/user/gfarm/result</storagePath>
+        <inputFiles>
+          <inputFile name="result.dat" mandatory="false">
+            <src srcNode="myTask" srcName="result.dat"/>
+          </inputFile>
+        </inputFiles>
+      </component>
+    </children>
+  </component>
+</workflow>
+```
+
+`<component>` に含まれるスカラーフィールド：
+`description`, `script`, `host`, `queue`, `submitOption`, `sourceScript`,
+`retry`, `retryCondition`, `checker`, `cleanupFlag`, `disable`,
+`ignoreFailure`, `useJobScheduler`, `storagePath`, `state`
+
+### 属性ビューアーUI
+
+ユーザーはWHEEL UI上でGFarm上のファイルに付与された属性を確認できる。
+
+- **remoteFileBrowser.vue**（hpciss）：ファイル選択中に「inspect gfarm attributes」ボタンが有効化
+- **gfarmTarBrowser.vue**（hpcisstar）：「inspect gfarm attributes」ボタンでtarアーカイブ全体の属性を表示
+- **gfarmAttributeViewer.vue**：属性ビューアーダイアログ
+  - 左パネル：コンポーネントツリービュー（検索フィルタ付き）
+  - 右パネル：選択コンポーネントの詳細
+  - パンくずリスト：ルートからhpcissコンポーネントまでの来歴を表示
+
+### デバッグ用メタデータ書き出し
+
+`server.json`（または環境変数）で以下を設定すると、転送時にメタデータをローカルファイルへ書き出す。
+
+| 設定キー | 環境変数 | 説明 |
+|---------|---------|------|
+| `debugMetadataJson` | `WHEEL_DEBUG_METADATA_JSON` | `gatherComponentMetadata` の出力JSONを指定パスに書き出す |
+| `debugMetadataXml` | `WHEEL_DEBUG_METADATA_XML` | `componentMetadataToXml` の出力XMLを指定パスに書き出す |
+
+値はファイルパス（文字列）。`null`（デフォルト）または未設定の場合は書き出しなし。
+
+```bash
+# 例：XMLデバッグ出力を有効化
+WHEEL_DEBUG_METADATA_XML=/tmp/debug_metadata.xml npm start -w server
+```
+
+## 9. タイムアウト設定
 
 各GFarm操作関数はデフォルトのタイムアウト（秒）が設定されている。
 大容量ファイルを扱う場合は適切なタイムアウト値を設定すること。

@@ -18,10 +18,11 @@ chai.use(chaiAsPromised);
 //testee
 import { _internal } from "../../../app/handlers/projectController.js";
 import { onSaveFile } from "../../../app/handlers/rapid.js";
+import allowedOperations from "../../../../common/allowedOperations.js";
 
 //helper functions
 import { _internal as coreProjectControllerInternal } from "../../../app/core/projectController.js";
-import { getProjectState, getProjectJson } from "../../../app/core/projectJsonFileOperator.js";
+import { getProjectState, getProjectJson, setProjectState, updateProjectROStatus } from "../../../app/core/projectJsonFileOperator.js";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { addLink } from "../../../app/core/componentLinks.js";
@@ -239,6 +240,117 @@ describe("project Controller handler UT", function () {
 
       const committedContent = await gitPromise(projectRootDir, ["show", `HEAD:${targetFilename}`], projectRootDir);
       expect(committedContent).to.equal(editedContent);
+    });
+  });
+});
+
+const testDirRoot2 = "WHEEL_TEST_TMP_PROJECTCONTROLLER";
+const projectRootDir2 = path.resolve(testDirRoot2, "testProject.wheel");
+
+describe("UT for projectController handlers", function () {
+  this.timeout(0);
+
+  describe("common/allowedOperations.js", ()=>{
+    it("allows runProject from stopped, failed, and unknown", ()=>{
+      expect(allowedOperations.stopped).to.include("runProject");
+      expect(allowedOperations.failed).to.include("runProject");
+      expect(allowedOperations.unknown).to.include("runProject");
+    });
+    it("does not allow runProject from running", ()=>{
+      expect(allowedOperations.running).to.not.include("runProject");
+    });
+  });
+
+  describe("#selectRunHandler", ()=>{
+    it("selects onRunProject for a fresh (not-started) project", ()=>{
+      expect(_internal.selectRunHandler("not-started")).to.equal(_internal.onRunProject);
+    });
+    it("selects onContinueProject to resume a stopped project", ()=>{
+      expect(_internal.selectRunHandler("stopped")).to.equal(_internal.onContinueProject);
+    });
+    it("selects onContinueProject to resume a failed project", ()=>{
+      expect(_internal.selectRunHandler("failed")).to.equal(_internal.onContinueProject);
+    });
+    it("selects onContinueProject to resume an unknown-state project", ()=>{
+      expect(_internal.selectRunHandler("unknown")).to.equal(_internal.onContinueProject);
+    });
+  });
+
+  describe("#onContinueProject (real run on an empty workflow)", ()=>{
+    beforeEach(async ()=>{
+      await fs.remove(testDirRoot2);
+      await createNewProject(projectRootDir2, "test project", null, "test", "test@example.com");
+      await setProjectState(projectRootDir2, "stopped");
+    });
+    after(async ()=>{
+      await fs.remove(testDirRoot2);
+    });
+
+    it("commits with 'project continuing' (not 'project starting') and finishes the (empty) run", async ()=>{
+      await new Promise((resolve)=>{
+        _internal.onContinueProject("client1", projectRootDir2, resolve);
+      });
+      const output = await gitPromise(projectRootDir2, ["log", "-1", "--pretty=%s"], projectRootDir2);
+      expect(output.trim()).to.equal("auto saved: project continuing");
+      expect(await getProjectState(projectRootDir2)).to.equal("finished");
+    });
+
+    it("unlocks the project for editing once the run finishes successfully", async ()=>{
+      await new Promise((resolve)=>{
+        _internal.onContinueProject("client1", projectRootDir2, resolve);
+      });
+      const projectJson = await getProjectJson(projectRootDir2);
+      expect(projectJson.readOnly).to.be.false;
+    });
+  });
+
+  describe("#unlockIfFinished", ()=>{
+    beforeEach(async ()=>{
+      await fs.remove(testDirRoot2);
+      await createNewProject(projectRootDir2, "test project", null, "test", "test@example.com");
+    });
+    after(async ()=>{
+      await fs.remove(testDirRoot2);
+    });
+
+    it("unlocks readOnly when the project state is finished", async ()=>{
+      await setProjectState(projectRootDir2, "finished");
+      await _internal.unlockIfFinished(projectRootDir2);
+      const projectJson = await getProjectJson(projectRootDir2);
+      expect(projectJson.readOnly).to.be.false;
+    });
+
+    it("keeps the project locked when the state is failed", async ()=>{
+      await updateProjectROStatus(projectRootDir2, true);
+      await setProjectState(projectRootDir2, "failed");
+      await _internal.unlockIfFinished(projectRootDir2);
+      const projectJson = await getProjectJson(projectRootDir2);
+      expect(projectJson.readOnly).to.be.true;
+    });
+
+    it("keeps the project locked when the state is unknown (e.g. a stage-out that never completed)", async ()=>{
+      await updateProjectROStatus(projectRootDir2, true);
+      await setProjectState(projectRootDir2, "unknown");
+      await _internal.unlockIfFinished(projectRootDir2);
+      const projectJson = await getProjectJson(projectRootDir2);
+      expect(projectJson.readOnly).to.be.true;
+    });
+  });
+
+  describe("#onStopProject", ()=>{
+    beforeEach(async ()=>{
+      await fs.remove(testDirRoot2);
+      await createNewProject(projectRootDir2, "test project", null, "test", "test@example.com");
+    });
+    after(async ()=>{
+      await fs.remove(testDirRoot2);
+    });
+
+    it("explicitly locks the project for editing", async ()=>{
+      await _internal.onStopProject(projectRootDir2);
+      const projectJson = await getProjectJson(projectRootDir2);
+      expect(projectJson.readOnly).to.be.true;
+      expect(projectJson.state).to.equal("stopped");
     });
   });
 });

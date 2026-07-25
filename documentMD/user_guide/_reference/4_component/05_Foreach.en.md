@@ -41,6 +41,8 @@ Glob patterns (e.g., `*.log`, `output_*`, `results/`) are supported.
 The Foreach component behaves the same way as the For component, but the index value is not calculated; instead, the values set in indexList are used starting from the beginning of the list.
 Terminates execution of the entire component when it reaches the end of the list.
 
+The separator escalation (`_` -> `__` -> `___`) that happens when an instance directory name collides with an existing component, file, or directory works the same way as for the For component. See [For Component Run-time Behavior]({{site.baseurl}}/reference/4_component/03_For.html#for-component-run-time-behavior) for details.
+
 --------
 [Return to Component Details]({{site.baseurl}}/reference/4_component/)
 

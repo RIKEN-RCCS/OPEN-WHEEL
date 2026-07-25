@@ -53,6 +53,7 @@ const mutationFactory = (types)=>{
  * @property {boolean} openDialog - flag to show global dialog
  * @property {object} dialogContent - dialog's content
  * @property {boolean} readOnly - project wide read-only flag
+ * @property {string} cleaningComponentID - ID of the component currently being "clean"-ed; while set, the next matching workflow update always overwrites local edits instead of being merged
  */
 const state = {
   currentComponent: null,
@@ -89,7 +90,8 @@ const state = {
   currentZoom: 1,
   currentPan: { x: 0, y: 0 },
   textEditorDialog: false,
-  pendingNavigation: null
+  pendingNavigation: null,
+  cleaningComponentID: null
 };
 
 const mutations = mutationFactory(Object.keys(state));
@@ -151,7 +153,11 @@ export default new Vuex.Store({
       //This prevents stale copySelectedComponent from diverging from selectedComponent
       //and causing spurious updateComponent calls when subsequent workflow events arrive.
       if (isSameComponent) {
-        const hasEdits = selected !== null && diff(selected, copied).some((e)=>{
+        //A "clean" operation explicitly means "discard my local edits" - the
+        //incoming payload must always win here, even though it looks just
+        //like any other same-component workflow event to this guard.
+        const isCleanedUpdate = context.state.cleaningComponentID === payload.ID;
+        const hasEdits = !isCleanedUpdate && selected !== null && diff(selected, copied).some((e)=>{
           return !["pos", "outputFiles", "inputFiles"].includes(e.path[0]);
         });
         if (!hasEdits) {
@@ -166,6 +172,9 @@ export default new Vuex.Store({
             updatedCopy.inputFiles = structuredClone(toRaw(payload.inputFiles));
           }
           context.commit("copySelectedComponent", updatedCopy);
+        }
+        if (isCleanedUpdate) {
+          context.commit("cleaningComponentID", null);
         }
       } else {
         context.commit("copySelectedComponent", structuredClone(toRaw(payload)));

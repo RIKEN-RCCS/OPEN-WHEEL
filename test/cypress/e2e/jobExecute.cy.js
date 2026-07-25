@@ -22,6 +22,12 @@ describe("jobExecute", ()=>{
 
   const codeTask1 = `echo "test" > message.txt`;
   const codeTask2 = `cat message.txt >/dev/null 2>&1`;
+  //PBS Pro jobs execute with cwd=$HOME by default regardless of where `qsub` was
+  //invoked from, unless the script itself cds into $PBS_O_WORKDIR (or qsub is
+  //passed -d). WHEEL's job submission doesn't pass -d, so remote/job-scheduler
+  //scripts must cd explicitly - this is standard PBS practice, not a workaround.
+  const codeTask1Remote = `cd $PBS_O_WORKDIR\n${codeTask1}`;
+  const codeTask2Remote = `cd $PBS_O_WORKDIR\n${codeTask2}`;
   const codeWhile = [`if [ "$WHEEL_CURRENT_INDEX" -lt 3 ]; then`, `  exit 0`, `else`, `  exit 1`].join("\n");
 
   before(()=>{
@@ -82,7 +88,7 @@ describe("jobExecute", ()=>{
    * 試験確認内容：リモートホストに対するタスク実行ワークフローが
    * 完了(status:finished)となること
    */
-  it.skip("executeRemoteHost", ()=>{ //TODO:テストで失敗しているため一時的にskip.修正後復帰すること.
+  it("executeRemoteHost", ()=>{
     //workflow作成
     cy.createComponent(DEF_COMPONENT_WORKFLOW, WORKFLOW_NAME_0, 501, 500);
     //while 作成
@@ -101,12 +107,12 @@ describe("jobExecute", ()=>{
     cy.doubleClickComponentName(FOREACH_NAME_0);
     //task 1つ目
     cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_0, 501, 500);
-    cy.setupTaskWithScriptAndIO(FILE_NAME_TASK1, codeTask1, TYPE_OUTPUT, "message.txt", HOST_NAME);
+    cy.setupTaskWithScriptAndIO(FILE_NAME_TASK1, codeTask1Remote, TYPE_OUTPUT, "message.txt", HOST_NAME);
     cy.switchUseJobScheduler("on");
     cy.closeProperty();
     //task 2つ目
     cy.createComponent(DEF_COMPONENT_TASK, TASK_NAME_1, 501, 700);
-    cy.setupTaskWithScriptAndIO(FILE_NAME_TASK2, codeTask2, TYPE_INPUT, "message.txt", HOST_NAME);
+    cy.setupTaskWithScriptAndIO(FILE_NAME_TASK2, codeTask2Remote, TYPE_INPUT, "message.txt", HOST_NAME);
     cy.switchUseJobScheduler("on");
     cy.closeProperty();
     //コンポーネント同士を接続
@@ -120,6 +126,10 @@ describe("jobExecute", ()=>{
     cy.passwordType("passw0rd");
 
     //完了まで待機
-    cy.checkProjectStatus("finished");
+    //リモートホスト(test/wheel_config/remotehost.json)はstatusCheckInterval: 60
+    //(秒)のため、WHEELは1分に1回しかジョブ状態をポーリングしない。task0/task1が
+    //直列に実行されるため、2ポーリング周期分に加えてqsubのスケジューリング待ち
+    //やSSHオーバーヘッド分の余裕を多めに見込む。
+    cy.checkProjectStatus("finished", 350000);
   });
 });

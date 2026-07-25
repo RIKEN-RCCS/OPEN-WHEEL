@@ -1,4 +1,13 @@
 #!/bin/bash
+# a blank TZ (e.g. from an unset host env var passed through compose as
+# TZ: ${TZ:-}) must not be left set, since glibc/Node treat an explicitly
+# empty TZ the same as TZ=UTC - unsetting it instead falls through to the
+# image's baked-in default (see Dockerfile's `ENV TZ=Etc/UTC`)
+if [ -z "${TZ}" ]; then
+  unset TZ
+fi
+echo "timezone = ${TZ:-Etc/UTC (image default)}"
+
 echo generate keypair = ${WHEEL_GENERATE_KEYPAIR:-NO}
 if [ "xYES" == "x${WHEEL_GENERATE_KEYPAIR}" ];then
   rm  /tmp_identify /tmp_identify.pub 2>/dev/null

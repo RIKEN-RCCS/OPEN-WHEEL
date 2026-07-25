@@ -44,7 +44,7 @@ HTTPS通信の代わりにHTTP通信を使う場合は、 手順3. にて`docker
 1. ターミナルを起動し、以下のコマンドを入力します。
 
     ```
-    > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
+    > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -e TZ=$(readlink /etc/localtime | sed 's#.*/zoneinfo/##') -p 8089:8089 tmkawanabe/wheel:latest
     ```
 
     このとき、`CONFIG_DIR`は、ホストマシン上での絶対パスである必要があります。
@@ -61,6 +61,7 @@ HTTPS通信の代わりにHTTP通信を使う場合は、 手順3. にて`docker
         - jobScheduler.json : バッチシステムの設定。詳細は [バッチシステムの設定](../job_scheduler/)を参照。
         - server.crt/server.key : サーバ証明書/鍵ファイル
     - WHHELのポート番号を8089に指定しています。
+    - `-e TZ=...` の部分は、ホストマシンに設定されているタイムゾーンを読み取ってコンテナに渡すので、コンテナの時計がUTCではなくホストのローカル時刻と一致するようになります。ホストに合わせる代わりに特定のタイムゾーンを強制したい場合は、例えば `-e TZ=Asia/Tokyo` のように置き換えてください。
 
 1. WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、 `http(s)://localhost:8089` にアクセスします。
 

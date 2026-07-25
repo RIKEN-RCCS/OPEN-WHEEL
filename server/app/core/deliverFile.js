@@ -45,6 +45,20 @@ async function deliverFile(src, dst, forceCopy = false) {
 }
 
 /**
+ * build ssh command string which delivers file(s) entirely on one remote host via ln -sf or cp -r
+ * srcName is glob-expanded inside srcRoot and each match is converted to an absolute path before
+ * being handed to ln/cp, so the result is correct regardless of how deep dstRoot is relative to
+ * srcRoot (a relative symlink target is resolved against the symlink's own directory, not srcRoot,
+ * so a naive relative target breaks as soon as srcRoot and dstRoot differ in depth).
+ * @param {object} recipe - deliver recipe which has srcRoot, srcName, dstRoot and dstName
+ * @param {string} cmd - "ln -sf" or "cp -r "
+ * @returns {string} - shell command to run via ssh.exec
+ */
+function _buildDeliverOnRemoteCmd(recipe, cmd) {
+  return `bash -O failglob -c 'BASE="$PWD"; mkdir -p ${recipe.dstRoot} 2>/dev/null; cd ${recipe.srcRoot} || exit 1; ABS_LIST=(); for i in ${recipe.srcName}; do ABS_LIST+=("$PWD/$i"); done; cd "$BASE" && cd ${recipe.dstRoot} || exit 1; RC=0; for a in "\${ABS_LIST[@]}"; do ${cmd} "$a" ${recipe.dstName} || RC=1; done; exit $RC'`;
+}
+
+/**
  * execut ln -s or cp -r command on remotehost to make shallow symlink
  * @param {object} recipe - deliver recipe which has src, dstination and more information
  * @returns {object} - result object
@@ -61,7 +75,7 @@ async function deliverFilesOnRemote(recipe) {
   }
   const ssh = _internal.getSsh(recipe.projectRootDir, recipe.srcRemotehostID);
   const cmd = recipe.forceCopy ? "cp -r " : "ln -sf";
-  const sshCmd = `bash -O failglob -c 'mkdir -p ${recipe.dstRoot} 2>/dev/null; (cd ${recipe.dstRoot} && for i in ${path.join(recipe.srcRoot, recipe.srcName)}; do ${cmd} \${i} ${recipe.dstName} ;done)'`;
+  const sshCmd = _buildDeliverOnRemoteCmd(recipe, cmd);
   logger.debug("execute on remote", sshCmd);
   const rt = await ssh.exec(sshCmd, 0, logger.debug.bind(logger));
   if (rt !== 0) {
@@ -143,7 +157,7 @@ async function deliverFilesLocalToRemoteShared(recipe) {
   }
   const ssh = _internal.getSsh(recipe.projectRootDir, recipe.dstRemotehostID);
   const cmd = recipe.forceCopy ? "cp -r " : "ln -sf";
-  const sshCmd = `bash -O failglob -c 'mkdir -p ${recipe.dstRoot} 2>/dev/null; (cd ${recipe.dstRoot} && for i in ${path.join(recipe.srcRoot, recipe.srcName)}; do ${cmd} \${i} ${recipe.dstName} ;done)'`;
+  const sshCmd = _buildDeliverOnRemoteCmd(recipe, cmd);
   logger.debug("execute on remote (localhost to remote via shared storage)", sshCmd);
   const rt = await ssh.exec(sshCmd, 0, logger.debug.bind(logger));
   if (rt !== 0) {

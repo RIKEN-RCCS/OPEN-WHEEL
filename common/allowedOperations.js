@@ -8,11 +8,11 @@ const allowedOperations = {
   "not-started": ["runProject", "revertProject", "saveProject", "checkProject"],
   "preparing": ["cleanProject"],
   "running": ["stopProject"],
-  "stopped": ["cleanProject"],
+  "stopped": ["runProject", "cleanProject"],
   "finished": ["cleanProject"],
-  "failed": ["cleanProject"],
+  "failed": ["runProject", "cleanProject"],
   "holding": [],
-  "unknown": ["cleanProject"]
+  "unknown": ["runProject", "cleanProject"]
 };
 
 export default allowedOperations;
