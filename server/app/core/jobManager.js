@@ -208,9 +208,7 @@ function registerJob(hostinfo, task) {
       getLogger(task.projectRootDir).debug(`${requestName} done`);
       getLogger(task.projectRootDir).trace(`${requestName} after cmd output:\n ${hook.output}`);
       const reEmpty = /^\s*$/;
-      if (reEmpty.test(hook.output)) {
-        getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`);
-
+      const recheck = ()=>{
         const request2 = structuredClone(request);
         request2.cmd = hook.cmd;
         request2.re = reEmpty.toString();
@@ -219,7 +217,7 @@ function registerJob(hostinfo, task) {
 
         const id2 = addRequest(request2);
         const result2 = getRequest(id2);
-        await new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject)=>{
           result2.event.on("finished", ()=>{
             hook.rt = result2.rt;
             hook.output = result2.lastOutput;
@@ -229,8 +227,21 @@ function registerJob(hostinfo, task) {
             reject(args);
           });
         });
+      };
+      if (reEmpty.test(hook.output)) {
+        getLogger(task.projectRootDir).trace(`${requestName} after cmd output is empty retring`);
+        await recheck();
       }
-      const rt = await getStatusCode(JS, task, hook.rt, hook.output);
+      let rt = await getStatusCode(JS, task, hook.rt, hook.output);
+      //a non-empty but ambiguous output (e.g. the job is still running and
+      //simply has no exit-code line yet, right after submission) looks
+      //identical to a real failure to getStatusCode - give it one more
+      //chance before trusting it, same as the empty-output case above
+      if (rt === -2 && !reEmpty.test(hook.output)) {
+        getLogger(task.projectRootDir).trace(`${requestName} after cmd output was ambiguous, rechecking once`);
+        await recheck();
+        rt = await getStatusCode(JS, task, hook.rt, hook.output);
+      }
       if (isJobFailed(JS, task.jobStatus)) {
         return reject(task.jobStatus);
       }
