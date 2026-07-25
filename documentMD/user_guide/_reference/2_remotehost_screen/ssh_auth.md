@@ -93,6 +93,68 @@ docker run -d \
 {% endcapture %}
 <div class="notice--info">{{ notice-ssh-agent | markdownify }}</div>
 
+### 2.4 OpenOnDemand（Fugaku）の使い捨て鍵を利用した認証
+
+RIKEN-RCCSが提供するFugaku向けOpenOnDemandポータルには、WHEELをインタラクティブアプリとして起動するための
+アプリ定義（[so5/ondemand_fugaku](https://github.com/so5/ondemand_fugaku/tree/main/WHEEL)）が用意されています。
+
+このアプリの起動フォームで `Key Mode` を **`Single-use key pair`** に設定すると、
+WHEELインスタンスが自動的に鍵ペアを生成し、Fugakuログインノードの `~/.ssh/authorized_keys` と
+`~/.ssh/config` を更新します。生成された鍵ペアは、WHEELインスタンス終了時に自動的に無効化される
+使い捨て（一度限り）の鍵です。
+
+#### 自動的に行われる処理
+
+`Single-use key pair` を選択して起動すると、以下の処理が自動的に行われます。
+
+1. WHEELコンテナ起動時（`entrypoint.sh`）に ed25519 鍵ペアが生成される。
+   - 秘密鍵: `/tmp_identify`
+   - 公開鍵: `~/.wheel/wheel_tmp_pubkey`
+2. WHEELサーバの起動が確認された後、生成された公開鍵がFugakuログインノードの
+   `~/.ssh/authorized_keys` に追記される。
+3. `~/.ssh/config` に以下のエントリが追記される。
+
+   ```
+   HOST login.fugaku.r-ccs.riken.jp
+     IdentityFile /tmp_identify
+   ```
+
+4. WHEELインスタンス終了時、上記で追加された `authorized_keys` の1行と
+   `~/.ssh/config` のエントリは自動的に削除される。
+
+#### WHEEL側で手動設定が必要な項目（初回のみ）
+
+上記の処理はFugaku側の認証設定のみを行うものです。「この鍵でどのリモートホストに接続するか」は、
+WHEELのリモートホスト設定ダイアログから**利用者自身が登録する必要があります**。
+
+1. [リモートホスト設定ダイアログ]({{ site.baseurl }}/reference/2_remotehost_screen/)で、
+   Fugakuログインノードを次の内容で新規登録する。
+
+   | 項目 | 設定値 |
+   |------|--------|
+   | Hostname | `login.fugaku.r-ccs.riken.jp` |
+   | User | Fugakuのユーザ名 |
+   | use public key authentication | 有効 |
+   | private key path | `/tmp_identify` |
+
+2. 秘密鍵のパス（`/tmp_identify`）は使い捨て鍵の生成先として常に固定されているため、
+   一度上記の設定を行っておけば、次回以降 `Single-use key pair` モードでWHEELを起動した際にも
+   同じリモートホスト設定をそのまま再利用できます
+   （`remotehost.json` は `~/.wheel/` 配下に保存され、WHEELインスタンスをまたいで保持されるため）。
+
+{% capture notice-single-use %}
+__注意__
+
+`Single-use key pair` モードで生成される鍵は、WHEELインスタンスが終了すると同時に
+Fugaku側の `authorized_keys` から削除されます。そのため、この鍵を使ったリモートホスト設定は
+**同じOpenOnDemandセッション中のみ**有効です。
+
+セッションをまたいで永続的に使用したい場合は、`Your own key pair` モードを選択し、
+[2.2 公開鍵認証（秘密鍵ファイル指定）](#22-公開鍵認証秘密鍵ファイル指定)の手順に従って
+自分自身の鍵ペアを登録してください。
+{% endcapture %}
+<div class="notice--warning">{{ notice-single-use | markdownify }}</div>
+
 ## 3. `~/.ssh/config` の活用
 
 WHEELはOpenSSHクライアントを使用するため、`~/.ssh/config` で設定した内容が反映されます。
