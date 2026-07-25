@@ -45,10 +45,10 @@
           <template #bottom />
           <template #item.action="{ item }">
             <action-row
-              :item="item.raw"
+              :item="item"
               :disabled="readOnly"
-              @edit="openDialog(item.raw)"
-              @delete="deleteItem(item.raw)"
+              @edit="openDialog(item)"
+              @delete="deleteItem(item)"
             />
           </template>
         </v-data-table>
@@ -144,7 +144,6 @@
 <script>
 "use strict";
 import { mapState } from "vuex";
-import { removeFromArray } from "../../lib/clientUtility.js";
 import actionRow from "../../components/common/actionRow.vue";
 import listForm from "../../components/common/listForm.vue";
 
@@ -164,7 +163,7 @@ export default {
       required: true
     }
   },
-  emits: ["openFilterEditor", "newParamAdded"],
+  emits: ["openFilterEditor", "newParamAdded", "del"],
   data() {
     return {
       currentItem: null,
@@ -242,7 +241,7 @@ export default {
       this.dialog = true;
     },
     deleteItem(item) {
-      removeFromArray(this.params, item);
+      this.$emit("del", item);
     },
     storeParam(target) {
       target.type = this.newItem.type;
