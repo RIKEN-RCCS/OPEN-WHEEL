@@ -30,6 +30,7 @@
       :read-only="readOnly"
       @new-param-added="newParamAdded"
       @open-filter-editor="$emit('openFilterEditor')"
+      @del="(e)=>{removeFromArray(parameterSetting.params, e, 'keyword')}"
     />
     <gather-scatter
       :container="parameterSetting.scatter"
