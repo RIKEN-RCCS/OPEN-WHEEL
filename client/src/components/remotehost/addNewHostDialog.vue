@@ -213,7 +213,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.renewInterval"
-                          label="connection renewal interval (min.) [default: 0]"
+                          label="connection renewal interval (min.)"
+                          :hint="`default: ${defaultValues.renewInterval}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-connection_renewal-text_field"
@@ -222,7 +224,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.statusCheckInterval"
-                          label="status check interval (sec.) [default: 60]"
+                          label="status check interval (sec.)"
+                          :hint="`default: ${defaultValues.statusCheckInterval}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-status_check-text_field"
@@ -231,7 +235,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.maxStatusCheckError"
-                          label="max number of status check error allowed [default: 10]"
+                          label="max number of status check error allowed"
+                          :hint="`default: ${defaultValues.maxStatusCheckError}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-max_number-text_field"
@@ -240,7 +246,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.execInterval"
-                          label="execution interval (sec.) [default: job 5, task 1]"
+                          label="execution interval (sec.)"
+                          :hint="`default: ${defaultValues.execInterval}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-execution_interval-text_field"
@@ -249,7 +257,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.readyTimeout"
-                          label="timeout during handshake phase (msec.) [default: 0]"
+                          label="timeout during handshake phase (msec.)"
+                          :hint="`default: ${defaultValues.readyTimeout}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-timeout_during-text_field"
@@ -363,6 +373,15 @@ export default {
     },
     workDirLabel() {
       return `Host work dir ${this.host.path ? "" : "[default $HOME]"}`;
+    },
+    defaultValues() {
+      return {
+        renewInterval: 0,
+        statusCheckInterval: 60,
+        maxStatusCheckError: 10,
+        execInterval: "job: 5, task: 1",
+        readyTimeout: 0
+      };
     }
   },
   watch: {
