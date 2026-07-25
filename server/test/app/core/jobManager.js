@@ -191,7 +191,7 @@ describe("#isJobFailed", ()=>{
     //ここではカスタムなオブジェクトを使う例を示します。
     const JS = {
       acceptableJobStatus: {
-        toString: ()=>"ABC"
+        toString: ()=>{ return "ABC"; }
       }
     };
     const code = "ABC";
@@ -202,7 +202,7 @@ describe("#isJobFailed", ()=>{
   it("should return false if acceptableJobStatus is an object that has toString() but code does not match", ()=>{
     const JS = {
       acceptableJobStatus: {
-        toString: ()=>"ABC"
+        toString: ()=>{ return "ABC"; }
       }
     };
     const code = "DEF";
@@ -1034,5 +1034,140 @@ describe("#registerJob", ()=>{
       expect(err.request.argument).to.equal("12345");
       expect(err.hookErr).to.equal(hookErr);
     }
+  });
+});
+
+describe("#registerJob rechecks an ambiguous still-running PBS Pro status instead of failing immediately (issue #994)", ()=>{
+  //NOTE: unlike the "#registerJob" describe block above, getStatusCode and
+  //isJobFailed are intentionally left unstubbed here so the real PBS Pro
+  //regexes from server/app/db/jobScheduler.json exercise the fix: a
+  //genuinely non-empty but ambiguous output - e.g. a real "qstat -xf"
+  //response for a job that is still running and simply has no Exit_status
+  //line yet - must be rechecked once instead of being trusted as a failure.
+  let rewireJobManager;
+  let registerJob;
+
+  let addRequestMock;
+  let getRequestMock;
+
+  let hostinfo;
+  let task;
+
+  beforeEach(()=>{
+    rewireJobManager = rewire("../../../app/core/jobManager.js");
+    registerJob = rewireJobManager.__get__("registerJob");
+
+    rewireJobManager.__set__("jobScheduler", {
+      PBSPro: {
+        maxStatusCheckError: 2,
+        stat: "qstat -xf",
+        statAfter: "qstat -xf",
+        reRunning: "<JOB_Id>{{ JOBID }}.*job_state\\=(R|H|Q|T|W)$",
+        reReturnCode: "Exit_status \\= (\\d+)$",
+        reJobStatusCode: "substate \\= (\\d+)$",
+        acceptableJobStatus: [92, 93],
+        acceptableRt: [153]
+      }
+    });
+    addRequestMock = sinon.stub();
+    getRequestMock = sinon.stub();
+    rewireJobManager.__set__("addRequest", addRequestMock);
+    rewireJobManager.__set__("getRequest", getRequestMock);
+    rewireJobManager.__set__("delRequest", sinon.stub());
+    rewireJobManager.__set__("getLogger", sinon.stub().returns({ debug: sinon.stub(), trace: sinon.stub(), warn: sinon.stub() }));
+
+    hostinfo = {
+      jobScheduler: "PBSPro",
+      useWebAPI: false,
+      statusCheckInterval: 1
+    };
+    task = {
+      projectRootDir: "/some/project",
+      jobID: "12345",
+      type: "normalTask"
+    };
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should recheck once and resolve with the real return code when the first check has a valid substate but no Exit_status line yet", async ()=>{
+    const firstEmitter = new EventEmitter();
+    const firstRequestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: firstEmitter
+    };
+    rewireJobManager.__set__("createRequest", sinon.stub().returns(firstRequestObj));
+
+    let addRequestCallCount = 0;
+    addRequestMock.callsFake(()=>{
+      addRequestCallCount++;
+      return addRequestCallCount === 1 ? "req-994" : "req-994-recheck";
+    });
+
+    const secondEmitter = new EventEmitter();
+    const secondRequestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: secondEmitter
+    };
+    getRequestMock.callsFake((id)=>{
+      return id === "req-994" ? firstRequestObj : secondRequestObj;
+    });
+
+    const p = registerJob(hostinfo, task);
+
+    //realistic PBS Pro "qstat -xf <jobid>" output for a job that is still
+    //genuinely RUNNING: it has a valid, non-terminal substate but (correctly)
+    //has no Exit_status line yet, since the job has not finished
+    const stillRunningOutput = [
+      "Job Id: 12345.pbshost",
+      "    job_state = R",
+      "    substate = 42"
+    ].join("\n");
+
+    firstEmitter.emit("finished", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      finishedHook: {
+        rt: 0,
+        output: stillRunningOutput,
+        cmd: "qstat -xf 12345"
+      }
+    });
+
+    //let the pending "await getStatusCode(...)" microtask resolve so the
+    //handler reaches recheck() and registers its listener on secondEmitter
+    //before we emit on it
+    await new Promise((resolve)=>{
+      setImmediate(resolve);
+    });
+
+    //by the time the recheck fires, the job has actually finished and
+    //qstat now reports a real exit status
+    const finishedOutput = [
+      "Job Id: 12345.pbshost",
+      "    job_state = F",
+      "    substate = 92",
+      "    Exit_status = 0"
+    ].join("\n");
+    secondRequestObj.rt = 0;
+    secondRequestObj.lastOutput = finishedOutput;
+
+    secondEmitter.emit("finished", {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      finishedHook: {
+        rt: 0,
+        output: finishedOutput,
+        cmd: "qstat -xf 12345"
+      }
+    });
+
+    const result = await p;
+    expect(result).to.equal(0);
+    expect(addRequestMock.callCount).to.equal(2);
   });
 });
