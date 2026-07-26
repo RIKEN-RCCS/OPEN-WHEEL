@@ -85,7 +85,9 @@ function makeQueueOpt(task, JS, queues) {
     return "";
   }
 
-  let queue = queues.find((e)=>{ return task.queue === e; });
+  let queue = queues.find((e)=>{
+    return task.queue === e;
+  });
   if (typeof queue === "undefined") {
     queue = queues[0];
   }
@@ -388,6 +390,21 @@ class RemoteJobExecuter extends Executer {
   }
 }
 
+//stepjobTask's job-scheduler-side chaining (--step, see makeStepOpt()) means the scheduler -
+//not WHEEL - enforces execution order between steps, so this queue must not throttle
+//submission the way the regular per-host job queue intentionally does.
+class StepjobTaskExecuter extends RemoteJobExecuter {
+  constructor(hostinfo) {
+    super(hostinfo, true);
+    this.batch.maxConcurrent = Number.MAX_SAFE_INTEGER;
+  }
+
+  setMaxNumJob() {
+    //intentionally a no-op: register()'s reuse path calls this on every re-registration
+    //with the host's numJob-derived cap, which must not be applied to this queue
+  }
+}
+
 class RemoteJobWebAPIExecuter extends Executer {
   constructor(hostinfo, isJob) {
     super(hostinfo, isJob);
@@ -544,7 +561,8 @@ class LocalTaskExecuter extends Executer {
  * @returns {string} - key string
  */
 function getExecutersKey(task) {
-  return `${task.projectRootDir}-${task.remotehostID}-${task.useJobScheduler}`;
+  const stepjobSuffix = task.type === "stepjobTask" ? "-stepjob" : "";
+  return `${task.projectRootDir}-${task.remotehostID}-${task.useJobScheduler}${stepjobSuffix}`;
 }
 
 /**
@@ -582,6 +600,10 @@ function createExecuter(task, hostinfo) {
     if (hostinfo.useWebAPI) {
       loggerWrapper.logDebug(task.projectRootDir, task.workingDir, `create new executer for ${task.host} with web API`);
       return new RemoteJobWebAPIExecuter(hostinfo, true);
+    }
+    if (task.type === "stepjobTask") {
+      loggerWrapper.logDebug(task.projectRootDir, task.workingDir, `create new executer for ${task.host} for stepjobTask`);
+      return new StepjobTaskExecuter(hostinfo);
     }
     if (task.useJobScheduler) {
       loggerWrapper.logDebug(task.projectRootDir, task.workingDir, `create new executer for ${task.host} with job scheduler`);
@@ -683,6 +705,7 @@ export {
   RemoteTaskExecuter,
   RemoteJobWebAPIExecuter,
   LocalTaskExecuter,
+  StepjobTaskExecuter,
   _internal
 };
 

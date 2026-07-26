@@ -14,8 +14,9 @@ import sinon from "sinon";
 import fs from "fs-extra";
 const { expect } = chai;
 import { EventEmitter } from "events";
+import { eventEmitters } from "../../../app/core/global.js";
 
-import { _internal, removeExecuters, isExceededLimit, makeQueueOpt, makeEnv, makeStepOpt, makeBulkOpt, decideFinishState, needsRetry, promisifiedSpawn, getExecutersKey, getMaxNumJob, createExecuter, register, cancel, RemoteJobExecuter, RemoteTaskExecuter, RemoteJobWebAPIExecuter, LocalTaskExecuter } from "../../../app/core/executerManager.js";
+import { _internal, removeExecuters, isExceededLimit, makeQueueOpt, makeEnv, makeStepOpt, makeBulkOpt, decideFinishState, needsRetry, promisifiedSpawn, getExecutersKey, getMaxNumJob, createExecuter, register, cancel, RemoteJobExecuter, RemoteTaskExecuter, RemoteJobWebAPIExecuter, LocalTaskExecuter, StepjobTaskExecuter } from "../../../app/core/executerManager.js";
 import { loggerWrapper } from "../../../app/logSettings.js";
 const testDirRoot = "WHEEL_TEST_TMP";
 
@@ -485,6 +486,34 @@ describe("UT for executerManager class", function () {
       const result = getExecutersKey(task);
       expect(result).to.equal("undefined-remoteHost-false");
     });
+    it("stepjobTask produces a different key than an otherwise-identical task (issue #764)", function () {
+      const task = {
+        projectRootDir: "/mock/project",
+        remotehostID: "remoteHost",
+        useJobScheduler: true
+      };
+      const stepjobTask = { ...task, type: "stepjobTask" };
+      expect(getExecutersKey(stepjobTask)).to.not.equal(getExecutersKey(task));
+    });
+    it("two stepjobTasks differing only in parentName/stepnum collide into the same key (issue #764)", function () {
+      const task0 = {
+        projectRootDir: "/mock/project",
+        remotehostID: "remoteHost",
+        useJobScheduler: true,
+        type: "stepjobTask",
+        parentName: "sj0",
+        stepnum: 0
+      };
+      const task1 = {
+        projectRootDir: "/mock/project",
+        remotehostID: "remoteHost",
+        useJobScheduler: true,
+        type: "stepjobTask",
+        parentName: "sj1",
+        stepnum: 1
+      };
+      expect(getExecutersKey(task0)).to.equal(getExecutersKey(task1));
+    });
   });
   describe("getMaxNumJob", function () {
     //eslint-disable-next-line no-unused-vars
@@ -560,6 +589,13 @@ describe("UT for executerManager class", function () {
       expect(executer).to.be.an.instanceof(RemoteJobWebAPIExecuter);
       expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, `create new executer for ${task.host} with web API`);
     });
+    it("should create a StepjobTaskExecuter for a stepjobTask (issue #764)", function () {
+      const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true, type: "stepjobTask", host: "remoteHost" };
+      const hostinfo = { host: "remoteHost", jobScheduler: "validScheduler" };
+      const executer = createExecuter(task, hostinfo);
+      expect(executer).to.be.an.instanceof(StepjobTaskExecuter);
+      expect(executer).to.be.an.instanceof(RemoteJobExecuter);
+    });
     it("should throw an error if an invalid job scheduler is specified", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true };
 
@@ -625,6 +661,78 @@ describe("UT for executerManager class", function () {
       _internal.executers.set(`${mockTask.projectRootDir}-${mockTask.remotehostID}-${mockTask.useJobScheduler}`, mockExecuter);
       getSshHostinfoStub.returns({ jobScheduler: "invalidScheduler" });
       await expect(register(mockTask)).to.be.rejectedWith(Error, "illegal job scheduler");
+    });
+  });
+  describe("StepjobTaskExecuter (issue #764)", function () {
+    afterEach(()=>{
+      sinon.restore();
+    });
+    it("should have unbounded maxConcurrent regardless of hostinfo.numJob", function () {
+      sinon.stub(_internal, "jobScheduler").value({ Fugaku: {} });
+      const hostinfo = { host: "fugakuHost", jobScheduler: "Fugaku", numJob: "1" };
+      const executer = new StepjobTaskExecuter(hostinfo);
+      expect(executer.batch.maxConcurrent).to.equal(Number.MAX_SAFE_INTEGER);
+    });
+    it("setMaxNumJob() should be a no-op, so register()'s reuse path can't clobber it back down", function () {
+      sinon.stub(_internal, "jobScheduler").value({ Fugaku: {} });
+      const hostinfo = { host: "fugakuHost", jobScheduler: "Fugaku", numJob: "1" };
+      const executer = new StepjobTaskExecuter(hostinfo);
+      executer.setMaxNumJob(1);
+      expect(executer.batch.maxConcurrent).to.equal(Number.MAX_SAFE_INTEGER);
+    });
+  });
+  describe("stepjobTask submission concurrency (issue #764 regression)", function () {
+    this.timeout(5000);
+    const testDir = path.resolve(testDirRoot, "stepjobConcurrency");
+
+    beforeEach(async ()=>{
+      await fs.ensureDir(testDir);
+      eventEmitters.set(testDir, new EventEmitter());
+      sinon.stub(_internal, "getSshHostinfo").returns({ host: "fugakuHost", jobScheduler: "Fugaku", numJob: "1" });
+      sinon.stub(_internal, "jobScheduler").value({ Fugaku: {} });
+    });
+    afterEach(async ()=>{
+      sinon.restore();
+      _internal.executers.clear();
+      eventEmitters.delete(testDir);
+      await fs.remove(testDir);
+    });
+
+    it("dispatches a stepjobTask without waiting for a sibling stepjobTask sharing the same host to finish, even when hostinfo.numJob=1", async function () {
+      let resolveFirst;
+      const firstStarted = sinon.stub();
+      const secondStarted = sinon.stub();
+      //NOTE: exec() is stubbed at the class level (not createExecuter/submit) so this test
+      //exercises the real StepjobTaskExecuter/SBS queue - the actual layer issue #764's bug
+      //lived in - rather than mocking that behavior away like the "register" tests above do
+      sinon.stub(RemoteJobExecuter.prototype, "exec").callsFake(async (task)=>{
+        if (task.name === "step0") {
+          firstStarted();
+          return new Promise((resolve)=>{
+            resolveFirst = resolve;
+          });
+        }
+        secondStarted();
+        return 0;
+      });
+
+      const task0 = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", name: "step0", host: "fugakuHost", jobStatus: null };
+      const task1 = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", name: "step1", host: "fugakuHost", jobStatus: null };
+
+      const p0 = register(task0);
+      //speed up SBS's dispatch interval for this test instead of waiting out the real
+      //multi-second job-submission interval
+      const executer = _internal.executers.get(getExecutersKey(task0));
+      executer.batch.interval = 10;
+
+      const p1 = register(task1);
+      await p1;
+
+      expect(firstStarted).to.have.been.calledOnce;
+      expect(secondStarted).to.have.been.calledOnce;
+
+      resolveFirst(0);
+      await p0;
     });
   });
   describe("cancel", function () {
