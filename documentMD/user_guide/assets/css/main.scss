@@ -9,3 +9,51 @@ $max-width: 90%;
 
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // skin
 @import "minimal-mistakes"; // main partials
+
+/* Click-to-zoom lightbox for documentation images (issue #811) */
+.page__content img {
+  cursor: zoom-in;
+}
+
+.wheel-lightbox-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.85);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 2em;
+  box-sizing: border-box;
+}
+
+.wheel-lightbox-overlay.is-visible {
+  display: flex;
+}
+
+.wheel-lightbox-overlay img {
+  max-width: 100%;
+  max-height: 85vh;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
+  cursor: default;
+}
+
+.wheel-lightbox-caption {
+  color: #fff;
+  margin-top: 0.75em;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.wheel-lightbox-close {
+  position: absolute;
+  top: 1em;
+  right: 1.5em;
+  color: #fff;
+  font-size: 2em;
+  line-height: 1;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
