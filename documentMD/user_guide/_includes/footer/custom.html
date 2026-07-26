@@ -4,3 +4,54 @@
 	{% endfor %}
 </div>
 
+<div class="wheel-lightbox-overlay" id="wheel-lightbox">
+  <button type="button" class="wheel-lightbox-close" aria-label="Close">&times;</button>
+  <img src="" alt="">
+  <div class="wheel-lightbox-caption"></div>
+</div>
+
+<script>
+(function () {
+  var overlay = document.getElementById("wheel-lightbox");
+  var overlayImg = overlay.querySelector("img");
+  var caption = overlay.querySelector(".wheel-lightbox-caption");
+  var closeBtn = overlay.querySelector(".wheel-lightbox-close");
+  var content = document.querySelector(".page__content");
+
+  function openLightbox(img) {
+    overlayImg.src = img.currentSrc || img.src;
+    var text = img.title || img.alt || "";
+    caption.textContent = text;
+    caption.style.display = text ? "" : "none";
+    overlay.classList.add("is-visible");
+  }
+
+  function closeLightbox() {
+    overlay.classList.remove("is-visible");
+    overlayImg.src = "";
+  }
+
+  if (content) {
+    content.addEventListener("click", function (event) {
+      var img = event.target.closest("img");
+      if (!img || event.target.closest("a")) {
+        return;
+      }
+      openLightbox(img);
+    });
+  }
+
+  overlay.addEventListener("click", function (event) {
+    if (event.target === overlay || event.target === closeBtn) {
+      closeLightbox();
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && overlay.classList.contains("is-visible")) {
+      closeLightbox();
+    }
+  });
+})();
+</script>
+
