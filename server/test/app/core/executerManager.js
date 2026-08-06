@@ -486,29 +486,42 @@ describe("UT for executerManager class", function () {
       const result = getExecutersKey(task);
       expect(result).to.equal("undefined-remoteHost-false");
     });
-    it("stepjobTask produces a different key than an otherwise-identical task (issue #764)", function () {
+    it("a stepjobTask head (previous.length===0) produces the same key as an ordinary task (issue #764 follow-up)", function () {
       const task = {
         projectRootDir: "/mock/project",
         remotehostID: "remoteHost",
-        useJobScheduler: true
+        useJobScheduler: true,
+        previous: []
       };
-      const stepjobTask = { ...task, type: "stepjobTask" };
-      expect(getExecutersKey(stepjobTask)).to.not.equal(getExecutersKey(task));
+      const stepjobHead = { ...task, type: "stepjobTask" };
+      expect(getExecutersKey(stepjobHead)).to.equal(getExecutersKey(task));
     });
-    it("two stepjobTasks differing only in parentName/stepnum collide into the same key (issue #764)", function () {
+    it("a stepjobTask child (previous.length>0) produces a different key than an otherwise-identical task (issue #764)", function () {
+      const task = {
+        projectRootDir: "/mock/project",
+        remotehostID: "remoteHost",
+        useJobScheduler: true,
+        previous: []
+      };
+      const stepjobChild = { ...task, type: "stepjobTask", previous: ["headID"] };
+      expect(getExecutersKey(stepjobChild)).to.not.equal(getExecutersKey(task));
+    });
+    it("two stepjobTask children differing only in parentName/stepnum collide into the same key (issue #764)", function () {
       const task0 = {
         projectRootDir: "/mock/project",
         remotehostID: "remoteHost",
         useJobScheduler: true,
         type: "stepjobTask",
+        previous: ["headID"],
         parentName: "sj0",
-        stepnum: 0
+        stepnum: 1
       };
       const task1 = {
         projectRootDir: "/mock/project",
         remotehostID: "remoteHost",
         useJobScheduler: true,
         type: "stepjobTask",
+        previous: ["headID"],
         parentName: "sj1",
         stepnum: 1
       };
@@ -589,12 +602,19 @@ describe("UT for executerManager class", function () {
       expect(executer).to.be.an.instanceof(RemoteJobWebAPIExecuter);
       expect(loggerDebugStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, `create new executer for ${task.host} with web API`);
     });
-    it("should create a StepjobTaskExecuter for a stepjobTask (issue #764)", function () {
-      const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true, type: "stepjobTask", host: "remoteHost" };
+    it("should create a StepjobTaskExecuter for a stepjobTask child (previous.length>0) (issue #764)", function () {
+      const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true, type: "stepjobTask", previous: ["headID"], host: "remoteHost" };
       const hostinfo = { host: "remoteHost", jobScheduler: "validScheduler" };
       const executer = createExecuter(task, hostinfo);
       expect(executer).to.be.an.instanceof(StepjobTaskExecuter);
       expect(executer).to.be.an.instanceof(RemoteJobExecuter);
+    });
+    it("should create a plain RemoteJobExecuter (not StepjobTaskExecuter) for a stepjobTask head (previous.length===0) (issue #764 follow-up)", function () {
+      const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true, type: "stepjobTask", previous: [], host: "remoteHost" };
+      const hostinfo = { host: "remoteHost", jobScheduler: "validScheduler" };
+      const executer = createExecuter(task, hostinfo);
+      expect(executer).to.be.an.instanceof(RemoteJobExecuter);
+      expect(executer).to.not.be.an.instanceof(StepjobTaskExecuter);
     });
     it("should throw an error if an invalid job scheduler is specified", function () {
       const task = { projectRootDir: "/test/project", remotehostID: "remoteHost", useJobScheduler: true };
@@ -681,7 +701,7 @@ describe("UT for executerManager class", function () {
       expect(executer.batch.maxConcurrent).to.equal(Number.MAX_SAFE_INTEGER);
     });
   });
-  describe("stepjobTask submission concurrency (issue #764 regression)", function () {
+  describe("stepjobTask head/child concurrency & gating (issue #764 follow-up)", function () {
     this.timeout(5000);
     const testDir = path.resolve(testDirRoot, "stepjobConcurrency");
 
@@ -694,19 +714,23 @@ describe("UT for executerManager class", function () {
     afterEach(async ()=>{
       sinon.restore();
       _internal.executers.clear();
+      _internal.stepjobHeadDeferreds.clear();
       eventEmitters.delete(testDir);
       await fs.remove(testDir);
     });
 
-    it("dispatches a stepjobTask without waiting for a sibling stepjobTask sharing the same host to finish, even when hostinfo.numJob=1", async function () {
+    it("dispatches a stepjobTask child without waiting for a sibling stepjobTask child sharing the same host to finish, even when hostinfo.numJob=1", async function () {
       let resolveFirst;
       const firstStarted = sinon.stub();
       const secondStarted = sinon.stub();
+      //the head's job ID is already confirmed so both children pass the wait immediately -
+      //this test is about the SBS queue's own concurrency, not the head-gating itself
+      _internal.getStepjobHeadDeferred(`${testDir}-containerID`).resolve("headJobID");
       //NOTE: exec() is stubbed at the class level (not createExecuter/submit) so this test
       //exercises the real StepjobTaskExecuter/SBS queue - the actual layer issue #764's bug
       //lived in - rather than mocking that behavior away like the "register" tests above do
       sinon.stub(RemoteJobExecuter.prototype, "exec").callsFake(async (task)=>{
-        if (task.name === "step0") {
+        if (task.name === "step1") {
           firstStarted();
           return new Promise((resolve)=>{
             resolveFirst = resolve;
@@ -716,8 +740,8 @@ describe("UT for executerManager class", function () {
         return 0;
       });
 
-      const task0 = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", name: "step0", host: "fugakuHost", jobStatus: null };
-      const task1 = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", name: "step1", host: "fugakuHost", jobStatus: null };
+      const task0 = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", previous: ["headID"], parent: "containerID", name: "step1", host: "fugakuHost", jobStatus: null };
+      const task1 = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", previous: ["headID"], parent: "containerID", name: "step2", host: "fugakuHost", jobStatus: null };
 
       const p0 = register(task0);
       //speed up SBS's dispatch interval for this test instead of waiting out the real
@@ -733,6 +757,150 @@ describe("UT for executerManager class", function () {
 
       resolveFirst(0);
       await p0;
+    });
+
+    it("throttles two stepjobTask heads sharing a host by hostinfo.numJob, same as ordinary job-scheduler tasks", async function () {
+      let resolveFirst;
+      const firstStarted = sinon.stub();
+      const secondStarted = sinon.stub();
+      sinon.stub(RemoteJobExecuter.prototype, "exec").callsFake(async (task)=>{
+        if (task.name === "head0") {
+          firstStarted();
+          return new Promise((resolve)=>{
+            resolveFirst = resolve;
+          });
+        }
+        secondStarted();
+        return 0;
+      });
+
+      const task0 = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", previous: [], parent: "containerA", name: "head0", host: "fugakuHost", jobStatus: null };
+      const task1 = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", previous: [], parent: "containerB", name: "head1", host: "fugakuHost", jobStatus: null };
+
+      const p0 = register(task0);
+      const executer = _internal.executers.get(getExecutersKey(task0));
+      executer.batch.interval = 10;
+      const p1 = register(task1);
+
+      //give the (speeded-up) SBS queue a moment to attempt dispatching task1 - it must
+      //NOT have started yet, since task0 still holds the only hostinfo.numJob=1 slot
+      await new Promise((resolve)=>{
+        setTimeout(resolve, 50);
+      });
+      expect(firstStarted).to.have.been.calledOnce;
+      expect(secondStarted).to.not.have.been.called;
+
+      resolveFirst(0);
+      await p0;
+      await p1;
+      expect(secondStarted).to.have.been.calledOnce;
+    });
+
+    it("does not submit a child until its head task's job ID is confirmed, then proceeds (issue #764 follow-up, upgraded after real-Fugaku testing showed the weaker \"running\" signal still races)", async function () {
+      const started = sinon.stub();
+      sinon.stub(RemoteJobExecuter.prototype, "exec").callsFake(async ()=>{
+        started();
+        return 0;
+      });
+
+      const task = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", previous: ["headID"], parent: "containerID", name: "step1", host: "fugakuHost", jobStatus: null };
+
+      //pre-create the executer with a fast dispatch interval and register it under this
+      //task's key *before* calling register() - SBS's qsub() reads the interval at call
+      //time, and register()'s own qsub() call happens synchronously, so overriding the
+      //interval only after calling register() (as the multi-task tests above do, riding
+      //on a second task's fresh qsub()) is too late for a single-task test like this one
+      const executer = new StepjobTaskExecuter({ host: "fugakuHost", jobScheduler: "Fugaku", numJob: "1" });
+      executer.batch.interval = 10;
+      _internal.executers.set(getExecutersKey(task), executer);
+
+      const p = register(task);
+
+      await new Promise((resolve)=>{
+        setTimeout(resolve, 50);
+      });
+      expect(started).to.not.have.been.called;
+
+      _internal.getStepjobHeadDeferred(`${testDir}-containerID`).resolve("headJobID");
+
+      await p;
+      expect(started).to.have.been.calledOnce;
+    });
+
+    it("does not hang if the head's job ID is already confirmed before the child starts waiting (race safety)", async function () {
+      sinon.stub(RemoteJobExecuter.prototype, "exec").resolves(0);
+      _internal.getStepjobHeadDeferred(`${testDir}-containerID`).resolve("headJobID");
+
+      const task = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", previous: ["headID"], parent: "containerID", name: "step1", host: "fugakuHost", jobStatus: null };
+
+      const executer = new StepjobTaskExecuter({ host: "fugakuHost", jobScheduler: "Fugaku", numJob: "1" });
+      executer.batch.interval = 10;
+      _internal.executers.set(getExecutersKey(task), executer);
+
+      const p = register(task);
+
+      await expect(p).to.eventually.be.fulfilled;
+    });
+
+    it("keys the head-wait deferred per stepjob container instance, so resolving one chain's head does not unblock another chain's child", async function () {
+      const startedA = sinon.stub();
+      const startedB = sinon.stub();
+      sinon.stub(RemoteJobExecuter.prototype, "exec").callsFake(async (task)=>{
+        if (task.parent === "containerA") {
+          startedA();
+        } else {
+          startedB();
+        }
+        return 0;
+      });
+      _internal.getStepjobHeadDeferred(`${testDir}-containerB`).resolve("headJobIDB");
+
+      const taskA = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", previous: ["headA"], parent: "containerA", name: "a-step1", host: "fugakuHost", jobStatus: null };
+      const taskB = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", previous: ["headB"], parent: "containerB", name: "b-step1", host: "fugakuHost", jobStatus: null };
+
+      //taskA and taskB share the same executer key (same host, both stepjobTask children) -
+      //registering one fast executer under that shared key covers both
+      const executer = new StepjobTaskExecuter({ host: "fugakuHost", jobScheduler: "Fugaku", numJob: "1" });
+      executer.batch.interval = 10;
+      _internal.executers.set(getExecutersKey(taskA), executer);
+
+      const pB = register(taskB);
+      await pB;
+      expect(startedB).to.have.been.calledOnce;
+
+      const pA = register(taskA);
+      await new Promise((resolve)=>{
+        setTimeout(resolve, 50);
+      });
+      expect(startedA).to.not.have.been.called;
+
+      _internal.getStepjobHeadDeferred(`${testDir}-containerA`).resolve("headJobIDA");
+      await pA;
+      expect(startedA).to.have.been.calledOnce;
+    });
+
+    it("releases a child parked waiting for its head's job ID when it is canceled, instead of hanging forever", async function () {
+      //head's job ID is never confirmed in this test - the child must be released via cancel()
+      sinon.stub(RemoteJobExecuter.prototype, "exec").resolves(0);
+      sinon.stub(_internal.remoteHost, "getID").returns("fugakuHost");
+
+      const task = { projectRootDir: testDir, workingDir: testDir, remotehostID: "fugakuHost", useJobScheduler: true, type: "stepjobTask", previous: ["headID"], parent: "containerID", name: "step1", host: "fugakuHost", jobStatus: null };
+
+      const executer = new StepjobTaskExecuter({ host: "fugakuHost", jobScheduler: "Fugaku", numJob: "1" });
+      executer.batch.interval = 10;
+      _internal.executers.set(getExecutersKey(task), executer);
+
+      const p = register(task);
+
+      //let SBS actually dispatch into exec() so it reaches the wait point and registers
+      //its cancel signal, before we try to cancel it
+      await new Promise((resolve)=>{
+        setTimeout(resolve, 50);
+      });
+
+      cancel(task);
+
+      await expect(p).to.be.rejected;
     });
   });
   describe("cancel", function () {

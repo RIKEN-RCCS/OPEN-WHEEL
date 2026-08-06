@@ -25,8 +25,28 @@ const _internal = {
   getSshHostinfo,
   jobScheduler,
   numLocalJob,
-  remoteHost
+  remoteHost,
+  getStepjobHeadDeferred,
+  stepjobHeadDeferreds: new Map()
 };
+
+/**
+ * get (creating if absent) the deferred promise a stepjobTask chain's children wait on
+ * before submitting, resolved once the chain's head task's job ID is confirmed
+ * @param {string} key - `${projectRootDir}-${stepjobContainerID}`
+ * @returns {object} - { promise, resolve, reject }
+ */
+function getStepjobHeadDeferred(key) {
+  if (!_internal.stepjobHeadDeferreds.has(key)) {
+    let resolve, reject;
+    const promise = new Promise((res, rej)=>{
+      resolve = res;
+      reject = rej;
+    });
+    _internal.stepjobHeadDeferreds.set(key, { promise, resolve, reject });
+  }
+  return _internal.stepjobHeadDeferreds.get(key);
+}
 
 /**
  * determine if job submission failed due to limitation or not
@@ -386,22 +406,67 @@ class RemoteJobExecuter extends Executer {
     task.jobID = jobID;
     loggerWrapper.logInfo(task.projectRootDir, task.workingDir, "submit success:", submitCmd, ",", jobID);
     task.jobSubmittedTime = getDateString(true, true);
+    //a stepjobTask chain's head just got its job ID confirmed - real Fugaku testing showed
+    //submitting a child's --step before this point (even just after the head starts running,
+    //not yet submitted) can race with the head's own pjsub and get rejected outright, so
+    //StepjobTaskExecuter (children) waits on this before submitting its own job
+    if (task.type === "stepjobTask" && task.previous.length === 0) {
+      _internal.getStepjobHeadDeferred(`${task.projectRootDir}-${task.parent}`).resolve(jobID);
+    }
     return registerJob(hostinfo, task);
   }
 }
 
 //stepjobTask's job-scheduler-side chaining (--step, see makeStepOpt()) means the scheduler -
 //not WHEEL - enforces execution order between steps, so this queue must not throttle
-//submission the way the regular per-host job queue intentionally does.
+//submission the way the regular per-host job queue intentionally does. Only non-head
+//stepjobTasks (task.previous.length > 0) are routed here - the chain's head is routed to
+//an ordinary RemoteJobExecuter instead, so it stays maxNumJob-throttled like any other
+//job-scheduler task (see getExecutersKey()/createExecuter()).
 class StepjobTaskExecuter extends RemoteJobExecuter {
   constructor(hostinfo) {
     super(hostinfo, true);
     this.batch.maxConcurrent = Number.MAX_SAFE_INTEGER;
+    this._cancelSignals = new Map(); //sbsID -> resolve fn, lets cancel() interrupt the wait in exec()
   }
 
   setMaxNumJob() {
     //intentionally a no-op: register()'s reuse path calls this on every re-registration
     //with the host's numJob-derived cap, which must not be applied to this queue
+  }
+
+  //wait until the chain's head task's job ID is confirmed (see RemoteJobExecuter.exec())
+  //before this child submits its own. dispatcher never awaits task execution (fire-and-forget,
+  //so canceled tasks aren't left blocked forever inside it) - this wait mirrors that guarantee
+  //via cancel() below instead, since it lives entirely inside this executer rather than in
+  //the dispatcher.
+  async exec(task) {
+    const key = `${task.projectRootDir}-${task.parent}`;
+    const canceled = await Promise.race([
+      _internal.getStepjobHeadDeferred(key).promise.then(()=>{
+        return false;
+      }),
+      new Promise((resolve)=>{
+        this._cancelSignals.set(task.sbsID, ()=>{
+          resolve(true);
+        });
+      })
+    ]);
+    this._cancelSignals.delete(task.sbsID);
+    if (canceled) {
+      const err = new Error("canceled while waiting for stepjob chain's head job to be submitted");
+      err.canceled = true;
+      return Promise.reject(err);
+    }
+    return super.exec(task);
+  }
+
+  cancel(task) {
+    const signal = this._cancelSignals.get(task.sbsID);
+    if (typeof signal === "function") {
+      signal();
+    }
+    return super.cancel(task);
   }
 }
 
@@ -561,7 +626,8 @@ class LocalTaskExecuter extends Executer {
  * @returns {string} - key string
  */
 function getExecutersKey(task) {
-  const stepjobSuffix = task.type === "stepjobTask" ? "-stepjob" : "";
+  const isStepjobChild = task.type === "stepjobTask" && task.previous.length > 0;
+  const stepjobSuffix = isStepjobChild ? "-stepjob" : "";
   return `${task.projectRootDir}-${task.remotehostID}-${task.useJobScheduler}${stepjobSuffix}`;
 }
 
@@ -601,7 +667,7 @@ function createExecuter(task, hostinfo) {
       loggerWrapper.logDebug(task.projectRootDir, task.workingDir, `create new executer for ${task.host} with web API`);
       return new RemoteJobWebAPIExecuter(hostinfo, true);
     }
-    if (task.type === "stepjobTask") {
+    if (task.type === "stepjobTask" && task.previous.length > 0) {
       loggerWrapper.logDebug(task.projectRootDir, task.workingDir, `create new executer for ${task.host} for stepjobTask`);
       return new StepjobTaskExecuter(hostinfo);
     }
@@ -682,6 +748,12 @@ function removeExecuters(projectRootDir) {
   });
   keysToRemove.forEach((key)=>{
     _internal.executers.delete(key);
+  });
+  const deferredKeysToRemove = Array.from(_internal.stepjobHeadDeferreds.keys()).filter((key)=>{
+    return key.startsWith(projectRootDir);
+  });
+  deferredKeysToRemove.forEach((key)=>{
+    _internal.stepjobHeadDeferreds.delete(key);
   });
 }
 
