@@ -12,6 +12,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: eWaterCycle/setup-apptainer@v2
+      - name: stamp version.json for this build
+        # master is branch-protected (rejects direct pushes even from Actions bots),
+        # so this can't be committed back - it only needs to be baked into the
+        # artifacts built below, which the Dockerfile's `COPY server server` picks up
+        # from this worktree.
+        run: |
+          case "${BRANCH_NAME}" in
+            master) TYPE=release ;;
+            maintenance*) TYPE=maintenance ;;
+            *) TYPE=beta ;;
+          esac
+          VERSION_NUMBER="$(date '+%Y-%m%d-%H%M%S')-${TYPE}"
+          echo "{\"version\": \"${VERSION_NUMBER}\" }" > server/app/db/version.json
+          cat server/app/db/version.json
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME}
