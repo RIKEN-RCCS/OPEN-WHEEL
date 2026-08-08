@@ -1,29 +1,33 @@
 name: build and deploy container
 on:
-  pull_request_target:
-    types:
-      - closed
+  workflow_dispatch:
 jobs:
   build_and_deploy:
-    if: github.event.pull_request.merged == true
     env:
       DOCKER_USER_NAME: ${{ vars.DOCKER_USER_NAME }}
       DOCKER_CONTAINER_NAME: ${{ vars.DOCKER_CONTAINER_NAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      BRANCH_NAME: ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: eWaterCycle/setup-apptainer@v2
-      - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME} .
+      - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
-      - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}
-      - run: apptainer build wheel.sif docker-daemon://${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:latest
+      - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME}
+      - run: docker save ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} | gzip > wheel_docker.tar.gz
+      - run: apptainer build wheel.sif docker-daemon://${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME}
+      - run: git archive --format=tar.gz --prefix=OpenWHEEL-${BRANCH_NAME}/ -o source.tar.gz HEAD
       - name: create release and upload artifact
         uses: softprops/action-gh-release@v1
         with:
-          files: wheel.sif
-          tag_name: ${{ github.run_id }}
-          body: "release for ${{ github.sha }}"
+          files: |
+            wheel.sif
+            wheel_docker.tar.gz
+            source.tar.gz
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: "release for ${{ github.ref_name }} @ ${{ github.sha }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   backup:
