@@ -102,7 +102,14 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
           echo "DEBUG: step summary write exit code: $?, file now has $(wc -l < "$GITHUB_STEP_SUMMARY") lines"
-      - run: echo "VERSION_NUMBER=`date '+%Y-%m%d-%H%M%S'`" >>$GITHUB_ENV
+      - name: determine release type from branch name
+        run: |
+          case "${{ github.ref_name }}" in
+            master) TYPE=release ;;
+            maintenance*) TYPE=maintenance ;;
+            *) TYPE=beta ;;
+          esac
+          echo "VERSION_NUMBER=$(date '+%Y-%m%d-%H%M%S')-${TYPE}" >>$GITHUB_ENV
       - run: cat  server/app/db/version.json
       - name: update version.json
         id: create-json
