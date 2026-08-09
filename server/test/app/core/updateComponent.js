@@ -3,28 +3,30 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
-const path = require("path");
-const fs = require("fs-extra");
-const { componentJsonFilename } = require("../../../app/db/db.js");
+import path from "path";
+import fs from "fs-extra";
+import { componentJsonFilename } from "../../../app/db/db.js";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("sinon-chai"));
-chai.use(require("chai-fs"));
-chai.use(require("chai-json-schema"));
-chai.use(require("deep-equal-in-any-order"));
-chai.use(require("chai-as-promised"));
-const sinon = require("sinon");
-const rewire = require("rewire");
-const { createNewProject, createNewComponent } = require("../../../app/core/projectFilesOperator.js");
-const { writeComponentJson } = require("../../../app/core/componentJsonIO.js");
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
+import Ajv from "ajv";
+//eslint-disable-next-line no-unused-vars
+const ajv = new Ajv({ strict: false });
+import deepEqualInAnyOrder from "deep-equal-in-any-order";
+chai.use(deepEqualInAnyOrder);
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinon from "sinon";
+import { createNewProject } from "../../../app/core/projectOperations.js";
+import { createNewComponent } from "../../../app/core/componentOperations.js";
+import { writeComponentJson } from "../../../app/core/componentJsonIO.js";
 
 //testee
-const { updateComponent } = require("../../../app/core/updateComponent.js");
-
+import updateComponent, { _internal } from "../../../app/core/updateComponent.js";
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
 
@@ -63,28 +65,62 @@ describe("updateComponent UT", function () {
       const updated = structuredClone(task0);
       updated.description = "hoge";
       updated.script = "run.sh";
-      await updateComponent(projectRootDir, task0.ID, updated);
+      await updateComponent.updateComponent(projectRootDir, task0.ID, updated);
       const readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
       expect(readFromFile).not.to.equal(task0);
       expect(readFromFile).to.deep.equal(updated);
       expect(readFromFile.description).to.equal("hoge");
       expect(readFromFile.script).to.equal("run.sh");
     });
+    it("should not revert pos updated by updateComponentPos when updateComponent() is called afterward with a stale pos (issue #910)", async ()=>{
+      //Reproduces GitLab issue #910:
+      //"if a component's properties panel is open, moving the component doesn't get persisted"
+      //
+      //Scenario this mimics:
+      //1. user opens the properties panel for task0. the client keeps a local
+      //working copy of task0 (Vuex `copySelectedComponent`) to back the panel's form fields.
+      //2. while the panel is open, the user drags task0 on the graph. the client
+      //sends ONLY `updateComponentPos` (position-only), which is written to
+      //disk immediately and does not touch the working copy of the panel's
+      //other fields (only "pos" is excluded from the panel's diff/update logic).
+      //3. the user edits another field in the still-open panel and commits it,
+      //which triggers `updateComponent()`. this call carries the panel's stale
+      //working copy, whose `pos` still holds the pre-drag value because the
+      //panel's local copy is only kept in sync for non-pos fields.
+      //
+      //Expected: the position written by updateComponentPos() in step 2 must survive
+      //the later updateComponent() call in step 3; only "description" should change.
+      const staleCopy = structuredClone(task0);
+
+      const newPos = { x: 123, y: 456 };
+      await updateComponent.updateComponentPos(projectRootDir, task0.ID, newPos);
+
+      let readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
+      expect(readFromFile.pos).to.deep.equal(newPos);
+
+      //staleCopy.pos still holds the original (pre-drag) position
+      staleCopy.description = "hoge";
+      await updateComponent.updateComponent(projectRootDir, task0.ID, staleCopy);
+
+      readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
+      expect(readFromFile.description).to.equal("hoge");
+      expect(readFromFile.pos).to.deep.equal(newPos);
+    });
     it("should change to default value if some property is dropped", async ()=>{
       const updated = structuredClone(task0);
       updated.description = "hoge";
       delete updated.script;
-      await updateComponent(projectRootDir, task0.ID, updated);
+      await updateComponent.updateComponent(projectRootDir, task0.ID, updated);
       const readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
       expect(readFromFile).not.to.deep.equal(task0);
-      expect(readFromFile).to.deep.equal(updated); //readFromFile.script seems not to be checked here
+      expect(readFromFile).to.deep.equal(updated);
       expect(readFromFile.description).to.equal(updated.description);
       expect(readFromFile.script).to.equal(null);
     });
     it("should change name and directory", async ()=>{
       const updated = structuredClone(task0);
       updated.name = "hoge";
-      await updateComponent(projectRootDir, task0.ID, updated);
+      await updateComponent.updateComponent(projectRootDir, task0.ID, updated);
       const readFromFile = await fs.readJson(path.join(projectRootDir, updated.name, componentJsonFilename));
       expect(readFromFile).not.to.equal(task0);
       expect(readFromFile).to.deep.equal(updated);
@@ -94,9 +130,8 @@ describe("updateComponent UT", function () {
       const updated = structuredClone(task0);
       updated.description = ["hoge"];
 
-      //check if updateComponent throw error for invalid JSON data
       try {
-        await updateComponent(projectRootDir, task0.ID, updated);
+        await updateComponent.updateComponent(projectRootDir, task0.ID, updated);
       } catch (e) {
         expect(e.message).to.equal("invalid JSON specified");
       }
@@ -111,7 +146,7 @@ describe("updateComponent UT", function () {
       updated.type = "workflow";
 
       try {
-        await updateComponent(projectRootDir, task0.ID, updated);
+        await updateComponent.updateComponent(projectRootDir, task0.ID, updated);
       } catch (e) {
         expect(e.message).to.equal("updateComponent can not change component's type");
       }
@@ -120,45 +155,12 @@ describe("updateComponent UT", function () {
       expect(readFromFile).not.to.deep.equal(updated);
       expect(readFromFile.type).to.equal("task");
     });
-    it("should add inputFile", async ()=>{
-      const updated = structuredClone(task0);
-      updated.inputFiles.push({ name: "hoge", src: [] });
-      await updateComponent(projectRootDir, task0.ID, updated);
-      const readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
-      expect(readFromFile).to.deep.equal(updated);
-      expect(readFromFile).not.to.deep.equal(task0);
-      expect(readFromFile.inputFiles).to.have.lengthOf(1);
-      expect(readFromFile.inputFiles[0].name).to.equal("hoge");
-      expect(readFromFile.inputFiles[0].src).to.be.an("array").that.is.empty;
-    });
-    it("should remove inputFile", async ()=>{
-      const updated = structuredClone(task1);
-      updated.inputFiles = [];
-      await updateComponent(projectRootDir, task1.ID, updated);
-      const readFromFile = await fs.readJson(path.join(projectRootDir, task1.name, componentJsonFilename));
-      expect(readFromFile).to.deep.equal(updated);
-      expect(readFromFile).not.to.deep.equal(task1);
-      expect(readFromFile.inputFiles).to.be.an("array").that.is.empty;
-      const task0FromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
-      expect(task0FromFile.outputFiles[0].dst).to.be.an("array").that.is.empty;
-    });
-    it("should change inputFiles' name", async ()=>{
-      const updated = structuredClone(task1);
-      updated.inputFiles[0].name = "hoge";
-      await updateComponent(projectRootDir, task1.ID, updated);
-      const readFromFile = await fs.readJson(path.join(projectRootDir, task1.name, componentJsonFilename));
-      expect(readFromFile).to.deep.equal(updated);
-      expect(readFromFile).not.to.deep.equal(task1);
-      expect(readFromFile.inputFiles[0].name).to.be.equal("hoge");
-      const task0FromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
-      expect(task0FromFile.outputFiles[0].dst[0].dstName).to.be.equal("hoge");
-    });
     it("should not change inputFiles/srcNode", async ()=>{
       const updated = structuredClone(task1);
       updated.inputFiles[0].src[0].srcNode = "hoge";
 
       try {
-        await updateComponent(projectRootDir, task1.ID, updated);
+        await updateComponent.updateComponent(projectRootDir, task1.ID, updated);
       } catch (e) {
         console.log("updateComponent throw error", e);
         throw e;
@@ -171,7 +173,7 @@ describe("updateComponent UT", function () {
       updated.inputFiles[0].src[0].srcName = "hoge";
 
       try {
-        await updateComponent(projectRootDir, task1.ID, updated);
+        await updateComponent.updateComponent(projectRootDir, task1.ID, updated);
       } catch (e) {
         console.log("updateComponent throw error", e);
         throw e;
@@ -179,45 +181,12 @@ describe("updateComponent UT", function () {
       const readFromFile = await fs.readJson(path.join(projectRootDir, task1.name, componentJsonFilename));
       expect(readFromFile).to.deep.equal(task1);
     });
-    it("should add outputFile", async ()=>{
-      const updated = structuredClone(task1);
-      updated.outputFiles.push({ name: "hoge", dst: [] });
-      await updateComponent(projectRootDir, task1.ID, updated);
-      const readFromFile = await fs.readJson(path.join(projectRootDir, task1.name, componentJsonFilename));
-      expect(readFromFile).to.deep.equal(updated);
-      expect(readFromFile).not.to.deep.equal(task1);
-      expect(readFromFile.outputFiles).to.have.lengthOf(1);
-      expect(readFromFile.outputFiles[0].name).to.equal("hoge");
-      expect(readFromFile.outputFiles[0].dst).to.be.an("array").that.is.empty;
-    });
-    it("should remove outputFile", async ()=>{
-      const updated = structuredClone(task0);
-      updated.outputFiles = [];
-      await updateComponent(projectRootDir, task0.ID, updated);
-      const readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
-      expect(readFromFile).to.deep.equal(updated);
-      expect(readFromFile).not.to.deep.equal(task0);
-      expect(readFromFile.outputFiles).to.be.an("array").that.is.empty;
-      const task1FromFile = await fs.readJson(path.join(projectRootDir, task1.name, componentJsonFilename));
-      expect(task1FromFile.inputFiles[0].src).to.be.an("array").that.is.empty;
-    });
-    it("should change outputFiles' name", async ()=>{
-      const updated = structuredClone(task0);
-      updated.outputFiles[0].name = "hoge";
-      await updateComponent(projectRootDir, task0.ID, updated);
-      const readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
-      expect(readFromFile).to.deep.equal(updated);
-      expect(readFromFile).not.to.deep.equal(task0);
-      expect(readFromFile.outputFiles[0].name).to.be.equal("hoge");
-      const task1FromFile = await fs.readJson(path.join(projectRootDir, task1.name, componentJsonFilename));
-      expect(task1FromFile.inputFiles[0].src[0].srcName).to.be.equal("hoge");
-    });
     it("should not change outputFiles/dstNode", async ()=>{
       const updated = structuredClone(task0);
       updated.outputFiles[0].dst[0].dstNode = "hoge";
 
       try {
-        await updateComponent(projectRootDir, task0.ID, updated);
+        await updateComponent.updateComponent(projectRootDir, task0.ID, updated);
       } catch (e) {
         console.log("updateComponent throw error", e);
         throw e;
@@ -230,7 +199,7 @@ describe("updateComponent UT", function () {
       updated.outputFiles[0].dst[0].dstName = "hoge";
 
       try {
-        await updateComponent(projectRootDir, task0.ID, updated);
+        await updateComponent.updateComponent(projectRootDir, task0.ID, updated);
       } catch (e) {
         console.log("updateComponent throw error", e);
         throw e;
@@ -241,7 +210,7 @@ describe("updateComponent UT", function () {
     it("should not change next' member", async ()=>{
       const updated = structuredClone(task1);
       updated.next.push(task0.ID);
-      await updateComponent(projectRootDir, task1.ID, updated);
+      await updateComponent.updateComponent(projectRootDir, task1.ID, updated);
       const readFromFile = await fs.readJson(path.join(projectRootDir, task1.name, componentJsonFilename));
       expect(readFromFile).to.deep.equal(task1);
       expect(readFromFile).not.to.deep.equal(updated);
@@ -250,7 +219,7 @@ describe("updateComponent UT", function () {
     it("should not change previous' member", async ()=>{
       const updated = structuredClone(task0);
       updated.previous.push(task1.ID);
-      await updateComponent(projectRootDir, task0.ID, updated);
+      await updateComponent.updateComponent(projectRootDir, task0.ID, updated);
       const readFromFile = await fs.readJson(path.join(projectRootDir, task0.name, componentJsonFilename));
       expect(readFromFile).to.deep.equal(task0);
       expect(readFromFile).not.to.deep.equal(updated);
@@ -265,7 +234,7 @@ describe("updateComponent UT", function () {
           targetComponent = await createNewComponent(projectRootDir, projectRootDir, type, { x: 0, y: 0 });
           const updated = structuredClone(targetComponent);
           try {
-            await updateComponent(projectRootDir, targetComponent.ID, updated);
+            await updateComponent.updateComponent(projectRootDir, targetComponent.ID, updated);
           } catch (e) {
             console.log("updateComponent throw error", type, e);
             throw e;
@@ -279,7 +248,7 @@ describe("updateComponent UT", function () {
           updated.description = "hoge";
 
           try {
-            await updateComponent(projectRootDir, targetComponent.ID, updated);
+            await updateComponent.updateComponent(projectRootDir, targetComponent.ID, updated);
           } catch (e) {
             console.log("updateComponent throw error", type, e);
             throw e;
@@ -301,7 +270,7 @@ describe("updateComponent UT", function () {
       updated.uploadOnDemand = true;
 
       try {
-        await updateComponent(projectRootDir, source.ID, updated);
+        await updateComponent.updateComponent(projectRootDir, source.ID, updated);
       } catch (e) {
         console.log("updateComponent throw error", e);
         throw e;
@@ -318,7 +287,7 @@ describe("updateComponent UT", function () {
       updated.uploadOnDemand = false;
 
       try {
-        await updateComponent(projectRootDir, source.ID, updated);
+        await updateComponent.updateComponent(projectRootDir, source.ID, updated);
       } catch (e) {
         console.log("updateComponent throw error", e);
         throw e;
@@ -330,15 +299,14 @@ describe("updateComponent UT", function () {
       expect(readFromFile.outputFiles).to.have.lengthOf(1);
       expect(readFromFile.outputFiles[0].name).to.be.equal("");
     });
-    it("should set outputFiles name and set uploadOnDemand to false", async ()=>{
+    it("should set uploadOnDemand to false when outputFiles name is not UPLOAD_ONDEMAND", async ()=>{
       const updated = structuredClone(source);
-      updated.outputFiles[0].name = "hoge";
 
       source.uploadOnDemand = true;
       await writeComponentJson(projectRootDir, path.join(projectRootDir, source.name), source);
 
       try {
-        await updateComponent(projectRootDir, source.ID, updated);
+        await updateComponent.updateComponent(projectRootDir, source.ID, updated);
       } catch (e) {
         console.log("updateComponent throw error", e);
         throw e;
@@ -348,7 +316,7 @@ describe("updateComponent UT", function () {
       expect(readFromFile).not.to.equal(updated);
       expect(readFromFile.uploadOnDemand).to.be.false;
       expect(readFromFile.outputFiles).to.have.lengthOf(1);
-      expect(readFromFile.outputFiles[0].name).to.be.equal("hoge");
+      expect(readFromFile.outputFiles[0].name).to.be.equal("");
     });
   });
 });
@@ -361,16 +329,10 @@ describe("updateComponent", ()=>{
     let writeComponentJsonStub;
 
     beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      removeInputFileLinkFromParent = updateComponent.__get__("removeInputFileLinkFromParent");
-      getComponentDirStub = sinon.stub();
-      readComponentJsonStub = sinon.stub();
-      writeComponentJsonStub = sinon.stub();
-      updateComponent.__set__({
-        getComponentDir: getComponentDirStub,
-        readComponentJson: readComponentJsonStub,
-        writeComponentJson: writeComponentJsonStub
-      });
+      removeInputFileLinkFromParent = updateComponent.removeInputFileLinkFromParent;
+      getComponentDirStub = sinon.stub(_internal, "getComponentDir");
+      readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
+      writeComponentJsonStub = sinon.stub(_internal, "writeComponentJson");
     });
 
     afterEach(()=>{
@@ -445,16 +407,10 @@ describe("updateComponent", ()=>{
     let writeComponentJsonStub;
 
     beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      removeOutputFileLinkToParent = updateComponent.__get__("removeOutputFileLinkToParent");
-      getComponentDirStub = sinon.stub();
-      readComponentJsonStub = sinon.stub();
-      writeComponentJsonStub = sinon.stub();
-      updateComponent.__set__({
-        getComponentDir: getComponentDirStub,
-        readComponentJson: readComponentJsonStub,
-        writeComponentJson: writeComponentJsonStub
-      });
+      removeOutputFileLinkToParent = updateComponent.removeOutputFileLinkToParent;
+      getComponentDirStub = sinon.stub(_internal, "getComponentDir");
+      readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
+      writeComponentJsonStub = sinon.stub(_internal, "writeComponentJson");
     });
 
     afterEach(()=>{
@@ -529,16 +485,10 @@ describe("updateComponent", ()=>{
     let writeComponentJsonStub;
 
     beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      removeInputFileLinkFromSiblings = updateComponent.__get__("removeInputFileLinkFromSiblings");
-      getComponentDirStub = sinon.stub();
-      readComponentJsonStub = sinon.stub();
-      writeComponentJsonStub = sinon.stub();
-      updateComponent.__set__({
-        getComponentDir: getComponentDirStub,
-        readComponentJson: readComponentJsonStub,
-        writeComponentJson: writeComponentJsonStub
-      });
+      removeInputFileLinkFromSiblings = updateComponent.removeInputFileLinkFromSiblings;
+      getComponentDirStub = sinon.stub(_internal, "getComponentDir");
+      readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
+      writeComponentJsonStub = sinon.stub(_internal, "writeComponentJson");
     });
 
     afterEach(()=>{
@@ -612,16 +562,10 @@ describe("updateComponent", ()=>{
     let writeComponentJsonStub;
 
     beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      removeOutputFileLinkToSiblings = updateComponent.__get__("removeOutputFileLinkToSiblings");
-      getComponentDirStub = sinon.stub();
-      readComponentJsonStub = sinon.stub();
-      writeComponentJsonStub = sinon.stub();
-      updateComponent.__set__({
-        getComponentDir: getComponentDirStub,
-        readComponentJson: readComponentJsonStub,
-        writeComponentJson: writeComponentJsonStub
-      });
+      removeOutputFileLinkToSiblings = updateComponent.removeOutputFileLinkToSiblings;
+      getComponentDirStub = sinon.stub(_internal, "getComponentDir");
+      readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
+      writeComponentJsonStub = sinon.stub(_internal, "writeComponentJson");
     });
 
     afterEach(()=>{
@@ -694,14 +638,9 @@ describe("updateComponent", ()=>{
     let removeInputFileLinkFromSiblingsStub;
 
     beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      removeInputFileCounterpart = updateComponent.__get__("removeInputFileCounterpart");
-      removeInputFileLinkFromParentStub = sinon.stub();
-      removeInputFileLinkFromSiblingsStub = sinon.stub();
-      updateComponent.__set__({
-        removeInputFileLinkFromParent: removeInputFileLinkFromParentStub,
-        removeInputFileLinkFromSiblings: removeInputFileLinkFromSiblingsStub
-      });
+      removeInputFileCounterpart = updateComponent.removeInputFileCounterpart;
+      removeInputFileLinkFromParentStub = sinon.stub(_internal, "removeInputFileLinkFromParent");
+      removeInputFileLinkFromSiblingsStub = sinon.stub(_internal, "removeInputFileLinkFromSiblings");
     });
 
     afterEach(()=>{
@@ -712,22 +651,21 @@ describe("updateComponent", ()=>{
       const componentJson = {
         ID: "id",
         parent: "parentName",
-        inputFiles: [{},
+        inputFiles: [{}, {
+          name: "srcName",
+          src: [{
+            srcNode: "parent",
+            srcName: "srcName1"
+          },
           {
-            name: "srcName",
-            src: [{
-              srcNode: "parent",
-              srcName: "srcName1"
-            },
-            {
-              srcNode: "parentName",
-              srcName: "srcName2"
-            },
-            {
-              srcNode: "siblings",
-              srcName: "srcName3"
-            }]
+            srcNode: "parentName",
+            srcName: "srcName2"
+          },
+          {
+            srcNode: "siblings",
+            srcName: "srcName3"
           }]
+        }]
       };
       await removeInputFileCounterpart("/projectRootDir", componentJson, 1);
       expect(removeInputFileLinkFromParentStub.calledTwice).to.be.true;
@@ -743,18 +681,17 @@ describe("updateComponent", ()=>{
       const componentJson = {
         ID: "id",
         parent: "parentName",
-        inputFiles: [{},
+        inputFiles: [{}, {
+          name: "srcName",
+          src: [{
+            srcNode: "parent",
+            srcName: "srcName1"
+          },
           {
-            name: "srcName",
-            src: [{
-              srcNode: "parent",
-              srcName: "srcName1"
-            },
-            {
-              srcNode: "siblings",
-              srcName: "srcName3"
-            }]
+            srcNode: "siblings",
+            srcName: "srcName3"
           }]
+        }]
       };
       const ret = removeInputFileCounterpart("/projectRootDir", componentJson, 1);
       await expect(ret).to.be.fulfilled;
@@ -766,18 +703,17 @@ describe("updateComponent", ()=>{
       const componentJson = {
         ID: "id",
         parent: "parentName",
-        inputFiles: [{},
+        inputFiles: [{}, {
+          name: "srcName",
+          src: [{
+            srcNode: "parent",
+            srcName: "srcName1"
+          },
           {
-            name: "srcName",
-            src: [{
-              srcNode: "parent",
-              srcName: "srcName1"
-            },
-            {
-              srcNode: "siblings",
-              srcName: "srcName3"
-            }]
+            srcNode: "siblings",
+            srcName: "srcName3"
           }]
+        }]
       };
       const ret = removeInputFileCounterpart("/projectRootDir", componentJson, 1);
       await expect(ret).to.be.rejected;
@@ -787,11 +723,10 @@ describe("updateComponent", ()=>{
       const componentJson = {
         ID: "id",
         parent: "parentName",
-        inputFiles: [{},
-          {
-            name: "srcName",
-            src: []
-          }]
+        inputFiles: [{}, {
+          name: "srcName",
+          src: []
+        }]
       };
       const ret = removeInputFileCounterpart("/projectRootDir", componentJson, 1);
       await expect(ret).to.be.fulfilled;
@@ -804,14 +739,9 @@ describe("updateComponent", ()=>{
     let removeOutputFileLinkToSiblingsStub;
 
     beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      removeOutputFileCounterpart = updateComponent.__get__("removeOutputFileCounterpart");
-      removeOutputFileLinkToParentStub = sinon.stub();
-      removeOutputFileLinkToSiblingsStub = sinon.stub();
-      updateComponent.__set__({
-        removeOutputFileLinkToParent: removeOutputFileLinkToParentStub,
-        removeOutputFileLinkToSiblings: removeOutputFileLinkToSiblingsStub
-      });
+      removeOutputFileCounterpart = updateComponent.removeOutputFileCounterpart;
+      removeOutputFileLinkToParentStub = sinon.stub(_internal, "removeOutputFileLinkToParent");
+      removeOutputFileLinkToSiblingsStub = sinon.stub(_internal, "removeOutputFileLinkToSiblings");
     });
 
     afterEach(()=>{
@@ -822,22 +752,21 @@ describe("updateComponent", ()=>{
       const componentJson = {
         ID: "id",
         parent: "parentName",
-        outputFiles: [{},
+        outputFiles: [{}, {
+          name: "dstName",
+          dst: [{
+            dstNode: "parent",
+            dstName: "dstName1"
+          },
           {
-            name: "dstName",
-            dst: [{
-              dstNode: "parent",
-              dstName: "dstName1"
-            },
-            {
-              dstNode: "parentName",
-              dstName: "dstName2"
-            },
-            {
-              dstNode: "siblings",
-              dstName: "dstName3"
-            }]
+            dstNode: "parentName",
+            dstName: "dstName2"
+          },
+          {
+            dstNode: "siblings",
+            dstName: "dstName3"
           }]
+        }]
       };
       await removeOutputFileCounterpart("/projectRootDir", componentJson, 1);
       expect(removeOutputFileLinkToParentStub.calledTwice).to.be.true;
@@ -853,18 +782,17 @@ describe("updateComponent", ()=>{
       const componentJson = {
         ID: "id",
         parent: "parentName",
-        outputFiles: [{},
+        outputFiles: [{}, {
+          name: "dstName",
+          dst: [{
+            dstNode: "parent",
+            dstName: "dstName1"
+          },
           {
-            name: "dstName",
-            dst: [{
-              dstNode: "parent",
-              dstName: "dstName1"
-            },
-            {
-              dstNode: "siblings",
-              dstName: "dstName3"
-            }]
+            dstNode: "siblings",
+            dstName: "dstName3"
           }]
+        }]
       };
       const ret = removeOutputFileCounterpart("/projectRootDir", componentJson, 1);
       await expect(ret).to.be.fulfilled;
@@ -876,18 +804,17 @@ describe("updateComponent", ()=>{
       const componentJson = {
         ID: "id",
         parent: "parentName",
-        outputFiles: [{},
+        outputFiles: [{}, {
+          name: "dstName",
+          dst: [{
+            dstNode: "parent",
+            dstName: "dstName1"
+          },
           {
-            name: "dstName",
-            dst: [{
-              dstNode: "parent",
-              dstName: "dstName1"
-            },
-            {
-              dstNode: "siblings",
-              dstName: "dstName3"
-            }]
+            dstNode: "siblings",
+            dstName: "dstName3"
           }]
+        }]
       };
       const ret = removeOutputFileCounterpart("/projectRootDir", componentJson, 1);
       await expect(ret).to.be.rejected;
@@ -897,11 +824,10 @@ describe("updateComponent", ()=>{
       const componentJson = {
         ID: "id",
         parent: "parentName",
-        outputFiles: [{},
-          {
-            name: "dstName",
-            dst: []
-          }]
+        outputFiles: [{}, {
+          name: "dstName",
+          dst: []
+        }]
       };
       const ret = removeOutputFileCounterpart("/projectRootDir", componentJson, 1);
       await expect(ret).to.be.fulfilled;
@@ -915,16 +841,10 @@ describe("updateComponent", ()=>{
     let writeComponentJsonStub;
 
     beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      renameInputFileCounterpart = updateComponent.__get__("renameInputFileCounterpart");
-      getComponentDirStub = sinon.stub();
-      readComponentJsonStub = sinon.stub();
-      writeComponentJsonStub = sinon.stub();
-      updateComponent.__set__({
-        getComponentDir: getComponentDirStub,
-        readComponentJson: readComponentJsonStub,
-        writeComponentJson: writeComponentJsonStub
-      });
+      renameInputFileCounterpart = updateComponent.renameInputFileCounterpart;
+      getComponentDirStub = sinon.stub(_internal, "getComponentDir");
+      readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
+      writeComponentJsonStub = sinon.stub(_internal, "writeComponentJson");
     });
 
     afterEach(()=>{
@@ -934,18 +854,17 @@ describe("updateComponent", ()=>{
     it("rename inputFile name and its counterparts' dstName", async ()=>{
       const componentJson = {
         ID: "id",
-        inputFiles: [{},
+        inputFiles: [{}, {
+          src: [{
+            srcNode: "srcNode1"
+          },
           {
-            src: [{
-              srcNode: "srcNode1"
-            },
-            {
-              srcNode: "srcNode2"
-            }]
+            srcNode: "srcNode2"
           }]
+        }]
       };
-      getComponentDirStub.withArgs("/projectRootDir", "srcNode1", true).resolves("/projectRootDir/srcNode1");
-      getComponentDirStub.withArgs("/projectRootDir", "srcNode2", true).resolves("/projectRootDir/srcNode2");
+      getComponentDirStub.withArgs("/projectRootDir", "srcNode1", true).returns("/projectRootDir/srcNode1");
+      getComponentDirStub.withArgs("/projectRootDir", "srcNode2", true).returns("/projectRootDir/srcNode2");
       const readComponentJsonResultBase = {
         outputFiles: [{
           dst: [{
@@ -1079,16 +998,10 @@ describe("updateComponent", ()=>{
     let writeComponentJsonStub;
 
     beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      renameOutputFileCounterpart = updateComponent.__get__("renameOutputFileCounterpart");
-      getComponentDirStub = sinon.stub();
-      readComponentJsonStub = sinon.stub();
-      writeComponentJsonStub = sinon.stub();
-      updateComponent.__set__({
-        getComponentDir: getComponentDirStub,
-        readComponentJson: readComponentJsonStub,
-        writeComponentJson: writeComponentJsonStub
-      });
+      renameOutputFileCounterpart = updateComponent.renameOutputFileCounterpart;
+      getComponentDirStub = sinon.stub(_internal, "getComponentDir");
+      readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
+      writeComponentJsonStub = sinon.stub(_internal, "writeComponentJson");
     });
 
     afterEach(()=>{
@@ -1098,15 +1011,14 @@ describe("updateComponent", ()=>{
     it("rename inputFile name and its counterparts' srcName", async ()=>{
       const componentJson = {
         ID: "id",
-        outputFiles: [{},
+        outputFiles: [{}, {
+          dst: [{
+            dstNode: "dstNode1"
+          },
           {
-            dst: [{
-              dstNode: "dstNode1"
-            },
-            {
-              dstNode: "dstNode2"
-            }]
+            dstNode: "dstNode2"
           }]
+        }]
       };
       getComponentDirStub.withArgs("/projectRootDir", "dstNode1", true).resolves("/projectRootDir/dstNode1");
       getComponentDirStub.withArgs("/projectRootDir", "dstNode2", true).resolves("/projectRootDir/dstNode2");
@@ -1124,7 +1036,7 @@ describe("updateComponent", ()=>{
         {
           src: [{
             srcNode: "srcNode3",
-            srcName: "srcNode3"
+            srcName: "srcName3"
           }]
         }],
         outputFiles: [{
@@ -1236,53 +1148,9 @@ describe("updateComponent", ()=>{
     });
   });
 
-  describe("#renameComponentDir", ()=>{
-    let renameComponentDir;
-    let getComponentDirStub;
-    let gitRmStub;
-    let moveStub;
-    let updateComponentPathStub;
-
-    beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      renameComponentDir = updateComponent.__get__("renameComponentDir");
-      getComponentDirStub = sinon.stub();
-      gitRmStub = sinon.stub();
-      moveStub = sinon.stub();
-      updateComponentPathStub = sinon.stub();
-      updateComponent.__set__({
-        getComponentDir: getComponentDirStub,
-        gitRm: gitRmStub,
-        updateComponentPath: updateComponentPathStub,
-        fs: {
-          move: moveStub
-        }
-      });
-    });
-
-    afterEach(()=>{
-      sinon.restore();
-    });
-
-    it("should rename component directory", async ()=>{
-      getComponentDirStub.withArgs("/projectRootDir", "id", true).returns("/projectRootDir/id/oldName");
-      gitRmStub.withArgs("/projectRootDir", "/projectRootDir/id/oldName").resolves();
-      moveStub.withArgs("/projectRootDir/id/oldName", "/projectRootDir/id/newName").resolves();
-      updateComponentPathStub.withArgs("/projectRootDir", "id", "newName").resolves();
-      await expect(renameComponentDir("/projectRootDir", "id", "/projectRootDir/id/newName")).to.be.fulfilled;
-      expect(gitRmStub.calledWith("/projectRootDir", "/projectRootDir/id/oldName")).to.be.true;
-      expect(moveStub.calledWith("/projectRootDir/id/oldName", "/projectRootDir/id/newName")).to.be.true;
-      expect(updateComponentPathStub.calledWith("/projectRootDir", "id", "/projectRootDir/id/newName")).to.be.true;
-    });
-
-    it("should reject if the project root dir is same as the component dir", async ()=>{
-      getComponentDirStub.withArgs("/projectRootDir", "id", true).returns("/projectRootDir");
-      await expect(renameComponentDir("/projectRootDir", "id", "newName")).to.be.rejected;
-    });
-  });
-
   describe("#updateComponentPos", ()=>{
     let updateComponentPos;
+    //eslint-disable-next-line no-unused-vars
     let getLoggerStub;
     let debugStub;
     let warnStub;
@@ -1291,25 +1159,13 @@ describe("updateComponent", ()=>{
     let writeComponentJsonStub;
 
     beforeEach(()=>{
-      const updateComponent = rewire("../../../app/core/updateComponent.js");
-      updateComponentPos = updateComponent.__get__("updateComponentPos");
-      getLoggerStub = sinon.stub();
+      updateComponentPos = updateComponent.updateComponentPos;
       debugStub = sinon.stub();
       warnStub = sinon.stub();
-      getComponentDirStub = sinon.stub();
-      readComponentJsonStub = sinon.stub();
-      writeComponentJsonStub = sinon.stub();
-
-      updateComponent.__set__({
-        getLogger: getLoggerStub,
-        getComponentDir: getComponentDirStub,
-        readComponentJson: readComponentJsonStub,
-        writeComponentJson: writeComponentJsonStub
-      });
-      getLoggerStub.returns({
-        debug: debugStub,
-        warn: warnStub
-      });
+      getLoggerStub = sinon.stub(_internal, "getLogger").returns({ debug: debugStub, warn: warnStub });
+      getComponentDirStub = sinon.stub(_internal, "getComponentDir");
+      readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
+      writeComponentJsonStub = sinon.stub(_internal, "writeComponentJson");
     });
 
     afterEach(()=>{

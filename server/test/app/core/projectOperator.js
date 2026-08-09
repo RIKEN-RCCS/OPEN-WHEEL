@@ -3,37 +3,30 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const fs = require("fs-extra");
-const path = require("path");
+import fs from "fs-extra";
+import path from "path";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-const sinon = require("sinon");
-const rewire = require("rewire");
-chai.use(require("sinon-chai"));
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
 
-const { createNewProject } = require("../../../app/core/projectFilesOperator.js");
+import { createNewProject } from "../../../app/core/projectOperations.js";
 //testee
-const projectController = rewire("../../../app/handlers/projectController.js");
-const onProjectOperation = projectController.__get__("onProjectOperation");
+import { onProjectOperation, _internal } from "../../../app/handlers/projectController.js";
+
 const onRunProject = sinon.stub();
 const onStopProject = sinon.stub();
 const onCleanProject = sinon.stub();
 const onRevertProject = sinon.stub();
 const onSaveProject = sinon.stub();
-const queues = projectController.__get__("projectOperationQueues");
 
-projectController.__set__("onRunProject", onRunProject);
-projectController.__set__("onStopProject", onStopProject);
-projectController.__set__("onCleanProject", onCleanProject);
-projectController.__set__("onRevertProject", onRevertProject);
-projectController.__set__("onSaveProject", onSaveProject);
-projectController.__set__("sendWorkflow", sinon.stub());
-projectController.__set__("sendTaskStateList", sinon.stub());
-projectController.__set__("sendProjectJson", sinon.stub());
-projectController.__set__("sendComponentTree", sinon.stub());
+const sendWorkflow = sinon.stub();
+const sendTaskStateList = sinon.stub();
+const sendProjectJson = sinon.stub();
+const sendComponentTree = sinon.stub();
 
 const ack = sinon.stub();
 async function sleep(time) {
@@ -51,16 +44,32 @@ describe("UT for projectOperation callback function", function () {
   beforeEach(async ()=>{
     await fs.remove(testDirRoot);
     await createNewProject(projectRootDir, "test project", null, "test", "test@example.com");
-    const sbs = queues.get(projectRootDir);
-    if (sbs) {
-      sbs.clear();
-    }
-    queues.clear();
+    sinon.stub(_internal, "onRunProject").value(onRunProject);
+    sinon.stub(_internal, "onStopProject").value(onStopProject);
+    sinon.stub(_internal, "onCleanProject").value(onCleanProject);
+    sinon.stub(_internal, "onRevertProject").value(onRevertProject);
+    sinon.stub(_internal, "onSaveProject").value(onSaveProject);
+    sinon.stub(_internal, "sendWorkflow").value(sendWorkflow);
+    sinon.stub(_internal, "sendTaskStateList").value(sendTaskStateList);
+    sinon.stub(_internal, "sendProjectJson").value(sendProjectJson);
+    sinon.stub(_internal, "sendComponentTree").value(sendComponentTree);
     onRunProject.reset();
     onStopProject.reset();
     onCleanProject.reset();
     onRevertProject.reset();
     onSaveProject.reset();
+  });
+  afterEach(async ()=>{
+    const sbs = _internal.projectOperationQueues.get(projectRootDir);
+    if (sbs) {
+      sbs.clear();
+
+      while (sbs.running.size > 0) {
+        await sleep(10);
+      }
+    }
+    _internal.projectOperationQueues.clear();
+    sinon.restore();
   });
   after(async ()=>{
     if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
@@ -120,7 +129,7 @@ describe("UT for projectOperation callback function", function () {
     it("should call onece if 2 consecutive API called", async ()=>{
       await onProjectOperation("dummy", projectRootDir, "revertProject", ack);
       await onProjectOperation("dummy", projectRootDir, "revertProject", ack);
-      await sleep(2000);
+      await sleep(3000);
       expect(onRevertProject).to.be.calledOnce;
     });
   });

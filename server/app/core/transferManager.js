@@ -3,19 +3,31 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const SBS = require("simple-batch-system");
-const { getLogger } = require("../logSettings.js");
-const { getDateString } = require("../lib/utility");
-const { getSsh } = require("./sshManager.js");
-const transferrers = new Map();
+import SBS from "simple-batch-system";
+import { getLogger } from "../logSettings.js";
+import { getDateString } from "../lib/utility.js";
+import { getSsh } from "./sshManager.js";
+
+export const _internal = {
+  SBS,
+  getLogger,
+  getDateString,
+  getSsh,
+  transferrers: new Map()
+};
+
+//rsync exit codes ssh-client-wrapper's built-in retry (10-14) doesn't cover, but which are
+//frequently transient right after an HPC job finishes (output still being flushed/becoming
+//visible on a shared filesystem): 23 = partial transfer due to error, 24 = some files vanished
+//before they could be transferred
+export const stageOutRetryableExitCodes = [23, 24];
 
 /**
  * create ID string from task's property
  * @param {object} task - task component
  * @returns {string} - ID string
  */
-function getKey(task) {
+export function getKey(task) {
   return `${task.projectRootDir}-${task.remotehostID}`;
 }
 
@@ -28,18 +40,18 @@ function getKey(task) {
  * @param {string} dst - destination path
  * @param {string[]} opt - option object for ssh.send or ssh.recv
  */
-async function register(hostinfo, task, direction, src, dst, opt) {
-  if (!transferrers.has(getKey(task))) {
-    const transferrer = new SBS({
+export async function register(hostinfo, task, direction, src, dst, opt) {
+  if (!_internal.transferrers.has(getKey(task))) {
+    const transferrer = new _internal.SBS({
       exec: async ({ direction, src, dst, task })=>{
-        const ssh = getSsh(task.projectRootDir, task.remotehostID);
+        const ssh = _internal.getSsh(task.projectRootDir, task.remotehostID);
         if (direction === "send") {
-          getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} start`);
+          _internal.getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} start`);
           await ssh.send(src, dst, opt);
-          task.preparedTime = getDateString(true, true);
-          getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} finished`);
+          task.preparedTime = _internal.getDateString(true, true);
+          _internal.getLogger(task.projectRootDir).debug(`send ${task.workingDir} to ${task.remoteWorkingDir} finished`);
         } else if (direction === "recv") {
-          await ssh.recv(src, dst, opt);
+          await ssh.recv(src, dst, opt, undefined, stageOutRetryableExitCodes);
         } else {
           const err = new Error("invalid direction");
           err.direction = direction;
@@ -49,9 +61,9 @@ async function register(hostinfo, task, direction, src, dst, opt) {
       maxConcurrent: hostinfo.maxNumParallelTransfer || 1,
       name: `transfer-${hostinfo.user || process.env.USER}@${hostinfo.name}:${hostinfo.port || 22}`
     });
-    transferrers.set(getKey(task), transferrer);
+    _internal.transferrers.set(getKey(task), transferrer);
   }
-  const transferrer = transferrers.get(getKey(task));
+  const transferrer = _internal.transferrers.get(getKey(task));
   return transferrer.qsubAndWait({ direction, src, dst, task });
 }
 
@@ -59,16 +71,11 @@ async function register(hostinfo, task, direction, src, dst, opt) {
  * remove all transfer class instance from DB
  * @param {string} projectRootDir - project's root path
  */
-function removeTransferrers(projectRootDir) {
-  const keysToRemove = Array.from(transferrers.keys()).filter((key)=>{
+export function removeTransferrers(projectRootDir) {
+  const keysToRemove = Array.from(_internal.transferrers.keys()).filter((key)=>{
     return key.startsWith(projectRootDir);
   });
   keysToRemove.forEach((key)=>{
-    transferrers.delete(key);
+    _internal.transferrers.delete(key);
   });
 }
-
-module.exports = {
-  register,
-  removeTransferrers
-};

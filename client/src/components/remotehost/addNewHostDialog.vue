@@ -94,6 +94,7 @@
                           v-model="host.jobScheduler"
                           :items="availableJobSchedulers"
                           label="job scheduler"
+                          :menu-props="{ transition: false }"
                           data-cy="add_new_host-job_schedulers-select"
                         />
                       </v-col>
@@ -105,10 +106,14 @@
                         />
                       </v-col>
                       <v-col cols="6">
-                        <v-text-field
+                        <v-combobox
                           v-model="host.queue"
                           label="available queues"
-                          data-cy="add_new_host-available_queues-text_field"
+                          multiple
+                          chips
+                          closable-chips
+                          :menu-props="{ transition: false }"
+                          data-cy="add_new_host-available_queues-combobox"
                         />
                       </v-col>
                       <v-col cols="3">
@@ -130,6 +135,7 @@
                           v-model="host.sharedHost"
                           :items="hostNames"
                           label="shared host"
+                          :menu-props="{ transition: false }"
                           data-cy="add_new_host-shared_host-select"
                           clearable
                         />
@@ -139,6 +145,33 @@
                           v-model="host.sharedPath"
                           label="shared path on shared host"
                           data-cy="add_new_host-shared_path_on_shared_host-text_field"
+                        />
+                      </v-col>
+                      <v-col cols="12">
+                        <v-checkbox
+                          v-model="host.sharedWithLocalhost"
+                          label="shared with localhost"
+                          data-cy="add_new_host-shared_with_localhost-checkbox"
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.localSharedPath"
+                          :disabled="!host.sharedWithLocalhost"
+                          label="shared storage path on localhost"
+                          placeholder="/mnt/shared"
+                          hint="Path where shared storage is mounted on WHEEL server"
+                          data-cy="add_new_host-local_shared_path-text_field"
+                        />
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model="host.sharedPath"
+                          :disabled="!host.sharedWithLocalhost && !host.sharedHost"
+                          label="shared storage path on remote"
+                          placeholder="/data"
+                          hint="Path where shared storage is mounted on remote host"
+                          data-cy="add_new_host-shared_path_remote-text_field"
                         />
                       </v-col>
                       <v-col cols="12">
@@ -170,7 +203,7 @@
                   </v-container>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-              <v-expansion-panel>
+              <v-expansion-panel eager>
                 <v-expansion-panel-title data-cy="add_new_host-advanced_settings-title">
                   Advanced settings
                 </v-expansion-panel-title>
@@ -180,7 +213,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.renewInterval"
-                          label="connection renewal interval (min.) [default: 0]"
+                          label="connection renewal interval (min.)"
+                          :hint="`default: ${defaultValues.renewInterval}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-connection_renewal-text_field"
@@ -189,7 +224,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.statusCheckInterval"
-                          label="status check interval (sec.) [default: 60]"
+                          label="status check interval (sec.)"
+                          :hint="`default: ${defaultValues.statusCheckInterval}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-status_check-text_field"
@@ -198,7 +235,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.maxStatusCheckError"
-                          label="max number of status check error allowed [default: 10]"
+                          label="max number of status check error allowed"
+                          :hint="`default: ${defaultValues.maxStatusCheckError}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-max_number-text_field"
@@ -207,7 +246,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.execInterval"
-                          label="execution interval (sec.) [default: job 5, task 1]"
+                          label="execution interval (sec.)"
+                          :hint="`default: ${defaultValues.execInterval}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-execution_interval-text_field"
@@ -216,7 +257,9 @@
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="host.readyTimeout"
-                          label="timeout during handshake phase (msec.) [default: 0]"
+                          label="timeout during handshake phase (msec.)"
+                          :hint="`default: ${defaultValues.readyTimeout}`"
+                          persistent-hint
                           :rules="[positiveNumber]"
                           validate-on="blur"
                           data-cy="add_new_host-timeout_during-text_field"
@@ -240,6 +283,7 @@
           <v-btn
             prepend-icon="mdi-close"
             text="cancel"
+            data-cy="add_new_host-cancel-btn"
             @click="cancelDialog"
           />
         </v-card-actions>
@@ -329,6 +373,15 @@ export default {
     },
     workDirLabel() {
       return `Host work dir ${this.host.path ? "" : "[default $HOME]"}`;
+    },
+    defaultValues() {
+      return {
+        renewInterval: 0,
+        statusCheckInterval: 60,
+        maxStatusCheckError: 10,
+        execInterval: "job: 5, task: 1",
+        readyTimeout: 0
+      };
     }
   },
   watch: {
@@ -362,6 +415,7 @@ export default {
     closeDialog() {
       this.host = { JWTServerURL: "https://elpis.hpci.nii.ac.jp/" };
       this.$refs.form.reset();
+      this.openPanel = [0];
       this.openDialog = false;
     }
   }

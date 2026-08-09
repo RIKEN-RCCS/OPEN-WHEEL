@@ -3,22 +3,11 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 //setup test framework
-const { expect } = require("chai");
-const sinon = require("sinon");
-const rewire = require("rewire");
-const rewWorkflowComponent = rewire("../../../app/core/workflowComponent.js");
-
-//testee
-const { isLocalComponent } = require("../../../app/core/workflowComponent");
-const { getComponentDefaultName } = require("../../../app/core/workflowComponent");
-const { removeDuplicatedComponent } = require("../../../app/core/workflowComponent");
-const isInitialComponent = rewWorkflowComponent.__get__("isInitialComponent");
-const isBehindIfComponent = rewWorkflowComponent.__get__("isBehindIfComponent");
-const { hasChild } = require("../../../app/core/workflowComponent");
-const { componentFactory } = require("../../../app/core/workflowComponent");
+import { expect } from "chai";
+import sinon from "sinon";
+import { _internal, isLocalComponent, isLocal, getComponentDefaultName, removeDuplicatedComponent, isInitialComponent, isBehindIfComponent, hasChild, componentFactory } from "../../../app/core/workflowComponent.js";
 
 describe("UT for workflowComponents class", ()=>{
   describe("#isLocalComponent", ()=>{
@@ -35,6 +24,23 @@ describe("UT for workflowComponents class", ()=>{
     it("should return false if component.host is not 'localhost'", ()=>{
       const component = { host: "remotehost" };
       const result = isLocalComponent(component);
+      expect(result).to.be.false;
+    });
+  });
+  describe("#isLocal", ()=>{
+    it("should return true if component.host is undefined", ()=>{
+      const component = {};
+      const result = isLocal(component);
+      expect(result).to.be.true;
+    });
+    it("should return true if component.host is 'localhost'", ()=>{
+      const component = { host: "localhost" };
+      const result = isLocal(component);
+      expect(result).to.be.true;
+    });
+    it("should return false if component.host is not 'localhost'", ()=>{
+      const component = { host: "remotehost" };
+      const result = isLocal(component);
       expect(result).to.be.false;
     });
   });
@@ -115,8 +121,7 @@ describe("UT for workflowComponents class", ()=>{
   describe("#isInitialComponent", ()=>{
     let isBehindIfComponentStub;
     beforeEach(()=>{
-      isBehindIfComponentStub = sinon.stub();
-      rewWorkflowComponent.__set__("isBehindIfComponent", isBehindIfComponentStub);
+      isBehindIfComponentStub = sinon.stub(_internal, "isBehindIfComponent");
     });
     afterEach(()=>{
       sinon.restore();
@@ -201,8 +206,7 @@ describe("UT for workflowComponents class", ()=>{
     let readComponentJsonByIDStub;
 
     beforeEach(()=>{
-      readComponentJsonByIDStub = sinon.stub();
-      rewWorkflowComponent.__set__("readComponentJsonByID", readComponentJsonByIDStub);
+      readComponentJsonByIDStub = sinon.stub(_internal, "readComponentJsonByID");
     });
 
     afterEach(()=>{
@@ -251,11 +255,12 @@ describe("UT for workflowComponents class", ()=>{
     });
     it("should handle circular dependencies gracefully", async ()=>{
       const component = {
+        ID: "comp0", //Add ID
         previous: ["prev1"],
         inputFiles: []
       };
-      readComponentJsonByIDStub.withArgs("/project/root", "prev1").resolves({ type: "task", previous: ["prev2"] });
-      readComponentJsonByIDStub.withArgs("/project/root", "prev2").resolves({ type: "task", previous: ["prev1"] });
+      readComponentJsonByIDStub.withArgs("/project/root", "prev1").resolves({ ID: "prev1", type: "task", previous: ["prev2"] }); //Add ID
+      readComponentJsonByIDStub.withArgs("/project/root", "prev2").resolves({ ID: "prev2", type: "task", previous: ["prev1"] }); //Add ID
 
       const result = await isBehindIfComponent("/project/root", component);
       expect(result).to.be.false;

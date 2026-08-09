@@ -24,11 +24,13 @@ const remotehostJsonSchema = {
     path: { type: "string" },
     jobScheduler: { type: "string" },
     numJob: { type: "number", default: 5, minimum: 0 },
-    queue: { type: "string" },
+    queue: { type: "array", items: { type: "string" } },
     useBulkjob: { type: "boolean", default: false },
     useStepjob: { type: "boolean", default: false },
     sharedHost: { type: "string", default: "" },
     sharedPath: { type: "string", default: "" },
+    sharedWithLocalhost: { type: "boolean", default: false },
+    localSharedPath: { type: "string", default: "" },
     renewInterval: { type: "number", default: 0, minimum: 0 },
     statusCheckInterval: { type: "number", default: 60, minimum: 0 },
     maxStatusCheckError: { type: "number", default: 10, minimum: 0 },
@@ -44,6 +46,6 @@ const remotehostJsonSchema = {
   required: ["name", "host", "user"]
 };
 
-module.exports = {
+export {
   remotehostJsonSchema
 };

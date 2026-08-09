@@ -3,21 +3,16 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See Licensethe project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { promisify } = require("util");
-const log4js = require("log4js");
+import path from "path";
+import { promisify } from "util";
+import log4js from "log4js";
 const logger = log4js.getLogger();
-const { logFilename, numLogFiles, maxLogSize, compressLogFile } = require("./db/db");
-const { emitAll } = require("./handlers/commUtils.js");
-function getLoglevel(ignoreEnv = false) {
-  const wheelLoglevel = process.env.WHEEL_LOGLEVEL;
-  const defaultLevel = "debug";
-  if (ignoreEnv || typeof wheelLoglevel !== "string") {
-    return defaultLevel;
-  }
-  return ["ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "MARK", "OFF"].includes(wheelLoglevel.toUpperCase()) ? wheelLoglevel.toUpperCase() : defaultLevel;
-}
+import { logFilename, numLogFiles, maxLogSize, compressLogFile, logLevel } from "./db/db.js";
+import { emitAll } from "./handlers/commUtils.js";
+
+export const _internal = {
+  emitAll
+};
 
 const eventNameTable = {
   DEBUG: null,
@@ -35,29 +30,75 @@ function socketIOAppender(layout, timezoneOffset, argEventName) {
     const eventName = argEventName || eventNameTable[loggingEvent.level.levelStr];
     const projectRootDir = loggingEvent.context.projectRootDir;
     if (eventName) {
-      //emitAll is async function but we did not wait here
-      emitAll(projectRootDir, eventName, layout(loggingEvent, timezoneOffset));
+      const message = layout(loggingEvent, timezoneOffset);
+      _internal.emitAll(projectRootDir, "WHEEL_LOG", message);
     }
   };
+}
+
+const getCircularReplacer = ()=>{
+  const seen = new WeakSet();
+  return (key, value)=>{
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) {
+        return; //undefined, property is removed
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
+//log4js only concatenates message parts with String() coercion (used by our own multiFile line
+//builder and by socketIO's json layout below), so a bare Error/Map/Set/plain object would render
+//as the useless literal "[object Object]". Serialize non-primitive values ourselves before that
+//happens so the actual content shows up in logs.
+function formatLogArg(value) {
+  if (value instanceof Error) {
+    return value.stack || `${value.name}: ${value.message}`;
+  }
+  if (value instanceof Map) {
+    return JSON.stringify(Object.fromEntries(value), getCircularReplacer());
+  }
+  if (value instanceof Set) {
+    return JSON.stringify(Array.from(value), getCircularReplacer());
+  }
+  if (value !== null && typeof value === "object") {
+    try {
+      return JSON.stringify(value, getCircularReplacer());
+    } catch {
+      return String(value);
+    }
+  }
+  return value;
 }
 
 const socketIO = {
   configure: (config, layouts)=>{
     let layout = layouts.basicLayout;
     if (config.layout) {
-      layout = layouts.layout(config.layout.type, config.layout);
+      if (config.layout.type === "json") {
+        const separator = config.layout.separator || ",";
+        layout = (logEvent)=>{
+          const data = Array.isArray(logEvent.data) ? logEvent.data.map(formatLogArg) : logEvent.data;
+          return JSON.stringify({ ...logEvent, data }, getCircularReplacer()) + separator;
+        };
+      } else {
+        layout = layouts.layout(config.layout.type, config.layout);
+      }
     }
     return socketIOAppender(layout, config.timezoneOffset);
   }
 };
 
-const logSettings = {
+export const logSettings = {
   appenders: {
     console: {
       type: "console"
     },
     socketIO: {
-      type: socketIO
+      type: socketIO,
+      layout: { type: "json", separator: "," }
     },
     multi: {
       type: "multiFile",
@@ -71,17 +112,17 @@ const logSettings = {
     filterdConsole: {
       type: "logLevelFilter",
       appender: "console",
-      level: getLoglevel()
+      level: logLevel
     },
     filterdFile: {
       type: "logLevelFilter",
       appender: "multi",
-      level: getLoglevel()
+      level: logLevel
     },
     log2client: {
       type: "logLevelFilter",
       appender: "socketIO",
-      level: getLoglevel()
+      level: logLevel
     }
   },
   categories: {
@@ -116,7 +157,7 @@ const logSettings = {
 //configure with default setting
 log4js.configure(logSettings);
 
-function getLogger(projectRootDir) {
+export function getLogger(projectRootDir) {
   const contextProjectRootDir = typeof projectRootDir === "string" ? projectRootDir : path.dirname(logFilename);
   if (logger.context.projectRootDir === contextProjectRootDir) {
     return logger;
@@ -128,6 +169,68 @@ function getLogger(projectRootDir) {
   return logger;
 }
 
-module.exports = {
-  getLogger
+export function configure(setting) {
+  log4js.configure(setting);
+}
+function logWithComponentDir(level, projectRootDir, componentDir, ...messages) {
+  const logger = getLogger(projectRootDir);
+  if (logger[level]) {
+    const message = messages.map(formatLogArg).join(" ");
+    let displayPath;
+
+    if (componentDir === projectRootDir) {
+      displayPath = "project root";
+    } else if (componentDir.startsWith(projectRootDir)) {
+      //Convert absolute path to relative path
+      displayPath = path.relative(projectRootDir, componentDir);
+    } else {
+      //Keep as-is if not under projectRootDir
+      displayPath = componentDir;
+    }
+
+    logger[level](`[${displayPath}] ${message}`);
+  }
+}
+
+export function logTrace(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("trace", projectRootDir, componentDir, ...messages);
+}
+export function logDebug(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("debug", projectRootDir, componentDir, ...messages);
+}
+export function logInfo(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("info", projectRootDir, componentDir, ...messages);
+}
+export function logWarn(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("warn", projectRootDir, componentDir, ...messages);
+}
+export function logError(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("error", projectRootDir, componentDir, ...messages);
+}
+export function logFatal(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("fatal", projectRootDir, componentDir, ...messages);
+}
+export function logStdout(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("stdout", projectRootDir, componentDir, ...messages);
+}
+export function logStderr(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("stderr", projectRootDir, componentDir, ...messages);
+}
+export function logSSHout(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("sshout", projectRootDir, componentDir, ...messages);
+}
+export function logSSHerr(projectRootDir, componentDir, ...messages) {
+  logWithComponentDir("ssherr", projectRootDir, componentDir, ...messages);
+}
+export const loggerWrapper = {
+  logTrace,
+  logDebug,
+  logInfo,
+  logWarn,
+  logError,
+  logFatal,
+  logStdout,
+  logStderr,
+  logSSHout,
+  logSSHerr
 };

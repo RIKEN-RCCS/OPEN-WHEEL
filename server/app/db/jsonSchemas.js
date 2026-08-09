@@ -3,8 +3,7 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { defaultPSconfigFilename } = require("../db/db.js");
+import { defaultPSconfigFilename } from "../db/db.js";
 
 const emptyArraySchema = {
   type: "array",
@@ -32,7 +31,8 @@ const dstSchema = {
   required: ["dstNode", "dstName"],
   properties: {
     dstNode: { type: "string" },
-    dstName: { type: "string" }
+    dstName: { type: "string" },
+    forceCopy: { type: "boolean" }
   }
 };
 
@@ -42,7 +42,8 @@ const inputFileSchema = {
   properties: {
     name: { type: "string" },
     src: { type: "array", items: srcSchema },
-    forwardTo: { type: "array", items: dstSchema }
+    forwardTo: { type: "array", items: dstSchema },
+    mandatory: { type: "boolean" }
   }
 };
 const outputFileSchema = {
@@ -108,12 +109,14 @@ class TaskSchema extends GeneralWorkflowComponentSchema {
     this.properties.useJobScheduler = { type: "boolean", default: false };
     this.properties.queue = { type: ["string", "null"], default: null };
     this.properties.submitOption = { type: ["string", "null"], default: null };
+    this.properties.sourceScript = { type: ["string", "null"], default: null };
     this.properties.include = stringArraySchema;
     this.properties.exclude = stringArraySchema;
     this.properties.state.enum.push(...["stage-in", "waiting", "queued", "stage-out"]);
     this.properties.retryCondition = { type: ["string", "null"], default: null };
     this.properties.retry = { type: ["number", "null"], default: null };
     this.properties.ignoreFailure = { type: "boolean", default: false };
+    this.properties.checker = { type: ["string", "null"], default: null };
   }
 }
 
@@ -157,6 +160,7 @@ class ForSchema extends GeneralWorkflowComponentSchema {
     this.properties.end = { type: ["number", "null"] };
     this.properties.step = { type: ["number", "null"] };
     this.properties.keep = { type: ["number", "null"] };
+    this.properties.skipCopy = { type: "array", items: { type: "string" }, default: [] };
   }
 }
 
@@ -167,6 +171,7 @@ class WhileSchema extends GeneralWorkflowComponentSchema {
     this.required.push("condition", "keep");
     this.properties.condition = { type: ["string", "null"], default: null };
     this.properties.keep = { type: ["number", "null"] };
+    this.properties.skipCopy = { type: "array", items: { type: "string" }, default: [] };
   }
 }
 
@@ -177,6 +182,7 @@ class ForeachSchema extends GeneralWorkflowComponentSchema {
     this.required.push("indexList");
     this.properties.indexList = { type: "array", items: { type: "string" } };
     this.properties.keep = { type: ["number", "null"] };
+    this.properties.skipCopy = { type: "array", items: { type: "string" }, default: [] };
   }
 }
 
@@ -225,7 +231,8 @@ class StepjobSchema extends GeneralWorkflowComponentSchema {
     this.properties.type = { enum: ["stepjob"] };
     this.required.push("host", "useJobScheduler", "queue");
     this.properties.host = { type: "string", default: "localhost" };
-    this.properties.useJobScheduler = { type: "boolean", default: false };
+    //see comment in StepjobTaskSchema
+    this.properties.useJobScheduler = { type: "boolean", default: true };
     this.properties.queue = { type: ["string", "null"], default: null };
     this.properties.submitOption = { type: ["string", "null"], default: null };
   }
@@ -412,4 +419,4 @@ function getSchema(type) {
   }
 }
 
-module.exports = getSchema;
+export default getSchema;

@@ -1,33 +1,32 @@
 ---
-title: リモートホスト設定画面
+title: リモートホスト設定ダイアログ
 lang: ja
 permalink: /reference/2_remotehost_screen/
 ---
 ワークフロー内でWHEELサーバ外の計算環境（以下、リモートホスト）を用いる場合、対象とするリモートホストにSSH接続し処理を実行します。
-ワークフロー作成時に使用するリモートホスト情報、およびリモートホストにSSH接続時に使用するユーザ情報は、リモートホスト設定画面にて登録します。
+ワークフロー作成時に使用するリモートホスト情報、およびリモートホストにSSH接続時に使用するユーザ情報は、リモートホスト設定ダイアログにて登録します。
 
-## リモートホスト設定画面の表示
-リモートホスト設定画面は、画面右上のハンバーガーメニューをクリックし、表示された __Remotehost editor__ リンクをクリックして表示します。
+## リモートホスト設定ダイアログの表示
+リモートホスト設定ダイアログは、画面右上のハンバーガーメニューをクリックし、表示された __Remotehost editor__ リンクをクリックして表示します。
 
-![img](./img/drawer.png "drawer.png")
+![img](./img/remotehost_editor_button.png "drawer.png")
 
 
-## リモートホスト設定画面
-リモートホスト設定画面の構成は、以下のとおりです。
+## リモートホスト設定ダイアログの構成
+リモートホスト設定ダイアログの構成は、以下のとおりです。
 
 ![img](./img/remotehost.png "remotehost")
 
 ||構成要素|説明|
 |----------|----------|---------------------------------|
-|1|タイトル(WHEEL) ボタン         | ホーム画面へ遷移します                                              |
-|2|NEW REMOTE HOST SETTING ボタン | リモートホストへの接続情報を新規作成します                          |
-|3|リモートホストリスト           | 登録済みリモートホスト情報がリスト表示されます                      |
-|4|TEST ボタン                    | 設定した接続情報でリモートホストにアクセスできるかどうかを確認します|
-|5|編集 ボタン                    | 入力済の接続情報を編集します                                        |
-|6|削除 ボタン                    | 入力済の接続情報を削除します                                        |
+|1|NEW REMOTE HOST SETTING ボタン | リモートホストへの接続情報を新規作成します                          |
+|2|リモートホストリスト           | 登録済みリモートホスト情報がリスト表示されます                      |
+|3|TEST ボタン                    | 設定した接続情報でリモートホストにアクセスできるかどうかを確認します|
+|4|編集 ボタン                    | 入力済の接続情報を編集します                                        |
+|5|削除 ボタン                    | 入力済の接続情報を削除します                                        |
 
 ## 新規リモートホスト設定の作成
-__NEW REMOTE HOST SETTING__ ボタンをクリックすると、新規リモートホスト設定画面が表示されます。
+__NEW REMOTE HOST SETTING__ ボタンをクリックすると、新規リモートホスト設定ダイアログが表示されます。
 
 ![img](./img/new_remotehost.png "new_remotehost")
 
@@ -48,6 +47,9 @@ __NEW REMOTE HOST SETTING__ ボタンをクリックすると、新規リモー�
 |use stepjob|(富士通TCS使用サイトのみ)ステップジョブを使えるサイトかどうか|
 |shared host|ストレージを共用している他のリモートホストのラベル<br/>詳細は [shared hostの使用方法](#shared-hostの使用方法) をご参照ください。|
 |shared path on shared host|shared host上でHost work dirへアクセスするためのパス|
+|shared with localhost|WHEELサーバ(localhost)とストレージを共用しているかどうか<br/>詳細は [shared with localhostの使用方法](#shared-with-localhostの使用方法) をご参照ください。|
+|shared storage path on localhost|WHEELサーバ側で共有ストレージがマウントされているパス<br/>(shared with localhostが有効のときに設定)|
+|shared storage path on remote|リモートホスト側で共有ストレージがマウントされているパス<br/>(shared with localhostが有効のときに設定)|
 |use gfarm|(富岳CSGWのみ) gfarmコマンドを用いてHPCI共用ストレージへアクセスできるかどうか|
 |HPCI-ID|HPCI共用ストレージのOAuth認証に用いるためのHPCI-ID|
 |JWT server URL|HPCI共用ストレージのOAuth認証で用いるJWT-tokenを保管するサーバのURL|
@@ -103,7 +105,54 @@ __shared host__ を使用すると、例としてあげたワークフロー実�
 |shared host||HostA|
 |shared path on shared host||/data|
 
+## shared with localhostの使用方法
+
+リモートホスト設定の __shared with localhost__ の使用方法について説明します。
+
+WHEELサーバ（localhost）とリモートホスト間でファイル転送を行う際、共有ストレージが存在する場合は __shared with localhost__ を使用することでファイル転送時間を短縮できます。
+
+### 共有ストレージが存在する場合
+
+実行環境として、WHEELサーバ（localhost）およびリモートホストの両方からアクセス可能な共有ストレージが存在する場合、リモートホスト設定の __shared with localhost__ を使用することで、ファイルの転送を回避できます。
+
+例えば、以下のような構成を考えます：
+- WHEELサーバ（localhost）: 共有ストレージを `/mnt/shared` にマウント
+- RemoteHost: 同じ共有ストレージを `/data` にマウント
+
+このとき、RemoteHostのリモートホスト設定として定義すべき項目は以下のとおりです：
+
+|項目|設定値|
+|-----|-----|
+|label|RemoteHost|
+|Host work dir|/work または /data/work（推奨）|
+|shared with localhost|✓（有効）|
+|shared storage path on localhost|/mnt/shared|
+|shared storage path on remote|/data|
+
+### 動作の詳細
+
+__shared with localhost__ を使用すると、ファイル転送は以下のようになります：
+
+- __Localhost → RemoteHostの場合:__
+  - Localhostで作成されたファイルは共有ストレージ上に配置されます
+  - RemoteHostは共有ストレージへのシンボリックリンクを作成します
+  - rsyncによるファイルのアップロードは発生しません
+
+- __RemoteHost → Localhostの場合:__
+  - RemoteHostで作成されたファイルは共有ストレージ上に配置されます
+  - Localhostは共有ストレージへのシンボリックリンクを作成します
+  - rsyncによるファイルのダウンロードは発生しません
+
+### 注意事項
+
+- __shared with localhost__ 機能を使用する場合、プロジェクトは共有ストレージ上に作成することを推奨します
+- 共有ストレージのパスが正しく設定されていることを確認してください
+- 両方の環境から共有ストレージへのアクセス権限が適切に設定されている必要があります
+- RemoteHost → Localhostの転送を行う場合、RemoteHostの __Host work dir__ を共有ストレージ上に設定することを推奨します
+
 
 
 --------
+[SSH認証の詳細設定]({{ site.baseurl }}/reference/2_remotehost_screen/ssh_auth/)
+
 [リファレンスマニュアルのトップページに戻る]({{ site.baseurl }}/reference/)

@@ -13,10 +13,18 @@
       - [リモート計算サーバ設定の作成](#リモート計算サーバ設定の作成)
     - [テストの実行](#テストの実行-1)
       - [一部のテストのみを実行する場合](#一部のテストのみを実行する場合)
+    - [モック実行環境について](#モック実行環境について)
+      - [モック実行環境図](#モック実行環境図)
+      - [モック環境を使用するメリット](#モック環境を使用するメリット)
+      - [mock環境事前準備](#mock環境事前準備)
+      - [詳しいセットアップ・試験手順 ](#詳しいセットアップ・試験手順 )
+   
   - [テスト対象外ケースについて](#テスト対象外ケースについて)
   - [テスト実行スキップケースについて](#テスト実行スキップケースについて)
   - [テスト環境のカスタマイズ](#テスト環境のカスタマイズ)
   - [GitHub Actions 実行時に、不具合ではないのに試験結果がNGとなる場合について](#github-actions-実行時に不具合ではないのに試験結果がngとなる場合について)
+  - [チュートリアルデモテストについて](#チュートリアルデモテストについて)
+  - [実装者向け](#実装者向け)
 
 ## GitHub Actions の実行
 
@@ -72,9 +80,9 @@ GitHub Actions上でテストを実行する際に前提としている実行環
 リポジトリからコードを取得し、必要なモジュールをインストールします。
 
 ```bash
-$ git clone https://github.com/RIKEN-RCCS/OPEN-WHEEL.git
-$ cd OPEN-WHEEL/test
-$ npm install # Cypressを含めた必要なモジュールがインストールされます。
+git clone https://github.com/RIKEN-RCCS/OPEN-WHEEL.git
+cd OPEN-WHEEL/test
+npm install # Cypressを含めた必要なモジュールがインストールされます。
 ```
 
 なお、google chromeはこの操作ではインストールされないため、テスト環境に別途インストールしてください。
@@ -118,26 +126,26 @@ OpenPBSでのバッチジョブ実行が可能なホストが存在する場合�
 本ドキュメント末尾に記載の [テスト環境のカスタマイズ](#テスト環境のカスタマイズ)
 の章を参照してリモートホスト設定を変更してください。
 
-3. テストUIの起動
+1. テストUIの起動
 OPEN-WHEEL/testフォルダで以下のコマンドを実行してください。
 
    ```bash
    npm run test
    ```
 
-3. cypressが起動すると以下の画面が表示されるので、"E2E Testing"をクリック。
+2. cypressが起動すると以下の画面が表示されるので、"E2E Testing"をクリック。
 
    ![](img/2024-03-29-21-29-55.png)
 
-4. ブラウザ選択画面が表示されるので、"Chrome"を選択して"Start E2E Testing in Chrome"をクリック。(Cypress実行環境にインストールされているブラウザによって画面の内容は異なります。)
+3. ブラウザ選択画面が表示されるので、"Chrome"を選択して"Start E2E Testing in Chrome"をクリック。(Cypress実行環境にインストールされているブラウザによって画面の内容は異なります。)
 
    ![](img/2025-03-13-13-55-00.png)
 
-5. Chromeが起動し、テストファイルの一覧が表示されるので"cypress/e2e/spec.cy.js"をクリック
+4. Chromeが起動し、テストファイルの一覧が表示されるので"cypress/e2e/spec.cy.js"をクリック
 
    ![](img/2024-03-29-21-31-05.png)
 
-6. Chrome上でテストが開始されます。
+5. Chrome上でテストが開始されます。
 
    ![](img/2024-03-29-21-31-49.png)
 
@@ -177,6 +185,31 @@ OPEN-WHEEL/testフォルダで以下のコマンドを実行してください�
 
 ```
 
+### モック実行環境について
+
+OPEN-WHEELのE2Eテストでは、従来の「バックエンド接続方式」に加えて  
+**バックエンドサーバと通信せずに GUI の試験を高速に実行できる “モック実行環境”**  
+を利用できます。
+
+モック実行環境では以下の構成により、UIが発行するすべての通信を Gateway（3001）に集約し、  
+バックエンドの代わりに **SPA / Socket.IO モック / HTTP モック** が応答します。
+
+#### モック実行環境図
+![](img/mock.drawio.svg)
+
+
+#### モック環境を使用するメリット
+特に理由が無い限り**E2E テストではモック環境の使用を推奨します**。  
+モックを利用することで、以下のメリットが得られ、テストの安定性と実行速度が大幅に向上します。
+- バックエンド（リモート計算サーバ）不要で UI のみを高速に試験できる  
+- バックエンドの状態に依存しないため **安定性が高い**  
+
+#### 詳しいセットアップ・試験手順  
+モック環境の構築方法、各モックサーバの起動方法、  
+Gatewayとの連携やcollection 切り替えなどの詳細は以下を参照してください：
+
+➡ [mock_guide.md](../documentMD/mock_guide.md)
+
 ## テスト実行スキップケースについて
 
 機能上の不具合によりエラーが発生するテストケースについて、実行をスキップする処理を付与しています。
@@ -186,6 +219,7 @@ OPEN-WHEEL/testフォルダで以下のコマンドを実行してください�
 -  it.skip( 
 +  it(  
 ```
+
 
 ## テスト対象外ケースについて
 
@@ -254,22 +288,25 @@ GitHub Actions のテスト実行おいて、画面表示が不安定になる�
 上記が発生した場合、試験を再実施することで解消される可能性があります。
 
 ## デフォルトでは実行されないテスト
+
 auth.cy.js (パスワードベースのログイン制限機能) および hpciss.cy.js(HPCI-SS, HPCI-SS-tarコンポーネントを使うテスト) はデフォルトでは実行されないように設定しています。
 これらのテストを実行する時は、describe関数に指定しているskipを削除してから実行してください。
 
 ただし、実行時にそれぞれ次の変数を指定して起動する必要があります。
 
 ### auth
+
 - `WHEEL_TEST_LOGIN_PASSWORD` ログインパスワード
 
 ### hpciss
+
 -`WHEEL_TEST_CSGW_HOSTNAME`      CSGWのホスト名
 -`WHEEL_TEST_CSGW_USERNAME`      CSGWへログインするユーザのユーザ名
 -`WHEEL_TEST_JWTServer_USERNAME` JWT tokenを発行したhpci-id
 -`WHEEL_TEST_GROUPNAME`          gfarm領域上で、前項のユーザが所属するグループ
 
-
 これらの変数は次のようにcypressの--envオプションに対して、カンマ区切りで複数の設定を続けて渡して起動してください。
+
 ```
 npm run test -- --env "WHEEL_TEST_CSGW_HOSTNAME=foo,WHEEL_TEST_CSGW_USERNAME=bar"
 ```
@@ -284,11 +321,166 @@ npm run test -- --env "WHEEL_TEST_CSGW_HOSTNAME=foo,WHEEL_TEST_CSGW_USERNAME=bar
 
 この作業は、コンテナを再起動する度に行なう必要があります。
 
+## チュートリアルデモテストについて
+
+`documentMD/user_guide/_tutorial` 配下のBasic/Advancedチュートリアルの操作手順をそのまま再現するE2Eスペック群です。
+「候補ユーザへのライブデモ」「デモ動画の収録」「実装後の動作確認(GUI run-through)」の3用途を1つのスペックコードで兼ねます。
+いずれもheadlessの`cypress run`単体では意図した動作をしません(後述のDEMO_MODEを参照)。
+
+### 対象ファイル
+
+いずれも`test/cypress/e2e/tutorial/`配下にまとめて配置しています。
+
+- `tutorialBasic.cy.js`: 1_basic_tutorialのPart1〜3を再現します。Part2(リモートホスト+ジョブスケジューラ実行)のスクリプトは先頭で`cd $PBS_O_WORKDIR`しています(PBS Proはジョブを投入者の`$HOME`で実行するため、相対パスの出力ファイルを扱うには必須)。
+- `tutorialAdvancedIf.cy.js` / `tutorialAdvancedLoop.cy.js` / `tutorialAdvancedParameterStudy.cy.js` / `tutorialAdvancedSource.cy.js` / `tutorialAdvancedViewer.cy.js` / `tutorialAdvancedStorage.cy.js`: 2_advanced_tutorialの各セクション(条件分岐/ループ/パラメータスタディ/入力ファイル/結果表示/ファイル保存)にそれぞれ対応します。1ファイルにまとめず分割しているのは、実サーバに対して複数の`it()`を1つのspecファイル内で連続実行すると、Chromeレンダラプロセスがメモリクラッシュする事象を確認したためです(モックサーバに対する既存specでは発生しません)。
+- `tutorialAdvancedJobScheduler.cy.js`: Bulk Job/Step Jobを再現します。他のtutorialAdvanced*.cy.jsと異なり**mockサーバ専用**です。テスト用リモートホストが素のOpenPBSであり、Fujitsu TCS系のbulk/stepjobに対応していないため、モックの`componentTestLabel`ホスト(useBulkjob/useStepjob: true)を使ってUI操作フローのみを実演します。
+
+### 実行対象サーバと起動手順
+
+`tutorialBasic.cy.js`と`tutorialAdvanced*.cy.js`(job schedulerを除く)は、スクリプトの実行・条件分岐・ループ・パラメータスタディのファンアウトが本当に行われることを検証するため、**実サーバ**(cypress.config.jsのデフォルトbaseUrl:8089)に対して実行してください。`tutorialAdvancedJobScheduler.cy.js`のみ、上記の理由から**モックサーバ**に対して実行してください。
+どちらも[テスト環境のセットアップ](#テスト環境のセットアップ)で`npm install`済みであることが前提です。
+
+`tutorialBasic.cy.js`のPart2はホスト名`wheel_release_test_server`への接続を必要としますが、これはローカルの`docker compose`ネットワーク内でのみ解決可能なホスト名です。GitHub Actions側の`run_cypress.yml`は同名のコンテナ/ホストを用意していない(`testbed`サービスは別のネットワークモデルで動作する)ため、`test/run-specs-sequential.sh`はデフォルトの実行対象から`tutorial/`ディレクトリ全体を除外しています(`gfarm/`と同様の扱い)。tutorialディレクトリのテストはこのREADMEの手順に従い、手元の環境で個別に実行してください。
+
+#### 実サーバでの起動手順 (tutorialBasic.cy.js / tutorialAdvancedIf.cy.js / tutorialAdvancedLoop.cy.js / tutorialAdvancedParameterStudy.cy.js / tutorialAdvancedSource.cy.js / tutorialAdvancedViewer.cy.js / tutorialAdvancedStorage.cy.js)
+
+1. `wheel`コンテナ(ローカルのソースからビルド)と`wheel_release_test_server`(仮想リモート計算サーバ)を起動します。
+
+   ```bash
+   cd OPEN-WHEEL/test
+   npm run test:e2e:start
+   ```
+
+   内部的には `docker compose up -d --build wheel_release_test_server wheel_release_test` を実行し、`http://localhost:8089`が応答するまで待機します。
+
+2. (リモートホスト+ジョブスケジューラ関連のテストを実行する場合のみ) OpenPBSのヒストリ機能を有効にします。現状これを使う`tutorialBasic.cy.js`のPart2はskip中のため、通常は省略できます。
+
+   ```bash
+   docker exec wheel_release_test_server /opt/pbs/bin/qmgr -c 'set server job_history_enable=True'
+   ```
+
+3. Cypressを起動します。ライブデモ・デモ動画収録・動作確認のいずれで開くかは、この節の後にある「DEMO_MODE」を参照してください。最も単純な動作確認の場合は次の通りです。
+
+   ```bash
+   npx cypress open
+   ```
+
+   "E2E Testing" → ブラウザ選択(Chrome) → 実行したいスペック(例: `tutorialBasic.cy.js`)をクリックしてください。
+
+4. テストが終わったらコンテナを停止します。
+
+   ```bash
+   npm run test:e2e:stop
+   ```
+
+#### モックサーバでの起動手順 (tutorialAdvancedJobScheduler.cy.js のみ)
+
+1. モック関連コンテナ(`wheel`はモック用ビルド、`mock`、`gateway`など)を起動します。
+
+   ```bash
+   cd OPEN-WHEEL/test
+   npm run test:e2e:mock:start
+   ```
+
+   内部的には `docker compose up -d --build` を実行し、`http://localhost:8089`、`http://localhost:8090`、gateway/mockの各ポートが応答するまで待機します。
+
+2. Cypressを起動します。
+
+   ```bash
+   npx cypress open
+   ```
+
+   "E2E Testing" → ブラウザ選択(Chrome) → `tutorialAdvancedJobScheduler.cy.js`をクリックしてください。
+
+3. テストが終わったらコンテナを停止します。
+
+   ```bash
+   npm run test:e2e:mock:stop
+   ```
+
+### DEMO_MODE (--env DEMO_MODE=...)
+
+各スペック内の主要な操作は`cy.demoStep(label)`(`test/cypress/support/commands-demo.js`)を経由しており、`--env DEMO_MODE=...`の値で挙動が切り替わります。
+
+| DEMO_MODE | 用途 | 挙動 |
+|---|---|---|
+| `pause` | プレゼンターによるライブデモ | 各ステップで`cy.pause()`により一時停止。Cypress Test RunnerでNextをクリックして進行 |
+| `video` | デモ動画の収録 | 各ステップ後に`cy.wait()`。`cy.demoMoveTo`/`cy.demoClick`によりカーソルが可視的に(`cypress-real-events`使用)目的の要素まで移動してからクリックする |
+| (未指定) | GUI動作確認 | 待機・カーソル移動なしで最速実行 |
+
+```bash
+# ライブデモ (要 cypress open)
+npx cypress open --env DEMO_MODE=pause
+
+# デモ動画収録
+npx cypress run --headed --config video=true --env DEMO_MODE=video --spec cypress/e2e/tutorial/tutorialBasic.cy.js
+
+# 動作確認 (DEMO_MODE未指定)
+npx cypress open
+```
+
+### 既知の問題
+
+- `tutorialAdvancedParameterStudy.cy.js`は、環境によってはPS0コンポーネントが`numTotal: 1`のまま(本来は3のはず)即座に`failed`となることがあります。`parameterSetting.json`とtarget scriptの内容自体は正しく保存されていることを確認済みですが、根本原因は未特定です(保存タイミングに関連する可能性を調査しましたが再現しないケースもあり、断定できていません)。再現した場合は再実行してください。
+- `tutorialBasic.cy.js`のPart2(リモートホスト+ジョブスケジューラ実行)は、以前は失敗していましたが解消し、現在は`it.skip`せず有効化されています。原因はWHEEL側ではなくPBS Proの標準的な挙動でした: `qsub`実行前に`cd <remoteWorkingDir>`していても、それは**qsubを呼び出すシェルのカレントディレクトリを変えるだけ**で、ジョブ自体の実行ディレクトリには反映されません(`qsub`に`-d <path>`を渡すか、スクリプト自身が`cd $PBS_O_WORKDIR`しない限り、ジョブは投入者の`$HOME`で実行されます)。そのため、テストのスクリプトの先頭に`cd $PBS_O_WORKDIR`を追加することで解消しました。同様に相対パスの出力ファイルを扱うリモートホスト+ジョブスケジューラ向けのスクリプトを新規に書く場合は、先頭に`cd $PBS_O_WORKDIR`を入れることを推奨します。
+
 ## remotehost.jsonについて
+
 コンテナが参照するremotehost.jsonはホスト側に残っているので、
 テストが異常終了した時などは、次のコマンドを実行してremotehost.jsonを初期状態に戻してください。
+
 ```
 git reset HEAD wheel_config/remotehost.json
 ```
 
+## 実装者向け
 
+### ディレクトリ構成
+
+次のディレクトリ構成を取ります。
+.
+├── e2e
+│   ├── components # OPEN-WHEELの各コンポーネントにフォーカスしたテストが格納されます。
+│   ├── tutorial # documentMD/user_guide/_tutorialのBasic/Advancedチュートリアルを再現するデモ用テストが格納されます。
+|   *.js # OPEN-WHEELの全般的な機能のテストが格納されます。
+└── support # E2Eテストからライブラリ的に呼び出されるコマンドを定義します。
+
+### テスト命名規則
+
+#### describe
+
+試験の大項目を記述します。
+次の値を取ります。
+
+- context
+- auth
+- export project
+- home
+- import project
+- remote host
+- shutcut key
+- source and viewer
+- dependency
+contextのみ、describeをネストして使用します。
+
+```js
+describe("Component", ()=>{
+   describe("コンポーネント名", ()=>{
+      // test
+   })
+})
+```
+
+各テストファイル内でdescribeによりテストケースを分離したくなった場合、
+describeをネストし、グループ化してもよいです。  
+一方でdescribeによるネストが深い場合、テストが複雑化している可能性があります。
+Vueコンポーネントテストに分離してのテストを検討してください。
+
+#### it
+
+各テストの内容を記述します。
+例えば次のような内容になります
+
+```js
+it("javascriptテキストボックス入力確認" ()->{});
+```

@@ -7,117 +7,291 @@
   <v-sheet
     class="text-center"
     max-height="40vh"
+    height="40vh"
+    style="display: flex; flex-direction: column;"
   >
     <v-toolbar
       density="compact"
       color="background"
     >
-      <template #extension>
-        <v-btn
-          variant="outlined"
-          text="clear all log"
-          @click="clearAllLog"
-        />
-        <v-tabs
-          v-model="currentTab"
-          @update:model-value="onChange"
-        >
-          <v-tab
-            v-for="item in items"
-            :key="item.id"
-            :slider-color="item.unread ? 'primary' :'white'"
-          >
-            <span :class="{'text-success' : item.unread }">
-              {{ item.label }}
-            </span>
-          </v-tab>
-        </v-tabs>
-      </template>
-    </v-toolbar>
-    <v-window
-      v-model="currentTab"
-    >
-      <v-window-item
-        v-for="item of items"
-        :key="item.id"
-        :eager="true"
-        :transition="false"
-        :reverse-transition="false"
+      <v-btn
+        variant="outlined"
+        text="clear all log"
+        @click="clearAllLog"
+      />
+      <v-menu
+        v-model="categoryMenu"
+        :close-on-content-click="false"
+        location="bottom"
       >
-        <xterm
-          :clear="item.clear"
-          :log="item.log"
-        />
-      </v-window-item>
-    </v-window>
+        <template #activator="{ props }">
+          <v-btn
+            class="ml-4"
+            variant="outlined"
+            v-bind="props"
+          >
+            category
+          </v-btn>
+        </template>
+        <v-card>
+          <v-list density="compact">
+            <v-list-group value="system">
+              <template #activator="{ props }">
+                <v-list-item
+                  v-bind="props"
+                  title="system"
+                >
+                  <template #prepend>
+                    <v-checkbox
+                      class="mt-5"
+                      :model-value="systemChildrenSelected"
+                      :indeterminate="systemChildrenPartiallySelected"
+                      @click.prevent="toggleSystem"
+                    />
+                  </template>
+                </v-list-item>
+              </template>
+              <v-list-item
+                v-for="(item, i) in categories.system"
+                :key="i"
+              >
+                <v-checkbox
+                  v-model="selectedCategories"
+                  :label="item"
+                  :value="item"
+                  density="compact"
+                  hide-details
+                />
+              </v-list-item>
+            </v-list-group>
+            <v-list-group value="script">
+              <template #activator="{ props }">
+                <v-list-item
+                  v-bind="props"
+                  title="script"
+                >
+                  <template #prepend>
+                    <v-checkbox
+                      class="mt-5"
+                      :model-value="scriptChildrenSelected"
+                      :indeterminate="scriptChildrenPartiallySelected"
+                      @click.prevent="toggleScript"
+                    />
+                  </template>
+                </v-list-item>
+              </template>
+              <v-list-item
+                v-for="(item, i) in categories.script"
+                :key="i"
+              >
+                <v-checkbox
+                  v-model="selectedCategories"
+                  :label="item"
+                  :value="item"
+                  density="compact"
+                  hide-details
+                />
+              </v-list-item>
+            </v-list-group>
+          </v-list>
+        </v-card>
+      </v-menu>
+      <v-spacer />
+      <v-btn
+        variant="outlined"
+        text="download debug"
+        @click="downloadDebugLog"
+      />
+    </v-toolbar>
+    <div
+      ref="logContainer"
+      style="overflow-y: scroll; flex-grow: 1; background-color: black; color: white; text-align: left; font-family: monospace; white-space: pre-wrap; padding: 5px;"
+    >
+      {{ filteredLogs }}
+    </div>
   </v-sheet>
 </template>
 
 <script>
-import xterm from "../components/xterm.vue";
 import { mapState } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 
+const levelToCategoryMap = {
+  INFO: "system",
+  WARN: "system",
+  ERROR: "system",
+  FATAL: "system",
+  STDOUT: "stdout",
+  STDERR: "stderr",
+  SSHOUT: "sshout"
+};
+
 export default {
   name: "LogScreen",
-  components: {
-    xterm
-  },
   props: {
     show: Boolean
   },
   data: ()=>{
+    const categories = {
+      system: ["info", "warn", "error"],
+      script: ["stdout", "stderr", "sshout"]
+    };
     return {
-      currentTab: 0,
-      items: [
-        { label: "info", id: "info", clear: 0, log: "", unread: false, eventNames: ["logINFO", "logWARN", "logERR"] },
-        { label: "stdout", id: "stdout", clear: 0, log: "", unread: false, eventNames: ["logStdout"] },
-        { label: "stderr", id: "stderr", clear: 0, log: "", unread: false, eventNames: ["logStderr"] },
-        { label: "output(SSH)", id: "sshout", clear: 0, log: "", unread: false, eventNames: ["logSSHout", "logSSHerr"] }
-      ]
+      logs: [],
+      categories,
+      selectedCategories: [...categories.system, ...categories.script],
+      categoryMenu: false
     };
   },
   computed: {
-    ...mapState(["projectRootDir"])
-  },
-  watch: {
-    show() {
-      if (!this.show) {
-        return;
+    ...mapState(["projectRootDir"]),
+    filteredLogs() {
+      return this.logs
+        .filter((log)=>{
+          const level = log.level.toLowerCase();
+          return this.selectedCategories.includes(level);
+        })
+        .map((log)=>{ return `[${log.timestamp}] [${log.level}] ${log.category} - ${log.message}`; })
+        .join("");
+    },
+    systemChildrenSelected() {
+      return this.categories.system.every((item)=>{
+        return this.selectedCategories.includes(item);
       }
-      this.onChange(this.currentTab);
+      );
+    },
+    systemChildrenPartiallySelected() {
+      const some = this.categories.system.some((item)=>{
+        return this.selectedCategories.includes(item);
+      }
+      );
+      return some && !this.systemChildrenSelected;
+    },
+    scriptChildrenSelected() {
+      return this.categories.script.every((item)=>{
+        return this.selectedCategories.includes(item);
+      }
+      );
+    },
+    scriptChildrenPartiallySelected() {
+      const some = this.categories.script.some((item)=>{
+        return this.selectedCategories.includes(item);
+      }
+      );
+      return some && !this.scriptChildrenSelected;
     }
   },
-  methods: {
-    getItemByEventName(eventName) {
-      return this.items.find((item)=>{
-        return item.eventNames.some((e)=>{
-          return e === eventName;
-        });
-      });
-    },
-    logRecieved(eventName, data) {
-      const item = this.getItemByEventName(eventName);
-      this.newlog(item);
-      item.log = data;
-    },
-    newlog: function (item) {
-      item.unread = item.id !== this.items[this.currentTab].id;
-    },
-    onChange: function (n) {
-      this.items[n].unread = false;
-    },
-    clearAllLog: function () {
-      //$refsでxtermコンポーネントのclear()を呼び出す方法を使うと
-      //Vue2 -> Vue3の移行時に作業量が増えるため、workaroundとしてclear propに変更があったら
-      //xtermコンポーネントでclearを実行するようにしている。
-      for (const item of this.items) {
-        item.unread = false;
-        item.clear = (item.clear + 1) % 2;
+  watch: {
+    show(newVal) {
+      if (newVal) {
+        this.scrollToBottom();
       }
+    },
+    filteredLogs() {
+      this.$nextTick(()=>{
+        this.scrollToBottom();
+      });
+    }
+  },
+  mounted() {
+    //Add a test message for debugging
+    const timestamp = new Date().toISOString();
+    this.logs.push({
+      timestamp: timestamp,
+      level: "INFO",
+      category: "client",
+      message: "Log screen initialized and listening for logs.\n",
+      clientCategory: "system"
+    });
+  },
+  methods: {
+    toggleSystem() {
+      if (this.systemChildrenSelected) {
+        this.selectedCategories = this.selectedCategories.filter(
+          (item)=>{ return !this.categories.system.includes(item); }
+        );
+      } else {
+        this.selectedCategories = [
+          ...this.selectedCategories,
+          ...this.categories.system
+        ];
+      }
+    },
+    toggleScript() {
+      if (this.scriptChildrenSelected) {
+        this.selectedCategories = this.selectedCategories.filter(
+          (item)=>{ return !this.categories.script.includes(item); }
+        );
+      } else {
+        this.selectedCategories = [
+          ...this.selectedCategories,
+          ...this.categories.script
+        ];
+      }
+    },
+    onWheelLog(logData) {
+      try {
+        //log4js json layout adds a separator (e.g. comma), so we need to remove it before parsing
+        const logString
+          = typeof logData === "string" && logData.endsWith(",")
+            ? logData.slice(0, -1)
+            : logData;
+        const logEvent
+          = typeof logString === "string" ? JSON.parse(logString) : logString;
+
+        const timestamp = new Date(logEvent.startTime).toISOString();
+        const level = logEvent.level.levelStr;
+        const category = logEvent.categoryName;
+        const message = Array.isArray(logEvent.data)
+          ? logEvent.data.join(" ")
+          : logEvent.data;
+        const clientCategory = levelToCategoryMap[level] || "system";
+
+        this.logs.push({ timestamp, level, category, message: `${message}\n`, clientCategory });
+      } catch (e) {
+        //fallback for unstructured logs or parse errors
+        console.error("Failed to parse log data:", logData, e);
+        const message
+          = typeof logData === "string" ? logData : JSON.stringify(logData);
+        this.logs.push({
+          timestamp: new Date().toISOString(),
+          level: "INFO",
+          category: "general",
+          message: `${message}\n`,
+          clientCategory: "system"
+        });
+      }
+    },
+    clearAllLog() {
+      this.logs = [];
+      this.selectedCategories = [];
       SIO.emitGlobal("aboutWheel", this.projectRootDir, ()=>{
         console.log("version info should be on INFO log");
       });
+    },
+    downloadDebugLog() {
+      SIO.emitGlobal("downloadFullLog", this.projectRootDir, (url)=>{
+        if (url) {
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "";
+          link.click();
+
+          setTimeout(()=>{
+            SIO.emitGlobal("removeDownloadFile", this.projectRootDir, url, ()=>{
+              console.log("Debug log archive removed from server");
+            });
+          }, 5000);
+        } else {
+          console.error("Failed to create debug log archive");
+        }
+      });
+    },
+    scrollToBottom() {
+      const container = this.$refs.logContainer;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
     }
   }
 };

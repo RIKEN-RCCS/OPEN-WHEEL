@@ -3,60 +3,57 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const { expect } = require("chai");
-const { describe, it, beforeEach, afterEach } = require("mocha");
-const sinon = require("sinon");
-const rewire = require("rewire");
-const { rsyncExcludeOptionOfWheelSystemFiles } = require("../../../app/db/db");
+import { expect } from "chai";
+import sinon from "sinon";
+import path from "path";
+import fs from "fs-extra";
+import os from "os";
+import { exec as execCb } from "child_process";
+import { rsyncExcludeOptionOfWheelSystemFiles } from "../../../app/db/db.js";
+import { deliverFile, deliverFilesOnRemote, deliverFilesFromRemote, deliverFilesLocalToRemoteShared, deliverFilesRemoteToLocalShared, deliverFilesBetweenRemotes, _internal } from "../../../app/core/deliverFile.js";
 
+/**
+ * run a shell command locally (standing in for what would run over ssh.exec on the
+ * remote host) and resolve with its exit code instead of rejecting on non-zero
+ * @param {string} cmd - command to run
+ * @param {string} cwd - directory to run it in, standing in for the ssh session's landing directory
+ * @returns {Promise<number>} - process exit code
+ */
+function runShellForExitCode(cmd, cwd) {
+  return new Promise((resolve)=>{
+    execCb(cmd, { cwd }, (err)=>{
+      resolve(err ? (typeof err.code === "number" ? err.code : 1) : 0);
+    });
+  });
+}
 describe("#deliverFile", ()=>{
-  let rewireDeliverFile;
-  let deliverFile;
-  let fsMock; //fsモジュールをstub化
-  let statsMock; //fs.lstatで返されるstatオブジェクトをstub化
+  let lstatStub, copyStub, removeStub, ensureSymlinkStub, statsMock;
 
   beforeEach(()=>{
-    //rewireでdeliverFile.jsを読み込み
-    rewireDeliverFile = rewire("../../../app/core/deliverFile.js");
-
-    //テスト対象関数deliverFileを取得
-    deliverFile = rewireDeliverFile.__get__("deliverFile");
-
-    //fsモックを用意し、呼び出しをすべてsinon.stub()化
-    fsMock = {
-      lstat: sinon.stub(),
-      copy: sinon.stub(),
-      remove: sinon.stub(),
-      ensureSymlink: sinon.stub()
-    };
-
-    //deliverFile.js内部のfsをモックに差し替え
-    rewireDeliverFile.__set__("fs", fsMock);
-
-    //isDirectory()の結果を切り替えるためのstatsオブジェクトMock
-    statsMock = {
-      isDirectory: sinon.stub()
-    };
+    lstatStub = sinon.stub(_internal.fs, "lstat");
+    copyStub = sinon.stub(_internal.fs, "copy");
+    removeStub = sinon.stub(_internal.fs, "remove");
+    ensureSymlinkStub = sinon.stub(_internal.fs, "ensureSymlink");
+    statsMock = { isDirectory: sinon.stub() };
+  });
+  afterEach(()=>{
+    sinon.restore();
   });
 
   it("should deliver directory with symlink if not forced to copy", async ()=>{
-    //isDirectory() => true
     statsMock.isDirectory.returns(true);
-    fsMock.lstat.resolves(statsMock);
-
-    //remove/ensureSymlink成功を想定
-    fsMock.remove.resolves();
-    fsMock.ensureSymlink.resolves();
+    lstatStub.resolves(statsMock);
+    removeStub.resolves();
+    ensureSymlinkStub.resolves();
 
     const src = "/path/to/srcDir";
     const dst = "/path/to/dstDir";
 
     const result = await deliverFile(src, dst, false);
 
-    expect(fsMock.lstat.calledOnceWithExactly(src)).to.be.true;
-    expect(fsMock.remove.calledOnceWithExactly(dst)).to.be.true;
-    expect(fsMock.ensureSymlink.calledOnceWithExactly(src, dst, "dir")).to.be.true;
+    expect(lstatStub.calledOnceWithExactly(src)).to.be.true;
+    expect(removeStub.calledOnceWithExactly(dst)).to.be.true;
+    expect(ensureSymlinkStub.calledOnceWithExactly(src, dst, "dir")).to.be.true;
     expect(result).to.deep.equal({
       type: "link-dir",
       src,
@@ -65,21 +62,19 @@ describe("#deliverFile", ()=>{
   });
 
   it("should deliver file with symlink if not forced to copy", async ()=>{
-    //isDirectory() => false
     statsMock.isDirectory.returns(false);
-    fsMock.lstat.resolves(statsMock);
-
-    fsMock.remove.resolves();
-    fsMock.ensureSymlink.resolves();
+    lstatStub.resolves(statsMock);
+    removeStub.resolves();
+    ensureSymlinkStub.resolves();
 
     const src = "/path/to/srcFile";
     const dst = "/path/to/dstFile";
 
     const result = await deliverFile(src, dst, false);
 
-    expect(fsMock.lstat.calledOnceWithExactly(src)).to.be.true;
-    expect(fsMock.remove.calledOnceWithExactly(dst)).to.be.true;
-    expect(fsMock.ensureSymlink.calledOnceWithExactly(src, dst, "file")).to.be.true;
+    expect(lstatStub.calledOnceWithExactly(src)).to.be.true;
+    expect(removeStub.calledOnceWithExactly(dst)).to.be.true;
+    expect(ensureSymlinkStub.calledOnceWithExactly(src, dst, "file")).to.be.true;
     expect(result).to.deep.equal({
       type: "link-file",
       src,
@@ -88,21 +83,18 @@ describe("#deliverFile", ()=>{
   });
 
   it("should deliver by copying if forceCopy is true", async ()=>{
-    statsMock.isDirectory.returns(true); //dir/file どちらでも可
-    fsMock.lstat.resolves(statsMock);
-
-    fsMock.copy.resolves();
+    statsMock.isDirectory.returns(true);
+    lstatStub.resolves(statsMock);
+    copyStub.resolves();
 
     const src = "/path/to/srcAny";
     const dst = "/path/to/dstAny";
 
     const result = await deliverFile(src, dst, true);
 
-    //remove()やensureSymlink()は呼ばれない
-    expect(fsMock.remove.notCalled).to.be.true;
-    expect(fsMock.ensureSymlink.notCalled).to.be.true;
-
-    expect(fsMock.copy.calledOnceWithExactly(src, dst, { overwrite: true })).to.be.true;
+    expect(removeStub.notCalled).to.be.true;
+    expect(ensureSymlinkStub.notCalled).to.be.true;
+    expect(copyStub.calledOnceWithExactly(src, dst, { overwrite: true })).to.be.true;
     expect(result).to.deep.equal({
       type: "copy",
       src,
@@ -111,28 +103,22 @@ describe("#deliverFile", ()=>{
   });
 
   it("should fallback to copy when ensureSymlink throws EPERM error", async ()=>{
-    //symlink作成時にEPERMエラーを投げる
     statsMock.isDirectory.returns(false);
-    fsMock.lstat.resolves(statsMock);
-    fsMock.remove.resolves();
-
+    lstatStub.resolves(statsMock);
+    removeStub.resolves();
     const epermError = new Error("EPERM error");
     epermError.code = "EPERM";
-    fsMock.ensureSymlink.rejects(epermError);
-
-    //fallbackのcopy
-    fsMock.copy.resolves();
+    ensureSymlinkStub.rejects(epermError);
+    copyStub.resolves();
 
     const src = "/dir/src";
     const dst = "/dir/dst";
 
     const result = await deliverFile(src, dst, false);
 
-    //remove -> ensureSymlink(EPERM) -> copy(overwrite: false)
-    expect(fsMock.remove.calledOnceWithExactly(dst)).to.be.true;
-    expect(fsMock.ensureSymlink.calledOnce).to.be.true;
-    expect(fsMock.copy.calledOnceWithExactly(src, dst, { overwrite: false })).to.be.true;
-
+    expect(removeStub.calledOnceWithExactly(dst)).to.be.true;
+    expect(ensureSymlinkStub.calledOnce).to.be.true;
+    expect(copyStub.calledOnceWithExactly(src, dst, { overwrite: false })).to.be.true;
     expect(result).to.deep.equal({
       type: "copy",
       src,
@@ -142,15 +128,12 @@ describe("#deliverFile", ()=>{
 
   it("should reject promise if ensureSymlink throws error with non-EPERM code", async ()=>{
     statsMock.isDirectory.returns(false);
-    fsMock.lstat.resolves(statsMock);
-    fsMock.remove.resolves();
-
+    lstatStub.resolves(statsMock);
+    removeStub.resolves();
     const otherError = new Error("Some other error");
-    otherError.code = "EACCES"; //例: EPERM以外のコード
-    fsMock.ensureSymlink.rejects(otherError);
-
-    //copyは呼ばれない
-    fsMock.copy.resolves();
+    otherError.code = "EACCES";
+    ensureSymlinkStub.rejects(otherError);
+    copyStub.resolves();
 
     const src = "/some/src";
     const dst = "/some/dst";
@@ -162,44 +145,26 @@ describe("#deliverFile", ()=>{
       expect(err).to.equal(otherError);
     }
 
-    expect(fsMock.remove.calledOnceWithExactly(dst)).to.be.true;
-    expect(fsMock.ensureSymlink.calledOnce).to.be.true;
-    //EPERMでないのでコピーも行われない
-    expect(fsMock.copy.notCalled).to.be.true;
+    expect(removeStub.calledOnceWithExactly(dst)).to.be.true;
+    expect(ensureSymlinkStub.calledOnce).to.be.true;
+    expect(copyStub.notCalled).to.be.true;
   });
 });
 
 describe("#deliverFilesOnRemote", ()=>{
-  let rewireDeliverFile;
-  let deliverFilesOnRemote;
-  let getLoggerMock;
-  let loggerMock;
-  let getSshMock;
-  let sshMock;
+  //eslint-disable-next-line no-unused-vars
+  let getLoggerStub;
+  let loggerWarnStub;
+  let loggerDebugStub;
+  let getSshStub;
+  let sshExecStub;
 
   beforeEach(()=>{
-    //rewire で deliverFile.js を読み込む
-    rewireDeliverFile = rewire("../../../app/core/deliverFile.js");
-
-    //テスト対象関数の取得
-    deliverFilesOnRemote = rewireDeliverFile.__get__("deliverFilesOnRemote");
-
-    //logger のモックを準備
-    loggerMock = {
-      warn: sinon.stub(),
-      debug: sinon.stub()
-    };
-    getLoggerMock = sinon.stub().returns(loggerMock);
-
-    //getSsh のモックを準備
-    sshMock = {
-      exec: sinon.stub()
-    };
-    getSshMock = sinon.stub().returns(sshMock);
-
-    //rewire で deliverFile.js 内部の依存を差し替え
-    rewireDeliverFile.__set__("getLogger", getLoggerMock);
-    rewireDeliverFile.__set__("getSsh", getSshMock);
+    loggerWarnStub = sinon.stub();
+    loggerDebugStub = sinon.stub();
+    getLoggerStub = sinon.stub(_internal, "getLogger").returns({ warn: loggerWarnStub, debug: loggerDebugStub });
+    sshExecStub = sinon.stub();
+    getSshStub = sinon.stub(_internal, "getSsh").returns({ exec: sshExecStub });
   });
 
   afterEach(()=>{
@@ -208,16 +173,15 @@ describe("#deliverFilesOnRemote", ()=>{
 
   it("should return null and log a warning if recipe.onSameRemote is false", async ()=>{
     const recipe = {
-      onSameRemote: false, //onSameRemoteがfalseの場合のテスト
+      onSameRemote: false,
       projectRootDir: "/dummy/dir",
       remotehostID: "hostID"
     };
     const result = await deliverFilesOnRemote(recipe);
 
     expect(result).to.be.null;
-    expect(loggerMock.warn.calledOnceWithExactly("deliverFilesOnRemote must be called with onSameRemote flag")).to.be.true;
-    //getSsh は呼ばれない
-    expect(getSshMock.notCalled).to.be.true;
+    expect(loggerWarnStub.calledOnceWithExactly("deliverFilesOnRemote must be called with onSameRemote flag")).to.be.true;
+    expect(getSshStub.notCalled).to.be.true;
   });
 
   it("should execute ln -sf if forceCopy is false and ssh.exec returns 0 (success)", async ()=>{
@@ -231,21 +195,15 @@ describe("#deliverFilesOnRemote", ()=>{
       dstRoot: "/remote/dest",
       dstName: "fileB"
     };
-    //exec結果が成功(0)を返すようにする
-    sshMock.exec.resolves(0);
+    sshExecStub.resolves(0);
 
     const result = await deliverFilesOnRemote(recipe);
 
-    //cmd: ln -sf
     const expectedCmdPart = "ln -sf";
-    expect(sshMock.exec.callCount).to.equal(1);
-    const calledCmd = sshMock.exec.getCall(0).args[0];
+    expect(sshExecStub.callCount).to.equal(1);
+    const calledCmd = sshExecStub.getCall(0).args[0];
     expect(calledCmd).to.include(expectedCmdPart);
-
-    //logger.debug が実行されているか
-    expect(loggerMock.debug.calledWithExactly("execute on remote", sinon.match.string)).to.be.true;
-
-    //正常完了の場合はオブジェクトを返す
+    expect(loggerDebugStub.calledWithExactly("execute on remote", sinon.match.string)).to.be.true;
     expect(result).to.deep.equal({
       type: "copy",
       src: "/remote/src/fileA",
@@ -264,16 +222,14 @@ describe("#deliverFilesOnRemote", ()=>{
       dstRoot: "/remote/dest2",
       dstName: "folderB"
     };
-    sshMock.exec.resolves(0);
+    sshExecStub.resolves(0);
 
     const result = await deliverFilesOnRemote(recipe);
 
-    //forceCopy=true => cmd: cp -r
     const expectedCmdPart = "cp -r";
-    expect(sshMock.exec.callCount).to.equal(1);
-    const calledCmd = sshMock.exec.getCall(0).args[0];
+    expect(sshExecStub.callCount).to.equal(1);
+    const calledCmd = sshExecStub.getCall(0).args[0];
     expect(calledCmd).to.include(expectedCmdPart);
-
     expect(result).to.deep.equal({
       type: "copy",
       src: "/remote/src2/folderA",
@@ -292,8 +248,7 @@ describe("#deliverFilesOnRemote", ()=>{
       dstRoot: "/remote/destX",
       dstName: "destfile"
     };
-    //exec結果が失敗(非0)を返すようにする
-    sshMock.exec.resolves(1);
+    sshExecStub.resolves(1);
 
     try {
       await deliverFilesOnRemote(recipe);
@@ -301,50 +256,25 @@ describe("#deliverFilesOnRemote", ()=>{
     } catch (err) {
       expect(err).to.be.instanceOf(Error);
       expect(err.message).to.equal("deliver file on remote failed");
-      //logger.warn にも記録されているか
-      expect(loggerMock.warn.calledWithExactly("deliver file on remote failed", 1)).to.be.true;
-      //付与される err.rt が 1 になっているか
+      expect(loggerWarnStub.calledWithExactly("deliver file on remote failed", 1)).to.be.true;
       expect(err).to.have.property("rt", 1);
     }
   });
 });
 
 describe("#deliverFilesFromRemote", ()=>{
-  let rewireDeliverFile;
-  let deliverFilesFromRemote;
-  let getLoggerMock;
-  let loggerMock;
-  let getSshMock;
-  let sshMock;
+  //eslint-disable-next-line no-unused-vars
+  let getLoggerStub;
+  let loggerWarnStub;
+  //eslint-disable-next-line no-unused-vars
+  let getSshStub;
+  let sshRecvStub;
 
   beforeEach(()=>{
-    //deliverFile.js を rewireで読み込む
-    rewireDeliverFile = rewire("../../../app/core/deliverFile.js");
-
-    //テスト対象関数を取得
-    deliverFilesFromRemote = rewireDeliverFile.__get__("deliverFilesFromRemote");
-
-    //getLoggerをスタブ化
-    getLoggerMock = sinon.stub();
-    //loggerとして warnやdebugをモック化
-    loggerMock = {
-      warn: sinon.stub(),
-      debug: sinon.stub()
-    };
-    getLoggerMock.returns(loggerMock);
-
-    //getSshをスタブ化
-    getSshMock = sinon.stub();
-    //sshオブジェクトのrecvメソッドをモック化
-    sshMock = {
-      recv: sinon.stub()
-    };
-
-    //rewireで差し替え
-    rewireDeliverFile.__set__({
-      getLogger: getLoggerMock,
-      getSsh: getSshMock
-    });
+    loggerWarnStub = sinon.stub();
+    getLoggerStub = sinon.stub(_internal, "getLogger").returns({ warn: loggerWarnStub });
+    sshRecvStub = sinon.stub();
+    getSshStub = sinon.stub(_internal, "getSsh").returns({ recv: sshRecvStub });
   });
 
   afterEach(()=>{
@@ -352,22 +282,18 @@ describe("#deliverFilesFromRemote", ()=>{
   });
 
   it("should return null and log a warning if recipe.remoteToLocal is false", async ()=>{
-    //準備
     const recipe = {
       projectRootDir: "/dummy/project",
       remoteToLocal: false
     };
 
-    //実行
     const result = await deliverFilesFromRemote(recipe);
 
-    //検証
     expect(result).to.be.null;
-    expect(loggerMock.warn.calledOnceWithExactly("deliverFilesFromRemote must be called with remoteToLocal flag")).to.be.true;
+    expect(loggerWarnStub.calledOnceWithExactly("deliverFilesFromRemote must be called with remoteToLocal flag")).to.be.true;
   });
 
   it("should reject with an error if ssh.recv throws an error", async ()=>{
-    //準備
     const recipe = {
       projectRootDir: "/dummy/project",
       remoteToLocal: true,
@@ -377,12 +303,9 @@ describe("#deliverFilesFromRemote", ()=>{
       dstRoot: "/local/dst",
       dstName: "fileA.txt"
     };
-    getSshMock.returns(sshMock);
-
     const fakeError = new Error("recv failed");
-    sshMock.recv.rejects(fakeError);
+    sshRecvStub.rejects(fakeError);
 
-    //実行 & 検証
     try {
       await deliverFilesFromRemote(recipe);
       expect.fail("Expected deliverFilesFromRemote to reject, but it resolved");
@@ -392,7 +315,6 @@ describe("#deliverFilesFromRemote", ()=>{
   });
 
   it("should call ssh.recv and return an object if successful", async ()=>{
-    //準備
     const recipe = {
       projectRootDir: "/dummy/project",
       remoteToLocal: true,
@@ -402,24 +324,615 @@ describe("#deliverFilesFromRemote", ()=>{
       dstRoot: "/local/dst",
       dstName: "fileB.dat"
     };
-    getSshMock.returns(sshMock);
+    sshRecvStub.resolves();
 
-    //recvが正常終了するようにする
-    sshMock.recv.resolves();
-
-    //実行
     const result = await deliverFilesFromRemote(recipe);
 
-    //検証
     expect(result).to.deep.equal({
       type: "copy",
       src: "/remote/src/fileB.dat",
       dst: "/local/dst/fileB.dat"
     });
-    expect(sshMock.recv.calledOnceWithExactly(
+    expect(sshRecvStub.calledOnceWithExactly(
       ["/remote/src/fileB.dat"],
       "/local/dst/fileB.dat",
       ["-vv", ...rsyncExcludeOptionOfWheelSystemFiles]
     )).to.be.true;
+  });
+});
+
+describe("#deliverFilesLocalToRemoteShared", ()=>{
+  //eslint-disable-next-line no-unused-vars
+  let getLoggerStub;
+  let loggerWarnStub;
+  let loggerDebugStub;
+
+  let getSshStub;
+  let sshExecStub;
+
+  beforeEach(()=>{
+    loggerWarnStub = sinon.stub();
+    loggerDebugStub = sinon.stub();
+    getLoggerStub = sinon.stub(_internal, "getLogger").returns({
+      warn: loggerWarnStub,
+      debug: loggerDebugStub
+    });
+    sshExecStub = sinon.stub();
+    getSshStub = sinon.stub(_internal, "getSsh").returns({ exec: sshExecStub });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return null and warn if localToRemoteShared flag is not set", async ()=>{
+    const recipe = {
+      localToRemoteShared: false,
+      projectRootDir: "/dummy/dir",
+      dstRemotehostID: "hostID"
+    };
+    const result = await deliverFilesLocalToRemoteShared(recipe);
+
+    expect(result).to.be.null;
+    expect(loggerWarnStub.calledOnceWithExactly("deliverFilesLocalToRemoteShared must be called with localToRemoteShared flag")).to.be.true;
+    expect(getSshStub.notCalled).to.be.true;
+  });
+
+  it("should execute ln -sf command on remote and return success", async ()=>{
+    const recipe = {
+      localToRemoteShared: true,
+      projectRootDir: "/dummy/project",
+      dstRemotehostID: "hostID",
+      srcRoot: "/mnt/shared/project",
+      srcName: "output.txt",
+      dstRoot: "/work/20240224-1234/taskB",
+      dstName: "input.txt",
+      forceCopy: false
+    };
+    sshExecStub.resolves(0);
+
+    const result = await deliverFilesLocalToRemoteShared(recipe);
+
+    expect(sshExecStub.callCount).to.equal(1);
+    const calledCmd = sshExecStub.getCall(0).args[0];
+    expect(calledCmd).to.include("ln -sf");
+    expect(result).to.deep.equal({
+      type: "link-via-shared",
+      src: "/mnt/shared/project/output.txt",
+      dst: "/work/20240224-1234/taskB/input.txt"
+    });
+  });
+
+  it("should reject if ssh.exec returns non-zero", async ()=>{
+    const recipe = {
+      localToRemoteShared: true,
+      projectRootDir: "/dummy/project",
+      dstRemotehostID: "hostID",
+      srcRoot: "/mnt/shared/project",
+      srcName: "output.txt",
+      dstRoot: "/work/taskB",
+      dstName: "input.txt",
+      forceCopy: false
+    };
+    sshExecStub.resolves(1);
+
+    try {
+      await deliverFilesLocalToRemoteShared(recipe);
+      expect.fail("Expected deliverFilesLocalToRemoteShared to throw");
+    } catch (err) {
+      expect(err).to.be.instanceOf(Error);
+      expect(err.message).to.equal("deliver file from localhost to remote via shared storage failed");
+      expect(err.rt).to.equal(1);
+    }
+  });
+});
+
+describe("#deliverFilesRemoteToLocalShared", ()=>{
+  //eslint-disable-next-line no-unused-vars
+  let getLoggerStub;
+  let loggerWarnStub;
+  let loggerDebugStub;
+
+  beforeEach(()=>{
+    loggerWarnStub = sinon.stub();
+    loggerDebugStub = sinon.stub();
+    getLoggerStub = sinon.stub(_internal, "getLogger").returns({
+      warn: loggerWarnStub,
+      debug: loggerDebugStub
+    });
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return null and warn if remoteToLocalShared flag is not set", async ()=>{
+    const recipe = {
+      remoteToLocalShared: false,
+      projectRootDir: "/dummy/dir"
+    };
+    const result = await deliverFilesRemoteToLocalShared(recipe);
+
+    expect(result).to.be.null;
+    expect(loggerWarnStub.calledOnceWithExactly("deliverFilesRemoteToLocalShared must be called with remoteToLocalShared flag")).to.be.true;
+  });
+});
+
+describe("#deliverFilesLocalToRemoteShared (with real symlink)", ()=>{
+  let tempDir;
+  let sharedDir;
+  let remoteWorkDir;
+  let srcFile;
+
+  //eslint-disable-next-line no-unused-vars
+  let getLoggerStub;
+  let loggerDebugStub;
+
+  beforeEach(async ()=>{
+    loggerDebugStub = sinon.stub();
+    getLoggerStub = sinon.stub(_internal, "getLogger").returns({
+      warn: sinon.stub(),
+      debug: loggerDebugStub
+    });
+
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "wheel-test-"));
+    sharedDir = path.join(tempDir, "shared");
+    remoteWorkDir = path.join(tempDir, "remote-work");
+
+    await fs.ensureDir(sharedDir);
+    await fs.ensureDir(remoteWorkDir);
+
+    srcFile = path.join(sharedDir, "source.txt");
+    await fs.writeFile(srcFile, "test content for local to remote");
+  });
+
+  afterEach(async ()=>{
+    sinon.restore();
+    if (tempDir) {
+      await fs.remove(tempDir);
+    }
+  });
+
+  it("should create symlink on remote via SSH and verify contents", async ()=>{
+    const sshExecStub = sinon.stub().resolves(0);
+    const getSshStub = sinon.stub(_internal, "getSsh").returns({ exec: sshExecStub });
+
+    const recipe = {
+      localToRemoteShared: true,
+      projectRootDir: "/dummy/project",
+      dstRemotehostID: "testHost",
+      srcRoot: sharedDir,
+      srcName: "source.txt",
+      dstRoot: remoteWorkDir,
+      dstName: "destination.txt",
+      forceCopy: false
+    };
+
+    const result = await deliverFilesLocalToRemoteShared(recipe);
+
+    expect(getSshStub.calledOnce).to.be.true;
+    expect(sshExecStub.calledOnce).to.be.true;
+    const calledCmd = sshExecStub.getCall(0).args[0];
+    expect(calledCmd).to.include("ln -sf");
+    expect(calledCmd).to.include(sharedDir);
+    expect(result).to.deep.equal({
+      type: "link-via-shared",
+      src: srcFile,
+      dst: path.join(remoteWorkDir, "destination.txt")
+    });
+
+    await sshExecStub.getCall(0).args[0];
+    const dstLink = path.join(remoteWorkDir, "destination.txt");
+    await fs.ensureSymlink(srcFile, dstLink, "file");
+
+    const linkStats = await fs.lstat(dstLink);
+    expect(linkStats.isSymbolicLink()).to.be.true;
+
+    const linkTarget = await fs.readlink(dstLink);
+    expect(linkTarget).to.equal(srcFile);
+
+    const content = await fs.readFile(dstLink, "utf8");
+    expect(content).to.equal("test content for local to remote");
+  });
+
+  it("should copy file when forceCopy is true", async ()=>{
+    const sshExecStub = sinon.stub().resolves(0);
+    sinon.stub(_internal, "getSsh").returns({ exec: sshExecStub });
+
+    const recipe = {
+      localToRemoteShared: true,
+      projectRootDir: "/dummy/project",
+      dstRemotehostID: "testHost",
+      srcRoot: sharedDir,
+      srcName: "source.txt",
+      dstRoot: remoteWorkDir,
+      dstName: "copied.txt",
+      forceCopy: true
+    };
+
+    const result = await deliverFilesLocalToRemoteShared(recipe);
+
+    expect(sshExecStub.calledOnce).to.be.true;
+    const calledCmd = sshExecStub.getCall(0).args[0];
+    expect(calledCmd).to.include("cp -r");
+    expect(result).to.deep.equal({
+      type: "link-via-shared",
+      src: srcFile,
+      dst: path.join(remoteWorkDir, "copied.txt")
+    });
+  });
+});
+
+describe("#deliverFilesRemoteToLocalShared (with real symlink)", ()=>{
+  let tempDir;
+  let sharedDir;
+  let localWorkDir;
+  let srcFile;
+
+  //eslint-disable-next-line no-unused-vars
+  let getLoggerStub;
+  let loggerDebugStub;
+
+  beforeEach(async ()=>{
+    loggerDebugStub = sinon.stub();
+    getLoggerStub = sinon.stub(_internal, "getLogger").returns({
+      warn: sinon.stub(),
+      debug: loggerDebugStub
+    });
+
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "wheel-test-"));
+    sharedDir = path.join(tempDir, "shared");
+    localWorkDir = path.join(tempDir, "local-work");
+
+    await fs.ensureDir(sharedDir);
+    await fs.ensureDir(localWorkDir);
+
+    srcFile = path.join(sharedDir, "remote-source.txt");
+    await fs.writeFile(srcFile, "test content from remote");
+  });
+
+  afterEach(async ()=>{
+    sinon.restore();
+    if (tempDir) {
+      await fs.remove(tempDir);
+    }
+  });
+
+  it("should create symlink on localhost and verify contents", async ()=>{
+    const recipe = {
+      remoteToLocalShared: true,
+      projectRootDir: "/dummy/project",
+      srcRoot: sharedDir,
+      srcName: "remote-source.txt",
+      dstRoot: localWorkDir,
+      dstName: "local-destination.txt",
+      forceCopy: false
+    };
+
+    const result = await deliverFilesRemoteToLocalShared(recipe);
+
+    expect(result.type).to.equal("link-file");
+    expect(result.src).to.equal(srcFile);
+    expect(result.dst).to.equal(path.join(localWorkDir, "local-destination.txt"));
+
+    const dstLink = path.join(localWorkDir, "local-destination.txt");
+    const linkStats = await fs.lstat(dstLink);
+    expect(linkStats.isSymbolicLink()).to.be.true;
+
+    const linkTarget = await fs.readlink(dstLink);
+    expect(linkTarget).to.equal(srcFile);
+
+    const content = await fs.readFile(dstLink, "utf8");
+    expect(content).to.equal("test content from remote");
+  });
+
+  it("should create symlink for directory and verify contents", async ()=>{
+    const srcDir = path.join(sharedDir, "remote-dir");
+    await fs.ensureDir(srcDir);
+    await fs.writeFile(path.join(srcDir, "file1.txt"), "file1 content");
+    await fs.writeFile(path.join(srcDir, "file2.txt"), "file2 content");
+
+    const recipe = {
+      remoteToLocalShared: true,
+      projectRootDir: "/dummy/project",
+      srcRoot: sharedDir,
+      srcName: "remote-dir",
+      dstRoot: localWorkDir,
+      dstName: "local-dir",
+      forceCopy: false
+    };
+
+    const result = await deliverFilesRemoteToLocalShared(recipe);
+
+    expect(result.type).to.equal("link-dir");
+    expect(result.src).to.equal(srcDir);
+    expect(result.dst).to.equal(path.join(localWorkDir, "local-dir"));
+
+    const dstLink = path.join(localWorkDir, "local-dir");
+    const linkStats = await fs.lstat(dstLink);
+    expect(linkStats.isSymbolicLink()).to.be.true;
+
+    const linkTarget = await fs.readlink(dstLink);
+    expect(linkTarget).to.equal(srcDir);
+
+    const file1Content = await fs.readFile(path.join(dstLink, "file1.txt"), "utf8");
+    expect(file1Content).to.equal("file1 content");
+
+    const file2Content = await fs.readFile(path.join(dstLink, "file2.txt"), "utf8");
+    expect(file2Content).to.equal("file2 content");
+  });
+
+  it("should copy file when forceCopy is true and verify contents", async ()=>{
+    const recipe = {
+      remoteToLocalShared: true,
+      projectRootDir: "/dummy/project",
+      srcRoot: sharedDir,
+      srcName: "remote-source.txt",
+      dstRoot: localWorkDir,
+      dstName: "copied.txt",
+      forceCopy: true
+    };
+
+    const result = await deliverFilesRemoteToLocalShared(recipe);
+
+    expect(result.type).to.equal("copy");
+    expect(result.src).to.equal(srcFile);
+    expect(result.dst).to.equal(path.join(localWorkDir, "copied.txt"));
+
+    const dstFile = path.join(localWorkDir, "copied.txt");
+    const fileStats = await fs.lstat(dstFile);
+    expect(fileStats.isSymbolicLink()).to.be.false;
+    expect(fileStats.isFile()).to.be.true;
+
+    const content = await fs.readFile(dstFile, "utf8");
+    expect(content).to.equal("test content from remote");
+  });
+});
+
+describe("#deliverFilesOnRemote (executed for real, relative srcRoot/dstRoot of different depth)", ()=>{
+  //this reproduces the real bug shape: srcRoot/dstRoot are RELATIVE paths (as
+  //getRemoteWorkingDir() produces whenever remotehost.json has no absolute "path"
+  //override) and srcRoot/dstRoot differ in depth, exactly like two task components
+  //(task0/task1) under the same foreach iteration on the same remote host.
+  let tempDir, landingDir;
+
+  beforeEach(async ()=>{
+    sinon.stub(_internal, "getLogger").returns({ warn: sinon.stub(), debug: sinon.stub() });
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "wheel-deliverOnRemote-test-"));
+    landingDir = tempDir;
+    await fs.ensureDir(path.join(landingDir, "proj/foreach0_0/task0"));
+    await fs.ensureDir(path.join(landingDir, "proj/foreach0_0/task1"));
+  });
+
+  afterEach(async ()=>{
+    sinon.restore();
+    if (tempDir) {
+      await fs.remove(tempDir);
+    }
+  });
+
+  it("should create a symlink that actually resolves for a single literal filename", async ()=>{
+    await fs.writeFile(path.join(landingDir, "proj/foreach0_0/task0/message.txt"), "hello from task0");
+    const execStub = sinon.stub().callsFake((cmd)=>{
+      return runShellForExitCode(cmd, landingDir);
+    });
+    sinon.stub(_internal, "getSsh").returns({ exec: execStub });
+
+    const recipe = {
+      onSameRemote: true,
+      forceCopy: false,
+      projectRootDir: "/dummy",
+      srcRemotehostID: "host",
+      srcRoot: "proj/foreach0_0/task0",
+      srcName: "message.txt",
+      dstRoot: "proj/foreach0_0/task1",
+      dstName: "message.txt"
+    };
+
+    await deliverFilesOnRemote(recipe);
+
+    const linkPath = path.join(landingDir, "proj/foreach0_0/task1/message.txt");
+    const stats = await fs.lstat(linkPath);
+    expect(stats.isSymbolicLink()).to.be.true;
+    const content = await fs.readFile(linkPath, "utf8");
+    expect(content).to.equal("hello from task0");
+  });
+
+  it("should deliver every file matched by a glob pattern evaluated inside srcRoot", async ()=>{
+    await fs.writeFile(path.join(landingDir, "proj/foreach0_0/task0/a.txt"), "content-a");
+    await fs.writeFile(path.join(landingDir, "proj/foreach0_0/task0/b.txt"), "content-b");
+    const execStub = sinon.stub().callsFake((cmd)=>{
+      return runShellForExitCode(cmd, landingDir);
+    });
+    sinon.stub(_internal, "getSsh").returns({ exec: execStub });
+
+    const recipe = {
+      onSameRemote: true,
+      forceCopy: false,
+      projectRootDir: "/dummy",
+      srcRemotehostID: "host",
+      srcRoot: "proj/foreach0_0/task0",
+      srcName: "*.txt",
+      dstRoot: "proj/foreach0_0/task1",
+      dstName: "./"
+    };
+
+    await deliverFilesOnRemote(recipe);
+
+    for (const [name, expected] of [["a.txt", "content-a"], ["b.txt", "content-b"]]) {
+      const linkPath = path.join(landingDir, "proj/foreach0_0/task1", name);
+      const stats = await fs.lstat(linkPath);
+      expect(stats.isSymbolicLink(), `${name} should be a symlink`).to.be.true;
+      const content = await fs.readFile(linkPath, "utf8");
+      expect(content).to.equal(expected);
+    }
+  });
+
+  it("should reject when the glob pattern matches nothing in srcRoot (failglob)", async ()=>{
+    //deliberately no files created under task0, so *.dat matches nothing
+    const execStub = sinon.stub().callsFake((cmd)=>{
+      return runShellForExitCode(cmd, landingDir);
+    });
+    sinon.stub(_internal, "getSsh").returns({ exec: execStub });
+
+    const recipe = {
+      onSameRemote: true,
+      forceCopy: false,
+      projectRootDir: "/dummy",
+      srcRemotehostID: "host",
+      srcRoot: "proj/foreach0_0/task0",
+      srcName: "*.dat",
+      dstRoot: "proj/foreach0_0/task1",
+      dstName: "./"
+    };
+
+    try {
+      await deliverFilesOnRemote(recipe);
+      expect.fail("Expected deliverFilesOnRemote to reject when the glob matches nothing");
+    } catch (err) {
+      expect(err.message).to.equal("deliver file on remote failed");
+      expect(err.rt).to.not.equal(0);
+    }
+  });
+});
+
+describe("#deliverFilesLocalToRemoteShared (executed for real, relative srcRoot/dstRoot of different depth)", ()=>{
+  let tempDir, landingDir;
+
+  beforeEach(async ()=>{
+    sinon.stub(_internal, "getLogger").returns({ warn: sinon.stub(), debug: sinon.stub() });
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "wheel-deliverLocalToRemote-test-"));
+    landingDir = tempDir;
+    await fs.ensureDir(path.join(landingDir, "shared/task0"));
+    await fs.ensureDir(path.join(landingDir, "work/task1"));
+  });
+
+  afterEach(async ()=>{
+    sinon.restore();
+    if (tempDir) {
+      await fs.remove(tempDir);
+    }
+  });
+
+  it("should create a symlink that actually resolves when srcRoot/dstRoot are relative and differ in depth", async ()=>{
+    await fs.writeFile(path.join(landingDir, "shared/task0/output.txt"), "hello from shared storage");
+    const execStub = sinon.stub().callsFake((cmd)=>{
+      return runShellForExitCode(cmd, landingDir);
+    });
+    sinon.stub(_internal, "getSsh").returns({ exec: execStub });
+
+    const recipe = {
+      localToRemoteShared: true,
+      forceCopy: false,
+      projectRootDir: "/dummy",
+      dstRemotehostID: "host",
+      srcRoot: "shared/task0",
+      srcName: "output.txt",
+      dstRoot: "work/task1",
+      dstName: "input.txt"
+    };
+
+    await deliverFilesLocalToRemoteShared(recipe);
+
+    const linkPath = path.join(landingDir, "work/task1/input.txt");
+    const stats = await fs.lstat(linkPath);
+    expect(stats.isSymbolicLink()).to.be.true;
+    const content = await fs.readFile(linkPath, "utf8");
+    expect(content).to.equal("hello from shared storage");
+  });
+});
+
+describe("#deliverFilesBetweenRemotes", ()=>{
+  let getSshStub, mockSsh, mockDstHostinfo, getSshHostinfoStub, getLoggerStub, mockLogger;
+
+  beforeEach(()=>{
+    getSshStub = sinon.stub(_internal, "getSsh");
+    getSshHostinfoStub = sinon.stub(_internal, "getSshHostinfo");
+    getLoggerStub = sinon.stub(_internal, "getLogger");
+
+    mockLogger = {
+      debug: sinon.stub(),
+      warn: sinon.stub(),
+      error: sinon.stub()
+    };
+    mockSsh = {
+      remoteToRemoteCopy: sinon.stub().resolves(0)
+    };
+    mockDstHostinfo = {
+      host: "remote-dst.example.com",
+      user: "dstuser",
+      port: 22
+    };
+    getSshStub.returns(mockSsh);
+    getSshHostinfoStub.returns(mockDstHostinfo);
+    getLoggerStub.returns(mockLogger);
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return null if betweenRemotes flag is not set", async ()=>{
+    const recipe = {
+      betweenRemotes: false,
+      projectRootDir: "/dummy/project"
+    };
+
+    const result = await deliverFilesBetweenRemotes(recipe);
+    expect(result).to.be.null;
+  });
+
+  it("should call remoteToRemoteCopy with correct parameters", async ()=>{
+    const recipe = {
+      betweenRemotes: true,
+      projectRootDir: "/dummy/project",
+      srcRemotehostID: "srchost-id",
+      dstRemotehostID: "dsthost-id",
+      srcRoot: "/remote/src/path",
+      srcName: "file.txt",
+      dstRoot: "/remote/dst/path",
+      dstName: "file.txt"
+    };
+
+    const result = await deliverFilesBetweenRemotes(recipe);
+
+    expect(getSshStub.calledOnceWithExactly(recipe.projectRootDir, recipe.srcRemotehostID)).to.be.true;
+    expect(getSshHostinfoStub.calledOnceWithExactly(recipe.projectRootDir, recipe.dstRemotehostID)).to.be.true;
+    expect(mockSsh.remoteToRemoteCopy.calledOnce).to.be.true;
+
+    const callArgs = mockSsh.remoteToRemoteCopy.getCall(0).args;
+    expect(callArgs[0]).to.deep.equal(["/remote/src/path/file.txt"]);
+    expect(callArgs[1]).to.equal(mockDstHostinfo);
+    expect(callArgs[2]).to.equal("/remote/dst/path/file.txt");
+    expect(callArgs[3]).to.include("-vv");
+    expect(callArgs[3]).to.include.members(rsyncExcludeOptionOfWheelSystemFiles);
+
+    expect(result).to.deep.equal({
+      type: "direct-remote-copy",
+      src: "/remote/src/path/file.txt",
+      dst: "/remote/dst/path/file.txt"
+    });
+  });
+
+  it("should reject if remoteToRemoteCopy returns non-zero exit code", async ()=>{
+    mockSsh.remoteToRemoteCopy = sinon.stub().resolves(1);
+    const recipe = {
+      betweenRemotes: true,
+      projectRootDir: "/dummy/project",
+      srcRemotehostID: "srchost-id",
+      dstRemotehostID: "dsthost-id",
+      srcRoot: "/remote/src/path",
+      srcName: "file.txt",
+      dstRoot: "/remote/dst/path",
+      dstName: "file.txt"
+    };
+
+    try {
+      await deliverFilesBetweenRemotes(recipe);
+      expect.fail("Expected deliverFilesBetweenRemotes to reject, but it resolved");
+    } catch (err) {
+      expect(err.message).to.match(/exit code 1/);
+      expect(err.rt).to.equal(1);
+    }
   });
 });

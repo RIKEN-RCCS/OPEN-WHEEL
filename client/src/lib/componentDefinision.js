@@ -8,6 +8,7 @@ import imgTask from "../assets/img_task.png";
 import imgJob from "../assets/img_task_job.png";
 import imgRemoteTask from "../assets/img_remotetask.png";
 import imgRemoteJob from "../assets/img_remotetask_job.png";
+import imgRemoteStorage from "../assets/img_remotestorage.png";
 import imgIf from "../assets/img_if.png";
 import imgFor from "../assets/img_for.png";
 import imgWhile from "../assets/img_while.png";
@@ -38,6 +39,7 @@ export default function () {
     parameterStudy: { color: "#666622", img: imgPS },
     workflow: { color: "#803DB3", img: imgWorkflow },
     storage: { color: "#00b8a0", img: imgStorage },
+    remotestorage: { color: "#00b8a0", img: imgRemoteStorage },
     hpciss: { color: "#00b8a0", img: imgHPCISS },
     hpcisstar: { color: "#00b8a0", img: imgHPCISStar },
     source: { color: "#00bff0", img: imgSource },

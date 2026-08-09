@@ -1,0 +1,18 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
+
+const allowedOperations = {
+  "not-started": ["runProject", "revertProject", "saveProject", "checkProject"],
+  "preparing": ["cleanProject"],
+  "running": ["stopProject"],
+  "stopped": ["runProject", "cleanProject"],
+  "finished": ["cleanProject"],
+  "failed": ["runProject", "cleanProject"],
+  "holding": [],
+  "unknown": ["runProject", "cleanProject"]
+};
+
+export default allowedOperations;

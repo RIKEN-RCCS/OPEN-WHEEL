@@ -1,7 +1,39 @@
+/*
+ * Copyright (c) Center for Computational Science, RIKEN All rights reserved.
+ * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * See License in the project root for the license information.
+ */
+/**
+ * home画面操作を対象にしたcommand
+ */
+/**
+ * Navigate to the home page.
+ * If the workflow-editor nav link is present (i.e. we are already inside a project),
+ * click it so the socket.io connection is preserved and the transition is fast.
+ * If already on the home page (home-new-btn exists), skip navigation entirely.
+ * Otherwise fall back to a full cy.visit("/").
+ */
+Cypress.Commands.add("goHome", ()=>{
+  cy.window().then((win)=>{
+    //If the current page is not on the expected baseUrl server, navigate there directly.
+    if (!win.location.href.startsWith(Cypress.config("baseUrl"))) {
+      return cy.visit("/");
+    }
+    const homeLink = win.document.querySelector("[href='./home']");
+    if (homeLink) {
+      return cy.wrap(homeLink).click({ force: true });
+    }
+    if (win.document.querySelector("[data-cy=\"home-new-btn\"]")) {
+      return; //Already on home page — no navigation needed
+    }
+    return cy.visit("/");
+  });
+  return cy.waitProjectList();
+});
+
 //create a project
 Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
-  cy.visit("/");
-  cy.waitProjectList();
+  cy.goHome();
   cy.get("[data-cy=\"home-new-btn\"]")
     .click();
   cy.get("[data-cy=\"home-project_name-text_field\"]")
@@ -10,8 +42,17 @@ Cypress.Commands.add("createProject", (projectName, projectDescription)=>{
     .type(projectDescription);
   cy.get("[data-cy=\"buttons-create-btn\"]")
     .click();
-  cy.waitProjectList();
   return cy.waitProjectAppear(projectName);
+});
+
+/**
+ * プロジェクトファイルを作成後、プロジェクトを開く。プロジェクトファイル名は自動的に設定する。
+ */
+Cypress.Commands.add("createAndOpenProject", ()=>{
+  const randomWord = Math.random().toString(32)
+    .substring(2);
+  const projectName = `WHEEL_TEST_${Date.now().toString()}_${randomWord}`;
+  return cy.createProject(projectName, "TestDescription").projectOpen(projectName);
 });
 
 //create multiple projects
@@ -33,30 +74,36 @@ Cypress.Commands.add("waitProjectList", (timeout = 20000)=>{
 });
 
 Cypress.Commands.add("waitProjectAppear", (projectName, timeout = 20000)=>{
-  return cy.get("[data-cy=\"home-project_name-btn\"]", { timeout })
-    .contains(projectName)
+  return cy.contains("[data-cy=\"home-project_name-btn\"]", projectName, { timeout })
     .should("be.visible");
 });
 
-//remove a project
-Cypress.Commands.add("removeAllProjects", ()=>{
-  cy.visit("/");
-  cy.waitProjectList();
-  cy.get("[data-cy=\"home-batch_mode-btn\"]")
-    .should("be.visible")
-    .click();
-  cy.get("[data-cy=\"home-project_list-data_table\"]")
-    .contains("th", "Project Name")
-    .parent() //select all project
-    .find("input[type=\"checkbox\"]")
-    .first()
+//remove a project by name
+Cypress.Commands.add("removeProject", (projectName)=>{
+  cy.get("[data-cy=\"home-project_name-btn\"]").contains(projectName)
+    .parents("tr")
+    .find("[type=\"checkbox\"]")
     .check();
-  cy.get("[data-cy=\"home-remove-btn\"]")
-    .should("be.visible")
-    .click();
-  cy.get("[data-cy=\"buttons-remove-btn\"]")
-    .should("be.visible")
-    .click();
-  return cy.get("[data-cy=\"home-project_list-data_table\"]")
-    .should("contain.text", "No data available");
+  cy.get("[data-cy=\"home-remove-btn\"]").click();
+  cy.get("[data-cy=\"buttons-remove-btn\"]").click();
+  return cy.contains(projectName).should("not.be.visible");
+});
+
+const projectListFilename = "/root/.wheel/projectList.json";
+const containerName = "wheel";
+
+Cypress.Commands.add("removeAllProjects", ()=>{
+  const tmpFilename = `cypress/fixtures/projectList.json`;
+  cy.exec(`docker cp ${containerName}:${projectListFilename} ${tmpFilename}`);
+  cy.task("readJson", tmpFilename).then((projects)=>{
+    if (!projects) {
+      return;
+    }
+    projects.forEach((project)=>{
+      cy.exec(`docker exec ${containerName} rm -fr ${project.path}`);
+    });
+  });
+  //Update the file inside the container only
+  cy.exec(`docker exec ${containerName} sh -c 'echo [] > ${projectListFilename}'`);
+  cy.task("deleteFile", tmpFilename);
 });

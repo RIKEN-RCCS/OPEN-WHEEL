@@ -46,6 +46,7 @@
             v-model="newHosts[index]"
             :items="hostCandidates"
             label="select or input host label"
+            :menu-props="{ transition: false }"
             clearable
           />
         </v-col>

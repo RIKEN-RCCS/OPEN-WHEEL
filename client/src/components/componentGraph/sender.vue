@@ -1,5 +1,5 @@
 <template>
-  <g>
+  <g :data-cy="elsePlug ? `${componentId}-else-sender` : `${componentId}-sender`">
     <equilateral-triangle
       :color="color"
       :center="end"
@@ -11,7 +11,7 @@
       @dragend="onDragEnd"
     />
     <equilateral-triangle
-      v-if="dragging"
+      v-if="isComponentDragging"
       :color="color"
       :center="start"
       :size="size"
@@ -31,6 +31,7 @@ import EquilateralTriangle from "../../components/componentGraph/triangle.vue";
 import Vconnector from "../../components/componentGraph/vconnector.vue";
 
 import { plugColor, elsePlugColor, plugSize } from "../../lib/constants.json";
+import { mapMutations, mapState } from "vuex";
 
 export default {
   name: "Sender",
@@ -57,23 +58,29 @@ export default {
       color: this.elsePlug ? elsePlugColor : plugColor,
       end: { x: this.start.x, y: this.start.y },
       size: plugSize,
-      dragging: false
+      isSenderDragging: false
     };
+  },
+  computed: {
+    ...mapState(["isComponentDragging"])
   },
   watch: {
     start(v) {
-      if (this.dragging) {
+      if (this.isSenderDragging) {
         return;
       }
       this.end = v;
     }
   },
   methods: {
+    ...mapMutations({ commitIsComponentDragging: "isComponentDragging" }),
     onDragStart() {
-      this.dragging = true;
+      this.isSenderDragging = true;
+      this.commitIsComponentDragging(true);
     },
     onDragEnd(event) {
-      this.dragging = false;
+      this.isSenderDragging = false;
+      this.commitIsComponentDragging(false);
       this.end.x = this.start.x;
       this.end.y = this.start.y;
       const dropEvent = new CustomEvent("drop", { detail: {
@@ -83,8 +90,21 @@ export default {
       } });
       const elements = document.elementsFromPoint(event.clientX, event.clientY);
       elements.forEach((element)=>{
+        //Skip if the drop target belongs to the same component that's being dragged
         if (element.dataset.droparea) {
-          element.dispatchEvent(dropEvent);
+          //Check if this element belongs to the same component
+          let currentEl = element;
+          let belongsToSameComponent = false;
+          while (currentEl && currentEl !== document.body) {
+            if (currentEl.dataset && currentEl.dataset.componentId === this.componentId) {
+              belongsToSameComponent = true;
+              break;
+            }
+            currentEl = currentEl.parentElement;
+          }
+          if (!belongsToSameComponent) {
+            element.dispatchEvent(dropEvent);
+          }
         }
       });
     }

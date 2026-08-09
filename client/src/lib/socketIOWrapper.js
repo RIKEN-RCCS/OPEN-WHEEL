@@ -62,6 +62,7 @@ const close = ()=>{
     socket.close();
     socket = null;
   }
+  initialized = false;
 };
 const listenOnDrop = (...args)=>{
   if (!initialized) {
@@ -95,6 +96,26 @@ const getID = ()=>{
   return socket !== null ? socket.id : null;
 };
 
+const isConnected = ()=>{
+  return socket !== null && socket.connected;
+};
+
+const onConnect = (callback)=>{
+  if (!initialized) {
+    debug("onConnect called but socketIO is not initialized");
+    return;
+  }
+  socket.on("connect", callback);
+};
+
+const onDisconnect = (callback)=>{
+  if (!initialized) {
+    debug("onDisconnect called but socketIO is not initialized");
+    return;
+  }
+  socket.on("disconnect", callback);
+};
+
 function submitFile(file) {
   uploader.submitFiles([file]);
 }
@@ -112,5 +133,8 @@ export default {
   onUploaderEvent,
   removeUploaderEvent,
   getID,
+  isConnected,
+  onConnect,
+  onDisconnect,
   submitFile
 };

@@ -7,12 +7,14 @@
   <v-app>
     <nav-drawer
       v-model="drawer"
+      @open-remotehost-manager="remoteHostDialog=true"
     />
     <application-tool-bar
       title="home"
       density="comfortable"
       data-cy="home-home-application_tool_bar"
       @nav-icon-click="drawer=!drawer"
+      @show-toast="showSnackbar"
     />
     <v-main>
       <v-toolbar
@@ -189,6 +191,30 @@
         </template>
       </v-snackbar>
     </v-main>
+    <v-dialog
+      v-model="remoteHostDialog"
+      max-width="90vw"
+      persistent
+    >
+      <v-card>
+        <v-card-title>
+          Remote Host Management
+        </v-card-title>
+        <v-card-text>
+          <remotehost-manager
+            :show-snackbar-func="showSnackbar"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+            prepend-icon="mdi-close"
+            text="Close"
+            data-cy="home-remote_host_close-btn"
+            @click="remoteHostDialog=false"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 <script>
@@ -204,6 +230,8 @@ import exportDialog from "../components/exportDialog.vue";
 import importDialog from "../components/importDialog.vue";
 import buttons from "../components/common/buttons.vue";
 import inlineEditor from "./common/inlineEditor.vue";
+import remotehostManager from "../components/remotehost/remotehostManager.vue";
+import versatileDialog from "../components/versatileDialog.vue";
 import { readCookie } from "../lib/utility.js";
 import SIO from "../lib/socketIOWrapper.js";
 import { required } from "../lib/validationRules.js";
@@ -223,7 +251,9 @@ export default {
     removeConfirmDialog,
     exportDialog,
     importDialog,
-    inlineEditor
+    inlineEditor,
+    remotehostManager,
+    versatileDialog
   },
   data: ()=>{
     return {
@@ -234,6 +264,7 @@ export default {
       rmDialog: false,
       exportDialog: false,
       importDialog: false,
+      remoteHostDialog: false,
       removeFromList: false,
       dialogMode: "default",
       selectedInTree: null,
@@ -312,20 +343,18 @@ export default {
     const baseURL = readCookie("socketIOPath");
     debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
-    SIO.onGlobal("projectList", (data)=>{
-      this.loading = false;
-      this.projectList.splice(0, this.projectList.length, ...data);
-    });
+    SIO.onGlobal("projectList", this.onProjectList);
     this.forceUpdateProjectList();
-    SIO.onGlobal("logERR", (message)=>{
-      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
-      const output = rt ? rt[1] || rt[0] : message;
-      this.showSnackbar(output);
-    });
+    SIO.onGlobal("logERR", this.onLogErr);
     SIO.onGlobal("hostList", this.commitRemoteHost);
     SIO.emitGlobal("getHostList", (hostList)=>{
       this.commitRemoteHost(hostList);
     });
+  },
+  beforeUnmount() {
+    SIO.off("projectList", this.onProjectList);
+    SIO.off("logERR", this.onLogErr);
+    SIO.off("hostList", this.commitRemoteHost);
   },
   methods: {
     ...mapMutations({
@@ -335,6 +364,25 @@ export default {
       showSnackbar: "showSnackbar",
       closeSnackbar: "closeSnackbar"
     }),
+
+    /**
+     * Handle incoming project list from server.
+     * @param {Array} data - Array of project objects
+     */
+    onProjectList(data) {
+      this.loading = false;
+      this.projectList.splice(0, this.projectList.length, ...data);
+    },
+
+    /**
+     * Handle error log message from server.
+     * @param {string} message - Error message string
+     */
+    onLogErr(message) {
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      this.showSnackbar(output);
+    },
     required,
     isValidName,
     forceUpdateProjectList() {

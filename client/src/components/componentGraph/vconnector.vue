@@ -7,7 +7,7 @@
     :end="end"
     :control1="control[0]"
     :control2="control[1]"
-    @click.right.prevent.stop="onRightclick"
+    @contextmenu="onRightclick"
   />
 </template>
 <script>

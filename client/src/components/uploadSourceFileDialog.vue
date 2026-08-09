@@ -83,23 +83,32 @@ export default {
   },
   mounted: function () {
     this.$nextTick().then(()=>{
-      SIO.onGlobal("askUploadSourceFile", (ID, name, description, cb)=>{
-        this.uploadSourceFileDialogTitle = `upload source file for ${name}`;
-        this.ID = ID;
-        this.uploadedFilename = null;
-        this.uploadSourceFileDialogCallback = (result)=>{
-          cb(result && this.uploadedFilename !== null ? "UPLOAD_ONDEMAND" : null);
-          this.uploadedFilename = null;
-          this.uploadSourceFileDialog = false;
-        };
-        this.uploadSourceFileDialog = true;
-      });
-    }
-    );
+      SIO.onGlobal("askUploadSourceFile", this.onAskUploadSourceFile);
+    });
   },
   beforeUnmount() {
+    SIO.off("askUploadSourceFile", this.onAskUploadSourceFile);
   },
   methods: {
+
+    /**
+     * Handle askUploadSourceFile event from server.
+     * @param {string} ID - Component ID requesting upload
+     * @param {string} name - Component name
+     * @param {string} description - Description text
+     * @param {Function} cb - Callback to invoke with upload result
+     */
+    onAskUploadSourceFile(ID, name, description, cb) {
+      this.uploadSourceFileDialogTitle = `upload source file for ${name}`;
+      this.ID = ID;
+      this.uploadedFilename = null;
+      this.uploadSourceFileDialogCallback = (result)=>{
+        cb(result && this.uploadedFilename !== null ? "UPLOAD_ONDEMAND" : null);
+        this.uploadedFilename = null;
+        this.uploadSourceFileDialog = false;
+      };
+      this.uploadSourceFileDialog = true;
+    },
     openFileSelectDialog() {
       SIO.prompt();
     },

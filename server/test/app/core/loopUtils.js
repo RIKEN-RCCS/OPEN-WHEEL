@@ -3,18 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("chai-as-promised"));
-const rewire = require("rewire");
-const sinon = require("sinon");
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+import sinon from "sinon";
 
 //testee
-const {
+import {
+  _internal,
   forTripCount,
   loopInitialize,
+  chooseInstanceDirSeparator,
   foreachTripCount,
   foreachIsFinished,
   foreachGetPrevIndex,
@@ -23,8 +24,12 @@ const {
   forIsFinished,
   forGetNextIndex,
   getPrevIndex,
-  getInstanceDirectoryName
-} = require("../../../app/core/loopUtils.js");
+  getInstanceDirectoryName,
+  keepLoopInstance,
+  whileIsFinished,
+  foreachKeepLoopInstance,
+  foreachSearchLatestFinishedIndex
+} from "../../../app/core/loopUtils.js";
 
 describe("#getInstanceDirectoryName", ()=>{
   it("should build name using name & index", ()=>{
@@ -140,19 +145,12 @@ describe("#getPrevIndex", ()=>{
 });
 
 describe("#keepLoopInstance", ()=>{
-  let keepLoopInstance;
   let getInstanceDirectoryNameStub;
   let removeStub;
 
   beforeEach(()=>{
-    const loopUtils = rewire("../../../app/core/loopUtils.js");
-    keepLoopInstance = loopUtils.keepLoopInstance;
-    getInstanceDirectoryNameStub = sinon.stub();
-    removeStub = sinon.stub();
-    loopUtils.__set__({
-      getInstanceDirectoryName: getInstanceDirectoryNameStub,
-      fs: { remove: removeStub }
-    });
+    getInstanceDirectoryNameStub = sinon.stub(_internal, "getInstanceDirectoryName");
+    removeStub = sinon.stub(_internal.fs, "remove");
   });
 
   afterEach(()=>{
@@ -202,6 +200,7 @@ describe("#keepLoopInstance", ()=>{
 
 describe("#loopInitialize()", ()=>{
   let component;
+  const dummyCwfDir = "/dummyCwfDir";
 
   beforeEach(()=>{
     component = {
@@ -209,111 +208,181 @@ describe("#loopInitialize()", ()=>{
       env: {},
       type: "dummy"
     };
+    //loopInitialize's own instance-directory-separator selection is
+    //covered separately by the #chooseInstanceDirSeparator describe block
+    //below; stub it here so these tests stay focused on loopInitialize's
+    //own field-initialization logic
+    sinon.stub(_internal, "chooseInstanceDirSeparator").resolves("_");
   });
 
-  it("should be initialized component", ()=>{
-    loopInitialize(component);
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should be initialized component", async ()=>{
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component).to.deep.equal({
       numFinished: 0,
       numFailed: 0,
       currentIndex: 0,
       name: "dummy",
       originalName: "dummy",
+      instanceDirSeparator: "_",
       env: {},
       type: "dummy",
       initialized: true
     });
   });
 
-  it("currentIndex should be set when having indexList of array type", ()=>{
+  it("currentIndex should be set when having indexList of array type", async ()=>{
     component = {
       ...component,
       indexList: [1, 2]
     };
-    loopInitialize(component);
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component.currentIndex).to.be.equal(1);
   });
 
-  it("currentIndex should be set when having start is not undefined", ()=>{
+  it("currentIndex should be set when having start is not undefined", async ()=>{
     component = {
       ...component,
       start: 1
     };
-    loopInitialize(component);
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component.currentIndex).to.be.equal(1);
   });
 
-  it("indexList has priority over start when setting currentIndex", ()=>{
+  it("indexList has priority over start when setting currentIndex", async ()=>{
     component = {
       ...component,
       indexList: [1],
       start: 2
     };
-    loopInitialize(component);
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component.currentIndex).to.be.equal(1);
   });
 
-  it("numTotal should be set when getTripCount is available", ()=>{
+  it("numTotal should be set when getTripCount is available", async ()=>{
     component = {
       ...component,
       dummy: 1
     };
-    loopInitialize(component, (component)=>{
+    await loopInitialize(component, (component)=>{
       return component.dummy + 1;
-    });
+    }, dummyCwfDir);
     expect(component.numTotal).to.be.equal(2);
   });
 
-  it("env should be set when env is undefined", ()=>{
+  it("env should be set when env is undefined", async ()=>{
     delete component.env;
-    loopInitialize(component);
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component.env).to.deep.equal({});
   });
 
-  it("WHEEL_FOR_START shoulde be set when start is not undefined", ()=>{
+  it("WHEEL_FOR_START shoulde be set when start is not undefined", async ()=>{
     component = {
       ...component,
       start: 1
     };
-    loopInitialize(component);
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component.env.WHEEL_FOR_START).to.be.equal(1);
   });
 
-  it("WHEEL_FOR_END shoulde be set when end is not undefined", ()=>{
+  it("WHEEL_FOR_END shoulde be set when end is not undefined", async ()=>{
     component = {
       ...component,
       end: 1
     };
-    loopInitialize(component);
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component.env.WHEEL_FOR_END).to.be.equal(1);
   });
 
-  it("WHEEL_FOR_STEP shoulde be set when step is not undefined", ()=>{
+  it("WHEEL_FOR_STEP shoulde be set when step is not undefined", async ()=>{
     component = {
       ...component,
       step: 1
     };
-    loopInitialize(component);
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component.env.WHEEL_FOR_STEP).to.be.equal(1);
   });
 
-  it("WHEEL_LOOP_LEN shoulde be set when numTotal is not undefined", ()=>{
+  it("WHEEL_LOOP_LEN shoulde be set when numTotal is not undefined", async ()=>{
     component = {
       ...component,
       numTotal: 1
     };
-    loopInitialize(component);
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component.env.WHEEL_LOOP_LEN).to.be.equal(1);
   });
 
-  it("WHEEL_FOREACH_LEN shoulde be set when type is foreach", ()=>{
+  it("WHEEL_FOREACH_LEN shoulde be set when type is foreach", async ()=>{
     component = {
       ...component,
       type: "foreach",
       numTotal: 1
     };
-    loopInitialize(component);
+    await loopInitialize(component, undefined, dummyCwfDir);
     expect(component.env.WHEEL_FOREACH_LEN).to.be.equal(1);
+  });
+});
+
+describe("#chooseInstanceDirSeparator()", ()=>{
+  let readdirStub;
+  let readComponentJsonStub;
+
+  beforeEach(()=>{
+    readdirStub = sinon.stub(_internal.fs, "readdir");
+    readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
+  });
+
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return \"_\" when nothing collides", async ()=>{
+    readdirStub.resolves(["unrelated_dir"]);
+    const separator = await chooseInstanceDirSeparator({ ID: "loop-id", name: "for0" }, "/cwfDir");
+    expect(separator).to.equal("_");
+  });
+
+  it("should return \"_\" when readdir itself fails", async ()=>{
+    readdirStub.rejects(new Error("ENOENT"));
+    const separator = await chooseInstanceDirSeparator({ ID: "loop-id", name: "for0" }, "/cwfDir");
+    expect(separator).to.equal("_");
+  });
+
+  it("should treat this loop's own previous instance (same ID) as no conflict", async ()=>{
+    readdirStub.resolves(["for0_0"]);
+    readComponentJsonStub.resolves({ ID: "loop-id" });
+    const separator = await chooseInstanceDirSeparator({ ID: "loop-id", name: "for0" }, "/cwfDir");
+    expect(separator).to.equal("_");
+  });
+
+  it("should escalate to \"__\" when a foreign component collides on \"_\"", async ()=>{
+    readdirStub.resolves(["for0_1"]);
+    readComponentJsonStub.resolves({ ID: "some-other-id" });
+    const separator = await chooseInstanceDirSeparator({ ID: "loop-id", name: "for0" }, "/cwfDir");
+    expect(separator).to.equal("__");
+  });
+
+  it("should escalate to \"__\" when a non-component entry collides on \"_\"", async ()=>{
+    readdirStub.resolves(["for0_1"]);
+    readComponentJsonStub.rejects(new Error("not a component"));
+    const separator = await chooseInstanceDirSeparator({ ID: "loop-id", name: "for0" }, "/cwfDir");
+    expect(separator).to.equal("__");
+  });
+
+  it("should escalate to \"___\" when both \"_\" and \"__\" collide", async ()=>{
+    readdirStub.resolves(["for0_1", "for0__1"]);
+    readComponentJsonStub.resolves(null);
+    const separator = await chooseInstanceDirSeparator({ ID: "loop-id", name: "for0" }, "/cwfDir");
+    expect(separator).to.equal("___");
+  });
+
+  it("should throw once escalation is exhausted", async ()=>{
+    readdirStub.resolves(["for0_1", "for0__1", "for0___1", "for0____1", "for0_____1"]);
+    readComponentJsonStub.resolves(null);
+    await expect(chooseInstanceDirSeparator({ ID: "loop-id", name: "for0" }, "/cwfDir")).to.be.rejectedWith(/unable to find a non-colliding instance directory naming scheme/);
   });
 });
 
@@ -390,16 +459,10 @@ describe("#whileGetNextIndex", ()=>{
 });
 
 describe("#whileIsFinished", ()=>{
-  let whileIsFinished;
   let evalConditionStub;
 
   beforeEach(()=>{
-    const loopUtils = rewire("../../../app/core/loopUtils.js");
-    whileIsFinished = loopUtils.whileIsFinished;
-    evalConditionStub = sinon.stub();
-    loopUtils.__set__({
-      evalCondition: evalConditionStub
-    });
+    evalConditionStub = sinon.stub(_internal, "evalCondition");
   });
 
   afterEach(()=>{
@@ -567,19 +630,12 @@ describe("#foreachTripCount()", ()=>{
 });
 
 describe("UT foreachKeepLoopInstance()", ()=>{
-  let foreachKeepLoopInstance;
   let getInstanceDirectoryNameStub;
   let removeStub;
 
   beforeEach(()=>{
-    const loopUtils = rewire("../../../app/core/loopUtils.js");
-    foreachKeepLoopInstance = loopUtils.foreachKeepLoopInstance;
-    getInstanceDirectoryNameStub = sinon.stub();
-    removeStub = sinon.stub();
-    loopUtils.__set__({
-      getInstanceDirectoryName: getInstanceDirectoryNameStub,
-      fs: { remove: removeStub }
-    });
+    getInstanceDirectoryNameStub = sinon.stub(_internal, "getInstanceDirectoryName");
+    removeStub = sinon.stub(_internal.fs, "remove");
   });
 
   afterEach(()=>{
@@ -638,19 +694,12 @@ describe("UT foreachKeepLoopInstance()", ()=>{
 });
 
 describe("#foreachSearchLatestFinishedIndex", ()=>{
-  let foreachSearchLatestFinishedIndex;
   let getInstanceDirectoryNameStub;
   let readComponentJsonStub;
 
   beforeEach(()=>{
-    const loopUtils = rewire("../../../app/core/loopUtils.js");
-    foreachSearchLatestFinishedIndex = loopUtils.foreachSearchLatestFinishedIndex;
-    getInstanceDirectoryNameStub = sinon.stub();
-    readComponentJsonStub = sinon.stub();
-    loopUtils.__set__({
-      getInstanceDirectoryName: getInstanceDirectoryNameStub,
-      readComponentJson: readComponentJsonStub
-    });
+    getInstanceDirectoryNameStub = sinon.stub(_internal, "getInstanceDirectoryName");
+    readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
   });
 
   afterEach(()=>{

@@ -149,6 +149,23 @@
           />
         </template>
       </v-tooltip>
+      <v-tooltip
+        v-if="isHPCISS"
+        location="top"
+        text="inspect gfarm attributes"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :rounded="false"
+            :color="iconColor"
+            icon="mdi-database-search"
+            :disabled="!activeItem || activeItem.type !== 'file'"
+            v-bind="props"
+            data-cy="remote_file_browser-inspect_attributes-btn"
+            @click="inspectAttributes"
+          />
+        </template>
+      </v-tooltip>
       <v-spacer />
       <v-progress-linear
         v-show="uploading"
@@ -228,6 +245,11 @@
         </v-row>
       </template>
     </versatile-dialog>
+    <gfarm-attribute-viewer
+      v-model="attrViewerOpen"
+      :xml="attrXml"
+      :filename="attrFilename"
+    />
   </div>
 </template>
 <script>
@@ -237,8 +259,9 @@ import { mapState, mapGetters, mapMutations } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import versatileDialog from "../components/versatileDialog.vue";
 import myTreeview from "../components/common/myTreeview.vue";
+import gfarmAttributeViewer from "../components/gfarmAttributeViewer.vue";
 import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "../components/common/fileTreeUtils.js";
-import { hasRemoteFileBrowser, isHPCISS } from "../../../common/checkComponent.cjs";
+import { hasRemoteFileBrowser, isHPCISS } from "../../../common/checkComponent.js";
 import loadComponentDefinition from "../lib/componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
 
@@ -262,11 +285,13 @@ export default {
   name: "RemoteFileBrowser",
   components: {
     versatileDialog,
-    myTreeview
+    myTreeview,
+    gfarmAttributeViewer
   },
   props: {
     readonly: { type: Boolean, default: true }
   },
+  emits: ["items-updated"],
   data: function () {
     return {
       loading: false,
@@ -292,7 +317,10 @@ export default {
       downloadURL: null,
       downloadDialog: false,
       API: "getRemoteFileList",
-      iconColor: componentDefinitionObj["storage"].color
+      iconColor: componentDefinitionObj["storage"].color,
+      attrViewerOpen: false,
+      attrXml: null,
+      attrFilename: ""
     };
   },
   computed: {
@@ -310,30 +338,29 @@ export default {
   },
   watch: {
     items() {
-      if (["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type)) {
+      if (["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent?.type)) {
         return;
       }
-      const scriptCandidates = this.items
-        .filter((e)=>{
-          return e.type.startsWith("file");
-        })
-        .map((e)=>{
-          return e.name;
-        });
-      this.commitScriptCandidates(scriptCandidates);
+      //Emit items to parent (componentProperty) to update scriptCandidates
+      this.$emit("items-updated", this.items);
     },
     currentComponent: {
       //edit workflow -> server respond workflow data -> fire this event
       handler(nv) {
         if (nv.descendants.some((e)=>{
-          return e.ID === this.selectedComponent.ID;
+          return e.ID === this.selectedComponent?.ID;
         })) {
           this.getComponentDirRootFiles();
         }
       },
       deep: true
     },
-    selectedComponent() {
+    selectedComponent(newVal, oldVal) {
+      //Clear stale file list so noDuplicate() never returns false based on old data
+      //while the new component's file list is being fetched asynchronously.
+      if (!newVal || !oldVal || newVal.ID !== oldVal.ID) {
+        this.items = [];
+      }
       this.getComponentDirRootFiles();
       this.currentDir = this.selectedComponentAbsPath;
     },
@@ -350,8 +377,8 @@ export default {
       SIO.onUploaderEvent("complete", this.onUploadComplete);
       SIO.onUploaderEvent("progress", this.updateProgressBar);
     }
-    this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
-    this.getFileListAPI = this.selectedComponent.type === "hpciss" ? "getRemoteGfarmFileList" : "getRemoteFileList";
+    this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
+    this.getFileListAPI = this.selectedComponent?.type === "hpciss" ? "getRemoteGfarmFileList" : "getRemoteFileList";
   },
   beforeUnmount() {
     SIO.removeUploaderEvent("choose", this.onChoose);
@@ -382,8 +409,11 @@ export default {
       return _getActiveItem(this.items, key);
     },
     getComponentDirRootFiles() {
+      if (!this.selectedComponent) {
+        return;
+      }
       const cb = (fileList)=>{
-        if (fileList === null) {
+        if (fileList === null || !this.selectedComponent) {
           return;
         }
         this.items = fileList
@@ -430,7 +460,6 @@ export default {
       this.percentUploaded = (event.bytesLoaded / event.file.size) * 100;
     },
     ...mapMutations({
-      commitScriptCandidates: "scriptCandidates",
       commitSelectedFile: "selectedFile",
       commitWaitingDownload: "waitingDownload"
     }),
@@ -600,6 +629,20 @@ export default {
     },
     showUploadDialog() {
       SIO.prompt();
+    },
+
+    /**
+     * Fetch the wheel.workflow gfarm XML attribute for the selected file and open the viewer dialog.
+     */
+    inspectAttributes() {
+      if (!this.activeItem || this.activeItem.type !== "file") {
+        return;
+      }
+      this.attrFilename = this.activeItem.name;
+      SIO.emitGlobal("getGfarmXattr", this.projectRootDir, this.selectedComponent.host, this.activeItem.id, "wheel.workflow", (xml)=>{
+        this.attrXml = xml;
+        this.attrViewerOpen = true;
+      });
     }
   }
 };

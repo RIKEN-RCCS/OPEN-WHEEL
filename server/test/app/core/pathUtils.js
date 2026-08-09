@@ -3,18 +3,14 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
 const expect = chai.expect;
-chai.use(require("chai-fs"));
-const path = require("path");
+import path from "path";
 
 //testee
-const { sanitizePath } = require("../../../app/core/pathUtils.js");
-const { replacePathsep } = require("../../../app/core/pathUtils.js");
-const { convertPathSep } = require("../../../app/core/pathUtils.js");
+import { sanitizePath, replacePathsep, convertPathSep } from "../../../app/core/pathUtils.js";
 
 describe("UT for pathUtils class", function () {
   describe("#sanitizePath", ()=>{
@@ -41,8 +37,10 @@ describe("UT for pathUtils class", function () {
       expect(sanitizePath("folder/subfolder/file")).to.equal("folder_subfolder_file");
     });
     it("throws an error when target is not a string", ()=>{
-      expect(()=>sanitizePath(null)).to.throw();
-      expect(()=>sanitizePath(undefined)).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return sanitizePath(null); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return sanitizePath(undefined); }).to.throw();
     });
   });
   describe("#replacePathsep", ()=>{
@@ -63,10 +61,14 @@ describe("UT for pathUtils class", function () {
       expect(replacePathsep("just/a/normal/path")).to.equal("just/a/normal/path");
     });
     it("throws an error when input is not a string", ()=>{
-      expect(()=>replacePathsep(null)).to.throw();
-      expect(()=>replacePathsep(undefined)).to.throw();
-      expect(()=>replacePathsep(123)).to.throw();
-      expect(()=>replacePathsep({})).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return replacePathsep(null); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return replacePathsep(undefined); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return replacePathsep(123); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return replacePathsep({}); }).to.throw();
     });
   });
   describe("#convertPathSep", ()=>{
@@ -102,10 +104,14 @@ describe("UT for pathUtils class", function () {
       expect(convertPathSep("just_a_filename.txt")).to.equal("just_a_filename.txt");
     });
     it("throws an error when input is not a string", ()=>{
-      expect(()=>convertPathSep(null)).to.throw();
-      expect(()=>convertPathSep(undefined)).to.throw();
-      expect(()=>convertPathSep(123)).to.throw();
-      expect(()=>convertPathSep({})).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return convertPathSep(null); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return convertPathSep(undefined); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return convertPathSep(123); }).to.throw();
+      //eslint-disable-next-line @stylistic/max-statements-per-line
+      expect(()=>{ return convertPathSep({}); }).to.throw();
     });
   });
 });

@@ -3,11 +3,10 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const { remoteHost } = require("../db/db");
-const { getLogger } = require("../logSettings");
-const { getSsh } = require("../core/sshManager");
+import path from "path";
+import { remoteHost } from "../db/db.js";
+import { getLogger } from "../logSettings.js";
+import { getSsh } from "../core/sshManager.js";
 
 /**
  * execute cmd on remotehost
@@ -34,7 +33,7 @@ async function execRemote(projectRootDir, host, cmd) {
  * @param {string} host - target host label
  * @returns {number} - return value of touch on remote host
  */
-async function createNewRemoteFile(projectRootDir, filename, host) {
+export async function createNewRemoteFile(projectRootDir, filename, host) {
   getLogger(projectRootDir).debug(`create file ${filename} on ${host}`);
   return execRemote(projectRootDir, host, `touch ${filename}`);
 }
@@ -46,7 +45,7 @@ async function createNewRemoteFile(projectRootDir, filename, host) {
  * @param {string} host - target host label
  * @returns {number} - return value of mkdir on remote host
  */
-async function createNewRemoteDir(projectRootDir, dirname, host) {
+export async function createNewRemoteDir(projectRootDir, dirname, host) {
   getLogger(projectRootDir).debug(`create directory ${dirname} on ${host}`);
   return execRemote(projectRootDir, host, `mkdir ${dirname}`);
 }
@@ -58,7 +57,7 @@ async function createNewRemoteDir(projectRootDir, dirname, host) {
  * @param {string} host - target host label
  * @returns {number} - return value of rm on remote host
  */
-async function removeRemoteFileOrDirectory(projectRootDir, target, host) {
+export async function removeRemoteFileOrDirectory(projectRootDir, target, host) {
   getLogger(projectRootDir).debug(`remove ${target} on ${host}`);
   return execRemote(projectRootDir, host, `rm -fr ${target}`);
 }
@@ -72,16 +71,9 @@ async function removeRemoteFileOrDirectory(projectRootDir, target, host) {
  * @param {string} host - target host label
  * @returns {number} - return value of rm on remote host
  */
-async function renameRemoteFileOrDirectory(projectRootDir, parentDir, argOldName, argNewName, host) {
+export async function renameRemoteFileOrDirectory(projectRootDir, parentDir, argOldName, argNewName, host) {
   getLogger(projectRootDir).debug(`rename ${argOldName} to ${argNewName} in ${parentDir} on ${host}`);
   const oldName = path.join(parentDir, argOldName);
   const newName = path.join(parentDir, argNewName);
   return execRemote(projectRootDir, host, `mv ${oldName} ${newName}`);
 }
-
-module.exports = {
-  createNewRemoteFile,
-  createNewRemoteDir,
-  removeRemoteFileOrDirectory,
-  renameRemoteFileOrDirectory
-};

@@ -16,7 +16,7 @@ The batch system configuration file, `jobScheduler.json`, is located in the `CON
 The settings of jobSchduler.json included in WHEEL by default have been verified to work in the following environments.
 - PBSPro, PBSProWithoutHistory  -> PBSPro (Open source version) ver. 18
 - SLURM -> SLURM 17.02.10
-- Fugaku- > Fugaku as of 2021/2/12
+- Fugaku -> Fugaku as of 2021/2/12
 {% endcapture %}
 <div class="notice--info">
   {{ notice-confirm | markdownify }}
@@ -77,7 +77,7 @@ For example, if the setting value is ["stat -a," "stat -b"]
 
 `stat -a ${jobID} || stat -b ${jobID}`
 
-If `stat -a` succeeds, the output of `stat -b` is treated as the output of the stat command.
+If `stat -a` succeeds, its output is used. If `stat -a` returns a non-zero value, the output of `stat -b` is treated as the output of the stat command.
 
 #### reFinishedState
 For the character string returned by the status check command, specify a character string as a regular expression for determining whether the job has ended (whether no further status check is required).
@@ -86,6 +86,7 @@ The determination of normal or abnormal termination is based on the capture retu
 
 #### reReturnCode
 Specifies, as a string, the regular expression for retrieving the return value (exit code) of the job script from the output of the stat command.
+The specified string is passed to the RegExp constructor as it is, so it needs to be escaped if necessary.
 Treats the only captured value in this regular expression as the return value.
 However, if the specified string does not qualify as a regular expression or contains no captures, treat it as "Return value =-2". (This fact is also output to the log.)
 

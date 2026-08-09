@@ -3,7 +3,6 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
 
 const jwtdb = new Map();
 
@@ -56,8 +55,4 @@ function removeAllJWTServerPassphrase(projectRootDir) {
   target.clear();
 }
 
-module.exports = {
-  setJWTServerPassphrase,
-  getJWTServerPassphrase,
-  removeAllJWTServerPassphrase
-};
+export { setJWTServerPassphrase, getJWTServerPassphrase, removeAllJWTServerPassphrase };

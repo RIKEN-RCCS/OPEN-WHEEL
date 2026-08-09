@@ -4,10 +4,10 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const path = require("node:path");
-const fs = require("fs-extra");
-const { getLogger } = require("../logSettings");
-const { emitAll } = require("./commUtils.js");
+import path from "node:path";
+import fs from "fs-extra";
+import { getLogger } from "../logSettings.js";
+import { emitAll } from "./commUtils.js";
 
 /**
  * generalized version of onUploadFileSaved
@@ -41,6 +41,6 @@ async function onUploadFileSaved2(event) {
   await emitAll(uploadClient, "uploadDone", rt);
 }
 
-module.exports = {
+export {
   onUploadFileSaved2
 };

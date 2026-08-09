@@ -45,9 +45,6 @@
 <script>
 import innerTreeview from "../../components/common/innerTreeview.vue";
 
-const nodeOpenIcon = "mdi-menu-down";
-const nodeCloseIcon = "mdi-menu-right";
-
 export default {
   name: "MyTreeview",
   components: {
@@ -74,13 +71,19 @@ export default {
       type: String,
       default: "id"
     },
+    //note: the expand/collapse indicator (▶/▼) itself is always rendered by innerTreeview.vue.
+    //getNodeIcon is only used for an additional, caller-specific icon (e.g. folder icon) shown next to it.
     getNodeIcon: {
       type: Function,
-      default: (isOpen)=>{ return isOpen ? nodeOpenIcon : nodeCloseIcon; }
+      default: ()=>{ return ""; }
     },
     getLeafIcon: {
       type: Function,
       default: ()=>{ return ""; }
+    },
+    active: {
+      type: [Object, null],
+      default: null
     }
   },
   emits: ["update:active"],
@@ -89,6 +92,11 @@ export default {
       lastActive: null,
       open: []
     };
+  },
+  watch: {
+    active(newValue) {
+      this.lastActive = newValue;
+    }
   },
   mounted() {
     if (this.openAll) {

@@ -46,7 +46,7 @@ HTTP communication should be used only in environments where there are no securi
 1. Start Terminal and enter the following command:
 
     ```
-    > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
+    > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -e TZ=$(readlink /etc/localtime | sed 's#.*/zoneinfo/##') -p 8089:8089 tmkawanabe/wheel:latest
     ```
 
     where `CONFIG_DIR` must be the absolute path on the host machine.
@@ -63,6 +63,7 @@ HTTP communication should be used only in environments where there are no securi
       - jobScheduler.json : Batch system settings. For more information, see [Configuring the Batch System](../job_scheduler/).
       - server.crt/server.key : Server certificate/key file
     - WHHEL port number is specified as 8089.
+    - The `-e TZ=...` part reads your host's configured timezone and passes it into the container, so its clock matches your local time instead of defaulting to UTC. To force a specific timezone instead of following the host, replace it with e.g. `-e TZ=Asia/Tokyo`.
 
 1. When the WHEEL server starts, open a web browser on the host machine and access `http(s)://localhost:8089`.
 
@@ -243,3 +244,74 @@ However, the number of jobs submitted without using WHEEL is not counted. Theref
 
 --------
 [Return to home page]({{ site.baseurl }}/)
+
+## Customizing server settings
+
+WHEEL loads all its config files (`server.json`, `jobScheduler.json`) using the same priority order (highest first):
+
+1. **Environment variables** (e.g. `WHEEL_PORT`) — overrides all config files
+2. **`WHEEL_CONFIG_DIR/{file}`** — set `WHEEL_CONFIG_DIR` env var to point at a directory
+3. **`~/.wheel/{file}`** — the easy way: place files in your home directory, no env var needed
+4. Built-in package defaults
+
+### Using ~/.wheel/ (recommended)
+
+Create files under `~/.wheel/` and set only the values you want to override. WHEEL will deep-merge them with the built-in defaults automatically, so you only need to specify the values that differ.
+
+For example, to change the port number, create `~/.wheel/server.json`:
+
+```json
+{ "port": 9000 }
+```
+
+To override a single field in a batch scheduler, create `~/.wheel/jobScheduler.json`:
+
+```json
+{ "PBSPro": { "submit": "my-qsub" } }
+```
+
+#### Docker users
+
+If you start WHEEL with Docker using the standard command, `${HOME}` on the host is already mounted to `/root` inside the container:
+
+```
+docker run -d -v ${HOME}:/root ...
+```
+
+This means `~/.wheel/` inside the container is `${HOME}/.wheel/` on the host. No extra volume mounts are needed — just create the files on the host and WHEEL will pick them up automatically.
+
+### Available server.json settings
+
+| Key | Default | Env var | Description |
+|-----|---------|---------|-------------|
+| `port` | `8089` | `WHEEL_PORT` | Port number WHEEL listens on |
+| `numLogFiles` | `5` | — | Number of log files to keep |
+| `withLogin` | `false` | — | Require login (use `WHEEL_ENABLE_AUTH` env var instead) |
+| `numLocalJob` | `1` | `WHEEL_NUM_LOCAL_JOB` | Max concurrent local task executions |
+| `baseURL` | `""` | `WHEEL_BASE_URL` | Base URL when WHEEL is behind a reverse proxy |
+| `useHttp` | `false` | `WHEEL_USE_HTTP` | Disable TLS and serve over plain HTTP |
+| `acceptAddress` | `null` | `WHEEL_ACCEPT_ADDRESS` | Allowed client IP address (`null` = allow all) |
+| `logLevel` | `"debug"` | `WHEEL_LOG_LEVEL` | Log level (`trace`/`debug`/`info`/`warn`/`error`/`fatal`) |
+| `verboseSsh` | `false` | `WHEEL_VERBOSE_SSH` | Enable SSH verbose logging (`-vvv` flag) |
+| `enableWebApi` | `false` | `WHEEL_ENABLE_WEB_API` | Enable Web API endpoints |
+| `enableAuth` | `false` | `WHEEL_ENABLE_AUTH` | Enable the authentication mechanism |
+
+> **Note:** `WHEEL_LOGLEVEL` was renamed to `WHEEL_LOG_LEVEL`. If you have an existing configuration using the old name, please update it.
+
+## Configuration migration
+
+When WHEEL starts, it automatically checks user configuration files (`~/.wheel/server.json` and `$WHEEL_CONFIG_DIR/server.json`) and rewrites any old property names to their new equivalents. If a rewrite occurs, a warning is printed to the console at startup.
+
+### Automatically migrated property names
+
+| Old property name | New property name |
+|-------------------|-------------------|
+| `numJobOnLocal` | `numLocalJob` |
+
+### Deprecated environment variables
+
+| Deprecated variable | Replacement |
+|---------------------|-------------|
+| `WHEEL_LOGLEVEL` | `WHEEL_LOG_LEVEL` |
+
+If a deprecated environment variable is detected at startup, WHEEL will print a `console.warn` message. The deprecated variable has no effect — it will not map to any configuration property, so your intended setting will be silently ignored unless you update to the new name.

@@ -1,11 +1,30 @@
 <template>
-  <path
-    :d="cmd"
-    :stroke="strokeColor"
-    :stroke-width="width"
-    fill="transparent"
-    data-cy="cubic-bezier-path"
-  />
+  <g
+    @click.right.prevent.stop="onRightClick"
+    @mousemove="$emit('mousemove', $event)"
+    @mouseleave="$emit('mouseleave', $event)"
+  >
+    <!-- Invisible wider path for easier clicking -->
+    <path
+      :d="cmd"
+      stroke="rgba(0,0,0,0.01)"
+      stroke-width="50"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+      data-cy="cubic-bezier-path-hitbox"
+    />
+    <!-- Visible path with actual styling -->
+    <path
+      :d="cmd"
+      :stroke="strokeColor"
+      :stroke-width="width"
+      :stroke-dasharray="strokeDasharray"
+      fill="transparent"
+      data-cy="cubic-bezier-path"
+      pointer-events="none"
+    />
+  </g>
 </template>
 <script>
 "use strict";
@@ -35,8 +54,13 @@ export default {
     width: {
       type: [Number, String],
       default: "1px"
+    },
+    strokeDasharray: {
+      type: String,
+      default: ""
     }
   },
+  emits: ["contextmenu", "mousemove", "mouseleave"],
   computed: {
     cmd() {
       return `M ${this.start.x},${this.start.y}
@@ -44,6 +68,11 @@ export default {
           ${this.control2.x},${this.control2.y}
           ${this.end.x},${this.end.y}
         `;
+    }
+  },
+  methods: {
+    onRightClick(e) {
+      this.$emit("contextmenu", e);
     }
   }
 };

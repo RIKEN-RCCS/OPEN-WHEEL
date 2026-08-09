@@ -6,13 +6,7 @@ on:
       - '!master'
 jobs:
   cypress-run:
-    services:
-      testbed:
-        image: naoso5/openpbs
-        ports:
-          - 4000:22
     env:
-      WHEEL_USE_HTTP: 1
       TZ: JST-9
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CYPRESS_WHEEL_TEST_REMOTEHOST: ${{ secrets.WHEEL_TEST_REMOTEHOST }}
@@ -20,53 +14,57 @@ jobs:
       CYPRESS_WHEEL_TEST_HOSTNAME: ${{ secrets.WHEEL_TEST_HOSTNAME }}
       CYPRESS_WHEEL_TEST_PORT: ${{ secrets.WHEEL_TEST_PORT }}
       CYPRESS_WHEEL_TEST_USER: ${{ secrets.WHEEL_TEST_USER }}
-      CYPRESS_WHEEL_PATH: '/home/runner'
-      WHEEL_LOGLEVEL: "ERROR"
+      CYPRESS_WHEEL_PATH: '/root'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [20.x]
-        browser: [chrome, edge]
+        browser: [chrome]
     steps:
-      - run: mkdir -p ~/.wheel
-      - run: >
-          echo '[{
-            "name": "${{ secrets.WHEEL_TEST_REMOTEHOST }}",
-            "host": "${{ secrets.WHEEL_TEST_HOSTNAME }}",
-            "path": "/home/${{ secrets.WHEEL_TEST_USER }}",
-            "keyFile": null,
-            "username": "${{ secrets.WHEEL_TEST_USER }}",
-            "numJob": 5,
-            "port": ${{ secrets.WHEEL_TEST_PORT }},
-            "id": "dummy-id",
-            "jobScheduler": "PBSPro",
-            "queue": "workq",
-            "renewInterval": 0,
-            "renewDelay": 0,
-            "statusCheckInterval": 5,
-            "maxStatusCheckError": 10,
-            "readyTimeout": 5000
-          }]' > ~/.wheel/remotehost.json
-      - run: cat ~/.wheel/remotehost.json
       - name: Checkout
         uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
-      - run: npm install
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
+      - name: Prepare shared directory
+        run: sudo mkdir -p /tmp/WHEEL_TEST/shared && sudo chmod 777 /tmp/WHEEL_TEST/shared
+      - name: Start containers via docker compose
+        working-directory: test
+        run: |
+          docker compose up -d --build
+          docker compose ps
+      - name: Install test dependencies
+        working-directory: test
+        run: npm install --ignore-scripts
+      - name: Install Cypress binary
+        working-directory: test
+        run: npx cypress install
+      - name: Wait for containers to be ready
+        working-directory: test
+        run: |
+          timeout 300 bash -c 'until curl -sf http://localhost:8089 > /dev/null 2>&1; do sleep 2; done'
+          timeout 300 bash -c 'until curl -sf http://localhost:8090 > /dev/null 2>&1; do sleep 2; done'
+          npx wait-on tcp:127.0.0.1:3001 tcp:127.0.0.1:3101 tcp:127.0.0.1:3102 --timeout 60000
+      - name: Increase /dev/shm size for Chrome
+        run: sudo mount -t tmpfs -o size=512m tmpfs /dev/shm
+      - name: Run E2E tests with mock server
+        working-directory: test
+        run: npm run test:e2e:mock:run:sequential
+      - name: Collect container logs on failure
+        if: failure()
+        run: |
+          docker logs gateway > /tmp/gateway.log 2>&1 || true
+          docker logs mock > /tmp/mock.log 2>&1 || true
+          docker logs wheel > /tmp/wheel.log 2>&1 || true
+          docker logs wheel_auth > /tmp/wheel_auth.log 2>&1 || true
+          docker logs wheel_release_test_server > /tmp/wheel_release_test_server.log 2>&1 || true
+      - name: Upload container logs
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          working-directory: test
-          browser: ${{ matrix.browser }}
-          install: false
-          build: npm run build
-          start: npm start
-          wait-on: "http://localhost:8089"
-          wait-on-timeout: 300
-          config: requestTimeout=300000,defaultCommandTimeout=300000,retries=2
-
+          name: container-logs
+          path: /tmp/*.log
+          if-no-files-found: ignore
       - name: upload screenshot
         uses: actions/upload-artifact@v4
         if: failure()
@@ -82,3 +80,8 @@ jobs:
           name: cypress-videos
           path: test/cypress/videos
           if-no-files-found: ignore
+
+      - name: Stop all containers and cleanup
+        if: always()
+        working-directory: test
+        run: docker compose down || true

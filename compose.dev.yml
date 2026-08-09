@@ -9,11 +9,11 @@ services:
     ports:
       - "8089:8089"
     environment:
-
       WHEEL_USE_HTTP: 1
       WHEEL_PORT: 8089
       WHEEL_LOG_LEVEL: debug
       SSH_CONTROL_PERSIST_DIR: /tmp
+      TZ: ${TZ:-}
     volumes:
       - ${HOME}:/root
       - ./common:/usr/src/common

@@ -14,7 +14,7 @@ If the transition cannot be made, the text editor button is displayed in a state
 {: .notice--info}
 
 The text editor screen has three modes:
-- ormal mode
+- normal mode
 - PS-config mode
 - jobScriptEditor mode
 
@@ -33,12 +33,12 @@ When a text editor screen is opened, it normally starts in normal mode. This mod
 
 ![img](./img/editor_normal.png "editor_normal")
 
-|| Component |
-|----------|----------|
-|1| File tab |
-|2| New file open button |
-|3|read only switch |
-|4|save all files button |
+| Component | Description |
+|---|---|
+|1| File tab | Displays the file name of the opened file. The currently displayed tab is shown in blue. |
+|2| New file open button | Opens a screen for creating a new file. |
+|3| read only switch | The displayed text becomes read-only and cannot be changed. |
+|4| save all files button | All currently open tabs and all parameter study settings currently being configured in the [PS-config mode](#ps-config-mode) described below are saved. |
 
 #### File tab
 Displays the file name of the opened file. The currently displayed tab is shown in blue.
@@ -97,14 +97,14 @@ From the HPC center drop-down list, select the system on which you want to submi
 
 ![img](./img/editor_jobscript_editor_fugaku.png "editor_jobscript_editor_fugaku")
 
-|| Component |
-|----------|----------|
-|1|insert button |
-|2|remove button |
-|3|clear button |
-|4|load button |
-|5|register button |
-|6| Option input form |
+| Component | Description |
+|---|---|
+|1| insert button | Inserts the option values from the __option input form__ into the beginning of the file that is open in the tab editor, in a format suitable for job scripts. |
+|2| remove button | You can delete the text inserted with the __insert__ button. |
+|3| clear button | Resets the contents of the __option input form__ to the default values. |
+|4| load button | Loads the option settings saved with the __register__ button into the __option input form__. |
+|5| register button | You can name and save the settings entered in the __option input form__. |
+|6| Option input form | A form for entering the options used by the system to which jobs are submitted is displayed. |
 
 #### insert button
 Click the __insert__ button to insert the option values from the __option input form__ into the beginning of the file that is open in the tab editor, in a format suitable for job scripts.
