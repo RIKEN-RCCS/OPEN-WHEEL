@@ -26,6 +26,7 @@ jobs:
           VERSION_NUMBER="$(date '+%Y-%m%d-%H%M%S')-${TYPE}"
           echo "{\"version\": \"${VERSION_NUMBER}\" }" > server/app/db/version.json
           cat server/app/db/version.json
+          echo "VERSION_NUMBER=${VERSION_NUMBER}" >>$GITHUB_ENV
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME}
@@ -40,8 +41,8 @@ jobs:
             wheel_docker.tar.gz
             source.tar.gz
           tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
-          body: "release for ${{ github.ref_name }} @ ${{ github.sha }}"
+          name: ${{ env.VERSION_NUMBER }}
+          body: "release for ${{ github.ref_name }} @ ${{ github.sha }} (${{ env.VERSION_NUMBER }})"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   backup:
