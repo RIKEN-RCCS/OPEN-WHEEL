@@ -1,13 +1,13 @@
-describe("import project e2e test", ()=>{
+describe("import project", { testIsolation: false }, ()=>{
   const PROJECT_NAME = "WHEEL_IMPORT_TEST_PROJECT";
   const PROJECT_DESCRIPTION = "TestDescription";
   const PROJECT_PATH = "/root/WHEEL_IMPORT_TEST_PROJECT.wheel";
   const ARCHIVE_FILENAME = "cypress/fixtures/importProjectE2Etest.tgz";
 
-  beforeEach(()=>{
-    return cy.goToScreen("home");
+  before(()=>{
+    return cy.goHome();
   });
-  afterEach(()=>{
+  after(()=>{
     return cy.removeAllProjects();
   });
   it("should import project from tar archive", ()=>{

@@ -3,149 +3,91 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-
-const { expect } = require("chai");
-const sinon = require("sinon");
-const rewire = require("rewire");
+import { expect } from "chai";
+import sinon from "sinon";
+import { _internal, getThreeGenerationFamily, getChildren as getChildrenUtil } from "../../../app/core/workflowUtil.js";
+import { componentJsonFilename } from "../../../app/db/db.js";
 
 describe("#getThreeGenerationFamily", ()=>{
-  let rewireWorkflowUtil;
-  let getThreeGenerationFamily;
-  let readComponentJsonMock;
-  let getChildrenMock;
-  let hasChildMock;
+  let readComponentJsonStub;
+  let getChildrenStub;
+  let hasChildStub;
 
   beforeEach(()=>{
-    //workflowUtil.js をリワイヤ
-    rewireWorkflowUtil = rewire("../../../app/core/workflowUtil.js");
-
-    //テスト対象の関数を取得
-    getThreeGenerationFamily = rewireWorkflowUtil.__get__("getThreeGenerationFamily");
-
-    //依存関数をSinon.stub() でモック化
-    readComponentJsonMock = sinon.stub();
-    getChildrenMock = sinon.stub();
-    hasChildMock = sinon.stub();
-
-    //rewire で内部の依存を差し替え
-    rewireWorkflowUtil.__set__({
-      readComponentJson: readComponentJsonMock,
-      getChildren: getChildrenMock,
-      hasChild: hasChildMock
-    });
+    readComponentJsonStub = sinon.stub(_internal, "readComponentJson");
+    getChildrenStub = sinon.stub(_internal, "getChildren");
+    hasChildStub = sinon.stub(_internal, "hasChild");
   });
 
   afterEach(()=>{
-    //テストごとに stub/spy をリセット
     sinon.restore();
   });
 
   it("should return a root component with empty descendants if no children exist", async ()=>{
-    //-- 準備 --
-    //readComponentJsonMock は ルートコンポーネントのJSONを返す
-    readComponentJsonMock.resolves({
+    readComponentJsonStub.resolves({
       ID: "rootID",
       type: "workflow"
     });
+    getChildrenStub.resolves([]);
 
-    //getChildrenMock は 空配列を返す => 子供なし
-    getChildrenMock.resolves([]);
-
-    //-- 実行 --
     const result = await getThreeGenerationFamily("/dummy/projectRoot", "/dummy/rootComponentDir");
 
-    //-- 検証 --
     expect(result).to.have.property("ID", "rootID");
     expect(result).to.have.property("type", "workflow");
     expect(result).to.have.property("descendants").that.is.an("array").with.lengthOf(0);
-
-    //stub が正しく呼ばれたか(参考)
-    expect(readComponentJsonMock.calledOnceWithExactly("/dummy/rootComponentDir")).to.be.true;
-    expect(getChildrenMock.calledOnceWithExactly("/dummy/projectRoot", "rootID")).to.be.true;
+    expect(readComponentJsonStub.calledOnceWithExactly("/dummy/rootComponentDir")).to.be.true;
+    expect(getChildrenStub.calledOnceWithExactly("/dummy/projectRoot", "rootID")).to.be.true;
   });
 
   it("should remove handler from each child if present, but skip grandsons if hasChild is false", async ()=>{
-    //-- 準備 --
-    //ルートコンポーネント
-    readComponentJsonMock.resolves({
+    readComponentJsonStub.resolves({
       ID: "rootID",
       type: "workflow"
     });
-    //直下の子供を2つ用意
     const child1 = { ID: "child1ID", type: "group", handler: "someHandlerValue" };
     const child2 = { ID: "child2ID", type: "other" };
-    getChildrenMock.resolves([child1, child2]);
+    getChildrenStub.resolves([child1, child2]);
+    hasChildStub.onCall(0).returns(false);
+    hasChildStub.onCall(1).returns(false);
 
-    //いずれの子供も hasChild => false とする
-    hasChildMock.onCall(0).returns(false); //for child1
-    hasChildMock.onCall(1).returns(false); //for child2
-
-    //-- 実行 --
     const result = await getThreeGenerationFamily("/dummy/projectRoot", "/dummy/rootComponentDir");
 
-    //-- 検証 --
-    //root
     expect(result).to.have.property("ID", "rootID");
     expect(result).to.have.property("descendants").that.is.an("array").with.lengthOf(2);
-
-    //child1 => handler が削除されている
     const [c1, c2] = result.descendants;
     expect(c1).to.have.property("ID", "child1ID");
-    expect(c1).to.not.have.property("handler"); //削除されている
-    //child2 => もともと handler なし
+    expect(c1).to.not.have.property("handler");
     expect(c2).to.have.property("ID", "child2ID");
-
-    //hasChild が false なので => どちらの子供も descenants (孫) は付与されない
     expect(c1).to.not.have.property("descendants");
     expect(c2).to.not.have.property("descendants");
   });
 
   it("should map grandsons when hasChild is true, and transform 'task' type differently", async ()=>{
-    //-- 準備 --
-    //root の情報
-    readComponentJsonMock.resolves({
+    readComponentJsonStub.resolves({
       ID: "rootID",
       type: "workflow"
     });
-
-    //子供は1つだけ存在
     const childA = { ID: "childAID", type: "group" };
-    getChildrenMock.onCall(0).resolves([childA]);
-    //↑ getChildren が呼ばれるのは root 用(最初の呼び出し)
-
-    //childA は hasChild => true とする
-    hasChildMock.onCall(0).returns(true);
-
-    //childA の子供 (孫にあたる) は2つ
+    getChildrenStub.onCall(0).resolves([childA]);
+    hasChildStub.onCall(0).returns(true);
     const grandTask = { ID: "g1", type: "task", pos: { x: 100, y: 200 }, host: "someHost", useJobScheduler: true };
     const grandOther = { ID: "g2", type: "group", pos: { x: 300, y: 400 } };
+    getChildrenStub.onCall(1).resolves([grandTask, grandOther]);
 
-    //2回目の getChildren 呼び出し => childA の孫取得
-    getChildrenMock.onCall(1).resolves([grandTask, grandOther]);
-
-    //-- 実行 --
     const result = await getThreeGenerationFamily("/dummy/proj", "/dummy/rootComp");
 
-    //-- 検証 --
     expect(result).to.have.property("ID", "rootID");
     expect(result).to.have.property("descendants").that.is.an("array").with.lengthOf(1);
-
     const cA = result.descendants[0];
     expect(cA).to.have.property("ID", "childAID");
-    //hasChild => true なので cA の descendants がある
     expect(cA).to.have.property("descendants").that.is.an("array").with.lengthOf(2);
-
-    //孫要素のチェック
     const [g1, g2] = cA.descendants;
-    //g1.type === 'task' => host, useJobScheduler も含む
     expect(g1).to.deep.equal({
       type: "task",
       pos: { x: 100, y: 200 },
       host: "someHost",
       useJobScheduler: true
     });
-    //g2.type !== 'task' => type, pos のみ
     expect(g2).to.deep.equal({
       type: "group",
       pos: { x: 300, y: 400 }
@@ -154,38 +96,17 @@ describe("#getThreeGenerationFamily", ()=>{
 });
 
 describe("#getChildren", ()=>{
-  let rewireWorkflowUtil;
   let getChildren;
-  let getComponentDirMock; //getComponentDir を Stub 化
-  let readJsonGreedyMock; //readJsonGreedy を Stub 化
-  let promisifyMock; //promisify を Stub 化
-  let globMock; //glob 関数(正確には promisify された glob)を Stub 化
-  let componentJsonFilename; //componentJsonFilename の値を取得し検証に利用する
+  let getComponentDirStub;
+  let readJsonGreedyStub;
+  let globStub;
 
   beforeEach(()=>{
-    //テスト対象モジュールを rewire で読み込む
-    rewireWorkflowUtil = rewire("../../../app/core/workflowUtil.js");
-
-    //テスト対象関数を取得
-    getChildren = rewireWorkflowUtil.__get__("getChildren");
-
-    //各依存関数を Stub 化
-    getComponentDirMock = sinon.stub();
-    readJsonGreedyMock = sinon.stub();
-    globMock = sinon.stub();
-
-    //promisify(...) が globMock を返すようにする
-    promisifyMock = sinon.stub().returns(globMock);
-
-    //依存を rewire で差し替え
-    rewireWorkflowUtil.__set__({
-      getComponentDir: getComponentDirMock,
-      readJsonGreedy: readJsonGreedyMock,
-      promisify: promisifyMock
-    });
-
-    //componentJsonFilename の実際の値を取得 (デフォルトでは "component.json" など)
-    componentJsonFilename = rewireWorkflowUtil.__get__("componentJsonFilename");
+    getChildren = getChildrenUtil;
+    getComponentDirStub = sinon.stub(_internal, "getComponentDir");
+    readJsonGreedyStub = sinon.stub(_internal, "readJsonGreedy");
+    globStub = sinon.stub();
+    sinon.stub(_internal, "glob").callsFake(globStub);
   });
 
   afterEach(()=>{
@@ -193,57 +114,83 @@ describe("#getChildren", ()=>{
   });
 
   it("should return an empty array if getComponentDir returns a falsy value", async ()=>{
-    //getComponentDir が null や undefined を返すケース
-    getComponentDirMock.resolves(null);
+    getComponentDirStub.resolves(null);
 
     const result = await getChildren("/some/project", "parentID");
     expect(result).to.be.an("array").that.is.empty;
-
-    //getComponentDir が正しく呼ばれ、ほかの依存が呼ばれていないことを検証
-    expect(getComponentDirMock.calledOnceWithExactly("/some/project", "parentID", true)).to.be.true;
-    expect(promisifyMock.notCalled).to.be.true;
-    expect(globMock.notCalled).to.be.true;
+    expect(getComponentDirStub.calledOnceWithExactly("/some/project", "parentID", true)).to.be.true;
+    expect(globStub.notCalled).to.be.true;
   });
 
   it("should return an empty array if no children are found by glob", async ()=>{
-    //getComponentDir でパスが返ってきても、glob 結果が空配列になるケース
-    getComponentDirMock.resolves("/path/to/component");
-    globMock.resolves([]); //=> children.length === 0
+    getComponentDirStub.resolves("/path/to/component");
+    globStub.resolves([]);
 
     const result = await getChildren("/projRoot", "someParent");
     expect(result).to.be.an("array").that.is.empty;
-
-    //glob の呼び出しパスが正しいか確認
-    const expectedGlobPath = require("path").join("/path/to/component", "*", componentJsonFilename);
-    expect(promisifyMock.calledOnce).to.be.true;
-    expect(globMock.calledOnceWithExactly(expectedGlobPath)).to.be.true;
+    const { join } = await import("path");
+    const expectedGlobPath = join("/path/to/component", "*", componentJsonFilename);
+    expect(globStub.calledOnceWithExactly(expectedGlobPath)).to.be.true;
   });
 
   it("should filter out subComponent objects and return the rest", async ()=>{
-    //getComponentDir で有効なパスが返り、glob で複数ファイルが見つかるケース
-    getComponentDirMock.resolves("/my/component");
-    globMock.resolves([
+    getComponentDirStub.resolves("/my/component");
+    globStub.resolves([
       "/my/component/child1/component.json",
       "/my/component/child2/component.json",
       "/my/component/child3/component.json"
     ]);
-
-    //readJsonGreedy の Stub 動作設定
-    //1つだけ subComponent:true として除外させる
-    readJsonGreedyMock.onCall(0).resolves({ ID: "child1", subComponent: false });
-    readJsonGreedyMock.onCall(1).resolves({ ID: "child2", subComponent: true });
-    readJsonGreedyMock.onCall(2).resolves({ ID: "child3" }); //subComponent が undefined
+    readJsonGreedyStub.onCall(0).resolves({ ID: "child1", subComponent: false });
+    readJsonGreedyStub.onCall(1).resolves({ ID: "child2", subComponent: true });
+    readJsonGreedyStub.onCall(2).resolves({ ID: "child3" });
 
     const result = await getChildren("/projRoot", "myParentID");
     expect(result).to.have.lengthOf(2);
     expect(result).to.deep.include({ ID: "child1", subComponent: false });
     expect(result).to.deep.include({ ID: "child3" });
+    const { join } = await import("path");
+    const expectedGlobPath = join("/my/component", "*", componentJsonFilename);
+    expect(globStub.calledOnceWithExactly(expectedGlobPath)).to.be.true;
+    expect(readJsonGreedyStub.callCount).to.equal(3);
+  });
 
-    //glob の呼び出しパスが正しいか確認
-    const expectedGlobPath = require("path").join("/my/component", "*", componentJsonFilename);
-    expect(globMock.calledOnceWithExactly(expectedGlobPath)).to.be.true;
+  it("should handle the case where isParentDir is true and use parentID as directory path", async ()=>{
+    globStub.resolves(["/mock/project/parent/child/cmp.wheel.json"]);
+    readJsonGreedyStub.resolves({ ID: "child", subComponent: false });
 
-    //3ファイルとも readJsonGreedy が呼ばれているか
-    expect(readJsonGreedyMock.callCount).to.equal(3);
+    const result = await getChildren("/mock/project", "/mock/project/parent", true);
+
+    expect(result).to.deep.equal([{ ID: "child", subComponent: false }]);
+    expect(getComponentDirStub.notCalled).to.be.true;
+  });
+
+  it("should handle the case where parentID is null and use projectRootDir", async ()=>{
+    globStub.resolves(["/mock/project/child/cmp.wheel.json"]);
+    readJsonGreedyStub.resolves({ ID: "child", subComponent: false });
+
+    const result = await getChildren("/mock/project", null, false);
+
+    expect(result).to.deep.equal([{ ID: "child", subComponent: false }]);
+    expect(getComponentDirStub.notCalled).to.be.true;
+  });
+
+  it("should return an empty array if the directory is not found", async ()=>{
+    getComponentDirStub.resolves(null);
+
+    const result = await getChildren("/mock/project", "invalidID", false);
+
+    expect(result).to.deep.equal([]);
+  });
+
+  it("should return an array of child components excluding subComponents", async ()=>{
+    getComponentDirStub.resolves("/mock/project/component");
+    globStub.resolves(["/mock/project/component/child1/cmp.wheel.json", "/mock/project/component/child2/cmp.wheel.json"]);
+
+    readJsonGreedyStub.withArgs("/mock/project/component/child1/cmp.wheel.json").resolves({ ID: "child1", subComponent: false });
+    readJsonGreedyStub.withArgs("/mock/project/component/child2/cmp.wheel.json").resolves({ ID: "child2", subComponent: true });
+
+    const result = await getChildren("/mock/project", "validID", false);
+
+    expect(result).to.deep.equal([{ ID: "child1", subComponent: false }]);
   });
 });

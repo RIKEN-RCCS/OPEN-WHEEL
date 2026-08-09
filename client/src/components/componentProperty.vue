@@ -5,8 +5,7 @@
  */
 <template>
   <v-navigation-drawer
-    v-if="selectedComponent !== null"
-    v-model="open"
+    v-if="drawerVisible"
     location="right"
     absolute
     :width="propWidth"
@@ -15,40 +14,25 @@
     <v-toolbar
       color="background"
     >
-      <v-toolbar-title>
-        <v-form
-          v-model="validName"
-          @submit.prevent
-        >
-          <v-text-field
-            v-model="copySelectedComponent.name"
-            label="name"
-            :readonly="readOnly"
-            variant="outlined"
-            class="pt-4"
-            density="compact"
-            :rules="[rules.isValidName, isUniqueName]"
-            data-cy="component_property-name-text_field"
-          />
-        </v-form>
-      </v-toolbar-title>
       <v-toolbar-items>
-        <v-tooltip
-          location="bottom"
-          text="disable"
-        >
-          <template #activator="{ props}">
-            <v-switch
-              v-model="copySelectedComponent.disable"
-              :readonly="readOnly"
-              hide-details
-              color="error"
-              label="disable"
-              v-bind="props"
-              data-cy="component_property-disable-switch"
-            />
-          </template>
-        </v-tooltip>
+        <div class="d-flex align-center ml-2">
+          <span
+            class="text-caption"
+            :class="!copySelectedComponent.disable ? 'text-primary font-weight-bold' : 'text-disabled'"
+          >enable</span>
+          <v-switch
+            v-model="copySelectedComponent.disable"
+            :readonly="readOnly"
+            hide-details
+            :color="copySelectedComponent.disable ? 'error' : 'primary'"
+            data-cy="component_property-disable-switch"
+            class="mx-1"
+          />
+          <span
+            class="text-caption"
+            :class="copySelectedComponent.disable ? 'text-error font-weight-bold' : 'text-disabled'"
+          >disable</span>
+        </div>
         <v-tooltip
           location="bottom"
           text="close"
@@ -64,6 +48,30 @@
         </v-tooltip>
       </v-toolbar-items>
     </v-toolbar>
+    <v-form
+      v-model="validName"
+      @submit.prevent
+    >
+      <v-tooltip
+        :text="copySelectedComponent.name"
+        location="top"
+        :disabled="copySelectedComponent.name.length <= 10"
+      >
+        <template #activator="{ props }">
+          <v-text-field
+            v-model="copySelectedComponent.name"
+            v-bind="props"
+            label="name"
+            :readonly="readOnly"
+            variant="outlined"
+            class="px-4 pt-3"
+            density="compact"
+            :rules="[rules.isValidName, isUniqueName]"
+            data-cy="component_property-name-text_field"
+          />
+        </template>
+      </v-tooltip>
+    </v-form>
     <v-form
       v-model="valid"
       @submit.prevent
@@ -85,22 +93,25 @@
               variant="outlined"
               data-cy="component_property-description-textarea"
             />
-            <v-autocomplete
+            <v-combobox
               v-if="hasScript"
               v-model="copySelectedComponent.script"
               label="script"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-script-autocomplete"
             />
+
             <v-select
               v-if="hasHost"
               v-model="copySelectedComponent.host"
               label="host"
               :readonly="readOnly"
               :items="hostCandidates"
+              :menu-props="{ transition: false }"
               variant="outlined"
               data-cy="component_property-host-select"
             />
@@ -114,32 +125,39 @@
               data-cy="component_property-job_scheduler-switch"
             />
             <v-select
-              v-if="hasJobScheduler"
+              v-if="hasJobScheduler && copySelectedComponent.useJobScheduler"
               v-model="copySelectedComponent.queue"
               label="queue"
               :readonly="readOnly"
               :items="queues"
-              :disabled="! copySelectedComponent.useJobScheduler"
+              :menu-props="{ transition: false }"
               variant="outlined"
               data-cy="component_property-queue-select"
             />
             <v-text-field
-              v-if="hasJobScheduler"
+              v-if="hasJobScheduler && copySelectedComponent.useJobScheduler"
               v-model="submitCmd"
               :readonly="readOnly"
               label="submit command"
-              :disabled="! copySelectedComponent.useJobScheduler"
               variant="outlined"
               data-cy="component_property-submit_command-text_field"
             />
             <v-text-field
-              v-if="hasJobScheduler"
+              v-if="hasJobScheduler && copySelectedComponent.useJobScheduler"
               v-model="copySelectedComponent.submitOption"
               label="submit option"
               :readonly="readOnly"
-              :disabled="! copySelectedComponent.useJobScheduler"
               variant="outlined"
               data-cy="component_property-submit_option-text_field"
+            />
+            <v-text-field
+              v-if="hasScript && copySelectedComponent.useJobScheduler"
+              v-model="copySelectedComponent.sourceScript"
+              label="source script"
+              :readonly="readOnly"
+              clearable
+              variant="outlined"
+              data-cy="component_property-source_script-text_field"
             />
             <v-text-field
               v-if="isStorage"
@@ -149,21 +167,23 @@
               variant="outlined"
               data-cy="component_property-directory_path-text_field"
             />
-            <v-switch
-              v-if="isTask"
-              v-model="copySelectedComponent.ignoreFailure"
-              label="continue project execution after filure"
-              :readonly="readOnly"
-              color="primary"
-              data-cy="component_property-ignore_failure-switch"
-            />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isTask">
-          <v-expansion-panel-title data-cy="component_property-retry-panel_title">
-            retry setting
+          <v-expansion-panel-title data-cy="component_property-advanced-panel_title">
+            advanced
           </v-expansion-panel-title>
           <v-expansion-panel-text>
+            <v-combobox
+              v-model="copySelectedComponent.checker"
+              label="checker script"
+              :readonly="readOnly"
+              :items="scriptCandidates"
+              :menu-props="{ transition: false }"
+              clearable
+              variant="outlined"
+              data-cy="component_property-checker-autocomplete"
+            />
             <v-text-field
               v-model="copySelectedComponent.retry"
               label="number of retry"
@@ -181,12 +201,13 @@
               :readonly="readOnly"
               data-cy="component_property-task_use_javascript-switch"
             />
-            <v-autocomplete
+            <v-combobox
               v-if="!retryByJS"
               v-model="copySelectedComponent.retryCondition"
               label="script name for condition check"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-task_use_javascript-autocomplete"
@@ -197,9 +218,19 @@
               :readonly="readOnly"
               data-cy="component_property-task_use_javascript-textarea"
             />
+            <v-switch
+              v-model="copySelectedComponent.ignoreFailure"
+              label="continue project execution after failure"
+              :readonly="readOnly"
+              color="primary"
+              data-cy="component_property-ignore_failure-switch"
+            />
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel v-if="isFor">
+        <v-expansion-panel
+          v-if="isFor"
+          eager
+        >
           <v-expansion-panel-title data-cy="component_property-loop_set_for-panel_title">
             loop setting
           </v-expansion-panel-title>
@@ -239,9 +270,22 @@
                 data-cy="component_property-keep_for-text_field"
               />
             </v-form>
+            <list-form
+              :label="'skip copy (glob patterns)'"
+              :readonly="readOnly"
+              :items="skipCopyList"
+              :edit-dialog-min-width="propWidth"
+              data-cy="component_property-skip_copy_for-list_form"
+              @add="addToSkipCopy"
+              @remove="removeFromSkipCopy"
+              @update="updateSkipCopy"
+            />
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel v-if="isForeach">
+        <v-expansion-panel
+          v-if="isForeach"
+          eager
+        >
           <v-expansion-panel-title data-cy="component_property-loop_set_foreach-panel_title">
             loop setting
           </v-expansion-panel-title>
@@ -263,6 +307,16 @@
               type="number"
               data-cy="component_property-keep_foreach-text_field"
             />
+            <list-form
+              :label="'skip copy (glob patterns)'"
+              :readonly="readOnly"
+              :items="skipCopyList"
+              :edit-dialog-min-width="propWidth"
+              data-cy="component_property-skip_copy_foreach-list_form"
+              @add="addToSkipCopy"
+              @remove="removeFromSkipCopy"
+              @update="updateSkipCopy"
+            />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isSource">
@@ -279,16 +333,16 @@
             />
             <v-row>
               <v-col>
-                <v-autocomplete
+                <v-text-field
                   v-if="!copySelectedComponent.uploadOnDemand"
                   v-model="sourceOutputFile"
                   label="source file name"
                   :readonly="readOnly"
-                  :items="scriptCandidates"
                   clearable
                   variant="outlined"
-                  data-cy="component_property-source_file_name-autocomplete"
-                  @update:model-value="updateSourceOutputFile"
+                  data-cy="component_property-source_file_name-text_field"
+                  @change="updateSourceOutputFile"
+                  @click:clear="updateSourceOutputFile"
                 />
               </v-col>
               <v-col
@@ -317,10 +371,15 @@
               :new-item-template="inputFileTemplate"
               :additional-rules="[isValidInputFilename]"
               :edit-dialog-min-width="propWidth"
+              :headers="inputFileHeaders"
+              :boolean-columns="['mandatory']"
+              :show-headers="true"
+              autofocus
               data-cy="component_property-input_files_viewer-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
+              @toggle="toggleInputFileMandatory"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -329,11 +388,12 @@
             PS setting
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            <v-autocomplete
+            <v-combobox
               v-model="copySelectedComponent.parameterFile"
               label="parameterFile"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-parameter_file-autocomplete"
@@ -395,12 +455,13 @@
               :readonly="readOnly"
               data-cy="component_property-bulk_number-switch"
             />
-            <v-autocomplete
+            <v-combobox
               v-if="copySelectedComponent.usePSSettingFile"
               v-model="copySelectedComponent.parameterFile"
               label="parameter file"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-parameter_file_bulkjob-autocomplete"
@@ -439,12 +500,13 @@
                 :readonly="readOnly"
                 data-cy="component_property-balkjob_use_javascript-switch"
               />
-              <v-autocomplete
+              <v-combobox
                 v-if="!conditionCheckByJS"
                 v-model="copySelectedComponent.condition"
                 label="script name for condition check"
                 :readonly="readOnly"
                 :items="scriptCandidates"
+                :menu-props="{ transition: false }"
                 clearable
                 variant="outlined"
                 data-cy="component_property-balkjob_use_javascript-autocomplete"
@@ -470,12 +532,13 @@
               :readonly="readOnly"
               data-cy="component_property-condition_use_javascript-switch"
             />
-            <v-autocomplete
+            <v-combobox
               v-if="!conditionCheckByJS"
               v-model="copySelectedComponent.condition"
               label="script name for condition check"
               :readonly="readOnly"
               :items="scriptCandidates"
+              :menu-props="{ transition: false }"
               clearable
               variant="outlined"
               data-cy="component_property-condition_use_javascript-autocomplete"
@@ -494,6 +557,17 @@
               type="number"
               data-cy="component_property-keep_while-text_field"
             />
+            <list-form
+              v-if="isWhile"
+              :label="'skip copy (glob patterns)'"
+              :readonly="readOnly"
+              :items="skipCopyList"
+              :edit-dialog-min-width="propWidth"
+              data-cy="component_property-skip_copy_while-list_form"
+              @add="addToSkipCopy"
+              @remove="removeFromSkipCopy"
+              @update="updateSkipCopy"
+            />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="! isSource && !isViewer">
@@ -501,6 +575,12 @@
             input/output files
           </v-expansion-panel-title>
           <v-expansion-panel-text>
+            <div
+              class="text-caption"
+              data-cy="component_property-input_files-label"
+            >
+              input files
+            </div>
             <list-form
               :label="'input files'"
               :readonly="readOnly"
@@ -508,11 +588,22 @@
               :new-item-template="inputFileTemplate"
               :additional-rules="[isValidInputFilename]"
               :edit-dialog-min-width="propWidth"
+              :headers="inputFileHeaders"
+              :boolean-columns="['mandatory']"
+              :show-headers="true"
+              autofocus
               data-cy="component_property-input_files-list_form"
               @add="addToInputFiles"
               @remove="removeFromInputFiles"
               @update="updateInputFiles"
+              @toggle="toggleInputFileMandatory"
             />
+            <div
+              class="text-caption mt-4"
+              data-cy="component_property-output_files-label"
+            >
+              output files
+            </div>
             <list-form
               :label="'output files'"
               :readonly="readOnly"
@@ -520,6 +611,8 @@
               :new-item-template="outputFileTemplate"
               :additional-rules="[isValidOutputFilename]"
               :edit-dialog-min-width="propWidth"
+              :headers="outputFileHeaders"
+              :show-headers="true"
               data-cy="component_property-output_files-list_form"
               @add="addToOutputFiles"
               @remove="removeFromOutputFiles"
@@ -582,7 +675,7 @@
             </v-radio-group>
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel>
+        <v-expansion-panel eager>
           <v-expansion-panel-title
             :class="{ 'remote': hasRemoteFileBrowser}"
             data-cy="component_property-files-panel_title"
@@ -592,12 +685,15 @@
           <v-expansion-panel-text>
             <file-browser
               v-if="hasLocalFileBrowser"
+              ref="fileBrowser"
               :readonly="false"
+              @items-updated="updateScriptCandidatesFromBrowser"
             />
             <remote-file-browser
               v-if="hasRemoteFileBrowser"
               ref="rfb"
               :readonly="false"
+              @items-updated="updateScriptCandidatesFromBrowser"
             />
             <gfarm-tar-browser
               v-if="hasGfarmTarBrowser"
@@ -622,11 +718,10 @@ import { propWidth } from "../lib/componentSizes.json";
 import {
   hasRemoteFileBrowser,
   hasGfarmTarBrowser
-} from "../../../common/checkComponent.cjs";
+} from "../../../common/checkComponent.js";
 
 const isNormalObject = (target)=>{
-  const type = typeof target;
-  return type !== "undefined" && type !== "null";
+  return target !== null && target !== undefined;
 };
 
 const isZeroOrMore = (v)=>{
@@ -661,18 +756,25 @@ export default {
       validName: true,
       inputFileTemplate: {
         name: "",
-        src: []
+        src: [],
+        mandatory: false
       },
+      inputFileHeaders: [
+        { key: "name", title: "name", sortable: false },
+        { key: "mandatory", title: "mandatory", sortable: false, tooltip: "fail if missing" }
+      ],
+      outputFileHeaders: [
+        { key: "name", title: "name", sortable: false }
+      ],
       outputFileTemplate: {
         name: "",
         dst: []
       },
       propWidth,
+      drawerVisible: false,
       openPanels: [0],
       retryByJS: false,
       conditionCheckByJS: false,
-      open: false,
-      reopening: false,
       sourceOutputFile: null,
       rules: {
         isValidName,
@@ -728,6 +830,9 @@ export default {
     isWhile() {
       return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "while";
     },
+    isLoopComponent() {
+      return this.isFor || this.isForeach || this.isWhile;
+    },
     isSource() {
       return isNormalObject(this.selectedComponent) && this.selectedComponent.type === "source";
     },
@@ -773,6 +878,15 @@ export default {
           return { name: e };
         });
     },
+    skipCopyList() {
+      if (!Array.isArray(this.copySelectedComponent.skipCopy)) {
+        return [];
+      }
+      return this.copySelectedComponent.skipCopy
+        .map((e)=>{
+          return { name: e };
+        });
+    },
     hostCandidates() {
       const hostInRemoteHost = this.remoteHost.map((e)=>{
         return e.name;
@@ -783,10 +897,7 @@ export default {
       const currentHostSetting = this.remoteHost.find((e)=>{
         return e.name === this.copySelectedComponent.host;
       });
-      return currentHostSetting && typeof currentHostSetting.queue === "string"
-        ? currentHostSetting.queue.split(",")
-          .map((e)=>{ return e.trim(); })
-        : [];
+      return Array.isArray(currentHostSetting && currentHostSetting.queue) ? currentHostSetting.queue : [];
     },
     submitCmd() {
       const currentHostSetting = this.remoteHost.find((e)=>{
@@ -797,6 +908,14 @@ export default {
       }
       const JS = currentHostSetting.jobScheduler;
       return JS ? this.jobScheduler[JS].submit : null;
+    },
+    remoteFileSettingPanelIndex() {
+      //Remote file setting panel only appears for task, bulkjobTask, and stepjobTask
+      //For these component types, it is always at index 3
+      if (this.isTask || this.isBulkjobTask || this.isStepjobTask) {
+        return 3;
+      }
+      return null;
     }
   },
   watch: {
@@ -804,28 +923,26 @@ export default {
       this.copySelectedComponent.retryCondition = null;
     },
     "copySelectedComponent.host"(newValue) {
-      if (newValue === "localhost" && !this.isBulkjobTask() && !this.isStepjobTask() && this.isStepjob()) {
+      if (newValue === "localhost" && this.isTask) {
         this.copySelectedComponent.useJobScheduler = false;
       }
-    },
-    open(newValue) {
-      //another component is selected while componentProperty is open
-      if (this.reopening || this.open) {
-        return;
-      }
-      //closing
-      if (newValue === false) {
-        this.commitSelectedComponent(null);
+      //Close remote file setting panel if changing to localhost
+      if (newValue === "localhost") {
+        //Remove remote file setting panel from openPanels
+        this.openPanels = this.openPanels.filter((idx)=>{
+          return idx !== this.remoteFileSettingPanelIndex;
+        });
       }
     },
     selectedComponent(newValue, oldValue) {
-      if (this.selectedComponent === null || (newValue !== null && oldValue !== null && newValue.ID === oldValue.ID)) {
+      this.drawerVisible = newValue !== null;
+      if (!this.selectedComponent || (newValue !== null && oldValue !== null && newValue.ID === oldValue.ID)) {
         return;
       }
       this.sourceOutputFile = Array.isArray(this.selectedComponent.outputFiles) && this.selectedComponent.outputFiles[0] ? this.selectedComponent.outputFiles[0].name : null;
       //get script candidate
-      if (!["for", "foreach", "workflow", "storage", "viewer", "hpciss", "hpcisstar"].includes(this.selectedComponent.type)) {
-        const mode = this.selectedComponent.type === "source" ? "sourceComponent" : "underComponent";
+      if (!this.selectedComponent || !["for", "foreach", "workflow", "storage", "viewer", "hpciss", "hpcisstar"].includes(this.selectedComponent.type)) {
+        const mode = this.selectedComponent?.type === "source" ? "sourceComponent" : "underComponent";
         SIO.emitGlobal("getFileList", this.projectRootDir, { path: this.selectedComponentAbsPath, mode }, (fileList)=>{
           if (Array.isArray(fileList)) {
             const scriptCandidates = fileList
@@ -835,7 +952,25 @@ export default {
               .map((e)=>{
                 return e.name;
               });
-            this.commitScriptCandidates(scriptCandidates);
+
+            //Add inputFiles (filtered for non-glob expressions)
+            const inputFileCandidates = this.copySelectedComponent?.inputFiles
+              ? this.copySelectedComponent.inputFiles
+                  .map((file)=>{
+                    return typeof file === "string" ? file : file.name;
+                  })
+                  .filter((name)=>{
+                    //Filter out glob expressions (*, ?, [, ]) and directories (ending with / or \)
+                    return name && !name.match(/[*?[\]]/) && !name.endsWith("/") && !name.endsWith("\\");
+                  })
+              : [];
+
+            //Merge and deduplicate
+            const allCandidates = [...new Set([...scriptCandidates, ...inputFileCandidates])];
+            this.commitScriptCandidates(allCandidates);
+          }
+          if (!this.selectedComponent) {
+            return;
           }
           if (typeof this.selectedComponent.condition === "string") {
             this.conditionCheckByJS = !this.scriptCandidates.includes(this.selectedComponent.condition);
@@ -845,18 +980,7 @@ export default {
           }
         });
       }
-      this.reopening = true;
       this.openPanels = [0];
-      this.open = false;
-      setTimeout(()=>{
-        this.open = true;
-        this.reopening = false;
-      }, 200);
-    }
-  },
-  mounted() {
-    if (this.selectedComponent !== null) {
-      this.open = true;
     }
   },
   methods: {
@@ -866,25 +990,69 @@ export default {
     }),
     ...mapMutations({
       commitScriptCandidates: "scriptCandidates",
-      commitComponentTree: "componentTree"
+      commitComponentTree: "componentTree",
+      commitSelectedFile: "selectedFile"
     }),
     isValidInputFilename,
     isValidOutputFilename,
+
+    /**
+     * Close the property panel by clearing the selected component.
+     */
     closeProperty() {
+      this.drawerVisible = false;
       this.commitSelectedComponent(null);
-      this.open = false;
+      this.commitSelectedFile(null);
+    },
+    updateScriptCandidatesFromBrowser(items) {
+      if (!this.selectedComponent || ["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type)) {
+        return;
+      }
+
+      const scriptCandidates = items
+        .filter((e)=>{
+          return e.type && e.type.startsWith("file");
+        })
+        .map((e)=>{
+          return e.name;
+        });
+
+      //Add inputFiles (filtered for non-glob expressions)
+      const inputFileCandidates = this.copySelectedComponent?.inputFiles
+        ? this.copySelectedComponent.inputFiles
+            .map((file)=>{
+              return typeof file === "string" ? file : file.name;
+            })
+            .filter((name)=>{
+              //Filter out glob expressions (*, ?, [, ]) and directories (ending with / or \)
+              return name && !name.match(/[*?[\]]/) && !name.endsWith("/") && !name.endsWith("\\");
+            })
+        : [];
+
+      //Merge and deduplicate
+      const allCandidates = [...new Set([...scriptCandidates, ...inputFileCandidates])];
+      this.commitScriptCandidates(allCandidates);
+    },
+    updateScriptCandidatesAfterInputFileChange() {
+      //Called when inputFiles are added/updated/removed
+      const localItems = this.$refs.fileBrowser?.items;
+      const remoteItems = this.$refs.rfb?.items;
+
+      if (this.hasLocalFileBrowser && Array.isArray(localItems) && localItems.length > 0) {
+        this.updateScriptCandidatesFromBrowser(localItems);
+      } else if (this.hasRemoteFileBrowser && Array.isArray(remoteItems) && remoteItems.length > 0) {
+        this.updateScriptCandidatesFromBrowser(remoteItems);
+      } else {
+        //File browser items not available yet, use empty array (will still include inputFiles)
+        this.updateScriptCandidatesFromBrowser([]);
+      }
     },
     updateSourceOutputFile() {
-      const name = this.sourceOutputFile;
-      if (name === null) {
-        this.deleteSourceOutputFile();
+      if (!this.isValidOutputFilename(this.sourceOutputFile)) {
+        this.commitShowSnackbar(`${this.sourceOutputFile} is not valid output filename`);
         return;
       }
-      if (!this.isValidOutputFilename(name)) {
-        this.commitShowSnackbar(`${name} is not valid output filename`);
-        return;
-      }
-      const outputFile = { name, dst: [] };
+      const outputFile = { name: this.sourceOutputFile, dst: [] };
       if (typeof this.selectedComponent.outputFiles[0] === "undefined") {
         this.addToOutputFiles(outputFile);
         return;
@@ -899,17 +1067,26 @@ export default {
       this.copySelectedComponent.inputFiles.push(v);
       const ID = this.selectedComponent.ID;
       SIO.emitGlobal("addInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID, SIO.generalCallback);
+      this.updateScriptCandidatesAfterInputFileChange();
     },
     updateInputFiles(v, index) {
       this.copySelectedComponent.inputFiles.splice(index, 1, v);
       const ID = this.selectedComponent.ID;
       SIO.emitGlobal("renameInputFile", this.projectRootDir, ID, index, v.name, this.currentComponent.ID, SIO.generalCallback);
+      this.updateScriptCandidatesAfterInputFileChange();
     },
     removeFromInputFiles(v, index) {
       this.copySelectedComponent.inputFiles.splice(index, 1);
       const ID = this.selectedComponent.ID;
       SIO.emitGlobal("removeInputFile", this.projectRootDir, ID, v.name, this.currentComponent.ID, SIO.generalCallback);
+      this.updateScriptCandidatesAfterInputFileChange();
     },
+    toggleInputFileMandatory(index, key, value) {
+      this.copySelectedComponent.inputFiles[index][key] = value;
+      const ID = this.selectedComponent.ID;
+      SIO.emitGlobal("toggleInputFileMandatory", this.projectRootDir, ID, index, value, this.currentComponent.ID, SIO.generalCallback);
+    },
+
     addToOutputFiles(v) {
       this.copySelectedComponent.outputFiles.push(v);
       const ID = this.selectedComponent.ID;
@@ -933,6 +1110,18 @@ export default {
     },
     removeFromIndexList(v, index) {
       this.copySelectedComponent.indexList.splice(index, 1);
+    },
+    addToSkipCopy(v) {
+      if (!Array.isArray(this.copySelectedComponent.skipCopy)) {
+        this.copySelectedComponent.skipCopy = [];
+      }
+      this.copySelectedComponent.skipCopy.push(v.name);
+    },
+    updateSkipCopy(v, index) {
+      this.copySelectedComponent.skipCopy.splice(index, 1, v.name);
+    },
+    removeFromSkipCopy(v, index) {
+      this.copySelectedComponent.skipCopy.splice(index, 1);
     },
     addToIncludeList(v) {
       this.copySelectedComponent.include.push(v.name);
@@ -969,6 +1158,14 @@ export default {
       return !names.some((name)=>{
         return name === v;
       });
+    },
+    refreshFileList() {
+      if (this.$refs.fileBrowser) {
+        this.$refs.fileBrowser.getComponentDirRootFiles();
+      }
+      if (this.$refs.rfb) {
+        this.$refs.rfb.refresh();
+      }
     }
   }
 };

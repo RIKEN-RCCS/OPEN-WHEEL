@@ -8,7 +8,8 @@ projectList.json
 jobScript.json
 .nyc_output
 coverage
-*.log*
+*.log
+*.pid
 errorShots
 logs
 server.crt
@@ -18,6 +19,7 @@ _user_guide
 **/_site
 tmp.*
 tmp_config.*
+test/cypress/fixtures/tmp_*.json
 session.db
 user.db
 server/app/public
@@ -28,3 +30,8 @@ test/cypress/screenshots/
 test/cypress/videos/
 test/wheel_config/jobScriptTemplate.json
 test/wheel_config/projectList.json.bak
+.env
+test/cypress/e2e/gfarm/gfarm-e2e.env
+test/cypress/downloads
+!test/wheel_config_auth/remotehost.json
+!test/wheel_config_auth/projectList.json

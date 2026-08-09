@@ -32,6 +32,8 @@
       :center="nameCenter"
       :text="name"
       :color="nameColor"
+      text-type="component"
+      :truncate-threshold="maxComponentnameTextChar"
     />
     <status-icon
       :x="statusIconX"
@@ -47,7 +49,7 @@
 "use strict";
 import TextBox from "../../components/componentGraph/textBox.vue";
 import StatusIcon from "../../components/componentGraph/statusIcon.vue";
-import { boxWidth, textHeight } from "../../lib/constants.json";
+import { boxWidth, textHeight, maxComponentnameTextChar } from "../../lib/constants.json";
 import { getComponentIcon, getColor } from "../../lib/utils.js";
 
 export default {
@@ -106,7 +108,8 @@ export default {
   data() {
     return {
       width: boxWidth,
-      height: textHeight
+      height: textHeight,
+      maxComponentnameTextChar
     };
   },
   computed: {

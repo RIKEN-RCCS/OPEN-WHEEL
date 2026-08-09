@@ -25,3 +25,5 @@ Cypress.Commands.add("mount", mount);
 
 //Example use:
 //cy.mount(MyComponent)
+
+import "./component_test/commands-components";

@@ -3,15 +3,17 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const { create } = require("tar");
-const { createTempd } = require("./tempd.js");
-const { readJsonGreedy } = require("./fileUtils.js");
-const { projectJsonFilename } = require("../db/db.js");
-const { gitAdd, gitClone, gitCommit, gitConfig, gitRemoveOrigin } = require("./gitOperator2.js");
-const { setComponentStateR } = require("./projectFilesOperator.js");
+import path from "path";
+import fs from "fs-extra";
+import * as tar from "tar";
+import { createTempd } from "./tempd.js";
+import { readJsonGreedy } from "./fileUtils.js";
+import { projectJsonFilename } from "../db/db.js";
+import { baseURL } from "./global.js";
+import { gitAdd, gitClone, gitCommit, gitConfig, gitRemoveOrigin } from "./gitOperator2.js";
+import { setComponentStateR } from "./componentState.js";
+
+const { create } = tar;
 
 /**
  * export existing project as archive file
@@ -76,11 +78,8 @@ async function exportProject(projectRootDir, name = null, mail = null, memo = nu
   [`${projectJson.name}.wheel`]
   );
 
-  const baseURL = process.env.WHEEL_BASE_URL || "";
-  const url = `${baseURL}/${path.join(path.relative(path.dirname(dir), archiveFilename))}`;
+  const url = `${baseURL.replace(/\/$/, "")}/${path.join(path.relative(path.dirname(dir), archiveFilename))}`;
   return url;
 }
 
-module.exports = {
-  exportProject
-};
+export { exportProject };

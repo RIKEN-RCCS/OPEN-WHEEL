@@ -36,6 +36,21 @@
         <v-toolbar-title text="files in tar archive" />
         <v-tooltip
           location="top"
+          text="inspect gfarm attributes"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              :rounded="false"
+              variant="flat"
+              icon="mdi-database-search"
+              v-bind="props"
+              data-cy="gfarm_tar_browser-inspect_attributes-btn"
+              @click="inspectAttributes"
+            />
+          </template>
+        </v-tooltip>
+        <v-tooltip
+          location="top"
           text="remove storage directory"
         >
           <template #activator="{ props }">
@@ -66,6 +81,11 @@
       @ok="submitAndCloseDialog"
       @cancel="closeDialog"
     />
+    <gfarm-attribute-viewer
+      v-model="attrViewerOpen"
+      :xml="attrXml"
+      :filename="selectedComponent.storagePath || ''"
+    />
   </div>
 </template>
 <script>
@@ -73,13 +93,15 @@ import { mapState } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import { getTitle } from "../components/common/fileTreeUtils.js";
 import versatileDialog from "../components/versatileDialog.vue";
+import gfarmAttributeViewer from "../components/gfarmAttributeViewer.vue";
 import loadComponentDefinition from "../lib/componentDefinision.js";
 const componentDefinitionObj = loadComponentDefinition();
 
 export default {
   name: "GfarmTarBrowser",
   components: {
-    versatileDialog
+    versatileDialog,
+    gfarmAttributeViewer
   },
   data: function () {
     return {
@@ -88,7 +110,9 @@ export default {
       items: [],
       dialog: false,
       dialogMessage: null,
-      dialogTitle: null
+      dialogTitle: null,
+      attrViewerOpen: false,
+      attrXml: null
     };
   },
   computed: {
@@ -119,6 +143,16 @@ export default {
         this.items = [];
       });
       this.closeDialog();
+    },
+
+    /**
+     * Fetch the wheel.workflow gfarm XML attribute for the tar archive and open the viewer dialog.
+     */
+    inspectAttributes() {
+      SIO.emitGlobal("getGfarmXattr", this.projectRootDir, this.selectedComponent.host, this.selectedComponent.storagePath, "wheel.workflow", (xml)=>{
+        this.attrXml = xml;
+        this.attrViewerOpen = true;
+      });
     },
     requestRemoteConnection() {
       this.loading = true;

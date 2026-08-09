@@ -3,11 +3,14 @@
     v-if="start.x !== end.x || start.y !== end.y"
     :stroke-color="color"
     :width="2"
+    stroke-dasharray=""
     :start="start"
     :end="end"
     :control1="control[0]"
     :control2="control[1]"
-    @click.right.prevent.stop="onRightclick"
+    @contextmenu="onRightclick"
+    @mousemove="$emit('mousemove', $event)"
+    @mouseleave="$emit('mouseleave', $event)"
   />
 </template>
 <script>
@@ -39,7 +42,9 @@ export default {
     }
   },
   emits: [
-    "openContextMenu"
+    "openContextMenu",
+    "mousemove",
+    "mouseleave"
   ],
   computed: {
     control() {

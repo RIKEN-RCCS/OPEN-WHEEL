@@ -11,6 +11,7 @@
     <text-box
       :center="frecieverPos"
       :text="inputFilename"
+      :truncate-threshold="maxFilenameTextChar"
     />
   </g>
 </template>
@@ -20,6 +21,7 @@ import { mapState } from "vuex";
 import Freciever from "../../components/componentGraph/freciever.vue";
 import TextBox from "../../components/componentGraph/textBox.vue";
 import { calcFreceiverPos } from "../../lib/utils.js";
+import { maxFilenameTextChar } from "../../lib/constants.json";
 
 export default {
   name: "InputFileBox",
@@ -49,6 +51,11 @@ export default {
     "addFileLink",
     "removeFileLink"
   ],
+  data() {
+    return {
+      maxFilenameTextChar
+    };
+  },
   computed: {
     ...mapState(["projectRootDir", "currentComponent"]),
     frecieverPos() {

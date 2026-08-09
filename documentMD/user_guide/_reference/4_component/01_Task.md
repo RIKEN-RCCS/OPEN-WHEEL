@@ -57,6 +57,36 @@ use job schedulerを有効にしたときのみ、次のqueue, submit optionプ�
 ### submit option
 ジョブ投入時に追加で指定するオプションを設定します。
 
+### source script
+リモートホストでスクリプトを実行する前に読み込む環境設定ファイルを指定します。
+ここで指定したスクリプトは`source`コマンドで読み込まれます。
+
+例えば、特定の環境変数を設定したり、モジュールシステム（Environment Modules等）を使用する場合に利用します。
+
+例:
+```bash
+# setup.sh の内容
+module load intel/2021
+export MY_VAR=value
+```
+
+### checker script
+Taskコンポーネントの成功/失敗を判定するための専用スクリプトを指定します。
+checkerスクリプトはTaskコンポーネント実行終了後に実行され、その戻り値（0:成功、0以外:失敗）でTaskの最終的な成否が決定されます。
+
+checkerスクリプトが設定されている場合、scriptプロパティで指定したスクリプトの戻り値は無視され、checkerスクリプトの戻り値が使用されます。
+
+例:
+```bash
+#!/bin/bash
+# 出力ファイルの存在確認
+if [ -f output.dat ]; then
+  exit 0
+else
+  exit 1
+fi
+```
+
 ### number of retry
 Taskコンポーネントの実行に失敗したときに、自動的に再実行する回数を指定します。
 無指定時は再実行しません。
@@ -78,6 +108,30 @@ Taskコンポーネントの成功 / 失敗を判定するのにjavascript式を
 ここで入力した式が、Taskコンポーネントの実行終了後に評価され、Truthyな値を返せば成功、Falsyな値を返せば失敗と判定されます。
 
 スクリプト名、javascript式ともに未設定で、number of retryの値のみを設定していた場合は、スクリプトが正常終了するか、retryに設定した回数に達するまで再実行を繰り返します。
+
+__利用可能な環境変数について__  
+再実行の判定を行うスクリプトやjavascript式では、以下の環境変数を利用できます。
+- シェルスクリプトの場合: `WHEEL_TASK_RT`
+- javascript式の場合: `wheelTaskRT`
+
+これらの変数には、scriptプロパティで指定されたスクリプトの戻り値が設定されます。
+ただし、checkerプロパティが設定されている場合は、checkerスクリプトの戻り値が優先して使用されます。
+
+例: シェルスクリプトで戻り値が10の場合のみ再実行する
+```bash
+#!/bin/bash
+if [ "$WHEEL_TASK_RT" = "10" ]; then
+  exit 0
+else
+  exit 1
+fi
+```
+
+例: javascript式で戻り値が5未満の場合のみ再実行する
+```javascript
+wheelTaskRT < 5
+```
+{: .notice--info}
 
 ### include, exclude
 

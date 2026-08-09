@@ -7,7 +7,7 @@
     "del": "qdel",
     "grpName": "",
     "reJobID": "^(\\d+).*",
-    "reRunning": "<JOB_Id>{{ JOBID }}.*job_state\\=(R|H|Q|T|W)$",
+    "reRunning": "job_state \\= (R|H|Q|T|W)",
     "reReturnCode": "Exit_status \\= (\\d+)$",
     "reJobStatusCode": "substate \\= (\\d+)$",
     "acceptableJobStatus": [
@@ -52,7 +52,7 @@
     "reSubJobStatusCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
     "reExceededLimitError": "PJM 0072 pjsub Job exceeded the accept limit",
     "acceptableJobStatus": [
-      0,6
+      0, 6
     ]
   }
 }

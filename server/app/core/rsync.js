@@ -3,10 +3,11 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const util = require("node:util");
-const fs = require("fs-extra");
-const exec = util.promisify(require("node:child_process").exec);
+import util from "node:util";
+import fs from "fs-extra";
+import { exec as execCallback } from "node:child_process";
+
+const exec = util.promisify(execCallback);
 
 /**
  * copy directory by rsync and overwrite existing files
@@ -26,6 +27,5 @@ async function overwriteByRsync(src, dst, ignoreFiles = []) {
 
   return exec(`rsync -av ${exclude} ${src}${stats.isDirectory() ? "/" : ""} ${dst}`);
 }
-module.exports = {
-  overwriteByRsync
-};
+
+export { overwriteByRsync };

@@ -8,9 +8,11 @@
     <application-tool-bar
       title="viewer"
       @nav-icon-click="drawer=!drawer"
+      @show-toast="showSnackbar"
     />
     <nav-drawer
       v-model="drawer"
+      @open-remotehost-manager="remoteHostDialog=true"
     />
     <v-main>
       <vue-viewer
@@ -49,6 +51,30 @@
         </template>
       </v-snackbar>
     </v-main>
+    <v-dialog
+      v-model="remoteHostDialog"
+      max-width="90vw"
+      persistent
+    >
+      <v-card>
+        <v-card-title>
+          Remote Host Management
+        </v-card-title>
+        <v-card-text>
+          <remotehost-manager
+            :show-snackbar-func="showSnackbar"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+            prepend-icon="mdi-close"
+            text="Close"
+            data-cy="viewer-remote_host_close-btn"
+            @click="remoteHostDialog=false"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -63,17 +89,20 @@ import NavDrawer from "../components/common/NavigationDrawer.vue";
 import { component as vueViewer } from "v-viewer";
 import SIO from "../lib/socketIOWrapper.js";
 import { readCookie } from "../lib/utility.js";
+import remotehostManager from "../components/remotehost/remotehostManager.vue";
 
 export default {
   name: "Viewer",
   components: {
     applicationToolBar,
     NavDrawer,
-    vueViewer
+    vueViewer,
+    remotehostManager
   },
   data() {
     return {
       drawer: false,
+      remoteHostDialog: false,
       items: [],
       options:
           {
@@ -110,21 +139,37 @@ export default {
     const baseURL = readCookie("socketIOPath");
     debug(`beseURL=${baseURL}`);
     SIO.init(null, baseURL);
-    SIO.onGlobal("resultFiles", (results)=>{
-      this.items = results;
-    });
+    SIO.onGlobal("resultFiles", this.onResultFiles);
     SIO.emitGlobal("getResultFiles", projectRootDir, dir, SIO.generalCallback);
-    SIO.onGlobal("logERR", (message)=>{
-      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
-      const output = rt ? rt[1] || rt[0] : message;
-      this.showSnackbar(output);
-    });
+    SIO.onGlobal("logERR", this.onLogErr);
+  },
+  beforeUnmount() {
+    SIO.off("resultFiles", this.onResultFiles);
+    SIO.off("logERR", this.onLogErr);
   },
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
       closeSnackbar: "closeSnackbar"
     }),
+
+    /**
+     * Handle incoming result files from server.
+     * @param {Array} results - Array of result file objects
+     */
+    onResultFiles(results) {
+      this.items = results;
+    },
+
+    /**
+     * Handle error log message from server.
+     * @param {string} message - Error message string
+     */
+    onLogErr(message) {
+      const rt = /^\[.*ERROR\].*- *(.*?)$/m.exec(message);
+      const output = rt ? rt[1] || rt[0] : message;
+      this.showSnackbar(output);
+    },
     inited(viewer) {
       this.$viewer = viewer;
     },

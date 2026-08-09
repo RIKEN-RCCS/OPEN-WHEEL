@@ -116,6 +116,9 @@ export default {
         && Number.isInteger(this.numFinished) && this.numFinished >= 0
         && Number.isInteger(this.numFailed) && this.numFailed >= 0;
     },
+    showPlayIcon() {
+      return this.numFinished === 0 && this.numFailed === 0 && (this.state === "stage-in" || this.state === "running" || this.state === "stage-out");
+    },
     successChartEndCoord() {
       return { x: this.x + this.radius * Math.sin(this.successRatio / 100 * Math.PI * 2),
         y: this.y - this.radius * Math.cos(this.successRatio / 100 * Math.PI * 2) };
@@ -141,6 +144,9 @@ export default {
                 Z`;
     },
     iconImg() {
+      if (this.showPlayIcon) {
+        return imgRunning;
+      }
       return stateIcon[this.state];
     }
   }

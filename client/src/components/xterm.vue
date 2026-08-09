@@ -8,8 +8,9 @@
 </template>
 <script>
 import { mapState } from "vuex";
-import { Terminal } from "xterm";
-import "../../../node_modules/xterm/css/xterm.css";
+import { Terminal } from "@xterm/xterm";
+import { FitAddon } from "@xterm/addon-fit";
+import "../../../node_modules/@xterm/xterm/css/xterm.css";
 import Debug from "debug";
 const debug = Debug("wheel:workflow:xterm");
 
@@ -26,24 +27,29 @@ export default {
     }
   },
   data: ()=>{
+    const term = new Terminal({
+      bellStyle: "none",
+      convertEol: true,
+      disableStdin: true,
+      logLevel: "info",
+      cursorBlink: false,
+      cursorStyle: "bar",
+      cursorWidth: 1,
+      cursorInactiveStyle: "none",
+      logger: {
+        trace: debug,
+        debug: debug,
+        info: debug,
+        warn: debug,
+        error: debug
+      }
+    });
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
     return {
-      term: new Terminal({
-        bellStyle: "none",
-        convertEol: true,
-        disableStdin: true,
-        logLevel: "info",
-        cursorBlink: false,
-        cursorStyle: "bar",
-        cursorWidth: 1,
-        cursorInactiveStyle: "none",
-        logger: {
-          trace: debug,
-          debug: debug,
-          info: debug,
-          warn: debug,
-          error: debug
-        }
-      })
+      term,
+      fitAddon,
+      resizeHandler: null
     };
   },
   computed: {
@@ -68,24 +74,16 @@ export default {
       this.fit();
       unwatch();
     });
-    window.addEventListener("resize", this.fit.bind(this));
+    this.resizeHandler = this.fit.bind(this);
+    window.addEventListener("resize", this.resizeHandler);
   },
   beforeUnmount() {
-    window.removeEventListener("resize", this.fit.bind(this));
+    window.removeEventListener("resize", this.resizeHandler);
+    this.term.dispose();
   },
   methods: {
     fit() {
-      debug(`current size: cols=${this.term.cols}, rows=${this.term.rows}`);
-      const height = this.$el.clientHeight > 0 ? this.$el.clientHeight : this.canvasHeight * 0.4;
-      const width = this.$el.clientWidth > 0 ? this.$el.clientWidth : this.canvasWidth;
-      debug(`area size: width=${width}, height=${height}`);
-      const fontSize = window.getComputedStyle(this.$el, null).getPropertyValue("font-size")
-        .replace("px", "");
-      debug(`fontsize = ${fontSize}`);
-      const rows = Math.floor(height / fontSize);
-      const cols = Math.floor(width / fontSize);
-      this.term.resize(cols, rows);
-      debug(`new size: cols=${this.term.cols}, rows=${this.term.rows}`);
+      this.fitAddon.fit();
     }
   }
 };

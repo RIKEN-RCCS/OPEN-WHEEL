@@ -3,20 +3,19 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
+import path from "path";
+import fs from "fs-extra";
 
 //setup test framework
-const chai = require("chai");
+import * as chai from "chai";
+import chaiAsPromised from "chai-as-promised";
 const expect = chai.expect;
-chai.use(require("chai-fs"));
-chai.use(require("chai-as-promised"));
+chai.use(chaiAsPromised);
 
 //testee
-const {
+import {
   overwriteByRsync
-} = require("../../../app/core/rsync");
+} from "../../../app/core/rsync.js";
 
 describe("rsync functions", function () {
   const testRoot = "WHEEL_TEST_TMP";
@@ -39,8 +38,8 @@ describe("rsync functions", function () {
       await fs.outputFile(path.resolve(srcDir, "file2.txt"), "content2");
       await overwriteByRsync(srcDir, dstDir);
 
-      expect(path.resolve(dstDir, "file1.txt")).to.be.a.file().with.content("content1");
-      expect(path.resolve(dstDir, "file2.txt")).to.be.a.file().with.content("content2");
+      expect(fs.readFileSync(path.resolve(dstDir, "file1.txt"), "utf8")).to.equal("content1");
+      expect(fs.readFileSync(path.resolve(dstDir, "file2.txt"), "utf8")).to.equal("content2");
     });
 
     it("should exclude files matching ignore patterns", async ()=>{
@@ -52,10 +51,10 @@ describe("rsync functions", function () {
 
       await overwriteByRsync(srcDir, dstDir, ["exclude.txt", "exclude2.txt"]);
 
-      expect(path.resolve(dstDir, "file1.txt")).to.be.a.file().with.content("content1");
-      expect(path.resolve(dstDir, "file2.txt")).to.be.a.file().with.content("content2");
-      expect(path.resolve(dstDir, "exclude.txt")).to.not.be.a.path();
-      expect(path.resolve(dstDir, "exclude2.txt")).to.not.be.a.path();
+      expect(fs.readFileSync(path.resolve(dstDir, "file1.txt"), "utf8")).to.equal("content1");
+      expect(fs.readFileSync(path.resolve(dstDir, "file2.txt"), "utf8")).to.equal("content2");
+      expect(fs.existsSync(path.resolve(dstDir, "exclude.txt"))).to.be.false;
+      expect(fs.existsSync(path.resolve(dstDir, "exclude2.txt"))).to.be.false;
     });
 
     it("should handle empty src directory gracefully", async ()=>{

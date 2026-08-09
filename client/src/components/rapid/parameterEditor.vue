@@ -11,53 +11,53 @@
       color="background"
     >
       {{ filename }}
-      <v-spacer />
-      <v-btn
-        prepend-icon="mdi-content-save"
-        text="save PS config"
-        @click="save"
-      />
     </v-toolbar>
     <target-files
       :target-files="parameterSetting.targetFiles"
       :read-only="readOnly"
       @open-new-tab="openNewTab"
-      @add="(e)=>{console.log('DEBUG add',e);parameterSetting.targetFiles.push(e)}"
-      @del="(e)=>{console.log('DEBUG del',e);removeFromArray(parameterSetting.targetFiles, e, 'targetName')}"
+      @add="(e)=>{parameterSetting.targetFiles.push(e)}"
+      @del="(e)=>{removeFromArray(parameterSetting.targetFiles, e, 'targetName')}"
     />
-    <parameter
-      :params="parameterSetting.params"
-      :read-only="readOnly"
-      @new-param-added="newParamAdded"
-      @open-filter-editor="$emit('openFilterEditor')"
-      @del="(e)=>{removeFromArray(parameterSetting.params, e, 'keyword')}"
-    />
-    <gather-scatter
-      :container="parameterSetting.scatter"
-      :headers="[ { key: 'srcName', title: 'srcName', sortable: false },
-                  { key: 'dstNodeName', title: 'dstNode', sortable: false },
-                  { key: 'dstName', title: 'dstName', sortable: false },
-                  { title: 'Actions', key: 'action', sortable: false }]"
-      :label="'scatter'"
-      :read-only="readOnly"
-      data-cy="parameter_editor-scatter-gather_scatter"
-      @add-new-item="onAddNewItem"
-      @update-item="onUpdateItem"
-      @delete-item="onDeleteItem"
-    />
-    <gather-scatter
-      :container="parameterSetting.gather"
-      :headers="[ { key: 'srcNodeName', title: 'srcNode', sortable: false },
-                  { key: 'srcName', title: 'srcName', sortable: false },
-                  { key: 'dstName', title: 'dstName', sortable: false },
-                  { title: 'Actions', key: 'action', sortable: false }]"
-      :label="'gather'"
-      :read-only="readOnly"
-      data-cy="parameter_editor-gather-gather_scatter"
-      @add-new-item="onAddNewItem"
-      @update-item="onUpdateItem"
-      @delete-item="onDeleteItem"
-    />
+    <div class="border-top">
+      <parameter
+        :params="parameterSetting.params"
+        :read-only="readOnly"
+        @new-param-added="newParamAdded"
+        @open-filter-editor="$emit('openFilterEditor')"
+        @del="(e)=>{removeFromArray(parameterSetting.params, e, 'keyword')}"
+      />
+    </div>
+    <div class="border-top">
+      <gather-scatter
+        :container="parameterSetting.scatter"
+        :headers="[ { key: 'srcName', title: 'srcName', sortable: false },
+                    { key: 'dstNodeName', title: 'dstNode', sortable: false },
+                    { key: 'dstName', title: 'dstName', sortable: false },
+                    { title: 'Actions', key: 'action', sortable: false }]"
+        :label="'scatter'"
+        :read-only="readOnly"
+        data-cy="parameter_editor-scatter-gather_scatter"
+        @add-new-item="onAddNewItem"
+        @update-item="onUpdateItem"
+        @delete-item="onDeleteItem"
+      />
+    </div>
+    <div class="border-top">
+      <gather-scatter
+        :container="parameterSetting.gather"
+        :headers="[ { key: 'srcNodeName', title: 'srcNode', sortable: false },
+                    { key: 'srcName', title: 'srcName', sortable: false },
+                    { key: 'dstName', title: 'dstName', sortable: false },
+                    { title: 'Actions', key: 'action', sortable: false }]"
+        :label="'gather'"
+        :read-only="readOnly"
+        data-cy="parameter_editor-gather-gather_scatter"
+        @add-new-item="onAddNewItem"
+        @update-item="onUpdateItem"
+        @delete-item="onDeleteItem"
+      />
+    </div>
   </div>
 </template>
 <script>
@@ -85,7 +85,7 @@ export default {
       required: true
     }
   },
-  emits: ["openFilterEditor", "openNewTab", "insertBraces"],
+  emits: ["openFilterEditor", "openNewTab", "insertBraces", "content-changed"],
   data: function () {
     return {
       parameterSetting: {
@@ -102,15 +102,38 @@ export default {
         scatter: [],
         gather: []
       },
-      filename: "parameterSetting.json"
+      filename: "parameterSetting.json",
+      autoSaveTimer: null
     };
   },
   computed: {
     ...mapState(["selectedFile", "projectRootDir", "componentPath"]),
     ...mapGetters(["selectedComponentAbsPath"])
   },
+  watch: {
+    parameterSetting: {
+      handler() {
+        this.scheduleAutoSave();
+        this.$emit("content-changed");
+      },
+      deep: true
+    }
+  },
   mounted() {
-    SIO.onGlobal("parameterSettingFile", (file)=>{
+    SIO.onGlobal("parameterSettingFile", this.onParameterSettingFile);
+  },
+  beforeUnmount() {
+    SIO.off("parameterSettingFile", this.onParameterSettingFile);
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
+  },
+  methods: {
+    removeFromArray,
+    ...mapActions({
+      showSnackbar: "showSnackbar"
+    }),
+    onParameterSettingFile(file) {
       if (!file.isParameterSettingFile) {
         debug("ERROR: illegal parameter setting file data", file);
         return;
@@ -126,15 +149,10 @@ export default {
       });
       this.filename = file.filename;
       this.dirname = file.dirname;
-    });
-  },
-  methods: {
-    removeFromArray,
-    ...mapActions({
-      showSnackbar: "showSnackbar"
-    }),
+    },
     onAddNewItem(mode, newItem) {
       this.parameterSetting[mode].push(newItem);
+      this.scheduleAutoSave();
     },
     onUpdateItem(mode, target, newItem) {
       target.srcName = newItem.srcName;
@@ -142,6 +160,7 @@ export default {
       if (newItem.dstNode) {
         target.dstNode = newItem.dstNode;
       }
+      this.scheduleAutoSave();
     },
     onDeleteItem(mode, target) {
       this.parameterSetting[mode] = this.parameterSetting[mode].filter((e)=>{
@@ -156,6 +175,7 @@ export default {
         }
         return false;
       });
+      this.scheduleAutoSave();
     },
     openNewTab(...args) {
       this.$emit("openNewTab", ...args);
@@ -185,7 +205,61 @@ export default {
           debug("new initial PS-setting=", this.initialParameterSetting);
         });
       return true;
+    },
+    scheduleAutoSave() {
+      if (this.readOnly) {
+        return;
+      }
+      if (this.autoSaveTimer) {
+        clearTimeout(this.autoSaveTimer);
+      }
+      this.autoSaveTimer = setTimeout(()=>{
+        this.autoSave();
+      }, 2000); //2 seconds client-side debounce
+    },
+    autoSave() {
+      if (deepEqual(this.initialParameterSetting, this.parameterSetting)) {
+        return;
+      }
+      const payload = JSON.stringify(this.parameterSetting);
+      SIO.emitGlobal("saveFile", this.projectRootDir, this.filename, this.dirname || this.selectedComponentAbsPath,
+        payload, (rt)=>{
+          if (!rt) {
+            debug("ERROR: parameter setting auto-save failed");
+            this.showSnackbar(`parameter setting auto-save failed`);
+            return;
+          }
+          this.initialParameterSetting = JSON.parse(payload);
+        });
+    },
+    async revertAll() {
+      //Revert to initial parameter setting and save to server
+      const reverted = JSON.parse(JSON.stringify(this.initialParameterSetting));
+
+      //Update parameterSetting reactively
+      Object.keys(this.parameterSetting).forEach((key)=>{
+        delete this.parameterSetting[key];
+      });
+      Object.assign(this.parameterSetting, reverted);
+
+      const payload = JSON.stringify(this.parameterSetting);
+
+      return new Promise((resolve, reject)=>{
+        SIO.emitGlobal("saveFile", this.projectRootDir, this.filename, this.dirname || this.selectedComponentAbsPath,
+          payload, (rt)=>{
+            if (!rt) {
+              reject(new Error("Failed to save parameter setting"));
+            } else {
+              resolve();
+            }
+          });
+      });
     }
   }
 };
 </script>
+<style scoped>
+.border-top {
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+</style>

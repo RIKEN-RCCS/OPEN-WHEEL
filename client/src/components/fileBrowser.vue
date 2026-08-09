@@ -41,7 +41,7 @@
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
+            :disabled="!isFileSelected || isSND"
             v-bind="props"
             icon="mdi-file-move-outline"
             @click="openDialog('rename')"
@@ -54,7 +54,7 @@
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
+            :disabled="!isFileSelected || isSND"
             v-bind="props"
             icon="mdi-file-remove-outline"
             data-cy="file_browser-remove_file-btn"
@@ -71,6 +71,7 @@
             :disabled="isSND"
             v-bind="props"
             icon="mdi-upload"
+            data-cy="file_browser-upload-btn"
             @click="showUploadDialog"
           />
         </template>
@@ -93,10 +94,25 @@
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="isSND"
+            :disabled="!isFileSelected || isSND"
             icon="mdi-share-outline"
             v-bind="props"
+            data-cy="file_browser-share_file-btn"
             @click="openDialog('share')"
+          />
+        </template>
+      </v-tooltip>
+      <v-tooltip
+        location="top"
+        text="edit files"
+      >
+        <template #activator="{ props }">
+          <v-btn
+            :disabled="!isFileSelected || isSND"
+            icon="mdi-file-edit-outline"
+            v-bind="props"
+            data-cy="file_browser-edit_files-btn"
+            @click="openTextEditor"
           />
         </template>
       </v-tooltip>
@@ -110,6 +126,7 @@
       :items="items"
       :load-children="getChildren"
       activatable
+      :active="activeItem"
       :open="openItems"
       :get-node-icon="getNodeIcon"
       :get-leaf-icon="getLeafIcon"
@@ -120,6 +137,7 @@
       v-model="dialog.open"
       max-width="40vw"
       :title="dialog.title"
+      :buttons="dialogButtons"
       data-cy="file_browser-dialog-dialog"
       @ok="submitAndCloseDialog"
       @cancel="clearAndCloseDialog"
@@ -131,8 +149,9 @@
         <v-text-field
           v-if="['createNewDir','createNewFile','rename'].includes(dialog.submitEvent)"
           v-model="dialog.inputField"
+          autofocus
           :label="dialog.inputFieldLabel"
-          :rules="[noDuplicate]"
+          :rules="[isValidInputFilename, noDuplicate]"
           variant="outlined"
           data-cy="file_browser-input-text_field"
         />
@@ -141,6 +160,7 @@
           v-model="dialog.inputField"
           readonly
           :label="dialog.inputFieldLabel"
+          data-cy="file_browser-share_path-text_field"
         >
           <template #append>
             <v-tooltip
@@ -152,12 +172,26 @@
                 <v-btn
                   icon="mdi-content-copy"
                   v-bind="props"
+                  data-cy="file_browser-share_path_copy-btn"
                   @click="copyToClipboard"
                 />
               </template>
             </v-tooltip>
           </template>
         </v-text-field>
+      </template>
+    </versatile-dialog>
+    <versatile-dialog
+      v-model="conflictDialog.open"
+      :title="`'${conflictDialog.filename}' already exists`"
+      max-width="40vw"
+      :buttons="conflictDialogButtons"
+      @overwrite="resolveConflict('overwrite')"
+      @rename="resolveConflict('rename')"
+      @skip="resolveConflict('skip')"
+    >
+      <template #message>
+        <span>A file or directory named <strong>{{ conflictDialog.filename }}</strong> already exists at the destination. What would you like to do?</span>
       </template>
     </versatile-dialog>
     <versatile-dialog
@@ -184,11 +218,12 @@
 <script>
 import Debug from "debug";
 const debug = Debug("wheel:fileBrowser");
-import { mapState, mapGetters, mapMutations } from "vuex";
+import { mapState, mapGetters, mapMutations, mapActions } from "vuex";
 import SIO from "../lib/socketIOWrapper.js";
 import versatileDialog from "../components/versatileDialog.vue";
 import myTreeview from "../components/common/myTreeview.vue";
 import { _getActiveItem, icons, openIcons, fileListModifier, removeItem, getTitle, getLabel } from "../components/common/fileTreeUtils.js";
+import { isValidInputFilename } from "../lib/utility.js";
 
 export default {
   name: "FileBrowser",
@@ -199,6 +234,7 @@ export default {
   props: {
     readonly: { type: Boolean, default: true }
   },
+  emits: ["items-updated"],
   data: function () {
     return {
       currentDir: null,
@@ -218,10 +254,21 @@ export default {
       downloadDialogButton: [
         { icon: "mdi-close", label: "close" }
       ],
+      conflictDialogButtons: [
+        { icon: "mdi-file-replace", label: "overwrite" },
+        { icon: "mdi-file-plus", label: "keep both", event: "rename" },
+        { icon: "mdi-cancel", label: "skip" }
+      ],
+      conflictDialog: {
+        open: false,
+        filename: "",
+        uploadId: null
+      },
       downloadURL: null,
       downloadDialog: false,
       showCopyButtonTooltipText: false,
-      copyButtonTooltipText: "copy file path"
+      copyButtonTooltipText: "copy file path",
+      fileListSeq: 0
     };
   },
   computed: {
@@ -233,8 +280,22 @@ export default {
     isSND() {
       return this.activeItem !== null && this.activeItem.type.startsWith("snd");
     },
+    isFileSelected() {
+      return this.activeItem !== null;
+    },
     needScriptCandidate() {
+      if (!this.selectedComponent) {
+        return false;
+      }
       return !["for", "foreach", "workflow", "storage", "viewer"].includes(this.selectedComponent.type);
+    },
+    dialogButtons() {
+      const requiresInput = ["createNewDir", "createNewFile", "rename"].includes(this.dialog.submitEvent);
+      const isInvalid = requiresInput && (this.dialog.inputField === "" || !isValidInputFilename(this.dialog.inputField) || !this.noDuplicate(this.dialog.inputField));
+      return [
+        { icon: "mdi-check", label: "ok", disabled: isInvalid },
+        { icon: "mdi-close", label: "cancel" }
+      ];
     }
   },
   watch: {
@@ -242,16 +303,27 @@ export default {
       //edit workflow -> server respond workflow data -> fire this event
       handler(nv) {
         if (nv.descendants.some((e)=>{
-          return e.ID === this.selectedComponent.ID;
+          return e.ID === this.selectedComponent?.ID;
         })) {
           this.getComponentDirRootFiles();
         }
       },
       deep: true
     },
-    selectedComponent() {
+
+    selectedComponent(newVal, oldVal) {
+      //Clear stale file selection when switching to a different component (or clearing selection).
+      //Without this, clicking the same filename in the new component triggers a deselect
+      //(because selectedFile still holds the old component's file path).
+      if (!newVal || !oldVal || newVal.ID !== oldVal.ID) {
+        this.activeItem = null;
+        this.commitSelectedFile(null);
+        //Clear stale file list so noDuplicate() never returns false based on old data
+        //while the new component's file list is being fetched asynchronously.
+        this.items = [];
+      }
       this.getComponentDirRootFiles();
-      this.currentDir = this.selectedComponentAbsPath;
+      this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
     }
   },
   mounted() {
@@ -267,27 +339,27 @@ export default {
       SIO.onUploaderEvent("choose", this.onChoose);
       SIO.onUploaderEvent("complete", this.onUploadComplete);
       SIO.onUploaderEvent("progress", this.updateProgressBar);
+      SIO.onGlobal("uploadConflict", this.onUploadConflict);
+      SIO.onGlobal("fileList", this.onFileListSaved);
     }
-    this.currentDir = this.selectedComponent.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
+    this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
   },
   beforeUnmount() {
     SIO.removeUploaderEvent("choose", this.onChoose);
     SIO.removeUploaderEvent("complete", this.onUploadComplete);
     SIO.removeUploaderEvent("progress", this.updateProgressBar);
+    SIO.off("uploadConflict", this.onUploadConflict);
+    SIO.off("fileList", this.onFileListSaved);
   },
   methods: {
+    ...mapActions(["openTextEditor"]),
+    isValidInputFilename,
     updateScriptCandidate() {
       if (!this.needScriptCandidate) {
         return;
       }
-      const scriptCandidates = this.items
-        .filter((e)=>{
-          return e.type.startsWith("file");
-        })
-        .map((e)=>{
-          return e.name;
-        });
-      this.commitScriptCandidates(scriptCandidates);
+      //Emit items to parent (componentProperty) to update scriptCandidates
+      this.$emit("items-updated", this.items);
     },
     getNodeIcon(isOpen, item) {
       return isOpen ? openIcons[item.type] : icons[item.type];
@@ -308,8 +380,10 @@ export default {
       if (!this.selectedComponent) {
         return;
       }
+      this.fileListSeq++;
+      const seq = this.fileListSeq;
       const cb = (fileList)=>{
-        if (fileList === null) {
+        if (seq !== this.fileListSeq || fileList === null || !this.selectedComponent) {
           return;
         }
         this.items = fileList
@@ -333,7 +407,24 @@ export default {
         return;
       }
       this.currentDir = this.activeItem.type === "file" ? this.activeItem.path : this.activeItem.id;
-      this.commitSelectedFile(`${this.currentDir}${this.pathSep}${this.activeItem.name}`);
+      const newSelectedFile = `${this.currentDir}${this.pathSep}${this.activeItem.name}`;
+
+      //Deselect if clicking the same file again
+      if (this.selectedFile === newSelectedFile) {
+        this.commitSelectedFile(null);
+        this.activeItem = null;
+      } else {
+        this.commitSelectedFile(newSelectedFile);
+      }
+    },
+    onUploadConflict({ filename, uploadId }) {
+      this.conflictDialog.filename = filename;
+      this.conflictDialog.uploadId = uploadId;
+      this.conflictDialog.open = true;
+    },
+    resolveConflict(choice) {
+      SIO.emitGlobal("resolveUploadConflict", { uploadId: this.conflictDialog.uploadId, choice }, SIO.generalCallback);
+      this.conflictDialog.open = false;
     },
     onChoose(event) {
       if (["running", "preparing"].includes(this.projectState)) {
@@ -357,6 +448,17 @@ export default {
       this.uploading = false;
       this.getComponentDirRootFiles();
     },
+    onFileListSaved() {
+      //The uploader's "complete" event (onUploadComplete) fires as soon as the bytes are
+      //received, but the server still needs to move the file into place and "git add" it
+      //asynchronously afterwards (see onUploadFileSaved on the server side). The server
+      //emits "fileList" once that work is actually finished, so refresh again here to
+      //pick up the newly uploaded file without requiring the panel to be closed and reopened.
+      if (["running", "preparing"].includes(this.projectState)) {
+        return;
+      }
+      this.getComponentDirRootFiles();
+    },
     updateProgressBar(event) {
       if (["running", "preparing"].includes(this.projectState)) {
         return;
@@ -364,7 +466,6 @@ export default {
       this.percentUploaded = (event.bytesLoaded / event.file.size) * 100;
     },
     ...mapMutations({
-      commitScriptCandidates: "scriptCandidates",
       commitSelectedFile: "selectedFile",
       commitWaitingDownload: "waitingDownload"
     }),
@@ -373,15 +474,20 @@ export default {
         const cb = (fileList)=>{
           if (!Array.isArray(fileList)) {
             reject(fileList);
+            return;
           }
-          item.children = fileList
+          const children = fileList
             .filter((e)=>{ return !e.isComponentDir; })
             .map(fileListModifier.bind(null, this.pathSep));
+          //Re-look up the item at callback time: this.items may have been replaced
+          //by a getComponentDirRootFiles() refresh while the socket request was in flight.
+          const currentItem = this.getActiveItem(item.id);
+          (currentItem || item).children = children;
           resolve();
         };
         const activeItem = this.getActiveItem(item.id);
         if (activeItem === null) {
-          console.log("failed to get current selected Item");
+          resolve();
           return;
         }
         if (item.type === "dir" || item.type === "dir-link") {
@@ -400,6 +506,11 @@ export default {
       this.showCopyButtonTooltipText = false;
     },
     submitAndCloseDialog() {
+      if (!["remove", "rename", "createNewFile", "createNewDir"].includes(this.dialog.submitEvent)) {
+        console.log("unsupported event", this.dialog.submitEvent);
+        this.clearAndCloseDialog();
+        return;
+      }
       if (this.dialog.submitEvent === "remove") {
         SIO.emitGlobal("removeFile", this.projectRootDir, this.activeItem.id, (rt)=>{
           if (!rt) {
@@ -409,7 +520,7 @@ export default {
           removeItem(this.items, this.activeItem.id);
           this.updateScriptCandidate();
           this.commitSelectedFile(null);
-          this.currentDir = this.selectedComponentAbsPath;
+          this.currentDir = this.selectedComponent?.type === "storage" ? this.storagePath : this.selectedComponentAbsPath;
           this.activeItem = null;
         });
       } else if (this.dialog.submitEvent === "rename") {
@@ -436,24 +547,32 @@ export default {
           return;
         }
         const type = this.dialog.submitEvent === "createNewFile" ? "file" : "dir";
+        //Invalidate any in-flight getFileList so its stale response won't overwrite the new item.
+        this.fileListSeq++;
         SIO.emitGlobal(this.dialog.submitEvent, this.projectRootDir, fullPath, (rt)=>{
           if (!rt) {
             console.log(rt);
+            this.clearAndCloseDialog();
             return;
           }
           const newItem = { id: fullPath, name, path: this.currentDir, type };
           if (this.dialog.submitEvent === "createNewDir") {
             newItem.children = [];
           }
-          const container = this.activeItem ? this.activeItem.children : this.items;
+          //activeItem can be a file (no .children array) rather than a
+          //directory - e.g. after selecting a file to open it in the editor,
+          //without navigating into a directory afterward. Only nest the new
+          //item under activeItem when it actually has a children array;
+          //otherwise it belongs at the root alongside activeItem.
+          const container = Array.isArray(this.activeItem?.children) ? this.activeItem.children : this.items;
           container.push(newItem);
           if (this.activeItem && !this.openItems.includes(this.activeItem.id)) {
             this.openItems.push(this.activeItem.id);
           }
           this.updateScriptCandidate();
+          this.clearAndCloseDialog();
         });
-      } else {
-        console.log("unsupported event", this.dialog.submitEvent);
+        return;
       }
       this.clearAndCloseDialog();
     },

@@ -1,4 +1,6 @@
 const animationWaitTime = 500;
+const containerName = "wheel";
+
 Cypress.on("uncaught:exception", ()=>{
   return false;
 });
@@ -63,7 +65,7 @@ Cypress.Commands.add("assertAll", ()=>{
     const errorMessages = Object.entries(errors).map(([title, entries], index)=>{
       const errorMessage = (entries).map(({ error })=>{
         return (
-        `${"=> " + error.message}`
+          `${"=> " + error.message}`
         );
       }).join("\n\n");
 
@@ -85,7 +87,7 @@ Cypress.Commands.add("setClipboardPermission", ()=>{
     command: "Browser.grantPermissions",
     params: {
       permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"],
-      origin: window.location.origin
+      origin: global.location.origin
     }
   }));
 });
@@ -132,9 +134,7 @@ Cypress.Commands.add("taskMake", (taskName)=>{
 
 //drag&drop task
 Cypress.Commands.add("dragAndDropTask", (x, y, taskName)=>{
-  cy.wait(animationWaitTime).then(()=>{
-    cy.get("#task");
-  });
+  cy.get("#task", { timeout: animationWaitTime + 4000 });
   cy.get("#task")
     .trigger("dragstart", { offsetX: 100, offsetY: 100 })
     .trigger("dragend", { clientX: x, clientY: y })
@@ -473,7 +473,7 @@ Cypress.Commands.add("swicthUseJavascriptExpressionForConditionCheck", (flg)=>{
 
 //open file editer
 Cypress.Commands.add("clickFileEditer", ()=>{
-  cy.get("[href=\"/editor\"]").click()
+  cy.get("[data-cy=\"file_browser-edit_files-btn\"]").click()
     .wait(animationWaitTime);
 });
 
@@ -488,11 +488,9 @@ Cypress.Commands.add("scriptEdit", (scriptName, script)=>{
   cy.clickFileEditer();
   cy.get("#editor").find("textarea")
     .type(script, { force: true });
-  cy.get("button").contains("button", "save all files")
-    .click();
-  //wait for saving and commiting file
-  cy.wait(500);
-  cy.get("[href=\"/graph\"]").click()
+  cy.get("[data-cy=\"workflow-text_editor_close-btn\"]").click();
+  cy.get("button").contains(/Keep changes/i)
+    .click()
     .wait(animationWaitTime);
 });
 
@@ -547,7 +545,7 @@ Cypress.Commands.add("execProject", ()=>{
 });
 
 //Project status check
-Cypress.Commands.add("checkProjectStatus", (status, timeout = 300000)=>{
+Cypress.Commands.add("checkProjectStatus", (status, timeout = 10000)=>{
   return cy.get("[data-cy=\"workflow-project_state-btn\"]", { timeout })
     .should("contain.text", status);
 });
@@ -559,17 +557,19 @@ Cypress.Commands.add("resetProject", ()=>{
     .eq(2)
     .click()
     .wait(animationWaitTime);
-  cy.contains("[type=\"button\"]", "ok").click();
+  cy.get(".v-overlay__content").contains("[type=\"button\"]", "ok")
+    .click();
 });
 
 //input remotehost password
 Cypress.Commands.add("passwordType", (password)=>{
-  cy.contains("input password or passphrase").parent()
+  cy.contains("input password for").parent()
     .parent()
     .next()
     .find("input")
     .type(password);
-  cy.contains("[type=\"button\"]", "ok").click();
+  cy.get(".v-overlay__content").contains("[type=\"button\"]", "ok")
+    .click();
 });
 
 //select host
@@ -595,7 +595,8 @@ Cypress.Commands.add("fileFolderMake", (type, name)=>{
     cy.contains("label", "new directory name").siblings("input")
       .type(name);
   }
-  cy.contains("button", "ok").click();
+  cy.get(".v-overlay__content").contains("button", "ok")
+    .click();
 });
 
 //make folder
@@ -606,7 +607,8 @@ Cypress.Commands.add("folderMake", (folderName)=>{
     .click();
   cy.contains("label", "new directory name").siblings("input")
     .type(folderName);
-  cy.contains("button", "ok").click();
+  cy.get(".v-overlay__content").contains("button", "ok")
+    .click();
 });
 
 //reneme file/folder
@@ -618,7 +620,8 @@ Cypress.Commands.add("fileFolderRename", (name, name2)=>{
     .click();
   cy.contains("label", "new name").next()
     .type(name2);
-  cy.contains("button", "ok").click()
+  cy.get(".v-overlay__content").contains("button", "ok")
+    .click()
     .wait(animationWaitTime);
 });
 
@@ -629,7 +632,8 @@ Cypress.Commands.add("fileFolderDelete", (name)=>{
     .find("button")
     .eq(3)
     .click();
-  cy.contains("button", "ok").click();
+  cy.get(".v-overlay__content").contains("button", "ok")
+    .click();
 });
 
 //send command
@@ -639,4 +643,10 @@ Cypress.Commands.add("sendCommand", (hostname, port, user, password)=>{
     sshconn: configObj,
     command: "dirs=`ls -tF | grep / | head -1`; ls -t ${dirs} | grep -v / | wc -l;"
   });
+});
+
+Cypress.Commands.add("restoreFile", (fileName)=>{
+  const src = `wheel_config/${fileName}`;
+  const containerPath = `/root/.wheel/${fileName}`;
+  cy.exec(`docker cp ${src} ${containerName}:${containerPath}`);
 });

@@ -41,6 +41,9 @@ refs:
     url: /reference/1_home_screen/
   - title: 2. リモートホスト設定画面
     url: /reference/2_remotehost_screen/
+    children:
+      - title: SSH認証の設定
+        url: /reference/2_remotehost_screen/ssh_auth/
   - title: 3. ワークフロー画面
     children:
       - title: グラフビュー

@@ -44,7 +44,7 @@ HTTPS通信の代わりにHTTP通信を使う場合は、 手順3. にて`docker
 1. ターミナルを起動し、以下のコマンドを入力します。
 
     ```
-    > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -p 8089:8089 tmkawanabe/wheel:latest
+    > docker run -d -v ${HOME}:/root -v CONFIG_DIR:/usr/src/server/app/config -e TZ=$(readlink /etc/localtime | sed 's#.*/zoneinfo/##') -p 8089:8089 tmkawanabe/wheel:latest
     ```
 
     このとき、`CONFIG_DIR`は、ホストマシン上での絶対パスである必要があります。
@@ -61,6 +61,7 @@ HTTPS通信の代わりにHTTP通信を使う場合は、 手順3. にて`docker
         - jobScheduler.json : バッチシステムの設定。詳細は [バッチシステムの設定](../job_scheduler/)を参照。
         - server.crt/server.key : サーバ証明書/鍵ファイル
     - WHHELのポート番号を8089に指定しています。
+    - `-e TZ=...` の部分は、ホストマシンに設定されているタイムゾーンを読み取ってコンテナに渡すので、コンテナの時計がUTCではなくホストのローカル時刻と一致するようになります。ホストに合わせる代わりに特定のタイムゾーンを強制したい場合は、例えば `-e TZ=Asia/Tokyo` のように置き換えてください。
 
 1. WHEELサーバが起動したら、ホストマシン上でwebブラウザを開いて、 `http(s)://localhost:8089` にアクセスします。
 
@@ -143,9 +144,9 @@ WHEELは、sshでログインした先の計算サーバ上でタスクを実行
 ### バッチシステムがない場合
 まず、WHEELにアクセスし、画面右上のハンバーガーメニューをクリックします。
 
-![img](./img/hamburger_menu.png "hamburger menu")
+![hamburger menu](img/hamburger_menu.png "hamburger menu")
 
-表示されたメニュー内の __Remotehost editor__ をクリックします。リモートホスト設定画面が別タブで表示されます。
+表示されたメニュー内の __Remotehost editor__ をクリックします。リモートホスト設定ダイアログが表示されます。
 
 ![img](./img/remotehost_editor_button.png "リモートホストエディタリンク")
 
@@ -173,6 +174,13 @@ Host work dir
 
 例えば、 `foo.example.com` ホストに対して、ユーザー `bar` で接続しタスクの実行を `/home/users/bar/baz` ディレクトリ以下で行なう設定を`example` という名前で作成する場合、入力内容は次のようになります。
 
+入力フィールド | 入力値
+--- | ---
+1   | example
+2   | foo.example.com
+3   | bar
+4   | /home/users/bar/baz
+
 ![img](./img/new_remotehost.png "新規ホスト情報設定")
 
 
@@ -198,6 +206,8 @@ __リモートホストへの接続に公開鍵認証を使用する場合__
 
 その他の詳細な設定内容は [リファレンスマニュアル]({{ site.baseurl }}/reference/2_remotehost_screen/ "remotehost設定") をご参照ください。
 
+SSH認証方式（公開鍵認証・ssh-agent・`~/.ssh/config` の活用方法など）については [SSH認証の設定]({{ site.baseurl }}/reference/2_remotehost_screen/ssh_auth/) をご参照ください。
+
 ### バッチシステムがある場合の追加設定
 ここでは、計算サーバにバッチシステムがある場合に必要な追加のリモートホスト設定について説明します。
 本手順を実施する際は、事前に[バッチシステムがない場合](#バッチシステムがない場合)の手順を実施してください。
@@ -210,24 +220,16 @@ __リモートホストへの接続に公開鍵認証を使用する場合__
 
 ![img](./img/edit_remotehost_setting.png "ホスト情報編集ダイアログ")
 
-リモートホストで使われているバッチシステムの種類を、 __job scheduler__ の欄(1)から選びます。
+リモートホストで使われているバッチシステムの種類を、 __job scheduler__ の欄①から選びます。
 現在設定可能な値は次の6種類です。
 
 - PBSPro
-- PBSProWithoutHistory
 - SLURM
 - Fugaku
-- TCS (Technical Computing Suite)
-- UGE (Univa Grid Engine)
-
-__PBSProWithoutHistoryについて__
-PBSProには、バッチシステムの設定で実行終了したジョブの情報を保存しないものがあります。
-この場合 __PBSPro__ ではなく __PBSProWithoutHistory__ を使用してください。
-{: .notice--info}
 
 __Fugakuについて__
-富岳では、TCSが採用されていますが他サイトとは一部挙動が違うため、富岳専用の設定(Fugaku)を用意しています。
-富岳を使用する場合は、__TCS (Technical Computing Suite)__ ではなく __Fugaku__ を選択してください。
+富岳では、Technical Computing Suite (TCS) 上でジョブ管理が行われています。同じジョブスケジューラを導入している他システムでは
+動作確認を行なっていないため、富岳専用の設定(Fugaku)として用意しています
 {: .notice--info}
 
 __バッチシステムの設定について__
@@ -246,3 +248,74 @@ __バッチシステムの設定について__
 
 --------
 [トップページに戻る]({{ site.baseurl }}/)
+
+## サーバー設定のカスタマイズ
+
+WHEELはすべての設定ファイル（`server.json`、`jobScheduler.json`）を以下の優先順位で読み込みます（上位が優先）。
+
+1. **環境変数**（例: `WHEEL_PORT`） — すべての設定ファイルより優先されます
+2. **`WHEEL_CONFIG_DIR/{ファイル名}`** — `WHEEL_CONFIG_DIR` 環境変数でディレクトリを指定します
+3. **`~/.wheel/{ファイル名}`** — 簡単な方法: ホームディレクトリにファイルを置くだけで、環境変数は不要です
+4. パッケージ組み込みのデフォルト値
+
+### ~/.wheel/ を使う（推奨）
+
+`~/.wheel/` 以下にファイルを作成し、変更したい設定項目のみ記述してください。WHEELがデフォルト値と自動的にディープマージします。
+
+例えばポート番号を変更する場合は `~/.wheel/server.json` を作成します。
+
+```json
+{ "port": 9000 }
+```
+
+バッチスケジューラーの設定を一部だけ変更する場合は `~/.wheel/jobScheduler.json` を作成します。
+
+```json
+{ "PBSPro": { "submit": "my-qsub" } }
+```
+
+#### Dockerをご利用の方
+
+標準の `docker run` コマンドでWHEELを起動する場合、ホスト側の `${HOME}` はコンテナ内の `/root` にマウントされています。
+
+```
+docker run -d -v ${HOME}:/root ...
+```
+
+そのため、コンテナ内の `~/.wheel/` はホスト側の `${HOME}/.wheel/` と同じディレクトリです。追加のボリュームマウントは不要で、ホスト側にファイルを作成するだけで自動的に読み込まれます。
+
+### server.json の設定項目
+
+| キー | デフォルト値 | 対応する環境変数 | 説明 |
+|------|------------|-----------------|------|
+| `port` | `8089` | `WHEEL_PORT` | WHEELが待ち受けるポート番号 |
+| `numLogFiles` | `5` | — | 保持するログファイルの数 |
+| `withLogin` | `false` | — | ログイン必須にする（代わりに `WHEEL_ENABLE_AUTH` 環境変数を使用してください） |
+| `numLocalJob` | `1` | `WHEEL_NUM_LOCAL_JOB` | localhostで実行するtaskの同時実行本数 |
+| `baseURL` | `""` | `WHEEL_BASE_URL` | WHEELのベースURL（リバースプロキシ配下で使用） |
+| `useHttp` | `false` | `WHEEL_USE_HTTP` | TLSを無効にしてHTTPで起動する |
+| `acceptAddress` | `null` | `WHEEL_ACCEPT_ADDRESS` | 接続を許可するクライアントのIPアドレス（nullは全て許可） |
+| `logLevel` | `"debug"` | `WHEEL_LOG_LEVEL` | ログレベル（`trace`/`debug`/`info`/`warn`/`error`/`fatal`） |
+| `verboseSsh` | `false` | `WHEEL_VERBOSE_SSH` | SSH接続時に詳細ログを出力する（`-vvv`オプション） |
+| `enableWebApi` | `false` | `WHEEL_ENABLE_WEB_API` | Web APIエンドポイントを有効にする |
+| `enableAuth` | `false` | `WHEEL_ENABLE_AUTH` | 認証機構を有効にする |
+
+> **注意:** `WHEEL_LOGLEVEL` は `WHEEL_LOG_LEVEL` に名称変更されました。既存の設定をお使いの場合は更新が必要です。
+
+## 設定の移行（マイグレーション）
+
+WHEELは起動時に、ユーザーの設定ファイル（`~/.wheel/server.json`、`$WHEEL_CONFIG_DIR/server.json`）を自動的に確認し、古いプロパティ名を新しい名前に書き換えます。書き換えが発生した場合は、起動時に `console.warn` メッセージが表示されます。
+
+### 自動変換されるプロパティ名
+
+| 旧プロパティ名 | 新プロパティ名 |
+|--------------|--------------|
+| `numJobOnLocal` | `numLocalJob` |
+
+### 廃止された環境変数
+
+| 廃止された環境変数 | 代替の環境変数 |
+|------------------|--------------|
+| `WHEEL_LOGLEVEL` | `WHEEL_LOG_LEVEL` |
+
+廃止された環境変数が設定されている場合、WHEELは起動時に警告を表示します。廃止された環境変数は設定値として認識されないため、意図した設定が有効にならない場合があります。古い名前から新しい名前への更新をお願いします。

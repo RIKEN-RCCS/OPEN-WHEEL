@@ -3,10 +3,12 @@ import js from "@eslint/js";
 import globals from "globals";
 import stylistic from "@stylistic/eslint-plugin";
 import jsdoc from "eslint-plugin-jsdoc";
-import node from "eslint-plugin-node";
+import n from "eslint-plugin-n";
 import chaiFriendly from "eslint-plugin-chai-friendly";
 import vue from "eslint-plugin-vue";
 import vueParser from "vue-eslint-parser";
+import jsonc from "eslint-plugin-jsonc";
+import jsoncParser from "jsonc-eslint-parser";
 
 const jsdocRules = {
   "jsdoc/require-jsdoc": ["warn", { enableFixer: false }],
@@ -24,6 +26,7 @@ const jsdocRules = {
 
 const styleRules = {
   "arrow-body-style": ["error", "always"],
+  "@stylistic/no-trailing-spaces": "error",
   "@stylistic/arrow-spacing": [
     "error",
     {
@@ -126,6 +129,13 @@ export default [
   jsdoc.configs["flat/recommended"],
   stylistic.configs["disable-legacy"],
   ...vue.configs["flat/recommended"],
+  ...jsonc.configs["flat/recommended-with-json"],
+  {
+    files: ["**/*.json"],
+    languageOptions: {
+      parser: jsoncParser
+    }
+  },
   stylistic.configs.customize({
     indent: 2,
     quotes: "double",
@@ -133,7 +143,7 @@ export default [
     arrowParens: true
   }),
   {
-    ignores: ["node_modules/", "server/app/public/", "documentMD/"]
+    ignores: ["node_modules/", "server/app/public/", "documentMD/", "server/app/db/version.json"]
   },
   {
     files: ["client/**/*.js", "client/**/*.vue"],
@@ -153,9 +163,22 @@ export default [
     }
   },
   {
-    files: ["server/app/**/*.js", "server/bin/*.js", "common/*.cjs"],
+    files: ["server/app/**/*.js", "server/bin/*.js"],
     plugins: {
-      node
+      n
+    },
+    languageOptions: {
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node
+      },
+      sourceType: "module"
+    }
+  },
+  {
+    files: ["common/*.cjs"],
+    plugins: {
+      n
     },
     languageOptions: {
       globals: {
@@ -165,16 +188,31 @@ export default [
       sourceType: "commonjs"
     },
     rules: {
-      "node/exports-style": [
+      "n/exports-style": [
         "error",
         "module.exports"
       ]
     }
   },
   {
-    files: ["server/test/**/*.{cjs,js}"],
+    files: ["server/test/**/*.js"],
     plugins: {
-      node,
+      n,
+      chaiFriendly
+    },
+    languageOptions: {
+      sourceType: "module",
+      globals: {
+        ...globals.nodeBuiltin,
+        ...globals.node,
+        ...globals.mocha
+      }
+    }
+  },
+  {
+    files: ["server/test/**/*.cjs"],
+    plugins: {
+      n,
       chaiFriendly
     },
     languageOptions: {
@@ -220,7 +258,7 @@ export default [
     }
   },
   {
-    files: ["*.js", "**/*.js", "**/*.vue"],
+    files: ["*.js", "**/*.js", "**/*.vue", "**/*.ts"],
     plugins: {
       "@stylistic": stylistic,
       jsdoc

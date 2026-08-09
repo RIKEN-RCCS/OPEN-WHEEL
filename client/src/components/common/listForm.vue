@@ -11,19 +11,44 @@
     :show-select="selectable"
     :single-select="true"
   >
-    <template #headers>
+    <template
+      v-if="!showHeaders"
+      #headers
+    >
       {{ label }}
     </template>
     <template
-      v-if="allowRenameInline"
-      #item.name="props"
+      v-for="header in headersWithTooltip"
+      :key="header.key"
+      #[`header.${header.key}`]
     >
+      <v-tooltip
+        :text="header.tooltip"
+        location="top"
+      >
+        <template #activator="{ props: tooltipProps }">
+          <span v-bind="tooltipProps">{{ header.title }}</span>
+        </template>
+      </v-tooltip>
+    </template>
+    <template #item.name="props">
       <inline-editor
+        v-if="allowRenameInline"
         :current-value="props.item.name"
         data-cy-prefix="list_form_property"
         :additional-rules="[updateItemValidator]"
         @confirmed="saveEditDialog(props.index, $event)"
       />
+      <v-tooltip
+        v-else
+        :text="props.item.name"
+        location="top"
+        :disabled="props.item.name.length <= 10"
+      >
+        <template #activator="{ props: tooltipProps }">
+          <span v-bind="tooltipProps">{{ props.item.name }}</span>
+        </template>
+      </v-tooltip>
     </template>
     <template #item.actions="{ item }">
       <action-row
@@ -34,10 +59,23 @@
       />
     </template>
     <template
+      v-if="booleanColumns.includes('mandatory')"
+      #item.mandatory="{ item, index }"
+    >
+      <v-checkbox
+        :model-value="item.mandatory"
+        :disabled="readOnly"
+        hide-details
+        density="compact"
+        @update:model-value="$emit('toggle', index, 'mandatory', $event)"
+      />
+    </template>
+    <template
       v-if="inputColumn"
       #bottom
     >
       <v-text-field
+        ref="addField"
         v-model.lazy="inputField"
         :rules="newItemValidator"
         :disabled="disabled"
@@ -103,6 +141,10 @@ export default {
       type: Boolean,
       default: true
     },
+    autofocus: {
+      type: Boolean,
+      default: false
+    },
     selectable: {
       type: Boolean,
       default: false
@@ -132,13 +174,22 @@ export default {
     readOnly: {
       type: Boolean,
       default: false
+    },
+    booleanColumns: {
+      type: Array,
+      default: ()=>{ return []; }
+    },
+    showHeaders: {
+      type: Boolean,
+      default: false
     }
   },
   emits: [
     "update:modelValue",
     "add",
     "remove",
-    "update"
+    "update",
+    "toggle"
   ],
   data: function () {
     return {
@@ -162,8 +213,14 @@ export default {
         return e.key !== "actions";
       });
       rt.push({ key: "actions", title: "", sortable: false });
-      rt[0].editable = true;
+      //Create a copy to avoid mutating the reactive prop object, which would cause an infinite re-render loop
+      rt[0] = { ...rt[0], editable: true };
       return rt;
+    },
+    headersWithTooltip: function () {
+      return this.headers.filter((e)=>{
+        return e.tooltip;
+      });
     },
     editableRows: function () {
       return this.headersWithActions
@@ -187,6 +244,14 @@ export default {
     if (this.additionalRules.length > 0) {
       this.updateItemValidator.push(...this.additionalRules);
       this.newItemValidator.push(...this.additionalRules);
+    }
+    if (this.autofocus) {
+      //Focus once, right after mount, instead of vuetify's built-in intersection-based
+      //autofocus: that fires on an animation frame, which can race with a sibling
+      //list-form (e.g. output files) also being interacted with while this panel opens.
+      this.$nextTick().then(()=>{
+        this.$refs.addField?.focus();
+      });
     }
   },
   methods: {

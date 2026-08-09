@@ -3,23 +3,22 @@
  * Copyright (c) Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * See License in the project root for the license information.
  */
-"use strict";
-const path = require("path");
-const fs = require("fs-extra");
-const { readComponentJsonByID } = require("../core/componentJsonIO.js");
-const { remoteHost } = require("../db/db");
-const { getLogger } = require("../logSettings");
-const { createSsh, getSsh, askPassword } = require("../core/sshManager");
-const { createTempd } = require("../core/tempd.js");
-const { hasRemoteFileBrowser, hasGfarmTarBrowser } = require("../../../common/checkComponent.cjs");
-const { checkJWTAgent, startJWTAgent, gfls, gfmkdir, gfrm, gfmv, gfptarList } = require("../core/gfarmOperator.js");
-const {
+import path from "path";
+import fs from "fs-extra";
+import { readComponentJsonByID } from "../core/componentJsonIO.js";
+import { remoteHost } from "../db/db.js";
+import { getLogger } from "../logSettings.js";
+import { createSsh, getSsh, askPassword } from "../core/sshManager.js";
+import { createTempd } from "../core/tempd.js";
+import { hasRemoteFileBrowser, hasGfarmTarBrowser } from "../../../common/checkComponent.js";
+import { checkJWTAgent, startJWTAgent, gfls, gfmkdir, gfrm, gfmv, gfptarList, getGfarmXattr } from "../core/gfarmOperator.js";
+import {
   createNewRemoteFile,
   createNewRemoteDir,
   removeRemoteFileOrDirectory,
   renameRemoteFileOrDirectory
-} = require("../core/remoteFileUtils.js");
-const { setJWTServerPassphrase } = require("../core/jwtServerPassphraseManager.js");
+} from "../core/remoteFileUtils.js";
+import { setJWTServerPassphrase } from "../core/jwtServerPassphraseManager.js";
 
 async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb) {
   const component = await readComponentJsonByID(projectRootDir, componentID);
@@ -49,7 +48,7 @@ async function onRequestRemoteConnection(socket, projectRootDir, componentID, cb
         setJWTServerPassphrase(projectRootDir, hostinfo.id, phGfarm);
       }
     }
-  } catch (e) {
+  } catch {
     cb(false);
     return;
   }
@@ -175,7 +174,7 @@ async function remoteFileUtilWrapper(func, ...args) {
   try {
     const rt = await func(...args);
     cb(rt === 0);
-  } catch (e) {
+  } catch {
     cb(false);
   }
 }
@@ -197,7 +196,7 @@ async function gfarmFileUtilWrapper(func, projectRootDir, ...args) {
   try {
     const output = await func(projectRootDir, hostID, ...args);
     cb(!(Number.isInteger(output) && output !== 0));
-  } catch (e) {
+  } catch {
     cb(false);
   }
 }
@@ -211,7 +210,26 @@ const onCreateNewGfarmDir = gfarmFileUtilWrapper.bind(null, gfmkdir);
 const onRemoveGfarmFile = gfarmFileUtilWrapper.bind(null, gfrm);
 const onRenameGfarmFile = gfarmFileUtilWrapper.bind(null, gfmv);
 
-module.exports = {
+/**
+ * Get XML extended attribute from a gfarm file and return it to the client.
+ * @param {string} projectRootDir - project's root path
+ * @param {string} host - remote host name
+ * @param {string} gfarmPath - absolute gfarm path to the file
+ * @param {string} attrName - XML attribute name to read (e.g., "wheel.workflow")
+ * @param {Function} cb - callback receiving the XML string, or null on error
+ */
+async function onGetGfarmXattr(projectRootDir, host, gfarmPath, attrName, cb) {
+  try {
+    const id = remoteHost.getID("name", host);
+    const xml = await getGfarmXattr(projectRootDir, id, gfarmPath, attrName);
+    return cb(xml);
+  } catch (e) {
+    getLogger(projectRootDir).error(projectRootDir, "error reading gfarm xattr", e);
+    return cb(null);
+  }
+}
+
+export {
   onRequestRemoteConnection,
   onGetRemoteGfarmFileList,
   onGetRemoteGfarmTarFileList,
@@ -224,5 +242,6 @@ module.exports = {
   onRenameRemoteFile,
   onCreateNewGfarmDir,
   onRemoveGfarmFile,
-  onRenameGfarmFile
+  onRenameGfarmFile,
+  onGetGfarmXattr
 };

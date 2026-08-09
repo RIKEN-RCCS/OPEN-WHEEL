@@ -1,0 +1,109 @@
+name: run UT on windows
+on:
+  push:
+    branches:
+      - '**'
+      - '!master'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: wsl-bash {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup WSL with Ubuntu
+        uses: Vampire/setup-wsl@v6
+        id: wsl
+        with:
+          distribution: 'Ubuntu-22.04'
+          update: 'true'
+          additional-packages: >
+            apt-transport-https
+            ca-certificates
+            curl
+            gnupg
+            lsb-release
+
+      - name: Install Docker Engine in WSL
+        run: |
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+      - name: Run tests
+        run: |
+          set -o pipefail
+          sudo service docker start
+          cd server/test
+          export WHEEL_CONFIG_DIR=$(mktemp -d tmp.XXXXXXXXXX)
+          {
+          echo '[{'
+          echo '  "name": "testServer",'
+          echo '  "host": "wheel_release_test_server",'
+          echo '  "path": "/home/testuser",'
+          echo '  "username": "testuser",'
+          echo '  "numJob": 1,'
+          echo '  "port": 22,'
+          echo '  "id": "dummy-id",'
+          echo '  "jobScheduler": "PBSPro",'
+          echo '  "renewInterval": 0,'
+          echo '  "renewDelay": 0,'
+          echo '  "statusCheckInterval": 10,'
+          echo '  "maxStatusCheckError": 10,'
+          echo '  "readyTimeout": 5000'
+          echo '}]'
+          } > ${WHEEL_CONFIG_DIR}/remotehost.json
+          sudo docker compose run --build wheel_release_test 2>&1 | tee /tmp/ut-output.log
+      - name: Summarize UT results
+        if: always()
+        run: |
+          LOG=/tmp/ut-output.log
+          echo "DEBUG: GITHUB_STEP_SUMMARY=${GITHUB_STEP_SUMMARY:-<unset>}"
+          if [ ! -f "$LOG" ]; then
+            echo "DEBUG: $LOG not found, nothing to summarize"
+            exit 0
+          fi
+          #mocha keeps ANSI color codes even though stdout is piped, because it
+          #detects the CI env var GitHub Actions sets - strip all ANSI CSI
+          #sequences before parsing so the regexes below match reliably (same
+          #issue found with cypress's output in run-specs-sequential.sh).
+          CLEAN_LOG="$(mktemp)"
+          sed -E $'s/\x1b\\[[0-9;]*[A-Za-z]//g' "$LOG" > "$CLEAN_LOG"
+          mv "$CLEAN_LOG" "$LOG"
+          #mocha's default reporter omits the pending/failing line entirely when
+          #that count is 0, so a missing match correctly means 0, not an error.
+          passing=$(grep -oE "[0-9]+ passing" "$LOG" | tail -1 | grep -oE "[0-9]+" || true)
+          pending=$(grep -oE "[0-9]+ pending" "$LOG" | tail -1 | grep -oE "[0-9]+" || true)
+          failing=$(grep -oE "[0-9]+ failing" "$LOG" | tail -1 | grep -oE "[0-9]+" || true)
+          passing=${passing:-0}; pending=${pending:-0}; failing=${failing:-0}
+          echo "DEBUG: parsed passing=$passing failing=$failing pending=$pending"
+          if [ -z "${GITHUB_STEP_SUMMARY:-}" ]; then
+            echo "DEBUG: GITHUB_STEP_SUMMARY is not set in this shell, skipping summary write"
+            exit 0
+          fi
+          {
+            echo "## Server UT results (Windows/WSL)"
+            echo ""
+            echo "**${passing} passing**, ${failing} failing, ${pending} pending"
+            if [ "$failing" -gt 0 ]; then
+              echo ""
+              echo "### Failures"
+              echo '```'
+              #mocha lists failure headers twice: once interleaved with live
+              #console output during the run, and again cleanly in the final
+              #recap after the passing/pending/failing counts - only take the
+              #latter.
+              awk '/[0-9]+ passing/{found=1} found' "$LOG" | grep -A 4 -E "^ *[0-9]+\) "
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "DEBUG: step summary write exit code: $?, file now has $(wc -l < "$GITHUB_STEP_SUMMARY") lines"

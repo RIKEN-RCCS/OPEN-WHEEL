@@ -1,7 +1,12 @@
 # syntax=docker/dockerfile:1
-ARG PLATFORM=linux/amd64
+ARG PLATFORM=${BUILDPLATFORM}
 FROM --platform=${PLATFORM} node:22-slim AS base
-RUN apt-get update && apt -y install curl git rsync openssh-server bzip2 python3 g++ build-essential&&\
+# tzdata's postinstall script needs a TZ value available at build time to
+# configure /usr/share/zoneinfo correctly; without one (even non-interactively)
+# it leaves corrupted/stub zoneinfo files. This is only a build-time default -
+# entrypoint.sh determines the real, per-container TZ at runtime.
+ENV TZ=Etc/UTC
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt -y install curl git rsync openssh-server bzip2 python3 g++ build-essential tzdata&&\
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash &&\
     apt -y install git-lfs &&\
     apt-get clean  &&\
@@ -15,6 +20,12 @@ RUN mkdir server client
 COPY server/package.json server/package.json
 COPY client/package.json client/package.json
 RUN npm install
+RUN arch=$(uname -m) && \
+    if [ "$arch" = "x86_64" ]; then npm install --no-save @rollup/rollup-linux-x64-gnu; \
+    elif [ "$arch" = "aarch64" ]; then npm install --no-save @rollup/rollup-linux-arm64-gnu; \
+    fi
+# Ensure tar v7 dependencies are available
+RUN cd server && npm install @isaacs/fs-minipass --no-save
 
 #build client
 FROM run_base AS builder
@@ -49,7 +60,7 @@ FROM run_base AS exec
 WORKDIR /usr/src
 COPY common common
 COPY server server
-RUN npm prune --production
+# Don't prune - keep all dependencies to avoid ESM resolution issues
 COPY --from=builder /usr/src/server/app/public /usr/src/server/app/public
 COPY entrypoint.sh /usr/src/server/
 RUN rm -fr client server/app/config/* server/test

@@ -1,0 +1,12 @@
+FROM node:20-slim
+WORKDIR /app
+COPY package.json ./
+RUN npm install --ignore-scripts
+COPY mocks.config.cjs ./
+COPY mocks/ ./mocks/
+COPY mock_server/ ./mock_server/
+COPY start-mock-sio.cjs ./
+# Override host binding so the server is accessible outside the container
+ENV MOCKS_SERVER_SERVER_HOST=0.0.0.0
+EXPOSE 3101 3102
+CMD sh -c "node start-mock-sio.cjs & npx mocks-server --config.fileSearchPlaces=mocks.config.cjs"

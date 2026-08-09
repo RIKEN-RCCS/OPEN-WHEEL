@@ -10,22 +10,34 @@
     >
       <template #activator="{ isOpen, props }">
         <v-list-item
-          v-bind="props"
           :key="item[itemKey]"
-          :class="{'text-primary': activatable && active !== null && active[itemKey] === item[itemKey]}"
-          @click="onActiveted(item);onClickNodeIcon(item)"
+          :class="{'text-primary font-weight-bold selected-item': activatable && active !== null && active[itemKey] === item[itemKey]}"
         >
           <template #prepend>
-            <v-icon
-              :icon="getNodeIcon(isOpen, item)"
-            />
+            <span
+              v-bind="props"
+              class="d-inline-flex align-center"
+              @click.stop="() => { if (!isOpen) { onClickNodeIcon(item); } }"
+            >
+              <v-icon
+                :icon="getExpandIcon(isOpen)"
+                data-cy="inner_treeview-expand-icon"
+              />
+              <v-icon
+                v-if="getNodeIcon(isOpen, item)"
+                :icon="getNodeIcon(isOpen, item)"
+                data-cy="inner_treeview-node-icon"
+              />
+            </span>
           </template>
-          <slot
-            name="label"
-            :item="item"
-          >
-            {{ item.name }}
-          </slot>
+          <div @click="(e) => { if (!isOpen) { props.onClick(e); onClickNodeIcon(item); } onActiveted(item); }">
+            <slot
+              name="label"
+              :item="item"
+            >
+              {{ item.name }}
+            </slot>
+          </div>
           <template #append>
             <slot
               name="append"
@@ -71,7 +83,7 @@
   <template v-else>
     <v-list-item
       :key="item[itemKey]"
-      :class="{'text-primary': activatable && active !== null && active[itemKey] === item[itemKey]}"
+      :class="{'text-primary font-weight-bold selected-item': activatable && active !== null && active[itemKey] === item[itemKey]}"
       @click="onActiveted(item)"
     >
       <template #prepend>
@@ -95,6 +107,12 @@
   </template>
 </template>
 <script>
+
+//always-shown expand/collapse indicator for directory-like (expandable) nodes.
+//kept separate from getNodeIcon so callers can add their own icon (e.g. folder icon)
+//alongside this indicator instead of replacing it.
+const nodeOpenIcon = "mdi-menu-down";
+const nodeCloseIcon = "mdi-menu-right";
 
 export default {
   name: "InnerTreeview",
@@ -134,6 +152,9 @@ export default {
   },
   emits: ["update:active"],
   methods: {
+    getExpandIcon(isOpen) {
+      return isOpen ? nodeOpenIcon : nodeCloseIcon;
+    },
     async onClickNodeIcon(item) {
       if (!this.loadChildren) {
         return false;
@@ -149,3 +170,9 @@ export default {
   }
 };
 </script>
+<style scoped>
+.selected-item {
+  background-color: rgba(var(--v-theme-primary), 0.12) !important;
+  border-left: 3px solid rgb(var(--v-theme-primary));
+}
+</style>
