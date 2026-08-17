@@ -44,7 +44,7 @@ jobs:
             wheel.sif
             wheel_docker.tar.gz
             source.tar.gz
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.VERSION_NUMBER }}
           name: ${{ env.VERSION_NUMBER }}
           body: "release for ${{ github.ref_name }} @ ${{ github.sha }} (${{ env.VERSION_NUMBER }})"
         env:
