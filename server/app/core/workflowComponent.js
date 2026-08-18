@@ -64,6 +64,7 @@ class Hpciss extends Storage {
     super(pos, parent);
     this.type = "hpciss";
     this.host = null;
+    this.memo = null;
   }
 }
 
@@ -72,6 +73,7 @@ class Hpcisstar extends Storage {
     super(pos, parent);
     this.type = "hpcisstar";
     this.host = null;
+    this.memo = null;
   }
 }
 

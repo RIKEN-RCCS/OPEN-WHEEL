@@ -4,14 +4,37 @@
  * See License in the project root for the license information.
  */
 import { writeFile } from "node:fs/promises";
+import path from "path";
+import fs from "fs-extra";
 import { getAllComponentIDs } from "./projectJsonFileOperator.js";
-import { readComponentJsonByID } from "./componentJsonIO.js";
+import { getComponentDir, readComponentJsonByID } from "./componentJsonIO.js";
+import { getLogger } from "../logSettings.js";
 import { debugMetadataJson, debugMetadataXml } from "../db/db.js";
 
 const _internal = {
   getAllComponentIDs,
-  readComponentJsonByID
+  readComponentJsonByID,
+  getComponentDir,
+  fs,
+  getLogger
 };
+
+/**
+ * Get the property name that holds a task/if/while component's script (or
+ * condition script/expression) filename, for the 3 types whose script
+ * content should be embedded in the exported metadata.
+ * @param {string} type - component type
+ * @returns {string|null} - property name, or null if this type has no script field
+ */
+function getScriptFieldName(type) {
+  if (type === "task") {
+    return "script";
+  }
+  if (type === "if" || type === "while") {
+    return "condition";
+  }
+  return null;
+}
 
 /**
  * Escape special XML characters in a string value.
@@ -42,14 +65,25 @@ function componentToXml(component, indent = "  ") {
 
   //Simple scalar fields
   const scalarFields = [
-    "description", "script", "host", "queue", "submitOption", "sourceScript",
+    "description", "script", "condition", "host", "queue", "submitOption", "sourceScript",
     "retry", "retryCondition", "checker", "cleanupFlag", "disable",
-    "ignoreFailure", "useJobScheduler", "storagePath", "state"
+    "ignoreFailure", "useJobScheduler", "storagePath", "state", "memo"
   ];
   for (const field of scalarFields) {
     if (component[field] !== null && component[field] !== undefined) {
       xml += `${indent}  <${field}>${escapeXml(component[field])}</${field}>\n`;
     }
+  }
+
+  //script/condition file content (task/if/while) - multi-line free text, so
+  //CDATA instead of entity-escaping; fall back to escaping only in the rare
+  //case the content itself contains the CDATA terminator.
+  if (typeof component.scriptContent === "string") {
+    xml += `${indent}  <scriptContent>`;
+    xml += component.scriptContent.includes("]]>")
+      ? escapeXml(component.scriptContent)
+      : `<![CDATA[${component.scriptContent}]]>`;
+    xml += "</scriptContent>\n";
   }
 
   //env object
@@ -128,6 +162,25 @@ export async function gatherComponentMetadata(projectRootDir) {
   const componentMap = new Map();
   for (const id of allIDs) {
     const component = await _internal.readComponentJsonByID(projectRootDir, id);
+
+    //for task/if/while, embed the referenced script's content alongside its
+    //filename - but if/while's "condition" is dual-purpose (a script filename
+    //OR a raw JS expression), so only attempt this when it actually resolves
+    //to a file on disk, same disambiguation evalCondition() uses at run time.
+    const scriptField = getScriptFieldName(component.type);
+    if (scriptField && typeof component[scriptField] === "string" && component[scriptField]) {
+      try {
+        const componentDir = await _internal.getComponentDir(projectRootDir, id, true);
+        if (componentDir) {
+          const scriptPath = path.resolve(componentDir, component[scriptField]);
+          if (await _internal.fs.pathExists(scriptPath)) {
+            component.scriptContent = await _internal.fs.readFile(scriptPath, "utf8");
+          }
+        }
+      } catch (e) {
+        _internal.getLogger(projectRootDir).warn(`failed to read script content for component ${id} (${scriptField}=${component[scriptField]}): ${e.message}`);
+      }
+    }
     componentMap.set(id, component);
   }
 

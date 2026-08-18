@@ -26,10 +26,21 @@ function makeComponent(id, type, name, parent, extras = {}) {
 describe("#gatherComponentMetadata", ()=>{
   let getAllComponentIDsStub;
   let readComponentJsonByIDStub;
+  let getComponentDirStub;
+  let pathExistsStub;
+  let readFileStub;
+  let warnStub;
 
   beforeEach(()=>{
     getAllComponentIDsStub = sinon.stub(_internal, "getAllComponentIDs");
     readComponentJsonByIDStub = sinon.stub(_internal, "readComponentJsonByID");
+    //safe no-op defaults so tests that don't care about script content never
+    //touch the real filesystem/logger; individual tests override as needed
+    getComponentDirStub = sinon.stub(_internal, "getComponentDir").resolves(null);
+    pathExistsStub = sinon.stub(_internal.fs, "pathExists").resolves(false);
+    readFileStub = sinon.stub(_internal.fs, "readFile").resolves("");
+    warnStub = sinon.stub();
+    sinon.stub(_internal, "getLogger").returns({ warn: warnStub });
   });
 
   afterEach(()=>{
@@ -108,6 +119,96 @@ describe("#gatherComponentMetadata", ()=>{
     const inputFile = result.components[0].inputFiles[0];
     expect(inputFile.name).to.equal("input.dat");
     expect(inputFile.mandatory).to.be.true;
+  });
+
+  it("should embed a task's script content when the script file exists", async ()=>{
+    const task = makeComponent("task-1", "task", "t", "this is root", { script: "run.sh" });
+    getAllComponentIDsStub.resolves(["task-1"]);
+    readComponentJsonByIDStub.withArgs(PROJECT_ROOT, "task-1").resolves(task);
+    getComponentDirStub.withArgs(PROJECT_ROOT, "task-1", true).resolves("/dummy/project/task-1");
+    pathExistsStub.withArgs("/dummy/project/task-1/run.sh").resolves(true);
+    readFileStub.withArgs("/dummy/project/task-1/run.sh", "utf8").resolves("#!/bin/bash\necho hello\n");
+
+    const result = await gatherComponentMetadata(PROJECT_ROOT);
+
+    expect(result.components[0].scriptContent).to.equal("#!/bin/bash\necho hello\n");
+  });
+
+  it("should not embed script content when the script file does not exist", async ()=>{
+    const task = makeComponent("task-1", "task", "t", "this is root", { script: "missing.sh" });
+    getAllComponentIDsStub.resolves(["task-1"]);
+    readComponentJsonByIDStub.withArgs(PROJECT_ROOT, "task-1").resolves(task);
+    getComponentDirStub.withArgs(PROJECT_ROOT, "task-1", true).resolves("/dummy/project/task-1");
+    pathExistsStub.withArgs("/dummy/project/task-1/missing.sh").resolves(false);
+
+    const result = await gatherComponentMetadata(PROJECT_ROOT);
+
+    expect(result.components[0].scriptContent).to.be.undefined;
+    expect(readFileStub.called).to.be.false;
+  });
+
+  it("should embed an if component's condition script content when it resolves to a file", async ()=>{
+    const ifComp = makeComponent("if-1", "if", "cond", "this is root", { condition: "check.sh" });
+    getAllComponentIDsStub.resolves(["if-1"]);
+    readComponentJsonByIDStub.withArgs(PROJECT_ROOT, "if-1").resolves(ifComp);
+    getComponentDirStub.withArgs(PROJECT_ROOT, "if-1", true).resolves("/dummy/project/if-1");
+    pathExistsStub.withArgs("/dummy/project/if-1/check.sh").resolves(true);
+    readFileStub.withArgs("/dummy/project/if-1/check.sh", "utf8").resolves("exit 0\n");
+
+    const result = await gatherComponentMetadata(PROJECT_ROOT);
+
+    expect(result.components[0].scriptContent).to.equal("exit 0\n");
+  });
+
+  it("should not treat a while component's raw JS expression condition as a file", async ()=>{
+    const whileComp = makeComponent("while-1", "while", "loop", "this is root", { condition: "i < 10" });
+    getAllComponentIDsStub.resolves(["while-1"]);
+    readComponentJsonByIDStub.withArgs(PROJECT_ROOT, "while-1").resolves(whileComp);
+    getComponentDirStub.withArgs(PROJECT_ROOT, "while-1", true).resolves("/dummy/project/while-1");
+    //pathExists defaults to false in beforeEach - a raw JS expression never resolves to a real file
+
+    const result = await gatherComponentMetadata(PROJECT_ROOT);
+
+    expect(result.components[0].scriptContent).to.be.undefined;
+    expect(result.components[0].condition).to.equal("i < 10");
+    expect(readFileStub.called).to.be.false;
+  });
+
+  it("should not attempt script content for component types other than task/if/while", async ()=>{
+    const wf = makeComponent("wf-1", "workflow", "root", "this is root", { script: "run.sh" });
+    getAllComponentIDsStub.resolves(["wf-1"]);
+    readComponentJsonByIDStub.withArgs(PROJECT_ROOT, "wf-1").resolves(wf);
+
+    const result = await gatherComponentMetadata(PROJECT_ROOT);
+
+    expect(result.components[0].scriptContent).to.be.undefined;
+    expect(getComponentDirStub.called).to.be.false;
+  });
+
+  it("should not throw and should skip script content when getComponentDir rejects", async ()=>{
+    const task = makeComponent("task-1", "task", "t", "this is root", { script: "run.sh" });
+    getAllComponentIDsStub.resolves(["task-1"]);
+    readComponentJsonByIDStub.withArgs(PROJECT_ROOT, "task-1").resolves(task);
+    getComponentDirStub.withArgs(PROJECT_ROOT, "task-1", true).rejects(new Error("ENOENT"));
+
+    const result = await gatherComponentMetadata(PROJECT_ROOT);
+
+    expect(result.components[0].scriptContent).to.be.undefined;
+    expect(warnStub.calledOnce).to.be.true;
+  });
+
+  it("should not throw and should skip script content when readFile rejects", async ()=>{
+    const task = makeComponent("task-1", "task", "t", "this is root", { script: "run.sh" });
+    getAllComponentIDsStub.resolves(["task-1"]);
+    readComponentJsonByIDStub.withArgs(PROJECT_ROOT, "task-1").resolves(task);
+    getComponentDirStub.withArgs(PROJECT_ROOT, "task-1", true).resolves("/dummy/project/task-1");
+    pathExistsStub.withArgs("/dummy/project/task-1/run.sh").resolves(true);
+    readFileStub.withArgs("/dummy/project/task-1/run.sh", "utf8").rejects(new Error("EACCES"));
+
+    const result = await gatherComponentMetadata(PROJECT_ROOT);
+
+    expect(result.components[0].scriptContent).to.be.undefined;
+    expect(warnStub.calledOnce).to.be.true;
   });
 });
 
@@ -216,5 +317,60 @@ describe("#componentMetadataToXml", ()=>{
     const xml = await componentMetadataToXml(metadata);
     expect(xml).to.not.include("<script>");
     expect(xml).to.not.include("<checker>");
+  });
+
+  it("should render memo field when present on an hpciss component", async ()=>{
+    const metadata = {
+      components: [makeComponent("id-1", "hpciss", "t", "this is root", { memo: "some free text" })]
+    };
+    const xml = await componentMetadataToXml(metadata);
+    expect(xml).to.include("<memo>some free text</memo>");
+  });
+
+  it("should not render memo field when null", async ()=>{
+    const metadata = {
+      components: [makeComponent("id-1", "hpciss", "t", "this is root", { memo: null })]
+    };
+    const xml = await componentMetadataToXml(metadata);
+    expect(xml).to.not.include("<memo>");
+  });
+
+  it("should render condition field for if/while components", async ()=>{
+    const metadata = {
+      components: [makeComponent("id-1", "while", "loop", "this is root", { condition: "i < 10" })]
+    };
+    const xml = await componentMetadataToXml(metadata);
+    expect(xml).to.include("<condition>i &lt; 10</condition>");
+  });
+
+  it("should wrap scriptContent in a CDATA section", async ()=>{
+    const metadata = {
+      components: [makeComponent("id-1", "task", "t", "this is root", {
+        script: "run.sh",
+        scriptContent: "#!/bin/bash\necho \"hi\" && exit 0\n"
+      })]
+    };
+    const xml = await componentMetadataToXml(metadata);
+    expect(xml).to.include("<scriptContent><![CDATA[#!/bin/bash\necho \"hi\" && exit 0\n]]></scriptContent>");
+  });
+
+  it("should fall back to escaped text when scriptContent contains the CDATA terminator", async ()=>{
+    const metadata = {
+      components: [makeComponent("id-1", "task", "t", "this is root", {
+        script: "run.sh",
+        scriptContent: "echo ]]> weird"
+      })]
+    };
+    const xml = await componentMetadataToXml(metadata);
+    expect(xml).to.not.include("<![CDATA[");
+    expect(xml).to.include("<scriptContent>echo ]]&gt; weird</scriptContent>");
+  });
+
+  it("should not render scriptContent element when absent", async ()=>{
+    const metadata = {
+      components: [makeComponent("id-1", "task", "t", "this is root", { script: "run.sh" })]
+    };
+    const xml = await componentMetadataToXml(metadata);
+    expect(xml).to.not.include("<scriptContent>");
   });
 });

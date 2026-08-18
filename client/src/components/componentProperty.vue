@@ -167,6 +167,14 @@
               variant="outlined"
               data-cy="component_property-directory_path-text_field"
             />
+            <v-textarea
+              v-if="isHpciss"
+              v-model="copySelectedComponent.memo"
+              label="memo"
+              :readonly="readOnly"
+              variant="outlined"
+              data-cy="component_property-memo-textarea"
+            />
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel v-if="isTask">
@@ -853,6 +861,9 @@ export default {
     },
     isStorage() {
       return isNormalObject(this.selectedComponent) && ["storage", "hpciss", "hpcisstar"].includes(this.selectedComponent.type);
+    },
+    isHpciss() {
+      return isNormalObject(this.selectedComponent) && ["hpciss", "hpcisstar"].includes(this.selectedComponent.type);
     },
     excludeList() {
       if (!Array.isArray(this.copySelectedComponent.exclude)) {
