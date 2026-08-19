@@ -1517,7 +1517,13 @@ class Dispatcher extends EventEmitter {
       return;
     }
     const componentDir = this._getComponentDir(component.ID);
-    const remotehostID = isLocal(component) ? null : remoteHost.getID("name", component.host);
+    //hpciss/hpcisstar have a non-local host (used later by _hpcissHandler for its own
+    //gfarm transfer) but _getInputFiles delivers their inputFiles into componentDir
+    //(the local WHEEL-server directory), same as a local component - never into the
+    //standard remote task working directory checked below. Without this, the check
+    //looks in a directory these types never populate and always reports "missing".
+    const checkFilesLocally = isLocal(component) || ["hpciss", "hpcisstar"].includes(component.type);
+    const remotehostID = checkFilesLocally ? null : remoteHost.getID("name", component.host);
     const ssh = remotehostID ? getSsh(this.projectRootDir, remotehostID) : null;
     const remoteWorkingDir = remotehostID
       ? getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component)
@@ -1530,7 +1536,7 @@ class Dispatcher extends EventEmitter {
       const renderedName = nunjucks.renderString(inputFile.name, this.env);
       let missing = false;
       try {
-        if (isLocal(component)) {
+        if (checkFilesLocally) {
           await fs.stat(path.join(componentDir, renderedName));
         } else {
           const rt = await ssh.exec(`test -e ${path.join(remoteWorkingDir, renderedName)}`, 0, logTrace.bind(null, this.projectRootDir, `${this.cwfDir}/${component.name}`));
@@ -1558,7 +1564,10 @@ class Dispatcher extends EventEmitter {
       return true;
     }
     const componentDir = this._getComponentDir(component.ID);
-    const remotehostID = isLocal(component) ? null : remoteHost.getID("name", component.host);
+    //see the matching comment in _warnMissingInputFiles - hpciss/hpcisstar receive
+    //their inputFiles in componentDir (local), never in the remote working dir below.
+    const checkFilesLocally = isLocal(component) || ["hpciss", "hpcisstar"].includes(component.type);
+    const remotehostID = checkFilesLocally ? null : remoteHost.getID("name", component.host);
     const ssh = remotehostID ? getSsh(this.projectRootDir, remotehostID) : null;
     const remoteWorkingDir = remotehostID
       ? getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component)
@@ -1570,7 +1579,7 @@ class Dispatcher extends EventEmitter {
       }
       const renderedName = nunjucks.renderString(inputFile.name, this.env);
       try {
-        if (isLocal(component)) {
+        if (checkFilesLocally) {
           await fs.stat(path.join(componentDir, renderedName));
         } else {
           const rt = await ssh.exec(`test -e ${path.join(remoteWorkingDir, renderedName)}`, 0, logTrace.bind(null, this.projectRootDir, `${this.cwfDir}/${component.name}`));

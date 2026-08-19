@@ -1540,6 +1540,114 @@ describe("UT for Dispatcher class", function () {
       expect(emitAllStub).to.have.been.calledWith(projectRootDir, "showMessage", sinon.match(/fileA\.txt/));
       expect(emitAllStub).to.have.been.calledWith(projectRootDir, "showMessage", sinon.match(/fileB\.txt/));
     });
+    //hpciss/hpcisstar have a non-local host but receive inputFiles in their local
+    //componentDir (never the remote working dir) - these prove the check looks in
+    //the right place for them despite isLocal(component) being false. No real
+    //remote host connection is needed: with the fix, remotehostID/ssh are never
+    //computed for these types, so an unreachable host name is fine.
+    it("should not emit showMessage for hpciss component when inputFile exists locally despite non-local host", async ()=>{
+      const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 30, y: 10 });
+      await updateComponentProperty(projectRootDir, hpciss.ID, "host", "fake-remote-host");
+      await addInputFile(projectRootDir, hpciss.ID, "present.txt");
+      await fs.outputFile(path.resolve(projectRootDir, hpciss.name, "present.txt"), "content");
+      const updatedHpciss = await fs.readJson(path.resolve(projectRootDir, hpciss.name, componentJsonFilename));
+      const updatedProjectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", updatedProjectJson.componentPath, {}, "");
+      await DP._warnMissingInputFiles(updatedHpciss);
+      expect(emitAllStub).to.not.have.been.called;
+    });
+    it("should not emit showMessage for hpcisstar component when inputFile exists locally despite non-local host", async ()=>{
+      const hpcisstar = await createNewComponent(projectRootDir, projectRootDir, "hpcisstar", { x: 30, y: 20 });
+      await updateComponentProperty(projectRootDir, hpcisstar.ID, "host", "fake-remote-host");
+      await addInputFile(projectRootDir, hpcisstar.ID, "present.txt");
+      await fs.outputFile(path.resolve(projectRootDir, hpcisstar.name, "present.txt"), "content");
+      const updatedHpcisstar = await fs.readJson(path.resolve(projectRootDir, hpcisstar.name, componentJsonFilename));
+      const updatedProjectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", updatedProjectJson.componentPath, {}, "");
+      await DP._warnMissingInputFiles(updatedHpcisstar);
+      expect(emitAllStub).to.not.have.been.called;
+    });
+    it("should still emit showMessage for hpciss component when inputFile is genuinely missing locally", async ()=>{
+      const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 40, y: 10 });
+      await updateComponentProperty(projectRootDir, hpciss.ID, "host", "fake-remote-host");
+      await addInputFile(projectRootDir, hpciss.ID, "missing.txt");
+      const updatedHpciss = await fs.readJson(path.resolve(projectRootDir, hpciss.name, componentJsonFilename));
+      const updatedProjectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", updatedProjectJson.componentPath, {}, "");
+      await DP._warnMissingInputFiles(updatedHpciss);
+      expect(emitAllStub).to.have.been.calledOnce;
+      expect(emitAllStub).to.have.been.calledWith(projectRootDir, "showMessage", sinon.match(/missing\.txt/));
+    });
+  });
+
+  describe("#_checkMandatoryInputFilesExist", ()=>{
+    let task;
+    beforeEach(async ()=>{
+      task = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
+      projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+    });
+    it("should return true when component has no inputFiles", async ()=>{
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      updatedTask.inputFiles = null;
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP._checkMandatoryInputFilesExist(updatedTask)).to.be.true;
+    });
+    it("should return true when non-mandatory inputFile is missing", async ()=>{
+      await addInputFile(projectRootDir, task.ID, "missing.txt");
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP._checkMandatoryInputFilesExist(updatedTask)).to.be.true;
+    });
+    it("should return false when mandatory inputFile is missing", async ()=>{
+      await addInputFile(projectRootDir, task.ID, "missing.txt");
+      await toggleInputFileMandatory(projectRootDir, task.ID, 0, true);
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP._checkMandatoryInputFilesExist(updatedTask)).to.be.false;
+    });
+    it("should return true when mandatory inputFile exists", async ()=>{
+      await addInputFile(projectRootDir, task.ID, "present.txt");
+      await toggleInputFileMandatory(projectRootDir, task.ID, 0, true);
+      await fs.outputFile(path.resolve(projectRootDir, task.name, "present.txt"), "content");
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(await DP._checkMandatoryInputFilesExist(updatedTask)).to.be.true;
+    });
+    //same rationale as the #_warnMissingInputFiles hpciss/hpcisstar cases above -
+    //no real remote host connection needed, the fix skips remotehostID/ssh entirely
+    //for these types.
+    it("should return true for hpciss component when mandatory inputFile exists locally despite non-local host", async ()=>{
+      const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 30, y: 10 });
+      await updateComponentProperty(projectRootDir, hpciss.ID, "host", "fake-remote-host");
+      await addInputFile(projectRootDir, hpciss.ID, "present.txt");
+      await toggleInputFileMandatory(projectRootDir, hpciss.ID, 0, true);
+      await fs.outputFile(path.resolve(projectRootDir, hpciss.name, "present.txt"), "content");
+      const updatedHpciss = await fs.readJson(path.resolve(projectRootDir, hpciss.name, componentJsonFilename));
+      const updatedProjectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", updatedProjectJson.componentPath, {}, "");
+      expect(await DP._checkMandatoryInputFilesExist(updatedHpciss)).to.be.true;
+    });
+    it("should return true for hpcisstar component when mandatory inputFile exists locally despite non-local host", async ()=>{
+      const hpcisstar = await createNewComponent(projectRootDir, projectRootDir, "hpcisstar", { x: 30, y: 20 });
+      await updateComponentProperty(projectRootDir, hpcisstar.ID, "host", "fake-remote-host");
+      await addInputFile(projectRootDir, hpcisstar.ID, "present.txt");
+      await toggleInputFileMandatory(projectRootDir, hpcisstar.ID, 0, true);
+      await fs.outputFile(path.resolve(projectRootDir, hpcisstar.name, "present.txt"), "content");
+      const updatedHpcisstar = await fs.readJson(path.resolve(projectRootDir, hpcisstar.name, componentJsonFilename));
+      const updatedProjectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", updatedProjectJson.componentPath, {}, "");
+      expect(await DP._checkMandatoryInputFilesExist(updatedHpcisstar)).to.be.true;
+    });
+    it("should still return false for hpciss component when mandatory inputFile is genuinely missing locally", async ()=>{
+      const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 40, y: 10 });
+      await updateComponentProperty(projectRootDir, hpciss.ID, "host", "fake-remote-host");
+      await addInputFile(projectRootDir, hpciss.ID, "missing.txt");
+      await toggleInputFileMandatory(projectRootDir, hpciss.ID, 0, true);
+      const updatedHpciss = await fs.readJson(path.resolve(projectRootDir, hpciss.name, componentJsonFilename));
+      const updatedProjectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", updatedProjectJson.componentPath, {}, "");
+      expect(await DP._checkMandatoryInputFilesExist(updatedHpciss)).to.be.false;
+    });
   });
 
   describe("#_getInputFiles mandatory-aware error handling", ()=>{
