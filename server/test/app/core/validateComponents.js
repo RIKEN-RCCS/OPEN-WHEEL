@@ -106,6 +106,42 @@ describe("validateComponents function", function () {
     getNextComponentsStub.restore();
   });
 
+  //hpciss/hpcisstar previously had no matching branch in validateComponent at all,
+  //so they were never validated (storagePath/host) regardless of content.
+  it("should validate hpciss component's storagePath", async function () {
+    const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 0, y: 0 });
+    hpciss.host = "OK";
+    hpciss.storagePath = "";
+
+    const errors = await validateComponent(projectRootDir, hpciss);
+
+    expect(errors).to.not.be.empty;
+    expect(errors.some((e)=>{
+      return e.message.includes("storagePath is not set");
+    })).to.be.true;
+  });
+  it("should validate hpcisstar component's storagePath", async function () {
+    const hpcisstar = await createNewComponent(projectRootDir, projectRootDir, "hpcisstar", { x: 0, y: 0 });
+    hpcisstar.host = "OK";
+    hpcisstar.storagePath = "";
+
+    const errors = await validateComponent(projectRootDir, hpcisstar);
+
+    expect(errors).to.not.be.empty;
+    expect(errors.some((e)=>{
+      return e.message.includes("storagePath is not set");
+    })).to.be.true;
+  });
+  it("should accept hpciss component with valid storagePath and host", async function () {
+    const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 0, y: 0 });
+    hpciss.host = "OK";
+    hpciss.storagePath = "/some/gfarm/path";
+
+    const errors = await validateComponent(projectRootDir, hpciss);
+
+    expect(errors).to.be.empty;
+  });
+
   it("should validate bulkjobTask with manualFinishCondition", async function () {
     const bulkjobTask = await createNewComponent(projectRootDir, projectRootDir, "bulkjobTask", { x: 0, y: 0 });
     bulkjobTask.host = "bulkjobOK";

@@ -67,7 +67,7 @@ export async function validateComponent(projectRootDir, component) {
   } else if (component.type === "foreach") {
     errors.push(...await validateForeach(component));
     errors.push(...await validateKeepProp(component));
-  } else if (component.type === "storage") {
+  } else if (["storage", "hpciss", "hpcisstar"].includes(component.type)) {
     errors.push(...await validateStorage(component));
   }
   //additional test for input and output files

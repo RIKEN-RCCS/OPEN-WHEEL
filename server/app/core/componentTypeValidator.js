@@ -71,6 +71,11 @@ export async function validateStorage(component) {
       }
     }
   } else {
+    //unlike the local branch above, fs.stat can't tell us an empty/blank remote
+    //storagePath is invalid - check it explicitly instead of silently accepting it.
+    if (component.storagePath.trim().length === 0) {
+      return [createValidationError("storagePath is not set")];
+    }
     const hostinfo = _internal.remoteHost.query("name", component.host);
     if (typeof hostinfo === "undefined") {
       return [createValidationError(`remote host setting for ${component.host} not found`)];
