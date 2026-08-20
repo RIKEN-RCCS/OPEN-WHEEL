@@ -10,7 +10,7 @@ import { readComponentJson, getComponentDir } from "./componentJsonIO.js";
 import { getChildren } from "./workflowUtil.js";
 import { validateTask, validateStepjobTask, validateStepjob, validateBulkjobTask, _internal as taskValidatorInternal } from "./taskValidator.js";
 import { validateConditionalCheck, validateKeepProp, validateInputFiles, validateOutputFiles, validateInputFileOverwrite, validateInputFileRaceCondition } from "./componentResourceValidator.js";
-import { validateForLoop, validateForeach, validateParameterStudy, validateStorage } from "./componentTypeValidator.js";
+import { validateForLoop, validateForeach, validateParameterStudy, validateStorage, validateHPCISS } from "./componentTypeValidator.js";
 import { getCycleGraph, getNextComponents } from "./dependencyGraphValidator.js";
 import { createValidationError } from "../lib/validationError.js";
 
@@ -67,8 +67,10 @@ export async function validateComponent(projectRootDir, component) {
   } else if (component.type === "foreach") {
     errors.push(...await validateForeach(component));
     errors.push(...await validateKeepProp(component));
-  } else if (["storage", "hpciss", "hpcisstar"].includes(component.type)) {
+  } else if (component.type === "storage") {
     errors.push(...await validateStorage(component));
+  } else if (["hpciss", "hpcisstar"].includes(component.type)) {
+    errors.push(...await validateHPCISS(component));
   }
   //additional test for input and output files
   if (Object.prototype.hasOwnProperty.call(component, "inputFiles")) {

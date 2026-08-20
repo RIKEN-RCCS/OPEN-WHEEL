@@ -19,7 +19,7 @@ import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { setupTestDir } from "../../testUtil.js";
 
 //testee
-import { _internal, validateForLoop, validateForeach, validateParameterStudy, validateStorage } from "../../../app/core/componentTypeValidator.js";
+import { _internal, validateForLoop, validateForeach, validateParameterStudy, validateStorage, validateHPCISS } from "../../../app/core/componentTypeValidator.js";
 import { _internal as fileValidatorInternal } from "../../../app/core/fileValidator.js";
 
 //test data
@@ -456,6 +456,58 @@ describe("componentTypeValidator UT", function () {
       storage.storagePath = "/absolute/path";
       storage.host = "OK";
       expect(await validateStorage(storage)).to.be.empty;
+    });
+  });
+
+  describe("validateHPCISS", ()=>{
+    let hpciss;
+    beforeEach(async ()=>{
+      hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 0, y: 0 });
+    });
+    it("should be rejected if host is not set", async ()=>{
+      hpciss.host = null;
+      hpciss.storagePath = "/some/gfarm/path";
+      const errors = await validateHPCISS(hpciss);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.include("host is required");
+    });
+    it("should be rejected if host is empty string", async ()=>{
+      hpciss.host = "";
+      hpciss.storagePath = "/some/gfarm/path";
+      const errors = await validateHPCISS(hpciss);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.include("host is required");
+    });
+    it("should be rejected if host is blank", async ()=>{
+      hpciss.host = "   ";
+      hpciss.storagePath = "/some/gfarm/path";
+      const errors = await validateHPCISS(hpciss);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.include("host is required");
+    });
+    it("should be rejected if host is localhost", async ()=>{
+      hpciss.host = "localhost";
+      hpciss.storagePath = "/some/gfarm/path";
+      const errors = await validateHPCISS(hpciss);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.include("must not be localhost");
+    });
+    it("should be resolved with empty array if host is a valid remote host and storagePath is set", async ()=>{
+      hpciss.host = "OK";
+      hpciss.storagePath = "/some/gfarm/path";
+      expect(await validateHPCISS(hpciss)).to.be.empty;
+    });
+    it("should be rejected if host is valid but storagePath is empty (delegates to validateStorage)", async ()=>{
+      hpciss.host = "OK";
+      hpciss.storagePath = "";
+      const errors = await validateHPCISS(hpciss);
+      expect(errors).to.not.be.empty;
+      expect(errors[0].message).to.be.a("string");
+      expect(errors[0].message).to.include("storagePath is not set");
     });
   });
 });

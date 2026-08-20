@@ -141,6 +141,20 @@ describe("validateComponents function", function () {
 
     expect(errors).to.be.empty;
   });
+  it("should reject hpciss component with host set to localhost, even with a real local storagePath", async function () {
+    const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 0, y: 0 });
+    hpciss.host = "localhost";
+    hpciss.storagePath = projectRootDir; //a genuinely existing local directory -
+    //rejection here must be because "localhost" isn't allowed for hpciss, not an
+    //incidental "path doesn't exist" failure.
+
+    const errors = await validateComponent(projectRootDir, hpciss);
+
+    expect(errors).to.not.be.empty;
+    expect(errors.some((e)=>{
+      return e.message.includes("must not be localhost");
+    })).to.be.true;
+  });
 
   it("should validate bulkjobTask with manualFinishCondition", async function () {
     const bulkjobTask = await createNewComponent(projectRootDir, projectRootDir, "bulkjobTask", { x: 0, y: 0 });
