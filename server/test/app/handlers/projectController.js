@@ -196,6 +196,34 @@ describe("project Controller handler UT", function () {
     });
   });
 
+  describe("[reproduction] running a project with an invalid component is rejected before it starts", ()=>{
+    it("should not run the project and should ack with the validation error report, not a boolean", async ()=>{
+      const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 10, y: 10 });
+      await updateComponentProperty(projectRootDir, hpciss.ID, "host", "localhost");
+      await updateComponentProperty(projectRootDir, hpciss.ID, "storagePath", projectRootDir);
+
+      const ack = sinon.stub();
+      await _internal.onRunProject("test-client-id", projectRootDir, ack);
+
+      //the client's ack callback treats a truthy value as success, so this must NOT
+      //be a plain boolean - it must be the array of {ID, name, errors} entries from
+      //validateComponents, so the client can recognize it and show the validation
+      //error dialog instead of silently treating rejection as acceptance.
+      expect(ack).to.have.been.calledOnce;
+      const report = ack.firstCall.args[0];
+      expect(report).to.be.an("array").that.is.not.empty;
+      expect(report.some((entry)=>{
+        return entry.errors.some((e)=>{
+          return e.message.includes("must not be localhost");
+        });
+      })).to.be.true;
+
+      //the project must never actually have started running
+      const state = await getProjectState(projectRootDir);
+      expect(state).to.equal("not-started");
+    });
+  });
+
   describe("[reproduction] issue #979 - a component disabled after run finished can not be cleaned up", ()=>{
     let task0, task1;
     beforeEach(async ()=>{
