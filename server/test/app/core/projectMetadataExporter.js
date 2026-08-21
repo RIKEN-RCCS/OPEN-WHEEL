@@ -6,6 +6,7 @@
 
 import { expect } from "chai";
 import sinon from "sinon";
+import { XMLParser } from "fast-xml-parser";
 import { gatherComponentMetadata, componentMetadataToXml, _internal } from "../../../app/core/projectMetadataExporter.js";
 
 const PROJECT_ROOT = "/dummy/project";
@@ -230,7 +231,7 @@ describe("#componentMetadataToXml", ()=>{
     expect(xml).to.include("</component>");
   });
 
-  it("should escape XML special characters in field values", async ()=>{
+  it("should escape XML special characters in attribute and element values", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "a&b<c>d", "this is root", { description: "\"quoted' & <escaped>" })]
     };
@@ -239,42 +240,92 @@ describe("#componentMetadataToXml", ()=>{
     expect(xml).to.include("&quot;quoted&apos; &amp; &lt;escaped&gt;");
   });
 
-  it("should render inputFiles with mandatory attribute", async ()=>{
+  //there is no allowlist any more - every property present on a component is
+  //exported, including ones that used to be silently dropped: previous/next
+  //(execution-order graph edges), if's "else" (false-branch target), pos/parent
+  //(previously deemed "internal"), and dispatcher/executer runtime fields like
+  //jobID/rt/dispatchedTime.
+  it("should render previous/next/else/pos/parent and dispatcher/executer runtime fields", async ()=>{
+    const metadata = {
+      components: [makeComponent("id-1", "if", "branch", "root-1", {
+        previous: ["a", "b"],
+        next: ["c"],
+        else: ["d"],
+        pos: { x: 10, y: 20 },
+        jobID: "12345",
+        rt: 0,
+        dispatchedTime: "2026-01-01T00:00:00Z"
+      })]
+    };
+    const xml = await componentMetadataToXml(metadata);
+    expect(xml).to.include("<parent>root-1</parent>");
+    expect(xml).to.include("<previous>a</previous>");
+    expect(xml).to.include("<previous>b</previous>");
+    expect(xml).to.include("<next>c</next>");
+    expect(xml).to.include("<else>d</else>");
+    expect(xml).to.include("<x>10</x>");
+    expect(xml).to.include("<y>20</y>");
+    expect(xml).to.include("<jobID>12345</jobID>");
+    expect(xml).to.include("<rt>0</rt>");
+    expect(xml).to.include("<dispatchedTime>2026-01-01T00:00:00Z</dispatchedTime>");
+  });
+
+  //arrays are no longer wrapped in a singular/plural container - each item
+  //becomes a sibling element using the property's own name, generically, with
+  //no per-field special-casing
+  it("should render an array property as repeated sibling elements, generically, with no wrapper", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", {
         inputFiles: [
-          { name: "required.dat", mandatory: true, src: [] },
-          { name: "optional.dat", mandatory: false, src: [] }
+          { name: "required.dat", mandatory: true },
+          { name: "optional.dat", mandatory: false }
         ]
       })]
     };
     const xml = await componentMetadataToXml(metadata);
-    expect(xml).to.include("<inputFile name=\"required.dat\" mandatory=\"true\"");
-    expect(xml).to.include("<inputFile name=\"optional.dat\" mandatory=\"false\"");
+    expect(xml).to.not.include("<inputFile ");
+    expect(xml).to.include("<inputFiles>\n      <name>required.dat</name>\n      <mandatory>true</mandatory>\n    </inputFiles>");
+    expect(xml).to.include("<inputFiles>\n      <name>optional.dat</name>\n      <mandatory>false</mandatory>\n    </inputFiles>");
   });
 
-  it("should render outputFiles element", async ()=>{
+  it("should render outputFiles the same generic way", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", {
-        outputFiles: [{ name: "result.dat", dst: [] }]
+        outputFiles: [{ name: "result.dat" }]
       })]
     };
     const xml = await componentMetadataToXml(metadata);
-    expect(xml).to.include("<outputFile name=\"result.dat\"");
+    expect(xml).to.include("<outputFiles>\n      <name>result.dat</name>\n    </outputFiles>");
   });
 
-  it("should render env variables", async ()=>{
+  //nested sub-objects (inputFile.src, outputFile.dst) are no longer
+  //special-cased attribute-bearing elements - they fall out of the same
+  //generic object-nesting as everything else
+  it("should render nested sub-objects (e.g. inputFile.src) as nested elements", async ()=>{
+    const metadata = {
+      components: [makeComponent("id-1", "task", "t", "this is root", {
+        inputFiles: [{ name: "in.dat", mandatory: false, src: [{ srcNode: "node-A", srcName: "out.dat" }] }]
+      })]
+    };
+    const xml = await componentMetadataToXml(metadata);
+    expect(xml).to.include("<src>\n        <srcNode>node-A</srcNode>\n        <srcName>out.dat</srcName>\n      </src>");
+  });
+
+  //env's shape changed from <variable name="X">value</variable> to one
+  //element per key, consistent with how every other object now serializes
+  it("should render env as one element per variable, not <variable name=...>", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", {
         env: { MY_VAR: "hello", OTHER: "world" }
       })]
     };
     const xml = await componentMetadataToXml(metadata);
-    expect(xml).to.include("<variable name=\"MY_VAR\">hello</variable>");
-    expect(xml).to.include("<variable name=\"OTHER\">world</variable>");
+    expect(xml).to.not.include("<variable");
+    expect(xml).to.include("<MY_VAR>hello</MY_VAR>");
+    expect(xml).to.include("<OTHER>world</OTHER>");
   });
 
-  it("should nest child components inside <children> element", async ()=>{
+  it("should nest child components inside <children><component> elements", async ()=>{
     const child = makeComponent("child-1", "task", "childTask", "parent-1");
     const parent = makeComponent("parent-1", "workflow", "parentWf", "this is root", {
       children: [child]
@@ -292,16 +343,6 @@ describe("#componentMetadataToXml", ()=>{
     expect(childStart).to.be.lessThan(childrenEnd);
   });
 
-  it("should render src elements inside inputFile when src is non-empty", async ()=>{
-    const metadata = {
-      components: [makeComponent("id-1", "task", "t", "this is root", {
-        inputFiles: [{ name: "in.dat", mandatory: false, src: [{ srcNode: "node-A", srcName: "out.dat" }] }]
-      })]
-    };
-    const xml = await componentMetadataToXml(metadata);
-    expect(xml).to.include("<src srcNode=\"node-A\" srcName=\"out.dat\"");
-  });
-
   it("should render script field when present", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", { script: "run.sh" })]
@@ -310,7 +351,7 @@ describe("#componentMetadataToXml", ()=>{
     expect(xml).to.include("<script>run.sh</script>");
   });
 
-  it("should not render null or undefined scalar fields", async ()=>{
+  it("should not render null or undefined fields", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", { script: null, checker: undefined })]
     };
@@ -343,27 +384,36 @@ describe("#componentMetadataToXml", ()=>{
     expect(xml).to.include("<condition>i &lt; 10</condition>");
   });
 
-  it("should wrap scriptContent in a CDATA section", async ()=>{
+  //the CDATA special-case now generalizes to any string containing a newline,
+  //not just scriptContent
+  it("should wrap any multiline string value in a CDATA section, not just scriptContent", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", {
         script: "run.sh",
-        scriptContent: "#!/bin/bash\necho \"hi\" && exit 0\n"
+        scriptContent: "#!/bin/bash\necho \"hi\" && exit 0\n",
+        description: "line1\nline2"
       })]
     };
     const xml = await componentMetadataToXml(metadata);
-    expect(xml).to.include("<scriptContent><![CDATA[#!/bin/bash\necho \"hi\" && exit 0\n]]></scriptContent>");
+    const parsed = new XMLParser().parse(xml);
+    expect(parsed.workflow.component.scriptContent).to.equal("#!/bin/bash\necho \"hi\" && exit 0\n");
+    expect(parsed.workflow.component.description).to.equal("line1\nline2");
+    expect(xml).to.include("<![CDATA[");
   });
 
-  it("should fall back to escaped text when scriptContent contains the CDATA terminator", async ()=>{
+  //unlike the old hand-rolled fallback-to-escaping, the CDATA terminator is
+  //now handled by splitting across adjacent CDATA sections, so the content
+  //stays inside proper CDATA (round-trippable) instead of losing that treatment
+  it("should split, not escape-fallback, when scriptContent contains the CDATA terminator", async ()=>{
     const metadata = {
       components: [makeComponent("id-1", "task", "t", "this is root", {
         script: "run.sh",
-        scriptContent: "echo ]]> weird"
+        scriptContent: "echo ]]> weird\nsecond line"
       })]
     };
     const xml = await componentMetadataToXml(metadata);
-    expect(xml).to.not.include("<![CDATA[");
-    expect(xml).to.include("<scriptContent>echo ]]&gt; weird</scriptContent>");
+    const parsed = new XMLParser().parse(xml);
+    expect(parsed.workflow.component.scriptContent).to.equal("echo ]]> weird\nsecond line");
   });
 
   it("should not render scriptContent element when absent", async ()=>{
@@ -372,5 +422,13 @@ describe("#componentMetadataToXml", ()=>{
     };
     const xml = await componentMetadataToXml(metadata);
     expect(xml).to.not.include("<scriptContent>");
+  });
+
+  it("should sanitize a property key that isn't a valid XML element name instead of silently dropping it", async ()=>{
+    const metadata = {
+      components: [makeComponent("id-1", "task", "t", "this is root", { "weird key!": "value" })]
+    };
+    const xml = await componentMetadataToXml(metadata);
+    expect(xml).to.include("<weird_key_>value</weird_key_>");
   });
 });

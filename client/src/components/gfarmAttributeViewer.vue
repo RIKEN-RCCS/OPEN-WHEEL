@@ -121,7 +121,10 @@
               </template>
             </v-breadcrumbs>
 
-            <!-- Component detail card -->
+            <!-- Component detail card: every property present on the component is
+                 shown here generically (no fixed field list) - nested
+                 objects/arrays are expanded with indentation so arbitrarily-shaped
+                 data (including future properties) is always visible. -->
             <div style="overflow-y: auto; flex: 1 1 0;">
               <v-card
                 v-if="selectedComponent"
@@ -140,138 +143,34 @@
                 </v-card-title>
                 <v-divider />
                 <v-card-text>
-                  <v-table density="compact">
+                  <v-table
+                    v-if="selectedComponentRows.length > 0"
+                    density="compact"
+                    data-cy="gfarm_attribute_viewer-props-table"
+                  >
                     <tbody>
-                      <tr v-if="selectedComponent.description">
-                        <td class="text-caption font-weight-bold">
-                          description
-                        </td>
-                        <td>{{ selectedComponent.description }}</td>
-                      </tr>
-                      <tr v-if="selectedComponent.host">
-                        <td class="text-caption font-weight-bold">
-                          host
-                        </td>
-                        <td>{{ selectedComponent.host }}</td>
-                      </tr>
-                      <tr v-if="selectedComponent.script">
-                        <td class="text-caption font-weight-bold">
-                          script
+                      <tr
+                        v-for="(row, index) in selectedComponentRows"
+                        :key="index"
+                      >
+                        <td
+                          class="text-caption font-weight-bold"
+                          :style="{ paddingLeft: `${row.depth * 16 + 8}px` }"
+                        >
+                          {{ row.key }}
                         </td>
                         <td>
-                          <code>{{ selectedComponent.script }}</code>
+                          <code v-if="row.isLeaf">{{ row.value }}</code>
                         </td>
-                      </tr>
-                      <tr v-if="selectedComponent.checker">
-                        <td class="text-caption font-weight-bold">
-                          checker
-                        </td>
-                        <td>
-                          <code>{{ selectedComponent.checker }}</code>
-                        </td>
-                      </tr>
-                      <tr v-if="selectedComponent.storagePath">
-                        <td class="text-caption font-weight-bold">
-                          storage path
-                        </td>
-                        <td>
-                          <code>{{ selectedComponent.storagePath }}</code>
-                        </td>
-                      </tr>
-                      <tr v-if="selectedComponent.state">
-                        <td class="text-caption font-weight-bold">
-                          state
-                        </td>
-                        <td>{{ selectedComponent.state }}</td>
                       </tr>
                     </tbody>
                   </v-table>
-
-                  <!-- inputFiles -->
-                  <div
-                    v-if="selectedComponent.inputFiles && selectedComponent.inputFiles.length > 0"
-                    class="mt-3"
-                  >
-                    <div class="text-caption font-weight-bold mb-1">
-                      input files
-                    </div>
-                    <v-table density="compact">
-                      <thead>
-                        <tr>
-                          <th>name</th>
-                          <th>mandatory</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr
-                          v-for="f in selectedComponent.inputFiles"
-                          :key="f.name"
-                        >
-                          <td>{{ f.name }}</td>
-                          <td>
-                            <v-icon
-                              v-if="f.mandatory"
-                              icon="mdi-check"
-                              color="error"
-                              size="small"
-                            />
-                          </td>
-                        </tr>
-                      </tbody>
-                    </v-table>
-                  </div>
-
-                  <!-- outputFiles -->
-                  <div
-                    v-if="selectedComponent.outputFiles && selectedComponent.outputFiles.length > 0"
-                    class="mt-3"
-                  >
-                    <div class="text-caption font-weight-bold mb-1">
-                      output files
-                    </div>
-                    <v-table density="compact">
-                      <thead>
-                        <tr>
-                          <th>name</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr
-                          v-for="f in selectedComponent.outputFiles"
-                          :key="f.name"
-                        >
-                          <td>{{ f.name }}</td>
-                        </tr>
-                      </tbody>
-                    </v-table>
-                  </div>
-
-                  <!-- env vars -->
-                  <div
-                    v-if="selectedComponent.env && Object.keys(selectedComponent.env).length > 0"
-                    class="mt-3"
-                  >
-                    <div class="text-caption font-weight-bold mb-1">
-                      environment variables
-                    </div>
-                    <v-table density="compact">
-                      <thead>
-                        <tr>
-                          <th>name</th>
-                          <th>value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr
-                          v-for="(value, key) in selectedComponent.env"
-                          :key="key"
-                        >
-                          <td>{{ key }}</td>
-                          <td>{{ value }}</td>
-                        </tr>
-                      </tbody>
-                    </v-table>
-                  </div>
+                  <v-alert
+                    v-else
+                    type="info"
+                    density="compact"
+                    text="This component has no additional properties."
+                  />
                 </v-card-text>
               </v-card>
               <v-alert
@@ -307,64 +206,138 @@ const typeColorMap = {
 };
 
 /**
- * Parse a <component> XML element into a plain JS object for the tree.
- * @param {Element} el - XML component element
- * @param {string} uploaderType - type string of the uploading component ("hpciss" or "hpcisstar")
- * @returns {object} - component data object with optional children array
+ * Group an element's direct children by tag name, preserving document order.
+ * @param {Element} el - XML element
+ * @returns {Map<string, Element[]>} - tag name -> elements with that tag
  */
-function parseComponentElement(el, uploaderType) {
+function groupChildrenByTag(el) {
+  const byTag = new Map();
+  for (const child of el.children) {
+    if (!byTag.has(child.tagName)) {
+      byTag.set(child.tagName, []);
+    }
+    byTag.get(child.tagName).push(child);
+  }
+  return byTag;
+}
+
+/**
+ * Parse a single XML element's value generically, with no fixed field list:
+ * an element with its own child elements becomes a nested object
+ * (recursively); an element with only text content becomes that text. A tag
+ * that occurs multiple times among its siblings becomes an array - this
+ * mirrors the server's export convention (arrays are repeated same-named
+ * sibling elements, not wrapped in a container).
+ * @param {Element} el - XML element
+ * @returns {object|string} - nested object, or text content
+ */
+function parseElementValue(el) {
+  if (el.children.length === 0) {
+    return el.textContent;
+  }
+  const obj = {};
+  for (const [tag, elements] of groupChildrenByTag(el)) {
+    obj[tag] = elements.length > 1
+      ? elements.map((e)=>{ return parseElementValue(e); })
+      : parseElementValue(elements[0]);
+  }
+  return obj;
+}
+
+/**
+ * Parse a <component> XML element into a plain JS object for the tree: type/
+ * name/id come from attributes, "children" is handled specially since it
+ * represents workflow nesting rather than a literal component property, and
+ * every other child element becomes a generic entry in `props` - scalar,
+ * nested object, or array - with no allowlist of known field names.
+ * @param {Element} el - XML component element
+ * @returns {object} - { id, name, type, isUploader, props, children? }
+ */
+function parseComponentElement(el) {
   const id = el.getAttribute("id");
   const type = el.getAttribute("type");
   const name = el.getAttribute("name");
-  const isUploader = type === uploaderType || (uploaderType && ["hpciss", "hpcisstar"].includes(type));
+  const isUploader = ["hpciss", "hpcisstar"].includes(type);
 
-  const getText = (tag)=>{
-    const child = el.querySelector(`:scope > ${tag}`);
-    return child ? child.textContent || null : null;
-  };
+  const props = {};
+  let children = [];
+  for (const [tag, elements] of groupChildrenByTag(el)) {
+    if (tag === "children") {
+      children = [...elements[0].querySelectorAll(":scope > component")].map((c)=>{
+        return parseComponentElement(c);
+      });
+      continue;
+    }
+    props[tag] = elements.length > 1
+      ? elements.map((e)=>{ return parseElementValue(e); })
+      : parseElementValue(elements[0]);
+  }
 
-  const inputFiles = [...el.querySelectorAll(":scope > inputFiles > inputFile")].map((f)=>{
-    return {
-      name: f.getAttribute("name"),
-      mandatory: f.getAttribute("mandatory") === "true"
-    };
-  });
-
-  const outputFiles = [...el.querySelectorAll(":scope > outputFiles > outputFile")].map((f)=>{
-    return {
-      name: f.getAttribute("name")
-    };
-  });
-
-  const envEntries = [...el.querySelectorAll(":scope > env > variable")].map((v)=>{
-    return [v.getAttribute("name"), v.textContent];
-  });
-  const env = Object.fromEntries(envEntries);
-
-  const childEls = [...el.querySelectorAll(":scope > children > component")];
-  const children = childEls.map((c)=>{
-    return parseComponentElement(c, uploaderType);
-  });
-
-  const node = {
-    id,
-    name,
-    type,
-    isUploader,
-    description: getText("description"),
-    host: getText("host"),
-    script: getText("script"),
-    checker: getText("checker"),
-    storagePath: getText("storagePath"),
-    state: getText("state"),
-    inputFiles,
-    outputFiles,
-    env
-  };
+  const node = { id, name, type, isUploader, props };
   if (children.length > 0) {
     node.children = children;
   }
   return node;
+}
+
+/**
+ * Flatten a component's generic props object into a display-ready, indented
+ * row list, so the template can render an arbitrarily-shaped property tree
+ * (any nesting of objects/arrays) without needing Vue template recursion.
+ * @param {object} props - tag name -> string|object|array
+ * @param {number} depth - current nesting depth, for indentation
+ * @returns {{key: string, value: (string|null), depth: number, isLeaf: boolean}[]} - flattened rows
+ */
+function flattenProps(props, depth = 0) {
+  const rows = [];
+  for (const [key, value] of Object.entries(props)) {
+    if (Array.isArray(value)) {
+      const allScalar = value.every((v)=>{
+        return typeof v === "string";
+      });
+      if (allScalar) {
+        rows.push({ key, value: value.join(", "), depth, isLeaf: true });
+      } else {
+        value.forEach((item, index)=>{
+          rows.push({ key: `${key} [${index}]`, value: null, depth, isLeaf: false });
+          rows.push(...flattenProps(typeof item === "string" ? { value: item } : item, depth + 1));
+        });
+      }
+    } else if (value && typeof value === "object") {
+      rows.push({ key, value: null, depth, isLeaf: false });
+      rows.push(...flattenProps(value, depth + 1));
+    } else {
+      rows.push({ key, value, depth, isLeaf: true });
+    }
+  }
+  return rows;
+}
+
+/**
+ * Collect every string value reachable from a component's props (recursing
+ * through nested objects/arrays), for full-text search - so search still
+ * covers arbitrary/future properties, not just a fixed short list of fields.
+ * @param {object} props - tag name -> string|object|array
+ * @returns {string[]} - all leaf string values found
+ */
+function collectSearchableStrings(props) {
+  const out = [];
+  for (const value of Object.values(props)) {
+    if (typeof value === "string") {
+      out.push(value);
+    } else if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === "string") {
+          out.push(item);
+        } else if (item && typeof item === "object") {
+          out.push(...collectSearchableStrings(item));
+        }
+      }
+    } else if (value && typeof value === "object") {
+      out.push(...collectSearchableStrings(value));
+    }
+  }
+  return out;
 }
 
 /**
@@ -376,7 +349,8 @@ function parseComponentElement(el, uploaderType) {
 function filterTree(items, query) {
   const result = [];
   for (const item of items) {
-    const matchesSelf = [item.name, item.type, item.script, item.host, item.description]
+    const searchable = [item.name, item.type, ...collectSearchableStrings(item.props)];
+    const matchesSelf = searchable
       .some((v)=>{ return v && v.toLowerCase().includes(query); });
     const filteredChildren = item.children ? filterTree(item.children, query) : [];
     if (matchesSelf || filteredChildren.length > 0) {
@@ -446,7 +420,7 @@ export default {
         }
         const rootComponents = [...doc.querySelectorAll("workflow > component")];
         return rootComponents.map((el)=>{
-          return parseComponentElement(el, null);
+          return parseComponentElement(el);
         });
       } catch {
         return [];
@@ -457,6 +431,12 @@ export default {
         return this.treeItems;
       }
       return filterTree(this.treeItems, this.searchQuery.toLowerCase());
+    },
+    selectedComponentRows() {
+      if (!this.selectedComponent) {
+        return [];
+      }
+      return flattenProps(this.selectedComponent.props);
     },
     breadcrumbItems() {
       const uploaderPath = findUploaderPath(this.treeItems);

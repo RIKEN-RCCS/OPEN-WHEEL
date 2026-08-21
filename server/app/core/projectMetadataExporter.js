@@ -6,6 +6,7 @@
 import { writeFile } from "node:fs/promises";
 import path from "path";
 import fs from "fs-extra";
+import { XMLBuilder } from "fast-xml-parser";
 import { getAllComponentIDs } from "./projectJsonFileOperator.js";
 import { getComponentDir, readComponentJsonByID } from "./componentJsonIO.js";
 import { getLogger } from "../logSettings.js";
@@ -18,6 +19,34 @@ const _internal = {
   fs,
   getLogger
 };
+
+//sentinel key fast-xml-parser's XMLBuilder recognizes as "wrap this value's text
+//content in a CDATA section" - see reshapeForXmlBuilder()
+const cdataPropName = "__cdata";
+const xmlBuilder = new XMLBuilder({ ignoreAttributes: false, format: true, cdataPropName });
+
+//XML element names must start with a letter or underscore and contain only
+//letters, digits, hyphens, underscores, and periods. every currently-known
+//component property is a plain camelCase identifier, so this only exists as a
+//defensive fallback - if it ever triggers, sanitize rather than silently drop
+//the property, since "never silently drop data" is the entire point of this module.
+const validXmlNamePattern = /^[A-Za-z_][A-Za-z0-9_.-]*$/;
+
+/**
+ * Sanitize a property name into a valid XML element name, logging a warning if
+ * sanitization was actually needed (not expected in practice - see above).
+ * @param {string} key - property name
+ * @param {string} projectRootDir - only used to route the warning to the right log
+ * @returns {string} - a valid XML element name
+ */
+function sanitizeXmlName(key, projectRootDir) {
+  if (validXmlNamePattern.test(key)) {
+    return key;
+  }
+  const sanitized = key.replace(/[^A-Za-z0-9_.-]/g, "_").replace(/^[^A-Za-z_]/, "_$&");
+  _internal.getLogger(projectRootDir).warn(`sanitized invalid XML element name "${key}" to "${sanitized}"`);
+  return sanitized;
+}
 
 /**
  * Get the property name that holds a task/if/while component's script (or
@@ -37,116 +66,70 @@ function getScriptFieldName(type) {
 }
 
 /**
- * Escape special XML characters in a string value.
- * @param {string|number|boolean|null|undefined} value - value to escape
- * @returns {string} - XML-safe string
+ * Recursively reshape a plain JS value into the shape fast-xml-parser's
+ * XMLBuilder expects: null/undefined are dropped entirely (so they are simply
+ * absent from the output, rather than rendered as empty tags), multiline
+ * strings are wrapped for CDATA (generalizes the old scriptContent-only
+ * special case to any free-text property), and object keys are sanitized into
+ * valid XML element names. No property is excluded - this replaces the old
+ * per-field allowlist.
+ * @param {string|number|boolean|object|Array|null|undefined} value - value to reshape
+ * @param {string} projectRootDir - only used to route a sanitization warning, if any
+ * @returns {string|number|boolean|object|Array|undefined} - reshaped value, or undefined if it should be omitted entirely
  */
-function escapeXml(value) {
-  const str = value === null || value === undefined ? "" : String(value);
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+function reshapeForXmlBuilder(value, projectRootDir) {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map((item)=>{ return reshapeForXmlBuilder(item, projectRootDir); })
+      .filter((item)=>{ return item !== undefined; });
+  }
+  if (typeof value === "object") {
+    const out = {};
+    for (const [key, v] of Object.entries(value)) {
+      const reshaped = reshapeForXmlBuilder(v, projectRootDir);
+      if (reshaped !== undefined) {
+        out[sanitizeXmlName(key, projectRootDir)] = reshaped;
+      }
+    }
+    return out;
+  }
+  if (typeof value === "string" && value.includes("\n")) {
+    return { [cdataPropName]: value };
+  }
+  return value;
 }
 
 /**
- * Convert a single component (with optional nested children) to XML string.
+ * Convert a single component (with optional nested children, as built by
+ * gatherComponentMetadata) into an XMLBuilder-ready object. type/name/ID
+ * become attributes on <component> (for cheap identification without walking
+ * children); every other property - including ones that used to be silently
+ * dropped, like previous/next/else/pos/parent and every dispatcher/executer
+ * runtime field - becomes a generic child element/array/nested-object.
  * @param {object} component - component object
- * @param {string} indent - current indentation string
- * @returns {string} - XML fragment for this component
+ * @param {string} projectRootDir - only used to route a sanitization warning, if any
+ * @returns {object} - XMLBuilder-shaped object for this <component>
  */
-function componentToXml(component, indent = "  ") {
-  const type = escapeXml(component.type);
-  const name = escapeXml(component.name);
-  const id = escapeXml(component.ID);
-  let xml = `${indent}<component type="${type}" name="${name}" id="${id}">\n`;
+function componentToXmlObject(component, projectRootDir) {
+  const { type, name, ID, children, ...rest } = component;
+  const node = {
+    "@_type": type === null || type === undefined ? "" : String(type),
+    "@_name": name === null || name === undefined ? "" : String(name),
+    "@_id": ID === null || ID === undefined ? "" : String(ID)
+  };
+  Object.assign(node, reshapeForXmlBuilder(rest, projectRootDir));
 
-  //Simple scalar fields
-  const scalarFields = [
-    "description", "script", "condition", "host", "queue", "submitOption", "sourceScript",
-    "retry", "retryCondition", "checker", "cleanupFlag", "disable",
-    "ignoreFailure", "useJobScheduler", "storagePath", "state", "memo"
-  ];
-  for (const field of scalarFields) {
-    if (component[field] !== null && component[field] !== undefined) {
-      xml += `${indent}  <${field}>${escapeXml(component[field])}</${field}>\n`;
-    }
+  if (Array.isArray(children) && children.length > 0) {
+    node.children = {
+      component: children.map((child)=>{
+        return componentToXmlObject(child, projectRootDir);
+      })
+    };
   }
-
-  //script/condition file content (task/if/while) - multi-line free text, so
-  //CDATA instead of entity-escaping; fall back to escaping only in the rare
-  //case the content itself contains the CDATA terminator.
-  if (typeof component.scriptContent === "string") {
-    xml += `${indent}  <scriptContent>`;
-    xml += component.scriptContent.includes("]]>")
-      ? escapeXml(component.scriptContent)
-      : `<![CDATA[${component.scriptContent}]]>`;
-    xml += "</scriptContent>\n";
-  }
-
-  //env object
-  if (component.env && Object.keys(component.env).length > 0) {
-    xml += `${indent}  <env>\n`;
-
-    for (const [key, value] of Object.entries(component.env)) {
-      xml += `${indent}    <variable name="${escapeXml(key)}">${escapeXml(value)}</variable>\n`;
-    }
-    xml += `${indent}  </env>\n`;
-  }
-
-  //inputFiles array
-  if (Array.isArray(component.inputFiles) && component.inputFiles.length > 0) {
-    xml += `${indent}  <inputFiles>\n`;
-
-    for (const f of component.inputFiles) {
-      const mandatory = f.mandatory === true ? "true" : "false";
-      if (Array.isArray(f.src) && f.src.length > 0) {
-        xml += `${indent}    <inputFile name="${escapeXml(f.name)}" mandatory="${mandatory}">\n`;
-
-        for (const s of f.src) {
-          xml += `${indent}      <src srcNode="${escapeXml(s.srcNode)}" srcName="${escapeXml(s.srcName)}"/>\n`;
-        }
-        xml += `${indent}    </inputFile>\n`;
-      } else {
-        xml += `${indent}    <inputFile name="${escapeXml(f.name)}" mandatory="${mandatory}"/>\n`;
-      }
-    }
-    xml += `${indent}  </inputFiles>\n`;
-  }
-
-  //outputFiles array
-  if (Array.isArray(component.outputFiles) && component.outputFiles.length > 0) {
-    xml += `${indent}  <outputFiles>\n`;
-
-    for (const f of component.outputFiles) {
-      if (Array.isArray(f.dst) && f.dst.length > 0) {
-        xml += `${indent}    <outputFile name="${escapeXml(f.name)}">\n`;
-
-        for (const d of f.dst) {
-          xml += `${indent}      <dst dstNode="${escapeXml(d.dstNode)}" dstName="${escapeXml(d.dstName)}"/>\n`;
-        }
-        xml += `${indent}    </outputFile>\n`;
-      } else {
-        xml += `${indent}    <outputFile name="${escapeXml(f.name)}"/>\n`;
-      }
-    }
-    xml += `${indent}  </outputFiles>\n`;
-  }
-
-  //Nested children
-  if (Array.isArray(component.children) && component.children.length > 0) {
-    xml += `${indent}  <children>\n`;
-
-    for (const child of component.children) {
-      xml += componentToXml(child, `${indent}    `);
-    }
-    xml += `${indent}  </children>\n`;
-  }
-
-  xml += `${indent}</component>\n`;
-  return xml;
+  return node;
 }
 
 /**
@@ -214,16 +197,19 @@ export async function gatherComponentMetadata(projectRootDir) {
 /**
  * Convert nested component metadata JSON to an XML string.
  * The XML uses <workflow> as root element and <component> for each component.
- * Components are nested inside <children> elements to reflect the workflow hierarchy.
+ * Components are nested inside <children> elements to reflect the workflow
+ * hierarchy. Every property present on a component is included - there is no
+ * allowlist.
  * @param {object} metadata - nested component metadata from gatherComponentMetadata
- * @returns {string} - XML string with XML declaration
+ * @returns {Promise<string>} - XML string with XML declaration
  */
 export async function componentMetadataToXml(metadata) {
-  let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<workflow>\n";
-  for (const component of metadata.components) {
-    xml += componentToXml(component);
-  }
-  xml += "</workflow>\n";
+  const doc = {
+    workflow: {
+      component: metadata.components.map((component)=>{ return componentToXmlObject(component); })
+    }
+  };
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n${xmlBuilder.build(doc)}`;
   if (debugMetadataXml) {
     await writeFile(debugMetadataXml, xml);
   }

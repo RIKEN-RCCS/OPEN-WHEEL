@@ -164,6 +164,24 @@ gfarm:///path/to/project/output  # プロジェクト配下
 `<workflow>` をルートとし、各コンポーネントを `<component>` 要素で表現する。
 子コンポーネントは `<children>` 要素にネストされ、階層構造を反映する。
 
+`<component>` の `type`/`name`/`id` 属性以外は、**そのコンポーネントのJSON
+（`cmp.wheel.json`）が持つプロパティを一切の許可リストなしで全て出力する**
+（`server/app/core/projectMetadataExporter.js` の `componentToXmlObject`/
+`reshapeForXmlBuilder`、[fast-xml-parser](https://github.com/NaturalIntelligence/fast-xml-parser)
+の `XMLBuilder` を使用）。これには実行中に `dispatcher.js`/`executerManager.js`
+が書き込む実行時プロパティ（`jobID`、`rt`、`startTime`/`endTime`、
+`dispatchedTime`、`remotehostID` など）や、以前は出力対象外だった
+`previous`/`next`（実行順序グラフのエッジ）、`if`の`else`（false分岐先）、
+`pos`/`parent` なども含まれる。変換規則は次の通り、完全に汎用的（フィールド名に
+よる特別扱いは一切ない）：
+
+- オブジェクト（例：`env`）→ キーごとに1つの子要素
+- 配列（例：`previous`、`inputFiles`）→ ラッパー要素なしで、プロパティ名と
+  同じタグ名を持つ兄弟要素を配列の要素数だけ繰り返す
+- 改行を含む文字列（例：`scriptContent`）→ `<![CDATA[...]]>` で囲む
+  （`]]>` を含む場合はライブラリが自動的に隣接するCDATAセクションに分割する）
+- `null`/`undefined` → 出力しない（フィールド自体が現れない）
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <workflow>
@@ -171,28 +189,30 @@ gfarm:///path/to/project/output  # プロジェクト配下
     <children>
       <component type="task" name="myTask" id="task-uuid">
         <script>run.sh</script>
+        <jobID>12345</jobID>
+        <rt>0</rt>
+        <next>hpciss-uuid</next>
         <outputFiles>
-          <outputFile name="result.dat"/>
+          <name>result.dat</name>
         </outputFiles>
       </component>
       <component type="hpciss" name="storage" id="hpciss-uuid">
         <host>csgw.example.ac.jp</host>
         <storagePath>/home/user/gfarm/result</storagePath>
+        <previous>task-uuid</previous>
         <inputFiles>
-          <inputFile name="result.dat" mandatory="false">
-            <src srcNode="myTask" srcName="result.dat"/>
-          </inputFile>
+          <name>result.dat</name>
+          <mandatory>false</mandatory>
+          <src>
+            <srcNode>myTask</srcNode>
+            <srcName>result.dat</srcName>
+          </src>
         </inputFiles>
       </component>
     </children>
   </component>
 </workflow>
 ```
-
-`<component>` に含まれるスカラーフィールド：
-`description`, `script`, `host`, `queue`, `submitOption`, `sourceScript`,
-`retry`, `retryCondition`, `checker`, `cleanupFlag`, `disable`,
-`ignoreFailure`, `useJobScheduler`, `storagePath`, `state`
 
 ### 属性ビューアーUI
 
@@ -201,20 +221,23 @@ gfarm:///path/to/project/output  # プロジェクト配下
 - **remoteFileBrowser.vue**（hpciss）：ファイル選択中に「inspect gfarm attributes」ボタンが有効化
 - **gfarmTarBrowser.vue**（hpcisstar）：「inspect gfarm attributes」ボタンでtarアーカイブ全体の属性を表示
 - **gfarmAttributeViewer.vue**：属性ビューアーダイアログ
-  - 左パネル：コンポーネントツリービュー（検索フィルタ付き）
-  - 右パネル：選択コンポーネントの詳細
+  - 左パネル：コンポーネントツリービュー（検索フィルタ付き。検索はコンポーネント名/種別だけでなく、
+    プロパティツリー内の全ての文字列値を対象とする）
+  - 右パネル：選択コンポーネントの詳細 — XML内に存在する全プロパティを、決め打ちの項目リストなしで
+    汎用的に（ネストしたオブジェクト/配列はインデント表示で）一覧表示する
   - パンくずリスト：ルートからhpcissコンポーネントまでの来歴を表示
 
 ### デバッグ用メタデータ書き出し
 
-`server.json`（または環境変数）で以下を設定すると、転送時にメタデータをローカルファイルへ書き出す。
+以下の**環境変数のみ**で設定する（`server.json` では設定不可 — 実運用中に設定ファイル経由で
+誤って有効化されたままにならないよう、意図的に環境変数専用としている）。
 
-| 設定キー | 環境変数 | 説明 |
-|---------|---------|------|
-| `debugMetadataJson` | `WHEEL_DEBUG_METADATA_JSON` | `gatherComponentMetadata` の出力JSONを指定パスに書き出す |
-| `debugMetadataXml` | `WHEEL_DEBUG_METADATA_XML` | `componentMetadataToXml` の出力XMLを指定パスに書き出す |
+| 環境変数 | 説明 |
+|---------|------|
+| `WHEEL_DEBUG_METADATA_JSON` | `gatherComponentMetadata` の出力JSONを指定パスに書き出す |
+| `WHEEL_DEBUG_METADATA_XML` | `componentMetadataToXml` の出力XMLを指定パスに書き出す |
 
-値はファイルパス（文字列）。`null`（デフォルト）または未設定の場合は書き出しなし。
+値はファイルパス（文字列）。未設定（デフォルト）の場合は書き出しなし。
 
 ```bash
 # 例：XMLデバッグ出力を有効化
