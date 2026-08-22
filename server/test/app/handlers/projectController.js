@@ -449,20 +449,30 @@ describe("project Controller handler UT", function () {
     });
 
     it("should include the text-editor's edited content in the 'auto saved: project starting' commit even when onRunProject is triggered immediately after saving (no await)", async ()=>{
-      const saveFileCb = sinon.stub();
-
       //this reproduces a real client interaction: the text editor's "saveFile" socket event is
       //fired, but rapid.js#onSaveFile debounces the actual write+gitAdd by SAVE_FILE_DEBOUNCE_MS
       //(10 seconds) internally and only resolves its callback once that timer fires. The client
       //does not (and, realistically, often will not) wait for that ack before letting the user
-      //immediately click "run project" - so intentionally do NOT await/settle saveFileCb here.
-      onSaveFile(projectRootDir, targetFilename, projectRootDir, editedContent, saveFileCb);
+      //immediately click "run project" - so intentionally do NOT await it before calling
+      //onRunProject below, to exercise that exact race.
+      const saveFileSettled = new Promise((resolve)=>{
+        onSaveFile(projectRootDir, targetFilename, projectRootDir, editedContent, resolve);
+      });
 
       const ack = sinon.stub();
       await _internal.onRunProject("test-client-id", projectRootDir, ack);
 
       const committedContent = await gitPromise(projectRootDir, ["show", `HEAD:${targetFilename}`], projectRootDir);
       expect(committedContent).to.equal(editedContent);
+
+      //NOTE: only wait for the debounced save (and the run's own dispatch) to fully settle
+      //*after* the assertions above - the whole point of this test is that onRunProject must
+      //not have needed to wait for it. But this test must not itself exit (letting later tests'
+      //beforeEach remove/recreate this same projectRootDir) while that ~10s debounced
+      //write+gitAdd, or this run's fire-and-forgotten dispatch, are still in flight - either
+      //would then crash with an unhandled ENOENT on a since-removed directory.
+      await saveFileSettled;
+      await drainProjectDispatch(projectRootDir);
     });
   });
 });
