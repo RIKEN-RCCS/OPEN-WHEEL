@@ -36,6 +36,34 @@ import { onUpdateComponent } from "../../../app/handlers/workflowEditor.js";
 
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 
+/**
+ * Wait until a project's dispatch has fully wound down after its ack has already
+ * fired. onRunProject/onContinueProject fire-and-forget the actual dispatch
+ * (runDispatcher), whose finally block calls ack (via sendWorkflow) *before* its
+ * own remaining cleanup (eventEmitters.delete/removeSsh/removeAllJWTServerPassphrase)
+ * runs, and dispatcher itself never awaits individual task execution (by design,
+ * so a canceled task isn't left blocked forever inside it) - so a test that only
+ * awaits the ack can still race the next test's beforeEach (which removes/
+ * recreates projectRootDir) against trailing dispatcher/task cleanup work,
+ * intermittently crashing with ENOENT on stale .git/objects files. Poll for the
+ * eventEmitter runDispatcher registers for the run (and clears right before its
+ * own trailing cleanup) as a best-effort signal, then add a short fixed grace
+ * period on top for any other fire-and-forgotten work outside that scope.
+ * @param {string} projectRootDir - project's root path
+ * @param {number} timeoutMs - give up polling and move on to the grace period after this long
+ */
+async function drainProjectDispatch(projectRootDir, timeoutMs = 5000) {
+  const start = Date.now();
+  while (eventEmitters.has(projectRootDir) && Date.now() - start < timeoutMs) {
+    await new Promise((resolve)=>{
+      setTimeout(resolve, 10);
+    });
+  }
+  await new Promise((resolve)=>{
+    setTimeout(resolve, 200);
+  });
+}
+
 describe("UT for projectController handlers", function () {
   this.timeout(0);
 
@@ -194,6 +222,7 @@ describe("project Controller handler UT", function () {
       await new Promise((resolve)=>{
         _internal.onRunProject("test-client-id", projectRootDir, resolve);
       });
+      await drainProjectDispatch(projectRootDir);
 
       const state = await getProjectState(projectRootDir);
       expect(state).to.equal("failed");
@@ -294,6 +323,7 @@ describe("project Controller handler UT", function () {
       await new Promise((resolve)=>{
         _internal.onRunProject("test-client-id", projectRootDir, resolve);
       });
+      await drainProjectDispatch(projectRootDir);
       const stateAfterRun = await getProjectState(projectRootDir);
       expect(stateAfterRun).to.equal("finished");
 
@@ -367,6 +397,7 @@ describe("project Controller handler UT", function () {
       await new Promise((resolve)=>{
         _internal.onRunProject(clientID, projectRootDir, resolve);
       });
+      await drainProjectDispatch(projectRootDir);
       let projectJson = await getProjectJson(projectRootDir);
       expect(projectJson.state).to.equal("finished");
       expect(projectJson.readOnly).to.equal(false);
