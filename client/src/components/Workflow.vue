@@ -959,6 +959,17 @@ export default {
         if (operation === "cleanProject") {
           this.viewerDataDir = null;
         }
+        //runProject/continueProject's ack is not always a plain boolean - when
+        //validation rejects the run, the server acks with the array of
+        //{ID, name, errors} entries from validateComponents instead (see
+        //runValidationPhase in projectController.js). That array is truthy, so
+        //without this check it would silently fall through to "accepted" below
+        //and the project would just never start with no indication why.
+        if (Array.isArray(rt) && rt.length > 0) {
+          debug("project run rejected due to validation errors", rt);
+          this.showValidationErrorDialog(rt, this.currentComponent);
+          return;
+        }
         const label = operation.replace("Project", " project");
         if (rt) {
           this.showSnackbar({ message: `${label} accepted`, timeout: 3000 });

@@ -203,6 +203,7 @@ class HpcissSchema extends StorageSchema {
     super(...args);
     this.properties.type = { enum: ["hpciss", "hpcisstar"] };
     this.properties.host = { type: ["string", "null"], default: null };
+    this.properties.memo = { type: ["string", "null"], default: null };
   }
 }
 

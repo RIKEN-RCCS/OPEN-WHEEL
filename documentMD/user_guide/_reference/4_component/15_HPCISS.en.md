@@ -16,11 +16,24 @@ to HPCI shared storage. The files themselves are stored on HPCI shared storage, 
 
 However, only hosts that have the `use gfarm` option checked in the remotehost settings can be set as the host.
 
+The HPCI-SS component always needs to transfer files to HPCI shared storage, so host is required.
+Unlike the Storage component, you cannot select localhost (a local path). If host is left unset,
+or set to localhost, running the project will fail with a validation error.
+
 ### directory path
 ![img](./img/storage_path.png "storage_path")
 
 Similar to the Storage component, this is the path where files are actually stored.
 However, you must specify the path on HPCI shared storage, not a path on the host.
+
+directory path is also required. Running the project with it left blank will fail with a
+validation error.
+
+### memo
+You can enter free-form text here. Whatever you enter is included as-is, in the `<memo>` element,
+in the GFarm extended-attribute metadata (`wheel.workflow`) attached to the file on HPCI shared
+storage at transfer time. Use it to record the origin, purpose, or any other note about the
+stored file.
 
 ### Constraints
 HPCI shared storage does not support overwriting copies to directories that already exist.

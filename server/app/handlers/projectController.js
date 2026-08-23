@@ -418,7 +418,13 @@ async function onRunProject(clientID, projectRootDir, ack) {
   if (!await runValidationPhase(projectRootDir, ack, "auto saved: project starting")) {
     return false;
   }
-  return runDispatcher(clientID, projectRootDir, ack);
+  //do not await - the actual run can take a long time, and projectOperator's operation
+  //queue must not be blocked on it (e.g. stopProject needs to be able to interrupt a
+  //running project). validation above already completed and acked on failure; on
+  //success this function returns immediately so projectOperator can ack(true) without
+  //waiting for the whole project to finish.
+  runDispatcher(clientID, projectRootDir, ack);
+  return true;
 }
 _internal.onRunProject = onRunProject;
 
@@ -435,7 +441,9 @@ async function onContinueProject(clientID, projectRootDir, ack) {
   if (!await runValidationPhase(projectRootDir, ack, "auto saved: project continuing")) {
     return false;
   }
-  return runDispatcher(clientID, projectRootDir, ack);
+  //see onRunProject for why runDispatcher is intentionally not awaited here
+  runDispatcher(clientID, projectRootDir, ack);
+  return true;
 }
 _internal.onContinueProject = onContinueProject;
 
@@ -584,10 +592,19 @@ async function projectOperator({ clientID, projectRootDir, ack, operation }) {
   }
   try {
     switch (operation) {
-      case "runProject":
-        //do not wait onRunProject/onContinueProject
-        _internal.selectRunHandler(projectState)(clientID, projectRootDir, ack);
+      case "runProject": {
+        //onRunProject/onContinueProject await validation (fast) themselves and
+        //ack(errors) on rejection, then fire-and-forget the actual dispatch (which can
+        //take a long time) - so awaiting the call here only waits for validation, not
+        //the whole run. this must be awaited: without it, execution would fall through
+        //to the shared ack(true) below before validation has had a chance to reject
+        //the run and ack its own, real result first.
+        const accepted = await _internal.selectRunHandler(projectState)(clientID, projectRootDir, ack);
+        if (!accepted) {
+          return false;
+        }
         break;
+      }
       case "stopProject":
         await _internal.onStopProject(projectRootDir, ack);
         break;

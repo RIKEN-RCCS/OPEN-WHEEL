@@ -16,7 +16,7 @@ import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 
 //testee
-import { _internal } from "../../../app/handlers/projectController.js";
+import { _internal, onProjectOperation } from "../../../app/handlers/projectController.js";
 import { onSaveFile } from "../../../app/handlers/rapid.js";
 import allowedOperations from "../../../../common/allowedOperations.js";
 
@@ -35,6 +35,34 @@ import { scriptName, scriptHeader, pwdCmd, exit } from "../../testScript.js";
 import { onUpdateComponent } from "../../../app/handlers/workflowEditor.js";
 
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
+
+/**
+ * Wait until a project's dispatch has fully wound down after its ack has already
+ * fired. onRunProject/onContinueProject fire-and-forget the actual dispatch
+ * (runDispatcher), whose finally block calls ack (via sendWorkflow) *before* its
+ * own remaining cleanup (eventEmitters.delete/removeSsh/removeAllJWTServerPassphrase)
+ * runs, and dispatcher itself never awaits individual task execution (by design,
+ * so a canceled task isn't left blocked forever inside it) - so a test that only
+ * awaits the ack can still race the next test's beforeEach (which removes/
+ * recreates projectRootDir) against trailing dispatcher/task cleanup work,
+ * intermittently crashing with ENOENT on stale .git/objects files. Poll for the
+ * eventEmitter runDispatcher registers for the run (and clears right before its
+ * own trailing cleanup) as a best-effort signal, then add a short fixed grace
+ * period on top for any other fire-and-forgotten work outside that scope.
+ * @param {string} projectRootDir - project's root path
+ * @param {number} timeoutMs - give up polling and move on to the grace period after this long
+ */
+async function drainProjectDispatch(projectRootDir, timeoutMs = 5000) {
+  const start = Date.now();
+  while (eventEmitters.has(projectRootDir) && Date.now() - start < timeoutMs) {
+    await new Promise((resolve)=>{
+      setTimeout(resolve, 10);
+    });
+  }
+  await new Promise((resolve)=>{
+    setTimeout(resolve, 200);
+  });
+}
 
 describe("UT for projectController handlers", function () {
   this.timeout(0);
@@ -181,18 +209,96 @@ describe("project Controller handler UT", function () {
     });
 
     it("should conclude the project as 'failed' and must not have prj.wheel.json's staged state clobbered back to 'stopped' by the redundant taskStateChanged listener", async ()=>{
-      const ack = sinon.stub();
-
       //this exercises the real production code path: handlers/projectController.js#onRunProject
       //registers a "taskStateChanged" listener which forcibly stops the whole project as soon as
       //any task fails. that listener races against the dispatcher's own natural completion, which
       //already concludes the project as "failed" and stages prj.wheel.json accordingly. the
       //listener used to unconditionally overwrite that already-concluded state with "stopped" and
       //re-stage prj.wheel.json a second, redundant time.
-      await _internal.onRunProject("test-client-id", projectRootDir, ack);
+      //NOTE: await the ack (fired once the whole run truly finishes), not onRunProject's own
+      //returned promise - onRunProject intentionally does not await the actual dispatch once
+      //validation passes (a run can take a long time), so its own promise settles as soon as
+      //the run starts, not when it finishes.
+      await new Promise((resolve)=>{
+        _internal.onRunProject("test-client-id", projectRootDir, resolve);
+      });
+      await drainProjectDispatch(projectRootDir);
 
       const state = await getProjectState(projectRootDir);
       expect(state).to.equal("failed");
+    });
+  });
+
+  describe("[reproduction] running a project with an invalid component is rejected before it starts", ()=>{
+    it("should not run the project and should ack with the validation error report, not a boolean", async ()=>{
+      const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 10, y: 10 });
+      await updateComponentProperty(projectRootDir, hpciss.ID, "host", "localhost");
+      await updateComponentProperty(projectRootDir, hpciss.ID, "storagePath", projectRootDir);
+
+      const ack = sinon.stub();
+      await _internal.onRunProject("test-client-id", projectRootDir, ack);
+
+      //the client's ack callback treats a truthy value as success, so this must NOT
+      //be a plain boolean - it must be the array of {ID, name, errors} entries from
+      //validateComponents, so the client can recognize it and show the validation
+      //error dialog instead of silently treating rejection as acceptance.
+      expect(ack).to.have.been.calledOnce;
+      const report = ack.firstCall.args[0];
+      expect(report).to.be.an("array").that.is.not.empty;
+      expect(report.some((entry)=>{
+        return entry.errors.some((e)=>{
+          return e.message.includes("must not be localhost");
+        });
+      })).to.be.true;
+
+      //the project must never actually have started running
+      const state = await getProjectState(projectRootDir);
+      expect(state).to.equal("not-started");
+    });
+  });
+
+  describe("[reproduction] projectOperator (the real 'projectOperation' socket handler) must not ack(true) before a validation-rejected runProject's real ack", ()=>{
+    it("should ack exactly once, with the validation error report - not first with a false 'accepted'", async ()=>{
+      const hpciss = await createNewComponent(projectRootDir, projectRootDir, "hpciss", { x: 10, y: 10 });
+      await updateComponentProperty(projectRootDir, hpciss.ID, "host", "localhost");
+      await updateComponentProperty(projectRootDir, hpciss.ID, "storagePath", projectRootDir);
+
+      //this exercises the real production entry point (handlers/projectController.js#onProjectOperation
+      //-> projectOperator), not onRunProject directly. projectOperator deliberately does not await the
+      //actual dispatch once validation passes, since a run can take a long time - but it must still
+      //await validation itself, so a rejection's ack(errors) is the one the client actually receives.
+      //a socket.io ack callback only ever delivers its first invocation to the client, so if
+      //projectOperator's own unconditional ack(true) fired first (the bug this guards against), the
+      //client would see "accepted" and never learn the run was actually rejected.
+      //NOTE: onProjectOperation() itself only submits the operation to an internal queue
+      //(simple-batch-system) and its own returned promise settles on submission, not on the queued
+      //job's actual completion - the real ack is delivered later, asynchronously, from inside
+      //projectOperator once the queue dispatches it. so wait on ack itself, not on onProjectOperation's
+      //return value.
+      const ack = sinon.stub();
+      const firstAck = new Promise((resolve)=>{
+        ack.callsFake(resolve);
+      });
+      onProjectOperation("test-client-id", projectRootDir, "runProject", ack);
+      await firstAck;
+      //give any wrongly-fired second ack call (the bug this test guards against) a chance to land
+      //before asserting calledOnce
+      await new Promise((resolve)=>{
+        setTimeout(resolve, 50);
+      });
+
+      expect(ack).to.have.been.calledOnce;
+      const report = ack.firstCall.args[0];
+      expect(report).to.be.an("array").that.is.not.empty;
+      expect(report.some((entry)=>{
+        return entry.errors.some((e)=>{
+          return e.message.includes("must not be localhost");
+        });
+      })).to.be.true;
+
+      //the project must never actually have started running
+      const state = await getProjectState(projectRootDir);
+      expect(state).to.equal("not-started");
     });
   });
 
@@ -211,10 +317,13 @@ describe("project Controller handler UT", function () {
     });
 
     it("should discard the post-run 'disable' flag and return the component to an editable not-started state after cleanProject", async ()=>{
-      const runAck = sinon.stub();
-
       //1. run the project to completion (this is what commits the pre-run state to HEAD)
-      await _internal.onRunProject("test-client-id", projectRootDir, runAck);
+      //await the ack (fired once the whole run truly finishes) rather than onRunProject's
+      //own returned promise - see the "task fails" test above for why.
+      await new Promise((resolve)=>{
+        _internal.onRunProject("test-client-id", projectRootDir, resolve);
+      });
+      await drainProjectDispatch(projectRootDir);
       const stateAfterRun = await getProjectState(projectRootDir);
       expect(stateAfterRun).to.equal("finished");
 
@@ -281,10 +390,14 @@ describe("project Controller handler UT", function () {
 
     it("should end up 'not-started' and NOT readOnly after cleanProject, even though a component was moved after the run finished, and saveProject must succeed afterwards", async ()=>{
       const clientID = "test-client-id";
-      const runAck = sinon.stub();
 
       //1. run the project to completion ("finished")
-      await _internal.onRunProject(clientID, projectRootDir, runAck);
+      //await the ack (fired once the whole run truly finishes) rather than onRunProject's
+      //own returned promise - see the "task fails" test above for why.
+      await new Promise((resolve)=>{
+        _internal.onRunProject(clientID, projectRootDir, resolve);
+      });
+      await drainProjectDispatch(projectRootDir);
       let projectJson = await getProjectJson(projectRootDir);
       expect(projectJson.state).to.equal("finished");
       expect(projectJson.readOnly).to.equal(false);
@@ -336,20 +449,30 @@ describe("project Controller handler UT", function () {
     });
 
     it("should include the text-editor's edited content in the 'auto saved: project starting' commit even when onRunProject is triggered immediately after saving (no await)", async ()=>{
-      const saveFileCb = sinon.stub();
-
       //this reproduces a real client interaction: the text editor's "saveFile" socket event is
       //fired, but rapid.js#onSaveFile debounces the actual write+gitAdd by SAVE_FILE_DEBOUNCE_MS
       //(10 seconds) internally and only resolves its callback once that timer fires. The client
       //does not (and, realistically, often will not) wait for that ack before letting the user
-      //immediately click "run project" - so intentionally do NOT await/settle saveFileCb here.
-      onSaveFile(projectRootDir, targetFilename, projectRootDir, editedContent, saveFileCb);
+      //immediately click "run project" - so intentionally do NOT await it before calling
+      //onRunProject below, to exercise that exact race.
+      const saveFileSettled = new Promise((resolve)=>{
+        onSaveFile(projectRootDir, targetFilename, projectRootDir, editedContent, resolve);
+      });
 
       const ack = sinon.stub();
       await _internal.onRunProject("test-client-id", projectRootDir, ack);
 
       const committedContent = await gitPromise(projectRootDir, ["show", `HEAD:${targetFilename}`], projectRootDir);
       expect(committedContent).to.equal(editedContent);
+
+      //NOTE: only wait for the debounced save (and the run's own dispatch) to fully settle
+      //*after* the assertions above - the whole point of this test is that onRunProject must
+      //not have needed to wait for it. But this test must not itself exit (letting later tests'
+      //beforeEach remove/recreate this same projectRootDir) while that ~10s debounced
+      //write+gitAdd, or this run's fire-and-forgotten dispatch, are still in flight - either
+      //would then crash with an unhandled ENOENT on a since-removed directory.
+      await saveFileSettled;
+      await drainProjectDispatch(projectRootDir);
     });
   });
 });

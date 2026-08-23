@@ -276,8 +276,11 @@ export const logLevel = VALID_LOG_LEVELS.includes(String(config.logLevel).toUppe
 export const verboseSsh = Boolean(config.verboseSsh);
 export const enableWebApi = Boolean(config.enableWebApi);
 export const enableAuth = Boolean(config.enableAuth);
-export const debugMetadataJson = getStringVar(config.debugMetadataJson, null);
-export const debugMetadataXml = getStringVar(config.debugMetadataXml, null);
+//debugMetadataJson/debugMetadataXml are intentionally NOT read from server.json -
+//they are controlled only by environment variable, so they can't be left silently
+//enabled in a config file (see WHEEL_TEMPD in tempd.js for the same convention).
+export const debugMetadataJson = getStringVar(process.env.WHEEL_DEBUG_METADATA_JSON, null);
+export const debugMetadataXml = getStringVar(process.env.WHEEL_DEBUG_METADATA_XML, null);
 
 //export setting files
 export { jobScheduler };

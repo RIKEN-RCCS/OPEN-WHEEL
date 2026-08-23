@@ -71,12 +71,31 @@ export async function validateStorage(component) {
       }
     }
   } else {
+    //unlike the local branch above, fs.stat can't tell us an empty/blank remote
+    //storagePath is invalid - check it explicitly instead of silently accepting it.
+    if (component.storagePath.trim().length === 0) {
+      return [createValidationError("storagePath is not set")];
+    }
     const hostinfo = _internal.remoteHost.query("name", component.host);
     if (typeof hostinfo === "undefined") {
       return [createValidationError(`remote host setting for ${component.host} not found`)];
     }
   }
   return [];
+}
+
+/**
+ * check if HPCI-SS/HPCISS-tar component has valid values
+ * unlike a plain storage component, these can never store to a local path - host is
+ * mandatory and "localhost" is not an accepted value.
+ * @param {object} component - component which will be tested
+ * @returns {{ message: string, ignoreable: boolean }[]} - array of validation errors; empty array means valid
+ */
+export async function validateHPCISS(component) {
+  if (typeof component.host !== "string" || component.host.trim().length === 0 || component.host === "localhost") {
+    return [createValidationError("host is required for HPCI-SS/HPCISS-tar and must not be localhost")];
+  }
+  return validateStorage(component);
 }
 
 /**

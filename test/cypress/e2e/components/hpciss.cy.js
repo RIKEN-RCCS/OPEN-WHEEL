@@ -241,7 +241,8 @@ describe("components", ()=>{
     it("転送対象ファイル・フォルダの設定-削除ボタン表示確認（input file）-削除ボタンが表示されることを確認", ()=>{
       cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
       cy.enterInputOrOutputFile(TYPE_INPUT, "testInputFile", true, true);
-      cy.get("[data-cy=\"action_row-delete-btn\"]").should("be.visible");
+      cy.get("[data-cy=\"action_row-delete-btn\"]").scrollIntoView()
+        .should("be.visible");
     });
 
     /**
@@ -628,6 +629,32 @@ describe("components", ()=>{
       cy.clickComponentName(HPCISS_NAME_0);
       cy.get("[data-cy=\"component_property-directory_path-text_field\"]").find("input")
         .should("have.value", "test/test");
+    });
+
+    /**
+  コンポーネントの基本機能動作確認
+  HPCI-SSコンポーネント共通機能確認
+  各コンポーネント特有のプロパティ確認
+  memo表示確認
+  試験確認内容：memo入力テキストエリアが表示されていることを確認
+     */
+    it("各コンポーネント特有のプロパティ確認-memo表示確認-memo入力テキストエリアが表示されていることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
+      const DATA_CY_STR = "[data-cy=\"component_property-memo-textarea\"]";
+      cy.confirmDisplayInProperty(DATA_CY_STR, true);
+    });
+
+    /**
+  コンポーネントの基本機能動作確認
+  HPCI-SSコンポーネント共通機能確認
+  各コンポーネント特有のプロパティ確認
+  memo入力反映確認
+  試験確認内容：memoが入力・反映されることを確認
+     */
+    it("各コンポーネント特有のプロパティ確認-memo入力反映確認-memoが入力・反映されることを確認", ()=>{
+      cy.createComponent(DEF_COMPONENT_HPCISS, HPCISS_NAME_0, 501, 500);
+      const INPUT_OBJ_CY = "[data-cy=\"component_property-memo-textarea\"]";
+      cy.confirmInputValueReflection(INPUT_OBJ_CY, "memoTest", TAG_TYPE_TEXT_AREA, HPCISS_NAME_0);
     });
   });
 });

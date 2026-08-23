@@ -13,7 +13,5 @@
     "logLevel": "debug",
     "verboseSsh": false,
     "enableWebApi": false,
-    "enableAuth": false,
-    "debugMetadataJson": null,
-    "debugMetadataXml": null
+    "enableAuth": false
 }
