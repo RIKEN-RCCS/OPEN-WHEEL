@@ -103,6 +103,26 @@ function getStringVar(target, alt) {
 }
 
 /**
+ * return the integer parsed from a WHEEL_* environment variable when it is set to a
+ * non-blank string that parses to a number (0 included); otherwise return the fallback
+ * taken from the merged config file / package default.
+ * A blank or whitespace-only env var never overrides the config value, so the documented
+ * priority "non-empty WHEEL_* env var > WHEEL_CONFIG_DIR/server.json > ~/.wheel/server.json
+ * > packaged default" holds. Unlike `parseInt(env, 10) || fallback`, a valid `0` from the
+ * env var is honoured instead of silently falling through to the config value.
+ * @param {string|undefined} envValue - raw process.env.WHEEL_XXX value
+ * @param {number} fallback - value from the merged config file / package default
+ * @returns {number} -
+ */
+function envIntOr(envValue, fallback) {
+  if (typeof envValue !== "string" || envValue.trim() === "") {
+    return fallback;
+  }
+  const parsed = parseInt(envValue, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+}
+
+/**
  * read default and userdefined config file and merge them
  * @param {string} filename - config file's name
  * @returns {object} -
@@ -161,13 +181,15 @@ module.exports.rsyncExcludeOptionOfWheelSystemFiles = [
 ];
 
 //re-export server settings
-module.exports.port = parseInt(process.env.WHEEL_PORT, 10) || config.port; //default var will be calcurated in app/index.js
+//non-empty WHEEL_PORT wins over every config file (see envIntOr); app/index.js still
+//falls back to a default port when the resolved value is <= 0.
+module.exports.port = envIntOr(process.env.WHEEL_PORT, config.port);
 module.exports.rootDir = getStringVar(config.rootDir, getStringVar(os.homedir(), "/"));
 module.exports.defaultCleanupRemoteRoot = getVar(config.defaultCleanupRemoteRoot, true);
 module.exports.numLogFiles = getIntVar(config.numLogFiles, 5);
 module.exports.maxLogSize = getIntVar(config.maxLogSize, 8388608);
 module.exports.compressLogFile = getVar(config.compressLogFile, true);
-module.exports.numJobOnLocal = parseInt(process.env.WHEEL_NUM_LOCAL_JOB, 10) || getIntVar(config.numJobOnLocal, 1);
+module.exports.numJobOnLocal = envIntOr(process.env.WHEEL_NUM_LOCAL_JOB, getIntVar(config.numJobOnLocal, 1));
 module.exports.defaultTaskRetryCount = getIntVar(config.defaultTaskRetryCount, 1);
 module.exports.gitLFSSize = getIntVar(config.gitLFSSize, 200);
 
@@ -176,3 +198,6 @@ module.exports.jobScheduler = jobScheduler;
 module.exports.remoteHost = new JsonArrayManager(remotehostFilename);
 module.exports.jobScriptTemplate = new JsonArrayManager(jobScriptTemplateFilename);
 module.exports.projectList = new JsonArrayManager(projectListFilename);
+
+/**@internal exported for unit testing only */
+module.exports._internal = { envIntOr };
