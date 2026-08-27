@@ -28,24 +28,33 @@ async function writeJson(dir, filename, data) {
 }
 
 describe("loadWheelConfig", function () {
-  let origWheelConfigDir;
+  let savedWheelEnv;
   let tmpDir;
 
   beforeEach(async function () {
-    origWheelConfigDir = process.env.WHEEL_CONFIG_DIR;
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "wheel-db-test-"));
+    //Snapshot and clear every WHEEL_* env var. loadWheelConfig() now gives non-empty
+    //WHEEL_* env vars top priority, so a stray one inherited from the CI / docker-compose
+    //environment (e.g. WHEEL_LOG_LEVEL=OFF, or a WHEEL_PORT) would otherwise leak in and
+    //perturb the file-vs-file precedence assertions below.
+    savedWheelEnv = {};
 
-    //Clear env vars used by loadWheelConfig
-    delete process.env.WHEEL_CONFIG_DIR;
+    for (const key of Object.keys(process.env)) {
+      if (key.startsWith("WHEEL_")) {
+        savedWheelEnv[key] = process.env[key];
+        delete process.env[key];
+      }
+    }
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "wheel-db-test-"));
   });
 
   afterEach(async function () {
-    //Restore env vars
-    if (typeof origWheelConfigDir !== "undefined") {
-      process.env.WHEEL_CONFIG_DIR = origWheelConfigDir;
-    } else {
-      delete process.env.WHEEL_CONFIG_DIR;
+    //Restore the exact WHEEL_* env snapshot (drop any a test added, re-add any it deleted).
+    for (const key of Object.keys(process.env)) {
+      if (key.startsWith("WHEEL_")) {
+        delete process.env[key];
+      }
     }
+    Object.assign(process.env, savedWheelEnv);
     await fs.remove(tmpDir);
   });
 
@@ -176,6 +185,97 @@ describe("loadWheelConfig", function () {
         await fs.remove(dotWheelConfig);
       }
     }
+  });
+
+  /**
+   * Run fn with a temporary ~/.wheel/server.json, restoring the previous state afterwards.
+   * @param {object} data - JSON contents to write to ~/.wheel/server.json for the duration of fn
+   * @param {()=>Promise<void>} fn - async test body
+   * @returns {Promise<void>}
+   */
+  async function withDotWheelServerJson(data, fn) {
+    const dotWheelDir = path.join(os.homedir(), ".wheel");
+    const dotWheelConfig = path.join(dotWheelDir, "server.json");
+    let existed = false;
+    let originalContent;
+    try {
+      originalContent = await fs.readFile(dotWheelConfig, "utf-8");
+      existed = true;
+    } catch (e) {
+      if (e.code !== "ENOENT") {
+        throw e;
+      }
+    }
+    try {
+      await fs.ensureDir(dotWheelDir);
+      await fs.writeJson(dotWheelConfig, data);
+      await fn();
+    } finally {
+      if (existed) {
+        await fs.writeFile(dotWheelConfig, originalContent);
+      } else {
+        await fs.remove(dotWheelConfig);
+      }
+    }
+  }
+
+  it("a non-empty WHEEL_* env var overrides ~/.wheel/server.json", async function () {
+    await withDotWheelServerJson({ port: 5555 }, async function () {
+      process.env.WHEEL_PORT = "39999";
+      const config = await loadWheelConfig("server.json");
+      expect(config.port).to.equal(39999);
+    });
+  });
+
+  it("a non-empty WHEEL_* env var overrides WHEEL_CONFIG_DIR/server.json", async function () {
+    const configDir = path.join(tmpDir, "envconfig");
+    await writeJson(configDir, "server.json", { port: 6543 });
+    process.env.WHEEL_CONFIG_DIR = configDir;
+    process.env.WHEEL_PORT = "39999";
+
+    const config = await loadWheelConfig("server.json");
+    expect(config.port).to.equal(39999);
+  });
+
+  it("a falsy-but-non-empty WHEEL_* env var (0) still overrides a config file", async function () {
+    await withDotWheelServerJson({ port: 5555 }, async function () {
+      process.env.WHEEL_PORT = "0";
+      const config = await loadWheelConfig("server.json");
+      expect(config.port).to.equal(0);
+    });
+  });
+
+  it("a blank WHEEL_* env var does not override WHEEL_CONFIG_DIR/server.json", async function () {
+    const configDir = path.join(tmpDir, "envconfig");
+    await writeJson(configDir, "server.json", { port: 6543 });
+    process.env.WHEEL_CONFIG_DIR = configDir;
+    process.env.WHEEL_PORT = "";
+
+    const config = await loadWheelConfig("server.json");
+    expect(config.port).to.equal(6543);
+  });
+
+  it("a whitespace-only WHEEL_* env var does not override ~/.wheel/server.json", async function () {
+    await withDotWheelServerJson({ port: 5555 }, async function () {
+      process.env.WHEEL_PORT = "   ";
+      const config = await loadWheelConfig("server.json");
+      expect(config.port).to.equal(5555);
+    });
+  });
+
+  it("WHEEL_BASE_URL maps to config.baseURL (not baseUrl)", async function () {
+    process.env.WHEEL_BASE_URL = "/node/host/39999/";
+    const config = await loadWheelConfig("server.json");
+    expect(config.baseURL).to.equal("/node/host/39999/");
+    expect(config).to.not.have.property("baseUrl");
+  });
+
+  it("WHEEL_USE_HTTP / WHEEL_ENABLE_AUTH coerce to booleans and override defaults", async function () {
+    process.env.WHEEL_USE_HTTP = "true";
+    process.env.WHEEL_ENABLE_AUTH = "false";
+    const config = await loadWheelConfig("server.json");
+    expect(config.useHttp).to.equal(true);
+    expect(config.enableAuth).to.equal(false);
   });
 });
 

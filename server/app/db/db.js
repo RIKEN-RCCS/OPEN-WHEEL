@@ -127,17 +127,34 @@ const INFRASTRUCTURE_ENV_VARS = new Set([
 ]);
 
 /**
+ * explicit WHEEL_* -> config key mapping for cases where naive UPPER_SNAKE_CASE -> camelCase
+ * would produce the wrong key. e.g. toCamelCase("BASE_URL") yields "baseUrl", but the config
+ * property (and every consumer, via db.js / core/global.js) is "baseURL".
+ */
+const ENV_KEY_OVERRIDES = {
+  WHEEL_BASE_URL: "baseURL"
+};
+
+/**
  * extract WHEEL_ prefixed environment variables and map them to camelCase config overrides.
- * UPPER_SNAKE_CASE after stripping WHEEL_ prefix is converted to camelCase.
- * String values are auto-coerced to boolean or number where appropriate.
+ * UPPER_SNAKE_CASE after stripping WHEEL_ prefix is converted to camelCase (see ENV_KEY_OVERRIDES
+ * for exceptions). String values are auto-coerced to boolean or number where appropriate.
+ * Keys whose coerced value is undefined (empty / whitespace-only env vars) are omitted so that
+ * a blank env var never overrides a value from a config file.
  * @returns {object} - config overrides from environment variables
  */
 function extractWheelEnvOverrides() {
   const overrides = {};
   for (const [key, value] of Object.entries(process.env)) {
-    if (key.startsWith("WHEEL_") && !INFRASTRUCTURE_ENV_VARS.has(key)) {
-      overrides[toCamelCase(key.slice(6))] = coerce(value);
+    if (!key.startsWith("WHEEL_") || INFRASTRUCTURE_ENV_VARS.has(key)) {
+      continue;
     }
+    const coerced = coerce(value);
+    if (typeof coerced === "undefined") {
+      continue;
+    }
+    const configKey = ENV_KEY_OVERRIDES[key] || toCamelCase(key.slice(6));
+    overrides[configKey] = coerced;
   }
   return overrides;
 }
@@ -173,10 +190,11 @@ function getStringVar(target, alt) {
 
 /**
  * load a WHEEL config file using c12.
- * Priority (highest to lowest):
- *   1. WHEEL_CONFIG_DIR/{filename}  (env-based override)
- *   2. ~/.wheel/{filename}          (user home directory)
- *   3. server/app/db/{filename}     (package defaults)
+ * Priority (highest to lowest), matching documentMD/design/configuration.md section 1:
+ *   1. non-empty WHEEL_* env vars (except INFRASTRUCTURE_ENV_VARS)
+ *   2. WHEEL_CONFIG_DIR/{filename}
+ *   3. ~/.wheel/{filename}
+ *   4. server/app/db/{filename}     (package defaults)
  * @param {string} filename - config file's name (e.g. "server.json")
  * @returns {Promise<object>} merged config
  */
@@ -211,11 +229,14 @@ async function loadWheelConfig(filename) {
     name: "wheel",
     rcFile: false,
     globalRc: false,
-    //c12 always lets `overrides` win over `defaults`, so individual WHEEL_* env vars (e.g. the
-    //WHEEL_PORT baked into server/test/compose.yml) must live in `defaults`, ranked above the
-    //package defaults but below ~/.wheel/{filename}, to match the documented priority order.
-    defaults: { ...packageDefaults, ...extractWheelEnvOverrides(), ...dotWheelConfig },
-    overrides: envDirConfig
+    //c12 lets `overrides` win over `defaults`. Within each object, later spreads win.
+    //defaults tier:  ~/.wheel/{filename}  >  package defaults
+    //overrides tier: non-empty WHEEL_* env vars  >  WHEEL_CONFIG_DIR/{filename}
+    //=> WHEEL_* env  >  WHEEL_CONFIG_DIR file  >  ~/.wheel file  >  package defaults
+    //(extractWheelEnvOverrides() already drops keys coerced to undefined, so a blank
+    //env var such as WHEEL_PORT="" never shadows a config file.)
+    defaults: { ...packageDefaults, ...dotWheelConfig },
+    overrides: { ...envDirConfig, ...extractWheelEnvOverrides() }
   });
   return config;
 }
