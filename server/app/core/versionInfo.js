@@ -20,7 +20,7 @@ function aboutWheel(projectRootDir) {
   logger.info("environment variables");
   logger.info(`WHEEL_TEMPD = ${process.env.WHEEL_TEMPD}`);
   logger.info(`WHEEL_CONFIG_DIR = ${process.env.WHEEL_CONFIG_DIR}`);
-  logger.info(`WHEEL_BASE_URL= ${process.env.WHEEL_USE_HTTP}`);
+  logger.info(`WHEEL_BASE_URL = ${process.env.WHEEL_BASE_URL}`);
   logger.info(`WHEEL_USE_HTTP = ${process.env.WHEEL_USE_HTTP}`);
   logger.info(`WHEEL_PORT = ${process.env.WHEEL_PORT}`);
   logger.info(`WHEEL_ACCEPT_ADDRESS = ${process.env.WHEEL_ACCEPT_ADDRESS}`);
