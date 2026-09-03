@@ -91,7 +91,7 @@ npm run UT:local-gfarm
 ネイティブモードで実行。GitHub Actions サービスコンテナ (`naoso5/openpbs`) を SSHテストサーバーとして使用します。
 
 ```
-トリガー: master以外の全ブランチへのpush
+トリガー: main以外の全ブランチへのpush
 SSH テストサーバー: naoso5/openpbs (port 4000:22)
 実行コマンド: npm run test (server/)
 成功後: server/app/db/version.json を自動更新
@@ -102,7 +102,7 @@ SSH テストサーバー: naoso5/openpbs (port 4000:22)
 WSL2 + Docker環境でDockerモードを実行します。
 
 ```
-トリガー: master以外の全ブランチへのpush
+トリガー: main以外の全ブランチへのpush
 環境: Windows Server 2022 + WSL2 (Ubuntu 22.04)
 実行コマンド: docker compose run --build wheel_release_test (server/test/)
 ```
@@ -348,7 +348,7 @@ docker logs wheel     # WHEELアプリのログ
 モックサーバーモードで実行します。専用Dockerイメージをビルドし、4コンテナを `wheel-e2e-net` ネットワーク上で起動します。
 
 ```
-トリガー: master以外の全ブランチへのpush
+トリガー: main以外の全ブランチへのpush
 SSHテストサーバー: naoso5/openpbs (GitHub Actionsサービス, port 4000:22)
 
 Dockerイメージ (3種):

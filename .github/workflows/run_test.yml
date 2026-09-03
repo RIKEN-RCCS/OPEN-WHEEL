@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - '**'
-      - '!master'
+      - '!main'
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -105,7 +105,7 @@ jobs:
       - name: determine release type from branch name
         run: |
           case "${{ github.ref_name }}" in
-            master) TYPE=release ;;
+            main) TYPE=release ;;
             maintenance*) TYPE=maintenance ;;
             *) TYPE=beta ;;
           esac

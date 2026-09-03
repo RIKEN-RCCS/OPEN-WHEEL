@@ -17,13 +17,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: eWaterCycle/setup-apptainer@v2
       - name: stamp version.json for this build
-        # master is branch-protected (rejects direct pushes even from Actions bots),
+        # main is branch-protected (rejects direct pushes even from Actions bots),
         # so this can't be committed back - it only needs to be baked into the
         # artifacts built below, which the Dockerfile's `COPY server server` picks up
         # from this worktree.
         run: |
           case "${BRANCH_NAME}" in
-            master) TYPE=release ;;
+            main) TYPE=release ;;
             maintenance*) TYPE=maintenance ;;
             *) TYPE=beta ;;
           esac
@@ -31,7 +31,7 @@ jobs:
           echo "{\"version\": \"${VERSION_NUMBER}\" }" > server/app/db/version.json
           cat server/app/db/version.json
           echo "VERSION_NUMBER=${VERSION_NUMBER}" >>$GITHUB_ENV
-          # only master builds (TYPE=release) own the `latest` docker tag and the
+          # only main builds (TYPE=release) own the `latest` docker tag and the
           # GitHub "Latest" release; maintenance*/beta builds must not.
           echo "RELEASE_TYPE=${TYPE}" >>$GITHUB_ENV
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} .
@@ -56,7 +56,7 @@ jobs:
           tag_name: ${{ env.VERSION_NUMBER }}
           name: ${{ env.VERSION_NUMBER }}
           body: "release for ${{ github.ref_name }} @ ${{ github.sha }} (${{ env.VERSION_NUMBER }})"
-          # only the master line is the "Latest" release; maintenance*/beta ship
+          # only the main line is the "Latest" release; maintenance*/beta ship
           # as pre-releases so they never take the badge or the /releases/latest
           # redirect (v1 silently ignored these inputs).
           make_latest: ${{ env.RELEASE_TYPE == 'release' }}

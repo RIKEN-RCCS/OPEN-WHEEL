@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - '**'
-      - '!master'
+      - '!main'
 jobs:
   cypress-run:
     env:

@@ -73,7 +73,7 @@ we have 4 main directories at top level
 
 "documentMD" contains documents written in markdown.
 Only files under `documentMD/user_guide` will be converted to html and be publishd at github.io pages
-when pull request will be merged to master branch
+when pull request will be merged to main branch
 Any other markdown files under documentMD is detailed informatin for developpers
 
 "client" and "server" has client and server code respectively.
