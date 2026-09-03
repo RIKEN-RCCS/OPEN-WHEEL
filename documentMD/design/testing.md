@@ -161,7 +161,7 @@ describe("My Feature", () => {
 ### サーバーサイド単体テスト（`run_test.yml`）
 
 ```
-トリガー: master以外の全ブランチへのpush
+トリガー: main以外の全ブランチへのpush
 SSHテストサーバー: naoso5/openpbs（port 4000:22）
 実行コマンド: npm run test（server/）
 成功後: server/app/db/version.json を自動更新
@@ -170,7 +170,7 @@ SSHテストサーバー: naoso5/openpbs（port 4000:22）
 ### E2Eテスト（`run_cypress.yml`）
 
 ```
-トリガー: master以外の全ブランチへのpush
+トリガー: main以外の全ブランチへのpush
 SSHテストサーバー: naoso5/openpbs（GitHub Actionsサービス, port 4000:22）
 
 Dockerコンテナ（4台, ネットワーク: wheel-e2e-net）:

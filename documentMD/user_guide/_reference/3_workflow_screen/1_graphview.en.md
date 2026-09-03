@@ -92,7 +92,7 @@ __About save project button/revert project button behavior__
 WHEEL uses git for file history management.
 Your edits on the graph view screen are immediately reflected in the server-side file, but are not registered in the git repository until you click the save project button.
 Click the revert project button to discard all changes made since the last commit and return the repository to the state it was in when it was last committed.<br/><br/>
-For more information about git operations, see the developer documentation [detailed design document](https://github.com/{{site.repository}}/blob/master/documentMD/design/design.md).
+For more information about git operations, see the developer documentation [detailed design document](https://github.com/{{site.repository}}/blob/main/documentMD/design/design.md).
 {: .notice--info}
 
 ### Workflow screen changeover button area

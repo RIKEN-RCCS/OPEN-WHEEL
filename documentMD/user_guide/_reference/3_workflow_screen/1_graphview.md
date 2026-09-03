@@ -125,7 +125,7 @@ __save projct ボタン / revert projct ボタンの動作について__
 WHEELでは、gitを用いたファイル履歴管理を行っております。
 グラフビュー画面上での編集内容はサーバサイドのファイルにすぐに反映されますが、save projct ボタンをクリックするまではgitリポジトリには登録されません。
 revert projct ボタンをクリックすると、最後にコミットしてから後に行なった変更を全て破棄してリポジトリを最後にコミットした時の状態に戻します。<br/><br/>
-git操作の詳細については開発者向けドキュメント[詳細設計書](https://github.com/{{ site.repository }}/blob/master/documentMD/design/design.md)をご確認ください。
+git操作の詳細については開発者向けドキュメント[詳細設計書](https://github.com/{{ site.repository }}/blob/main/documentMD/design/design.md)をご確認ください。
 {: .notice--info}
 
 ### ワークフロー画面切替ボタンエリア
