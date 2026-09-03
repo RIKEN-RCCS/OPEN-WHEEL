@@ -31,14 +31,23 @@ jobs:
           echo "{\"version\": \"${VERSION_NUMBER}\" }" > server/app/db/version.json
           cat server/app/db/version.json
           echo "VERSION_NUMBER=${VERSION_NUMBER}" >>$GITHUB_ENV
+          # only master builds (TYPE=release) own the `latest` docker tag and the
+          # GitHub "Latest" release; maintenance*/beta builds must not.
+          echo "RELEASE_TYPE=${TYPE}" >>$GITHUB_ENV
       - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME}
+      - name: publish :latest for mainline releases only
+        if: env.RELEASE_TYPE == 'release'
+        run: |
+          docker tag ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} \
+                     ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:latest
+          docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:latest
       - run: docker save ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} | gzip > wheel_docker.tar.gz
       - run: apptainer build wheel.sif docker-daemon://${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME}
       - run: git archive --format=tar.gz --prefix=OpenWHEEL-${BRANCH_NAME}/ -o source.tar.gz HEAD
       - name: create release and upload artifact
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             wheel.sif
@@ -47,6 +56,11 @@ jobs:
           tag_name: ${{ env.VERSION_NUMBER }}
           name: ${{ env.VERSION_NUMBER }}
           body: "release for ${{ github.ref_name }} @ ${{ github.sha }} (${{ env.VERSION_NUMBER }})"
+          # only the master line is the "Latest" release; maintenance*/beta ship
+          # as pre-releases so they never take the badge or the /releases/latest
+          # redirect (v1 silently ignored these inputs).
+          make_latest: ${{ env.RELEASE_TYPE == 'release' }}
+          prerelease: ${{ env.RELEASE_TYPE != 'release' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   backup:
