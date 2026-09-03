@@ -244,6 +244,24 @@ gfarm:///path/to/project/output  # プロジェクト配下
 WHEEL_DEBUG_METADATA_XML=/tmp/debug_metadata.xml npm start -w server
 ```
 
+#### 上書き挙動
+
+書き出し先は環境変数で指定した**固定パス**で、コンポーネント名や連番は付与されない。
+`writeFile`（`node:fs/promises`、フラグ `w` = truncate）で書き込むため、既存内容は毎回上書きされる。
+
+- **1つの HPCI-SS / HPCISS-tar コンポーネント内に `inputFiles` が複数ある場合** — 書き出しは
+  **1回だけ**。`gatherComponentMetadata` / `componentMetadataToXml` は `_hpcissHandler`
+  （`dispatcher.js`）内で1回のみ呼ばれ、複数の `inputFiles` は Gfarm 拡張属性
+  `wheel.workflow` の付与先が増えるだけで、生成される JSON/XML は共通。
+- **プロジェクト内に HPCI-SS / HPCISS-tar コンポーネントが2つ以上ある場合、または同一コンポーネントが
+  loop 内・再実行で複数回実行される場合** — 実行のたびに同じパスへ書き出すため上書きされ、
+  **最後の実行分だけが残る**。
+- 各書き出しはその時点の**プロジェクト全体のスナップショット**（対象コンポーネントだけではない）。
+  実行タイミングが異なれば各コンポーネントの `state` 等が変わり、内容も異なり得る。
+
+複数コンポーネント分をすべて残したい場合は、パスへ連番／コンポーネントID／タイムスタンプを
+付与する改修が必要（現状の実装では非対応）。
+
 ## 9. タイムアウト設定
 
 各GFarm操作関数はデフォルトのタイムアウト（秒）が設定されている。
