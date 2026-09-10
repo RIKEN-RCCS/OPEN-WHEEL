@@ -659,7 +659,7 @@ function createExecuter(task, hostinfo) {
     err.task = task.name;
     err.useJobScheduler = task.useJobScheduler;
     err.hostinfo = hostinfo;
-    loggerWrapper.logError(task.projectRootDir, task.workingDir, err);
+    loggerWrapper.notifyUser(task.projectRootDir, `[${task.name}] job scheduler "${hostinfo.jobScheduler}" of host "${task.host}" is not defined in jobScheduler.json`);
     throw err;
   }
   if (onRemote) {

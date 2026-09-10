@@ -563,12 +563,13 @@ describe("UT for executerManager class", function () {
   });
   describe("createExecuter", function () {
     let loggerDebugStub;
-    let loggerErrorStub;
+    let notifyUserStub;
     //eslint-disable-next-line no-unused-vars
     let jobSchedulerStub;
     beforeEach(()=>{
       loggerDebugStub = sinon.stub(loggerWrapper, "logDebug");
-      loggerErrorStub = sinon.stub(loggerWrapper, "logError");
+      sinon.stub(loggerWrapper, "logError");
+      notifyUserStub = sinon.stub(loggerWrapper, "notifyUser");
       jobSchedulerStub = sinon.stub(_internal, "jobScheduler").value({ validScheduler: { submit: "mockSubmitCommand", queueOpt: "--queue=", reJobID: "mockJobIDPattern" } });
     });
     afterEach(()=>{
@@ -622,7 +623,7 @@ describe("UT for executerManager class", function () {
       const hostinfo = { host: "remoteHost", jobScheduler: "invalidScheduler" };
       //eslint-disable-next-line @stylistic/max-statements-per-line
       expect(()=>{ return createExecuter(task, hostinfo); }).to.throw("illegal job Scheduler specifies");
-      expect(loggerErrorStub).to.have.been.calledWith(task.projectRootDir, task.workingDir, sinon.match.instanceOf(Error));
+      expect(notifyUserStub).to.have.been.calledWith(task.projectRootDir, sinon.match(/job scheduler .* is not defined in jobScheduler\.json/));
     });
   });
   describe("register", function () {

@@ -9,7 +9,7 @@ import axios from "axios";
 import { glob } from "glob";
 import fs from "fs-extra";
 import SBS from "simple-batch-system";
-import { getLogger } from "../logSettings.js";
+import { getLogger, notifyUser } from "../logSettings.js";
 import { filesJsonFilename, remoteHost, componentJsonFilename, projectJsonFilename } from "../db/db.js";
 import { deliverFile } from "../core/deliverFile.js";
 import { gitAdd, gitCommit, gitResetHEAD, gitClean, gitPromise, getUnsavedFiles } from "../core/gitOperator2.js";
@@ -221,7 +221,7 @@ async function runValidationPhase(projectRootDir, ack, commitMessage) {
     await gitCommit(projectRootDir, commitMessage);
     return true;
   } catch (err) {
-    getLogger(projectRootDir).error("fatal error occurred while validation phase:", err);
+    notifyUser(projectRootDir, "fatal error occurred while validation phase:", err);
     ack(err);
     return false;
   } finally {
@@ -322,9 +322,9 @@ async function runDispatcher(clientID, projectRootDir, ack) {
     if (err.reason === "CANCELED") {
       getLogger(projectRootDir).debug(err.message);
     } else if (err.reason === "invalidRemoteStorage") {
-      getLogger(projectRootDir).error(`you do not have write permission to ${err.storagePath} on ${err.host}`);
+      notifyUser(projectRootDir, `you do not have write permission to ${err.storagePath} on ${err.host}`);
     } else {
-      getLogger(projectRootDir).error("fatal error occurred while preparing phase:", err);
+      notifyUser(projectRootDir, "fatal error occurred while preparing phase:", err);
     }
     removeSsh(projectRootDir);
     removeAllJWTServerPassphrase(projectRootDir);
@@ -391,7 +391,7 @@ async function runDispatcher(clientID, projectRootDir, ack) {
     await runProject(projectRootDir);
     await _internal.unlockIfFinished(projectRootDir);
   } catch (err) {
-    getLogger(projectRootDir).error("fatal error occurred while parsing workflow:", err);
+    notifyUser(projectRootDir, "fatal error occurred while parsing workflow:", err);
     await updateProjectState(projectRootDir, "failed");
     ack(err);
   } finally {
@@ -563,11 +563,11 @@ async function onSaveProject(projectRootDir, ack) {
   const projectJson = await getProjectJson(projectRootDir);
   const { readOnly, state: projectState } = projectJson;
   if (readOnly) {
-    getLogger(projectRootDir).error("readOnly project can not be saved", projectRootDir);
+    notifyUser(projectRootDir, "readOnly project can not be saved");
     return ack(new Error("project is read-only"));
   }
   if (!allowedOperations[projectState].includes("saveProject")) {
-    getLogger(projectRootDir).error(projectState, "project can not be saved", projectRootDir);
+    notifyUser(projectRootDir, projectState, "project can not be saved");
     return ack(new Error(`${projectState} project is not allowed to save`));
   }
   if (projectJson.exportInfo && projectJson.exportInfo.notChanged) {
@@ -619,7 +619,7 @@ async function projectOperator({ clientID, projectRootDir, ack, operation }) {
         break;
     }
   } catch (e) {
-    getLogger(projectRootDir).error(`${operation} failed`, e);
+    notifyUser(projectRootDir, `${operation} failed`, e);
     ack(e);
   } finally {
     if (operation !== "runProject") {

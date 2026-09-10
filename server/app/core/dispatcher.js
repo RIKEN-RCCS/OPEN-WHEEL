@@ -32,7 +32,7 @@ import {
   logInfo,
   logWarn,
   logError,
-  logFatal,
+  notifyUser,
   _internal
 } from "../logSettings.js";
 import { cancelDispatchedTasks } from "./taskUtil.js";
@@ -383,7 +383,7 @@ class Dispatcher extends EventEmitter {
           const stuckNames = Array.from(new Set(stuckPairs.map(({ stuck })=>{
             return stuck.name;
           }))).join(", ");
-          logFatal(this.projectRootDir, this.cwfDir,
+          notifyUser(this.projectRootDir,
             `project failed: ${blockedNames} can never start because required input file(s) from ${stuckNames} were never delivered (stage-out stuck). Resolve the transfer and re-run to continue.`);
         }
       }

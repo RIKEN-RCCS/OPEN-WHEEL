@@ -107,6 +107,30 @@ logError(projectRootDir, componentDir, "エラー:", error);
 logStdout(projectRootDir, componentDir, "タスク出力:", line);
 ```
 
+### notifyUser() — ユーザーが対応すべきエラーの通知
+
+エラーの扱いは「ユーザーが何か対応しないといけないか」で分ける。
+
+| 関数 | 用途 | クライアント表示 |
+|------|------|-----------------|
+| `notifyUser(projectRootDir, ...)` | ユーザーが要求した操作が失敗した／設定を直さないと先に進めない | ログ **＋ トースト**（`logERR` イベント） |
+| `logError()` / `logger.error()` | 記録はしたいがユーザーの対応は不要（自動リトライ中の転送、内部アサーション、廃止APIの呼び出し、コンポーネント自体に赤表示される単発のタスク失敗 等） | ログのみ |
+
+```javascript
+import { notifyUser } from "../logSettings.js";
+
+//run/save が失敗した、リモートホストが未設定、プロジェクト名が不正 …
+notifyUser(projectRootDir, "fatal error occurred while preparing phase:", err);
+
+//プロジェクトに紐づかないもの（プロジェクト一覧／リモートホスト画面／インポートダイアログ）は "default"
+notifyUser("default", "export project failed:", err);
+```
+
+- `notifyUser()` は内部で `getLogger(projectRootDir).error(...)` を呼ぶため、ログ画面（`WHEEL_LOG`）とログファイルには従来どおり出力される。
+- 追加で `logERR` イベントを対象ルーム（`projectRootDir` または `default`）へ emit する。クライアントの `onLogErr`（Home / Viewer / Workflow / Remotehost 各画面）がこれを snackbar として表示する。
+- トーストにはスタックトレースは載せない（`Error` は `message` のみ）。全文はログ画面／ログファイルで確認する。
+- 引数は `logger.error()` と同じ（第1引数は `projectRootDir` または `"default"`）。`componentDir` は取らない。
+
 ### ログファイルの保存先
 
 ```

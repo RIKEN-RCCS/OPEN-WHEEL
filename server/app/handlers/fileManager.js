@@ -16,7 +16,7 @@ import { getUnusedPath } from "../core/fileUtils.js";
 import { deliverFile } from "../core/deliverFile.js";
 import { escapeRegExp } from "../lib/utility.js";
 import fileBrowser from "../core/fileBrowser.js";
-import { getLogger } from "../logSettings.js";
+import { getLogger, notifyUser } from "../logSettings.js";
 import { gitLFSSize, projectJsonFilename, componentJsonFilename, rootDir, remoteHost, logFilename } from "../db/db.js";
 import { baseURL } from "../core/global.js";
 import { emitAll } from "./commUtils.js";
@@ -120,7 +120,7 @@ export async function onCreateNewFile(projectRootDir, argFilename, cb) {
       await gitAdd(projectRootDir, filename);
     }
   } catch (e) {
-    getLogger(projectRootDir).error(projectRootDir, "create new file failed", e);
+    notifyUser(projectRootDir, "create new file failed", e);
     cb(null);
     return;
   }
@@ -142,7 +142,7 @@ export async function onCreateNewDir(projectRootDir, argDirname, cb) {
       await gitAdd(projectRootDir, path.resolve(dirname, ".gitkeep"));
     }
   } catch (e) {
-    getLogger(projectRootDir).error(projectRootDir, "create new directory failed", e);
+    notifyUser(projectRootDir, "create new directory failed", e);
     cb(null);
     return;
   }
@@ -186,7 +186,7 @@ export async function onRenameFile(projectRootDir, parentDir, argOldName, argNew
     return;
   }
   if (await fs.pathExists(newName)) {
-    getLogger(projectRootDir).error(newName, "is already exists");
+    notifyUser(projectRootDir, newName, "is already exists");
     cb(false);
     return;
   }
@@ -216,7 +216,7 @@ export async function onRenameFile(projectRootDir, parentDir, argOldName, argNew
     err.path = parentDir;
     err.oldName = oldName;
     err.newName = newName;
-    getLogger(projectRootDir).error("rename failed", err);
+    notifyUser(projectRootDir, "rename failed", err);
     cb(false);
     return;
   }
@@ -243,7 +243,7 @@ export async function onCommitFiles(projectRootDir, files, cb) {
     });
     await gitCommit(projectRootDir, undefined, filenames);
   } catch (err) {
-    getLogger(projectRootDir).error("commit files failed", err);
+    notifyUser(projectRootDir, "commit files failed", err);
     cb(false);
     return;
   }
@@ -258,7 +258,7 @@ export async function onCommitFiles(projectRootDir, files, cb) {
 export async function onUploadFileSaved(event, socket) {
   const projectRootDir = event.file.meta.projectRootDir;
   if (!event.file.success) {
-    getLogger(projectRootDir).error("file upload failed", event.file.name);
+    notifyUser(projectRootDir, "file upload failed", event.file.name);
     return;
   }
   const uploadDir = path.resolve(projectRootDir, event.file.meta.currentDir);
@@ -457,7 +457,7 @@ export async function onDownloadFullLog(projectRootDir, cb) {
     getLogger(projectRootDir).info("Debug log archive is ready for download", url);
     cb(url);
   } catch (e) {
-    getLogger(projectRootDir).error("Failed to create debug log archive", e);
+    notifyUser(projectRootDir, "Failed to create debug log archive", e);
     cb(null);
   }
 };

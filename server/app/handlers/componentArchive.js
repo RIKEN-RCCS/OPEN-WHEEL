@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-import { getLogger } from "../logSettings.js";
+import { notifyUser } from "../logSettings.js";
 import { exportComponent } from "../core/exportComponent.js";
 import { importComponent } from "../core/importComponent.js";
 
@@ -19,7 +19,7 @@ async function onExportComponent(projectRootDir, componentID, cb) {
     const url = await exportComponent(projectRootDir, componentID);
     cb(url);
   } catch (e) {
-    getLogger(projectRootDir).error("export component failed", e);
+    notifyUser(projectRootDir, "export component failed", e);
     cb(e);
   }
 }
@@ -41,7 +41,7 @@ async function onImportComponent(archiveFile, projectRootDir, targetParentID, po
     }
     return newComponentID;
   } catch (e) {
-    getLogger(projectRootDir).error("import component failed", e);
+    notifyUser(projectRootDir, "import component failed", e);
     if (typeof cb === "function") {
       cb(e);
     }

@@ -5,7 +5,7 @@
  */
 "use strict";
 import SshClientWrapper from "ssh-client-wrapper";
-import { getLogger } from "../logSettings.js";
+import { getLogger, notifyUser } from "../logSettings.js";
 const logger = getLogger();
 import { remoteHost, verboseSsh } from "../db/db.js";
 import { askPassword } from "../core/sshManager.js";
@@ -32,7 +32,7 @@ async function onTryToConnect(clientID, hostInfo, cb) {
       logger.info("tryToConnect canceled by user");
       return cb("canceled");
     }
-    logger.error("tryToConnect failed with", err);
+    notifyUser("default", "connection test failed:", err);
     return cb(err);
   }
   ssh.disconnect();
