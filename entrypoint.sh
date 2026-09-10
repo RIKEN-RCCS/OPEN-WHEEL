@@ -27,9 +27,15 @@ if [ "xYES" == "x${WHEEL_ANONYMOUS_LOGIN}" ]; then
   export WHEEL_ENABLE_AUTH=YES
 fi
 
-SSH_ENV_FILE=/root/ssh_env
-ssh-agent -s > ${SSH_ENV_FILE}
-source ${SSH_ENV_FILE}
-echo "source ${SSH_ENV_FILE}" >> /root/.bashrc
+# start an ssh-agent for the WHEEL server. WHEEL spawns many `ssh` subprocesses
+# (ssh-client-wrapper) that inherit SSH_AUTH_SOCK from this process, so with
+# AddKeysToAgent in the user's ssh config the key passphrase is entered once (via
+# the browser prompt) and reused, and agent forwarding works for ProxyJump chains.
+# The socket lives on a container-local path (/tmp is not bind-mounted) so nothing
+# is written into a bind-mounted home - a shared /etc/bash.bashrc line (see
+# Dockerfile) lets `docker exec ... bash` pick up the same agent.
+export SSH_AUTH_SOCK=/tmp/wheel-ssh-agent.sock
+rm -f "${SSH_AUTH_SOCK}"
+ssh-agent -a "${SSH_AUTH_SOCK}" > /dev/null
 
-npm start
+exec npm start
