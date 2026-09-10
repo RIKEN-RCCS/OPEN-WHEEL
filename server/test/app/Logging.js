@@ -26,7 +26,7 @@ import { logFilename } from "../../app/db/db.js";
 const projectRootDir = path.resolve("hoge");
 
 //testee
-import { getLogger, configure, logSettings, _internal, logInfo, logDebug, logError } from "../../app/logSettings.js";
+import { getLogger, configure, logSettings, _internal, logInfo, logDebug, logError, notifyUser } from "../../app/logSettings.js";
 
 describe("Unit test for log4js's helper functions", ()=>{
   let logger;
@@ -214,6 +214,50 @@ describe("Unit test for log4js's helper functions", ()=>{
       expect(payload).not.to.match(/\[object Object\]/);
       const errorLog = JSON.parse(payload);
       expect(errorLog.data.join(" ")).to.match(/Error: something went wrong/);
+    });
+  });
+  describe("#notifyUser", ()=>{
+    const findLogErrCall = ()=>{
+      return emitAll.getCalls().find((c)=>{
+        return c.args[1] === "logERR";
+      });
+    };
+    beforeEach(async ()=>{
+      await fs.remove(projectRootDir);
+      await fs.mkdir(projectRootDir);
+      emitAll.resetHistory();
+    });
+    afterEach(async ()=>{
+      if (!process.env.WHEEL_KEEP_FILES_AFTER_LAST_TEST) {
+        await fs.remove(path.resolve(__dirname, logFilename));
+        await fs.remove(projectRootDir);
+      }
+      configure(logSettings);
+    });
+    it("should emit a plain-text 'logERR' toast to the project's room in addition to the log", ()=>{
+      notifyUser(projectRootDir, "something the user must fix");
+      const logErr = findLogErrCall();
+      expect(logErr, "a logERR event should have been emitted").to.not.be.undefined;
+      expect(logErr.args[0]).to.equal(projectRootDir);
+      expect(logErr.args[2]).to.equal("something the user must fix");
+      //the same message is still logged (and streamed to the log screen) via WHEEL_LOG
+      expect(emitAll.getCalls().some((c)=>{
+        return c.args[1] === "WHEEL_LOG";
+      })).to.be.true;
+    });
+    it("should reduce an Error argument to its message (no stack trace) in the toast", ()=>{
+      notifyUser(projectRootDir, "operation failed:", new Error("boom"));
+      const logErr = findLogErrCall();
+      expect(logErr.args[2]).to.equal("operation failed: boom");
+      expect(logErr.args[2]).to.not.match(/\n\s+at /);
+    });
+    it("should route messages not tied to a project to the 'default' room", ()=>{
+      notifyUser("default", "invalid project name");
+      expect(findLogErrCall().args[0]).to.equal("default");
+    });
+    it("should fall back to the 'default' room when projectRootDir is not a string", ()=>{
+      notifyUser(null, "connection test failed");
+      expect(findLogErrCall().args[0]).to.equal("default");
     });
   });
 });
