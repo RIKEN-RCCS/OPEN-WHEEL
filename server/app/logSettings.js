@@ -32,6 +32,14 @@ function socketIOAppender(layout, timezoneOffset, argEventName) {
     if (eventName) {
       const message = layout(loggingEvent, timezoneOffset);
       _internal.emitAll(projectRootDir, "WHEEL_LOG", message);
+      //the structured "WHEEL_LOG" stream above feeds the log screen. the client also
+      //raises a toast for "logERR" events (onLogErr in Home.vue/Viewer.vue/Workflow.vue),
+      //but that per-level channel stopped being emitted once the socketIO appender was
+      //unified onto "WHEEL_LOG". re-emit FATAL only (as plain text) so a run-aborting
+      //error still pops a toast, without flooding it with every ERROR-level line.
+      if (loggingEvent.level.levelStr === "FATAL") {
+        _internal.emitAll(projectRootDir, "logERR", formatToastMessage(loggingEvent));
+      }
     }
   };
 }
@@ -71,6 +79,18 @@ function formatLogArg(value) {
     }
   }
   return value;
+}
+
+//build a short one-line string from a logging event's data parts for a client-side
+//toast. unlike formatLogArg(), an Error is reduced to its message (no stack trace)
+//since the toast has no room for it - the full entry is still in the log screen/file.
+function formatToastMessage(loggingEvent) {
+  const data = Array.isArray(loggingEvent.data) ? loggingEvent.data : [loggingEvent.data];
+  return data
+    .map((value)=>{
+      return value instanceof Error ? value.message : formatLogArg(value);
+    })
+    .join(" ");
 }
 
 const socketIO = {

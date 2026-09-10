@@ -323,11 +323,16 @@ async function runDispatcher(clientID, projectRootDir, ack) {
       getLogger(projectRootDir).debug(err.message);
     } else if (err.reason === "invalidRemoteStorage") {
       getLogger(projectRootDir).error(`you do not have write permission to ${err.storagePath} on ${err.host}`);
+      emitAll(projectRootDir, "showMessage", `you do not have write permission to ${err.storagePath} on ${err.host}`);
     } else {
       getLogger(projectRootDir).error("fatal error occurred while preparing phase:", err);
+      emitAll(projectRootDir, "showMessage", `failed to start project: ${err.message || err}`);
     }
     removeSsh(projectRootDir);
     removeAllJWTServerPassphrase(projectRootDir);
+    //runDispatcher is fire-and-forget from onRunProject/onContinueProject, so projectOperator
+    //has already resolved the socket ack with ack(true); this ack(err) is a dropped second
+    //ack on the wire. the client is notified via "showMessage" (toast) above instead.
     ack(err);
     return false;
   }
@@ -392,6 +397,9 @@ async function runDispatcher(clientID, projectRootDir, ack) {
     await _internal.unlockIfFinished(projectRootDir);
   } catch (err) {
     getLogger(projectRootDir).error("fatal error occurred while parsing workflow:", err);
+    //the socket ack was already resolved by projectOperator's ack(true) (runDispatcher is
+    //not awaited), so ack(err) below does nothing on the wire - surface it as a toast here.
+    emitAll(projectRootDir, "showMessage", `project run aborted: ${err.message || err}`);
     await updateProjectState(projectRootDir, "failed");
     ack(err);
   } finally {
