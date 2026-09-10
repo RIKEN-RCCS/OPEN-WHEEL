@@ -73,9 +73,13 @@ function formatLogArg(value) {
   return value;
 }
 
-//build a short one-line string from the log-call arguments for a client-side toast.
-//unlike formatLogArg(), an Error is reduced to its message (no stack trace) since the
-//toast has no room for it - the full entry is still in the log screen and log file.
+/**
+ * build a short one-line string from the log-call arguments for a client-side toast.
+ * unlike formatLogArg(), an Error is reduced to its message (no stack trace) since the
+ * toast has no room for it - the full entry is still in the log screen and log file.
+ * @param {Array<(string|Error|object)>} messages - the arguments passed to notifyUser()
+ * @returns {string} - space-joined single-line message
+ */
 function formatToastMessage(messages) {
   return messages
     .map((value)=>{
@@ -248,7 +252,7 @@ export function logSSHerr(projectRootDir, componentDir, ...messages) {
  * handlers (Home/Viewer/Workflow/remotehost screens) already turn into a snackbar.
  * @param {string} projectRootDir - project's root path, or "default" for messages not
  *   tied to a project (project list / remotehost screen / import dialog)
- * @param {...any} messages - same arguments you would pass to logger.error()
+ * @param {...(string|Error|object)} messages - same arguments you would pass to logger.error()
  * @returns {void}
  */
 export function notifyUser(projectRootDir, ...messages) {
