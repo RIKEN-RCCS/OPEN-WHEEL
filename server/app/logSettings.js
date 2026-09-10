@@ -73,6 +73,21 @@ function formatLogArg(value) {
   return value;
 }
 
+/**
+ * build a short one-line string from the log-call arguments for a client-side toast.
+ * unlike formatLogArg(), an Error is reduced to its message (no stack trace) since the
+ * toast has no room for it - the full entry is still in the log screen and log file.
+ * @param {Array<(string|Error|object)>} messages - the arguments passed to notifyUser()
+ * @returns {string} - space-joined single-line message
+ */
+function formatToastMessage(messages) {
+  return messages
+    .map((value)=>{
+      return value instanceof Error ? value.message : formatLogArg(value);
+    })
+    .join(" ");
+}
+
 const socketIO = {
   configure: (config, layouts)=>{
     let layout = layouts.basicLayout;
@@ -222,6 +237,30 @@ export function logSSHout(projectRootDir, componentDir, ...messages) {
 export function logSSHerr(projectRootDir, componentDir, ...messages) {
   logWithComponentDir("ssherr", projectRootDir, componentDir, ...messages);
 }
+
+/**
+ * report a condition the user has to act on: something they requested failed, or a
+ * setting must be fixed before they can proceed.
+ *
+ * logging policy:
+ * - notifyUser(): the user must do something about it -> logged AND shown as a toast
+ * - logger.error() / logError(): an error worth recording but the user need not act
+ *   (auto-retried transfer, internal assertion, deprecated API call, a task failure
+ *   that already shows on the component itself) -> log only, no toast
+ *
+ * the toast is delivered on the "logERR" socket event, which the client's onLogErr
+ * handlers (Home/Viewer/Workflow/remotehost screens) already turn into a snackbar.
+ * @param {string} projectRootDir - project's root path, or "default" for messages not
+ *   tied to a project (project list / remotehost screen / import dialog)
+ * @param {...(string|Error|object)} messages - same arguments you would pass to logger.error()
+ * @returns {void}
+ */
+export function notifyUser(projectRootDir, ...messages) {
+  getLogger(projectRootDir).error(...messages);
+  const room = typeof projectRootDir === "string" && projectRootDir.length > 0 ? projectRootDir : "default";
+  _internal.emitAll(room, "logERR", formatToastMessage(messages));
+}
+
 export const loggerWrapper = {
   logTrace,
   logDebug,
@@ -232,5 +271,6 @@ export const loggerWrapper = {
   logStdout,
   logStderr,
   logSSHout,
-  logSSHerr
+  logSSHerr,
+  notifyUser
 };

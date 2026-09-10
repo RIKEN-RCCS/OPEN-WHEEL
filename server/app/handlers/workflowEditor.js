@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 import SBS from "simple-batch-system";
-import { getLogger } from "../logSettings.js";
+import { getLogger, notifyUser } from "../logSettings.js";
 import {
   addInputFile,
   addOutputFile,
@@ -128,7 +128,7 @@ async function generalHandler(func, funcname, projectRootDir, parentID, needSend
         await sendComponentTree(projectRootDir, projectRootDir);
       }
     } catch (e) {
-      getLogger(projectRootDir).error(`${funcname} failed`, e);
+      notifyUser(projectRootDir, `${funcname} failed`, e);
       cb(e);
     }
   });

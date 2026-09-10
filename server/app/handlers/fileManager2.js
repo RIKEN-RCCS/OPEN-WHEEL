@@ -6,7 +6,7 @@
 "use strict";
 import path from "node:path";
 import fs from "fs-extra";
-import { getLogger } from "../logSettings.js";
+import { getLogger, notifyUser } from "../logSettings.js";
 import { emitAll } from "./commUtils.js";
 
 /**
@@ -20,7 +20,7 @@ import { emitAll } from "./commUtils.js";
  */
 async function onUploadFileSaved2(event) {
   if (!event.file.success) {
-    getLogger().error("file upload failed", event.file.name);
+    notifyUser("default", "file upload failed", event.file.name);
     return;
   }
   const fileSizeMB = parseInt(event.file.size / 1024 / 1024, 10);
