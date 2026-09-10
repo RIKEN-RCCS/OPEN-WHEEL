@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs-extra";
 import { readComponentJsonByID } from "../core/componentJsonIO.js";
 import { remoteHost } from "../db/db.js";
-import { getLogger } from "../logSettings.js";
+import { getLogger, notifyUser } from "../logSettings.js";
 import { createSsh, getSsh, askPassword } from "../core/sshManager.js";
 import { createTempd } from "../core/tempd.js";
 import { hasRemoteFileBrowser, hasGfarmTarBrowser } from "../../../common/checkComponent.js";
@@ -159,7 +159,7 @@ async function onRemoteDownload(projectRootDir, target, host, cb) {
     getLogger(projectRootDir).debug("Download url is ready", url);
     return cb(url);
   } catch (e) {
-    getLogger(projectRootDir).error("fetch download file failed", e);
+    notifyUser(projectRootDir, "fetch download file failed", e);
     return cb(null);
   }
 }
@@ -190,7 +190,7 @@ async function gfarmFileUtilWrapper(func, projectRootDir, ...args) {
   const host = args.pop();
   const hostID = remoteHost.getID("name", host);
   if (!hostID) {
-    getLogger(projectRootDir).error(`${host} not found in remotehost settings`);
+    notifyUser(projectRootDir, `${host} not found in remotehost settings`);
     cb(false);
   }
   try {

@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-import { getLogger } from "../logSettings.js";
+import { getLogger, notifyUser } from "../logSettings.js";
 import { exportProject } from "../core/exportProject.js";
 import { importProject, importProjectFromGitRepository } from "../core/importProject.js";
 
@@ -15,7 +15,7 @@ async function onImportProject(clientID, target, parentDir, isURL, cb) {
     cb(projectRootDir);
   } catch (e) {
     if (e.reason !== "CANCELED") {
-      getLogger("default").error(`${e.message}`);
+      notifyUser("default", `${e.message}`);
     } else {
       getLogger("default").debug("user canceled importing project:", target);
     }
@@ -28,7 +28,7 @@ async function onExportProject(projectRootDir, name, mail, memo, cb) {
     const url = await exportProject(projectRootDir, name, mail, memo);
     cb(url);
   } catch (e) {
-    getLogger("default").error("export project failed:", e);
+    notifyUser("default", "export project failed:", e);
     cb(false);
   }
 }

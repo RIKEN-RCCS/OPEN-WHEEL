@@ -5,7 +5,7 @@
  */
 import fs from "fs-extra";
 import path from "path";
-import { getLogger } from "../logSettings.js";
+import { getLogger, notifyUser } from "../logSettings.js";
 import { projectList, defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename, suffix } from "../db/db.js";
 import { getDateString, writeJsonWrapper, isValidName, removeTrailingPathSep } from "../lib/utility.js";
 import { convertPathSep } from "./pathUtils.js";
@@ -110,7 +110,7 @@ export async function addProject(projectDir, description) {
 
   const projectName = path.basename(projectRootDir.slice(0, -suffix.length));
   if (!_internal.isValidName(projectName)) {
-    _internal.getLogger().error(projectName, "is not allowed for project name");
+    notifyUser("default", projectName, "is not allowed for project name");
     throw (new Error("illegal project name"));
   }
   projectRootDir = await _internal.createNewProject(projectRootDir, projectName, description, "wheel", "wheel@example.com");
@@ -126,12 +126,12 @@ export async function addProject(projectDir, description) {
 export async function renameProject(id, argNewName, oldDir) {
   const newName = argNewName.endsWith(suffix) ? argNewName.slice(0, -suffix.length) : argNewName;
   if (!_internal.isValidName(newName)) {
-    _internal.getLogger().error(newName, "is not allowed for project name");
+    notifyUser("default", newName, "is not allowed for project name");
     throw (new Error("illegal project name"));
   }
   const newDir = path.resolve(path.dirname(oldDir), `${newName}${suffix}`);
   if (await _internal.fs.pathExists(newDir)) {
-    _internal.getLogger().error(newName, "directory is already exists");
+    notifyUser("default", newName, "directory is already exists");
     throw (new Error("already exists"));
   }
 
@@ -190,7 +190,7 @@ export async function readProject(projectRootDir) {
       await _internal.gitAdd(projectRootDir, "./");
       await _internal.gitCommit(projectRootDir, "import project");
     } catch (e) {
-      _internal.getLogger().error("can not access to git repository", e);
+      notifyUser("default", "can not access to git repository", e);
       return null;
     }
   } else {

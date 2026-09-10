@@ -40,7 +40,7 @@ import {
 import { onAddJobScriptTemplate, onUpdateJobScriptTemplate, onRemoveJobScriptTemplate, onGetJobScriptTemplates } from "./jobScript.js";
 import { onGetResultFiles } from "./resultFiles.js";
 import { sendTaskStateList, sendComponentTree, sendWorkflow, sendProjectJson } from "./senders.js";
-import { getLogger } from "../logSettings.js";
+import { getLogger, notifyUser } from "../logSettings.js";
 import {
   onCreateNewRemoteFile,
   onCreateNewRemoteDir,
@@ -120,7 +120,7 @@ const registerHandlers = (socket, Siofu)=>{
     //Handle component import uploads specially
     if (event.file.meta.isComponentImport) {
       if (!event.file.success) {
-        getLogger(event.file.meta.projectRootDir).error("component import upload failed", event.file.name);
+        notifyUser(event.file.meta.projectRootDir, "component import upload failed", event.file.name);
         return;
       }
       //Call importComponent with the uploaded file path
@@ -138,7 +138,7 @@ const registerHandlers = (socket, Siofu)=>{
         const parentDir = await getComponentDir(projectRootDir, targetParentID, true);
         await sendWorkflow(null, projectRootDir, parentDir);
       } catch (e) {
-        getLogger(projectRootDir).error("component import failed", e);
+        notifyUser(projectRootDir, "component import failed", e);
       }
       return;
     }
@@ -149,7 +149,7 @@ const registerHandlers = (socket, Siofu)=>{
   });
   uploader.on("error", (event)=>{
     const projectRootDir = event.file.meta.projectRootDir;
-    getLogger(projectRootDir).error("file upload failed", event.file, event.error);
+    notifyUser(projectRootDir, "file upload failed", event.file && event.file.name, event.error);
   });
   //create
   socket.on("createNewFile", onCreateNewFile);
