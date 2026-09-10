@@ -12,6 +12,11 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt -y install curl git rsy
     apt-get clean  &&\
     rm -rf /var/lib/apt/lists/*
 
+# entrypoint.sh starts an ssh-agent on this fixed, container-local socket; let
+# `docker exec ... bash` sessions attach to the same agent without writing to the
+# bind-mounted home. No-op when the socket is absent.
+RUN printf '\n[ -S /tmp/wheel-ssh-agent.sock ] && export SSH_AUTH_SOCK=/tmp/wheel-ssh-agent.sock\n' >> /etc/bash.bashrc
+
 FROM base AS run_base
 WORKDIR /usr/src/
 COPY package.json package.json
