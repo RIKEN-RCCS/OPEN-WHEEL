@@ -7,6 +7,20 @@ RUN apt-get update && apt -y install curl git rsync openssh-server bzip2 python3
     apt-get clean  &&\
     rm -rf /var/lib/apt/lists/*
 
+# Resolve one version string for this build from the .git in the build context.
+# This happens at build time so the value is frozen into the image (static, not
+# recomputed at server start). Everything in this stage is discarded except
+# /wheel-version - the copied .git never reaches the final image. See issue #1014.
+# (Do not add .git to .dockerignore or every build falls back to "unknown".)
+# No --dirty: git describe would inspect the working tree, but .dockerignore
+# hides tracked paths (documentMD/ etc.) from `COPY . .`, so --dirty would always
+# fire. The abbreviated commit is enough to identify the source.
+FROM base AS versioner
+WORKDIR /wheel-src
+COPY . .
+RUN git describe --tags --always --long --abbrev=12 > /wheel-version 2>/dev/null \
+    || echo unknown > /wheel-version
+
 FROM base AS run_base
 WORKDIR /usr/src/
 COPY package.json package.json
@@ -30,6 +44,18 @@ WORKDIR /usr/src
 COPY common common
 COPY client client
 COPY server server
+# bake the build version (issue #1014):
+#  - WHEEL_VERSION build-arg wins (CI passes the release/beta string)
+#  - else the git-derived value from the versioner stage, marked -local
+#  - else leave version.json as shipped (committed placeholder, or a
+#    source.tar.gz that already carries a baked version)
+COPY --from=versioner /wheel-version /tmp/wheel-version
+ARG WHEEL_VERSION=
+RUN if [ -n "${WHEEL_VERSION}" ]; then \
+      printf '{"version": "%s" }\n' "${WHEEL_VERSION}" > server/app/db/version.json ; \
+    elif [ "$(cat /tmp/wheel-version)" != unknown ]; then \
+      printf '{"version": "%s-local" }\n' "$(cat /tmp/wheel-version)" > server/app/db/version.json ; \
+    fi
 WORKDIR /usr/src/client
 RUN npm run build
 COPY entrypoint.sh /usr/src/server/
@@ -50,6 +76,14 @@ WORKDIR /usr/src
 COPY common common
 COPY server server
 RUN npm prune --production
+# bake the build version - same rule as the dev stage (issue #1014)
+COPY --from=versioner /wheel-version /tmp/wheel-version
+ARG WHEEL_VERSION=
+RUN if [ -n "${WHEEL_VERSION}" ]; then \
+      printf '{"version": "%s" }\n' "${WHEEL_VERSION}" > server/app/db/version.json ; \
+    elif [ "$(cat /tmp/wheel-version)" != unknown ]; then \
+      printf '{"version": "%s-local" }\n' "$(cat /tmp/wheel-version)" > server/app/db/version.json ; \
+    fi
 COPY --from=builder /usr/src/server/app/public /usr/src/server/app/public
 COPY entrypoint.sh /usr/src/server/
 RUN rm -fr client server/app/config/* server/test

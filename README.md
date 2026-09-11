@@ -85,8 +85,3 @@ run following commands
 3. cd test; npm install (install e2e test modules)
 
 please read test/README.md for E2E test preparation
-
-
-### CI/CD process
-when you push new commit to github, server/app/db/version.json will be updated during CI/CD process.
-So, you have to pull before make further commit.

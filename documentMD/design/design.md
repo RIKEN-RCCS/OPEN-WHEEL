@@ -496,6 +496,38 @@ saveボタンの押下          | git commit
 revertボタンの押下        | git reset HEAD --hard
 cleanボタンの押下         | rm -fr && git reset HEAD --hard
 
+## バージョン番号の管理
+サーバ起動時のログ（`starting WHEEL server (version X)`）とログ画面の「about」で
+表示するバージョン番号は、`server/app/core/versionInfo.js` が
+`server/app/db/version.json` の `version` を読んで使っているだけである。
+
+リポジトリに commit されている値は固定のプレースホルダで、CI を含め誰もこの
+ファイルを書き換えない。
+
+```json
+{"version": "not defined - this is a development build"}
+```
+
+（過去は `run_test.yml` が push のたびに日付ベースの値を各ブランチへ
+commit-back していたが、並行して出している複数の PR が `version.json` で
+必ず conflict するのと、merge のたびに stale な値が main / maintenance に
+乗ってしまう問題があったため廃止した。GitLab issue `aicshud/WHEEL#1014`。）
+
+実際に表示される文字列は、実行経路ごとに **ビルド時** に焼き込まれる。
+アプリのコードが起動時にバージョンを計算することはない。
+
+| 実行経路 | version.json を書くのは | 表示される文字列 |
+|---|---|---|
+| 公式リリース（`build_and_deploy.yml`） | CI が `docker build --build-arg WHEEL_VERSION=...` で渡す | `YYYY-MMDD-HHMMSS-{release\|maintenance\|beta}`（GitHub Release のタグと一致） |
+| `docker build .`（`.git` あり・build-arg なし） | Dockerfile の `versioner` ステージが `git describe` した値 | `<git describe>-local` |
+| `docker build --build-arg WHEEL_VERSION=... .` | Dockerfile（build-arg 優先） | 渡した値そのまま |
+| `source.tar.gz` を展開して build | CI が焼き込んだ値を保持 | `YYYY-MMDD-HHMMSS-{type}` |
+| ソースから直接 `npm start`（ビルドなし） | 誰も書かない（プレースホルダのまま） | `not defined - this is a development build` |
+| `compose.dev.yml` での開発 | 上記と同じ（`server/app` を bind mount するため、イメージに焼き込まれた値は隠れる） | `not defined - this is a development build` |
+
+`server/app/db/version.json` は手で書き換えない。中身はビルド処理が焼き込む
+ものであり、リポジトリ上の値は「ビルドされていない」ことを示すプレースホルダ
+として固定してある。
 
 ## 画面遷移
 ![画面遷移図](./screen_transition.svg)
