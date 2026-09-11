@@ -84,7 +84,3 @@ Any other markdown files under documentMD is detailed informatin for developpers
 > cd server
 > npm start
 ```
-
-### CI/CD process
-when you push new commit to github, server/app/db/version.json will be updated during CI/CD process.
-So, you have to pull before make further commit.
