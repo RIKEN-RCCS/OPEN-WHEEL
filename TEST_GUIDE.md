@@ -94,7 +94,6 @@ npm run UT:local-gfarm
 トリガー: main以外の全ブランチへのpush
 SSH テストサーバー: naoso5/openpbs (port 4000:22)
 実行コマンド: npm run test (server/)
-成功後: server/app/db/version.json を自動更新
 ```
 
 #### Windows (`run_test_windows.yml`)

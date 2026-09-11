@@ -19,7 +19,7 @@ test/cypress/component   component test with cypress
 - if you make new functions under server, you have to add unit tests for them.
 - if you make changes that affect the UI, you have to add component tests for them.
 - never commit, revert or make any other operations to git repo without explicitly order from user.
-- do not change "server/app/db/version.json" this file is automatically updated by github workflow.
+- do not hand-edit "server/app/db/version.json". It holds a fixed development placeholder in the repo; the real value is baked in only at build time (Dockerfile / build_and_deploy.yml), never by a running CI job. See documentMD/design/design.md ("バージョン番号の管理").
 - Do not use conditional skip in unit tests except for pre-existing ones.
 
 ## implementation policy
