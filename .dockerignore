@@ -1,3 +1,6 @@
+# NOTE: do not add .git here. The Dockerfile's `versioner` stage runs
+# `git describe` against it to stamp the build version (issue #1014); excluding
+# it makes every build report "unknown".
 docs
 documentMD
 **/node_modules

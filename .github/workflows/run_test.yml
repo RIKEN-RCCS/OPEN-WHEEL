@@ -21,7 +21,6 @@ jobs:
       WHEEL_TEST_REMOTEHOST: testServer
       WHEEL_TEST_REMOTE_PASSWORD: passw0rd
       TZ: JST-9
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -102,31 +101,6 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
           echo "DEBUG: step summary write exit code: $?, file now has $(wc -l < "$GITHUB_STEP_SUMMARY") lines"
-      - name: determine release type from branch name
-        run: |
-          case "${{ github.ref_name }}" in
-            main) TYPE=release ;;
-            maintenance*) TYPE=maintenance ;;
-            *) TYPE=beta ;;
-          esac
-          echo "VERSION_NUMBER=$(date '+%Y-%m%d-%H%M%S')-${TYPE}" >>$GITHUB_ENV
-      - run: cat  server/app/db/version.json
-      - name: update version.json
-        id: create-json
-        uses: jsdaniell/create-json@v1.2.2
-        with:
-          dir: "server/app/db"
-          name: "version.json"
-          json: '{"version": "${{ env.VERSION_NUMBER }}" }'
-      - run: cat  server/app/db/version.json
-      - name: commit and push version.json
-        run: |
-          git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
-          git config user.name 'version-number-updater[bot]'
-          git config user.email 'action@github.com'
-          git add  server/app/db/version.json
-          git commit -m '[skip ci] update version number'
-          git push origin HEAD:${GITHUB_REF}
   backup:
     needs: ["test"]
     runs-on: ubuntu-latest

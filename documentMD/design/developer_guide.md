@@ -144,7 +144,7 @@ OpenWHEEL/
 ### 必須ルール
 1. コード変更後は必ずlintを実行する
 2. 関数には JSDoc コメントを付ける
-3. `server/app/db/version.json` は変更しない（GitHub Workflowが自動更新）
+3. `server/app/db/version.json` は変更しない（固定プレースホルダを commit してあり、実際の値はビルド時に焼き込まれる。詳細は design.md「バージョン番号の管理」参照）
 
 ### 実装スタイル
 
