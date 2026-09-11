@@ -12,25 +12,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: eWaterCycle/setup-apptainer@v2
-      - name: stamp version.json for this build
-        # master is branch-protected (rejects direct pushes even from Actions bots),
-        # so this can't be committed back - it only needs to be baked into the
-        # artifacts built below, which the Dockerfile's `COPY server server` picks up
-        # from this worktree.
+      - name: determine version number for this build
+        # This value is baked into the image via the WHEEL_VERSION build-arg (see
+        # the docker build step) and into source.tar.gz below. It is never
+        # committed back: master is branch-protected, and the per-branch
+        # `[skip ci] update version number` commits used to conflict on
+        # server/app/db/version.json between parallel PRs (issue #1014).
         run: |
           case "${BRANCH_NAME}" in
             master) TYPE=release ;;
             maintenance*) TYPE=maintenance ;;
             *) TYPE=beta ;;
           esac
-          VERSION_NUMBER="$(date '+%Y-%m%d-%H%M%S')-${TYPE}"
-          echo "{\"version\": \"${VERSION_NUMBER}\" }" > server/app/db/version.json
-          cat server/app/db/version.json
-          echo "VERSION_NUMBER=${VERSION_NUMBER}" >>$GITHUB_ENV
+          echo "VERSION_NUMBER=$(date '+%Y-%m%d-%H%M%S')-${TYPE}" >>$GITHUB_ENV
           # only master builds (TYPE=release) own the `latest` docker tag and the
           # GitHub "Latest" release; maintenance*/beta builds must not.
           echo "RELEASE_TYPE=${TYPE}" >>$GITHUB_ENV
-      - run: docker build -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} .
+      - run: docker build --build-arg WHEEL_VERSION="${VERSION_NUMBER}" -t ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} .
       - run: docker login -u ${DOCKER_USER_NAME} -p ${DOCKER_PASSWORD}
       - run: docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME}
       - name: publish :latest for mainline releases only
@@ -41,7 +39,16 @@ jobs:
           docker push ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:latest
       - run: docker save ${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME} | gzip > wheel_docker.tar.gz
       - run: apptainer build wheel.sif docker-daemon://${DOCKER_USER_NAME}/${DOCKER_CONTAINER_NAME}:${BRANCH_NAME}
-      - run: git archive --format=tar.gz --prefix=OpenWHEEL-${BRANCH_NAME}/ -o source.tar.gz HEAD
+      - name: pack source.tar.gz with the version baked in
+        # git archive would ship the committed placeholder version.json; extract
+        # the tracked tree, drop in the real version, and re-pack so a run from
+        # source.tar.gz reports the same version as the images (issue #1014).
+        run: |
+          rm -rf _src && mkdir -p _src
+          git archive --prefix=OpenWHEEL-${BRANCH_NAME}/ HEAD | tar -x -C _src
+          echo "{\"version\": \"${VERSION_NUMBER}\" }" > _src/OpenWHEEL-${BRANCH_NAME}/server/app/db/version.json
+          tar -czf source.tar.gz -C _src OpenWHEEL-${BRANCH_NAME}
+          rm -rf _src
       - name: create release and upload artifact
         uses: softprops/action-gh-release@v2
         with:
