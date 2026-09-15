@@ -36,7 +36,16 @@ mkdir -p ${SHARED_DIR}
 
 echo boot up test server
 docker compose up ${TAG_TEST_SERVER} -d --wait --remove-orphans
-docker exec ${TAG_TEST_SERVER} /opt/pbs/bin/qmgr -c "set server job_history_enable=True"
+
+# docker's healthcheck can report "healthy" slightly before pbs_server is actually ready to
+# accept qmgr connections (seen as "qmgr: cannot connect to server"). If this set silently
+# fails, job_history_enable stays False, so a finished job's qstat/qstat -xf entry can vanish
+# from the queue before WHEEL's status polling reads it - retry briefly instead of racing it.
+for i in $(seq 1 10); do
+  docker exec ${TAG_TEST_SERVER} /opt/pbs/bin/qmgr -c "set server job_history_enable=True" && break
+  echo "qmgr not ready yet, retrying ($i/10)..."
+  sleep 2
+done
 
 echo remove entry from known_hosts to avoid error if the entry already exists
 ssh-keygen -R ${KNOWN_HOSTS} 2>/dev/null
