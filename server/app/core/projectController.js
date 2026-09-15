@@ -23,7 +23,11 @@ const _internal = {
   eventEmitters,
   gitClean,
   gitResetHEAD,
-  setProjectState
+  setProjectState,
+  removeSsh,
+  removeExecuters,
+  removeTransferrers,
+  runDeferredCleanups
 };
 
 /**
@@ -123,10 +127,17 @@ async function runProject(projectRootDir) {
   await updateProjectState(projectRootDir, rootWF.state, projectJson);
   await writeComponentJson(projectRootDir, projectRootDir, rootWF, true);
   _internal.rootDispatchers.delete(projectRootDir);
-  await runDeferredCleanups(projectRootDir);
-  removeExecuters(projectRootDir);
-  removeTransferrers(projectRootDir);
-  removeSsh(projectRootDir);
+  //if the dispatcher settled via an external stop (stopProject() -> Dispatcher.remove() ->
+  //pause()), that caller already owns this teardown once its own await on remove() finishes -
+  //doing it again here races it, since start() now resolves as soon as pause() emits "stop",
+  //well before its still-in-flight nested job cancellation is done using these same SSH
+  //connections (aicshud/WHEEL#1020).
+  if (!rootDispatcher.stoppedExternally) {
+    await _internal.runDeferredCleanups(projectRootDir);
+    _internal.removeExecuters(projectRootDir);
+    _internal.removeTransferrers(projectRootDir);
+    _internal.removeSsh(projectRootDir);
+  }
   return rootWF.state;
 }
 
