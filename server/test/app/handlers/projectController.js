@@ -22,6 +22,7 @@ import allowedOperations from "../../../../common/allowedOperations.js";
 
 //helper functions
 import { _internal as coreProjectControllerInternal } from "../../../app/core/projectController.js";
+import Dispatcher from "../../../app/core/dispatcher.js";
 import { createNewProject } from "../../../app/core/projectOperations.js";
 import { createNewComponent } from "../../../app/core/componentOperations.js";
 import { addLink } from "../../../app/core/componentLinks.js";
@@ -475,6 +476,28 @@ describe("project Controller handler UT", function () {
       //would then crash with an unhandled ENOENT on a since-removed directory.
       await saveFileSettled;
       await drainProjectDispatch(projectRootDir);
+    });
+  });
+
+  describe("[reproduction] issue aicshud/WHEEL#1022 - removeExecuters/removeTransferrers are not released on runDispatcher's fatal-error path", ()=>{
+    it("should call removeExecuters/removeTransferrers as well as removeSsh when runProject() throws before ever reaching its own cleanup", async ()=>{
+      //simulate rootDispatcher.start() itself rejecting (e.g. a bug in the dispatch loop
+      //itself, not a task failure) - this is the one path where runProject() throws before
+      //ever reaching its own removeSsh/removeExecuters/removeTransferrers teardown, so
+      //runDispatcher()'s own catch block is the last chance to release these resources.
+      sinon.stub(Dispatcher.prototype, "start").rejects(new Error("dummy dispatch failure"));
+      const removeExecutersStub = sinon.stub(coreProjectControllerInternal, "removeExecuters");
+      const removeTransferrersStub = sinon.stub(coreProjectControllerInternal, "removeTransferrers");
+      const removeSshStub = sinon.stub(coreProjectControllerInternal, "removeSsh");
+
+      await new Promise((resolve)=>{
+        _internal.onRunProject("test-client-id", projectRootDir, resolve);
+      });
+      await drainProjectDispatch(projectRootDir);
+
+      sinon.assert.calledOnceWithExactly(removeSshStub, projectRootDir);
+      sinon.assert.calledOnceWithExactly(removeExecutersStub, projectRootDir);
+      sinon.assert.calledOnceWithExactly(removeTransferrersStub, projectRootDir);
     });
   });
 });
