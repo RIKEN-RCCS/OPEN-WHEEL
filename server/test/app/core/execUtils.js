@@ -45,6 +45,21 @@ describe("#setTaskState", ()=>{
     expect(ee.emit.firstCall.args).to.deep.equal(["taskStateChanged", task]);
     expect(ee.emit.secondCall.args).to.deep.equal(["componentStateChanged", task]);
   });
+
+  //reproduction for aicshud/WHEEL#1019: a task completion that arrives after the project has
+  //already been torn down (eventEmitters.delete(projectRootDir) already ran) must not crash -
+  //there is simply no one left to notify.
+  it("should not throw if eventEmitters has no entry for the project (project already torn down)", async ()=>{
+    const task = {
+      projectRootDir: "alreadyTornDownProjectRootDir",
+      workingDir: "/dummy/working/dir",
+      ID: "task123",
+      state: "oldState"
+    };
+
+    await setTaskState(task, "newState");
+    expect(task.state).to.equal("newState");
+  });
 });
 
 describe("#needDownload", ()=>{
