@@ -31,6 +31,23 @@ const _internal = {
 };
 
 /**
+ * release the runtime resources (SSH connections, executers, transferrers) a project run
+ * accumulated - the 3-point cleanup set shared by every path that tears down a run
+ * (natural completion, an external stop, or a fatal dispatch error), consolidated here so
+ * every call site releases the same three things instead of each hand-rolling its own
+ * subset (aicshud/WHEEL#1022 - removeExecuters/removeTransferrers used to be missing from
+ * runDispatcher()'s fatal-error path, leaking stale executer/transferrer map entries that a
+ * subsequent run attempt could otherwise reuse).
+ * @param {string} projectRootDir - project's root path
+ */
+function releaseRuntimeResources(projectRootDir) {
+  _internal.removeExecuters(projectRootDir);
+  _internal.removeTransferrers(projectRootDir);
+  _internal.removeSsh(projectRootDir);
+}
+_internal.releaseRuntimeResources = releaseRuntimeResources;
+
+/**
  * @event projectStateChanged
  * @type {object} - updated projectJson
  * @event taskStateChanged
@@ -94,9 +111,7 @@ async function stopProject(projectRootDir, reasonState) {
   //remote-symlink target file on resume, and there is no way to safely tell from here
   //whether that consumer has already run. Leave the registry as-is so a later natural
   //completion (after 0+ resumes) can still process it via runDeferredCleanups().
-  removeExecuters(projectRootDir);
-  removeTransferrers(projectRootDir);
-  removeSsh(projectRootDir);
+  _internal.releaseRuntimeResources(projectRootDir);
   //project state must be updated by onStopProject()
 }
 
@@ -138,11 +153,9 @@ async function runProject(projectRootDir) {
   //connections (aicshud/WHEEL#1020).
   if (!rootDispatcher.stoppedExternally) {
     await _internal.runDeferredCleanups(projectRootDir);
-    _internal.removeExecuters(projectRootDir);
-    _internal.removeTransferrers(projectRootDir);
-    _internal.removeSsh(projectRootDir);
+    _internal.releaseRuntimeResources(projectRootDir);
   }
   return rootWF.state;
 }
 
-export { cleanProject, runProject, stopProject, updateProjectState, _internal };
+export { cleanProject, runProject, stopProject, updateProjectState, releaseRuntimeResources, _internal };

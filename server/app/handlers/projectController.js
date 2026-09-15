@@ -21,7 +21,7 @@ import { checkRemoteStoragePathWritePermission } from "../core/checkRemoteStorag
 import { getProjectJson, getProjectState, setProjectState, updateProjectDescription, updateProjectROStatus } from "../core/projectJsonFileOperator.js";
 import { createSsh, removeSsh, askPassword } from "../core/sshManager.js";
 import { setJWTServerPassphrase, removeAllJWTServerPassphrase } from "../core/jwtServerPassphraseManager.js";
-import { runProject, cleanProject, stopProject } from "../core/projectController.js";
+import { runProject, cleanProject, stopProject, releaseRuntimeResources } from "../core/projectController.js";
 import { isValidOutputFilename } from "../lib/utility.js";
 import { checkWritePermissions, parentDirs, eventEmitters } from "../core/global.js";
 import { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, sendComponentTree } from "./senders.js";
@@ -393,14 +393,16 @@ async function runDispatcher(clientID, projectRootDir, ack) {
   } catch (err) {
     notifyUser(projectRootDir, "fatal error occurred while parsing workflow:", err);
     await updateProjectState(projectRootDir, "failed");
-    //runProject() (core/projectController.js) owns removeSsh/removeExecuters/
-    //removeTransferrers on every non-throwing exit (natural completion or external stop,
-    //aicshud/WHEEL#1020) - only do it here as a safety net for the case where runProject()
-    //threw before ever reaching its own cleanup (e.g. rootDispatcher.start() itself
-    //rejected). Doing this unconditionally in a shared `finally` below used to always fire
-    //on every exit path, including the external-stop one - racing stopProject()'s own
-    //still-in-flight teardown of the very same SSH connections.
-    removeSsh(projectRootDir);
+    //runProject() (core/projectController.js) owns releaseRuntimeResources() (removeSsh/
+    //removeExecuters/removeTransferrers) on every non-throwing exit (natural completion or
+    //external stop, aicshud/WHEEL#1020) - only do it here as a safety net for the case where
+    //runProject() threw before ever reaching its own cleanup (e.g. rootDispatcher.start()
+    //itself rejected). Doing this unconditionally in a shared `finally` below used to always
+    //fire on every exit path, including the external-stop one - racing stopProject()'s own
+    //still-in-flight teardown of the very same SSH connections. This used to call removeSsh()
+    //alone, leaking stale removeExecuters()/removeTransferrers() entries on this path
+    //(aicshud/WHEEL#1022) - use the same 3-point cleanup every other exit path uses instead.
+    releaseRuntimeResources(projectRootDir);
     removeAllJWTServerPassphrase(projectRootDir);
     ack(err);
   } finally {
