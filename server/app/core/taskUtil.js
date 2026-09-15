@@ -5,6 +5,7 @@
  */
 import { getSsh, getSshHostinfo } from "./sshManager.js";
 import { cancel } from "./executerManager.js";
+import { cancelJobStatusCheck } from "./jobManager.js";
 import { jobScheduler } from "../db/db.js";
 import { getLogger } from "../logSettings.js";
 
@@ -13,13 +14,11 @@ const _internal = {
   getSshHostinfo,
   cancel,
   getLogger,
+  cancelJobStatusCheck,
   killTask: null,
   killLocalProcess: null,
   cancelRemoteJob: null,
-  cancelLocalJob: null,
-  //placeholder for aicshud/WHEEL#1018 (test seam only; wired up to jobManager.js's real
-  //implementation, and actually called from cancelRemoteJob(), once that fix lands)
-  cancelJobStatusCheck: ()=>{}
+  cancelLocalJob: null
 };
 
 /**
@@ -41,6 +40,10 @@ export async function cancelRemoteJob(task) {
     output.push(data);
   });
   _internal.getLogger(task.projectRootDir).debug("cacnel done", output.join());
+  //only stop watching once the cancel command itself succeeded (didn't throw) - if it failed
+  //(e.g. connection error), the job might still be running on the scheduler; keep polling so
+  //WHEEL still finds out its real outcome instead of silently losing track of it.
+  _internal.cancelJobStatusCheck(task);
 }
 _internal.cancelRemoteJob = cancelRemoteJob;
 
