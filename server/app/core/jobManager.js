@@ -78,7 +78,10 @@ export function isJobFailed(JS, code) {
   } else {
     return false;
   }
-  return statusList.includes(code);
+  //acceptableJobStatus is a list of codes that mean "OK" - failed means NOT in that list.
+  //acceptableJobStatus in jobScheduler.json is written as JSON numbers while code is always
+  //a string (regexp capture group), so compare as strings on both sides.
+  return !statusList.map(String).includes(String(code));
 }
 _internal.isJobFailed = isJobFailed;
 
@@ -125,12 +128,16 @@ export async function getStatusCode(JS, task, statCmdRt, outputText) {
     strRt = rt;
   }
   if (strRt === null) {
-    _internal.getLogger(task.projectRootDir).warn("get return code failed, code is overwrited by -2");
-    return -2;
-  }
-  if (strRt === "6") {
-    _internal.getLogger(task.projectRootDir).warn("get return code 6, this job was canceled by stepjob dependency");
-    return 0;
+    //script's own return code is not obtainable/trustworthy (job was canceled, held,
+    //rejected, etc. before/without producing a real exit code). Design policy: fall back
+    //to the job status code via isJobFailed() - NOT the raw status code value itself,
+    //because acceptableJobStatus can list more than one "OK" code (Fugaku: [0, 6], where
+    //6 means "canceled by a stepjob dependency expression" - itself not a failure), so the
+    //raw code isn't safe to compare against the universal "rt === 0 means success" rule
+    //downstream (executerManager.js's `state = task.rt === 0 ? "finished" : "failed"`).
+    _internal.getLogger(task.projectRootDir).warn(`return code not available, falling back to job status code (${task.jobStatus})`);
+    task.rt = _internal.isJobFailed(JS, task.jobStatus) ? 1 : 0;
+    return task.rt;
   }
   if (task.type === "bulkjobTask") {
     await _internal.createBulkStatusFile(task, rtCodeList, jobStatusList);

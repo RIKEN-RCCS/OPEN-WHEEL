@@ -46,7 +46,7 @@
     "bulkstat": "pjstat -E -v --choose jid,st",
     "bulkstatAfter": "pjstat -E -v -H day=3 --choose jid,st,ec,pc",
     "reRunning": "{{ JOBID }} *(?:ACC|HLD|QUE|RNA|RNE|RNO|RNP|RSM|RUN|SPD|SPP)",
-    "reReturnCode": "{{ JOBID }} *(?:EXT|CCL) *(\\d+) *\\d+",
+    "reReturnCode": "{{ JOBID }} *EXT *(\\d+) *\\d+",
     "reJobStatusCode": "{{ JOBID }} *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
     "reSubReturnCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *(\\d+) *\\d+",
     "reSubJobStatusCode": "(?:\\d+\\[\\d+\\]) *(?:CCL|ERR|EXT|RJT) *\\d+ *(\\d+)",
