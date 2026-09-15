@@ -16,7 +16,10 @@ const _internal = {
   killTask: null,
   killLocalProcess: null,
   cancelRemoteJob: null,
-  cancelLocalJob: null
+  cancelLocalJob: null,
+  //placeholder for aicshud/WHEEL#1018 (test seam only; wired up to jobManager.js's real
+  //implementation, and actually called from cancelRemoteJob(), once that fix lands)
+  cancelJobStatusCheck: ()=>{}
 };
 
 /**

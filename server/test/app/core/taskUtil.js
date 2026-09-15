@@ -185,6 +185,21 @@ describe("UT for taskUtil class", function () {
       sinon.assert.calledOnce(loggerDebugStub);
       sinon.assert.calledWith(loggerDebugStub, "cancel job: scancel 12345");
     });
+
+    //reproduction for aicshud/WHEEL#1018: stopProject's pjdel/scancel etc. never stops
+    //jobManager.js's background status polling for this job.
+    it("should call cancelJobStatusCheck after a successful ssh.exec, so the background status polling for this job stops", async ()=>{
+      const cancelJobStatusCheckStub = sinon.stub(_internal, "cancelJobStatusCheck");
+      await cancelRemoteJob(task);
+      sinon.assert.calledOnceWithExactly(cancelJobStatusCheckStub, task);
+    });
+
+    it("should NOT call cancelJobStatusCheck if ssh.exec fails (job might still be running - keep polling so it isn't lost track of)", async ()=>{
+      sshStub.exec.rejects(new Error("SSH execution failed"));
+      const cancelJobStatusCheckStub = sinon.stub(_internal, "cancelJobStatusCheck");
+      await expect(cancelRemoteJob(task)).to.be.rejectedWith(Error, "SSH execution failed");
+      sinon.assert.notCalled(cancelJobStatusCheckStub);
+    });
   });
   describe("#taskStateFilter", ()=>{
     it("should filter task properties correctly", ()=>{
