@@ -1580,6 +1580,21 @@ describe("UT for Dispatcher class", function () {
     });
   });
 
+  //reproduction for aicshud/WHEEL#1019: a stale component-state update that arrives after
+  //the project has already been torn down (eventEmitters.delete(projectRootDir) already ran,
+  //e.g. via a late-resolving job-status poll or remote command) must not crash - there is
+  //simply no one left to notify.
+  describe("#_setComponentState (aicshud/WHEEL#1019)", ()=>{
+    it("should not throw when eventEmitters has no entry for the project (project already torn down)", async ()=>{
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      eventEmitters.delete(projectRootDir); //simulate: project already torn down
+
+      await DP._setComponentState(rootWF, "running");
+      expect(rootWF.state).to.equal("running");
+    });
+  });
+
   describe("#_checkMandatoryInputFilesExist", ()=>{
     let task;
     beforeEach(async ()=>{
