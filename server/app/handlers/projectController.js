@@ -393,6 +393,15 @@ async function runDispatcher(clientID, projectRootDir, ack) {
   } catch (err) {
     notifyUser(projectRootDir, "fatal error occurred while parsing workflow:", err);
     await updateProjectState(projectRootDir, "failed");
+    //runProject() (core/projectController.js) owns removeSsh/removeExecuters/
+    //removeTransferrers on every non-throwing exit (natural completion or external stop,
+    //aicshud/WHEEL#1020) - only do it here as a safety net for the case where runProject()
+    //threw before ever reaching its own cleanup (e.g. rootDispatcher.start() itself
+    //rejected). Doing this unconditionally in a shared `finally` below used to always fire
+    //on every exit path, including the external-stop one - racing stopProject()'s own
+    //still-in-flight teardown of the very same SSH connections.
+    removeSsh(projectRootDir);
+    removeAllJWTServerPassphrase(projectRootDir);
     ack(err);
   } finally {
     //make sure any in-flight abort-on-failure work has fully settled before this handler
@@ -401,8 +410,6 @@ async function runDispatcher(clientID, projectRootDir, ack) {
     emitAll(projectRootDir, "projectJson", await getProjectJson(projectRootDir));
     await _internal.sendWorkflow(ack, projectRootDir);
     _internal.eventEmitters.delete(projectRootDir);
-    removeSsh(projectRootDir);
-    removeAllJWTServerPassphrase(projectRootDir);
   }
   return;
 }

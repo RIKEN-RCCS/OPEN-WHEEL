@@ -39,16 +39,18 @@ const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 /**
  * Wait until a project's dispatch has fully wound down after its ack has already
  * fired. onRunProject/onContinueProject fire-and-forget the actual dispatch
- * (runDispatcher), whose finally block calls ack (via sendWorkflow) *before* its
- * own remaining cleanup (eventEmitters.delete/removeSsh/removeAllJWTServerPassphrase)
- * runs, and dispatcher itself never awaits individual task execution (by design,
- * so a canceled task isn't left blocked forever inside it) - so a test that only
- * awaits the ack can still race the next test's beforeEach (which removes/
- * recreates projectRootDir) against trailing dispatcher/task cleanup work,
- * intermittently crashing with ENOENT on stale .git/objects files. Poll for the
- * eventEmitter runDispatcher registers for the run (and clears right before its
- * own trailing cleanup) as a best-effort signal, then add a short fixed grace
- * period on top for any other fire-and-forgotten work outside that scope.
+ * (runDispatcher), whose finally block calls ack (via sendWorkflow) *before*
+ * eventEmitters.delete runs (removeSsh/removeAllJWTServerPassphrase only run there
+ * too if runProject() itself threw before reaching its own cleanup - see
+ * aicshud/WHEEL#1020 - otherwise runProject() already handled them), and dispatcher
+ * itself never awaits individual task execution (by design, so a canceled task
+ * isn't left blocked forever inside it) - so a test that only awaits the ack can
+ * still race the next test's beforeEach (which removes/recreates projectRootDir)
+ * against trailing dispatcher/task cleanup work, intermittently crashing with
+ * ENOENT on stale .git/objects files. Poll for the eventEmitter runDispatcher
+ * registers for the run (and clears right before its own trailing cleanup) as a
+ * best-effort signal, then add a short fixed grace period on top for any other
+ * fire-and-forgotten work outside that scope.
  * @param {string} projectRootDir - project's root path
  * @param {number} timeoutMs - give up polling and move on to the grace period after this long
  */
