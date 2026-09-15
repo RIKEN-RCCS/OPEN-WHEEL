@@ -1595,6 +1595,30 @@ describe("UT for Dispatcher class", function () {
     });
   });
 
+  //reproduction for aicshud/WHEEL#1020: start()'s promise must record that it settled via an
+  //external stop (pause()/remove(), e.g. from stopProject()) rather than natural completion,
+  //so callers (runProject()) can tell not to also run their own teardown - see #1020's
+  //investigation for why racing that teardown disconnects SSH out from under stopProject()'s
+  //still-in-flight nested job cancellation.
+  describe("#start stoppedExternally flag (aicshud/WHEEL#1020)", ()=>{
+    it("should set stoppedExternally and resolve when stopped via pause() before any component is dispatched", async ()=>{
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      const startPromise = DP.start();
+      await DP.pause();
+      const state = await startPromise;
+      expect(DP.stoppedExternally).to.be.true;
+      expect(state).to.equal("finished");
+    });
+
+    it("should NOT set stoppedExternally when the dispatcher finishes naturally", async ()=>{
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      await DP.start();
+      expect(DP.stoppedExternally).to.not.be.true;
+    });
+  });
+
   describe("#_checkMandatoryInputFilesExist", ()=>{
     let task;
     beforeEach(async ()=>{
