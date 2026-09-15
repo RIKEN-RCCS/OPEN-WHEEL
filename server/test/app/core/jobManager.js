@@ -871,4 +871,49 @@ describe("#registerJob", ()=>{
       expect(err.hookErr).to.equal(hookErr);
     }
   });
+
+  //reproduction for aicshud/WHEEL#1018: stopProject cancels the job (e.g. via pjdel) but has
+  //no way to also stop registerJob()'s background status polling, so a stale poll can still
+  //resolve/reject long after the project has been torn down.
+  it("should stash jobManagerRequestId and a jobManagerCancel closure on the task", async ()=>{
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: eventEmitter
+    };
+    createRequestStub.returns(requestObj);
+    addRequestStub.returns("req-cancel-1");
+    getRequestStub.returns(requestObj);
+
+    const p = registerJob(hostinfo, task);
+
+    expect(task.jobManagerRequestId).to.equal("req-cancel-1");
+    expect(task.jobManagerCancel).to.be.a("function");
+
+    //settle the promise so it doesn't dangle past the test
+    getStatusCodeStub.resolves(0);
+    isJobFailedStub.returns(false);
+    eventEmitter.emit("finished", { argument: "12345", hostInfo: { host: "dummyHost" }, finishedHook: { rt: 0, output: "x" } });
+    await p;
+  });
+
+  it("should delRequest and resolve with null when jobManagerCancel() is invoked (deliberate cancel, e.g. after a successful pjdel)", async ()=>{
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: eventEmitter
+    };
+    createRequestStub.returns(requestObj);
+    addRequestStub.returns("req-cancel-2");
+    getRequestStub.returns(requestObj);
+
+    const p = registerJob(hostinfo, task);
+    task.jobManagerCancel();
+
+    const result = await p;
+    expect(result).to.be.null;
+    sinon.assert.calledOnceWithExactly(delRequestStub, "req-cancel-2");
+  });
 });
