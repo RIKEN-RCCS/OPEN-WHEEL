@@ -9,7 +9,7 @@ import { gitResetHEAD, gitClean } from "../core/gitOperator2.js";
 import { removeSsh } from "./sshManager.js";
 import { removeExecuters } from "./executerManager.js";
 import { removeTransferrers } from "./transferManager.js";
-import { runDeferredCleanups, clearDeferredCleanups } from "./transferrer.js";
+import { runDeferredCleanups } from "./transferrer.js";
 import { defaultCleanupRemoteRoot, projectJsonFilename, componentJsonFilename } from "../db/db.js";
 import { setProjectState } from "../core/projectJsonFileOperator.js";
 import { writeComponentJson } from "./componentJsonIO.js";
@@ -89,7 +89,11 @@ async function stopProject(projectRootDir, reasonState) {
     await rootDispatcher.remove();
     _internal.rootDispatchers.delete(projectRootDir);
   }
-  clearDeferredCleanups(projectRootDir);
+  //deliberately do NOT discard pending deferred remote cleanups here (aicshud/WHEEL#1021):
+  //an entry means a not-yet-executed downstream task may still need the preserved
+  //remote-symlink target file on resume, and there is no way to safely tell from here
+  //whether that consumer has already run. Leave the registry as-is so a later natural
+  //completion (after 0+ resumes) can still process it via runDeferredCleanups().
   removeExecuters(projectRootDir);
   removeTransferrers(projectRootDir);
   removeSsh(projectRootDir);
