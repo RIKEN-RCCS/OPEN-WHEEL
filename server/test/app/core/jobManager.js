@@ -168,6 +168,32 @@ describe("#isJobFailed", ()=>{
     const result = isJobFailed(JS, code);
     expect(result).to.be.false;
   });
+
+  //reproduction for aicshud/WHEEL#1017: acceptableJobStatus is a list of PC (PJM code)
+  //values that are NOT a failure (per the Fugaku job scheduler's actual definition -
+  //0: normal exit, 6: canceled by a stepjob dependency expression - see Technical
+  //Computing Suite V4.0L20 command reference, pjstat(1) "PC"). code should therefore
+  //be judged failed when it is NOT in that list. The production jobScheduler.json
+  //entries (Fugaku, PBSPro) also write acceptableJobStatus as JSON numbers, while
+  //code is always a string (regexp capture group) - the comparison must not depend
+  //on both sides being the same type.
+  describe("with a real jobScheduler.json shape (numeric acceptableJobStatus)", ()=>{
+    const fugakuJS = {
+      acceptableJobStatus: [0, 6] //verbatim from server/app/db/jobScheduler.json's Fugaku entry
+    };
+
+    it("should return false for PC=0 (normal exit)", ()=>{
+      expect(isJobFailed(fugakuJS, "0")).to.be.false;
+    });
+
+    it("should return false for PC=6 (canceled by stepjob dependency, not a real failure)", ()=>{
+      expect(isJobFailed(fugakuJS, "6")).to.be.false;
+    });
+
+    it("should return true for PC=1 (canceled via pjdel - e.g. stopProject) since 1 is not an accepted code", ()=>{
+      expect(isJobFailed(fugakuJS, "1")).to.be.true;
+    });
+  });
 });
 
 describe("#getStatusCode", ()=>{
@@ -347,6 +373,39 @@ describe("#getStatusCode", ()=>{
     const result = await getStatusCode(JS, task, statCmdRt, outputText);
     expect(result).to.equal(0);
     expect(loggerWarnStub.calledWithMatch("this job was canceled by stepjob dependency")).to.be.true;
+  });
+
+  //reproduction for aicshud/WHEEL#1017: when strRt is null (script's own return code is not
+  //obtainable/trustworthy - e.g. a CCL'd job on Fugaku, once reReturnCode is fixed to stop
+  //matching CCL rows), design policy says fall back to the job status code (PC) via
+  //isJobFailed(JS, task.jobStatus) rather than a hardcoded -2. A hardcoded -2 wrongly fails
+  //jobs whose PC is actually in acceptableJobStatus (e.g. PC=6, canceled by a stepjob
+  //dependency expression - not a real failure).
+  describe("PC fallback when strRt is null (design policy: EC unavailable -> use PC via isJobFailed)", ()=>{
+    const fugakuJS = {
+      reJobStatusCode: "JS_{{ JOBID }}=" + "(d+)",
+      reReturnCode: "RET_{{ JOBID }}=" + "(d+)",
+      acceptableRt: [0],
+      acceptableJobStatus: [0, 6] //verbatim from server/app/db/jobScheduler.json's Fugaku entry
+    };
+
+    it("should return non-zero (failed) when PC is not in acceptableJobStatus (e.g. PC=1, canceled via pjdel)", async ()=>{
+      const task = { type: "normalTask", jobID: "777", projectRootDir: "/dummy/pcfallback1" };
+      getFirstCaptureStub.onFirstCall().returns("1"); //task.jobStatus = "1" (PC=1)
+      getFirstCaptureStub.onSecondCall().returns(null); //strRt not obtainable
+
+      const result = await getStatusCode(fugakuJS, task, 0, "JS_777=1");
+      expect(result).to.equal(1);
+    });
+
+    it("should return 0 (not failed) when PC is in acceptableJobStatus (e.g. PC=6, canceled by stepjob dependency)", async ()=>{
+      const task = { type: "normalTask", jobID: "778", projectRootDir: "/dummy/pcfallback2" };
+      getFirstCaptureStub.onFirstCall().returns("6"); //task.jobStatus = "6" (PC=6)
+      getFirstCaptureStub.onSecondCall().returns(null); //strRt not obtainable
+
+      const result = await getStatusCode(fugakuJS, task, 0, "JS_778=6");
+      expect(result).to.equal(0);
+    });
   });
 
   it("should handle bulkjobTask by calling createBulkStatusFile", async ()=>{
