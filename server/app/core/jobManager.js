@@ -212,6 +212,15 @@ export function registerJob(hostinfo, task) {
     }
     const request = hostinfo.useWebAPI ? _internal.createRequestForWebAPI(hostinfo, task, JS) : _internal.createRequest(hostinfo, task, JS);
     const id = _internal.addRequest(request);
+    task.jobManagerRequestId = id;
+    task.jobManagerCancel = ()=>{
+      _internal.delRequest(id);
+      //deliberate cancel (e.g. stopProject already confirmed the job itself is canceled via
+      //pjdel): resolve, not reject, with null so the SBS wrapper's
+      //"task.state === 'not-started'" guard (executerManager.js) discards it, the same way a
+      //killed local task's resolved (not rejected) exit is discarded.
+      resolve(null);
+    };
     const result = _internal.getRequest(id);
     const requestName = `${request.argument} on ${request.hostInfo.host}`;
     let statusCheckErrorCount = 0;
@@ -227,6 +236,8 @@ export function registerJob(hostinfo, task) {
         err.numStatusCheckError = statusCheckErrorCount;
         err.maxStatusCheckError = JS.maxStatusCheckError;
         _internal.delRequest(id);
+        delete task.jobManagerCancel;
+        delete task.jobManagerRequestId;
         reject(err);
       }
     });
@@ -258,6 +269,8 @@ export function registerJob(hostinfo, task) {
         });
       }
       const rt = await _internal.getStatusCode(JS, task, hook.rt, hook.output);
+      delete task.jobManagerCancel;
+      delete task.jobManagerRequestId;
       if (_internal.isJobFailed(JS, task.jobStatus)) {
         return reject(task.jobStatus);
       }
@@ -270,9 +283,25 @@ export function registerJob(hostinfo, task) {
       if (typeof hookErr !== "undefined") {
         err.hookErr = hookErr;
       }
+      delete task.jobManagerCancel;
+      delete task.jobManagerRequestId;
       reject(err);
     });
   });
 }
+
+/**
+ * stop watching a job's status that registerJob() started polling for
+ * (aicshud/WHEEL#1018 - e.g. after stopProject has confirmed the job itself is canceled)
+ * @param {object} task - task component instance, as passed to registerJob()
+ */
+export function cancelJobStatusCheck(task) {
+  if (typeof task.jobManagerCancel === "function") {
+    task.jobManagerCancel();
+    delete task.jobManagerCancel;
+    delete task.jobManagerRequestId;
+  }
+}
+_internal.cancelJobStatusCheck = cancelJobStatusCheck;
 
 export { _internal };

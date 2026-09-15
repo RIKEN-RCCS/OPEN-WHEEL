@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { expect } from "chai";
 import sinon from "sinon";
-import { _internal, getFirstCapture, getBulkFirstCapture, isJobFailed, getStatusCode, createRequestForWebAPI, createRequest, registerJob } from "../../../app/core/jobManager.js";
+import { _internal, getFirstCapture, getBulkFirstCapture, isJobFailed, getStatusCode, createRequestForWebAPI, createRequest, registerJob, cancelJobStatusCheck } from "../../../app/core/jobManager.js";
 describe("#getFirstCapture", ()=>{
   beforeEach(()=>{
     //getFirstCapture is now imported directly
@@ -915,5 +915,51 @@ describe("#registerJob", ()=>{
     const result = await p;
     expect(result).to.be.null;
     sinon.assert.calledOnceWithExactly(delRequestStub, "req-cancel-2");
+  });
+
+  it("cancelJobStatusCheck() should invoke jobManagerCancel and clear it (so a later call is a no-op)", async ()=>{
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: eventEmitter
+    };
+    createRequestStub.returns(requestObj);
+    addRequestStub.returns("req-cancel-3");
+    getRequestStub.returns(requestObj);
+
+    const p = registerJob(hostinfo, task);
+    cancelJobStatusCheck(task);
+
+    const result = await p;
+    expect(result).to.be.null;
+    sinon.assert.calledOnceWithExactly(delRequestStub, "req-cancel-3");
+    expect(task.jobManagerCancel).to.be.undefined;
+    expect(task.jobManagerRequestId).to.be.undefined;
+
+    //calling it again after settlement must be a no-op (no double delRequest/resolve)
+    cancelJobStatusCheck(task);
+    sinon.assert.calledOnce(delRequestStub);
+  });
+
+  it("should clear jobManagerCancel/jobManagerRequestId once the request settles naturally", async ()=>{
+    const eventEmitter = new EventEmitter();
+    const requestObj = {
+      argument: "12345",
+      hostInfo: { host: "dummyHost" },
+      event: eventEmitter
+    };
+    createRequestStub.returns(requestObj);
+    addRequestStub.returns("req-cancel-4");
+    getRequestStub.returns(requestObj);
+
+    const p = registerJob(hostinfo, task);
+    getStatusCodeStub.resolves(0);
+    isJobFailedStub.returns(false);
+    eventEmitter.emit("finished", { argument: "12345", hostInfo: { host: "dummyHost" }, finishedHook: { rt: 0, output: "x" } });
+    await p;
+
+    expect(task.jobManagerCancel).to.be.undefined;
+    expect(task.jobManagerRequestId).to.be.undefined;
   });
 });
