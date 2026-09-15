@@ -518,6 +518,16 @@ class Dispatcher extends EventEmitter {
         //start()'s promise with the current outcome instead of leaving it pending forever -
         //otherwise the caller (runProject()) hangs indefinitely and never reaches its own
         //state update/cleanup, which in turn leaves the project stuck instead of concluding.
+        //
+        //record that this was an external stop (aicshud/WHEEL#1020): pause()/remove() (which
+        //triggered this) is still busy recursively canceling nested job tasks - using the
+        //project's SSH connections - well after this resolves, since pause() emits "stop"
+        //synchronously before awaiting that cancellation. The caller (runProject()) must not
+        //also run its own SSH/executer/transferrer teardown once this resolves - that races
+        //the still-in-flight cancellation and can disconnect SSH out from under it. Whoever
+        //called pause()/remove() (stopProject()) already owns that teardown once its own
+        //await on remove() finishes.
+        this.stoppedExternally = true;
         resolve(this._getState());
       };
       this.once("done", this.onDone);
