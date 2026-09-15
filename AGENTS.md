@@ -26,3 +26,20 @@ test/cypress/component   component test with cypress
 - always write code in async/await style
 - always use try/catch to handle errors in async functions
 - use debug module for logging (temporarily use console.log for debugging is allowed, but remember to remove them before commit)
+
+## bug fix workflow (standard)
+Test-first is the principle for every bug fix. Follow these steps in order:
+
+1. File the symptom as a GitLab issue.
+2. Investigate the root cause and post the findings as a comment on that issue.
+3. Write a reproduction test, confirm it fails (red), then commit it.
+4. Implement the fix, confirm the full test suite is green, then commit it.
+5. Push to the forked repository and confirm CI is green there.
+6. Open a pull request to the upstream (RIKEN-RCCS) repository.
+
+Run lint before every commit made in this workflow (not only once at the end).
+
+When one pull request bundles fixes for multiple issues, do steps 1-4 separately and
+sequentially for each issue (one issue's investigation/red-test/fix/commit cycle at a
+time, not in parallel, to limit context/token usage), then do steps 5-6 once for the
+combined branch.
