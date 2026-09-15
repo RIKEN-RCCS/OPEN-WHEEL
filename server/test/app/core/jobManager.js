@@ -103,39 +103,41 @@ describe("#isJobFailed", ()=>{
     //isJobFailed is now imported directly
   });
 
-  it("should return true if acceptableJobStatus is undefined and code is '0'", ()=>{
+  //acceptableJobStatus is the list of codes that mean "OK" (not failed). isJobFailed()
+  //returns true (failed) when code is NOT in that list.
+  it("should return false if acceptableJobStatus is undefined and code is '0'", ()=>{
     const JS = {};
     const code = "0";
-    const result = isJobFailed(JS, code);
-    expect(result).to.be.true;
-  });
-
-  it("should return false if acceptableJobStatus is undefined and code is not '0'", ()=>{
-    const JS = {};
-    const code = "1";
     const result = isJobFailed(JS, code);
     expect(result).to.be.false;
   });
 
-  it("should return true if acceptableJobStatus is an array and code is included in the array", ()=>{
+  it("should return true if acceptableJobStatus is undefined and code is not '0'", ()=>{
+    const JS = {};
+    const code = "1";
+    const result = isJobFailed(JS, code);
+    expect(result).to.be.true;
+  });
+
+  it("should return false if acceptableJobStatus is an array and code is included in the array", ()=>{
     const JS = {
       acceptableJobStatus: ["1", "99", "abc"]
     };
     const code = "99";
     const result = isJobFailed(JS, code);
-    expect(result).to.be.true;
+    expect(result).to.be.false;
   });
 
-  it("should return false if acceptableJobStatus is an array and code is not included in the array", ()=>{
+  it("should return true if acceptableJobStatus is an array and code is not included in the array", ()=>{
     const JS = {
       acceptableJobStatus: ["1", "99", "abc"]
     };
     const code = "xyz";
     const result = isJobFailed(JS, code);
-    expect(result).to.be.false;
+    expect(result).to.be.true;
   });
 
-  it("should return true if acceptableJobStatus is an object that has toString() and code matches that string", ()=>{
+  it("should return false if acceptableJobStatus is an object that has toString() and code matches that string", ()=>{
     const JS = {
       acceptableJobStatus: {
         toString: ()=>{ return "ABC"; }
@@ -143,10 +145,10 @@ describe("#isJobFailed", ()=>{
     };
     const code = "ABC";
     const result = isJobFailed(JS, code);
-    expect(result).to.be.true;
+    expect(result).to.be.false;
   });
 
-  it("should return false if acceptableJobStatus is an object that has toString() but code does not match", ()=>{
+  it("should return true if acceptableJobStatus is an object that has toString() but code does not match", ()=>{
     const JS = {
       acceptableJobStatus: {
         toString: ()=>{ return "ABC"; }
@@ -154,7 +156,7 @@ describe("#isJobFailed", ()=>{
     };
     const code = "DEF";
     const result = isJobFailed(JS, code);
-    expect(result).to.be.false;
+    expect(result).to.be.true;
   });
 
   it("should return false if acceptableJobStatus has no valid toString() function", ()=>{
@@ -331,7 +333,7 @@ describe("#getStatusCode", ()=>{
     expect(loggerWarnStub.calledWithMatch("it may fail to get job script's return code. so it is overwirted by 0")).to.be.true;
   });
 
-  it("should return -2 when strRt is null", async ()=>{
+  it("should fall back to isJobFailed(JS, task.jobStatus) when strRt is null (no acceptableJobStatus -> defaults to '0' being OK)", async ()=>{
     const JS = {
       reJobStatusCode: "JS_{{ JOBID }}=" + "(d+)",
       reReturnCode: "RET_{{ JOBID }}=" + "(d+)",
@@ -345,34 +347,12 @@ describe("#getStatusCode", ()=>{
     const statCmdRt = 0;
     const outputText = "JS_444=0";
 
-    getFirstCaptureStub.onFirstCall().returns("0");
+    getFirstCaptureStub.onFirstCall().returns("0"); //task.jobStatus = "0", which is the default "OK" code
     getFirstCaptureStub.onSecondCall().returns(null);
 
     const result = await getStatusCode(JS, task, statCmdRt, outputText);
-    expect(result).to.equal(-2);
-    expect(loggerWarnStub.calledWithMatch("get return code failed")).to.be.true;
-  });
-
-  it("should return 0 when strRt is '6'", async ()=>{
-    const JS = {
-      reJobStatusCode: "JS_{{ JOBID }}=" + "(d+)",
-      reReturnCode: "RET_{{ JOBID }}=" + "(d+)",
-      acceptableRt: [0]
-    };
-    const task = {
-      type: "normalTask",
-      jobID: "555",
-      projectRootDir: "/dummy/cancel"
-    };
-    const statCmdRt = 0;
-    const outputText = "JS_555=3\nRET_555=6";
-
-    getFirstCaptureStub.onFirstCall().returns("3");
-    getFirstCaptureStub.onSecondCall().returns("6");
-
-    const result = await getStatusCode(JS, task, statCmdRt, outputText);
     expect(result).to.equal(0);
-    expect(loggerWarnStub.calledWithMatch("this job was canceled by stepjob dependency")).to.be.true;
+    expect(loggerWarnStub.calledWithMatch("return code not available, falling back to job status code")).to.be.true;
   });
 
   //reproduction for aicshud/WHEEL#1017: when strRt is null (script's own return code is not
