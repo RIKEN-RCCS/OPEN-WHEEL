@@ -1502,7 +1502,12 @@ class Dispatcher extends EventEmitter {
     const componentDir = this._getComponentDir(component.ID);
     await writeComponentJson(this.projectRootDir, componentDir, component, true);
     const ee = eventEmitters.get(this.projectRootDir);
-    ee.emit("componentStateChanged", component);
+    //ee is undefined if this component settled after the project was already torn down
+    //(e.g. a stale job-status poll or remote command that finished late) - there is no one
+    //left to notify, so just skip it (aicshud/WHEEL#1019).
+    if (ee) {
+      ee.emit("componentStateChanged", component);
+    }
   }
 
   /**

@@ -32,8 +32,13 @@ async function setTaskState(task, state) {
   _internal.getLogger(task.projectRootDir).trace(`TaskStateList: ${task.ID}'s state is changed to ${state}`);
   await _internal.writeComponentJson(task.projectRootDir, task.workingDir, task, true);
   const ee = _internal.eventEmitters.get(task.projectRootDir);
-  ee.emit("taskStateChanged", task);
-  ee.emit("componentStateChanged", task);
+  //ee is undefined if this task settled after the project was already torn down (e.g. a
+  //stale job-status poll or remote command that finished late) - there is no one left to
+  //notify, so just skip it (aicshud/WHEEL#1019).
+  if (ee) {
+    ee.emit("taskStateChanged", task);
+    ee.emit("componentStateChanged", task);
+  }
 }
 
 /**
