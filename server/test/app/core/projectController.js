@@ -20,6 +20,7 @@ import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 
 import { _internal, runProject, stopProject, cleanProject, updateProjectState } from "../../../app/core/projectController.js";
+import Dispatcher from "../../../app/core/dispatcher.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -1141,6 +1142,53 @@ describe("project Controller UT", function () {
       const result = await runProject(projectRootDir);
       expect(result).to.be.an("error");
       expect(result.message).to.include("project is already running");
+    });
+
+    //reproduction for aicshud/WHEEL#1020: when a Dispatcher settles because it was stopped
+    //externally (stopProject() -> Dispatcher.remove() -> pause(), which resolves start()'s
+    //promise as soon as it emits "stop" - well before its own, still-in-flight nested
+    //cancellation of remote job tasks is done using the project's SSH connections),
+    //runProject() must not also tear down removeSsh/removeExecuters/removeTransferrers here:
+    //stopProject() already owns that once its own await on rootDispatcher.remove() finishes,
+    //and racing it by doing it again here can disconnect SSH out from under that still-running
+    //cancellation (observed as "ssh instance is not registerd for the project").
+    describe("when the dispatcher was stopped externally", ()=>{
+      let removeSshStub, removeExecutersStub, removeTransferrersStub, runDeferredCleanupsStub;
+      beforeEach(()=>{
+        sinon.stub(Dispatcher.prototype, "start").callsFake(function () {
+          this.stoppedExternally = true;
+          return Promise.resolve("stopped");
+        });
+        removeSshStub = sinon.stub(_internal, "removeSsh");
+        removeExecutersStub = sinon.stub(_internal, "removeExecuters");
+        removeTransferrersStub = sinon.stub(_internal, "removeTransferrers");
+        runDeferredCleanupsStub = sinon.stub(_internal, "runDeferredCleanups").resolves();
+      });
+      it("should not call removeSsh/removeExecuters/removeTransferrers/runDeferredCleanups", async ()=>{
+        await runProject(projectRootDir);
+        sinon.assert.notCalled(removeSshStub);
+        sinon.assert.notCalled(removeExecutersStub);
+        sinon.assert.notCalled(removeTransferrersStub);
+        sinon.assert.notCalled(runDeferredCleanupsStub);
+      });
+    });
+
+    describe("when the dispatcher finishes naturally (not stopped externally)", ()=>{
+      let removeSshStub, removeExecutersStub, removeTransferrersStub, runDeferredCleanupsStub;
+      beforeEach(()=>{
+        sinon.stub(Dispatcher.prototype, "start").resolves("finished");
+        removeSshStub = sinon.stub(_internal, "removeSsh");
+        removeExecutersStub = sinon.stub(_internal, "removeExecuters");
+        removeTransferrersStub = sinon.stub(_internal, "removeTransferrers");
+        runDeferredCleanupsStub = sinon.stub(_internal, "runDeferredCleanups").resolves();
+      });
+      it("should still call removeSsh/removeExecuters/removeTransferrers/runDeferredCleanups", async ()=>{
+        await runProject(projectRootDir);
+        sinon.assert.calledOnceWithExactly(removeSshStub, projectRootDir);
+        sinon.assert.calledOnceWithExactly(removeExecutersStub, projectRootDir);
+        sinon.assert.calledOnceWithExactly(removeTransferrersStub, projectRootDir);
+        sinon.assert.calledOnceWithExactly(runDeferredCleanupsStub, projectRootDir);
+      });
     });
   });
   describe("#stopProject", ()=>{
