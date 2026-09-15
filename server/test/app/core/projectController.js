@@ -21,6 +21,7 @@ chai.use(chaiAsPromised);
 
 import { _internal, runProject, stopProject, cleanProject, updateProjectState } from "../../../app/core/projectController.js";
 import Dispatcher from "../../../app/core/dispatcher.js";
+import { runDeferredCleanups, _internal as transferrerInternal } from "../../../app/core/transferrer.js";
 
 //test data
 const testDirRoot = "WHEEL_TEST_TMP";
@@ -1206,6 +1207,29 @@ describe("project Controller UT", function () {
       await stopProject(projectRootDir);
       sinon.assert.calledOnce(mockDispatcher.remove);
       expect(_internal.rootDispatchers.has(projectRootDir)).to.be.false;
+    });
+    //reproduction for aicshud/WHEEL#1021: stopProject() must not discard pending deferred
+    //remote cleanups (files preserved as remote-symlink targets for a not-yet-executed
+    //downstream task) - doing so leaks them permanently, since a resumed run never
+    //re-registers them (finished components are skipped) and cleanProject only touches
+    //local git state, never the remote host.
+    it("should NOT discard entries registered in the deferred-cleanup registry", async ()=>{
+      const getSshStub = sinon.stub(transferrerInternal, "getSsh").returns({ exec: sinon.stub().resolves() });
+      transferrerInternal.addDeferredCleanup(projectRootDir, {
+        remoteWorkingDir: "/remote/work/dir",
+        remotehostID: "dummyHostID",
+        symlinkTargetNames: ["result.txt"]
+      });
+
+      try {
+        await stopProject(projectRootDir);
+        //if the entry survived stopProject(), a later runDeferredCleanups() (e.g. after a
+        //resume eventually finishes naturally) must still find and process it.
+        await runDeferredCleanups(projectRootDir);
+        sinon.assert.calledOnce(getSshStub);
+      } finally {
+        getSshStub.restore();
+      }
     });
     it("should handle the case where the dispatcher does not exist", async ()=>{
       _internal.rootDispatchers.delete(projectRootDir);
