@@ -1655,14 +1655,16 @@ describe("UT for Dispatcher class", function () {
   //investigation for why racing that teardown disconnects SSH out from under stopProject()'s
   //still-in-flight nested job cancellation.
   describe("#start stoppedExternally flag (aicshud/WHEEL#1020)", ()=>{
-    it("should set stoppedExternally and resolve when stopped via pause() before any component is dispatched", async ()=>{
+    it("should set stoppedExternally and resolve when stopped via remove() (what stopProject() actually calls) before any component is dispatched", async ()=>{
       const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       const startPromise = DP.start();
-      await DP.pause();
+      await DP.remove();
       const state = await startPromise;
       expect(DP.stoppedExternally).to.be.true;
-      expect(state).to.equal("finished");
+      //aicshud/WHEEL#1028: start() must resolve with "stopped" (the documented state for an
+      //externally-stopped project), not "finished" - see #_getState below.
+      expect(state).to.equal("stopped");
     });
 
     it("should NOT set stoppedExternally when the dispatcher finishes naturally", async ()=>{
@@ -1670,6 +1672,71 @@ describe("UT for Dispatcher class", function () {
       const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
       await DP.start();
       expect(DP.stoppedExternally).to.not.be.true;
+    });
+
+    //reproduction for aicshud/WHEEL#1028: pause() alone (as opposed to remove(), which
+    //stopProject() calls) must NOT set stoppedExternally - _jumpHandler's "break" handling
+    //calls pause() directly as part of a normal, successful in-workflow loop exit, which is
+    //not an external stop and must not be reported as "stopped" (see the #Break tests, which
+    //this would otherwise break: a break-terminated loop's own state must still be "finished").
+    it("should NOT set stoppedExternally when only pause() (not remove()) is called", async ()=>{
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      const startPromise = DP.start();
+      await DP.pause();
+      const state = await startPromise;
+      expect(DP.stoppedExternally).to.not.be.true;
+      expect(state).to.equal("finished");
+    });
+  });
+
+  //reproduction for aicshud/WHEEL#1028: _getState() never returned "stopped", the documented
+  //state for an externally-stopped project (documentMD/user_guide/_reference/3_workflow_screen/
+  //1_graphview.md), even though start()'s onStop handler sets stoppedExternally (aicshud/
+  //WHEEL#1020) specifically to record this case. Currently masked at the whole-project level
+  //because onStopProject() unconditionally force-overwrites the project state to "stopped"
+  //afterward - but runProject() also writes _getState()'s (wrong) return value straight to the
+  //root workflow component's own cmp.wheel.json, so that component's own recorded state was
+  //still wrong ("finished"/"failed"/"unknown") even though the project overall correctly showed
+  //"stopped".
+  describe("#_getState (aicshud/WHEEL#1028)", ()=>{
+    it("should return 'stopped' when the dispatcher was stopped externally and no component failed or is unknown", async ()=>{
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      DP.stoppedExternally = true;
+      expect(DP._getState()).to.equal("stopped");
+    });
+
+    //issue #1000 already established that a task-failure-triggered project abort must report
+    //"failed", not "stopped" - the "taskStateChanged" listener in handlers/projectController.js
+    //aborts the rest of the project by calling stopProject(projectRootDir, task.state), which
+    //sets hasFailedComponent/hasUnknownComponent (via setStateFlag()) *before* remove() runs -
+    //so stoppedExternally being true here must NOT override that more specific outcome.
+    it("should still return 'failed'/'unknown' even when stopped externally, if a component failed or is unknown", async ()=>{
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP1 = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      DP1.stoppedExternally = true;
+      DP1.hasFailedComponent = true;
+      expect(DP1._getState()).to.equal("failed");
+
+      const DP2 = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      DP2.stoppedExternally = true;
+      DP2.hasUnknownComponent = true;
+      expect(DP2._getState()).to.equal("unknown");
+    });
+
+    it("should still return 'unknown'/'failed'/'finished' as before when not stopped externally", async ()=>{
+      const projectJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP1 = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      expect(DP1._getState()).to.equal("finished");
+
+      const DP2 = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      DP2.hasFailedComponent = true;
+      expect(DP2._getState()).to.equal("failed");
+
+      const DP3 = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projectJson.componentPath, {}, "");
+      DP3.hasUnknownComponent = true;
+      expect(DP3._getState()).to.equal("unknown");
     });
   });
 
