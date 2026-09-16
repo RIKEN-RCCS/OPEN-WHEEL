@@ -22,6 +22,7 @@ import { getProjectJson, getProjectState, setProjectState, updateProjectDescript
 import { createSsh, removeSsh, askPassword } from "../core/sshManager.js";
 import { setJWTServerPassphrase, removeAllJWTServerPassphrase } from "../core/jwtServerPassphraseManager.js";
 import { runProject, cleanProject, stopProject, releaseRuntimeResources } from "../core/projectController.js";
+import { runDeferredCleanups, getDeferredCleanupRemotehostIDs } from "../core/transferrer.js";
 import { isValidOutputFilename } from "../lib/utility.js";
 import { checkWritePermissions, parentDirs, eventEmitters } from "../core/global.js";
 import { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, sendComponentTree } from "./senders.js";
@@ -50,7 +51,12 @@ const _internal = {
   setProjectState,
   selectRunHandler,
   unlockIfFinished,
-  rootDispatchers: new Map()
+  rootDispatchers: new Map(),
+  remoteHost,
+  createSsh,
+  removeSsh,
+  runDeferredCleanups,
+  getDeferredCleanupRemotehostIDs
 };
 
 async function updateProjectState(projectRootDir, state, force) {
@@ -529,6 +535,39 @@ export async function onCleanComponent(clientID, projectRootDir, targetComponent
   ]);
 }
 
+/**
+ * reconnect SSH to every remotehost this project still has pending deferred cleanups for,
+ * run them, then disconnect again (aicshud/WHEEL#1023).
+ * stopProject() (aicshud/WHEEL#1020/#1021) unconditionally disconnects every SSH connection
+ * on stop, but deliberately leaves deferredCleanupRegistry populated - a not-yet-executed
+ * downstream task may still need the preserved remote-symlink target file if the project is
+ * resumed. If the user cleans the project instead of resuming it, that entry never gets a
+ * chance to run naturally (only runProject()'s own natural-completion path calls
+ * runDeferredCleanups()), permanently leaking the preserved remote files. Since cleanProject
+ * is only ever triggered by an explicit user action (the "clean" button), it is fine for this
+ * to need a fresh password/passphrase prompt (via createSsh()'s askPassword callback) even
+ * though the project is not running.
+ * @param {string} clientID - socket's ID, used if createSsh needs to ask for a password
+ * @param {string} projectRootDir - project's root path
+ */
+async function reconnectAndRunDeferredCleanups(clientID, projectRootDir) {
+  const remotehostIDs = _internal.getDeferredCleanupRemotehostIDs(projectRootDir);
+  if (remotehostIDs.length === 0) {
+    return;
+  }
+  for (const id of remotehostIDs) {
+    const hostinfo = _internal.remoteHost.get(id);
+    if (!hostinfo) {
+      getLogger(projectRootDir).warn(`remotehost ${id} is no longer defined; skipping its deferred cleanup`);
+      continue;
+    }
+    await _internal.createSsh(projectRootDir, hostinfo.name, hostinfo, clientID, false);
+  }
+  await _internal.runDeferredCleanups(projectRootDir);
+  _internal.removeSsh(projectRootDir);
+}
+_internal.reconnectAndRunDeferredCleanups = reconnectAndRunDeferredCleanups;
+
 async function onCleanProject(clientID, projectRootDir) {
   try {
     await askUnsavedFiles(clientID, projectRootDir);
@@ -540,6 +579,7 @@ async function onCleanProject(clientID, projectRootDir) {
   }
   try {
     await clearProjectEdits(projectRootDir);
+    await _internal.reconnectAndRunDeferredCleanups(clientID, projectRootDir);
     await Promise.all([
       cleanProject(projectRootDir),
       removeTempd(projectRootDir, "viewer"),

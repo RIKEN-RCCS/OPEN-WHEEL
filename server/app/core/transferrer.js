@@ -193,6 +193,23 @@ export async function stageOut(task) {
 }
 
 /**
+ * Get the distinct remotehostIDs that a project has pending deferred cleanups for, without
+ * consuming/clearing the registry (aicshud/WHEEL#1023). A caller that needs its SSH
+ * connections re-established before runDeferredCleanups() can run (e.g. onCleanProject(),
+ * invoked after stopProject() has already unconditionally disconnected everything) uses this
+ * to know which remotehosts to reconnect to first.
+ * @param {string} projectRootDir - project's root path
+ * @returns {string[]} - distinct remotehostIDs referenced by this project's registered entries
+ */
+export function getDeferredCleanupRemotehostIDs(projectRootDir) {
+  const entries = deferredCleanupRegistry.get(projectRootDir) || [];
+  const remotehostIDs = entries.map((entry)=>{
+    return entry.remotehostID;
+  });
+  return [...new Set(remotehostIDs)];
+}
+
+/**
  * Run all deferred cleanup operations for a project.
  * Deletes remote-symlink output files that were preserved during per-component cleanup,
  * then removes the now-empty remote working directories.
