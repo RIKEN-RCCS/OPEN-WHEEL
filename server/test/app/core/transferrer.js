@@ -9,7 +9,7 @@ const expect = chai.expect;
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 import sinon from "sinon";
-import { stageIn, stageOut, runDeferredCleanups, clearDeferredCleanups, _internal } from "../../../app/core/transferrer.js";
+import { stageIn, stageOut, runDeferredCleanups, clearDeferredCleanups, getDeferredCleanupRemotehostIDs, _internal } from "../../../app/core/transferrer.js";
 describe("#stageIn", ()=>{
   let setTaskStateStub;
   let getSshHostinfoStub;
@@ -451,6 +451,44 @@ describe("#runDeferredCleanups", ()=>{
     await runDeferredCleanups("/proj/d");
 
     expect(loggerWarnStub.calledOnce).to.be.true;
+  });
+});
+
+describe("[reproduction] issue aicshud/WHEEL#1023 - getDeferredCleanupRemotehostIDs must expose which remotehosts need reconnecting", ()=>{
+  afterEach(()=>{
+    sinon.restore();
+  });
+
+  it("should return an empty array when no deferred cleanups are registered for the project", ()=>{
+    expect(getDeferredCleanupRemotehostIDs("/proj/not-registered")).to.deep.equal([]);
+  });
+
+  it("should return the distinct remotehostIDs of all registered entries, without mutating the registry", ()=>{
+    _internal.addDeferredCleanup("/proj/multi", {
+      remoteWorkingDir: "/remote/task1",
+      remotehostID: "hostX",
+      symlinkTargetNames: ["file1.dat"]
+    });
+    _internal.addDeferredCleanup("/proj/multi", {
+      remoteWorkingDir: "/remote/task2",
+      remotehostID: "hostY",
+      symlinkTargetNames: ["file2.dat"]
+    });
+    _internal.addDeferredCleanup("/proj/multi", {
+      remoteWorkingDir: "/remote/task3",
+      remotehostID: "hostX",
+      symlinkTargetNames: ["file3.dat"]
+    });
+
+    expect(getDeferredCleanupRemotehostIDs("/proj/multi").sort()).to.deep.equal(["hostX", "hostY"]);
+
+    //must be a non-destructive peek - runDeferredCleanups must still see all 3 entries
+    const sshExecStub = sinon.stub().resolves(0);
+    sinon.stub(_internal, "getSsh").returns({ exec: sshExecStub });
+    sinon.stub(_internal, "getLogger").returns({ debug: sinon.stub(), warn: sinon.stub() });
+    return runDeferredCleanups("/proj/multi").then(()=>{
+      expect(sshExecStub.callCount).to.equal(6); //1 file + 1 dir for each of the 3 entries
+    });
   });
 });
 

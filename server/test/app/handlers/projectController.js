@@ -500,4 +500,44 @@ describe("project Controller handler UT", function () {
       sinon.assert.calledOnceWithExactly(removeTransferrersStub, projectRootDir);
     });
   });
+
+  describe("[reproduction] issue aicshud/WHEEL#1023 - onCleanProject must reconnect SSH before running deferred cleanups", ()=>{
+    it("should reconnect ssh for every remotehost with a pending deferred cleanup, run them, then disconnect again", async ()=>{
+      //stopProject() (aicshud/WHEEL#1020/#1021) leaves the deferredCleanupRegistry populated
+      //but has already unconditionally disconnected every SSH connection - so by the time the
+      //user clicks "clean", runDeferredCleanups() can not just be called directly (it would
+      //throw "ssh instance is not registerd for the project"). onCleanProject must reconnect
+      //first, using the same remotehost.json entry runDispatcher() itself would have used.
+      const clientID = "test-client-id";
+      const hostinfoA = { id: "hostA", name: "hostA-name" };
+      sinon.stub(_internal, "getDeferredCleanupRemotehostIDs").returns(["hostA"]);
+      sinon.stub(_internal, "remoteHost").value({
+        get: sinon.stub().withArgs("hostA")
+          .returns(hostinfoA)
+      });
+      const createSshStub = sinon.stub(_internal, "createSsh").resolves({});
+      const runDeferredCleanupsStub = sinon.stub(_internal, "runDeferredCleanups").resolves();
+      const removeSshStub = sinon.stub(_internal, "removeSsh");
+
+      await _internal.onCleanProject(clientID, projectRootDir);
+
+      sinon.assert.calledOnceWithExactly(createSshStub, projectRootDir, "hostA-name", hostinfoA, clientID, false);
+      sinon.assert.calledOnceWithExactly(runDeferredCleanupsStub, projectRootDir);
+      sinon.assert.calledOnceWithExactly(removeSshStub, projectRootDir);
+      sinon.assert.callOrder(createSshStub, runDeferredCleanupsStub, removeSshStub);
+    });
+
+    it("should not attempt any SSH reconnection when there are no pending deferred cleanups", async ()=>{
+      sinon.stub(_internal, "getDeferredCleanupRemotehostIDs").returns([]);
+      const createSshStub = sinon.stub(_internal, "createSsh");
+      const runDeferredCleanupsStub = sinon.stub(_internal, "runDeferredCleanups");
+      const removeSshStub = sinon.stub(_internal, "removeSsh");
+
+      await _internal.onCleanProject("test-client-id", projectRootDir);
+
+      expect(createSshStub.called).to.be.false;
+      expect(runDeferredCleanupsStub.called).to.be.false;
+      expect(removeSshStub.called).to.be.false;
+    });
+  });
 });
