@@ -697,7 +697,9 @@ class Dispatcher extends EventEmitter {
     this.runningTasks.push(component);
     this.dispatchedTasks.add(component);
     const ee = eventEmitters.get(this.projectRootDir);
-    ee.emit("taskDispatched", component);
+    if (ee) {
+      ee.emit("taskDispatched", component);
+    }
     await writeComponentJson(this.projectRootDir, component.workingDir, component, true);
     await this._addNextComponent(component);
   }
@@ -724,7 +726,9 @@ class Dispatcher extends EventEmitter {
       component.state = "running";
       await fs.writeJson(path.resolve(childDir, componentJsonFilename), component);
       const ee = eventEmitters.get(this.projectRootDir);
-      ee.emit("componentStateChanged", component);
+      if (ee) {
+        ee.emit("componentStateChanged", component);
+      }
     }
     const ancestorsType = typeof this.ancestorsType === "string" ? `${this.ancestorsType}/${component.type}` : component.type;
     const childEnv = Object.assign({}, this.env, component.env);
@@ -746,7 +750,9 @@ class Dispatcher extends EventEmitter {
       //so, it is no need to emit "componentStateChanged" here.
       if (component.type === "workflow" || component.type === "stepjob") {
         const ee = eventEmitters.get(this.projectRootDir);
-        ee.emit("componentStateChanged", component);
+        if (ee) {
+          ee.emit("componentStateChanged", component);
+        }
       }
     } finally {
       await this._addNextComponent(component);
@@ -1030,7 +1036,9 @@ class Dispatcher extends EventEmitter {
 
     const updateComponentJson = debounce(async ()=>{
       const ee = eventEmitters.get(this.projectRootDir);
-      ee.emit("componentStateChanged", component);
+      if (ee) {
+        ee.emit("componentStateChanged", component);
+      }
       return writeComponentJson(this.projectRootDir, templateRoot, component, true);
     });
     //templateRoot's descendants (e.g. the task shown when navigating into this PS component)
@@ -1218,7 +1226,9 @@ class Dispatcher extends EventEmitter {
     });
     await writeJsonWrapper(filename, filesJson);
     const ee = eventEmitters.get(this.projectRootDir);
-    ee.emit("resultFilesReady", dir);
+    if (ee) {
+      ee.emit("resultFilesReady", dir);
+    }
     await this._setComponentState(component, "finished");
   }
 
