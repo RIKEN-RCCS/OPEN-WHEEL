@@ -35,7 +35,7 @@ import { removeTransferrers } from "../../../app/core/transferManager.js";
 import { addInputFile, addOutputFile, renameOutputFile, toggleInputFileMandatory } from "../../../app/core/componentFiles.js";
 import { addLink, addFileLink } from "../../../app/core/componentLinks.js";
 import { validateComponents } from "../../../app/core/validateComponents.js";
-import { scriptName, pwdCmd, scriptHeader } from "../../testScript.js";
+import { scriptName, pwdCmd, scriptHeader, exit } from "../../testScript.js";
 const scriptPwd = `${scriptHeader}\n${pwdCmd}`;
 const wait = ()=>{
   return new Promise((resolve)=>{
@@ -1592,6 +1592,60 @@ describe("UT for Dispatcher class", function () {
 
       await DP._setComponentState(rootWF, "running");
       expect(rootWF.state).to.equal("running");
+    });
+  });
+
+  //reproduction for aicshud/WHEEL#1027: same class of bug as #1019, found by auditing the rest
+  //of this file after confirming a live "TypeError: Cannot read properties of undefined
+  //(reading 'emit')" crash from _dispatchTask on real Fugaku hardware during aicshud/WHEEL#1024's
+  //investigation (a late-resolving task dispatch racing project teardown). _delegate and
+  //_viewerHandler have the identical unguarded pattern.
+  describe("#_dispatchTask (aicshud/WHEEL#1027)", ()=>{
+    let task;
+    beforeEach(async ()=>{
+      task = await createNewComponent(projectRootDir, projectRootDir, "task", { x: 10, y: 10 });
+      await updateComponentProperty(projectRootDir, task.ID, "script", scriptName);
+      await fs.outputFile(path.resolve(projectRootDir, task.name, scriptName), `${scriptHeader}\n${pwdCmd}\n${exit(0)}`);
+    });
+
+    it("should not throw when eventEmitters has no entry for the project (project already torn down)", async ()=>{
+      const updatedTask = await fs.readJson(path.resolve(projectRootDir, task.name, componentJsonFilename));
+      const projJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projJson.componentPath, {}, "");
+      await DP._asyncInit();
+      eventEmitters.delete(projectRootDir); //simulate: project already torn down
+
+      await expect(DP._dispatchTask(updatedTask)).to.not.be.rejected;
+    });
+  });
+
+  describe("#_delegate (aicshud/WHEEL#1027)", ()=>{
+    let subWorkflow;
+    beforeEach(async ()=>{
+      subWorkflow = await createNewComponent(projectRootDir, projectRootDir, "workflow", { x: 10, y: 10 });
+    });
+
+    it("should not throw when eventEmitters has no entry for the project (project already torn down)", async ()=>{
+      const updatedSubWorkflow = await fs.readJson(path.resolve(projectRootDir, subWorkflow.name, componentJsonFilename));
+      const projJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projJson.componentPath, {}, "");
+      eventEmitters.delete(projectRootDir); //simulate: project already torn down
+
+      await expect(DP._delegate(updatedSubWorkflow, false)).to.not.be.rejected;
+      expect(updatedSubWorkflow.state).to.equal("finished");
+    });
+  });
+
+  describe("#_viewerHandler (aicshud/WHEEL#1027)", ()=>{
+    it("should not throw when eventEmitters has no entry for the project (project already torn down)", async ()=>{
+      const viewer = await createNewComponent(projectRootDir, projectRootDir, "viewer", { x: 10, y: 10 });
+      const updatedViewer = await fs.readJson(path.resolve(projectRootDir, viewer.name, componentJsonFilename));
+      updatedViewer.files = [];
+      const projJson = await fs.readJson(path.resolve(projectRootDir, projectJsonFilename));
+      const DP = new Dispatcher(projectRootDir, rootWF.ID, projectRootDir, "dummy start time", projJson.componentPath, {}, "");
+      eventEmitters.delete(projectRootDir); //simulate: project already torn down
+
+      await expect(DP._viewerHandler(updatedViewer)).to.not.be.rejected;
     });
   });
 
