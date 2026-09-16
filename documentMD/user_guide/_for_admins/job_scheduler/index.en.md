@@ -88,7 +88,7 @@ The determination of normal or abnormal termination is based on the capture retu
 Specifies, as a string, the regular expression for retrieving the return value (exit code) of the job script from the output of the stat command.
 The specified string is passed to the RegExp constructor as it is, so it needs to be escaped if necessary.
 Treats the only captured value in this regular expression as the return value.
-However, if the specified string does not qualify as a regular expression or contains no captures, treat it as "Return value =-2". (This fact is also output to the log.)
+However, if the specified string does not match the regular expression or contains no captures (e.g. the job was canceled and the script itself never produced a return value), success or failure is instead judged from the status code obtained via reJobStatus / reJobStatusCode. (This fact is also output to the log.)
 
 #### reJobStatus
 A string is a regular expression used to obtain the status code returned by the job scheduler from the output of the stat command.
