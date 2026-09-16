@@ -466,6 +466,16 @@ class Dispatcher extends EventEmitter {
       state = "unknown";
     } else if (this.hasFailedComponent) {
       state = "failed";
+    } else if (this.stoppedExternally) {
+      //a plain external stop (aicshud/WHEEL#1020/#1028), reported only once
+      //hasUnknownComponent/hasFailedComponent are ruled out. stopProject() is also called
+      //when a task's own failure aborts the rest of the project (the "taskStateChanged"
+      //listener in handlers/projectController.js) - that path already records the failure
+      //via setStateFlag() before remove() runs, so hasFailedComponent/hasUnknownComponent
+      //(checked above) correctly take priority over stoppedExternally in that case,
+      //matching the existing "failed must not be clobbered by stopped" contract (issue
+      //#1000, referenced in that listener).
+      state = "stopped";
     }
     return state;
   }
@@ -513,13 +523,17 @@ class Dispatcher extends EventEmitter {
       const onStop = ()=>{
         logTrace(this.projectRootDir, this.cwfDir, "dispatcher stopped externally");
         removeSettleListeners();
-        //the dispatcher was stopped from outside the normal dispatch loop (e.g. the whole
-        //project being aborted because a task failed, or a manual "stop project"). settle
-        //start()'s promise with the current outcome instead of leaving it pending forever -
-        //otherwise the caller (runProject()) hangs indefinitely and never reaches its own
-        //state update/cleanup, which in turn leaves the project stuck instead of concluding.
+        //"stop" fires both for a genuine external stop (remove(), the whole project being
+        //aborted because a task failed, or a manual "stop project") and for _jumpHandler's
+        //"break" handling (a normal, successful in-workflow loop exit calling pause()
+        //directly) - stoppedExternally (set by remove() itself, aicshud/WHEEL#1020/#1028)
+        //distinguishes the two, so _getState() only reports "stopped" for the former.
+        //settle start()'s promise with the current outcome instead of leaving it pending
+        //forever either way - otherwise the caller (runProject()) hangs indefinitely and
+        //never reaches its own state update/cleanup, which in turn leaves the project stuck
+        //instead of concluding.
         //
-        //record that this was an external stop (aicshud/WHEEL#1020): pause()/remove() (which
+        //note for the genuine-external-stop case (aicshud/WHEEL#1020): pause()/remove() (which
         //triggered this) is still busy recursively canceling nested job tasks - using the
         //project's SSH connections - well after this resolves, since pause() emits "stop"
         //synchronously before awaiting that cancellation. The caller (runProject()) must not
@@ -527,7 +541,6 @@ class Dispatcher extends EventEmitter {
         //the still-in-flight cancellation and can disconnect SSH out from under it. Whoever
         //called pause()/remove() (stopProject()) already owns that teardown once its own
         //await on remove() finishes.
-        this.stoppedExternally = true;
         resolve(this._getState());
       };
       this.once("done", this.onDone);
@@ -553,6 +566,12 @@ class Dispatcher extends EventEmitter {
   }
 
   async remove() {
+    //record that this was a genuine external stop (aicshud/WHEEL#1020/#1028) before pause()
+    //synchronously emits "stop" below - pause() is also called directly by _jumpHandler's
+    //"break" handling (a normal, successful in-workflow loop exit, not a stop), so the flag
+    //must be set here, the one and only caller of remove() (stopProject()), rather than
+    //unconditionally inside the "stop" handler itself.
+    this.stoppedExternally = true;
     await this.pause();
     const p = [];
     for (const child of this.children) {
