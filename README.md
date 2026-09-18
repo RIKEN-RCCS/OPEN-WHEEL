@@ -79,6 +79,14 @@ Any other markdown files under documentMD is detailed informatin for developpers
 "client" and "server" has client and server code respectively.
 "test" contains E2E test code based on cypress, you can find server-side unit test code under server/test
 
+### Branch strategy
+- `main` reflects the latest published release. It only moves forward when a release is cut - either by merging in `dev/YYYY` at a cycle-end release, or by merging a `maint/YYYY` hotfix line forward for a patch release. Do not open feature/bugfix pull requests directly against `main` - see below for where changes should target instead.
+- `dev/YYYY` is the active development branch for fiscal year YYYY, branched off `main`. All feature and bugfix pull requests during an active development cycle target this branch.
+- Once `dev/YYYY`'s cycle is done, it is merged into `main` (a release point) and then renamed in place (not re-created) to `maint/YYYY`, becoming a hotfix-only branch that receives no new features.
+- From that rename until the next `dev/YYYY+1` is created, any hotfix targets the current `maint/YYYY`, not `main` directly.
+- Both `dev/YYYY` and `maint/YYYY` are protected: no direct commits/pushes, changes only land via reviewed pull requests.
+- `maintenance2023` and `maintenance2026` predate this naming rule and are kept as-is (legacy exceptions); any new long-lived release-maintenance branch going forward uses the `maint/YYYY` scheme.
+
 ### preparation
 run following commands
 1. npm install
