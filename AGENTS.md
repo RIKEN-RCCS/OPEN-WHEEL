@@ -21,6 +21,7 @@ test/cypress/component   component test with cypress
 - never commit, revert or make any other operations to git repo without explicitly order from user.
 - do not hand-edit "server/app/db/version.json". It holds a fixed development placeholder in the repo; the real value is baked in only at build time (Dockerfile / build_and_deploy.yml), never by a running CI job. See documentMD/design/design.md ("バージョン番号の管理").
 - Do not use conditional skip in unit tests except for pre-existing ones.
+- Follow the branch strategy documented in README.md's "Branch strategy" section strictly (which branch to target for feature work vs. hotfixes, naming, no direct commits to `dev/YYYY`/`maint/YYYY`).
 
 ## implementation policy
 - always write code in async/await style
