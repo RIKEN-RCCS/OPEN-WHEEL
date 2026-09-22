@@ -68,6 +68,11 @@ jobs:
             wheel_docker.tar.gz
             source.tar.gz
           tag_name: ${{ env.VERSION_NUMBER }}
+          # without this, the GitHub API creates a brand-new tag against the
+          # repository's default branch (main) regardless of which branch this
+          # workflow actually ran on - a maintenance/beta build's tag would
+          # silently point at main instead of its own branch.
+          target_commitish: ${{ github.sha }}
           name: "${{ env.TITLE_PREFIX }} ${{ env.VERSION_NUMBER }}"
           body: "release for ${{ github.ref_name }} @ ${{ github.sha }} (${{ env.VERSION_NUMBER }})"
           # only the master line ever takes the "Latest" badge and the
