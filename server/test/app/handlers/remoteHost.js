@@ -117,6 +117,9 @@ describe("remoteHost handler UT", ()=>{
       sinon.stub(remoteHost, "unshift").resolves("newID");
       sinon.stub(remoteHost, "update").resolves();
       sinon.stub(remoteHost, "getAll").returns([]);
+      sinon.stub(remoteHost, "get").callsFake((id)=>{
+        return { id, stored: true };
+      });
     });
     afterEach(()=>{
       sinon.restore();
@@ -125,7 +128,7 @@ describe("remoteHost handler UT", ()=>{
       await onAddHost(socket, { name: "foo", host: "bar", user: "baz", port: "" }, cb);
       expect(remoteHost.unshift).to.have.been.calledOnce;
       expect(remoteHost.unshift.args[0][0]).not.to.have.property("port");
-      expect(cb).to.have.been.calledOnceWithExactly("newID");
+      expect(cb).to.have.been.calledOnceWithExactly("newID", { id: "newID", stored: true });
     });
     it("onAddHost should reject and not store host with empty required property", async ()=>{
       await onAddHost(socket, { name: "foo", host: "", user: "baz" }, cb);
@@ -136,7 +139,7 @@ describe("remoteHost handler UT", ()=>{
       await onUpdateHost(socket, { id: "id", name: "foo", host: "bar", user: "baz", port: "" }, cb);
       expect(remoteHost.update).to.have.been.calledOnce;
       expect(remoteHost.update.args[0][0]).not.to.have.property("port");
-      expect(cb).to.have.been.calledOnceWithExactly("id");
+      expect(cb).to.have.been.calledOnceWithExactly("id", { id: "id", stored: true });
     });
     it("onUpdateHost should reject and not store host with empty required property", async ()=>{
       await onUpdateHost(socket, { id: "id", name: "", host: "bar", user: "baz" }, cb);

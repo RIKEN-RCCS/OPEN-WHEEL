@@ -216,14 +216,17 @@ export default {
           })
         : 0;
       const numDelete = updated.id ? 1 : 0;
-      SIO.emitGlobal(eventName, updated, (id)=>{
+      SIO.emitGlobal(eventName, updated, (id, stored)=>{
         if (!id) {
           console.log(`${eventName} API failed`, id);
           return;
         }
-        updated.id = id;
-        this.initializeConnectionTestIcon(updated);
-        this.hosts.splice(index, numDelete, updated);
+        //use the entry the server actually stored, because it can differ from what we sent
+        //(e.g. properties sent as empty string are removed on the server)
+        const host = stored ? { ...stored } : updated;
+        host.id = id;
+        this.initializeConnectionTestIcon(host);
+        this.hosts.splice(index, numDelete, host);
       });
     },
     openRemoveConfirmDialog(item) {
