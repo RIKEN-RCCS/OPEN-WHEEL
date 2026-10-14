@@ -27,21 +27,45 @@ addFormats(ajv, ["uri"]);
 
 const validate = ajv.compile(remotehostJsonSchema);
 
-async function validateHostSetting(newHost) {
+//properties which must exist and have non-empty value
+const requiredProps = remotehostJsonSchema.required;
+
+//properties which have no default value in schema
+//client can not remove these properties, so empty string is treated as a request to unset them
+const unsettableProps = Object.entries(remotehostJsonSchema.properties)
+  .filter(([prop, definition])=>{
+    return !requiredProps.includes(prop) && !Object.hasOwn(definition, "default");
+  })
+  .map(([prop])=>{
+    return prop;
+  });
+
+export async function validateHostSetting(newHost) {
   Object.keys(newHost).forEach((prop)=>{
     if (newHost[prop] === null) {
       delete newHost[prop];
     }
   });
-  validate(newHost);
-  if (validate !== null && Array.isArray(validate.errors)) {
-    const missingRequiredKey = validate.errors.includes((e)=>{
-      return e.keyword === "required";
-    });
-    if (missingRequiredKey) {
-      logger.warn("addHost failed due to validation error");
-      return false;
+
+  for (const prop of unsettableProps) {
+    if (newHost[prop] === "") {
+      delete newHost[prop];
     }
+  }
+  const invalidRequiredProps = requiredProps.filter((prop)=>{
+    return newHost[prop] === "";
+  });
+  validate(newHost);
+  if (Array.isArray(validate.errors)) {
+    for (const e of validate.errors) {
+      if (e.keyword === "required") {
+        invalidRequiredProps.push(e.params.missingProperty);
+      }
+    }
+  }
+  if (invalidRequiredProps.length > 0) {
+    logger.warn(`host setting rejected because required properties are missing or empty: ${invalidRequiredProps.join(", ")}`);
+    return false;
   }
   if (newHost.useGfarm) {
     if (typeof newHost.JWTServerUser !== "string" || newHost.JWTServerUser === "") {
@@ -58,7 +82,7 @@ async function validateHostSetting(newHost) {
 
 export async function onAddHost(socket, newHost, cb) {
   if (!await validateHostSetting(newHost)) {
-    cb(false);
+    return cb(false);
   }
   const id = await remoteHost.unshift(newHost);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
@@ -89,7 +113,7 @@ export async function onUpdateHost(socket, updatedHost, cb) {
     delete updatedHost.username;
   }
   if (!await validateHostSetting(updatedHost)) {
-    cb(false);
+    return cb(false);
   }
 
   await remoteHost.update(updatedHost, true);
