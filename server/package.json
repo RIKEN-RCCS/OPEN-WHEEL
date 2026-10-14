@@ -67,7 +67,7 @@
     "passport-local": "^1.0.0",
     "perfect-debounce": "^2.0.0",
     "promise-retry": "^2.0.1",
-    "rwatchd": "^1.0.0",
+    "rwatchd": "^1.2.3",
     "simple-batch-system": "^2.1.0",
     "socket.io": "^4.8.1",
     "socketio-file-upload": "^0.7.3",
