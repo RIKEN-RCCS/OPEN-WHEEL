@@ -86,7 +86,8 @@ export async function onAddHost(socket, newHost, cb) {
   }
   const id = await remoteHost.unshift(newHost);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
-  return cb(id);
+  //return the stored entry too, because it can differ from what the client sent (e.g. empty properties are removed)
+  return cb(id, remoteHost.get(id));
 }
 export async function onCopyHost(socket, id, cb) {
   await remoteHost.copy(id);
@@ -118,7 +119,7 @@ export async function onUpdateHost(socket, updatedHost, cb) {
 
   await remoteHost.update(updatedHost, true);
   socket.emit("hostList", remoteHost.getAll());//for workflow screen's handler
-  return cb(updatedHost.id);
+  return cb(updatedHost.id, remoteHost.get(updatedHost.id));
 }
 
 export async function onRemoveHost(socket, id, cb) {
