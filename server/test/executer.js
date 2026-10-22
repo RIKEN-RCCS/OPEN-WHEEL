@@ -6,7 +6,7 @@
 "use strict";
 const path = require("path");
 const fs = require("fs-extra");
-const SshClientWrapper = require("ssh-client-wrapper");
+const SshClientWrapper = require("ssh-client-wrapper").default;
 
 //setup test framework
 const chai = require("chai");
