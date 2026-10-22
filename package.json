@@ -14,7 +14,7 @@
   "license": "BSD-2-Clause",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "workspaces": [
     "server",
