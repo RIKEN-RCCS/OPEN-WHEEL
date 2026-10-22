@@ -4,7 +4,7 @@
  * See License in the project root for the license information.
  */
 "use strict";
-const SshClientWrapper = require("ssh-client-wrapper");
+const SshClientWrapper = require("ssh-client-wrapper").default;
 const { getLogger } = require("../logSettings");
 const logger = getLogger();
 const { remoteHost } = require("../db/db");
