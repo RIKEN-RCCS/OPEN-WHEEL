@@ -22,7 +22,7 @@ OPEN-WHEELのテストは以下の2種類があります。
 
 ### 1.2 前提条件
 
-- Node.js 20.x
+- Node.js 24.x (LTS)
 - Docker (SSHテストサーバー起動に必要)
 - プロジェクトルートで `npm install` 済み
 
