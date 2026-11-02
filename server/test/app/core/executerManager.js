@@ -695,6 +695,82 @@ describe("UT for executerManager class", function () {
       await expect(register(mockTask)).to.be.rejectedWith(Error, "illegal job scheduler");
     });
   });
+  describe("task retry on failure (aicshud/WHEEL#1033)", function () {
+    this.timeout(5000);
+    const testDir = path.resolve(testDirRoot, "taskRetry");
+    let stateHistory;
+
+    beforeEach(async ()=>{
+      await fs.ensureDir(testDir);
+      const ee = new EventEmitter();
+      stateHistory = [];
+      //the project is stopped by whoever listens to taskStateChanged and sees "failed",
+      //so record every state which is notified to the listener
+      ee.on("taskStateChanged", (task)=>{
+        stateHistory.push(task.state);
+      });
+      eventEmitters.set(testDir, ee);
+    });
+    afterEach(async ()=>{
+      sinon.restore();
+      _internal.executers.clear();
+      eventEmitters.delete(testDir);
+      await fs.remove(testDir);
+    });
+
+    /**
+     * create task object which runs on localhost
+     * @param {object} opt - additional property of task
+     * @returns {object} - task object
+     */
+    function createTask(opt) {
+      return { projectRootDir: testDir, workingDir: testDir, remotehostID: "localhost", host: "localhost", useJobScheduler: false, name: "retryTask", ID: "retryTaskID", retry: null, retryCondition: null, ...opt };
+    }
+
+    /**
+     * register task and speed up SBS's dispatch interval
+     * @param {object} task - task object
+     * @returns {Promise} - promise returned from register()
+     */
+    function registerFast(task) {
+      const p = register(task);
+      _internal.executers.get(getExecutersKey(task)).batch.interval = 10;
+      return p;
+    }
+
+    it("should not notify \"failed\" while the task is going to be retried, and finish when the retry succeeded", async function () {
+      const execStub = sinon.stub(LocalTaskExecuter.prototype, "exec");
+      execStub.onFirstCall().resolves(1);
+      execStub.onSecondCall().resolves(0);
+      const task = createTask({ retry: 3 });
+
+      await registerFast(task);
+
+      expect(execStub).to.have.been.calledTwice;
+      expect(task.state).to.equal("finished");
+      expect(stateHistory).not.to.include("failed");
+    });
+    it("should be failed after all retries are consumed", async function () {
+      const execStub = sinon.stub(LocalTaskExecuter.prototype, "exec").resolves(1);
+      const task = createTask({ retry: 2 });
+
+      await expect(registerFast(task)).to.be.rejected;
+
+      //first execution + 2 retries
+      expect(execStub).to.have.been.calledThrice;
+      expect(task.state).to.equal("failed");
+      expect(stateHistory[stateHistory.length - 1]).to.equal("failed");
+    });
+    it("should be failed without retry if retry is not specified", async function () {
+      const execStub = sinon.stub(LocalTaskExecuter.prototype, "exec").resolves(1);
+      const task = createTask();
+
+      await registerFast(task);
+
+      expect(execStub).to.have.been.calledOnce;
+      expect(task.state).to.equal("failed");
+    });
+  });
   describe("StepjobTaskExecuter (issue #764)", function () {
     afterEach(()=>{
       sinon.restore();
