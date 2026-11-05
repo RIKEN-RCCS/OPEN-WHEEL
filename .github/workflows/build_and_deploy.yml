@@ -8,7 +8,8 @@ jobs:
       DOCKER_CONTAINER_NAME: ${{ vars.DOCKER_CONTAINER_NAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       BRANCH_NAME: ${{ github.ref_name }}
-    runs-on: ubuntu-latest
+    #setup-apptainer installs apptainer's .deb which depends on libfuse3-3, not installable on ubuntu-26.04 (ubuntu-latest). (aicshud/WHEEL#1036)
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: eWaterCycle/setup-apptainer@v2
