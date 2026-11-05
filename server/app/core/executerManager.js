@@ -206,7 +206,7 @@ async function runChecker(task) {
   }
 }
 async function needsRetry(task, checkerRt) {
-  if ((typeof task.retry === "undefined" || task.retryCondition === null)
+  if ((typeof task.retry === "undefined" || task.retry === null)
     && (typeof task.retryCondition === "undefined" || task.retryCondition === null)) {
     return false;
   }
@@ -283,12 +283,16 @@ class Executer {
         } else {
           state = task.rt === 0 ? "finished" : "failed";
         }
-        await setTaskState(task, state);
         //exec useualy returns task.state but to use it in retry function
         //to use task in retry function, exec() will be rejected with task object if failed
+        //
+        //"failed" must not be notified while the task is going to be retried, because
+        //the project is stopped immediately when a failed task is notified
+        //(if all retries are consumed, the state will be set in submit())
         if (state === "failed" && await needsRetry(task, checkerRt)) {
           return Promise.reject(task);
         }
+        await setTaskState(task, state);
         return state;
       },
       maxConcurrent: maxNumJob,
@@ -315,6 +319,12 @@ class Executer {
     const tmp = async ()=>{
       try {
         await this.batch.qwait(task.sbsID);
+      } catch (e) {
+        //all retries are consumed or retry is not possible. the task is finally failed
+        if (!["failed", "unknown"].includes(task.state)) {
+          await setTaskState(task, "failed");
+        }
+        throw e;
       } finally {
         await createStatusFile(task);
         loggerWrapper.logTrace(task.projectRootDir, task.workingDir, task.state);
