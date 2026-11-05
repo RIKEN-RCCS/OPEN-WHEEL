@@ -3,7 +3,8 @@ on:
   push:
     branches:
       - '**'
-      - '!master'
+      - '!main'
+      - '!maintenance*'
 jobs:
   cypress-run:
     services:
