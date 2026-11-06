@@ -218,7 +218,11 @@ async function runValidationPhase(projectRootDir, ack, commitMessage) {
   try {
     await stopProjectEdits(projectRootDir);
     const report = await validateComponents(projectRootDir);
-    const nonIgnoreableErrors = report.filter((entry)=>{ return entry.errors.some((e)=>{ return !e.ignoreable; }); });
+    const nonIgnoreableErrors = report.filter((entry)=>{
+      return entry.errors.some((e)=>{
+        return !e.ignoreable;
+      });
+    });
     if (nonIgnoreableErrors.length > 0) {
       getLogger(projectRootDir).error("invalid component found:");
       ack(nonIgnoreableErrors);

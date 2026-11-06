@@ -45,18 +45,19 @@ describe("issue935 - PS + task status icons after project finished", ()=>{
       const store = win.document.querySelector("#app").__vue_app__.config.globalProperties.$store;
       const target = store.state.currentComponent && store.state.currentComponent.descendants
         ? store.state.currentComponent.descendants.find((c)=>{
-          return c.name === name;
-        })
+            return c.name === name;
+          })
         : null;
       expect(target, `${name} present in currentComponent.descendants`).to.exist;
       expect(target.state, `${name} component state`).to.equal(expectedState);
-    }).then(()=>{
-      return getStoreState().then((state)=>{
-        return state.currentComponent.descendants.find((c)=>{
-          return c.name === name;
+    })
+      .then(()=>{
+        return getStoreState().then((state)=>{
+          return state.currentComponent.descendants.find((c)=>{
+            return c.name === name;
+          });
         });
       });
-    });
   }
 
   it("PS component and the task inside it both show \"finished\" status after the project reaches finished", ()=>{

@@ -336,17 +336,6 @@ export default {
       this.itemToDelete = item;
       this.deleteDialog = true;
     },
-    confirmDelete() {
-      if (this.itemToDelete) {
-        this.$emit("deleteItem", this.label, this.itemToDelete);
-        this.itemToDelete = null;
-      }
-      this.deleteDialog = false;
-    },
-    cancelDelete() {
-      this.itemToDelete = null;
-      this.deleteDialog = false;
-    },
     loadSrcFileCandidates() {
       const srcComponentID = this.label === "scatter" ? this.selectedComponent.ID : (this.newItem.srcNode || this.selectedComponent.ID);
       const path = `${this.projectRootDir}${this.pathSep}${this.componentPath[srcComponentID]}`;

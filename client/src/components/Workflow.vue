@@ -590,7 +590,9 @@ export default {
         return false;
       }
       return this.validationErrors.every((entry)=>{
-        return entry.errors.every((e)=>{ return e.ignoreable; });
+        return entry.errors.every((e)=>{
+          return e.ignoreable;
+        });
       });
     },
     isReadOnly() {

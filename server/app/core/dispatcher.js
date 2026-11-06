@@ -1588,7 +1588,7 @@ class Dispatcher extends EventEmitter {
             missing = true;
           }
         }
-      } catch (e) {
+      } catch {
         missing = true;
       }
       if (missing) {
@@ -1730,8 +1730,12 @@ class Dispatcher extends EventEmitter {
                   path.resolve(this.cwfDir, component.name), component);
 
             const srcName = nunjucks.renderString(src.srcName, this.env);
-            const srcOutputFile = srcComponent.outputFiles.find((o)=>{ return o.name === src.srcName; });
-            const dstEntry = srcOutputFile?.dst.find((d)=>{ return d.dstNode === component.ID && d.dstName === inputFile.name; });
+            const srcOutputFile = srcComponent.outputFiles.find((o)=>{
+              return o.name === src.srcName;
+            });
+            const dstEntry = srcOutputFile?.dst.find((d)=>{
+              return d.dstNode === component.ID && d.dstName === inputFile.name;
+            });
             const forceCopy = hasStoragePath(srcComponent) || (dstEntry?.forceCopy === true);
             tmpDeliverRecipes.push({
               dstRoot,
@@ -1770,8 +1774,12 @@ class Dispatcher extends EventEmitter {
               : this._getComponentDir(component.ID);
 
             const srcName = nunjucks.renderString(src.srcName, this.env);
-            const srcOutputFile = srcComponent.outputFiles.find((o)=>{ return o.name === src.srcName; });
-            const dstEntry = srcOutputFile?.dst.find((d)=>{ return d.dstNode === component.ID && d.dstName === inputFile.name; });
+            const srcOutputFile = srcComponent.outputFiles.find((o)=>{
+              return o.name === src.srcName;
+            });
+            const dstEntry = srcOutputFile?.dst.find((d)=>{
+              return d.dstNode === component.ID && d.dstName === inputFile.name;
+            });
             const forceCopy = hasStoragePath(srcComponent) || (dstEntry?.forceCopy === true);
             tmpDeliverRecipes.push({
               dstRoot,
@@ -1791,8 +1799,12 @@ class Dispatcher extends EventEmitter {
             const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, srcComponent.name), component, srcRemotehostID !== remotehostID);
             const dstRoot = hasStoragePath(component) ? component.storagePath : getRemoteWorkingDir(this.projectRootDir, this.projectStartTime, path.resolve(this.cwfDir, component.name), component);
             const srcName = nunjucks.renderString(src.srcName, this.env);
-            const srcOutputFile = srcComponent.outputFiles.find((o)=>{ return o.name === src.srcName; });
-            const dstEntry = srcOutputFile?.dst.find((d)=>{ return d.dstNode === component.ID && d.dstName === inputFile.name; });
+            const srcOutputFile = srcComponent.outputFiles.find((o)=>{
+              return o.name === src.srcName;
+            });
+            const dstEntry = srcOutputFile?.dst.find((d)=>{
+              return d.dstNode === component.ID && d.dstName === inputFile.name;
+            });
             const forceCopy = hasStoragePath(srcComponent) || (dstEntry?.forceCopy === true);
             tmpDeliverRecipes.push({
               dstRoot,
@@ -1864,8 +1876,12 @@ class Dispatcher extends EventEmitter {
                   }
                 } else {
                   const srcName = nunjucks.renderString(src.srcName, this.env);
-                  const srcOutputFile2 = srcComponent.outputFiles.find((o)=>{ return o.name === src.srcName; });
-                  const dstEntry2 = srcOutputFile2?.dst.find((d)=>{ return d.dstNode === component.ID && d.dstName === inputFile.name; });
+                  const srcOutputFile2 = srcComponent.outputFiles.find((o)=>{
+                    return o.name === src.srcName;
+                  });
+                  const dstEntry2 = srcOutputFile2?.dst.find((d)=>{
+                    return d.dstNode === component.ID && d.dstName === inputFile.name;
+                  });
                   const forceCopy = hasStoragePath(srcComponent) || (dstEntry2?.forceCopy === true);
                   const srcRoot = hasStoragePath(srcComponent) ? srcComponent.storagePath : this._getComponentDir(src.srcNode);
                   tmpDeliverRecipes.push({
