@@ -54,6 +54,7 @@ jobs:
       - run: npm run test
         working-directory: ./server
   backup:
+    if: github.repository == 'RIKEN-RCCS/OPEN-WHEEL'
     needs: ["test"]
     runs-on: ubuntu-latest
     steps:
