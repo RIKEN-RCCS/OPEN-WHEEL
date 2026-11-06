@@ -191,7 +191,7 @@ export async function saveFile(argFilename, content) {
   let parsed;
   try {
     parsed = JSON.parse(content);
-  } catch (_) {
+  } catch {
     parsed = null;
   }
   if (parsed !== null && typeof parsed === "object") {

@@ -269,10 +269,7 @@ export async function onUploadFileSaved(event, socket) {
   if (event.file.meta.overwrite !== true && await fs.pathExists(destPath)) {
     const choice = await new Promise((resolve)=>{
       const uploadId = event.file.id;
-      const timeoutId = setTimeout(()=>{
-        socket.off("resolveUploadConflict", handler);
-        resolve("rename");
-      }, 60000);
+      let timeoutId = null;
       const handler = (response)=>{
         if (response.uploadId === uploadId) {
           clearTimeout(timeoutId);
@@ -280,6 +277,10 @@ export async function onUploadFileSaved(event, socket) {
           resolve(response.choice);
         }
       };
+      timeoutId = setTimeout(()=>{
+        socket.off("resolveUploadConflict", handler);
+        resolve("rename");
+      }, 60000);
       socket.on("resolveUploadConflict", handler);
       socket.emit("uploadConflict", { filename: event.file.meta.orgName, uploadId });
     });
@@ -399,7 +400,7 @@ async function collectLogFiles(baseLogPath) {
         logFiles.push(path.join(baseDir, file));
       }
     }
-  } catch (e) {
+  } catch {
     //directory or files may not exist, return what we have
   }
 

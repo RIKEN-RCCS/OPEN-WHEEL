@@ -1758,7 +1758,9 @@ async function start(port = 3101) {
      * @returns {void} 返り値なし
      */
     socket.on("addHost", (newHost, cb)=>{
-      const id = _HOST_LIST.reduce((max, h)=>{ return Math.max(max, h.id); }, -1) + 1;
+      const id = _HOST_LIST.reduce((max, h)=>{
+        return Math.max(max, h.id);
+      }, -1) + 1;
       _HOST_LIST.push({ ...newHost, id });
       io.emit("hostList", [..._HOST_LIST]);
       return cb?.(id);

@@ -231,7 +231,6 @@ import importDialog from "../components/importDialog.vue";
 import buttons from "../components/common/buttons.vue";
 import inlineEditor from "./common/inlineEditor.vue";
 import remotehostManager from "../components/remotehost/remotehostManager.vue";
-import versatileDialog from "../components/versatileDialog.vue";
 import { readCookie } from "../lib/utility.js";
 import SIO from "../lib/socketIOWrapper.js";
 import { required } from "../lib/validationRules.js";
@@ -252,8 +251,7 @@ export default {
     exportDialog,
     importDialog,
     inlineEditor,
-    remotehostManager,
-    versatileDialog
+    remotehostManager
   },
   data: ()=>{
     return {

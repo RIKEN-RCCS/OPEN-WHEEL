@@ -153,7 +153,9 @@ export async function checkPSNodeReferences(projectRootDir, component) {
   const psSettings = await _internal.readJsonGreedy(filename, 0);
 
   const children = await _internal.getChildren(projectRootDir, component.ID, false);
-  const childIDs = new Set(children.map((c)=>{ return c.ID; }));
+  const childIDs = new Set(children.map((c)=>{
+    return c.ID;
+  }));
 
   const errors = [];
   for (const recipe of (psSettings.scatter || [])) {

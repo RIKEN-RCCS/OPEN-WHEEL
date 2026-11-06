@@ -25,8 +25,7 @@ const {
   removeComponent,
   getSourceComponents,
   isComponentDir,
-  getComponentTree,
-  pasteComponent
+  getComponentTree
 } = componentOperations;
 
 describe("componentOperations tests", ()=>{
@@ -1131,8 +1130,6 @@ describe("#pasteComponent", ()=>{
     //In practice, this scenario might not make sense, but we test the behavior anyway.
     const copyInfo = { type: "cut", ID: "sourceID" };
     const sourceJson = { name: "workflow1", ID: "sourceID", parent: "parentID" };
-    //When cut to same parent, if name doesn't conflict, it should keep the same name
-    const movedJson = { name: "workflow1", ID: "sourceID", parent: "parentID" };
 
     //Source and target parent are the same, and it's the same location
     getComponentDirMock.withArgs("/project", "sourceID", true).resolves("/project/parent/workflow1");

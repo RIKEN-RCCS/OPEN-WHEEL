@@ -103,6 +103,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           echo "DEBUG: step summary write exit code: $?, file now has $(wc -l < "$GITHUB_STEP_SUMMARY") lines"
   backup:
+    if: github.repository == 'RIKEN-RCCS/OPEN-WHEEL'
     needs: ["test"]
     runs-on: ubuntu-latest
     steps:
