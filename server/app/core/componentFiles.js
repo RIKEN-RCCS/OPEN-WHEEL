@@ -227,11 +227,15 @@ export async function toggleInputFileMandatory(projectRootDir, ID, index, mandat
 export async function toggleOutputFileForceCopy(projectRootDir, ID, srcName, dstNode, dstName, forceCopy) {
   const componentDir = await _internal.getComponentDir(projectRootDir, ID, true);
   const componentJson = await _internal.readComponentJson(componentDir);
-  const outputFile = componentJson.outputFiles.find((o)=>{ return o.name === srcName; });
+  const outputFile = componentJson.outputFiles.find((o)=>{
+    return o.name === srcName;
+  });
   if (!outputFile) {
     return Promise.reject(new Error(`outputFile ${srcName} not found`));
   }
-  const dstEntry = outputFile.dst.find((d)=>{ return d.dstNode === dstNode && d.dstName === dstName; });
+  const dstEntry = outputFile.dst.find((d)=>{
+    return d.dstNode === dstNode && d.dstName === dstName;
+  });
   if (!dstEntry) {
     return Promise.reject(new Error(`dst connection to ${dstNode}:${dstName} not found`));
   }

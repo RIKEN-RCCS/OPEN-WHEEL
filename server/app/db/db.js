@@ -310,7 +310,9 @@ export const remoteHost = new JsonArrayManager(remotehostFilename);
 //Migrate old string queue format to array
 for (const host of remoteHost.data) {
   if (typeof host.queue === "string") {
-    host.queue = host.queue.split(",").map((e)=>{ return e.trim(); })
+    host.queue = host.queue.split(",").map((e)=>{
+      return e.trim();
+    })
       .filter((e)=>{ return e.length > 0; });
   }
 }

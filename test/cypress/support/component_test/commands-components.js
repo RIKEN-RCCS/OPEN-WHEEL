@@ -1,3 +1,4 @@
+/*global document*/
 //以下、Vuetify + App Shell付きで mount するためのヘルパー
 import { defineComponent, h, onMounted } from "vue";
 import { VApp, VMain } from "vuetify/components";
@@ -71,7 +72,11 @@ export function mountComponentWithAppShell(Inner, options = {}) {
       return ()=>{
         return h("div", { id: "app" }, [
           h(VApp, null, {
-            default: ()=>{ return h(VMain, null, { default: ()=>{ return h(Inner); } }); }
+            default: ()=>{
+              return h(VMain, null, { default: ()=>{
+                return h(Inner);
+              } });
+            }
           })
         ]);
       };
@@ -101,7 +106,8 @@ export function mountComponentWithAppShell(Inner, options = {}) {
   };
 
   //options.global は mergedGlobal を使うので、残りの mount オプションのみ抽出する
-  const { global: _discard, ...restOptions } = options;
+  const restOptions = { ...options };
+  delete restOptions.global;
 
   //cypress/vue の mount を実行
   //attachTo: document.body により、DOM 実体として扱われやすくする（計測/フォーカス等）
@@ -113,7 +119,9 @@ export function mountComponentWithAppShell(Inner, options = {}) {
 }
 
 //マウント処理をCypressコマンドに追加
-Cypress.Commands.add("mountComponentWithAppShell", (comp, options)=>{ return mountComponentWithAppShell(comp, options); });
+Cypress.Commands.add("mountComponentWithAppShell", (comp, options)=>{
+  return mountComponentWithAppShell(comp, options);
+});
 
 //confirm the display in the property
 Cypress.Commands.add("confirmDisplayInProperty_comp", (dataCyStr, visibleFlg)=>{
@@ -136,7 +144,7 @@ Cypress.Commands.add("confirmInputValueReflection_comp", (inputObjCy, inputVal, 
 });
 
 //confirmation of input value not reflection
-Cypress.Commands.add("confirmInputValueNotReflection_comp", (inputObjCy, inputVal, tagType)=>{
+Cypress.Commands.add("confirmInputValueNotReflection_comp", (inputObjCy, inputVal)=>{
   cy.get(inputObjCy).find("input")
     .clear();
   //input
