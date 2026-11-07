@@ -93,21 +93,29 @@ Taskコンポーネントの実行に失敗したときに、自動的に再実�
 
 ![img](./img/task_num_retry.png "task_number_of_retry")
 
-### use javascript expression for condition check
-Taskコンポーネントの成功 / 失敗を判定するのにjavascript式を用いるか、シェルスクリプトを用いるかを指定します。
+再実行するかどうかの条件を指定したい場合は、次の __script name for condition check__ (または __use javascript expression for condition check__) を併用します。
 
- - 無効のとき  
+### script name for condition check / use javascript expression for condition check
+Taskコンポーネントが失敗したときに、__再実行するかどうかを判定する__ ためのシェルスクリプトまたはjavascript式を指定します。
+Taskの成功/失敗そのものを判定するものではありません。成功/失敗の判定を行うのは、上記の __checker script__ (未設定のときは __script__ の戻り値)です。
+
+|  | 役割 | 実行されるタイミング | 判定結果の意味 |
+|---|---|---|---|
+| checker script | Taskの最終的な成功/失敗を決める | Taskの実行終了後 | 戻り値 0: 成功 / 0以外: 失敗 |
+| script name for condition check | 失敗したTaskを再実行するかどうかを決める | Taskが失敗と判定された後(成功したときは実行されない) | 戻り値 0: 再実行する / 0以外: 再実行しない |
+
+ - __use javascript expression for condition check__ が無効のとき  
  ![img](./img/task_retry_expression_disable.png "task_retry_expression_disable")<br/>
 無効のときは、シェルスクリプトを選択するドロップダウンリストが表示されます。  
-ここで指定されたシェルスクリプトが、Taskコンポーネント実行終了後に実行され、戻り値が0であれば成功、0以外であれば失敗と判定されます。<br/><br/>
-なお、無指定のときは __script__ に指定したスクリプトの戻り値で同様の判定が行われます。
+ここで指定されたシェルスクリプトが、Taskが失敗した後に実行され、戻り値が0であれば再実行、0以外であれば再実行せずにTaskを失敗として確定します。
 
- - 有効のとき  
+ - __use javascript expression for condition check__ が有効のとき  
 ![img](./img/task_retry_expression_enable.png "task_retry_expression_enable")<br/>
 有効のときは、javascript式を記述することができます。  
-ここで入力した式が、Taskコンポーネントの実行終了後に評価され、Truthyな値を返せば成功、Falsyな値を返せば失敗と判定されます。
+ここで入力した式が、Taskが失敗した後に評価され、Truthyな値を返せば再実行、Falsyな値を返せば再実行せずにTaskを失敗として確定します。
 
-スクリプト名、javascript式ともに未設定で、number of retryの値のみを設定していた場合は、スクリプトが正常終了するか、retryに設定した回数に達するまで再実行を繰り返します。
+スクリプト名、javascript式ともに未設定で、number of retryの値のみを設定していた場合は、Taskが失敗するたびに、number of retryに設定した回数に達するまで再実行を繰り返します。  
+条件を指定した場合も、再実行の回数の上限は number of retry で決まります(無指定のときはサーバの設定 `defaultTaskRetryCount` の値が上限になります)。
 
 __利用可能な環境変数について__  
 再実行の判定を行うスクリプトやjavascript式では、以下の環境変数を利用できます。
@@ -132,6 +140,15 @@ fi
 wheelTaskRT < 5
 ```
 {: .notice--info}
+
+### continue project execution after failure
+Taskコンポーネントが(再実行の回数を使い切った後も)失敗した場合に、プロジェクトの実行を続けるかどうかを指定します。
+
+ - 無効のとき(デフォルト)  
+Taskが失敗した時点で、プロジェクト全体の実行が中断されます。実行中や実行待ちの他のコンポーネントも実行されません。
+
+ - 有効のとき  
+このTaskが失敗しても、それを理由にプロジェクトを中断せず、他のコンポーネントの実行を続けます。
 
 ### include, exclude
 

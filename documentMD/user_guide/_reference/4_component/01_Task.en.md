@@ -93,21 +93,29 @@ If none is specified, the command is not re-executed.
 
 ![img](./img/task_num_retry.png "task_number_of_retry")
 
-### use javascript expression for condition check
-Specifies whether to use a javascript expression or a shell script to determine whether a Task component succeeds or fails.
+To rerun only under certain conditions, use __script name for condition check__ (or __use javascript expression for condition check__) described next together with this property.
 
- - When invalid  
+### script name for condition check / use javascript expression for condition check
+Specifies a shell script or a javascript expression that determines __whether to rerun__ a Task component that has failed.
+It does not determine whether the Task itself succeeded or failed. That is the role of the __checker script__ above (or the return value of __script__ when no checker script is set).
+
+|  | Role | When it is executed | Meaning of the result |
+|---|---|---|---|
+| checker script | Determines the final success/failure of the Task | After the Task finishes | return value 0: success / non-zero: failure |
+| script name for condition check | Determines whether a failed Task is rerun | After the Task is judged as failed (not executed when the Task succeeded) | return value 0: rerun / non-zero: do not rerun |
+
+ - When __use javascript expression for condition check__ is disabled  
  ![img](./img/task_retry_expression_disable.png "task_retry_expression_disable")<br/>
 When disabled, a drop-down list appears to select a shell script.  
-The shell script specified here is executed after the Task component has finished executing, and returns 0 as success or non-zero as failure. <br/><br/>
-If none is specified, the return code of the script specified in __script__ performs the same judgment.
+The shell script specified here is executed after the Task has failed. If it returns 0 the Task is rerun, and if it returns non-zero the Task is not rerun and is finally marked as failed.
 
- - When enabled  
+ - When __use javascript expression for condition check__ is enabled  
 ![img](./img/task_retry_expression_enable.png "task_retry_expression_enable")<br/>
 When enabled, you can write javascript expressions.  
-The expression you enter here is evaluated after the Task component has finished executing, and a Truthy value indicates success, and a Falsy value indicates failure.
+The expression you enter here is evaluated after the Task has failed. If it returns a Truthy value the Task is rerun, and if it returns a Falsy value the Task is not rerun and is finally marked as failed.
 
-If both the script name and the javascript expression are not set and you set only the number of retry values, repeat the retry until the script terminates normally or reaches the number of retry settings.
+If both the script name and the javascript expression are not set and you set only the number of retry, the Task is rerun every time it fails, until the number of retry is reached.  
+Even when a condition is specified, the upper limit of reruns is determined by number of retry (when it is not specified, the server setting `defaultTaskRetryCount` is the upper limit).
 
 __Available Environment Variables__  
 The following environment variables are available in the script or javascript expression used to determine whether to retry:
@@ -132,6 +140,15 @@ Example: Retry only if the return value is less than 5 (javascript expression)
 wheelTaskRT < 5
 ```
 {: .notice--info}
+
+### continue project execution after failure
+Specifies whether the project continues to run when the Task component fails (even after all reruns are used up).
+
+ - When disabled (default)  
+As soon as the Task fails, the execution of the whole project is stopped. Other components that are running or waiting are not executed either.
+
+ - When enabled  
+Even if this Task fails, the project is not stopped for that reason and the other components continue to run.
 
 ### include, exclude
 
