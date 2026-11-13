@@ -274,8 +274,9 @@ wheel_auth コンテナ (port 8090)
 #### 認証ユーザーの仕組み
 
 `entrypoint.sh` 内で `WHEEL_ANONYMOUS_LOGIN=YES` が設定されると:
-1. `passwordDBTool.js -u anonymous -p "$WHEEL_ANONYMOUS_PASSWORD" -c` を実行してユーザーDBを初期化
-2. `WHEEL_ENABLE_AUTH=YES` をエクスポートし、認証ミドルウェアを有効化
+1. `WHEEL_ANONYMOUS_PASSWORD` を標準入力で `passwordDBTool.js -u anonymous --password-stdin -c` に渡してユーザーDBを初期化(コマンドラインの引数は `ps` で他の利用者から見えるため)
+2. `WHEEL_ENABLE_AUTH=YES` をエクスポートし、認証ミドルウェア(HTTP と Socket.IO の両方)を有効化
+3. `WHEEL_ANONYMOUS_PASSWORD` を `unset` し、WHEEL と WHEEL が起動するタスクに渡さない
 
 `WHEEL_ANONYMOUS_PASSWORD` を省略した場合は、ランダムパスワードで `anonymous` ユーザーを作成します。
 

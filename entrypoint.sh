@@ -22,10 +22,14 @@ if [ "xYES" == "x${WHEEL_ANONYMOUS_LOGIN}" ]; then
   if [ -z "${WHEEL_ANONYMOUS_PASSWORD}" ];then
     node bin/passwordDBTool.js -A -c
   else
-    node bin/passwordDBTool.js -u anonymous -p "${WHEEL_ANONYMOUS_PASSWORD}" -c
+    # pass the password via stdin (printf is a shell builtin), because command line
+    # arguments can be seen by other users on the same host via ps
+    printf '%s' "${WHEEL_ANONYMOUS_PASSWORD}" | node bin/passwordDBTool.js -u anonymous --password-stdin -c
   fi
   export WHEEL_ENABLE_AUTH=YES
 fi
+# the password is no longer needed. do not pass it to WHEEL and the tasks it spawns
+unset WHEEL_ANONYMOUS_PASSWORD
 
 # start an ssh-agent for the WHEEL server. WHEEL spawns many `ssh` subprocesses
 # (ssh-client-wrapper) that inherit SSH_AUTH_SOCK from this process, so with
