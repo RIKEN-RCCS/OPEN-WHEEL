@@ -127,7 +127,7 @@ If environment variable `WHEEL_ANONYMOUS_LOGIN` is set to `YES` with `docker run
 WHEEL is boot up with authentication mechanism and anonymous user is created.
 
 By default, anonymous user's password is shown on console.
-If environment variable `WHEEL_ANONYMOUS_PASSWORD` is set, it will go to the file named `${WHEEL_ANONYMOUS_PASSOWRD}`
+If environment variable `WHEEL_ANONYMOUS_PASSWORD` is set, its value is used as the anonymous user's password (in this case, the password is not shown).
 
 ## Remote Host Settings
 WHEEL can perform tasks on the compute server where you logged in via ssh.
