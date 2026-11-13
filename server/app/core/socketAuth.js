@@ -12,7 +12,11 @@
  * @param {(err?: Error) => void} next - next middleware
  */
 export function requireLogin(req, res, next) {
-  next();
+  if (req.user) {
+    next();
+    return;
+  }
+  next(new Error("login required"));
 }
 
 /**
@@ -40,8 +44,7 @@ function onlyForHandshake(middleware) {
  * @param {Array<(req: object, res: object, next: (err?: Error) => void) => void>} guards - express style middlewares
  */
 export function applySocketGuards(sio, guards) {
-  //not implemented yet
-  void sio;
-  void guards;
-  void onlyForHandshake;
+  for (const guard of guards) {
+    sio.engine.use(onlyForHandshake(guard));
+  }
 }

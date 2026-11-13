@@ -27,6 +27,7 @@ import { tempdRoot } from "./core/tempd.js";
 import { aboutWheel } from "./core/versionInfo.js";
 import { hasEntry, hasCode, hasRefreshToken, storeCode, acquireAccessToken, getURLtoAcquireCode, getRemotehostIDFromState } from "./core/webAPI.js";
 import checkAllCommands from "./core/commandCheck.js";
+import { applySocketGuards, requireLogin } from "./core/socketAuth.js";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -82,9 +83,13 @@ const defaultPort = useHttp ? 80 : 443;
 let portNumber = port || defaultPort;
 portNumber = portNumber > 0 ? portNumber : defaultPort;
 //middlewares
+//Socket.IO bypasses express middlewares, so the same guards are applied to it as well
+const socketGuards = [];
 if (address) {
   const ips = [address];
-  app.use(IpFilter(ips, { mode: "allow", logF: logger.debug.bind(logger) }));
+  const ipFilter = IpFilter(ips, { mode: "allow", logF: logger.debug.bind(logger) });
+  app.use(ipFilter);
+  socketGuards.push(ipFilter);
 }
 
 app.use(cors());
@@ -92,18 +97,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(Siofu.router);
-app.use(session({
+const sessionMiddleware = session({
   secret,
   resave: false,
   saveUninitialized: false,
   store: new SQLiteStore({ db: sessionDBFilename, dir: sessionDBDir })
-}));
+});
+app.use(sessionMiddleware);
 
 if (enableAuth) {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(passport.authenticate("session"));
+  socketGuards.push(sessionMiddleware, passport.initialize(), passport.session(), requireLogin);
 }
+applySocketGuards(sio, socketGuards);
 
 //global socket IO handler
 sio.on("connection", (socket)=>{
@@ -200,7 +208,7 @@ router.route("/workflow").get(checkLoggedIn, routes.workflow.get)
 router.route("/graph").get(checkLoggedIn, routes.workflow.get)
   .post(checkLoggedIn, routes.workflow.post);
 router.route("/list").get(checkLoggedIn, routes.workflow.get)
-  .post(routes.workflow.post);
+  .post(checkLoggedIn, routes.workflow.post);
 router.route("/editor").get(checkLoggedIn, routes.workflow.get)
   .post(checkLoggedIn, routes.workflow.post);
 router.route("/viewer").get(checkLoggedIn, routes.viewer.get)

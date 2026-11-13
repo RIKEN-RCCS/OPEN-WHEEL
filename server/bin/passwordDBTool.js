@@ -17,12 +17,13 @@ const doc = `
 manupirate WHEEL's user DB
 
 Usage:
-  wheel_pw [-A|--anonymous] [-u <username>] [-p <password>] [-c|--clear] [-d|--delete] [-h|--help] [--version]
+  wheel_pw [-A|--anonymous] [-u <username>] [-p <password>|--password-stdin] [-c|--clear] [-d|--delete] [-h|--help] [--version]
 
 Options:
   -A: create anonymous user and remove old if it exists
   -u USERNAME : username
   -p PASSWORD : password
+  --password-stdin: read password from standard input (safer than command line argument)
   -c: clear DB before add new user
   -d: delete user instead of adding newuser
   -h: show this message
@@ -46,6 +47,20 @@ function generatePassword() {
 }
 
 /**
+ * read password from standard input
+ * trailing newline is removed
+ * @returns {Promise<string>} - password
+ */
+async function readPasswordFromStdin() {
+  const chunks = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString()
+    .replace(/\r?\n$/, "");
+}
+
+/**
  * parse command line option
  * @param {object} options - commandline options
  * @returns {object} -
@@ -59,7 +74,9 @@ function parseOptions(options) {
   const makeAnonymous = options["-A"] || options["--anonymous"];
   const deleteUser = options["-d"] || options["--delete"];
   const username = options["-u"];
-  const password = options["-p"];
+  const passwordFromStdin = options["--password-stdin"];
+  //actual password is read later when it is given via stdin
+  const password = passwordFromStdin ? "" : options["-p"];
 
   let mode = "add";
   if (makeAnonymous) {
@@ -78,7 +95,7 @@ function parseOptions(options) {
     console.log("username is requilred");
     process.exit(2);
   }
-  return { mode, clear, username, password };
+  return { mode, clear, username, password, passwordFromStdin };
 }
 
 /**
@@ -112,7 +129,7 @@ try {
   process.exit(10);
 }
 
-const { mode, clear, username, password } = parseOptions(options);
+const { mode, clear, username, password, passwordFromStdin } = parseOptions(options);
 
 if (mode === "version") {
   console.log(toolVersion);
@@ -120,6 +137,11 @@ if (mode === "version") {
 }
 
 (async ()=>{
+  const actualPassword = passwordFromStdin ? await readPasswordFromStdin() : password;
+  if (mode === "add" && actualPassword === "") {
+    console.log("password is empty");
+    process.exit(3);
+  }
   if (clear && mode !== "list") {
     await fs.remove(path.resolve(userDBDir, userDBFilename));
   }
@@ -134,7 +156,7 @@ if (mode === "version") {
       await delUser(username);
       break;
     case "add":
-      await addUser(username, password);
+      await addUser(username, actualPassword);
       break;
     case "anon":
       await createAnonymousUser();
