@@ -13,13 +13,13 @@ if [ "xYES" == "x${WHEEL_ANONYMOUS_LOGIN}" ]; then
   if [ -z "${WHEEL_ANONYMOUS_PASSWORD}" ];then
     node bin/passwordDBTool.js -A -c
   else
-    # WHEEL_ANONYMOUS_PASSWORD is the path of the file to which the password is written.
-    # create it readable only by the owner
-    (umask 077; node bin/passwordDBTool.js -A -c >"${WHEEL_ANONYMOUS_PASSWORD}")
+    # pass the password via stdin (printf is a shell builtin), because command line
+    # arguments can be seen by other users on the same host via ps
+    printf '%s' "${WHEEL_ANONYMOUS_PASSWORD}" | node bin/passwordDBTool.js -u anonymous --password-stdin -c
   fi
   export WHEEL_ENABLE_AUTH=YES
 fi
-# do not pass it to WHEEL and the tasks it spawns
+# the password is no longer needed. do not pass it to WHEEL and the tasks it spawns
 unset WHEEL_ANONYMOUS_PASSWORD
 
 SSH_ENV_FILE=/root/ssh_env
