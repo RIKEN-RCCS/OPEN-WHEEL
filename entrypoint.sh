@@ -10,13 +10,17 @@ if [ "xYES" == "x${WHEEL_GENERATE_KEYPAIR}" ];then
 fi
 echo generate anonymous login user = ${WHEEL_ANONYMOUS_LOGIN:-NO}
 if [ "xYES" == "x${WHEEL_ANONYMOUS_LOGIN}" ]; then
-  if [ -z ${WHEEL_ANONYMOUS_PASSWORD} ];then
+  if [ -z "${WHEEL_ANONYMOUS_PASSWORD}" ];then
     node bin/passwordDBTool.js -A -c
   else
-    node bin/passwordDBTool.js -A -c >${WHEEL_ANONYMOUS_PASSWORD}
+    # pass the password via stdin (printf is a shell builtin), because command line
+    # arguments can be seen by other users on the same host via ps
+    printf '%s' "${WHEEL_ANONYMOUS_PASSWORD}" | node bin/passwordDBTool.js -u anonymous --password-stdin -c
   fi
   export WHEEL_ENABLE_AUTH=YES
 fi
+# the password is no longer needed. do not pass it to WHEEL and the tasks it spawns
+unset WHEEL_ANONYMOUS_PASSWORD
 
 SSH_ENV_FILE=/root/ssh_env
 ssh-agent -s > ${SSH_ENV_FILE}
