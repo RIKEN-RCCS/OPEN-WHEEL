@@ -10,13 +10,17 @@ if [ "xYES" == "x${WHEEL_GENERATE_KEYPAIR}" ];then
 fi
 echo generate anonymous login user = ${WHEEL_ANONYMOUS_LOGIN:-NO}
 if [ "xYES" == "x${WHEEL_ANONYMOUS_LOGIN}" ]; then
-  if [ -z ${WHEEL_ANONYMOUS_PASSWORD} ];then
+  if [ -z "${WHEEL_ANONYMOUS_PASSWORD}" ];then
     node bin/passwordDBTool.js -A -c
   else
-    node bin/passwordDBTool.js -A -c >${WHEEL_ANONYMOUS_PASSWORD}
+    # WHEEL_ANONYMOUS_PASSWORD is the path of the file to which the password is written.
+    # create it readable only by the owner
+    (umask 077; node bin/passwordDBTool.js -A -c >"${WHEEL_ANONYMOUS_PASSWORD}")
   fi
   export WHEEL_ENABLE_AUTH=YES
 fi
+# do not pass it to WHEEL and the tasks it spawns
+unset WHEEL_ANONYMOUS_PASSWORD
 
 SSH_ENV_FILE=/root/ssh_env
 ssh-agent -s > ${SSH_ENV_FILE}
