@@ -61,8 +61,13 @@ import { aboutWheel } from "../core/versionInfo.js";
 import { onImportProject, onExportProject } from "./projectArchive.js";
 import { onExportComponent, onImportComponent } from "./componentArchive.js";
 import { getTempdRoot } from "../core/tempd.js";
+import { removeParentDirsOfClient } from "../core/global.js";
 
 const registerHandlers = (socket, Siofu)=>{
+  socket.on("disconnect", ()=>{
+    removeParentDirsOfClient(socket.id);
+  });
+
   //
   //read information
   //
