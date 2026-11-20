@@ -24,7 +24,7 @@ import { setJWTServerPassphrase, removeAllJWTServerPassphrase } from "../core/jw
 import { runProject, cleanProject, stopProject, releaseRuntimeResources } from "../core/projectController.js";
 import { runDeferredCleanups, getDeferredCleanupRemotehostIDs } from "../core/transferrer.js";
 import { isValidOutputFilename } from "../lib/utility.js";
-import { checkWritePermissions, parentDirs, eventEmitters } from "../core/global.js";
+import { checkWritePermissions, eventEmitters } from "../core/global.js";
 import { sendWorkflow, sendProjectJson, sendTaskStateList, sendResultsFileDir, sendComponentTree } from "./senders.js";
 import { emitAll, emitWithPromise } from "./commUtils.js";
 import { removeTempd, getTempd } from "../core/tempd.js";
@@ -350,8 +350,8 @@ async function runDispatcher(clientID, projectRootDir, ack) {
     const ee = new EventEmitter();
     _internal.eventEmitters.set(projectRootDir, ee);
     ee.on("componentStateChanged", ()=>{
-      const parentDir = parentDirs.get(projectRootDir);
-      _internal.sendWorkflow(()=>{}, projectRootDir, parentDir);
+      //send every level displayed by any client
+      _internal.sendWorkflow(()=>{}, projectRootDir);
     });
     ee.on("projectStateChanged", _internal.sendProjectJson.bind(null, projectRootDir));
     ee.on("taskDispatched", _internal.sendTaskStateList.bind(null, projectRootDir));

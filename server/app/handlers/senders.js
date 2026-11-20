@@ -12,19 +12,64 @@ import { getComponentTree } from "../core/componentOperations.js";
 import { projectJsonFilename, componentJsonFilename } from "../db/db.js";
 import { readJsonGreedy } from "../core/fileUtils.js";
 import { taskStateFilter } from "../core/taskUtil.js";
-import { parentDirs } from "../core/global.js";
+import { setParentDir, getParentDirs } from "../core/global.js";
 import { emitAll } from "./commUtils.js";
-//read and send current workflow and its child and grandson
+export const _internal = {
+  getThreeGenerationFamily,
+  emitAll
+};
+
+/**
+ * read and send workflow (component and its child and grandson)
+ *
+ * if clientID is specified, send parentComponentDir only to the client and record it as the
+ * client's displayed dir. Otherwise, send every dir displayed by any client of the project
+ * (plus parentComponentDir if specified) to all clients of the project. Each client
+ * displays only the workflow it is showing, so clients can show different levels at once.
+ * @param {((result: (boolean|Error)) => void)|null} cb - called with true on success or with the error
+ * @param {string} projectRootDir - project's root path
+ * @param {string} parentComponentDir - component dir to be sent ("" means not specified)
+ * @param {string|null} clientID - socket.io client ID of the requester
+ */
 export async function sendWorkflow(cb, projectRootDir, parentComponentDir = "", clientID = null) {
   if (typeof projectRootDir !== "string") {
     getLogger(projectRootDir).error("sendWorkflow called without projectRootDir!!");
   }
-  const target = path.isAbsolute(parentComponentDir) ? parentComponentDir : path.resolve(projectRootDir, parentComponentDir);
+  const target = parentComponentDir
+    ? path.isAbsolute(parentComponentDir) ? parentComponentDir : path.resolve(projectRootDir, parentComponentDir)
+    : null;
   try {
-    const wf = await getThreeGenerationFamily(projectRootDir, target);
-    if (wf) {
-      parentDirs.set(projectRootDir, target);
-      await emitAll(clientID ? clientID : projectRootDir, "workflow", wf);
+    if (clientID) {
+      const dir = target || projectRootDir;
+      const wf = await _internal.getThreeGenerationFamily(projectRootDir, dir);
+      if (wf) {
+        setParentDir(projectRootDir, clientID, dir);
+        await _internal.emitAll(clientID, "workflow", wf);
+      }
+    } else {
+      if (target) {
+        const wf = await _internal.getThreeGenerationFamily(projectRootDir, target);
+        if (wf) {
+          await _internal.emitAll(projectRootDir, "workflow", wf);
+        }
+      }
+      const displayed = getParentDirs(projectRootDir).filter((dir)=>{
+        return dir !== target;
+      });
+      if (!target && displayed.length === 0) {
+        displayed.push(projectRootDir);
+      }
+      for (const dir of displayed) {
+        try {
+          const wf = await _internal.getThreeGenerationFamily(projectRootDir, dir);
+          if (wf) {
+            await _internal.emitAll(projectRootDir, "workflow", wf);
+          }
+        } catch (e) {
+          //displayed dir may be already removed or renamed by other client
+          getLogger(projectRootDir).debug("send workflow failed", dir, e);
+        }
+      }
     }
   } catch (e) {
     if (typeof cb !== "function") {
